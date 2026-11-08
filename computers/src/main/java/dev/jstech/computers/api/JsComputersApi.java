@@ -16,7 +16,6 @@ import dev.jstech.computers.api.planner.IPlannerStatistic;
 import dev.jstech.computers.engine.EngineDef;
 import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.engine.nextgre.NextgreExtensions;
-import dev.jstech.computers.hardware.ArchitectureSpec;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -104,20 +103,6 @@ public final class JsComputersApi {
             return;
         }
         Isas.add(isa);
-    }
-
-    /**
-     * Adds a kind of machine under the ISA's former name.
-     *
-     * @deprecated use {@link #registerIsa(IsaSpec)}; this goes in the next cycle of the series
-     */
-    @Deprecated(since = "0.5.0a", forRemoval = true)
-    @SuppressWarnings("removal")
-    public static void registerArchitecture(final ArchitectureSpec architecture) {
-        if (architecture == null) {
-            return;
-        }
-        registerIsa(architecture.toIsa());
     }
 
     /** Adds a kernel, which an operating system then names as the one it is built on. */

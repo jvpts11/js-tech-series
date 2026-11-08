@@ -519,6 +519,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   (`budgetWatts`), how hot it is in kelvin (`temperature`, not a number for one that keeps only its budget), the share
   of its work it still does (`performance`) and whether it is over (`over`). A machine offers it on
   `ThermalBudgets.BUDGET`, the same on every block of it. Experimental.
+- (Computers) Removed: `ArchitectureSpec`, `ComputersRegisterEvent.architecture` and
+  `JsComputersApi.registerArchitecture`, the former name of the instruction set registration, deprecated in 0.5.0a
+  for one cycle. Register an `IsaSpec` with `ComputersRegisterEvent.isa` instead.
 
 ### Added
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -3024,6 +3027,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole blocks.
 
 ### Changed
+- (Computers) Item data with a version: each of the 21 kinds of data J's Computers' items carry (a server's storage
+  and hardware, a disk's files and systems, a medium's contents, a name, a printed document, a card's recipes and the
+  rest) is saved with the version of its layout beside its value, so a later change to one can bring an item saved
+  before it up to date. An item saved before reads as it was; what travels to the players is the value alone.
 - (Core) A block aboard a moving structure sounds where the structure carries it: a sound played at one of its blocks,
   and a running sound a block entity aboard asks for, are heard from where that block is in the world now, a running
   one following it every tick as the structure moves, where both came from the yard its blocks are kept in, far from

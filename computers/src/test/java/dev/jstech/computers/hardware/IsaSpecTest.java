@@ -79,11 +79,4 @@ class IsaSpecTest {
     void bits_areTheIsasOwn() {
         assertEquals(64, new IsaSpec("other:risc64", "RISC-64", 64, Set.of("other:risc64")).bits());
     }
-
-    @Test
-    @SuppressWarnings("removal")
-    void formerName_carriesTheSameValuesAcross() {
-        final ArchitectureSpec former = new ArchitectureSpec("other:risc", "RISC", 32, Set.of("other:risc"));
-        assertEquals(new IsaSpec("other:risc", "RISC", 32, Set.of("other:risc")), former.toIsa());
-    }
 }

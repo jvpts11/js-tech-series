@@ -41,10 +41,8 @@ public final class JsComputersApiGameTests {
     }
 
     @GameTest(template = ARENA)
-    @SuppressWarnings("removal")
     public static void register_ignoresAMissingArgument(final GameTestHelper helper) {
         JsComputersApi.registerIsa(null);
-        JsComputersApi.registerArchitecture(null);
         JsComputersApi.registerGraphicsProgram(null);
 
         helper.succeed();

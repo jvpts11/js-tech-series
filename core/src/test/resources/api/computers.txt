@@ -9,7 +9,6 @@ stable 7
 5 dev.jstech.computers.api.ComponentKind  new(ResourceLocation)
 1 dev.jstech.computers.api.ComputersRegisterEvent  type final class extends Event implements IModBusEvent
 8 dev.jstech.computers.api.ComputersRegisterEvent  LanguageRegistry languages()
-1 dev.jstech.computers.api.ComputersRegisterEvent  deprecated void architecture(ArchitectureSpec)
 8 dev.jstech.computers.api.ComputersRegisterEvent  void cardKind(ExpansionCardKind)
 5 dev.jstech.computers.api.ComputersRegisterEvent  void componentKind(ComponentKind)
 8 dev.jstech.computers.api.ComputersRegisterEvent  void computer(Block, ComputerDef)
@@ -44,7 +43,6 @@ stable 7
 5 dev.jstech.computers.api.IComponentValidator  default boolean data(Object)
 5 dev.jstech.computers.api.IComponentValidator  static final IComponentValidator ANYTHING
 1 dev.jstech.computers.api.JsComputersApi  type final class
-1 dev.jstech.computers.api.JsComputersApi  deprecated static void registerArchitecture(ArchitectureSpec)
 8 dev.jstech.computers.api.JsComputersApi  static LanguageRegistry languages()
 1 dev.jstech.computers.api.JsComputersApi  static final int VERSION
 8 dev.jstech.computers.api.JsComputersApi  static void registerCardKind(ExpansionCardKind)
@@ -241,8 +239,6 @@ stable 7
 8 dev.jstech.computers.engine.EngineDef  String versionFor(Era)
 8 dev.jstech.computers.engine.EngineDef  boolean madeFor(Era)
 3 dev.jstech.computers.engine.EngineDef  boolean offers(EngineCapability)
-1 dev.jstech.computers.hardware.ArchitectureSpec  type deprecated record(String id, String name, int bits, Set<String> runs)
-2 dev.jstech.computers.hardware.ArchitectureSpec  IsaSpec toIsa()
 8 dev.jstech.computers.hardware.CaseParts  type record(int processors, int memory, int cards, int disks, int bays, int storage)
 8 dev.jstech.computers.hardware.CaseParts  static final int AS_THE_BOARD
 8 dev.jstech.computers.hardware.ComputerDef  type record(Era era, Set<FormFactor> formFactors, HostScope machine, CaseParts parts)

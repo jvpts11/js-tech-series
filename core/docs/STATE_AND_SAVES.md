@@ -60,7 +60,9 @@ older one:
 ```
 
 `CoreState.builder(...)`, a block entity's fields (`fields().layout(...)`) and `SaveLayout.builder(name)` for your
-own files all take the same steps. What was saved before any version was given counts as version 0. When the
+own files all take the same steps. An item's data component takes them through its codec: register it with
+`.persistent(layout.codec(codec))`, and keep `.networkSynchronized(...)` for what travels to the players, which
+needs no version. What was saved before any version was given counts as version 0. When the
 game loads something older, it runs every step from that version up, in order. When it finds something
 **newer** (the world was opened with a newer version of your mod, then an older one), it reads what it can and
 never writes over it: a copy of the newer file is kept beside the one it writes, so going back to the newer mod

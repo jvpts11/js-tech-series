@@ -14,7 +14,6 @@ import dev.jstech.computers.api.planner.IPlannerRule;
 import dev.jstech.computers.api.planner.IPlannerStatistic;
 import dev.jstech.computers.block.SmallComputerBlock;
 import dev.jstech.computers.engine.EngineDef;
-import dev.jstech.computers.hardware.ArchitectureSpec;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -78,20 +77,6 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
     /** Adds an instruction set architecture, a kind of machine that programs can then be built for. */
     public void isa(final IsaSpec isa) {
         JsComputersApi.registerIsa(isa);
-    }
-
-    /**
-     * Adds a kind of machine under the ISA's former name.
-     *
-     * @deprecated use {@link #isa(IsaSpec)}; this goes in the next cycle of the series
-     */
-    @Deprecated(since = "0.5.0a", forRemoval = true)
-    @SuppressWarnings("removal")
-    public void architecture(final ArchitectureSpec architecture) {
-        if (architecture == null) {
-            return;
-        }
-        isa(architecture.toIsa());
     }
 
     /** Adds a kernel, which an operating system then names as the one it is built on. */

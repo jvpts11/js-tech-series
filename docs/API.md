@@ -45,8 +45,7 @@ because a mod cannot add anything without holding them:
 - The registries a mod adds to: `LanguageRegistry` and `OperationTypeRegistry`.
 - What it adds to them: `IProgrammingLanguage`, `OperationType` and `IOperationArgs`.
 - What a machine is and what can be installed on one: `IsaSpec`, `KernelDef`, `OsDef`, `ProgramSpec`,
-  `DesktopEnvironmentDef` and `OperatingSpaceDef`, with `ArchitectureSpec`, the former name of `IsaSpec`,
-  for one more cycle.
+  `DesktopEnvironmentDef` and `OperatingSpaceDef`.
 - What a Mainframe can run to plan its network's work: `EngineDef`, a Network Operations Engine, and the
   `EngineCapability` values it may offer.
 - The hardware a mod brings: the sheet of each kind of part (`CpuSpec`, `GpuSpec`, `RamSpec`, `DiskSpec`,

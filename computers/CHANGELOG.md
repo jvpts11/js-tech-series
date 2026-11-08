@@ -53,6 +53,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The plug of a card that reads machines: J's Computers' API stays at version 8.
   `IExpansionCardSpec.controlPlug()` names the connector the industrial control cable plugs into on the card, and a
   computer with such a card is a device whose port takes the cable's plug of that kind.
+- Removed: `ArchitectureSpec`, `ComputersRegisterEvent.architecture` and
+  `JsComputersApi.registerArchitecture`, the former name of the instruction set registration, deprecated in 0.5.0a
+  for one cycle. Register an `IsaSpec` with `ComputersRegisterEvent.isa` instead.
 
 ### Added
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
@@ -114,6 +117,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its autocrafting.
 
 ### Changed
+- Item data with a version: each of the 21 kinds of data J's Computers' items carry (a server's storage
+  and hardware, a disk's files and systems, a medium's contents, a name, a printed document, a card's recipes and the
+  rest) is saved with the version of its layout beside its value, so a later change to one can bring an item saved
+  before it up to date. An item saved before reads as it was; what travels to the players is the value alone.
 - Listeners declared: every class of the three mods that answers the game's events is
   handed to the buses from its mod's constructor, through a `listen` method of its own, rather than found by an
   annotation, so what runs is what the constructor says; a mod's mistake in what it declares stops the load saying

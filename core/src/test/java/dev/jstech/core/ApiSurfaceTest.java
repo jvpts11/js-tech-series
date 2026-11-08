@@ -52,9 +52,7 @@ class ApiSurfaceTest {
             "CpuSocketId", "CpuDesign", "Microarchitecture", "IntegratedGraphics", "StorageTier", "ExpansionBus",
             "MediaFormat",
             // the computers: what one is, the machine it is, and the chassis of a server
-            "ComputerDef", "CaseParts", "HostScope", "RackChassis",
-            // the former name of IsaSpec, deprecated for one cycle before it goes
-            "ArchitectureSpec");
+            "ComputerDef", "CaseParts", "HostScope", "RackChassis");
 
     /**
      * What the promise reached before it was followed to its end, each line a promised type and a type of the series
