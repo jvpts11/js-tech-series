@@ -117,7 +117,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   working as the game's own does: the Ship Crafting Table, the Ship Smithing Table, the Ship Furnace, which gives light
   while it burns, and the Ship Barrel, of 27 stacks. The holds carry their barrels along both walls, one on another
   every other row: the bay and the ramp fifteen each, the side door's hold eleven, small cargo four. A crew's
-  furnaces and barrels are its own to use, as its lockers are.
+  furnaces and barrels are its own to use, as its lockers are. The Mission Handbook's page on the ship's fittings
+  explains them.
 - The mod: J's Space (`jsspace`) is a mod of the series, a jar of its own that requires J's Core alone, at
   the same version as every mod of the series.
 - The settings of a world, `jsspace-server.toml`, none of which turns a part of the mod off: fourteen

@@ -560,7 +560,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   working as the game's own does: the Ship Crafting Table, the Ship Smithing Table, the Ship Furnace, which gives light
   while it burns, and the Ship Barrel, of 27 stacks. The holds carry their barrels along both walls, one on another
   every other row: the bay and the ramp fifteen each, the side door's hold eleven, small cargo four. A crew's
-  furnaces and barrels are its own to use, as its lockers are.
+  furnaces and barrels are its own to use, as its lockers are. The Mission Handbook's page on the ship's fittings
+  explains them.
 - (Core) A declared model may name a texture a pack makes as the game loads, once promised: the data run's check of
   the model takes it.
 - (Core) Errors that teach: when something a mod declared cannot stand (a block with no name, a setting whose

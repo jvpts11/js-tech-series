@@ -2,7 +2,7 @@
 section: starships
 order: 5
 icon: jsspace:airlock_door
-covers: [jsspace:flight_console, jsspace:pilot_seat, jsspace:airlock_door, jsspace:airlock_cycler, jsspace:docking_collar, jsspace:docking_guide, jsspace:suit_locker, jsspace:oxygen_panel, jsspace:bunk_frame, jsspace:lab_panel, jsspace:server_panel, jsspace:sample_rack, jsspace:cargo_rack]
+covers: [jsspace:flight_console, jsspace:pilot_seat, jsspace:airlock_door, jsspace:airlock_cycler, jsspace:docking_collar, jsspace:docking_guide, jsspace:suit_locker, jsspace:oxygen_panel, jsspace:bunk_frame, jsspace:lab_panel, jsspace:server_panel, jsspace:sample_rack, jsspace:cargo_rack, jsspace:ship_crafting_table, jsspace:ship_smithing_table, jsspace:ship_furnace, jsspace:ship_barrel]
 ---
 # Ship Fittings
 
@@ -21,6 +21,8 @@ The blocks of a ship's kit that work aboard, and the modules' furniture. Once th
 - Oxygen Panel: fills the tanks of the suit you wear from the cabin's air.
 - Bunk Frame: the Quarters' bunk, a place to wake.
 - Lab Panel, Sample Rack, Server Panel and Cargo Rack: the Laboratory's, Computing's and Small Cargo's furniture, drawn by their models.
+- Ship Crafting Table, Ship Smithing Table and Ship Furnace: the Workshop's, and they work as the game's own do.
+- Ship Barrel: 27 places, as a barrel has, in the Workshop, the holds and Small Cargo.
 
 The seat, the console, the bunk, the locker and the racks let the cabin's air round them.
 
@@ -37,6 +39,7 @@ From the creative menu, J's Space tab.
 5. Docked, use the Docking Collar over your head to go through into the other ship.
 6. Wearing a suit, use the Oxygen Panel to fill its tanks ([the lunar suit](jsspace:lunar_suit)).
 7. Use the Bunk Frame to wake there next time.
+8. Use the Ship Crafting Table, Ship Smithing Table, Ship Furnace or Ship Barrel to open it, as you would the game's own.
 
 ## What can go wrong
 
@@ -50,4 +53,4 @@ From the creative menu, J's Space tab.
 > The cabin has lost its air. Mend the hull and let the reserve fill it.
 
 > [!CAUTION]
-> A Suit Locker broken drops what it holds.
+> A Suit Locker, a Ship Furnace or a Ship Barrel broken drops what it holds.

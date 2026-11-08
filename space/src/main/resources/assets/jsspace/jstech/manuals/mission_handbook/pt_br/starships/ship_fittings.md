@@ -2,7 +2,7 @@
 section: starships
 order: 5
 icon: jsspace:airlock_door
-covers: [jsspace:flight_console, jsspace:pilot_seat, jsspace:airlock_door, jsspace:airlock_cycler, jsspace:docking_collar, jsspace:docking_guide, jsspace:suit_locker, jsspace:oxygen_panel, jsspace:bunk_frame, jsspace:lab_panel, jsspace:server_panel, jsspace:sample_rack, jsspace:cargo_rack]
+covers: [jsspace:flight_console, jsspace:pilot_seat, jsspace:airlock_door, jsspace:airlock_cycler, jsspace:docking_collar, jsspace:docking_guide, jsspace:suit_locker, jsspace:oxygen_panel, jsspace:bunk_frame, jsspace:lab_panel, jsspace:server_panel, jsspace:sample_rack, jsspace:cargo_rack, jsspace:ship_crafting_table, jsspace:ship_smithing_table, jsspace:ship_furnace, jsspace:ship_barrel]
 ---
 # Equipamentos de bordo
 
@@ -21,6 +21,8 @@ Os blocos do kit da nave que funcionam a bordo, e os móveis dos módulos. Depoi
 - Painel de Oxigênio: enche os tanques do traje que você veste com o ar da cabine.
 - Estrutura do Beliche: o beliche do Alojamento, um lugar para acordar.
 - Painel de Laboratório, Suporte de Amostras, Painel de Servidores e Prateleira de Carga: os móveis do Laboratório, da Computação e da Carga Pequena, desenhados pelos modelos deles.
+- Bancada de Trabalho da Nave, Mesa de Ferraria da Nave e Fornalha da Nave: as da Oficina, e funcionam como as do próprio jogo.
+- Barril da Nave: 27 lugares, como um barril tem, na Oficina, nos porões e na Carga Pequena.
 
 O assento, o console, o beliche, o armário e os suportes deixam o ar da cabine passar em volta deles.
 
@@ -37,6 +39,7 @@ No menu criativo, aba J's Space.
 5. Acoplado, use o Colar de Acoplagem acima da sua cabeça para passar para a outra nave.
 6. Vestindo um traje, use o Painel de Oxigênio para encher os tanques dele ([o traje lunar](jsspace:lunar_suit)).
 7. Use a Estrutura do Beliche para acordar ali da próxima vez.
+8. Use a Bancada de Trabalho da Nave, a Mesa de Ferraria da Nave, a Fornalha da Nave ou o Barril da Nave para abri-los, como faria com os do próprio jogo.
 
 ## O que pode dar errado
 
@@ -50,4 +53,4 @@ No menu criativo, aba J's Space.
 > A cabine perdeu o ar. Conserte o casco e deixe a reserva enchê-la.
 
 > [!CAUTION]
-> Um Armário de Trajes quebrado solta o que guarda.
+> Um Armário de Trajes, uma Fornalha da Nave ou um Barril da Nave quebrado solta o que guarda.
