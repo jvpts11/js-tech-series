@@ -153,6 +153,16 @@ board seats parts of its own era only.
 11 of them, 200 W to 3,000 W, with their efficiency. A computer whose parts draw more than its power supply gives
 refuses to start. Some power supplies scale to what the computer draws and never refuse.
 
+*Added 2026-11-08.* A running computer draws its energy from the grid through its power supply: its parts' watts
+over the supply's efficiency (300 W of parts on an 80% supply take 375 W from the line). It takes J's Energy in
+the low voltage class, or FE while J's Core lets the series take it (the default), from any cable or block that
+gives energy. Without energy it does not start; when energy stops reaching it, it goes dark at once, as a computer
+whose plug is pulled does, and the network's event log says so in an ERROR line. A rack's powered bays draw the
+same, each machine through its own supply, from the cabinet. The assembly screen's DRAW readout shows the parts
+against the supply, its bar amber near the rating and red past it, and its tooltip the watts from the line (NO
+POWER when nothing reaches the computer). The server setting `power.draw_energy` turns the draw off, for a world
+with no energy at all.
+
 ### Disks
 
 | Era | Disks |
@@ -177,7 +187,13 @@ refuses to start. Some power supplies scale to what the computer draws and never
   that many crafting table recipes in its own memory: 2 in the Vintage, 4 in the Legacy, 5 in the Transition, 6
   in the Standard, 8 in the Advanced.
 - **Workshop cards** (Crafting Table, Furnace, Enchanting, Anvil): let a Personal Computer's Workshop program
-  craft, smelt, enchant and repair, and let the network change stored items the same way.
+  craft, smelt, enchant and repair, and let the network change stored items the same way. Their work costs the
+  computer energy (added 2026-11-08): smelting 2 kJ an item, enchanting 10 kJ for every level the enchanting table
+  would take, repairing 2 kJ for every percent of durability given back, combining 10 kJ for every level the anvil
+  would ask, naming 5 kJ. That is more than its store holds, so the computer owes it and pays it off as the grid
+  fills the store; the cards' next paid work waits until it has. The server setting `update.cost` makes it levels
+  instead (half of what the game's own block takes, at least one, and never lapis), both, or nothing. A player still
+  needs the level an enchanting offer asks for.
 - **Cluster Interface Cards** (Serial Console Card, Management NIC, Fabric Host Adapter): let a Cluster Management
   Computer reach racked machines; each newer one reaches more, and installs on several at once.
 - **Optical Network Card**: lets a Mainframe or a Cluster Management Computer take fibre on the backbone (a rack

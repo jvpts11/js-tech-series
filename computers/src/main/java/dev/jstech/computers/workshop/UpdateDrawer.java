@@ -143,11 +143,12 @@ public final class UpdateDrawer {
 
     /**
      * One tick of the network's smelting at {@code speed} times a furnace's pace, at the same rules as the Workshop's:
-     * the item handed to the card smelts into what it made while there is room for it, and the experience it earns
-     * goes to the card's furnace, for whoever next takes its output. Returns how many items were smelted this tick.
+     * the item handed to the card smelts into what it made while there is room for it, each item done charged to the
+     * computer as the Workshop's are, and the experience it earns goes to the card's furnace, for whoever next takes
+     * its output. Returns how many items were smelted this tick.
      */
     public int tickSmelt(final ServerLevel level, final int speed, final Workshop workshop) {
-        if (!smelting() || speed <= 0) {
+        if (!smelting() || speed <= 0 || workshop.awaitsEnergy()) {
             return 0;
         }
         final ItemStack input = slot(WORK);
@@ -169,6 +170,7 @@ public final class UpdateDrawer {
         put(MADE, made.isEmpty() ? smelt.result().copy() : made.copyWithCount(made.getCount()
                 + smelt.result().getCount()));
         workshop.addExperience(smelt.experience());
+        workshop.chargeSmelt();
         return 1;
     }
 

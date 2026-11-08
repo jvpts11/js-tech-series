@@ -9,13 +9,13 @@ package dev.jstech.computers.operation.payload.update;
 
 import dev.jstech.computers.operation.payload.workshop.WorkshopStatePayload;
 import dev.jstech.computers.workshop.UpdateAction;
+import dev.jstech.computers.workshop.WorkshopPrice;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.chat.ComponentSerialization;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -40,7 +40,7 @@ import net.minecraft.world.item.ItemStack;
  * @param materialUsed   how much of it the repair takes
  * @param repaired       what the anvil would make of the worn item, its material and the name
  * @param anvilLevels    what an anvil would ask for it
- * @param cardLevels     what the Anvil Card asks
+ * @param cardPrice      what the Anvil Card asks
  * @param name           the name the anvil would give
  * @param smeltsInto     what one of the item smelts into, or an empty stack
  * @param furnaceSpeed   how many times a furnace's pace the Furnace Card works at
@@ -53,7 +53,7 @@ import net.minecraft.world.item.ItemStack;
 public record UpdatePreviewPayload(ItemStack item, int cards, int accepts, String computer, long held,
                                    List<String> where, List<WorkshopStatePayload.Offer> offers, int level,
                                    ItemStack worn, ItemStack material, long materialHeld, int materialUsed,
-                                   ItemStack repaired, int anvilLevels, int cardLevels, String name,
+                                   ItemStack repaired, int anvilLevels, WorkshopPrice cardPrice, String name,
                                    ItemStack smeltsInto, int furnaceSpeed, int workshopDone, int workshopTotal,
                                    boolean networkBusy, Text status, boolean sent) implements CustomPacketPayload {
 
@@ -71,6 +71,7 @@ public record UpdatePreviewPayload(ItemStack item, int cards, int accepts, Strin
         computer = clip(computer);
         where = where.stream().limit(MAX_WHERE).map(UpdatePreviewPayload::clip).toList();
         offers = List.copyOf(offers.subList(0, Math.min(MAX_OFFERS, offers.size())));
+        cardPrice = cardPrice == null ? WorkshopPrice.FREE : cardPrice;
         name = clip(name);
         status = status == null ? Text.EMPTY : status;
     }
@@ -101,9 +102,7 @@ public record UpdatePreviewPayload(ItemStack item, int cards, int accepts, Strin
         }
         buf.writeVarInt(offers.size());
         for (final WorkshopStatePayload.Offer offer : offers) {
-            buf.writeVarInt(offer.required());
-            ComponentSerialization.STREAM_CODEC.encode(buf, offer.clue());
-            buf.writeVarInt(offer.levels());
+            offer.write(buf);
         }
         buf.writeVarInt(level);
         ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, worn);
@@ -112,7 +111,7 @@ public record UpdatePreviewPayload(ItemStack item, int cards, int accepts, Strin
         buf.writeVarInt(materialUsed);
         ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, repaired);
         buf.writeVarInt(anvilLevels);
-        buf.writeVarInt(cardLevels);
+        WorkshopStatePayload.PRICE_CODEC.encode(buf, cardPrice);
         ByteBufCodecs.stringUtf8(MAX_TEXT).encode(buf, name);
         ItemStack.OPTIONAL_STREAM_CODEC.encode(buf, smeltsInto);
         buf.writeVarInt(furnaceSpeed);
@@ -137,8 +136,7 @@ public record UpdatePreviewPayload(ItemStack item, int cards, int accepts, Strin
         final int offerCount = Math.min(buf.readVarInt(), MAX_OFFERS);
         final List<WorkshopStatePayload.Offer> offers = new ArrayList<>(offerCount);
         for (int i = 0; i < offerCount; i++) {
-            offers.add(new WorkshopStatePayload.Offer(buf.readVarInt(), ComponentSerialization.STREAM_CODEC.decode(buf),
-                    buf.readVarInt()));
+            offers.add(WorkshopStatePayload.Offer.read(buf));
         }
         final int level = buf.readVarInt();
         final ItemStack worn = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
@@ -147,7 +145,7 @@ public record UpdatePreviewPayload(ItemStack item, int cards, int accepts, Strin
         final int materialUsed = buf.readVarInt();
         final ItemStack repaired = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
         final int anvilLevels = buf.readVarInt();
-        final int cardLevels = buf.readVarInt();
+        final WorkshopPrice cardPrice = WorkshopStatePayload.PRICE_CODEC.decode(buf);
         final String name = ByteBufCodecs.stringUtf8(MAX_TEXT).decode(buf);
         final ItemStack smeltsInto = ItemStack.OPTIONAL_STREAM_CODEC.decode(buf);
         final int furnaceSpeed = buf.readVarInt();
@@ -157,7 +155,7 @@ public record UpdatePreviewPayload(ItemStack item, int cards, int accepts, Strin
         final Text status = TextCodecs.STREAM_CODEC.decode(buf);
         final boolean sent = buf.readBoolean();
         return new UpdatePreviewPayload(item, cards, accepts, computer, held, where, offers, level, worn, material,
-                materialHeld, materialUsed, repaired, anvilLevels, cardLevels, name, smeltsInto, furnaceSpeed,
+                materialHeld, materialUsed, repaired, anvilLevels, cardPrice, name, smeltsInto, furnaceSpeed,
                 workshopDone, workshopTotal, networkBusy, status, sent);
     }
 }

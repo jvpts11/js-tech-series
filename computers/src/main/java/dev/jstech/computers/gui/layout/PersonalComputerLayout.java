@@ -12,14 +12,14 @@ import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
 
 /**
- * The Personal Computer's assembly screen: its era's tower case, its graphics cards' slots, and three readouts on its
- * front panel (capacity, RAM buffer, network). The menu seats its slots from here and the screen draws from here, so
- * the two can never disagree.
+ * The Personal Computer's assembly screen: its era's tower case, its graphics cards' slots, and four readouts on its
+ * front panel (capacity, RAM buffer, network, draw). The menu seats its slots from here and the screen draws from here,
+ * so the two can never disagree.
  */
 public final class PersonalComputerLayout {
 
-    /** The front panel's readouts: capacity, RAM buffer, network. */
-    public static final int READOUTS = 3;
+    /** The front panel's readouts: capacity, RAM buffer, network, draw. */
+    public static final int READOUTS = 4;
 
     private PersonalComputerLayout() {
     }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.industrial.integration.computers;
 
+import dev.jstech.computers.ComputingCapabilities;
 import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.block.CaseStyle;
@@ -29,6 +30,7 @@ import java.util.List;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
@@ -120,6 +122,9 @@ public final class IndustrialControllers {
         modEventBus.addListener(ComputersRegisterEvent.class, IndustrialControllers::register);
         modEventBus.addListener(RegisterOperationTypesEvent.class, ControllerOperations::register);
         modEventBus.addListener(RegisterPayloadHandlersEvent.class, MachineMonitorPayloads::register);
+        // A controller draws its energy as every computer does, through the port J's Computers gives its own.
+        modEventBus.addListener(RegisterCapabilitiesEvent.class,
+                event -> ComputingCapabilities.offerEnergy(event, ENTITY.get()));
     }
 
     /* The machine, the cards and each computer, on J's Computers' register event. */

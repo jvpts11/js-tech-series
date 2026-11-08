@@ -26,14 +26,16 @@ final class UpdatePopupTexts {
     static final TextKey CARD_ENCHANT = TextKey.of("jsc.update_window.card_enchant", "%s on %s, a full table");
     static final TextKey CARD_SMELT = TextKey.of("jsc.update_window.card_smelt", "%s on %s, %sx a furnace");
     static final TextKey CARD_REPAIR = TextKey.of("jsc.update_window.card_repair", "%s on %s, never wears");
-    static final TextKey PAY = TextKey.of("jsc.update_window.pay", "Costs %s of your %s levels, no lapis");
+    /** What the picked offer costs, and the asker's level. */
+    static final TextKey PAY = TextKey.of("jsc.update_window.pay", "Costs %s, no lapis (you have %s levels)");
     /** How worn the most worn of the item is, the one a repair takes: its damage and its durability. */
     static final TextKey WORN = TextKey.of("jsc.update_window.worn", "worn: %s of %s used");
     static final TextKey WITH = TextKey.of("jsc.update_window.with", "Repair with: %s, from the network (%s of %s)");
     static final TextKey WITH_NOTHING = TextKey.of("jsc.update_window.with_nothing",
             "Nothing in the network mends it: only the name changes");
     static final TextKey NAME = TextKey.of("jsc.update_window.name", "Name:");
-    static final TextKey COST = TextKey.of("jsc.update_window.cost", "Cost: %s (an anvil would take %s)");
+    /** What the Anvil Card asks, and the levels the game's anvil would take. */
+    static final TextKey COST = TextKey.of("jsc.update_window.cost", "Cost: %s (an anvil would take %s levels)");
     static final TextKey NO_CHANGE = TextKey.of("jsc.update_window.no_change", "Nothing to change, or too expensive");
     static final TextKey YOU_HAVE = TextKey.of("jsc.update_window.you_have", "You have %s");
     static final TextKey SMELT = TextKey.of("jsc.update_window.smelt", "Smelt");

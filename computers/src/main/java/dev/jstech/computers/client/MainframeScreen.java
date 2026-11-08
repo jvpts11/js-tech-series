@@ -109,7 +109,8 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
                 new Readout(GameText.resolve(AssemblyTexts.RAM_BUFFER),
                         JsTechTheme.fmt(menu.ramBuffer()) + " " + GameText.resolve(AssemblyTexts.ITEMS),
                         JsTechTheme.text()),
-                new Readout(GameText.resolve(AssemblyTexts.NETWORK), network, networkColour));
+                new Readout(GameText.resolve(AssemblyTexts.NETWORK), network, networkColour),
+                drawReadout(menu.powerShown(), menu.psu()));
     }
 
     @Override

@@ -65,12 +65,11 @@ final class WorkshopAppTexts {
     static final TextKey OFFERS_NOTE = TextKey.of("jsc.workshop_app.offers_note",
             "As a table with every bookshelf around it.");
     static final TextKey WHAT_IT_TAKES = TextKey.of("jsc.workshop_app.what_it_takes", "WHAT IT TAKES");
-    static final TextKey ENCHANT_COST = TextKey.of("jsc.workshop_app.enchant_cost", "1, 1 and 2 levels, no lapis");
+    /** What the card asks for its three offers, as the server's settings price them. */
+    static final TextKey ENCHANT_COST = TextKey.of("jsc.workshop_app.enchant_cost", "%s, %s and %s, no lapis");
     static final TextKey ENCHANT_WAS = TextKey.of("jsc.workshop_app.enchant_was",
             "a table: 1, 2 and 3 levels, and as many lapis");
     static final TextKey CLUE = TextKey.of("jsc.workshop_app.clue", "%s . . . ?");
-    static final TextKey ONE_LEVEL = TextKey.of("jsc.workshop_app.one_level", "1 level");
-    static final TextKey LEVELS = TextKey.of("jsc.workshop_app.levels", "%s levels");
 
     static final TextKey NAME = TextKey.of("jsc.workshop_app.name", "Name");
     static final TextKey REPAIR_RENAME = TextKey.of("jsc.workshop_app.repair_rename", "REPAIR AND RENAME");

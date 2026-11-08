@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.workshop;
 
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.ValueField;
 import java.util.ArrayList;
@@ -55,7 +56,9 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>The rules are the blocks' own: the game's crafting recipes, its smelting recipes, the three offers of an
  * enchanting table with every bookshelf around it, and the anvil's result and cost, through the game's anvil logic
- * (an anvil that is nowhere, so the card never wears). Only the price and the pace differ ({@link WorkshopRates}).
+ * (an anvil that is nowhere, so the card never wears). Only the price ({@link WorkshopPrice}, the computer's energy,
+ * levels, both or nothing, as the server's settings choose) and the pace ({@link WorkshopRates}) differ. A player
+ * still needs the level an offer asks for, as at a table.
  */
 public final class Workshop {
 
@@ -63,6 +66,7 @@ public final class Workshop {
     private final ValueField<Integer> progress;
     private final ValueField<Float> experience;
     private final ValueField<String> anvilName;
+    private final IEnergyAccount energy;
     /** Remembers the last smelting recipe found, so a furnace whose input stays the same does not scan them all. */
     private final RecipeManager.CachedCheck<SingleRecipeInput, SmeltingRecipe> furnaceCheck =
             RecipeManager.createCheck(RecipeType.SMELTING);
@@ -80,20 +84,23 @@ public final class Workshop {
     public static final int MAX_NAME = AnvilMenu.MAX_NAME_LENGTH;
     private static final int OFFERS = 3;
 
+    /** The Workshop of a computer whose energy, {@code energy}, pays the cards' work. */
     public Workshop(final FieldItemHandler slots, final ValueField<Integer> progress,
-                    final ValueField<Float> experience, final ValueField<String> anvilName) {
+                    final ValueField<Float> experience, final ValueField<String> anvilName,
+                    final IEnergyAccount energy) {
         this.slots = slots;
         this.progress = progress;
         this.experience = experience;
         this.anvilName = anvilName;
+        this.energy = energy;
     }
 
     /** One of the three offers: the level a player needs, the enchantment it names as its clue, what it costs. */
-    public record Offer(int required, Component clue, int levels) {
+    public record Offer(int required, Component clue, WorkshopPrice price) {
     }
 
     /** What the anvil card would make of its two items now, what an anvil would ask and what the card asks. */
-    public record AnvilResult(ItemStack result, int anvilLevels, int levels) {
+    public record AnvilResult(ItemStack result, int anvilLevels, WorkshopPrice price) {
     }
 
     /** What the anvil made, and what is left of the two items it was given. */
@@ -306,7 +313,8 @@ public final class Workshop {
 
     /**
      * One tick of the furnace at {@code speed} times a furnace's pace: the input smelts into the output while there is
-     * room for it. Returns true on the tick the last of the input is done.
+     * room for it, and each item done is charged; it waits while the computer still owes for earlier work. Returns
+     * true on the tick the last of the input is done.
      */
     public boolean tickFurnace(final ServerLevel level, final int speed) {
         final ItemStack input = slots.getStackInSlot(FURNACE_IN);
@@ -320,7 +328,7 @@ public final class Workshop {
         }
         final ItemStack made = recipe.value().assemble(new SingleRecipeInput(input), level.registryAccess());
         final ItemStack output = slots.getStackInSlot(FURNACE_OUT);
-        if (!hasRoomFor(output, made)) {
+        if (!hasRoomFor(output, made) || awaitsEnergy()) {
             return false;
         }
         final int needed = WorkshopRates.ticksPerItem(recipe.value().getCookingTime(), speed);
@@ -335,7 +343,18 @@ public final class Workshop {
         slots.setStackInSlot(FURNACE_OUT, output.isEmpty() ? made.copy() : output.copyWithCount(
                 output.getCount() + made.getCount()));
         experience.set(experienceEarned() + recipe.value().getExperience());
+        chargeSmelt();
         return input.isEmpty();
+    }
+
+    /** Whether the cards' work waits for the computer to pay what it owes for earlier work. */
+    public boolean awaitsEnergy() {
+        return energy.owesEnergy();
+    }
+
+    /** Charges the computer for one item smelted, the Workshop's or the network's. */
+    public void chargeSmelt() {
+        energy.oweEnergy(WorkshopPrice.smelt(ComputersServerConfig.updateCost()).joules());
     }
 
     /** How far the item now in the furnace is, in ticks. */
@@ -424,24 +443,25 @@ public final class Workshop {
         }
         final RandomSource random = RandomSource.create();
         final int[] costs = costs(player, item, random);
+        final UpdateCost cost = ComputersServerConfig.updateCost();
         final List<Offer> offers = new ArrayList<>(OFFERS);
         for (int i = 0; i < OFFERS; i++) {
             if (costs[i] <= 0) {
-                offers.add(new Offer(0, Component.empty(), WorkshopRates.enchantLevels(i)));
+                offers.add(new Offer(0, Component.empty(), WorkshopPrice.enchant(cost, i)));
                 continue;
             }
             final List<EnchantmentInstance> list = enchantments(player, item, i, costs[i], random);
-            offers.add(new Offer(costs[i], clueOf(list, random), WorkshopRates.enchantLevels(i)));
+            offers.add(new Offer(costs[i], clueOf(list, random), WorkshopPrice.enchant(cost, i)));
         }
         return offers;
     }
 
     /**
-     * Enchants the item on the card with offer {@code offer} for {@code player}: the levels the card asks, no lapis.
-     * False when the offer is not there or the player cannot pay it.
+     * Enchants the item on the card with offer {@code offer} for {@code player}, at the card's price and no lapis.
+     * False when the offer is not there, the player cannot pay it or the computer still owes for earlier work.
      */
     public boolean enchant(final ServerPlayer player, final int offer) {
-        final ItemStack enchanted = enchanted(player, slots.getStackInSlot(ENCHANT_ITEM), offer);
+        final ItemStack enchanted = enchanted(player, slots.getStackInSlot(ENCHANT_ITEM), offer, energy);
         if (enchanted.isEmpty()) {
             return false;
         }
@@ -450,25 +470,33 @@ public final class Workshop {
     }
 
     /**
-     * {@code item} enchanted with offer {@code offer} for {@code player}, who pays the levels the card asks and no
-     * lapis; an empty stack, with nothing paid, when the offer is not there or the player cannot pay it.
+     * {@code item} enchanted with offer {@code offer} for {@code player}, at the card's price: {@code player} pays its
+     * levels and {@code energy} its joules, and nobody any lapis. An empty stack, with nothing paid, when the offer is
+     * not there, the player is under the level it asks for or cannot pay it, or the computer still owes for earlier
+     * work.
      */
-    public static ItemStack enchanted(final ServerPlayer player, final ItemStack item, final int offer) {
+    public static ItemStack enchanted(final ServerPlayer player, final ItemStack item, final int offer,
+                                      final IEnergyAccount energy) {
         if (offer < 0 || offer >= OFFERS || item.isEmpty() || !item.isEnchantable()) {
             return ItemStack.EMPTY;
         }
         final RandomSource random = RandomSource.create();
         final int[] costs = costs(player, item, random);
-        final int levels = WorkshopRates.enchantLevels(offer);
+        final WorkshopPrice price = WorkshopPrice.enchant(ComputersServerConfig.updateCost(), offer);
         if (costs[offer] <= 0 || !player.getAbilities().instabuild
-                && (player.experienceLevel < levels || player.experienceLevel < costs[offer])) {
+                && (player.experienceLevel < price.levels() || player.experienceLevel < costs[offer])) {
+            return ItemStack.EMPTY;
+        }
+        if (price.joules() > 0L && energy.owesEnergy()) {
             return ItemStack.EMPTY;
         }
         final List<EnchantmentInstance> list = enchantments(player, item, offer, costs[offer], random);
         if (list.isEmpty()) {
             return ItemStack.EMPTY;
         }
-        player.onEnchantmentPerformed(item, levels);
+        // Even at no levels, the enchanting seed moves on, so the next offers are new ones as at a table.
+        player.onEnchantmentPerformed(item, price.levels());
+        energy.oweEnergy(price.joules());
         final ItemStack enchanted = item.getItem().applyEnchantments(item, list);
         player.awardStat(Stats.ENCHANT_ITEM);
         player.level().playSound(null, player.blockPosition(), SoundEvents.ENCHANTMENT_TABLE_USE, SoundSource.BLOCKS,
@@ -489,17 +517,30 @@ public final class Workshop {
         final AnvilMenu menu = anvilMenu(player, left, right, name);
         final ItemStack result = menu.getSlot(AnvilMenu.RESULT_SLOT).getItem().copy();
         final int cost = menu.getCost();
-        return new AnvilResult(result, cost, WorkshopRates.anvilLevels(cost));
+        return new AnvilResult(result, cost, anvilPrice(left, right, result, cost));
     }
 
     /**
-     * Takes what the anvil card makes into {@code player}'s inventory and charges the card's levels: the anvil's own
-     * logic consumes the two items exactly as an anvil does. False when there is nothing to take or the player cannot
-     * pay.
+     * What the anvil does with {@code left} given {@code right}: names it with nothing beside it, repairs it with what
+     * mends it or with another of it that carries no enchantment, and combines the two otherwise.
+     */
+    public static UpdateAction anvilAction(final ItemStack left, final ItemStack right) {
+        if (right.isEmpty()) {
+            return UpdateAction.NAME;
+        }
+        final boolean mends = left.getItem().isValidRepairItem(left, right)
+                || right.is(left.getItem()) && !right.isEnchanted();
+        return mends ? UpdateAction.REPAIR : UpdateAction.COMBINE;
+    }
+
+    /**
+     * Takes what the anvil card makes into {@code player}'s inventory at the card's price: the anvil's own logic
+     * consumes the two items exactly as an anvil does. False when there is nothing to take, the player cannot pay or
+     * the computer still owes for earlier work.
      */
     public boolean takeAnvil(final ServerPlayer player) {
         final AnvilTake take = takeAnvilFor(player, slots.getStackInSlot(ANVIL_LEFT),
-                slots.getStackInSlot(ANVIL_RIGHT), anvilName());
+                slots.getStackInSlot(ANVIL_RIGHT), anvilName(), energy);
         if (take == null) {
             return false;
         }
@@ -511,30 +552,44 @@ public final class Workshop {
     }
 
     /**
-     * What an anvil makes of {@code left} and {@code right} with {@code name}, {@code player} paying the card's
-     * levels, and what is left of the two; null, with nothing paid, when it makes nothing or the player cannot pay.
+     * What an anvil makes of {@code left} and {@code right} with {@code name}, at the card's price ({@code player}
+     * paying its levels and {@code energy} its joules), and what is left of the two; null, with nothing paid, when it
+     * makes nothing, the player cannot pay or the computer still owes for earlier work.
      */
     @Nullable
     public static AnvilTake takeAnvilFor(final ServerPlayer player, final ItemStack left, final ItemStack right,
-                                         final String name) {
+                                         final String name, final IEnergyAccount energy) {
         final AnvilMenu menu = anvilMenu(player, left, right, name);
         final ItemStack result = menu.getSlot(AnvilMenu.RESULT_SLOT).getItem();
         final int cost = menu.getCost();
-        final int levels = WorkshopRates.anvilLevels(cost);
+        final WorkshopPrice price = anvilPrice(left, right, result, cost);
         final boolean free = player.getAbilities().instabuild;
-        if (result.isEmpty() || cost <= 0 || !free && player.experienceLevel < levels) {
+        if (result.isEmpty() || cost <= 0 || !free && player.experienceLevel < price.levels()
+                || price.joules() > 0L && energy.owesEnergy()) {
             return null;
         }
         final ItemStack made = result.copy();
         // The anvil's take charges its full cost: the levels it asks over the card's are handed over first.
         if (!free) {
-            player.giveExperienceLevels(cost - levels);
+            player.giveExperienceLevels(cost - price.levels());
         }
+        energy.oweEnergy(price.joules());
         menu.getSlot(AnvilMenu.RESULT_SLOT).onTake(player, made);
         player.level().playSound(null, player.blockPosition(), SoundEvents.ANVIL_USE, SoundSource.BLOCKS, 1.0F,
                 player.getRandom().nextFloat() * 0.1F + 0.9F);
         return new AnvilTake(made, menu.getSlot(AnvilMenu.INPUT_SLOT).getItem().copy(),
                 menu.getSlot(AnvilMenu.ADDITIONAL_SLOT).getItem().copy());
+    }
+
+    /* The card's price for the anvil turning {@code left} and {@code right} into {@code result}, an anvil's cost. */
+    private static WorkshopPrice anvilPrice(final ItemStack left, final ItemStack right, final ItemStack result,
+                                            final int cost) {
+        if (result.isEmpty() || cost <= 0) {
+            return WorkshopPrice.FREE;
+        }
+        final int restored = left.isDamageableItem() ? left.getDamageValue() - result.getDamageValue() : 0;
+        return WorkshopPrice.anvil(ComputersServerConfig.updateCost(), anvilAction(left, right), cost, restored,
+                left.getMaxDamage());
     }
 
     /* The game's anvil over two items and a name, at no place, so nothing it does can wear a block. */

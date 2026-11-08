@@ -62,7 +62,7 @@ public class CraftingComputerScreen extends AbstractTowerAssemblyScreen<Crafting
         return List.of(capacity(List.of()), craft,
                 new Readout(GameText.resolve(AssemblyTexts.RECIPE_ROM),
                         GameText.resolve(AssemblyTexts.OF.with(menu.romUsed(), menu.romLimit())), JsTechTheme.text()),
-                network(List.of()));
+                network(List.of()), draw());
     }
 
     private static String formatFactor(final int factorX100) {

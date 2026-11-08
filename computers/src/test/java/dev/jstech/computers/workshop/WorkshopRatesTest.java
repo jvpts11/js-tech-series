@@ -30,21 +30,4 @@ class WorkshopRatesTest {
         assertEquals(1, WorkshopRates.ticksPerItem(1, 6));
         assertEquals(Integer.MAX_VALUE, WorkshopRates.ticksPerItem(200, 0));
     }
-
-    @Test
-    void enchantLevels_areOneOneAndTwo() {
-        assertEquals(1, WorkshopRates.enchantLevels(0));
-        assertEquals(1, WorkshopRates.enchantLevels(1));
-        assertEquals(2, WorkshopRates.enchantLevels(2));
-        assertEquals(2, WorkshopRates.enchantLevels(7));
-    }
-
-    @Test
-    void anvilLevels_areTwoThirdsRoundedUp() {
-        assertEquals(0, WorkshopRates.anvilLevels(0));
-        assertEquals(1, WorkshopRates.anvilLevels(1));
-        assertEquals(4, WorkshopRates.anvilLevels(6));
-        assertEquals(5, WorkshopRates.anvilLevels(7));
-        assertEquals(26, WorkshopRates.anvilLevels(39));
-    }
 }

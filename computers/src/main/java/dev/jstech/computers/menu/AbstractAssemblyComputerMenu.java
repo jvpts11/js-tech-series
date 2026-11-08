@@ -10,6 +10,7 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
 import dev.jstech.computers.blockentity.IAssemblyComputer;
+import dev.jstech.computers.blockentity.PowerShown;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.menu.CoreMenu;
@@ -146,6 +147,16 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
 
     public boolean hasPsu() {
         return slots.get(1).hasItem();
+    }
+
+    /** The supply in its slot, for the DRAW readout to name. */
+    public ItemStack psu() {
+        return slots.get(1).getItem();
+    }
+
+    /** What the machine's power draws, as the server last told the open screen. */
+    public PowerShown powerShown() {
+        return computer.powerShown();
     }
 
     public boolean isRunning() {

@@ -80,8 +80,10 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.audio.StereoSide;
+import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.LongField;
+import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -108,6 +110,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -140,6 +143,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final ComputerHardware hardware;
     /** Whether it is on, whether it comes up by itself, and whether the next look at it shows the self-test. */
     private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession, this::switched);
+    /*
+     * What it draws from the grid through its power supply, and the store the grid fills. The store changes every
+     * tick, so it only marks the block for saving: a full setChanged would write the console back to its disk and
+     * make the network read the computer's storage again, each tick, for nothing.
+     */
+    private final ComputerEnergy energy = new ComputerEnergy(this::markDirtyOnly);
     /** What its system does when it runs short: the page it goes down on, and what its kernel ends for memory. */
     private final MachineKernel kernel = new MachineKernel(power.phases());
     /** Where this computer stands on the data network: its node, its network, and the cable it reads. */
@@ -203,6 +212,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      * server, so without it the player's side never knows the system and a help program cannot open its book.
      */
     private final ValueField<String> clientOs = fields().value("ClientOs", Codec.STRING, "").toClient();
+    /* What its power draws, shown on its assembly screen while that is open: its parts, its supply, the line. */
+    private final DerivedInt partsWattsShown = fields().derived("PartsWatts", this::partsWatts).toMenu();
+    private final DerivedInt psuWattsShown = fields().derived("PsuWatts", this::psuWatts).toMenu();
+    private final DerivedInt lineWattsShown = fields().derived("LineWatts", this::lineWatts).toMenu();
+    private final DerivedInt energizedShown = fields().derived("Energized", this::energized).toMenu();
 
     /** How often the system it boots is looked at again for the players who see it: once a second. */
     private static final int OS_CHECK_TICKS = 20;
@@ -227,6 +241,9 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         })).save();
         fields().part("Power", IFieldPart.of((tag, registries) -> power.save(tag),
                 (tag, registries) -> power.load(tag))).save();
+        fields().part("Energy", energy.store()).save();
+        fields().part("EnergyOwed", IFieldPart.of((tag, registries) -> energy.saveDebt(tag),
+                (tag, registries) -> energy.loadDebt(tag))).save();
         fields().part("Session", IFieldPart.of((tag, registries) -> session.save(tag),
                 (tag, registries) -> session.load(tag))).save();
         fields().part("OutOfMemory", IFieldPart.of((tag, registries) -> kernel.save(tag),
@@ -511,6 +528,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         if (level instanceof ServerLevel server) {
             sounds.pressed(server);
         }
+        // A computer with no energy to run on does not start: the button is pressed and nothing comes up.
+        if (!power.on() && buildValid() && !energized()) {
+            return;
+        }
         power.toggle();
         if (wasOn && !isRunning()) {
             showShutdown(false);
@@ -520,6 +541,9 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     @Override
     public void setPowered(final boolean on) {
+        if (on && !power.on() && buildValid() && !energized()) {
+            return;
+        }
         final boolean wasOn = isRunning();
         final boolean wasSwitchedOn = power.on();
         power.setPowered(on);
@@ -1481,7 +1505,91 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     protected abstract void unregisterNode(NetworkSystem system, NetworkUuid network);
 
+    /** Its energy port, which the grid's cables fill: J's Energy in the low voltage class. */
+    public IEnergyPort energyPort() {
+        return energy.store();
+    }
+
+    /** What the game's FE capability sees of it: its store, while the series takes FE; nothing otherwise. */
+    @Nullable
+    public IEnergyStorage feEnergy() {
+        return energy.fe();
+    }
+
+    /** Whether it has a build and the energy to run a tick of it, or the server lets computers run free. */
+    public boolean energized() {
+        final ComputerBuild build = currentBuild();
+        return build != null && energy.canRun(ComputerEnergy.lineWatts(build.powerDraw(), build.psu()));
+    }
+
+    /** What its parts take now, in watts, through a supply rated at {@link #psuWatts}; nothing without a build. */
+    public int partsWatts() {
+        final ComputerBuild build = currentBuild();
+        return build == null ? 0 : build.powerDraw();
+    }
+
+    /** Its supply's rating in watts, or nothing without a build. */
+    public int psuWatts() {
+        final ComputerBuild build = currentBuild();
+        return build == null ? 0 : build.psu().wattage();
+    }
+
+    /** What its parts take from the line, in watts: their watts over its supply's efficiency. */
+    public int lineWatts() {
+        final ComputerBuild build = currentBuild();
+        return build == null ? 0 : (int) Math.ceil(ComputerEnergy.lineWatts(build.powerDraw(), build.psu()));
+    }
+
+    /** Whether it still owes energy for work its cards did, which their new work waits behind. */
+    public boolean owesEnergy() {
+        return energy.owing();
+    }
+
+    /**
+     * Owes {@code joules} for work its cards did, paid out of its store over the next ticks as the grid fills it, a
+     * tick's draw always kept back; nothing while the server lets computers run free.
+     */
+    public void oweEnergy(final long joules) {
+        energy.owe(joules);
+    }
+
+    /** What it still owes for work its cards did, in joules. */
+    public long energyOwed() {
+        return energy.debt();
+    }
+
+    /** What its power draws as its open assembly screen was last told: its parts, its supply, the line, in watts. */
+    public PowerShown powerShown() {
+        return new PowerShown(partsWattsShown.getAsInt(), psuWattsShown.getAsInt(), lineWattsShown.getAsInt(),
+                energizedShown.getAsInt() != 0);
+    }
+
+    /**
+     * A tick of what the machine draws through its power supply: its store sized to the supply in it, and a machine
+     * that runs without the energy for the tick goes dark, as a computer whose plug is pulled does; what is left over
+     * pays what its cards' work owes. Every kind of computer calls it first in its tick.
+     */
+    protected void drawEnergy(final ServerLevel level) {
+        final ComputerBuild build = currentBuild();
+        energy.sizeFor(build == null ? 0.0 : ComputerEnergy.lineWatts(build.psu().wattage(), build.psu()));
+        final double watts = build == null ? 0.0 : ComputerEnergy.lineWatts(build.powerDraw(), build.psu());
+        if (isRunning() && !energy.draw(watts)) {
+            powerLost(level);
+        }
+        energy.payDebt(watts);
+    }
+
+    /* The power went: the machine goes dark at once, with no goodbye, and the network's log says why. */
+    private void powerLost(final ServerLevel level) {
+        power.lose();
+        final NodeUuid node = nodeUuid();
+        if (node != null) {
+            NetworkEvents.powerLost(level, networkUuid(), node, NetworkEvents.machineName(customName(), machine(), node));
+        }
+    }
+
     protected void tickNode(final ServerLevel level) {
+        drawEnergy(level);
         tickTerminal(level);
         tickBootPhases(level);
         tickSounds(level);

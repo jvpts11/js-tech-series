@@ -851,9 +851,13 @@ final class AutocraftingPages {
                 .row(GuideCell.words("Advanced"), GuideCell.words("6"))
                 .paragraph("The speed grows with the era of the computer. Every number here is a first estimate, and it"
                         + " may change.")
-                .paragraph("The Enchanting Card asks 1, 1 or 2 levels for its three offers, and it asks no lapis. The"
-                        + " Anvil Card asks two thirds of the levels an anvil would ask, rounded up. An offer shows its"
-                        + " level and what it costs, and an offer that cannot be made reads \"no offer\".")
+                .paragraph("The cards' work costs the computer energy, and no lapis: smelting 2 kJ an item, enchanting"
+                        + " 10 kJ for every level the enchanting table would take, repairing 2 kJ for every percent of"
+                        + " durability given back, combining 10 kJ for every level the anvil would ask, and naming"
+                        + " 5 kJ. The computer owes it and pays it off as the grid fills its store, and the cards' next"
+                        + " paid work waits until it has. A server can make the work cost levels instead (half of what"
+                        + " the game's own block takes, at least one), both, or nothing. An offer shows the level it"
+                        + " needs and what it costs, and an offer that cannot be made reads \"no offer\".")
                 .paragraph("Repair takes a material from storage. Each piece of material mends a quarter of the item's"
                         + " durability, and up to 4 pieces are used.")
                 .subheading("UPDATE through the cards")
@@ -871,8 +875,9 @@ final class AutocraftingPages {
                         "Ask from a Personal Computer that has the card.",
                         "The screen says \"this computer has no\", then the card's name.",
                         "Put that card in the Personal Computer.",
-                        "The screen says \"somebody has to ask for it: the card is paid for with their experience\".",
-                        "Ask through a player, who pays with their own experience.",
+                        "The screen says \"somebody has to ask for it: the card works it for them, as they would at"
+                                + " the block\".",
+                        "Ask through a player: the card enchants and works the anvil as that player would.",
                         "The screen names the item, then says \"does not smelt\".",
                         "The Furnace Card does not smelt in a Vintage computer. Use a Personal Computer from the"
                                 + " Legacy era on.",
@@ -884,15 +889,17 @@ final class AutocraftingPages {
                         "Put a material that mends the item into storage on the network.",
                         "The screen says \"the card could not do it to\", then the item's name, then the reason:"
                                 + " nothing to change, too expensive or too few levels.",
-                        "Check the item, and give the paying player enough levels.",
+                        "Check the item, and give the player who asks enough levels.",
                         "The screen says \"the network was not holding\", then the item's name.",
                         "Put the item into storage on the network, and ask again.",
-                        "The screen says \"whoever asked for it was not here to pay\".",
+                        "The screen says \"whoever asked for it was not here\".",
                         "Ask again while the player who asked is in the world.",
                         "The grid makes nothing.",
                         "Fill the grid with a recipe that the game knows.",
                         "The screen says \"Not enough levels for that offer\".",
-                        "Give the paying player more levels, or choose a cheaper offer.")
+                        "Give the player who asks more levels, or choose a cheaper offer.",
+                        "The Workshop says \"The computer is still drawing the energy for the last job\".",
+                        "Wait while the grid fills the computer's store, or bring it more energy.")
                 .seeAlso("jsc:expansion_cards", "jsc:operations_catalogue", "jsc:personal_computers",
                         "jsc:when_a_craft_goes_wrong")
                 .register();

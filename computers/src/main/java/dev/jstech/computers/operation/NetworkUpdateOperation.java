@@ -43,8 +43,8 @@ import org.jetbrains.annotations.Nullable;
  *
  * <p>Three steps, each a row of its own. SUB_SELECT takes the item out of the servers into the card's drawer, as a
  * SELECT does, locks and latency and all. SUB_UPDATE is the card's work: smelting at the card's furnace pace, in the
- * same queue as the Workshop's own smelting; enchanting and the anvil at once, whoever asked paying the card's
- * price. SUB_INSERT writes the result back, as an INSERT does, trying the item's own server first; what the network
+ * same queue as the Workshop's own smelting; enchanting and the anvil at once, at the card's price, paid in the
+ * computer's energy or the asker's levels as the server's settings choose. SUB_INSERT writes the result back, as an INSERT does, trying the item's own server first; what the network
  * then has no room for is left at the card's output. Smelting more than a stack goes round the three again, a stack
  * at a time; a step that cannot be done sends the item back as it was.
  *
@@ -94,9 +94,9 @@ public final class NetworkUpdateOperation implements INetworkOperation {
     /** A repair found nothing to mend with, or a combine nothing to add. */
     public static final TextKey NO_SECOND = TextKey.of("jsc.operation.failure.update.no_second",
             "the network was not holding the %s to work it with");
-    /** Whoever asked has left, and the card's price is theirs to pay. */
+    /** Whoever asked has left, and the card works it for them, as they would at the block. */
     public static final TextKey NOBODY_TO_PAY = TextKey.of("jsc.operation.failure.update.nobody_to_pay",
-            "whoever asked for it was not here to pay");
+            "whoever asked for it was not here");
     /** The card would not do it: nothing to change, too expensive, or too few levels to pay. */
     public static final TextKey NOT_DONE = TextKey.of("jsc.operation.failure.update.not_done",
             "the card could not do it to the %s: nothing to change, too expensive or too few levels");
@@ -182,7 +182,7 @@ public final class NetworkUpdateOperation implements INetworkOperation {
         switch (phase) {
             case WAITING -> claim(computer, drawer);
             case TAKING -> take(drawer, throughputBudget);
-            case WORKING -> work(drawer);
+            case WORKING -> work(computer, drawer);
             case RETURNING -> giveBack(computer, drawer, throughputBudget);
         }
     }
@@ -299,8 +299,11 @@ public final class NetworkUpdateOperation implements INetworkOperation {
         phase = Phase.WORKING;
     }
 
-    /* SUB_UPDATE: the furnace smelts on the computer's own ticks; the enchanting table and the anvil work at once. */
-    private void work(final UpdateDrawer drawer) {
+    /*
+     * SUB_UPDATE: the furnace smelts on the computer's own ticks; the enchanting table and the anvil work at once,
+     * once the computer has paid the energy it owes for earlier work.
+     */
+    private void work(final PersonalComputerBlockEntity computer, final UpdateDrawer drawer) {
         switch (request.action()) {
             case SMELT -> {
                 updated = updatedBefore + roundTaken - drawer.slot(UpdateDrawer.WORK).getCount();
@@ -310,12 +313,20 @@ public final class NetworkUpdateOperation implements INetworkOperation {
                     phase = Phase.RETURNING;
                 }
             }
-            case ENCHANT -> enchant(drawer);
-            case REPAIR, COMBINE, NAME -> anvil(drawer);
+            case ENCHANT -> {
+                if (!computer.owesEnergy()) {
+                    enchant(computer, drawer);
+                }
+            }
+            case REPAIR, COMBINE, NAME -> {
+                if (!computer.owesEnergy()) {
+                    anvil(computer, drawer);
+                }
+            }
         }
     }
 
-    private void enchant(final UpdateDrawer drawer) {
+    private void enchant(final PersonalComputerBlockEntity computer, final UpdateDrawer drawer) {
         final ServerPlayer payer = payer();
         phase = Phase.RETURNING;
         if (payer == null) {
@@ -323,7 +334,8 @@ public final class NetworkUpdateOperation implements INetworkOperation {
             return;
         }
         final ItemStack before = drawer.slot(UpdateDrawer.WORK).copy();
-        final ItemStack enchanted = Workshop.enchanted(payer, drawer.slot(UpdateDrawer.WORK).copy(), request.offer());
+        final ItemStack enchanted = Workshop.enchanted(payer, drawer.slot(UpdateDrawer.WORK).copy(), request.offer(),
+                computer);
         if (enchanted.isEmpty()) {
             failure = OperationFailure.of(NOT_DONE, before.getHoverName().getString());
             return;
@@ -334,7 +346,7 @@ public final class NetworkUpdateOperation implements INetworkOperation {
         noteChange(before, enchanted);
     }
 
-    private void anvil(final UpdateDrawer drawer) {
+    private void anvil(final PersonalComputerBlockEntity computer, final UpdateDrawer drawer) {
         final ServerPlayer payer = payer();
         phase = Phase.RETURNING;
         if (payer == null) {
@@ -345,7 +357,7 @@ public final class NetworkUpdateOperation implements INetworkOperation {
         final ItemStack right = drawer.slot(UpdateDrawer.SECOND).copy();
         // A repair or a combine with no name asked for keeps the name the item has.
         final String name = request.name().isEmpty() ? left.getHoverName().getString() : request.name();
-        final Workshop.AnvilTake took = Workshop.takeAnvilFor(payer, left, right, name);
+        final Workshop.AnvilTake took = Workshop.takeAnvilFor(payer, left, right, name, computer);
         if (took == null) {
             failure = OperationFailure.of(NOT_DONE, left.getHoverName().getString());
             return;

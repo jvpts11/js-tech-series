@@ -206,6 +206,10 @@
       "text": "jsc.guide.power_supplies.text5"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.power_supplies.text6"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -215,6 +219,10 @@
         {
           "fix": "jsc.guide.power_supplies.fix1",
           "problem": "jsc.guide.power_supplies.problem1"
+        },
+        {
+          "fix": "jsc.guide.power_supplies.fix2",
+          "problem": "jsc.guide.power_supplies.problem2"
         }
       ]
     },

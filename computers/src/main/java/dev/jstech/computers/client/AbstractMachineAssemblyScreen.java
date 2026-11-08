@@ -8,11 +8,15 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.blockentity.PowerShown;
 import dev.jstech.computers.client.assembly.AssemblyPainter;
 import dev.jstech.computers.gui.layout.AssemblyGeometry;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
+import dev.jstech.computers.hardware.PsuSpec;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.EraTable;
@@ -22,6 +26,7 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,12 +55,27 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
      * @param value   its value
      * @param colour  the value's colour
      * @param tooltip what it says when the mouse rests on it, empty for nothing
+     * @param gauge   the small gauge beside its label, or none
      */
-    protected record Readout(String label, String value, int colour, List<Component> tooltip) {
+    protected record Readout(String label, String value, int colour, List<Component> tooltip, @Nullable Gauge gauge) {
+
+        public Readout(final String label, final String value, final int colour, final List<Component> tooltip) {
+            this(label, value, colour, tooltip, null);
+        }
 
         public Readout(final String label, final String value, final int colour) {
-            this(label, value, colour, List.of());
+            this(label, value, colour, List.of(), null);
         }
+    }
+
+    /**
+     * A small gauge beside a readout's label.
+     *
+     * @param fraction how full, from 0 to 1
+     * @param colour   what it fills with
+     * @param marks    where along it a mark stands, each from 0 to 1
+     */
+    protected record Gauge(double fraction, int colour, double... marks) {
     }
 
     /**
@@ -100,6 +120,11 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     private static final EraTable<TextKey> BUS_LABELS = EraTable.of(AssemblyTexts.BUS_ISA)
             .from(HardwareEra.LEGACY, AssemblyTexts.BUS_PCI)
             .from(HardwareEra.TRANSITION, AssemblyTexts.PCIE);
+    /* Past this load a supply's gauge turns amber; its marks stand where a supply's wear slows and quickens. */
+    private static final double HIGH_LOAD = 0.8;
+    private static final double[] LOAD_MARKS = {0.5, HIGH_LOAD};
+    private static final int PERCENT = 100;
+    private static final int TICKS_A_SECOND = 20;
 
     protected AbstractMachineAssemblyScreen(final T menu, final Inventory playerInventory, final Component title) {
         super(menu, playerInventory, title);
@@ -239,6 +264,10 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         for (int i = 0; i < rows.size() && i < geo.readouts(); i++) {
             final Readout r = rows.get(i);
             AssemblyPainter.drawReadout(g, font, x, y, geo.readout(i), r.label(), r.value(), r.colour());
+            if (r.gauge() != null) {
+                AssemblyPainter.drawGauge(g, font, x, y, geo.readout(i), r.label(), r.gauge().fraction(),
+                        r.gauge().colour(), r.gauge().marks());
+            }
         }
         drawOperations(g, geo, x, y);
         // The inventory, the service switches and the lamps.
@@ -279,6 +308,41 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     }
 
     /** The machine's era, whose case and theme the screen wears. */
+    /**
+     * The DRAW readout: what the parts take against the supply's rating, its gauge the supply's load (green, amber past
+     * 80%, red past the rating), and its tooltip what that takes from the line and the supply it goes through; NO POWER
+     * while no energy reaches a machine that has a supply.
+     *
+     * @param power what the machine's power draws
+     * @param psu   its supply, named in the tooltip
+     */
+    protected static Readout drawReadout(final PowerShown power, final ItemStack psu) {
+        final String label = GameText.resolve(AssemblyTexts.DRAW);
+        if (power.psuWatts() == 0) {
+            return new Readout(label, GameText.resolve(AssemblyTexts.NO_WATTS), JsTechTheme.dim());
+        }
+        final double load = power.load();
+        final List<Component> tooltip = new ArrayList<>();
+        tooltip.add(GameText.component(AssemblyTexts.DRAW_PARTS.with(power.partsWatts(), power.psuWatts(),
+                (int) Math.round(load * PERCENT))));
+        tooltip.add(GameText.component(AssemblyTexts.DRAW_LINE.with(power.lineWatts(),
+                JsEnergy.ENERGY.toFe(Math.round(power.lineWatts() / (double) TICKS_A_SECOND))))
+                .withColor(JsTechTheme.accent()));
+        final PsuSpec spec = HardwareRegistry.psu(psu);
+        if (spec != null) {
+            tooltip.add(GameText.component(AssemblyTexts.DRAW_SUPPLY.with(psu.getHoverName().getString(),
+                    spec.efficiencyPercent())).withColor(JsTechTheme.dim()));
+        }
+        if (!power.energized()) {
+            tooltip.add(GameText.component(AssemblyTexts.DRAW_NONE).withColor(JsTechTheme.red()));
+            return new Readout(label, GameText.resolve(AssemblyTexts.NO_POWER), JsTechTheme.red(), tooltip,
+                    new Gauge(0.0, JsTechTheme.red(), LOAD_MARKS));
+        }
+        final int gauge = load > 1.0 ? JsTechTheme.red() : load > HIGH_LOAD ? JsTechTheme.amber() : JsTechTheme.green();
+        return new Readout(label, GameText.resolve(AssemblyTexts.DRAW_OF.with(power.partsWatts(),
+                power.psuWatts())), JsTechTheme.text(), tooltip, new Gauge(load, gauge, LOAD_MARKS));
+    }
+
     protected abstract Era caseEra();
 
     /** Where everything stands on this machine's screen. */

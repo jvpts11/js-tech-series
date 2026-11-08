@@ -186,6 +186,17 @@ final class ComputerPower {
         setPowered(!this.manualOn);
     }
 
+    /**
+     * The power went: the machine goes dark at once, its session with it, as a computer whose plug is pulled does. No
+     * switch was touched, so nothing hears one go off; whoever lost it says why.
+     */
+    void lose() {
+        this.manualOn = false;
+        this.phases.powered(false);
+        this.endSession.run();
+        this.changed.run();
+    }
+
     void toggleAutoStart(final boolean buildValid) {
         this.autoStart = !this.autoStart;
         if (this.autoStart && buildValid) {

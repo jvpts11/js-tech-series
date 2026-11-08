@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
+import dev.jstech.computers.blockentity.PowerShown;
 import dev.jstech.computers.gui.layout.ServerAssemblyLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.MotherboardSpec;
@@ -118,6 +119,16 @@ public class ServerAssemblyMenu extends CoreMenu {
     public static ServerAssemblyMenu fromNetwork(final int containerId, final Inventory playerInventory,
                                                  final RegistryFriendlyByteBuf buf) {
         return new ServerAssemblyMenu(containerId, playerInventory, buf.readEnum(InteractionHand.class));
+    }
+
+    /** What the server's power will draw in its bay: its parts, its supply, the line; it runs on its rack's energy. */
+    public PowerShown powerShown() {
+        return PowerShown.of(currentBuild(), true);
+    }
+
+    /** The supply in its slot, for the DRAW readout to name. */
+    public ItemStack psu() {
+        return slots.get(1).getItem();
     }
 
     @Nullable

@@ -25,6 +25,7 @@ import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.workshop.IEnergyAccount;
 import dev.jstech.computers.workshop.UpdateDrawer;
 import dev.jstech.computers.workshop.Workshop;
 import dev.jstech.computers.workshop.WorkshopCard;
@@ -57,7 +58,7 @@ import java.util.Map;
  * second processor and four more modules.
  */
 public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntity
-        implements IComputerTerminalHost, IAssemblyComputer {
+        implements IComputerTerminalHost, IAssemblyComputer, IEnergyAccount {
 
     // Slot layout, kept public so the assembly Menu and Screen address slots by name.
     public static final int MOTHERBOARD_SLOT = 0;
@@ -104,7 +105,9 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
     private final ValueField<String> anvilName = fields().value("WorkshopAnvilName", Codec.STRING, "").save();
     /* Whether the Furnace Card is smelting, which the desktop's tray shows. */
     private final ValueField<Boolean> smelting = fields().value("WorkshopSmelting", Codec.BOOL, false).toClient();
-    private final Workshop workshop = new Workshop(workshopSlots, furnaceProgress, furnaceExperience, anvilName);
+    /* The cards' work is paid out of this computer's own energy. */
+    private final Workshop workshop = new Workshop(workshopSlots, furnaceProgress, furnaceExperience, anvilName,
+            this);
     /* Where an item the network sends to the cards waits while they work on it, out of every query. */
     private final FieldItemHandler updateSlots = fields().items("UpdateDrawer", UpdateDrawer.SLOTS).save();
     private final ValueField<Integer> updateProgress = fields().value("UpdateProgress", Codec.INT, 0).save();

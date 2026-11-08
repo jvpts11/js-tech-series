@@ -11,13 +11,14 @@ import dev.jstech.core.gui.layout.GuiLayout;
 
 /**
  * The Mainframe's assembly screen: its cabinet with four sockets, eight banks and six cards in two I/O cages, four disks
- * at the front, the operations strip under the case, and four readouts on its front panel (capacity, queues, RAM
- * buffer, network). The menu seats its slots from here and the screen draws from here, so the two can never disagree.
+ * at the front, the operations strip under the case, and five readouts on its front panel (capacity, queues, RAM
+ * buffer, network, draw). The menu seats its slots from here and the screen draws from here, so the two can never
+ * disagree.
  */
 public final class MainframeLayout {
 
-    /** The front panel's readouts: capacity, queues, RAM buffer, network. */
-    public static final int READOUTS = 4;
+    /** The front panel's readouts: capacity, queues, RAM buffer, network, draw. */
+    public static final int READOUTS = 5;
 
     private MainframeLayout() {
     }

@@ -264,7 +264,8 @@ public final class ConfigFileGameTests {
         same(helper, "jscomputers-server.toml", ComputersServerConfig.FILE.fileName(), "the computers' file");
         same(helper, List.of("balance.hdd_latency_ticks", "balance.ssd_latency_ticks", "balance.nvme_latency_ticks",
                         "balance.subframe_efficiency_factor", "balance.program_machine_micros",
-                        "balance.program_server_micros", "boot.show_boot_menu", "install_by_hand.gentoo_every_step",
+                        "balance.program_server_micros", "power.draw_energy", "update.cost", "boot.show_boot_menu",
+                        "install_by_hand.gentoo_every_step",
                         "install_by_hand.arch_every_step", "prompt.list_commands", "soundfoundry.catalog",
                         "soundfoundry.ethernet_kilobytes_per_second", "programs.outside_components"),
                 ComputersServerConfig.FILE.keys().stream().map(ConfigKey::dottedPath).toList(),

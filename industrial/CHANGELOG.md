@@ -117,6 +117,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   are and suits that say they are sealed, so a space module fits only a sealed suit; nothing of the mod enchanted at
   the table or the anvil; and a server setting for each kind of tool, which off takes its recipes and its place in the
   creative tab away.
+- Computers run on energy: a running computer draws its parts' watts over its power supply's
+  efficiency from the grid, J's Energy in the low voltage class or FE while J's Core lets the series take it, from any
+  cable or block that gives it, J's Industrial's Industrial Controller Computers too; a rack's powered bays draw the
+  same from the cabinet, each through its own supply. Without
+  energy a computer does not start, and one that runs out goes dark at once, which the network's event log writes as
+  an ERROR. Every assembly screen has a DRAW readout, the parts against the supply with a bar amber near the rating
+  and red past it and the watts from the line in its tooltip, or NO POWER when nothing reaches it. The server setting
+  `power.draw_energy` turns the draw off, for a world with no energy.
 - Tanks read from outside: the tank and the tanks of a size the player chooses say what they hold, and a
   gas tank its pressure, to a controller on the industrial control cable.
 - With J's Computers installed, the Industrial Controller Computer: one in each case J's Computers ships

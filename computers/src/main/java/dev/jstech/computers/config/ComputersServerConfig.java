@@ -8,11 +8,13 @@
 package dev.jstech.computers.config;
 
 import dev.jstech.computers.api.language.ExecutionBalance;
+import dev.jstech.computers.workshop.UpdateCost;
 import dev.jstech.core.config.ConfigFile;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.ConfigKey;
 import dev.jstech.core.config.ConfigSide;
 import dev.jstech.core.config.format.ConfigFormats;
+import dev.jstech.core.id.StableNames;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.jstechseries.operation.OperationBalance;
@@ -43,6 +45,8 @@ public final class ComputersServerConfig {
     private static final int MAX_MACHINE_MICROS = 1_000_000;
     private static final int MIN_SERVER_MICROS = 100;
     private static final int MAX_SERVER_MICROS = 10_000_000;
+    private static final StableNames<UpdateCost> COSTS = StableNames.of(UpdateCost.class);
+    private static final String UPDATE_COST_PATH = "update.cost";
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(BALANCE + ".hdd_latency_ticks",
@@ -77,6 +81,26 @@ public final class ComputersServerConfig {
             .range(MIN_SERVER_MICROS, MAX_SERVER_MICROS)
             .comment("The real time every machine together may spend running programs in a tick, in microseconds.")
             .named("Program time per server").unit("µs");
+
+    public static final ConfigKey<Boolean> DRAW_ENERGY = ConfigKey.flag("power.draw_energy", true)
+            .comment("Whether the computers draw energy for what their parts take, through their power supplies: "
+                            + "J's Energy in the low voltage class, or FE where J's Core lets the series take it. "
+                            + "A computer without it does not start, and one that loses it goes dark.",
+                    "Off, every computer runs free, for a world with no energy source at all.")
+            .named("Computers draw energy");
+
+    public static final ConfigKey<String> UPDATE_COST = ConfigKey.text(UPDATE_COST_PATH,
+                    UpdateCost.ENERGY.serializedName())
+            .allowing(UpdateCost.ENERGY.serializedName(), UpdateCost.XP.serializedName(),
+                    UpdateCost.BOTH.serializedName(), UpdateCost.NONE.serializedName())
+            .comment("What the personal-use cards' work is paid with, an UPDATE's and the Workshop's alike.",
+                    "energy: the computer that has the cards draws it: smelting 2 kJ an item, enchanting 10 kJ for "
+                            + "every level the enchanting table would take, repairing 2 kJ for every percent of "
+                            + "durability given back, combining 10 kJ for every level the anvil would ask, naming "
+                            + "5 kJ.",
+                    "xp: whoever asked pays half the levels the game's own block would take, at least one, and no "
+                            + "lapis lazuli. both: the energy and those levels. none: nothing.")
+            .named("What the cards cost");
 
     public static final ConfigKey<Boolean> SHOW_BOOT_MENU = ConfigKey.flag("boot.show_boot_menu", true)
             .comment("Whether a machine whose system brings a boot manager stops at it every time it starts: GRUB "
@@ -143,11 +167,16 @@ public final class ComputersServerConfig {
             .comment("How the computers of J's Computers behave, and what they lend the Operations engine, whose own "
                     + "settings live in the series' file beside this one.")
             .sectionNamed(BALANCE, "Disks and programs")
+            .sectionNamed("power", "Power")
+            .sectionNamed("update", "Changing items")
             .sectionNamed("boot", "Starting up")
             .sectionNamed("install_by_hand", "Installing by hand")
             .sectionNamed("prompt", "The prompt")
             .sectionNamed("soundfoundry", "Soundfoundry")
             .sectionNamed("programs", "Programs")
+            .sectionComment("power", "What the computers run on: the energy their power supplies draw.")
+            .sectionComment("update", "What the personal-use cards charge for changing an item: smelting, "
+                    + "enchanting, repairing, combining and naming.")
             .sectionComment("boot", "How the machines come up: whether they stop at their system's boot manager.")
             .sectionComment("install_by_hand", "Installing a system by hand: how much of its guide the machine "
                     + "insists on.")
@@ -163,6 +192,8 @@ public final class ComputersServerConfig {
             .key(SUBFRAME_EFFICIENCY_FACTOR, OperationBalance::setSubframeEfficiencyFactor)
             .key(PROGRAM_MACHINE_MICROS, ExecutionBalance::setMachineMicros)
             .key(PROGRAM_SERVER_MICROS, ExecutionBalance::setServerMicros)
+            .key(DRAW_ENERGY)
+            .key(UPDATE_COST)
             .key(SHOW_BOOT_MENU)
             .key(GENTOO_EVERY_STEP)
             .key(ARCH_EVERY_STEP)
@@ -178,6 +209,16 @@ public final class ComputersServerConfig {
     /** Puts the file beside the world, where its side reads it. */
     public static void register(final IEventBus modEventBus, final ModContainer modContainer) {
         ConfigFiles.register(FILE, modEventBus, modContainer);
+    }
+
+    /** Whether the computers draw energy for what their parts take; off, they run free. */
+    public static boolean drawEnergy() {
+        return FILE.get(DRAW_ENERGY);
+    }
+
+    /** What the personal-use cards' work is paid with. */
+    public static UpdateCost updateCost() {
+        return COSTS.byName(FILE.get(UPDATE_COST), UpdateCost.ENERGY);
     }
 
     /** Whether a machine whose system brings a boot manager stops at it on the way up. */

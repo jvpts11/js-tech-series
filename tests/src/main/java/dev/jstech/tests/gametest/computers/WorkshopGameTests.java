@@ -19,18 +19,24 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.os.devices.DeviceMaps;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.workshop.UpdateCost;
 import dev.jstech.computers.workshop.UpdateDoor;
 import dev.jstech.computers.workshop.Workshop;
 import dev.jstech.computers.workshop.WorkshopCard;
+import dev.jstech.computers.workshop.WorkshopPrice;
 import dev.jstech.computers.workshop.WorkshopRates;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.computers.TestComputerEnergy;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.AfterBatch;
+import net.minecraft.gametest.framework.BeforeBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -58,6 +64,16 @@ public final class WorkshopGameTests {
     private static final int FIRST_FREE_CARD_SLOT = PersonalComputerBlockEntity.GPU_SLOTS_START + 1;
 
     private WorkshopGameTests() {
+    }
+
+    @BeforeBatch(batch = TestComputerEnergy.XP_BATCH)
+    public static void cardsCostLevels(final ServerLevel level) {
+        TestComputerEnergy.costing(UpdateCost.XP);
+    }
+
+    @AfterBatch(batch = TestComputerEnergy.XP_BATCH)
+    public static void cardsCostEnergyAgain(final ServerLevel level) {
+        TestComputerEnergy.costing(UpdateCost.ENERGY);
     }
 
     /** The cards seat in a Personal Computer, on any slot from PCI on, and never in another kind of computer. */
@@ -167,9 +183,9 @@ public final class WorkshopGameTests {
                 .thenSucceed();
     }
 
-    /** The three offers of a full table, for one or two levels and no lapis. */
-    @GameTest(template = ARENA, timeoutTicks = 100)
-    public static void enchanting_takesFewerLevelsAndNoLapis(final GameTestHelper helper) {
+    /** Paid in levels, the three offers of a full table take half the table's levels and no lapis. */
+    @GameTest(template = ARENA, timeoutTicks = 100, batch = TestComputerEnergy.XP_BATCH)
+    public static void enchanting_takesHalfTheLevelsAndNoLapis(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(PC);
         helper.startSequence()
@@ -181,21 +197,23 @@ public final class WorkshopGameTests {
                     final List<Workshop.Offer> offers = pc.workshop().offers(player);
                     helper.assertTrue(offers.size() == 3 && offers.get(2).required() >= 20,
                             "three offers, the last a full table's; got " + offers);
-                    helper.assertTrue(offers.get(0).levels() == 1 && offers.get(2).levels() == 2,
-                            "they cost 1 and 2 levels");
+                    helper.assertTrue(offers.get(0).price().equals(new WorkshopPrice(1, 0L))
+                            && offers.get(2).price().equals(new WorkshopPrice(2, 0L)),
+                            "they cost 1 and 2 levels and no energy; got " + offers);
                     helper.assertTrue(pc.workshop().enchant(player, 2), "the third offer is taken");
                     helper.assertTrue(pc.workshop().slot(Workshop.ENCHANT_ITEM).isEnchanted(),
                             "the sword is enchanted");
                     helper.assertTrue(player.experienceLevel == 38, "two levels, no lapis; level "
                             + player.experienceLevel);
+                    helper.assertTrue(pc.energyOwed() == 0L, "and the computer owes nothing");
                     leave(helper, player);
                 })
                 .thenSucceed();
     }
 
-    /** The anvil's repair at two thirds of its levels, and the card never wears. */
-    @GameTest(template = ARENA, timeoutTicks = 100)
-    public static void anvil_repairsForTwoThirdsOfTheLevels(final GameTestHelper helper) {
+    /** Paid in levels, the anvil's repair takes half its levels, and the card never wears. */
+    @GameTest(template = ARENA, timeoutTicks = 100, batch = TestComputerEnergy.XP_BATCH)
+    public static void anvil_repairsForHalfTheLevels(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(PC);
         helper.startSequence()
@@ -210,10 +228,11 @@ public final class WorkshopGameTests {
                     final Workshop.AnvilResult result = pc.workshop().anvil(player);
                     helper.assertTrue(!result.result().isEmpty() && result.anvilLevels() > 0,
                             "the diamonds repair it");
-                    helper.assertTrue(result.levels() == WorkshopRates.anvilLevels(result.anvilLevels()),
-                            "for two thirds of the anvil's levels");
+                    helper.assertTrue(result.price().equals(new WorkshopPrice(
+                            WorkshopPrice.halfLevels(result.anvilLevels()), 0L)),
+                            "for half the anvil's levels; got " + result.price());
                     helper.assertTrue(pc.workshop().takeAnvil(player), "it is taken");
-                    helper.assertTrue(player.experienceLevel == 30 - result.levels(),
+                    helper.assertTrue(player.experienceLevel == 30 - result.price().levels(),
                             "the card's levels were paid; level " + player.experienceLevel);
                     helper.assertTrue(player.getInventory().countItem(Items.DIAMOND_PICKAXE) == 1,
                             "the repaired pickaxe is in the inventory");

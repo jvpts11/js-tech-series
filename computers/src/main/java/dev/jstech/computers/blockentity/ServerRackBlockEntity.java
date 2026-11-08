@@ -76,6 +76,7 @@ import dev.jstech.core.audio.Audio;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
@@ -110,6 +111,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 import java.util.ArrayList;
@@ -930,6 +932,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     // Per-bay power, stored inverted (bit set = switched OFF) so a fresh rack powers every bay on.
     private int bayPowerOff;
+    /*
+     * What the cabinet draws from the grid for the machines in its powered bays, each through its own supply. Its
+     * store changes every tick, so it only marks the block for saving and wakes no neighbour.
+     */
+    private final ComputerEnergy energy = new ComputerEnergy(this::energyChanged);
 
     /** Whether the bay whose unit tops at {@code slot} has its power switch on. */
     public boolean bayPowerOn(final int slot) {
@@ -939,6 +946,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /** Flips the power switch of the bay at {@code slot}; a powered-off machine POSTs on power-up. */
     public void toggleBayPower(final int slot) {
         if (slot < 0 || slot >= CAPACITY_U) {
+            return;
+        }
+        // A machine the cabinet has no energy for does not start: the switch is thrown and nothing comes up.
+        final ComputerBuild build = buildAt(slot);
+        if (!bayPowerOn(slot) && build != null && build.isPowered()
+                && !energy.canRun(drawnWatts() + ComputerEnergy.lineWatts(build.powerDraw(), build.psu()))) {
             return;
         }
         bayPowerOff ^= 1 << slot;
@@ -960,6 +973,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public ServerRackBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.SERVER_RACK_BE.get(), pos, state);
         fields().part("Rack", IFieldPart.of(this::saveRack, this::loadRack)).save();
+        fields().part("Energy", energy.store()).save();
         fields().part("Cabinet", new CabinetPart()).toClient();
         for (int slot = 0; slot < CAPACITY_U; slot++) {
             final int row = slot;
@@ -1209,7 +1223,31 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
     }
 
+    /** The cabinet's energy port, which the grid's cables fill for its machines: J's Energy in the low voltage class. */
+    public IEnergyPort energyPort() {
+        return energy.store();
+    }
+
+    /** What the game's FE capability sees of the cabinet: its store, while the series takes FE; nothing otherwise. */
+    @Nullable
+    public IEnergyStorage feEnergy() {
+        return energy.fe();
+    }
+
+    /** What the machines in the powered bays take from the line now, in watts, each through its own supply. */
+    public double drawnWatts() {
+        double drawn = 0.0;
+        for (int slot = 0; slot < CAPACITY_U; slot++) {
+            final ComputerBuild build = buildAt(slot);
+            if (build != null && build.isPowered() && bayPowerOn(slot)) {
+                drawn += ComputerEnergy.lineWatts(build.powerDraw(), build.psu());
+            }
+        }
+        return drawn;
+    }
+
     private void tick(final ServerLevel level) {
+        drawEnergy(level);
         sounds.tick();
         PeripheralReconciler.reconcile(this, level, worldPosition.asLong());
         final NetworkSystem system = NetworkSystem.get(level);
@@ -2712,6 +2750,55 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     }
 
     /* The bay's switch went on or off: the server seated there is a machine, and its network writes that down. */
+    /*
+     * A tick of what the powered bays draw: the store sized to a second of what every mounted supply can give, and every
+     * powered machine going dark at once when the cabinet runs without the energy for the tick, as a rack whose feed is
+     * cut does.
+     */
+    private void drawEnergy(final ServerLevel level) {
+        double supplies = 0.0;
+        for (int slot = 0; slot < CAPACITY_U; slot++) {
+            final ComputerBuild build = buildAt(slot);
+            if (build != null) {
+                supplies += ComputerEnergy.lineWatts(build.psu().wattage(), build.psu());
+            }
+        }
+        energy.sizeFor(supplies);
+        final double drawn = drawnWatts();
+        if (drawn > 0.0 && !energy.draw(drawn)) {
+            for (int slot = 0; slot < CAPACITY_U; slot++) {
+                final ComputerBuild build = buildAt(slot);
+                if (build != null && build.isPowered() && bayPowerOn(slot)) {
+                    bayPowerLost(level, slot);
+                }
+            }
+        }
+    }
+
+    private void energyChanged() {
+        if (level != null) {
+            level.blockEntityChanged(worldPosition);
+        }
+    }
+
+    /* The power went from under the machine in {@code slot}: it goes dark at once, and the network's log says why. */
+    private void bayPowerLost(final ServerLevel level, final int slot) {
+        bayPowerOff |= 1 << slot;
+        unitState(slot).phases.powered(false);
+        endRun(slot);
+        flushConsole(slot);
+        setChanged();
+        final ItemStack stack = servers.getStackInSlot(slot);
+        final UUID node = stack.getItem() instanceof ServerItem ? ServerItem.nodeUuid(stack) : null;
+        if (node != null) {
+            final RackChassis chassis = ServerItem.chassisOf(stack);
+            final NodeUuid machine = new NodeUuid(node);
+            NetworkEvents.powerLost(level, networkUuid(), machine, NetworkEvents.machineName(
+                    ServerItem.customName(stack), chassis == null ? HostScope.SERVER : chassis.computer().machine(),
+                    machine));
+        }
+    }
+
     private void bayPowerSwitched(final int slot) {
         final ItemStack stack = servers.getStackInSlot(slot);
         final UUID node = stack.getItem() instanceof ServerItem ? ServerItem.nodeUuid(stack) : null;

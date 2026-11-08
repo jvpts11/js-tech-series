@@ -27,6 +27,7 @@ public final class NetworkEvents {
 
     public static final TextKey TURNED_ON = TextKey.of("jsc.event_log.turned_on", "Turned on");
     public static final TextKey TURNED_OFF = TextKey.of("jsc.event_log.turned_off", "Turned off");
+    public static final TextKey POWER_LOST = TextKey.of("jsc.event_log.power_lost", "Power lost: no energy reached it");
     public static final TextKey CONFLICT = TextKey.of("jsc.event_log.conflict",
             "Network conflict: a second Mainframe on the network, near %s");
     public static final TextKey CONFLICT_RESOLVED = TextKey.of("jsc.event_log.conflict_resolved",
@@ -58,6 +59,14 @@ public final class NetworkEvents {
                                 @Nullable final NodeUuid machine, final String machineName, final boolean on) {
         if (machine != null) {
             record(level, network, EventLevel.INFO, machine, machineName, (on ? TURNED_ON : TURNED_OFF).text());
+        }
+    }
+
+    /** Writes that a machine went dark for want of energy. */
+    public static void powerLost(final ServerLevel level, @Nullable final NetworkUuid network,
+                                 @Nullable final NodeUuid machine, final String machineName) {
+        if (machine != null) {
+            record(level, network, EventLevel.ERROR, machine, machineName, POWER_LOST.text());
         }
     }
 

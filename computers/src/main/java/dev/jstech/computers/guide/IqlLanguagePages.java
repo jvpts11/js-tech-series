@@ -390,8 +390,8 @@ final class IqlLanguagePages {
                         "Put that card into this Personal Computer, then run the statement again.",
                         "only a Personal Computer's own cards change items for the network",
                         "Run the statement on a Personal Computer that holds the card.",
-                        "somebody has to ask for it: the card is paid for with their experience",
-                        "Run the statement from a player's terminal, so that a player pays the experience.",
+                        "somebody has to ask for it: the card works it for them, as they would at the block",
+                        "Run the statement from a player's terminal, so that the card works for that player.",
                         "the <item> does not smelt",
                         "Pick an item that smelts.",
                         "the <item> takes no enchantment",
@@ -1090,7 +1090,8 @@ final class IqlLanguagePages {
                         + " Personal Computer."))
                 .row(GuideCell.code("only a Personal Computer's own cards change items for the network"),
                         GuideCell.words("Run the statement on a Personal Computer."))
-                .row(GuideCell.code("somebody has to ask for it: the card is paid for with their experience"),
+                .row(GuideCell.code("somebody has to ask for it: the card works it for them, as they would at the"
+                                + " block"),
                         GuideCell.words("Run the statement from a player's terminal."))
                 .row(GuideCell.code("the <item> does not smelt"), GuideCell.words("Pick an item that smelts."))
                 .row(GuideCell.code("the <item> takes no enchantment"), GuideCell.words("Pick an item that takes an"

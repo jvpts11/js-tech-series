@@ -712,8 +712,9 @@ final class BuildingPages {
                         + " the graphics cards, the disks and the expansion cards each draw watts. The supply has"
                         + " to give at least their total.")
                 .paragraph("There are twelve supplies, from 200 W to 3,000 W, each with its own efficiency.")
-                .define("Efficiency", "The share of the power a supply takes in that reaches the parts. The build check"
-                        + " does not use it.")
+                .define("Efficiency", "The share of the power a supply takes from the line that reaches the parts:"
+                        + " 300 W of parts on an 80% supply take 375 W from the line. The build check does not use"
+                        + " it.")
                 .table("The power supplies", "Power supply", "Era", "Power", "Efficiency")
                 .row(GuideCell.words("MF PowerBasic 200"), GuideCell.words("Vintage"), GuideCell.words("200 W"),
                         GuideCell.words("80%"))
@@ -743,13 +744,20 @@ final class BuildingPages {
                         + " expansion cards."
                         + " If the sum is more than the supply gives, the build fails with PSU insufficient"
                         + " ([When the build is refused](jsc:build_refusals)).")
-                .paragraph("On a rack server, the DRAW readout shows the draw and the supply's watts, and it turns"
-                        + " red when"
-                        + " the draw is over. A tower has no draw readout, so keep the sum in mind when you choose.")
+                .paragraph("Every computer's assembly screen has a DRAW readout: the draw against the supply's watts,"
+                        + " amber near the rating and red past it, so you can see the sum while you choose. Its tooltip"
+                        + " gives the watts the supply takes from the line.")
                 .paragraph("A computer whose supply gives less than its parts draw does not start. It stays off, and a"
                         + " server says why.")
+                .paragraph("A running computer draws its energy from the grid through its supply: its parts' watts"
+                        + " over the supply's efficiency, as J's Energy in the low voltage class or as FE, from any"
+                        + " cable that brings energy. Without energy it does not start. When energy stops reaching"
+                        + " it, it goes dark at once, and the network's event log says so. A server can turn the"
+                        + " draw off.")
                 .ifSomethingGoesWrong("The computer does not start, or the build says \"PSU insufficient\".",
-                        "Its parts draw more than its supply gives. Use a supply with more watts.")
+                        "Its parts draw more than its supply gives. Use a supply with more watts.",
+                        "The computer does not start, and its DRAW readout says NO POWER.",
+                        "No energy reaches it. Run a cable to it from a generator or a battery.")
                 .seeAlso("jsc:build_refusals", "jsc:disks", "jsc:processors")
                 .register();
     }

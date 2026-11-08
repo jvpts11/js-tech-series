@@ -68,8 +68,11 @@ public enum UpdateAction {
         return card;
     }
 
-    /** Whether it costs whoever asked experience, which only smelting does not. */
-    public boolean paid() {
+    /**
+     * Whether the card works it for whoever asked, as they would at the block: an enchantment drawn from their
+     * enchanting seed, an anvil at their levels. Only smelting needs nobody.
+     */
+    public boolean needsAsker() {
         return this != SMELT;
     }
 

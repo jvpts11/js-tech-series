@@ -8,6 +8,7 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.PowerShown;
 import dev.jstech.computers.gui.layout.MainframeLayout;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.core.gui.layout.GuiLayout;
@@ -102,6 +103,16 @@ public class MainframeMenu extends CoreMenu {
 
     public boolean hasPsu() {
         return slots.get(1).hasItem();
+    }
+
+    /** The supply in its slot, for the DRAW readout to name. */
+    public ItemStack psu() {
+        return slots.get(1).getItem();
+    }
+
+    /** What the Mainframe's power draws, as the server last told the open screen. */
+    public PowerShown powerShown() {
+        return blockEntity.powerShown();
     }
 
     public BlockPos blockPos() {

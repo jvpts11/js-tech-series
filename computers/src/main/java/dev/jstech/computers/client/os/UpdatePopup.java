@@ -341,9 +341,9 @@ public final class UpdatePopup extends Popup {
         }
         return switch (tab()) {
             case TAB_ENCHANT_INDEX -> offerThere(offer) && affordable(Math.max(preview.offers().get(offer).required(),
-                    preview.offers().get(offer).levels()));
+                    preview.offers().get(offer).price().levels()));
             case TAB_SMELT_INDEX -> preview.held() > 0L && !preview.smeltsInto().isEmpty();
-            default -> !preview.repaired().isEmpty() && affordable(preview.cardLevels());
+            default -> !preview.repaired().isEmpty() && affordable(preview.cardPrice().levels());
         };
     }
 
@@ -447,13 +447,13 @@ public final class UpdatePopup extends Popup {
                 continue;
             }
             final WorkshopStatePayload.Offer shown = preview.offers().get(i);
-            final boolean can = affordable(Math.max(shown.required(), shown.levels()));
+            final boolean can = affordable(Math.max(shown.required(), shown.price().levels()));
             g.fill(ox + 1, oy + 1, ox + 1 + BADGE_W, oy + OFFER_H - 1, can ? PALETTE.get().working()
                     : ctx.skin().edge());
             final String needed = Integer.toString(shown.required());
             Texts.small(g, font, needed, ox + 1 + (BADGE_W - Texts.smallWidth(font, needed)) / 2, oy + 3,
                     ctx.skin().panelBg());
-            final String cost = GameText.resolve(UpdateDoor.levels(shown.levels()));
+            final String cost = GameText.resolve(shown.price().text());
             final int costW = Texts.smallWidth(font, cost);
             final int ink = can ? ctx.skin().text() : ctx.skin().dim();
             Texts.small(g, font, cost, ox + TEXT_W - costW - 4, oy + 3, ink);
@@ -463,9 +463,10 @@ public final class UpdatePopup extends Popup {
                     oy + 3, ink);
         }
         if (offerThere(offer)) {
-            final int levels = preview.offers().get(offer).levels();
-            Texts.small(g, font, Texts.clip(font, GameText.resolve(PAY.with(levels, preview.level())),
-                    Texts.smallFits(TEXT_W)), px + OFFER_X, py + PAY_Y, ctx.skin().dim());
+            final String pay = GameText.resolve(PAY.with(preview.offers().get(offer).price().text(),
+                    preview.level()));
+            Texts.small(g, font, Texts.clip(font, pay, Texts.smallFits(TEXT_W)), px + OFFER_X, py + PAY_Y,
+                    ctx.skin().dim());
         }
     }
 
@@ -515,11 +516,11 @@ public final class UpdatePopup extends Popup {
                 ctx.skin().text());
         Texts.small(g, font, GameText.resolve(NAME), px + LEFT_X, py + NAME_ROW_Y + 2, ctx.skin().text());
         final String cost = preview.repaired().isEmpty() ? GameText.resolve(NO_CHANGE)
-                : GameText.resolve(COST.with(UpdateDoor.levels(preview.cardLevels()), preview.anvilLevels()));
+                : GameText.resolve(COST.with(preview.cardPrice().text(), preview.anvilLevels()));
         final String have = GameText.resolve(YOU_HAVE.with(preview.level()));
         final int haveW = Texts.smallWidth(font, have);
         Texts.small(g, font, Texts.clip(font, cost, Texts.smallFits(TEXT_W - haveW - 6)), px + LEFT_X, py + COST_Y,
-                preview.repaired().isEmpty() || !affordable(preview.cardLevels()) ? PALETTE.get().lacking()
+                preview.repaired().isEmpty() || !affordable(preview.cardPrice().levels()) ? PALETTE.get().lacking()
                         : ctx.skin().text());
         Texts.small(g, font, have, px + LEFT_X + TEXT_W - haveW, py + COST_Y, ctx.skin().dim());
     }

@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.payload.workshop.WorkshopActionPayload;
 import dev.jstech.computers.operation.payload.workshop.WorkshopStatePayload;
 import dev.jstech.computers.workshop.Workshop;
 import dev.jstech.computers.workshop.WorkshopCard;
+import dev.jstech.computers.workshop.WorkshopPrice;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
 import dev.jstech.core.client.gui.component.Draw;
@@ -72,7 +73,6 @@ import static dev.jstech.computers.client.os.WorkshopAppTexts.INGREDIENT;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.IN_INVENTORY;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.INVENTORY;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.LEVEL;
-import static dev.jstech.computers.client.os.WorkshopAppTexts.LEVELS;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.LOADING;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.NAME;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.NEEDS_CARD;
@@ -84,7 +84,6 @@ import static dev.jstech.computers.client.os.WorkshopAppTexts.NO_FUEL;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.NO_LAPIS;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.NO_RESULT;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.OFFERS_NOTE;
-import static dev.jstech.computers.client.os.WorkshopAppTexts.ONE_LEVEL;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.RECIPE;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.REPAIR_RENAME;
 import static dev.jstech.computers.client.os.WorkshopAppTexts.RUNS_ON_COMPUTER;
@@ -438,7 +437,8 @@ public final class WorkshopApp implements IInventoryBandApp {
         if (offer >= 0 && offer < state.offers().size()) {
             final WorkshopStatePayload.Offer shown = state.offers().get(offer);
             g.renderComponentTooltip(font, List.of(GameText.component(CLUE.with(GameText.of(shown.clue()))),
-                    Component.literal(levelsText(shown.levels())).withStyle(ChatFormatting.GRAY)), mouseX, mouseY);
+                    Component.literal(GameText.resolve(shown.price().text())).withStyle(ChatFormatting.GRAY)), mouseX,
+                    mouseY);
         }
     }
 
@@ -491,7 +491,8 @@ public final class WorkshopApp implements IInventoryBandApp {
         anvilRight.setVisible(show);
         anvilResult.setVisible(show);
         takeAnvil.setVisible(show);
-        takeAnvil.setEnabled(state != null && !state.anvilResult().isEmpty() && affordable(state.anvilCost()));
+        takeAnvil.setEnabled(state != null && !state.anvilResult().isEmpty()
+                && affordable(state.anvilPrice().levels()));
     }
 
     /* What only drawing can show on a station: arrows, notes, the offers. */
@@ -540,7 +541,7 @@ public final class WorkshopApp implements IInventoryBandApp {
             final int oy = sy + WorkshopLayout.offerY(i);
             final WorkshopStatePayload.Offer offer = i < state.offers().size() ? state.offers().get(i) : null;
             final boolean there = offer != null && offer.required() > 0;
-            final boolean can = there && affordable(Math.max(offer.required(), offer.levels()));
+            final boolean can = there && affordable(Math.max(offer.required(), offer.price().levels()));
             final boolean over = can && mouseX >= ox && mouseX < ox + ow && mouseY >= oy
                     && mouseY < oy + WorkshopLayout.OFFER_H;
             skin.field(g, ox, oy, ow, WorkshopLayout.OFFER_H, over);
@@ -551,7 +552,7 @@ public final class WorkshopApp implements IInventoryBandApp {
             final int ink = can ? skin.text() : skin.dim();
             final String needed = Integer.toString(offer.required());
             Draw.text(g, font, needed, ox + 22, oy + 7, can ? PALETTE.get().working() : skin.dim());
-            final String cost = levelsText(offer.levels());
+            final String cost = GameText.resolve(offer.price().text());
             final int costW = Texts.smallWidth(font, cost);
             Texts.small(g, font, cost, ox + ow - costW - 4, oy + 8, ink);
             final int clueX = ox + 24 + font.width(needed) + 4;
@@ -605,7 +606,9 @@ public final class WorkshopApp implements IInventoryBandApp {
                 lines.key(THE_OFFERS);
                 lines.value(GameText.resolve(OFFERS_NOTE), skin.text());
                 lines.key(WHAT_IT_TAKES);
-                lines.value(GameText.resolve(ENCHANT_COST), skin.text());
+                lines.value(GameText.resolve(ENCHANT_COST.with(WorkshopPrice.enchant(state.cost(), 0).text(),
+                        WorkshopPrice.enchant(state.cost(), 1).text(), WorkshopPrice.enchant(state.cost(), 2).text())),
+                        skin.text());
                 lines.value(GameText.resolve(ENCHANT_WAS), skin.dim());
             }
             case ANVIL -> {
@@ -613,7 +616,8 @@ public final class WorkshopApp implements IInventoryBandApp {
                 lines.value(anvilLine(), skin.text());
                 if (!state.anvilResult().isEmpty()) {
                     lines.key(WHAT_IT_TAKES);
-                    lines.value(levelsText(state.anvilCost()), affordable(state.anvilCost()) ? skin.text()
+                    lines.value(GameText.resolve(state.anvilPrice().text()),
+                            affordable(state.anvilPrice().levels()) ? skin.text()
                             : PALETTE.get().lacking());
                     lines.value(GameText.resolve(ANVIL_WAS.with(state.anvilLevels())), skin.dim());
                 }
@@ -801,10 +805,6 @@ public final class WorkshopApp implements IInventoryBandApp {
 
     private void send(final int action, final int index) {
         PacketDistributor.sendToServer(WorkshopActionPayload.of(host, monitorPos, action, index));
-    }
-
-    private static String levelsText(final int levels) {
-        return levels == 1 ? GameText.resolve(WorkshopAppTexts.ONE_LEVEL) : GameText.resolve(LEVELS.with(levels));
     }
 
     private static int firstCard(final int cards, final int fallback) {

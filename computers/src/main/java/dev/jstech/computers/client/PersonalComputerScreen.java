@@ -54,6 +54,6 @@ public class PersonalComputerScreen extends AbstractTowerAssemblyScreen<Personal
                 new Readout(GameText.resolve(AssemblyTexts.RAM_BUFFER),
                         JsTechTheme.fmt(menu.ramBuffer()) + " " + GameText.resolve(AssemblyTexts.ITEMS),
                         JsTechTheme.text()),
-                network(network));
+                network(network), draw());
     }
 }

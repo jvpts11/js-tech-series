@@ -34,7 +34,8 @@ import org.lwjgl.glfw.GLFW;
 /**
  * The Network Interactor's Update window as a player uses it on a Frames XP Personal Computer with the Enchanting,
  * Furnace and Anvil Cards in: opened from an item's dialog, a tab per action greyed where the item does not take
- * it, and each of the three sent to the network, paid for with the player's own levels.
+ * it, and each of the three sent to the network, paid for by default in the computer's energy and none of the
+ * player's levels.
  */
 public final class UpdateClientTests {
 
@@ -108,8 +109,8 @@ public final class UpdateClientTests {
                         "the window to close once the network took the UPDATE")
                 .thenWaitUntilServer(level -> enchantedSword(ctx, level), WORK_WAIT,
                         "the sword to come back enchanted", level -> "levels=" + ctx.serverPlayer().experienceLevel)
-                .thenServer(0, level -> ctx.assertTrue(ctx.serverPlayer().experienceLevel == LEVELS - 1,
-                        "the first offer cost one level; levels=" + ctx.serverPlayer().experienceLevel))
+                .thenServer(0, level -> ctx.assertTrue(ctx.serverPlayer().experienceLevel == LEVELS,
+                        "the first offer is paid in energy, no levels; levels=" + ctx.serverPlayer().experienceLevel))
                 // Smelt: the raw iron opens on the Smelt tab, the only one it takes.
                 .then(2, () -> openDialog(ctx, "Raw Iron"))
                 .thenWaitUntil(() -> interactor(ctx).hasPopup(), SCREEN_WAIT, "the raw iron's dialog")

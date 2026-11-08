@@ -415,6 +415,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     public static void serverTick(final Level level, final BlockPos pos,
                                   final BlockState state, final MainframeBlockEntity be) {
         if (level instanceof ServerLevel serverLevel) {
+            be.drawEnergy(serverLevel);
             be.tickTerminal(serverLevel);
             /*
              * Before tick(), which returns early on a powered-down machine: a cabinet that was just

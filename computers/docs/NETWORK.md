@@ -20,8 +20,9 @@ the storage, and the Operations being worked.
 
 **The network's event log** (added 2026-10-25), in the Network Manager's Log tab beside the Operations, writes
 down what happens to every machine: INFO (a machine switched on or off), WARN and ERROR (two Mainframes on one
-network). It filters by level, machine and period, prints, and exports to a text file on a disk of the Mainframe.
-A network keeps its last seven days, at most 2,000 events. When the team that owns the network (the team of its
+network, or a machine that went dark because no energy reached it, added 2026-11-08). It filters by level, machine
+and period, prints, and exports to a text file on a disk of the Mainframe. A network keeps its last seven days, at
+most 2,000 events. When the team that owns the network (the team of its
 Mainframe's operator) reaches an era of hardware, or one of J's Industrial's tiers, the log says so in an INFO line
 ("Era Standard reached by" the team); a team reaches an era the first time one of its players assembles a working
 computer of it (added 2026-11-08).
@@ -98,7 +99,10 @@ QUERY disks
 - **World events** (added 2026-10-25): `QUERY events` lists those the network sees, under way where it stands, and
   coming when a machine on it is the event's instrument; each step goes into the network's event log as well.
 - **Upkeep**: `ANALYZE`, `VACUUM`, `REINDEX`.
-- **Changing items**: `UPDATE ... SET SMELT`, `ENCHANT`, `REPAIR`, `COMBINE ... WITH ...`, `NAME '...'`.
+- **Changing items**: `UPDATE ... SET SMELT`, `ENCHANT`, `REPAIR`, `COMBINE ... WITH ...`, `NAME '...'`. The work
+  is the asking Personal Computer's workshop cards', at their price (added 2026-11-08): by default energy, which
+  that computer owes and pays off as the grid fills its store, the next paid work waiting until it has
+  ([Hardware](HARDWARE.md#cards)); the server can make it levels instead, both, or nothing (`update.cost`).
 - **Other mods' machines** (added 2026-10-25): `RUN` and the id of a kind of Operation another mod registered, to
   have one of its machines on the network do it: `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton',
   energy = 20 PRIORITY HIGH`. `ON` names the machine by the name you gave it on its screen, by its block's name and
@@ -157,12 +161,14 @@ waiting one climbs in priority, how long a saved one nobody resumed is kept. J's
 | `boot.show_boot_menu` | on | Stop at the boot manager when a computer starts. |
 | `install_by_hand.arch_every_step` | off | Ask for every step of Arch Linux's guide. |
 | `install_by_hand.gentoo_every_step` | off | Ask for every step of Gentoo's handbook. |
+| `power.draw_energy` | on | Computers draw energy through their power supplies ([Hardware](HARDWARE.md#power-supplies-psu)); off, they run free. |
 | `prompt.list_commands` | off | The `listcmd` command on every system. |
 | `programs.outside_components` | off | Let programs show components that reach outside the game. |
 | `soundfoundry.catalog` | on | Offer the server's music catalogue ([Music on a server](SOUNDFOUNDRY.md)). |
 | `soundfoundry.ethernet_kilobytes_per_second` | 512 | How fast songs travel over Ethernet. |
 | `soundfoundry.hbw_kilobytes_per_second` | 2048 | The same over HBW. |
 | `soundfoundry.hpc_kilobytes_per_second` | 8192 | The same over the high compute cable. |
+| `update.cost` | `energy` | What the workshop cards' work costs, an UPDATE's and the Workshop's: `energy`, `xp`, `both` or `none`. |
 
 Each player's own (`jscomputers-client.toml`): `client.desktop_cursors` (each system's own pointer) and
 `client.outside_components`. Desktops act at once, without animation, for a player who turns on `motion.reduce` in

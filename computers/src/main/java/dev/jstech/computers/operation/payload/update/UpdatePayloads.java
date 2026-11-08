@@ -95,7 +95,7 @@ public final class UpdatePayloads {
         }
         final List<WorkshopStatePayload.Offer> offers = new ArrayList<>();
         for (final Workshop.Offer offer : Workshop.offersFor(player, one)) {
-            offers.add(new WorkshopStatePayload.Offer(offer.required(), offer.clue(), offer.levels()));
+            offers.add(WorkshopStatePayload.Offer.of(offer));
         }
         final StorageKey wornKey = mostWorn(stock, key);
         final ItemStack worn = wornKey.stack(1);
@@ -123,7 +123,7 @@ public final class UpdatePayloads {
                 mainframe == null ? List.of() : holders(level, mainframe, key), offers, player.experienceLevel, worn,
                 materialKey == null ? ItemStack.EMPTY : materialKey.stack(1),
                 materialKey == null ? 0L : stock.getOrDefault(materialKey, 0L), used, anvil.result(),
-                anvil.anvilLevels(), anvil.levels(), given, smelt == null ? ItemStack.EMPTY : smelt.result(),
+                anvil.anvilLevels(), anvil.price(), given, smelt == null ? ItemStack.EMPTY : smelt.result(),
                 furnaceSpeed, workshopDone, workshopTotal, networkBusy, status, sent);
     }
 

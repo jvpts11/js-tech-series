@@ -9,15 +9,17 @@ package dev.jstech.computers.operation.payload.workshop;
 
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.client.os.WorkshopApp;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.terminal.TerminalHosts;
 import dev.jstech.computers.workshop.Workshop;
 import dev.jstech.computers.workshop.WorkshopCard;
-import dev.jstech.computers.workshop.WorkshopRates;
+import dev.jstech.computers.workshop.WorkshopPrice;
 import dev.jstech.computers.workshop.WorkshopTexts;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -64,13 +66,14 @@ public final class WorkshopPayloads {
         final int speed = computer.furnaceSpeed();
         final List<WorkshopStatePayload.Offer> offers = new ArrayList<>();
         for (final Workshop.Offer offer : workshop.offers(player)) {
-            offers.add(new WorkshopStatePayload.Offer(offer.required(), offer.clue(), offer.levels()));
+            offers.add(WorkshopStatePayload.Offer.of(offer));
         }
         final Workshop.AnvilResult anvil = workshop.anvil(player);
         return new WorkshopStatePayload(computer.workshopCards(), workshop.contents(), workshop.craftResult(level),
                 workshop.moreFromInventory(player), speed, workshop.ticksPerItem(level, speed),
                 workshop.progressTicks(), workshop.smeltsInto(level), offers, anvil.result(), anvil.anvilLevels(),
-                anvil.levels(), workshop.anvilName(), player.experienceLevel, player.experienceProgress, status);
+                anvil.price(), workshop.anvilName(), player.experienceLevel, player.experienceProgress,
+                ComputersServerConfig.updateCost(), status);
     }
 
     private static void handleAction(final WorkshopActionPayload payload, final ServerPlayer player,
@@ -112,9 +115,10 @@ public final class WorkshopPayloads {
             }
             case WorkshopActionPayload.ENCHANT -> {
                 if (WorkshopCard.ENCHANTING.in(cards)) {
-                    final int levels = WorkshopRates.enchantLevels(payload.index());
-                    status = workshop.enchant(player, payload.index()) ? WorkshopTexts.ENCHANTED.with(levels)
-                            : WorkshopTexts.CANNOT_ENCHANT.text();
+                    final WorkshopPrice price = WorkshopPrice.enchant(ComputersServerConfig.updateCost(),
+                            payload.index());
+                    status = workshop.enchant(player, payload.index()) ? WorkshopTexts.ENCHANTED.with(price.text())
+                            : refusal(workshop, price, WorkshopTexts.CANNOT_ENCHANT);
                 }
             }
             case WorkshopActionPayload.ANVIL_NAME -> {
@@ -126,8 +130,8 @@ public final class WorkshopPayloads {
                 if (WorkshopCard.ANVIL.in(cards)) {
                     final Workshop.AnvilResult anvil = workshop.anvil(player);
                     status = workshop.takeAnvil(player)
-                            ? WorkshopTexts.TOOK.with(GameText.of(anvil.result().getHoverName()), anvil.levels())
-                            : WorkshopTexts.CANNOT_TAKE.text();
+                            ? WorkshopTexts.TOOK.with(GameText.of(anvil.result().getHoverName()), anvil.price().text())
+                            : refusal(workshop, anvil.price(), WorkshopTexts.CANNOT_TAKE);
                     menu.broadcastChanges();
                 }
             }
@@ -139,6 +143,11 @@ public final class WorkshopPayloads {
             }
         }
         PacketDistributor.sendToPlayer(player, state(player, computer, status));
+    }
+
+    /* Why the work was refused: the computer still paying for earlier work, or {@code otherwise}. */
+    private static Text refusal(final Workshop workshop, final WorkshopPrice price, final TextKey otherwise) {
+        return price.joules() > 0L && workshop.awaitsEnergy() ? WorkshopTexts.STILL_PAYING.text() : otherwise.text();
     }
 
     /* The Personal Computer at {@code hostPos}, if the player is at one of its monitors. */

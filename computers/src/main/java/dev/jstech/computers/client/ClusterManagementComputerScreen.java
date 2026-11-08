@@ -67,6 +67,7 @@ public class ClusterManagementComputerScreen extends AbstractTowerAssemblyScreen
                 clusters,
                 new Readout(GameText.resolve(AssemblyTexts.MANAGEMENT),
                         GameText.resolve(manager ? AssemblyTexts.INSTALLED : AssemblyTexts.NOT_INSTALLED),
-                        manager ? JsTechTheme.accent() : JsTechTheme.amber()));
+                        manager ? JsTechTheme.accent() : JsTechTheme.amber()),
+                draw());
     }
 }

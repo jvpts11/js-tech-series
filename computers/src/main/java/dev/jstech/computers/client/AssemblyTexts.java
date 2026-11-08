@@ -66,6 +66,13 @@ final class AssemblyTexts {
     static final TextKey ITEMS = TextKey.of("jsc.assembly.items", "it");
     static final TextKey NETWORK = TextKey.of("jsc.assembly.network", "NETWORK");
     static final TextKey LINKED = TextKey.of("jsc.assembly.linked", "LINKED");
+    // What the power draws (DRAW, below): the parts against the supply's rating, and what that takes from the line.
+    static final TextKey NO_POWER = TextKey.of("jsc.assembly.no_power", "NO POWER");
+    static final TextKey DRAW_PARTS = TextKey.of("jsc.assembly.draw_parts", "Parts: %s W of %s W (%s%%)");
+    static final TextKey DRAW_LINE = TextKey.of("jsc.assembly.draw_line", "From the line: %s W = %s FE/t");
+    static final TextKey DRAW_SUPPLY = TextKey.of("jsc.assembly.draw_supply", "%s, %s%% efficient");
+    static final TextKey DRAW_NONE = TextKey.of("jsc.assembly.draw_none",
+            "No energy reaches it: J's Energy or FE, by cable");
     static final TextKey ONE_SERVER = TextKey.of("jsc.assembly.one_server", "%s server");
     static final TextKey SERVERS = TextKey.of("jsc.assembly.servers", "%s servers");
     static final TextKey CRAFT = TextKey.of("jsc.assembly.craft", "CRAFT");
@@ -82,7 +89,7 @@ final class AssemblyTexts {
     static final TextKey ORCHESTRATION = TextKey.of("jsc.assembly.orchestration", "ORCHESTRATION");
     static final TextKey RAM_BUFFER_SHORT = TextKey.of("jsc.assembly.ram_buffer_short", "RAM BUF");
     static final TextKey DRAW = TextKey.of("jsc.assembly.draw", "DRAW");
-    static final TextKey DRAW_OF = TextKey.of("jsc.assembly.draw_of", "%s/%sW");
+    static final TextKey DRAW_OF = TextKey.of("jsc.assembly.draw_of", "%s / %s W");
     static final TextKey NO_WATTS = TextKey.of("jsc.assembly.no_watts", "-- W");
     static final TextKey POWER = TextKey.of("jsc.assembly.power", "POWER");
     static final TextKey STORAGE = TextKey.of("jsc.assembly.storage", "STORAGE");

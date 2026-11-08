@@ -153,6 +153,30 @@ public final class AssemblyPainter {
         }
     }
 
+    /**
+     * A small gauge beside a readout's label, in what is left of its top row: its track, filled to {@code fraction} in
+     * {@code colour}, and a mark at each of {@code marks}.
+     */
+    public static void drawGauge(final GuiGraphics g, final Font font, final int left, final int top, final Box box,
+                                 final String label, final double fraction, final int colour, final double... marks) {
+        final int x0 = left + box.x() + 3 + JsTechTheme.widthS(font, label) + 4;
+        final int x1 = left + box.x() + box.w() - 3;
+        final int y = top + box.y();
+        if (x1 - x0 < 4) {
+            return;
+        }
+        g.fill(x0, y + 3, x1, y + 6, JsTechTheme.track());
+        frame(g, x0, y + 3, x1, y + 6, JsTechTheme.line());
+        final int filled = x0 + 1 + (int) Math.round((x1 - x0 - 2) * Math.clamp(fraction, 0.0, 1.0));
+        if (filled > x0 + 1) {
+            g.fill(x0 + 1, y + 4, filled, y + 5, colour);
+        }
+        for (final double mark : marks) {
+            final int mx = x0 + 1 + (int) Math.round((x1 - x0 - 2) * mark);
+            g.fill(mx, y + 2, mx + 1, y + 7, JsTechTheme.dim());
+        }
+    }
+
     /** A rocker of the service panel: its caption left, its knob thrown right when it is on. */
     public static void drawSwitch(final GuiGraphics g, final Font font, final int left, final int top, final Box box,
                                   final String caption, final boolean on) {

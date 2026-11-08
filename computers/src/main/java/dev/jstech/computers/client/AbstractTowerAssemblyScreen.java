@@ -123,6 +123,11 @@ public abstract class AbstractTowerAssemblyScreen<M extends AbstractAssemblyComp
                 menu.isOnNetwork() ? JsTechTheme.accent() : JsTechTheme.dim(), tooltip);
     }
 
+    /** The DRAW readout: what the parts take against the supply, and what that takes from the line. */
+    protected Readout draw() {
+        return drawReadout(menu.powerShown(), menu.psu());
+    }
+
     /** What its empty name field says. */
     protected abstract TextKey nameHint();
 }

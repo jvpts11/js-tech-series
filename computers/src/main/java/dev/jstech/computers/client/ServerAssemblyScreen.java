@@ -103,8 +103,6 @@ public class ServerAssemblyScreen extends AbstractMachineAssemblyScreen<ServerAs
     @Override
     protected List<Readout> readouts() {
         final ComputerBuild build = frameBuild;
-        final int draw = build == null ? 0 : build.powerDraw();
-        final int watt = build == null ? 0 : build.psu().wattage();
         final Readout storage = build != null && build.serverGpuBonus() > 0
                 // A server's graphics cards add to what it sends out: what they add, against its processor's capacity.
                 ? new Readout(GameText.resolve(AssemblyTexts.GPU_BONUS),
@@ -121,9 +119,7 @@ public class ServerAssemblyScreen extends AbstractMachineAssemblyScreen<ServerAs
                 new Readout(GameText.resolve(AssemblyTexts.RAM_BUFFER),
                         build == null ? "0" : JsTechTheme.fmt(build.ramBuffer()) + " "
                                 + GameText.resolve(AssemblyTexts.ITEMS), JsTechTheme.text()),
-                new Readout(GameText.resolve(AssemblyTexts.DRAW), GameText.resolve(build == null
-                        ? AssemblyTexts.NO_WATTS.text() : AssemblyTexts.DRAW_OF.with(draw, watt)),
-                        draw > watt ? JsTechTheme.red() : JsTechTheme.text()),
+                drawReadout(menu.powerShown(), menu.psu()),
                 storage);
     }
 

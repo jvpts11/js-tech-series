@@ -210,6 +210,10 @@
         {
           "fix": "jsc.guide.workshop.fix12",
           "problem": "jsc.guide.workshop.problem12"
+        },
+        {
+          "fix": "jsc.guide.workshop.fix13",
+          "problem": "jsc.guide.workshop.problem13"
         }
       ]
     },
