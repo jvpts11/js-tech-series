@@ -1718,7 +1718,9 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
     void drawDataIcon(final GuiGraphics g, final StorageKey key, final long count,
                               final int x, final int y) {
         if (!key.isItem()) {
-            if (key.isChemical()) {
+            if (key.isMatter()) {
+                MatterSprite.draw(g, key, x, y);
+            } else if (key.isChemical()) {
                 ChemicalSprite.draw(g, key, x, y);
             } else {
                 FluidSprite.draw(g, key.fluidPrototype(), x, y);

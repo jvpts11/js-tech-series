@@ -60,12 +60,16 @@ public final class ChemicalDataGameTests {
 
     @GameTest(template = ARENA)
     public static void storageKey_chemicalRoundTripsThroughNbtAndTheWire(final GameTestHelper helper) {
-        final StorageKey oxygen = StorageKey.chemical(OXYGEN);
+        // Brine, which J's Core has no material for: Mekanism's oxygen is J's Core's oxygen gas.
+        final StorageKey oxygen = StorageKey.chemical(ResourceLocation.fromNamespaceAndPath("mekanism", "brine"));
         helper.assertTrue(oxygen.isChemical() && !oxygen.isItem() && !oxygen.isFluid(), "a chemical key is only a chemical");
+        helper.assertTrue(StorageKey.chemical(OXYGEN).kind() == StorageKey.Kind.GAS
+                        && OXYGEN.equals(StorageKey.chemical(OXYGEN).chemicalId()),
+                "a chemical J's Core links to its oxygen is that gas, still known to Mekanism by its own id");
         helper.assertTrue(oxygen.weight(250) == 250, "a chemical weighs its millibuckets, like a fluid");
         helper.assertTrue(oxygen.batch() == 1000, "a chemical batch is a bucket");
-        helper.assertTrue(oxygen.equals(StorageKey.chemical(OXYGEN)) && oxygen.hashCode() == StorageKey.chemical(OXYGEN).hashCode(),
-                "chemical keys compare by id");
+        final StorageKey brine = StorageKey.chemical(ResourceLocation.fromNamespaceAndPath("mekanism", "brine"));
+        helper.assertTrue(oxygen.equals(brine) && oxygen.hashCode() == brine.hashCode(), "chemical keys compare by id");
         helper.assertTrue(!oxygen.equals(StorageKey.of(Items.IRON_INGOT)) && !oxygen.equals(StorageKey.of(new FluidStack(Fluids.WATER, 1))),
                 "a chemical never equals an item or a fluid");
 

@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.ChemicalSprite;
+import dev.jstech.computers.client.MatterSprite;
 import dev.jstech.computers.client.FluidSprite;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Draw;
@@ -104,7 +105,9 @@ public final class DesktopItems {
         }
         g.pose().pushPose();
         g.pose().translate(0.0F, 0.0F, DesktopZ.BAND_ITEM);
-        if (key.isChemical()) {
+        if (key.isMatter()) {
+            MatterSprite.draw(g, key, x, y);
+        } else if (key.isChemical()) {
             ChemicalSprite.draw(g, key, x, y);
         } else {
             FluidSprite.draw(g, key.fluidPrototype(), x, y);

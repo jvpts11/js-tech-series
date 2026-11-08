@@ -104,10 +104,11 @@ public final class StorageVolume {
 
     private void tally(final StorageKey key, final long delta) {
         usedWeight += key.weight(delta);
+        // Gases and the other states of matter are counted with the chemicals, in millibuckets of other matter.
         switch (key.kind()) {
             case ITEM -> itemUnits += delta;
             case FLUID -> fluidUnits += delta;
-            case CHEMICAL -> chemicalUnits += delta;
+            default -> chemicalUnits += delta;
         }
     }
 

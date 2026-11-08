@@ -37,7 +37,8 @@ public record DiskUsage(long usedWeight, long items, long fluidMb, long chemical
     private static final TextKey ITEMS_ONE = TextKey.of("jsc.storage.disk_usage.items_one", "%s item");
     private static final TextKey ITEMS_MANY = TextKey.of("jsc.storage.disk_usage.items_many", "%s items");
     private static final TextKey FLUID = TextKey.of("jsc.storage.disk_usage.fluid", "%s mB of fluid");
-    private static final TextKey CHEMICAL = TextKey.of("jsc.storage.disk_usage.chemical", "%s mB of chemical");
+    // Gases, plasmas, slurries, supercritical fluids, exotic matter and a chemical mod's chemicals, together.
+    private static final TextKey CHEMICAL = TextKey.of("jsc.storage.disk_usage.chemical", "%s mB of other matter");
     private static final TextKey LIST = TextKey.of("jsc.storage.disk_usage.list", "%s, %s");
     private static final TextKey TYPES_ONE = TextKey.of("jsc.storage.disk_usage.types_one", "%s type");
     private static final TextKey TYPES_MANY = TextKey.of("jsc.storage.disk_usage.types_many", "%s types");

@@ -50,7 +50,9 @@ jsc.log("info", "hello")             -- write a line into the Gateway's log
 ```
 
 Names are what CC programs expect: an item is its registry id (`minecraft:iron_ingot`, and the
-`minecraft:` may be left off), a fluid is `fluid/` and its id, a chemical `chemical/` and its id.
+`minecraft:` may be left off), a fluid is `fluid/` and its id, a chemical `chemical/` and its id, and a state of
+matter its state and its material's id: `gas/jscore:hydrogen`, `plasma/...`, `supercritical/...`, `slurry/...`,
+`exotic/...`.
 
 Two things arrive as events on the computer that asked for them: `jsc_stock(name, total, previous)` when
 a watched total moves, and `jsc_operation(id, status)` when an operation of theirs settles.

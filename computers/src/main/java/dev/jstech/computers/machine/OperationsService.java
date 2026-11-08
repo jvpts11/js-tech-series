@@ -358,7 +358,7 @@ public final class OperationsService {
             return null;
         }
         for (final StorageKey key : NetworkStorage.of(this.level, net).query().keySet()) {
-            if ((key.isFluid() || key.isChemical())
+            if (!key.isItem()
                     && (key.registryId().toString().equalsIgnoreCase(item)
                         || key.registryId().getPath().equalsIgnoreCase(item)
                         || key.displayName().getString().equalsIgnoreCase(item))) {

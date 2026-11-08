@@ -34,9 +34,12 @@ computer of it (added 2026-11-08).
 
 *Added 2026-06-05.*
 
-The network keeps items, fluids and chemicals as data on disks, all counted the same way (a bucket weighs as much
-as an item). How much room an item takes depends on the disk's era: 1 MB in the Vintage, 16 MB in the Legacy,
-256 MB from the Transition on. Disks hold folders, files and programs as well.
+The network keeps items, liquids and every other state of matter of J's Core (gases, plasmas, supercritical
+fluids, slurries and exotic matter) as data on disks, all counted the same way (a bucket weighs as much as an item);
+a chemical mod's chemicals J's Core has no state for are kept as chemicals, and the ones it links to its materials
+(Mekanism's hydrogen, oxygen, chlorine, deuterium and tritium) as those gases. How much room an item takes depends on
+the disk's era: 1 MB in the Vintage, 16 MB in the Legacy, 256 MB from the Transition on. Disks hold folders, files and
+programs as well.
 
 The network's storage is the disks of the **Servers** in its racks. An **External Storage Bus** on a cable lets it
 use a chest beside it as storage too, ten times slower than a server. **Import** and **Export Buses** bring items

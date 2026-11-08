@@ -97,8 +97,16 @@ final class NetworkInteractorTexts {
     static final TextKey ID = TextKey.of("jsc.interactor.id", "ID");
     static final TextKey KIND = TextKey.of("jsc.interactor.kind", "KIND");
     static final TextKey ITEM = TextKey.of("jsc.interactor.item", "Item");
-    static final TextKey FLUID = TextKey.of("jsc.interactor.fluid", "Fluid");
+    static final TextKey FLUID = TextKey.of("jsc.interactor.fluid", "Liquid");
+    static final TextKey GAS = TextKey.of("jsc.interactor.gas", "Gas");
+    static final TextKey PLASMA = TextKey.of("jsc.interactor.plasma", "Plasma");
+    static final TextKey SUPERCRITICAL = TextKey.of("jsc.interactor.supercritical", "Supercritical fluid");
+    static final TextKey SLURRY = TextKey.of("jsc.interactor.slurry", "Slurry");
+    static final TextKey EXOTIC = TextKey.of("jsc.interactor.exotic", "Exotic matter");
     static final TextKey CHEMICAL = TextKey.of("jsc.interactor.chemical", "Chemical");
+    /* What a kind of matter goes in, and what moves it, under its details. */
+    static final TextKey MATTER_HINT = TextKey.of("jsc.interactor.matter_hint",
+            "It goes in a store of its state or in a server; a bus with a %s filter moves it.");
     static final TextKey ROOM = TextKey.of("jsc.interactor.room", "ROOM");
     static final TextKey DURABILITY = TextKey.of("jsc.interactor.durability", "DURABILITY");
     static final TextKey TAGS = TextKey.of("jsc.interactor.tags", "TAGS");

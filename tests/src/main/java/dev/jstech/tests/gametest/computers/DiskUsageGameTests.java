@@ -76,7 +76,8 @@ public final class DiskUsageGameTests {
         helper.assertTrue(line.equals("Used 28%: 22,944 mB of fluid across 1 type"), "got: " + line);
         final DiskUsage mixed = new DiskUsage(12_000 + 22_944 + 500, 12, 22_944, 500, 3);
         final String both = mixed.summary(80).english();
-        helper.assertTrue(both.equals("Used 44%: 12 items, 22,944 mB of fluid, 500 mB of chemical across 3 types"), "got: " + both);
+        helper.assertTrue(both.equals("Used 44%: 12 items, 22,944 mB of fluid, 500 mB of other matter across 3 types"),
+                "got: " + both);
         // Chemicals are named only while a chemical mod (Mekanism on the dev runtime) is present.
         final String capacity = "Holds 80 items, or 80,000 mB of fluid"
                 + (ChemicalBridges.anyRegistered() ? " or chemical" : "");

@@ -232,7 +232,7 @@ public final class DataHandoff {
                                           final NetworkUuid network, final Player player, final ISource source,
                                           final StorageKey key, final String label, final Runnable afterSettle) {
         final ItemStack stack = source.get();
-        if (stack.isEmpty() || !(key.isFluid() || key.isChemical())) {
+        if (stack.isEmpty() || key.isItem()) {
             return Outcome.NOTHING;
         }
         final long want = DataContainers.roomFor(stack, key, mainframe.networkIndex().available(key));
@@ -306,7 +306,7 @@ public final class DataHandoff {
     public static Outcome fillFromLocalStore(final LocalStore store, final Player player, final ISource source,
                                              final StorageKey key) {
         final ItemStack stack = source.get();
-        if (stack.isEmpty() || !(key.isFluid() || key.isChemical())) {
+        if (stack.isEmpty() || key.isItem()) {
             return Outcome.NOTHING;
         }
         final long want = DataContainers.roomFor(stack, key, store.count(key));

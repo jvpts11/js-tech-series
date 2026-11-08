@@ -34,6 +34,7 @@ import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.FastColor;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -593,7 +594,9 @@ public final class StorageInsightsApp implements IDesktopApp {
         if (key.isItem()) {
             itemIcon(g, key.stack(1), x, y, size);
         } else {
-            final int c = key.isFluid() ? PALETTE.get().fluid() : PALETTE.get().chemical();
+            // A material of J's Core in its own colour; a liquid and a chemical in theirs.
+            final int c = key.isFluid() ? PALETTE.get().fluid() : key.material()
+                    .map(material -> FastColor.ARGB32.opaque(material.colour())).orElse(PALETTE.get().chemical());
             g.fill(x + 1, y + 1, x + size - 1, y + size - 1, c);
             Draw.outline(g, x + 1, y + 1, size - 2, size - 2, skin.edge());
         }

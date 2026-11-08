@@ -9,6 +9,9 @@ package dev.jstech.computers.storage;
 
 import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.chemical.IChemicalPort;
+import dev.jstech.core.matter.IMatterHandler;
+import dev.jstech.core.matter.MatterCapabilities;
+import dev.jstech.core.matter.MatterStack;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -16,6 +19,8 @@ import net.neoforged.neoforge.fluids.FluidUtil;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -45,7 +50,21 @@ public final class DataContainers {
                 && !fluids.get().drain(Integer.MAX_VALUE, IFluidHandler.FluidAction.SIMULATE).isEmpty()) {
             return true;
         }
+        for (final IMatterHandler matter : matterIn(one)) {
+            if (matter.extractAny(Long.MAX_VALUE, true).isPresent()) {
+                return true;
+            }
+        }
         return ChemicalBridges.itemPortFor(one).map(port -> !port.available().isEmpty()).orElse(false);
+    }
+
+    /* J's Core's stores of matter on an item, one for each state it keeps. */
+    private static List<IMatterHandler> matterIn(final ItemStack container) {
+        final List<IMatterHandler> out = new ArrayList<>();
+        for (final StorageKey.Kind kind : StorageKey.Kind.values()) {
+            kind.matter().flatMap(MatterCapabilities::item).map(container::getCapability).ifPresent(out::add);
+        }
+        return out;
     }
 
     /**
@@ -73,6 +92,13 @@ public final class DataContainers {
                         IFluidHandler.FluidAction.EXECUTE);
                 return taken.isEmpty() ? Optional.empty()
                         : Optional.of(new Drained(StorageKey.of(taken), taken.getAmount(), handler.getContainer()));
+            }
+        }
+        for (final IMatterHandler matter : matterIn(one)) {
+            final Optional<MatterStack> taken = matter.extractAny(roomWeight, false);
+            if (taken.isPresent()) {
+                return Optional.of(new Drained(StorageKey.matter(matter.state(), taken.get().material()),
+                        taken.get().amount(), one));
             }
         }
         final Optional<IChemicalPort> chemicals = ChemicalBridges.itemPortFor(one);
@@ -108,11 +134,24 @@ public final class DataContainers {
                             IFluidHandler.FluidAction.SIMULATE))
                     .orElse(0L);
         }
+        final IMatterHandler matter = matterOf(one, key);
+        if (matter != null) {
+            return matter.insert(new MatterStack(key.material().orElseThrow(), available), true);
+        }
         final ResourceLocation chemical = key.chemicalId();
         if (chemical == null) {
             return 0L;
         }
         return ChemicalBridges.itemPortFor(one).map(port -> port.fill(chemical, available, true)).orElse(0L);
+    }
+
+    /* J's Core's store of a key's state of matter on an item (a gas canister), or null for any other key or item. */
+    private static IMatterHandler matterOf(final ItemStack container, final StorageKey key) {
+        if (key.material().isEmpty()) {
+            return null;
+        }
+        return key.kind().matter().flatMap(MatterCapabilities::item)
+                .map(capability -> container.getCapability(capability)).orElse(null);
     }
 
     /** Whether one of {@code stack} could take any of {@code key} at all. */
@@ -137,6 +176,10 @@ public final class DataContainers {
             final int taken = fluids.get().fill(key.fluidStack((int) Math.min(amount, Integer.MAX_VALUE)),
                     IFluidHandler.FluidAction.EXECUTE);
             return new Filled(fluids.get().getContainer(), taken);
+        }
+        final IMatterHandler matter = matterOf(container, key);
+        if (matter != null) {
+            return new Filled(container, matter.insert(new MatterStack(key.material().orElseThrow(), amount), false));
         }
         final ResourceLocation chemical = key.chemicalId();
         if (chemical == null) {

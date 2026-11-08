@@ -60,6 +60,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.TypedDataComponent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -1676,8 +1677,16 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             py += 30;
         }
         py = detail(g, font, px, py, dw, GameText.resolve(ID), id.toString());
-        py = detail(g, font, px, py, dw, GameText.resolve(KIND),
-                GameText.resolve(key.isItem() ? ITEM : key.isFluid() ? FLUID : CHEMICAL));
+        py = detail(g, font, px, py, dw, GameText.resolve(KIND), GameText.resolve(kindLabel(key)));
+        if (key.isMatter()) {
+            // Where a gas or another state of matter goes, and what moves it (computers/docs/design/storage.md).
+            final String hint = GameText.resolve(NetworkInteractorTexts.MATTER_HINT
+                    .with(key.kind().serializedName().toUpperCase(Locale.ROOT)));
+            final List<String> lines = new ArrayList<>();
+            font.getSplitter().splitLines(hint, Texts.smallFits(dw - 14), Style.EMPTY)
+                    .forEach(line -> lines.add(line.getString()));
+            py = detailList(g, font, px, py, dw, "", lines);
+        }
         py = detail(g, font, px, py, dw, GameText.resolve(ROOM), weightLabel(key.weight(e.total())));
         if (key.isItem() && stack.isDamageableItem()) {
             py = detail(g, font, px, py, dw, GameText.resolve(DURABILITY),
@@ -3232,6 +3241,20 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
      * one item costs is the era of the drive holding it: the same stack fills a tenth of a vintage
      * network and a hundredth of a standard one. A bucket of fluid weighs what an item weighs.
      */
+    /* What kind of data a key is, in the words of its details: an item, a liquid, a gas, a plasma... */
+    private static TextKey kindLabel(final StorageKey key) {
+        return switch (key.kind()) {
+            case ITEM -> ITEM;
+            case FLUID -> FLUID;
+            case GAS -> NetworkInteractorTexts.GAS;
+            case PLASMA -> NetworkInteractorTexts.PLASMA;
+            case SUPERCRITICAL -> NetworkInteractorTexts.SUPERCRITICAL;
+            case SLURRY -> NetworkInteractorTexts.SLURRY;
+            case EXOTIC -> NetworkInteractorTexts.EXOTIC;
+            case CHEMICAL -> CHEMICAL;
+        };
+    }
+
     private String weightLabel(final long weight) {
         final long whole = capacityItems * StorageKey.MB_EQ_PER_ITEM;
         return DiskSpec.sizeLabel(whole <= 0L ? 0L : weight * capacityMb / whole);

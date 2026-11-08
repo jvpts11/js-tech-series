@@ -54,7 +54,12 @@ public final class ExternalDataPort implements IDataPort {
             channels.put(StorageKey.Kind.FLUID, new FluidChannel(fluids));
         }
         if (chemicals != null) {
-            channels.put(StorageKey.Kind.CHEMICAL, new ChemicalChannel(chemicals));
+            // The port's chemicals J's Core keeps as matter come through it as that kind of matter.
+            for (final StorageKey.Kind kind : StorageKey.Kind.values()) {
+                if (kind == StorageKey.Kind.CHEMICAL || kind.matter().isPresent()) {
+                    channels.put(kind, new ChemicalChannel(chemicals, kind));
+                }
+            }
         }
     }
 

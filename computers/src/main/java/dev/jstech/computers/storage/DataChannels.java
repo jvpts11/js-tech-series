@@ -8,6 +8,8 @@
 package dev.jstech.computers.storage;
 
 import dev.jstech.core.chemical.ChemicalBridges;
+import dev.jstech.core.matter.IMatterHandler;
+import dev.jstech.core.matter.MatterCapabilities;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -48,8 +50,23 @@ public final class DataChannels {
             final IFluidHandler fluids = level.getCapability(Capabilities.FluidHandler.BLOCK, pos, side);
             return fluids == null ? null : new FluidChannel(fluids);
         });
-        RESOLVERS.put(StorageKey.Kind.CHEMICAL, (level, pos, side) ->
-                ChemicalBridges.portFor(level, pos, side).<IDataChannel>map(ChemicalChannel::new).orElse(null));
+        RESOLVERS.put(StorageKey.Kind.CHEMICAL, (level, pos, side) -> ChemicalBridges.portFor(level, pos, side)
+                .<IDataChannel>map(port -> new ChemicalChannel(port, StorageKey.Kind.CHEMICAL)).orElse(null));
+        /*
+         * A state of matter is found in J's Core's store of that state, else in a chemical mod's tank, which keeps the
+         * chemicals J's Core links to a material of that state (a chemical mod's gases and slurries).
+         */
+        for (final StorageKey.Kind kind : StorageKey.Kind.values()) {
+            kind.matter().ifPresent(state -> RESOLVERS.put(kind, (level, pos, side) -> {
+                final IMatterHandler handler = MatterCapabilities.block(state)
+                        .map(capability -> level.getCapability(capability, pos, side)).orElse(null);
+                if (handler != null) {
+                    return new MatterChannel(handler, kind);
+                }
+                return ChemicalBridges.portFor(level, pos, side)
+                        .<IDataChannel>map(port -> new ChemicalChannel(port, kind)).orElse(null);
+            }));
+        }
         for (final StorageKey.Kind kind : StorageKey.Kind.values()) {
             if (!RESOLVERS.containsKey(kind)) {
                 throw new IllegalStateException("no data channel resolver for " + kind + ": every kind of data must be transferable");

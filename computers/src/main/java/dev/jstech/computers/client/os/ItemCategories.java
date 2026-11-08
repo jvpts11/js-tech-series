@@ -45,7 +45,8 @@ public final class ItemCategories {
 
     /** The categories in the order the filter lists them. */
     public static final List<String> ALL = List.of("Ingots", "Nuggets", "Ores", "Raw materials", "Dusts", "Gems",
-            "Plates", "Rods", "Blocks", "Machines", "Tools", "Armor", "Food", "Fluids", "Chemicals", OTHER);
+            "Plates", "Rods", "Blocks", "Machines", "Tools", "Armor", "Food", "Liquids", "Gases", "Plasmas",
+            "Supercritical", "Slurries", "Exotic matter", "Chemicals", OTHER);
 
     /** The common tag paths that name a category, and the category each names. */
     private static final String[][] TAGGED = {
@@ -70,11 +71,17 @@ public final class ItemCategories {
     private static final TextKey TOOLS = TextKey.of("jsc.item_category.tools", "Tools");
     private static final TextKey ARMOR = TextKey.of("jsc.item_category.armor", "Armor");
     private static final TextKey FOOD = TextKey.of("jsc.item_category.food", "Food");
-    private static final TextKey FLUIDS = TextKey.of("jsc.item_category.fluids", "Fluids");
+    private static final TextKey LIQUIDS = TextKey.of("jsc.item_category.liquids", "Liquids");
+    private static final TextKey GASES = TextKey.of("jsc.item_category.gases", "Gases");
+    private static final TextKey PLASMAS = TextKey.of("jsc.item_category.plasmas", "Plasmas");
+    private static final TextKey SUPERCRITICAL = TextKey.of("jsc.item_category.supercritical", "Supercritical");
+    private static final TextKey SLURRIES = TextKey.of("jsc.item_category.slurries", "Slurries");
+    private static final TextKey EXOTIC = TextKey.of("jsc.item_category.exotic", "Exotic matter");
     private static final TextKey CHEMICALS = TextKey.of("jsc.item_category.chemicals", "Chemicals");
     private static final TextKey OTHER_LABEL = TextKey.of("jsc.item_category.other", "Other");
     private static final Map<String, TextKey> LABELS = labels(INGOTS, NUGGETS, ORES, RAW_MATERIALS, DUSTS, GEMS,
-            PLATES, RODS, BLOCKS, MACHINES, TOOLS, ARMOR, FOOD, FLUIDS, CHEMICALS, OTHER_LABEL);
+            PLATES, RODS, BLOCKS, MACHINES, TOOLS, ARMOR, FOOD, LIQUIDS, GASES, PLASMAS, SUPERCRITICAL, SLURRIES,
+            EXOTIC, CHEMICALS, OTHER_LABEL);
 
     private ItemCategories() {
     }
@@ -86,11 +93,32 @@ public final class ItemCategories {
     }
 
     public static String of(final StorageKey key) {
-        if (key.isFluid()) {
-            return "Fluids";
-        }
-        if (key.isChemical()) {
-            return "Chemicals";
+        // Each state of matter is a category of its own; a chemical mod's chemicals J's Core has no state for, too.
+        switch (key.kind()) {
+            case FLUID -> {
+                return "Liquids";
+            }
+            case GAS -> {
+                return "Gases";
+            }
+            case PLASMA -> {
+                return "Plasmas";
+            }
+            case SUPERCRITICAL -> {
+                return "Supercritical";
+            }
+            case SLURRY -> {
+                return "Slurries";
+            }
+            case EXOTIC -> {
+                return "Exotic matter";
+            }
+            case CHEMICAL -> {
+                return "Chemicals";
+            }
+            default -> {
+                // An item, sorted by what it is below.
+            }
         }
         final ItemStack stack = key.stack(1);
         final String tagged = byTag(stack.getItemHolder().tags());

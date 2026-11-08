@@ -2198,6 +2198,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   gave back and lost; the network's log says so too.
 - (Computers) This PC and the Storage Insights show corruption: the corrupted share of a disk in red on its bar, what
   bad sectors took hatched at its end, and a dead disk crossed out, "This disk has failed".
+- (Computers) Every state of matter is data: gases, plasmas, supercritical fluids, slurries and exotic matter of J's
+  Core are stored, indexed, moved by buses and requested like items and liquids, each weighing as a liquid does, from
+  J's Core's own stores and a chemical mod's tanks alike; Mekanism's hydrogen, oxygen, chlorine, deuterium and tritium
+  are J's Core's gases. The Network Interactor draws each with a swatch of its own (a gas a translucent cloud, a plasma
+  glowing from its centre, a supercritical fluid half liquid and half gas, a slurry grainy, exotic matter changing
+  colour), names its kind, and its category filter lists Liquids, Gases, Plasmas, Supercritical, Slurries and Exotic
+  matter, with Chemicals for what has no state.
 - (Computers) A network conflict costs: what the discarded Operations were carrying is lost, and the log says what.
   The network splitting under an Operation (a cable pulled between the Mainframe and a server it was reading or
   writing) loses what it was carrying too. The server's `[item_loss]` settings gain `network_split`,

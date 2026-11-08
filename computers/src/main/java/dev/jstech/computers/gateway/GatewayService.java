@@ -207,6 +207,15 @@ public final class GatewayService {
             }
             return StorageKey.chemical(id);
         }
+        // A gas, a plasma and the other states of matter by their kind and their material: gas/jscore:hydrogen.
+        final int slash = given.indexOf('/');
+        if (slash > 0) {
+            final StorageKey matter = StorageKey.byId(given.substring(0, slash) + "|" + given.substring(slash + 1));
+            if (matter == null || !matter.isMatter()) {
+                throw new GatewayRefusedException(UNKNOWN_CHEMICAL.with(name));
+            }
+            return matter;
+        }
         final ResourceLocation id = ResourceLocation.tryParse(given.contains(":") ? given : "minecraft:" + given);
         final Item item = id == null ? null : BuiltInRegistries.ITEM.getOptional(id).orElse(null);
         if (item == null) {
@@ -218,9 +227,10 @@ public final class GatewayService {
     /** The name the other side knows a key by. */
     public static String nameOf(final StorageKey key) {
         return switch (key.kind()) {
+            case ITEM -> key.registryId().toString();
             case FLUID -> FLUID_PREFIX + key.registryId();
             case CHEMICAL -> CHEMICAL_PREFIX + key.registryId();
-            default -> key.registryId().toString();
+            default -> key.kind().serializedName() + "/" + key.registryId();
         };
     }
 
