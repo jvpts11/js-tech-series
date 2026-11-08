@@ -108,6 +108,7 @@ describes it.
 - The AI: AI Servers, datasets, models, training, generation and forecasting. [Artificial intelligence](ai.md)
 - Teracoin: mining, pools, wallets, blocks and the 3D Printer. [Teracoin](teracoin.md)
 - The cosmological simulator. [The cosmological simulator](simulator.md)
+- Fifty more advancements, with the Fab and Teracoin tabs. [Advancements](advancements.md)
 - The hardware, computer and era registries in the API, the event for an era reached, temperature for other mods,
   and dataset and model types. [The API](api.md)
 - Create: computers that shut down on contraptions and keep working on Create Aeronautics' ships, and Create's
