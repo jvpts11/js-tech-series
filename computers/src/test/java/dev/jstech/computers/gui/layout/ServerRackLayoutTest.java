@@ -23,6 +23,25 @@ class ServerRackLayoutTest {
     }
 
     @Test
+    void equipmentLayout_isClean() {
+        final GuiLayout l = ServerRackLayout.equipmentLayout();
+        assertTrue(l.isClean(), () -> "overlaps " + l.overlaps() + ", out of bounds " + l.outOfBounds());
+        assertTrue(l.zeroSizedSolids().isEmpty(), () -> "zero-sized " + l.zeroSizedSolids());
+    }
+
+    @Test
+    void equipment_standsBetweenThePostsAndClearsTheBays() {
+        final int lastOutletEnd = ServerRackLayout.outletX(ServerRackLayout.OUTLETS - 1) + ServerRackLayout.OUTLET_W;
+        assertTrue(lastOutletEnd < ServerRackLayout.DISPLAY_X, "the outlets end before the readout");
+        assertTrue(ServerRackLayout.DISPLAY_X + ServerRackLayout.DISPLAY_W <= ServerRackLayout.RAIL_R - 2,
+                "the readout clears the right post");
+        assertTrue(ServerRackLayout.CELLS_X + ServerRackLayout.CELLS * ServerRackLayout.CELL_PITCH
+                <= ServerRackLayout.RAIL_R - 2, "the cells clear the right post");
+        assertTrue(ServerRackLayout.frontItemX(ServerRackLayout.FRONT_SLOTS - 1) + 17 <= ServerRackLayout.DISPLAY_X,
+                "a shelf's bays end before the readout's place");
+    }
+
+    @Test
     void rows_startBelowTheHeaderAndEndAboveTheInventory() {
         assertTrue(ServerRackLayout.ROW_Y0 >= ServerRackLayout.HEADER_Y + ServerRackLayout.HEADER_H,
                 "the first rack unit must clear the header bar");

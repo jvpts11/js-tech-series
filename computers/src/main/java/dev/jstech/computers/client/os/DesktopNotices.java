@@ -11,6 +11,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.power.UpsTexts;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.Nullable;
  * and goes away on its own, taking nothing over. On Frames 10 the balloon is the toast in the corner, and every
  * notice is also kept for the Action Center.
  *
- * <p>The toast's colours are {@code jsc:desktop/toast}.
+ * <p>The toast's colours are {@code jsc:desktop/toast}, Plasma's notice's {@code jsc:desktop/plasma_notice}.
  */
 @PaletteHolder
 final class DesktopNotices {
@@ -70,7 +71,13 @@ final class DesktopNotices {
     private static final int TOAST_W = 168;
     private static final int HISTORY_MAX = 12;
     private static final Palette<Toast> TOAST = Palettes.declare(JsComputers.MODID, "desktop/toast",
-            new Toast(0xF21F1F1F, 0xFF2B2B2B, 0xFFFFFFFF, 0xFFBBBBBB, 0xFF0078D7));
+            new Toast(0xF21F1F1F, 0xFF2B2B2B, 0xFFFFFFFF, 0xFFBBBBBB, 0xFF0078D7, 0xFFF0B23A));
+    /** Plasma's notice: the card, its edge, the title, the words, the dim words, the bar's track and its fill. */
+    private static final Palette<PlasmaCard> PLASMA = Palettes.declare(JsComputers.MODID, "desktop/plasma_notice",
+            new PlasmaCard(0xFFFCFCFC, 0xFFBDC3C7, 0xFF232629, 0xFF31363B, 0xFF7F8C8D, 0xFFD6D9DC, 0xFFF67400));
+    /** Plasma's bar under a UPS's notice, and the room it takes with its words. */
+    private static final int BAR_H = 3;
+    private static final int BAR_ROOM = 4 + BAR_H + 3 + 9;
 
     DesktopNotices(final DesktopState desktop) {
         this.desktop = desktop;
@@ -210,6 +217,11 @@ final class DesktopNotices {
      * @param opens the window key of the program a click on it opens, or empty
      */
     void showBalloon(final String title, final String body, final String opens) {
+        showBalloon(title, body, opens, null);
+    }
+
+    /** The same, from the machine's UPS: {@code battery} is shown under the words, as the desktop shows it. */
+    void showBalloon(final String title, final String body, final String opens, @Nullable final Battery battery) {
         history.add(0, new Notice(title, body, opens, desktop.prefs().clockText()));
         if (history.size() > HISTORY_MAX) {
             history.remove(history.size() - 1);
@@ -218,7 +230,7 @@ final class DesktopNotices {
         if (quiet) {
             return;
         }
-        this.balloon = new Balloon(title, body, System.currentTimeMillis() + BALLOON_MS, opens);
+        this.balloon = new Balloon(title, body, System.currentTimeMillis() + BALLOON_MS, opens, battery);
         this.balloonIn = desktop.motion().start(MotionKinds.NOTICE_SHOW);
         this.leaving = null;
         PacketDistributor.sendToServer(new MachineSoundPayload(desktop.hostPos(), SystemSound.NOTIFY));
@@ -317,6 +329,10 @@ final class DesktopNotices {
             paintToast(g, shown, tbY, sw);
             return;
         }
+        if (plasma()) {
+            paintPlasma(g, shown, tbY, sw);
+            return;
+        }
         final int[] r = balloonRect(shown, tbY, sw);
         final Font font = desktop.textFont();
         final int x = r[0];
@@ -346,8 +362,7 @@ final class DesktopNotices {
         Draw.text(g, font, Component.literal(shown.title()).withStyle(ChatFormatting.BOLD),
                 x + 18, y + 5, c.balloonTitle());
         int ly = y + 16;
-        final List<FormattedCharSequence> lines = font.split(Component.literal(shown.body()), w - 12);
-        for (final FormattedCharSequence line : lines) {
+        for (final FormattedCharSequence line : words(shown, w - 12)) {
             Draw.text(g, font, line, x + 6, ly, c.balloonBody());
             ly += 9;
         }
@@ -360,7 +375,8 @@ final class DesktopNotices {
 
     /**
      * Frames 10's notice: a dark card in the corner over the taskbar, the program's mark, its name over the words, and
-     * a cross that appears under the cursor; no tail, since it points at nothing but the corner it came from.
+     * a cross that appears under the cursor; no tail, since it points at nothing but the corner it came from. The UPS's
+     * mark is its battery.
      */
     private void paintToast(final GuiGraphics g, final Balloon shown, final int tbY, final int sw) {
         final int[] r = balloonRect(shown, tbY, sw);
@@ -368,14 +384,85 @@ final class DesktopNotices {
         final Toast c = TOAST.get();
         g.fill(r[0], r[1], r[0] + r[2], r[1] + r[3], c.card());
         Draw.outline(g, r[0], r[1], r[2], r[3], c.edge());
-        g.fill(r[0] + 6, r[1] + 6, r[0] + 16, r[1] + 16, c.mark());
+        if (shown.battery() != null) {
+            BatteryGlyph.draw(g, r[0] + 4, r[1] + 7, 14, 8, shown.battery().percent(), c.title(), c.battery());
+        } else {
+            g.fill(r[0] + 6, r[1] + 6, r[0] + 16, r[1] + 16, c.mark());
+        }
         Draw.text(g, font, font.plainSubstrByWidth(shown.title(), r[2] - 34), r[0] + 22, r[1] + 6, c.title());
         int ly = r[1] + 18;
-        for (final FormattedCharSequence line : font.split(Component.literal(shown.body()), r[2] - 28)) {
+        for (final FormattedCharSequence line : words(shown, r[2] - 28)) {
             Draw.text(g, font, line, r[0] + 22, ly, c.body());
             ly += 9;
         }
         Draw.text(g, font, "x", r[0] + r[2] - 9, r[1] + 4, c.body());
+    }
+
+    /**
+     * Plasma's notice: a light card over the panel's corner, the program's mark and name over the words, and its cross.
+     * The UPS's notice carries the battery as Plasma's power manager drew it: a bar, how full under its start and how
+     * long it lasts under its end.
+     */
+    private void paintPlasma(final GuiGraphics g, final Balloon shown, final int tbY, final int sw) {
+        final int[] r = balloonRect(shown, tbY, sw);
+        final Font font = desktop.textFont();
+        final PlasmaCard c = PLASMA.get();
+        final int x = r[0];
+        final int y = r[1];
+        final int w = r[2];
+        g.fill(x, y, x + w, y + r[3], c.card());
+        Draw.outline(g, x, y, w, r[3], c.edge());
+        final Battery battery = shown.battery();
+        if (battery != null) {
+            BatteryGlyph.draw(g, x + 5, y + 6, 10, 6, battery.percent(), c.title(), c.barFill());
+        }
+        Draw.text(g, font, font.plainSubstrByWidth(shown.title(), w - 34), x + 18, y + 5, c.title());
+        Draw.text(g, font, "x", x + w - 9, y + 4, c.dim());
+        int ly = y + 17;
+        for (final FormattedCharSequence line : words(shown, w - 12)) {
+            Draw.text(g, font, line, x + 6, ly, c.body());
+            ly += 9;
+        }
+        if (battery == null) {
+            return;
+        }
+        final int barX = x + 6;
+        final int barW = w - 12;
+        final int barY = ly + 3;
+        g.fill(barX, barY, barX + barW, barY + BAR_H, c.barTrack());
+        g.fill(barX, barY, barX + barW * battery.percent() / 100, barY + BAR_H, c.barFill());
+        final int textY = barY + BAR_H + 3;
+        Draw.text(g, font, GameText.resolve(UpsTexts.PERCENT.with(battery.percent())), barX, textY, c.body());
+        if (battery.minutes() > 0L) {
+            final String left = GameText.resolve(UpsTexts.MINUTES_LEFT.with(battery.minutes()));
+            Draw.text(g, font, left, barX + barW - font.width(left), textY, c.dim());
+        }
+    }
+
+    /* Whether this desktop raises Plasma's notices: KDE's own desktop of today, not its period one. */
+    private boolean plasma() {
+        return desktop.panelStyle() == PanelStyle.KDE && !desktop.periodPanel();
+    }
+
+    /*
+     * The words of a notice, wrapped to {@code width}: what it says, and under it, where the desktop shows it as words,
+     * the UPS's battery; Frames adds when the system shuts itself down. Plasma shows the battery as its bar instead.
+     */
+    private List<FormattedCharSequence> words(final Balloon shown, final int width) {
+        final Font font = desktop.textFont();
+        final List<FormattedCharSequence> lines = new ArrayList<>(font.split(Component.literal(shown.body()), width));
+        final Battery battery = shown.battery();
+        if (battery == null || plasma()) {
+            return lines;
+        }
+        final String charge = GameText.resolve(battery.minutes() > 0L
+                ? UpsTexts.PERCENT_MINUTES_LEFT.with(battery.percent(), battery.minutes())
+                : UpsTexts.PERCENT.with(battery.percent()));
+        lines.addAll(font.split(Component.literal(charge), width));
+        if (!desktop.panelStyle().unixLike()) {
+            lines.addAll(font.split(Component.literal(GameText.resolve(UpsTexts.SHUTS_DOWN)), width));
+        }
+        return lines;
     }
 
     /**
@@ -403,11 +490,16 @@ final class DesktopNotices {
     @Nullable
     private int[] balloonRect(final Balloon shown, final int tbY, final int sw) {
         if (desktop.panelStyle() == PanelStyle.FRAMES_10) {
-            final int lines = desktop.textFont().split(Component.literal(shown.body()), TOAST_W - 28).size();
+            final int lines = words(shown, TOAST_W - 28).size();
             final int h = 18 + lines * 9 + 5;
             return new int[] {Math.max(4, sw - TOAST_W - 4), tbY - h - 4, TOAST_W, h};
         }
-        final int lines = desktop.textFont().split(Component.literal(shown.body()), BALLOON_W - 12).size();
+        if (plasma()) {
+            final int lines = words(shown, TOAST_W - 12).size();
+            final int h = 17 + lines * 9 + (shown.battery() == null ? 0 : BAR_ROOM) + 5;
+            return new int[] {Math.max(4, sw - TOAST_W - 4), tbY - h - 4, TOAST_W, h};
+        }
+        final int lines = words(shown, BALLOON_W - 12).size();
         final int h = 15 + lines * 9 + 5;
         final int x = Math.max(4, sw - BALLOON_W - 6);
         return new int[] {x, tbY - h - 7, BALLOON_W, h};
@@ -418,7 +510,16 @@ final class DesktopNotices {
      *
      * @param opens the program a click on it opens, or empty when clicking it only puts it away
      */
-    private record Balloon(String title, String body, long until, String opens) {
+    private record Balloon(String title, String body, long until, String opens, @Nullable Battery battery) {
+    }
+
+    /**
+     * The battery of the machine's UPS, under a notice the UPS raised.
+     *
+     * @param percent how full it is
+     * @param minutes how long it lasts at the load, in whole minutes
+     */
+    record Battery(int percent, long minutes) {
     }
 
     /**
@@ -428,7 +529,14 @@ final class DesktopNotices {
     record Notice(String title, String body, String opens, String time) {
     }
 
-    /** Frames 10's toast: its card and edge, the program's mark, the name and the words under it. */
-    private record Toast(int card, int edge, int title, int body, int mark) {
+    /**
+     * Frames 10's toast: its card and edge, the program's mark, the name and the words under it, and the charge of the
+     * battery a UPS's notice carries as its mark.
+     */
+    private record Toast(int card, int edge, int title, int body, int mark, int battery) {
+    }
+
+    /** Plasma's notice: its card and edge, the name, the words, the dim words, and the bar's track and fill. */
+    private record PlasmaCard(int card, int edge, int title, int body, int dim, int barTrack, int barFill) {
     }
 }

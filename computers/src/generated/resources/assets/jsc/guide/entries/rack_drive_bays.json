@@ -98,7 +98,7 @@
     }
   ],
   "id": "jsc:rack_drive_bays",
-  "order": 29,
+  "order": 30,
   "section": "jsc:racks",
   "title": "jsc.guide.rack_drive_bays.title"
 }

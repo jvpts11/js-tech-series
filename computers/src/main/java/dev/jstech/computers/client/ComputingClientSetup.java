@@ -213,6 +213,8 @@ public final class ComputingClientSetup {
         // The Redstone Interfaces: the sensor of each era, its lens and mode lamps showing what it does.
         event.registerBlockEntityRenderer(ComputingModule.REDSTONE_INTERFACE_BE.get(),
                 RedstoneInterfaceRenderer::create);
+        // The MF PowerGuards: the UPS of each era, its lamps showing whether the line or the battery carries the load.
+        event.registerBlockEntityRenderer(ComputingModule.UPS_BE.get(), UpsRenderer::create);
         // The small computers: each machine's case, by its age and the case it comes in.
         event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.SMALL_COMPUTER_BE.get(), ComputerRenderer::create);

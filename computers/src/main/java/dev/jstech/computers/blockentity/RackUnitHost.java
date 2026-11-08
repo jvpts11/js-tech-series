@@ -23,6 +23,7 @@ import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.OsInstallJob;
+import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.jstechseries.peripheral.PeripheralCableType;
 import dev.jstech.core.jstechseries.peripheral.PortKind;
@@ -510,6 +511,12 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     public boolean networkAttached() {
         // The rack answers for its units on both sides, so a mounted server's desktop reads its own link.
         return rack.asUnit(row, rack::networkAttached);
+    }
+
+    /** The rack's UPS, which carries every machine in it. */
+    @Override
+    public UpsReading upsReading() {
+        return rack.upsReading();
     }
 
     @Override

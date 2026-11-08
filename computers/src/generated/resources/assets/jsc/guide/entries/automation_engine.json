@@ -277,7 +277,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:automation_engine",
-  "order": 113,
+  "order": 114,
   "section": "jsc:automation_jobs",
   "title": "jsc.guide.automation_engine.title"
 }

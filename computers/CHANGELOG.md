@@ -139,6 +139,35 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   seconds; btrfs nothing; MC-DOS and MC-NET check nothing, as the real ones did not. A clean shutdown leaves no mark.
 - The Local heading of a computer's monitor shows what it draws, its parts' watts (DRAW) and what it takes
   from the line in FE a tick (LINE), and its id across from its title, which tells it from machines of the same name.
+- UPSes: the MF PowerGuard, a UPS block for every era (the 300 of the Vintage and the Legacy, 90 kJ for up
+  to 300 W; the 500, 240 kJ and 500 W; the 800, 480 kJ and 800 W; the 1500, 1.35 MJ and 1,500 W). The energy cable
+  plugs into its back or either side, and every computer standing against it draws from it. While the line brings
+  what they draw it feeds them and charges on top, an empty battery full in ten game minutes; when the line goes or
+  falls short, the battery carries them and its amber lamp lights; above what it carries it is in bypass, its green
+  lamp blinking, and protects nothing. A line one class too high, or a surge, does not get through it: it carries the
+  computers on its battery instead. A look at it says how it stands, and how long its battery lasts.
+- The Rack UPS carries its rack: every one holds 2.7 MJ and carries 3 kW, and the new UPS Battery
+  Expansion, one for every era, adds 2.7 MJ each. It charges on top of what the rack draws and carries the bays when
+  the line goes; above 3 kW a UPS is in bypass.
+- A system knows its UPS: the battery stands in the notification area, green on the line, amber on the
+  battery, red near the end or in bypass, its charge in the tip. As the line goes, Frames raises "On battery" from
+  the battery with its charge, how long it lasts and that it shuts down at 10%; Plasma raises Power Management's
+  notice with its bar; the other desktops their notice with the charge under it; MC-DOS and MC-NET print the UPS's two
+  lines, and a Unix at its console gets the UPS daemon's broadcast. At 10% of the battery every system shuts itself
+  down cleanly, so nothing is lost and no disk is checked, and the network's event log says so as a WARN; no machine
+  stays up on so low a battery. In an outage a machine switched on starts on the battery, as it would on the line.
+- The PDU, one for every era: it measures what every bay of its rack draws and lays their power open to
+  the network. `QUERY power` lists every server of a rack with a PDU, the rack unit it tops, its watts and whether it
+  is on; `UPDATE power SET on = no WHERE server = 'VAULT-01'` switches bays off, or on with `yes`, from a prompt or
+  a job, as their PWR switches would, and says how many did not start for want of energy.
+- The Drive Shelf (2U, Standard): ten drive bays that join those of the server mounted right above it,
+  its storage and its array; with no server right above it, it does nothing, and says so.
+- The rack's screen shows its own units: a click on any of them picks it for the card. The Rack UPS
+  shows its charge on its readout, and its card where the power comes from, the charge, what it holds, the load, how
+  long it lasts and when it shuts down; a battery expansion lights its cells; the PDU lights an outlet for each unit
+  drawing and shows the rack's draw, its card each unit's; the Drive Shelf's badge points at the server it extends,
+  and its card counts its bays and drives. The header says ON BATTERY or BYPASS.
+- The guide's list of the network's tables and their columns has the `events` and `power` tables.
 - Other mods' machines do the network's work: `RUN` asks a machine of the network for a kind of Operation
   its mod registered, `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH`,
   from a prompt, the studio, a job (so a job can answer a world event on another mod's machine) or a program. `ON`

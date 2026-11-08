@@ -95,7 +95,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:mainframe_services",
-  "order": 73,
+  "order": 74,
   "section": "jsc:network_operation",
   "title": "jsc.guide.mainframe_services.title"
 }

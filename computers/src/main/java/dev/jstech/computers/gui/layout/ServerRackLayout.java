@@ -65,6 +65,25 @@ public final class ServerRackLayout {
     public static final int PWR_H = 12;
     public static final int PWR_LAMP_DX = 3;
     public static final int PWR_LABEL_DX = 8;
+    /**
+     * The readout at the right end of a Rack UPS's or a PDU's faceplate: the UPS's charge, the PDU's draw. A drive
+     * shelf's badge, which says whose bays it extends, stands where a computer's power button does.
+     */
+    public static final int DISPLAY_W = 36;
+    public static final int DISPLAY_H = 11;
+    public static final int DISPLAY_X = RAIL_R - 6 - DISPLAY_W;
+    /** A UPS Battery Expansion's charge, a row of cells left of the right post. */
+    public static final int CELLS = 6;
+    public static final int CELL_W = 3;
+    public static final int CELL_H = 5;
+    public static final int CELL_PITCH = 4;
+    public static final int CELLS_X = RAIL_R - 8 - CELLS * CELL_PITCH;
+    /** A PDU's outlets along its faceplate, each with its lamp over it. */
+    public static final int OUTLETS = 8;
+    public static final int OUTLET_W = 8;
+    public static final int OUTLET_H = 6;
+    public static final int OUTLET_PITCH = 11;
+    public static final int OUTLETS_X = FRONT_X;
 
     /** The card of the selected unit, right of the cabinet. */
     public static final int CARD_X = 192;
@@ -112,6 +131,36 @@ public final class ServerRackLayout {
     /** The top of the card's line {@code index}: its label, with its value under it. */
     public static int cardLineY(final int index) {
         return CARD_LINE_Y + index * CARD_LINE_PITCH;
+    }
+
+    /** The top of a readout, centred on a unit {@code heightU} rack units tall topped at {@code row}. */
+    public static int displayY(final int row, final int heightU) {
+        return rowY(row) + (heightU * ROW_PITCH - DISPLAY_H) / 2;
+    }
+
+    /** Where outlet {@code index} of a PDU starts. */
+    public static int outletX(final int index) {
+        return OUTLETS_X + index * OUTLET_PITCH;
+    }
+
+    /**
+     * The faceplate of a rack's own equipment at its densest, on a 2U row pair at the cabinet's top: a PDU's outlets
+     * and readout on the first, a battery expansion's cells on the second; a drive shelf's badge is a power button's
+     * size and place. Checked apart from {@link #layout()}, whose rows all hold computers.
+     */
+    public static GuiLayout equipmentLayout() {
+        final GuiLayout l = new GuiLayout(WIDTH, HEIGHT);
+        for (int index = 0; index < OUTLETS; index++) {
+            l.box("outlet" + index, outletX(index), rowY(0) + 7, OUTLET_W, OUTLET_H);
+        }
+        l.box("pduDisplay", DISPLAY_X, displayY(0, 1), DISPLAY_W, DISPLAY_H);
+        l.text("pduReadout", DISPLAY_X + 3, displayY(0, 1) + 3, 6, 0.75f);   // "1.24kW"
+        for (int cell = 0; cell < CELLS; cell++) {
+            l.box("cell" + cell, CELLS_X + cell * CELL_PITCH, rowY(1) + 6, CELL_W, CELL_H);
+        }
+        l.slot("unit0", serverItemX(), itemY(0));
+        l.slot("unit1", serverItemX(), itemY(1));
+        return l;
     }
 
     /**

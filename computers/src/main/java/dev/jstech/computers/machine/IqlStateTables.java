@@ -38,8 +38,9 @@ public final class IqlStateTables {
     /** The column every state table has besides its own: where the machine stands. */
     public static final String AT = "at";
 
-    private static final TextKey YES = TextKey.of("jsc.iql.table.yes", "yes");
-    private static final TextKey NO = TextKey.of("jsc.iql.table.no", "no");
+    /** How a column that is true or false reads. */
+    static final TextKey YES = TextKey.of("jsc.iql.table.yes", "yes");
+    static final TextKey NO = TextKey.of("jsc.iql.table.no", "no");
 
     private IqlStateTables() {
     }

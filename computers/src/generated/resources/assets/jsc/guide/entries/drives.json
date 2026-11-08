@@ -276,7 +276,7 @@
     "jsc:blu_ray_drive",
     "jsc:dock_station"
   ],
-  "order": 42,
+  "order": 43,
   "section": "jsc:peripherals",
   "title": "jsc.guide.drives.title"
 }

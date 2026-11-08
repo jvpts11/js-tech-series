@@ -172,7 +172,7 @@
     }
   ],
   "id": "jsc:device_listing",
-  "order": 278,
+  "order": 279,
   "section": "jsc:freebsd_tools",
   "title": "jsc.guide.device_listing.title"
 }

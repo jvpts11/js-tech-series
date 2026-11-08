@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
+import dev.jstech.computers.blockentity.UpsBlockEntity;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.rack.RackThermalBudget;
 import dev.jstech.core.energy.EnergyPorts;
@@ -70,6 +71,10 @@ public final class ComputingCapabilities {
                     final AbstractComputerBlockEntity mainframe = mainframeOf(part);
                     return mainframe == null ? null : mainframe.feEnergy();
                 });
+        // A UPS takes the line only at its inlet, on its back and sides; the computers against it it feeds itself.
+        event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.UPS_BE.get(), UpsBlockEntity::energyPort);
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ComputingModule.UPS_BE.get(),
+                UpsBlockEntity::feEnergy);
         // A rack takes the energy of the machines in it, on any of its blocks.
         event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.SERVER_RACK_BE.get(),
                 (rack, side) -> rack.energyPort());

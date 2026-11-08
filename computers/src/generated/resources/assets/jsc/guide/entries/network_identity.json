@@ -134,7 +134,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:network_identity",
-  "order": 68,
+  "order": 69,
   "section": "jsc:network_operation",
   "title": "jsc.guide.network_identity.title"
 }

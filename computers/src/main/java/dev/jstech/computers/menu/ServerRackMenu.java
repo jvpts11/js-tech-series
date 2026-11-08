@@ -13,11 +13,14 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.ExpansionCardKind;
+import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.item.StorageCards;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.power.UpsRating;
+import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
@@ -201,6 +204,63 @@ public class ServerRackMenu extends CoreMenu {
         return rack.screenShown();
     }
 
+    /** How the rack's UPS stands, as the cabinet last told the players who see it: none without a Rack UPS. */
+    public UpsReading upsReading() {
+        return rack.upsReading();
+    }
+
+    /** The UPS the mounted units make up, or null without a Rack UPS. */
+    @Nullable
+    public UpsRating upsRating() {
+        return RackUnitItem.rackUps(RACK_SLOTS, this::serverInBay);
+    }
+
+    /** What the machine topped at {@code topRow} takes from the line now, in whole watts: nothing while it is off. */
+    public int bayWatts(final int topRow) {
+        return (int) Math.ceil(ServerRackBlockEntity.bayWatts(ServerItem.build(serverInBay(topRow)),
+                bayPowerOn(topRow)));
+    }
+
+    /** What every machine in the rack takes from the line now, in whole watts. */
+    public int drawnWatts() {
+        double drawn = 0.0;
+        for (int row = 0; row < RACK_SLOTS; row++) {
+            drawn += ServerRackBlockEntity.bayWatts(ServerItem.build(serverInBay(row)), bayPowerOn(row));
+        }
+        return (int) Math.ceil(drawn);
+    }
+
+    /** The top row of the server the drive shelf topped at {@code shelfTop} extends, or -1 when it extends none. */
+    public int extendedBy(final int shelfTop) {
+        final List<RackLayout.Unit> mounted = mountedUnits();
+        final RackLayout.Unit server = RackLayout.extendedBy(RackLayout.unitAt(shelfTop, mounted), mounted);
+        return server == null ? -1 : server.topU();
+    }
+
+    /** The top row of the drive shelf right under the server topped at {@code topRow}, or -1 when it has none. */
+    public int shelfUnder(final int topRow) {
+        final List<RackLayout.Unit> mounted = mountedUnits();
+        final RackLayout.Unit shelf = RackLayout.shelfUnder(RackLayout.unitAt(topRow, mounted), mounted);
+        return shelf == null ? -1 : shelf.topU();
+    }
+
+    /** How many drives the drive bays of the unit topped at {@code topRow} hold, its own rows only. */
+    public int drivesIn(final int topRow) {
+        final List<RackLayout.Unit> mounted = mountedUnits();
+        final RackLayout.Unit unit = RackLayout.unitAt(topRow, mounted);
+        int drives = 0;
+        for (int row = topRow; unit != null && row < topRow + unit.heightU(); row++) {
+            for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
+                final int index = row * RackLayout.SLOTS_PER_U + column;
+                if (LAYOUT.roleAt(row, column, mounted) == RackLayout.SlotRole.DRIVE
+                        && !frontSlotStack(index).isEmpty()) {
+                    drives++;
+                }
+            }
+        }
+        return drives;
+    }
+
     /**
      * The disk the machine topped at {@code topRow} boots from, counted among its drive bays from 0, or -1 when none
      * of its disks carries a system: the one it prefers when that one carries a system, else the first that does.
@@ -227,16 +287,14 @@ public class ServerRackMenu extends CoreMenu {
 
     // RAID readout, derived from the synced slots so the client can draw it
 
-    /** The front-slot indices the unit topped at {@code topRow} claims with the given role. */
+    /** The front-slot indices the unit topped at {@code topRow} claims with the given role, a shelf's under it too. */
     private List<Integer> claimedSlots(final int topRow, final RackLayout.SlotRole role) {
-        final RackChassis chassis =
-                ServerItem.chassisOf(serverInBay(topRow));
         final List<Integer> out = new ArrayList<>();
-        if (chassis == null) {
+        if (ServerItem.chassisOf(serverInBay(topRow)) == null) {
             return out;
         }
         final List<RackLayout.Unit> mounted = mountedUnits();
-        for (int row = topRow; row < topRow + chassis.heightU() && row < RACK_SLOTS; row++) {
+        for (final int row : RackLayout.rowsServing(RackLayout.unitAt(topRow, mounted), mounted)) {
             for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
                 if (LAYOUT.roleAt(row, column, mounted) == role) {
                     out.add(row * RackLayout.SLOTS_PER_U + column);

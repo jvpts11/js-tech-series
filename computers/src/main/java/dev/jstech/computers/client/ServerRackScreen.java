@@ -14,14 +14,19 @@ import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.operation.payload.RackBayPowerPayload;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.power.UpsRating;
+import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.rack.IMountableRackUnit;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.format.UnitFormatter;
+import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -42,6 +47,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Screen for the Server Rack, drawn as the cabinet seen from the front: the rack-unit ruler, the two posts with their
@@ -100,10 +106,10 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         final int relY = (int) Math.floor(mouseY - topPos);
         final int row = rowAt(relX, relY);
         final int top = row < 0 ? -1 : menu.unitTopOf(row);
-        if (isComputer(top)) {
-            // A click anywhere on a computer's faceplate picks it for the card, and still reaches the slot under it.
+        if (selectable(top)) {
+            // A click anywhere on a unit's faceplate picks it for the card, and still reaches the slot under it.
             selected = top;
-            if (button == 0 && onPower(top, relX, relY)) {
+            if (isComputer(top) && button == 0 && onPower(top, relX, relY)) {
                 send(new RackBayPowerPayload(menu.rackPos(), top));
                 return true;
             }
@@ -225,9 +231,20 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
          */
         final int throttle = menu.throttlePercent();
         final boolean linked = menu.networkLinked();
-        final String pill = GameText.resolve(throttle < 100 ? ServerRackTexts.THROTTLED.with(usedU, ROWS, throttle)
-                : (linked ? ServerRackTexts.LINKED : ServerRackTexts.OFFLINE).with(usedU, ROWS));
-        final int colour = throttle < 100 ? JsTechTheme.amber() : linked ? JsTechTheme.green() : JsTechTheme.red();
+        final UpsReading.Mode ups = menu.upsReading().mode();
+        // A rack its UPS carries, or one it no longer protects, says so first: the power is the most urgent of all.
+        final String pill;
+        final int colour;
+        if (ups == UpsReading.Mode.ON_BATTERY || ups == UpsReading.Mode.BYPASS) {
+            final boolean battery = ups == UpsReading.Mode.ON_BATTERY;
+            pill = GameText.resolve((battery ? ServerRackTexts.ON_BATTERY_PILL : ServerRackTexts.BYPASS_PILL)
+                    .with(usedU, ROWS));
+            colour = battery ? JsTechTheme.amber() : JsTechTheme.red();
+        } else {
+            pill = GameText.resolve(throttle < 100 ? ServerRackTexts.THROTTLED.with(usedU, ROWS, throttle)
+                    : (linked ? ServerRackTexts.LINKED : ServerRackTexts.OFFLINE).with(usedU, ROWS));
+            colour = throttle < 100 ? JsTechTheme.amber() : linked ? JsTechTheme.green() : JsTechTheme.red();
+        }
         final int pillX = x + ServerRackLayout.HEADER_X + ServerRackLayout.HEADER_W - 4 - font.width(pill);
         JsTechTheme.text(g, font, pill, pillX, y + ServerRackLayout.TITLE_Y, colour);
         AssemblyPainter.drawLamp(g, pillX - 7, y + ServerRackLayout.TITLE_Y + 3, colour, true);
@@ -267,11 +284,14 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         g.fill(left, ry, right, ry + 1, AssemblyPainter.mix(face, sheen, 0.18f));
         JsTechTheme.slot(g, x + ServerRackLayout.serverItemX(), y + ServerRackLayout.itemY(row));
         final boolean computer = isComputer(row);
-        final boolean on = computer && menu.bayPowerOn(row);
-        // The vents across what the chassis does not cable, between its bays and its power button.
+        final RackUnitItem.Kind kind = RackUnitItem.kindOf(menu.serverInBay(row));
+        // A drive shelf's bays serve the computer above it, so they light with that computer's power.
+        final int owner = kind == RackUnitItem.Kind.DRIVE_SHELF ? menu.extendedBy(row) : row;
+        final boolean on = owner >= 0 && isComputer(owner) && menu.bayPowerOn(owner);
+        // The vents across what the chassis does not cable, between its bays and what stands at its right end.
         final int cabled = unit.driveSlots();
         final int ventLeft = x + ServerRackLayout.frontItemX(Math.min(ServerRackLayout.FRONT_SLOTS, cabled)) + 2;
-        final int ventRight = x + ServerRackLayout.PWR_X - 2;
+        final int ventRight = x + ventEnd(kind);
         if (ventLeft < ventRight - 4) {
             final int vent = AssemblyPainter.mix(face, sheen, 0.12f);
             for (int vy = ry + 3; vy < ry + h - 3; vy += 2) {
@@ -299,7 +319,115 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
             AssemblyPainter.drawLamp(g, px + ServerRackLayout.PWR_LAMP_DX, py + 4, state.lamp(), on);
             JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.POWER), px + ServerRackLayout.PWR_LABEL_DX,
                     py + 3, JsTechTheme.text());
+        } else if (kind != null) {
+            drawEquipment(g, x, y, row, heightU, kind, face);
         }
+    }
+
+    /* Where a unit's vents end: before its readout or its cells, or before a computer's power button. */
+    private static int ventEnd(@Nullable final RackUnitItem.Kind kind) {
+        if (kind == null) {
+            return ServerRackLayout.PWR_X - 2;
+        }
+        return switch (kind) {
+            case RACK_UPS -> ServerRackLayout.DISPLAY_X - 3;
+            case UPS_BATTERY -> ServerRackLayout.CELLS_X - 3;
+            // A PDU's faceplate is its outlets, a shelf's its bays: neither has vents.
+            case PDU, DRIVE_SHELF -> 0;
+            default -> ServerRackLayout.PWR_X - 2;
+        };
+    }
+
+    /*
+     * The faces of the rack's own power and storage: the Rack UPS's charge on its readout, a battery expansion's cells,
+     * the PDU's outlets lit for the units drawing and the rack's whole draw, and the badge that says which server a
+     * drive shelf extends. The KVM switch, the Cooling Unit and the fibre interface show only their vents.
+     */
+    private void drawEquipment(final GuiGraphics g, final int x, final int y, final int row, final int heightU,
+                               final RackUnitItem.Kind kind, final int face) {
+        final UpsReading ups = menu.upsReading();
+        final int upsColour = upsColour(ups);
+        switch (kind) {
+            case RACK_UPS -> drawReadout(g, x, y, row, heightU, ups.present()
+                    ? GameText.resolve(ServerRackTexts.PERCENT.with(ups.percent())) : "--", upsColour, true);
+            case UPS_BATTERY -> {
+                final int lit = ups.present() ? (ups.percent() * ServerRackLayout.CELLS + 99) / 100 : 0;
+                final int cy = y + ServerRackLayout.rowY(row) + (heightU * PITCH - ServerRackLayout.CELL_H) / 2;
+                for (int cell = 0; cell < ServerRackLayout.CELLS; cell++) {
+                    final int cx = x + ServerRackLayout.CELLS_X + cell * ServerRackLayout.CELL_PITCH;
+                    g.fill(cx, cy, cx + ServerRackLayout.CELL_W, cy + ServerRackLayout.CELL_H, cell < lit ? upsColour
+                            : AssemblyPainter.mix(upsColour, JsTechTheme.screen(), 0.75f));
+                }
+            }
+            case PDU -> {
+                final int drawing = unitsDrawing();
+                final int oy = y + ServerRackLayout.rowY(row) + (heightU * PITCH - ServerRackLayout.OUTLET_H) / 2 + 1;
+                for (int index = 0; index < ServerRackLayout.OUTLETS; index++) {
+                    final int ox = x + ServerRackLayout.outletX(index);
+                    g.fill(ox, oy, ox + ServerRackLayout.OUTLET_W, oy + ServerRackLayout.OUTLET_H,
+                            AssemblyPainter.mix(face, JsTechTheme.screen(), 0.5f));
+                    AssemblyPainter.frame(g, ox, oy, ox + ServerRackLayout.OUTLET_W, oy + ServerRackLayout.OUTLET_H,
+                            AssemblyPainter.mix(face, JsTechTheme.text(), 0.25f));
+                    g.fill(ox + 2, oy + 2, ox + 3, oy + 4, JsTechTheme.dim());
+                    g.fill(ox + 5, oy + 2, ox + 6, oy + 4, JsTechTheme.dim());
+                    g.fill(ox + 3, oy - 3, ox + 5, oy - 2, index < drawing ? JsTechTheme.green()
+                            : AssemblyPainter.mix(JsTechTheme.green(), JsTechTheme.screen(), 0.75f));
+                }
+                final UnitFormatter.Scaled watts = UnitFormatter.forCurrentLocale().si(menu.drawnWatts());
+                drawReadout(g, x, y, row, heightU, GameText.resolve(ServerRackTexts.WATTS_SHORT.with(watts.number(),
+                        watts.prefix())), JsTechTheme.amber(), false);
+            }
+            case DRIVE_SHELF -> {
+                final int px = x + ServerRackLayout.PWR_X;
+                final int py = y + ServerRackLayout.pwrY(row, heightU);
+                final int server = menu.extendedBy(row);
+                final int colour = server >= 0 ? JsTechTheme.accent() : JsTechTheme.dim();
+                JsTechTheme.button(g, px, py, ServerRackLayout.PWR_W, ServerRackLayout.PWR_H, false);
+                // An arrow up at the server whose bays it extends.
+                g.fill(px + 4, py + 3, px + 5, py + 9, colour);
+                g.fill(px + 3, py + 4, px + 6, py + 5, colour);
+                JsTechTheme.textS(g, font, server >= 0 ? GameText.resolve(ServerRackTexts.UNIT.with(server + 1))
+                        : "--", px + ServerRackLayout.PWR_LABEL_DX, py + 3, colour);
+            }
+            default -> {
+            }
+        }
+    }
+
+    /* A readout at a unit's right end: its words in {@code colour}, and a lamp of the same beside them. */
+    private void drawReadout(final GuiGraphics g, final int x, final int y, final int row, final int heightU,
+                             final String text, final int colour, final boolean lamp) {
+        final int dx = x + ServerRackLayout.DISPLAY_X;
+        final int dy = y + ServerRackLayout.displayY(row, heightU);
+        final int right = dx + ServerRackLayout.DISPLAY_W;
+        g.fill(dx, dy, right, dy + ServerRackLayout.DISPLAY_H, JsTechTheme.track());
+        AssemblyPainter.frame(g, dx, dy, right, dy + ServerRackLayout.DISPLAY_H, JsTechTheme.line());
+        JsTechTheme.textS(g, font, text, dx + 3, dy + 3, colour);
+        if (lamp) {
+            g.fill(right - 6, dy + 3, right - 2, dy + 7, colour);
+        }
+    }
+
+    /* How many of the rack's units draw from the line now: its powered machines, and its UPS while it charges. */
+    private int unitsDrawing() {
+        int drawing = 0;
+        for (int row = 0; row < ROWS; row++) {
+            if (isComputer(row) && menu.bayWatts(row) > 0) {
+                drawing++;
+            }
+        }
+        final UpsReading ups = menu.upsReading();
+        return drawing + (ups.present() && !ups.onBattery() && ups.permille() < 1_000 ? 1 : 0);
+    }
+
+    /* The colour a UPS's state is shown in: green on the line, amber on its battery, red in bypass, dim for none. */
+    private static int upsColour(final UpsReading ups) {
+        return switch (ups.mode()) {
+            case ON_LINE -> JsTechTheme.green();
+            case ON_BATTERY -> JsTechTheme.amber();
+            case BYPASS -> JsTechTheme.red();
+            case NONE -> JsTechTheme.dim();
+        };
     }
 
     /*
@@ -349,7 +477,9 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         for (int i = 0; i < lines.size(); i++) {
             final CardLine line = lines.get(i);
             final int ly = y + ServerRackLayout.cardLineY(i);
-            JsTechTheme.textS(g, font, GameText.resolve(line.label()), cx + 3, ly, JsTechTheme.dim());
+            final String label = GameText.resolve(line.label());
+            JsTechTheme.textS(g, font, JsTechTheme.widthS(font, label) <= w - 6 ? label
+                    : Texts.clip(font, label, (int) ((w - 6) / JsTechTheme.small())), cx + 3, ly, JsTechTheme.dim());
             if (font.width(line.value()) <= w - 6) {
                 JsTechTheme.textRight(g, font, line.value(), cx + w - 3, ly + 7, line.colour());
             } else {
@@ -360,7 +490,7 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         }
     }
 
-    /* What the card says of the unit topped at top, or its empty lines when no computer is picked. */
+    /* What the card says of the unit topped at top, or its empty lines when no unit is picked. */
     private List<CardLine> cardLines(final int top) {
         if (top < 0) {
             final int text = JsTechTheme.text();
@@ -368,6 +498,16 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                     new CardLine(ServerRackTexts.CARD_BOOT, "--", text),
                     new CardLine(ServerRackTexts.CARD_SYSTEM, "--", text),
                     new CardLine(ServerRackTexts.CARD_NETWORK, "--", text));
+        }
+        final RackUnitItem.Kind kind = RackUnitItem.kindOf(menu.serverInBay(top));
+        if (kind != null) {
+            return switch (kind) {
+                case RACK_UPS -> upsLines();
+                case UPS_BATTERY -> expansionLines();
+                case PDU -> pduLines();
+                case DRIVE_SHELF -> shelfLines(top);
+                default -> List.of();
+            };
         }
         final UnitState state = stateOf(top);
         final int disk = menu.bootDisk(top);
@@ -383,6 +523,123 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                         : "--", linked ? JsTechTheme.accent() : JsTechTheme.dim()),
                 raidLine(top),
                 kvmLine(top));
+    }
+
+    /* The Rack UPS: where the power comes from, its charge, what it holds, the load, how long it lasts, its end. */
+    private List<CardLine> upsLines() {
+        final UpsReading ups = menu.upsReading();
+        final UpsRating rating = menu.upsRating();
+        final int colour = upsColour(ups);
+        final TextKey state = switch (ups.mode()) {
+            case ON_BATTERY -> ServerRackTexts.UPS_ON_BATTERY;
+            case BYPASS -> ServerRackTexts.UPS_BYPASS;
+            default -> ServerRackTexts.UPS_ON_LINE;
+        };
+        final int load = menu.drawnWatts();
+        return List.of(
+                new CardLine(ServerRackTexts.CARD_STATE, ups.present() ? GameText.resolve(state) : "--", colour),
+                new CardLine(ServerRackTexts.CARD_CHARGE, GameText.resolve(ServerRackTexts.PERCENT.with(ups.percent())),
+                        colour),
+                new CardLine(ServerRackTexts.CARD_HOLDS, rating == null ? "--"
+                        : GameText.resolve(JsEnergy.ENERGY.amount(rating.batteryJoules())), JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_LOAD, watts(load), JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_LASTS, load <= 0 ? "--"
+                        : GameText.resolve(ServerRackTexts.MINUTES.with(ups.minutesLeft())), JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_SHUTDOWN, GameText.resolve(ServerRackTexts.SHUTDOWN_AT),
+                        JsTechTheme.dim()));
+    }
+
+    /* A UPS Battery Expansion: what it adds, the Rack UPS it adds to, and that UPS's charge. */
+    private List<CardLine> expansionLines() {
+        final UpsReading ups = menu.upsReading();
+        final int upsRow = firstOf(RackUnitItem.Kind.RACK_UPS);
+        return List.of(
+                new CardLine(ServerRackTexts.CARD_ADDS, GameText.resolve(JsEnergy.ENERGY.amount(
+                        UpsRating.EXPANSION_JOULES)), JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_UPS, upsRow < 0 ? GameText.resolve(ServerRackTexts.NONE)
+                        : GameText.resolve(ServerRackTexts.UNIT.with(upsRow + 1)),
+                        upsRow < 0 ? JsTechTheme.amber() : JsTechTheme.accent()),
+                new CardLine(ServerRackTexts.CARD_CHARGE, ups.present()
+                        ? GameText.resolve(ServerRackTexts.PERCENT.with(ups.percent())) : "--", upsColour(ups)));
+    }
+
+    /*
+     * The PDU: the rack's whole draw, then what each unit draws (the UPS by whether it charges), as many as the card
+     * holds, and who switches the bays.
+     */
+    private List<CardLine> pduLines() {
+        final List<CardLine> units = new ArrayList<>();
+        final int upsRow = firstOf(RackUnitItem.Kind.RACK_UPS);
+        if (upsRow >= 0) {
+            final UpsReading ups = menu.upsReading();
+            final TextKey charging = ups.onBattery() ? ServerRackTexts.UPS_DRAINING
+                    : ups.permille() >= 1_000 ? ServerRackTexts.UPS_CHARGED : ServerRackTexts.UPS_CHARGING;
+            units.add(new CardLine(ServerRackTexts.UNIT_NAMED.with(upsRow + 1, ServerRackTexts.CARD_UPS.text()),
+                    GameText.resolve(charging), upsColour(ups)));
+        }
+        for (int row = 0; row < ROWS; row++) {
+            if (isComputer(row)) {
+                final boolean on = menu.bayPowerOn(row);
+                units.add(new CardLine(ServerRackTexts.UNIT_NAMED.with(row + 1, unitName(row)),
+                        on ? watts(menu.bayWatts(row)) : GameText.resolve(ServerRackTexts.OFF),
+                        on ? JsTechTheme.text() : JsTechTheme.dim()));
+            }
+        }
+        final List<CardLine> lines = new ArrayList<>();
+        lines.add(new CardLine(ServerRackTexts.CARD_TOTAL, watts(menu.drawnWatts()), JsTechTheme.text()));
+        final int room = ServerRackLayout.CARD_LINES - 2;
+        if (units.size() <= room) {
+            lines.addAll(units);
+        } else {
+            lines.addAll(units.subList(0, room - 1));
+            lines.add(new CardLine(ServerRackTexts.MORE_UNITS.with(units.size() - room + 1), "", JsTechTheme.dim()));
+        }
+        lines.add(new CardLine(ServerRackTexts.CARD_POWER, GameText.resolve(ServerRackTexts.IQL_JOBS),
+                JsTechTheme.accent()));
+        return lines;
+    }
+
+    /*
+     * A drive shelf: the server it extends, or nothing; that server's bays and its own; the drives in its own; and the
+     * array they join.
+     */
+    private List<CardLine> shelfLines(final int top) {
+        final int server = menu.extendedBy(top);
+        final int bays = menu.unitHeightAt(top) * RackLayout.SLOTS_PER_U;
+        final String drives = GameText.resolve(ServerRackTexts.OF_TOTAL.with(menu.drivesIn(top), bays));
+        if (server < 0) {
+            return List.of(new CardLine(ServerRackTexts.CARD_EXTENDS, GameText.resolve(ServerRackTexts.NOTHING),
+                            JsTechTheme.amber()),
+                    new CardLine(ServerRackTexts.CARD_BAYS, String.valueOf(bays), JsTechTheme.text()),
+                    new CardLine(ServerRackTexts.CARD_DRIVES, drives, JsTechTheme.text()));
+        }
+        final RackChassis chassis = ServerItem.chassisOf(menu.serverInBay(server));
+        final int own = chassis == null ? 0 : chassis.driveSlots();
+        final boolean array = menu.raidLabel(server) != null;
+        return List.of(
+                new CardLine(ServerRackTexts.CARD_EXTENDS, GameText.resolve(ServerRackTexts.UNIT_NAMED.with(server + 1,
+                        unitName(server))), JsTechTheme.accent()),
+                new CardLine(ServerRackTexts.CARD_BAYS, GameText.resolve(ServerRackTexts.BAYS_PLUS.with(own, bays)),
+                        JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_DRIVES, drives, JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_ARRAY, GameText.resolve(array
+                        ? ServerRackTexts.WITH_UNIT.with(server + 1) : ServerRackTexts.NONE.text()),
+                        array ? JsTechTheme.text() : JsTechTheme.dim()));
+    }
+
+    /* The top row of the first unit of {@code kind} in the rack, or -1 when it has none. */
+    private int firstOf(final RackUnitItem.Kind kind) {
+        for (int row = 0; row < ROWS; row++) {
+            if (RackUnitItem.is(menu.serverInBay(row), kind)) {
+                return row;
+            }
+        }
+        return -1;
+    }
+
+    /* Watts as the card writes them, grouped: "1,240 W". */
+    private static String watts(final int watts) {
+        return GameText.resolve(ServerRackTexts.WATTS.with(UnitFormatter.forCurrentLocale().decimal(watts)));
     }
 
     /* The array: rebuilding with its progress, its level and health, or none. */
@@ -470,6 +727,16 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
             }
             return;
         }
+        // A drive shelf with no server right above it says so, and where it has to go.
+        final int hoveredRow = rowAt(relX, relY);
+        final int hoveredTop = hoveredRow < 0 ? -1 : menu.unitTopOf(hoveredRow);
+        if (hoveredTop >= 0 && RackUnitItem.is(menu.serverInBay(hoveredTop), RackUnitItem.Kind.DRIVE_SHELF)
+                && menu.extendedBy(hoveredTop) < 0) {
+            g.renderComponentTooltip(font, List.of(
+                    GameText.component(ServerRackTexts.SHELF_ALONE).withStyle(ChatFormatting.GOLD),
+                    GameText.component(ServerRackTexts.SHELF_MOUNT)), mouseX, mouseY);
+            return;
+        }
         // An empty bay explains itself: what goes in it, and whether it belongs to an array.
         final int index = hoveredSlot == null ? -1 : frontIndex(hoveredSlot);
         if (index >= 0) {
@@ -506,18 +773,38 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         g.renderComponentTooltip(font, lines, mouseX, mouseY);
     }
 
-    /* The selected computer, or the topmost one when the selection holds none any more; -1 when the rack has none. */
+    /*
+     * The selected unit, or, when the selection holds none any more, the topmost computer, else the topmost unit the
+     * card describes; -1 when the rack has none.
+     */
     private int selectedUnit() {
-        if (isComputer(selected)) {
+        if (selectable(selected)) {
             return selected;
         }
+        int first = -1;
         for (int row = 0; row < ROWS; row++) {
             if (isComputer(row)) {
                 selected = row;
                 return row;
             }
+            if (first < 0 && selectable(row)) {
+                first = row;
+            }
         }
-        return -1;
+        if (first >= 0) {
+            selected = first;
+        }
+        return first;
+    }
+
+    /* Whether the card describes the unit topped at row: a computer, or the rack's power and storage. */
+    private boolean selectable(final int row) {
+        if (isComputer(row)) {
+            return true;
+        }
+        final RackUnitItem.Kind kind = row < 0 || row >= ROWS ? null : RackUnitItem.kindOf(menu.serverInBay(row));
+        return kind == RackUnitItem.Kind.RACK_UPS || kind == RackUnitItem.Kind.UPS_BATTERY
+                || kind == RackUnitItem.Kind.PDU || kind == RackUnitItem.Kind.DRIVE_SHELF;
     }
 
     /* Whether a computer is mounted with its top at row. */
@@ -564,7 +851,11 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
     }
 
     /** One line of the card: its label, and its value in its colour. */
-    private record CardLine(TextKey label, String value, int colour) {
+    private record CardLine(Text label, String value, int colour) {
+
+        CardLine(final TextKey label, final String value, final int colour) {
+            this(label.text(), value, colour);
+        }
     }
 
     /** A computer's state: its word on the card and that word's colour, and its power lamp's colour. */

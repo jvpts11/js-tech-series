@@ -33,6 +33,8 @@ import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.power.UpsRating;
+import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
@@ -100,6 +102,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.Arrays;
 import java.util.function.BiFunction;
+import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -177,6 +180,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /* The storage and compute servers of the other eras, four in a row each in the same way. */
     public static final int UNIT_STORAGE_2U_VINTAGE = 27;
     public static final int UNIT_COMPUTE_2U_VINTAGE = 31;
+    /* The UPS Battery Expansions and the PDUs, each kind's five in a row from the Vintage's to the Advanced's. */
+    public static final int UNIT_UPS_BATTERY_VINTAGE = 35;
+    public static final int UNIT_PDU_VINTAGE = 40;
+    public static final int UNIT_DRIVE_SHELF = 45;
     /* The 1U server's face of each era, and the supercomputer node's, which only the Standard and the Advanced make. */
     private static final EraTable<Integer> SERVER_FACES = EraTable.ofFive(UNIT_SERVER_VINTAGE, UNIT_SERVER_LEGACY,
             UNIT_SERVER_TRANSITION, UNIT_SERVER_STANDARD, UNIT_SERVER_ADVANCED);
@@ -191,7 +198,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             "rack_ups_vintage", "rack_ups_legacy", "rack_ups_transition", "rack_ups_advanced",
             "cooling_unit_vintage", "cooling_unit_legacy", "cooling_unit_transition", "cooling_unit_advanced",
             "storage_2u_vintage", "storage_2u_legacy", "storage_2u_transition", "storage_2u_advanced",
-            "compute_2u_vintage", "compute_2u_legacy", "compute_2u_transition", "compute_2u_advanced"};
+            "compute_2u_vintage", "compute_2u_legacy", "compute_2u_transition", "compute_2u_advanced",
+            "ups_battery_vintage", "ups_battery_legacy", "ups_battery_transition", "ups_battery_standard",
+            "ups_battery_advanced", "pdu_vintage", "pdu_legacy", "pdu_transition", "pdu_standard", "pdu_advanced",
+            "drive_shelf"};
 
     /*
      * What the client copy knows about the cabinet: it holds no inventory, so the server sends the unit
@@ -239,6 +249,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             case COOLING_UNIT -> eraUnit(UNIT_COOLING_UNIT, UNIT_COOLING_UNIT_VINTAGE, unit.era());
             case FIBRE_INTERFACE -> RackUnitItem.fibreReachOf(stack) == FibreReach.ADVANCED
                     ? UNIT_FIBRE_ADVANCED : UNIT_FIBRE_STANDARD;
+            case UPS_BATTERY -> UNIT_UPS_BATTERY_VINTAGE + HardwareEra.partsIndex(unit.era());
+            case PDU -> UNIT_PDU_VINTAGE + HardwareEra.partsIndex(unit.era());
+            case DRIVE_SHELF -> UNIT_DRIVE_SHELF;
         };
     }
 
@@ -250,7 +263,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /** Whether a unit code is a computer's, rather than a unit's that serves the cabinet. */
     public static boolean isComputerUnit(final int unitCode) {
         return unitCode > UNIT_NONE && unitCode <= UNIT_NODE_2U_ADVANCED
-                || unitCode >= UNIT_STORAGE_2U_VINTAGE && unitCode < UNIT_BONES.length;
+                || unitCode >= UNIT_STORAGE_2U_VINTAGE && unitCode < UNIT_UPS_BATTERY_VINTAGE;
     }
 
     /** Whether the bay at {@code slot} is switched on, on either side. */
@@ -424,6 +437,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 bayPowerOff |= 1 << slot;
             }
             markStorageChanged(slot);
+            // A drive shelf mounted or taken away right under a server changes that server's bays, so its storage.
+            for (final RackLayout.Unit unit : mountedUnits()) {
+                if (unit.role() == RackLayout.Role.COMPUTER && unit.topU() + unit.heightU() == slot) {
+                    markStorageChanged(unit.topU());
+                }
+            }
             setChanged();
             updateBayVisuals();
             syncDisplayEra(); // a swapped machine can be of another era than the one it replaced
@@ -804,9 +823,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
         @Override
         protected void onContentsChanged(final int slot) {
-            // Storage lives on the drives, so a hotswap is a storage change of the owning unit.
-            final RackLayout.Unit unit = RackLayout.unitAt(
-                    slot / RackLayout.SLOTS_PER_U, mountedUnits());
+            /*
+             * Storage lives on the drives, so a hotswap is a storage change of the owning unit: the row's own, or the
+             * server a drive shelf extends.
+             */
+            final RackLayout.Unit unit = RackLayout.ownerOfRow(slot / RackLayout.SLOTS_PER_U, mountedUnits());
             final int top = unit != null ? unit.topU() : slot / RackLayout.SLOTS_PER_U;
             markStorageChanged(top);
             // A replacement drive completing a degraded array starts the rebuild.
@@ -955,6 +976,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private final ComputerEnergy energy = new ComputerEnergy(this::energyChanged);
     /* When each bay's power supply is next due to wear while its machine runs. */
     private final PsuWearing.Clock[] psuClocks = new PsuWearing.Clock[CAPACITY_U];
+    /* The battery of the rack's UPS. */
+    private final UpsBattery ups = new UpsBattery();
 
     /** Whether the bay whose unit tops at {@code slot} has its power switch on. */
     public boolean bayPowerOn(final int slot) {
@@ -972,7 +995,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
          */
         final ComputerBuild build = buildAt(slot);
         if (!bayPowerOn(slot) && build != null && build.isPowered() && (psuFailed(slot)
-                || !energy.canRun(drawnWatts() + ComputerEnergy.lineWatts(build.powerDraw(), build.psu())))) {
+                || !startsOn(drawnWatts() + ComputerEnergy.lineWatts(build.powerDraw(), build.psu())))) {
             return;
         }
         bayPowerOff ^= 1 << slot;
@@ -989,6 +1012,41 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         flushConsole(slot);
         setChanged();
         bayPowerSwitched(slot);
+    }
+
+    /**
+     * Throws the power switch of the bay at {@code slot} to {@code on}, as its PDU does for the network; answers
+     * whether the bay is now as asked, which a machine the cabinet has no energy for, or whose supply failed, does not
+     * come to.
+     */
+    public boolean setBayPower(final int slot, final boolean on) {
+        if (bayPowerOn(slot) != on) {
+            toggleBayPower(slot);
+        }
+        return bayPowerOn(slot) == on;
+    }
+
+    /*
+     * Whether the cabinet has a tick of {@code watts} for its machines: in its store, or from its UPS's battery, which
+     * starts a machine in an outage as the line would, while it has more than a tenth and carries the lot.
+     */
+    private boolean startsOn(final double watts) {
+        if (energy.canRun(watts)) {
+            return true;
+        }
+        final UpsRating rating = upsRating();
+        return rating != null && ups.mode() == UpsReading.Mode.ON_BATTERY && !rating.bypassedBy(watts)
+                && !rating.shutsDownAt(ups.charge());
+    }
+
+    /** Whether a PDU is mounted, which lays the bays' power open to the network's language. */
+    public boolean hasPdu() {
+        for (int slot = 0; slot < CAPACITY_U; slot++) {
+            if (RackUnitItem.is(servers.getStackInSlot(slot), RackUnitItem.Kind.PDU)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public ServerRackBlockEntity(final BlockPos pos, final BlockState state) {
@@ -1096,17 +1154,17 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     }
 
     /**
-     * The drive stacks the unit mounted at {@code serverSlot} has claimed, in row-major slot order.
-     * The returned stacks are the live front-slot stacks: writing their components writes the bay.
+     * The drive stacks the unit mounted at {@code serverSlot} has claimed, in row-major slot order, a drive shelf's
+     * right under it included. The returned stacks are the live front-slot stacks: writing their components writes
+     * the bay.
      */
     public List<ItemStack> claimedDriveStacks(final int serverSlot) {
-        final RackChassis chassis = ServerItem.chassisOf(servers.getStackInSlot(serverSlot));
-        if (chassis == null) {
+        if (ServerItem.chassisOf(servers.getStackInSlot(serverSlot)) == null) {
             return List.of();
         }
         final List<RackLayout.Unit> mounted = mountedUnits();
         final List<ItemStack> drives = new ArrayList<>();
-        for (int row = serverSlot; row < serverSlot + chassis.heightU() && row < CAPACITY_U; row++) {
+        for (final int row : RackLayout.rowsServing(RackLayout.unitAt(serverSlot, mounted), mounted)) {
             for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
                 if (layout.roleAt(row, column, mounted) != RackLayout.SlotRole.DRIVE) {
                     continue;
@@ -1120,14 +1178,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return drives;
     }
 
-    /** Inserts a drive into the first free claimed drive slot of the unit at {@code serverSlot}. */
+    /** Inserts a drive into the first free claimed drive slot of the unit at {@code serverSlot}, a shelf's included. */
     public boolean insertDrive(final int serverSlot, final ItemStack drive) {
-        final RackChassis chassis = ServerItem.chassisOf(servers.getStackInSlot(serverSlot));
-        if (chassis == null || !fitsBay(drive)) {
+        if (ServerItem.chassisOf(servers.getStackInSlot(serverSlot)) == null || !fitsBay(drive)) {
             return false;
         }
         final List<RackLayout.Unit> mounted = mountedUnits();
-        for (int row = serverSlot; row < serverSlot + chassis.heightU() && row < CAPACITY_U; row++) {
+        for (final int row : RackLayout.rowsServing(RackLayout.unitAt(serverSlot, mounted), mounted)) {
             for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
                 if (layout.roleAt(row, column, mounted) != RackLayout.SlotRole.DRIVE) {
                     continue;
@@ -1262,12 +1319,18 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public double drawnWatts() {
         double drawn = 0.0;
         for (int slot = 0; slot < CAPACITY_U; slot++) {
-            final ComputerBuild build = buildAt(slot);
-            if (build != null && build.isPowered() && bayPowerOn(slot)) {
-                drawn += ComputerEnergy.lineWatts(build.powerDraw(), build.psu());
-            }
+            drawn += bayWatts(buildAt(slot), bayPowerOn(slot));
         }
         return drawn;
+    }
+
+    /**
+     * What the machine built as {@code build} takes from the line through its own supply, in watts, in a bay whose
+     * switch is {@code powerOn}: nothing for no machine, or one switched off.
+     */
+    public static double bayWatts(@Nullable final ComputerBuild build, final boolean powerOn) {
+        return build != null && build.isPowered() && powerOn
+                ? ComputerEnergy.lineWatts(build.powerDraw(), build.psu()) : 0.0;
     }
 
     private void tick(final ServerLevel level) {
@@ -1673,13 +1736,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     /** The front-slot index of the {@code i}-th DRIVE-role slot of the unit at {@code topRow}, or -1. */
     private int driveSlotIndex(final int topRow, final int i) {
-        final RackChassis chassis = ServerItem.chassisOf(servers.getStackInSlot(topRow));
-        if (chassis == null || i < 0) {
+        if (ServerItem.chassisOf(servers.getStackInSlot(topRow)) == null || i < 0) {
             return -1;
         }
         final List<RackLayout.Unit> mounted = mountedUnits();
         int seen = 0;
-        for (int row = topRow; row < topRow + chassis.heightU() && row < CAPACITY_U; row++) {
+        for (final int row : RackLayout.rowsServing(RackLayout.unitAt(topRow, mounted), mounted)) {
             for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
                 if (layout.roleAt(row, column, mounted) != RackLayout.SlotRole.DRIVE) {
                     continue;
@@ -2228,7 +2290,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     @Override
     public int diskSlots() {
         final RackChassis chassis = ServerItem.chassisOf(soleServerStack());
-        return chassis == null ? 0 : chassis.driveSlots();
+        if (chassis == null) {
+            return 0;
+        }
+        // A drive shelf right under the server adds its bays to the server's own.
+        final List<RackLayout.Unit> mounted = mountedUnits();
+        final RackLayout.Unit shelf = RackLayout.shelfUnder(RackLayout.unitAt(soleComputerSlot(), mounted), mounted);
+        return chassis.driveSlots() + (shelf == null ? 0 : shelf.driveSlots());
     }
 
     @Override
@@ -2744,6 +2812,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         // The machine the monitor was switched to; activeChannel() still falls back if that row is empty now.
         activeChannel = tag.getInt("ActiveChannel");
         arrays.load(tag);
+        ups.load(tag);
     }
 
     /*
@@ -2778,6 +2847,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         tag.putBoolean("ServicePanelOff", servicePanelOff);
         tag.putInt("ActiveChannel", activeChannel);
         arrays.save(tag);
+        ups.save(tag);
     }
 
     /*
@@ -2820,15 +2890,74 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 supplies += ComputerEnergy.lineWatts(build.psu().wattage(), build.psu());
             }
         }
-        energy.sizeFor(supplies);
+        // A Rack UPS charges its battery from the line too, a tick of it on top of what the machines take.
+        final UpsRating rating = upsRating();
+        energy.sizeFor(supplies, rating == null ? 0L : rating.chargePerTick());
         final double drawn = drawnWatts();
+        final UpsReading.Mode was = ups.mode();
+        final UpsReading.Mode mode = ups.carry(rating, energy, drawn);
         if (drawn > 0.0 && !energy.draw(drawn)) {
-            final boolean wavering = energy.wavering();
+            // A battery that ran out took the power with it, which no wavering line did.
+            final boolean wavering = mode != UpsReading.Mode.ON_BATTERY && energy.wavering();
             for (int slot = 0; slot < CAPACITY_U; slot++) {
                 final ComputerBuild build = buildAt(slot);
                 if (build != null && build.isPowered() && bayPowerOn(slot)) {
                     bayPowerLost(level, slot, wavering);
                 }
+            }
+        }
+        ups.charge(rating, energy, drawn);
+        energy.settle();
+        if (mode == UpsReading.Mode.ON_BATTERY && was != UpsReading.Mode.ON_BATTERY) {
+            forEachRunningBay(slot -> UpsNotices.onBattery(worldPosition, unitHost(slot),
+                    terminals.watching(level, slot), ClientReplication.keyboardOf(unitState(slot).console),
+                    ups.reading(rating, drawn)));
+        }
+        if (ups.low(rating)) {
+            // As real UPS software does: the systems shut themselves down cleanly before the battery runs out.
+            forEachRunningBay(slot -> {
+                logBay(level, slot, EventLevel.WARN, UpsNotices.LOG_SHUTDOWN.text());
+                unitHost(slot).shutDown();
+            });
+        }
+        syncUps(rating, drawn);
+    }
+
+    /** The UPS the rack's units make up, or null without a Rack UPS. */
+    @Nullable
+    private UpsRating upsRating() {
+        return RackUnitItem.rackUps(CAPACITY_U, servers::getStackInSlot);
+    }
+
+    /** How the rack's UPS stands, on either side: none without a Rack UPS. */
+    public UpsReading upsReading() {
+        if (level != null && level.isClientSide()) {
+            return ups.shown();
+        }
+        return ups.reading(upsRating(), drawnWatts());
+    }
+
+    /** Sets what the rack's UPS battery holds, for a test to start an outage from. */
+    public void setUpsCharge(final long joules) {
+        ups.setCharge(joules);
+    }
+
+    /*
+     * Tells the players who see the cabinet how its UPS stands when that changes: where the power comes from, a
+     * percent of charge, or a minute of what is left.
+     */
+    private void syncUps(@Nullable final UpsRating rating, final double drawn) {
+        if (ups.shownChanged(ups.reading(rating, drawn))) {
+            fields().syncToClients();
+        }
+    }
+
+    /* Runs {@code body} for every bay whose machine is switched on and runs. */
+    private void forEachRunningBay(final IntConsumer body) {
+        for (int slot = 0; slot < CAPACITY_U; slot++) {
+            final ComputerBuild build = buildAt(slot);
+            if (build != null && build.isPowered() && bayPowerOn(slot)) {
+                body.accept(slot);
             }
         }
     }
@@ -2981,6 +3110,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             tag.putBoolean("ServicePanelOff", servicePanelOff);
             // Whether the rack is on a data network, for the notification area of a mounted server's desktop.
             tag.putBoolean("Networked", !registered.isEmpty());
+            // And how its UPS stands, for the same area and the rack's screen.
+            UpsBattery.writeShown(tag, upsReading());
             sounds.saveForClient(tag);
         }
 
@@ -2995,6 +3126,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             clientBayPowerOff = tag.getInt("BayPowerOff");
             clientServicePanelOff = tag.getBoolean("ServicePanelOff");
             clientNetworked = tag.getBoolean("Networked");
+            ups.readShown(tag);
             sounds.loadFromClient(tag);
         }
     }

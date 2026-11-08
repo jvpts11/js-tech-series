@@ -216,7 +216,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:notices",
-  "order": 156,
+  "order": 157,
   "section": "jsc:desktop_working",
   "title": "jsc.guide.notices.title"
 }

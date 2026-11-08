@@ -66,6 +66,46 @@ final class ServerRackTexts {
     static final TextKey CHASSIS = TextKey.of("jsc.rack.chassis", "%sU - %s drive bays");
     static final TextKey NEEDS_BOARD = TextKey.of("jsc.rack.needs_board", "Incomplete - needs a board + PSU");
     static final TextKey NOT_ON_NETWORK = TextKey.of("jsc.rack.not_on_network", "Rack cable not on a network");
+    /* The header while the rack's UPS carries it, or protects nothing. */
+    static final TextKey ON_BATTERY_PILL = TextKey.of("jsc.rack.on_battery_pill", "%s/%sU  ON BATTERY");
+    static final TextKey BYPASS_PILL = TextKey.of("jsc.rack.bypass_pill", "%s/%sU  BYPASS");
+    /* The Rack UPS's card: where the power comes from, its charge, what it holds, the load, how long, when it stops. */
+    static final TextKey CARD_CHARGE = TextKey.of("jsc.rack.card_charge", "CHARGE");
+    static final TextKey CARD_HOLDS = TextKey.of("jsc.rack.card_holds", "HOLDS");
+    static final TextKey CARD_LOAD = TextKey.of("jsc.rack.card_load", "LOAD");
+    static final TextKey CARD_LASTS = TextKey.of("jsc.rack.card_lasts", "LASTS");
+    static final TextKey CARD_SHUTDOWN = TextKey.of("jsc.rack.card_shutdown", "SHUTDOWN");
+    static final TextKey UPS_ON_LINE = TextKey.of("jsc.rack.ups_on_line", "ON LINE");
+    static final TextKey UPS_ON_BATTERY = TextKey.of("jsc.rack.ups_on_battery", "ON BATTERY");
+    static final TextKey UPS_BYPASS = TextKey.of("jsc.rack.ups_bypass", "BYPASS");
+    static final TextKey PERCENT = TextKey.of("jsc.rack.percent", "%s%%");
+    static final TextKey MINUTES = TextKey.of("jsc.rack.minutes", "%s min");
+    static final TextKey SHUTDOWN_AT = TextKey.of("jsc.rack.shutdown_at", "at 10%%");
+    static final TextKey WATTS = TextKey.of("jsc.rack.watts", "%s W");
+    static final TextKey WATTS_SHORT = TextKey.of("jsc.rack.watts_short", "%s%sW");
+    /* The UPS Battery Expansion's card: what it adds, and the UPS it adds to. */
+    static final TextKey CARD_ADDS = TextKey.of("jsc.rack.card_adds", "ADDS");
+    static final TextKey CARD_UPS = TextKey.of("jsc.rack.card_ups", "UPS");
+    /* The PDU's card: the whole rack's draw, each unit's, and who switches the bays. */
+    static final TextKey CARD_TOTAL = TextKey.of("jsc.rack.card_total", "TOTAL");
+    static final TextKey CARD_POWER = TextKey.of("jsc.rack.card_power", "POWER");
+    static final TextKey UNIT_NAMED = TextKey.of("jsc.rack.unit_named", "%sU %s");
+    static final TextKey UPS_CHARGED = TextKey.of("jsc.rack.ups_charged", "charged");
+    static final TextKey UPS_CHARGING = TextKey.of("jsc.rack.ups_charging", "charging");
+    static final TextKey UPS_DRAINING = TextKey.of("jsc.rack.ups_draining", "on battery");
+    static final TextKey IQL_JOBS = TextKey.of("jsc.rack.iql_jobs", "IQL, jobs");
+    static final TextKey MORE_UNITS = TextKey.of("jsc.rack.more_units", "+%s more");
+    /* The Drive Shelf's card: the server it extends, the bays, the drives in its own, and the array they join. */
+    static final TextKey CARD_EXTENDS = TextKey.of("jsc.rack.card_extends", "EXTENDS");
+    static final TextKey CARD_BAYS = TextKey.of("jsc.rack.card_bays", "BAYS");
+    static final TextKey CARD_DRIVES = TextKey.of("jsc.rack.card_drives", "DRIVES");
+    static final TextKey CARD_ARRAY = TextKey.of("jsc.rack.card_array", "ARRAY");
+    static final TextKey NOTHING = TextKey.of("jsc.rack.nothing", "nothing");
+    static final TextKey BAYS_PLUS = TextKey.of("jsc.rack.bays_plus", "%s + %s");
+    static final TextKey OF_TOTAL = TextKey.of("jsc.rack.of_total", "%s / %s");
+    static final TextKey WITH_UNIT = TextKey.of("jsc.rack.with_unit", "with %sU");
+    static final TextKey SHELF_ALONE = TextKey.of("jsc.rack.shelf_alone", "No server above this shelf");
+    static final TextKey SHELF_MOUNT = TextKey.of("jsc.rack.shelf_mount", "Mount it right under a server");
 
     private ServerRackTexts() {
     }

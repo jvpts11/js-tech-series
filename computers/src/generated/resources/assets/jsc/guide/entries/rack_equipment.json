@@ -67,6 +67,39 @@
           {
             "words": "jsc.guide.rack_equipment.table1_5_3"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_6_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_8_3"
+          }
         ]
       ]
     },
@@ -91,6 +124,18 @@
       "text": "jsc.guide.rack_equipment.text6"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text9"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -112,6 +157,18 @@
         {
           "fix": "jsc.guide.rack_equipment.fix4",
           "problem": "jsc.guide.rack_equipment.problem4"
+        },
+        {
+          "fix": "jsc.guide.rack_equipment.fix5",
+          "problem": "jsc.guide.rack_equipment.problem5"
+        },
+        {
+          "fix": "jsc.guide.rack_equipment.fix6",
+          "problem": "jsc.guide.rack_equipment.problem6"
+        },
+        {
+          "fix": "jsc.guide.rack_equipment.fix7",
+          "problem": "jsc.guide.rack_equipment.problem7"
         }
       ]
     },
@@ -119,7 +176,8 @@
       "type": "see",
       "entries": [
         "jsc:server_racks",
-        "jsc:rack_cooling_and_heat"
+        "jsc:rack_cooling_and_heat",
+        "jsc:upses"
       ]
     }
   ],
@@ -141,10 +199,21 @@
     "jsc:transition_cooling_unit",
     "jsc:cooling_unit",
     "jsc:advanced_cooling_unit",
+    "jsc:vintage_ups_battery_expansion",
+    "jsc:legacy_ups_battery_expansion",
+    "jsc:transition_ups_battery_expansion",
+    "jsc:ups_battery_expansion",
+    "jsc:advanced_ups_battery_expansion",
+    "jsc:vintage_pdu",
+    "jsc:legacy_pdu",
+    "jsc:transition_pdu",
+    "jsc:pdu",
+    "jsc:advanced_pdu",
+    "jsc:drive_shelf",
     "jsc:fibre_optic_interface",
     "jsc:advanced_fibre_optic_interface"
   ],
-  "order": 31,
+  "order": 32,
   "section": "jsc:racks",
   "title": "jsc.guide.rack_equipment.title"
 }

@@ -10,6 +10,9 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.FramesEmblem;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.power.UpsRating;
+import dev.jstech.computers.power.UpsReading;
+import dev.jstech.computers.power.UpsTexts;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -75,11 +78,12 @@ final class PanelTray {
     }
 
     /**
-     * How wide the status group runs: the network icon, the speaker and the memory bar, and after them the Furnace
-     * Card's own picture while it is smelting.
+     * How wide the status group runs: the battery of the machine's UPS while it has one, the network icon, the speaker
+     * and the memory bar, and after them the Furnace Card's own picture while it is smelting.
      */
     int statusWidth() {
-        return ICON + GAP + ICON + GAP + RAM_BAR_W + (desktop.furnaceSmelting() ? GAP + PROGRAM_ICON : 0);
+        return batteryRoom() + ICON + GAP + ICON + GAP + RAM_BAR_W
+                + (desktop.furnaceSmelting() ? GAP + PROGRAM_ICON : 0);
     }
 
     /** How wide the whole notification area runs: the status group, the clock, and the padding around them. */
@@ -198,19 +202,44 @@ final class PanelTray {
     /** The status group alone, for a panel that puts its clock somewhere else of its own. */
     void drawStatus(final GuiGraphics g, final int x, final int panelY, final int textColor) {
         final int iconY = panelY + (DesktopScreen.TASKBAR_H - ICON) / 2;
-        drawNetworkIcon(g, x, iconY, desktop.onNetwork(), textColor);
-        speaker(g, x + ICON + GAP, iconY, textColor, desktop.soundMuted());
-        drawRamBar(g, x + 2 * (ICON + GAP), panelY + (DesktopScreen.TASKBAR_H - RAM_BAR_H) / 2);
+        final UpsReading ups = desktop.ups();
+        if (ups.present()) {
+            drawBattery(g, x, iconY, ups, textColor);
+        }
+        final int at = x + batteryRoom();
+        drawNetworkIcon(g, at, iconY, desktop.onNetwork(), textColor);
+        speaker(g, at + ICON + GAP, iconY, textColor, desktop.soundMuted());
+        drawRamBar(g, at + 2 * (ICON + GAP), panelY + (DesktopScreen.TASKBAR_H - RAM_BAR_H) / 2);
         if (desktop.furnaceSmelting()) {
             // A program's picture rather than a status mask: the card at work, in its own colours.
             final ResourceLocation furnace = SkinSprites.find("device", FURNACE_CARD, FURNACE_CARD,
                     desktop.iconSet());
             if (SkinSprites.exists(furnace)) {
-                SkinSprites.draw(g, furnace, x + 2 * (ICON + GAP) + RAM_BAR_W + GAP,
+                SkinSprites.draw(g, furnace, at + 2 * (ICON + GAP) + RAM_BAR_W + GAP,
                         panelY + (DesktopScreen.TASKBAR_H - PROGRAM_ICON) / 2, PROGRAM_ICON, PROGRAM_ICON,
                         PROGRAM_ICON);
             }
         }
+    }
+
+    /*
+     * The battery of the machine's UPS, in the panel's own tone, filled as far as it is charged: green on the line,
+     * amber on the battery, red once the system is about to shut itself down or while the UPS is in bypass.
+     */
+    private void drawBattery(final GuiGraphics g, final int x, final int y, final UpsReading ups,
+                             final int textColor) {
+        final Colours c = PALETTE.get();
+        final int fill = switch (ups.mode()) {
+            case ON_BATTERY -> ups.permille() <= UpsRating.SHUTDOWN_PERMILLE ? c.barFull() : c.barHigh();
+            case BYPASS -> c.barFull();
+            default -> c.barLow();
+        };
+        BatteryGlyph.draw(g, x, y + 2, ICON, ICON - 4, ups.percent(), textColor, fill);
+    }
+
+    /* The room the battery takes at the start of the status group: none without a UPS. */
+    private int batteryRoom() {
+        return desktop.ups().present() ? ICON + GAP : 0;
     }
 
     /**
@@ -233,8 +262,8 @@ final class PanelTray {
     }
 
     /** How far into the status group the speaker stands, for a panel that places the group itself. */
-    static int speakerOffset() {
-        return ICON + GAP;
+    int speakerOffset() {
+        return batteryRoom() + ICON + GAP;
     }
 
     /** How wide the speaker is. */
@@ -244,7 +273,7 @@ final class PanelTray {
 
     /** Where the speaker stands on a panel {@code sw} wide: in the notification area, or at the top bar's end. */
     int speakerX(final int sw, final boolean topBar) {
-        return (topBar ? sw - PAD - statusWidth() : left(sw) + PAD + lead()) + ICON + GAP;
+        return (topBar ? sw - PAD - statusWidth() : left(sw) + PAD + lead()) + speakerOffset();
     }
 
     /** Whether a desktop-local point is on the speaker of the panel whose band starts at {@code panelY}. */
@@ -253,7 +282,7 @@ final class PanelTray {
         return mx >= x - 2 && mx < x + ICON + 2 && my >= panelY && my < panelY + DesktopScreen.TASKBAR_H;
     }
 
-    /** The figures behind the tray, shown while the cursor rests on it: the link and the memory. */
+    /** The figures behind the tray, shown while the cursor rests on it: the link, the memory and the UPS. */
     void drawTip(final GuiGraphics g, final int panelY, final int sw) {
         if (!desktop.hoverBeyond(left(sw), panelY)) {
             return;
@@ -273,8 +302,12 @@ final class PanelTray {
         final String link =
                 GameText.resolve(desktop.onNetwork() ? PanelTexts.NETWORK_CONNECTED : PanelTexts.NO_NETWORK);
         final String mem = GameText.resolve(PanelTexts.RAM.with(desktop.memory().meterText()));
-        final int w = Math.max(desktop.textFont().width(link), desktop.textFont().width(mem)) + 8;
-        final int h = 22;
+        final UpsReading ups = desktop.ups();
+        final String battery = ups.present()
+                ? GameText.resolve(UpsTexts.TIP.with(UpsTexts.mode(ups.mode()), ups.percent())) : "";
+        final int w = Math.max(Math.max(desktop.textFont().width(link), desktop.textFont().width(mem)),
+                desktop.textFont().width(battery)) + 8;
+        final int h = ups.present() ? 31 : 22;
         final int x = Math.max(2, sw - w - 2);
         final int y = panelY - h - 2;
         final Colours c = PALETTE.get();
@@ -282,6 +315,9 @@ final class PanelTray {
         g.fill(x, y, x + w, y + h, c.tip());
         Draw.text(g, desktop.textFont(), link, x + 4, y + 3, c.tipInk());
         Draw.text(g, desktop.textFont(), mem, x + 4, y + 12, c.tipDim());
+        if (ups.present()) {
+            Draw.text(g, desktop.textFont(), battery, x + 4, y + 21, c.tipDim());
+        }
     }
 
     /**

@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
@@ -34,6 +35,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.power.UpsReading;
 import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.motion.MotionKinds;
@@ -52,6 +54,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -1155,6 +1158,19 @@ final class DesktopState {
     static boolean hostNetworked(final BlockPos pos) {
         final Level level = Minecraft.getInstance().level;
         return level != null && level.getBlockEntity(pos) instanceof IOsHost computer && computer.networkAttached();
+    }
+
+    /** How the machine's UPS stands, as its block tells the client, which the tray shows: none without one. */
+    UpsReading ups() {
+        final Level level = Minecraft.getInstance().level;
+        if (level == null) {
+            return UpsReading.NONE;
+        }
+        final BlockEntity at = level.getBlockEntity(host);
+        if (at instanceof IOsHost computer) {
+            return computer.upsReading();
+        }
+        return at instanceof ServerRackBlockEntity rack ? rack.upsReading() : UpsReading.NONE;
     }
 
     /** Whether this machine's Furnace Card is smelting, which the tray shows while it works. */

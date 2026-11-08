@@ -42,7 +42,7 @@ joined to it. To do anything useful it needs a disk with a system installed on i
 | **Crafting Computer** | Runs the network's crafting ([Autocrafting](AUTOCRAFTING.md)). Needs a Crafting Card. | 1 CPU, 4 RAM, 4 expansion cards, 2 disks, 1 PSU. |
 | **Cluster Management Computer** | Installs systems on racked machines and watches them. Without a Cluster Interface Card it is an ordinary computer. | 1 CPU, 4 RAM (2 and 8 on a two-socket board), 4 expansion cards, 2 disks, 1 PSU, 18 storage slots. |
 | **Mainframe** | The network's brain: it keeps the index of everything stored, moves it and crafts it. | A block of 3 wide, 2 tall, 2 deep. 1 MTX board, 1 PSU, 4 CPUs, 8 RAM, 6 GPUs, 4 disks, 27 storage slots. |
-| **Server Rack** | A cabinet of 8 rack units (U) for Servers, a KVM Switch, a Rack UPS and a Cooling Unit. | A block of 2 wide, 3 tall, 2 deep. |
+| **Server Rack** | A cabinet of 8 rack units (U) for Servers and the rack's own units: a KVM Switch, a Rack UPS and its battery expansions, a PDU, a Cooling Unit, a Drive Shelf. | A block of 2 wide, 3 tall, 2 deep. |
 | **Supercomputer Rack** | The same cabinet for Supercomputer Nodes only (Standard and Advanced). | As the Server Rack. |
 
 Each computer exists in every era, named for it (the Vintage Personal Computer, the Legacy Mainframe). From the
@@ -98,11 +98,15 @@ the rack, and room for processors and expansion cards:
   RAID 1 with at least 2: every drive a copy; RAID 5 with at least 3: survives losing one), and the **Vaultis
   Cache** cuts how long a read waits, from 10% on the ISA card to 30% on the PCI-e 4.0 one.
 - **Rack units**: the **KVM Switch** lets one monitor reach several machines; the **Rack UPS** carries the cabinet
-  through an outage; the **Cooling Unit** adds to the heat the cabinet can carry, 300 W for the Vintage one, 600 W
-  for the Legacy, 1,000 W for the Transition, 1,500 W for the Standard and 2,500 W for the Advanced. Each of the three
-  comes in every era, and a rack seats the units of its era and the earlier ones, as it does servers. The **Fibre
-  Optic Interface** is how a rack takes the fibre backbone: the
-  Standard's takes the Fibre Optic Cable, the Advanced's, in an Advanced rack, the OM5 Fibre Cable as well.
+  through an outage (2.7 MJ for up to 3 kW, and each **UPS Battery Expansion** adds 2.7 MJ; see
+  [UPSes](#upses)); the **PDU** measures every bay's draw and lets the network switch the bays (`QUERY power`,
+  `UPDATE power SET on = no WHERE server = 'VAULT-01'`); the **Drive Shelf** (2U, Standard) adds ten drive bays to
+  the server mounted right above it, and does nothing with no server there; the **Cooling Unit** adds to the heat
+  the cabinet can carry, 300 W for the Vintage one, 600 W for the Legacy, 1,000 W for the Transition, 1,500 W for the
+  Standard and 2,500 W for the Advanced. The KVM Switch, the Rack UPS, the Cooling Unit, the battery expansion and
+  the PDU come in every era, and a rack seats the units of its era and the earlier ones, as it does servers. The
+  **Fibre Optic Interface** is how a rack takes the fibre backbone: the Standard's takes the Fibre Optic Cable, the
+  Advanced's, in an Advanced rack, the OM5 Fibre Cable as well.
 - A **supercomputer** is every Supercomputer Rack tied together by the high compute cable, meeting the network at
   one **HBW Interface**.
 
@@ -190,6 +194,32 @@ up ([Systems](SYSTEMS.md#after-a-sudden-shutdown)). A rack's bays shut down sudd
 of a computer's monitor shows its DRAW (its parts' watts) and its LINE (what it takes from the line, in FE a tick),
 and its id across from its title, which tells it from machines of the same name.
 
+### UPSes
+
+*Added 2026-11-08.* A UPS keeps computers running when the power goes. The **MF PowerGuard** is a whole block, one
+for every era: the 300 of the Vintage and the Legacy (90 kJ, up to 300 W), the 500 of the Transition (240 kJ,
+500 W), the 800 of the Standard (480 kJ, 800 W) and the 1500 of the Advanced (1.35 MJ, 1,500 W). The energy cable
+plugs into the inlet in the middle of its back or of either side, and every computer standing against it, on any
+face, draws from it. While the line brings what they draw, it feeds them and charges its battery on top (an empty
+battery is full in ten game minutes); when the line goes or falls short, the battery carries them, and the amber lamp
+lights; above what it carries it is in bypass, its green lamp blinking, and the computers run straight from the line,
+unprotected. A line one class too high, or a lightning surge, does not get through it: it takes nothing from that line
+and carries the computers on its battery; two classes too high, not even a UPS holds. Looking at it says how it
+stands and how long the battery lasts.
+
+The **Rack UPS** (1U) does the same for its whole rack: 2.7 MJ for up to 3 kW, and every **UPS Battery Expansion**
+in the rack adds 2.7 MJ more. The rack's screen shows its charge on its faceplate and, with it picked, where the
+power comes from, the charge, what it holds, the load, how long it lasts and when it shuts down; its header says ON
+BATTERY or BYPASS.
+
+A system knows its UPS. The battery stands in the notification area, green on the line, amber on the battery, red
+near the end or in bypass, with its charge in the tip. As the line goes, Frames raises "On battery" with the charge,
+how long it lasts and that it shuts down at 10%; Plasma raises Power Management's notice with its bar; the other
+desktops their notice with the charge under it; MC-DOS and MC-NET print the UPS's two lines on the console, and a
+Unix at its console gets the UPS daemon's broadcast. At 10% of the battery every system shuts itself down cleanly,
+as real UPS software does: nothing is lost, no disk is checked, and the network's event log records a WARN. No
+machine stays up on so low a battery; above it, a machine switched on in an outage starts on the battery.
+
 ### Disks
 
 | Era | Disks |
@@ -237,6 +267,11 @@ and its id across from its title, which tells it from machines of the same name.
   and failed. Put in a new one; a supply that runs well under its rating lasts much longer.
 - **The computer keeps going down on a red page that says INTERNAL_POWER_ERROR, or that the power is unstable.** The
   line gives it less than it draws: add generation, take machines off the line, or put a UPS between them.
+- **The computers went dark when the power went, though a UPS stands beside them.** They draw more than the UPS
+  carries, so it was in bypass. Use a bigger UPS, or fewer computers on it.
+- **The computers shut themselves down while the power was out.** The UPS's battery fell to 10%. Bring the line
+  back; for a rack, UPS Battery Expansions make it last longer.
+- **A Drive Shelf's drives show on no server.** The shelf extends only the server mounted right above it.
 - **Items an Operation was moving are gone, and the log says "Lost in transit".** The Mainframe went dark in the
   middle of it. Keep its power steady, or turn `item_loss.power_loss` off on the server.
 - **A part sits in the window but does nothing.** The board does not offer that slot. Use a board with more.

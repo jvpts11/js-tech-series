@@ -175,6 +175,8 @@ class HardcodedTextTest {
                     + ", from a modpack's startup script"),
             data(COMPUTERS + "blockentity/AbstractComputerBlockEntity.java", 1, SAVE_TAG),
             data(COMPUTERS + "blockentity/MainframeBlockEntity.java", 1, SAVE_TAG),
+            data(COMPUTERS + "blockentity/UpsNotices.java", 2, "what the Unixes' UPS daemon broadcasts on every"
+                    + " terminal, in its own words, as no daemon ever printed in anything but its own"),
             data(COMPUTERS + "client/os/ItemCategories.java", 7,
                     "a category's id, which a saved filter keeps; what it reads as is translated"),
             data(COMPUTERS + "client/os/TtyChrome.java", 1, "the mode line of a period editor, as the editor drew it"),

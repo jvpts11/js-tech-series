@@ -21,9 +21,14 @@ public interface IMountableRackUnit {
     /** How many rack units this item occupies when mounted. */
     int heightU();
 
-    /** How many of the rack's front slots it cables as drive bays (zero for a non-computer unit). */
+    /** How many of the rack's front slots it cables as drive bays (zero for most units that serve the cabinet). */
     default int driveSlots() {
         return 0;
+    }
+
+    /** What it is to the rack: a computer unless it says otherwise. */
+    default RackLayout.Role rackRole() {
+        return RackLayout.Role.COMPUTER;
     }
 
     /** The mountable unit a stack represents, or null when the item cannot be racked. */
@@ -37,6 +42,6 @@ public interface IMountableRackUnit {
     static RackLayout.Unit unitAt(final ItemStack stack, final int topU) {
         final IMountableRackUnit unit = of(stack);
         return unit == null ? null
-                : new RackLayout.Unit(topU, unit.heightU(), unit.driveSlots());
+                : new RackLayout.Unit(topU, unit.heightU(), unit.driveSlots(), unit.rackRole());
     }
 }

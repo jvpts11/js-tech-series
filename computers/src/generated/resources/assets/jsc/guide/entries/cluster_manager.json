@@ -181,7 +181,7 @@
   ],
   "icon": "jsc:cluster_management_computer",
   "id": "jsc:cluster_manager",
-  "order": 116,
+  "order": 117,
   "section": "jsc:cluster_tools",
   "title": "jsc.guide.cluster_manager.title"
 }

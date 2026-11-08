@@ -89,7 +89,8 @@ public final class DesktopPayloads {
         registrar.playToClient(DesktopBalloonPayload.TYPE, DesktopBalloonPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
                         ActiveDesktop.raise(payload.hostPos(), GameText.resolve(payload.title()),
-                                GameText.resolve(payload.body()), payload.opens())));
+                                GameText.resolve(payload.body()), payload.opens(), payload.batteryPercent(),
+                                payload.batteryMinutes())));
     }
 
     private static void handleRequestDesktopFiles(final RequestDesktopFilesPayload payload, final ServerPlayer player,

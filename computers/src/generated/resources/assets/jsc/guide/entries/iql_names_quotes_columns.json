@@ -183,6 +183,22 @@
           {
             "words": "jsc.guide.iql_names_quotes_columns.table3_6_2"
           }
+        ],
+        [
+          {
+            "literal": "events"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table3_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "power"
+          },
+          {
+            "words": "jsc.guide.iql_names_quotes_columns.table3_8_2"
+          }
         ]
       ]
     },
@@ -313,7 +329,7 @@
     }
   ],
   "id": "jsc:iql_names_quotes_columns",
-  "order": 289,
+  "order": 290,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.iql_names_quotes_columns.title"
 }

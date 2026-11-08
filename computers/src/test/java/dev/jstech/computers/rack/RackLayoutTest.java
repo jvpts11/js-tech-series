@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -104,5 +105,65 @@ class RackLayoutTest {
     @Test
     void constructor_rejectsANonPositiveCapacity() {
         assertThrows(IllegalArgumentException.class, () -> new RackLayout(0));
+    }
+
+    @Test
+    void extendedBy_isTheComputerRightAboveTheShelf() {
+        final RackLayout.Unit server = of(RackChassis.STORAGE_SERVER, 0);
+        final RackLayout.Unit shelf = shelf(2);
+        final List<RackLayout.Unit> mounted = List.of(server, shelf);
+        assertEquals(server, RackLayout.extendedBy(shelf, mounted));
+        assertEquals(shelf, RackLayout.shelfUnder(server, mounted));
+    }
+
+    @Test
+    void extendedBy_isNoneWithARowBetweenOrNothingAbove() {
+        final RackLayout.Unit server = of(RackChassis.SERVER, 0);
+        final RackLayout.Unit shelf = shelf(2);
+        assertNull(RackLayout.extendedBy(shelf, List.of(server, shelf)), "a row lies between them");
+        assertNull(RackLayout.extendedBy(shelf(0), List.of(shelf(0))), "nothing is above the top row");
+        assertNull(RackLayout.shelfUnder(server, List.of(server, shelf)));
+    }
+
+    @Test
+    void extendedBy_isNoneForAnythingButAShelf() {
+        final RackLayout.Unit server = of(RackChassis.SERVER, 0);
+        final RackLayout.Unit ups = new RackLayout.Unit(1, 1, 0, RackLayout.Role.EQUIPMENT);
+        assertNull(RackLayout.extendedBy(ups, List.of(server, ups)));
+        assertNull(RackLayout.shelfUnder(ups, List.of(server, ups)));
+    }
+
+    @Test
+    void rowsServing_takesTheShelfsRowsAfterTheServersOwn() {
+        final RackLayout.Unit server = of(RackChassis.STORAGE_SERVER, 0);
+        final List<RackLayout.Unit> mounted = List.of(server, shelf(2));
+        assertEquals(List.of(0, 1, 2, 3), RackLayout.rowsServing(server, mounted));
+        assertEquals(List.of(0, 1), RackLayout.rowsServing(server, List.of(server)));
+        assertTrue(RackLayout.rowsServing(null, mounted).isEmpty());
+    }
+
+    @Test
+    void ownerOfRow_givesAShelfsRowsToTheServerItExtends() {
+        final RackLayout.Unit server = of(RackChassis.STORAGE_SERVER, 0);
+        final RackLayout.Unit shelf = shelf(2);
+        final List<RackLayout.Unit> mounted = List.of(server, shelf);
+        assertEquals(server, RackLayout.ownerOfRow(3, mounted));
+        assertEquals(server, RackLayout.ownerOfRow(1, mounted));
+        assertNull(RackLayout.ownerOfRow(5, mounted), "an empty row belongs to nobody");
+        assertNull(RackLayout.ownerOfRow(4, List.of(shelf(4))), "nor does a lone shelf's");
+    }
+
+    @Test
+    void roleAt_aShelfCablesItsTenBays() {
+        final List<RackLayout.Unit> mounted = List.of(shelf(4));
+        for (int row = 4; row < 6; row++) {
+            for (int index = 0; index < RackLayout.SLOTS_PER_U; index++) {
+                assertEquals(RackLayout.SlotRole.DRIVE, rack.roleAt(row, index, mounted));
+            }
+        }
+    }
+
+    private static RackLayout.Unit shelf(final int topU) {
+        return new RackLayout.Unit(topU, 2, 10, RackLayout.Role.SHELF);
     }
 }

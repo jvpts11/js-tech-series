@@ -231,6 +231,10 @@ public final class IqlEngine {
                     job == null ? IqlBusSetter.TYPED : job);
             return new Outcome(set.ok(), set.message(), List.of());
         }
+        // The racks' bays are switched through their PDUs.
+        if (parsed.isPower()) {
+            return IqlPowerSetter.apply(mainframe, parsed.power());
+        }
         // Another mod's kind of Operation goes to a machine of the network, through the network's door.
         if (parsed.isRun()) {
             final MemberRuns.Outcome given = mainframe.networkOperations().run(parsed.run());

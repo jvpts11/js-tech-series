@@ -145,6 +145,10 @@ public final class IqlError extends IllegalArgumentException {
     static final TextKey FIELD_TWICE = TextKey.of("jsc.iql.error.field_twice", "the field %s is given twice");
     static final TextKey A_MACHINE = TextKey.of("jsc.iql.expected.machine", "the machine's name or position");
 
+    // An UPDATE of the power of a rack's bays.
+    static final TextKey POWER_NEEDS_ON = TextKey.of("jsc.iql.error.power_needs_on",
+            "UPDATE power sets one column, on: SET on = yes, or SET on = no");
+
     // A duration.
     static final TextKey EMPTY_DURATION = TextKey.of("jsc.iql.error.empty_duration", "empty duration");
     static final TextKey NOT_A_DURATION = TextKey.of("jsc.iql.error.not_a_duration", "not a duration: %s");

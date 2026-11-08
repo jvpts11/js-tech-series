@@ -427,7 +427,7 @@
     }
   ],
   "id": "jsc:datacenters",
-  "order": 37,
+  "order": 38,
   "section": "jsc:clusters",
   "title": "jsc.guide.datacenters.title"
 }

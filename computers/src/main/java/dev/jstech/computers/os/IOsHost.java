@@ -19,6 +19,7 @@ import dev.jstech.computers.os.boot.IBootingMachine;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.install.IInstallingMachine;
+import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -237,6 +238,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      */
     default boolean networkAttached() {
         return networkUuid() != null;
+    }
+
+    /**
+     * How the UPS that carries this machine stands, for the battery its system shows: none without one. Answered on
+     * both sides, as {@link #networkAttached()} is.
+     */
+    default UpsReading upsReading() {
+        return UpsReading.NONE;
     }
 
     /**

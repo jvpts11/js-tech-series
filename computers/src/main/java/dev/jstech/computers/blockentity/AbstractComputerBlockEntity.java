@@ -73,6 +73,7 @@ import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.gui.term.TermBuffer;
+import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
@@ -231,6 +232,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final DerivedInt psuWattsShown = fields().derived("PsuWatts", this::psuWatts).toMenu();
     private final DerivedInt lineWattsShown = fields().derived("LineWatts", this::lineWatts).toMenu();
     private final DerivedInt energizedShown = fields().derived("Energized", this::energized).toMenu();
+    /** How the UPS it stands against stands, as that UPS last told it, for the battery its system shows. */
+    private final UpsFeed upsFeed = new UpsFeed(fields());
 
     /** How often the system it boots is looked at again for the players who see it: once a second. */
     private static final int OS_CHECK_TICKS = 20;
@@ -1593,6 +1596,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      * computer calls it first in its tick.
      */
     protected void drawEnergy(final ServerLevel level) {
+        upsFeed.tick(level.getGameTime());
         final ComputerBuild build = currentBuild();
         energy.sizeFor(build == null ? 0.0 : ComputerEnergy.lineWatts(build.psu().wattage(), build.psu()));
         final double watts = build == null ? 0.0 : ComputerEnergy.lineWatts(build.powerDraw(), build.psu());
@@ -1601,6 +1605,16 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         }
         energy.payDebt(watts);
         wearPsu(level, build);
+    }
+
+    @Override
+    public UpsReading upsReading() {
+        return upsFeed.reading();
+    }
+
+    /** The UPS it stands against tells it, in tick {@code gameTime}, how it stands. */
+    void upsTold(final UpsReading reading, final long gameTime) {
+        upsFeed.told(reading, gameTime);
     }
 
     /** The power supply in its slot, the stack that carries its wear; empty for none. */

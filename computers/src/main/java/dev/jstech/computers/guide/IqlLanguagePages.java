@@ -89,6 +89,8 @@ final class IqlLanguagePages {
                         + " priority"))
                 .row(GuideCell.code("recipes"), GuideCell.words("recipe, where, machine, chance"))
                 .row(GuideCell.code("computers"), GuideCell.words("name, kind, era, state, os"))
+                .row(GuideCell.code("events"), GuideCell.words("event, name, state, starts, ends"))
+                .row(GuideCell.code("power"), GuideCell.words("server, row, watts, on"))
                 .paragraph("An item has more fields than its table shows. A WHERE clause can compare any of these:")
                 .table("Fields of an item", "Field", "What it holds")
                 .row(GuideCell.code("item"), GuideCell.words("The item's internal name, without its namespace, such as"
@@ -138,6 +140,8 @@ final class IqlLanguagePages {
                 .row(GuideCell.code("disks"), GuideCell.words("The disks of the network."))
                 .row(GuideCell.code("events"), GuideCell.words("The world events the network sees: under way where it"
                         + " stands, or coming when a machine on it is the event's instrument."))
+                .row(GuideCell.code("power"), GuideCell.words("Every server of a rack with a PDU: the rack unit it"
+                        + " tops, what it draws in watts, and whether its bay is on."))
                 .paragraph("Machines of other mods on the network have tables of their own. Name one by its id, such"
                         + " as QUERY mymod:reactors, or by the part after the colon when no other table has it. Each"
                         + " row is one machine, with its columns, their units in the heading, and at, where it stands.")
@@ -386,6 +390,13 @@ final class IqlLanguagePages {
                         + " network."))
                 .row(GuideCell.code("could not start the UPDATE"), GuideCell.words("The network did not start the"
                         + " change."))
+                .subheading("The power of a rack's bays")
+                .paragraph("One table takes an UPDATE of its own: power, the bays of the racks with a PDU. SET on = no"
+                        + " switches off every bay its WHERE keeps, and SET on = yes switches them on, as their PWR"
+                        + " switches would; it needs no card. A job running it turns servers on and off by rule. A"
+                        + " server the rack has no energy for, or whose supply failed, does not start, and the reply"
+                        + " counts it.")
+                .listingIn("iql", "power.iql", "UPDATE power SET on = no WHERE server = 'VAULT-01'")
                 .ifSomethingGoesWrong("this computer has no <card name>",
                         "Put that card into this Personal Computer, then run the statement again.",
                         "only a Personal Computer's own cards change items for the network",
@@ -405,8 +416,11 @@ final class IqlLanguagePages {
                         "a name is at most 50 characters long",
                         "Shorten the name to 50 characters or fewer.",
                         "unknown action: <word> (expected SMELT, ENCHANT, REPAIR, COMBINE or NAME)",
-                        "Type one of the five action words.")
-                .seeAlso("jsc:workshop", "jsc:clauses_priority_if_with", "jsc:personal_computers")
+                        "Type one of the five action words.",
+                        "no bay of a rack with a PDU on this network is so",
+                        "Mount a PDU in the rack, and check the WHERE with QUERY power first.")
+                .seeAlso("jsc:workshop", "jsc:clauses_priority_if_with", "jsc:personal_computers",
+                        "jsc:rack_equipment")
                 .register();
     }
 

@@ -93,9 +93,14 @@ public final class IqlTables {
      * world's clock until it begins and until it ends.
      */
     public static final List<String> EVENTS = List.of("event", "name", "state", "starts", "ends");
+    /**
+     * The power of the bays of the racks with a PDU (computers/docs/design/servers-and-racks.md): the server, the rack
+     * unit it tops, what it draws from the line in watts, and whether its bay is switched on, which an UPDATE changes.
+     */
+    public static final List<String> POWER = List.of("server", "row", "watts", "on");
     /** The network's own tables, in the order a studio lists them; the other mods' come after. */
     public static final List<String> TABLES = List.of("items", "servers", "disks", "operations", "recipes",
-            "computers", "events");
+            "computers", "events", "power");
 
     private static final TextKey ON_SERVERS = TextKey.of("jsc.iql.table.on_servers", "%s servers");
     private static final TextKey MAINFRAME = TextKey.of("jsc.iql.table.mainframe", "Mainframe");
@@ -151,11 +156,12 @@ public final class IqlTables {
             case "recipes" -> recipes(level, network);
             case "computers" -> computers(level, network);
             case "events" -> events(level, network);
+            case "power" -> powerRows(level, network);
             default -> IqlStateTables.rows(level, network, state);
         };
         final List<Map<String, Text>> kept = new ArrayList<>();
         for (final Map<String, Text> row : rows) {
-            if (where == null || where.matches(field -> fieldOf(row, field))) {
+            if (keeps(where, row)) {
                 kept.add(row);
             }
         }
@@ -217,6 +223,7 @@ public final class IqlTables {
             case "recipes" -> recipes(level, network).size();
             case "computers" -> computers(level, network).size();
             case "events" -> events(level, network).size();
+            case "power" -> powerBays(level, network).size();
             default -> {
                 final StateTable state = IqlStateTables.find(table);
                 yield state == null ? 0 : NetworkTables.rows(level, network, state).size();
@@ -245,8 +252,48 @@ public final class IqlTables {
             case "recipes" -> RECIPES;
             case "computers" -> COMPUTERS;
             case "events" -> EVENTS;
+            case "power" -> POWER;
             default -> null;
         };
+    }
+
+    /** Whether {@code where} keeps {@code row}, as a WHERE reads a table's row: every row with no WHERE. */
+    public static boolean keeps(@Nullable final IIqlCondition where, final Map<String, Text> row) {
+        return where == null || where.matches(field -> fieldOf(row, field));
+    }
+
+    /**
+     * Every bay of the network's racks with a PDU that holds one of its servers, with its row of the {@code power}
+     * table; what an UPDATE of the table switches.
+     */
+    public static List<PowerBay> powerBays(final ServerLevel level, final NetworkUuid network) {
+        final NetworkSystem system = NetworkSystem.get(level);
+        final List<PowerBay> bays = new ArrayList<>();
+        for (final ServerNode node : system.serversOf(network)) {
+            final ServerRackBlockEntity rack = rackOf(level, node.nodeUuid());
+            final int slot = system.locationOf(node.nodeUuid()).map(at -> at.slot()).orElse(-1);
+            if (rack == null || slot < 0 || !rack.hasPdu()) {
+                continue;
+            }
+            final boolean on = rack.bayPowerOn(slot);
+            final Map<String, Text> row = new LinkedHashMap<>();
+            row.put("server", Text.literal(NetworkLookup.serverLabel(level, node.nodeUuid())));
+            row.put("row", Text.literal(Integer.toString(slot + 1)));
+            row.put("watts", Text.literal(Long.toString((long) Math.ceil(
+                    ServerRackBlockEntity.bayWatts(rack.buildIn(slot), on)))));
+            row.put("on", (on ? IqlStateTables.YES : IqlStateTables.NO).text());
+            bays.add(new PowerBay(rack, slot, row));
+        }
+        return bays;
+    }
+
+    /* The rows of the {@code power} table. */
+    private static List<Map<String, Text>> powerRows(final ServerLevel level, final NetworkUuid network) {
+        final List<Map<String, Text>> rows = new ArrayList<>();
+        for (final PowerBay bay : powerBays(level, network)) {
+            rows.add(bay.row());
+        }
+        return rows;
     }
 
     /*
@@ -524,5 +571,15 @@ public final class IqlTables {
                 .map(at -> Loaded.blockEntity(level, BlockPos.of(at.rackPos())) instanceof ServerRackBlockEntity rack
                         ? rack : null)
                 .orElse(null);
+    }
+
+    /**
+     * A bay of a rack with a PDU, as the {@code power} table shows it.
+     *
+     * @param rack the rack it is in
+     * @param slot the rack unit its server tops, from 0
+     * @param row  its row of the table
+     */
+    public record PowerBay(ServerRackBlockEntity rack, int slot, Map<String, Text> row) {
     }
 }

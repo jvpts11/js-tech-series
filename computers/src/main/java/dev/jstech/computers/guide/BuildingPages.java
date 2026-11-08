@@ -7,11 +7,13 @@
  */
 package dev.jstech.computers.guide;
 
+import static dev.jstech.computers.guide.ComputersGuide.blocksOf;
 import static dev.jstech.computers.guide.ComputersGuide.hardwareOf;
 import static dev.jstech.computers.guide.ComputersGuide.itemsOf;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.block.UpsBlock;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -382,6 +384,7 @@ final class BuildingPages {
         graphicsCards(guide, section);
         disks(guide, section);
         powerSupplies(guide, section);
+        upses(guide, section);
         soundCards(guide, section);
         expansionCards(guide, section);
     }
@@ -781,6 +784,47 @@ final class BuildingPages {
                         "The computer starts with a long check of its disk.",
                         "It went dark suddenly the last time. Let it finish: the check erases nothing.")
                 .seeAlso("jsc:build_refusals", "jsc:disks", "jsc:processors")
+                .register();
+    }
+
+    private static void upses(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("upses", section).titled("UPSes").icon(ComputingModule.STANDARD_UPS)
+                .coversAll(blocksOf(UpsBlock.class))
+                .paragraph("A UPS keeps your computers running when the power goes. The MF PowerGuard is a whole"
+                        + " block: you plug the energy cable into the inlet in the middle of its back or of either"
+                        + " side, and every computer standing against it on any face draws from it.")
+                .define("UPS", "Uninterruptible power supply: a battery between the line and the computer, which"
+                        + " carries the computer when the line goes.")
+                .table("The UPSes", "UPS", "Era", "Battery", "Carries")
+                .row(GuideCell.words("MF PowerGuard 300"), GuideCell.words("Vintage, Legacy"),
+                        GuideCell.words("90 kJ"), GuideCell.words("300 W"))
+                .row(GuideCell.words("MF PowerGuard 500"), GuideCell.words("Transition"), GuideCell.words("240 kJ"),
+                        GuideCell.words("500 W"))
+                .row(GuideCell.words("MF PowerGuard 800"), GuideCell.words("Standard"), GuideCell.words("480 kJ"),
+                        GuideCell.words("800 W"))
+                .row(GuideCell.words("MF PowerGuard 1500"), GuideCell.words("Advanced"),
+                        GuideCell.words("1.35 MJ"), GuideCell.words("1,500 W"))
+                .paragraph("While the line brings what the computers draw, the UPS feeds them and charges its battery"
+                        + " on top: an empty battery is full in ten game minutes. When the line goes, or brings too"
+                        + " little, the battery carries them, the amber lamp lights, and each system says so in its"
+                        + " own way: the battery in the notification area and a notice on a desktop, two lines on"
+                        + " MC-DOS, the UPS daemon's broadcast on a Unix console.")
+                .paragraph("The battery lasts its joules over the draw: 480 kJ carry 800 W for ten minutes."
+                        + " At 10% of the battery the systems shut themselves down cleanly, so nothing is lost and"
+                        + " the next start checks no disk.")
+                .paragraph("Above what it carries the UPS goes into bypass, and the green lamp blinks: the computers"
+                        + " run straight from the line, and the battery protects nothing.")
+                .paragraph("It also stands between the computers and a line of the wrong class. A line one class too"
+                        + " high, or a surge, does not reach them: the UPS takes nothing from it and carries them on"
+                        + " its battery. Two classes too high, not even a UPS holds.")
+                .paragraph("A rack has its own UPS, the Rack UPS, which takes a rack unit ([](jsc:rack_equipment)).")
+                .ifSomethingGoesWrong("The computers went dark when the power went, with the UPS beside them.",
+                        "They drew more than it carries, so it was in bypass. Use a bigger UPS, or fewer computers.",
+                        "The computers shut themselves down while the power was out.",
+                        "The battery fell to 10%. Bring the line back, and the battery charges again.",
+                        "The cable does not plug into the UPS.",
+                        "It plugs in on the back and the sides only. Turn the UPS, or bring the cable to one of those.")
+                .seeAlso("jsc:power_supplies", "jsc:rack_equipment")
                 .register();
     }
 

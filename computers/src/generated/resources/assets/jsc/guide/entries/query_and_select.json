@@ -75,6 +75,14 @@
           {
             "words": "jsc.guide.query_and_select.table1_7_2"
           }
+        ],
+        [
+          {
+            "literal": "power"
+          },
+          {
+            "words": "jsc.guide.query_and_select.table1_8_2"
+          }
         ]
       ]
     },
@@ -331,7 +339,7 @@
     }
   ],
   "id": "jsc:query_and_select",
-  "order": 290,
+  "order": 291,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.query_and_select.title"
 }

@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>A store that runs dry tells how: a line that still brought something within the last second fed it less than it
  * draws, a weak generator or an overloaded grid, which is unstable power; one that brought nothing for longer was cut.
  */
-final class ComputerEnergy {
+final class ComputerEnergy implements IUpsLine {
 
     private final EnergyStore store;
     private final Runnable changed;
@@ -40,6 +40,8 @@ final class ComputerEnergy {
     private long debt;
     /* What the store held once this machine had taken its share, so the next draw sees what the line brought since. */
     private long left;
+    /* Whether the store was full as a rack's last tick ended. */
+    private boolean leftFull;
     /* How many draws in a row the line brought nothing. */
     private int dryDraws;
 
@@ -74,11 +76,17 @@ final class ComputerEnergy {
 
     /** Sizes the store to a second of {@code watts} from the line: what its supplies can give at most. */
     void sizeFor(final double watts) {
-        this.store.setCapacity((long) Math.ceil(Math.max(0.0, watts)));
+        sizeFor(watts, 0L);
+    }
+
+    /** The same, with room for {@code more} joules on top: a tick of what a UPS's battery charges with. */
+    void sizeFor(final double watts, final long more) {
+        this.store.setCapacity((long) Math.ceil(Math.max(0.0, watts)) + Math.max(0L, more));
     }
 
     /** Whether there is energy for a tick drawing {@code watts} from the line, or the draw is off. */
-    boolean canRun(final double watts) {
+    @Override
+    public boolean canRun(final double watts) {
         if (!ComputersServerConfig.drawEnergy()) {
             return true;
         }
@@ -115,6 +123,53 @@ final class ComputerEnergy {
      */
     boolean wavering() {
         return !this.store.damaged() && this.dryDraws < WAVERS_WITHIN;
+    }
+
+    @Override
+    public long stored() {
+        return this.store.stored();
+    }
+
+    /** A rack's tick is over: what the store holds now is what the line's next delivery is told from. */
+    void settle() {
+        this.left = this.store.stored();
+        this.leftFull = this.store.capacity() > 0L && this.left >= this.store.capacity();
+    }
+
+    /* A store left full had no room for the line to fill, so the line's silence says nothing of it. */
+    @Override
+    public boolean fed() {
+        return this.store.stored() > this.left || this.leftFull;
+    }
+
+    /**
+     * Puts up to {@code joules} from a UPS's battery into the store, which the line did not bring, so it does not count
+     * as the line; answers what it took.
+     */
+    @Override
+    public long fromBattery(final long joules) {
+        final long taken = joules <= 0L ? 0L : this.store.receive(joules, false);
+        this.left = this.store.stored();
+        return taken;
+    }
+
+    /**
+     * Takes up to {@code most} joules of what the line brought beyond a tick of {@code watts}, for a UPS's battery to
+     * charge with; answers what it took. Nothing while the draw is off.
+     */
+    @Override
+    public long spareForCharging(final long most, final double watts) {
+        if (!ComputersServerConfig.drawEnergy() || most <= 0L || this.store.damaged()) {
+            return 0L;
+        }
+        final long spare = this.store.stored() - (long) Math.ceil(watts / TICKS_A_SECOND);
+        final long taken = Math.min(most, spare);
+        if (taken <= 0L) {
+            return 0L;
+        }
+        this.store.spend(taken);
+        this.left = this.store.stored();
+        return taken;
     }
 
     /** Owes {@code joules} for work its cards did; nothing while the draw is off. */

@@ -150,6 +150,22 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.update_cards.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.update_cards.text7"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "UPDATE power SET on = no WHERE server = 'VAULT-01'"
+      ],
+      "name": "power.iql"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -194,6 +210,10 @@
         {
           "fix": "jsc.guide.update_cards.fix10",
           "problem": "jsc.guide.update_cards.problem10"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix11",
+          "problem": "jsc.guide.update_cards.problem11"
         }
       ]
     },
@@ -202,12 +222,13 @@
       "entries": [
         "jsc:workshop",
         "jsc:clauses_priority_if_with",
-        "jsc:personal_computers"
+        "jsc:personal_computers",
+        "jsc:rack_equipment"
       ]
     }
   ],
   "id": "jsc:update_cards",
-  "order": 294,
+  "order": 295,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.update_cards.title"
 }

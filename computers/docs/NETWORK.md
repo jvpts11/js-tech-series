@@ -96,11 +96,16 @@ QUERY disks
   quantity and an item, and optionally `FROM`, `TO`, `WHERE`, `IF`, `ORDER BY`, `LIMIT` and `PRIORITY` (`LOW`,
   `MEDIUM_LOW`, `MEDIUM`, `MEDIUM_HIGH`, `HIGH`).
 - **Questions**: `QUERY` or `SHOW` and what to look at (`items`, `servers`, `disks`, `operations`, `recipes`,
-  `computers`, `events`), with `WHERE`, `ORDER BY`, `LIMIT`. Other mods' machines on the network are read the same
+  `computers`, `events`, `power`), with `WHERE`, `ORDER BY`, `LIMIT`. Other mods' machines on the network are read the same
   way, by their table's id or, when no other table shares it, its last part (`QUERY mymod:reactors WHERE temperature
   > 90`): a row for each machine, its columns with their units, and `at`, where it stands (added 2026-10-25).
 - **World events** (added 2026-10-25): `QUERY events` lists those the network sees, under way where it stands, and
   coming when a machine on it is the event's instrument; each step goes into the network's event log as well.
+- **The power of the racks' bays** (added 2026-11-08): `QUERY power` lists every server of a rack with a PDU, the
+  rack unit it tops (`row`), what it draws from the line (`watts`) and whether its bay is switched on (`on`, yes or
+  no). `UPDATE power SET on = no WHERE server = 'VAULT-01'` switches the bays the WHERE keeps off, `SET on = yes` on,
+  as their PWR switches would; from a job it turns servers on and off by rule. The reply counts the bays switched,
+  and those that did not start for want of energy or with a failed supply ([Hardware](HARDWARE.md#upses)).
 - **Upkeep**: `ANALYZE`, `VACUUM`, `REINDEX`.
 - **Changing items**: `UPDATE ... SET SMELT`, `ENCHANT`, `REPAIR`, `COMBINE ... WITH ...`, `NAME '...'`. The work
   is the asking Personal Computer's workshop cards', at their price (added 2026-11-08): by default energy, which

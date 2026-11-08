@@ -95,6 +95,14 @@ public final class IqlParser {
                 return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
             }
         }
+        // The power of the racks' bays, a table's column rather than an item: UPDATE power SET on = no WHERE ...
+        if (IqlPowerStatement.isPowerUpdate(input)) {
+            try {
+                return IqlParseResult.okPower(IqlPowerStatement.parse(input));
+            } catch (final IllegalArgumentException e) {
+                return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
+            }
+        }
         /*
          * Layer 2 first: CREATE/DROP/EXEC of a saved object. tryParse returns null (and we fall through)
          * for an ordinary action; it throws only when the text *is* a malformed definition.

@@ -14,6 +14,7 @@ import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.UpsBlockEntity;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.content.GeoLook;
@@ -74,6 +75,13 @@ public final class ComputingLooks {
     public static final String REDSTONE_LAMP_OUT = "mode_out";
     /** The two runners a Redstone Interface stands on, drawn only while it faces one of the four sides. */
     public static final String REDSTONE_FEET = "feet";
+    /** The MF PowerGuards, one model each era: the UPS of its day, its screen, button and lamps on its front. */
+    public static final GeoLook<UpsBlockEntity> UPS = GeoLook.of(JsComputers.MODID, "ups", "ups",
+            ups -> ups(ups.era()));
+    /** A UPS's three lamps: the line, the battery, and the battery to be replaced. */
+    public static final String UPS_LINE_LAMP = "lamp_line";
+    public static final String UPS_BATTERY_LAMP = "lamp_battery";
+    public static final String UPS_REPLACE_LAMP = "lamp_replace";
     /**
      * The small computers' cases, a model for each machine in each case: the tower of each age, and from the Standard
      * age on the three cases a machine comes in. They share the fans' turning.
@@ -116,6 +124,11 @@ public final class ComputingLooks {
     /** The model of a Redstone Interface of {@code era}; an era after the Advanced has the Advanced's. */
     public static String redstoneInterface(final Era era) {
         return HardwareEra.withParts(era).path() + "_redstone_interface";
+    }
+
+    /** The model of an MF PowerGuard of {@code era}; an era after the Advanced has the Advanced's. */
+    public static String ups(final Era era) {
+        return HardwareEra.withParts(era).path() + "_ups";
     }
 
     /** The model of a Mainframe cabinet of {@code era}. */

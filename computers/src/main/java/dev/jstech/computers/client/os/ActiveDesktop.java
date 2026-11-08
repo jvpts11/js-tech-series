@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
@@ -245,9 +246,16 @@ public final class ActiveDesktop {
 
     /** Raises that balloon on whichever desktop is looking at that machine, if one is. */
     public static void raise(final BlockPos host, final String title, final String body, final String opens) {
+        raise(host, title, body, opens, DesktopBalloonPayload.NO_BATTERY, 0L);
+    }
+
+    /** The same, with the UPS's battery under its words when {@code batteryPercent} is not negative. */
+    public static void raise(final BlockPos host, final String title, final String body, final String opens,
+                             final int batteryPercent, final long batteryMinutes) {
         final DesktopState desktop = DesktopScreen.current();
         if (desktop != null && desktop.host().equals(host)) {
-            desktop.notices().showBalloon(title, body, opens);
+            desktop.notices().showBalloon(title, body, opens, batteryPercent < 0 ? null
+                    : new DesktopNotices.Battery(batteryPercent, batteryMinutes));
         }
     }
 

@@ -210,6 +210,7 @@ class LayoutAuditTest {
         c.add(new AuditCase("ProphetConsoleLayout", ProphetConsoleLayout.layout(), false));
         c.add(new AuditCase("ProphetConsoleLayout(large)", ProphetConsoleLayout.layout(640, 420), false));
         c.add(new AuditCase("ServerRackLayout", ServerRackLayout.layout(), true));
+        c.add(new AuditCase("ServerRackLayout(equipment)", ServerRackLayout.equipmentLayout(), true));
         c.add(AuditCase.onTheGlass("ComputerTerminalLayout", ComputerTerminalLayout.layout()));
         /*
          * The explorer and This PC are resizable desktop windows: audit the smallest, the default and a

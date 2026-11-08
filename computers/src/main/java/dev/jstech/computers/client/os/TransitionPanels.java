@@ -217,7 +217,7 @@ final class TransitionPanels {
 
     /** Where GNOME 2's speaker stands on its top panel, which the volume control opens from. */
     int gnome2SpeakerX(final int sw) {
-        return gnome2StatusX(sw) + PanelTray.speakerOffset();
+        return gnome2StatusX(sw) + desktop.tray().speakerOffset();
     }
 
     private boolean clickKde4(final double mx, final double my, final int button, final int tbY, final int sw) {

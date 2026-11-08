@@ -455,19 +455,26 @@ final class ComputerKindsPages {
         guide.page("rack_equipment", section).titled("Rack equipment").icon(ComputingModule.KVM_SWITCH)
                 .coversAll(ComputersGuide.itemsOf(RackUnitItem.class))
                 .paragraph("Not everything in a rack computes. Some units serve the rack: the KVM Switch (keyboard,"
-                        + " video, mouse), the Rack UPS (uninterruptible power supply), the Cooling Unit and the Fibre"
-                        + " Optic Interface take rack units, as a server does.")
+                        + " video, mouse), the Rack UPS (uninterruptible power supply) and its battery expansions, the"
+                        + " PDU (power distribution unit), the Cooling Unit, the Fibre Optic Interface and the Drive"
+                        + " Shelf take rack units, as a server does.")
                 .table("Rack units that are not computers", "Unit", "Takes", "What it does")
                 .row(GuideCell.words("KVM Switch"), GuideCell.words("1 U"),
                         GuideCell.words("Lets one monitor reach every machine in the rack"))
                 .row(GuideCell.words("Rack UPS"), GuideCell.words("1 U"),
-                        GuideCell.words("Takes the rack unit, and adds nothing to the heat budget"))
+                        GuideCell.words("Carries the rack on its battery when the power goes: 2.7 MJ, up to 3 kW"))
                 .row(GuideCell.words("Cooling Unit"), GuideCell.words("1 U"),
                         GuideCell.words("Adds to the heat budget, more in each newer era"))
                 .row(GuideCell.words("Fibre Optic Interface"), GuideCell.words("1 U"),
                         GuideCell.words("Lets the rack's back take the Fibre Optic Cable"))
                 .row(GuideCell.words("Advanced Fibre Optic Interface"), GuideCell.words("1 U"),
                         GuideCell.words("Lets the rack's back take the Fibre Optic Cable and the OM5 Fibre Cable"))
+                .row(GuideCell.words("UPS Battery Expansion"), GuideCell.words("1 U"),
+                        GuideCell.words("Adds 2.7 MJ to the Rack UPS's battery; they stack"))
+                .row(GuideCell.words("PDU"), GuideCell.words("1 U"),
+                        GuideCell.words("Measures each bay's draw, and lets IQL and jobs switch the bays"))
+                .row(GuideCell.words("Drive Shelf"), GuideCell.words("2 U"),
+                        GuideCell.words("Ten more drive bays for the server right above it"))
                 .paragraph("The KVM Switch, the Rack UPS and the Cooling Unit come in every era, from the Vintage to"
                         + " the Advanced. A rack seats the units of its own era and of the earlier ones, as it does"
                         + " servers: a Vintage KVM Switch goes in a Standard rack, a Standard one never in a Vintage"
@@ -483,6 +490,18 @@ final class ComputerKindsPages {
                 .paragraph("A server's storage cards go in its expansion slots, not in the rack: the RAID controller"
                         + " joins the server's drives into one array, and the read cache cuts the time each read from"
                         + " them takes ([](jsc:raid_arrays)).")
+                .paragraph("The Rack UPS carries the whole rack when the power goes: every one mounted holds 2.7 MJ"
+                        + " and carries 3 kW, and every UPS Battery Expansion adds 2.7 MJ more, as many as the rack has"
+                        + " room for. While the line brings enough, it charges on top of what the machines draw. On"
+                        + " the battery, the rack's screen says ON BATTERY, each server's system says so, and at 10%"
+                        + " they shut themselves down cleanly. Above what it carries the UPS is in bypass and"
+                        + " protects nothing. Click a unit's faceplate to see its card.")
+                .paragraph("The PDU measures what each bay draws, and its card lists it. It lays the bays' power open"
+                        + " to the network: QUERY power lists every server of a rack with a PDU, with its watts and"
+                        + " whether it is on, and UPDATE power SET on = no WHERE server = 'VAULT-01' switches it off,"
+                        + " from a prompt or from a job ([](jsc:iql_jobs)).")
+                .paragraph("A Drive Shelf adds its ten bays to the server mounted right above it: their drives join"
+                        + " the server's storage and its array. A shelf with no server right above it does nothing.")
                 .ifSomethingGoesWrong("A rack with several computers has no way to pick one on the monitor.",
                         "Mount a KVM Switch in the rack. It takes one rack unit.",
                         "A unit does not go in, and the rack says it belongs in a newer rack.",
@@ -491,8 +510,14 @@ final class ComputerKindsPages {
                         "The rack holds the Standard Fibre Optic Interface, which takes only the Fibre Optic Cable."
                                 + " Mount the Advanced one, in an Advanced rack.",
                         "The RAID controller does nothing.",
-                        "Its server has no mode set, or fewer drives than the mode needs ([](jsc:raid_arrays)).")
-                .seeAlso("jsc:server_racks", "jsc:rack_cooling_and_heat")
+                        "Its server has no mode set, or fewer drives than the mode needs ([](jsc:raid_arrays)).",
+                        "The drives in a Drive Shelf do not show on any server.",
+                        "The shelf extends only the server right above it. Mount it in the row under the server.",
+                        "The servers shut themselves down while the power was out.",
+                        "The Rack UPS's battery fell to 10%. Add UPS Battery Expansions to last longer.",
+                        "UPDATE power says no bay is so.",
+                        "The rack needs a PDU, and the server has to be on the network.")
+                .seeAlso("jsc:server_racks", "jsc:rack_cooling_and_heat", "jsc:upses")
                 .register();
     }
 

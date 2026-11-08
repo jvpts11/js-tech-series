@@ -37,6 +37,7 @@ import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
+import dev.jstech.computers.block.UpsBlock;
 import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
@@ -58,6 +59,7 @@ import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.blockentity.SmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
+import dev.jstech.computers.blockentity.UpsBlockEntity;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
@@ -184,6 +186,9 @@ public final class ComputingModule {
     /** A Redstone Interface's lit lens and mode lamps, dark on its item: the item shows the lens at rest. */
     private static final List<String> REDSTONE_INTERFACE_LIT = List.of(ComputingLooks.REDSTONE_LENS_HALF,
             ComputingLooks.REDSTONE_LENS_FULL, ComputingLooks.REDSTONE_LAMP_IN, ComputingLooks.REDSTONE_LAMP_OUT);
+    /** A UPS's lamps, dark on its item. */
+    private static final List<String> UPS_LAMPS = List.of(ComputingLooks.UPS_LINE_LAMP, ComputingLooks.UPS_BATTERY_LAMP,
+            ComputingLooks.UPS_REPLACE_LAMP);
     /** How thick the long distance line is, in pixels; every other data cable is four. */
     private static final int LONG_DISTANCE_PIXELS = 6;
     /** What a personal-use card draws, in watts. */
@@ -634,6 +639,24 @@ public final class ComputingModule {
                     STANDARD_REDSTONE_INTERFACE, ADVANCED_REDSTONE_INTERFACE);
 
     /*
+     * The MF PowerGuards, the UPS of each era: a whole block that takes the energy cable on its back or sides and
+     * carries the computers standing against it when the power goes. The Vintage and the Legacy sell the same 300.
+     */
+    public static final BlockEntry<UpsBlock> VINTAGE_UPS =
+            ups("vintage_ups", HardwareEra.VINTAGE).named("MF PowerGuard 300").register();
+    public static final BlockEntry<UpsBlock> LEGACY_UPS =
+            ups("legacy_ups", HardwareEra.LEGACY).named("MF PowerGuard 300").register();
+    public static final BlockEntry<UpsBlock> TRANSITION_UPS =
+            ups("transition_ups", HardwareEra.TRANSITION).named("MF PowerGuard 500").register();
+    public static final BlockEntry<UpsBlock> STANDARD_UPS =
+            ups("standard_ups", HardwareEra.STANDARD).named("MF PowerGuard 800").register();
+    public static final BlockEntry<UpsBlock> ADVANCED_UPS =
+            ups("advanced_ups", HardwareEra.ADVANCED).named("MF PowerGuard 1500").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<UpsBlockEntity>> UPS_BE =
+            CONTENT.blockEntity("ups", UpsBlockEntity::new, VINTAGE_UPS, LEGACY_UPS, TRANSITION_UPS, STANDARD_UPS,
+                    ADVANCED_UPS);
+
+    /*
      * The speakers, which carry a computer's sound out beside its monitor, a model each era from the Legacy on; and the
      * subwoofer of the Transition set, which takes no cable: set against a satellite, it plays the bass they leave out.
      */
@@ -898,6 +921,34 @@ public final class ComputingModule {
             RackUnitItem.Kind.COOLING_UNIT, HardwareEra.STANDARD).named("Cooling Unit").register();
     public static final ItemEntry<RackUnitItem> ADVANCED_COOLING_UNIT = rackUnit("advanced_cooling_unit",
             RackUnitItem.Kind.COOLING_UNIT, HardwareEra.ADVANCED).named("Advanced Cooling Unit").register();
+    // The Rack UPS's battery expansions and the PDU, one of each for every era as the Rack UPS has.
+    public static final ItemEntry<RackUnitItem> VINTAGE_UPS_BATTERY_EXPANSION = rackUnit(
+            "vintage_ups_battery_expansion", RackUnitItem.Kind.UPS_BATTERY, HardwareEra.VINTAGE)
+            .named("Vintage UPS Battery Expansion").register();
+    public static final ItemEntry<RackUnitItem> LEGACY_UPS_BATTERY_EXPANSION = rackUnit(
+            "legacy_ups_battery_expansion", RackUnitItem.Kind.UPS_BATTERY, HardwareEra.LEGACY)
+            .named("Legacy UPS Battery Expansion").register();
+    public static final ItemEntry<RackUnitItem> TRANSITION_UPS_BATTERY_EXPANSION = rackUnit(
+            "transition_ups_battery_expansion", RackUnitItem.Kind.UPS_BATTERY, HardwareEra.TRANSITION)
+            .named("Transition UPS Battery Expansion").register();
+    public static final ItemEntry<RackUnitItem> UPS_BATTERY_EXPANSION = rackUnit("ups_battery_expansion",
+            RackUnitItem.Kind.UPS_BATTERY, HardwareEra.STANDARD).named("UPS Battery Expansion").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_UPS_BATTERY_EXPANSION = rackUnit(
+            "advanced_ups_battery_expansion", RackUnitItem.Kind.UPS_BATTERY, HardwareEra.ADVANCED)
+            .named("Advanced UPS Battery Expansion").register();
+    public static final ItemEntry<RackUnitItem> VINTAGE_PDU = rackUnit("vintage_pdu", RackUnitItem.Kind.PDU,
+            HardwareEra.VINTAGE).named("Vintage PDU").register();
+    public static final ItemEntry<RackUnitItem> LEGACY_PDU = rackUnit("legacy_pdu", RackUnitItem.Kind.PDU,
+            HardwareEra.LEGACY).named("Legacy PDU").register();
+    public static final ItemEntry<RackUnitItem> TRANSITION_PDU = rackUnit("transition_pdu", RackUnitItem.Kind.PDU,
+            HardwareEra.TRANSITION).named("Transition PDU").register();
+    public static final ItemEntry<RackUnitItem> PDU = rackUnit("pdu", RackUnitItem.Kind.PDU, HardwareEra.STANDARD)
+            .named("PDU").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_PDU = rackUnit("advanced_pdu", RackUnitItem.Kind.PDU,
+            HardwareEra.ADVANCED).named("Advanced PDU").register();
+    // The shelf of drives of the late game, which turns a Storage Server into a great store.
+    public static final ItemEntry<RackUnitItem> DRIVE_SHELF = rackUnit("drive_shelf", RackUnitItem.Kind.DRIVE_SHELF,
+            HardwareEra.STANDARD).named("Drive Shelf").register();
     // A server rack takes the fibre backbone through one of these: the Standard's opens it to the Fibre Optic Cable,
     // the Advanced's to the OM5 Fibre Cable as well.
     public static final ItemEntry<RackUnitItem> FIBRE_OPTIC_INTERFACE = rackUnit("fibre_optic_interface",
@@ -1337,6 +1388,19 @@ public final class ComputingModule {
                 .geo(ComputingLooks.REDSTONE_INTERFACE)
                 .item((block, properties) -> new CabinetBlockItem(block, properties,
                         ComputingLooks.REDSTONE_INTERFACE, model, DEVICE_FIT, REDSTONE_INTERFACE_LIT))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.PERIPHERALS, era));
+    }
+
+    /** An MF PowerGuard of {@code era}: one model drawn by its block entity, its lamps dark on its item. */
+    private static BlockBuilder<UpsBlock> ups(final String id, final Era era) {
+        final String model = ComputingLooks.ups(era);
+        return CONTENT.block(id, properties -> new UpsBlock(properties, era))
+                .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.5F)
+                        .sound(SoundType.METAL).noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body", "block/ups/" + model)))
+                .geo(ComputingLooks.UPS)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.UPS, model,
+                        DEVICE_FIT, UPS_LAMPS))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.PERIPHERALS, era));
     }
 
