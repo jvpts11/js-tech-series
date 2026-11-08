@@ -55,6 +55,8 @@ public final class NetworkIndex {
     private final Map<StorageKey, List<ItemLocation>> catalog = new LinkedHashMap<>();
     private final StorageLockTable<StorageKey> locks = new StorageLockTable<>();
     private final Map<NodeUuid, Long> indexedModCounts = new LinkedHashMap<>();
+    /* The storage nodes that left the network, until the Mainframe asks which; any caller of a pass may find them. */
+    private final Set<NodeUuid> left = new HashSet<>();
     // What the index is currently worth trusting, so hot events and ghost rows stop being invisible.
     private final IndexHealth health =
             new IndexHealth();
@@ -205,6 +207,7 @@ public final class NetworkIndex {
         }
         final Set<NodeUuid> stale = new HashSet<>(dirty);
         stale.addAll(gone);
+        left.addAll(gone);
         dropServers(stale);
         for (final NodeUuid node : gone) {
             indexedModCounts.remove(node);
@@ -227,6 +230,19 @@ public final class NetworkIndex {
                 }
             }
         }
+    }
+
+    /**
+     * The storage nodes that left the network since this was last asked, and forgets them: what the Mainframe needs to
+     * know which of its Operations the network split under (computers/docs/design/power.md).
+     */
+    public Set<NodeUuid> drainLeft() {
+        if (left.isEmpty()) {
+            return Set.of();
+        }
+        final Set<NodeUuid> out = Set.copyOf(left);
+        left.clear();
+        return out;
     }
 
     public int vacuum(final ServerLevel level, final NetworkUuid network) {
@@ -745,6 +761,7 @@ public final class NetworkIndex {
         locks.clear();
         indexedModCounts.clear();
         manualLocks.clear();
+        left.clear();
     }
 
     // Readout (for the Mainframe terminal's Maintenance tab)

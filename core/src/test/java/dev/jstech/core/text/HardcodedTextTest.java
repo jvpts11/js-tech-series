@@ -201,6 +201,8 @@ class HardcodedTextTest {
             data(COMPUTERS + "os/boot/SysVBootLines.java", 3, KERNEL_LOG),
             data(COMPUTERS + "os/crash/CrashPages.java", 104, "what a kernel prints as it panics, and where a"
                     + " crashed system says it failed: no kernel ever printed them in anything but its own words"),
+            data(COMPUTERS + "os/defrag/FsckLines.java", 27, "what fsck prints as it repairs a corrupted disk: no"
+                    + " fsck ever printed in anything but its own words"),
             data(COMPUTERS + "os/KernelNames.java", 4, "kernel names as a system reports them"),
             data(COMPUTERS + "os/OsBootstrap.java", 5, PRODUCTS),
             data(COMPUTERS + "os/OsRegistry.java", 2, "the kind of entry a registration names in the log"),

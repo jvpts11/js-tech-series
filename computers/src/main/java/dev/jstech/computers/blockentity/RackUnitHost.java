@@ -575,6 +575,13 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
         rack.setChanged();
     }
 
+    /* What the server in this bay stores changed: the network's index reads the bay again. */
+    @Override
+    public void storageChanged() {
+        rack.markStorageChanged(row);
+        rack.setChanged();
+    }
+
     @Override
     @Nullable
     public Era installedEra() {

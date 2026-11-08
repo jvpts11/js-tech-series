@@ -263,7 +263,7 @@
     }
   ],
   "id": "jsc:computercraft_peripheral",
-  "order": 130,
+  "order": 131,
   "section": "jsc:gateway",
   "title": "jsc.guide.computercraft_peripheral.title"
 }

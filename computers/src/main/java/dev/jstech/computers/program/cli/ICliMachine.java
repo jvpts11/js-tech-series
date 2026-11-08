@@ -37,6 +37,14 @@ public interface ICliMachine {
         return "";
     }
 
+    /**
+     * The machine's Defrag after doing what {@code request} asks of it ({@code defrag:start:1}), as the lines its state
+     * travels in (computers/docs/design/storage.md); empty where the machine has none.
+     */
+    default String defrag(final String request) {
+        return "";
+    }
+
     /** A human label for the computer kind, e.g. {@code "Personal Computer"} or {@code "Mainframe"}. */
     default String type() {
         return "";

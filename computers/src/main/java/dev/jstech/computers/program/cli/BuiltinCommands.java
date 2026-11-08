@@ -105,6 +105,8 @@ public final class BuiltinCommands {
                 new MachineCommands.Devices(),
                 // The Vintage systems' diagnostics, where they disable a device, having no Device Manager.
                 new MsdCommand(),
+                // MC-DOS's Defrag, which repairs a corrupted disk on a screen of its own.
+                new DefragCommand(),
                 // MC-DOS's menu shell, the desktop a machine of its age had none of.
                 new DosShellCommand(),
                 new NetworkCommands.Ssh(),

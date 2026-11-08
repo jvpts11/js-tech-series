@@ -73,6 +73,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   kept for a computer cooled from outside it, which keeps no temperature. A modpack's startup script declares them with
   `JsComputers.cooler(item, {era, kind, takes_away_watts})` and `JsComputers.caseFan(item, {era, size_mm,
   takes_away_watts})`. Experimental.
+- System tools under the menu: `DesktopEnvironmentDef` gains `menuOnly`, the bundled programs its menus
+  list with no icon on the wallpaper, and `onWallpaper`; the six-part constructor is kept for a desktop that puts an
+  icon of every program on it. Experimental.
 
 ### Added
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
@@ -212,6 +215,26 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   and the cards; the supply in its niche on the floor of the disk bay, and each disk in a sled with a handle and the
   lamp that says it carries a system. The nine MTX boards have models of their own (four sockets, eight memory slots
   as long as their era's modules, six expansion slots and their connectors). No cables are drawn inside.
+- Storage corruption: a network conflict corrupts a tenth of what both networks store, and a thermal trip
+  may corrupt the disks of the computer that shut down (a chance of 25% for each disk, 5% of it). Corrupted items
+  leave the network's index and wait for the Defrag, still taking their room; corruption can also hit a system's own
+  files, and a system missing the file that starts it does not start. Over half corrupted, bad sectors take the
+  capacity it goes over half by; over nine tenths, the disk dies with all it held, and formatting does not bring it
+  back. The private part of a Personal Computer is never touched.
+- The Defrag, on every system: DEFRAG on MC-DOS and MC-NET, its map of clusters in sixteen colours; the
+  Disk Defragmenter of Frames 95 (its grid of blocks), XP (its volumes and two bars) and 7 (its schedule and the state
+  of each disk), and Optimize Drives on 10 and 11, from the Start menu; and `fsck` on Linux, FreeBSD and UNIX. A pass
+  tries every corrupted item once (a hard disk gives back 95%, an SSD and an NVMe disk less as the damage grows),
+  mends a quarter of the bad sectors left, takes 3 minutes on a hard disk, 1 on an SSD and 30 seconds on NVMe, and
+  doubles that disk's wait for the network while it runs. It can be paused and stopped; Frames 7, 10 and 11 run it once
+  a week on a disk that needs it. Corrupted items are drawn in yellow and bad sectors in black, and each says what it
+  gave back and lost; the network's log says so too.
+- This PC and the Storage Insights show corruption: the corrupted share of a disk in red on its bar, what
+  bad sectors took hatched at its end, and a dead disk crossed out, "This disk has failed".
+- A network conflict costs: what the discarded Operations were carrying is lost, and the log says what.
+  The network splitting under an Operation (a cable pulled between the Mainframe and a server it was reading or
+  writing) loses what it was carrying too. The server's `[item_loss]` settings gain `network_split`,
+  `network_conflict` and `corruption`, all on by default; with one off, that situation gives everything back.
 - Other mods' machines do the network's work: `RUN` asks a machine of the network for a kind of Operation
   its mod registered, `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH`,
   from a prompt, the studio, a job (so a job can answer a world event on another mod's machine) or a program. `ON`

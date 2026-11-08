@@ -40,6 +40,8 @@ public final class PosixCommands {
         out.addAll(DeviceCommands.posix());
         // This family's own words for giving a name a value and taking it away again.
         out.addAll(VariableCommands.posix());
+        // What repairs a corrupted disk here, the Defrag of these systems.
+        out.add(new FsckCommand());
         return List.copyOf(out);
     }
 

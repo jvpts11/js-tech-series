@@ -65,9 +65,10 @@ public final class LocalStore implements IWeightedStore {
         return ordered;
     }
 
+    /* The room a drive has, in items: less what bad sectors took of it, and nothing of a dead one. */
     private static long diskCapacity(final ItemStack disk) {
         final DiskSpec spec = HardwareRegistry.disk(disk);
-        return spec != null ? spec.capacityItems() : 0L;
+        return spec != null ? DriveVolumes.usableCapacity(disk, spec.capacityItems()) : 0L;
     }
 
     /** What one item costs on that drive, in megabytes: its era's word size decides. */
@@ -76,6 +77,7 @@ public final class LocalStore implements IWeightedStore {
         return spec != null ? EraStorage.mbPerItem(spec.era()) : 0L;
     }
 
+    /** The room these drives have, in items: less what bad sectors took of them, and nothing of a dead one. */
     public long capacity() {
         long total = 0L;
         for (final ItemStack disk : disks) {
@@ -195,6 +197,12 @@ public final class LocalStore implements IWeightedStore {
             sum += diskCapacityWeight(i) / StorageKey.MB_EQ_PER_ITEM * diskPublicPermille(i) / 1000L;
         }
         return sum;
+    }
+
+    /** One disk's public view: what of it the network may read, and the only part of it corruption can reach. */
+    public static Map<StorageKey, Long> publicViewOf(final ItemStack disk) {
+        return DiskStorageView.publicView(DriveVolumes.peek(disk).items(),
+                diskCapacity(disk) * StorageKey.MB_EQ_PER_ITEM, DriveVolumes.publicPermille(disk));
     }
 
     /** The union of every disk's public view, what the network may read from this computer. */

@@ -18,6 +18,7 @@ import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.printer.PrintedDocument;
 import dev.jstech.computers.printer.PrintedDocuments;
+import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.computers.storage.DiskUsage;
 import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.core.id.StableCodecs;
@@ -65,6 +66,13 @@ public final class ComputingComponents {
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<DiskUsage>>
             DISK_USAGE = saved("disk_usage", DiskUsage.CODEC, DiskUsage.STREAM_CODEC);
+
+    /*
+     * What corruption did to a drive, beside its usage summary: what waits for the Defrag, the bad sectors and a death.
+     * Absent on a drive nothing happened to.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<DiskHealth>>
+            DISK_HEALTH = saved("disk_health", DiskHealth.CODEC, DiskHealth.STREAM_CODEC);
 
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>>
             SERVER_HARDWARE = saved("server_hardware", ItemContainerContents.CODEC,

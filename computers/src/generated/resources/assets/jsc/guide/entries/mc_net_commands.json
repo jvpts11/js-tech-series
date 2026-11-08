@@ -94,6 +94,10 @@
     },
     {
       "type": "command",
+      "command": "jsc:command/mc_net/defrag"
+    },
+    {
+      "type": "command",
       "command": "jsc:command/mc_net/config"
     },
     {
@@ -246,7 +250,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:mc_net_commands",
-  "order": 80,
+  "order": 81,
   "section": "jsc:mc_net_terminal",
   "title": "jsc.guide.mc_net_commands.title"
 }

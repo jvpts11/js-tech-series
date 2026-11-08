@@ -16,6 +16,7 @@ import dev.jstech.computers.operation.payload.NetworkItemEntry.StorageShare;
 import dev.jstech.computers.operation.payload.RequestItemDetailPayload;
 import dev.jstech.computers.operation.payload.RequestStorageInsightsPayload;
 import dev.jstech.computers.operation.payload.StorageInsightsPayload;
+import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
@@ -82,6 +83,8 @@ public final class StorageInsightsApp implements IDesktopApp {
             new Colours(0xFFD1495B, 0xFFE0A020, 0x18D1495B, 0xFF3A78C8, 0xFF9A6BC9));
     private static final int TOP_ROW_H = 15;
     private static final int LOW_ROW_H = 13;
+    /* The room under the servers for what corruption did to one: three lines. */
+    private static final int CORRUPTION_H = 32;
     private static final int SERVER_ROW_H = 11;
     private static final int DETAIL_ROW_H = 10;
     private static final int USE_CELL = 16;
@@ -91,6 +94,9 @@ public final class StorageInsightsApp implements IDesktopApp {
     private final BlockPos host;
     private final BlockPos monitorPos;
     private OsSkin skin = OsSkin.fallback();
+    /* Where what corruption did to a server is written, under the list of servers, as last laid out. */
+    private int corruptionX;
+    private int corruptionY;
     @Nullable
     private StorageInsightsPayload data;
     private int threshold = 64;
@@ -283,6 +289,9 @@ public final class StorageInsightsApp implements IDesktopApp {
             layoutDashboard(px, py, pw, ph);
         }
         root.render(g, ctx);
+        if (!detailMode && anyHurt()) {
+            renderCorruption(g, ctx.font(), corruptionX, corruptionY);
+        }
         if (detailMode && detail != null) {
             // The item's own icon beside its name, and the rule under the header.
             itemIcon(g, detail.item(), px + 40, py - 1, 16);
@@ -348,7 +357,24 @@ public final class StorageInsightsApp implements IDesktopApp {
 
         final int svY = thY + 16;
         serverHeader.setBounds(rx, svY, rw, 8);
-        serverList.setBounds(rx, svY + 12, rw, Math.max(SERVER_ROW_H, colTop + colH - (svY + 12)));
+        // A server corruption hurt leaves room under the list for what it did, in three lines.
+        final int listH = Math.max(SERVER_ROW_H, colTop + colH - (svY + 12) - (anyHurt() ? CORRUPTION_H : 0));
+        serverList.setBounds(rx, svY + 12, rw, listH);
+        corruptionX = rx;
+        corruptionY = svY + 14 + listH;
+    }
+
+    /* Whether corruption hurt any server the dashboard lists. */
+    private boolean anyHurt() {
+        if (data == null) {
+            return false;
+        }
+        for (int i = 0; i < data.servers().size(); i++) {
+            if (!data.healthOf(i).sound()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void layoutDetail(final int x, final int y, final int w, final int h) {
@@ -461,9 +487,45 @@ public final class StorageInsightsApp implements IDesktopApp {
         final int bx = x + 46;
         final int bw = Math.max(8, w - 46 - 30);
         g.fill(bx, y, bx + bw, y + 6, ctx.skin().fieldBg());
-        g.fill(bx, y, bx + (int) (bw * Math.min(1.0, (double) s.qty() / smax)), y + 6, ctx.skin().accent());
+        final int filled = (int) (bw * Math.min(1.0, (double) s.qty() / smax));
+        g.fill(bx, y, bx + filled, y + 6, ctx.skin().accent());
+        // What of a server's storage corruption hurt is red at the end of its bar, waiting for the Defrag.
+        final DiskHealth health = data == null ? DiskHealth.SOUND : data.healthOf(index);
+        final int red = filled * health.damage() / 1000;
+        if (red > 0) {
+            g.fill(bx + filled - red, y, bx + filled, y + 6, PALETTE.get().critical());
+        }
         final String q = JsTechTheme.fmt(s.qty());
         Draw.text(g, font, q, x + w - font.width(q), y - 1, ctx.skin().dim());
+    }
+
+    /*
+     * Under the servers, what corruption did to the first one it hurt: the share corrupted in red, that it waits for
+     * the Defrag, and the share bad sectors took.
+     */
+    private void renderCorruption(final GuiGraphics g, final Font font, final int x, final int y) {
+        if (data == null) {
+            return;
+        }
+        final int red = PALETTE.get().critical();
+        for (int i = 0; i < data.servers().size(); i++) {
+            final DiskHealth health = data.healthOf(i);
+            if (health.sound()) {
+                continue;
+            }
+            if (health.dead()) {
+                Draw.text(g, font, GameText.resolve(StorageInsightsTexts.SERVER_FAILED), x, y, red);
+                return;
+            }
+            Draw.text(g, font, GameText.resolve(StorageInsightsTexts.CORRUPTED.with((health.damage() + 5) / 10)), x,
+                    y, red);
+            Draw.text(g, font, GameText.resolve(StorageInsightsTexts.WAITING), x, y + 10, skin.dim());
+            if (health.badSectors() > 0) {
+                Draw.text(g, font, GameText.resolve(StorageInsightsTexts.BAD_SECTORS.with(
+                        (health.badSectors() + 5) / 10)), x, y + 20, skin.dim());
+            }
+            return;
+        }
     }
 
     private void renderStoredRow(final GuiGraphics g, final UiContext ctx, final StorageShare s, final int index, final int x,

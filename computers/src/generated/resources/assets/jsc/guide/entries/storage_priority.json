@@ -125,7 +125,7 @@
   ],
   "icon": "jsc:disk_vaultis_trench_20m",
   "id": "jsc:storage_priority",
-  "order": 83,
+  "order": 84,
   "section": "jsc:storage",
   "title": "jsc.guide.storage_priority.title"
 }

@@ -71,6 +71,14 @@
       "command": "jsc:command/linux/devices"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.system_commands.text5"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/fsck"
+    },
+    {
       "type": "command",
       "command": "jsc:command/linux/which"
     },
@@ -100,7 +108,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.system_commands.text5"
+      "text": "jsc.guide.system_commands.text6"
     },
     {
       "type": "heading",
@@ -132,7 +140,7 @@
     }
   ],
   "id": "jsc:system_commands",
-  "order": 198,
+  "order": 199,
   "section": "jsc:shell_commands",
   "title": "jsc.guide.system_commands.title"
 }

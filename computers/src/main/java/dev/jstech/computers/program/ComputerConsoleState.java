@@ -9,6 +9,7 @@ package dev.jstech.computers.program;
 
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.os.defrag.MachineDefrag;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.program.install.LiveInstallState;
@@ -88,6 +89,8 @@ public final class ComputerConsoleState {
      */
     @Nullable
     private SetupJob setup;
+    /* The machine's Defrag: the pass under way, the last one's end and the weekly schedule. Saved. */
+    private final MachineDefrag defrag = new MachineDefrag();
     /*
      * A live installation medium booted on this computer (the manual Arch / Gentoo install), until it reboots
      * into the installed system. Persisted so a half-done install survives a reload.
@@ -249,6 +252,11 @@ public final class ComputerConsoleState {
         this.setup = null;
     }
 
+    /** The machine's Defrag: the pass under way, the last one's end and the weekly schedule. */
+    public MachineDefrag defrag() {
+        return defrag;
+    }
+
     /** The live installation in progress, or null when the computer is not booted from a live medium. */
     @Nullable
     public LiveInstallState liveInstall() {
@@ -388,6 +396,7 @@ public final class ComputerConsoleState {
             tag.put("Setup", job);
         }
         programs.save(tag);
+        defrag.save(tag);
         if (liveInstall != null) {
             LongText.put(tag, "LiveInstall", liveInstall.serialize());
         }
@@ -423,6 +432,7 @@ public final class ComputerConsoleState {
             history.removeFirst();
         }
         programs.load(tag);
+        defrag.load(tag);
         setup = null;
         if (tag.contains("Setup")) {
             final CompoundTag job = tag.getCompound("Setup");

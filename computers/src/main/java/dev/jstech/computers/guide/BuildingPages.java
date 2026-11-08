@@ -386,6 +386,7 @@ final class BuildingPages {
         memory(guide, section);
         graphicsCards(guide, section);
         disks(guide, section);
+        corruption(guide, section);
         powerSupplies(guide, section);
         upses(guide, section);
         cooling(guide, section);
@@ -829,6 +830,65 @@ final class BuildingPages {
                         "The cable does not plug into the UPS.",
                         "It plugs in on the back and the sides only. Turn the UPS, or bring the cable to one of those.")
                 .seeAlso("jsc:power_supplies", "jsc:rack_equipment")
+                .register();
+    }
+
+    private static void corruption(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("corruption_and_the_defrag", section).titled("Corruption and the Defrag")
+                .icon(HardwareItems.DISK_TRENCH_20M)
+                .paragraph("Storage is never corrupted in normal play. Two things corrupt it: a network conflict, two"
+                        + " Mainframes on one network ([](jsc:network_identity)), which corrupts a tenth of what both"
+                        + " networks store; and a thermal trip ([](jsc:cooling)), which may corrupt the disks of the"
+                        + " computer that shut down.")
+                .define("Corrupted item", "An item a disk still holds but nobody can read: it leaves the network's"
+                        + " index until the Defrag gives it back or loses it.")
+                .define("Bad sectors",
+                        "The part of a disk that heavy corruption ruined: the disk holds that much less.")
+                .paragraph("Corrupted items still take their room on the disk, and This PC and the Storage Insights"
+                        + " show how much of each disk is corrupted, in red. Corruption can also hit a system's own"
+                        + " files, and a system missing the file that starts it does not start. The private part of a"
+                        + " Personal Computer is never touched.")
+                .table("How hurt a disk gets", "Corrupted", "What it does")
+                .row(GuideCell.words("Up to half"), GuideCell.words("Only the items, waiting for the Defrag"))
+                .row(GuideCell.words("Over half"), GuideCell.words("Bad sectors take what goes over half: at 70%,"
+                        + " the disk holds a fifth less"))
+                .row(GuideCell.words("Over nine tenths"), GuideCell.words("The disk dies, with all it held"))
+                .table("The Defrag on each system", "System", "Program", "How to start it")
+                .row(GuideCell.words("MC-DOS and MC-NET"), GuideCell.code("DEFRAG"),
+                        GuideCell.words("Type defrag at the prompt, then press Enter"))
+                .row(GuideCell.words("Frames 95, XP and 7"), GuideCell.words("Disk Defragmenter"),
+                        GuideCell.words("Open it from the Start menu"))
+                .row(GuideCell.words("Frames 10 and 11"), GuideCell.words("Optimize Drives"),
+                        GuideCell.words("Open it from the Start menu"))
+                .row(GuideCell.words("Linux, FreeBSD and UNIX"), GuideCell.code("fsck"),
+                        GuideCell.words("Type fsck -y and the disk's device, such as /dev/sdb1"))
+                .define("Disk Defragmenter", "The Defrag of Frames 95, XP and 7; Frames 10 and 11 call it Optimize"
+                        + " Drives.")
+                .paragraph("When you run the Defrag, a pass tries every corrupted item once. What comes back is part"
+                        + " of your disk again; what does not is lost. Every pass also mends a quarter of the bad"
+                        + " sectors left. While a pass runs, the computer keeps working, but that disk answers the"
+                        + " network twice as slowly.")
+                .table("A pass on each kind of disk", "Disk", "Chance an item comes back", "A pass takes")
+                .row(GuideCell.words("Hard disk"), GuideCell.words("95%"), GuideCell.words("3 minutes"))
+                .row(GuideCell.words("SSD"), GuideCell.words("70%, 10 less for every tenth corrupted; none from 70%"),
+                        GuideCell.words("1 minute"))
+                .row(GuideCell.words("NVMe"), GuideCell.words("60%, 15 less for every tenth corrupted; none from 50%"),
+                        GuideCell.words("30 seconds"))
+                .paragraph("Frames 7, 10 and 11 run the Defrag on their own once a week on a disk that needs it; its"
+                        + " Configure schedule or Change settings button turns that on or off. A system that no longer"
+                        + " starts is mended by taking its disk to a Dock Station on another computer and running the"
+                        + " Defrag there, or by installing the system again.")
+                .paragraph("The server's settings decide what a failing network costs, in jscomputers-server.toml under"
+                        + " [item_loss]: corruption turns all corruption off, network_conflict what a conflict costs,"
+                        + " and network_split whether an Operation loses what it carried when the network splits"
+                        + " under it, a cable pulled between the Mainframe and a server.")
+                .ifSomethingGoesWrong("Items are missing from the network after two Mainframes met on it.",
+                        "The conflict corrupted them. Separate the Mainframes, then run the Defrag on each disk.",
+                        "The Defrag gave nothing back on an NVMe disk.",
+                        "Over half of it was corrupted, and NVMe gives nothing back from there. A hard disk would.",
+                        "This PC says a disk has failed.",
+                        "Over nine tenths of it was corrupted, and it died with all it held. Replace it.")
+                .seeAlso("jsc:disks", "jsc:network_identity", "jsc:cooling", "jsc:storage_insights")
                 .register();
     }
 

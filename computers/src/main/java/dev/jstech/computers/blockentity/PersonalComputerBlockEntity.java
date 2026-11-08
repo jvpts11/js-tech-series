@@ -20,6 +20,7 @@ import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.storage.DiskCorruption;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
@@ -42,6 +43,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.Containers;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -192,6 +194,31 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
 
     public long storageModCount() {
         return storageModCount;
+    }
+
+    /*
+     * Corruption reaches only what the network may read of a Personal Computer's disk: its private part is never
+     * affected (computers/docs/design/storage.md).
+     */
+    @Override
+    protected Map<StorageKey, Long> corruptible(final ItemStack disk) {
+        return LocalStore.publicViewOf(disk);
+    }
+
+    /**
+     * A network conflict corrupts {@code share} of what this computer lends its network, its disks' public parts, and
+     * nothing of its own files. Returns whether anything was corrupted.
+     */
+    public boolean corruptPublic(final double share, final RandomSource random) {
+        boolean hit = false;
+        for (int slot = 0; slot < diskSlots(); slot++) {
+            final ItemStack disk = diskInSlot(slot);
+            hit |= DiskCorruption.corrupt(disk, share, corruptible(disk), false, random);
+        }
+        if (hit) {
+            setChanged();
+        }
+        return hit;
     }
 
     /**

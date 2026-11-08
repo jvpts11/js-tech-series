@@ -751,6 +751,7 @@ final class NetworkPages {
                 .command(CommandGuidePages.id(Platform.MC_NET, "status"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "devices"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "msd"))
+                .command(CommandGuidePages.id(Platform.MC_NET, "defrag"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "config"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "reboot"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "clear"))

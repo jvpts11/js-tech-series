@@ -29,6 +29,7 @@ import dev.jstech.computers.crafting.PendingCraftOperation;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.engine.INetworkEngine;
 import dev.jstech.computers.engine.NetworkOperationsService;
+import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.CaseCooling;
 import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -47,6 +48,7 @@ import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.program.iql.IqlCatalog;
 import dev.jstech.computers.storage.IDataSink;
@@ -431,6 +433,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         }
         // Whatever the machine is setting up copies on while it is up, network or no network.
         SetupRunner.tick(this, level, worldPosition);
+        DefragRunner.tick(this, level);
         networking.update(level);
         if (networking.conflicted()) {
             // A contested network collapses: discard every in-flight Operation (its progress is
@@ -463,6 +466,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         runDispatch();
         // Reconcile the in-RAM storage catalog with the network's servers: a changes-only ANALYZE
         networkIndex.analyzeIncremental(level, networkUuid());
+        splitUnder(level, networkIndex.drainLeft());
         /*
          * The holds a player put on the storage last: taken again now that the catalog has been read, since
          * a hold lasts until somebody lets it go and closing a world is not somebody letting it go.
@@ -602,7 +606,10 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
              * INSERT returning leftover, a SELECT freeing its lock) recovers; then record each as
              * DISCARDED so a conflict or power-off leaves a trace in the log instead of vanishing.
              */
-            final boolean lose = !keepPersistent && stoppedSuddenly() && ComputersServerConfig.loseOnPowerLoss();
+            // A conflict costs what was in flight as a power loss does, when the settings say a conflict costs.
+            final boolean conflict = networking.conflicted() && ComputersServerConfig.conflictCosts();
+            final boolean lose = !keepPersistent
+                    && (conflict || stoppedSuddenly() && ComputersServerConfig.loseOnPowerLoss());
             final Map<StorageKey, Long> lost = new HashMap<>();
             for (final var operation : scheduler.live()) {
                 if (keepPersistent && operation instanceof IPersistentOperation persistent
@@ -621,12 +628,30 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
                 scheduler.postDiscarded(operation);
             }
             if (level instanceof ServerLevel server) {
-                logItemsLost(server, lost);
+                logItemsLost(server, lost, conflict ? NetworkEvents.ITEMS_LOST_CONFLICT : NetworkEvents.ITEMS_LOST);
             }
             scheduler.clear();
             // The index lives in RAM: powering off clears the catalog, rebuilt on the next start.
             networkIndex.clear();
         }
+    }
+
+    /*
+     * The network split under the Operations moving items through the nodes that left it (a cable pulled between the
+     * Mainframe and a server, a router gone): what they were carrying is lost when the settings say so, and the log
+     * says what. Otherwise they are left to stall and give everything back, as they always did.
+     */
+    private void splitUnder(final ServerLevel level, final Set<NodeUuid> left) {
+        if (left.isEmpty() || !ComputersServerConfig.loseOnNetworkSplit()) {
+            return;
+        }
+        final Map<StorageKey, Long> lost = new HashMap<>();
+        for (final var operation : scheduler.live()) {
+            if (left.stream().anyMatch(operation::reaches)) {
+                operation.lose().forEach((key, amount) -> lost.merge(key, amount, Long::sum));
+            }
+        }
+        logItemsLost(level, lost, NetworkEvents.ITEMS_LOST_SPLIT);
     }
 
     public int submitSelfTest(final int count, final int workUnits) {

@@ -27,6 +27,7 @@ final class DesktopNames {
     static final TextKey FRAMES_XP_HELP = TextKey.of("jsc.desktop.frames_xp.help_viewer", "Help and Support");
     static final TextKey FRAMES_7_HELP = TextKey.of("jsc.desktop.frames_7.help_viewer", "Help and Support");
     static final TextKey GET_HELP = TextKey.of("jsc.desktop.frames_10.help_viewer", "Get Help");
+    static final TextKey OPTIMIZE_DRIVES = TextKey.of("jsc.desktop.frames_10.defrag", "Optimize Drives");
     static final TextKey KDE_HELP = TextKey.of("jsc.desktop.kde_plasma.help_viewer", "Help Center");
     static final TextKey CDE_HELP = TextKey.of("jsc.desktop.cde.help_viewer", "Help Viewer");
 

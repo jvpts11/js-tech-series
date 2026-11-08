@@ -431,7 +431,7 @@
   ],
   "icon": "jsc:personal_computer",
   "id": "jsc:network_interactor",
-  "order": 57,
+  "order": 58,
   "section": "jsc:network_tools",
   "title": "jsc.guide.network_interactor.title"
 }

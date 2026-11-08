@@ -171,6 +171,9 @@ waiting one climbs in priority, how long a saved one nobody resumed is kept. J's
 | `hardware.psu_life_multiplier` | 1.0 | How much longer every power supply lasts, from 0.1 to 10. |
 | `install_by_hand.arch_every_step` | off | Ask for every step of Arch Linux's guide. |
 | `item_loss.power_loss` | on | What the Operations were carrying is lost when the machine running them goes dark suddenly ([Hardware](HARDWARE.md#power-supplies-psu)); off, it is given back. |
+| `item_loss.network_split` | on | What an Operation was carrying is lost when the network splits under it, a cable pulled between the Mainframe and a server; off, it is given back. |
+| `item_loss.network_conflict` | on | A network conflict loses what the discarded Operations were carrying and corrupts a tenth of what both networks store; off, it costs nothing. |
+| `item_loss.corruption` | on | Storage can be corrupted at all, by a conflict or a thermal trip ([Hardware](HARDWARE.md#corruption-and-the-defrag)); off, nothing is. |
 | `install_by_hand.gentoo_every_step` | off | Ask for every step of Gentoo's handbook. |
 | `power.draw_energy` | on | Computers draw energy through their power supplies ([Hardware](HARDWARE.md#power-supplies-psu)); off, they run free. |
 | `prompt.list_commands` | off | The `listcmd` command on every system. |

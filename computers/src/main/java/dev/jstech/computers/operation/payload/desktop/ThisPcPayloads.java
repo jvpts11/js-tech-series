@@ -49,6 +49,7 @@ import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.os.media.MediaVolume;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -120,7 +121,8 @@ public final class ThisPcPayloads {
                      */
                     disks.add(new ThisPcPayload.WireDisk(slot, GameText.of(stack.getHoverName()),
                             cap, shares.usedItems(), stack == sys, osId != null ? osId.getPath() : "",
-                            shares.systemItems(), shares.storageItems(), shares.fileItems()));
+                            shares.systemItems(), shares.storageItems(), shares.fileItems(),
+                            DriveVolumes.health(stack)));
                 }
                 slot++;
             }

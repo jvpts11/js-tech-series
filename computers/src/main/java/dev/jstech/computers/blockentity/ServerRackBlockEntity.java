@@ -58,6 +58,7 @@ import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MachineMedia;
@@ -75,6 +76,8 @@ import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RackThermals;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.storage.Corruption;
+import dev.jstech.computers.storage.DiskCorruption;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
@@ -117,6 +120,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
@@ -973,6 +977,24 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
     }
 
+    /**
+     * Corrupts {@code share} of every drive the machine in {@code slot} claimed, its items and its system files, each
+     * drive when {@code chance} draws it (computers/docs/design/storage.md). Returns how many drives were hit.
+     */
+    public int corruptBay(final int slot, final double share, final double chance, final RandomSource random) {
+        int hit = 0;
+        for (final ItemStack drive : claimedDriveStacks(slot)) {
+            if (random.nextDouble() < chance && DiskCorruption.corrupt(drive, share, null, true, random)) {
+                hit++;
+            }
+        }
+        if (hit > 0) {
+            markStorageChanged(slot);
+            setChanged();
+        }
+        return hit;
+    }
+
     public long storageModCount(final int slot) {
         return slot >= 0 && slot < storageModCounts.length ? storageModCounts[slot] : 0L;
     }
@@ -1293,7 +1315,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         for (final ItemStack drive : claimedDriveStacks(serverSlot)) {
             final DiskSpec disk = HardwareRegistry.disk(drive);
             if (disk != null) {
-                items += disk.capacityItems();
+                items += DriveVolumes.usableCapacity(drive, disk.capacityItems());
             }
         }
         bayItemsCache[serverSlot] = items;
@@ -1401,6 +1423,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 return null;
             });
             SetupRunner.tick(unit, level, worldPosition);
+            DefragRunner.tick(unit, level);
             OsInstallRunner.tick(unit, level, worldPosition);
             // And whatever was left running in front of its terminal goes on running, watched or not.
             terminals.tick(level, i);
@@ -3130,6 +3153,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             bayStopsSuddenly(slot, CrashCause.THERMAL_TRIP, CrashPages.Moment.none());
             logBay(level, slot, EventLevel.ERROR, NetworkEvents.THERMAL_TRIP.with(heat.lastTrip(),
                     ComputersServerConfig.restartBelow()));
+            // Each drive it had in use may be corrupted by the trip.
+            final int hit = corruptBay(slot, Corruption.TRIP_SHARE, Corruption.TRIP_CHANCE, level.random);
+            if (hit > 0) {
+                logBay(level, slot, EventLevel.ERROR, NetworkEvents.DISKS_CORRUPTED.with(hit));
+            }
         });
     }
 

@@ -189,7 +189,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:recipe_nightly_craft",
-  "order": 328,
+  "order": 329,
   "section": "jsc:iql_recipe_list",
   "title": "jsc.guide.recipe_nightly_craft.title"
 }

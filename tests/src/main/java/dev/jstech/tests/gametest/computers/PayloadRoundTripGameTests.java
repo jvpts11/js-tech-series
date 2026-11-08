@@ -51,6 +51,7 @@ import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.trace.TraceEvent;
 import dev.jstech.computers.trace.TraceEventClass;
@@ -128,7 +129,7 @@ public final class PayloadRoundTripGameTests {
                 1, Text.literal("x86-64, 64-bit"), 16384, 3072, 1, Text.literal("PSU 650G"), true,
                 ThisPcPayload.COUNTED.with(2, ThisPcPayload.MONITOR), about);
         final ThisPcPayload.WireDisk disk = new ThisPcPayload.WireDisk(0, Text.literal("Vaultis Swift SSD 500 GB"),
-                2000L, 120L, true, "C:\\", 80L, 20L, 20L);
+                2000L, 120L, true, "C:\\", 80L, 20L, 20L, new DiskHealth(12_000L, 12L, 120, 30, false));
         final ThisPcPayload.WireMedia media = new ThisPcPayload.WireMedia(123L, "D:", Text.literal("Frames 11 USB"),
                 "OS", "FRAMES", true, "Frames 11", 2021, "jsc:frames_11",
                 List.of(Text.literal("Standard era or later"), Text.literal("64 it of memory")), 0L, 2);

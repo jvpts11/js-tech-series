@@ -23,6 +23,8 @@ import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.VolumeLabel;
+import dev.jstech.computers.os.defrag.DefragRunner;
+import dev.jstech.computers.os.defrag.DefragState;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
@@ -309,8 +311,11 @@ public final class FilePayloads {
             final Optional<String> interac = interacScreen(level, computer, player, payload.path());
             final Optional<String> msd = interac.isPresent() ? interac
                     : msdScreen(level, computer, player, payload.path());
-            final Optional<String> drawn = msd.isPresent() ? msd
+            final Optional<String> listed = msd.isPresent() ? msd
                     : menuShellListing(level, computer, player, payload.path());
+            // The Defrag's state, after whatever the request asks of it, for its screen, its windows and fsck.
+            final Optional<String> drawn = listed.isPresent() ? listed : DefragState.names(payload.path())
+                    ? Optional.of(DefragRunner.reply(computer, level, payload.path())) : Optional.empty();
             // A help viewer draws from the player's manuals; what it was opened on is all it needs, and no disk has it.
             final Optional<String> help = drawn.isPresent() ? drawn
                     : HelpViews.names(payload.path()) ? Optional.of("") : Optional.empty();

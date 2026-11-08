@@ -213,6 +213,14 @@ public interface IDesktopApp {
     }
 
     /**
+     * Whether the program asked, with a Close button of its own, for its window to close: asked after every click on
+     * it, and the window then closes as the title bar's close button closes it.
+     */
+    default boolean wantsToClose() {
+        return false;
+    }
+
+    /**
      * Whether Escape means something to the app right now: a menu to close, an editor with modes of its
      * own. The desktop closes on Escape otherwise, and never while an app says it wants the key.
      */

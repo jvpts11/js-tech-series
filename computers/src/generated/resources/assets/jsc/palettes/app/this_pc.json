@@ -1,5 +1,7 @@
 {
+  "badSectors": "#FF3A3F48",
   "barTrack": "#FFD7DBE4",
+  "corrupted": "#FFE53935",
   "discBody": "#FFB9C0CE",
   "discEdge": "#FF6E7686",
   "discHub": "#FFEDF0F6",
@@ -13,6 +15,7 @@
   "dockLight": "#FFB8BEC8",
   "emptyEdge": "#FFC2C7D4",
   "emptyFace": "#FFEEF0F4",
+  "failed": "#FFD32F2F",
   "floppyBody": "#FF1C2438",
   "floppyEdge": "#FF0B1220",
   "floppyShutter": "#FFB8BEC8",

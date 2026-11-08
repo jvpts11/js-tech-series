@@ -46,7 +46,7 @@
   "items": [
     "jsc:server_router"
   ],
-  "order": 40,
+  "order": 41,
   "section": "jsc:clusters",
   "title": "jsc.guide.server_router.title"
 }

@@ -19,6 +19,7 @@ import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.help.HelpForm;
 import dev.jstech.computers.hardware.CaseCooling;
 import dev.jstech.computers.os.boot.BootMenu;
+import dev.jstech.computers.os.defrag.DefragLook;
 import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -57,7 +58,8 @@ class LayoutAuditTest {
             "RedstoneInterfaceLayout", "DeviceManagerLayout", "InfoCenterLayout", "PowerStripLayout",
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
-            "SystemBootLayout", "CrashLayout", "DiskCheckLayout", "CommandPromptLayout", "OsInstallLayout",
+            "SystemBootLayout", "CrashLayout", "DiskCheckLayout", "DefragLayout", "CommandPromptLayout",
+            "OsInstallLayout",
             "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
             "NetworkServicesLayout", "NetworkLinksLayout", "NetworkEventLogLayout", "PrinterLayout", "DockLayout",
@@ -173,6 +175,12 @@ class LayoutAuditTest {
         c.add(AuditCase.onTheGlass("CrashLayout(Frames 95)", CrashLayout.frames95(60)));
         // Frames 95's ScanDisk after a sudden shutdown, its words over the list of areas and the bar.
         c.add(AuditCase.onTheGlass("DiskCheckLayout", DiskCheckLayout.layout()));
+        // The Frames' Defrag windows, each edition's at its own size.
+        for (final DefragLook look : DefragLook.values()) {
+            if (look.window()) {
+                c.add(new AuditCase("DefragLayout(" + look.serializedName() + ")", DefragLayout.layout(look), true));
+            }
+        }
         /*
          * The Command Prompt window is resizable, so audit it at the full glass size and at a compact one
          * that still leaves the console panel and the input strip room to draw; a bare terminal (MC-DOS, the

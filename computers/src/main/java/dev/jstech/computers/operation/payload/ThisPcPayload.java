@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.os.media.MediaVolume;
+import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
@@ -201,11 +202,12 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
      * @param osItems    the share the installed system occupies
      * @param storeItems the share stored items occupy
      * @param fileItems  the share files and installed programs occupy
+     * @param health     what corruption did to it: corrupted, bad sectors, dead
      */
     public record WireDisk(int slot, Text label, long capItems, long usedItems, boolean system,
-                           String osPath, long osItems, long storeItems, long fileItems) {
+                           String osPath, long osItems, long storeItems, long fileItems, DiskHealth health) {
 
-        // Written by hand: composite() tops out at six pairs, and a disk now carries nine fields.
+        // Written by hand: composite() tops out at six pairs, and a disk now carries ten fields.
         public static final StreamCodec<RegistryFriendlyByteBuf, WireDisk> STREAM_CODEC =
                 StreamCodec.of((buf, d) -> {
                     buf.writeVarInt(d.slot());
@@ -217,9 +219,10 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
                     buf.writeVarLong(d.osItems());
                     buf.writeVarLong(d.storeItems());
                     buf.writeVarLong(d.fileItems());
+                    DiskHealth.STREAM_CODEC.encode(buf, d.health());
                 }, buf -> new WireDisk(buf.readVarInt(), TextCodecs.STREAM_CODEC.decode(buf), buf.readVarLong(),
                         buf.readVarLong(), buf.readBoolean(), buf.readUtf(64),
-                        buf.readVarLong(), buf.readVarLong(), buf.readVarLong()));
+                        buf.readVarLong(), buf.readVarLong(), buf.readVarLong(), DiskHealth.STREAM_CODEC.decode(buf)));
 
         /** Free space in item-equivalents. */
         public long freeItems() {

@@ -44,6 +44,16 @@ public final class NetworkEvents {
             "Network conflict: a second Mainframe on the network, near %s");
     public static final TextKey CONFLICT_RESOLVED = TextKey.of("jsc.event_log.conflict_resolved",
             "Network conflict resolved");
+    public static final TextKey ITEMS_LOST_CONFLICT = TextKey.of("jsc.event_log.items_lost_conflict",
+            "Lost in transit in the network conflict: %s");
+    public static final TextKey ITEMS_LOST_SPLIT = TextKey.of("jsc.event_log.items_lost_split",
+            "Lost in transit when the network split: %s");
+    public static final TextKey STORAGE_CORRUPTED = TextKey.of("jsc.event_log.storage_corrupted",
+            "The network conflict corrupted the storage of %s machines: the Defrag can try to give it back");
+    public static final TextKey DISKS_CORRUPTED = TextKey.of("jsc.event_log.disks_corrupted",
+            "The thermal trip corrupted %s of its disks: the Defrag can try to give it back");
+    public static final TextKey DEFRAG_DONE = TextKey.of("jsc.event_log.defrag_done",
+            "Defrag of %s: %s corrupted, %s recovered, %s lost; bad sectors %s, now %s");
     /** What the machine column shows for something of the whole network. */
     public static final TextKey WHOLE_NETWORK = TextKey.of("jsc.event_log.network", "network");
     /* One kind lost: so many of an item, so many millibuckets of a fluid or a chemical; and the kinds not named. */
@@ -87,6 +97,13 @@ public final class NetworkEvents {
     public static void itemsLost(final ServerLevel level, @Nullable final NetworkUuid network,
                                  @Nullable final NodeUuid machine, final String machineName,
                                  final Map<StorageKey, Long> lost) {
+        itemsLost(level, network, machine, machineName, lost, ITEMS_LOST);
+    }
+
+    /** The same, in the words of how they were lost: {@code wording} takes the list of what. */
+    public static void itemsLost(final ServerLevel level, @Nullable final NetworkUuid network,
+                                 @Nullable final NodeUuid machine, final String machineName,
+                                 final Map<StorageKey, Long> lost, final TextKey wording) {
         if (machine == null || lost.isEmpty()) {
             return;
         }
@@ -101,7 +118,7 @@ public final class NetworkEvents {
         final Text list = TextLists.join(", ", named);
         final int more = kinds.size() - named.size();
         record(level, network, EventLevel.ERROR, machine, machineName,
-                ITEMS_LOST.with(more > 0 ? LOST_AND_MORE.with(list, more) : list));
+                wording.with(more > 0 ? LOST_AND_MORE.with(list, more) : list));
     }
 
     /**

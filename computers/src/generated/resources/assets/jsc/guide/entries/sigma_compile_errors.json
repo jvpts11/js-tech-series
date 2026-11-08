@@ -153,7 +153,7 @@
     }
   ],
   "id": "jsc:sigma_compile_errors",
-  "order": 384,
+  "order": 385,
   "section": "jsc:errors_compile",
   "title": "jsc.guide.sigma_compile_errors.title"
 }

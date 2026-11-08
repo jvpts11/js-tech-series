@@ -76,6 +76,7 @@ import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
@@ -88,6 +89,9 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.job.MachineJobs;
 import dev.jstech.computers.registry.ComputerRegistry;
 import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.storage.Corruption;
+import dev.jstech.computers.storage.DiskCorruption;
+import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.IAudioHost;
@@ -1809,7 +1813,36 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             stopSuddenly(CrashCause.THERMAL_TRIP, CrashPages.Moment.none());
             logEvent(level, EventLevel.ERROR, NetworkEvents.THERMAL_TRIP.with(heat.lastTrip(),
                     ComputersServerConfig.restartBelow()));
+            tripCorrupts(level);
         }
+    }
+
+    /*
+     * A thermal trip may corrupt the disks the machine had in use (computers/docs/design/temperature.md): each one by
+     * chance, a share of what corruption can reach on it and of its system files.
+     */
+    private void tripCorrupts(final ServerLevel level) {
+        int hit = 0;
+        for (int slot = 0; slot < diskSlots(); slot++) {
+            final ItemStack disk = diskInSlot(slot);
+            if (DriveVolumes.isDisk(disk) && level.random.nextDouble() < Corruption.TRIP_CHANCE
+                    && DiskCorruption.corrupt(disk, Corruption.TRIP_SHARE, corruptible(disk), true, level.random)) {
+                hit++;
+            }
+        }
+        if (hit > 0) {
+            setChanged();
+            logEvent(level, EventLevel.ERROR, NetworkEvents.DISKS_CORRUPTED.with(hit));
+        }
+    }
+
+    /**
+     * What corruption can reach of {@code disk}'s items: all of them here, null; a Personal Computer keeps its private
+     * part out of reach.
+     */
+    @Nullable
+    protected Map<StorageKey, Long> corruptible(final ItemStack disk) {
+        return null;
     }
 
     @Override
@@ -1917,10 +1950,15 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     /** Writes into the same log what the Operations it ran were carrying when it went dark, {@code lost} by kind. */
     protected void logItemsLost(final ServerLevel level, final Map<StorageKey, Long> lost) {
+        logItemsLost(level, lost, NetworkEvents.ITEMS_LOST);
+    }
+
+    /** The same, in the words of how they were lost: in a network conflict, or when the network split. */
+    protected void logItemsLost(final ServerLevel level, final Map<StorageKey, Long> lost, final TextKey wording) {
         final NodeUuid node = nodeUuid();
         if (node != null) {
             NetworkEvents.itemsLost(level, networkUuid() != null ? networkUuid() : ranOn, node,
-                    NetworkEvents.machineName(customName(), machine(), node), lost);
+                    NetworkEvents.machineName(customName(), machine(), node), lost, wording);
         }
     }
 
@@ -1933,6 +1971,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         // What the machine's programs and jobs ask the network for is the doing of whoever works it.
         Acting.asOperatorOf(this, sigmaTick);
         SetupRunner.tick(this, level, worldPosition);
+        DefragRunner.tick(this, level);
         attachment.tick(level);
         // A computer whose cards read machines keeps its links on the industrial control cable, once a second.
         if (--controlKeepIn <= 0) {

@@ -97,6 +97,8 @@ public final class ProgramClient {
         register(rl("network_manager"), (host, mon, os) -> new NetworkManagerApp(host, mon));
         register(rl("task_manager"), (host, mon, os) -> new TaskManagerApp(host, os));
         register(rl("device_manager"), (host, mon, os) -> new DeviceManagerApp(host, os));
+        // The Frames' Defrag, in the form of the edition it opens on.
+        register(rl("defrag"), (host, mon, os) -> new DefragApp(host, os));
         // Installable programs.
         register(rl("isms"), (host, mon, os) -> new IsmsApp(host, mon));
         // Its Profiler, which Tools opens in a window of its own and which comes back with the session.

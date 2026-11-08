@@ -242,10 +242,14 @@ public final class OsBootstrap {
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("help_viewer"));
 
-    /** What the Frames editions bundle: the same, and their Device Manager. */
+    /** What the Frames editions bundle: the same, their Device Manager, and their Defrag. */
     private static final List<ResourceLocation> FRAMES_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
-            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("device_manager"), rl("help_viewer"));
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("device_manager"), rl("help_viewer"),
+            rl("defrag"));
+
+    /** The Frames' system tools, kept under the Start menu with no icon on the wallpaper: the Defrag. */
+    private static final Set<ResourceLocation> FRAMES_TOOLS = Set.of(rl("defrag"));
 
     /** What CDE bundles: the same, and its Workstation Info, which no other desktop has. */
     private static final List<ResourceLocation> CDE_APPS = List.of(
@@ -265,20 +269,23 @@ public final class OsBootstrap {
              */
             new DesktopEnvironmentDef(rl("frames_95"), "Frames 95", PanelStyle.FRAMES_95, FRAMES_APPS,
                     Map.of(rl("device_manager"), DesktopNames.FRAMES_95_SYSTEM, rl("help_viewer"),
-                            DesktopNames.FRAMES_95_HELP), SoftwareHouse.MIDSOFT),
+                            DesktopNames.FRAMES_95_HELP), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
             new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, FRAMES_APPS, Map.of(
-                    rl("help_viewer"), DesktopNames.FRAMES_XP_HELP), SoftwareHouse.MIDSOFT),
+                    rl("help_viewer"), DesktopNames.FRAMES_XP_HELP), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
             // Frames 7 calls the machine Computer, and keeps its settings in a Control Panel of categories.
             new DesktopEnvironmentDef(rl("frames_7"), "Frames 7", PanelStyle.FRAMES_7, FRAMES_APPS, Map.of(
                     rl("this_pc"), DesktopNames.FRAMES_7_COMPUTER, rl("settings"), DesktopNames.FRAMES_7_CONTROL_PANEL,
-                    rl("help_viewer"), DesktopNames.FRAMES_7_HELP), SoftwareHouse.MIDSOFT),
-            // Frames 10 named its file manager after what it explores, and the machine This PC, as 11 still does.
+                    rl("help_viewer"), DesktopNames.FRAMES_7_HELP), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
+            /*
+             * Frames 10 named its file manager after what it explores, and the machine This PC, as 11 still does; both
+             * call their Defrag Optimize Drives.
+             */
             new DesktopEnvironmentDef(rl("frames_10"), "Frames 10", PanelStyle.FRAMES_10, FRAMES_APPS, Map.of(
-                    rl("files"), DesktopNames.FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP),
-                    SoftwareHouse.MIDSOFT),
+                    rl("files"), DesktopNames.FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP,
+                    rl("defrag"), DesktopNames.OPTIMIZE_DRIVES), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
             new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, FRAMES_APPS, Map.of(
-                    rl("files"), DesktopNames.FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP),
-                    SoftwareHouse.MIDSOFT),
+                    rl("files"), DesktopNames.FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP,
+                    rl("defrag"), DesktopNames.OPTIMIZE_DRIVES), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
             new DesktopEnvironmentDef(rl("kde_plasma"), "KDE Plasma", PanelStyle.KDE, BUILTIN_APPS, Map.of(
                     rl("files"), DesktopNames.KDE_FILES, rl("editor"), DesktopNames.KDE_EDITOR,
                     rl("command_prompt"), DesktopNames.KDE_TERMINAL, rl("calculator"), DesktopNames.KDE_CALCULATOR,
@@ -437,6 +444,15 @@ public final class OsBootstrap {
                     .named("Device Manager")
                     .described("The machine's hardware and every port it has: what is plugged into each, what is"
                             + " free, and a device disabled or enabled again."),
+            /*
+             * The Frames editions' Defrag: the Disk Defragmenter, Optimize Drives on 10 and 11. It repairs the
+             * corrupted items on a disk and mends its bad sectors; MC-DOS has its DEFRAG and the Unix systems fsck at
+             * the prompt.
+             */
+            ProgramSpec.of(rl("defrag"), "dfrgui", true, FRAMES_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Disk Defragmenter")
+                    .described("Repairs the corrupted items on a disk, gives back what it can and mends a quarter of"
+                            + " its bad sectors on every pass."),
 
             /*
              * Installables. The OS rank only gates the Frames editions (a Linux distribution ranks 0, so any

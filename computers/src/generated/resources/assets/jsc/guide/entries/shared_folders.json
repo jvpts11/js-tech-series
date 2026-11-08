@@ -82,7 +82,7 @@
   ],
   "icon": "jsc:server",
   "id": "jsc:shared_folders",
-  "order": 77,
+  "order": 78,
   "section": "jsc:network_remote",
   "title": "jsc.guide.shared_folders.title"
 }

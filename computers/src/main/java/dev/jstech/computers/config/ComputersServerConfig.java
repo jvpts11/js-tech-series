@@ -146,6 +146,24 @@ public final class ComputersServerConfig {
                             + "much and of what.",
                     "Off, a sudden shutdown gives everything back, as switching the machine off does.")
             .named("Lost on a power loss");
+    public static final ConfigKey<Boolean> LOSE_ON_NETWORK_SPLIT = ConfigKey.flag("item_loss.network_split", true)
+            .comment("Whether what an Operation was carrying is lost when the network splits under it: a cable pulled "
+                            + "between the Mainframe and a server it was reading or writing, a router that disappears.",
+                    "Off, the Operation stops and gives everything back.")
+            .named("Lost when the network splits");
+    public static final ConfigKey<Boolean> LOSE_ON_NETWORK_CONFLICT = ConfigKey.flag("item_loss.network_conflict",
+            true)
+            .comment("Whether a network conflict, two Mainframes on one network, costs: what the discarded Operations "
+                            + "were carrying is lost, and a tenth of what both networks store is corrupted, waiting "
+                            + "for the Defrag.",
+                    "Off, a conflict gives everything back and corrupts nothing.")
+            .named("A network conflict costs");
+    public static final ConfigKey<Boolean> CORRUPTION = ConfigKey.flag("item_loss.corruption", true)
+            .comment("Whether storage can be corrupted at all: by a network conflict, or by a thermal trip, which may "
+                            + "corrupt the disks of the machine that shut down. Corrupted items leave the network's "
+                            + "index until the Defrag gives them back or loses them.",
+                    "Off, nothing is ever corrupted.")
+            .named("Storage corruption");
 
     public static final ConfigKey<Boolean> SHOW_BOOT_MENU = ConfigKey.flag("boot.show_boot_menu", true)
             .comment("Whether a machine whose system brings a boot manager stops at it every time it starts: GRUB "
@@ -255,6 +273,9 @@ public final class ComputersServerConfig {
             .key(NETHER_EXTRA)
             .key(RESTART_BELOW_C)
             .key(LOSE_ON_POWER_LOSS)
+            .key(LOSE_ON_NETWORK_SPLIT)
+            .key(LOSE_ON_NETWORK_CONFLICT)
+            .key(CORRUPTION)
             .key(SHOW_BOOT_MENU)
             .key(GENTOO_EVERY_STEP)
             .key(ARCH_EVERY_STEP)
@@ -309,6 +330,21 @@ public final class ComputersServerConfig {
     /** Whether what the Operations carry is lost when the machine running them goes dark suddenly. */
     public static boolean loseOnPowerLoss() {
         return FILE.get(LOSE_ON_POWER_LOSS);
+    }
+
+    /** Whether what an Operation carries is lost when the network splits under it. */
+    public static boolean loseOnNetworkSplit() {
+        return FILE.get(LOSE_ON_NETWORK_SPLIT);
+    }
+
+    /** Whether a network conflict loses what its Operations carried and corrupts both networks' storage. */
+    public static boolean conflictCosts() {
+        return FILE.get(LOSE_ON_NETWORK_CONFLICT);
+    }
+
+    /** Whether storage can be corrupted at all. */
+    public static boolean corruption() {
+        return FILE.get(CORRUPTION);
     }
 
     /** Whether a machine whose system brings a boot manager stops at it on the way up. */

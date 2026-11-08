@@ -40,6 +40,11 @@ final class StorageInsightsTexts {
     static final TextKey BUSES = TextKey.of("jsc.storage_insights.buses", "BUSES");
     static final TextKey NOT_ON_A_BUS = TextKey.of("jsc.storage_insights.not_on_a_bus", "not on any bus filter");
 
+    static final TextKey CORRUPTED = TextKey.of("jsc.storage_insights.corrupted", "%s%% corrupted");
+    static final TextKey WAITING = TextKey.of("jsc.storage_insights.waiting", "waiting for the Defrag");
+    static final TextKey BAD_SECTORS = TextKey.of("jsc.storage_insights.bad_sectors", "Bad sectors: %s%%");
+    static final TextKey SERVER_FAILED = TextKey.of("jsc.storage_insights.server_failed", "A disk has failed");
+
     private StorageInsightsTexts() {
     }
 }

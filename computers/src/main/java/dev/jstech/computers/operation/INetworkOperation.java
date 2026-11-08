@@ -10,6 +10,7 @@ package dev.jstech.computers.operation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
+import dev.jstech.core.uuid.NodeUuid;
 
 import java.util.Map;
 import java.util.UUID;
@@ -63,6 +64,14 @@ public interface INetworkOperation {
     default Map<StorageKey, Long> lose() {
         abandon();
         return Map.of();
+    }
+
+    /**
+     * Whether the Operation, still running, is moving items through the storage node {@code node}: when that node
+     * leaves the network, the network has split under it.
+     */
+    default boolean reaches(final NodeUuid node) {
+        return false;
     }
 
     /** The level the Mainframe schedules this Operation at; {@link OperationPriority#DEFAULT} unless changed. */

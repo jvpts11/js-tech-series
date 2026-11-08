@@ -1,0 +1,207 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.corruption_and_the_defrag.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.corruption_and_the_defrag.definition1",
+      "term": "jsc.guide.corruption_and_the_defrag.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.corruption_and_the_defrag.definition2",
+      "term": "jsc.guide.corruption_and_the_defrag.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.corruption_and_the_defrag.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.corruption_and_the_defrag.table1",
+      "heads": [
+        "jsc.guide.corruption_and_the_defrag.table1_head1",
+        "jsc.guide.corruption_and_the_defrag.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.corruption_and_the_defrag.table2",
+      "heads": [
+        "jsc.guide.corruption_and_the_defrag.table2_head1",
+        "jsc.guide.corruption_and_the_defrag.table2_head2",
+        "jsc.guide.corruption_and_the_defrag.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table2_1_1"
+          },
+          {
+            "literal": "DEFRAG"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table2_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table2_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table2_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table2_4_1"
+          },
+          {
+            "literal": "fsck"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table2_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.corruption_and_the_defrag.definition3",
+      "term": "jsc.guide.corruption_and_the_defrag.term3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.corruption_and_the_defrag.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.corruption_and_the_defrag.table3",
+      "heads": [
+        "jsc.guide.corruption_and_the_defrag.table3_head1",
+        "jsc.guide.corruption_and_the_defrag.table3_head2",
+        "jsc.guide.corruption_and_the_defrag.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table3_1_2"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table3_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table3_2_2"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table3_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table3_3_2"
+          },
+          {
+            "words": "jsc.guide.corruption_and_the_defrag.table3_3_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.corruption_and_the_defrag.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.corruption_and_the_defrag.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.corruption_and_the_defrag.fix1",
+          "problem": "jsc.guide.corruption_and_the_defrag.problem1"
+        },
+        {
+          "fix": "jsc.guide.corruption_and_the_defrag.fix2",
+          "problem": "jsc.guide.corruption_and_the_defrag.problem2"
+        },
+        {
+          "fix": "jsc.guide.corruption_and_the_defrag.fix3",
+          "problem": "jsc.guide.corruption_and_the_defrag.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:disks",
+        "jsc:network_identity",
+        "jsc:cooling",
+        "jsc:storage_insights"
+      ]
+    }
+  ],
+  "icon": "jsc:disk_vaultis_trench_20m",
+  "id": "jsc:corruption_and_the_defrag",
+  "order": 21,
+  "section": "jsc:hardware",
+  "title": "jsc.guide.corruption_and_the_defrag.title"
+}

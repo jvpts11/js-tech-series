@@ -343,6 +343,9 @@ final class ShellPages {
                 .paragraph("The reboot command can open the firmware instead of the system: its --firmware option"
                         + " enters the setup of the [firmware](jsc:firmware).")
                 .command(CommandGuidePages.id(Platform.LINUX, "devices"))
+                .paragraph("The fsck command repairs a corrupted disk, as the Defrag does on the other systems"
+                        + " ([](jsc:corruption_and_the_defrag)).")
+                .command(CommandGuidePages.id(Platform.LINUX, "fsck"))
                 .command(CommandGuidePages.id(Platform.LINUX, "which"))
                 .command(CommandGuidePages.id(Platform.LINUX, "whoami"))
                 .command(CommandGuidePages.id(Platform.LINUX, "echo"))

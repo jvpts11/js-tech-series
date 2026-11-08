@@ -1,0 +1,20 @@
+{
+  "bad": "#FF000000",
+  "contiguous": "#FF2B54E4",
+  "corrupt": "#FFF0C000",
+  "error": "#FFC42B1C",
+  "fixed": "#FFFF00FF",
+  "fragmented": "#FFE9372E",
+  "frame": "#FF808080",
+  "free": "#FFFFFFFF",
+  "grey": "#FFC0C0C0",
+  "heading": "#FF1E3287",
+  "ink": "#FF000000",
+  "listFrame": "#FF7F9DB9",
+  "optimized": "#FF000080",
+  "read": "#FFFF0000",
+  "selection": "#FFCCE8FF",
+  "statusBar": "#FFECE9D8",
+  "unmovable": "#FF29A62F",
+  "unoptimized": "#FF00FFFF"
+}

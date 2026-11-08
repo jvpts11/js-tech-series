@@ -373,6 +373,9 @@ final class McDosPages {
                 .define("LPT port", "A parallel port, where a printer is usually plugged in.")
                 .define("COM port", "A serial port, where a modem or a mouse of the era could be plugged in.")
                 .command(CommandGuidePages.id(Platform.MC_DOS, "msd"))
+                .paragraph("DEFRAG takes the whole screen the same way, to repair a corrupted disk"
+                        + " ([](jsc:corruption_and_the_defrag)).")
+                .command(CommandGuidePages.id(Platform.MC_DOS, "defrag"))
                 .ifSomethingGoesWrong(
                         "The screen says msd: there is no machine to read.",
                         "msd has no computer to read. Type msd at the prompt of a computer.",

@@ -10,6 +10,7 @@ package dev.jstech.computers.storage;
 import com.mojang.logging.LogUtils;
 import com.mojang.serialization.DataResult;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.core.persistence.SaveFiles;
 import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.persistence.SavedValue;
@@ -117,7 +118,7 @@ public final class StorageVolumes extends SavedData {
     public int pendingEncodes() {
         int pending = 0;
         for (final Map.Entry<UUID, StorageVolume> entry : volumes.entrySet()) {
-            if (!entry.getValue().isEmpty() && !encoded.containsKey(entry.getKey())) {
+            if (!entry.getValue().blank() && !encoded.containsKey(entry.getKey())) {
                 pending++;
             }
         }
@@ -129,12 +130,13 @@ public final class StorageVolumes extends SavedData {
         final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
         final ListTag list = new ListTag();
         for (final Map.Entry<UUID, StorageVolume> entry : volumes.entrySet()) {
-            if (entry.getValue().isEmpty()) {
+            if (entry.getValue().blank()) {
                 continue; // a blank volume is recreated blank on demand; no need to write it
             }
             final UUID id = entry.getKey();
             final CompoundTag one = new CompoundTag();
             one.putUUID("Id", id);
+            saveCorruption(entry.getValue(), one, ops);
             Tag items = encoded.get(id);
             if (items == null) {
                 final DataResult<Tag> fresh = ServerStorageContents.CODEC.encodeStart(ops, entry.getValue().snapshot());
@@ -181,11 +183,52 @@ public final class StorageVolumes extends SavedData {
                     store.encoded.put(id, items);
                 }
             }
+            loadCorruption(volume, one, ops, id);
             store.volumes.put(id, volume);
         }
         if (found < LAYOUT.version()) {
             store.setDirty(); // written again at the next save, in today's layout
         }
         return store;
+    }
+
+    /*
+     * What corruption did to a volume, written beside its contents only when there is any: a volume nothing ever
+     * happened to saves as it always did. Small, so it is encoded afresh on every save.
+     */
+    private static void saveCorruption(final StorageVolume volume, final CompoundTag one,
+                                       final RegistryOps<Tag> ops) {
+        if (!volume.corrupted().isEmpty()) {
+            SavedValue.written(ServerStorageContents.CODEC.encodeStart(ops,
+                            new ServerStorageContents(volume.corrupted())), LOGGER, "what a disk had corrupted")
+                    .ifPresent(tag -> one.put("Corrupted", tag));
+        }
+        if (!volume.corruptedFiles().files().isEmpty()) {
+            SavedValue.written(FilesystemContents.CODEC.encodeStart(ops, volume.corruptedFiles()), LOGGER,
+                    "the system files a disk had corrupted").ifPresent(tag -> one.put("CorruptedFiles", tag));
+        }
+        if (volume.badSectors() > 0) {
+            one.putInt("BadSectors", volume.badSectors());
+        }
+        if (volume.dead()) {
+            one.putBoolean("Dead", true);
+        }
+    }
+
+    private static void loadCorruption(final StorageVolume volume, final CompoundTag one, final RegistryOps<Tag> ops,
+                                       final UUID id) {
+        if (!one.contains("Corrupted") && !one.contains("CorruptedFiles") && !one.contains("BadSectors")
+                && !one.contains("Dead")) {
+            return;
+        }
+        final Map<StorageKey, Long> corrupted = one.contains("Corrupted")
+                ? SavedValue.read(ServerStorageContents.CODEC.parse(ops, one.get("Corrupted")), LOGGER,
+                        "what a disk had corrupted (" + id + ")").map(ServerStorageContents::items).orElse(Map.of())
+                : Map.of();
+        final FilesystemContents files = one.contains("CorruptedFiles")
+                ? SavedValue.read(FilesystemContents.CODEC.parse(ops, one.get("CorruptedFiles")), LOGGER,
+                        "the system files a disk had corrupted (" + id + ")").orElse(FilesystemContents.EMPTY)
+                : FilesystemContents.EMPTY;
+        volume.restore(corrupted, files, one.getInt("BadSectors"), one.getBoolean("Dead"));
     }
 }

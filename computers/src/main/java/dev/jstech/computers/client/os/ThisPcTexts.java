@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.storage.DiskHealth;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 
@@ -45,6 +47,10 @@ final class ThisPcTexts {
     static final TextKey SYSTEM = TextKey.of("jsc.this_pc.system", "System");
     static final TextKey SYSTEM_IS = TextKey.of("jsc.this_pc.system_is", "System · %s");
     static final TextKey FREE = TextKey.of("jsc.this_pc.free", "%s of %s it free");
+    static final TextKey CORRUPTED = TextKey.of("jsc.this_pc.corrupted", "%s%% corrupted");
+    static final TextKey BAD = TextKey.of("jsc.this_pc.bad", "%s%% bad");
+    static final TextKey CORRUPTED_AND_BAD = TextKey.of("jsc.this_pc.corrupted_and_bad", "%s%% corrupted · %s%% bad");
+    static final TextKey DISK_FAILED = TextKey.of("jsc.this_pc.disk_failed", "This disk has failed");
     static final TextKey FLOPPY = TextKey.of("jsc.this_pc.floppy", "Floppy");
     static final TextKey CD = TextKey.of("jsc.this_pc.cd", "CD");
     static final TextKey DVD = TextKey.of("jsc.this_pc.dvd", "DVD");
@@ -110,5 +116,16 @@ final class ThisPcTexts {
     static final TextKey OS_WITH_ARCHITECTURE = TextKey.of("jsc.this_pc.about.os_with_arch", "%s %s");
 
     private ThisPcTexts() {
+    }
+
+    /** What corruption did to a disk, in the words its row says it in: corrupted, bad, or both, in whole percents. */
+    static Text corruption(final DiskHealth health) {
+        final int corrupted = (health.damage() + 5) / 10;
+        final int bad = (health.badSectors() + 5) / 10;
+        if (health.badSectors() <= 0) {
+            return CORRUPTED.with(Math.max(1, corrupted));
+        }
+        return health.corruptedItems() <= 0L ? BAD.with(Math.max(1, bad))
+                : CORRUPTED_AND_BAD.with(Math.max(1, corrupted), Math.max(1, bad));
     }
 }

@@ -23,6 +23,7 @@ import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.SystemProcesses;
 import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.program.cli.CliTexts;
@@ -95,6 +96,11 @@ public final class ServerCliComputer extends ServerCliNetwork {
     /** The build every package the Mirror serves is currently at: the mod's own version. */
     public static String modVersion() {
         return PackageService.modVersion();
+    }
+
+    @Override
+    public String defrag(final String request) {
+        return host instanceof IOsHost machine ? DefragRunner.reply(machine, level, request) : "";
     }
 
     @Override

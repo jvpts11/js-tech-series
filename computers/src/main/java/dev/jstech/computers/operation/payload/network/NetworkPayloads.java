@@ -42,6 +42,8 @@ import dev.jstech.computers.operation.payload.RequestStorageInsightsPayload;
 import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.StorageInsightsPayload;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.storage.Corruption;
+import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
@@ -482,6 +484,7 @@ public final class NetworkPayloads {
         }
         final NetworkSystem system = NetworkSystem.get(level);
         final List<NetworkItemEntry.StorageShare> servers = new ArrayList<>();
+        final List<DiskHealth> health = new ArrayList<>();
         int serverCount = 0;
         for (final ServerNode server : system.serversOf(net)) {
             serverCount++;
@@ -491,7 +494,34 @@ public final class NetworkPayloads {
             final ServerStore store = storeOf(level, system, server.nodeUuid());
             final long used = store == null ? 0L : store.used();
             servers.add(new NetworkItemEntry.StorageShare(Text.literal(serverLabel(level, server.nodeUuid())), used));
+            health.add(healthOf(level, system, server.nodeUuid()));
         }
-        return new StorageInsightsPayload(totalItems, totals.size(), serverCount, top, low, servers);
+        return new StorageInsightsPayload(totalItems, totals.size(), serverCount, top, low, servers, health);
+    }
+
+    /*
+     * What corruption did to a server's drives together, for the Storage Insights: the share of what they store that
+     * waits for the Defrag, the worst of their bad sectors, and whether any of them died.
+     */
+    private static DiskHealth healthOf(final ServerLevel level, final NetworkSystem system, final NodeUuid node) {
+        final Optional<NetworkSystem.ServerLocation> where = system.locationOf(node);
+        if (where.isEmpty() || !(Loaded.blockEntity(level, BlockPos.of(where.get().rackPos()))
+                instanceof ServerRackBlockEntity rack)) {
+            return DiskHealth.SOUND;
+        }
+        long corrupted = 0L;
+        long items = 0L;
+        long used = 0L;
+        int bad = 0;
+        boolean dead = false;
+        for (final ItemStack drive : rack.claimedDriveStacks(where.get().slot())) {
+            final DiskHealth one = DriveVolumes.health(drive);
+            corrupted += one.corruptedWeight();
+            items += one.corruptedItems();
+            used += DriveVolumes.usedWeight(drive);
+            bad = Math.max(bad, one.badSectors());
+            dead |= one.dead();
+        }
+        return new DiskHealth(corrupted, items, Corruption.damage(corrupted, used), bad, dead);
     }
 }

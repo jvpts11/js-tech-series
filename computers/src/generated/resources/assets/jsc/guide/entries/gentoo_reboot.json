@@ -164,7 +164,7 @@
     }
   ],
   "id": "jsc:gentoo_reboot",
-  "order": 266,
+  "order": 267,
   "section": "jsc:gentoo_system",
   "title": "jsc.guide.gentoo_reboot.title"
 }

@@ -152,7 +152,12 @@ final class DesktopLaunchers {
         if (trash.onWallpaper()) {
             icons.add(trash.launcher());
         }
-        icons.addAll(all);
+        // A system tool the desktop keeps under its menu (the Disk Defragmenter) has no icon of its own.
+        for (final Launcher launcher : all) {
+            if (chrome == null || launcher.programId() == null || chrome.onWallpaper(launcher.programId())) {
+                icons.add(launcher);
+            }
+        }
     }
 
     /** The first launcher that answers {@code test}, or null. */

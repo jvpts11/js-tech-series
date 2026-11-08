@@ -10,14 +10,17 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.MainframeStructure;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.storage.Corruption;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.jstechseries.network.ConnectivityIndex;
 import dev.jstech.core.jstechseries.network.FailoverRole;
 import dev.jstech.core.jstechseries.network.MainframeNode;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.ServerNode;
 import dev.jstech.core.persistence.NetworkRegistry;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.text.GameText;
@@ -165,7 +168,7 @@ final class MainframeNetworking {
         final boolean primaryPeerPresent = peers.stream().anyMatch(peer -> !peer.failoverEnabled());
 
         if (!failoverEnabled) {
-            updateAsOwner(level, system, index, cables, adopted, primaryPeerPresent);
+            updateAsOwner(level, system, index, cables, adopted, peers, primaryPeerPresent);
             return;
         }
         updateAsStandby(level, system, index, cables, adopted, primaryPeerPresent, peers);
@@ -174,7 +177,7 @@ final class MainframeNetworking {
     /** A Mainframe that owns its network: it takes the segment it is on, or lays down its own. */
     private void updateAsOwner(final ServerLevel level, final NetworkSystem system, final ConnectivityIndex index,
                                final Set<Long> cables, @Nullable final NetworkUuid adopted,
-                               final boolean primaryPeerPresent) {
+                               final List<MainframeBlockEntity> peers, final boolean primaryPeerPresent) {
         failoverRole = FailoverRole.NONE;
         waitTicks = 0;
         final NetworkUuid effective = adopted != null ? adopted : mainframe.nativeNetworkUuid();
@@ -183,6 +186,10 @@ final class MainframeNetworking {
         }
         setConflict(level, effective, primaryPeerPresent);
         if (primaryPeerPresent) {
+            // The first owner to see the conflict corrupts both networks' storage, once for the whole conflict.
+            if (NetworkRegistry.networkState(level, effective) != NetworkUuidState.CONFLICTED) {
+                conflictCorrupts(level, system, effective, peers);
+            }
             // Two owners on one network: collapse it until they are physically separated.
             NetworkRegistry.setNetworkState(level, effective, NetworkUuidState.CONFLICTED);
             mainframe.networkAttachment().attachTo(null);
@@ -397,6 +404,52 @@ final class MainframeNetworking {
             level.getServer().getPlayerList().broadcastSystemMessage(GameText.component(message.with(where)), false);
         }
         conflicted = conflict;
+    }
+
+    /*
+     * A conflict corrupts the storage of both networks (computers/docs/design/network.md): a tenth of every server's
+     * drives, items and system files, and of every Personal Computer's public part. Both networks are the one the
+     * cable now joins and each Mainframe's own from before, since a machine of the other side may not yet have moved
+     * onto the joined one; a machine is on one network at a time, so none is corrupted twice.
+     */
+    private void conflictCorrupts(final ServerLevel level, final NetworkSystem system, final NetworkUuid effective,
+                                  final List<MainframeBlockEntity> peers) {
+        if (!ComputersServerConfig.conflictCosts() || !ComputersServerConfig.corruption()) {
+            return;
+        }
+        final Set<NetworkUuid> networks = new LinkedHashSet<>();
+        networks.add(effective);
+        addIfSet(networks, mainframe.networkAttachment().registered());
+        for (final MainframeBlockEntity peer : peers) {
+            addIfSet(networks, peer.networkAttachment().registered());
+        }
+        int machines = 0;
+        for (final NetworkUuid network : networks) {
+            for (final ServerNode server : system.serversOf(network)) {
+                final Optional<NetworkSystem.ServerLocation> where = system.locationOf(server.nodeUuid());
+                if (where.isPresent() && Loaded.blockEntity(level, BlockPos.of(where.get().rackPos()))
+                        instanceof ServerRackBlockEntity rack
+                        && rack.corruptBay(where.get().slot(), Corruption.CONFLICT_SHARE, 1.0, level.random) > 0) {
+                    machines++;
+                }
+            }
+            for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
+                if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity computer
+                        && computer.corruptPublic(Corruption.CONFLICT_SHARE, level.random)) {
+                    machines++;
+                }
+            }
+        }
+        if (machines > 0) {
+            NetworkEvents.record(level, effective, EventLevel.ERROR, null, "",
+                    NetworkEvents.STORAGE_CORRUPTED.with(machines));
+        }
+    }
+
+    private static void addIfSet(final Set<NetworkUuid> networks, @Nullable final NetworkUuid network) {
+        if (network != null) {
+            networks.add(network);
+        }
     }
 
     private void logConflict(final ServerLevel level, @Nullable final NetworkUuid network, final EventLevel what,

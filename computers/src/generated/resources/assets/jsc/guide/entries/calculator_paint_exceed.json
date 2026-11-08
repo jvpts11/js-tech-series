@@ -384,7 +384,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:calculator_paint_exceed",
-  "order": 54,
+  "order": 55,
   "section": "jsc:desktop_apps",
   "title": "jsc.guide.calculator_paint_exceed.title"
 }

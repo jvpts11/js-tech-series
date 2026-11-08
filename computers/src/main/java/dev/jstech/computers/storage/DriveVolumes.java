@@ -100,12 +100,28 @@ public final class DriveVolumes {
         return usage(drive).usedWeight();
     }
 
+    /** What corruption did to the drive, from its summary: sound when nothing did. Valid wherever the item is. */
+    public static DiskHealth health(final ItemStack drive) {
+        return drive.getOrDefault(ComputingComponents.DISK_HEALTH.get(), DiskHealth.SOUND);
+    }
+
+    /** What a drive of {@code capacity} items still holds, with what bad sectors took and a death. */
+    public static long usableCapacity(final ItemStack drive, final long capacity) {
+        return health(drive).usable(capacity);
+    }
+
     /** Rewrites the drive's summary from its volume; every write to the volume ends with this. */
     public static void refreshUsage(final ItemStack drive, final StorageVolume volume) {
-        if (volume.isEmpty()) {
+        if (volume.usedWeight() <= 0L && volume.types() == 0) {
             drive.remove(ComputingComponents.DISK_USAGE.get());
         } else {
             drive.set(ComputingComponents.DISK_USAGE.get(), DiskUsage.of(volume));
+        }
+        final DiskHealth health = DiskHealth.of(volume);
+        if (health.sound()) {
+            drive.remove(ComputingComponents.DISK_HEALTH.get());
+        } else {
+            drive.set(ComputingComponents.DISK_HEALTH.get(), health);
         }
     }
 
@@ -116,8 +132,14 @@ public final class DriveVolumes {
         refreshUsage(drive, volume);
     }
 
-    /** Wipes a drive's stored items: the volume is dropped from the store and the drive forgets it. */
+    /**
+     * Wipes a drive's stored items: the volume is dropped from the store and the drive forgets it. A drive that died of
+     * its corruption has nothing left to wipe and stays dead: formatting does not bring a dead disk back.
+     */
     public static void erase(final ItemStack drive) {
+        if (health(drive).dead()) {
+            return;
+        }
         final UUID id = drive.get(ComputingComponents.DISK_VOLUME.get());
         if (id != null) {
             final StorageVolumes store = StorageVolumes.current();
@@ -127,5 +149,6 @@ public final class DriveVolumes {
         }
         drive.remove(ComputingComponents.DISK_VOLUME.get());
         drive.remove(ComputingComponents.DISK_USAGE.get());
+        drive.remove(ComputingComponents.DISK_HEALTH.get());
     }
 }

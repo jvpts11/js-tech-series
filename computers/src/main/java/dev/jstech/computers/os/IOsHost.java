@@ -283,6 +283,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     }
 
     /**
+     * What this machine's disks store changed behind the network's back (a Defrag gave corrupted items back): it is
+     * saved, and whatever lends that storage to the network has it read again.
+     */
+    default void storageChanged() {
+        setChanged();
+    }
+
+    /**
      * Tells the world only that this machine's block has unsaved state, without writing the console onto its disks
      * first. For progress that moves every tick: the next save of the block writes it, and the moments that need the
      * disks to be current right now (a start, an end, a cancel) use {@link #markChanged()}.

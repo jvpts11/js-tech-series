@@ -28,6 +28,8 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.media.MediaDriveType;
 import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.storage.DiskHealth;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
 import dev.jstech.core.client.gui.component.Draw;
@@ -79,7 +81,8 @@ public final class ThisPcApp implements IDesktopApp {
                     0xFFEEF0F4, 0xFFC2C7D4,
                     0xFF2E3238, 0xFFB8BEC8, 0xFF1C1F24,
                     0xFF1C2438, 0xFFB8BEC8, 0xFF0B1220,
-                    0xFFB9C0CE, 0xFFEDF0F6, 0xFF6E7686));
+                    0xFFB9C0CE, 0xFFEDF0F6, 0xFF6E7686,
+                    0xFFE53935, 0xFF3A3F48, 0xFFD32F2F));
     private static final int RENAME_W = 34;
     private static final int NAME_MAX = 32;
     private static final long DOUBLE_CLICK_MS = 300L;
@@ -224,7 +227,17 @@ public final class ThisPcApp implements IDesktopApp {
             final int tx = cx + ThisPcLayout.TEXT_X;
             final int maxW = ThisPcLayout.driveTextMaxW(width, buttons.size());
             final int textColor = ctx.skin().listRowText(sel);
-            if (disk != null) {
+            if (disk != null && disk.health().dead()) {
+                // A disk past nine tenths corrupted has died: its picture crossed out, and the words that say so.
+                drawDiskIcon(g, cx + 4, cy + 5);
+                drawCross(g, cx + 4, cy + 5);
+                final String label = GameText.resolve(disk.label()) + (drive().isEmpty() ? "" : "  " + drive());
+                Draw.text(g, font, Texts.clip(font, label, maxW), tx, cy + 2, textColor);
+                final String failed = GameText.resolve(ThisPcTexts.DISK_FAILED);
+                final Colours c = PALETTE.get();
+                g.fill(tx, cy + 13, tx + ThisPcLayout.barWidth(maxW, font.width(failed)), cy + 14, c.badSectors());
+                Draw.text(g, font, failed, tx + maxW - font.width(failed), cy + 11, c.failed());
+            } else if (disk != null) {
                 drawDiskIcon(g, cx + 4, cy + 5);
                 final String label = GameText.resolve(disk.label()) + (drive().isEmpty() ? "" : "  " + drive());
                 Draw.text(g, font, Texts.clip(font, label, maxW), tx, cy + 2, textColor);
@@ -240,22 +253,40 @@ public final class ThisPcApp implements IDesktopApp {
                  * The bar is segmented by what actually takes the space, so "the disk is full" always
                  * comes with "of what": the system, the items stored on it, or its files.
                  */
-                final String usage = GameText.resolve(ThisPcTexts.FREE.with(disk.freeItems(), disk.capItems()));
+                /*
+                 * A disk corruption hurt says how much in red where the free space was said: the share corrupted and
+                 * waiting for the Defrag, and the share lost to bad sectors.
+                 */
+                final DiskHealth health = disk.health();
+                final String usage = health.sound()
+                        ? GameText.resolve(ThisPcTexts.FREE.with(disk.freeItems(), disk.capItems()))
+                        : GameText.resolve(ThisPcTexts.corruption(health));
                 // The bar ends before the words saying what is free, which close the same line.
                 final int barW = ThisPcLayout.barWidth(maxW, font.width(usage));
                 final Colours c = PALETTE.get();
                 g.fill(tx, cy + 12, tx + barW, cy + 15, c.barTrack());
                 final long cap = Math.max(1, disk.capItems());
+                final long corrupted = Math.min(disk.storeItems(),
+                        health.corruptedWeight() / StorageKey.MB_EQ_PER_ITEM);
                 int segX = tx;
                 for (final long[] part : new long[][] {{disk.osItems(), c.segmentSystem()},
-                    {disk.storeItems(), c.segmentStored()}, {disk.fileItems(), c.segmentFiles()}}) {
+                    {disk.storeItems() - corrupted, c.segmentStored()}, {disk.fileItems(), c.segmentFiles()},
+                    {corrupted, c.corrupted()}}) {
                     final int w = (int) Math.min(tx + barW - segX, barW * part[0] / cap);
                     if (w > 0) {
                         g.fill(segX, cy + 12, segX + w, cy + 15, (int) part[1]);
                         segX += w;
                     }
                 }
-                Draw.text(g, font, usage, tx + maxW - font.width(usage), cy + 11, ctx.skin().dim());
+                // What bad sectors took, hatched at the far end of the bar.
+                final int bad = barW * health.badSectors() / 1000;
+                for (int i = 0; i < bad; i++) {
+                    if (i % 2 == 0) {
+                        g.fill(tx + barW - 1 - i, cy + 12, tx + barW - i, cy + 15, c.badSectors());
+                    }
+                }
+                Draw.text(g, font, usage, tx + maxW - font.width(usage), cy + 11,
+                        health.sound() ? ctx.skin().dim() : c.failed());
             } else if (media != null && media.docked()) {
                 // A docked disk is an external drive: the disk's picture, its name and letter, and how full it is.
                 drawDiskIcon(g, cx + 4, cy + 5);
@@ -999,6 +1030,16 @@ public final class ThisPcApp implements IDesktopApp {
         Draw.outline(g, x, y, 14, 10, c.diskEdge());
     }
 
+    /* A dead disk's picture crossed out, corner to corner. */
+    private static void drawCross(final GuiGraphics g, final int x, final int y) {
+        final int red = PALETTE.get().failed();
+        for (int i = 0; i < 10; i++) {
+            final int across = i * 14 / 10;
+            g.fill(x + across, y + i, x + across + 2, y + i + 1, red);
+            g.fill(x + 12 - across, y + i, x + 14 - across, y + i + 1, red);
+        }
+    }
+
     private static void drawMediaIcon(final GuiGraphics g, final int x, final int y, final WireMedia m) {
         final Colours c = PALETTE.get();
         if (!m.loaded()) {
@@ -1033,7 +1074,8 @@ public final class ThisPcApp implements IDesktopApp {
                            int emptyFace, int emptyEdge,
                            int dockBody, int dockLight, int dockEdge,
                            int floppyBody, int floppyShutter, int floppyEdge,
-                           int discBody, int discHub, int discEdge) {
+                           int discBody, int discHub, int discEdge,
+                           int corrupted, int badSectors, int failed) {
     }
 
     // inspection (client tests; points are content-local, i.e. relative to window.x()+4 / window.y()+18)

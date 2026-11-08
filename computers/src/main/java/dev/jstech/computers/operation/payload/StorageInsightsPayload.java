@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.storage.DiskHealth;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
@@ -23,7 +24,8 @@ import java.util.List;
  */
 public record StorageInsightsPayload(long totalItems, int typeCount, int serverCount,
                                      List<NetworkItemEntry> topItems, List<NetworkItemEntry> lowItems,
-                                     List<NetworkItemEntry.StorageShare> servers) implements CustomPacketPayload {
+                                     List<NetworkItemEntry.StorageShare> servers, List<DiskHealth> serverHealth)
+        implements CustomPacketPayload {
 
     public static final int MAX_TOP = 16;
     public static final int MAX_LOW = 24;
@@ -43,6 +45,7 @@ public record StorageInsightsPayload(long totalItems, int typeCount, int serverC
         NetworkItemEntry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_TOP)).encode(buf, p.topItems);
         NetworkItemEntry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LOW)).encode(buf, p.lowItems);
         NetworkItemEntry.StorageShare.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_SERVERS)).encode(buf, p.servers);
+        DiskHealth.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_SERVERS)).encode(buf, p.serverHealth);
     }
 
     private static StorageInsightsPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -55,7 +58,8 @@ public record StorageInsightsPayload(long totalItems, int typeCount, int serverC
                 NetworkItemEntry.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_LOW)).decode(buf);
         final List<NetworkItemEntry.StorageShare> servers =
                 NetworkItemEntry.StorageShare.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_SERVERS)).decode(buf);
-        return new StorageInsightsPayload(totalItems, typeCount, serverCount, top, low, servers);
+        final List<DiskHealth> health = DiskHealth.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_SERVERS)).decode(buf);
+        return new StorageInsightsPayload(totalItems, typeCount, serverCount, top, low, servers, health);
     }
 
     /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
@@ -63,6 +67,12 @@ public record StorageInsightsPayload(long totalItems, int typeCount, int serverC
         topItems = List.copyOf(topItems);
         lowItems = List.copyOf(lowItems);
         servers = List.copyOf(servers);
+        serverHealth = List.copyOf(serverHealth);
+    }
+
+    /** What corruption did to the server at {@code index} of {@link #servers}: sound when nothing did. */
+    public DiskHealth healthOf(final int index) {
+        return index >= 0 && index < serverHealth.size() ? serverHealth.get(index) : DiskHealth.SOUND;
     }
 
     @Override

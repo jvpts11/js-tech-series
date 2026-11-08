@@ -168,7 +168,8 @@ public final class DriveTable {
     public static long freeWeightOf(final ItemStack stack) {
         final long capacityItems;
         if (HardwareRegistry.disk(stack) instanceof DiskSpec disk) {
-            capacityItems = disk.capacityItems();
+            // Bad sectors take their share of the room, and a dead disk has none.
+            capacityItems = DriveVolumes.usableCapacity(stack, disk.capacityItems());
         } else if (stack.getItem() instanceof FormattedMediaItem mediaItem) {
             capacityItems = mediaItem.format().capacityItems();
         } else {

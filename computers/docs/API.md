@@ -318,6 +318,9 @@ The panel style is one of the existing ones (each Frames edition, KDE, GNOME, Ci
 programs it ships; the map gives programs the names this desktop calls them (`this_pc` is "Computer" on some).
 Linux and FreeBSD install a desktop as a package.
 
+A seventh argument, a set of program ids, names the system tools its menus list with no icon on the wallpaper, as
+the Frames keep their Disk Defragmenter under the Start menu (*added 2026-11-08*).
+
 ## A network engine
 
 *Added 2026-10-04.*

@@ -579,6 +579,10 @@ final class DesktopInput {
             }
         }
         w.app().mouseClicked(w, mouseX, mouseY, button);
+        // A program with a Close button of its own closes its window the way the title bar's does.
+        if (w.app().wantsToClose()) {
+            desktop.wm().close(w);
+        }
         return Click.TAKEN;
     }
 

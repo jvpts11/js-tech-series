@@ -224,7 +224,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:achievements_networks",
-  "order": 134,
+  "order": 135,
   "section": "jsc:the_achievements",
   "title": "jsc.guide.achievements_networks.title"
 }

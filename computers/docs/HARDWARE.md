@@ -292,6 +292,30 @@ switches on until the cabinet has cooled below 60 °C.
   change these).
 - Once a system is installed, the tooltip says which, its desktop, and how many programs.
 
+### Corruption and the Defrag
+
+Storage is corrupted only by a network conflict, which corrupts a tenth of what both networks store, and by a thermal
+trip, which corrupts each disk the computer had in use at a chance of 25%, 5% of it
+(computers/docs/design/storage.md). Corrupted items leave the network's index and wait for the Defrag, still taking
+their room; a system's own files can be hit too, and a system missing the file that starts it does not start. The
+private part of a Personal Computer is never touched.
+
+| Corrupted | What it does |
+| --- | --- |
+| Up to half | Only the items, waiting for the Defrag |
+| Over half | Bad sectors take the capacity it goes over half by |
+| Over nine tenths | The disk dies, with all it held; formatting does not bring it back |
+
+The Defrag is DEFRAG on MC-DOS and MC-NET, the Disk Defragmenter on Frames 95, XP and 7, Optimize Drives on 10 and
+11 (from the Start menu), and `fsck -y <device>` on Linux, FreeBSD and UNIX. A pass tries every corrupted item once
+and mends a quarter of the bad sectors left; while it runs, that disk answers the network twice as slowly.
+
+| Disk | Chance an item comes back | A pass takes |
+| --- | --- | --- |
+| Hard disk | 95% | 3 minutes |
+| SSD | 70%, 10 less for every tenth corrupted; none from 70% | 1 minute |
+| NVMe | 60%, 15 less for every tenth corrupted; none from 50% | 30 seconds |
+
 ### Cards
 
 - **Sound cards** (the Artisan Tone Blaster family, Vintage to Transition): one a computer, of the board's era.

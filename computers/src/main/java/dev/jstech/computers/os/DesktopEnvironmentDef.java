@@ -11,9 +11,11 @@ import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * A desktop environment: the graphical shell a computer runs on top of its OS. The Frames editions bundle
@@ -31,14 +33,18 @@ import java.util.Map;
  * @param bundledPrograms  the pre-installed program ids this desktop shows launchers for, in rail order
  * @param nativeNames      per-program names under this desktop, as sentences to translate (missing = the program's own)
  * @param house            who makes this desktop, and so who is credited for the programs it bundles
+ * @param menuOnly         the bundled programs it lists in its menus but puts no icon of on the wallpaper, as the
+ *                         system tools a real desktop kept under its Start menu
  */
+@ApiStatus.Experimental
 public record DesktopEnvironmentDef(
         ResourceLocation id,
         String displayName,
         PanelStyle panelStyle,
         List<ResourceLocation> bundledPrograms,
         Map<ResourceLocation, TextKey> nativeNames,
-        SoftwareHouse house
+        SoftwareHouse house,
+        Set<ResourceLocation> menuOnly
 ) {
 
     public DesktopEnvironmentDef {
@@ -50,6 +56,19 @@ public record DesktopEnvironmentDef(
         if (house == null) {
             house = SoftwareHouse.MIDSOFT;
         }
+        menuOnly = menuOnly == null ? Set.of() : Set.copyOf(menuOnly);
+    }
+
+    /** A desktop that puts an icon of every program it bundles on its wallpaper. */
+    public DesktopEnvironmentDef(final ResourceLocation id, final String displayName, final PanelStyle panelStyle,
+                                 final List<ResourceLocation> bundledPrograms,
+                                 final Map<ResourceLocation, TextKey> nativeNames, final SoftwareHouse house) {
+        this(id, displayName, panelStyle, bundledPrograms, nativeNames, house, Set.of());
+    }
+
+    /** Whether the wallpaper wears an icon of that program, rather than only the menus listing it. */
+    public boolean onWallpaper(final ResourceLocation programId) {
+        return !menuOnly.contains(programId);
     }
 
     /** The name a program shows under this desktop: its native name here, else its own name. */
