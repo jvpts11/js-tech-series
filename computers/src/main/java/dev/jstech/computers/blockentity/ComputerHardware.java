@@ -157,9 +157,10 @@ final class ComputerHardware {
         return board == null ? 0 : Math.min(this.layout.cpuCount(), board.cpuSlots());
     }
 
+    /* The memory a workstation's case uses goes by the processors its board carries: a second row for a second. */
     int boardRamSlots() {
         final MotherboardSpec board = board();
-        return board == null ? 0 : Math.min(this.layout.ramCount(), board.ramSlots());
+        return board == null ? 0 : Math.min(this.layout.ramFor(boardCpuSlots()), board.ramSlots());
     }
 
     int boardPcieSlots() {
@@ -250,12 +251,12 @@ final class ComputerHardware {
          * does not offer is ignored.
          */
         final List<CpuSpec> cpus = new ArrayList<>();
-        for (int i = 0; i < Math.min(this.layout.cpuCount(), motherboard.cpuSlots()); i++) {
-            add(cpus, HardwareRegistry.cpu(this.handler.getStackInSlot(this.layout.cpuStart() + i)));
+        for (int i = 0; i < boardCpuSlots(); i++) {
+            add(cpus, HardwareRegistry.cpu(this.handler.getStackInSlot(this.layout.cpuSlot(i))));
         }
         final List<RamSpec> rams = new ArrayList<>();
-        for (int i = 0; i < Math.min(this.layout.ramCount(), motherboard.ramSlots()); i++) {
-            add(rams, HardwareRegistry.ram(this.handler.getStackInSlot(this.layout.ramStart() + i)));
+        for (int i = 0; i < boardRamSlots(); i++) {
+            add(rams, HardwareRegistry.ram(this.handler.getStackInSlot(this.layout.ramSlot(i))));
         }
         final List<IExpansionCardSpec> pcieCards = new ArrayList<>();
         for (int i = 0; i < Math.min(this.layout.pcieCount(), motherboard.pcieSlots()); i++) {

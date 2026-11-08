@@ -16,9 +16,9 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
-import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
+import dev.jstech.computers.hardware.TowerBoards;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.InstallMode;
@@ -62,7 +62,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * The Cluster Management Computer's machine: an ordinary computer (board, CPU, RAM, disks, a GPU to sit
@@ -88,11 +87,20 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
     /** The 5.25-inch bays, as many as the most any era's case has; the case says how many it really has. */
     public static final int BAY_SLOTS_START = 13;
     public static final int BAY_SLOTS = 2;
-    public static final int HARDWARE_SLOTS = 15;
+    /*
+     * A two-socket workstation board's second processor and the four modules beside it, after the bays, so a machine
+     * saved before them keeps every part where it was.
+     */
+    public static final int SECOND_CPU_SLOT = 15;
+    public static final int SECOND_RAM_SLOTS_START = 16;
+    public static final int HARDWARE_SLOTS = 20;
     public static final int STORAGE_SLOTS = 18;
-    /** What a Cluster Management Computer's case counts, whatever its era: the slots above are where they sit. */
+    /**
+     * What a Cluster Management Computer's case counts, whatever its era: a processor and its four modules, and a
+     * second of each on a two-socket workstation board. The slots above are where they sit.
+     */
     public static final CaseParts PARTS =
-            new CaseParts(1, RAM_SLOTS, PCIE_SLOTS, DISK_SLOTS, BAY_SLOTS, STORAGE_SLOTS);
+            new CaseParts(2, 2 * RAM_SLOTS, PCIE_SLOTS, DISK_SLOTS, BAY_SLOTS, STORAGE_SLOTS, RAM_SLOTS);
 
     /** How long writing a system to a node takes on a 2 GHz node; scaled by the node's own CPU. */
     private static final int INSTALL_TICKS_AT_2GHZ = 280;
@@ -108,9 +116,8 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
      * the later eras on ATX or EATX.
      */
     public static ComputerDef computer(final Era era) {
-        final Set<FormFactor> boards = era == HardwareEra.VINTAGE ? Set.of(FormFactor.BABY_AT, FormFactor.AT)
-                : Set.of(FormFactor.ATX, FormFactor.EATX);
-        return new ComputerDef(era, boards, HostScope.CLUSTER_MANAGEMENT_COMPUTER, PARTS);
+        return new ComputerDef(era, TowerBoards.clusterManagementComputer(era), HostScope.CLUSTER_MANAGEMENT_COMPUTER,
+                PARTS);
     }
 
     @Override

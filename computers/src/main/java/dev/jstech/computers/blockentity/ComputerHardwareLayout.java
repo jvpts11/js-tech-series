@@ -13,38 +13,77 @@ import dev.jstech.computers.hardware.CaseParts;
  * The hardware-slot map of a computer block: where each component category sits in the assembly {@code ItemStackHandler}.
  * The 5.25-inch bays come last, so a machine saved before it had them keeps every part where it was; how many of them
  * a machine really has is its case's to say, up to {@code bayCount}.
+ *
+ * <p>A workstation's case seats its memory by processor ({@link CaseParts#memoryPerProcessor}): its first processor
+ * and that one's memory sit where a one-socket machine's do, and the second processor and its memory come after the
+ * bays, for the same reason the bays came last. {@link #cpuSlot} and {@link #ramSlot} find each one wherever it sits.
+ *
+ * @param cpuStart      the first processor's slot
+ * @param cpuCount      the processors in all
+ * @param firstCpus     how many of them sit from {@code cpuStart} on; the rest come after the bays
+ * @param ramStart      the first module's slot
+ * @param ramCount      the memory modules in all
+ * @param firstRam      how many of them sit from {@code ramStart} on; the rest come after the later processors
+ * @param laterStart    where the later processors start, after the bays, followed by the later modules
+ * @param ramPerCpu     the modules each processor on the board opens, or 0 when the memory does not go by processor
  */
 public record ComputerHardwareLayout(
         int motherboardSlot,
-        int cpuStart, int cpuCount,
-        int ramStart, int ramCount,
+        int cpuStart, int cpuCount, int firstCpus,
+        int ramStart, int ramCount, int firstRam,
         int pcieStart, int pcieCount,
         int psuSlot,
         int diskStart, int diskCount,
         int bayStart, int bayCount,
+        int laterStart, int ramPerCpu,
         int totalSlots) {
 
     /**
      * The map of a case counting {@code parts}: the board first, then the processors, the memory, the cards, the
-     * supply, the disks and the bays, each kind right after the one before.
+     * supply, the disks and the bays, each kind right after the one before; then a workstation's later processors and
+     * their memory.
      */
     public static ComputerHardwareLayout of(final CaseParts parts) {
+        final boolean rows = parts.memoryPerProcessor() > 0;
+        final int firstCpus = rows ? Math.min(1, parts.processors()) : parts.processors();
+        final int firstRam = rows ? Math.min(parts.memoryPerProcessor(), parts.memory()) : parts.memory();
         final int cpuStart = 1;
-        final int ramStart = cpuStart + parts.processors();
-        final int pcieStart = ramStart + parts.memory();
+        final int ramStart = cpuStart + firstCpus;
+        final int pcieStart = ramStart + firstRam;
         final int psuSlot = pcieStart + parts.cards();
         final int diskStart = psuSlot + 1;
         final int bayStart = diskStart + parts.disks();
-        return new ComputerHardwareLayout(0, cpuStart, parts.processors(), ramStart, parts.memory(), pcieStart,
-                parts.cards(), psuSlot, diskStart, parts.disks(), bayStart, parts.bays(), bayStart + parts.bays());
+        final int laterStart = bayStart + parts.bays();
+        final int total = laterStart + (parts.processors() - firstCpus) + (parts.memory() - firstRam);
+        return new ComputerHardwareLayout(0, cpuStart, parts.processors(), firstCpus, ramStart, parts.memory(),
+                firstRam, pcieStart, parts.cards(), psuSlot, diskStart, parts.disks(), bayStart, parts.bays(),
+                laterStart, parts.memoryPerProcessor(), total);
+    }
+
+    /** The slot of processor {@code index}, from 0. */
+    public int cpuSlot(final int index) {
+        return index < firstCpus ? cpuStart + index : laterStart + index - firstCpus;
+    }
+
+    /** The slot of memory module {@code index}, from 0. */
+    public int ramSlot(final int index) {
+        return index < firstRam ? ramStart + index : laterStart + (cpuCount - firstCpus) + index - firstRam;
+    }
+
+    /** How many of its modules the case uses beside {@code processors} processors on its board. */
+    public int ramFor(final int processors) {
+        return ramPerCpu == 0 ? ramCount : Math.min(ramCount, ramPerCpu * Math.max(1, processors));
     }
 
     public boolean isCpu(final int slot) {
-        return slot >= cpuStart && slot < cpuStart + cpuCount;
+        return slot >= cpuStart && slot < cpuStart + firstCpus
+                || slot >= laterStart && slot < laterStart + cpuCount - firstCpus;
     }
 
     public boolean isRam(final int slot) {
-        return slot >= ramStart && slot < ramStart + ramCount;
+        final int laterRam = laterStart + cpuCount - firstCpus;
+        return slot >= ramStart && slot < ramStart + firstRam
+                || slot >= laterRam && slot < laterRam + ramCount - firstRam;
     }
 
     public boolean isPcie(final int slot) {

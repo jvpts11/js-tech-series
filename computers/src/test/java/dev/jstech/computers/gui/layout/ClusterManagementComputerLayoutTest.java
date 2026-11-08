@@ -16,6 +16,7 @@ import dev.jstech.computers.hardware.CaseBays;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class ClusterManagementComputerLayoutTest {
@@ -36,7 +37,11 @@ class ClusterManagementComputerLayoutTest {
             final GuiLayout l = ClusterManagementComputerLayout.layout(era);
             assertEquals(at(geo.seat(SeatKind.BOARD)), l.slotAt("mobo"), era + " board");
             assertEquals(at(geo.seat(SeatKind.PSU)), l.slotAt("psu"), era + " supply");
-            assertEquals(at(geo.seat(SeatKind.CPU)), l.slotAt("cpu"), era + " processor");
+            final List<Seat> cpus = geo.seats(SeatKind.CPU);
+            for (final Seat cpu : cpus) {
+                assertEquals(at(cpu), l.slotAt(cpus.size() == 1 ? "cpu" : "cpu_" + cpu.index()),
+                        era + " processor " + cpu.index());
+            }
             assertEquals(at(geo.seats(SeatKind.RAM).get(0)), l.slotAt("ram_0"), era + " first bank");
             assertEquals(at(geo.seats(SeatKind.CARD).get(0)), l.slotAt("pcie_0"), era + " first card");
             assertEquals(at(geo.seats(SeatKind.DISK).get(1)), l.slotAt("disk_1"), era + " last disk");

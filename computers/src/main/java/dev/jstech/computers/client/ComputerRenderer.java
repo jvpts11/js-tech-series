@@ -101,6 +101,8 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
     /** The controllers each bay's tray and caddy play on. */
     private static final String[] TRAYS = DeviceLamps.numbered("tray_", CaseFront.BAYS);
     private static final String[] CADDIES = DeviceLamps.numbered("caddy_", CaseFront.BAYS);
+    /* A two-socket board's later processors' seats: seat_cpu_1 on, the first being seat_cpu. */
+    private static final String[] CPU_SEATS = DeviceLamps.numbered("seat_cpu_", NAMED);
     private static final String[] RAM_SEATS = DeviceLamps.numbered("seat_ram_", NAMED);
     private static final String[] CARD_SEATS = DeviceLamps.numbered("seat_card_", NAMED);
     /** Each hardware slot's part is drawn by a model of its own, kept by the slot it is in. */
@@ -371,6 +373,10 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
             KitInstance boardInstance = null;
             if (board != null) {
                 boardInstance = draw(slot(boardSlot), board, null, null, false, null);
+                // A two-socket workstation board's second processor sits on the board's second socket.
+                for (int k = 1; k < layout.cpuCount(); k++) {
+                    drawOn(layout.cpuSlot(k), boardInstance, nth(CPU_SEATS, "seat_cpu_", k));
+                }
                 final Part cpu = part(computer.installedPart(layout.cpuStart()));
                 if (cpu != null && draw(slot(layout.cpuStart()), cpu, boardInstance, SEAT_CPU, false, null) != null
                         && !CARTRIDGE.equals(cpu.kind())) {
@@ -382,8 +388,7 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
                     }
                 }
                 for (int k = 0; k < layout.ramCount(); k++) {
-                    final int at = layout.ramStart() + k;
-                    drawOn(at, boardInstance, nth(RAM_SEATS, "seat_ram_", k));
+                    drawOn(layout.ramSlot(k), boardInstance, nth(RAM_SEATS, "seat_ram_", k));
                 }
                 for (int k = 0; k < layout.pcieCount(); k++) {
                     final int at = layout.pcieStart() + k;

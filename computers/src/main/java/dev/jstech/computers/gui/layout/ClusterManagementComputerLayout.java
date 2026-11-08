@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.gui.layout;
 
+import dev.jstech.computers.hardware.TowerBoards;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
 
@@ -25,7 +26,7 @@ public final class ClusterManagementComputerLayout {
 
     /** Where everything stands on the screen of a Cluster Management Computer of that era. */
     public static AssemblyGeometry geometry(final Era era) {
-        return AssemblyGeometry.tower(era, READOUTS);
+        return AssemblyGeometry.tower(era, TowerBoards.clusterManagementComputer(era), READOUTS);
     }
 
     /** The layout the menu seats its slots from: every seat, the panels, the inventory and the captions. */

@@ -13,8 +13,8 @@ import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.ExpansionCardKind;
-import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.hardware.TowerBoards;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.os.HostScope;
@@ -36,7 +36,6 @@ import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -51,10 +50,11 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
- * The Personal Computer: the player's hands-on access point to the network, assembled on a consumer ATX board (one CPU, four RAM, four PCIe, one PSU, two disks).
+ * The Personal Computer: the player's hands-on access point to the network, assembled on a consumer ATX board (one CPU,
+ * four RAM, four PCIe, one PSU, two disks), or from the Transition on a workstation's EATX board, which may carry a
+ * second processor and four more modules.
  */
 public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntity
         implements IComputerTerminalHost, IAssemblyComputer {
@@ -72,11 +72,21 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
     /** The 5.25-inch bays, as many as the most any era's case has; the case says how many it really has. */
     public static final int BAY_SLOTS_START = 13;
     public static final int BAY_SLOTS = 2;
-    public static final int HARDWARE_SLOTS = 15;
+    /*
+     * A two-socket workstation board's second processor and the four modules beside it, after the bays, so a machine
+     * saved before them keeps every part where it was.
+     */
+    public static final int SECOND_CPU_SLOT = 15;
+    public static final int SECOND_RAM_SLOTS_START = 16;
+    public static final int HARDWARE_SLOTS = 20;
 
     public static final int STORAGE_SLOTS = 18;
-    /** What a Personal Computer's case counts, whatever its era: the slots above are where they sit. */
-    public static final CaseParts PARTS = new CaseParts(1, RAM_SLOTS, GPU_SLOTS, DISK_SLOTS, BAY_SLOTS, STORAGE_SLOTS);
+    /**
+     * What a Personal Computer's case counts, whatever its era: a processor and its four modules, and a second of each
+     * on a two-socket workstation board. The slots above are where they sit.
+     */
+    public static final CaseParts PARTS =
+            new CaseParts(2, 2 * RAM_SLOTS, GPU_SLOTS, DISK_SLOTS, BAY_SLOTS, STORAGE_SLOTS, RAM_SLOTS);
 
     /*
      * Bumped on any change to the disk contents (insert/extract/disk swap) AND on a privacy-slider
@@ -115,9 +125,7 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
      * Legacy on ATX, and from the Transition on ATX or the workstation's EATX, as the tower cases of the time did.
      */
     public static ComputerDef computer(final Era era) {
-        final Set<FormFactor> boards = era == HardwareEra.VINTAGE ? Set.of(FormFactor.BABY_AT, FormFactor.AT)
-                : era == HardwareEra.LEGACY ? Set.of(FormFactor.ATX) : Set.of(FormFactor.ATX, FormFactor.EATX);
-        return new ComputerDef(era, boards, HostScope.PERSONAL_COMPUTER, PARTS);
+        return new ComputerDef(era, TowerBoards.personalComputer(era), HostScope.PERSONAL_COMPUTER, PARTS);
     }
 
     /** What the personal-use cards hold and do on this computer. */

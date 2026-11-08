@@ -398,7 +398,7 @@ public final class ContentGameTests {
 
     /**
      * Whether a small computer takes the item and draws it: a board of the forms its cases hold, or any other part. A
-     * board for two processors is a server's, drawn on its own, and has no place in a small case yet.
+     * board for two processors works in a workstation's case but has no model drawn in it yet.
      */
     private static boolean installable(final Item item) {
         final HardwareRegistry.Part part = HardwareRegistry.part(item);

@@ -16,6 +16,7 @@ import dev.jstech.computers.hardware.CaseBays;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class PersonalComputerLayoutTest {
@@ -36,8 +37,13 @@ class PersonalComputerLayoutTest {
             final GuiLayout l = PersonalComputerLayout.layout(era);
             assertEquals(at(geo.seat(SeatKind.BOARD)), l.slotAt("mobo"), era + " board");
             assertEquals(at(geo.seat(SeatKind.PSU)), l.slotAt("psu"), era + " supply");
-            assertEquals(at(geo.seat(SeatKind.CPU)), l.slotAt("cpu"), era + " processor");
-            assertEquals(at(geo.seats(SeatKind.RAM).get(3)), l.slotAt("ram_3"), era + " last bank");
+            final List<Seat> cpus = geo.seats(SeatKind.CPU);
+            for (final Seat cpu : cpus) {
+                assertEquals(at(cpu), l.slotAt(cpus.size() == 1 ? "cpu" : "cpu_" + cpu.index()),
+                        era + " processor " + cpu.index());
+            }
+            final List<Seat> ram = geo.seats(SeatKind.RAM);
+            assertEquals(at(ram.getLast()), l.slotAt("ram_" + (ram.size() - 1)), era + " last bank");
             assertEquals(at(geo.seats(SeatKind.CARD).get(3)), l.slotAt("gpu_3"), era + " last card");
             assertEquals(at(geo.seats(SeatKind.DISK).get(1)), l.slotAt("disk_1"), era + " last disk");
             assertEquals(new GuiLayout.SlotPosition(AssemblyGeometry.INVENTORY_X, geo.inventoryY()),

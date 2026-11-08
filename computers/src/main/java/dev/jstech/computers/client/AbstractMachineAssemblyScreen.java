@@ -224,6 +224,10 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
             if (boardIn && slot != null && !slot.isActive()) {
                 continue;
             }
+            // A tower's second row is a two-socket board's alone: it shows only while one is in.
+            if (geo.inSecondRow(seat) && (slot == null || !slot.isActive())) {
+                continue;
+            }
             AssemblyPainter.drawSeat(g, x, y, seat, slot != null && slot.isActive(), slot == null || !slot.hasItem());
         }
         drawCaptions(g, geo, x, y, era, boardIn);

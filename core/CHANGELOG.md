@@ -432,6 +432,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   (`budgetWatts`), how hot it is in kelvin (`temperature`, not a number for one that keeps only its budget), the share
   of its work it still does (`performance`) and whether it is over (`over`). A machine offers it on
   `ThermalBudgets.BUDGET`, the same on every block of it. Experimental.
+- Asking a layout for a slot: J's Core's API is at version 44. `GuiLayout.hasSlot(name)` says whether a layout
+  has a slot of that name, for a screen whose case may seat a part or not. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

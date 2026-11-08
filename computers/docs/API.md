@@ -145,8 +145,13 @@ event.computer(LAB_COMPUTER.get(), new ComputerDef(QUANTUM, Set.of(FormFactor.AT
   `CLUSTER_MANAGEMENT_COMPUTER`, `MAINFRAME` and `SERVER`.
 - **A small computer** of yours is a `SmallComputerBlock`, drawn in the case of its era and style (an era after the
   Advanced draws the Advanced's) and assembled on the Personal Computer's screen, so its case counts no more parts than
-  a Personal Computer's: one processor, four modules, four cards, two disks, two bays. Its block entity is J's
-  Computers' `SmallComputerBlockEntity`, one type every mod's small computers share.
+  a Personal Computer's: one processor, four modules, four cards, two disks, two bays, and on a two-socket workstation
+  board a second processor and four more modules. Its block entity is J's Computers' `SmallComputerBlockEntity`, one
+  type every mod's small computers share.
+- **Memory by processor** (added 2026-11-08): a case whose memory goes by processor, as a workstation's does, says how
+  many modules each processor on the board opens, the seventh number of `CaseParts`: `new CaseParts(2, 8, 4, 2, 2, 18,
+  4)` counts one processor and four modules on a board of one socket, two and eight on a board of two. The six-number
+  form counts its memory whatever the processors.
 - **A machine drawn in your own files** (added 2026-10-25): a subclass of `SmallComputerBlock` answers `machineName()`
   (the last part of its models' names) and `modelsOf()` (your mod's id), and its cases are drawn from your files:
   `assets/<yourmod>/geo/computer_<case>_<machine>.geo.json` and

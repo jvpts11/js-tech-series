@@ -522,6 +522,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) Removed: `ArchitectureSpec`, `ComputersRegisterEvent.architecture` and
   `JsComputersApi.registerArchitecture`, the former name of the instruction set registration, deprecated in 0.5.0a
   for one cycle. Register an `IsaSpec` with `ComputersRegisterEvent.isa` instead.
+- (Core) Asking a layout for a slot: J's Core's API is at version 44. `GuiLayout.hasSlot(name)` says whether a layout
+  has a slot of that name, for a screen whose case may seat a part or not. Experimental.
+- (Computers) Cases that seat memory by processor: J's Computers' API is at version 9. `CaseParts` gains
+  `memoryPerProcessor`, how many modules each processor on the board opens, so a workstation's case counts one
+  processor and four modules on a board of one socket and two and eight on a board of two; the six-number constructor
+  is kept, counting the memory whatever the processors. Experimental.
 
 ### Added
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2054,6 +2060,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   reaches an era, or one of J's Industrial's tiers, each network it owns (the team of its Mainframe's operator)
   writes it into its event log, "Era Standard reached by" the team, and a job can wait for it, `WHEN ERA standard
   REACHED` or `WHEN TIER t3 REACHED`.
+- (Computers) Two-socket workstations: three new EATX boards, the MF EATX Standard WS (2x LGA 2011) and the MF EATX
+  Advanced WS on 2x LGA 4677 and on 2x SP5. On any two-socket EATX board, the Legacy's and the Transition's too, a
+  Personal or Cluster Management Computer counts two processors and eight memory modules, and its assembly screen opens
+  a second row under the first for them; a board of one socket uses the first row only. The Crafting Computer takes no
+  EATX board. The two-socket boards are not drawn inside the case yet.
 - (Computers) A rack's heat for any mod: a Server Rack answers J's Core's thermal budget from any of its blocks, the
   heat of the machines turned on in it against what its cabinet and Cooling Units take away, and the share of their
   speed they keep while it is over.

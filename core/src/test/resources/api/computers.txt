@@ -239,7 +239,8 @@ stable 7
 8 dev.jstech.computers.engine.EngineDef  String versionFor(Era)
 8 dev.jstech.computers.engine.EngineDef  boolean madeFor(Era)
 3 dev.jstech.computers.engine.EngineDef  boolean offers(EngineCapability)
-8 dev.jstech.computers.hardware.CaseParts  type record(int processors, int memory, int cards, int disks, int bays, int storage)
+9 dev.jstech.computers.hardware.CaseParts  type record(int processors, int memory, int cards, int disks, int bays, int storage, int memoryPerProcessor)
+9 dev.jstech.computers.hardware.CaseParts  new(int, int, int, int, int, int)
 8 dev.jstech.computers.hardware.CaseParts  static final int AS_THE_BOARD
 8 dev.jstech.computers.hardware.ComputerDef  type record(Era era, Set<FormFactor> formFactors, HostScope machine, CaseParts parts)
 8 dev.jstech.computers.hardware.ComputerDef  boolean takesBoard(MotherboardSpec)

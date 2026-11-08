@@ -38,9 +38,9 @@ joined to it. To do anything useful it needs a disk with a system installed on i
 
 | Computer | What it is for | What it holds |
 | --- | --- | --- |
-| **Personal Computer** | Your own computer: the programs, and your way into the network. | 1 board, 1 CPU, 4 RAM, 4 GPUs, 2 disks, 1 PSU (the board may offer fewer), and 18 storage slots. |
+| **Personal Computer** | Your own computer: the programs, and your way into the network. | 1 board, 1 CPU, 4 RAM (2 and 8 on a two-socket board), 4 GPUs, 2 disks, 1 PSU (the board may offer fewer), and 18 storage slots. |
 | **Crafting Computer** | Runs the network's crafting ([Autocrafting](AUTOCRAFTING.md)). Needs a Crafting Card. | 1 CPU, 4 RAM, 4 expansion cards, 2 disks, 1 PSU. |
-| **Cluster Management Computer** | Installs systems on racked machines and watches them. Without a Cluster Interface Card it is an ordinary computer. | 1 CPU, 4 RAM, 4 expansion cards, 2 disks, 1 PSU, 18 storage slots. |
+| **Cluster Management Computer** | Installs systems on racked machines and watches them. Without a Cluster Interface Card it is an ordinary computer. | 1 CPU, 4 RAM (2 and 8 on a two-socket board), 4 expansion cards, 2 disks, 1 PSU, 18 storage slots. |
 | **Mainframe** | The network's brain: it keeps the index of everything stored, moves it and crafts it. | A block of 3 wide, 2 tall, 2 deep. 1 MTX board, 1 PSU, 4 CPUs, 8 RAM, 6 GPUs, 4 disks, 27 storage slots. |
 | **Server Rack** | A cabinet of 8 rack units (U) for Servers, a KVM Switch, a Rack UPS and a Cooling Unit. | A block of 2 wide, 3 tall, 2 deep. |
 | **Supercomputer Rack** | The same cabinet for Supercomputer Nodes only (Standard and Advanced). | As the Server Rack. |
@@ -50,7 +50,14 @@ Standard on, the Personal Computer and the Crafting Computer each come in three 
 the plain one, "High Performance" and "Aesthetic".
 
 The board a case takes depends on its size (its **form factor**): a Vintage Personal Computer takes a Baby-AT or
-AT board, a Legacy one an ATX board, and from the Transition on an ATX or EATX board.
+AT board, a Legacy one an ATX board, and from the Transition on an ATX or EATX board. The Cluster Management
+Computer takes EATX from the Legacy on; the Crafting Computer never does.
+
+**Two-socket workstations.** An EATX board may carry two sockets: the Legacy's on Socket 604 and 940, the
+Transition's on LGA 771, the Standard WS on LGA 2011, and the Advanced WS on LGA 4677 and SP5. On one, a Personal or
+Cluster Management Computer counts two processors and eight memory modules, as a real two-socket workstation does:
+its assembly screen opens a second row under the first, for the second processor and modules 5 to 8. A board with
+one socket uses the first row only, however many memory slots it has.
 
 **Why the Mainframe's hardware matters most.** Everything the network does goes through the Mainframe:
 

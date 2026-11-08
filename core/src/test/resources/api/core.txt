@@ -4615,6 +4615,7 @@ stable 4
 10 dev.jstech.core.gui.layout.GuiLayout  List<String> zeroSizedSolids()
 10 dev.jstech.core.gui.layout.GuiLayout  SlotPosition playerInventoryAt()
 10 dev.jstech.core.gui.layout.GuiLayout  SlotPosition slotAt(String)
+44 dev.jstech.core.gui.layout.GuiLayout  boolean hasSlot(String)
 10 dev.jstech.core.gui.layout.GuiLayout  boolean isClean()
 10 dev.jstech.core.gui.layout.GuiLayout  int height()
 10 dev.jstech.core.gui.layout.GuiLayout  int width()

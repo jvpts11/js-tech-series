@@ -8,12 +8,15 @@
 package dev.jstech.computers.gui.layout;
 
 import dev.jstech.computers.hardware.CaseBays;
+import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.TowerBoards;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Where everything stands on an assembly screen, which is drawn as the machine: on the left the case seen from its open
@@ -23,7 +26,10 @@ import java.util.List;
  * the inventory, beside it the service switches and the lamps.
  *
  * <p>The three towers (Personal, Crafting and Cluster Management Computers) share one case, whose bays and supply stand
- * where their era's case has them. The Mainframe and the rack server carry four sockets, eight banks and six cards, which
+ * where their era's case has them. A tower that takes a workstation's two-socket board has a second row under the
+ * first, for its second processor and four more modules, and its cards and a supply at the foot stand a row lower;
+ * the row's seats show only while a two-socket board is in. The Mainframe and the rack server carry four sockets, eight
+ * banks and six cards, which
  * no tower board does: their cards stand in two I/O cages of three risers. The server has no front, its drives being the
  * rack's, but a wall of fans.
  *
@@ -68,6 +74,7 @@ public final class AssemblyGeometry {
     private final Kind kind;
     private final int bays;
     private final boolean supplyAtTop;
+    private final boolean secondRow;
     private final int readouts;
     private final boolean operations;
     private final int switches;
@@ -158,12 +165,15 @@ public final class AssemblyGeometry {
      * @param kind        which case
      * @param bays        its 5.25-inch bays (the towers only)
      * @param supplyAtTop whether its supply sits at the top of the back panel, as in the old towers
+     * @param secondRow   whether a tower seats a second processor and four more modules under the first row
      * @param readouts    how many readouts its front panel shows
      */
-    public AssemblyGeometry(final Kind kind, final int bays, final boolean supplyAtTop, final int readouts) {
+    public AssemblyGeometry(final Kind kind, final int bays, final boolean supplyAtTop, final boolean secondRow,
+                            final int readouts) {
         this.kind = kind;
         this.bays = kind == Kind.TOWER ? bays : 0;
         this.supplyAtTop = kind == Kind.TOWER && supplyAtTop;
+        this.secondRow = kind == Kind.TOWER && secondRow;
         this.readouts = readouts;
         this.operations = kind == Kind.MAINFRAME;
         // A server has no switches of its own: it is switched on and off in its rack.
@@ -190,21 +200,23 @@ public final class AssemblyGeometry {
     }
 
     /**
-     * A tower's geometry for its era's case: its bays, and its supply at the top of the back panel in the towers up to
-     * the Transition's, at the foot in the newer ones.
+     * A tower's geometry for its era's case: its bays, its supply at the top of the back panel in the towers up to the
+     * Transition's, at the foot in the newer ones, and the second row of a tower that takes {@code boards} when one of
+     * them is a workstation's ({@link TowerBoards#secondRow}).
      */
-    public static AssemblyGeometry tower(final Era era, final int readouts) {
-        return new AssemblyGeometry(Kind.TOWER, CaseBays.of(era), era.isAtMost(HardwareEra.TRANSITION), readouts);
+    public static AssemblyGeometry tower(final Era era, final Set<FormFactor> boards, final int readouts) {
+        return new AssemblyGeometry(Kind.TOWER, CaseBays.of(era), era.isAtMost(HardwareEra.TRANSITION),
+                TowerBoards.secondRow(boards), readouts);
     }
 
     /** The Mainframe's geometry. */
     public static AssemblyGeometry mainframe(final int readouts) {
-        return new AssemblyGeometry(Kind.MAINFRAME, 0, false, readouts);
+        return new AssemblyGeometry(Kind.MAINFRAME, 0, false, false, readouts);
     }
 
     /** A rack server's geometry. */
     public static AssemblyGeometry server(final int readouts) {
-        return new AssemblyGeometry(Kind.SERVER, 0, false, readouts);
+        return new AssemblyGeometry(Kind.SERVER, 0, false, false, readouts);
     }
 
     public Kind kind() {
@@ -223,6 +235,17 @@ public final class AssemblyGeometry {
     /** The case's 5.25-inch bays. */
     public int bays() {
         return bays;
+    }
+
+    /** Whether the case seats a second row, for a two-socket workstation board. */
+    public boolean secondRow() {
+        return secondRow;
+    }
+
+    /** Whether {@code seat} is one of the second row's, which shows only while a two-socket board is in. */
+    public boolean inSecondRow(final Seat seat) {
+        return secondRow && (seat.kind() == SeatKind.CPU && seat.index() > 0
+                || seat.kind() == SeatKind.RAM && seat.index() >= TOWER_RAM);
     }
 
     /** Every seat, in the order the machine's slots run. */
@@ -398,14 +421,19 @@ public final class AssemblyGeometry {
         final List<Seat> out = new ArrayList<>();
         out.add(new Seat(SeatKind.BOARD, 0, BOARD_X, TOP));
         if (kind == Kind.TOWER) {
-            out.add(new Seat(SeatKind.CPU, 0, CPU_X, TOP));
-            for (int i = 0; i < TOWER_RAM; i++) {
-                out.add(new Seat(SeatKind.RAM, i, dimmX + i * PITCH, TOP));
+            // The second row, under the first, moves the cards and a supply at the foot down by one.
+            final int rows = secondRow ? 2 : 1;
+            for (int row = 0; row < rows; row++) {
+                out.add(new Seat(SeatKind.CPU, row, CPU_X, TOP + row * PITCH));
+                for (int i = 0; i < TOWER_RAM; i++) {
+                    out.add(new Seat(SeatKind.RAM, row * TOWER_RAM + i, dimmX + i * PITCH, TOP + row * PITCH));
+                }
             }
+            final int cardsTop = TOP + (rows - 1) * PITCH;
             for (int k = 0; k < TOWER_CARDS; k++) {
-                out.add(new Seat(SeatKind.CARD, k, BOARD_X, TOP + (k + 1) * PITCH + 4));
+                out.add(new Seat(SeatKind.CARD, k, BOARD_X, cardsTop + (k + 1) * PITCH + 4));
             }
-            final int lastCard = TOP + TOWER_CARDS * PITCH + 4;
+            final int lastCard = cardsTop + TOWER_CARDS * PITCH + 4;
             out.add(new Seat(SeatKind.PSU, 0, REAR_X, supplyAtTop ? TOP : lastCard));
             for (int i = 0; i < bays; i++) {
                 out.add(new Seat(SeatKind.BAY, i, frontX, TOP + i * PITCH));

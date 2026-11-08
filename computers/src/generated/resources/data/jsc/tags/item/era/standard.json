@@ -121,6 +121,7 @@
     "jsc:motherboard_atx_standard_am3p",
     "jsc:motherboard_atx_standard_fm2p",
     "jsc:motherboard_eatx_standard_2011",
+    "jsc:motherboard_eatx_standard_dual_2011",
     "jsc:motherboard_eeb_s_g34",
     "jsc:motherboard_mtx_s_g34",
     "jsc:usb_flash_drive"

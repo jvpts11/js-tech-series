@@ -64,9 +64,21 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
         final List<Slot> hardwareSlots = new ArrayList<>();
         hardwareSlots.add(slot(hw, map.motherboardSlot(), layout.slotAt("mobo")));
         hardwareSlots.add(slot(hw, map.psuSlot(), layout.slotAt("psu")));
-        final GuiLayout.SlotPosition cpuAt = layout.slotAt("cpu");
-        hardwareSlots.add(new BoardSlot(hw, map.cpuStart(), cpuAt.x(), cpuAt.y(), 0, be::boardCpuSlots));
-        addBoardSlots(hardwareSlots, hw, layout, "ram_", map.ramStart(), map.ramCount(), be::boardRamSlots);
+        /*
+         * The processors and the memory the case seats: one processor and its modules, and a second row of each on a
+         * tower that takes a two-socket workstation board, wherever the layout keeps each one's slot.
+         */
+        for (int i = 0; i < map.cpuCount(); i++) {
+            final String key = cpuKey(layout, i);
+            if (key != null) {
+                final GuiLayout.SlotPosition at = layout.slotAt(key);
+                hardwareSlots.add(new BoardSlot(hw, map.cpuSlot(i), at.x(), at.y(), i, be::boardCpuSlots));
+            }
+        }
+        for (int i = 0; i < map.ramCount() && layout.hasSlot("ram_" + i); i++) {
+            final GuiLayout.SlotPosition at = layout.slotAt("ram_" + i);
+            hardwareSlots.add(new BoardSlot(hw, map.ramSlot(i), at.x(), at.y(), i, be::boardRamSlots));
+        }
         addBoardSlots(hardwareSlots, hw, layout, pcieKey + "_", map.pcieStart(), map.pcieCount(), be::boardPcieSlots);
         addBoardSlots(hardwareSlots, hw, layout, "disk_", map.diskStart(), map.diskCount(), be::boardDiskSlots);
         // The bays the case has, which take their drives whatever the board.
@@ -174,6 +186,16 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
     protected static Era caseEra(final AbstractSmallComputerBlockEntity be) {
         final Era era = be.displayEra();
         return era == null ? HardwareEra.STANDARD : era;
+    }
+
+    /* The key of processor seat {@code index}: "cpu" on a case of one, "cpu_<i>" on one of more; none past them. */
+    @Nullable
+    private static String cpuKey(final GuiLayout layout, final int index) {
+        if (layout.hasSlot("cpu")) {
+            return index == 0 ? "cpu" : null;
+        }
+        final String key = "cpu_" + index;
+        return layout.hasSlot(key) ? key : null;
     }
 
     private static void addBoardSlots(final List<Slot> into, final IItemHandler hw, final GuiLayout layout,

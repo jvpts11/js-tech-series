@@ -18,8 +18,8 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.ExpansionCardKind;
-import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.hardware.TowerBoards;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
@@ -28,11 +28,9 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.tier.Era;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -111,9 +109,7 @@ public class CraftingComputerBlockEntity extends AbstractSmallComputerBlockEntit
      * Vintage on Baby-AT/AT and the later eras on ATX.
      */
     public static ComputerDef computer(final Era era) {
-        final Set<FormFactor> boards = era == HardwareEra.VINTAGE ? Set.of(FormFactor.BABY_AT, FormFactor.AT)
-                : Set.of(FormFactor.ATX);
-        return new ComputerDef(era, boards, HostScope.CRAFTING_COMPUTER, PARTS);
+        return new ComputerDef(era, TowerBoards.craftingComputer(era), HostScope.CRAFTING_COMPUTER, PARTS);
     }
 
     public static void serverTick(final Level level, final BlockPos pos,

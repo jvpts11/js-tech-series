@@ -179,6 +179,11 @@ public final class GuiLayout {
         return at;
     }
 
+    /** Whether the layout has a slot of that name: a screen whose case may seat a part or not asks before it seats. */
+    public boolean hasSlot(final String name) {
+        return slots.containsKey(name);
+    }
+
     /**
      * The top-left of the player's inventory grid, as {@link #playerInventory} placed it.
      *

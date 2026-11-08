@@ -1069,6 +1069,11 @@ public final class HardwareItems {
             board("motherboard_eatx_standard_2011", new MotherboardSpec(FormFactor.EATX, HardwareEra.STANDARD,
                     CpuSocketId.LGA_2011, 1, Set.of(RamGeneration.DDR3), 8, PcieGeneration.PCIE_3_0, 7, 4))
                     .named("MF EATX Standard Motherboard (LGA 2011)").register();
+    // The two-socket workstation board: a second Integra on LGA 2011 and four more DDR3 modules.
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_STANDARD_DUAL_2011 =
+            board("motherboard_eatx_standard_dual_2011", new MotherboardSpec(FormFactor.EATX, HardwareEra.STANDARD,
+                    CpuSocketId.LGA_2011, 2, Set.of(RamGeneration.DDR3), 16, PcieGeneration.PCIE_3_0, 7, 6))
+                    .named("MF EATX Standard WS Motherboard (2x LGA 2011)").register();
     // The G34 server boards, two Opteras or four, on the PCIe 2.0 of their chipset.
     public static final DeferredItem<Item> MOTHERBOARD_EEB_S_G34 =
             board("motherboard_eeb_s_g34", new MotherboardSpec(FormFactor.EEB, HardwareEra.STANDARD,
@@ -1538,6 +1543,18 @@ public final class HardwareItems {
             board("motherboard_eatx_advanced_4677", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
                     CpuSocketId.LGA_4677, 1, Set.of(RamGeneration.DDR5), 8, PcieGeneration.PCIE_5_0, 7, 4))
                     .named("MF EATX Advanced WS Motherboard (LGA 4677)").register();
+    /*
+     * The two-socket workstation boards, a Personal or Cluster Management Computer's second processor and its four
+     * more modules: two Integra Servos on LGA 4677, and two Velocion Epics on SP5.
+     */
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_ADVANCED_DUAL_4677 =
+            board("motherboard_eatx_advanced_dual_4677", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_4677, 2, Set.of(RamGeneration.DDR5), 16, PcieGeneration.PCIE_5_0, 7, 6))
+                    .named("MF EATX Advanced WS Motherboard (2x LGA 4677)").register();
+    public static final DeferredItem<Item> MOTHERBOARD_EATX_ADVANCED_DUAL_SP5 =
+            board("motherboard_eatx_advanced_dual_sp5", new MotherboardSpec(FormFactor.EATX, HardwareEra.ADVANCED,
+                    CpuSocketId.SP5, 2, Set.of(RamGeneration.DDR5), 16, PcieGeneration.PCIE_5_0, 7, 6))
+                    .named("MF EATX Advanced WS Motherboard (2x SP5)").register();
     // The two-way server boards.
     public static final DeferredItem<Item> MOTHERBOARD_EEB_A_SP3 =
             board("motherboard_eeb_a_sp3", new MotherboardSpec(FormFactor.EEB, HardwareEra.ADVANCED,
