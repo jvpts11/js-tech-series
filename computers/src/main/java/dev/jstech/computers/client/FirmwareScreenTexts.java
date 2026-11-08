@@ -160,6 +160,12 @@ public final class FirmwareScreenTexts {
     static final TextKey LABEL_MONITORS = TextKey.of("jsc.firmware.screen.label_monitors", "Monitors");
     static final TextKey LABEL_HARDWARE_ERA = TextKey.of("jsc.firmware.screen.label_hardware_era", "Hardware Era");
     static final TextKey LABEL_BOOT_DISK = TextKey.of("jsc.firmware.screen.label_boot_disk", "Boot Disk");
+    static final TextKey LABEL_POWER_SUPPLY = TextKey.of("jsc.firmware.screen.label_power_supply", "Power Supply");
+    /** The power supply's wear; and the line each firmware reads the supply out in. */
+    static final TextKey PSU_WORN = TextKey.of("jsc.firmware.screen.psu_worn", "%s%% worn");
+    static final TextKey PSU_LINE = TextKey.of("jsc.firmware.screen.psu_line", "%s, %s");
+    static final TextKey PSU_LINE_DEGRADED = TextKey.of("jsc.firmware.screen.psu_line_degraded", "%s, %s: degraded");
+    static final TextKey PSU_LINE_NAMED = TextKey.of("jsc.firmware.screen.psu_line_named", "%s: %s");
     static final TextKey LABEL_INSTALL_TARGET =
             TextKey.of("jsc.firmware.screen.label_install_target", "Install Target");
     static final TextKey NO_DISK = TextKey.of("jsc.firmware.screen.no_disk", "no disk");

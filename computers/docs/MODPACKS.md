@@ -226,7 +226,7 @@ JsComputers.memory('mypack:scripted_ram', { era: 'advanced', generation: 'ddr5',
 | `JsComputers.memory(item, sheet)` | A memory module | `era`, `generation`, `buffer_items`, `tdp_watts` |
 | `JsComputers.disk(item, sheet)` | A disk | `tier` (`hdd`, `ssd`, `nvme`), `era`, `capacity_items`, `tdp_watts` |
 | `JsComputers.motherboard(item, sheet)` | A board | `form_factor`, `era`, `socket`, `cpu_slots`, `memory`, `ram_slots`, `bus`, `slots`, `disk_slots` |
-| `JsComputers.powerSupply(item, sheet, era)` | A supply, shown with `era` | `wattage`, `efficiency_percent`, and `auto_scaling` |
+| `JsComputers.powerSupply(item, sheet, era)` | A supply, shown with `era` | `wattage`, `efficiency_percent`, and `auto_scaling`, `life_days` (at full load, 100 if left out) and `units` (2 or more for a redundant one) |
 | `JsComputers.expansionCard(item, sheet)` | A card | `kind`, `era`, `bus`, `tdp_watts` |
 | `JsComputers.memoryGeneration(sheet)` | A generation of memory | `id`, `label`, `latency_ticks` |
 | `JsComputers.slotGeneration(sheet)` | A generation of slot | `id`, `generation`, `label`, `slot_name`, `family` |

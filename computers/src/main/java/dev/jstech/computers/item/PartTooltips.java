@@ -59,7 +59,7 @@ public final class PartTooltips {
             case RamSpec ram -> MemoryTooltip.append(ram, lines);
             case DiskSpec disk -> DiskTooltip.append(disk, stack, lines);
             case MotherboardSpec board -> MotherboardTooltip.append(board, lines);
-            case PsuSpec psu -> PowerSupplyTooltip.append(psu, lines);
+            case PsuSpec psu -> PowerSupplyTooltip.append(psu, stack, lines);
             case IExpansionCardSpec card -> card(card, part, stack, lines);
             default -> {
                 // A kind of sheet no tooltip is written for says nothing.

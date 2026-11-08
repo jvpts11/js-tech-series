@@ -108,22 +108,27 @@ public final class PostWall {
      * <p>A drive row is columns instead, because a variable-width font cannot be made to line up with spaces
      * and a list of drives that does not line up is a list nobody can read down.
      */
-    private record Line(String head, String hot, String tail, String right, String[] cols) {
+    private record Line(String head, String hot, String tail, String right, String[] cols, boolean warns) {
 
         static Line of(final String text) {
-            return new Line(text, "", "", "", null);
+            return new Line(text, "", "", "", null, false);
         }
 
         static Line blank() {
-            return new Line("", "", "", "", null);
+            return new Line("", "", "", "", null, false);
         }
 
         static Line found(final String head, final String hot, final String tail) {
-            return new Line(head, hot, tail, "", null);
+            return new Line(head, hot, tail, "", null, false);
+        }
+
+        /* A warning: what leads it lifted out in the key's yellow, as those boards printed their WARNING!. */
+        static Line warning(final String lead, final String tail) {
+            return new Line("", lead, tail, "", null, true);
         }
 
         static Line columns(final String role, final String device, final String size, final String holds) {
-            return new Line("", "", "", "", new String[]{role, device, size, holds});
+            return new Line("", "", "", "", new String[]{role, device, size, holds}, false);
         }
     }
 
@@ -228,7 +233,7 @@ public final class PostWall {
             tx = run(g, font, line.head(), tx, ty, text);
         }
         if (!line.hot().isEmpty()) {
-            tx = run(g, font, line.hot(), tx, ty, accent);
+            tx = run(g, font, line.hot(), tx, ty, line.warns() ? PALETTE.get().key() : accent);
         }
         if (!line.tail().isEmpty()) {
             run(g, font, line.tail(), tx, ty, text);
@@ -245,7 +250,7 @@ public final class PostWall {
         final boolean legacy = kind == FirmwareKind.BLUE_BIOS;
         final String title = title(state, machineName);
         final List<Line> out = new ArrayList<>();
-        out.add(new Line("", Branding.biosBanner(era), "", legacy ? "" : title, null));
+        out.add(new Line("", Branding.biosBanner(era), "", legacy ? "" : title, null, false));
         out.add(Line.of(Branding.firmwareCopyright(era)));
         out.add(Line.blank());
         if (state == null) {
@@ -276,6 +281,11 @@ public final class PostWall {
         out.add(Line.of(of(legacy ? DETECTING_DRIVES_OLD : DETECTING_DRIVES)));
         drives(state, out);
         out.add(Line.blank());
+        // What the machine warns of, in its firmware's words; the boot goes on and the warning stays written.
+        for (final PostWarnings.Warning warning : PostWarnings.of(state.psu())) {
+            out.add(legacy ? Line.warning(of(PostWarnings.BIOS_WARNING), of(warning.bios()))
+                    : Line.of(of(warning.cli())));
+        }
         if (finished) {
             /*
              * What it is about to boot, by name, or the era's own way of saying there is nothing: a machine of

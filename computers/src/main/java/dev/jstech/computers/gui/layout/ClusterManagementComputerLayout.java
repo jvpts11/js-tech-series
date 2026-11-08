@@ -12,9 +12,9 @@ import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
 
 /**
- * The Cluster Management Computer's assembly screen: its era's tower case, its expansion slots, and five readouts on its
- * front panel (capacity, network, the clusters in reach, the management software, draw). The menu seats its slots from
- * here and the screen draws from here, so the two can never disagree.
+ * The Cluster Management Computer's assembly screen: its era's tower case, its expansion slots, and five readouts on
+ * its front panel (capacity, network, the clusters in reach, the management software, draw). The menu seats its slots
+ * from here and the screen draws from here, so the two can never disagree.
  */
 public final class ClusterManagementComputerLayout {
 

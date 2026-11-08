@@ -159,6 +159,10 @@ public class ServerAssemblyScreen extends AbstractMachineAssemblyScreen<ServerAs
         if (frameBuild == null) {
             return List.of(GameText.component(AssemblyTexts.INSERT_TO_BEGIN).withStyle(ChatFormatting.GRAY));
         }
+        final List<Component> failure = psuFailure(menu.psu());
+        if (!failure.isEmpty()) {
+            return failure;
+        }
         final List<Text> problems = frameChecks.problems();
         if (problems.isEmpty()) {
             return List.of(GameText.component(AssemblyTexts.ALL_CHECKS_PASSED).withStyle(ChatFormatting.GREEN));

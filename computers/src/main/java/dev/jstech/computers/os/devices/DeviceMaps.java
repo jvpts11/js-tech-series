@@ -17,6 +17,10 @@ import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.NetworkCardSpec;
+import dev.jstech.computers.hardware.PsuCondition;
+import dev.jstech.computers.hardware.PsuConditions;
+import dev.jstech.computers.hardware.PsuSpec;
+import dev.jstech.computers.hardware.PsuTexts;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
@@ -64,6 +68,7 @@ public final class DeviceMaps {
         final List<Text> network = new ArrayList<>();
         final List<Text> cards = new ArrayList<>();
         final List<String> cardIcons = new ArrayList<>();
+        final List<DeviceMap.PowerSupply> power = new ArrayList<>();
         network.add(DeviceMap.boardNetwork(DataLinkNames.access(era).text()));
         for (final ItemStack part : computer.hardwareStacks()) {
             final Text name = GameText.of(part.getHoverName());
@@ -80,18 +85,24 @@ public final class DeviceMaps {
                 case WorkshopCardSpec card -> addCard(cards, cardIcons, name, card.card().id());
                 // Any other card, an add-on's among them, is listed as a card.
                 case IExpansionCardSpec ignored -> addCard(cards, cardIcons, name, DeviceMap.CARD_ICON);
+                // A supply is told by its wear, marked once it needs attention.
+                case PsuSpec psu -> {
+                    final PsuCondition condition = PsuConditions.of(part);
+                    power.add(new DeviceMap.PowerSupply(name, PsuTexts.note(psu, condition),
+                            condition.failed(psu) || condition.degraded(psu)));
+                }
                 case null, default -> {
                 }
             }
         }
         if (build == null) {
             return new DeviceMap(Installers.hostName(computer), board, processors, memory, disks, List.of(),
-                    List.of(), family(era), List.of(), network, cards, cardIcons);
+                    List.of(), family(era), List.of(), network, cards, cardIcons, power);
         }
         final Linked linked = new Linked(level, computer);
         return new DeviceMap(Installers.hostName(computer), board, processors, memory, disks,
                 video(build, gpus, linked), audio(build, soundCards, linked), family(era), devicePorts(era, linked),
-                network, cards, cardIcons);
+                network, cards, cardIcons, power);
     }
 
     /** A graphics card as the device list needs it: its name and how many video outputs its generation carries. */

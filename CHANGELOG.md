@@ -528,6 +528,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `memoryPerProcessor`, how many modules each processor on the board opens, so a workstation's case counts one
   processor and four modules on a board of one socket and two and eight on a board of two; the six-number constructor
   is kept, counting the memory whatever the processors. Experimental.
+- (Computers) Power supplies that wear: J's Computers' API is at version 10. `PsuSpec` gains `lifeDays`, how long the
+  supply lasts at full load, and `units`, two or more for a redundant one, with the earlier constructors kept and a
+  supply named without a life lasting as a PowerGold; `PsuCondition`, `PsuConditions` (a supply's wear on its item),
+  `PsuWear` (the wear's rule) and `PsuTexts` are new. A scripted supply's sheet takes `life_days` and `units`.
+  Experimental.
 
 ### Added
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2076,6 +2081,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   an ERROR. Every assembly screen has a DRAW readout, the parts against the supply with a bar amber near the rating
   and red past it and the watts from the line in its tooltip, or NO POWER when nothing reaches it. The server setting
   `power.draw_energy` turns the draw off, for a world with no energy.
+- (Computers) Power supplies wear out: a supply wears while it is on, faster the nearer its rating it runs (eight times
+  its full-load life up to half its rating, three times up to four fifths), and the wear stays on the supply. At full
+  load a PowerBasic lasts 60 game days, a PowerGold 100, a PowerPlat 150 and a ServerPSU 250, each a little more or
+  less, and a rack over its thermal budget halves its servers'. The wear is a bar under the supply in the assembly
+  screens and a line in its tooltip. From 80% worn it is degraded: an amber edge on its seat, a warning at every boot
+  in the voice of each firmware, a mark under Power supplies in the Device Manager, a line on the firmware's Hardware
+  page and a WARN in the network's event log. At 100% it fails: the machine goes dark at once (an ERROR in the log) and
+  does not start, "PSU failure", until the supply is replaced. The MF ServerPSU 3000P (Redundant) has two units that
+  share the load, so one can fail and the other carries it all. The server settings `hardware.psu_failures` and
+  `hardware.psu_life_multiplier` turn it off or stretch every life.
 - (Computers) Other mods' machines do the network's work: `RUN` asks a machine of the network for a kind of Operation
   its mod registered, `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH`,
   from a prompt, the studio, a job (so a job can answer a world event on another mod's machine) or a program. `ON`

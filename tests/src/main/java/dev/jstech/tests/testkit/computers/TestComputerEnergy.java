@@ -20,7 +20,8 @@ import net.neoforged.neoforge.event.server.ServerStartingEvent;
  * The computers of a test run draw no energy: the tests that build a running computer bring no generator, and what
  * they test is not the energy. The few that test it turn the draw on in a batch of their own ({@link #drawing}) and
  * off again when they end, and feed their machines by hand ({@link #feed}); the same goes for what the personal-use
- * cards cost ({@link #costing}). A game started by hand is left as its settings say.
+ * cards cost ({@link #costing}) and whether power supplies wear ({@link #wearing}). A game started by hand is left as
+ * its settings say.
  */
 @EventBusSubscriber(modid = JsTests.MODID)
 public final class TestComputerEnergy {
@@ -29,6 +30,8 @@ public final class TestComputerEnergy {
     public static final String BATCH = "jsc_computer_energy";
     /** The batch of the tests that make the cards cost levels instead of energy. */
     public static final String XP_BATCH = "jsc_update_cost_xp";
+    /** The batch of the tests that let power supplies last for ever. */
+    public static final String NO_WEAR_BATCH = "jsc_psu_no_wear";
     private static final String CLIENT_TESTS = "jstestkit.clienttests";
     /* As much as a store takes from the grid in a tick. */
     private static final long A_TICK = 4_000L;
@@ -41,7 +44,13 @@ public final class TestComputerEnergy {
         if (event.getServer() instanceof GameTestServer || Boolean.getBoolean(CLIENT_TESTS)) {
             drawing(false);
             costing(UpdateCost.ENERGY);
+            wearing(true);
         }
+    }
+
+    /** Turns power supplies' wear on or off, for the tests of {@link #NO_WEAR_BATCH}. */
+    public static void wearing(final boolean on) {
+        ComputersServerConfig.FILE.set(ComputersServerConfig.PSU_FAILURES, on);
     }
 
     /** Turns the computers' draw on or off for the tests of {@link #BATCH}. */

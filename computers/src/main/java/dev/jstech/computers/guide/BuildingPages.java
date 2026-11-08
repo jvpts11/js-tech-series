@@ -754,10 +754,20 @@ final class BuildingPages {
                         + " cable that brings energy. Without energy it does not start. When energy stops reaching"
                         + " it, it goes dark at once, and the network's event log says so. A server can turn the"
                         + " draw off.")
+                .paragraph("A supply wears out while it is on, and in the end fails. The nearer its rating it runs,"
+                        + " the faster it wears: up to half its rating it lives eight times as long as at full load,"
+                        + " up to four fifths three times. At full load a PowerBasic lasts 60 game days, a PowerGold"
+                        + " 100, a PowerPlat 150 and a ServerPSU 250, and a rack running too hot halves that. The wear"
+                        + " shows as a bar under the supply, as an item's durability does. From 80% worn the supply"
+                        + " is degraded, and you are warned at every boot; at 100% it fails, and the computer goes"
+                        + " dark until you put in a new one. The 3000P has two units: one can fail, and the other"
+                        + " carries the load.")
                 .ifSomethingGoesWrong("The computer does not start, or the build says \"PSU insufficient\".",
                         "Its parts draw more than its supply gives. Use a supply with more watts.",
                         "The computer does not start, and its DRAW readout says NO POWER.",
-                        "No energy reaches it. Run a cable to it from a generator or a battery.")
+                        "No energy reaches it. Run a cable to it from a generator or a battery.",
+                        "The computer went dark, and its power button says \"PSU failure\".",
+                        "Its supply wore out. Put in a new supply, and run it further under its rating.")
                 .seeAlso("jsc:build_refusals", "jsc:disks", "jsc:processors")
                 .register();
     }

@@ -52,6 +52,7 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_ISA;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MEMBER_DRIVES;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MEMORY;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_MONITORS;
+import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_POWER_SUPPLY;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_PROCESSOR;
 import static dev.jstech.computers.client.FirmwareScreenTexts.LABEL_VIDEO;
 import static dev.jstech.computers.client.FirmwareScreenTexts.MONITORS_PORTS;
@@ -72,6 +73,10 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.PAGE_BOOT_NAME;
 import static dev.jstech.computers.client.FirmwareScreenTexts.PAGE_BOOT_ORDER;
 import static dev.jstech.computers.client.FirmwareScreenTexts.PAGE_HARDWARE_NAME;
 import static dev.jstech.computers.client.FirmwareScreenTexts.PAGE_STORAGE_NAME;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PSU_LINE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PSU_LINE_DEGRADED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PSU_LINE_NAMED;
+import static dev.jstech.computers.client.FirmwareScreenTexts.PSU_WORN;
 import static dev.jstech.computers.client.FirmwareScreenTexts.RAID0_STRENGTH;
 import static dev.jstech.computers.client.FirmwareScreenTexts.RAID1_STRENGTH;
 import static dev.jstech.computers.client.FirmwareScreenTexts.RAID5_STRENGTH;
@@ -90,8 +95,12 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.WHERE_BUT;
 import static dev.jstech.computers.client.FirmwareScreenTexts.of;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.layout.FirmwareLayout;
+import dev.jstech.computers.hardware.PsuCondition;
+import dev.jstech.computers.hardware.PsuSpec;
+import dev.jstech.computers.hardware.PsuTexts;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
@@ -573,7 +582,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         ty += FirmwareLayout.CLI_CONTENT_DY;
         if (page == PAGE_HARDWARE) {
             renderHardwareLines(g, tx, ty, FirmwareLayout.CLI_LINE_STEP, CLI.get().text(), CLI.get().bright(),
-                    CLI.get().dim(), W - FirmwareLayout.CLI_CONTENT_WIDTH_MARGIN);
+                    CLI.get().dim(), CLI.get().bright(), W - FirmwareLayout.CLI_CONTENT_WIDTH_MARGIN);
         } else if (page == PAGE_STORAGE) {
             renderStorageLines(g, tx, ty, FirmwareLayout.CLI_LINE_STEP, CLI.get().text(), CLI.get().bright(),
                     CLI.get().dim(), W - FirmwareLayout.CLI_CONTENT_WIDTH_MARGIN);
@@ -658,7 +667,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         if (page == PAGE_HARDWARE) {
             drawBox(g, boxX, top, boxW, boxH, of(SYSTEM_INFORMATION));
             renderHardwareLines(g, boxX + insetX, top + insetY, FirmwareLayout.BIOS_LINE_STEP, BIOS.get().text(),
-                    BIOS.get().value(), BIOS.get().dim(), boxW - 2 * FirmwareLayout.BIOS_CONTENT_INSET_X);
+                    BIOS.get().value(), BIOS.get().dim(), BIOS.get().amber(),
+                    boxW - 2 * FirmwareLayout.BIOS_CONTENT_INSET_X);
             help = of(HARDWARE_HELP);
         } else if (page == PAGE_STORAGE) {
             drawBox(g, boxX, top, boxW, boxH, of(STORAGE_CONTROLLER));
@@ -791,7 +801,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         if (page == PAGE_HARDWARE) {
             panel(g, mainX, top, mainW, panelH, of(SYSTEM_INFORMATION));
             renderHardwareLines(g, mainX + uefiInsetX, top + uefiInsetY, FirmwareLayout.UEFI_LINE_STEP,
-                    UEFI.get().key(), UEFI.get().text(), UEFI.get().dim(),
+                    UEFI.get().key(), UEFI.get().text(), UEFI.get().dim(), UEFI.get().amber(),
                     mainW - FirmwareLayout.UEFI_CONTENT_WIDTH_MARGIN);
         } else if (page == PAGE_STORAGE) {
             panel(g, mainX, top, mainW, panelH, of(STORAGE_CONTROLLER));
@@ -888,10 +898,10 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     // Shared helpers
 
-    /** The hardware page's key/value lines in the caller's palette. */
+    /** The hardware page's key/value lines in the caller's palette, a degraded power supply in its warning colour. */
     private void renderHardwareLines(final GuiGraphics g, final int x, final int y, final int lh,
                                      final int keyColor, final int valueColor, final int dimColor,
-                                     final int width) {
+                                     final int warnColor, final int width) {
         int ty = y;
         final FirmwareStatePayload.Machine machine = state == null ? null : state.machine();
         final String detecting = of(DETECTING);
@@ -925,6 +935,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 {of(LABEL_HARDWARE_ERA), eraLabel()},
                 {of(LABEL_BOOT_DISK), bootDiskLine()},
                 {of(LABEL_INSTALL_TARGET), target},
+                // Last, so it is the line a degraded supply turns to the warning colour.
+                {of(LABEL_POWER_SUPPLY), psuLine()},
         };
         /*
          * The values start at a column and end where the page does. A board and a graphics card are named by
@@ -933,12 +945,44 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
          */
         final int valueAt = Math.min(FirmwareLayout.VALUE_COLUMN, width / 2);
         final int room = Math.max(20, width - valueAt);
-        for (final String[] pair : kv) {
+        for (int row = 0; row < kv.length; row++) {
+            final String[] pair = kv[row];
             Draw.text(g, font, InstallerFrames.clip(font, pair[0], valueAt - 6), x, ty, keyColor);
+            final boolean warns = row == kv.length - 1 && psuNeedsAttention();
             Draw.text(g, font, InstallerFrames.clip(font, pair[1], room), x + valueAt, ty,
-                    detecting.equals(pair[1]) ? dimColor : valueColor);
+                    warns ? warnColor : detecting.equals(pair[1]) ? dimColor : valueColor);
             ty += lh;
         }
+    }
+
+    /*
+     * The power supply as each firmware read it out: the text BIOS its name, its wear and its state; the blue BIOS
+     * its wear alone; the UEFI its name and its wear. A redundant supply short of a unit says how many failed.
+     */
+    private String psuLine() {
+        final FirmwareStatePayload.Psu psu = state == null ? null : state.psu();
+        if (psu == null) {
+            return of(NONE);
+        }
+        final String name = of(psu.name());
+        if (!ComputersServerConfig.psuFailures()) {
+            return name;
+        }
+        final PsuSpec spec = psu.spec();
+        final PsuCondition condition = psu.condition();
+        final int failed = condition.failedUnits(spec);
+        final String worn = failed > 0 ? of(PsuTexts.NOTE_UNITS.with(failed, spec.units()))
+                : of(PSU_WORN.with(PsuTexts.percent(condition.worst(spec))));
+        return switch (kind) {
+            case CLI_BIOS -> of((condition.degraded(spec) ? PSU_LINE_DEGRADED : PSU_LINE).with(name, worn));
+            case BLUE_BIOS -> worn;
+            case UEFI -> of(PSU_LINE_NAMED.with(name, worn));
+        };
+    }
+
+    private boolean psuNeedsAttention() {
+        final FirmwareStatePayload.Psu psu = state == null ? null : state.psu();
+        return psu != null && psu.condition().degraded(psu.spec());
     }
 
     /**

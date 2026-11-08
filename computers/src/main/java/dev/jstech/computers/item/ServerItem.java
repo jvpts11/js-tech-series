@@ -144,6 +144,24 @@ public class ServerItem extends Item
         return true;
     }
 
+    /** A copy of the power supply seated in the server in {@code stack}, which carries its wear; empty for none. */
+    public static ItemStack psu(final ItemStack stack) {
+        final ItemContainerContents parts = hardware(stack);
+        return ServerHardwareHandler.PSU < parts.getSlots() ? parts.getStackInSlot(ServerHardwareHandler.PSU).copy()
+                : ItemStack.EMPTY;
+    }
+
+    /** Puts {@code psu} in the server in {@code stack} in the place of its supply, as its wear has changed. */
+    public static void replacePsu(final ItemStack stack, final ItemStack psu) {
+        final ItemContainerContents current = hardware(stack);
+        final NonNullList<ItemStack> parts = NonNullList.withSize(ServerHardwareHandler.SLOTS, ItemStack.EMPTY);
+        for (int slot = 0; slot < ServerHardwareHandler.SLOTS && slot < current.getSlots(); slot++) {
+            parts.set(slot, current.getStackInSlot(slot).copy());
+        }
+        parts.set(ServerHardwareHandler.PSU, psu.copy());
+        stack.set(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(parts));
+    }
+
     @Nullable
     public static UUID nodeUuid(final ItemStack stack) {
         return stack.get(ComputingComponents.SERVER_NODE_UUID.get());

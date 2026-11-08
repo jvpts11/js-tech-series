@@ -132,7 +132,10 @@ public final class JsComputersScripts {
         ScriptedHardware.keep(ScriptedHardware.Kind.MOTHERBOARD, item, sheet, null);
     }
 
-    /** Makes the item a power supply, shown with {@code era}: wattage, efficiency_percent. */
+    /**
+     * Makes the item a power supply, shown with {@code era}: wattage, efficiency_percent, and auto_scaling, life_days
+     * (how long it lasts at full load) and units (two or more for a redundant one).
+     */
     public static void powerSupply(final String item, final Object sheet, final String era) {
         ScriptedHardware.keep(ScriptedHardware.Kind.POWER_SUPPLY, item, sheet, era);
     }

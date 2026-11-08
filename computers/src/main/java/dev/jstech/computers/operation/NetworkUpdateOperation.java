@@ -44,9 +44,10 @@ import org.jetbrains.annotations.Nullable;
  * <p>Three steps, each a row of its own. SUB_SELECT takes the item out of the servers into the card's drawer, as a
  * SELECT does, locks and latency and all. SUB_UPDATE is the card's work: smelting at the card's furnace pace, in the
  * same queue as the Workshop's own smelting; enchanting and the anvil at once, at the card's price, paid in the
- * computer's energy or the asker's levels as the server's settings choose. SUB_INSERT writes the result back, as an INSERT does, trying the item's own server first; what the network
- * then has no room for is left at the card's output. Smelting more than a stack goes round the three again, a stack
- * at a time; a step that cannot be done sends the item back as it was.
+ * computer's energy or the asker's levels as the server's settings choose. SUB_INSERT writes the result back, as an
+ * INSERT does, trying the item's own server first; what the network then has no room for is left at the card's
+ * output. Smelting more than a stack goes round the three again, a stack at a time; a step that cannot be done sends
+ * the item back as it was.
  *
  * <p>The UPDATE belongs to the computer that asked. If that computer stops or loses its card, the UPDATE is
  * discarded and what the card held is left at its output; for the same reason it does not outlive the world being

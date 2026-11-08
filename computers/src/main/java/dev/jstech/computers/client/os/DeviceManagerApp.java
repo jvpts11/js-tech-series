@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.DeviceManagerLayout;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -18,6 +19,9 @@ import dev.jstech.core.client.gui.component.MenuBar;
 import dev.jstech.core.client.gui.component.ScrollBar;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.client.Minecraft;
@@ -50,6 +54,7 @@ import static dev.jstech.computers.gui.layout.DeviceManagerLayout.TOGGLE;
  * <p>Everything shown is the machine's, asked for when the window opens and after every change; a device the
  * computer disabled is crossed out.
  */
+@PaletteHolder
 public final class DeviceManagerApp implements IDesktopApp {
 
     private final BlockPos host;
@@ -85,6 +90,10 @@ public final class DeviceManagerApp implements IDesktopApp {
     private static final int MENU_ITEM_W = 90;
     private static final int TAB_PAD = 4;
     private static final int SCROLL_W = 5;
+    /** A device that needs attention: its words, and the warning triangle over its icon with the mark in it. */
+    private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/device_manager",
+            new Colours(0xFFB06A00, 0xFFF0C020, 0xFF1A1A1A));
+    private static final int TRIANGLE = 6;
 
     /** The shape this window takes, decided by the desktop it opened on. */
     private enum Form { CLASSIC, CONSOLE, MODERN }
@@ -460,11 +469,19 @@ public final class DeviceManagerApp implements IDesktopApp {
                 this.skin.text());
     }
 
-    /** What the status bar says: what disabling the selected device did, or how many devices there are. */
+    /**
+     * What the status bar says: what disabling the selected device did, how many devices need attention, or how many
+     * devices there are.
+     */
     private String status() {
         final DeviceMap.Device device = selectedDeviceOf();
         if (device != null && device.disabled()) {
             return GameText.resolve(DeviceManagerTexts.STATUS_DISABLED.with(device.name()));
+        }
+        final int attention = this.map == null ? 0 : this.map.needingAttention();
+        if (attention > 0) {
+            return GameText.resolve((attention == 1 ? DeviceManagerTexts.STATUS_ATTENTION_ONE
+                    : DeviceManagerTexts.STATUS_ATTENTION).with(attention));
         }
         return GameText.resolve(DeviceManagerTexts.STATUS_COUNT.with(this.map == null ? 0 : this.map.devices().size()));
     }
@@ -610,16 +627,31 @@ public final class DeviceManagerApp implements IDesktopApp {
                 SkinSprites.draw(g, icon, at, y + 1, ICON, ICON, 16);
             }
         }
+        if (row.state() == DeviceRows.State.ATTENTION) {
+            triangle(g, at + ICON - TRIANGLE, y + 1 + ICON - TRIANGLE);
+        }
         at += ICON + 2;
         final String label = Texts.clip(font, GameText.resolve(row.label()), Texts.smallFits(x + w - at - 2));
         final int ink = chosen ? this.skin.listRowText(true)
-                : row.state() == DeviceRows.State.NORMAL ? this.skin.text() : this.skin.dim();
+                : row.state() == DeviceRows.State.NORMAL ? this.skin.text()
+                : row.state() == DeviceRows.State.ATTENTION ? PALETTE.get().attention() : this.skin.dim();
         final int textX = row.state() == DeviceRows.State.SUMMARY ? x : at;
         Texts.small(g, font, label, textX, y + (ROW_H - DeviceManagerLayout.TEXT_H) / 2 + 1, ink);
         if (row.state() == DeviceRows.State.DISABLED) {
             final int lineY = y + ROW_H / 2;
             g.fill(at, lineY, at + Texts.smallWidth(font, label), lineY + 1, ink);
         }
+    }
+
+    /* The small warning triangle the systems put over a device with a problem, its point up and a mark inside. */
+    private static void triangle(final GuiGraphics g, final int x, final int y) {
+        final Colours colours = PALETTE.get();
+        for (int row = 0; row < TRIANGLE; row++) {
+            final int half = row / 2;
+            g.fill(x + TRIANGLE / 2 - 1 - half, y + row, x + TRIANGLE / 2 + 1 + half, y + row + 1, colours.triangle());
+        }
+        g.fill(x + TRIANGLE / 2 - 1, y + 2, x + TRIANGLE / 2, y + TRIANGLE - 2, colours.mark());
+        g.fill(x + TRIANGLE / 2 - 1, y + TRIANGLE - 1, x + TRIANGLE / 2, y + TRIANGLE, colours.mark());
     }
 
     private boolean isSelected(final DeviceRows.Row row) {
@@ -776,5 +808,8 @@ public final class DeviceManagerApp implements IDesktopApp {
             case FRAMES_10, FRAMES_11 -> Form.MODERN;
             default -> Form.CONSOLE;
         };
+    }
+
+    private record Colours(int attention, int triangle, int mark) {
     }
 }

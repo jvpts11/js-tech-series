@@ -58,6 +58,14 @@ final class DeviceManagerTexts {
     static final TextKey STATUS_DISABLED = TextKey.of("jsc.device_manager.status.disabled",
             "%s is disabled: the computer stops reading and writing it.");
     static final TextKey STATUS_COUNT = TextKey.of("jsc.device_manager.status.count", "%s devices");
+    /*
+     * A running machine's only device that can need attention is its power supply, degraded: one that failed does not
+     * run the machine at all.
+     */
+    static final TextKey STATUS_ATTENTION_ONE = TextKey.of("jsc.device_manager.status.attention_one",
+            "%s device needs attention: the power supply is degraded");
+    static final TextKey STATUS_ATTENTION = TextKey.of("jsc.device_manager.status.attention",
+            "%s devices need attention");
 
     static final TextKey PROPS_TITLE = TextKey.of("jsc.device_manager.props.title", "%s Properties");
     static final TextKey PROPS_LOCATION = TextKey.of("jsc.device_manager.props.location", "Location: %s");

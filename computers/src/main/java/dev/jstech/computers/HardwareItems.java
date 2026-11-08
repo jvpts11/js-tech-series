@@ -71,6 +71,12 @@ public final class HardwareItems {
 
     /* The graphics the Haswell desktop chips carry on the die, by the name their makers gave them. */
     private static final String HASWELL_GRAPHICS = "Integra HD Graphics 4600";
+    /* How long each line of supply lasts at full load, in game days; estimates. The PowerGold's is the default. */
+    private static final int POWER_BASIC_DAYS = 60;
+    private static final int POWER_PLAT_DAYS = 150;
+    private static final int SERVER_PSU_DAYS = 250;
+    /* The redundant supply's two units. */
+    private static final int REDUNDANT_UNITS = 2;
 
     //  VINTAGE: ISA/PCI/AGP 2x buses, SIMM/EDO/SDRAM RAM, single-core CPUs
 
@@ -185,9 +191,11 @@ public final class HardwareItems {
             .named("Envya Prism TNT").register();
 
     public static final DeferredItem<Item> PSU_200 =
-            psu("psu_200", HardwareEra.VINTAGE, new PsuSpec(200, 80)).named("MF PowerBasic 200").register();
+            psu("psu_200", HardwareEra.VINTAGE, new PsuSpec(200, 80, POWER_BASIC_DAYS)).named("MF PowerBasic 200")
+                    .register();
     public static final DeferredItem<Item> PSU_300 =
-            psu("psu_300", HardwareEra.VINTAGE, new PsuSpec(300, 80)).named("MF PowerBasic 300").register();
+            psu("psu_300", HardwareEra.VINTAGE, new PsuSpec(300, 80, POWER_BASIC_DAYS)).named("MF PowerBasic 300")
+                    .register();
 
     public static final DeferredItem<Item> MOTHERBOARD_BABYAT_VINTAGE = board("motherboard_babyat_vintage",
             new MotherboardSpec(FormFactor.BABY_AT, HardwareEra.VINTAGE,
@@ -449,9 +457,11 @@ public final class HardwareItems {
             .named("Atrion Radiance X800 XT").register();
 
     public static final DeferredItem<Item> PSU_350 =
-            psu("psu_350", HardwareEra.LEGACY, new PsuSpec(350, 80)).named("MF PowerBasic 350").register();
+            psu("psu_350", HardwareEra.LEGACY, new PsuSpec(350, 80, POWER_BASIC_DAYS)).named("MF PowerBasic 350")
+                    .register();
     public static final DeferredItem<Item> PSU_500B =
-            psu("psu_500b", HardwareEra.LEGACY, new PsuSpec(500, 80)).named("MF PowerBasic 500B").register();
+            psu("psu_500b", HardwareEra.LEGACY, new PsuSpec(500, 80, POWER_BASIC_DAYS)).named("MF PowerBasic 500B")
+                    .register();
 
     /*
      * The Legacy ATX boards, one per socket, since a board spec carries a single socket and a single bus: each has
@@ -770,7 +780,8 @@ public final class HardwareItems {
             .named("Atrion Radiance HD 5870").register();
 
     public static final DeferredItem<Item> PSU_450B =
-            psu("psu_450b", HardwareEra.TRANSITION, new PsuSpec(450, 85)).named("MF PowerBasic 450B").register();
+            psu("psu_450b", HardwareEra.TRANSITION, new PsuSpec(450, 85, POWER_BASIC_DAYS))
+                    .named("MF PowerBasic 450B").register();
 
     /*
      * The Transition ATX boards, one per socket, all on PCIe 2.0: the LGA 775 board of the Centro 2 with DDR2 and
@@ -1489,13 +1500,17 @@ public final class HardwareItems {
     public static final DeferredItem<Item> PSU_1000G =
             psu("psu_1000g", HardwareEra.ADVANCED, new PsuSpec(1000, 90)).named("MF PowerGold 1000G").register();
     public static final DeferredItem<Item> PSU_1200P =
-            psu("psu_1200p", HardwareEra.ADVANCED, new PsuSpec(1200, 92)).named("MF PowerPlat 1200P").register();
+            psu("psu_1200p", HardwareEra.ADVANCED, new PsuSpec(1200, 92, POWER_PLAT_DAYS))
+                    .named("MF PowerPlat 1200P").register();
     public static final DeferredItem<Item> PSU_1600P =
-            psu("psu_1600p", HardwareEra.ADVANCED, new PsuSpec(1600, 92)).named("MF PowerPlat 1600P").register();
+            psu("psu_1600p", HardwareEra.ADVANCED, new PsuSpec(1600, 92, POWER_PLAT_DAYS))
+                    .named("MF PowerPlat 1600P").register();
     public static final DeferredItem<Item> PSU_2000P =
-            psu("psu_2000p", HardwareEra.ADVANCED, new PsuSpec(2000, 94)).named("MF ServerPSU 2000P").register();
+            psu("psu_2000p", HardwareEra.ADVANCED, new PsuSpec(2000, 94, SERVER_PSU_DAYS))
+                    .named("MF ServerPSU 2000P").register();
     public static final DeferredItem<Item> PSU_3000P = psu("psu_3000p", HardwareEra.ADVANCED,
-            new PsuSpec(3000, 94)).named("MF ServerPSU 3000P (Redundant)").register();
+            new PsuSpec(3000, 94, false, SERVER_PSU_DAYS, REDUNDANT_UNITS)).named("MF ServerPSU 3000P (Redundant)")
+            .register();
 
     /*
      * The Advanced ATX boards, one per socket, on the bus of their chipsets: PCIe 3.0 on LGA 1151 and 1200, 4.0 on

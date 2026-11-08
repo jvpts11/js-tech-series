@@ -11,6 +11,8 @@ import com.mojang.serialization.Codec;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.crafting.CraftingEras;
 import dev.jstech.computers.crafting.CraftingPattern;
+import dev.jstech.computers.hardware.PsuCondition;
+import dev.jstech.computers.hardware.PsuConditions;
 import dev.jstech.computers.os.DiskSystems;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.media.MediaKind;
@@ -178,6 +180,13 @@ public final class ComputingComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<List<CraftingPattern>>>
             RECIPE_ROM = saved("recipe_rom", CraftingPattern.CODEC.listOf(),
                     CraftingPattern.STREAM_CODEC.apply(ByteBufCodecs.list(CraftingEras.MAX_ROM_PER_CARD)));
+
+    /*
+     * How worn a power supply is, its own life and each unit's wear: it rides on the supply, so the wear goes with it
+     * from machine to machine. Absent on a supply never turned on.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PsuCondition>>
+            PSU_CONDITION = saved("psu_condition", PsuConditions.CODEC, PsuConditions.STREAM_CODEC);
 
     private ComputingComponents() {
     }

@@ -16,6 +16,7 @@ import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
@@ -24,6 +25,8 @@ import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PartFitting;
+import dev.jstech.computers.hardware.PsuConditions;
+import dev.jstech.computers.hardware.PsuTexts;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
@@ -88,6 +91,7 @@ import dev.jstech.core.jstechseries.peripheral.PortKind;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.jstechseries.tier.EraTable;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -342,6 +346,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private boolean quiet;
     /** Whether the cabinet's rear cable (or fabric uplink) sits on a network; set once each server tick. */
     private boolean linked;
+    /*
+     * The network the cabinet's rear cable sits on, set once each server tick: what a machine that just went dark, and
+     * so left the network, is still told of under.
+     */
+    @Nullable
+    private NetworkUuid cableNetwork;
 
     // Values the rack's screen shows, worked out on the server and mirrored to the client while it is open.
     private final DerivedInt linkedShown = fields().derived("Linked", () -> linked).toMenu();
@@ -407,6 +417,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             unitStates.remove(slot);
             buildCached[slot] = false;
             mountedCache = null;
+            // A machine mounted with a failed supply sits dark, its switch off, until the supply is replaced.
+            if (psuFailed(slot)) {
+                bayPowerOff |= 1 << slot;
+            }
             markStorageChanged(slot);
             setChanged();
             updateBayVisuals();
@@ -937,6 +951,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
      * store changes every tick, so it only marks the block for saving and wakes no neighbour.
      */
     private final ComputerEnergy energy = new ComputerEnergy(this::energyChanged);
+    /* When each bay's power supply is next due to wear while its machine runs. */
+    private final PsuWearing.Clock[] psuClocks = new PsuWearing.Clock[CAPACITY_U];
 
     /** Whether the bay whose unit tops at {@code slot} has its power switch on. */
     public boolean bayPowerOn(final int slot) {
@@ -948,10 +964,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         if (slot < 0 || slot >= CAPACITY_U) {
             return;
         }
-        // A machine the cabinet has no energy for does not start: the switch is thrown and nothing comes up.
+        /*
+         * A machine the cabinet has no energy for, or whose supply has failed, does not start: the switch is thrown and
+         * nothing comes up.
+         */
         final ComputerBuild build = buildAt(slot);
-        if (!bayPowerOn(slot) && build != null && build.isPowered()
-                && !energy.canRun(drawnWatts() + ComputerEnergy.lineWatts(build.powerDraw(), build.psu()))) {
+        if (!bayPowerOn(slot) && build != null && build.isPowered() && (psuFailed(slot)
+                || !energy.canRun(drawnWatts() + ComputerEnergy.lineWatts(build.powerDraw(), build.psu())))) {
             return;
         }
         bayPowerOff ^= 1 << slot;
@@ -972,6 +991,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     public ServerRackBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.SERVER_RACK_BE.get(), pos, state);
+        for (int slot = 0; slot < CAPACITY_U; slot++) {
+            psuClocks[slot] = new PsuWearing.Clock();
+        }
         fields().part("Rack", IFieldPart.of(this::saveRack, this::loadRack)).save();
         fields().part("Energy", energy.store()).save();
         fields().part("Cabinet", new CabinetPart()).toClient();
@@ -1223,7 +1245,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
     }
 
-    /** The cabinet's energy port, which the grid's cables fill for its machines: J's Energy in the low voltage class. */
+    /** The cabinet's energy port, which the grid's cables fill for its machines: J's Energy at low voltage. */
     public IEnergyPort energyPort() {
         return energy.store();
     }
@@ -1248,10 +1270,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     private void tick(final ServerLevel level) {
         drawEnergy(level);
+        wearPsus(level);
         sounds.tick();
         PeripheralReconciler.reconcile(this, level, worldPosition.asLong());
         final NetworkSystem system = NetworkSystem.get(level);
         final NetworkUuid network = adjacentNetwork(level, system);
+        cableNetwork = network;
         // Cached rather than worked out on every menu poll: the network lookup above bridges cable segments.
         linked = network != null || fabricLinked;
         arrays.tick();
@@ -2749,11 +2773,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         fields().syncToClients();
     }
 
-    /* The bay's switch went on or off: the server seated there is a machine, and its network writes that down. */
     /*
-     * A tick of what the powered bays draw: the store sized to a second of what every mounted supply can give, and every
-     * powered machine going dark at once when the cabinet runs without the energy for the tick, as a rack whose feed is
-     * cut does.
+     * A tick of what the powered bays draw: the store sized to a second of what every mounted supply can give, and
+     * every powered machine going dark at once when the cabinet runs without the energy for the tick, as a rack whose
+     * feed is cut does.
      */
     private void drawEnergy(final ServerLevel level) {
         double supplies = 0.0;
@@ -2783,22 +2806,76 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     /* The power went from under the machine in {@code slot}: it goes dark at once, and the network's log says why. */
     private void bayPowerLost(final ServerLevel level, final int slot) {
+        bayDark(slot);
+        logBay(level, slot, EventLevel.ERROR, NetworkEvents.POWER_LOST.text());
+    }
+
+    /* The machine in {@code slot} goes dark at once: its switch off, whatever it ran ended, with no goodbye. */
+    private void bayDark(final int slot) {
         bayPowerOff |= 1 << slot;
         unitState(slot).phases.powered(false);
         endRun(slot);
         flushConsole(slot);
         setChanged();
+    }
+
+    /* Writes {@code message} into the network's log under the machine in {@code slot}. */
+    private void logBay(final ServerLevel level, final int slot, final EventLevel what, final Text message) {
         final ItemStack stack = servers.getStackInSlot(slot);
         final UUID node = stack.getItem() instanceof ServerItem ? ServerItem.nodeUuid(stack) : null;
         if (node != null) {
             final RackChassis chassis = ServerItem.chassisOf(stack);
             final NodeUuid machine = new NodeUuid(node);
-            NetworkEvents.powerLost(level, networkUuid(), machine, NetworkEvents.machineName(
+            // A server gone dark has left the network it ran on, which is the cabinet's: it is written down there.
+            final NetworkUuid network = registered.containsKey(node) ? registered.get(node) : cableNetwork;
+            NetworkEvents.record(level, network, what, machine, NetworkEvents.machineName(
                     ServerItem.customName(stack), chassis == null ? HostScope.SERVER : chassis.computer().machine(),
-                    machine));
+                    machine), message);
         }
     }
 
+    /*
+     * Each running machine's supply wears for the time it has been on, once a minute and when it stops, twice as fast
+     * while the cabinet runs over its thermal budget. Degraded or short of a unit, the network's log warns; failed,
+     * the machine goes dark and its switch brings nothing up until the supply is replaced.
+     */
+    private void wearPsus(final ServerLevel level) {
+        for (int slot = 0; slot < CAPACITY_U; slot++) {
+            final ComputerBuild build = buildAt(slot);
+            final boolean running = build != null && build.isPowered() && bayPowerOn(slot);
+            final long ticks = psuClocks[slot].due(level.getGameTime(), running);
+            if (ticks <= 0L || build == null) {
+                continue;
+            }
+            final ItemStack server = servers.getStackInSlot(slot);
+            final ItemStack psu = ServerItem.psu(server);
+            final PsuWearing.Outcome worn = PsuWearing.wear(psu, build.powerDraw(), ticks,
+                    thermalLoadWatts() > thermalBudgetWatts(), level.random);
+            if (worn == null) {
+                continue;
+            }
+            ServerItem.replacePsu(server, psu);
+            energyChanged();
+            final String supply = psu.getHoverName().getString();
+            if (worn.failedNow()) {
+                bayDark(slot);
+                logBay(level, slot, EventLevel.ERROR, PsuTexts.LOG_FAILED.with(supply));
+            } else if (worn.unitLost()) {
+                logBay(level, slot, EventLevel.WARN, PsuTexts.LOG_UNIT_FAILED.with(
+                        worn.after().failedUnits(worn.spec()), worn.spec().units(), supply));
+            } else if (worn.degradedNow()) {
+                logBay(level, slot, EventLevel.WARN, PsuTexts.LOG_DEGRADED.with(supply,
+                        PsuTexts.percent(worn.after().worst(worn.spec()))));
+            }
+        }
+    }
+
+    /* Whether the server in {@code slot} has a power supply whose every unit has failed. */
+    private boolean psuFailed(final int slot) {
+        return PsuConditions.failed(ServerItem.psu(servers.getStackInSlot(slot)));
+    }
+
+    /* The bay's switch went on or off: the server seated there is a machine, and its network writes that down. */
     private void bayPowerSwitched(final int slot) {
         final ItemStack stack = servers.getStackInSlot(slot);
         final UUID node = stack.getItem() instanceof ServerItem ? ServerItem.nodeUuid(stack) : null;

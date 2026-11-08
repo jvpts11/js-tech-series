@@ -388,8 +388,12 @@ stable 7
 8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration PCIE_5_0
 8 dev.jstech.computers.hardware.PcieGeneration  static final PcieGeneration PCIE_6_0
 8 dev.jstech.computers.hardware.PlainCardSpec  type record(ExpansionCardKind kind, Era era, PcieGeneration bus, int tdpWatts) implements IExpansionCardSpec
-8 dev.jstech.computers.hardware.PsuSpec  type record(int wattage, int efficiencyPercent, boolean autoScaling)
+10 dev.jstech.computers.hardware.PsuSpec  type record(int wattage, int efficiencyPercent, boolean autoScaling, int lifeDays, int units)
+10 dev.jstech.computers.hardware.PsuSpec  boolean redundant()
 8 dev.jstech.computers.hardware.PsuSpec  new(int, int)
+10 dev.jstech.computers.hardware.PsuSpec  new(int, int, boolean)
+10 dev.jstech.computers.hardware.PsuSpec  new(int, int, int)
+10 dev.jstech.computers.hardware.PsuSpec  static final int DEFAULT_LIFE_DAYS
 8 dev.jstech.computers.hardware.RamGeneration  type record(String id, Text label, int latencyTicks)
 8 dev.jstech.computers.hardware.RamGeneration  static List<RamGeneration> all()
 8 dev.jstech.computers.hardware.RamGeneration  static RamGeneration byId(String)

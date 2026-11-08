@@ -117,7 +117,9 @@ public final class HardwareCodecs {
     public static final Codec<PsuSpec> POWER_SUPPLY = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.fieldOf("wattage").forGetter(PsuSpec::wattage),
             Codec.INT.fieldOf("efficiency_percent").forGetter(PsuSpec::efficiencyPercent),
-            Codec.BOOL.optionalFieldOf("auto_scaling", false).forGetter(PsuSpec::autoScaling)
+            Codec.BOOL.optionalFieldOf("auto_scaling", false).forGetter(PsuSpec::autoScaling),
+            Codec.INT.optionalFieldOf("life_days", PsuSpec.DEFAULT_LIFE_DAYS).forGetter(PsuSpec::lifeDays),
+            Codec.INT.optionalFieldOf("units", 1).forGetter(PsuSpec::units)
     ).apply(i, PsuSpec::new));
     /** A card of a kind of its own that asks nothing more of a build than its slot and its power. */
     public static final Codec<PlainCardSpec> CARD = RecordCodecBuilder.create(i -> i.group(

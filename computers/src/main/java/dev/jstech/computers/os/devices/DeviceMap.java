@@ -40,11 +40,12 @@ import java.util.List;
  * @param cards       the other expansion cards by name
  * @param cardIcons   the icon each of those cards is drawn with, in the same order; a card past the end of the list
  *                    is drawn with the crafting card's
+ * @param power       the power supplies, each with what it is to be told of
  */
 @TextHolder
 public record DeviceMap(String host, Text board, List<Text> processors, List<Text> memory, List<Text> disks,
                         List<VideoCard> video, List<AudioSource> audio, PortFamily family, List<Port> devicePorts,
-                        List<Text> network, List<Text> cards, List<String> cardIcons) {
+                        List<Text> network, List<Text> cards, List<String> cardIcons, List<PowerSupply> power) {
 
     private static final TextKey OUTPUT = TextKey.of("jsc.devices.output", "Output %s");
     private static final TextKey HUB_PORT = TextKey.of("jsc.devices.hub_port", "Hub port %s");
@@ -73,6 +74,16 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
         network = List.copyOf(network);
         cards = List.copyOf(cards);
         cardIcons = List.copyOf(cardIcons);
+        power = List.copyOf(power);
+    }
+
+    /** A machine with no power supply to tell of. */
+    public DeviceMap(final String host, final Text board, final List<Text> processors, final List<Text> memory,
+                     final List<Text> disks, final List<VideoCard> video, final List<AudioSource> audio,
+                     final PortFamily family, final List<Port> devicePorts, final List<Text> network,
+                     final List<Text> cards, final List<String> cardIcons) {
+        this(host, board, processors, memory, disks, video, audio, family, devicePorts, network, cards, cardIcons,
+                List.of());
     }
 
     /** A machine whose cards all wear the crafting card's icon. */
@@ -81,6 +92,24 @@ public record DeviceMap(String host, Text board, List<Text> processors, List<Tex
                      final PortFamily family, final List<Port> devicePorts, final List<Text> network,
                      final List<Text> cards) {
         this(host, board, processors, memory, disks, video, audio, family, devicePorts, network, cards, List.of());
+    }
+
+    /** How many devices need attention: a power supply degraded or failed. */
+    public int needingAttention() {
+        int count = 0;
+        for (final PowerSupply supply : power) {
+            if (supply.attention()) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * A power supply: its name, the short state it is to be told by (empty while it is sound), and whether it needs
+     * attention.
+     */
+    public record PowerSupply(Text name, Text note, boolean attention) {
     }
 
     /** The icon expansion card {@code index} is drawn with. */

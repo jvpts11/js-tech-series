@@ -42,6 +42,14 @@ class BootSequenceLayoutTest {
     }
 
     @Test
+    void warningLayout_isCleanAndClearOfTheFootLine() {
+        final GuiLayout l = BootSequenceLayout.warningLayout();
+        assertTrue(l.overlaps().isEmpty(), "overlaps: " + l.overlaps());
+        assertTrue(l.outOfBounds().isEmpty(), "out of bounds: " + l.outOfBounds());
+        assertTrue(BootSequenceLayout.warningBoxY() + BootSequenceLayout.warningBoxH() < BootSequenceLayout.footerY());
+    }
+
+    @Test
     void bar_standsBelowTheCentreOfTheGlass() {
         assertTrue(BootSequenceLayout.barY() > BootSequenceLayout.HEIGHT / 2);
     }

@@ -17,6 +17,9 @@ import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CraftingCardSpec;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.hardware.PsuCondition;
+import dev.jstech.computers.hardware.PsuSpec;
+import dev.jstech.computers.hardware.PsuWear;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
@@ -50,6 +53,13 @@ public final class AssemblyPainter {
     /** The light a lit lamp's glass catches in its corner. */
     private static final Palette<LampLight> LAMP_LIGHT = Palettes.declare(JsComputers.MODID, "screen/assembly_lamp",
             new LampLight(0xFFFFFFFF));
+    /** The power supply's wear bar, as the game draws an item's durability: its track, then what is left of it. */
+    private static final Palette<WearBar> WEAR_BAR = Palettes.declare(JsComputers.MODID, "screen/psu_wear",
+            new WearBar(0xFF000000, 0xFF3EE04A, 0xFFE0D22A, 0xFFFF8A1A, 0xFFFF3A2A, 0x78280000));
+    private static final int WEAR_BAR_X = 2;
+    private static final int WEAR_BAR_Y = 13;
+    private static final int WEAR_BAR_W = 13;
+    private static final float HALF_WORN = 0.5f;
 
     private static final ResourceLocation GHOSTS = tex("ghosts");
     private static final int GHOST = 16;
@@ -116,6 +126,38 @@ public final class AssemblyPainter {
         }
         if (empty) {
             drawGhost(g, x, y, seat.kind(), JsTechTheme.dim(), active ? GHOST_ALPHA : DIMMED_GHOST_ALPHA);
+        }
+    }
+
+    /** The edge round the power supply's seat: amber once it is degraded, red once it has failed. */
+    public static void drawPsuEdge(final GuiGraphics g, final int left, final int top, final Seat seat,
+                                   final PsuSpec spec, final PsuCondition condition) {
+        if (condition.failed(spec) || condition.degraded(spec)) {
+            final int x = left + seat.x();
+            final int y = top + seat.y();
+            frame(g, x - 1, y - 1, x + 17, y + 17, condition.failed(spec) ? JsTechTheme.red() : JsTechTheme.amber());
+        }
+    }
+
+    /**
+     * The power supply's wear under its icon at ({@code x}, {@code y}), drawn over the item as the game draws its
+     * durability: a failed supply darkened, and a redundant one's bar split into its units.
+     */
+    public static void drawPsuWear(final GuiGraphics g, final int x, final int y, final PsuSpec spec,
+                                   final PsuCondition condition) {
+        final WearBar colours = WEAR_BAR.get();
+        if (condition.failed(spec)) {
+            g.fill(x, y, x + 16, y + 16, colours.failedShade());
+        }
+        g.fill(x + WEAR_BAR_X, y + WEAR_BAR_Y, x + WEAR_BAR_X + WEAR_BAR_W, y + WEAR_BAR_Y + 2, colours.track());
+        final int units = spec.units();
+        final int unitW = (WEAR_BAR_W - (units - 1)) / units;
+        for (int unit = 0; unit < units; unit++) {
+            final float wear = condition.wearOf(unit);
+            final int ux = x + WEAR_BAR_X + unit * (unitW + 1);
+            // A failed unit of a redundant supply shows red; a supply of one unit that failed shows only its track.
+            final int left = wear >= 1f ? (units > 1 ? unitW : 0) : Math.round(unitW * (1f - wear));
+            g.fill(ux, y + WEAR_BAR_Y, ux + left, y + WEAR_BAR_Y + 1, wearColour(colours, wear));
         }
     }
 
@@ -235,6 +277,17 @@ public final class AssemblyPainter {
         return (colour & 0xFFFFFF) | (alpha << 24);
     }
 
+    /* What is left of a unit: green past half, yellow to the warning, then orange; red once it has failed. */
+    private static int wearColour(final WearBar colours, final float wear) {
+        if (wear >= 1f) {
+            return colours.failed();
+        }
+        if (wear >= PsuWear.DEGRADED) {
+            return colours.degraded();
+        }
+        return wear >= HALF_WORN ? colours.half() : colours.good();
+    }
+
     /* The cases' pictures are named by the case the towers share, the Mainframe's and the server's. */
     private static String caseName(final String kind) {
         return "tower".equals(kind) ? "small" : kind;
@@ -287,5 +340,8 @@ public final class AssemblyPainter {
 
     /** The light in a lit lamp's corner. */
     private record LampLight(int glint) {
+    }
+
+    private record WearBar(int track, int good, int half, int degraded, int failed, int failedShade) {
     }
 }

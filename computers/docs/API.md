@@ -96,6 +96,10 @@ event.expansionCard(MyItems.Q_CARD.get(), new PlainCardSpec(MY_KIND, QUANTUM, Pc
         QUANTUM);
 ```
 
+- **A power supply's life** (added 2026-11-08, J's Computers' API at version 10): `new PsuSpec(1200, 94, false, 150,
+  1)` lasts 150 game days at full load and has one unit; two or more units make it redundant, each wearing on its
+  own. The supply's wear is kept on its item (`PsuConditions.of(stack)`), and a supply declared without a life lasts
+  as long as an MF PowerGold.
 - What fits with what is the same for every part, in one place (`PartFitting`): a board goes in a case that takes its
   form factor, of the case's own era; a processor seats on a board of its socket and era; memory on a board of its era
   that takes its generation; a card in a slot of its bus's family; a disk in a machine of its era or a later one.

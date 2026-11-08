@@ -52,6 +52,13 @@ public final class BootSequenceLayout {
     public static final int NO_BOOT_INSERT_MEDIA_GAP = 4;
     /** As many devices as the dialog ever lists before it stops; {@code PostWall.MOST_DRIVES} reads this too. */
     public static final int MOST_LISTED_DEVICES = 10;
+    /**
+     * The box a machine that still boots warns in, under the bar, in the dialog's own width and head strip: its
+     * title over the strip, the warning's two lines under it.
+     */
+    public static final int WARNING_GAP = 8;
+    public static final int WARNING_LINES = 2;
+    public static final int WARNING_BOTTOM_PAD = 6;
 
     private BootSequenceLayout() {
     }
@@ -79,6 +86,29 @@ public final class BootSequenceLayout {
 
     public static int noBootBoxY(final int boxH) {
         return (HEIGHT - boxH) / 2;
+    }
+
+    /** Where the warning box stands: under the bar, by the gap. */
+    public static int warningBoxY() {
+        return barY() + BAR_H + WARNING_GAP;
+    }
+
+    /** How tall the warning box stands: the head strip and the warning's lines. */
+    public static int warningBoxH() {
+        return NO_BOOT_LIST_TOP + WARNING_LINES * NO_BOOT_LIST_STEP + WARNING_BOTTOM_PAD;
+    }
+
+    /** The bar, the title and the foot line with the warning box under the bar, as a machine that warns draws them. */
+    public static GuiLayout warningLayout() {
+        final GuiLayout l = layout();
+        final int bx = noBootBoxX();
+        final int by = warningBoxY();
+        l.box("warningBox", bx, by, NO_BOOT_BOX_W, warningBoxH());
+        l.text("warningTitle", bx + NO_BOOT_COMPLAINT_X, by + NO_BOOT_COMPLAINT_DY, 34, 1.0f);
+        for (int i = 0; i < WARNING_LINES; i++) {
+            l.text("warningLine" + i, bx + NO_BOOT_LIST_X, by + NO_BOOT_LIST_TOP + i * NO_BOOT_LIST_STEP, 34, 1.0f);
+        }
+        return l;
     }
 
     /**

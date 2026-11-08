@@ -7,8 +7,12 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.hardware.PsuCondition;
+import dev.jstech.computers.hardware.PsuConditions;
+import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
@@ -19,6 +23,8 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,8 +32,8 @@ import java.util.List;
 /**
  * Server to client: everything the firmware boot manager shows for one computer: the boot entries (each
  * disk, with or without a system; each linked drive holding a bootable medium), the preferred boot disk,
- * and the hardware summary. Sent in reply to {@link RequestFirmwareStatePayload} and after every
- * {@link FirmwareActionPayload} that changes the state.
+ * the hardware summary, and the power supply, whose wear the self-test warns of. Sent in reply to
+ * {@link RequestFirmwareStatePayload} and after every {@link FirmwareActionPayload} that changes the state.
  */
 public record FirmwareStatePayload(
         BlockPos hostPos,
@@ -36,8 +42,19 @@ public record FirmwareStatePayload(
         int bootSlot,
         int installTargetSlot,
         List<Entry> entries,
-        RaidInfo raid
+        RaidInfo raid,
+        @Nullable Psu psu
 ) implements CustomPacketPayload {
+
+    /**
+     * The power supply as the self-test reads it: its name, what it is, and how worn it is.
+     *
+     * @param name      the supply by model
+     * @param spec      what the supply is: its rating, its life, its units
+     * @param condition how worn each of its units is
+     */
+    public record Psu(Text name, PsuSpec spec, PsuCondition condition) {
+    }
 
     /**
      * What the firmware found when the machine powered on: the same facts its self-test reads out and its
@@ -160,6 +177,19 @@ public record FirmwareStatePayload(
         entries = List.copyOf(entries);
     }
 
+    /** The state of a machine whose power supply is not read: the guide's pictures, a host with none. */
+    public FirmwareStatePayload(final BlockPos hostPos, final int eraPlace, final Machine machine, final int bootSlot,
+                                final int installTargetSlot, final List<Entry> entries, final RaidInfo raid) {
+        this(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, null);
+    }
+
+    /** The supply {@code stack} as the self-test reads it, or null for anything that is no supply. */
+    @Nullable
+    public static Psu psuOf(final ItemStack stack) {
+        final PsuSpec spec = PsuConditions.spec(stack);
+        return spec == null ? null : new Psu(GameText.of(stack.getHoverName()), spec, PsuConditions.of(stack));
+    }
+
     @Override
     public CustomPacketPayload.Type<FirmwareStatePayload> type() {
         return TYPE;
@@ -199,6 +229,17 @@ public record FirmwareStatePayload(
                 buf.writeVarLong(raid.capacities().get(i));
             }
         }
+        buf.writeBoolean(p.psu != null);
+        if (p.psu != null) {
+            TextCodecs.STREAM_CODEC.encode(buf, p.psu.name());
+            final PsuSpec spec = p.psu.spec();
+            buf.writeVarInt(spec.wattage());
+            buf.writeVarInt(spec.efficiencyPercent());
+            buf.writeBoolean(spec.autoScaling());
+            buf.writeVarInt(spec.lifeDays());
+            buf.writeVarInt(spec.units());
+            PsuConditions.STREAM_CODEC.encode(buf, p.psu.condition());
+        }
     }
 
     private static FirmwareStatePayload decode(final RegistryFriendlyByteBuf buf) {
@@ -226,7 +267,14 @@ public record FirmwareStatePayload(
             }
             raid = new RaidInfo(true, mode, members, drives, capacities);
         }
-        return new FirmwareStatePayload(pos, era, machine, bootSlot, target, entries, raid);
+        Psu psu = null;
+        if (buf.readBoolean()) {
+            final Text name = TextCodecs.STREAM_CODEC.decode(buf);
+            final PsuSpec spec = new PsuSpec(Math.max(1, buf.readVarInt()), Math.max(1, Math.min(100,
+                    buf.readVarInt())), buf.readBoolean(), Math.max(1, buf.readVarInt()), Math.max(1, buf.readVarInt()));
+            psu = new Psu(name, spec, PsuConditions.STREAM_CODEC.decode(buf));
+        }
+        return new FirmwareStatePayload(pos, era, machine, bootSlot, target, entries, raid, psu);
     }
 
     private static void writeMachine(final RegistryFriendlyByteBuf buf, final Machine m) {

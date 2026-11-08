@@ -458,6 +458,10 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         g.fill(bx, by, bx + barW, by + BootSequenceLayout.BAR_H, post().track());
         final int fill = Math.min(barW, barW * ticks / postTicks);
         g.fill(bx, by, bx + fill, by + BootSequenceLayout.BAR_H, accent);
+        final List<PostWarnings.Warning> warnings = state == null ? List.of() : PostWarnings.of(state.psu());
+        if (!warnings.isEmpty()) {
+            renderUefiWarning(g, x, y, warnings.getFirst(), text, dim);
+        }
         /*
          * Along the foot: what the machine is made of where a board of this age prints it, and the two keys
          * at the other end, blinking as they do until one of them is pressed.
@@ -518,6 +522,29 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         }
         wall(g, of(INSERT_MEDIA), bx + BootSequenceLayout.NO_BOOT_LIST_X,
                 ly + BootSequenceLayout.NO_BOOT_INSERT_MEDIA_GAP, dim);
+    }
+
+    /*
+     * A modern machine that still boots warns in a box under its bar, in the no-boot dialog's own form with the alarm
+     * colour along its head: the title, what is wrong, and what to do or where it is booting from.
+     */
+    private void renderUefiWarning(final GuiGraphics g, final int x, final int y, final PostWarnings.Warning warning,
+                                   final int text, final int dim) {
+        final Post look = post();
+        final int boxW = BootSequenceLayout.NO_BOOT_BOX_W;
+        final int bx = x + BootSequenceLayout.noBootBoxX();
+        final int by = y + BootSequenceLayout.warningBoxY();
+        g.fill(bx, by, bx + boxW, by + BootSequenceLayout.warningBoxH(), look.box());
+        g.fill(bx, by, bx + boxW, by + BootSequenceLayout.NO_BOOT_HEADER_STRIP_H, look.boxHead());
+        g.fill(bx, by, bx + 2, by + BootSequenceLayout.NO_BOOT_HEADER_STRIP_H, look.alarm());
+        final int width = boxW - 2 * BootSequenceLayout.NO_BOOT_LIST_X;
+        wall(g, wallClip(of(warning.uefiTitle()), width), bx + BootSequenceLayout.NO_BOOT_COMPLAINT_X,
+                by + BootSequenceLayout.NO_BOOT_COMPLAINT_DY, look.alarm());
+        final int ly = by + BootSequenceLayout.NO_BOOT_LIST_TOP;
+        wall(g, wallClip(of(warning.uefiLine()), width), bx + BootSequenceLayout.NO_BOOT_LIST_X, ly, text);
+        final String next = warning.uefiAdvice().isEmpty() ? bootingFrom() : of(warning.uefiAdvice());
+        wall(g, wallClip(next, width), bx + BootSequenceLayout.NO_BOOT_LIST_X,
+                ly + BootSequenceLayout.NO_BOOT_LIST_STEP, dim);
     }
 
     /* This machine's self-test colours, by the firmware it posts with. */

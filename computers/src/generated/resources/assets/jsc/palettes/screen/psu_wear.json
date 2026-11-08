@@ -1,0 +1,8 @@
+{
+  "degraded": "#FFFF8A1A",
+  "failed": "#FFFF3A2A",
+  "failedShade": "#78280000",
+  "good": "#FF3EE04A",
+  "half": "#FFE0D22A",
+  "track": "#FF000000"
+}

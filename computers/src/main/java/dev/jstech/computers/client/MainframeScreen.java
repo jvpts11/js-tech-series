@@ -162,6 +162,10 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
 
     @Override
     protected List<Component> powerTooltip() {
+        final List<Component> failure = psuFailure(menu.psu());
+        if (!failure.isEmpty()) {
+            return failure;
+        }
         if (!menu.buildValid()) {
             return List.of(GameText.component(AssemblyTexts.NOT_A_COMPUTER),
                     GameText.component(AssemblyTexts.NEEDS_PARTS).withStyle(ChatFormatting.GOLD),

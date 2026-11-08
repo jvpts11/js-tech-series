@@ -68,6 +68,8 @@ final class AssemblyTexts {
     static final TextKey LINKED = TextKey.of("jsc.assembly.linked", "LINKED");
     // What the power draws (DRAW, below): the parts against the supply's rating, and what that takes from the line.
     static final TextKey NO_POWER = TextKey.of("jsc.assembly.no_power", "NO POWER");
+    /** The DRAW readout of a machine whose supply has failed. */
+    static final TextKey DRAW_FAILED = TextKey.of("jsc.assembly.draw_failed", "FAILED");
     static final TextKey DRAW_PARTS = TextKey.of("jsc.assembly.draw_parts", "Parts: %s W of %s W (%s%%)");
     static final TextKey DRAW_LINE = TextKey.of("jsc.assembly.draw_line", "From the line: %s W = %s FE/t");
     static final TextKey DRAW_SUPPLY = TextKey.of("jsc.assembly.draw_supply", "%s, %s%% efficient");

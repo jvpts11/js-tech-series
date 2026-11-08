@@ -21,6 +21,7 @@ import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
@@ -31,6 +32,7 @@ import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PartFitting;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
+import dev.jstech.computers.hardware.PsuTexts;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
@@ -149,6 +151,14 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      * make the network read the computer's storage again, each tick, for nothing.
      */
     private final ComputerEnergy energy = new ComputerEnergy(this::markDirtyOnly);
+    /** When the power supply is next due to wear while the machine runs. */
+    private final PsuWearing.Clock psuClock = new PsuWearing.Clock();
+    /*
+     * The network the machine last ran on: its supply's wear is worked out once more as it stops, by when it may have
+     * left the network, and what that wear comes to is still told to the network it ran on.
+     */
+    @Nullable
+    private NetworkUuid ranOn;
     /** What its system does when it runs short: the page it goes down on, and what its kernel ends for memory. */
     private final MachineKernel kernel = new MachineKernel(power.phases());
     /** Where this computer stands on the data network: its node, its network, and the cable it reads. */
@@ -263,6 +273,9 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     /* The parts installed have changed: the build is worked out again and the power reconsidered. */
     void hardwareChanged() {
+        if (level != null) {
+            psuClock.restart(level.getGameTime());
+        }
         power.hardwareChanged(buildValid());
         setChanged();
         HardwareMilestones.report(this);
@@ -1567,7 +1580,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     /**
      * A tick of what the machine draws through its power supply: its store sized to the supply in it, and a machine
      * that runs without the energy for the tick goes dark, as a computer whose plug is pulled does; what is left over
-     * pays what its cards' work owes. Every kind of computer calls it first in its tick.
+     * pays what its cards' work owes. Then the supply wears for the time the machine has been on. Every kind of
+     * computer calls it first in its tick.
      */
     protected void drawEnergy(final ServerLevel level) {
         final ComputerBuild build = currentBuild();
@@ -1577,6 +1591,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             powerLost(level);
         }
         energy.payDebt(watts);
+        wearPsu(level, build);
+    }
+
+    /** The power supply in its slot, the stack that carries its wear; empty for none. */
+    public ItemStack psuStack() {
+        return hardware.psu();
     }
 
     /* The power went: the machine goes dark at once, with no goodbye, and the network's log says why. */
@@ -1584,7 +1604,46 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         power.lose();
         final NodeUuid node = nodeUuid();
         if (node != null) {
-            NetworkEvents.powerLost(level, networkUuid(), node, NetworkEvents.machineName(customName(), machine(), node));
+            NetworkEvents.powerLost(level, networkUuid(), node,
+                    NetworkEvents.machineName(customName(), machine(), node));
+        }
+    }
+
+    /*
+     * The supply wears for the time the machine has been on, once a minute and when it stops. Degraded or short of a
+     * unit, the network's log warns; failed, the machine goes dark at once and stays so until the supply is replaced.
+     */
+    private void wearPsu(final ServerLevel level, @Nullable final ComputerBuild build) {
+        if (isRunning() && networkUuid() != null) {
+            ranOn = networkUuid();
+        }
+        final long ticks = psuClock.due(level.getGameTime(), isRunning());
+        final PsuWearing.Outcome worn = ticks <= 0L || build == null ? null
+                : PsuWearing.wear(hardware.psu(), build.powerDraw(), ticks, false, level.random);
+        if (worn == null) {
+            return;
+        }
+        markDirtyOnly();
+        final String supply = hardware.psu().getHoverName().getString();
+        if (worn.failedNow()) {
+            power.lose();
+            hardware.markDirty();
+            hardwareChanged();
+            logPsu(level, EventLevel.ERROR, PsuTexts.LOG_FAILED.with(supply));
+        } else if (worn.unitLost()) {
+            logPsu(level, EventLevel.WARN, PsuTexts.LOG_UNIT_FAILED.with(worn.after().failedUnits(worn.spec()),
+                    worn.spec().units(), supply));
+        } else if (worn.degradedNow()) {
+            logPsu(level, EventLevel.WARN, PsuTexts.LOG_DEGRADED.with(supply,
+                    PsuTexts.percent(worn.after().worst(worn.spec()))));
+        }
+    }
+
+    private void logPsu(final ServerLevel level, final EventLevel what, final Text message) {
+        final NodeUuid node = nodeUuid();
+        if (node != null) {
+            NetworkEvents.record(level, networkUuid() != null ? networkUuid() : ranOn, what, node,
+                    NetworkEvents.machineName(customName(), machine(), node), message);
         }
     }
 

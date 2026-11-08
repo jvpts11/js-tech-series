@@ -163,6 +163,21 @@ against the supply, its bar amber near the rating and red past it, and its toolt
 POWER when nothing reaches the computer). The server setting `power.draw_energy` turns the draw off, for a world
 with no energy at all.
 
+*Added 2026-11-08.* A power supply wears out while it is on, and in the end fails. The wear is kept on the supply,
+so it goes with it from machine to machine, and how fast it grows depends on the load (the parts' watts over the
+rating): up to 50% a supply lives eight times its full-load life, up to 80% three times, above that its full-load
+life. At full load an MF PowerBasic lasts 60 game days, a PowerGold 100, a PowerPlat 150 and a ServerPSU 250, each
+supply a little more or less (up to a fifth either way, drawn once); a rack over its thermal budget halves the life
+of its servers' supplies. The wear shows as a bar under the supply in the assembly screens, as an item's durability
+does, and in its tooltip and the DRAW readout's. From 80% worn the supply is degraded: its seat's edge turns amber,
+the self-test of every boot writes a warning, the Device Manager marks it under Power supplies, the firmware's
+Hardware page shows it, and the network's event log records a WARN. At 100% it fails: the computer goes dark at once
+(an ERROR in the log), and it does not start again, the assembly screen saying "PSU failure", until the supply is
+replaced; a failed supply cannot be repaired. The MF ServerPSU 3000P (Redundant) has two units that share the load,
+each with its own wear: when one fails, the other carries everything and wears faster for it, and only with both
+failed does the server go dark. The server settings `hardware.psu_failures` (off, no supply wears) and
+`hardware.psu_life_multiplier` (0.1 to 10) change all of this.
+
 ### Disks
 
 | Era | Disks |
@@ -206,6 +221,8 @@ with no energy at all.
   slots for; a CPU that does not fit the socket; processors of two instruction sets mixed; a card in the wrong kind
   of slot; memory of a generation the board does not take; two sound cards, or one of another era; more power
   drawn than the power supply gives.
+- **The computer went dark and does not start, and its power button says "PSU failure".** Its power supply wore out
+  and failed. Put in a new one; a supply that runs well under its rating lasts much longer.
 - **A part sits in the window but does nothing.** The board does not offer that slot. Use a board with more.
 - **A part does not go in at all.** It is from another era than the board.
 - **The network is slow.** Look at the Mainframe first: its processors set how much it handles at once, and its

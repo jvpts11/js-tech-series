@@ -12,6 +12,8 @@ import dev.jstech.computers.engine.nextgre.NextgreEngine;
 import dev.jstech.computers.engine.nextgre.NextgrePlanView;
 import dev.jstech.computers.engine.prophet.ProphetEngine;
 import dev.jstech.computers.engine.prophet.ProphetStates;
+import dev.jstech.computers.hardware.PsuCondition;
+import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload;
 import dev.jstech.computers.operation.payload.CreateAutomationJobPayload;
@@ -377,6 +379,11 @@ public final class PayloadRoundTripGameTests {
                         new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, 123L, "jsc:ubuntu",
                                 Text.literal("Ubuntu installer"), Text.literal("CD drive"), "", Text.EMPTY, true, 1)),
                 new FirmwareStatePayload.RaidInfo(true, 1, 2, 2, List.of(512L, 512L))));
+        // With a redundant supply, one unit failed: its name, what it is, and each unit's wear.
+        roundTrip(helper, FirmwareStatePayload.STREAM_CODEC, new FirmwareStatePayload(HOST, 4,
+                FirmwareStatePayload.Machine.NONE, 0, -1, List.of(), FirmwareStatePayload.RaidInfo.ABSENT,
+                new FirmwareStatePayload.Psu(Text.literal("MF ServerPSU 3000P (Redundant)"),
+                        new PsuSpec(3000, 94, false, 250, 2), new PsuCondition(1.1f, List.of(1f, 0.41f)))));
         helper.succeed();
     }
 

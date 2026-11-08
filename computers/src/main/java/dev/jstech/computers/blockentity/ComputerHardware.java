@@ -13,6 +13,7 @@ import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.PsuConditions;
 import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.registry.HardwareRegistry;
@@ -101,16 +102,21 @@ final class ComputerHardware {
     ComputerBuild current() {
         if (this.dirty) {
             this.cached = compute();
-            this.powered = this.cached != null && this.cached.isPowered();
+            this.powered = this.cached != null && this.cached.isPowered() && !PsuConditions.failed(psu());
             this.dirty = false;
         }
         return this.cached;
     }
 
-    /** Whether the installed parts make a computer that can be switched on. */
+    /** Whether the installed parts make a computer that can be switched on: a failed power supply makes none. */
     boolean valid() {
         current();
         return this.powered;
+    }
+
+    /** The power supply in its slot, the stack itself, which carries the supply's wear; empty for none. */
+    ItemStack psu() {
+        return this.handler.getStackInSlot(this.layout.psuSlot());
     }
 
     void save(final CompoundTag tag, final HolderLookup.Provider registries, final String key) {

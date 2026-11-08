@@ -243,7 +243,19 @@ public final class FirmwarePayloads {
         }
         return new FirmwareStatePayload(pos, EraCodecs.placeOf(era), machineOf(level, computer, pos),
                 computer.bootDiskSlot(),
-                computer.defaultInstallSlot(), entries, raidInfoOf(level, computer));
+                computer.defaultInstallSlot(), entries, raidInfoOf(level, computer), psuOf(computer));
+    }
+
+    /* The power supply among the machine's parts, with the wear the self-test warns of; null for none. */
+    @Nullable
+    private static FirmwareStatePayload.Psu psuOf(final IOsHost computer) {
+        for (final ItemStack part : computer.hardwareStacks()) {
+            final FirmwareStatePayload.Psu psu = FirmwareStatePayload.psuOf(part);
+            if (psu != null) {
+                return psu;
+            }
+        }
+        return null;
     }
 
     /**

@@ -47,6 +47,8 @@ public final class ComputersServerConfig {
     private static final int MAX_SERVER_MICROS = 10_000_000;
     private static final StableNames<UpdateCost> COSTS = StableNames.of(UpdateCost.class);
     private static final String UPDATE_COST_PATH = "update.cost";
+    private static final double MIN_PSU_LIFE = 0.1;
+    private static final double MAX_PSU_LIFE = 10.0;
 
     /** The seek latency of a hard disk drive, in ticks. */
     public static final ConfigKey<Integer> HDD_LATENCY_TICKS = ConfigKey.whole(BALANCE + ".hdd_latency_ticks",
@@ -101,6 +103,18 @@ public final class ComputersServerConfig {
                     "xp: whoever asked pays half the levels the game's own block would take, at least one, and no "
                             + "lapis lazuli. both: the energy and those levels. none: nothing.")
             .named("What the cards cost");
+
+    public static final ConfigKey<Boolean> PSU_FAILURES = ConfigKey.flag("hardware.psu_failures", true)
+            .comment("Whether power supplies wear out while they are on and in the end fail, faster the nearer their "
+                            + "rating they run: degraded from 80% worn, with warnings at every boot, and failed at "
+                            + "100%, when the computer shuts down and does not start until the supply is replaced.",
+                    "Off, no supply wears, warns or fails.")
+            .named("Power supplies wear out");
+    public static final ConfigKey<Double> PSU_LIFE_MULTIPLIER = ConfigKey.number("hardware.psu_life_multiplier",
+                    1.0).range(MIN_PSU_LIFE, MAX_PSU_LIFE)
+            .comment("How much longer than their lines' lives every power supply lasts: 2 is twice as long, 0.5 half.")
+            .named("Power supply life")
+            .activeWhen(PSU_FAILURES);
 
     public static final ConfigKey<Boolean> SHOW_BOOT_MENU = ConfigKey.flag("boot.show_boot_menu", true)
             .comment("Whether a machine whose system brings a boot manager stops at it every time it starts: GRUB "
@@ -169,6 +183,7 @@ public final class ComputersServerConfig {
             .sectionNamed(BALANCE, "Disks and programs")
             .sectionNamed("power", "Power")
             .sectionNamed("update", "Changing items")
+            .sectionNamed("hardware", "Hardware")
             .sectionNamed("boot", "Starting up")
             .sectionNamed("install_by_hand", "Installing by hand")
             .sectionNamed("prompt", "The prompt")
@@ -177,6 +192,7 @@ public final class ComputersServerConfig {
             .sectionComment("power", "What the computers run on: the energy their power supplies draw.")
             .sectionComment("update", "What the personal-use cards charge for changing an item: smelting, "
                     + "enchanting, repairing, combining and naming.")
+            .sectionComment("hardware", "How the parts age: the power supplies' wear and their failure.")
             .sectionComment("boot", "How the machines come up: whether they stop at their system's boot manager.")
             .sectionComment("install_by_hand", "Installing a system by hand: how much of its guide the machine "
                     + "insists on.")
@@ -194,6 +210,8 @@ public final class ComputersServerConfig {
             .key(PROGRAM_SERVER_MICROS, ExecutionBalance::setServerMicros)
             .key(DRAW_ENERGY)
             .key(UPDATE_COST)
+            .key(PSU_FAILURES)
+            .key(PSU_LIFE_MULTIPLIER)
             .key(SHOW_BOOT_MENU)
             .key(GENTOO_EVERY_STEP)
             .key(ARCH_EVERY_STEP)
@@ -219,6 +237,16 @@ public final class ComputersServerConfig {
     /** What the personal-use cards' work is paid with. */
     public static UpdateCost updateCost() {
         return COSTS.byName(FILE.get(UPDATE_COST), UpdateCost.ENERGY);
+    }
+
+    /** Whether power supplies wear out and fail. */
+    public static boolean psuFailures() {
+        return FILE.get(PSU_FAILURES);
+    }
+
+    /** How much longer than their lines' lives every power supply lasts. */
+    public static double psuLifeMultiplier() {
+        return FILE.get(PSU_LIFE_MULTIPLIER);
     }
 
     /** Whether a machine whose system brings a boot manager stops at it on the way up. */

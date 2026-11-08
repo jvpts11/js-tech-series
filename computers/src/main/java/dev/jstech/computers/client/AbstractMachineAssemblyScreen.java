@@ -10,11 +10,16 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PowerShown;
 import dev.jstech.computers.client.assembly.AssemblyPainter;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.gui.layout.AssemblyGeometry;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
+import dev.jstech.computers.hardware.PsuCondition;
+import dev.jstech.computers.hardware.PsuConditions;
 import dev.jstech.computers.hardware.PsuSpec;
+import dev.jstech.computers.hardware.PsuTexts;
+import dev.jstech.computers.hardware.PsuWear;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
@@ -25,6 +30,7 @@ import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -254,6 +260,10 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
                 continue;
             }
             AssemblyPainter.drawSeat(g, x, y, seat, slot != null && slot.isActive(), slot == null || !slot.hasItem());
+            final PsuSpec psu = seat.kind() == SeatKind.PSU && slot != null ? PsuConditions.spec(slot.getItem()) : null;
+            if (psu != null) {
+                AssemblyPainter.drawPsuEdge(g, x, y, seat, psu, PsuConditions.of(slot.getItem()));
+            }
         }
         drawCaptions(g, geo, x, y, era, boardIn);
         // The front panel.
@@ -294,6 +304,31 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     @Override
     protected void renderLabels(final GuiGraphics g, final int mouseX, final int mouseY) {
         // Every word is drawn with the machine in renderBg; the game's own title and inventory caption are not shown.
+        // The supply's wear goes over its icon, as an item's durability does, so it is drawn once the items are.
+        if (!ComputersServerConfig.psuFailures()) {
+            return;
+        }
+        for (final Seat seat : geometry().seats(SeatKind.PSU)) {
+            final Slot slot = seatSlots.get(seat);
+            final PsuSpec spec = slot == null || !slot.isActive() ? null : PsuConditions.spec(slot.getItem());
+            if (spec != null) {
+                AssemblyPainter.drawPsuWear(g, seat.x(), seat.y(), spec, PsuConditions.of(slot.getItem()));
+            }
+        }
+    }
+
+    /**
+     * What the power button says of a machine whose supply has failed: why it does not start and what to do; nothing
+     * for any other.
+     */
+    protected static List<Component> psuFailure(final ItemStack psu) {
+        if (!PsuConditions.failed(psu)) {
+            return List.of();
+        }
+        return List.of(GameText.component(PsuTexts.PSU_FAILURE).withColor(JsTechTheme.red()),
+                GameText.component(PsuTexts.SUPPLY_FAILED.with(psu.getHoverName().getString()))
+                        .withColor(JsTechTheme.dim()),
+                GameText.component(PsuTexts.REPLACE).withColor(JsTechTheme.dim()));
     }
 
     @Override
@@ -329,9 +364,25 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
                 JsEnergy.ENERGY.toFe(Math.round(power.lineWatts() / (double) TICKS_A_SECOND))))
                 .withColor(JsTechTheme.accent()));
         final PsuSpec spec = HardwareRegistry.psu(psu);
+        final PsuCondition condition = PsuConditions.of(psu);
         if (spec != null) {
             tooltip.add(GameText.component(AssemblyTexts.DRAW_SUPPLY.with(psu.getHoverName().getString(),
                     spec.efficiencyPercent())).withColor(JsTechTheme.dim()));
+            if (ComputersServerConfig.psuFailures()) {
+                final int colour = condition.failed(spec) ? JsTechTheme.red()
+                        : condition.degraded(spec) ? JsTechTheme.amber() : JsTechTheme.dim();
+                for (final Text line : PsuTexts.state(spec, condition)) {
+                    tooltip.add(GameText.component(line).withColor(colour));
+                }
+                if (!condition.failed(spec)) {
+                    tooltip.add(GameText.component(PsuTexts.pace(PsuWear.unitLoad(spec, condition,
+                            power.partsWatts()))).withColor(JsTechTheme.dim()));
+                }
+            }
+            if (condition.failed(spec)) {
+                return new Readout(label, GameText.resolve(AssemblyTexts.DRAW_FAILED), JsTechTheme.red(), tooltip,
+                        new Gauge(0.0, JsTechTheme.red(), LOAD_MARKS));
+            }
         }
         if (!power.energized()) {
             tooltip.add(GameText.component(AssemblyTexts.DRAW_NONE).withColor(JsTechTheme.red()));
@@ -339,8 +390,9 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
                     new Gauge(0.0, JsTechTheme.red(), LOAD_MARKS));
         }
         final int gauge = load > 1.0 ? JsTechTheme.red() : load > HIGH_LOAD ? JsTechTheme.amber() : JsTechTheme.green();
+        final int value = spec != null && condition.degraded(spec) ? JsTechTheme.amber() : JsTechTheme.text();
         return new Readout(label, GameText.resolve(AssemblyTexts.DRAW_OF.with(power.partsWatts(),
-                power.psuWatts())), JsTechTheme.text(), tooltip, new Gauge(load, gauge, LOAD_MARKS));
+                power.psuWatts())), value, tooltip, new Gauge(load, gauge, LOAD_MARKS));
     }
 
     protected abstract Era caseEra();

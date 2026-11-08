@@ -43,6 +43,9 @@ public final class DeviceRows {
     private static final TextKey NETWORK_ADAPTERS = TextKey.of("jsc.devices.type.network_adapters",
             "Network adapters");
     private static final TextKey EXPANSION_CARDS = TextKey.of("jsc.devices.type.expansion_cards", "Expansion cards");
+    private static final TextKey POWER_SUPPLIES = TextKey.of("jsc.devices.type.power_supplies", "Power supplies");
+    /** A device and what it is to be told of: "MF PowerGold 650G, degraded, 86% worn". */
+    private static final TextKey WITH_NOTE = TextKey.of("jsc.devices.with_note", "%s, %s");
     private static final TextKey CONTROLLER_SERIAL = TextKey.of("jsc.devices.controller.serial",
             "Serial and parallel ports");
     private static final TextKey CONTROLLER_USB = TextKey.of("jsc.devices.controller.usb", "USB controller");
@@ -53,6 +56,8 @@ public final class DeviceRows {
 
     /** The icon of the machine itself at the root of every view, which is This PC's picture. */
     public static final String HOST_ICON = "this_pc";
+    /** The icon of a power supply. */
+    public static final String PSU_ICON = "psu";
 
     private DeviceRows() {
     }
@@ -62,9 +67,12 @@ public final class DeviceRows {
         BY_PORT, BY_TYPE, BY_CONNECTION
     }
 
-    /** How a row reads: as a heading or a device, a free port, a disabled device, or the count at the foot. */
+    /**
+     * How a row reads: as a heading or a device, a free port, a disabled device, the count at the foot, or a device
+     * that needs attention, which a system marks as it marked a device with a problem.
+     */
     public enum State {
-        NORMAL, FREE, DISABLED, SUMMARY
+        NORMAL, FREE, DISABLED, SUMMARY, ATTENTION
     }
 
     /**
@@ -162,6 +170,16 @@ public final class DeviceRows {
             if (b.open("type/cards")) {
                 for (int i = 0; i < map.cards().size(); i++) {
                     b.leaf(2, map.cardIcon(i), map.cards().get(i));
+                }
+            }
+        }
+        if (!map.power().isEmpty()) {
+            b.heading(1, PSU_ICON, POWER_SUPPLIES.text(), "type/power", true);
+            if (b.open("type/power")) {
+                for (final DeviceMap.PowerSupply supply : map.power()) {
+                    b.rows.add(new Row(2, PSU_ICON, supply.note().isEmpty() ? supply.name()
+                            : WITH_NOTE.with(supply.name(), supply.note()),
+                            supply.attention() ? State.ATTENTION : State.NORMAL, "", false, NO_DEVICE));
                 }
             }
         }
