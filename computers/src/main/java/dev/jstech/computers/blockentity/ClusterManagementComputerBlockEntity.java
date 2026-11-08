@@ -176,8 +176,8 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
 
     /* An Optical Network Card put in or taken out opens or closes the machine's fibre port. */
     @Override
-    protected void partsChanged() {
-        super.partsChanged();
+    protected void partsChanged(final List<ResourceLocation> before) {
+        super.partsChanged(before);
         if (level != null && !level.isClientSide()) {
             OpticalPort.set(level, List.of(worldPosition), OpticalPort.OPTICAL, OpticalPort.holdsCard(currentBuild()));
         }

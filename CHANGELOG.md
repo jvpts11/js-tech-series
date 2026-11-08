@@ -2174,6 +2174,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   budget, its parts' watts, its budget, its temperature in kelvin and the share of its clock its heat leaves it.
 - (Computers) The Vent Panel, one for every era: a perforated 1U blank that adds 500 W to its rack's heat budget,
   drawn in the colour of the rack it is mounted in, with a card on the rack's screen as the Cooling Unit's.
+- (Computers) The Mainframe draws what is in it, as a Personal Computer does: each part by its own model, the board
+  standing on the back of the card bay facing the front, on it the processors with the cooler over each, the memory
+  and the cards; the supply in its niche on the floor of the disk bay, and each disk in a sled with a handle and the
+  lamp that says it carries a system. The nine MTX boards have models of their own (four sockets, eight memory slots
+  as long as their era's modules, six expansion slots and their connectors). No cables are drawn inside.
 - (Computers) Other mods' machines do the network's work: `RUN` asks a machine of the network for a kind of Operation
   its mod registered, `RUN mymod:accel_run ON 'Cyclotron-3fa2c1' WITH beam = 'proton', energy = 20 PRIORITY HIGH`,
   from a prompt, the studio, a job (so a job can answer a world event on another mod's machine) or a program. `ON`

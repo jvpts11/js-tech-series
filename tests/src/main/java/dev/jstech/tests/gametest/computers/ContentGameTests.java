@@ -330,8 +330,8 @@ public final class ContentGameTests {
     }
 
     /**
-     * Every part a small computer takes is drawn inside it by a model of its own, its processor's cooler and its case
-     * fans too: a case brings neither of its own.
+     * Every part a small computer or a Mainframe takes is drawn inside it by a model of its own, its processor's cooler
+     * and its case fans too: a case brings neither of its own.
      */
     @GameTest(template = ARENA)
     public static void installableParts_haveTheModelsTheComputersDrawThemBy(final GameTestHelper helper) {
@@ -388,13 +388,15 @@ public final class ContentGameTests {
     }
 
     /**
-     * Whether a small computer takes the item and draws it: a board of the forms its cases hold, or any other part. A
-     * board for two processors works in a workstation's case but has no model drawn in it yet.
+     * Whether a computer takes the item and draws it: a board of the forms a small computer's cases hold, a Mainframe's
+     * MTX board, or any other part. A board for two processors works in a workstation's case but has no model drawn in
+     * it yet.
      */
     private static boolean installable(final Item item) {
         final HardwareRegistry.Part part = HardwareRegistry.part(item);
         if (part != null && part.spec() instanceof MotherboardSpec board) {
-            return SMALL_BOARDS.contains(board.formFactor()) && board.cpuSlots() == 1;
+            return SMALL_BOARDS.contains(board.formFactor()) && board.cpuSlots() == 1
+                    || board.formFactor() == FormFactor.MTX;
         }
         return part != null;
     }

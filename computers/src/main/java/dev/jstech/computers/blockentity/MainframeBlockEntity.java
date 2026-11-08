@@ -170,7 +170,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     /** The service panel taken off, showing the card bay and everything seated in it. */
     private final BoolField servicePanelOff = fields().flag("ServicePanelOff", false).save();
-    private final DerivedInt visualHardware = fields().derived("VisualHardware", () -> hardwareMask()).toClient();
     private final DerivedInt visualSystems = fields().derived("VisualSystems", () -> systemsMask()).toClient();
     private final DerivedInt visualFlags = fields().derived("VisualFlags", () -> machineFlags()).toClient();
 
@@ -195,13 +194,7 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     /** Whether hardware slot {@code slot} holds a part, on either side. */
     public boolean hardwareInstalled(final int slot) {
-        if (slot < 0 || slot >= TOTAL_SLOTS) {
-            return false;
-        }
-        if (level != null && level.isClientSide()) {
-            return (visualHardware.getAsInt() & (1 << slot)) != 0;
-        }
-        return !getHardware().getStackInSlot(slot).isEmpty();
+        return installedPart(slot) != null;
     }
 
     /** Whether the disk in bay {@code bay} carries a system, which is what lights its lamp. */
@@ -235,17 +228,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     /** Takes the service panel off the card bay or puts it back. */
     public void toggleServicePanel() {
         servicePanelOff.set(!servicePanelOff.get());
-    }
-
-    /* Which hardware slots hold a part, a bit each. */
-    private int hardwareMask() {
-        int hardware = 0;
-        for (int slot = 0; slot < TOTAL_SLOTS; slot++) {
-            if (!getHardware().getStackInSlot(slot).isEmpty()) {
-                hardware |= 1 << slot;
-            }
-        }
-        return hardware;
     }
 
     /* Which disk bays hold a disk carrying a system, a bit each. */
@@ -546,8 +528,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
 
     /* An Optical Network Card put in or taken out opens or closes the cabinet's fibre port. */
     @Override
-    protected void partsChanged() {
-        super.partsChanged();
+    protected void partsChanged(final List<ResourceLocation> before) {
+        super.partsChanged(before);
         if (level != null && !level.isClientSide() && getBlockState().getBlock() instanceof MainframeBlock block) {
             block.setOptical(level, worldPosition, OpticalPort.holdsCard(currentBuild()));
         }

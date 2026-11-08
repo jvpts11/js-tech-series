@@ -116,11 +116,13 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -167,6 +169,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final PsuWearing.Clock psuClock = new PsuWearing.Clock();
     /** How hot it is against what its case, coolers and fans take away; nothing for a machine cooled from outside. */
     private final ComputerHeat heat = new ComputerHeat();
+    /**
+     * The item in each hardware slot, air where there is none, told to the players who see the machine so they see
+     * each part inside it. It is the hardware's own record, worked out again whenever the hardware changes or is read.
+     */
+    private final ValueField<List<ResourceLocation>> installed =
+            fields().value("Installed", ResourceLocation.CODEC.listOf(), List.of()).toClient();
     /*
      * The network the machine last ran on: its supply's wear is worked out once more as it stops, by when it may have
      * left the network, and what that wear comes to is still told to the network it ran on.
@@ -277,7 +285,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         }, (tag, registries) -> {
             hardware.load(tag, registries, hardwareNbtKey());
             hardware.markDirty();
-            partsChanged();
+            recordParts();
         })).save();
         fields().part("Power", IFieldPart.of((tag, registries) -> power.save(tag),
                 (tag, registries) -> power.load(tag))).save();
@@ -312,11 +320,41 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         power.hardwareChanged(buildValid() && heat.mayStart());
         setChanged();
         HardwareMilestones.report(this);
-        partsChanged();
+        recordParts();
     }
 
-    /** The parts in the machine have changed or been read from the save: a machine that shows them updates its look. */
-    protected void partsChanged() {
+    /** The id of the item in hardware slot {@code slot}, as the players who see the machine know it, or null. */
+    public @Nullable ResourceLocation installedPart(final int slot) {
+        final List<ResourceLocation> parts = installed.get();
+        if (slot < 0 || slot >= parts.size()) {
+            return null;
+        }
+        final ResourceLocation part = parts.get(slot);
+        return part.equals(BuiltInRegistries.ITEM.getKey(Items.AIR)) ? null : part;
+    }
+
+    /** The item in every hardware slot as the players who see the machine know them, air where there is none. */
+    protected List<ResourceLocation> installedParts() {
+        return installed.get();
+    }
+
+    /**
+     * The parts in the machine have changed or been read from the save, {@code before} what they were: a machine that
+     * shows them updates its look.
+     */
+    protected void partsChanged(final List<ResourceLocation> before) {
+    }
+
+    /* The record of the parts written again from the hardware, and whatever shows them told. */
+    private void recordParts() {
+        final ItemStackHandler slots = getHardware();
+        final List<ResourceLocation> parts = new ArrayList<>(slots.getSlots());
+        for (int slot = 0; slot < slots.getSlots(); slot++) {
+            parts.add(BuiltInRegistries.ITEM.getKey(slots.getStackInSlot(slot).getItem()));
+        }
+        final List<ResourceLocation> before = installed.get();
+        installed.set(List.copyOf(parts));
+        partsChanged(before);
     }
 
     /**

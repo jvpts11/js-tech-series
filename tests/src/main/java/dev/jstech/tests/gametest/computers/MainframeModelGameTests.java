@@ -16,11 +16,15 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -48,6 +52,11 @@ public final class MainframeModelGameTests {
             throw new IllegalStateException("no mainframe at " + pos);
         }
         return mainframe;
+    }
+
+    /* The id of the item in hardware slot {@code slot}. */
+    private static String idIn(final MainframeBlockEntity mainframe, final int slot) {
+        return BuiltInRegistries.ITEM.getKey(mainframe.getHardware().getStackInSlot(slot).getItem()).toString();
     }
 
     /** Board, one processor, one memory stick, one graphics card, the power supply and a disk. */
@@ -99,13 +108,17 @@ public final class MainframeModelGameTests {
                 .thenExecuteAfter(SETTLE, () -> {
                     fitMinimalBuild(mainframe);
                     final CompoundTag tag = mainframe.getUpdateTag(helper.getLevel().registryAccess());
-                    final int hardware = tag.getInt("VisualHardware");
-                    helper.assertTrue((hardware & (1 << MainframeBlockEntity.CPU_SLOTS_START)) != 0,
+                    // The item in each slot, which the client draws each part by.
+                    final ListTag installed = tag.getList("Installed", Tag.TAG_STRING);
+                    helper.assertTrue(installed.getString(MainframeBlockEntity.CPU_SLOTS_START)
+                                    .equals(idIn(mainframe, MainframeBlockEntity.CPU_SLOTS_START)),
                             "the update carries the seated processor for the client's model");
-                    helper.assertTrue((hardware & (1 << MainframeBlockEntity.PSU_SLOT)) != 0,
+                    helper.assertTrue(installed.getString(MainframeBlockEntity.PSU_SLOT)
+                                    .equals(idIn(mainframe, MainframeBlockEntity.PSU_SLOT)),
                             "and the power supply, which decides whether the build comes up");
-                    helper.assertTrue((hardware & (1 << (MainframeBlockEntity.CPU_SLOTS_START + 1))) == 0,
-                            "an empty socket is not sent as filled");
+                    helper.assertTrue(installed.getString(MainframeBlockEntity.CPU_SLOTS_START + 1)
+                                    .equals(BuiltInRegistries.ITEM.getKey(Items.AIR).toString()),
+                            "an empty socket is sent as empty");
                     helper.assertTrue(tag.contains("VisualSystems") && tag.contains("VisualFlags"),
                             "the disk lamps and the machine's condition travel with it");
                 })

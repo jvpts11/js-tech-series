@@ -15,7 +15,6 @@ import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.cable.IPlugged;
 import dev.jstech.core.blockentity.DerivedInt;
-import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.model.network.ModelAnimations;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,12 +23,9 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * A small computer, one block: the Personal Computer, the Crafting Computer and the Cluster Management Computer. Its
@@ -41,12 +37,6 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
 
     /** The left side taken off the case, showing what the player put inside; the world and the screen both show it. */
     private final BoolField sidePanelOff = fields().flag("SidePanelOff", false).save().toClient().toMenu();
-    /**
-     * The item in each hardware slot, air where there is none, told to the players who see the machine so they see
-     * each part inside it. It is the hardware's own record, worked out again whenever the hardware changes or is read.
-     */
-    private final ValueField<List<ResourceLocation>> installed =
-            fields().value("Installed", ResourceLocation.CODEC.listOf(), List.of()).toClient();
     /** The lamps on the front, worked out on the server: the power lamp's and the disk lamp's. */
     private final DerivedInt lamps =
             fields().derived("Lamps", () -> (isRunning() ? POWER_LAMP : 0) | (diskBusy() ? DISK_LAMP : 0)).toClient();
@@ -101,16 +91,6 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
         return layout();
     }
 
-    /** The id of the item in hardware slot {@code slot}, as the players who see the machine know it, or null. */
-    public @Nullable ResourceLocation installedPart(final int slot) {
-        final List<ResourceLocation> parts = installed.get();
-        if (slot < 0 || slot >= parts.size()) {
-            return null;
-        }
-        final ResourceLocation part = parts.get(slot);
-        return part.equals(BuiltInRegistries.ITEM.getKey(Items.AIR)) ? null : part;
-    }
-
     /**
      * The port a control cable plugs into on it: the connector of its first card that reads machines, as a PROFIBUS
      * card's violet D-sub; read off the parts the players who see it are told of, so it is the same on both sides.
@@ -118,7 +98,7 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
      */
     @Override
     public String plugKind() {
-        for (final ResourceLocation part : installed.get()) {
+        for (final ResourceLocation part : installedParts()) {
             final IExpansionCardSpec card = HardwareRegistry.card(new ItemStack(BuiltInRegistries.ITEM.get(part)));
             if (card != null && !card.controlPlug().isEmpty()) {
                 return card.controlPlug();
@@ -201,15 +181,8 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
     }
 
     @Override
-    protected void partsChanged() {
-        final ItemStackHandler slots = getHardware();
-        final List<ResourceLocation> parts = new ArrayList<>(slots.getSlots());
-        for (int slot = 0; slot < slots.getSlots(); slot++) {
-            parts.add(BuiltInRegistries.ITEM.getKey(slots.getStackInSlot(slot).getItem()));
-        }
-        final List<ResourceLocation> before = installed.get();
-        installed.set(List.copyOf(parts));
+    protected void partsChanged(final List<ResourceLocation> before) {
         // A part taken out of a bay, or swapped for another, lets fall what it held.
-        front.partsChanged(before, installed.get());
+        front.partsChanged(before, installedParts());
     }
 }

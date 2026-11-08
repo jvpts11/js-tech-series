@@ -19,28 +19,19 @@ import dev.jstech.computers.os.media.DiscTray;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.client.model.kit.IKitDriver;
 import dev.jstech.core.client.model.kit.IKitExtras;
-import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
-import dev.jstech.core.client.model.kit.KitClock;
 import dev.jstech.core.client.model.kit.KitInstance;
-import dev.jstech.core.client.model.kit.KitModel;
-import dev.jstech.core.client.model.kit.KitModels;
-import dev.jstech.core.client.model.kit.KitRenderer;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
-import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelAnimator;
 import dev.jstech.core.model.ModelBone;
 import dev.jstech.core.model.ModelData;
-import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.model.ModelPose;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -56,44 +47,24 @@ import org.jetbrains.annotations.Nullable;
  * drive's lamp blinks while the machine reads its disc, the hot-swap bay's while it works its disk; the fans of the
  * parts in it turn while the machine runs.
  *
- * <p>Inside it, each part the player installed is drawn by a model of its own, chosen by the item: the board on the
+ * <p>Inside it, each part the player installed is drawn by a model of its own ({@link PartModels}): the board on the
  * tray, and on the board's seats the processor, the memory, the cards and an M.2 drive; on the case's seats the supply,
  * the disks and the case fans; and over each processor the cooler fitted on it, unless the processor is a cartridge
- * that brings its own (computers/docs/design/temperature.md). A part's model has the point it plugs in by at its
- * origin, so a part made for one age sits on the seat of another age's board or case. A part that sits more than one
- * way carries each way as a bone of its own, way_<name>, and only the way it sits in is drawn: a fan against the back,
- * under the roof or behind the front, as the case's seat for it names; a water cooler's radiator under the roof or
- * behind the front, as the pair of seats it takes lies. A case with a light lights the fans and coolers in it: a part
- * with a model for that light, {@code <item>_<light>}, is drawn by it. The parts are drawn only when they can be seen:
- * with the side off, or through the glass or the mesh of a case that has some.
+ * that brings its own (computers/docs/design/temperature.md). A fan sits the way the case's seat for it names: against
+ * the back, under the roof or behind the front; a water cooler's radiator under the roof or behind the front, as the
+ * pair of seats it takes lies. A case with a light lights the fans and coolers in it. The parts are drawn only when
+ * they can be seen: with the side off, or through the glass or the mesh of a case that has some.
  */
 public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerBlockEntity>,
         IKitExtras<AbstractSmallComputerBlockEntity> {
 
-    /* What the part being drawn is moved by: its fans' turn and the leads its supply keeps; one frame at a time. */
-    private final PartFrame partFrame = new PartFrame();
-
     /** A case whose glass or mesh shows its inside carries this bone. */
     private static final String SEE_THROUGH = "see_through";
-    private static final String CARTRIDGE = "cartridge";
-    private static final String PSU = "psu_";
-    private static final String PSU_TOP = "top";
-    /** Under the Advanced cases' cover only that case's own supply is drawn: any other could not be seen. */
-    private static final String PSU_COVER = "cover";
-    private static final String[] PSU_FORMS = {PSU_TOP, "floor", PSU_COVER};
-    private static final String[] PSU_SEATS = {"seat_psu_top", "seat_psu_floor", "seat_psu_cover"};
     private static final String SEAT_CPU = "seat_cpu";
     private static final String LEAD = "lead_";
     private static final String DISK = "disk_";
     private static final String M2 = "m2";
-    /** A part's fan is a bone named for the axis it turns about: spin_x_, spin_y_ or spin_z_ and its name. */
-    private static final String SPIN = "spin_";
-    /** The ticks a fan takes to turn once, as the case's own fans turn in its animation. */
-    private static final int FAN_TICKS = 20;
-    private static final float FULL_TURN = 360f;
-    /** Half a supply's height, in the model's units: a supply turned over turns about its middle. */
-    private static final float PSU_HALF_HEIGHT = 1.75f;
-    private static final float UNITS = 16f;
+    private static final String FAN = "fan";
     /** How many numbered seats of one kind a name is kept for; a seat past them is named when it is drawn. */
     private static final int NAMED = 16;
     /** What a bay's model can show, as its bones name it: drive_<bay>_<part>. */
@@ -110,11 +81,7 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
     private static final String[] CPU_SEATS = DeviceLamps.numbered("seat_cpu_", NAMED);
     private static final String[] RAM_SEATS = DeviceLamps.numbered("seat_ram_", NAMED);
     private static final String[] CARD_SEATS = DeviceLamps.numbered("seat_card_", NAMED);
-    /** Each hardware slot's part is drawn by a model of its own, kept by the slot it is in. */
-    private static final String[] SLOT_PARTS = DeviceLamps.numbered("slot_", NAMED * 4);
-    private static final String COOLER = "cooler";
-    private static final String FAN = "fan";
-    /** One of the ways a part sits, a bone of the part's root: way_<name>. */
+    /** One of the ways a part sits, as a case's fan seat names it. */
     private static final String WAY = "way_";
     private static final String WAY_TOP = "way_top";
     private static final String WAY_FRONT = "way_front";
@@ -123,33 +90,10 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
     /** The mark of the light a case gives the fans and coolers in it: lit_<light>. */
     private static final String LIT = "lit_";
 
-    /* Where each part's model and texture are, by the item that names it, until the models are read again. */
-    private static final Map<ResourceLocation, PartFiles> PART_FILES = new HashMap<>();
-    /* The model of each part for each case light, by the item: <item>_<light>. */
-    private static final Map<String, Map<ResourceLocation, ResourceLocation>> LIT_PARTS = new HashMap<>();
     /* The seats of each form of disk, on the board or in the case: seat_<form>_<n>. */
     private static final Map<String, String[]> DISK_SEATS = new HashMap<>();
     private static final Map<Era, String> LEADS = new HashMap<>();
-    private static final ModelFacts<PartShape> SHAPES = new ModelFacts<>(ComputerRenderer::shapeOf);
     private static final ModelFacts<CaseSeats> CASES = new ModelFacts<>(CaseSeats::of);
-    /* The part's moves: its fans turned, its supply's leads chosen. */
-    private static final IKitDriver<PartFrame> PART_MOVES = new IKitDriver<>() {
-        @Override
-        public void drive(final PartFrame frame, final ModelAnimator animator, final double seconds) {
-        }
-
-        @Override
-        public void move(final PartFrame frame, final ModelPose pose, final double seconds) {
-            frame.move(pose);
-        }
-
-        @Override
-        public boolean movesBones() {
-            return true;
-        }
-    };
-
-    private static long partFilesReadAt = Long.MIN_VALUE;
 
     private ComputerRenderer() {
     }
@@ -209,7 +153,8 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
                 || !computer.sidePanelOff() && instance.pose().index(SEE_THROUGH) < 0) {
             return;
         }
-        new Drawing(computer, chassis, instance, poses, buffers, light, overlay, partialTick).parts();
+        new Drawing(computer, chassis, instance, new PartModels.Drawer(computer, computer.visualRunning(), poses,
+                buffers, light, overlay, partialTick)).parts();
     }
 
     /* The bones of each part in each bay, named once rather than every frame: <prefix><bay>_<part>. */
@@ -223,11 +168,6 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
         return out;
     }
 
-    /* The k-th of names kept, or one made for a k past them. */
-    private static String nth(final String[] names, final String prefix, final int k) {
-        return k < names.length ? names[k] : prefix + k;
-    }
-
     /* The hot-swap bay's caddy: riding in as its disk goes in, riding out as the disk comes out, else at rest. */
     private static @Nullable String caddy(final CaseFront front, final int bay, @Nullable final Level level) {
         final DiscTray.Clips clips = front.caddyClips(bay);
@@ -235,114 +175,6 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
             return null;
         }
         return front.caddyWentIn(bay) ? clips.closing() : clips.opening();
-    }
-
-    /** The part an item is drawn as, or null for no item or an item with no model of its own. */
-    private static @Nullable Part part(@Nullable final ResourceLocation item) {
-        if (item == null) {
-            return null;
-        }
-        if (partFilesReadAt != KitModels.reloadedAt()) {
-            PART_FILES.clear();
-            partFilesReadAt = KitModels.reloadedAt();
-        }
-        final PartFiles files = PART_FILES.computeIfAbsent(item, PartFiles::of);
-        if (!files.there()) {
-            return null;
-        }
-        final Optional<KitModel> model = KitModels.look(files.geo(), files.texture(), files.animation());
-        if (model.isEmpty()) {
-            return null;
-        }
-        final PartShape shape = SHAPES.of(model.get().data());
-        return shape.kind() == null ? null : new Part(model.get(), shape);
-    }
-
-    /** The part an item is drawn as in a case of {@code light}: its model for that light when it has one. */
-    private static @Nullable Part lit(@Nullable final ResourceLocation item, @Nullable final String light) {
-        if (item == null || light == null) {
-            return part(item);
-        }
-        final Part own = part(LIT_PARTS.computeIfAbsent(light, named -> new HashMap<>())
-                .computeIfAbsent(item, id -> id.withSuffix("_" + light)));
-        return own != null ? own : part(item);
-    }
-
-    /* What a part's model is: its one root bone's name, its fans, its supply's leads and the ways it sits. */
-    private static PartShape shapeOf(final ModelData model) {
-        final List<ModelBone> bones = model.bones();
-        String root = null;
-        int roots = 0;
-        for (final ModelBone bone : bones) {
-            if (bone.parent() == null) {
-                root = bone.name();
-                roots++;
-            }
-        }
-        final List<Integer> spins = new ArrayList<>();
-        final List<Integer> leads = new ArrayList<>();
-        final List<Integer> ways = new ArrayList<>();
-        for (int i = 0; i < bones.size(); i++) {
-            final String name = bones.get(i).name();
-            final boolean onRoot = root != null && root.equals(bones.get(i).parent());
-            if (name.startsWith(SPIN) && name.length() > SPIN.length()) {
-                spins.add(i);
-            } else if (name.startsWith(LEAD) && onRoot) {
-                leads.add(i);
-            } else if (name.startsWith(WAY) && onRoot) {
-                ways.add(i);
-            }
-        }
-        final int[] spinBones = spins.stream().mapToInt(Integer::intValue).toArray();
-        final char[] axes = new char[spinBones.length];
-        for (int k = 0; k < spinBones.length; k++) {
-            axes[k] = bones.get(spinBones[k]).name().charAt(SPIN.length());
-        }
-        return new PartShape(roots == 1 ? root : null, spinBones, axes, indices(leads), names(bones, leads),
-                indices(ways), names(bones, ways));
-    }
-
-    private static int[] indices(final List<Integer> picked) {
-        return picked.stream().mapToInt(Integer::intValue).toArray();
-    }
-
-    private static String[] names(final List<ModelBone> bones, final List<Integer> picked) {
-        final String[] out = new String[picked.size()];
-        for (int k = 0; k < out.length; k++) {
-            out[k] = bones.get(picked.get(k)).name();
-        }
-        return out;
-    }
-
-    /** Where a part's model, texture and animations are. */
-    private record PartFiles(ResourceLocation geo, ResourceLocation texture, ResourceLocation animation,
-                             boolean there) {
-
-        static PartFiles of(final ResourceLocation item) {
-            final String namespace = item.getNamespace();
-            final ResourceLocation geo = ResourceLocation.fromNamespaceAndPath(namespace,
-                    "geo/part/" + item.getPath() + ".geo.json");
-            return new PartFiles(geo,
-                    ResourceLocation.fromNamespaceAndPath(namespace, "textures/block/part/" + item.getPath() + ".png"),
-                    ResourceLocation.fromNamespaceAndPath(namespace,
-                            "animations/part/" + item.getPath() + ".animation.json"),
-                    Minecraft.getInstance().getResourceManager().getResource(geo).isPresent());
-        }
-    }
-
-    /**
-     * What a part's model is, worked out once from its bones: the name of its one root bone, which says the kind of
-     * part ({@code board}, {@code cpu} or {@code cartridge}, {@code ram}, {@code card}, {@code psu_<form>},
-     * {@code disk_<form>}, {@code cooler}, {@code fan}), or none for a model of more roots than one; the bones of its
-     * fans and the axes they turn about; the leads of a supply, each named for the age of the board it runs to; and the
-     * ways it sits.
-     */
-    private record PartShape(@Nullable String kind, int[] spins, char[] axes, int[] leads, String[] leadNames,
-                             int[] ways, String[] wayNames) {
-
-        boolean moves() {
-            return spins.length > 0 || leads.length > 0 || ways.length > 0;
-        }
     }
 
     /**
@@ -379,74 +211,22 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
         }
     }
 
-    /** A part's model, as it is drawn. */
-    private record Part(KitModel model, PartShape shape) {
-
-        @Nullable String kind() {
-            return shape.kind();
-        }
-    }
-
-    /*
-     * What moves the part being drawn: how far its fans have turned, the one lead its supply keeps and the one way it
-     * sits.
-     */
-    private static final class PartFrame {
-
-        private PartShape shape;
-        private float turned;
-        private @Nullable String lead;
-        private @Nullable String way;
-
-        /* Turns the fans about their axes, keeps only the supply's lead the board takes and only the way it sits. */
-        void move(final ModelPose pose) {
-            for (int k = 0; k < shape.spins().length; k++) {
-                final char axis = shape.axes()[k];
-                pose.addEuler(shape.spins()[k], axis == 'x' ? turned : 0f, axis == 'y' ? turned : 0f,
-                        axis == 'z' ? turned : 0f);
-            }
-            if (lead != null) {
-                for (int k = 0; k < shape.leads().length; k++) {
-                    pose.setHidden(shape.leads()[k], !shape.leadNames()[k].equals(lead));
-                }
-            }
-            // A part that sits more than one way shows the one asked for, and none when it is asked for none.
-            for (int k = 0; k < shape.ways().length; k++) {
-                pose.setHidden(shape.ways()[k], !shape.wayNames()[k].equals(way));
-            }
-        }
-    }
-
     /** One computer's parts drawn in one frame. */
-    private final class Drawing {
+    private static final class Drawing {
 
         private final AbstractSmallComputerBlockEntity computer;
         private final IComputerCase chassis;
         private final KitInstance caseInstance;
-        private final PoseStack poses;
-        private final MultiBufferSource buffers;
-        private final int light;
-        private final int overlay;
-        private final double seconds;
-        /** How far the parts' fans have turned, in degrees: they stand still while the machine is off. */
-        private final float turned;
+        private final PartModels.Drawer drawer;
         /** The case's fan seats and its light. */
         private final CaseSeats caseSeats;
 
         Drawing(final AbstractSmallComputerBlockEntity computer, final IComputerCase chassis,
-                final KitInstance caseInstance, final PoseStack poses, final MultiBufferSource buffers,
-                final int light, final int overlay, final float partialTick) {
+                final KitInstance caseInstance, final PartModels.Drawer drawer) {
             this.computer = computer;
             this.chassis = chassis;
             this.caseInstance = caseInstance;
-            this.poses = poses;
-            this.buffers = buffers;
-            this.light = light;
-            this.overlay = overlay;
-            this.seconds = KitClock.seconds(partialTick);
-            final Level level = computer.getLevel();
-            this.turned = computer.visualRunning() && level != null
-                    ? (level.getGameTime() % FAN_TICKS + partialTick) / FAN_TICKS * FULL_TURN : 0f;
+            this.drawer = drawer;
             this.caseSeats = CASES.of(caseInstance.model().data());
         }
 
@@ -454,62 +234,66 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
             final ComputerHardwareLayout layout = computer.hardwareLayout();
             final List<CoolerSpec> coolers = coolers(layout);
             final int boardSlot = layout.motherboardSlot();
-            final Part board = part(computer.installedPart(boardSlot));
+            final PartModels.Part board = PartModels.part(computer.installedPart(boardSlot));
             KitInstance boardInstance = null;
             if (board != null) {
-                boardInstance = draw(slot(boardSlot), board, null, null, false, null, null);
+                boardInstance = drawer.draw(PartModels.Drawer.key(boardSlot), board, null, null, false, null, null);
                 // Each processor on its socket, a two-socket board's second on the second, and its cooler on it.
                 for (int k = 0; k < layout.cpuCount(); k++) {
                     processor(layout, k, boardInstance, coolers);
                 }
                 for (int k = 0; k < layout.ramCount(); k++) {
-                    drawOn(layout.ramSlot(k), boardInstance, nth(RAM_SEATS, "seat_ram_", k));
+                    drawer.slot(layout.ramSlot(k), computer.installedPart(layout.ramSlot(k)), boardInstance,
+                            PartModels.nth(RAM_SEATS, "seat_ram_", k));
                 }
                 for (int k = 0; k < layout.pcieCount(); k++) {
                     final int at = layout.pcieStart() + k;
-                    drawOn(at, boardInstance, nth(CARD_SEATS, "seat_card_", k));
+                    drawer.slot(at, computer.installedPart(at), boardInstance,
+                            PartModels.nth(CARD_SEATS, "seat_card_", k));
                 }
             }
-            supply(layout.psuSlot());
-            int onBoard = 0;
-            int inBays = 0;
-            for (int k = 0; k < layout.diskCount(); k++) {
-                final int at = layout.diskStart() + k;
-                final Part disk = part(computer.installedPart(at));
-                if (disk == null || !disk.kind().startsWith(DISK)) {
-                    continue;
-                }
-                final String form = disk.kind().substring(DISK.length());
-                if (M2.equals(form)) {
-                    if (boardInstance != null) {
-                        draw(slot(at), disk, boardInstance, diskSeat(form, onBoard), false, null, null);
-                    }
-                    onBoard++;
-                } else {
-                    draw(slot(at), disk, caseInstance, diskSeat(form, inBays++), false, null, null);
-                }
-            }
+            drawer.supply(layout.psuSlot(), computer.installedPart(layout.psuSlot()), caseInstance,
+                    LEADS.computeIfAbsent(chassis.chassisEra(), era -> LEAD + HardwareEra.withParts(era).path()));
+            disks(layout, boardInstance);
             fans(layout, coolers);
         }
 
         /*
-         * Processor {@code k} on its socket, and on it the cooler fitted over it, but on a cartridge, which brings its
-         * own: a water cooler's radiator the way the pair of seats it takes lies.
+         * Processor {@code k} on its socket, and on it the cooler fitted over it: a water cooler's radiator the way the
+         * pair of seats it takes lies.
          */
         private void processor(final ComputerHardwareLayout layout, final int k, final KitInstance board,
                                final List<CoolerSpec> coolers) {
-            final String seat = k == 0 ? SEAT_CPU : nth(CPU_SEATS, "seat_cpu_", k);
-            final Part cpu = part(computer.installedPart(layout.cpuSlot(k)));
-            if (cpu == null || draw(slot(layout.cpuSlot(k)), cpu, board, seat, false, null, null) == null
-                    || CARTRIDGE.equals(cpu.kind()) || k >= layout.coolerCount()) {
-                return;
-            }
-            final int at = layout.coolerStart() + k;
-            final Part cooler = lit(computer.installedPart(at), caseSeats.light());
-            if (cooler != null && COOLER.equals(cooler.kind())) {
-                final CaseCooling.Side side = computer.computer().cooling().radiatorSide(coolers, k);
-                draw(slot(at), cooler, board, seat, false, null,
-                        side == CaseCooling.Side.TOP ? WAY_TOP : side == CaseCooling.Side.FRONT ? WAY_FRONT : null);
+            final String seat = k == 0 ? SEAT_CPU : PartModels.nth(CPU_SEATS, "seat_cpu_", k);
+            final boolean cooled = k < layout.coolerCount();
+            final CaseCooling.Side side = cooled ? computer.computer().cooling().radiatorSide(coolers, k) : null;
+            drawer.processor(layout.cpuSlot(k), computer.installedPart(layout.cpuSlot(k)), layout.coolerStart() + k,
+                    cooled ? computer.installedPart(layout.coolerStart() + k) : null, board, seat,
+                    side == CaseCooling.Side.TOP ? WAY_TOP : side == CaseCooling.Side.FRONT ? WAY_FRONT : null,
+                    caseSeats.light());
+        }
+
+        /* Each disk on its seat: an M.2 drive on the board's, the others on the case's of their form, in order. */
+        private void disks(final ComputerHardwareLayout layout, @Nullable final KitInstance board) {
+            int onBoard = 0;
+            int inBays = 0;
+            for (int k = 0; k < layout.diskCount(); k++) {
+                final int at = layout.diskStart() + k;
+                final PartModels.Part disk = PartModels.part(computer.installedPart(at));
+                if (disk == null || disk.kind() == null || !disk.kind().startsWith(DISK)) {
+                    continue;
+                }
+                final String form = disk.kind().substring(DISK.length());
+                if (M2.equals(form)) {
+                    if (board != null) {
+                        drawer.draw(PartModels.Drawer.key(at), disk, board, diskSeat(form, onBoard), false, null,
+                                null);
+                    }
+                    onBoard++;
+                } else {
+                    drawer.draw(PartModels.Drawer.key(at), disk, caseInstance, diskSeat(form, inBays++), false, null,
+                            null);
+                }
             }
         }
 
@@ -519,10 +303,11 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
             final Set<Integer> radiators = computer.computer().cooling().radiatorSeats(coolers);
             for (int n = 0; n < Math.min(seats.length, layout.fanCount()); n++) {
                 final int at = layout.fanStart() + n;
-                final Part fan = seats[n] == null || radiators.contains(n) ? null
-                        : lit(computer.installedPart(at), caseSeats.light());
+                final PartModels.Part fan = seats[n] == null || radiators.contains(n) ? null
+                        : PartModels.lit(computer.installedPart(at), caseSeats.light());
                 if (fan != null && FAN.equals(fan.kind())) {
-                    draw(slot(at), fan, caseInstance, seats[n], false, null, caseSeats.fanWays()[n]);
+                    drawer.draw(PartModels.Drawer.key(at), fan, caseInstance, seats[n], false, null,
+                            caseSeats.fanWays()[n]);
                 }
             }
         }
@@ -539,78 +324,9 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
             return out;
         }
 
-        /**
-         * The supply, on the case's seat for it. One made for a case that holds its supply the other way up is
-         * turned over; one from another age loses its leads, which run to a connector its board does not have there.
-         */
-        private void supply(final int slot) {
-            final Part psu = part(computer.installedPart(slot));
-            if (psu == null || !psu.kind().startsWith(PSU)) {
-                return;
-            }
-            final String form = psu.kind().substring(PSU.length());
-            for (int k = 0; k < PSU_FORMS.length; k++) {
-                if (caseInstance.pose().index(PSU_SEATS[k]) < 0) {
-                    continue;
-                }
-                final String held = PSU_FORMS[k];
-                if (PSU_COVER.equals(held) && !PSU_COVER.equals(form)) {
-                    return;
-                }
-                final String lead = LEADS.computeIfAbsent(chassis.chassisEra(),
-                        era -> LEAD + HardwareEra.withParts(era).path());
-                draw(slot(slot), psu, caseInstance, PSU_SEATS[k], PSU_TOP.equals(held) != PSU_TOP.equals(form),
-                        lead, null);
-                return;
-            }
-        }
-
-        private void drawOn(final int slot, final KitInstance on, final String seat) {
-            final Part part = part(computer.installedPart(slot));
-            if (part != null) {
-                draw(slot(slot), part, on, seat, false, null, null);
-            }
-        }
-
-        /*
-         * Draws a part, on {@code seat} of the model {@code on} has, or where the case stands for none, the way
-         * {@code way} when it sits more than one; the part as it is drawn, or none when that seat is not there.
-         */
-        private @Nullable KitInstance draw(final String key, final Part part, @Nullable final KitInstance on,
-                                           @Nullable final String seat, final boolean turnedOver,
-                                           @Nullable final String lead, @Nullable final String way) {
-            poses.pushPose();
-            if (on != null && seat != null && !KitRenderer.toBone(on, seat, poses)) {
-                poses.popPose();
-                return null;
-            }
-            if (turnedOver) {
-                poses.translate(0, PSU_HALF_HEIGHT / UNITS, 0);
-                poses.scale(1, -1, 1);
-                poses.translate(0, -PSU_HALF_HEIGHT / UNITS, 0);
-            }
-            final KitInstance instance = KitAnimations.part(computer, key, part.model());
-            if (part.shape().moves()) {
-                // The part's model is its own, so its fans and leads are set for this frame before it is drawn.
-                partFrame.shape = part.shape();
-                partFrame.turned = turned;
-                partFrame.lead = lead;
-                partFrame.way = way;
-                instance.animate(KitClock.frame(), seconds, PART_MOVES, partFrame, IAnimationListener.NONE);
-            }
-            KitRenderer.draw(instance, ModelDefinition.Variant.NONE, computer, poses, buffers, light, overlay, null,
-                    computer.getLevel(), true);
-            poses.popPose();
-            return instance;
-        }
-
-        private String slot(final int slot) {
-            return nth(SLOT_PARTS, "slot_", slot);
-        }
-
         private String diskSeat(final String form, final int k) {
-            return nth(DISK_SEATS.computeIfAbsent(form, named -> DeviceLamps.numbered("seat_" + named + "_", NAMED)),
-                    "seat_" + form + "_", k);
+            return PartModels.nth(DISK_SEATS.computeIfAbsent(form,
+                    named -> DeviceLamps.numbered("seat_" + named + "_", NAMED)), "seat_" + form + "_", k);
         }
     }
 }
