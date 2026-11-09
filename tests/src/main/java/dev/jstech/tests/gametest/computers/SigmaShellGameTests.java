@@ -429,4 +429,40 @@ public final class SigmaShellGameTests {
                 })
                 .thenSucceed();
     }
+
+    /**
+     * sigma build builds a program for the instruction sets asked for, as a universal build when there are several:
+     * one listing for each, one after another in one file, which runs here on the build for this machine's processor
+     * (computers/docs/design/quince.md).
+     */
+    @GameTest(template = ARENA)
+    public static void sigmaBuild_writesAUniversalBuildThatRunsHere(final GameTestHelper helper) {
+        final CraftingComputerBlockEntity computer = computer(helper, new BlockPos(2, 2, 2));
+        if (computer == null) {
+            return;
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    DiskFilesystem.write(computer.systemDisk(), "progs/hello.sgs", FileType.SGS, HELLO,
+                            Long.MAX_VALUE, FilesystemKind.HIERARCHICAL);
+                    final ServerCliComputer cli = new ServerCliComputer(computer, helper.getLevel());
+                    final CliShell shell = CliCommands.shellFor(cli, 52);
+                    final String built = text(shell.run("sigma build progs/hello.sgs --isa powerpc,x86-64", cli));
+                    helper.assertTrue(built.contains("wrote") && built.contains("universal build for PowerPC, x86-64"),
+                            "both builds are written as one; got " + built);
+                    final String listing = DiskFilesystem.read(computer.systemDisk(), "progs/hello.asm").orElse("");
+                    helper.assertTrue(listing.contains(".arch jsc:powerpc") && listing.contains(".arch jsc:x86_64"),
+                            "the file carries a build for each; got " + listing);
+                    final String ran = text(shell.run("sigma run progs/hello.asm", cli));
+                    helper.assertFalse(ran.contains("A4015") || ran.contains("not found"),
+                            "this machine runs the build for its own processor; got " + ran);
+                    final String unknown = text(shell.run("sigma build progs/hello.sgs --isa risc", cli));
+                    helper.assertTrue(unknown.contains("no instruction set is called 'risc'"),
+                            "an instruction set nobody brought is refused; got " + unknown);
+                    final String one = text(shell.run("sigma build progs/hello.sgs --isa 68k -o progs/old.asm", cli));
+                    helper.assertTrue(one.contains("built for 68k") && DiskFilesystem.exists(computer.systemDisk(),
+                            "progs/old.asm"), "one instruction set is one build, where it was asked to go; got " + one);
+                })
+                .thenSucceed();
+    }
 }

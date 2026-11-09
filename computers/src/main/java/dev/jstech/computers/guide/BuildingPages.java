@@ -478,12 +478,24 @@ final class BuildingPages {
                         + " must be the board's era. With no board in place yet, a processor goes into any slot, so you"
                         + " can set up your parts first.")
                 .paragraph("Every processor belongs to an instruction set. A program built for one set runs on it"
-                        + " and on"
-                        + " every newer set, never on an older one. Processors of two sets never share a computer.")
+                        + " and on every newer set of its line, never on an older one and never on another line."
+                        + " Processors of two sets never share a computer, and a system built for one set is not"
+                        + " installed on a processor of another.")
                 .table("The instruction sets", "Instruction set", "Word size", "Runs programs built for")
                 .row(GuideCell.words("IA-16"), GuideCell.words("16 bits"), GuideCell.words("IA-16"))
                 .row(GuideCell.words("x86"), GuideCell.words("32 bits"), GuideCell.words("x86 and IA-16"))
                 .row(GuideCell.words("x86-64"), GuideCell.words("64 bits"), GuideCell.words("x86-64, x86 and IA-16"))
+                .row(GuideCell.words("68k"), GuideCell.words("32 bits"), GuideCell.words("68k"))
+                .row(GuideCell.words("PowerPC"), GuideCell.words("32 bits"), GuideCell.words("PowerPC"))
+                .row(GuideCell.words("ARM64"), GuideCell.words("64 bits"), GuideCell.words("ARM64"))
+                .paragraph("The last three are Quince's. The Motoroller 68000, the PowerQ G3 and G4 and the Quince Q1"
+                        + " to Q3 go only on Quince's logic boards. The Q chips carry their memory in the package,"
+                        + " shared with their graphics, so a machine runs on one with no memory module.")
+                .paragraph("A program crosses from one line to another when it is built for both: sigma build --isa"
+                        + " powerpc,x86-64 makes a universal build, which runs on each ([](jsc:sigma_compile)). A"
+                        + " system can also carry a translator, which runs it more slowly: Champollion runs PowerPC"
+                        + " programs on x86-64 processors at half their speed, and Champollion 2 runs x86-64 programs"
+                        + " on Quince's own chips at four fifths of it.")
                 .paragraph("The word size of a processor depends on its era, and so does the size of one item. You"
                         + " will see the same sizes on the disks ([Units and ticks](jsc:units_and_ticks)).")
                 .table("Word size and item size by era", "Era", "Word size", "Size of one item")
@@ -494,13 +506,15 @@ final class BuildingPages {
                 .row(GuideCell.words("Advanced"), GuideCell.words("64 bits"), GuideCell.words("256 MB"))
                 .row(GuideCell.words("Exa"), GuideCell.words("64 bits"), GuideCell.words("256 MB"))
                 .row(GuideCell.words("Singularity"), GuideCell.words("64 bits"), GuideCell.words("256 MB"))
-                .paragraph("There are more than 170 processors in the mod, from the Integra and Velocion makers. A"
-                        + " processor with graphics built in says so on its tooltip, and it lights a monitor without a"
-                        + " graphics card.")
+                .paragraph("There are more than 170 processors in the mod, from the Integra and Velocion makers and"
+                        + " from Quince. A processor with graphics built in says so on its tooltip, and it lights a"
+                        + " monitor without a graphics card.")
                 .ifSomethingGoesWrong("It will not go in.",
                         "Its socket or its era is not the board's. Use a processor with the board's socket and era.",
                         "The build says the CPU instruction set does not match.",
                         "Use processors of one instruction set.",
+                        "A system will not install, or the firmware finds nothing to start on a disk.",
+                        "The system is built for another processor. Use a system built for this machine's.",
                         "The build says there are too many CPUs.",
                         "Take processors out, or use a board with more CPU slots.")
                 .seeAlso("jsc:motherboards", "jsc:mainframes", "jsc:eras")

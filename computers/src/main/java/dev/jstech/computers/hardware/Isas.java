@@ -49,6 +49,20 @@ public final class Isas {
     /** The 64-bit x86, which runs what was built for the 32-bit one as well as its own. */
     public static final IsaSpec X86_64 = own("x86_64", "x86-64", 64, X86);
 
+    /*
+     * Quince's three (computers/docs/design/quince.md): the 68000's of its first machine, the PowerPC of its Legacy
+     * ones and the ARM64 of its own chips. Each runs only what was built for it, so a program crosses from one to
+     * another by being built for both, or through a translator the system carries (IsaTranslators).
+     */
+    /** The 68k of the Motoroller 68000, 32-bit from the first. */
+    public static final IsaSpec M68K = own("m68k", "68k", 32);
+
+    /** The PowerPC of the PowerQ G3 and G4. */
+    public static final IsaSpec POWERPC = own("powerpc", "PowerPC", 32);
+
+    /** The ARM64 of Quince's own chips, the Q1 to the Q3. */
+    public static final IsaSpec ARM64 = own("arm64", "ARM64", 64);
+
     /**
      * The instructions an ISA brought that the ones before it did not have, by the ISA that brought them.
      *
@@ -72,6 +86,9 @@ public final class Isas {
         add(IA_16);
         add(X86);
         add(X86_64);
+        add(M68K);
+        add(POWERPC);
+        add(ARM64);
     }
 
     private Isas() {

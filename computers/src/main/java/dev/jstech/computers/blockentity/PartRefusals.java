@@ -57,6 +57,10 @@ public final class PartRefusals {
             "This cooler is of a later era than the case: its mount has nothing to hold it");
     public static final TextKey NO_RADIATOR_ROOM = TextKey.of("jsc.part_refusal.no_radiator_room",
             "Its radiator needs two free fan seats, on the top or at the front");
+    public static final TextKey OWN_HEAT_SINK = TextKey.of("jsc.part_refusal.own_heat_sink",
+            "The processor here carries its own heat sink: no cooler goes over it");
+    public static final TextKey COOLER_IN_ITS_PLACE = TextKey.of("jsc.part_refusal.cooler_in_its_place",
+            "This processor carries its own heat sink, and a cooler sits where it would go");
     public static final TextKey FAN_TOO_NEW = TextKey.of("jsc.part_refusal.fan_too_new",
             "This fan is of a later era than the case");
     public static final TextKey NO_FAN_SEAT = TextKey.of("jsc.part_refusal.no_fan_seat",

@@ -26,6 +26,10 @@ final class FirmwareTexts {
             "The system on the medium is not known to this machine.");
     static final TextKey NEEDS_ERA = TextKey.of("jsc.firmware.needs_era",
             "%s needs %s era hardware or newer; this machine is %s era.");
+    /* The instruction sets a system is built for, by name: the short reason beside it in a list. */
+    static final TextKey FOR_PROCESSORS = TextKey.of("jsc.firmware.for_processors", "for %s processors");
+    static final TextKey NOT_ITS_PROCESSOR = TextKey.of("jsc.firmware.not_its_processor",
+            "%s is built for %s processors; this machine's processor is %s.");
     static final TextKey BY_HAND = TextKey.of("jsc.firmware.by_hand",
             "%s is put on the disk by hand from its own shell: boot the medium instead.");
     static final TextKey NO_DISK = TextKey.of("jsc.firmware.no_disk", "No disk is installed to put %s on.");

@@ -9,7 +9,12 @@ package dev.jstech.computers;
 
 import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
+import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.IntegratedGraphics;
+import dev.jstech.computers.hardware.Isas;
+import dev.jstech.computers.hardware.Microarchitecture;
+import dev.jstech.computers.hardware.Microarchitectures;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
 import dev.jstech.computers.hardware.QuinceBoards;
@@ -27,9 +32,19 @@ import net.minecraft.world.item.Item;
  *
  * <p>The sockets follow the machines Quince's are drawn after: the 68000's long package in the Russet 128K, the G3 and
  * the G4 module in the Legacy ones, the Integra workstation and server sockets of 2006 and of the 2010s, Quince's own
- * chips on the Advanced. Beside the boards, the heat sinks of the two Russet Pros.
+ * chips on the Advanced. Beside the boards, the processors that go in no other socket, of the 68k, the PowerPC and the
+ * ARM64, and the heat sinks of the two Russet Pros.
  */
 public final class QuinceItems {
+
+    /* The memory in the package of each of Quince's own chips, in buffer items: 8, 16 and 24 GB. */
+    private static final long Q1_MEMORY = 2048L;
+    private static final long Q2_MEMORY = 4096L;
+    private static final long Q3_MEMORY = 6144L;
+    /* The efficiency cores beside the performance ones on each of Quince's own chips. */
+    private static final int Q_EFFICIENCY_CORES = 4;
+    /* What the heat sink on the PowerQ G4's module takes away, as the Legacy's stock cooler does; an estimate. */
+    private static final int G4_HEAT_SINK_WATTS = 60;
 
     public static final ItemEntry<Item> BOARD_RUSSET_128K = PartItems.board("quince_board_russet_128k",
             new MotherboardSpec(QuinceBoards.RUSSET_128K, HardwareEra.VINTAGE, CpuSocketId.DIP_64, 1,
@@ -97,6 +112,37 @@ public final class QuinceItems {
             .named("Quince Logic Board (Quince Mainframe, Advanced)").register();
 
     /*
+     * The processors of Quince's own boards, each only in its own socket: the Motoroller 68000's long package, the
+     * PowerQ G3's ceramic one, the G4's whole module with its heat sink on it, and Quince's own chips, which carry
+     * their memory in the package beside the die, shared with the graphics on it. Clocks, power and memory follow the
+     * real chips; all are estimates.
+     */
+    public static final ItemEntry<Item> CPU_68000 = PartItems.cpu("cpu_motoroller_68000",
+            new CpuSpec(HardwareEra.VINTAGE, Isas.M68K, CpuSocketId.DIP_64, 1, 8, 2, false)
+                    .on(Microarchitectures.M68000, ""))
+            .named("Motoroller 68000").register();
+    public static final ItemEntry<Item> CPU_G3 = PartItems.cpu("cpu_powerq_g3",
+            new CpuSpec(HardwareEra.LEGACY, Isas.POWERPC, CpuSocketId.POWERQ_G3, 1, 400, 8, false)
+                    .on(Microarchitectures.PPC_750, "Arthur"))
+            .named("PowerQ G3").register();
+    public static final ItemEntry<Item> CPU_G4 = PartItems.cpu("cpu_powerq_g4",
+            new CpuSpec(HardwareEra.LEGACY, Isas.POWERPC, CpuSocketId.POWERQ_G4, 1, 1250, 30, false)
+                    .on(Microarchitectures.PPC_7450, "Apollo").withHeatSink(G4_HEAT_SINK_WATTS))
+            .named("PowerQ G4").register();
+    public static final ItemEntry<Item> CPU_Q1 = PartItems.cpu("cpu_quince_q1",
+            quinceChip(4, 3200, 20, Microarchitectures.FIRESTORM, 2064, Microarchitectures.ICESTORM,
+                    new IntegratedGraphics("Quince Q1 GPU", 8, 1278), Q1_MEMORY))
+            .named("Quince Q1").register();
+    public static final ItemEntry<Item> CPU_Q2 = PartItems.cpu("cpu_quince_q2",
+            quinceChip(4, 3490, 22, Microarchitectures.AVALANCHE, 2420, Microarchitectures.BLIZZARD,
+                    new IntegratedGraphics("Quince Q2 GPU", 10, 1398), Q2_MEMORY))
+            .named("Quince Q2").register();
+    public static final ItemEntry<Item> CPU_Q3 = PartItems.cpu("cpu_quince_q3",
+            quinceChip(4, 4050, 22, Microarchitectures.EVEREST, 2750, Microarchitectures.SAWTOOTH,
+                    new IntegratedGraphics("Quince Q3 GPU", 10, 1380), Q3_MEMORY))
+            .named("Quince Q3").register();
+
+    /*
      * The Russet Pros' heat sinks: the finned aluminium block that sits over the processor where a PC's cooler does,
      * with no fan of its own, the case's fans blowing through it. Watts each takes away; estimates.
      */
@@ -113,6 +159,20 @@ public final class QuinceItems {
     /** Loads the boards, which declares them, before the mod's content goes to its event bus. */
     public static void init() {
         // Referencing the class runs the declarations above.
+    }
+
+    /*
+     * One of Quince's own chips, of the Advanced: its performance cores and their clock, its power, the designs of its
+     * two kinds of core and the clock of the efficiency ones, the graphics on its die and the memory in its package.
+     */
+    private static CpuSpec quinceChip(final int cores, final int mhz, final int watts, final Microarchitecture design,
+                                      final int efficiencyMhz, final Microarchitecture efficiencyDesign,
+                                      final IntegratedGraphics graphics, final long memory) {
+        return new CpuSpec(HardwareEra.ADVANCED, Isas.ARM64, CpuSocketId.QUINCE_Q, cores, mhz, watts, false)
+                .on(design, "")
+                .withEfficiencyCores(Q_EFFICIENCY_CORES, efficiencyMhz, efficiencyDesign)
+                .withGraphics(graphics)
+                .withMemory(memory);
     }
 
     private static MotherboardSpec spec(final FormFactor form, final Era era, final CpuSocketId socket,

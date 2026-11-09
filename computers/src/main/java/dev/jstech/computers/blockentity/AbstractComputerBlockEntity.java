@@ -462,7 +462,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             return HardwareRegistry.psu(stack) != null;
         }
         if (layout().isCpu(slot)) {
-            return isValidCpu(stack);
+            return isValidCpu(stack) && !sinkMeetsCooler(layout().cpuIndex(slot), stack);
         }
         if (layout().isRam(slot)) {
             return isValidRam(stack);
@@ -499,7 +499,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             return HardwareRegistry.board(stack) != null ? PartRefusals.BOARD : PartRefusals.NOT_THIS_SLOT;
         }
         if (layout().isCpu(slot)) {
-            return HardwareRegistry.cpu(stack) != null ? PartRefusals.CPU : PartRefusals.NOT_THIS_SLOT;
+            if (HardwareRegistry.cpu(stack) == null) {
+                return PartRefusals.NOT_THIS_SLOT;
+            }
+            return isValidCpu(stack) ? PartRefusals.COOLER_IN_ITS_PLACE : PartRefusals.CPU;
         }
         if (layout().isRam(slot)) {
             return HardwareRegistry.ram(stack) != null ? PartRefusals.RAM : PartRefusals.NOT_THIS_SLOT;
@@ -523,6 +526,16 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     /*
+     * Whether {@code stack} is a processor carrying its own heat sink, for processor {@code index}'s place, while a
+     * cooler sits on that processor's seat, where the sink would go.
+     */
+    private boolean sinkMeetsCooler(final int index, final ItemStack stack) {
+        final CpuSpec cpu = HardwareRegistry.cpu(stack);
+        return cpu != null && cpu.design().heatSinkWatts() > 0 && index >= 0 && index < layout().coolerCount()
+                && !getHardware().getStackInSlot(layout().coolerStart() + index).isEmpty();
+    }
+
+    /*
      * Why {@code stack} stays off processor {@code index}'s cooler seat, or null when it goes on: a cooler of the
      * case's era or an older one, and a water cooler only where its radiator finds a pair of free fan seats, with the
      * water coolers before it taking theirs first.
@@ -535,6 +548,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         }
         if (!PartFitting.coolerFits(cooler, computer.era())) {
             return PartRefusals.COOLER_TOO_NEW;
+        }
+        final CpuSpec under = index < layout().cpuCount()
+                ? HardwareRegistry.cpu(getHardware().getStackInSlot(layout().cpuSlot(index))) : null;
+        if (under != null && under.design().heatSinkWatts() > 0) {
+            return PartRefusals.OWN_HEAT_SINK;
         }
         if (cooler.radiatorFans() == 0) {
             return null;

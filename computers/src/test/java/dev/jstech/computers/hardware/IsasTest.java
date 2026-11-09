@@ -55,6 +55,44 @@ class IsasTest {
         assertTrue(Isas.X86_64.runs(Isas.X86));
     }
 
+    /** Quince's three run only what was built for each: a program crosses between them by being built for both. */
+    @Test
+    void quinceIsas_runOnlyTheirOwn() {
+        final List<IsaSpec> quince = List.of(Isas.M68K, Isas.POWERPC, Isas.ARM64);
+        for (final IsaSpec one : quince) {
+            for (final IsaSpec other : Isas.all()) {
+                assertEquals(one.equals(other), one.runs(other), one.name() + " running " + other.name());
+            }
+        }
+        for (final IsaSpec x86 : List.of(Isas.IA_16, Isas.X86, Isas.X86_64)) {
+            for (final IsaSpec one : quince) {
+                assertFalse(x86.runs(one), x86.name() + " runs nothing built for " + one.name());
+            }
+        }
+    }
+
+    @Test
+    void quinceIsas_haveTheirWordSizes() {
+        assertEquals(32, Isas.M68K.bits());
+        assertEquals(32, Isas.POWERPC.bits());
+        assertEquals(64, Isas.ARM64.bits());
+    }
+
+    @Test
+    void find_takesQuincesByTheNamesTheyAreWrittenUnder() {
+        assertEquals(Isas.M68K, Isas.find("68k").orElseThrow());
+        assertEquals(Isas.POWERPC, Isas.find("powerpc").orElseThrow());
+        assertEquals(Isas.ARM64, Isas.find("jsc:arm64").orElseThrow());
+    }
+
+    /** A program of the x86 line never moves to another line, however many bits it has. */
+    @Test
+    void oldestWith_neverMovesAProgramToAnotherLine() {
+        final Map<Opcode, String> addedIn = Map.of(Opcode.CONV_I8, "jsc:x86_64");
+        assertEquals(Isas.X86_64, Isas.oldestWith(Isas.X86, EnumSet.of(Opcode.CONV_I8), addedIn));
+        assertEquals(Isas.POWERPC, Isas.oldestWith(Isas.POWERPC, EnumSet.of(Opcode.ADD)));
+    }
+
     @Test
     void bits_growWithTheSeries() {
         assertEquals(16, Isas.IA_16.bits());

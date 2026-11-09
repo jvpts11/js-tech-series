@@ -9,9 +9,12 @@ package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.IsaFit;
 import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.IsaTranslator;
 import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.ListingError;
@@ -24,6 +27,7 @@ import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.nbt.CompoundTag;
@@ -67,7 +71,8 @@ public final class MachineListing {
     @Nullable
     public static IMachineRuntime start(final String listing, final long heapBytes, final BlockEntity machine,
                                         final List<String> arguments) {
-        final ProgramImage program = read(listing, machine);
+        final Loaded loaded = load(listing, machine);
+        final ProgramImage program = loaded.problems().isEmpty() ? loaded.image() : null;
         if (program == null || program.entryPoint() == null) {
             return null;
         }
@@ -84,7 +89,7 @@ public final class MachineListing {
                 process.begin(script, "OnInit");
             }
         }
-        return new SigmaProgram(process);
+        return new SigmaProgram(process, loaded.speedPercent());
     }
 
     /**
@@ -95,13 +100,14 @@ public final class MachineListing {
      */
     @Nullable
     public static IMachineRuntime restore(final String listing, final CompoundTag saved, final BlockEntity machine) {
-        final ProgramImage program = read(listing, machine);
+        final Loaded loaded = load(listing, machine);
+        final ProgramImage program = loaded.problems().isEmpty() ? loaded.image() : null;
         if (program == null) {
             return null;
         }
         try {
             return new SigmaProgram(Process.restore(program,
-                    SnapshotTag.read(SigmaProgram.snapshotOf(saved)), hostOf(machine)));
+                    SnapshotTag.read(SigmaProgram.snapshotOf(saved)), hostOf(machine)), loaded.speedPercent());
         } catch (final SnapshotException damaged) {
             // One program that cannot come back is left out; the machine and the rest of its programs load.
             LOGGER.warn("A saved program on the machine at {} was left out: {}", machine.getBlockPos(),
@@ -132,56 +138,65 @@ public final class MachineListing {
     }
 
     /**
-     * Reads a listing, or null when it is not one, when something in it has nothing to answer it, or when the
-     * machine it was brought to does not run programs built the way this one was.
+     * Reads a listing and makes ready the build of it the machine runs: nothing when it is not a listing, when
+     * something in it has nothing to answer it, or when the machine it was brought to runs none of its builds.
      */
-    @Nullable
-    private static ProgramImage read(final String listing, @Nullable final BlockEntity machine) {
-        final Loaded loaded = load(listing, machine);
-        return loaded.problems().isEmpty() ? loaded.image() : null;
-    }
-
     private static Loaded load(final String listing, @Nullable final BlockEntity machine) {
         final AsmReader reader = new AsmReader(listing);
-        final AsmProgram program = reader.read();
+        final List<AsmProgram> builds = reader.readAll();
         if (reader.hasProblems()) {
-            return new Loaded(null, reader.problems());
+            return new Loaded(null, reader.problems(), IsaFit.FULL_SPEED);
         }
-        final ListingProblem wrongMachine = refusedBy(machine, program);
-        if (wrongMachine != null) {
-            return new Loaded(null, List.of(wrongMachine));
+        final IOsHost computer = machine instanceof IOsHost host ? host : null;
+        final ComputerBuild build = computer == null ? null : computer.currentBuild();
+        final IsaSpec here = build == null ? null : build.isa();
+        /*
+         * Only a machine with a processor chooses, so a host that is not a computer runs the first build. A program is
+         * instructions for a processor, and one that does not understand any of them cannot be made to, unless the
+         * machine's system carries a translator for one; the listing is not at fault, and runs untouched elsewhere.
+         */
+        final IsaFit fit = here == null ? new IsaFit(0, IsaFit.FULL_SPEED, null)
+                : IsaFit.of(here, isasOf(builds), translatorsOf(computer)).orElse(null);
+        if (fit == null) {
+            return new Loaded(null, List.of(new ListingProblem(builds.getFirst().isaLine(), 1,
+                    ListingError.ISA_MISMATCH.code(), ListingError.ISA_MISMATCH.message(namesOf(builds), here.name()))),
+                    IsaFit.FULL_SPEED);
         }
-        final ProgramImage image = ProgramImage.of(program);
-        return new Loaded(image, image.problems());
+        final ProgramImage image = ProgramImage.of(builds.get(fit.build()));
+        return new Loaded(image, image.problems(), fit.speedPercent());
+    }
+
+    /** The instruction sets the builds were built for, in the order the listing carries them. */
+    private static List<String> isasOf(final List<AsmProgram> builds) {
+        final List<String> isas = new ArrayList<>(builds.size());
+        for (final AsmProgram one : builds) {
+            isas.add(one.isa());
+        }
+        return isas;
+    }
+
+    /** What the machine's system carries to run the programs of another processor; nothing with no system. */
+    private static List<IsaTranslator> translatorsOf(final IOsHost computer) {
+        final OsDef os = computer.installedOs();
+        return os == null ? List.of() : os.translators();
     }
 
     /**
-     * Why that machine will not run this program, or null when it will.
-     *
-     * <p>The listing is not at fault here and would run untouched on another computer: a program is instructions for
-     * a processor, and a processor that does not understand them cannot be made to. Only a machine with a processor
-     * answers this, so a host that is not a computer holds no program against anything.
+     * The instruction sets a program was built for as a person reads them, each by the name it is written under, or by
+     * its id when no mod has brought one under that name.
      */
-    @Nullable
-    private static ListingProblem refusedBy(@Nullable final BlockEntity machine, final AsmProgram program) {
-        if (!(machine instanceof IOsHost computer)) {
-            return null;
+    private static String namesOf(final List<AsmProgram> builds) {
+        final List<String> names = new ArrayList<>(builds.size());
+        for (final AsmProgram one : builds) {
+            names.add(Isas.byId(one.isa()).map(IsaSpec::name).orElse(one.isa()));
         }
-        final ComputerBuild build = computer.currentBuild();
-        final IsaSpec here = build == null ? null : build.isa();
-        if (here == null || here.runs(program.isa())) {
-            return null;
-        }
-        return new ListingProblem(program.isaLine(), 1, ListingError.ISA_MISMATCH.code(),
-                ListingError.ISA_MISMATCH.message(nameOf(program.isa()), here.name()));
+        return String.join(", ", names);
     }
 
-    /** An instruction set as a person reads it, falling back to its id when no mod has brought one under that name. */
-    private static String nameOf(final String isa) {
-        return Isas.byId(isa).map(IsaSpec::name).orElse(isa);
-    }
-
-    /** A listing made ready, with everything wrong with it; there is no image when the text could not be read. */
-    private record Loaded(@Nullable ProgramImage image, List<ListingProblem> problems) {
+    /**
+     * A listing made ready, with everything wrong with it, and how fast the build the machine runs goes: there is no
+     * image when the text could not be read.
+     */
+    private record Loaded(@Nullable ProgramImage image, List<ListingProblem> problems, int speedPercent) {
     }
 }

@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
+import dev.jstech.computers.hardware.IsaFit;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.SnapshotException;
@@ -16,6 +17,7 @@ import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.nbt.CompoundTag;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
@@ -30,9 +32,18 @@ final class SigmaProgram implements IMachineRuntime {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private final Process process;
+    /* How far it gets on what it is dealt when it runs through a translator; null when it runs as it is. */
+    @Nullable
+    private final TranslatedPace pace;
 
     SigmaProgram(final Process process) {
+        this(process, IsaFit.FULL_SPEED);
+    }
+
+    /** A program running at {@code speedPercent} hundredths of its own speed, through a translator below 100. */
+    SigmaProgram(final Process process, final int speedPercent) {
         this.process = process;
+        this.pace = speedPercent >= IsaFit.FULL_SPEED ? null : new TranslatedPace(speedPercent);
     }
 
     /** The program underneath, for the parts of this mod that know it is Σ#. */
@@ -42,7 +53,7 @@ final class SigmaProgram implements IMachineRuntime {
 
     @Override
     public int step(final int budget) {
-        return this.process.step(budget);
+        return this.paced(budget);
     }
 
     @Override
@@ -127,7 +138,7 @@ final class SigmaProgram implements IMachineRuntime {
             return 0;
         }
         this.process.beginFirst(script, "OnDestroy");
-        return this.process.step(budget);
+        return this.paced(budget);
     }
 
     @Override
@@ -203,5 +214,15 @@ final class SigmaProgram implements IMachineRuntime {
     /** Where {@link #save} puts it, for the language to read back. */
     static CompoundTag snapshotOf(final CompoundTag tag) {
         return tag.getCompound("Snapshot");
+    }
+
+    /* Runs the program on a grant of {@code budget}, through its translator's pace when it has one. */
+    private int paced(final int budget) {
+        if (this.pace == null) {
+            return this.process.step(budget);
+        }
+        final int share = this.pace.share(budget);
+        final int used = share == 0 ? 0 : this.process.step(share);
+        return this.pace.charged(budget, share, used);
     }
 }

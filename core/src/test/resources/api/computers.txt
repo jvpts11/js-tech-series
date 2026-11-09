@@ -40,6 +40,7 @@ stable 7
 1 dev.jstech.computers.api.ComputersRegisterEvent  void program(ProgramSpec)
 8 dev.jstech.computers.api.ComputersRegisterEvent  void server(ItemLike, RackChassis)
 8 dev.jstech.computers.api.ComputersRegisterEvent  void slotGeneration(PcieGeneration)
+15 dev.jstech.computers.api.ComputersRegisterEvent  void translator(IsaTranslator)
 5 dev.jstech.computers.api.IComponentValidator  type interface
 5 dev.jstech.computers.api.IComponentValidator  default boolean action(String, Object)
 5 dev.jstech.computers.api.IComponentValidator  default boolean data(Object)
@@ -78,6 +79,7 @@ stable 7
 8 dev.jstech.computers.api.JsComputersApi  static void registerServer(ItemLike, RackChassis)
 8 dev.jstech.computers.api.JsComputersApi  static void registerSlotGeneration(PcieGeneration)
 1 dev.jstech.computers.api.JsComputersApi  static void registerSpace(OperatingSpaceDef)
+15 dev.jstech.computers.api.JsComputersApi  static void registerTranslator(IsaTranslator)
 5 dev.jstech.computers.api.client.ComponentRenderers  type final class
 5 dev.jstech.computers.api.client.ComponentRenderers  static IComponentRenderer get(String)
 5 dev.jstech.computers.api.client.ComponentRenderers  static void register(ResourceLocation, IComponentRenderer)
@@ -279,9 +281,11 @@ stable 7
 11 dev.jstech.computers.hardware.CoolerSpec.Kind  TOWER
 11 dev.jstech.computers.hardware.CoolerSpec.Kind  WATER
 11 dev.jstech.computers.hardware.CoolerSpec.Kind  int radiatorFans()
-8 dev.jstech.computers.hardware.CpuDesign  type record(Microarchitecture arch, String codename, boolean smt, int efficiencyCores, int efficiencyMhz, Microarchitecture efficiencyArch, IntegratedGraphics graphics)
+15 dev.jstech.computers.hardware.CpuDesign  type record(Microarchitecture arch, String codename, boolean smt, int efficiencyCores, int efficiencyMhz, Microarchitecture efficiencyArch, IntegratedGraphics graphics, long memoryItems, int heatSinkWatts)
 8 dev.jstech.computers.hardware.CpuDesign  CpuDesign withEfficiencyCores(int, int, Microarchitecture)
 8 dev.jstech.computers.hardware.CpuDesign  CpuDesign withGraphics(IntegratedGraphics)
+15 dev.jstech.computers.hardware.CpuDesign  CpuDesign withHeatSink(int)
+15 dev.jstech.computers.hardware.CpuDesign  CpuDesign withMemory(long)
 8 dev.jstech.computers.hardware.CpuDesign  CpuDesign withSmt()
 8 dev.jstech.computers.hardware.CpuDesign  String label()
 8 dev.jstech.computers.hardware.CpuDesign  static CpuDesign of(Microarchitecture, String)
@@ -336,6 +340,8 @@ stable 7
 8 dev.jstech.computers.hardware.CpuSpec  CpuSpec on(Microarchitecture, String)
 8 dev.jstech.computers.hardware.CpuSpec  CpuSpec withEfficiencyCores(int, int, Microarchitecture)
 8 dev.jstech.computers.hardware.CpuSpec  CpuSpec withGraphics(IntegratedGraphics)
+15 dev.jstech.computers.hardware.CpuSpec  CpuSpec withHeatSink(int)
+15 dev.jstech.computers.hardware.CpuSpec  CpuSpec withMemory(long)
 8 dev.jstech.computers.hardware.CpuSpec  CpuSpec withSmt()
 8 dev.jstech.computers.hardware.CpuSpec  boolean hasIntegratedGraphics()
 8 dev.jstech.computers.hardware.CpuSpec  long orchestrationCapacity()
@@ -402,6 +408,8 @@ stable 7
 2 dev.jstech.computers.hardware.IsaSpec  type record(String id, String name, int bits, Set<String> runs)
 2 dev.jstech.computers.hardware.IsaSpec  boolean runs(IsaSpec)
 2 dev.jstech.computers.hardware.IsaSpec  boolean runs(String)
+15 dev.jstech.computers.hardware.IsaTranslator  type record(String id, String name, String from, String on, int speedPercent)
+15 dev.jstech.computers.hardware.IsaTranslator  boolean runs(IsaSpec, String)
 8 dev.jstech.computers.hardware.Microarchitecture  type record(String id, String name, int efficiencyMilli, int coresPerUnit)
 8 dev.jstech.computers.hardware.Microarchitecture  int unitsOf(int)
 8 dev.jstech.computers.hardware.Microarchitecture  new(String, String, int)
@@ -483,11 +491,16 @@ stable 7
 1 dev.jstech.computers.os.KernelDef  type record(ResourceLocation id, SchedulerKind scheduler, FilesystemKind filesystem, ShellFamily shellFamily)
 1 dev.jstech.computers.os.KernelDef  static final Codec<KernelDef> CODEC
 1 dev.jstech.computers.os.OperatingSpaceDef  type record(ResourceLocation id, String displayName, SoftwareHouse house)
-8 dev.jstech.computers.os.OsDef  type record(ResourceLocation id, OsCapability capability, Era minEra, ResourceLocation kernelId, int footprintMb, Optional<ResourceLocation> installMediaId, Platform platform, String displayName, ShellKind shell, PackageManagerKind packageManager, InstallMode installMode, Optional<ResourceLocation> bundledDesktop, SoftwareHouse house, int ramMb, InstallerStyle installerStyle, int familyRank)
+15 dev.jstech.computers.os.OsDef  type record(ResourceLocation id, OsCapability capability, Era minEra, ResourceLocation kernelId, int footprintMb, Optional<ResourceLocation> installMediaId, Platform platform, String displayName, ShellKind shell, PackageManagerKind packageManager, InstallMode installMode, Optional<ResourceLocation> bundledDesktop, SoftwareHouse house, int ramMb, InstallerStyle installerStyle, int familyRank, SystemIsas isas)
+15 dev.jstech.computers.os.OsDef  List<IsaTranslator> translators()
+15 dev.jstech.computers.os.OsDef  List<String> builtFor()
 1 dev.jstech.computers.os.OsDef  OsDef withInstaller(InstallerStyle)
+15 dev.jstech.computers.os.OsDef  OsDef withIsas(IsaSpec...)
 1 dev.jstech.computers.os.OsDef  OsDef withRam(int)
 1 dev.jstech.computers.os.OsDef  OsDef withRank(int)
+15 dev.jstech.computers.os.OsDef  OsDef withTranslators(IsaTranslator...)
 1 dev.jstech.computers.os.OsDef  String titleKey()
+15 dev.jstech.computers.os.OsDef  boolean runsOn(IsaSpec)
 8 dev.jstech.computers.os.OsDef  long footprintItemsOn(Era)
 2 dev.jstech.computers.os.OsDef  static OsDef linuxDistro(ResourceLocation, int, String, ShellKind, PackageManagerKind, InstallMode, SoftwareHouse)
 8 dev.jstech.computers.os.OsDef  static OsDef mediaInstalled(ResourceLocation, OsCapability, Era, ResourceLocation, int, Platform, String, Optional<ResourceLocation>, SoftwareHouse)
@@ -511,6 +524,9 @@ stable 7
 8 dev.jstech.computers.os.ProgramSpec  int ramMbOn(Era, boolean)
 2 dev.jstech.computers.os.ProgramSpec  static ProgramSpec of(ResourceLocation, String, boolean, Set<Platform>, int, ProgramKind, int, HostScope)
 1 dev.jstech.computers.os.ProgramSpec  static final Codec<ProgramSpec> CODEC
+15 dev.jstech.computers.os.SystemIsas  type record(List<String> builtFor, List<String> translators)
+15 dev.jstech.computers.os.SystemIsas  static final MapCodec<SystemIsas> MAP_CODEC
+15 dev.jstech.computers.os.SystemIsas  static final SystemIsas UNNAMED
 8 dev.jstech.computers.os.media.EraMedia  type record(MediaFormat systems, MediaFormat programs, MediaFormat services)
 8 dev.jstech.computers.os.media.EraMedia  static EraMedia all(MediaFormat)
 8 dev.jstech.computers.os.media.MediaFormat  type enum

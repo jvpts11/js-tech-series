@@ -26,6 +26,8 @@ import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.IsaTranslator;
+import dev.jstech.computers.hardware.IsaTranslators;
 import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
@@ -72,7 +74,7 @@ public final class JsComputersApi {
      * <p>How settled it is, and how long something lives once it is marked as going, are the series'
      * answers rather than this mod's: see the Core's.
      */
-    public static final int VERSION = 14;
+    public static final int VERSION = 15;
 
     /* The languages the computers of a world can be programmed in. */
     private static final LanguageRegistry LANGUAGES = new LanguageRegistry();
@@ -105,6 +107,23 @@ public final class JsComputersApi {
             return;
         }
         Isas.add(isa);
+    }
+
+    /**
+     * Adds a translator, which a system can then carry to run the programs built for one instruction set on a
+     * processor of another (computers/docs/design/quince.md).
+     */
+    @ApiStatus.Experimental
+    public static void registerTranslator(final IsaTranslator translator) {
+        if (translator == null) {
+            return;
+        }
+        if (OsRegistry.isFrozen()) {
+            JsComputers.LOGGER.warn("The translator {} was not registered: they are only added while the game loads",
+                    translator.id());
+            return;
+        }
+        IsaTranslators.add(translator);
     }
 
     /** Adds a kernel, which an operating system then names as the one it is built on. */

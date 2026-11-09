@@ -198,6 +198,9 @@
     "jsc:quince_board_russet_studio",
     "jsc:quince_board_qserve_advanced",
     "jsc:quince_board_mainframe_a",
+    "jsc:cpu_quince_q1",
+    "jsc:cpu_quince_q2",
+    "jsc:cpu_quince_q3",
     "jsc:bd_rom",
     "jsc:bd_re"
   ]

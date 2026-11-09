@@ -564,6 +564,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   blocked)` gives the devices a walk from some positions meets, never stepping on a position `blocked` names;
   `ConnectivityIndex.devicesThisSide(positions)` gives the devices of a place without crossing a long-distance line,
   and `forgetNetworkOf(position)` drops the network id a part of the grid kept after it was cut off. Experimental.
+- (Computers) Quince's processors and instruction sets: J's Computers' API is at version 15. `Isas` gains `M68K`,
+  `POWERPC` and `ARM64`. `IsaTranslator` is a translator a system carries, which runs the programs built for one
+  instruction set on a processor of another at a speed of its own; `IsaTranslators` holds them (`CHAMPOLLION` and
+  `CHAMPOLLION_2`), and `ComputersRegisterEvent.translator` adds one. `IsaFit` says which build of a program a machine
+  runs, and how fast. `OsDef` gains `isas`, a `SystemIsas` of the instruction sets it is built for and the translators
+  it carries, with `withIsas`, `withTranslators`, `builtFor`, `runsOn` and `translators`; `IOsHost.runsSystem` asks a
+  machine. `CpuDesign` gains `memoryItems`, the memory in a chip's package, and `heatSinkWatts`, a heat sink it
+  carries on itself, with `withMemory` and `withHeatSink`, as `CpuSpec` does; `ComputerBuild.packageMemory` adds the
+  memory up. Experimental.
 
 ### Added
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2277,7 +2286,7 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) Quince's hardware is closed: each of its machines takes only its own logic board, one of sixteen (one
   for each machine, for the qServe of each era and for the Quince Mainframe of each era), and no other board goes in
   it; the memory, the disks and the cards are the common ones. The Russet Pros' Quince Heat Sinks sit on the processor
-  where a PC's cooler does. The machines of the Vintage, the Legacy and the Advanced wait for Quince's processors.
+  where a PC's cooler does.
 - (Computers) The qServe, Quince's 1U server for the ordinary racks, one for each era from the Legacy with its case,
   drawn in the rack with its era's face; and the Quince Mainframe of the Transition, the Standard and the Advanced, the
   Mainframe's cabinet in Quince's aluminium, which takes Quince's logic board for it.
@@ -2288,6 +2297,22 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   switches it off), the Startup Manager on the Transition and the Standard, with the volumes it can start from, and
   the Startup Options on the Advanced, whose Options open its setup. Switched on with parts that make no computer, it
   shows the Sad Quince and what is wrong, where any other machine only beeps.
+- (Computers) Quince's processors: the Motoroller 68000 of the Russet 128K, the PowerQ G3 and the PowerQ G4 (the
+  whole module, its heat sink on it, which cools it with no cooler over it) of the Legacy's machines and the qServe,
+  and the Quince Q1, Q2 and Q3 of the
+  Advanced, which carry their graphics and their memory in the package, 8, 16 and 24 GB: a machine runs on one with no
+  memory module, the memory shared with the graphics, and the boards keep their memory slots besides. Each goes on
+  Quince's logic boards alone; the Transition's and the Standard's boards take the Integra processors of their era.
+- (Computers) Quince's instruction sets, the 68k, the PowerPC and the ARM64, each running only the programs built
+  for it. `sigma build` builds a program for the instruction sets named after `--isa`, and with several makes a
+  universal build, the listing for each one after another in one file, every machine running the one for its own
+  processor. A system can carry translators that run another set's programs more slowly: Champollion runs PowerPC
+  programs on x86-64 processors at half their speed, and Champollion 2 x86-64 programs on Quince's own chips at four
+  fifths of it.
+- (Computers) A system is built for an instruction set, and a machine whose processor runs none it was built for
+  neither installs nor starts it: the setup lists it "for ... processors", a cluster's installation leaves such a
+  node out, and a disk carried from one maker's machine to another's shows the firmware nothing to start. The
+  systems there were are built for the x86 line, as before.
 - (Computers) A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the

@@ -369,9 +369,15 @@ final class OsSession {
     /**
      * Installs {@code osId} onto disk slot {@code preferredSlot}, or (-1) onto the default target: a slot
      * already carrying this system (so a re-install is idempotent), else the first disk without one, else the
-     * first disk. False when the system is unknown, no disk is present, or the footprint does not fit.
+     * first disk. False when the system is unknown, built for another processor, no disk is present, or the
+     * footprint does not fit.
      */
     boolean installOs(final ResourceLocation osId, final int preferredSlot) {
+        // Every path into a machine's disks comes through here, so a system its processor cannot run stops here.
+        final OsDef system = OsRegistry.getOs(osId);
+        if (system != null && !this.machine.runsSystem(system)) {
+            return false;
+        }
         /*
          * Writing back through setStackInSlot makes onContentsChanged fire (setChanged + build
          * invalidation); the block update then pushes the new disk state to watching clients.

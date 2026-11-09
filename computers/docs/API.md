@@ -73,6 +73,20 @@ processor runs x86 and IA-16 programs). A program built for an instruction set r
 `runs` holds it. Bringing processors of your own needs no socket registration: a socket is an id in the
 `namespace:path` form that a processor and a board both name.
 
+*Added 2026-11-09, J's Computers' API at version 15.* A **translator** runs the programs built for one instruction
+set on a processor of another, more slowly, on the systems that carry it, as Quince's Champollion does
+(`computers/docs/design/quince.md`):
+
+```java
+public static final IsaTranslator BRIDGE = new IsaTranslator("myaddon:bridge", "Bridge", "jsc:x86_64",
+        "myaddon:arm64", 70);           // runs x86-64 programs on ARM64 processors at 70% of their speed
+// event.translator(BRIDGE);
+```
+
+It runs only the programs built for its first instruction set, not those that set itself runs. A system carries it
+with `withTranslators(BRIDGE)` (below). A machine runs a program built for its own processor before any translated one,
+and of two translators the faster.
+
 ## Parts
 
 *Added 2026-10-25.*
@@ -96,6 +110,10 @@ event.expansionCard(MyItems.Q_CARD.get(), new PlainCardSpec(MY_KIND, QUANTUM, Pc
         QUANTUM);
 ```
 
+- **Memory in the package** (added 2026-11-09, J's Computers' API at version 15): `new CpuSpec(...).withMemory(2048L)`
+  is a processor carrying 2,048 items buffer of memory in its package, as Quince's own chips do; its machine has that
+  memory with no module in a slot, and with graphics on the die the two share it. `withHeatSink(60)` is a module
+  carrying its own heat sink, as the PowerQ G4's is: it takes away 60 W, and no cooler goes over the processor.
 - **A power supply's life** (added 2026-11-08, J's Computers' API at version 10): `new PsuSpec(1200, 94, false, 150,
   1)` lasts 150 game days at full load and has one unit; two or more units make it redundant, each wearing on its
   own. The supply's wear is kept on its item (`PsuConditions.of(stack)`), and a supply declared without a life lasts
@@ -205,6 +223,10 @@ public static final OsDef MY_OS = OsDef.terminalSystem(rl("micro_os"), rl("micro
   (compiled first).
 - `withInstaller(InstallerStyle...)` picks which existing installer it looks like; `withRank` orders systems of one
   family from oldest to newest, for programs that need a newer one.
+- *Added 2026-11-09, version 15.* `withIsas(Isas.POWERPC, Isas.X86_64)` says which instruction sets the system is
+  built for: a machine installs and starts it only when its processor runs one of them. A system that names none is
+  built for the instruction set of its first era's own processors (IA-16 in the Vintage, x86 in the Legacy, x86-64
+  after), which is what every system was before. `withTranslators(...)` gives it translators (above).
 - A `SoftwareHouse` is who made it, as banners and About boxes print it. Bring your own.
 - The system's install medium is made for it, in the format of its era, and shows in the era's creative tab.
 

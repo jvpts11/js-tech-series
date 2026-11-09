@@ -22,7 +22,7 @@
         ],
         [
           {
-            "literal": "sigma stop <id>"
+            "literal": "sigma build <source> [--isa <isa>[,<isa>...]]"
           },
           {
             "words": "jsc.guide.sigma_run.table1_2_2"
@@ -30,10 +30,18 @@
         ],
         [
           {
-            "literal": "sigma ps"
+            "literal": "sigma stop <id>"
           },
           {
             "words": "jsc.guide.sigma_run.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "sigma ps"
+          },
+          {
+            "words": "jsc.guide.sigma_run.table1_4_2"
           }
         ]
       ]

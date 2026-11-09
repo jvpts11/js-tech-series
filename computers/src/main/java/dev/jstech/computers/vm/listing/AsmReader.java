@@ -46,32 +46,41 @@ public final class AsmReader {
         this.lines = text.split("\n", -1);
     }
 
-    /** Reads the whole listing. Always gives back a program, even one nothing could be read into. */
+    /**
+     * Reads the whole listing, and gives back its first build: the only one, unless it is a universal build. Always
+     * gives back a program, even one nothing could be read into.
+     */
     public AsmProgram read() {
+        return this.readAll().getFirst();
+    }
+
+    /**
+     * Reads every build the listing carries, in the order it carries them: one, or one for each instruction set of a
+     * universal build, which is the listings of its builds one after another, each from its own {@code .asm} line
+     * ({@link AsmWriter#universal}). Never empty: a listing nothing could be read into gives back one empty program.
+     */
+    public List<AsmProgram> readAll() {
         int at = 0;
         while (at < this.lines.length && code(this.lines[at]).isBlank()) {
             at++;
         }
-        if (at >= this.lines.length || !code(this.lines[at]).trim().startsWith(".asm ")) {
+        if (at >= this.lines.length || !isHead(this.lines[at])) {
             this.report(1, ListingError.MISSING_VERSION_LINE);
-            return new AsmProgram();
+            return List.of(new AsmProgram());
         }
-        final String versionText = code(this.lines[at]).trim().substring(".asm ".length()).trim();
-        final int version = number(versionText, at + 1, -1);
-        if (version > AsmProgram.VERSION) {
-            this.report(at + 1, ListingError.VERSION_TOO_NEW, AsmProgram.VERSION, version);
-            return new AsmProgram(version);
-        }
-        if (version >= 0 && version < AsmProgram.OLDEST_VERSION) {
-            this.report(at + 1, ListingError.VERSION_TOO_OLD, version, AsmProgram.OLDEST_VERSION);
-            return new AsmProgram(version);
-        }
-        final AsmProgram program = new AsmProgram(version < 0 ? AsmProgram.VERSION : version);
-        for (int line = at + 1; line < this.lines.length; line++) {
-            this.readLine(program, this.lines[line], line + 1);
+        final List<AsmProgram> builds = new ArrayList<>();
+        AsmProgram program = this.begin(at, builds);
+        for (int line = at + 1; program != null && line < this.lines.length; line++) {
+            if (isHead(this.lines[line])) {
+                this.closeMethod();
+                this.type = null;
+                program = this.begin(line, builds);
+            } else {
+                this.readLine(program, this.lines[line], line + 1);
+            }
         }
         this.closeMethod();
-        return program;
+        return List.copyOf(builds);
     }
 
     /** Whether the listing read has anything wrong with it; a listing that has does not run. */
@@ -84,6 +93,33 @@ public final class AsmReader {
         final List<ListingProblem> copy = new ArrayList<>(this.problems);
         copy.sort(Comparator.comparingInt(ListingProblem::line).thenComparingInt(ListingProblem::column));
         return Collections.unmodifiableList(copy);
+    }
+
+    /* Whether that line opens a build: the .asm line that names the format it is written in. */
+    private static boolean isHead(final String raw) {
+        return code(raw).trim().startsWith(".asm ");
+    }
+
+    /*
+     * Starts the build whose .asm line is at that index, adding it to the builds: the program to read the lines after
+     * it into, or null when its version is one this reader cannot read, which ends the reading.
+     */
+    private AsmProgram begin(final int at, final List<AsmProgram> builds) {
+        final String versionText = code(this.lines[at]).trim().substring(".asm ".length()).trim();
+        final int version = number(versionText, at + 1, -1);
+        if (version > AsmProgram.VERSION) {
+            this.report(at + 1, ListingError.VERSION_TOO_NEW, AsmProgram.VERSION, version);
+            builds.add(new AsmProgram(version));
+            return null;
+        }
+        if (version >= 0 && version < AsmProgram.OLDEST_VERSION) {
+            this.report(at + 1, ListingError.VERSION_TOO_OLD, version, AsmProgram.OLDEST_VERSION);
+            builds.add(new AsmProgram(version));
+            return null;
+        }
+        final AsmProgram program = new AsmProgram(version < 0 ? AsmProgram.VERSION : version);
+        builds.add(program);
+        return program;
     }
 
     private void report(final int line, final ListingError error, final Object... arguments) {

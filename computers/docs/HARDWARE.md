@@ -23,7 +23,8 @@ Every computer and part belongs to an **era**, a generation of computing. Five h
   an item is. A 20 MB Vintage drive holds 20 items. From the Transition on an item is 256 MB, so a 1 TB disk holds
   4,096 items.
 - **Instruction set** (ISA): what a processor runs. A program built for an instruction set runs on that one and
-  every newer one (x86-64 runs x86 and IA-16 programs), never on an older one.
+  every newer one of its line (x86-64 runs x86 and IA-16 programs), never on an older one. Quince's processors
+  have their own (see [Quince's computers](#quinces-computers)).
 - Each era has its creative tab, **J's Computers - Vintage** to **- Advanced**, with the same shelves in each:
   personal computers, crafting computers, cluster management computers, Mainframes, server racks, rack bays,
   peripherals, network, components and programs. What every era shares is in the tab **J's Computers**.
@@ -75,8 +76,29 @@ one socket uses the first row only, however many memory slots it has.
 
 - **Closed hardware.** Each machine takes only its own **Quince Logic Board**, and its board goes in no other case.
   There are sixteen: one for each computer, one for the qServe of each era and one for the Quince Mainframe of each
-  era. The processors are the era's (the Integra ones in the Transition and the Standard); the Vintage's, the
-  Legacy's and the Advanced's machines wait for Quince's own. The memory, the disks and the cards are the common ones.
+  era. The memory, the disks and the cards are the common ones.
+- **The processors.** *Added 2026-11-09.* The Transition's and the Standard's boards take the Integra processors of
+  their era; the others take Quince's own, which go on no other board:
+
+  | Processor | Era | Instruction set | Cores | Clock | Memory in the package |
+  | --- | --- | --- | --- | --- | --- |
+  | Motoroller 68000 | Vintage | 68k | 1 | 8 MHz | |
+  | PowerQ G3 | Legacy | PowerPC | 1 | 400 MHz | |
+  | PowerQ G4 (the whole module, with its heat sink) | Legacy | PowerPC | 1 | 1.25 GHz | |
+  | Quince Q1 | Advanced | ARM64 | 4 and 4 efficiency cores | 3.2 GHz | 8 GB |
+  | Quince Q2 | Advanced | ARM64 | 4 and 4 efficiency cores | 3.49 GHz | 16 GB |
+  | Quince Q3 | Advanced | ARM64 | 4 and 4 efficiency cores | 4.05 GHz | 24 GB |
+
+  The G4's module carries its own heat sink, which cools it as the Legacy's stock cooler would (60 W): no cooler goes
+  over it. The Q chips carry their graphics and their memory, shared with the graphics, so a machine runs on one with
+  no memory module; the Advanced boards keep their memory slots besides.
+- **Quince's instruction sets.** The 68k (32-bit), the PowerPC (32-bit) and the ARM64 (64-bit) each run only the
+  programs built for them. A program runs on several when it is built as a **universal build**
+  (`sigma build --isa powerpc,x86-64`, [Σ and Σ#](SIGMA.md)), which carries a listing for each and runs on each. A
+  system can carry a **translator**, which runs another set's programs more slowly: **Champollion** runs PowerPC
+  programs on x86-64 processors at half their speed, **Champollion 2** x86-64 programs on Quince's own chips at four
+  fifths of it. A system is built for an instruction set too: one built for another processor is not installed, and a
+  disk carried from one maker's machine to another's shows nothing to start.
 - **The all-in-ones** carry their screen: their glass shows what the machine shows, as a monitor does, and a click on
   the glass sits you down at it; a click anywhere else opens its parts. Their sound comes from their own case. They
   and the Studio take their cables only from behind, and each line plugged in shows its socket on the back and its
@@ -164,7 +186,7 @@ Hover a part to read its tooltip. What each line means:
 
 ### Processors (CPU)
 
-170 of them across the eras, from the Integra and Velocion makers.
+176 of them across the eras, from the Integra and Velocion makers, and Quince's six.
 
 - **N cores @ X GHz**: how many things it does at once, and how fast each.
 - **Architecture**: its design; a newer design does more in a tick at the same clock.
@@ -174,6 +196,8 @@ Hover a part to read its tooltip. What each line means:
 - **x86-64, 64-bit, 256 MB per item**: its instruction set, its word size, and the disk space an item takes in its
   era.
 - A processor with graphics built in says so: it lights a monitor without a graphics card.
+- A processor with memory in its package says how much, in items buffer, as a module does; one that carries its own
+  heat sink says what it takes away, and takes no cooler.
 
 ### Memory (RAM)
 
@@ -411,6 +435,8 @@ and mends a quarter of the bad sectors left; while it runs, that disk answers th
 
 ## What can go wrong
 
+- **A system will not install, or the setup lists a disk's system as "for ... processors".** The system is built for
+  another instruction set than the machine's processor: use one built for it.
 - **The window refuses the build.** It names the reason: no CPU or no RAM; more of a part than the board has
   slots for; a CPU that does not fit the socket; processors of two instruction sets mixed; a card in the wrong kind
   of slot; memory of a generation the board does not take; two sound cards, or one of another era; more power

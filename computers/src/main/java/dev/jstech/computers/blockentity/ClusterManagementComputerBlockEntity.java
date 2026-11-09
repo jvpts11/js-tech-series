@@ -633,6 +633,10 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
             return ClusterJobTexts.BAY_OFF;
         }
         if (j.kind == JobKind.SYSTEM) {
+            final OsDef system = OsRegistry.getOs(j.medium.id());
+            if (system != null && !host.runsSystem(system)) {
+                return ClusterJobTexts.OTHER_PROCESSOR;
+            }
             // "To all" means bring every node to this system: one already running it is left alone.
             return j.medium.id().equals(host.installedOsId()) ? ClusterJobTexts.ALREADY_INSTALLED : null;
         }

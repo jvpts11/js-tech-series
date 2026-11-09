@@ -2476,6 +2476,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     @Override
     public boolean installOs(final ResourceLocation osId, final int preferredSlot) {
+        // A system the unit's processor cannot run is put on none of its disks, as on a desk computer.
+        final OsDef system = OsRegistry.getOs(osId);
+        if (system != null && !runsSystem(system)) {
+            return false;
+        }
         final boolean installed = OsDisks.installOs(
                 diskSlots(), this::diskInSlot, this::setDiskInSlot, osId, preferredSlot);
         /* A network system arrives with its interface on, on a rack unit as on a desk computer. */

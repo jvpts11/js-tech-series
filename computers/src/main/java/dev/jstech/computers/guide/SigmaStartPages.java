@@ -283,8 +283,8 @@ final class SigmaStartPages {
                         GuideCell.words("Names the listing it writes; without it, the listing takes the first source"
                                 + " file's name with .asm in place of its ending."))
                 .row(GuideCell.code("--arch <isa>"),
-                        GuideCell.words("Builds for an instruction set: IA-16, x86 or x86-64, in any letter case;"
-                                + " without it, the language's default applies."))
+                        GuideCell.words("Builds for an instruction set: IA-16, x86, x86-64, 68k, PowerPC or ARM64,"
+                                + " in any letter case; without it, the language's default applies."))
                 .row(GuideCell.code("--lang <version>"),
                         GuideCell.words("Holds the build to a language version, 1 or 2; without it, the newest"
                                 + " version the installed compiler knows is used."))
@@ -306,6 +306,20 @@ final class SigmaStartPages {
                 .paragraph("A warning looks the same, but it says warning instead of error, and it is shown in dim"
                         + " text. When the build fails, the compiler prints the number of errors last, such as"
                         + " \"sgsc: 1 error, nothing was written\". You get no listing from a failed build.")
+                .subheading("Building for several instruction sets")
+                .paragraph("A program runs only on the line of processors it was built for. Quince's machines have"
+                        + " lines of their own (68k, PowerPC and ARM64), so a program for them and for the others is"
+                        + " built with sigma build, the runtime's own command. With several instruction sets after"
+                        + " --isa, it makes a universal build: one listing for each, in one file, and every machine"
+                        + " runs the listing for its own processor. The file is as big as all of them together.")
+                .table("The sigma build command", "Command", "What it does")
+                .row(GuideCell.code("sigma build <source> [-o <out.asm>] [--isa <isa>[,<isa>...]] [--lang <version>]"),
+                        GuideCell.words("Builds a source file for the instruction sets named, or for its language's"
+                                + " default with no --isa. The source's ending names the language."))
+                .session("jsc:guide/terminal/bash", "Ubuntu")
+                .typed("player@pc:~$ ", "sigma build hello.sgs --isa powerpc,x86-64")
+                .answer("sigma: wrote hello.asm", "a universal build for PowerPC, x86-64, which runs on each",
+                        "run it with: sigma run hello.asm")
                 .ifSomethingGoesWrong(
                         "\"sgsc: 1 error, nothing was written\" appears, or the same with more errors.",
                         "Read each error above it, fix the line it names, and compile again.",
@@ -316,7 +330,7 @@ final class SigmaStartPages {
                         "\"IA-16 runs Σ only; write it in Σ and build it with scc\" appears.",
                         "Build the Sigma program with scc, or choose x86 or x86-64 with --arch.",
                         "\"no instruction set is called\" appears, followed by the names there are.",
-                        "Use one of the names IA-16, x86 or x86-64.",
+                        "Use one of the names IA-16, x86, x86-64, 68k, PowerPC or ARM64.",
                         "\"'3' is not a version of Σ#; there are 1 to 2\" appears.",
                         "Use 1 or 2 after --lang.",
                         "\"this compiler knows Σ# 1 at most; Σ# 2 needs a newer one\" appears.",
@@ -332,6 +346,9 @@ final class SigmaStartPages {
                 .table("The sigma command", "Command", "What it does")
                 .row(GuideCell.code("sigma run <file> [--heap <n>M] [arguments]"),
                         GuideCell.words("Starts a program. The word start does the same."))
+                .row(GuideCell.code("sigma build <source> [--isa <isa>[,<isa>...]]"),
+                        GuideCell.words("Builds a program for one instruction set, or for several at once"
+                                + " ([](jsc:sigma_compile))."))
                 .row(GuideCell.code("sigma stop <id>"),
                         GuideCell.words("Stops a running program. The word kill does the same."))
                 .row(GuideCell.code("sigma ps"),
@@ -352,7 +369,8 @@ final class SigmaStartPages {
                         + " version and the default instruction set of its language. The settings of a project do not"
                         + " apply to that compile.")
                 .paragraph("Before a listing starts, the runtime makes three checks. It checks that"
-                        + " the listing fits the computer's instruction set. It checks the listing's assembly version,"
+                        + " the listing fits the computer's instruction set, or that the computer's system carries a"
+                        + " translator for it, which runs it more slowly. It checks the listing's assembly version,"
                         + " which is refused when it is too old or too new. And it checks that the memory of the"
                         + " program fits in the free memory of the computer.")
                 .paragraph("A running program gets its own memory, called the heap. The heap is measured in megabytes,"

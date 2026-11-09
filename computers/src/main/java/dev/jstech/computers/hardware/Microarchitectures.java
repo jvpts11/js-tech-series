@@ -74,6 +74,21 @@ public final class Microarchitectures {
             new Microarchitecture("sapphire_rapids", "Sapphire Rapids", 3400);
     public static final Microarchitecture EMERALD_RAPIDS =
             new Microarchitecture("emerald_rapids", "Emerald Rapids", 3400);
+    /*
+     * The designs of Quince's machines (computers/docs/design/quince.md): the 68000, which took eight clocks or so to
+     * an instruction, a fifth of what a 486 did a clock; the G3's 750 and the G4's 7450, a little ahead of the P6 a
+     * clock; and the cores of Quince's own chips, a performance and an efficiency design for each, the performance
+     * ones doing a little more a clock than the best x86 cores of their years. All are estimates.
+     */
+    public static final Microarchitecture M68000 = new Microarchitecture("m68000", "68000", 100);
+    public static final Microarchitecture PPC_750 = new Microarchitecture("ppc_750", "750", 1100);
+    public static final Microarchitecture PPC_7450 = new Microarchitecture("ppc_7450", "7450", 1200);
+    public static final Microarchitecture FIRESTORM = new Microarchitecture("firestorm", "Firestorm", 3900);
+    public static final Microarchitecture ICESTORM = new Microarchitecture("icestorm", "Icestorm", 2000);
+    public static final Microarchitecture AVALANCHE = new Microarchitecture("avalanche", "Avalanche", 4000);
+    public static final Microarchitecture BLIZZARD = new Microarchitecture("blizzard", "Blizzard", 2200);
+    public static final Microarchitecture EVEREST = new Microarchitecture("everest", "Everest", 4150);
+    public static final Microarchitecture SAWTOOTH = new Microarchitecture("sawtooth", "Sawtooth", 2400);
 
     // Graphics cards, oldest first.
 
@@ -150,7 +165,8 @@ public final class Microarchitectures {
             I486, P5, K5, K6, P6, K7, NETBURST, K8, CENTRO, K10, NEHALEM, WESTMERE, SANDY_BRIDGE, IVY_BRIDGE, HASWELL,
             BULLDOZER, PILEDRIVER, SKYLAKE, KABY_LAKE, COFFEE_LAKE, COMET_LAKE, WAY_1, WAY_1_PLUS, WAY_2, WAY_3, WAY_4,
             WAY_5, ALDER_LAKE, RAPTOR_LAKE, ARROW_LAKE, GRACEMONT, SKYMONT, SKYLAKE_SP, CASCADE_LAKE, ICE_LAKE_SP,
-            COOPER_LAKE, SAPPHIRE_RAPIDS, EMERALD_RAPIDS,
+            COOPER_LAKE, SAPPHIRE_RAPIDS, EMERALD_RAPIDS, M68000, PPC_750, PPC_7450, FIRESTORM, ICESTORM, AVALANCHE,
+            BLIZZARD, EVEREST, SAWTOOTH,
             VGA, RENDITION, NV3, RAGE, THREEDFX, FAHRENHEIT, CELSIUS, R100, R200, KELVIN, R300, RANKINE, CURIE, R400,
             R500, TESLA, TERASCALE, FERMI, TERASCALE_2, GCN, KEPLER, MAXWELL, PASCAL, VOLTA, TURING, RDNA, AMPERE,
             RDNA_2, ADA, HOPPER, RDNA_3, BLACKWELL, RDNA_4);

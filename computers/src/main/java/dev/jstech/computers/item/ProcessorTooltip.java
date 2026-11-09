@@ -26,6 +26,10 @@ final class ProcessorTooltip {
     private static final TextKey SOCKET = TextKey.of("jsc.item.cpu.socket", "Socket %s");
     private static final TextKey GRAPHICS = TextKey.of("jsc.item.cpu.graphics",
             "%s on the die: a video output on the board, no graphics card needed");
+    private static final TextKey MEMORY = TextKey.of("jsc.item.cpu.memory",
+            "%s items buffer in the package, shared with its graphics");
+    private static final TextKey HEAT_SINK = TextKey.of("jsc.item.cpu.heat_sink",
+            "Its own heat sink takes away %s W: no cooler goes over it");
     /* The instruction set, then what an item costs on the era's disks. */
     private static final TextKey WORD = TextKey.of("jsc.item.cpu.word", "%s  -  %s");
 
@@ -39,6 +43,13 @@ final class ProcessorTooltip {
         HardwareTooltip.appendDesign(tooltip, spec.design().label());
         if (spec.hasIntegratedGraphics()) {
             tooltip.add(GameText.component(GRAPHICS.with(spec.design().graphics().model()))
+                    .withStyle(ChatFormatting.GRAY));
+        }
+        if (spec.design().memoryItems() > 0) {
+            tooltip.add(GameText.component(MEMORY.with(spec.design().memoryItems())).withStyle(ChatFormatting.GRAY));
+        }
+        if (spec.design().heatSinkWatts() > 0) {
+            tooltip.add(GameText.component(HEAT_SINK.with(spec.design().heatSinkWatts()))
                     .withStyle(ChatFormatting.GRAY));
         }
         tooltip.add(GameText.component(THROUGHPUT.with(spec.orchestrationCapacity(), spec.tdpWatts()))

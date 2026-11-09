@@ -78,6 +78,17 @@ public record ComputerHardwareLayout(
         return index < firstCpus ? cpuStart + index : laterStart + index - firstCpus;
     }
 
+    /** Which processor, from 0, the slot holds; -1 for a slot that holds none. */
+    public int cpuIndex(final int slot) {
+        if (slot >= cpuStart && slot < cpuStart + firstCpus) {
+            return slot - cpuStart;
+        }
+        if (slot >= laterStart && slot < laterStart + cpuCount - firstCpus) {
+            return firstCpus + slot - laterStart;
+        }
+        return -1;
+    }
+
     /** The slot of memory module {@code index}, from 0. */
     public int ramSlot(final int index) {
         return index < firstRam ? ramStart + index : laterStart + (cpuCount - firstCpus) + index - firstRam;

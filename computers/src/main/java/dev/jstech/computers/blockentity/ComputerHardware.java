@@ -323,9 +323,12 @@ final class ComputerHardware {
         int bare = 0;
         final int processors = Math.min(boardCpuSlots(), this.layout.coolerCount());
         for (int i = 0; i < processors; i++) {
-            final CoolerSpec cooler = cooler(i);
+            final CpuSpec cpu = HardwareRegistry.cpu(this.handler.getStackInSlot(this.layout.cpuSlot(i)));
+            // A module carrying its own heat sink is cooled by it, as a stock cooler would have been in its seat.
+            final CoolerSpec cooler = cpu != null && cpu.design().heatSinkWatts() > 0
+                    ? new CoolerSpec(cpu.era(), CoolerSpec.Kind.STOCK, cpu.design().heatSinkWatts()) : cooler(i);
             coolers.add(cooler);
-            if (cooler == null && HardwareRegistry.cpu(this.handler.getStackInSlot(this.layout.cpuSlot(i))) != null) {
+            if (cooler == null && cpu != null) {
                 bare++;
             }
         }

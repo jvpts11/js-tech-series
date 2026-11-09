@@ -24,6 +24,7 @@ import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.IsaTranslator;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PcieGeneration;
 import dev.jstech.computers.hardware.PsuSpec;
@@ -79,6 +80,15 @@ public final class ComputersRegisterEvent extends Event implements IModBusEvent 
     /** Adds an instruction set architecture, a kind of machine that programs can then be built for. */
     public void isa(final IsaSpec isa) {
         JsComputersApi.registerIsa(isa);
+    }
+
+    /**
+     * Adds a translator, which runs the programs built for one instruction set on a processor of another, slower,
+     * on the systems that carry it ({@link OsDef#withTranslators}).
+     */
+    @ApiStatus.Experimental
+    public void translator(final IsaTranslator translator) {
+        JsComputersApi.registerTranslator(translator);
     }
 
     /** Adds a kernel, which an operating system then names as the one it is built on. */

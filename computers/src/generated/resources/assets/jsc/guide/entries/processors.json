@@ -71,12 +71,53 @@
           {
             "words": "jsc.guide.processors.table1_3_3"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.processors.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.processors.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.processors.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.processors.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.processors.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.processors.table1_5_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.processors.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.processors.table1_6_2"
+          },
+          {
+            "words": "jsc.guide.processors.table1_6_3"
+          }
         ]
       ]
     },
     {
       "type": "text",
       "text": "jsc.guide.processors.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.processors.text7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.processors.text8"
     },
     {
       "type": "table",
@@ -168,7 +209,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.processors.text7"
+      "text": "jsc.guide.processors.text9"
     },
     {
       "type": "heading",
@@ -188,6 +229,10 @@
         {
           "fix": "jsc.guide.processors.fix3",
           "problem": "jsc.guide.processors.problem3"
+        },
+        {
+          "fix": "jsc.guide.processors.fix4",
+          "problem": "jsc.guide.processors.problem4"
         }
       ]
     },
@@ -375,7 +420,13 @@
     "jsc:cpu_integra_servo_oro_6442y",
     "jsc:cpu_integra_servo_w9_3495x",
     "jsc:cpu_integra_servo_platina_8490h",
-    "jsc:cpu_integra_servo_platina_8592"
+    "jsc:cpu_integra_servo_platina_8592",
+    "jsc:cpu_motoroller_68000",
+    "jsc:cpu_powerq_g3",
+    "jsc:cpu_powerq_g4",
+    "jsc:cpu_quince_q1",
+    "jsc:cpu_quince_q2",
+    "jsc:cpu_quince_q3"
   ],
   "order": 17,
   "section": "jsc:hardware",

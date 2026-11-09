@@ -8,9 +8,14 @@
 package dev.jstech.computers.os;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.hardware.EraStorage;
+import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.IsaTranslator;
+import dev.jstech.computers.hardware.IsaTranslators;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -18,8 +23,11 @@ import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Immutable descriptor for an operating system registered with the mod.
@@ -56,6 +64,8 @@ import org.jetbrains.annotations.ApiStatus;
  *                       ask for a system of that family no older than a given one. Zero, the default, means
  *                       the family has no order: nothing is newer or older than anything else in it, and a
  *                       program is decided by the platform alone
+ * @param isas           the instruction sets the system is built for and the translators it carries; a system
+ *                       that names none is built for its first era's processors ({@link #builtFor()})
  */
 @ApiStatus.Experimental
 public record OsDef(
@@ -74,7 +84,8 @@ public record OsDef(
         SoftwareHouse house,
         int ramMb,
         InstallerStyle installerStyle,
-        int familyRank
+        int familyRank,
+        SystemIsas isas
 ) {
 
     public static final Codec<OsDef> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -97,8 +108,11 @@ public record OsDef(
             StableCodecs.byName(InstallerStyle.class)
                     .optionalFieldOf("installer", InstallerStyle.PLAIN)
                     .forGetter(OsDef::installerStyle),
-            Codec.INT.optionalFieldOf("family_rank", 0).forGetter(OsDef::familyRank)
-    ).apply(inst, OsDef::new));
+            Tail.CODEC.forGetter(os -> new Tail(os.familyRank(), os.isas()))
+    ).apply(inst, (id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName, shell,
+            packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, tail) -> new OsDef(id,
+            capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName, shell, packageManager,
+            installMode, bundledDesktop, house, ramMb, installerStyle, tail.familyRank(), tail.isas())));
 
     /**
      * The media-installed, guided, desktop-bundling form used by the DOS-family systems: {@code cmd} shell, no
@@ -117,7 +131,7 @@ public record OsDef(
                 displayName, ShellKind.CMD,
                 platform == Platform.FRAMES ? PackageManagerKind.PCKMGR : PackageManagerKind.NONE,
                 InstallMode.GUIDED, bundledDesktop, house, 0,
-                InstallerStyle.PLAIN, 0);
+                InstallerStyle.PLAIN, 0, SystemIsas.UNNAMED);
     }
 
     /** A Linux distribution: TTY capability on the Linux kernel, no bundled desktop, installable from the Legacy era. */
@@ -140,14 +154,69 @@ public record OsDef(
                                        final SoftwareHouse house) {
         return new OsDef(id, OsCapability.TERMINAL_ONLY, minEra, kernelId, footprintMb, Optional.empty(), platform,
                 displayName, shell, packageManager, installMode, Optional.empty(), house, 0,
-                InstallerStyle.PLAIN, 0);
+                InstallerStyle.PLAIN, 0, SystemIsas.UNNAMED);
     }
 
     /** The same system, holding {@code megabytes} of RAM for itself while it runs. */
     public OsDef withRam(final int megabytes) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
                 shell, packageManager, installMode, bundledDesktop, house, megabytes, installerStyle,
-                familyRank);
+                familyRank, isas);
+    }
+
+    /**
+     * The same system, built for those instruction sets: a machine starts it when its processor runs one of them, as
+     * a system built for two processors at once starts on either (computers/docs/design/quince.md).
+     */
+    public OsDef withIsas(final IsaSpec... instructionSets) {
+        final List<String> ids = new ArrayList<>();
+        for (final IsaSpec one : instructionSets) {
+            ids.add(one.id());
+        }
+        return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
+                shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, familyRank,
+                new SystemIsas(ids, isas.translators()));
+    }
+
+    /** The same system, carrying those translators for the programs built for another processor. */
+    public OsDef withTranslators(final IsaTranslator... carried) {
+        final List<String> ids = new ArrayList<>();
+        for (final IsaTranslator one : carried) {
+            ids.add(one.id());
+        }
+        return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
+                shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, familyRank,
+                new SystemIsas(isas.builtFor(), ids));
+    }
+
+    /**
+     * The ids of the instruction sets this system is built for: the ones it names, or, when it names none, the one
+     * this mod's processors of its first era are built on, which is what every system was built for before any other.
+     */
+    public List<String> builtFor() {
+        return isas.builtFor().isEmpty() ? List.of(Isas.of(minEra).id()) : isas.builtFor();
+    }
+
+    /** Whether a machine whose processor is of {@code isa} starts this system; one with no processor says nothing. */
+    public boolean runsOn(@Nullable final IsaSpec isa) {
+        if (isa == null) {
+            return true;
+        }
+        for (final String one : builtFor()) {
+            if (isa.runs(one)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** The translators this system carries, those a mod has brought; one nobody brought is left out. */
+    public List<IsaTranslator> translators() {
+        final List<IsaTranslator> carried = new ArrayList<>();
+        for (final String one : isas.translators()) {
+            IsaTranslators.byId(one).ifPresent(carried::add);
+        }
+        return carried;
     }
 
     /**
@@ -161,7 +230,7 @@ public record OsDef(
      */
     public OsDef withRank(final int rank) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, rank);
+                shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, rank, isas);
     }
 
     /**
@@ -172,7 +241,7 @@ public record OsDef(
      */
     public OsDef withInstaller(final InstallerStyle style) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shell, packageManager, installMode, bundledDesktop, house, ramMb, style, familyRank);
+                shell, packageManager, installMode, bundledDesktop, house, ramMb, style, familyRank, isas);
     }
 
     public OsDef {
@@ -204,6 +273,9 @@ public record OsDef(
         if (familyRank < 0) {
             familyRank = 0;
         }
+        if (isas == null) {
+            isas = SystemIsas.UNNAMED;
+        }
     }
 
     /**
@@ -218,5 +290,17 @@ public record OsDef(
     /** The translation key for this OS's display name, in vanilla {@code os.<ns>.<path>} form. */
     public String titleKey() {
         return "os." + id.getNamespace() + "." + id.getPath();
+    }
+
+    /*
+     * The fields after the fifteenth, read and written beside the others: one codec group takes sixteen at most, so
+     * the family's rank and the instruction sets go in as the sixteenth, side by side in the same object.
+     */
+    private record Tail(int familyRank, SystemIsas isas) {
+
+        static final MapCodec<Tail> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
+                Codec.INT.optionalFieldOf("family_rank", 0).forGetter(Tail::familyRank),
+                SystemIsas.MAP_CODEC.forGetter(Tail::isas)
+        ).apply(inst, Tail::new));
     }
 }

@@ -91,13 +91,13 @@ public class ServerAssemblyScreen extends AbstractMachineAssemblyScreen<ServerAs
     protected String stateWord() {
         return GameText.resolve(frameBuild == null ? AssemblyTexts.UNASSEMBLED
                 : !frameChecks.valid() ? AssemblyTexts.ERROR
-                : frameBuild.rams().isEmpty() ? AssemblyTexts.WARN : AssemblyTexts.READY);
+                : frameBuild.ramBuffer() == 0 ? AssemblyTexts.WARN : AssemblyTexts.READY);
     }
 
     @Override
     protected int stateColour() {
         return frameBuild == null ? JsTechTheme.dim() : !frameChecks.valid() ? JsTechTheme.red()
-                : frameBuild.rams().isEmpty() ? JsTechTheme.amber() : JsTechTheme.green();
+                : frameBuild.ramBuffer() == 0 ? JsTechTheme.amber() : JsTechTheme.green();
     }
 
     @Override

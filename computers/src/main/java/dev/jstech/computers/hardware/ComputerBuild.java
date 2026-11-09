@@ -184,10 +184,20 @@ public record ComputerBuild(MotherboardSpec motherboard,
         return 1 + gpus().size();
     }
 
+    /** The machine's memory, in buffer items: its modules', and what its processors carry in their packages. */
     public long ramBuffer() {
-        long sum = 0L;
+        long sum = packageMemory();
         for (final RamSpec ram : rams) {
             sum += ram.bufferItems();
+        }
+        return sum;
+    }
+
+    /** The memory the processors carry in their packages, in buffer items; 0 for all but Quince's own chips. */
+    public long packageMemory() {
+        long sum = 0L;
+        for (final CpuSpec cpu : cpus) {
+            sum += cpu.design().memoryItems();
         }
         return sum;
     }
@@ -203,9 +213,13 @@ public record ComputerBuild(MotherboardSpec motherboard,
     /**
      * The lowest staging latency across all installed RAM modules, in ticks. When no RAM is
      * installed this returns zero, and the caller already guards against an empty RAM list through
-     * {@link #validate()}, so an empty list here means the build is invalid anyway.
+     * {@link #validate()}, so an empty list here means the build is invalid anyway. Memory in a processor's package
+     * sits beside its cores and keeps nothing waiting.
      */
     public int bestRamLatencyTicks() {
+        if (packageMemory() > 0) {
+            return 0;
+        }
         int best = Integer.MAX_VALUE;
         for (final RamSpec ram : rams) {
             best = Math.min(best, ram.latencyTicks());
@@ -254,9 +268,10 @@ public record ComputerBuild(MotherboardSpec motherboard,
         }
         /*
          * Every computer needs RAM to do work: with a zero buffer the CPU has nothing to stage
-         * through and can move nothing. A box without RAM is not a working computer.
+         * through and can move nothing. A box without RAM is not a working computer, unless its
+         * processor carries memory of its own in its package.
          */
-        if (rams.isEmpty()) {
+        if (rams.isEmpty() && packageMemory() == 0) {
             problems.add(NO_RAM.text());
         }
         if (cpus.size() > motherboard.cpuSlots()) {

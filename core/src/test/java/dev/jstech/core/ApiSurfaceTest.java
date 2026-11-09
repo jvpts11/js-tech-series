@@ -43,7 +43,8 @@ class ApiSurfaceTest {
             // what it adds to them
             "IProgrammingLanguage", "OperationType", "IOperationArgs",
             // the computers: what a machine is, and what can be installed on one
-            "IsaSpec", "KernelDef", "OsDef", "ProgramSpec", "DesktopEnvironmentDef", "OperatingSpaceDef",
+            "IsaSpec", "IsaTranslator", "KernelDef", "OsDef", "SystemIsas", "ProgramSpec", "DesktopEnvironmentDef",
+            "OperatingSpaceDef",
             // the engines a Mainframe can run to plan its network's work, and what they may offer
             "EngineDef", "EngineCapability",
             // the hardware: the sheet of each kind of part, and the kinds parts are made of

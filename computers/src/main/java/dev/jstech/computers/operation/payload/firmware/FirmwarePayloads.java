@@ -10,9 +10,11 @@ package dev.jstech.computers.operation.payload.firmware;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.BY_HAND;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.EMPTY_DRIVE;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.ERA_OR_NEWER;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.FOR_PROCESSORS;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.INSTALLER;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.LIVE;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NEEDS_ERA;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NOT_ITS_PROCESSOR;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_DISK;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_MEDIUM;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_ROOM;
@@ -41,6 +43,8 @@ import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
@@ -205,12 +209,14 @@ public final class FirmwarePayloads {
             final ResourceLocation osId =
                     OsDisks.systemOn(disk);
             final OsDef os = osId == null ? null : OsRegistry.getOs(osId);
+            // A system built for another processor is shown for what it is, and offered as nothing to start.
+            final boolean starts = os != null && computer.runsSystem(os);
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i,
                     os == null ? "" : os.id().toString(),
                     os == null ? NO_SYSTEM.text() : Text.literal(os.displayName()),
                     GameText.of(disk.getHoverName()),
                     DiskSpec.sizeLabel(spec.capacityMb()),
-                    Text.EMPTY, os != null, -1));
+                    os == null || starts ? Text.EMPTY : FOR_PROCESSORS.with(processorsOf(os)), starts, -1));
         }
         /*
          * The drives a machine can start a system from: its readers and the drives and ports on its own front, a
@@ -236,11 +242,13 @@ public final class FirmwarePayloads {
                 continue;
             }
             final boolean eraOk = OsGating.canInstall(os.minEra(), era);
+            final boolean processorOk = computer.runsSystem(os);
+            final Text refused = !eraOk ? ERA_OR_NEWER.with(os.minEra().text())
+                    : !processorOk ? FOR_PROCESSORS.with(processorsOf(os)) : Text.EMPTY;
             entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_MEDIA, endpoint,
                     os.id().toString(),
                     (os.installMode() == InstallMode.GUIDED ? INSTALLER : LIVE).with(os.displayName()),
-                    drive, "", eraOk ? Text.EMPTY : ERA_OR_NEWER.with(os.minEra().text()), eraOk,
-                    os.installMode().id(), bay));
+                    drive, "", refused, eraOk && processorOk, os.installMode().id(), bay));
         }
         return new FirmwareStatePayload(pos, EraCodecs.placeOf(era), machineOf(level, computer, pos),
                 computer.bootDiskSlot(),
@@ -486,7 +494,7 @@ public final class FirmwarePayloads {
                     final Era hostEra =
                             computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
                     if (os != null && distro != null && os.installMode() != InstallMode.GUIDED
-                            && OsGating.canInstall(os.minEra(), hostEra)) {
+                            && OsGating.canInstall(os.minEra(), hostEra) && computer.runsSystem(os)) {
                         /*
                          * A live medium: the machine starts from it, which means it restarts. The self-test
                          * runs again and the medium's shell is what comes up after it, exactly as starting
@@ -581,6 +589,11 @@ public final class FirmwarePayloads {
                 failure = NEEDS_ERA.with(def.displayName(), def.minEra().text(), hostEra.text());
                 continue;
             }
+            final ComputerBuild build = computer.currentBuild();
+            if (!computer.runsSystem(def) && build != null) {
+                failure = NOT_ITS_PROCESSOR.with(def.displayName(), processorsOf(def), build.isa().name());
+                continue;
+            }
             /*
              * A live/source medium (Arch, Gentoo) never one-click installs: it must be BOOTED and the
              * system put on the disk by hand through its shell. Only guided installers land here.
@@ -671,5 +684,14 @@ public final class FirmwarePayloads {
             MonitorBlock.openBootTarget(
                     player, level, payload.monitorPos(), payload.hostPos());
         }
+    }
+
+    /** The processors a system is built for, as a person reads them: "PowerPC / x86-64". */
+    private static String processorsOf(final OsDef os) {
+        final List<String> names = new ArrayList<>();
+        for (final String id : os.builtFor()) {
+            names.add(Isas.byId(id).map(IsaSpec::name).orElse(id));
+        }
+        return String.join(" / ", names);
     }
 }

@@ -331,6 +331,15 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     }
 
     /**
+     * Whether this machine's processor starts {@code os}: it runs what the system was built for. A machine with no
+     * processor to ask, or built from no parts at all, holds no system against it.
+     */
+    default boolean runsSystem(final OsDef os) {
+        final ComputerBuild build = currentBuild();
+        return os.runsOn(build == null ? null : build.isa());
+    }
+
+    /**
      * How many bits wide this machine's processor is, which is what a system names its architecture from. A
      * machine that cannot say what it is built of is taken for one of today's.
      */

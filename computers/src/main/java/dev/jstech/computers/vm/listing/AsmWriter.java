@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.vm.listing;
 
+import java.util.List;
+
 /**
  * Writes a program out as the text a player can open and read.
  *
@@ -26,6 +28,26 @@ public final class AsmWriter {
     private static final int COMMENT_COLUMN = 45;
 
     private AsmWriter() {
+    }
+
+    /**
+     * A universal build of {@code builds}, the listings of one program built for each of several instruction sets:
+     * the listings one after another, each from its own {@code .asm} line, as a real universal binary carries a whole
+     * program for each processor it runs on, and is that much bigger for it. A machine runs the one built for its
+     * processor ({@link AsmReader#readAll}).
+     */
+    public static String universal(final List<String> builds) {
+        final StringBuilder text = new StringBuilder();
+        for (final String build : builds) {
+            if (!text.isEmpty()) {
+                text.append('\n');
+            }
+            text.append(build);
+            if (!build.endsWith("\n")) {
+                text.append('\n');
+            }
+        }
+        return text.toString();
     }
 
     /** The whole program as text. */

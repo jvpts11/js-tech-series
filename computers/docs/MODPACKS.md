@@ -240,3 +240,8 @@ A kind already declared is named by its id, a bare name being J's Computers' own
 'ddr4'`, `bus: 'pcie_4_0'`, `form_factor: 'atx'`, `socket: 'lga_1150'`, and an instruction set by its id or its
 name (`'x86-64'`). The kinds a script declares come before the parts that use them, whatever order the script writes
 them in.
+
+A processor's `design` is an object: `arch`, and `codename`, `smt`, `efficiency_cores`, `efficiency_mhz`,
+`efficiency_arch`, `graphics` (`model`, `units`, `mhz`) and, *added 2026-11-09*, `memory_items`, the memory it carries
+in its package, in items buffer, which its machine has with no module in a slot, and `heat_sink_watts`, what a heat
+sink it carries on itself takes away, which cools it with no cooler over it.

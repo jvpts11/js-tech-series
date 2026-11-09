@@ -91,6 +91,16 @@ public record CpuSpec(Era era,
         return with(design.withGraphics(graphics));
     }
 
+    /** The same processor carrying {@code items} of memory in its package, shared with its graphics. */
+    public CpuSpec withMemory(final long items) {
+        return with(design.withMemory(items));
+    }
+
+    /** The same processor as a module carrying its own heat sink, which takes away {@code watts}. */
+    public CpuSpec withHeatSink(final int watts) {
+        return with(design.withHeatSink(watts));
+    }
+
     /** Whether the processor carries graphics of its own. */
     public boolean hasIntegratedGraphics() {
         return design.graphics().present();

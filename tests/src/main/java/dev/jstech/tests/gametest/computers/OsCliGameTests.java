@@ -37,7 +37,9 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -1190,7 +1192,7 @@ public final class OsCliGameTests {
     /**
      * Software cannot predate its hardware generation. KDE and GNOME are old enough for a Legacy
      * machine; Cinnamon is a much later desktop and needs a Standard one; a Vintage machine gets no
-     * graphical desktop at all and stays at the TTY.
+     * graphical desktop at all, since its 16-bit processor runs no Linux to put one on.
      */
     @GameTest(template = ARENA)
     public static void desktopEnvironments_installOnlyOnHardwareOfTheirOwnEraOrNewer(final GameTestHelper helper) {
@@ -1205,14 +1207,13 @@ public final class OsCliGameTests {
                 ComputingModule.LEGACY_MAINFRAME.get(),
                 HardwareItems.MOTHERBOARD_MTX_LEGACY.get(), HardwareItems.CPU_VELOCION_OPTERA_250.get(),
                 HardwareItems.RAM_DDR_1024.get(), HardwareItems.PSU_500B.get());
-        final MainframeBlockEntity vintage = placeMainframeWithEra(helper, vintagePos, ubuntu,
+        final MainframeBlockEntity vintage = assembleMainframe(helper, vintagePos,
                 ComputingModule.VINTAGE_MAINFRAME.get(),
                 HardwareItems.MOTHERBOARD_MTX_VINTAGE.get(), HardwareItems.CPU_INTEGRA_PENTIX_PRO_200.get(),
                 HardwareItems.RAM_EDO_16.get(), HardwareItems.PSU_300.get());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
                     legacy.installMirror();
-                    vintage.installMirror();
                     final ServerCliComputer legacyCli = cliFor(legacy, helper.getLevel());
                     final var legacyShell =
                             dev.jstech.computers.program.cli.CliCommands.shellFor(legacyCli, 52);
@@ -1226,14 +1227,10 @@ public final class OsCliGameTests {
                                     .contains("Standard hardware"),
                             "Cinnamon must refuse a Legacy machine and say which era it needs");
 
-                    final ServerCliComputer vintageCli = cliFor(vintage, helper.getLevel());
-                    final var vintageShell =
-                            dev.jstech.computers.program.cli.CliCommands.shellFor(vintageCli, 52);
-                    helper.assertTrue(text(vintageShell.run("apt install gnome", vintageCli))
-                                    .contains("Legacy hardware"),
-                            "a Vintage machine gets no desktop environment at all");
+                    // Linux is built for the x86 of the Legacy on, and a Vintage processor runs IA-16 alone.
+                    helper.assertFalse(vintage.installOs(ubuntu), "a Vintage machine takes no Linux to begin with");
                     helper.assertTrue(vintage.installedDesktopId() == null,
-                            "the refused install must leave the Vintage machine at the TTY");
+                            "so it gets no desktop environment at all");
                 })
                 .thenSucceed();
     }
@@ -1485,6 +1482,17 @@ public final class OsCliGameTests {
                                                               final net.minecraft.world.item.Item cpu,
                                                               final net.minecraft.world.item.Item ram,
                                                               final net.minecraft.world.item.Item psu) {
+        final MainframeBlockEntity mainframe = assembleMainframe(helper, pos, chassis, board, cpu, ram, psu);
+        if (!mainframe.installOs(osId)) {
+            throw new IllegalStateException("failed to install " + osId + " on the era Mainframe at " + pos);
+        }
+        return mainframe;
+    }
+
+    /** A Mainframe of an era built on those parts and a disk, switched on, with no system on it. */
+    private static MainframeBlockEntity assembleMainframe(final GameTestHelper helper, final BlockPos pos,
+                                                          final Block chassis, final Item board, final Item cpu,
+                                                          final Item ram, final Item psu) {
         helper.setBlock(pos, chassis);
         if (!(helper.getBlockEntity(pos) instanceof MainframeBlockEntity mainframe)) {
             throw new IllegalStateException("no MainframeBlockEntity at " + pos);
@@ -1497,9 +1505,6 @@ public final class OsCliGameTests {
         inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
                 new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
         mainframe.togglePower();
-        if (!mainframe.installOs(osId)) {
-            throw new IllegalStateException("failed to install " + osId + " on the era Mainframe at " + pos);
-        }
         return mainframe;
     }
 

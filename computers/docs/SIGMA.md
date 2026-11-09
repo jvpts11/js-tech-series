@@ -11,6 +11,15 @@ machine runs; the listing is text you can open and read a line at a time. `sigma
 runs it, and whatever follows the file name is the program's `Program.Args`. `sgpack` wraps a program
 up for the network's Mirror so other players can install it.
 
+A listing is built for one instruction set, and runs on processors of that set and of the newer ones of its line
+(an x86-64 machine runs an x86 listing). *Added 2026-11-09.* Quince's machines have lines of their own, the 68k, the
+PowerPC and the ARM64 ([Hardware](HARDWARE.md#quinces-computers)). `sigma build file.sgs --isa powerpc,x86-64`
+builds a program for the instruction sets named; with more than one, it writes a **universal build**, the listing
+for each one after another in one file, as big as all of them together, and each machine runs the listing for its
+own processor. With no `--isa`, it builds for the language's own default, as `sgsc` does. A system can also carry a
+translator that runs another set's listings more slowly (Champollion runs PowerPC listings on x86-64 at half their
+speed, Champollion 2 x86-64 listings on Quince's own chips at four fifths).
+
 A program is one of two shapes, and says which by how it is written:
 
 - A class with a `static void Main()` runs at the terminal that started it. It holds the prompt, prints

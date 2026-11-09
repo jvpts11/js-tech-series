@@ -372,4 +372,65 @@ class AsmRoundTripTest {
                 + "    ldstr \"abc\\\"\n    ret\n");
         assertEquals(List.of("A4006", "A4006", "A4006"), this.codes());
     }
+
+    /** A universal build is the listings of its builds one after another, each read back whole and on its own. */
+    @Test
+    void readAll_aUniversalBuild_givesBackEachBuildWithItsIsa() {
+        final String universal = AsmWriter.universal(List.of(built("jsc:powerpc"), built("jsc:x86_64")));
+        final AsmReader universalReader = new AsmReader(universal);
+        final List<AsmProgram> builds = universalReader.readAll();
+        assertFalse(universalReader.hasProblems(), universalReader.problems().toString());
+        assertEquals(2, builds.size());
+        assertEquals("jsc:powerpc", builds.get(0).isa());
+        assertEquals("jsc:x86_64", builds.get(1).isa());
+        assertEquals(AsmWriter.write(builds.get(0)), AsmWriter.write(sampleFor("jsc:powerpc")));
+        assertEquals(AsmWriter.write(builds.get(1)), AsmWriter.write(sampleFor("jsc:x86_64")));
+    }
+
+    @Test
+    void read_aUniversalBuild_givesItsFirstBuild() {
+        assertEquals("jsc:powerpc", this.read(AsmWriter.universal(List.of(built("jsc:powerpc"),
+                built("jsc:x86_64")))).isa());
+        assertTrue(this.codes().isEmpty());
+    }
+
+    @Test
+    void readAll_aListingOfOneBuild_givesThatOne() {
+        assertEquals(1, new AsmReader(built("jsc:x86")).readAll().size());
+    }
+
+    /** What is wrong in a later build is reported at its line in the whole listing, not its line in that build. */
+    @Test
+    void readAll_reportsAProblemInALaterBuildAtItsLineInTheWholeListing() {
+        final String first = ".asm 3\n.arch jsc:x86\n.class C\n.method void M() slots 0\n    ret\n";
+        final String second = ".asm 3\n.arch jsc:arm64\n.class C\n.method void M() slots 0\n    nonsense\n";
+        this.reader = new AsmReader(AsmWriter.universal(List.of(first, second)));
+        this.reader.readAll();
+        assertEquals(List.of("A4003"), this.codes());
+        assertEquals(11, this.reader.problems().getFirst().line());
+    }
+
+    /** A type of one build ends where the next build begins, and never takes the next build's members. */
+    @Test
+    void readAll_aTypeEndsWhereTheNextBuildBegins() {
+        final String first = ".asm 3\n.arch jsc:x86\n.class A\n.method void M() slots 0\n    ret\n";
+        final String second = ".asm 3\n.arch jsc:arm64\n.class B\n.method void N() slots 0\n    ret\n";
+        final List<AsmProgram> builds = new AsmReader(AsmWriter.universal(List.of(first, second))).readAll();
+        assertEquals(1, builds.get(0).types().size());
+        assertEquals(1, builds.get(0).type("A").methods().size());
+        assertNull(builds.get(0).type("B"));
+        assertEquals(1, builds.get(1).type("B").methods().size());
+    }
+
+    /* The sample program, built for that instruction set. */
+    private static AsmProgram sampleFor(final String isa) {
+        final AsmProgram program = sample();
+        program.setIsa(isa, 1);
+        return program;
+    }
+
+    /* The sample program's listing, built for that instruction set. */
+    private static String built(final String isa) {
+        return AsmWriter.write(sampleFor(isa));
+    }
 }

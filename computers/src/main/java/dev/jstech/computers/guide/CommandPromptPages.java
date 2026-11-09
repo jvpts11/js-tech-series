@@ -919,8 +919,8 @@ final class CommandPromptPages {
                 .row(GuideCell.code("sgsc"), GuideCell.code("sgsc"),
                         GuideCell.words("Compiles a Sigma# file, which ends in .sgs, into a listing."))
                 .row(GuideCell.code("sigma"), GuideCell.code("sigma"),
-                        GuideCell.words("Runs a listing with sigma run, stops one with sigma stop, and lists what"
-                                + " runs with sigma ps."))
+                        GuideCell.words("Runs a listing with sigma run, builds one for several instruction sets"
+                                + " with sigma build, stops one with sigma stop, and lists what runs with sigma ps."))
                 .row(GuideCell.code("sgpack"), GuideCell.code("sigma"),
                         GuideCell.words("Starts a package, builds it, and puts it on the Mirror or takes it back."))
                 .paragraph("On the Frames editions, pckmgr install fetches these packages from the Mirror. MC-DOS"

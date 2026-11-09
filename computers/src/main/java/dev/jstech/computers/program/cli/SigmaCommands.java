@@ -8,6 +8,8 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.api.JsComputersApi;
+import dev.jstech.computers.api.language.IProgrammingLanguage;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.Platform;
@@ -19,6 +21,8 @@ import dev.jstech.computers.sigma.Diagnostic;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.pack.Manifest;
 import dev.jstech.computers.sigma.pack.Packed;
+import dev.jstech.computers.vm.listing.AsmReader;
+import dev.jstech.computers.vm.listing.AsmWriter;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -367,10 +371,19 @@ public final class SigmaCommands {
 
         /* The runtime's language and its files go in as they are written. */
         private static final TextKey SUMMARY = TextKey.of("jsc.cli.sigma.run.summary",
-                "run a %s program, stop one, or list what is running");
+                "run a %s program, build one, stop one, or list what is running");
         private static final TextKey USAGE = TextKey.of("jsc.cli.sigma.run.usage",
-                "run %s [--heap <n>M] | stop <id> | ps");
+                "run %s [--heap <n>M] | build <source> [--isa <isa>[,<isa>...]] | stop <id> | ps");
         private static final TextKey RUN_USAGE = TextKey.of("jsc.cli.sigma.run.run_usage", "run %s [--heap <n>M]");
+        private static final TextKey BUILD_USAGE = TextKey.of("jsc.cli.sigma.run.build_usage",
+                "build <source> [more ...] [-o <out.asm>] [--isa <isa>[,<isa>...]] [--lang <version>]");
+        /* The source's extension. */
+        private static final TextKey NOT_FOR_A_PROCESSOR = TextKey.of("jsc.cli.sigma.run.not_for_a_processor",
+                "'.%s' is not the source of a language that builds for a processor");
+        /* The instruction sets the listing was built for, by name. */
+        private static final TextKey BUILT_FOR = TextKey.of("jsc.cli.sigma.run.built_for", "built for %s");
+        private static final TextKey UNIVERSAL = TextKey.of("jsc.cli.sigma.run.universal",
+                "a universal build for %s, which runs on each");
         private static final TextKey STOP_USAGE = TextKey.of("jsc.cli.sigma.run.stop_usage",
                 "stop <id>   (as listed by '%s ps')");
         private static final TextKey NOT_A_PROGRAM = TextKey.of("jsc.cli.sigma.run.not_a_program",
@@ -419,6 +432,7 @@ public final class SigmaCommands {
         public void run(final CliContext ctx) {
             switch (ctx.arg(0).toLowerCase(Locale.ROOT)) {
                 case "run", "start" -> this.start(ctx);
+                case "build" -> this.build(ctx);
                 case "stop", "kill" -> this.stop(ctx);
                 case "ps", "list", "" -> this.list(ctx);
                 default -> ctx.out().error(CliTexts.USAGE.with(this.runtime.verb(), this.usage()));
@@ -458,6 +472,126 @@ public final class SigmaCommands {
             } else {
                 ctx.out().error(started.message());
             }
+        }
+
+        /**
+         * Builds a program for one instruction set, or for several at once as a universal build that runs on each
+         * (computers/docs/design/quince.md): {@code sigma build Low.sgs --isa powerpc,x86-64}. The language is the
+         * one the source's extension names in the registry, built once for each instruction set asked for, and the
+         * listings go out one after another in one file. With no instruction set named, it builds for the one the
+         * language starts at, as its compiler does.
+         */
+        private void build(final CliContext ctx) {
+            final String verb = this.runtime.verb();
+            final List<String> paths = new ArrayList<>();
+            String out = null;
+            String isas = null;
+            String lang = null;
+            for (int i = 1; i < ctx.args().size(); i++) {
+                final String arg = ctx.args().get(i);
+                if ("-o".equals(arg)) {
+                    i++;
+                    out = i < ctx.args().size() ? ctx.args().get(i) : null;
+                } else if ("--isa".equals(arg)) {
+                    i++;
+                    isas = i < ctx.args().size() ? ctx.args().get(i) : "";
+                } else if ("--lang".equals(arg)) {
+                    i++;
+                    lang = i < ctx.args().size() ? ctx.args().get(i) : "";
+                } else {
+                    paths.add(arg);
+                }
+            }
+            if (paths.isEmpty()) {
+                ctx.out().error(CliTexts.USAGE.with(verb, BUILD_USAGE));
+                return;
+            }
+            final String extension = extensionOf(paths.getFirst());
+            final IProgrammingLanguage language = JsComputersApi.languages().sourceOf(extension);
+            // Only a language whose programs are the machine's own listings is built for a processor.
+            if (language == null || !language.binaryExtensions().isEmpty()) {
+                ctx.out().error(CliTexts.SAID_BY.with(verb, NOT_FOR_A_PROCESSOR.with(extension)));
+                return;
+            }
+            final List<String> targets = new ArrayList<>();
+            if (isas != null) {
+                for (final String asked : isas.split(",")) {
+                    final Optional<IsaSpec> found = Isas.find(asked.trim());
+                    if (found.isEmpty()) {
+                        ctx.out().error(CliTexts.SAID_BY.with(verb, Compile.NO_ISA.with(asked.trim(),
+                                Compile.isaNames())));
+                        return;
+                    }
+                    if (!targets.contains(found.get().id())) {
+                        targets.add(found.get().id());
+                    }
+                }
+            }
+            if (targets.isEmpty()) {
+                targets.add("");
+            }
+            final List<IProgrammingLanguage.SourceText> sources = new ArrayList<>();
+            for (final String path : paths) {
+                final ICliComputer.FsResult read = ctx.computer().readFile(path);
+                if (!read.ok()) {
+                    ctx.out().error(CliTexts.SAID_BY.with(verb, read.message()));
+                    return;
+                }
+                sources.add(new IProgrammingLanguage.SourceText(Compile.leaf(path), read.message().english()));
+            }
+            int version = IProgrammingLanguage.CompileOptions.NEWEST;
+            if (lang != null) {
+                version = Compile.parseVersion(lang);
+                if (!SigmaVersions.known(version)) {
+                    ctx.out().error(CliTexts.SAID_BY.with(verb, Compile.NO_VERSION.with(lang,
+                            language.displayName(), SigmaVersions.FIRST, SigmaVersions.NEWEST)));
+                    return;
+                }
+            }
+            final List<String> builds = new ArrayList<>();
+            for (final String isa : targets) {
+                final IProgrammingLanguage.CompileResult built = language.compile(sources,
+                        new IProgrammingLanguage.CompileOptions(isa, version));
+                if (!built.ok()) {
+                    ctx.computer().report(JscEvents.SIGMA_COMPILE_ERROR, "");
+                    for (final IProgrammingLanguage.Complaint complaint : built.complaints()) {
+                        ctx.out().error(complaint.text());
+                    }
+                    final int errors = built.complaints().size();
+                    ctx.out().error(CliTexts.SAID_BY.with(verb,
+                            errors == 1 ? Compile.ONE_ERROR : Compile.ERRORS.with(errors)));
+                    return;
+                }
+                builds.add(built.binary());
+            }
+            final String target = out != null ? out : Compile.compiled(paths.getFirst());
+            final ICliComputer.FsResult written = ctx.computer().writeFile(target,
+                    builds.size() == 1 ? builds.getFirst() : AsmWriter.universal(builds));
+            if (!written.ok()) {
+                ctx.out().error(CliTexts.SAID_BY.with(verb, written.message()));
+                return;
+            }
+            ctx.out().ok(CliTexts.SAID_BY.with(verb, WROTE.with(target)));
+            final String names = namesOf(builds);
+            ctx.out().dim(builds.size() == 1 ? BUILT_FOR.with(names) : UNIVERSAL.with(names));
+            ctx.out().dim(Compile.runIt(ctx.computer(), target));
+        }
+
+        /** The instruction sets the builds came out for, as a person reads them, in the order they were built. */
+        private static String namesOf(final List<String> builds) {
+            final List<String> names = new ArrayList<>();
+            for (final String build : builds) {
+                final String isa = new AsmReader(build).read().isa();
+                names.add(Isas.byId(isa).map(IsaSpec::name).orElse(isa));
+            }
+            return String.join(", ", names);
+        }
+
+        /** A file's extension, without the dot and in lower case; empty when it has none. */
+        private static String extensionOf(final String path) {
+            final int dot = path.lastIndexOf('.');
+            final int slash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+            return dot > slash ? path.substring(dot + 1).toLowerCase(Locale.ROOT) : "";
         }
 
         private void stop(final CliContext ctx) {

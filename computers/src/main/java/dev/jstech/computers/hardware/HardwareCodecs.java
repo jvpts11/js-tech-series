@@ -66,7 +66,9 @@ public final class HardwareCodecs {
             Codec.INT.optionalFieldOf("efficiency_mhz", 0).forGetter(CpuDesign::efficiencyMhz),
             MICROARCHITECTURE.optionalFieldOf("efficiency_arch", Microarchitectures.UNSPECIFIED)
                     .forGetter(CpuDesign::efficiencyArch),
-            INTEGRATED_GRAPHICS.optionalFieldOf("graphics", IntegratedGraphics.NONE).forGetter(CpuDesign::graphics)
+            INTEGRATED_GRAPHICS.optionalFieldOf("graphics", IntegratedGraphics.NONE).forGetter(CpuDesign::graphics),
+            Codec.LONG.optionalFieldOf("memory_items", 0L).forGetter(CpuDesign::memoryItems),
+            Codec.INT.optionalFieldOf("heat_sink_watts", 0).forGetter(CpuDesign::heatSinkWatts)
     ).apply(i, CpuDesign::new));
     public static final Codec<CpuSpec> PROCESSOR = RecordCodecBuilder.create(i -> i.group(
             ERA.fieldOf("era").forGetter(CpuSpec::era),

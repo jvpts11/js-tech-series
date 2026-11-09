@@ -80,6 +80,13 @@ public final class SystemIntegrity {
         if (os == null || disk == null || disk.isEmpty()) {
             return FINE;
         }
+        /*
+         * A system built for another processor is no system this machine can find, whole as it is: a disk carried
+         * from one maker's machine to another's shows the firmware nothing to start, as a real one did.
+         */
+        if (!machine.runsSystem(os)) {
+            return new Result(State.NO_SYSTEM, Text.EMPTY, "");
+        }
         final String folder = folderOf(os);
         final String loader = loaderOf(os);
         if (folder.isEmpty() && loader.isEmpty()) {

@@ -122,6 +122,8 @@
     "jsc:quince_board_qrusset_g3",
     "jsc:quince_board_power_g4",
     "jsc:quince_board_qserve_legacy",
+    "jsc:cpu_powerq_g3",
+    "jsc:cpu_powerq_g4",
     "jsc:cd_rom",
     "jsc:cd_rw"
   ]

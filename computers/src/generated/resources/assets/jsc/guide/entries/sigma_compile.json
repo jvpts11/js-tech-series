@@ -171,6 +171,53 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.sigma_compile.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_compile.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_compile.table4",
+      "heads": [
+        "jsc.guide.sigma_compile.table4_head1",
+        "jsc.guide.sigma_compile.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "sigma build <source> [-o <out.asm>] [--isa <isa>[,<isa>...]] [--lang <version>]"
+          },
+          {
+            "words": "jsc.guide.sigma_compile.table4_1_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "player@pc:~$ ",
+          "text": "sigma build hello.sgs --isa powerpc,x86-64",
+          "typed": true
+        },
+        {
+          "text": "sigma: wrote hello.asm"
+        },
+        {
+          "text": "a universal build for PowerPC, x86-64, which runs on each"
+        },
+        {
+          "text": "run it with: sigma run hello.asm"
+        }
+      ],
+      "look": "jsc:guide/terminal/bash",
+      "title": "Ubuntu"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {

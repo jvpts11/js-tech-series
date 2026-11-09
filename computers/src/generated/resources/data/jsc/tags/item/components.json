@@ -58,6 +58,7 @@
     "jsc:case_fan_vintage",
     "jsc:stock_cooler_vintage",
     "jsc:quince_board_russet_128k",
+    "jsc:cpu_motoroller_68000",
     "jsc:crafting_card_pci",
     "jsc:management_nic",
     "jsc:vaultis_array_pci",
@@ -135,6 +136,8 @@
     "jsc:quince_board_qrusset_g3",
     "jsc:quince_board_power_g4",
     "jsc:quince_board_qserve_legacy",
+    "jsc:cpu_powerq_g3",
+    "jsc:cpu_powerq_g4",
     "jsc:crafting_card_t2",
     "jsc:crafting_card_t3",
     "jsc:vaultis_array_pcie2",
@@ -452,6 +455,9 @@
     "jsc:quince_board_qrusset_colour",
     "jsc:quince_board_russet_studio",
     "jsc:quince_board_qserve_advanced",
-    "jsc:quince_board_mainframe_a"
+    "jsc:quince_board_mainframe_a",
+    "jsc:cpu_quince_q1",
+    "jsc:cpu_quince_q2",
+    "jsc:cpu_quince_q3"
   ]
 }

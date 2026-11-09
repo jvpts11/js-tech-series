@@ -51,6 +51,8 @@ final class ClusterJobTexts {
     static final TextKey REQUIREMENTS =
             TextKey.of("jsc.cluster.job.requirements", "does not meet the program's requirements");
     static final TextKey TOO_OLD = TextKey.of("jsc.cluster.job.too_old", "too old for the program");
+    static final TextKey OTHER_PROCESSOR = TextKey.of("jsc.cluster.job.other_processor",
+            "the system is built for another processor");
 
     // The names a cluster, a router and a node go by when the player has not named them.
     static final TextKey SUPERCOMPUTER_NAME = TextKey.of("jsc.cluster.name.supercomputer", "SC-%s");

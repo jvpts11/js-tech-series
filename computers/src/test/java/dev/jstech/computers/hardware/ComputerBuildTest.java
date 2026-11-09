@@ -346,4 +346,29 @@ class ComputerBuildTest {
         assertThrows(NullPointerException.class,
                 () -> new ComputerBuild(mtxStandard(), List.of(standardCpu()), List.of(), List.of(ddr3()), null));
     }
+
+    /** A chip that carries memory in its package makes a computer with no module in a slot, as Quince's own do. */
+    @Test
+    void validate_aChipWithMemoryInItsPackage_needsNoModule() {
+        final ComputerBuild build = new ComputerBuild(mtxStandard(),
+                List.of(standardCpu().withMemory(2048L)), List.of(), List.of(), psu(650));
+        assertTrue(build.validate().valid(), "the package's memory is the machine's: " + build.validate().problems());
+    }
+
+    @Test
+    void ramBuffer_addsThePackagesMemoryToTheModules() {
+        final ComputerBuild build = new ComputerBuild(mtxStandard(),
+                List.of(standardCpu().withMemory(2048L), standardCpu().withMemory(1024L)), List.of(),
+                List.of(ddr3()), psu(650));
+        assertEquals(3072L, build.packageMemory());
+        assertEquals(3072L + 2048L, build.ramBuffer());
+    }
+
+    @Test
+    void bestRamLatencyTicks_memoryInThePackage_keepsNothingWaiting() {
+        final RamSpec simm = new RamSpec(HardwareEra.VINTAGE, RamGeneration.SIMM, 1, 1);
+        final ComputerBuild build = new ComputerBuild(mtxStandard(),
+                List.of(standardCpu().withMemory(2048L)), List.of(), List.of(simm), psu(650));
+        assertEquals(0, build.bestRamLatencyTicks());
+    }
 }

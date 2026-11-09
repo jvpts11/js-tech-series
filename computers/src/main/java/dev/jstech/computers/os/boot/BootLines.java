@@ -255,7 +255,8 @@ public final class BootLines {
              */
             for (final ResourceLocation id : OsDisks.systemsOn(disk).ids()) {
                 final OsDef system = OsRegistry.getOs(id);
-                if (system == null) {
+                // One built for another processor is nothing this machine can start, so there is nothing to choose.
+                if (system == null || !machine.runsSystem(system)) {
                     continue;
                 }
                 if (id.equals(runningId)) {
