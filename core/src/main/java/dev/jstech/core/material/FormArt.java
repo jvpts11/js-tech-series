@@ -40,7 +40,8 @@ public final class FormArt {
     /** The game's textures the forms it has are drawn from. */
     private static final Map<String, String> FROM_THE_GAME = Map.ofEntries(
             Map.entry("ingot", "textures/item/iron_ingot.png"), Map.entry("nugget", "textures/item/gold_nugget.png"),
-            Map.entry("raw", "textures/item/raw_iron.png"), Map.entry("dust", "textures/item/glowstone_dust.png"),
+            Map.entry("raw", "textures/item/raw_iron.png"), Map.entry("lump", "textures/item/raw_iron.png"),
+            Map.entry("dust", "textures/item/glowstone_dust.png"),
             Map.entry("wire", "textures/item/string.png"), Map.entry("lens", "textures/item/ender_pearl.png"),
             Map.entry("rod", "textures/item/stick.png"), Map.entry("gem", "textures/item/emerald.png"),
             Map.entry("crystal", "textures/block/amethyst_cluster.png"),
@@ -132,7 +133,7 @@ public final class FormArt {
     /** The forms the Core draws or recolours, every one it knows. */
     public static List<String> forms() {
         return List.of("ingot", "nugget", "block", "dust", "plate", "sheet", "wire", "rod", "bolt", "gear", "coil",
-                "spring", "foil", "frame", "lens", "boule", "wafer", "crystal", "gem", "raw");
+                "spring", "foil", "frame", "lens", "boule", "wafer", "crystal", "gem", "raw", "lump");
     }
 
     /**

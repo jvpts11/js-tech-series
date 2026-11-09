@@ -19,7 +19,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * Every form a material can take, open to any mod: the Core's twenty-one, and those a mod adds when it has a real use
+ * Every form a material can take, open to any mod: the Core's twenty-three, and those a mod adds when it has a real use
  * for one. A form only has things in the game for the materials an installed mod says it uses
  * ({@link MaterialUses}).
  *
@@ -56,6 +56,9 @@ public final class Forms {
     public static final TextKey GEM_NAME = TextKey.of("jscore.form.gem", "%s");
     public static final TextKey ORE_NAME = TextKey.of("jscore.form.ore", "%s Ore");
     public static final TextKey RAW_NAME = TextKey.of("jscore.form.raw", "Raw %s");
+    public static final TextKey CRUSHED_NAME = TextKey.of("jscore.form.crushed", "Crushed %s");
+    /* A solid in pieces is called by its material's name alone: coke, calcium carbide. */
+    public static final TextKey LUMP_NAME = TextKey.of("jscore.form.lump", "%s");
 
     public static final Form INGOT = form("ingot", Form.Shape.ITEM, "ingots", INGOT_NAME)
             .fits(MaterialKind.METAL).declare();
@@ -63,16 +66,20 @@ public final class Forms {
             .fits(MaterialKind.METAL).declare();
     public static final Form BLOCK = form("block", Form.Shape.BLOCK, "storage_blocks", BLOCK_NAME)
             .fits(MaterialKind.METAL, MaterialKind.GEM, MaterialKind.CRYSTAL, MaterialKind.NONMETAL_SOLID).declare();
+    /* Any solid ground down, a mineral too, as fluorspar is for its acid. */
     public static final Form DUST = form("dust", Form.Shape.ITEM, "dusts", DUST_NAME)
-            .fits(MaterialKind.METAL, MaterialKind.CRYSTAL, MaterialKind.GEM, MaterialKind.NONMETAL_SOLID).declare();
+            .fits(MaterialKind.METAL, MaterialKind.CRYSTAL, MaterialKind.GEM, MaterialKind.NONMETAL_SOLID,
+                    MaterialKind.POLYMER, MaterialKind.MINERAL).declare();
+    /* A polymer comes as plate and sheet besides its dust: a thick resin board, a thin plastic film. */
     public static final Form PLATE = form("plate", Form.Shape.ITEM, "plates", PLATE_NAME)
-            .fits(MaterialKind.METAL).declare();
+            .fits(MaterialKind.METAL, MaterialKind.POLYMER).declare();
     public static final Form SHEET = form("sheet", Form.Shape.ITEM, "sheets", SHEET_NAME)
-            .fits(MaterialKind.METAL).declare();
+            .fits(MaterialKind.METAL, MaterialKind.POLYMER).declare();
     public static final Form WIRE = form("wire", Form.Shape.ITEM, "wires", WIRE_NAME)
             .fits(MaterialKind.METAL).declare();
+    /* A crystal may be grown as a rod: polysilicon comes out of its reactor so, as the real one does. */
     public static final Form ROD = form("rod", Form.Shape.ITEM, "rods", ROD_NAME)
-            .fits(MaterialKind.METAL).declare();
+            .fits(MaterialKind.METAL, MaterialKind.CRYSTAL).declare();
     public static final Form BOLT = form("bolt", Form.Shape.ITEM, "bolts", BOLT_NAME)
             .fits(MaterialKind.METAL).declare();
     public static final Form GEAR = form("gear", Form.Shape.ITEM, "gears", GEAR_NAME)
@@ -91,8 +98,9 @@ public final class Forms {
             .fits(MaterialKind.CRYSTAL).declare();
     public static final Form WAFER = form("wafer", Form.Shape.ITEM, "wafers", WAFER_NAME)
             .fits(MaterialKind.CRYSTAL).declare();
+    /* A crystal grown, or a mineral's own crystals, as fluorspar's. */
     public static final Form CRYSTAL = form("crystal", Form.Shape.ITEM, "crystals", CRYSTAL_NAME)
-            .fits(MaterialKind.CRYSTAL).declare();
+            .fits(MaterialKind.CRYSTAL, MaterialKind.MINERAL).declare();
     public static final Form GEM = form("gem", Form.Shape.ITEM, "gems", GEM_NAME)
             .fits(MaterialKind.GEM).declare();
     /* A mineral's ore, and an element's "X ore" (tin ore, mercury ore), whatever the element's kind. */
@@ -100,7 +108,19 @@ public final class Forms {
             .fits(MaterialKind.MINERAL, MaterialKind.METAL, MaterialKind.GEM, MaterialKind.CRYSTAL,
                     MaterialKind.NONMETAL_SOLID, MaterialKind.LIQUID).declare();
     public static final Form RAW = form("raw", Form.Shape.ITEM, "raw_materials", RAW_NAME)
-            .fits(MaterialKind.METAL, MaterialKind.MINERAL).declare();
+            .fits(MaterialKind.METAL, MaterialKind.MINERAL).oreColoured().declare();
+    /*
+     * An ore broken in a crusher, for any mod's crusher, of anything that has an ore; drawn from the Core's own picture
+     * of broken ore, in the ore's colour.
+     */
+    public static final Form CRUSHED = form("crushed", Form.Shape.ITEM, "crushed_raw_materials", CRUSHED_NAME)
+            .fits(MaterialKind.MINERAL, MaterialKind.METAL, MaterialKind.GEM, MaterialKind.CRYSTAL,
+                    MaterialKind.NONMETAL_SOLID, MaterialKind.LIQUID)
+            .art(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "item/form/crushed")).oreColoured().declare();
+    /* A solid in pieces, as coke, calcium carbide and metallurgical silicon come out of their furnaces. */
+    public static final Form LUMP = form("lump", Form.Shape.ITEM, "lumps", LUMP_NAME)
+            .fits(MaterialKind.METAL, MaterialKind.CRYSTAL, MaterialKind.GEM, MaterialKind.NONMETAL_SOLID,
+                    MaterialKind.MINERAL).declare();
 
     private Forms() {
     }

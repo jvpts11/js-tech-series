@@ -8569,9 +8569,11 @@ stable 4
 10 dev.jstech.core.material.Form  TagKey<Item> itemTag(Material)
 10 dev.jstech.core.material.Form  TextKey name()
 10 dev.jstech.core.material.Form  boolean fits(MaterialKind)
+49 dev.jstech.core.material.Form  boolean oreColoured()
 10 dev.jstech.core.material.Form.Builder  type static final class
 10 dev.jstech.core.material.Form.Builder  Builder art(ResourceLocation)
 10 dev.jstech.core.material.Form.Builder  Builder fits(MaterialKind...)
+49 dev.jstech.core.material.Form.Builder  Builder oreColoured()
 10 dev.jstech.core.material.Form.Builder  Form declare()
 10 dev.jstech.core.material.Form.Shape  type enum
 10 dev.jstech.core.material.Form.Shape  BLOCK
@@ -8596,6 +8598,7 @@ stable 4
 10 dev.jstech.core.material.Forms  static final Form BOLT
 10 dev.jstech.core.material.Forms  static final Form BOULE
 10 dev.jstech.core.material.Forms  static final Form COIL
+49 dev.jstech.core.material.Forms  static final Form CRUSHED
 10 dev.jstech.core.material.Forms  static final Form CRYSTAL
 10 dev.jstech.core.material.Forms  static final Form DUST
 10 dev.jstech.core.material.Forms  static final Form FOIL
@@ -8604,6 +8607,7 @@ stable 4
 10 dev.jstech.core.material.Forms  static final Form GEM
 10 dev.jstech.core.material.Forms  static final Form INGOT
 10 dev.jstech.core.material.Forms  static final Form LENS
+49 dev.jstech.core.material.Forms  static final Form LUMP
 10 dev.jstech.core.material.Forms  static final Form NUGGET
 10 dev.jstech.core.material.Forms  static final Form ORE
 10 dev.jstech.core.material.Forms  static final Form PLATE
@@ -8617,6 +8621,7 @@ stable 4
 10 dev.jstech.core.material.Forms  static final TextKey BOLT_NAME
 10 dev.jstech.core.material.Forms  static final TextKey BOULE_NAME
 10 dev.jstech.core.material.Forms  static final TextKey COIL_NAME
+49 dev.jstech.core.material.Forms  static final TextKey CRUSHED_NAME
 10 dev.jstech.core.material.Forms  static final TextKey CRYSTAL_NAME
 10 dev.jstech.core.material.Forms  static final TextKey DUST_NAME
 10 dev.jstech.core.material.Forms  static final TextKey FOIL_NAME
@@ -8625,6 +8630,7 @@ stable 4
 10 dev.jstech.core.material.Forms  static final TextKey GEM_NAME
 10 dev.jstech.core.material.Forms  static final TextKey INGOT_NAME
 10 dev.jstech.core.material.Forms  static final TextKey LENS_NAME
+49 dev.jstech.core.material.Forms  static final TextKey LUMP_NAME
 10 dev.jstech.core.material.Forms  static final TextKey NUGGET_NAME
 10 dev.jstech.core.material.Forms  static final TextKey ORE_NAME
 10 dev.jstech.core.material.Forms  static final TextKey PLATE_NAME
@@ -8755,6 +8761,7 @@ stable 4
 10 dev.jstech.core.material.MaterialKind  MINERAL
 10 dev.jstech.core.material.MaterialKind  MatterState roomState()
 10 dev.jstech.core.material.MaterialKind  NONMETAL_SOLID
+49 dev.jstech.core.material.MaterialKind  POLYMER
 10 dev.jstech.core.material.MaterialKind  String serializedName()
 10 dev.jstech.core.material.MaterialKind  static Optional<MaterialKind> byName(String)
 10 dev.jstech.core.material.MaterialLiquid  type record(Material material, ResourceLocation id, int temperature)

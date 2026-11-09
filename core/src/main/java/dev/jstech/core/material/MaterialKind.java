@@ -21,14 +21,16 @@ public enum MaterialKind {
     /** A crystal grown or cut, as silicon or quartz. */
     CRYSTAL("crystal", MatterState.SOLID),
     GEM("gem", MatterState.SOLID),
-    /** A solid that is neither metal nor crystal: carbon, sulfur, a plastic. */
+    /** A solid that is neither metal nor crystal: carbon, sulfur, a salt. */
     NONMETAL_SOLID("nonmetal_solid", MatterState.SOLID),
     /** What comes out of the ground, as chalcopyrite, not copper. */
     MINERAL("mineral", MatterState.SOLID),
     LIQUID("liquid", MatterState.LIQUID),
     GAS("gas", MatterState.GAS),
     /** An exotic form of matter, from real physics, observed or predicted. */
-    EXOTIC("exotic", MatterState.EXOTIC);
+    EXOTIC("exotic", MatterState.EXOTIC),
+    /** A plastic or a resin, which comes as plate, sheet and dust: PVC, epoxy. */
+    POLYMER("polymer", MatterState.SOLID);
 
     private final String serializedName;
     private final MatterState roomState;

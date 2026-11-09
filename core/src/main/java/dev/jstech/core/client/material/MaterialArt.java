@@ -141,17 +141,19 @@ public final class MaterialArt implements IRuntimeFiles {
                                      final Map<ResourceLocation, Optional<GameTexture>> read) {
         final Form form = thing.thing().form();
         final Material material = thing.thing().material();
+        final int colour = form.oreColoured() ? material.oreLook().speckColour(material.colour())
+                : material.colour();
         if (form.art().isPresent()) {
             final GameTexture template = picture(texture(form.art().get()), read);
-            return FormArt.recolour(template.texels(), template.width(), material.colour());
+            return FormArt.recolour(template.texels(), template.width(), colour);
         }
         final String name = form.id().getPath();
         final Optional<String> fromTheGame = FormArt.gameTexture(name, material.kind() == MaterialKind.GEM);
         if (fromTheGame.isPresent()) {
             final GameTexture source = picture(ResourceLocation.withDefaultNamespace(fromTheGame.get()), read);
-            return FormArt.recolour(source.texels(), source.width(), material.colour());
+            return FormArt.recolour(source.texels(), source.width(), colour);
         }
-        return FormArt.drawn(name, material.colour());
+        return FormArt.drawn(name, colour);
     }
 
     private static int[] blockTexture(final RegisteredThing thing,

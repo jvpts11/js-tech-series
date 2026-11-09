@@ -33,6 +33,7 @@ public final class Form {
     private final Set<MaterialKind> kinds;
     private final TextKey name;
     private final @Nullable ResourceLocation art;
+    private final boolean oreColoured;
 
     /** What a form's thing is in the game. */
     public enum Shape {
@@ -51,6 +52,7 @@ public final class Form {
         this.kinds = Set.copyOf(builder.kinds);
         this.name = builder.name;
         this.art = builder.art;
+        this.oreColoured = builder.oreColoured;
     }
 
     public ResourceLocation id() {
@@ -78,11 +80,20 @@ public final class Form {
 
     /**
      * The texture its things are drawn from, recoloured in each material's colour, in its mod's own resources
-     * ({@code mymod:item/pellet} for {@code assets/mymod/textures/item/pellet.png}); none for the Core's forms, which
-     * the Core draws itself.
+     * ({@code mymod:item/pellet} for {@code assets/mymod/textures/item/pellet.png}); none for a form the Core draws
+     * from the game's textures or its own templates.
      */
     public Optional<ResourceLocation> art() {
         return Optional.ofNullable(this.art);
+    }
+
+    /**
+     * Whether its things are drawn in the colour of their material's ore rather than the material's own: what comes
+     * out of the ground and is only broken up, as raw and crushed ore, looks as the ore's specks do (cassiterite's
+     * brown), and only what is smelted from it takes the metal's colour (tin's).
+     */
+    public boolean oreColoured() {
+        return this.oreColoured;
     }
 
     /** Whether a material of {@code kind} can take this form. */
@@ -124,6 +135,7 @@ public final class Form {
         private final TextKey name;
         private final Set<MaterialKind> kinds = EnumSet.noneOf(MaterialKind.class);
         private @Nullable ResourceLocation art;
+        private boolean oreColoured;
 
         Builder(final ResourceLocation id, final Shape shape, final String tagFolder, final TextKey name) {
             this.id = Objects.requireNonNull(id, "id");
@@ -144,6 +156,12 @@ public final class Form {
          */
         public Builder art(final ResourceLocation texture) {
             this.art = Objects.requireNonNull(texture, "texture");
+            return this;
+        }
+
+        /** Its things drawn in the colour of their material's ore, as what comes out of the ground is. */
+        public Builder oreColoured() {
+            this.oreColoured = true;
             return this;
         }
 

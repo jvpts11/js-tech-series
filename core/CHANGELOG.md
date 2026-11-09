@@ -452,6 +452,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   placed; `BuildSources.takeOne` says which source a block came from. `BuildSupplies` and `IBuildSupply` are gone, and
   so are the builder's own `BuildSources` and `IBuildSource` in `dev.jstech.core.jstechseries.builder`; a supply
   becomes a source declared with an id. Experimental.
+- Polymers, crushed ore and lumps: J's Core's API is at version 49. `MaterialKind.POLYMER` is the kind of the
+  plastics and resins, which come as plate, sheet and dust; `Forms.CRUSHED` and `Forms.LUMP` are the forms of crushed
+  ore and of a solid in pieces; and `Form.oreColoured()`, set with `Form.Builder.oreColoured()`, draws a form's things
+  in the colour of their material's ore, as raw and crushed ore are. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2002,6 +2006,24 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ### Changed
 - A notification that says where it came from says so after its mod's name, on the screen and in the history.
+- The catalogue of the electronics chain: crushed ore, drawn from a picture of broken ore in the colour of the
+  material's ore, and lumps (coke, calcium carbide); polymers as plate, sheet and dust, and crystals grown as rods
+  (polysilicon); fluorspar, a halide in five rocks, fluorine's source; and lithium's ore drawn as spodumene, pale lilac.
+  Twenty compounds (alumina, caustic soda, salt, zinc sulfide, lithium hydroxide, lithium cobalt oxide, calcium
+  carbide, coke, metallurgical silicon, polysilicon, cultured quartz, gallium arsenide, aluminium gallium indium
+  phosphide, gallium nitride, calcium fluoride, wood pulp, phenolic and epoxy resin, polycarbonate, PVC), seven alloys
+  (steel, stainless steel, solder, lead-free solder, permalloy, indium tin oxide, refined copper) and twelve liquids and
+  gases (coal tar, phenol, methanol, hydrofluoric and sulfuric acid, ferric chloride, photoresist, ultrapure water,
+  liquid crystal, battery electrolyte, hydrogen chloride, acetylene), each with its formula and its hazard classes.
+  Each exists only when a mod uses it.
+- The lead-acid battery and the lithium-ion cell join the shared components, and the electric motor, the LED
+  (its dome changing colour), the oscillator, the antenna and the magnetic head have their pictures.
+- The metals of the electronics chain each take a hue of their own, so no two ingots read alike: tin, silver,
+  aluminium (sky blue), zinc, lead (purple grey), nickel, tantalum (violet), indium (indigo), chromium (green),
+  manganese (pink), cobalt (blue), tungsten (graphite), molybdenum, gallium (aqua), hafnium and ruthenium; germanium a
+  lighter grey. The gases take their cylinder's colour by the European code: hydrogen red, oxygen white, nitrogen black,
+  argon dark green, krypton bright green, chlorine yellow.
+- Raw ore is drawn in the colour of its ore rather than its metal's: raw tin is cassiterite's brown.
 - A block aboard a moving structure sounds where the structure carries it: a sound played at one of its blocks,
   and a running sound a block entity aboard asks for, are heard from where that block is in the world now, a running
   one following it every tick as the structure moves, where both came from the yard its blocks are kept in, far from

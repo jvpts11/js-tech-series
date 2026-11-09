@@ -582,6 +582,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   placed; `BuildSources.takeOne` says which source a block came from. `BuildSupplies` and `IBuildSupply` are gone, and
   so are the builder's own `BuildSources` and `IBuildSource` in `dev.jstech.core.jstechseries.builder`; a supply
   becomes a source declared with an id. Experimental.
+- (Core) Polymers, crushed ore and lumps: J's Core's API is at version 49. `MaterialKind.POLYMER` is the kind of the
+  plastics and resins, which come as plate, sheet and dust; `Forms.CRUSHED` and `Forms.LUMP` are the forms of crushed
+  ore and of a solid in pieces; and `Form.oreColoured()`, set with `Form.Builder.oreColoured()`, draws a form's things
+  in the colour of their material's ore, as raw and crushed ore are. Experimental.
 - (Computers) Wi-Fi cards: J's Computers' API is at version 17. `ExpansionCardKind.WIFI` is the kind of the Wi-Fi
   cards, which the Personal, Crafting and Cluster Management Computers alone seat. Experimental.
 - (Computers) Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
@@ -3412,6 +3416,24 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Network storage is the source chosen on its display, which shows what the network holds of each block. A block that
   cannot stay goes back to the network, or to the player when the network has no room; out of every access point's
   reach, the network is no source.
+- (Core) The catalogue of the electronics chain: crushed ore, drawn from a picture of broken ore in the colour of the
+  material's ore, and lumps (coke, calcium carbide); polymers as plate, sheet and dust, and crystals grown as rods
+  (polysilicon); fluorspar, a halide in five rocks, fluorine's source; and lithium's ore drawn as spodumene, pale lilac.
+  Twenty compounds (alumina, caustic soda, salt, zinc sulfide, lithium hydroxide, lithium cobalt oxide, calcium
+  carbide, coke, metallurgical silicon, polysilicon, cultured quartz, gallium arsenide, aluminium gallium indium
+  phosphide, gallium nitride, calcium fluoride, wood pulp, phenolic and epoxy resin, polycarbonate, PVC), seven alloys
+  (steel, stainless steel, solder, lead-free solder, permalloy, indium tin oxide, refined copper) and twelve liquids and
+  gases (coal tar, phenol, methanol, hydrofluoric and sulfuric acid, ferric chloride, photoresist, ultrapure water,
+  liquid crystal, battery electrolyte, hydrogen chloride, acetylene), each with its formula and its hazard classes.
+  Each exists only when a mod uses it.
+- (Core) The lead-acid battery and the lithium-ion cell join the shared components, and the electric motor, the LED
+  (its dome changing colour), the oscillator, the antenna and the magnetic head have their pictures.
+- (Core) The metals of the electronics chain each take a hue of their own, so no two ingots read alike: tin, silver,
+  aluminium (sky blue), zinc, lead (purple grey), nickel, tantalum (violet), indium (indigo), chromium (green),
+  manganese (pink), cobalt (blue), tungsten (graphite), molybdenum, gallium (aqua), hafnium and ruthenium; germanium a
+  lighter grey. The gases take their cylinder's colour by the European code: hydrogen red, oxygen white, nitrogen black,
+  argon dark green, krypton bright green, chlorine yellow.
+- (Core) Raw ore is drawn in the colour of its ore rather than its metal's: raw tin is cassiterite's brown.
 - (Computers) IQL: the computers table gives every computer its era, a Cluster Management Computer's too, and names a
   WAN Gateway Computer as one; the network's log calls a gateway `WAN-` and its short id, This PC "WAN Gateway
   Computer".

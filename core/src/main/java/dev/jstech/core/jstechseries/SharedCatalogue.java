@@ -52,6 +52,10 @@ public final class SharedCatalogue {
     public static final TextKey OSCILLATOR_NAME = TextKey.of("item.jscore.oscillator", "Oscillator");
     public static final TextKey ANTENNA_NAME = TextKey.of("item.jscore.antenna", "Antenna");
     public static final TextKey MAGNETIC_HEAD_NAME = TextKey.of("item.jscore.magnetic_head", "Magnetic Head");
+    public static final TextKey LEAD_ACID_BATTERY_NAME = TextKey.of("item.jscore.lead_acid_battery",
+            "Lead-Acid Battery");
+    public static final TextKey LITHIUM_ION_CELL_NAME = TextKey.of("item.jscore.lithium_ion_cell",
+            "Lithium-Ion Cell");
 
     /*
      * Water, whose liquid is the game's own: steam is its gas and ice its solid, and a boiler boils it by its real
@@ -123,6 +127,11 @@ public final class SharedCatalogue {
     public static final CatalogueItems.Entry OSCILLATOR = component("oscillator", OSCILLATOR_NAME);
     public static final CatalogueItems.Entry ANTENNA = component("antenna", ANTENNA_NAME);
     public static final CatalogueItems.Entry MAGNETIC_HEAD = component("magnetic_head", MAGNETIC_HEAD_NAME);
+    /* The block of lead plates in acid every small UPS holds. */
+    public static final CatalogueItems.Entry LEAD_ACID_BATTERY = component("lead_acid_battery",
+            LEAD_ACID_BATTERY_NAME);
+    /* The pouch cell of a phone or a tablet. */
+    public static final CatalogueItems.Entry LITHIUM_ION_CELL = component("lithium_ion_cell", LITHIUM_ION_CELL_NAME);
 
     private SharedCatalogue() {
     }
@@ -139,7 +148,8 @@ public final class SharedCatalogue {
 
     /** The generic components. */
     public static List<CatalogueItems.Entry> components() {
-        return List.of(SERVOMOTOR, ELECTRIC_MOTOR, LED, SENSOR, OSCILLATOR, ANTENNA, MAGNETIC_HEAD);
+        return List.of(SERVOMOTOR, ELECTRIC_MOTOR, LED, SENSOR, OSCILLATOR, ANTENNA, MAGNETIC_HEAD, LEAD_ACID_BATTERY,
+                LITHIUM_ION_CELL);
     }
 
     /* A fuel burns, harms the skin and the head, harms the lungs it is breathed into, and poisons the water. */

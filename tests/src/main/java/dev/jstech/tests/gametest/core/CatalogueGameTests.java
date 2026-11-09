@@ -298,8 +298,8 @@ public final class CatalogueGameTests {
                 "an entry a mod uses, named as declared");
         helper.assertTrue(SharedCatalogue.components().stream().noneMatch(entry ->
                 BuiltInRegistries.ITEM.containsKey(entry.id())), "the series' components, which nobody uses, are not");
-        helper.assertTrue(SharedCatalogue.fuels().size() == 3 && SharedCatalogue.components().size() == 7,
-                "three fuels and seven components in the catalogue");
+        helper.assertTrue(SharedCatalogue.fuels().size() == 3 && SharedCatalogue.components().size() == 9,
+                "three fuels and nine components in the catalogue");
         helper.succeed();
     }
 

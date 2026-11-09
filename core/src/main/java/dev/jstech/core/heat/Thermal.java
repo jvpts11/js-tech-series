@@ -150,8 +150,9 @@ public record Thermal(double density, double specificHeat, double conductivity, 
 
     /**
      * What a material of {@code kind} that says nothing of heat is taken to do: a metal as iron is, much as a crystal
-     * as silicon, a mineral or a solid non-metal as stone, a liquid as water, a gas as air. Its liquid is as dense as
-     * itself, but for a gas's, which is unknown.
+     * as silicon, a mineral or a solid non-metal as stone, a liquid as water, a gas as air, a polymer as a common
+     * plastic, which softens far below a metal and chars before it could boil. Its liquid is as dense as itself, but
+     * for a gas's, which is unknown.
      */
     public static Thermal ofKind(final MaterialKind kind) {
         final Thermal taken = switch (kind) {
@@ -162,6 +163,7 @@ public record Thermal(double density, double specificHeat, double conductivity, 
             case LIQUID -> new Thermal(1_000.0, 4_186.0, 0.6, 0.95, 273.15, 373.15);
             case GAS -> new Thermal(1.2, 1_005.0, 0.026, 0.0, 63.0, 77.0);
             case EXOTIC -> new Thermal(10_000.0, 500.0, 50.0, 0.5, 5_000.0, 10_000.0);
+            case POLYMER -> new Thermal(1_300.0, 1_300.0, 0.2, 0.9, 500.0, 700.0);
         };
         return kind == MaterialKind.GAS ? taken : taken.boils(Double.NaN, Double.NaN, taken.density());
     }

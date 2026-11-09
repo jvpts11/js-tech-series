@@ -100,6 +100,7 @@ class FormArtTest {
         assertEquals(Optional.of("textures/item/iron_ingot.png"), FormArt.gameTexture("ingot", false));
         assertEquals(Optional.of("textures/block/emerald_block.png"), FormArt.gameTexture("block", true));
         assertEquals(Optional.of("textures/block/gold_block.png"), FormArt.gameTexture("block", false));
+        assertEquals(Optional.of("textures/item/raw_iron.png"), FormArt.gameTexture("lump", false));
         assertTrue(FormArt.gameTexture("gear", false).isEmpty());
     }
 
@@ -112,7 +113,7 @@ class FormArtTest {
                 assertFalse(empty(FormArt.drawn(form, IRON)), form + " has texels");
             }
         }
-        assertEquals(20, FormArt.forms().size());
+        assertEquals(21, FormArt.forms().size());
     }
 
     @Test

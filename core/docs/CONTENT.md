@@ -381,17 +381,21 @@ registries, every entry known by an id (`namespace:path`) and open to any mod:
 | Registry | What it holds | The Core's own |
 | --- | --- | --- |
 | `Materials` | Elements, alloys, minerals, compounds, liquids, gases, exotic matter | none; the series' are in `SeriesMaterials` |
-| `Forms` | What a material is made into: an ingot, a dust, a plate, a block, an ore | 21 forms |
+| `Forms` | What a material is made into: an ingot, a dust, a plate, a block, an ore | 23 forms |
 | `MaterialProperties` | The real data a material carries: never a game rule | symbol, atomic number, formula, colour, state at room temperature |
 | `MineralFamilies` | The chemistry that decides how a mineral is processed | sulfide, oxide, carbonate, silicate, arsenide, native, halide, sulfate, phosphate, arsenate, vanadate |
 | `HostRocks` | The rocks ores sit in | the game's twelve: stone, deepslate, granite, diorite, andesite, tuff, calcite, sandstone, netherrack, basalt, blackstone, end stone |
 
 ### A material
 
-A material has a **kind** (`MaterialKind`: metal, crystal, gem, non-metal solid, mineral, liquid, gas, exotic), set by
-its state at room temperature, and the kind says which forms it can take: a metal an ingot, a wire, a gear; a crystal a
-boule and a wafer; a gem a gem. It can take other states besides (a molten metal is a liquid). It has a colour, which
-its things are drawn in, and the values of its properties. It has **no tier**: when it becomes available is for each
+A material has a **kind** (`MaterialKind`: metal, crystal, gem, non-metal solid, mineral, liquid, gas, exotic,
+polymer), set by its state at room temperature, and the kind says which forms it can take: a metal an ingot, a wire, a
+gear; a crystal a boule, a wafer and a rod; a gem a gem; a polymer a plate, a sheet and a dust. Anything with an ore
+can be crushed (`Forms.CRUSHED`, "Crushed Tin"), and a solid can come in lumps (`Forms.LUMP`, called by its material's
+name alone: "Coke"). It can take other states besides (a molten metal is a liquid). It has a colour, which its things
+are drawn in, and the values of its properties. What comes out of the ground and is only broken up, its raw and
+crushed ore (`Form.oreColoured()`), is drawn in the colour of the material's ore rather than its own: raw tin is
+cassiterite's brown, its ingot tin's colour. It has **no tier**: when it becomes available is for each
 mod's recipes to say. A material declared once, as a static final, from the mod's constructor:
 
 ```java
@@ -495,10 +499,23 @@ The series' own materials are in `SeriesMaterials`, which any mod uses as it use
 - **The 118 known elements** (`Element`, `Elements.of(Element.URANIUM)`), as data: atomic number, symbol, standard
   atomic weight (`MaterialProperties.ATOMIC_WEIGHT`, `Elements.atomicWeight("Fe")`), the kind each is at room
   temperature (bromine and mercury liquids, silicon and germanium crystals, the rest metals, non-metal solids or
-  gases), a colour near the pure element's, and its hazard classes. A metal can be molten, a gas liquefied, hydrogen
-  and helium a plasma. Iron, copper and gold keep the game's ingots, nuggets, blocks, raw ores and ores.
+  gases), a colour near the pure element's, and its hazard classes. The metals of the electronics chain each take a
+  hue of their own, on a real association where there is one (tantalum violet, cobalt blue, chromium green), so that
+  no two ingots read alike, and the gases their cylinder's colour by the European code, EN 1089-3 (hydrogen red,
+  oxygen white, nitrogen black). A metal can be molten, a gas liquefied, hydrogen and helium a plasma. Iron, copper
+  and gold keep the game's ingots, nuggets, blocks, raw ores and ores.
 - **The minerals** (`SeriesMinerals`): hematite, magnetite, siderite, pyrite, chalcopyrite, cuprite, malachite,
-  electrum and cassiterite, each declared from its formula (below).
+  electrum and cassiterite, and fluorspar, fluorine's source, each declared from its formula (below).
+- **The compounds** (`SeriesCompounds`): the salts and oxides of the chemistry (alumina, caustic soda, salt, zinc
+  sulfide), the battery's lithium hydroxide and lithium cobalt oxide, calcium carbide, coke, metallurgical silicon and
+  polysilicon, cultured quartz, the crystals of light (gallium arsenide, aluminium gallium indium phosphide, gallium
+  nitride, calcium fluoride), wood pulp, and the polymers (phenolic and epoxy resin, polycarbonate, PVC), each with its
+  formula (a polymer's repeating unit, `(C₂H₃Cl)ₙ`; none for a mixture) and its hazard classes.
+- **The alloys** (`SeriesAlloys`, and bronze in `SeriesMaterials`): steel, stainless steel, solder, lead-free solder,
+  permalloy, indium tin oxide and refined copper.
+- **The liquids and gases of the chemistry** (`SeriesChemicals`): coal tar, phenol, methanol, hydrofluoric and
+  sulfuric acid, ferric chloride, photoresist, ultrapure water, liquid crystal and battery electrolyte; and hydrogen
+  chloride and acetylene, gases with their limits in the air.
 - **Isotopes** (`Isotopes`), materials of their own tied to their element by their mass number
   (`material.isotope()`), named after it ("Uranium-235") and written as chemists write them (²³⁵U): deuterium,
   tritium, helium-3, the reactor's fuels and targets, the sources of radiation, and the stable, neutron-rich isotope
@@ -565,8 +582,9 @@ A liquid is itself (gasoline), molten for a solid (`jscore:molten_tin`, "Molten 
 and is drawn as the game's water in its material's colour.
 
 The shared catalogue (`SharedCatalogue`) holds what the series' mods share that is no element: the common fuels
-(gasoline, kerosene, diesel), carbon dioxide, ammonia, methane and air, and the generic components (servomotor, electric motor, LED, sensor, oscillator,
-antenna, magnetic head). A component exists only when a mod uses it, through the catalogue any mod adds to:
+(gasoline, kerosene, diesel), carbon dioxide, ammonia, methane and air, and the generic components (servomotor,
+electric motor, LED, sensor, oscillator, antenna, magnetic head, lead-acid battery, lithium-ion cell). A component
+exists only when a mod uses it, through the catalogue any mod adds to:
 
 ```java
 public static final Supplier<Item> MY_LED = CatalogueItems.use(MODID, SharedCatalogue.LED);

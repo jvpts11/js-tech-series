@@ -165,6 +165,8 @@ public final class Elements {
                     .providedOre(HostRocks.NETHERRACK, () -> Blocks.NETHER_GOLD_ORE);
             // Tin's ore is drawn as its mineral, cassiterite, is: dark brown grains.
             case TIN -> builder.ore(OreLook.of(OreLook.Pattern.COAL).inColour(0x5A4434));
+            // Lithium's ore is drawn as spodumene, the silicate it is mined from, is: pale lilac, glassy crystals.
+            case LITHIUM -> builder.ore(OreLook.of(OreLook.Pattern.DIAMOND).inColour(0xC8A0D8).withSheen(0xF0E0F8));
             default -> {
             }
         }

@@ -23,8 +23,9 @@ import net.minecraft.resources.ResourceLocation;
  * sulfides of iron and copper, gold's natural alloy with silver, and tin's oxide. Each is a material of its own
  * ({@code jscore:chalcopyrite}), with its formula, its family, the rocks its veins cross and the byproducts it gives,
  * and has an ore only once a mod uses it. Which minerals exist is the mods' to say: J's Industrial's first veins
- * ({@link #all()}), the rest of its list joining as the mod grows, and the minerals J's Space finds on the Moon and
- * Mars ({@link #ofTheMoonAndMars()}), each declared once here so every mod shares it.
+ * ({@link #all()}), the rest of its list joining as the mod grows, the minerals J's Space finds on the Moon and Mars
+ * ({@link #ofTheMoonAndMars()}) and fluorspar, fluorine's source for J's Computers' chain ({@link #FLUORSPAR}), each
+ * declared once here so every mod shares it.
  */
 @TextHolder
 public final class SeriesMinerals {
@@ -47,6 +48,7 @@ public final class SeriesMinerals {
     public static final TextKey OLIVINE_NAME = TextKey.of("jscore.material.olivine", "Olivine");
     public static final TextKey JAROSITE_NAME = TextKey.of("jscore.material.jarosite", "Jarosite");
     public static final TextKey GYPSUM_NAME = TextKey.of("jscore.material.gypsum", "Gypsum");
+    public static final TextKey FLUORSPAR_NAME = TextKey.of("jscore.material.fluorspar", "Fluorspar");
 
     /**
      * Iron's oxide, the ore of the world's steel: red as a dust, its crystals a steel grey with a metal's glint, round
@@ -95,6 +97,14 @@ public final class SeriesMinerals {
     public static final Material CASSITERITE = mineral("cassiterite", CASSITERITE_NAME, MineralFamilies.OXIDE,
             Element.TIN).formula("SnO2").colour(0x4A3426).ore(OreLook.of(OreLook.Pattern.COAL).inColour(0x3E2C20))
             .rocks(HostRocks.GRANITE).declare();
+    /**
+     * Fluorite, calcium's fluoride, purple with green zones: fluorine's source, for J's Computers' hydrofluoric acid
+     * and its lasers and for any mod after it. Fluorine itself has no ore of its own.
+     */
+    public static final Material FLUORSPAR = mineral("fluorspar", FLUORSPAR_NAME, MineralFamilies.HALIDE,
+            Element.FLUORINE).formula("CaF2").colour(0x8A52C8)
+            .ore(OreLook.of(OreLook.Pattern.EMERALD, 0x4FBF8A, 0.3, 0.42)).rocks(HostRocks.STONE,
+                    HostRocks.DEEPSLATE, HostRocks.GRANITE, HostRocks.ANDESITE, HostRocks.TUFF).declare();
     /** Iron and titanium's black oxide, glinting like a metal: the Moon's titanium, and its oxygen by reduction. */
     public static final Material ILMENITE = mineral("ilmenite", ILMENITE_NAME, MineralFamilies.OXIDE,
             Element.TITANIUM).formula("FeTiO3").byproduct(Element.IRON).colour(0x1E1C1F)
