@@ -271,7 +271,8 @@ public final class ConfigFileGameTests {
                         "item_loss.corruption",
                         "boot.show_boot_menu", "install_by_hand.gentoo_every_step",
                         "install_by_hand.arch_every_step", "prompt.list_commands", "soundfoundry.catalog",
-                        "soundfoundry.ethernet_kilobytes_per_second", "programs.outside_components"),
+                        "soundfoundry.ethernet_kilobytes_per_second", "programs.outside_components",
+                        "wireless.lost_device_hours"),
                 ComputersServerConfig.FILE.keys().stream().map(ConfigKey::dottedPath).toList(),
                 "the computers' settings");
         same(helper, "jstech-audio.json", AudioSettings.FILE.fileName(), "the player's sound file");

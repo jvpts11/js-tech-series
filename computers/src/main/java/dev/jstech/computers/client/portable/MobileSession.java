@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 public final class MobileSession {
 
     private final UUID device;
+    private final MobileAppState apps = new MobileAppState();
     private MobilePage page = MobilePage.LOCK;
     @Nullable
     private MobileApp app;
@@ -44,6 +45,16 @@ public final class MobileSession {
 
     public MobilePage page() {
         return page;
+    }
+
+    /** The device it is the system of. */
+    public UUID device() {
+        return device;
+    }
+
+    /** Where its apps are. */
+    public MobileAppState apps() {
+        return apps;
     }
 
     @Nullable
@@ -103,21 +114,33 @@ public final class MobileSession {
             case UNLOCK -> go(MobilePage.HOME);
             case HOME -> {
                 if (page != MobilePage.LOCK) {
+                    leaveApp(send);
                     go(MobilePage.HOME);
                 }
             }
             case BACK -> {
-                if (page != MobilePage.LOCK && page != MobilePage.HOME) {
+                // An app goes back inside itself first, and only then to the home.
+                if (page == MobilePage.APP && apps.back()) {
+                    apps.askSoon();
+                } else if (page != MobilePage.LOCK && page != MobilePage.HOME) {
+                    leaveApp(send);
                     go(MobilePage.HOME);
                 }
                 balloon = null;
             }
             case OPEN -> {
+                leaveApp(send);
                 app = tap.app();
                 go(MobilePage.APP);
                 balloon = null;
+                apps.askSoon();
                 if (tap.app() == MobileApp.ALERTS) {
                     send.accept(action(PortableActionPayload.Action.SEE_ALERTS, ""));
+                }
+            }
+            case RUN -> {
+                if (tap.run() != null) {
+                    tap.run().run();
                 }
             }
             case ALERTS -> {
@@ -145,6 +168,19 @@ public final class MobileSession {
         }
     }
 
+    /** The device was put down with an app open: the Messenger lets its room know the player has gone. */
+    public void putDown(final Consumer<PortableActionPayload> send) {
+        leaveApp(send);
+    }
+
+    /* Leaves the app open, if any: the Messenger is told the player left it. */
+    private void leaveApp(final Consumer<PortableActionPayload> send) {
+        if (page == MobilePage.APP && app == MobileApp.MESSENGER) {
+            send.accept(action(PortableActionPayload.Action.LEAVE, ""));
+        }
+        apps.typeInto(MobileAppState.Field.NONE);
+    }
+
     /* Goes to {@code to}, at the top of it. */
     private void go(final MobilePage to) {
         page = to;
@@ -153,6 +189,6 @@ public final class MobileSession {
     }
 
     private PortableActionPayload action(final PortableActionPayload.Action action, final String named) {
-        return new PortableActionPayload(device, action, named);
+        return PortableActionPayload.named(device, action, named);
     }
 }

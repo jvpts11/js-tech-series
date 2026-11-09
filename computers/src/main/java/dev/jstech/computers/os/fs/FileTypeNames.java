@@ -37,6 +37,7 @@ final class FileTypeNames {
     static final TextKey OGG = TextKey.of("jsc.file_type.ogg", "Ogg Vorbis audio");
     static final TextKey WAV = TextKey.of("jsc.file_type.wav", "Wave audio");
     static final TextKey PIX = TextKey.of("jsc.file_type.pix", "Picture");
+    static final TextKey PNG = TextKey.of("jsc.file_type.png", "PNG picture");
 
     private FileTypeNames() {
     }

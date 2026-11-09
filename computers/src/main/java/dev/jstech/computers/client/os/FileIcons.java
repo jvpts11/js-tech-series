@@ -60,7 +60,7 @@ public final class FileIcons {
             case CRAFT -> Kind.CRAFT;
             // An archive is a thing with other things inside it, which is what the parcel already stands for.
             case CPK, SLN, SGSPROJ, SGPROJ, ARK -> Kind.BUNDLE;
-            case PIX -> Kind.IMAGE;
+            case PIX, PNG -> Kind.IMAGE;
             case OGG, WAV -> Kind.AUDIO;
             case TXT, CSV, CMD, SGS, SG, ASM, OTHER -> Kind.DOC;
         };

@@ -41,6 +41,7 @@ import dev.jstech.computers.os.OsMotions;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ComponentKinds;
 import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.portable.PortableEvents;
 import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.computers.registry.ComputerRegistry;
 import dev.jstech.computers.registry.HardwareRegistry;
@@ -162,6 +163,8 @@ public class JsComputers {
         IsmsTraces.listen();
         NetworkWorldEvents.listen();
         NetworkProgress.listen();
+        // The portables' watched items, lost devices and camera pictures.
+        PortableEvents.listen();
         // A part's tooltip, whichever mod's item it is, on both sides: a server's own checks read it too.
         NeoForge.EVENT_BUS.addListener(PartTooltips::onTooltip);
     }

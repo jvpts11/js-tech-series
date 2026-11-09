@@ -44,6 +44,8 @@ public final class NotificationTexts {
     public static final TextKey FORGET = TextKey.of("jscore.notification.forget", "Take it off the list");
     /* How many alike came. */
     public static final TextKey COUNT = TextKey.of("jscore.notification.count", "x%s");
+    /* The mod's name, then where the notification came from: a device, a machine. */
+    public static final TextKey FROM = TextKey.of("jscore.notification.from", "%s · %s");
     public static final TextKey OPEN_PAGE = TextKey.of("jscore.notification.open_page", "Click: open its page");
     public static final TextKey SHOW_PLACE = TextKey.of("jscore.notification.show_place", "Click: show it on the map");
     /* The place's coordinates, its dimension and how far it is, in blocks. */

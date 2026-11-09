@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import dev.jstech.computers.PortableItems;
 import dev.jstech.computers.block.ChargingDockBlock;
 import dev.jstech.computers.portable.PortableBattery;
+import dev.jstech.computers.portable.PortableDevices;
 import dev.jstech.computers.portable.PortableItem;
 import dev.jstech.computers.portable.Portables;
 import dev.jstech.core.blockentity.FieldItemHandler;
@@ -21,6 +22,7 @@ import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -123,12 +125,21 @@ public class ChargingDockBlockEntity extends SyncedBlockEntity {
                 shownPercent = percent;
                 fields().syncToClients();
             }
+            seen(held);
         } else {
             filling = false;
         }
         if (filling != isCharging()) {
             charging.set(filling);
             fields().syncToClients();
+        }
+    }
+
+    /* A device standing in its dock is not lost: it is marked so once a second. */
+    private void seen(final ItemStack held) {
+        final UUID id = Portables.id(held);
+        if (id != null && level instanceof ServerLevel server && server.getGameTime() % Portables.LOOK_EVERY == 0) {
+            PortableDevices.get(server.getServer()).seen(id, server.getGameTime());
         }
     }
 }

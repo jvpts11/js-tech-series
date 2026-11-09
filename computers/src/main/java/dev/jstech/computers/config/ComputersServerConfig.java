@@ -225,6 +225,15 @@ public final class ComputersServerConfig {
                             + "turn them on as well.")
             .named("Outside components");
 
+    public static final ConfigKey<Integer> LOST_DEVICE_HOURS = ConfigKey.whole("wireless.lost_device_hours", 72)
+            .range(1, 8_760)
+            .comment("How long a portable device may be out of every player's inventory and every charging dock "
+                            + "before the server lets go of what was on it, in hours of the server running: its apps, "
+                            + "its alerts, its storage and its pictures.",
+                    "A device whose item is destroyed (lava, fire, the void, despawning) is let go at once.")
+            .named("Lost devices")
+            .unit("h");
+
     public static final ConfigFile FILE = ConfigFile.builder("jscomputers-server", ConfigSide.SERVER,
                     ConfigFormats.TOML)
             .comment("How the computers of J's Computers behave, and what they lend the Operations engine, whose own "
@@ -240,6 +249,8 @@ public final class ComputersServerConfig {
             .sectionNamed("prompt", "The prompt")
             .sectionNamed("soundfoundry", "Soundfoundry")
             .sectionNamed("programs", "Programs")
+            .sectionNamed("wireless", "Wireless")
+            .sectionComment("wireless", "The portable devices: how long a lost one keeps what was on it.")
             .sectionComment("power", "What the computers run on: the energy their power supplies draw.")
             .sectionComment("update", "What the personal-use cards charge for changing an item: smelting, "
                     + "enchanting, repairing, combining and naming.")
@@ -283,6 +294,7 @@ public final class ComputersServerConfig {
             .key(SOUNDFOUNDRY_CATALOG)
             .key(ETHERNET_KILOBYTES_PER_SECOND)
             .key(OUTSIDE_COMPONENTS)
+            .key(LOST_DEVICE_HOURS)
             .build();
 
     private ComputersServerConfig() {
@@ -296,6 +308,11 @@ public final class ComputersServerConfig {
     /** Whether the computers draw energy for what their parts take; off, they run free. */
     public static boolean drawEnergy() {
         return FILE.get(DRAW_ENERGY);
+    }
+
+    /** How long a portable may be out of every inventory and dock before what was on it is let go, in hours. */
+    public static int lostDeviceHours() {
+        return FILE.get(LOST_DEVICE_HOURS);
     }
 
     /** What the personal-use cards' work is paid with. */

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public final class FramesPocketLook implements IMobileLook {
 
     private final boolean legacy;
+    private final IAppKit kit;
 
     private static final int TITLE_H = 13;
     private static final int BAR_H = 13;
@@ -51,6 +52,7 @@ public final class FramesPocketLook implements IMobileLook {
 
     FramesPocketLook(final MobileSystem system) {
         this.legacy = system == MobileSystem.FRAMES_POCKET_2002;
+        this.kit = IAppKit.of(system);
     }
 
     @Override
@@ -332,10 +334,19 @@ public final class FramesPocketLook implements IMobileLook {
         bar(c, MobileTexts.say(MobileTexts.DONE), null, MobileTap.BACK, null);
     }
 
-    /* An app, its window under the title bar with its name. */
+    /*
+     * An app, its window under the title bar with its name, drawn by its own view in Frames Pocket's kit; one whose
+     * inside comes later shows its icon and its name.
+     */
     private void app(final MobileCanvas c, final MobileFrame f) {
         final Colours k = COLOURS.get();
         final MobileApp app = f.app() == null ? MobileApp.NETWORK : f.app();
+        if (MobileApps.of(app) != null) {
+            kit.ground(c, app);
+            title(c, f, MobileParts.name(app), false);
+            MobileApps.paint(c, f, kit, TITLE_H);
+            return;
+        }
         c.rect(0, 0, c.width(), c.height(), legacy ? k.white() : k.ground());
         title(c, f, MobileParts.name(app), false);
         icon(c, MobileArt.glyph(app), c.width() / 2.0F - 8, c.height() / 2.0F - 20);
@@ -392,9 +403,18 @@ public final class FramesPocketLook implements IMobileLook {
         return y + ROW;
     }
 
-    /* The soft keys' bar: a word on the left and one on the right, each pressing its tap. */
+    /* The soft keys' bar of this look's year. */
     private void bar(final MobileCanvas c, final String left, @Nullable final String right,
                      @Nullable final MobileTap leftTap, @Nullable final MobileTap rightTap) {
+        softKeys(c, legacy, left, right, leftTap, rightTap);
+    }
+
+    /**
+     * The soft keys' bar at the foot of the screen, of 2002's look when {@code legacy}: a word on the left and one on
+     * the right, each pressing its tap. The apps' pages draw it too.
+     */
+    static void softKeys(final MobileCanvas c, final boolean legacy, final String left, @Nullable final String right,
+                         @Nullable final MobileTap leftTap, @Nullable final MobileTap rightTap) {
         final Colours k = COLOURS.get();
         final float y = c.height() - BAR_H;
         if (legacy) {

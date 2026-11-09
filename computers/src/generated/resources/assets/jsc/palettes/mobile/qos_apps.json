@@ -1,0 +1,20 @@
+{
+  "black": "#FF000000",
+  "blue": "#FF2F7EF0",
+  "buttonBlue": "#FF007AFF",
+  "buttonGrey": "#FFE5E5EA",
+  "caps": "#FF6D6D72",
+  "chosen": "#FFE0E8F4",
+  "field": "#FFE8E8ED",
+  "green": "#FF34C759",
+  "grey": "#FF8E8E93",
+  "grouped": "#FFF2F2F7",
+  "line": "#FFE8E8EC",
+  "navBottom": "#FF6D84A2",
+  "navLine": "#FF2D3D53",
+  "navTop": "#FFB4C2D4",
+  "orange": "#FFFF9500",
+  "red": "#FFFF3B30",
+  "switchOn": "#FF4CD964",
+  "white": "#FFFFFFFF"
+}

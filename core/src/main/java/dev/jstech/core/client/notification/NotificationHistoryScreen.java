@@ -282,7 +282,7 @@ public final class NotificationHistoryScreen extends Screen {
                 NotificationToasts.levelColour(this.skin, notification.level()));
         this.skin.drawText(g, this.font, Texts.clip(this.font, GameText.resolve(notification.body()),
                 row.textRoom()), row.textX(), y + 14, this.skin.colour(StyleRole.MENU_TEXT));
-        this.skin.drawText(g, this.font, Texts.clip(this.font, NotificationsClient.modName(entry.mod()),
+        this.skin.drawText(g, this.font, Texts.clip(this.font, NotificationsClient.source(notification, entry.mod()),
                 NotificationHistoryLayout.MOD), row.modX(), y + 14, this.skin.colour(StyleRole.MENU_DIM));
         // The board keeps the game's own clock; the time of day is the wall clock's, as far back as that.
         final String when = WHEN.format(Instant.ofEpochMilli(System.currentTimeMillis() - (Util.getMillis()

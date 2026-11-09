@@ -172,8 +172,8 @@ final class NotificationToasts implements IHudElement {
         final int smallRoom = (int) ((right - (x + TEXT_X)) / small);
         skin.drawText(g, font, Texts.clip(font, GameText.resolve(notification.body()), smallRoom), x + TEXT_X,
                 y + lines.body(), skin.colour(StyleRole.MENU_TEXT), small);
-        skin.drawText(g, font, Texts.clip(font, NotificationsClient.modName(entry.mod()), smallRoom), x + TEXT_X,
-                y + lines.mod(), skin.colour(StyleRole.MENU_DIM), small);
+        skin.drawText(g, font, Texts.clip(font, NotificationsClient.source(notification, entry.mod()), smallRoom),
+                x + TEXT_X, y + lines.mod(), skin.colour(StyleRole.MENU_DIM), small);
         actionLine(notification).ifPresent(line -> skin.drawText(g, font, Texts.clip(font, line, smallRoom),
                 x + TEXT_X, y + lines.action(), skin.colour(StyleRole.INFO), small));
         final int left = (int) ((w - 2 * 4) * NotificationBoard.left(entry, now));

@@ -20,6 +20,7 @@ import dev.jstech.core.notification.NotificationBoard;
 import dev.jstech.core.notification.NotificationKind;
 import dev.jstech.core.notification.NotificationSettings;
 import dev.jstech.core.notification.NotificationSounds;
+import dev.jstech.core.notification.NotificationTexts;
 import dev.jstech.core.notification.Notifications;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
@@ -117,6 +118,16 @@ public final class NotificationsClient {
     /** The name of the mod {@code modid}, as its list of mods calls it. */
     public static String modName(final String modid) {
         return ModList.get().getModContainerById(modid).map(mod -> mod.getModInfo().getDisplayName()).orElse(modid);
+    }
+
+    /**
+     * Who sent {@code notification}, as its foot says: the name of the mod {@code modid}, then where it came from when
+     * it says so (a device, a machine).
+     */
+    public static String source(final Notification notification, final String modid) {
+        final String mod = modName(modid);
+        return notification.origin().isEmpty() ? mod
+                : GameText.resolve(NotificationTexts.FROM.with(mod, notification.origin()));
     }
 
     /** What the player calls the kind {@code kind}: its declared name, or its id when this game does not know it. */

@@ -69,6 +69,16 @@ public final class PortableLinks {
         return out;
     }
 
+    /** Every device on a network in that level, those gone a while dropped as they are met. */
+    public static List<Joined> all(final ServerLevel level) {
+        final Map<UUID, Joined> known = BY_LEVEL.get(level);
+        if (known == null) {
+            return List.of();
+        }
+        known.values().removeIf(joined -> !fresh(level, joined));
+        return List.copyOf(known.values());
+    }
+
     private static boolean fresh(final ServerLevel level, final Joined joined) {
         return level.getGameTime() - joined.seenAt() <= GONE_AFTER;
     }

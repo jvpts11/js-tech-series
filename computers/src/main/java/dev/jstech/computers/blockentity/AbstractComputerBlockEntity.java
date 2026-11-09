@@ -86,6 +86,7 @@ import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.gui.term.TermBuffer;
+import dev.jstech.computers.portable.AlertKind;
 import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -2064,12 +2065,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             stopSuddenly(CrashCause.POWER_SUPPLY, CrashPages.Moment.hardware(supply));
             hardware.markDirty();
             hardwareChanged();
-            logEvent(level, EventLevel.ERROR, PsuTexts.LOG_FAILED.with(supply));
+            logAlert(level, EventLevel.ERROR, AlertKind.POWER, PsuTexts.LOG_FAILED.with(supply));
         } else if (worn.unitLost()) {
-            logEvent(level, EventLevel.WARN, PsuTexts.LOG_UNIT_FAILED.with(worn.after().failedUnits(worn.spec()),
-                    worn.spec().units(), supply));
+            logAlert(level, EventLevel.WARN, AlertKind.POWER, PsuTexts.LOG_UNIT_FAILED.with(
+                    worn.after().failedUnits(worn.spec()), worn.spec().units(), supply));
         } else if (worn.degradedNow()) {
-            logEvent(level, EventLevel.WARN, PsuTexts.LOG_DEGRADED.with(supply,
+            logAlert(level, EventLevel.WARN, AlertKind.POWER, PsuTexts.LOG_DEGRADED.with(supply,
                     PsuTexts.percent(worn.after().worst(worn.spec()))));
         }
     }
@@ -2082,6 +2083,18 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         final NodeUuid node = nodeUuid();
         if (node != null) {
             NetworkEvents.record(level, networkUuid() != null ? networkUuid() : ranOn, what, node,
+                    NetworkEvents.machineName(customName(), machine(), node), message);
+        }
+    }
+
+    /**
+     * Writes {@code message} into the same log as {@link #logEvent} does, and tells the network's portables that take
+     * alerts of {@code kind} (computers/docs/design/wireless.md).
+     */
+    void logAlert(final ServerLevel level, final EventLevel what, final AlertKind kind, final Text message) {
+        final NodeUuid node = nodeUuid();
+        if (node != null) {
+            NetworkEvents.alert(level, networkUuid() != null ? networkUuid() : ranOn, what, kind, node,
                     NetworkEvents.machineName(customName(), machine(), node), message);
         }
     }

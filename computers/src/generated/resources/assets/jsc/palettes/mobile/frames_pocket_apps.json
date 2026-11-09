@@ -1,0 +1,15 @@
+{
+  "bad": "#FFC00000",
+  "black": "#FF000000",
+  "chosen": "#FF0A246A",
+  "chosenValue": "#FFFFD040",
+  "edge": "#FF404040",
+  "face": "#FFD4D0C8",
+  "good": "#FF008000",
+  "grey": "#FF808080",
+  "header": "#FFE8ECF4",
+  "headerInk": "#FF303030",
+  "track": "#FFE0E0E0",
+  "warn": "#FFC07000",
+  "white": "#FFFFFFFF"
+}

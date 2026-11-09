@@ -35,6 +35,9 @@ public final class SystemLayout {
     /** The directory songs are kept in on a Frames system, made the first time one is brought. */
     public static final String MUSIC_DIR = "Users/Public/Music";
 
+    /** The directory a portable's pictures are kept in on a Frames system, made the first time one is sent. */
+    public static final String PICTURES_DIR = "Users/Public/Pictures";
+
     /** The folder the system itself lives in, named after the system line rather than after somebody else's. */
     public static final String SYSTEM_DIR = "Frames";
 
@@ -83,6 +86,17 @@ public final class SystemLayout {
             return MUSIC_DIR;
         }
         return (os == null ? UnixTree.HOME_AND_MEDIA : UnixTree.of(os.platform(), os.familyRank())).musicPath();
+    }
+
+    /**
+     * The pictures folder for an OS: under that system's own home on a POSIX kernel, the Windows-style one
+     * otherwise.
+     */
+    public static String picturesDirFor(final OsDef os, final KernelDef kernel) {
+        if (kernel == null || kernel.shellFamily() != ShellFamily.POSIX) {
+            return PICTURES_DIR;
+        }
+        return (os == null ? UnixTree.HOME_AND_MEDIA : UnixTree.of(os.platform(), os.familyRank())).picturesPath();
     }
 
     /**

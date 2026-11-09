@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload.social;
 import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.client.os.KnotApp;
 import dev.jstech.computers.client.os.MessengerApp;
+import dev.jstech.computers.client.portable.PortableApps;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.KnotActionPayload;
@@ -76,8 +77,18 @@ public final class SocialPayloads {
 
     private static void handleMessenger(final MessengerActionPayload payload, final ServerPlayer player,
                                         final ServerLevel level) {
-        final ServerServices.Host host = serviceFor(player, level,
-                payload.hostPos(), payload.monitorPos(), Programs.MESSENGER_SERVICE);
+        talk(player, level, serviceFor(player, level, payload.hostPos(), payload.monitorPos(),
+                Programs.MESSENGER_SERVICE), payload.action(), payload.room(), payload.text());
+    }
+
+    /**
+     * What {@code player} did in the Messenger that {@code host} runs, or that none does: looked at {@code room},
+     * said {@code text} in it, nudged it or left; one of {@link MessengerActionPayload}'s actions. A computer's window
+     * and a portable's app speak to the service alike.
+     */
+    public static void talk(final ServerPlayer player, final ServerLevel level,
+                            @Nullable final ServerServices.Host host, final int action, final String asked,
+                            final String text) {
         if (host == null) {
             /*
              * No server on this network is running it. The window is told so rather than left waiting, and
@@ -95,18 +106,18 @@ public final class SocialPayloads {
         }
         final String who = player.getGameProfile().getName();
         // A private room asked for by somebody who is not one of its two is the lobby for them.
-        final String asked = payload.room().isBlank() ? MessengerLog.LOBBY : payload.room();
-        final String room = MessengerLog.mayEnter(asked, who) ? asked : MessengerLog.LOBBY;
+        final String named = asked.isBlank() ? MessengerLog.LOBBY : asked;
+        final String room = MessengerLog.mayEnter(named, who) ? named : MessengerLog.LOBBY;
         final long now = level.getGameTime();
         // Anybody who has gone quiet is let go of first, so the weight below is of who is really there.
         log.forgetIdle(now);
-        if (payload.action() == MessengerActionPayload.LEAVE) {
+        if (action == MessengerActionPayload.LEAVE) {
             log.disconnect(who);
             return; // nothing to draw for a window that is closing
         }
         log.connect(who, room, now);
-        final boolean spoke = switch (payload.action()) {
-            case MessengerActionPayload.SAY -> log.say(room, who, payload.text(), now, false) != null;
+        final boolean spoke = switch (action) {
+            case MessengerActionPayload.SAY -> log.say(room, who, text, now, false) != null;
             case MessengerActionPayload.NUDGE -> log.say(room, who, "", now, true) != null;
             default -> false;
         };
@@ -175,7 +186,9 @@ public final class SocialPayloads {
     }
 
     private static void handleMessengerState(final MessengerStatePayload payload, final Player player) {
+        // A computer's window or a portable's app has it open: whichever it is shows it.
         MessengerApp.accept(payload);
+        PortableApps.take(payload);
     }
 
     /* The repository */

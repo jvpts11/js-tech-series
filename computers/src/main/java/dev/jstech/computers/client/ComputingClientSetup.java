@@ -10,6 +10,8 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.PortableItems;
+import dev.jstech.computers.client.portable.CameraShots;
+import dev.jstech.computers.client.portable.PortableApps;
 import dev.jstech.computers.client.portable.PortableItemRenderer;
 import dev.jstech.computers.client.portable.PortableScreen;
 import dev.jstech.computers.client.portable.PortableViews;
@@ -84,6 +86,8 @@ public final class ComputingClientSetup {
     public static void listen(final IEventBus modBus) {
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, ComputingClientSetup::onLoggingOut);
         NeoForge.EVENT_BUS.addListener(RenderItemInFrameEvent.class, ComputingClientSetup::onRenderItemInFrame);
+        // The portables' cameras take the world as it is drawn, before the hand and the HUD.
+        CameraShots.listen();
         modBus.addListener(RegisterMenuScreensEvent.class, ComputingClientSetup::registerScreens);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, ComputingClientSetup::registerRenderers);
         modBus.addListener(RegisterClientExtensionsEvent.class, ComputingClientSetup::registerItemRenderers);
@@ -100,6 +104,7 @@ public final class ComputingClientSetup {
         PrintedPictureTextures.forgetAll();
         SigmaImages.clear();
         PortableViews.clear();
+        PortableApps.clear();
     }
 
     /** A printed picture in an item frame shows on it, as a map does. */

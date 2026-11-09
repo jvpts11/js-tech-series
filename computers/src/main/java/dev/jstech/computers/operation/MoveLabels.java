@@ -28,6 +28,8 @@ public final class MoveLabels {
     public static final String TERMINAL = "Terminal";
     /** The Cluster Manager on a Cluster Management Computer. */
     public static final String CLUSTER_MANAGER = "Cluster Manager";
+    /** The network app of a portable device. */
+    public static final String NETWORK_APP = "Network app";
 
     /**
      * A program written by the player, named by the script that asked.

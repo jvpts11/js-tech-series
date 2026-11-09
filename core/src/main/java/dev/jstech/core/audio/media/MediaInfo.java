@@ -19,6 +19,9 @@ package dev.jstech.core.audio.media;
  */
 public record MediaInfo(long millis, int sampleRate, int channels, int kbps, MediaTags tags) {
 
+    /** What a picture the store keeps is, as a recording: it runs for no time and makes no sound. */
+    public static final MediaInfo STILL = new MediaInfo(0L, 0, 0, 0, MediaTags.EMPTY);
+
     public MediaInfo {
         millis = Math.max(0L, millis);
         tags = tags == null ? MediaTags.EMPTY : tags;

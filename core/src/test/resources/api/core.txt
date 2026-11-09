@@ -11921,8 +11921,10 @@ stable 4
 10 dev.jstech.core.multipart.SpaceSlots  static int faceAxis(int)
 10 dev.jstech.core.multipart.SpaceSlots  static int faceOf(int)
 10 dev.jstech.core.multipart.SpaceSlots  static int[] across(int)
-10 dev.jstech.core.notification.Notification  type record(ResourceLocation kind, NotificationLevel level, Text title, Text body, Optional<NotificationAction> action)
+47 dev.jstech.core.notification.Notification  type record(ResourceLocation kind, NotificationLevel level, Text title, Text body, Optional<NotificationAction> action, Text origin)
 10 dev.jstech.core.notification.Notification  Notification withAction(NotificationAction)
+47 dev.jstech.core.notification.Notification  Notification withOrigin(Text)
+47 dev.jstech.core.notification.Notification  new(ResourceLocation, NotificationLevel, Text, Text, Optional<NotificationAction>)
 10 dev.jstech.core.notification.Notification  static final StreamCodec<ByteBuf, Notification> STREAM_CODEC
 10 dev.jstech.core.notification.NotificationAction  type sealed interface permits NotificationAction.OpenManual, NotificationAction.ShowPlace
 10 dev.jstech.core.notification.NotificationAction  static final StreamCodec<ByteBuf, NotificationAction> STREAM_CODEC
@@ -11996,6 +11998,7 @@ stable 4
 10 dev.jstech.core.notification.NotificationTexts  static final TextKey DO_NOT_DISTURB
 10 dev.jstech.core.notification.NotificationTexts  static final TextKey EMPTY
 10 dev.jstech.core.notification.NotificationTexts  static final TextKey FORGET
+47 dev.jstech.core.notification.NotificationTexts  static final TextKey FROM
 10 dev.jstech.core.notification.NotificationTexts  static final TextKey HEAR_KIND
 10 dev.jstech.core.notification.NotificationTexts  static final TextKey HEAR_MOD
 10 dev.jstech.core.notification.NotificationTexts  static final TextKey HERE

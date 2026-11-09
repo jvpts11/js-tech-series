@@ -27,7 +27,7 @@ public final class PortableViews {
 
     /** The server told what the device keeps. */
     public static void take(final PortableViewPayload view) {
-        VIEWS.put(view.device(), view);
+        PortableHud.cameIn(VIEWS.put(view.device(), view), view);
     }
 
     /** What the device {@code device} keeps, as last told, or null before it was told anything. */

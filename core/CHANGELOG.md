@@ -443,6 +443,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   blocked)` gives the devices a walk from some positions meets, never stepping on a position `blocked` names;
   `ConnectivityIndex.devicesThisSide(positions)` gives the devices of a place without crossing a long-distance line,
   and `forgetNetworkOf(position)` drops the network id a part of the grid kept after it was cut off. Experimental.
+- Notifications that say where they came from: J's Core's API is at version 47. `Notification` gains `origin`,
+  said after the mod's name at its foot ("J's Computers · from your qPhone 5"), set with `withOrigin(Text)`;
+  `NotificationTexts.FROM` writes the two together. The record without it stays as a constructor of five. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -1804,6 +1807,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
   everywhere, its machines, its tables and its progress. Whatever a rule of the series says era by era, an era that
   says nothing takes the nearest earlier era's, as the Exa and the Singularity take the Advanced's.
+- Pictures in the media store: the store keeps PNG pictures beside the recordings, read as far as their size
+  (`MediaProbe.pngSize`, `MediaInfo.STILL`), and `MediaUploader.upload` brings bytes a game made itself, such as a
+  camera's picture.
 - A manual leaves out the page of things the game has none of, such as what a mod brings with another mod that
   is not installed.
 - A capsule station is read and set from outside as a machine is (its address, where it sends the rest, what
@@ -1988,6 +1994,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   stands in the block over it is sat in from its back.
 
 ### Changed
+- A notification that says where it came from says so after its mod's name, on the screen and in the history.
 - A block aboard a moving structure sounds where the structure carries it: a sound played at one of its blocks,
   and a running sound a block entity aboard asks for, are heard from where that block is in the world now, a running
   one following it every tick as the structure moves, where both came from the yard its blocks are kept in, far from

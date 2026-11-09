@@ -25,9 +25,10 @@ import java.util.stream.Stream;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * The recordings a server keeps, one file each, named by what is in it. A recording is written once however many
- * players bring it or however many disks hold it, and only a recording that can be read as one is kept: a file that
- * is not what its kind says is refused before it takes any room.
+ * The recordings a server keeps, one file each, named by what is in it, and the pictures players' cameras take, kept
+ * the same way. A recording is written once however many players bring it or however many disks hold it, and only a
+ * recording that can be read as one is kept: a file that is not what its kind says is refused before it takes any
+ * room.
  *
  * <p>It lives with the world, so the recordings travel with the save and a world copied to another server keeps its
  * music. The world's own folder and what keeps the ledger are handed in, which keeps this free of the game and testable

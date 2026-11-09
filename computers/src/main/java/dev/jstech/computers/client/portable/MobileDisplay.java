@@ -110,6 +110,6 @@ public final class MobileDisplay {
                 stack.get(ComputingComponents.PORTABLE_LINK.get()), PortableClock.time(dayTime),
                 PortableClock.day(dayTime), owner, mouseX, mouseY, session == null ? null : session.balloon(),
                 session == null ? 0.0F : session.slide(), session == null ? MobileSession.ALL_TAB : session.tab(),
-                session == null ? 0 : session.scroll(), now);
+                session == null ? 0 : session.scroll(), now, session);
     }
 }

@@ -28,9 +28,10 @@ import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
- * Brings a recording from the player's own computer to the server: it is read off the game's thread, named by its
- * hash and offered; once the server says to send it, it goes a few pieces a tick at the pace the server asked for,
- * and whoever brought it is told how far it has got and how it ended.
+ * Brings a recording from the player's own computer to the server, or a picture their game made (a camera's): a file
+ * is read off the game's thread; then it is named by its hash and offered, and once the server says to send it, it
+ * goes a few pieces a tick at the pace the server asked for, and whoever brought it is told how far it has got and how
+ * it ended.
  */
 public final class MediaUploader {
 
@@ -86,21 +87,22 @@ public final class MediaUploader {
                 listener.finished(false, Text.literal(name));
                 return null;
             }
-            final byte[] bytes = loaded.bytes();
-            final MediaId media;
-            try {
-                media = MediaId.of(bytes, format);
-            } catch (final IllegalArgumentException notAKind) {
-                listener.finished(false, Text.literal(name));
-                return null;
-            }
-            final int token = ++nextToken;
-            OUTGOING.put(token, new Outgoing(bytes, listener));
-            PacketDistributor.sendToServer(new MediaOfferPayload(token, media,
-                    TextBounds.clip(name, MediaOfferPayload.MAX_NAME), purpose,
-                    TextBounds.clip(context, MediaOfferPayload.MAX_CONTEXT)));
+            offer(loaded.bytes(), name, format, purpose, context, listener);
             return null;
         }, Minecraft.getInstance());
+    }
+
+    /**
+     * Brings {@code bytes}, a file called {@code name} the player's game made itself (a picture its camera took), to
+     * the server for {@code purpose}. Called on the game's own thread.
+     *
+     * @param context what the server's side needs to know to do with it
+     */
+    public static void upload(final byte[] bytes, final String name, final String purpose, final String context,
+                              final IListener listener) {
+        final int dot = name.lastIndexOf('.');
+        offer(bytes, name, dot < 0 ? "" : name.substring(dot + 1).toLowerCase(Locale.ROOT), purpose, context,
+                listener);
     }
 
     /** The server answered an offer. */
@@ -159,6 +161,23 @@ public final class MediaUploader {
         OUTGOING.clear();
         // A file still being read finds the number changed and is dropped instead of offered to the next server.
         generation++;
+    }
+
+    /* Names {@code bytes} by their hash and offers them to the server, which says whether to send them. */
+    private static void offer(final byte[] bytes, final String name, final String format, final String purpose,
+                              final String context, final IListener listener) {
+        final MediaId media;
+        try {
+            media = MediaId.of(bytes, format);
+        } catch (final IllegalArgumentException notAKind) {
+            listener.finished(false, Text.literal(name));
+            return;
+        }
+        final int token = ++nextToken;
+        OUTGOING.put(token, new Outgoing(bytes, listener));
+        PacketDistributor.sendToServer(new MediaOfferPayload(token, media,
+                TextBounds.clip(name, MediaOfferPayload.MAX_NAME), purpose,
+                TextBounds.clip(context, MediaOfferPayload.MAX_CONTEXT)));
     }
 
     /* Reads the file, or says it is too big to; null when it cannot be read. */

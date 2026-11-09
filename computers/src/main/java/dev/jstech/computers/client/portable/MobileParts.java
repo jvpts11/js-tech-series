@@ -18,6 +18,7 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.Text;
 import java.util.List;
+import java.util.Locale;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -151,6 +152,11 @@ final class MobileParts {
     /** What {@code text} says. */
     static String say(final Text text) {
         return MobileTexts.say(text);
+    }
+
+    /** A count as the apps write it, its thousands grouped. */
+    static String number(final long count) {
+        return String.format(Locale.ROOT, "%,d", count);
     }
 
     /** The shared colours, as the palette above names them. */

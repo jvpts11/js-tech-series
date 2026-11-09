@@ -97,4 +97,9 @@ public record UnixTree(List<String> home, String mounts, List<String> desktop, L
     public String musicPath() {
         return homePath() + "/Music";
     }
+
+    /** The folder a portable's pictures are kept in, made the first time one is sent. */
+    public String picturesPath() {
+        return homePath() + "/Pictures";
+    }
 }

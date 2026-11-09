@@ -11,6 +11,7 @@ import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.CraftPlannerApp;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
+import dev.jstech.computers.client.portable.PortableApps;
 import dev.jstech.computers.crafting.AnyTagResolver;
 import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftingPattern;
@@ -48,6 +49,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -123,8 +125,9 @@ public final class CraftingPayloads {
         if (player.containerMenu instanceof ComputerTerminalMenu menu) {
             menu.setCraftPlan(payload);
         } else {
-            // The desktop Network Interactor has no container menu; route the plan to its craft popup.
+            // The desktop Network Interactor and a portable's network app have no container menu: both are told.
             NetworkInteractorApp.acceptCraftPlan(payload);
+            PortableApps.take(payload);
         }
     }
 
@@ -231,16 +234,26 @@ public final class CraftingPayloads {
     private static void handleCraftPlanRequest(final CraftPlanRequestPayload payload, final ServerPlayer player,
                                                final ServerLevel level) {
         final IComputerTerminalHost host = craftHost(player, level, payload.monitorPos(), payload.hostPos());
-        if (host == null || host.networkUuid() == null || payload.quantity() <= 0L) {
+        if (host == null || host.networkUuid() == null) {
             return;
         }
-        final MainframeBlockEntity mainframe = resolveMainframe(level, host.networkUuid());
+        sendPlan(player, level, host.networkUuid(), payload.result(), payload.quantity(), payload.recipe(),
+                count -> rememberedRecipe(host, StorageKey.of(payload.result()), count));
+    }
+
+    /**
+     * Sends {@code player} how the network {@code network} would craft {@code quantity} of {@code result}: with the
+     * recipe {@code asked}, or when that is none of them, the one {@code remembered} says out of how many there
+     * are. A machine's dialog and a portable's network app ask it alike.
+     */
+    public static void sendPlan(final ServerPlayer player, final ServerLevel level, final NetworkUuid network,
+                                final ItemStack result, final long quantity, final int asked,
+                                final IntUnaryOperator remembered) {
+        final MainframeBlockEntity mainframe = quantity <= 0L ? null : resolveMainframe(level, network);
         if (mainframe == null) {
             return;
         }
-        final StorageKey key = StorageKey.of(payload.result());
-        final long quantity = payload.quantity();
-        final ItemStack result = payload.result();
+        final StorageKey key = StorageKey.of(result);
         // A craft's plan is the network's engine's to make; with none running, the dialog is told so.
         final ICraftPlanning planner = mainframe.networkOperations().planner();
         if (planner == null) {
@@ -249,17 +262,16 @@ public final class CraftingPayloads {
             return;
         }
         final var machines = mainframe.networkProcessingPatterns();
-        final var stock = NetworkStorage
-                .of(level, host.networkUuid()).query();
+        final var stock = NetworkStorage.of(level, network).query();
         /*
-         * Which recipe to plan with: the one the dialog named, else the one this machine remembers the
+         * Which recipe to plan with: the one asked for, else the one the machine asking remembers the
          * player picking for the item, else the first. The reply carries every recipe that makes the item
          * when there is more than one, so the dialog can offer the choice.
          */
         final List<NetworkRecipe> recipes = mainframe.recipesFor(key);
-        int chosen = payload.recipe();
+        int chosen = asked;
         if (chosen < 0 || chosen >= recipes.size()) {
-            chosen = rememberedRecipe(host, key, recipes.size());
+            chosen = remembered.applyAsInt(recipes.size());
         }
         final List<RecipeChoice> options = recipes.size() > 1
                 ? recipeChoices(level, mainframe, planner, recipes, key, quantity, machines, stock) : List.of();

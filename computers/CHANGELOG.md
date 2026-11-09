@@ -402,6 +402,27 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   an aluminium stand, a wireless stand) holds a portable of its era by a right click, charges it from the energy behind
   it at its charger's watts, shows the battery filling on its screen and lights its lamp, and gives it back to an empty
   hand.
+- The portables' network app, a smaller Network Interactor in each family's look: Stock, the network's
+  items, searched, each opening to be requested into the portable's own storage, never straight into the inventory;
+  Device, that storage, each line taken into the inventory or returned, with the Deposit of the inventory row by row or
+  all at once; and Craft, what the network makes, how many, its plan and the jobs running. A portable holds its storage
+  over its era's item size, less its system: 4 items on the Hightide Pocket, 112 on the qPhone 5, 1,000 on the qPad
+  Pro. On Frames Pocket the left soft key requests the item picked and the Menu holds the other pages.
+- The network's alerts to its portables: an item below the level a portable watches it at, an Operation that
+  failed, a degraded power supply, a UPS on its battery and a network conflict, each to the portables on the network
+  that take its kind. The Alerts app turns the five kinds on or off and watches up to 12 items, each with its level; a
+  watched item is told once until it comes back up. A client setting, Alerts on the HUD, shows them as J's Core's
+  notifications too, naming the device they came from.
+- The camera, the gallery, Maps, prospecting and the Messenger on the portables. The camera takes what you
+  see without the hand or the HUD, at its era's resolution (640 x 480, 1280 x 960, 4032 x 3024); the gallery keeps it in
+  the portable's storage and sends it to a personal computer of the network as a PNG file in its pictures folder. Maps
+  draws J's Core's map round you with the network's Mainframe, its access points and their reach; prospecting shows
+  which way the veins within 64 blocks lie and how strongly, never where; the Messenger talks to the network's service.
+- Whoever loses a portable loses what was on it: a portable whose item is destroyed (lava, fire, the void,
+  despawning) is let go at once, and one out of every inventory and dock for 72 hours of the server running too, as the
+  new `[wireless] lost_device_hours` setting says.
+- PNG pictures on the computers' disks: a file naming a picture the server keeps, weighing what the
+  picture does, as a song's file does.
 - A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
@@ -449,6 +470,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its autocrafting.
 
 ### Changed
+- A computer, or a server in its rack, that its UPS takes over writes it in the network's log: "On its
+  UPS's battery: the power went".
 - IQL: the computers table gives every computer its era, a Cluster Management Computer's too, and names a
   WAN Gateway Computer as one; the network's log calls a gateway `WAN-` and its short id, This PC "WAN Gateway
   Computer".

@@ -135,6 +135,11 @@ public enum FileType {
     OGG("ogg", false, false, FileTypeNames.OGG, true),
     /** The same, kept as an uncompressed wave, which weighs many times what the Ogg of it would. */
     WAV("wav", false, false, FileTypeNames.WAV, true),
+    /**
+     * A picture a portable's camera took (computers/docs/design/wireless.md), sent here from its gallery. Like a song,
+     * the file names the picture the server keeps and weighs what the picture does.
+     */
+    PNG("png", false, false, FileTypeNames.PNG, true),
 
     /**
      * A file of a kind the machines do not know: whatever a player or a program chose to call it, such as
@@ -206,16 +211,21 @@ public enum FileType {
 
     /**
      * Whether a file of this type is a recording: it names a recording the server keeps rather than holding it, and
-     * weighs what that recording weighs. Such a file is only ever the recording it was made as; it never turns into
-     * text, and text never turns into one.
+     * weighs what that recording weighs; a camera's picture is kept the same way. Such a file is only ever the
+     * recording it was made as; it never turns into text, and text never turns into one.
      */
     public boolean recording() {
         return recording;
     }
 
-    /** The type a recording of that kind of file is kept as on a disk, or empty for a kind no recording is kept as. */
+    /** Whether a file of this type is a sound: a recording a music player plays, not a camera's picture. */
+    public boolean sound() {
+        return recording && this != PNG;
+    }
+
+    /** The type a sound of that kind of file is kept as on a disk, or empty for a kind no sound is kept as. */
     public static Optional<FileType> forRecording(final String format) {
-        return fromExtension(format).filter(FileType::recording);
+        return fromExtension(format).filter(FileType::sound);
     }
 
     /**

@@ -35,6 +35,7 @@ public final class DroidixLook implements IMobileLook {
 
     private final MobileSystem system;
     private final IconStyle style;
+    private final IAppKit kit;
 
     private static final int ROW_PITCH = 34;
     /**
@@ -52,6 +53,7 @@ public final class DroidixLook implements IMobileLook {
         this.system = system;
         this.style = system == MobileSystem.DROIDIX_2009 ? IconStyle.DROIDIX_2009
                 : system == MobileSystem.DROIDIX_2014 ? IconStyle.DROIDIX_2014 : IconStyle.DROIDIX_2019;
+        this.kit = IAppKit.of(system);
     }
 
     @Override
@@ -324,10 +326,19 @@ public final class DroidixLook implements IMobileLook {
         }
     }
 
-    /* An app: its bar in its colour with its name, its icon in its window. */
+    /*
+     * An app, drawn by its own view in Droidix's kit under the status bar, which is drawn again over a page that fills
+     * the screen; one whose inside comes later shows its bar in its colour with its name and its icon in its window.
+     */
     private void app(final MobileCanvas c, final MobileFrame f) {
         final Colours k = COLOURS.get();
         final MobileApp app = f.app() == null ? MobileApp.NETWORK : f.app();
+        if (MobileApps.of(app) != null) {
+            kit.ground(c, app);
+            MobileApps.paint(c, f, kit, status(c, f, kit.dark(app)));
+            status(c, f, kit.dark(app));
+            return;
+        }
         final float w = c.width();
         c.rect(0, 0, w, c.height(), k.white());
         final float top = status(c, f, system != MobileSystem.DROIDIX_2019);

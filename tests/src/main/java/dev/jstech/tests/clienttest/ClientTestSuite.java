@@ -83,6 +83,7 @@ import dev.jstech.tests.clienttest.computers.NetworkDeviceClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkEventLogClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkInteractorClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkLinksClientTests;
+import dev.jstech.tests.clienttest.computers.PortableAppsClientTests;
 import dev.jstech.tests.clienttest.computers.PortableClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkServicesClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkSharesClientTests;
@@ -482,6 +483,7 @@ public final class ClientTestSuite {
             NetworkDeviceClientTests.class,
             NetworkLinksClientTests.class,
             PortableClientTests.class,
+            PortableAppsClientTests.class,
             BusWindowClientTests.class,
             BusModelClientTests.class,
             PeripheralCableClientTests.class,

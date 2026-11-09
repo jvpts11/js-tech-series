@@ -109,6 +109,38 @@ taking from its line only what it gives the battery. A portable in its dock is o
 filling, the dock's lamp lit. What a portable keeps (its apps and its alerts) lives on the server, by the id its item
 carries. The numbers are estimates.
 
+Each family draws its apps in its own look. The **network app** is a smaller Network Interactor with three tabs:
+Stock, the network's items, searched, each opening to be requested; Device, the portable's own storage; and Craft,
+what the network makes, how many, its plan and the jobs running on it. A request puts the items into the portable's
+own storage, never straight into the inventory; Device takes them into the inventory (Take) or back to the network
+(Return), and its Deposit lists the player's inventory row by row, each given to the network or all at once. A
+portable holds what its storage holds over the item size of its era's disk, less its system: 4 items on the Hightide
+Pocket, 8 on the Pocket Pro with its card, 112 on the qPhone 5, 480 on the Nebula S10, 1,000 on the qPad Pro. On
+Frames Pocket the left soft key requests the item picked and the Menu holds the other pages, as the Pocket PC's
+programs did.
+
+The network sends **alerts** to the portables on it: an item below the level a portable watches it at, an Operation
+that failed, a degraded power supply, a UPS on its battery (a line in the network's log too), and a network conflict.
+The **Alerts** app turns the five kinds on or off for its portable and keeps up to 12 watched items, each with its
+level, halved or doubled; a watched item is told once when it goes below its level, and again only after it came back
+up. A rule for the whole network belongs to the automation. A player's client setting
+(`jscomputers-client.toml`, `notifications_on_hud`) shows the alerts on the HUD too, as J's Core notifications at the
+attention level, naming the device they came from.
+
+The **camera** takes what the player sees, without the hand or the HUD, cut to four by three at the resolution of the
+portable's era (640 x 480, 1280 x 960, 4032 x 3024), and keeps it in the **gallery** as a PNG the server's store
+keeps, in the portable's own storage by its bytes, up to 60 pictures. From the gallery a picture goes to a personal
+computer of the network as a PNG file in its pictures folder (`Users/Public/Pictures`, or `~/Pictures` on a Unix),
+naming the picture the store keeps, as a song's file does. **Maps** draws J's Core's map round the player with the
+network's Mainframe, its access points and their reach, and the Core's markers; the wheel zooms it. **Prospecting**
+shows the veins within 64 blocks as a compass and bars, from J's Core's world kit: which way each lies and how
+strongly, never where. The **Messenger** talks to the network's Messenger service, its rooms and its people the same
+as a computer's.
+
+Whoever loses a portable loses what was on it: when its item is destroyed (lava, fire, the void, despawning) the server
+lets its state go, and a portable out of every inventory and every dock for 72 hours of the server running is let go
+too (`[wireless] lost_device_hours` in `jscomputers-server.toml`).
+
 ## Two places over a long-distance line
 
 *Added 2026-11-09.*

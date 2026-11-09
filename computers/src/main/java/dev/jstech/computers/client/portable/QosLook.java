@@ -33,6 +33,7 @@ public final class QosLook implements IMobileLook {
 
     private final MobileSystem system;
     private final IconStyle style;
+    private final IAppKit kit;
 
     private static final int ICON = 22;
     private static final int ROW_PITCH = 34;
@@ -56,6 +57,7 @@ public final class QosLook implements IMobileLook {
         this.system = system;
         this.style = system == MobileSystem.QOS_2007 ? IconStyle.QOS_2007
                 : system == MobileSystem.QOS_2013 ? IconStyle.QOS_2013 : IconStyle.QOS_2017;
+        this.kit = IAppKit.of(system);
     }
 
     @Override
@@ -361,10 +363,19 @@ public final class QosLook implements IMobileLook {
         }
     }
 
-    /* An app, its name on its bar and its icon in its window. */
+    /*
+     * An app, drawn by its own view in the qOS's kit under the status bar, which is drawn again over a page that fills
+     * the screen, as the maps do; one whose inside comes later shows its name on its bar and its icon in its window.
+     */
     private void app(final MobileCanvas c, final MobileFrame f) {
         final Colours k = COLOURS.get();
         final MobileApp app = f.app() == null ? MobileApp.NETWORK : f.app();
+        if (MobileApps.of(app) != null) {
+            kit.ground(c, app);
+            MobileApps.paint(c, f, kit, status(c, f, kit.dark(app)));
+            status(c, f, kit.dark(app));
+            return;
+        }
         final float w = c.width();
         c.rect(0, 0, w, c.height(), k.white());
         final float top = status(c, f, false);

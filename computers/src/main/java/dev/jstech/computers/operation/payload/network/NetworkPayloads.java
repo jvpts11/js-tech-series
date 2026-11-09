@@ -78,6 +78,7 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -262,6 +263,23 @@ public final class NetworkPayloads {
 
     private static void handleNetworkManager(final NetworkManagerPayload payload, final Player player) {
         NetworkManagerApp.accept(payload);
+    }
+
+    /**
+     * The personal computers of the network {@code net}, by their nodes, each as the Network Manager lists it: what
+     * it is called and how it is on the network. A portable's gallery sends its pictures to them.
+     */
+    public static Map<NodeUuid, NetworkNodeInfo> personalComputers(final ServerLevel level, final NetworkUuid net) {
+        final UnitFormatter fmt = UnitFormatter.forCurrentLocale();
+        final NodeLinks links = new NodeLinks(level, net);
+        final Map<NodeUuid, NetworkNodeInfo> out = new LinkedHashMap<>();
+        for (final NetworkSystem.PersonalComputerNode pc : NetworkSystem.get(level).personalComputersOf(net)) {
+            if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity) {
+                out.put(pc.nodeUuid(), resolveComputerNode(level, NetworkNodeInfo.KIND_PC, pc.nodeUuid().asString(),
+                        pc.pos(), fmt.compact(pc.capacity(), Unit.IT_PER_TICK), links));
+            }
+        }
+        return out;
     }
 
     private static List<NetworkNodeInfo> collectNodes(final ServerLevel level, final MainframeBlockEntity mf) {

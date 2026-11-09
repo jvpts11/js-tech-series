@@ -9,21 +9,34 @@ package dev.jstech.core.audio.media;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Reads what a recording is from its file, without decoding a sample of it: how long it runs, its rate, its channels,
  * its bit rate, and the tags it carries. The server reads it where it has no decoder at all, when a player brings a
  * song or an album is put in its catalogue.
  *
- * <p>Two kinds are read. An Ogg Vorbis file says its rate and channels in its first packet and its tags in its
- * second, and how long it runs is the position its last page ends on. A WAV file says its rate and channels in its
- * format chunk, how long it runs by the size of its data, and its tags in an INFO list, when it has one.
+ * <p>Two kinds of recording are read. An Ogg Vorbis file says its rate and channels in its first packet and its tags
+ * in its second, and how long it runs is the position its last page ends on. A WAV file says its rate and channels in
+ * its format chunk, how long it runs by the size of its data, and its tags in an INFO list, when it has one.
+ *
+ * <p>The store keeps pictures too, a camera's PNG files: a PNG is read as far as its header, which says how large it
+ * is, and is a still ({@link MediaInfo#STILL}).
  */
 public final class MediaProbe {
 
+    /* What every PNG file starts with, and its header chunk after it: the length, the name, the width, the height. */
+    private static final byte[] PNG_SIGNATURE = {(byte) 0x89, 'P', 'N', 'G', '\r', '\n', 0x1A, '\n'};
+    private static final byte[] PNG_HEADER_NAME = {'I', 'H', 'D', 'R'};
+    private static final int PNG_HEADER_AT = 12;
+    private static final int PNG_WIDTH_AT = 16;
+    private static final int PNG_HEIGHT_AT = 20;
+    /** How many bytes of a PNG say how large it is. */
+    public static final int PNG_HEAD = 24;
     private static final int VORBIS_ID_PACKET = 1;
     private static final int VORBIS_COMMENT_PACKET = 3;
     private static final int VORBIS_SIGNATURE = 7;
@@ -47,12 +60,48 @@ public final class MediaProbe {
             return switch (format.toLowerCase(Locale.ROOT)) {
                 case "ogg" -> ogg(content);
                 case "wav" -> wav(content);
+                case "png" -> pngSize(content).map(size -> MediaInfo.STILL)
+                        .orElseThrow(() -> new IOException("not a PNG picture"));
                 default -> throw new IOException("no reader for ." + format + " files");
             };
         } catch (final IndexOutOfBoundsException | IllegalArgumentException malformed) {
             // A file that claims more than it holds is unreadable, whatever way it overreaches.
             throw new IOException("a recording that claims more than the file holds", malformed);
         }
+    }
+
+    /**
+     * How large the PNG picture whose file starts with {@code head} is, by its header; empty when it is no PNG or says
+     * it is no size at all. Only the first {@link #PNG_HEAD} bytes are read.
+     */
+    public static Optional<PictureSize> pngSize(final byte[] head) {
+        if (head.length < PNG_HEAD || !Arrays.equals(head, 0, PNG_SIGNATURE.length, PNG_SIGNATURE, 0,
+                PNG_SIGNATURE.length) || !Arrays.equals(head, PNG_HEADER_AT, PNG_HEADER_AT + PNG_HEADER_NAME.length,
+                PNG_HEADER_NAME, 0, PNG_HEADER_NAME.length)) {
+            return Optional.empty();
+        }
+        final long width = be32(head, PNG_WIDTH_AT);
+        final long height = be32(head, PNG_HEIGHT_AT);
+        // Its own format holds a side to 2^31 - 1; anything past that, or nothing, is no picture.
+        if (width <= 0 || height <= 0 || width > Integer.MAX_VALUE || height > Integer.MAX_VALUE) {
+            return Optional.empty();
+        }
+        return Optional.of(new PictureSize((int) width, (int) height));
+    }
+
+    /* A big-endian unsigned 32-bit number at {@code at}, as PNG writes its numbers. */
+    private static long be32(final byte[] bytes, final int at) {
+        return (bytes[at] & 0xFFL) << 24 | (bytes[at + 1] & 0xFFL) << 16 | (bytes[at + 2] & 0xFFL) << 8
+                | bytes[at + 3] & 0xFFL;
+    }
+
+    /**
+     * How large a picture is, in pixels.
+     *
+     * @param width  across
+     * @param height down
+     */
+    public record PictureSize(int width, int height) {
     }
 
     /* Ogg Vorbis: the identification and comment packets of the first stream, and the end of its last page. */

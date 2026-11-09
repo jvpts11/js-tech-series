@@ -49,6 +49,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.portable.PortableAlerts;
 import dev.jstech.computers.program.iql.IqlCatalog;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
@@ -535,6 +536,7 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
         setChanged();
         if (level instanceof ServerLevel serverLevel) {
             TracePoints.operationSettled(serverLevel, networkUuid(), record);
+            PortableAlerts.settled(serverLevel, networkUuid(), record);
         }
     }
 

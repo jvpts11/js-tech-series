@@ -2819,6 +2819,7 @@
   "jscore.notification.done": "Done",
   "jscore.notification.empty": "No notifications yet",
   "jscore.notification.forget": "Take it off the list",
+  "jscore.notification.from": "%s · %s",
   "jscore.notification.hear_kind": "Hear %s again",
   "jscore.notification.hear_mod": "Hear %s again",
   "jscore.notification.here": "It",

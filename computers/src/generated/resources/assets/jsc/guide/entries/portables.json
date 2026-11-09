@@ -142,6 +142,22 @@
       "text": "jsc.guide.portables.text6"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.portables.text7"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.portables.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.portables.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.portables.text9"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -159,6 +175,10 @@
         {
           "fix": "jsc.guide.portables.fix3",
           "problem": "jsc.guide.portables.problem3"
+        },
+        {
+          "fix": "jsc.guide.portables.fix4",
+          "problem": "jsc.guide.portables.problem4"
         }
       ]
     },

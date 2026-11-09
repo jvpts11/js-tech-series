@@ -2322,6 +2322,7 @@
   "jscore.notification.bottom_right": "Embaixo à direita",
   "jscore.notification.count": "x%s",
   "jscore.notification.do_not_disturb": "Não perturbe",
+  "jscore.notification.from": "%s · %s",
   "jscore.notification.done": "Pronto",
   "jscore.notification.empty": "Nenhuma notificação ainda",
   "jscore.notification.forget": "Tirar da lista",

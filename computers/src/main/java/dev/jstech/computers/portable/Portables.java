@@ -9,15 +9,20 @@ package dev.jstech.computers.portable;
 
 import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.machine.MirrorService;
+import dev.jstech.computers.operation.payload.MessengerActionPayload;
 import dev.jstech.computers.operation.payload.portable.PortableActionPayload;
 import dev.jstech.computers.operation.payload.portable.PortableViewPayload;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.wireless.AccessPoints;
 import dev.jstech.computers.wireless.WirelessLink;
 import dev.jstech.computers.wireless.WirelessStandard;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
@@ -26,6 +31,7 @@ import java.util.function.Consumer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -121,7 +127,12 @@ public final class Portables {
             stack.set(ComputingComponents.PORTABLE_ID.get(), id);
             setBattery(stack, model, battery(stack, model));
         }
-        final PortableState state = PortableDevices.get(level.getServer()).of(id, model);
+        final PortableDevices devices = PortableDevices.get(level.getServer());
+        final PortableState state = devices.of(id, model);
+        // In an inventory, on or flat, it is not lost.
+        if (now % LOOK_EVERY == 0 || state.seenAt() == 0L) {
+            devices.seen(id, now);
+        }
         if (!isOn(stack)) {
             switchOn(stack, model, now);
             if (!isOn(stack)) {
@@ -142,26 +153,100 @@ public final class Portables {
         }
     }
 
-    /** What {@code player} did on the system of the device in their hand that {@code payload} names. */
+    /**
+     * What {@code player} did on the device in their hand that {@code payload} names: on its system, which changes
+     * what it keeps, or in one of its apps, which asks the network or the world and is answered by that app. A device
+     * switched off does nothing.
+     */
     public static void act(final PortableActionPayload payload, final ServerPlayer player, final ServerLevel level) {
         final ItemStack held = held(player, payload.device());
-        if (held.isEmpty() || !(held.getItem() instanceof PortableItem item)) {
+        if (held.isEmpty() || !(held.getItem() instanceof PortableItem item) || !isOn(held)) {
             return;
         }
+        final UUID device = payload.device();
         final PortableDevices devices = PortableDevices.get(level.getServer());
-        final PortableLinks.Joined joined = PortableLinks.of(level, payload.device());
+        final PortableState state = devices.of(device, item.model());
+        // An app's work is done only on a device that has that app.
+        final MobileApp needs = appOf(payload.action());
+        if (needs != null && !state.installed().contains(needs)) {
+            return;
+        }
+        final PortableLinks.Joined joined = PortableLinks.of(level, device);
         final boolean mirror = joined != null && MirrorService.servingOn(level, joined.network());
+        final StorageKey key = payload.key().orElse(null);
+        final long amount = payload.amount();
         switch (payload.action()) {
             case INSTALL -> {
-                final MobileApp app = MobileApp.byName(payload.app());
-                if (app != null && mirror && isOn(held)) {
-                    devices.install(payload.device(), app);
+                final MobileApp app = MobileApp.byName(payload.named());
+                if (app != null && mirror) {
+                    devices.install(device, app);
                 }
             }
-            case SEE_ALERTS -> devices.seeAll(payload.device());
-            case CLEAR_ALERTS -> devices.clearAlerts(payload.device());
+            case SEE_ALERTS -> devices.seeAll(device);
+            case CLEAR_ALERTS -> devices.clearAlerts(device);
+            case TOGGLE_ALERT -> devices.toggle(device, AlertKind.byName(payload.named()));
+            case WATCH -> {
+                if (key != null) {
+                    devices.watch(device, key, amount);
+                }
+            }
+            case UNWATCH -> {
+                if (key != null) {
+                    devices.unwatch(device, key);
+                }
+            }
+            case NETWORK -> PortableNetwork.view(player, level, device, state);
+            case REQUEST -> {
+                if (key != null) {
+                    PortableNetwork.request(player, level, device, state, key, amount);
+                }
+            }
+            case TAKE -> {
+                if (key != null) {
+                    PortableNetwork.take(player, level, device, key, amount);
+                }
+            }
+            case RETURN -> {
+                if (key != null) {
+                    PortableNetwork.giveBack(player, level, device, state, key, amount);
+                }
+            }
+            case DEPOSIT -> PortableNetwork.deposit(player, level, device, state, (int) amount);
+            case DEPOSIT_ALL -> PortableNetwork.depositAll(player, level, device, state);
+            case CRAFT -> {
+                if (key != null) {
+                    PortableNetwork.craft(player, level, device, state, key, amount);
+                }
+            }
+            case PLAN -> {
+                if (key != null) {
+                    PortableNetwork.plan(player, level, device, key, amount);
+                }
+            }
+            case GALLERY -> PortableGallery.view(player, level, device, state, Text.EMPTY);
+            case SEND_PICTURE -> PortableGallery.send(player, level, device, state, (int) amount, payload.named());
+            case DELETE_PICTURE -> PortableGallery.delete(player, level, device, (int) amount);
+            case MESSENGER -> PortableMessenger.talk(player, level, device, MessengerActionPayload.LOOK,
+                    payload.named(), "");
+            case SAY -> PortableMessenger.talk(player, level, device, MessengerActionPayload.SAY, payload.named(),
+                    payload.text());
+            case LEAVE -> PortableMessenger.talk(player, level, device, MessengerActionPayload.LEAVE,
+                    payload.named(), "");
+            case MAP -> PortableMaps.map(player, level, device);
+            case PROSPECT -> PortableMaps.prospect(player, level, device);
         }
-        tell(player, payload.device(), devices.of(payload.device(), item.model()), mirror);
+        tell(player, device, state, mirror);
+    }
+
+    /**
+     * The device lying in the world as {@code entity} is gone for good, burned, fallen into the void or despawned:
+     * whoever lost it loses what was on it, and its room on the server is freed.
+     */
+    public static void lost(final ItemEntity entity) {
+        final UUID id = id(entity.getItem());
+        if (id != null && entity.level() instanceof ServerLevel level) {
+            PortableDevices.get(level.getServer()).erase(id);
+        }
     }
 
     /** The device {@code device} in either of {@code player}'s hands, or an empty stack when neither holds it. */
@@ -201,6 +286,20 @@ public final class Portables {
         return network;
     }
 
+    /* The app an action is the work of, or null for the system's own. */
+    @Nullable
+    private static MobileApp appOf(final PortableActionPayload.Action action) {
+        return switch (action) {
+            case INSTALL, SEE_ALERTS, CLEAR_ALERTS -> null;
+            case TOGGLE_ALERT, WATCH, UNWATCH -> MobileApp.ALERTS;
+            case NETWORK, REQUEST, TAKE, RETURN, DEPOSIT, DEPOSIT_ALL, CRAFT, PLAN -> MobileApp.NETWORK;
+            case GALLERY, SEND_PICTURE, DELETE_PICTURE -> MobileApp.GALLERY;
+            case MESSENGER, SAY, LEAVE -> MobileApp.MESSENGER;
+            case MAP -> MobileApp.MAPS;
+            case PROSPECT -> MobileApp.PROSPECTING;
+        };
+    }
+
     /* Tells {@code player}'s game what the device keeps, when that is not what it was last told. */
     private static void tell(final ServerPlayer player, final UUID id, final PortableState state,
                              final boolean mirror) {
@@ -210,8 +309,12 @@ public final class Portables {
             return;
         }
         told.put(id, now);
-        PacketDistributor.sendToPlayer(player,
-                new PortableViewPayload(id, state.installed(), state.alerts(), mirror));
+        final List<PortableViewPayload.Watch> watched = new ArrayList<>();
+        for (final Map.Entry<StorageKey, Long> watch : state.watched().entrySet()) {
+            watched.add(new PortableViewPayload.Watch(watch.getKey(), watch.getValue()));
+        }
+        PacketDistributor.sendToPlayer(player, new PortableViewPayload(id, state.installed(), state.alerts(), mirror,
+                state.alertsOn(), watched));
     }
 
     /* What a player's game was told of a device. */

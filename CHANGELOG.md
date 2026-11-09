@@ -573,6 +573,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   machine. `CpuDesign` gains `memoryItems`, the memory in a chip's package, and `heatSinkWatts`, a heat sink it
   carries on itself, with `withMemory` and `withHeatSink`, as `CpuSpec` does; `ComputerBuild.packageMemory` adds the
   memory up. Experimental.
+- (Core) Notifications that say where they came from: J's Core's API is at version 47. `Notification` gains `origin`,
+  said after the mod's name at its foot ("J's Computers · from your qPhone 5"), set with `withOrigin(Text)`;
+  `NotificationTexts.FROM` writes the two together. The record without it stays as a constructor of five. Experimental.
 - (Computers) Wi-Fi cards: J's Computers' API is at version 17. `ExpansionCardKind.WIFI` is the kind of the Wi-Fi
   cards, which the Personal, Crafting and Cluster Management Computers alone seat. Experimental.
 - (Computers) Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
@@ -2378,6 +2381,30 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   an aluminium stand, a wireless stand) holds a portable of its era by a right click, charges it from the energy behind
   it at its charger's watts, shows the battery filling on its screen and lights its lamp, and gives it back to an empty
   hand.
+- (Computers) The portables' network app, a smaller Network Interactor in each family's look: Stock, the network's
+  items, searched, each opening to be requested into the portable's own storage, never straight into the inventory;
+  Device, that storage, each line taken into the inventory or returned, with the Deposit of the inventory row by row or
+  all at once; and Craft, what the network makes, how many, its plan and the jobs running. A portable holds its storage
+  over its era's item size, less its system: 4 items on the Hightide Pocket, 112 on the qPhone 5, 1,000 on the qPad
+  Pro. On Frames Pocket the left soft key requests the item picked and the Menu holds the other pages.
+- (Computers) The network's alerts to its portables: an item below the level a portable watches it at, an Operation that
+  failed, a degraded power supply, a UPS on its battery and a network conflict, each to the portables on the network
+  that take its kind. The Alerts app turns the five kinds on or off and watches up to 12 items, each with its level; a
+  watched item is told once until it comes back up. A client setting, Alerts on the HUD, shows them as J's Core's
+  notifications too, naming the device they came from.
+- (Computers) The camera, the gallery, Maps, prospecting and the Messenger on the portables. The camera takes what you
+  see without the hand or the HUD, at its era's resolution (640 x 480, 1280 x 960, 4032 x 3024); the gallery keeps it in
+  the portable's storage and sends it to a personal computer of the network as a PNG file in its pictures folder. Maps
+  draws J's Core's map round you with the network's Mainframe, its access points and their reach; prospecting shows
+  which way the veins within 64 blocks lie and how strongly, never where; the Messenger talks to the network's service.
+- (Computers) Whoever loses a portable loses what was on it: a portable whose item is destroyed (lava, fire, the void,
+  despawning) is let go at once, and one out of every inventory and dock for 72 hours of the server running too, as the
+  new `[wireless] lost_device_hours` setting says.
+- (Computers) PNG pictures on the computers' disks: a file naming a picture the server keeps, weighing what the
+  picture does, as a song's file does.
+- (Core) Pictures in the media store: the store keeps PNG pictures beside the recordings, read as far as their size
+  (`MediaProbe.pngSize`, `MediaInfo.STILL`), and `MediaUploader.upload` brings bytes a game made itself, such as a
+  camera's picture.
 - (Computers) A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
@@ -3370,6 +3397,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole blocks.
 
 ### Changed
+- (Computers) A computer, or a server in its rack, that its UPS takes over writes it in the network's log: "On its
+  UPS's battery: the power went".
+- (Core) A notification that says where it came from says so after its mod's name, on the screen and in the history.
 - (Computers) IQL: the computers table gives every computer its era, a Cluster Management Computer's too, and names a
   WAN Gateway Computer as one; the network's log calls a gateway `WAN-` and its short id, This PC "WAN Gateway
   Computer".

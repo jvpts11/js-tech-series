@@ -39,11 +39,13 @@ import org.jetbrains.annotations.Nullable;
  * @param tab       the tab of the alerts' list chosen: 0 today's, 1 all, 2 the missed ones
  * @param scroll    how many rows a long list is scrolled down
  * @param ticks     the game's ticks, for what blinks and runs
+ * @param session   where its system is, when it is held up; null when it is only glanced at
  */
 public record MobileFrame(PortableModel model, MobilePage page, @Nullable MobileApp app, Set<MobileApp> installed,
                           List<PortableAlert> alerts, boolean mirror, int battery, @Nullable PortableLink link,
                           String clock, long day, String owner, double mouseX, double mouseY,
-                          @Nullable PortableAlert balloon, float slide, int tab, int scroll, long ticks) {
+                          @Nullable PortableAlert balloon, float slide, int tab, int scroll, long ticks,
+                          @Nullable MobileSession session) {
 
     /* A game day, and an hour of it, in ticks. */
     private static final long TICKS_A_DAY = 24_000L;

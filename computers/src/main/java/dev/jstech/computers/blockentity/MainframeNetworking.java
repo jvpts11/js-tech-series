@@ -17,6 +17,8 @@ import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.portable.AlertKind;
+import dev.jstech.computers.portable.PortableAlerts;
 import dev.jstech.computers.storage.Corruption;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.jstechseries.network.ConnectivityIndex;
@@ -664,6 +666,8 @@ final class MainframeNetworking {
             JscEvents.awardOperator(mainframe, JscEvents.MAINFRAME_CONFLICT);
             conflictOn = network;
             logConflict(level, network, EventLevel.ERROR,
+                    NetworkEvents.CONFLICT.with(mainframe.getBlockPos().toShortString()));
+            PortableAlerts.fromLog(level, network, AlertKind.CONFLICT, "",
                     NetworkEvents.CONFLICT.with(mainframe.getBlockPos().toShortString()));
         } else if (!conflict && conflicted) {
             logConflict(level, conflictOn, EventLevel.INFO, NetworkEvents.CONFLICT_RESOLVED.text());

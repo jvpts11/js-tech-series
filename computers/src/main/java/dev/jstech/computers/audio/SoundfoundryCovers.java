@@ -8,16 +8,14 @@
 package dev.jstech.computers.audio;
 
 import dev.jstech.computers.audio.catalog.SoundfoundryCatalog;
+import dev.jstech.computers.os.fs.PictureScaling;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaPicture;
 import dev.jstech.core.audio.media.MediaStore;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -25,9 +23,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
-import javax.imageio.ImageIO;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -168,25 +163,15 @@ public final class SoundfoundryCovers {
      */
     public static byte[] scaled(final byte[] picture) {
         try {
-            final BufferedImage read = decoded(picture);
+            final BufferedImage read = PictureScaling.decode(picture, MOST_PIXELS);
             if (read == null || read.getWidth() <= 0 || read.getHeight() <= 0) {
                 return NONE;
             }
             final int side = Math.min(read.getWidth(), read.getHeight());
-            final int left = (read.getWidth() - side) / 2;
-            final int top = (read.getHeight() - side) / 2;
             final int out = Math.min(SIZE, side);
-            final BufferedImage small = new BufferedImage(out, out, BufferedImage.TYPE_INT_ARGB);
-            // Each pixel is the average of the square of the picture it stands for, so a large cover keeps its look.
-            for (int y = 0; y < out; y++) {
-                for (int x = 0; x < out; x++) {
-                    small.setRGB(x, y, average(read, left + x * side / out, top + y * side / out,
-                            left + (x + 1) * side / out, top + (y + 1) * side / out));
-                }
-            }
-            final ByteArrayOutputStream png = new ByteArrayOutputStream();
-            ImageIO.write(small, "png", png);
-            return png.size() <= MAX_BYTES ? png.toByteArray() : NONE;
+            final byte[] png = PictureScaling.png(PictureScaling.scale(read, (read.getWidth() - side) / 2,
+                    (read.getHeight() - side) / 2, side, side, out, out));
+            return png.length <= MAX_BYTES ? png : NONE;
         } catch (final IOException | RuntimeException unreadable) {
             return NONE;
         }
@@ -220,51 +205,6 @@ public final class SoundfoundryCovers {
             return new MediaId(parts[0], parts[1], Long.parseLong(parts[2]));
         } catch (final IllegalArgumentException malformed) {
             return null;
-        }
-    }
-
-    private static int average(final BufferedImage image, final int x0, final int y0, final int x1, final int y1) {
-        long a = 0;
-        long r = 0;
-        long g = 0;
-        long b = 0;
-        int n = 0;
-        for (int y = y0; y < Math.max(y0 + 1, y1); y++) {
-            for (int x = x0; x < Math.max(x0 + 1, x1); x++) {
-                final int argb = image.getRGB(x, y);
-                a += argb >>> 24;
-                r += argb >> 16 & 0xFF;
-                g += argb >> 8 & 0xFF;
-                b += argb & 0xFF;
-                n++;
-            }
-        }
-        return (int) (a / n) << 24 | (int) (r / n) << 16 | (int) (g / n) << 8 | (int) (b / n);
-    }
-
-    /*
-     * The picture's pixels, or null when it is no picture this reads or says it is larger than a cover is ever made
-     * from. The size a file declares is read before a pixel of it is: a few bytes of PNG can declare a picture whose
-     * pixels fill gigabytes, and a recording a player brought can carry one.
-     */
-    @Nullable
-    private static BufferedImage decoded(final byte[] picture) throws IOException {
-        try (ImageInputStream stream = ImageIO.createImageInputStream(new ByteArrayInputStream(picture))) {
-            if (stream == null) {
-                return null;
-            }
-            final Iterator<ImageReader> readers = ImageIO.getImageReaders(stream);
-            if (!readers.hasNext()) {
-                return null;
-            }
-            final ImageReader reader = readers.next();
-            try {
-                reader.setInput(stream, true, true);
-                final long pixels = (long) reader.getWidth(0) * reader.getHeight(0);
-                return pixels <= 0 || pixels > MOST_PIXELS ? null : reader.read(0);
-            } finally {
-                reader.dispose();
-            }
         }
     }
 

@@ -210,10 +210,10 @@ public final class PortableGameTests {
         }
         helper.assertValueEqual(devices.find(id).alerts().size(), PortableState.MOST_ALERTS, "the newest kept");
         helper.assertValueEqual(devices.find(id).unseen(), PortableState.MOST_ALERTS, "none seen yet");
-        Portables.act(new PortableActionPayload(id, PortableActionPayload.Action.SEE_ALERTS, ""), player,
+        Portables.act(PortableActionPayload.of(id, PortableActionPayload.Action.SEE_ALERTS), player,
                 helper.getLevel());
         helper.assertValueEqual(devices.find(id).unseen(), 0, "seen once looked at");
-        Portables.act(new PortableActionPayload(id, PortableActionPayload.Action.CLEAR_ALERTS, ""), player,
+        Portables.act(PortableActionPayload.of(id, PortableActionPayload.Action.CLEAR_ALERTS), player,
                 helper.getLevel());
         helper.assertTrue(devices.find(id).alerts().isEmpty(), "let go");
         helper.succeed();
@@ -353,7 +353,7 @@ public final class PortableGameTests {
     /* Installs {@code app} on the device {@code device}, as its store does. */
     private static void install(final GameTestHelper helper, final ServerPlayer player, final UUID device,
                                 final MobileApp app) {
-        Portables.act(new PortableActionPayload(device, PortableActionPayload.Action.INSTALL, app.serializedName()),
-                player, helper.getLevel());
+        Portables.act(PortableActionPayload.named(device, PortableActionPayload.Action.INSTALL,
+                app.serializedName()), player, helper.getLevel());
     }
 }

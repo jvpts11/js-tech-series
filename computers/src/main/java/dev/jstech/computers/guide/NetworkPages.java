@@ -375,6 +375,24 @@ final class NetworkPages {
                         + " alerts come with every portable, and the camera, the gallery and Maps with the smartphones"
                         + " and the tablets; the Crypto Wallet installs from the Transition on, the Messenger and"
                         + " prospecting from the Standard on.")
+                .subheading("Its apps")
+                .paragraph("The network app is a smaller Network Interactor. Stock lists the network's items; pick one"
+                        + " and Request puts it into your portable's own storage, never straight into your"
+                        + " inventory. Device shows what that storage holds: Take brings it to your inventory, Return"
+                        + " gives it back, and Deposit lists your inventory row by row. Craft makes what the network"
+                        + " can make, plans it first if you like, and shows the jobs running. A portable holds what its"
+                        + " storage holds over the item size of its era's disk, less its system: 4 items on the"
+                        + " Hightide Pocket, 112 items on the Standard's qPhone, about a thousand items on the qPad"
+                        + " Pro.")
+                .paragraph("The Alerts app chooses which of the network's five kinds of alert reach your portable,"
+                        + " and the items it watches, each with the level below which it tells you. Turn on Alerts"
+                        + " on the HUD in your client settings to see them on your screen too.")
+                .paragraph("The camera takes a picture of what you see, without the HUD, at its era's resolution;"
+                        + " the gallery keeps it in the portable's storage and sends it to a personal computer of the"
+                        + " network as a PNG file in its pictures folder. Maps draws the land round you with the"
+                        + " network's Mainframe, its access points and their reach; prospecting shows which way the"
+                        + " veins near you lie and how strongly, never where. The Messenger talks to the network's own"
+                        + " Messenger service.")
                 .subheading("Its battery")
                 .paragraph("A portable runs on its battery while you carry it: about two game days on a smartphone or"
                         + " a tablet, a day and a half on a PDA. Its battery is the bar under its icon, and its tooltip"
@@ -389,7 +407,10 @@ final class NetworkPages {
                         "Its store installs nothing.",
                         "The network's Mainframe has to run the Mirror; a portable off the network cannot reach it.",
                         "The dock will not take your portable.",
-                        "A dock holds a portable of its own era alone: use the dock of the portable's era.")
+                        "A dock holds a portable of its own era alone: use the dock of the portable's era.",
+                        "A portable lost its apps and its pictures.",
+                        "Its item was destroyed, or it lay out of every inventory and dock longer than the server"
+                                + " allows: what was on it is gone.")
                 .seeAlso("jsc:wireless", "jsc:network_manager")
                 .register();
     }

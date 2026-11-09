@@ -34,14 +34,21 @@ public final class ComputersClientConfig {
                     "Off, each shows a placeholder naming it, whatever the server allows.")
             .named("Outside components");
 
+    public static final ConfigKey<Boolean> NOTIFICATIONS_ON_HUD = ConfigKey.flag("client.notifications_on_hud", false)
+            .comment("Whether the network's alerts to the portable devices this player carries show on the HUD too, as "
+                    + "J's Core's notifications at the attention level, naming the device they came from. Off, they "
+                    + "reach the device alone.")
+            .named("Alerts on the HUD");
+
     public static final ConfigFile FILE = ConfigFile.builder("jscomputers-client", ConfigSide.CLIENT,
                     ConfigFormats.TOML)
             .comment("How the computers of J's Computers look on this player's game.")
             .sectionNamed("client", "Client")
             .sectionComment("client", "How the desktops look on this game: whose pointer they draw, and what of the "
-                    + "world outside the game they show.")
+                    + "world outside the game they show; and whether the portables' alerts show on the HUD.")
             .key(DESKTOP_CURSORS)
             .key(OUTSIDE_COMPONENTS)
+            .key(NOTIFICATIONS_ON_HUD)
             .build();
 
     private ComputersClientConfig() {
@@ -60,5 +67,10 @@ public final class ComputersClientConfig {
     /** Whether the desktops draw their own pointer over the glass. */
     public static boolean desktopCursors() {
         return FILE.get(DESKTOP_CURSORS);
+    }
+
+    /** Whether the portables' alerts show on the HUD too. */
+    public static boolean notificationsOnHud() {
+        return FILE.get(NOTIFICATIONS_ON_HUD);
     }
 }

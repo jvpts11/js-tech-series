@@ -165,6 +165,22 @@ public enum PortableModel implements IStableName {
         return storageMb + cardMb;
     }
 
+    /**
+     * How wide the pictures its camera takes are, at its era's resolution: 640 in the Transition, 1,280 in the
+     * Standard, 4,032 in the Advanced; 0 for a device with no camera.
+     */
+    public int cameraWidth() {
+        if (!kind.hasCameraAndGps()) {
+            return 0;
+        }
+        return era == HardwareEra.TRANSITION ? 640 : era == HardwareEra.STANDARD ? 1_280 : 4_032;
+    }
+
+    /** How tall: 480, 960 or 3,024, four to every three across; 0 for a device with no camera. */
+    public int cameraHeight() {
+        return cameraWidth() * 3 / 4;
+    }
+
     @Override
     public String serializedName() {
         return serializedName;

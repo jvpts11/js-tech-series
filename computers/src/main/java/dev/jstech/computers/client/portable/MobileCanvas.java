@@ -13,6 +13,7 @@ import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -38,6 +39,8 @@ public final class MobileCanvas {
     public static final float HUGE = 6.0F;
     /* Half pixels to a GUI pixel. */
     private static final int HALF = 2;
+    /* The pixels the game draws an item's icon at. */
+    private static final float ITEM_PIXELS = 16.0F;
     private static final String ELLIPSIS = "...";
 
     /** A canvas over a screen {@code width} by {@code height} GUI pixels, drawn at the origin of {@code graphics}. */
@@ -158,6 +161,35 @@ public final class MobileCanvas {
     public void picture(final ResourceLocation texture, final int size, final int tall, final float x, final float y,
                         final float w, final float h) {
         half(() -> graphics.blit(texture, h2(x), h2(y), h2(w), h2(h), 0.0F, 0.0F, size, tall, size, tall));
+    }
+
+    /**
+     * The part of a picture {@code texW} by {@code texH} texels from {@code (u, v)}, {@code uw} by {@code vh} of them,
+     * drawn {@code w} by {@code h} pixels at {@code (x, y)}; a negative {@code vh} reads it upside down, as a frame the
+     * game rendered is stored.
+     */
+    public void picture(final ResourceLocation texture, final int texW, final int texH, final int u, final int v,
+                        final int uw, final int vh, final float x, final float y, final float w, final float h) {
+        half(() -> graphics.blit(texture, h2(x), h2(y), h2(w), h2(h), u, v, uw, vh, texW, texH));
+    }
+
+    /** The icon of {@code stack}, {@code size} pixels square, its top left at {@code (x, y)}. */
+    public void item(final ItemStack stack, final float x, final float y, final float size) {
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y, 0.0F);
+        graphics.pose().scale(size / ITEM_PIXELS, size / ITEM_PIXELS, 1.0F);
+        graphics.renderItem(stack, 0, 0);
+        graphics.pose().popPose();
+    }
+
+    /** A line {@code t} pixels thick from {@code (x0, y0)} to {@code (x1, y1)}, laid on the grid of half pixels. */
+    public void line(final float x0, final float y0, final float x1, final float y1, final float t, final int argb) {
+        final float length = (float) Math.hypot(x1 - x0, y1 - y0);
+        final int steps = Math.max(1, Math.round(length * HALF));
+        for (int n = 0; n <= steps; n++) {
+            final float along = (float) n / steps;
+            rect(x0 + (x1 - x0) * along - t / 2.0F, y0 + (y1 - y0) * along - t / 2.0F, t, t, argb);
+        }
     }
 
     /**

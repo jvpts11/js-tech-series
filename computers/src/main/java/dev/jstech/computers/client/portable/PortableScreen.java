@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.portable;
 
 import dev.jstech.computers.operation.payload.portable.PortableViewPayload;
+import dev.jstech.computers.portable.MobileApp;
 import dev.jstech.computers.portable.PortableBoot;
 import dev.jstech.computers.portable.PortableItem;
 import dev.jstech.computers.portable.PortableModel;
@@ -111,9 +112,35 @@ public final class PortableScreen extends Screen {
 
     @Override
     public void tick() {
-        if (held().isEmpty()) {
+        final ItemStack stack = held();
+        if (stack.isEmpty()) {
             onClose();
+            return;
         }
+        final MobileSession session = session(stack);
+        final Minecraft game = Minecraft.getInstance();
+        if (session != null && game.level != null && ready(stack)) {
+            MobileApps.tick(session, game.level.getGameTime());
+        }
+    }
+
+    /* Put down with an app open, the Messenger is told the player has gone. */
+    @Override
+    public void removed() {
+        final MobileSession session = session(held());
+        if (session != null) {
+            session.putDown(PacketDistributor::sendToServer);
+        }
+        super.removed();
+    }
+
+    @Override
+    public boolean charTyped(final char letter, final int modifiers) {
+        final MobileSession session = session(held());
+        if (session != null && MobileApps.typed(session, letter)) {
+            return true;
+        }
+        return super.charTyped(letter, modifiers);
     }
 
     @Override
@@ -182,7 +209,13 @@ public final class PortableScreen extends Screen {
     public boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollX,
                                  final double scrollY) {
         final MobileSession session = session(held());
-        if (session != null && scrollY != 0) {
+        if (session == null || scrollY == 0) {
+            return true;
+        }
+        // The wheel brings the map nearer or takes it further; elsewhere it scrolls the page's list.
+        if (session.page() == MobilePage.APP && session.app() == MobileApp.MAPS) {
+            session.apps().zoom(scrollY > 0);
+        } else {
             session.scrollBy(scrollY > 0 ? -1 : 1);
         }
         return true;
@@ -191,8 +224,15 @@ public final class PortableScreen extends Screen {
     @Override
     public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
         final MobileSession session = session(held());
-        if (keyCode == GLFW.GLFW_KEY_BACKSPACE && session != null) {
-            session.tap(MobileTap.BACK, PacketDistributor::sendToServer);
+        if (session != null && keyCode == GLFW.GLFW_KEY_BACKSPACE) {
+            // Rubs out what is being typed, and only when nothing is goes back.
+            if (session.page() != MobilePage.APP || !session.apps().erase()) {
+                session.tap(MobileTap.BACK, PacketDistributor::sendToServer);
+            }
+            return true;
+        }
+        if (session != null && (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER)
+                && MobileApps.entered(session)) {
             return true;
         }
         return super.keyPressed(keyCode, scanCode, modifiers);

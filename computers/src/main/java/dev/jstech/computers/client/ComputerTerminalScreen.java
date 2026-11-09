@@ -1123,7 +1123,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         };
     }
 
-    static String statusLabel(final byte status) {
+    /** The word an Operation's status is shown by: PROCESSING, COMPLETED and the rest. */
+    public static String statusLabel(final byte status) {
         return GameText.resolve(switch (status) {
             case OperationRecord.STATUS_COMPLETED -> TerminalTexts.STATUS_COMPLETED;
             case OperationRecord.STATUS_PARTIAL -> TerminalTexts.STATUS_PARTIAL;

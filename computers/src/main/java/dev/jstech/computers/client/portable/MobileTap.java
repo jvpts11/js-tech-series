@@ -12,13 +12,15 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * What pressing a place on a portable's screen does: unlock it, go home or back, open a page or an app, install an
- * app from the store, choose a tab of the alerts' list, let the alerts go, or put away the balloon an alert came in.
+ * app from the store, choose a tab of the alerts' list, let the alerts go, put away the balloon an alert came in, or
+ * something an app does on its own page.
  *
  * @param action what it does
  * @param app    the app it opens or installs; null for the rest
  * @param tab    the tab it chooses, for {@link Action#TAB}
+ * @param run    what an app does, for {@link Action#RUN}; null for the rest
  */
-public record MobileTap(Action action, @Nullable MobileApp app, int tab) {
+public record MobileTap(Action action, @Nullable MobileApp app, int tab, @Nullable Runnable run) {
 
     public static final MobileTap UNLOCK = of(Action.UNLOCK);
     public static final MobileTap HOME = of(Action.HOME);
@@ -33,21 +35,26 @@ public record MobileTap(Action action, @Nullable MobileApp app, int tab) {
 
     /** Opens {@code app}. */
     public static MobileTap open(final MobileApp app) {
-        return new MobileTap(Action.OPEN, app, 0);
+        return new MobileTap(Action.OPEN, app, 0, null);
     }
 
     /** Installs {@code app} from the store. */
     public static MobileTap install(final MobileApp app) {
-        return new MobileTap(Action.INSTALL, app, 0);
+        return new MobileTap(Action.INSTALL, app, 0, null);
     }
 
     /** Chooses the tab {@code tab} of the alerts' list. */
     public static MobileTap tab(final int tab) {
-        return new MobileTap(Action.TAB, null, tab);
+        return new MobileTap(Action.TAB, null, tab, null);
+    }
+
+    /** Does {@code what}, something an app does on its own page. */
+    public static MobileTap run(final Runnable what) {
+        return new MobileTap(Action.RUN, null, 0, what);
     }
 
     private static MobileTap of(final Action action) {
-        return new MobileTap(action, null, 0);
+        return new MobileTap(action, null, 0, null);
     }
 
     /** What a press can do. */
@@ -64,6 +71,7 @@ public record MobileTap(Action action, @Nullable MobileApp app, int tab) {
         INSTALL,
         TAB,
         CLEAR_ALERTS,
-        DISMISS
+        DISMISS,
+        RUN
     }
 }

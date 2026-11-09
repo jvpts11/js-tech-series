@@ -38,6 +38,7 @@ import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.portable.AlertKind;
 import dev.jstech.computers.power.UpsRating;
 import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.os.IOsHost;
@@ -3035,9 +3036,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         ups.charge(rating, energy, drawn);
         energy.settle();
         if (mode == UpsReading.Mode.ON_BATTERY && was != UpsReading.Mode.ON_BATTERY) {
-            forEachRunningBay(slot -> UpsNotices.onBattery(worldPosition, unitHost(slot),
-                    terminals.watching(level, slot), ClientReplication.keyboardOf(unitState(slot).console),
-                    ups.reading(rating, drawn)));
+            forEachRunningBay(slot -> {
+                UpsNotices.onBattery(worldPosition, unitHost(slot), terminals.watching(level, slot),
+                        ClientReplication.keyboardOf(unitState(slot).console), ups.reading(rating, drawn));
+                logBayAlert(level, slot, EventLevel.WARN, AlertKind.UPS, NetworkEvents.ON_UPS.text());
+            });
         }
         if (ups.low(rating)) {
             // As real UPS software does: the systems shut themselves down cleanly before the battery runs out.
@@ -3152,6 +3155,17 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
     }
 
+    /* The same, telling the network's portables that take alerts of {@code kind} too. */
+    private void logBayAlert(final ServerLevel level, final int slot, final EventLevel what, final AlertKind kind,
+                             final Text message) {
+        final ItemStack stack = servers.getStackInSlot(slot);
+        final UUID node = stack.getItem() instanceof ServerItem ? ServerItem.nodeUuid(stack) : null;
+        if (node != null) {
+            final NetworkUuid network = registered.containsKey(node) ? registered.get(node) : cableNetwork;
+            NetworkEvents.alert(level, network, what, kind, new NodeUuid(node), machineNameIn(slot), message);
+        }
+    }
+
     /**
      * What the network's log calls the machine in {@code slot}: the name it was given, or its kind's mark and its short
      * id ({@code SRV-96174f}); empty for a bay with no server that has joined a network yet.
@@ -3193,12 +3207,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             final String supply = psu.getHoverName().getString();
             if (worn.failedNow()) {
                 bayStopsSuddenly(slot, CrashCause.POWER_SUPPLY, CrashPages.Moment.hardware(supply));
-                logBay(level, slot, EventLevel.ERROR, PsuTexts.LOG_FAILED.with(supply));
+                logBayAlert(level, slot, EventLevel.ERROR, AlertKind.POWER, PsuTexts.LOG_FAILED.with(supply));
             } else if (worn.unitLost()) {
-                logBay(level, slot, EventLevel.WARN, PsuTexts.LOG_UNIT_FAILED.with(
+                logBayAlert(level, slot, EventLevel.WARN, AlertKind.POWER, PsuTexts.LOG_UNIT_FAILED.with(
                         worn.after().failedUnits(worn.spec()), worn.spec().units(), supply));
             } else if (worn.degradedNow()) {
-                logBay(level, slot, EventLevel.WARN, PsuTexts.LOG_DEGRADED.with(supply,
+                logBayAlert(level, slot, EventLevel.WARN, AlertKind.POWER, PsuTexts.LOG_DEGRADED.with(supply,
                         PsuTexts.percent(worn.after().worst(worn.spec()))));
             }
         }

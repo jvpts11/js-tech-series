@@ -8,6 +8,8 @@
 package dev.jstech.computers.eventlog;
 
 import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.portable.AlertKind;
+import dev.jstech.computers.portable.PortableAlerts;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
@@ -63,6 +65,8 @@ public final class NetworkEvents {
     public static final TextKey NO_ENGINE = TextKey.of("jsc.event_log.no_engine", "The network has no engine now");
     public static final TextKey OPERATIONS_DISCARDED = TextKey.of("jsc.event_log.operations_discarded",
             "%s of its Operations DISCARDED");
+    public static final TextKey ON_UPS = TextKey.of("jsc.event_log.on_ups",
+            "On its UPS's battery: the power went");
     public static final TextKey ANCHOR_SHORT = TextKey.of("jsc.event_log.anchor_short",
             "The Network Anchor Card keeps %s of its %s chunks loaded: the owner's quota or the server's is full");
     /** What the machine column shows for something of the whole network. */
@@ -91,6 +95,18 @@ public final class NetworkEvents {
         }
         NetworkEventLog.of(level).add(network, new NetworkEvent(level.getGameTime(), level.getDayTime(), what, machine,
                 machine == null ? "" : TextBounds.clip(machineName, MOST_NAME), message));
+    }
+
+    /**
+     * Writes into {@code network}'s log, as {@link #record} does, something its players' portables are told of too
+     * when they take alerts of {@code kind} (computers/docs/design/wireless.md).
+     */
+    public static void alert(final ServerLevel level, @Nullable final NetworkUuid network, final EventLevel what,
+                             final AlertKind kind, @Nullable final NodeUuid machine, final String machineName,
+                             final Text message) {
+        record(level, network, what, machine, machineName, message);
+        PortableAlerts.fromLog(level, network, kind, machine == null ? "" : TextBounds.clip(machineName, MOST_NAME),
+                message);
     }
 
     /** Writes that a machine was switched on or off. */

@@ -68,7 +68,7 @@ public final class SongFiles {
                 DiskFilesystem.list(volume, dir, FilesystemKind.HIERARCHICAL));
         files.sort((a, b) -> a.path().compareToIgnoreCase(b.path()));
         for (final DiskFilesystem.FileEntry file : files) {
-            if (file.type().recording()) {
+            if (file.type().sound()) {
                 found.add(prefix + file.path());
             }
         }

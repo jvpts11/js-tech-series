@@ -19,6 +19,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -33,6 +34,9 @@ import net.minecraft.world.level.Level;
 public final class PortableItem extends Item {
 
     private final PortableModel model;
+
+    /* How far under the world's floor an item falls before the game takes it, as it takes anything there. */
+    private static final int BELOW_THE_WORLD = 64;
 
     public PortableItem(final Properties properties, final PortableModel model) {
         super(properties.stacksTo(1));
@@ -50,6 +54,21 @@ public final class PortableItem extends Item {
         if (entity instanceof ServerPlayer player) {
             Portables.carried(player, stack, model);
         }
+    }
+
+    /** Burned, blown up or cut down where it lay: whoever lost it loses what was on it. */
+    @Override
+    public void onDestroyed(final ItemEntity entity) {
+        Portables.lost(entity);
+    }
+
+    /** Fallen into the void, it is gone with the next tick: what was on it goes with it. */
+    @Override
+    public boolean onEntityItemUpdate(final ItemStack stack, final ItemEntity entity) {
+        if (entity.getY() < entity.level().getMinBuildHeight() - BELOW_THE_WORLD) {
+            Portables.lost(entity);
+        }
+        return false;
     }
 
     @Override
