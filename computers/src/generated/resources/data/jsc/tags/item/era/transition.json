@@ -1,13 +1,18 @@
 {
   "values": [
     "jsc:transition_personal_computer",
+    "jsc:qrusset_white",
+    "jsc:russet_pro_t",
     "jsc:transition_crafting_computer",
     "jsc:transition_cluster_management_computer",
     "jsc:transition_mainframe",
+    "jsc:quince_mainframe_transition",
     "jsc:transition_wan_gateway",
     "jsc:transition_server_rack",
     "jsc:transition_server_case",
     "jsc:transition_server",
+    "jsc:qserve_transition_case",
+    "jsc:qserve_transition",
     "jsc:transition_storage_server_case",
     "jsc:transition_storage_server",
     "jsc:transition_compute_server_case",
@@ -119,6 +124,11 @@
     "jsc:internal_dvd_drive",
     "jsc:case_fan_transition",
     "jsc:stock_cooler_transition",
+    "jsc:quince_board_qrusset_white",
+    "jsc:quince_board_pro_2006",
+    "jsc:quince_board_qserve_transition",
+    "jsc:quince_board_mainframe_t",
+    "jsc:cooler_quince_pro_2006",
     "jsc:dvd_rom",
     "jsc:dvd_rw"
   ]

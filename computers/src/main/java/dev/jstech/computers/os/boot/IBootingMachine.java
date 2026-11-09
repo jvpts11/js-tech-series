@@ -122,6 +122,18 @@ public interface IBootingMachine {
         return 0;
     }
 
+    /**
+     * Whether the machine stands in its self-test at the start-up choices a power-on while sneaking opened, as one of
+     * Quince's does: the test waits there until a choice is made. A host with no such choices answers no.
+     */
+    default boolean atStartupChoices() {
+        return false;
+    }
+
+    /** A choice was made at the start-up choices, or the player went past them: the self-test goes on. */
+    default void leaveStartupChoices() {
+    }
+
     /** Whether the machine is stopped at its boot manager, waiting to be told what to start. */
     default boolean atBootMenu() {
         return false;

@@ -1,6 +1,7 @@
 {
   "values": [
     "jsc:vintage_personal_computer",
+    "jsc:russet_128k",
     "jsc:vintage_crafting_computer",
     "jsc:vintage_cluster_management_computer",
     "jsc:vintage_mainframe",
@@ -90,6 +91,7 @@
     "jsc:hot_swap_drive_bay",
     "jsc:case_fan_vintage",
     "jsc:stock_cooler_vintage",
+    "jsc:quince_board_russet_128k",
     "jsc:floppy_disk"
   ]
 }

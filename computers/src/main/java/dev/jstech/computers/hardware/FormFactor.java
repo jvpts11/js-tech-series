@@ -20,11 +20,13 @@ import org.jetbrains.annotations.Nullable;
  * <p>An id rather than a closed set, as a socket is, so a mod bringing computers of its own brings the boards that
  * fit them. This mod's own are the constants here.
  *
- * @param id    the form factor's id, {@code namespace:path}: {@code jsc:atx}
- * @param label its name, the same in every language: "ATX"
+ * @param id            the form factor's id, {@code namespace:path}: {@code jsc:atx}
+ * @param label         its name, the same in every language: "ATX"
+ * @param drivesAScreen whether a board of it shows a picture by itself, with no graphics card: a server board's
+ *                      management controller, or an all-in-one's board with its graphics on it
  */
 @ApiStatus.Experimental
-public record FormFactor(String id, String label) {
+public record FormFactor(String id, String label, boolean drivesAScreen) {
 
     private static final DeclaredKinds<FormFactor> KINDS = new DeclaredKinds<>("form factor", FormFactor::id);
 
@@ -32,7 +34,7 @@ public record FormFactor(String id, String label) {
     public static final FormFactor AT = own("at", "AT");
     public static final FormFactor ATX = own("atx", "ATX");
     public static final FormFactor EATX = own("eatx", "EATX");
-    public static final FormFactor EEB = own("eeb", "EEB");
+    public static final FormFactor EEB = own("eeb", "EEB", true);
     public static final FormFactor MTX = own("mtx", "MTX");
     public static final FormFactor SOCKET_Q = own("socket_q", "Socket Q");
     /**
@@ -49,6 +51,11 @@ public record FormFactor(String id, String label) {
     public FormFactor {
         HardwareIds.requireNamespaced(id, "a form factor");
         Objects.requireNonNull(label, "label");
+    }
+
+    /** A form factor whose boards show a picture only through a graphics card or a processor with graphics. */
+    public FormFactor(final String id, final String label) {
+        this(id, label, false);
     }
 
     /**
@@ -76,6 +83,11 @@ public record FormFactor(String id, String label) {
     }
 
     private static FormFactor own(final String path, final String label) {
-        return KINDS.declare(new FormFactor(HardwareIds.own(path), label));
+        return own(path, label, false);
+    }
+
+    /* One of this mod's own; package-wide, so this mod's other makers' boards are declared beside their machines. */
+    static FormFactor own(final String path, final String label, final boolean drivesAScreen) {
+        return KINDS.declare(new FormFactor(HardwareIds.own(path), label, drivesAScreen));
     }
 }

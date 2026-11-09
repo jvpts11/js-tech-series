@@ -160,7 +160,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:desktops",
-  "order": 208,
+  "order": 209,
   "section": "jsc:desktop_environments",
   "title": "jsc.guide.desktops.title"
 }

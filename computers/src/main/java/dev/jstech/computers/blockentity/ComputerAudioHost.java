@@ -15,6 +15,7 @@ import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.audio.SoundOutput;
 import dev.jstech.computers.audio.SpeakerSides;
 import dev.jstech.computers.audio.SystemSound;
+import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -257,6 +258,10 @@ final class ComputerAudioHost implements IAudioHost {
             if (Loaded.blockEntity(level, pos) instanceof MonitorBlockEntity) {
                 found.add(pos);
             }
+        }
+        // A computer that is its own screen carries a monitor's speakers in its own case.
+        if (machine.getBlockState().getBlock() instanceof IComputerCase chassis && chassis.glass() != null) {
+            found.add(machine.getBlockPos());
         }
         found.sort(Comparator.naturalOrder());
         return found;

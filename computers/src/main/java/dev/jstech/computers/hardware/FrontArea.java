@@ -20,6 +20,9 @@ package dev.jstech.computers.hardware;
  */
 public record FrontArea(int left, int top, int right, int bottom) {
 
+    /** No part: a front whose power button is elsewhere, which no click on the front lands on. */
+    public static final FrontArea NOWHERE = new FrontArea(-64, -64, -64, -64);
+
     /*
      * The room round a part a click still reaches: half a pixel, as round an eject button. The parts are a few pixels
      * across, and the server measures the player's aim a moment after it was taken.

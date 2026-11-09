@@ -60,6 +60,41 @@ Cluster Management Computer counts two processors and eight memory modules, as a
 its assembly screen opens a second row under the first, for the second processor and modules 5 to 8. A board with
 one socket uses the first row only, however many memory slots it has.
 
+### Quince's computers
+
+*Added 2026-11-09.* Quince is the third maker, next to the house's own machines and the Linux world
+([design](design/quince.md)). Its computers are Personal Computers in every way but their cases:
+
+| Era | All-in-ones | Towers and the Studio |
+| --- | --- | --- |
+| Vintage | Russet 128K | |
+| Legacy | qRusset G3, in Bondi Blue, Blueberry, Strawberry, Lime, Grape and Tangerine | Russet Power G4 |
+| Transition | qRusset (White) | Russet Pro (Transition) |
+| Standard | qRusset (Slim) | Russet Pro (Standard) |
+| Advanced | qRusset in Blue, Green, Pink, Silver, Yellow, Orange and Purple | Russet Studio |
+
+- **Closed hardware.** Each machine takes only its own **Quince Logic Board**, and its board goes in no other case.
+  There are sixteen: one for each computer, one for the qServe of each era and one for the Quince Mainframe of each
+  era. The processors are the era's (the Integra ones in the Transition and the Standard); the Vintage's, the
+  Legacy's and the Advanced's machines wait for Quince's own. The memory, the disks and the cards are the common ones.
+- **The all-in-ones** carry their screen: their glass shows what the machine shows, as a monitor does, and a click on
+  the glass sits you down at it; a click anywhere else opens its parts. Their sound comes from their own case. They
+  and the Studio take their cables only from behind, and each line plugged in shows its socket on the back and its
+  cord into the machine. Their power button is behind them; a tower's is on its front.
+- **The towers** open on their left side (sneak and use the case) to show the parts inside, each drawn by its own
+  model; their own fans turn while they run. The Russet Pros take the **Quince Heat Sink** of their era, which sits on
+  the processor as a cooler does. The **Russet Studio** is a small box that drives a monitor.
+- **The qServe** is Quince's 1U server for the ordinary racks, one for each era from the Legacy; the **Quince
+  Mainframe** (Transition, Standard and Advanced) is a Mainframe in Quince's aluminium. Each takes its own logic board.
+- **Starting.** A machine of Quince's starts with its firmware's own picture: the Happy Quince on the Russet 128K's
+  ROM and on Open Firmware, EFI's fruit on grey with a spinner (Transition) or on black with a bar (Standard), and the
+  Quince chip's on the Advanced. Switch it on while sneaking and it stops at its **start-up choices**, as holding the
+  key did: Open Firmware's `0 >` prompt on the Legacy (type `quince-boot` to go on or `shut-down` to switch off), the
+  **Startup Manager** on the Transition and the Standard (pick a volume with the arrows and Enter) and the **Startup
+  Options** on the Advanced, whose Options open the setup. The Russet 128K has no choices. Switched on with a board
+  and a supply but parts that make no computer (no processor, say), it shows the **Sad Quince** and what is wrong,
+  where any other computer only beeps.
+
 **Why the Mainframe's hardware matters most.** Everything the network does goes through the Mainframe:
 
 - its **processors** decide how many items it handles at once (its capacity, in items a tick);
@@ -91,6 +126,10 @@ the rack, and room for processors and expansion cards:
 | Transition Compute Server | 2 | 2 | 4 | 2 |
 | Compute Server (Standard) | 2 | 2 | 4 | any |
 | Advanced Compute Server | 2 | 3 | 4 | any |
+| qServe (Legacy) | 1 | 3 | 2 | 2 |
+| qServe (Transition) | 1 | 5 | 2 | 2 |
+| qServe (Standard) | 1 | 4 | 2 | 2 |
+| qServe (Advanced) | 1 | 5 | 2 | 2 |
 | Supercomputer Node | 2 | 2 | 2 | 2 |
 | Advanced Supercomputer Node | 2 | 3 | 2 | 4 |
 
@@ -155,7 +194,8 @@ Hover a part to read its tooltip. What each line means:
 
 ### Motherboards
 
-49 boards. The tooltip says its form factor (which cases it fits), its sockets, how many memory modules and of
+70 boards, 16 of them Quince's logic boards, each for its own machine. The tooltip says its form factor (which
+cases it fits), its sockets, how many memory modules and of
 which generations, its expansion slots and their generation, sound on the board when it has it, and its era. A
 board seats parts of its own era only.
 
@@ -241,6 +281,14 @@ take away from itself: what its case takes away on its own, plus the cooler over
 | Neutral (Standard, Advanced) | 200 W | 1, 0, 2 |
 | High Performance (Standard, Advanced) | 300 W | 1, 2, 3 |
 | Aesthetic (Standard, Advanced) | 150 W | 1, 1, 2 |
+| Russet 128K | 40 W | none |
+| qRusset G3 | 60 W | none |
+| qRusset (White) | 100 W | none |
+| qRusset (Slim), the Advanced qRusset | 150 W | none |
+| Russet Power G4 | 150 W | none, its own fan built in |
+| Russet Pro (Transition) | 300 W | none, its own fans built in |
+| Russet Pro (Standard) | 400 W | none, its own fans built in |
+| Russet Studio | 250 W | none |
 
 | Part | Vintage | Legacy | Transition | Standard | Advanced |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -248,6 +296,7 @@ take away from itself: what its case takes away on its own, plus the cooler over
 | Tower cooler | | | | 250 W | 300 W |
 | MF AquaLoop 240 or 360 (all-in-one water cooler) | | | | 300 W | 400 W |
 | Case fan (80, 80, 92, 120 and 120 mm) | 20 W | 30 W | 40 W | 50 W | 60 W |
+| Quince Heat Sink (the Russet Pros') | | | 150 W | 300 W | |
 
 They go in on the **COOLING** face of the assembly window, a tab under its lamps: a cooler seat over each processor
 and the case's fan seats where the case has them; the tab's lamp lights while the computer lacks cooling. A cooler or

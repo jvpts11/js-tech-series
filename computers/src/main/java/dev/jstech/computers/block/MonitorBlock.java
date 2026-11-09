@@ -28,6 +28,7 @@ import dev.jstech.computers.menu.IMonitorMenu;
 import dev.jstech.computers.menu.LinuxTtyMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.menu.NetTerminalMenu;
+import dev.jstech.computers.monitor.IScreen;
 import dev.jstech.computers.monitor.SessionOpenings;
 import dev.jstech.computers.operation.payload.OpenComputerUiPayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
@@ -37,6 +38,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.QuinceStart;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.boot.BootController;
@@ -296,6 +298,15 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
      * is passed over without being dropped, which is how the monitor's face in the world asks, since looking at a
      * machine from across the room must not change what happens when somebody sits down at it.
      */
+    /**
+     * Whether {@code computer} is one of Quince's standing at a hardware fault: switched on with a board and a supply
+     * whose parts make no computer, which its board's self-test shows as the Sad Quince (computers/docs/design/
+     * quince.md). Any other machine so built only beeps, and its screen stays dark.
+     */
+    public static boolean standsAtFault(final IOsHost computer) {
+        return computer.quinceStart() != QuinceStart.NONE && computer.hardwareFault() != null;
+    }
+
     public static Entry entryFor(final IOsHost computer, final boolean settle) {
         /*
          * Before the power: a part taken out from under a running system leaves no computer at once, and the red
@@ -303,6 +314,10 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
          */
         if (computer.crashPage() != null) {
             return Entry.CRASHED;
+        }
+        // A machine of Quince's switched on with parts that make no computer stands at the Sad Quince.
+        if (standsAtFault(computer)) {
+            return Entry.POST;
         }
         if (!computer.isRunning()) {
             return Entry.NO_POWER;
@@ -785,25 +800,32 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
                         VramLedger.label(monitor.starvedNeedKb()), VramLedger.label(monitor.starvedFreeKb()))), true);
                 return InteractionResult.SUCCESS;
             }
-            /*
-             * One screen, one keyboard: whoever is at it keeps it. Asked before anything else, because what
-             * follows ends the remote session the screen holds and opens a session over the one being read.
-             */
-            final Player using = IMonitorMenu.userOf(serverPlayer.serverLevel().players(), pos, player);
-            if (using != null) {
-                serverPlayer.displayClientMessage(GameText.component(
-                        MonitorTexts.IN_USE.with(using.getGameProfile().getName())), true);
-                return InteractionResult.SUCCESS;
-            }
-            /*
-             * Using the monitor directly always means "show me MY machine": any remote session this
-             * screen was holding ends here.
-             */
-            monitor.setRemoteSession(null);
-            MachineOperators.note(level, owner, player);
-            bootOrPost(serverPlayer, level, pos, owner);
+            sitDown(serverPlayer, level, monitor, owner);
         }
         return InteractionResult.SUCCESS;
+    }
+
+    /**
+     * Sits a player down at {@code screen}, a monitor or a computer's own glass, in front of {@code owner}, its own
+     * machine: what a click on the screen does once it has something to show.
+     */
+    public static void sitDown(final ServerPlayer player, final Level level, final IScreen screen,
+                               final BlockPos owner) {
+        final BlockPos at = screen.getBlockPos();
+        /*
+         * One screen, one keyboard: whoever is at it keeps it. Asked before anything else, because what follows ends
+         * the remote session the screen holds and opens a session over the one being read.
+         */
+        final Player using = IMonitorMenu.userOf(player.serverLevel().players(), at, player);
+        if (using != null) {
+            player.displayClientMessage(GameText.component(
+                    MonitorTexts.IN_USE.with(using.getGameProfile().getName())), true);
+            return;
+        }
+        // Using the screen directly always means "show me MY machine": any remote session it was holding ends here.
+        screen.setRemoteSession(null);
+        MachineOperators.note(level, owner, player);
+        bootOrPost(player, level, at, owner);
     }
 
     private static Component diagnoseUnlinked(final Level level, final BlockPos monitorPos) {

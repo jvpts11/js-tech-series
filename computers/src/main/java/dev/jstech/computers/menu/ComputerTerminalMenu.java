@@ -12,6 +12,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
+import dev.jstech.computers.monitor.IScreen;
 import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
 import dev.jstech.computers.operation.payload.CraftPlanPayload;
@@ -678,7 +679,7 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
     private static Predicate<Player> validity(final Level level, final BlockPos hostPos, final BlockPos monitorPos) {
         return MenuValidity.near(level, monitorPos, MONITOR_REACH)
                 // Covers both a cable link and a Remote Control session onto the same host.
-                .and(player -> level.getBlockEntity(monitorPos) instanceof MonitorBlockEntity monitor
+                .and(player -> level.getBlockEntity(monitorPos) instanceof IScreen monitor
                         && monitor.shows(hostPos))
                 // Closes the GUI the moment the machine powers off or its system disk is pulled.
                 .and(player -> CommandPromptMenu.sessionAlive(level, hostPos));

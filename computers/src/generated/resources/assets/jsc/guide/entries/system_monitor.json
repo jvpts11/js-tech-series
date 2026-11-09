@@ -56,7 +56,7 @@
     }
   ],
   "id": "jsc:system_monitor",
-  "order": 172,
+  "order": 173,
   "section": "jsc:frames_machine_tools",
   "title": "jsc.guide.system_monitor.title"
 }

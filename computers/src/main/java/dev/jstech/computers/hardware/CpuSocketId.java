@@ -64,6 +64,15 @@ public record CpuSocketId(String id) {
     public static final CpuSocketId LGA_4677 = own("lga_4677");
     public static final CpuSocketId SOCKET_Q = own("socket_q");
     public static final CpuSocketId SOCKET_EM = own("socket_em");
+    /* Quince's own, which only Quince's logic boards offer (computers/docs/design/quince.md). */
+    /** The Motoroller 68000's long package of 64 pins, on the Russet 128K's board. */
+    public static final CpuSocketId DIP_64 = own("dip_64");
+    /** The PowerQ G3's ceramic package, on the qRusset G3's board. */
+    public static final CpuSocketId POWERQ_G3 = own("powerq_g3");
+    /** The PowerQ G4's processor module, the little board under its heat sink. */
+    public static final CpuSocketId POWERQ_G4 = own("powerq_g4");
+    /** Quince's own chips, the Q1 to Q3, with their memory in the package. */
+    public static final CpuSocketId QUINCE_Q = own("quince_q");
 
     public CpuSocketId {
         Objects.requireNonNull(id, "a socket must have an id");

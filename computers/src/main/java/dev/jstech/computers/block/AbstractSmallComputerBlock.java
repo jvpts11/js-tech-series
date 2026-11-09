@@ -12,6 +12,9 @@ import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.blockentity.ChunkAnchor;
 import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CaseFrontLayout;
+import dev.jstech.computers.hardware.CaseGlass;
+import dev.jstech.computers.hardware.FrontArea;
+import dev.jstech.computers.monitor.IScreen;
 import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.IStandingParts;
@@ -83,11 +86,21 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
                                          final CaseStyle caseStyle, final FacePorts ports,
                                          final Class<E> entityClass, final Supplier<BlockEntityType<E>> entityType,
                                          final BlockEntityTicker<E> serverTicker) {
+        this(properties, era, caseStyle, CaseFrontLayout.of(era, caseStyle), ports, entityClass, entityType,
+                serverTicker);
+    }
+
+    /** A computer whose front is its own rather than its age's case's. */
+    protected AbstractSmallComputerBlock(final Properties properties, final Era era,
+                                         final CaseStyle caseStyle, final CaseFrontLayout front,
+                                         final FacePorts ports, final Class<E> entityClass,
+                                         final Supplier<BlockEntityType<E>> entityType,
+                                         final BlockEntityTicker<E> serverTicker) {
         super(properties);
         this.era = era;
         this.caseStyle = caseStyle;
         this.ports = ports;
-        this.front = CaseFrontLayout.of(era, caseStyle);
+        this.front = front;
         this.entityClass = entityClass;
         this.entityType = entityType;
         this.serverTicker = serverTicker;
@@ -175,6 +188,17 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
                 return ItemInteractionResult.sidedSuccess(level.isClientSide());
             }
         }
+        // A machine with its power button behind it answers a click there, whatever the hand holds.
+        final FrontArea behind = powerBehind();
+        if (computer != null && behind != null) {
+            final double[] back = DeviceFront.point(facing.getOpposite(), pos, hit, player.getEyePosition(), 0);
+            if (back != null && behind.contains(back[0], back[1])) {
+                if (!level.isClientSide()) {
+                    pressPower(computer, player);
+                }
+                return ItemInteractionResult.sidedSuccess(level.isClientSide());
+            }
+        }
         final double[] at = DeviceFront.point(facing, pos, hit, player.getEyePosition(), 0);
         if (computer == null || at == null) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
@@ -182,8 +206,7 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
         // The power button answers whatever the hand holds, as the one on the assembly screen does.
         if (front.power().contains(at[0], at[1])) {
             if (!level.isClientSide()) {
-                computer.togglePower();
-                computer.showPowerPressed();
+                pressPower(computer, player);
             }
             return ItemInteractionResult.sidedSuccess(level.isClientSide());
         }
@@ -210,9 +233,19 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
         final E computer = computerAt(level, pos);
         if (!level.isClientSide() && player instanceof ServerPlayer serverPlayer && computer != null) {
             // Sneaking takes the left side off the case, or puts it back, to see what is inside.
-            if (player.isShiftKeyDown()) {
+            if (player.isShiftKeyDown() && sideComesOff()) {
                 computer.toggleSidePanel();
                 return InteractionResult.sidedSuccess(false);
+            }
+            // A computer that is its own screen sits the player down at a click on its glass, as a monitor does.
+            final CaseGlass glass = glass();
+            if (glass != null && computer instanceof IScreen screen) {
+                final double[] at = DeviceFront.point(state.getValue(FACING), pos, hit, player.getEyePosition(),
+                        glass.depth());
+                if (at != null && glass.area().contains(at[0], at[1])) {
+                    MonitorBlock.sitDown(serverPlayer, level, screen, pos);
+                    return InteractionResult.sidedSuccess(false);
+                }
             }
             serverPlayer.openMenu(new SimpleMenuProvider(
                     (id, inventory, p) -> createMenu(id, inventory, computer), menuTitle()),
@@ -246,6 +279,30 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
 
     /** Whatever else the computer lets fall when it goes, besides its hardware; nothing unless a computer says. */
     protected void dropWhenRemoved(final ServerLevel level, final BlockPos pos, final E computer) {
+    }
+
+    /**
+     * Its power button when it is behind the machine rather than on its front, in sixty-fourths of the back from its
+     * top left as the back is seen; null when the button is on the front, as a PC's is.
+     */
+    @Nullable
+    protected FrontArea powerBehind() {
+        return null;
+    }
+
+    /** Whether its left side comes off to show what is inside, as a tower's does; an all-in-one's does not. */
+    protected boolean sideComesOff() {
+        return true;
+    }
+
+    /**
+     * What a press of its power button does, on the server: the machine switches on or off, and switched on while the
+     * player sneaks, a machine whose firmware has start-up choices opens them.
+     */
+    protected void pressPower(final E computer, final Player player) {
+        computer.askStartupChoices(!computer.isManualOn() && player.isShiftKeyDown());
+        computer.togglePower();
+        computer.showPowerPressed();
     }
 
     /* What the case holds falls on the ground: the installed hardware, and what its front's bays and ports hold. */

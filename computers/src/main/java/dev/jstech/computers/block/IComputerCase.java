@@ -8,6 +8,8 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.hardware.CaseGlass;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A small computer drawn as its case: the age of the case, which of the age's cases it is, and which machine it
@@ -34,5 +36,19 @@ public interface IComputerCase extends IEraChassisBlock {
     default String caseModel() {
         final String name = "computer_" + caseStyle().caseName(chassisEra()) + "_" + machineName();
         return modelsOf().equals(JsComputers.MODID) ? name : modelsOf() + ":" + name;
+    }
+
+    /**
+     * Whether its supply is drawn with the lead that runs to its board; a case drawn with no cables inside, as Quince's
+     * are, shows the supply alone.
+     */
+    default boolean drawsSupplyLead() {
+        return true;
+    }
+
+    /** The glass of a computer that is its own screen, as an all-in-one is; null for one shown on a monitor. */
+    @Nullable
+    default CaseGlass glass() {
+        return null;
     }
 }

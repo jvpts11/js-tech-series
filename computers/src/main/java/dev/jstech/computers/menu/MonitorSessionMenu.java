@@ -8,7 +8,7 @@
 package dev.jstech.computers.menu;
 
 import dev.jstech.computers.registry.ComputingMenus;
-import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.monitor.IScreen;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.id.IStableId;
 import dev.jstech.core.id.StableIds;
@@ -136,7 +136,7 @@ public class MonitorSessionMenu extends CoreMenu implements IMonitorMenu {
          * shows nothing at all.
          */
         final Predicate<Player> monitorStillShows = player -> monitorPos.equals(hostPos)
-                || level.getBlockEntity(monitorPos) instanceof MonitorBlockEntity monitor && monitor.shows(hostPos);
+                || level.getBlockEntity(monitorPos) instanceof IScreen monitor && monitor.shows(hostPos);
         return hostIsMachine.and(MenuValidity.near(level, standingAt, REACH)).and(monitorStillShows);
     }
 

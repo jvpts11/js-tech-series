@@ -16,6 +16,7 @@ import dev.jstech.computers.block.MonitorPanel;
 import dev.jstech.computers.client.monitor.MonitorPictureCache;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.monitor.IMonitorPicture;
+import dev.jstech.computers.monitor.IScreen;
 import dev.jstech.computers.monitor.MonitorPicturePayload;
 import dev.jstech.computers.monitor.MonitorPictures;
 import dev.jstech.computers.monitor.VideoMemory;
@@ -49,7 +50,7 @@ import org.jetbrains.annotations.Nullable;
  * the link and the video output, the others refuse one of their own and light with it, and only the corner keeps its
  * power button. Whoever is near is sent what the face shows, by the monitor holding the link.
  */
-public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint {
+public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IScreen {
 
     private final PeripheralLink link = new PeripheralLink(fields(), PeripheralCableType.COMPUTING,
             PeripheralLinks.COMPUTING);
@@ -133,8 +134,15 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
     }
 
     /** Whether the screen is lit: its computer runs and drives it. */
+    @Override
     public boolean lit() {
         return lit.get();
+    }
+
+    @Override
+    @Nullable
+    public BlockPos shownMachine() {
+        return remoteSession != null ? remoteSession : ownerPos();
     }
 
     /** Whether its own switch is on. */
@@ -177,7 +185,7 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
         return starvedFreeKb.get();
     }
 
-    /** Starts (or ends, with {@code null}) a remote session showing {@code machine} on this screen. */
+    @Override
     public void setRemoteSession(@Nullable final BlockPos machine) {
         this.remoteSession = machine;
     }
@@ -193,6 +201,7 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
      * a remote session put it there. The menus validate through this, so a taken-over screen is not torn down for
      * showing a computer that is not its own, and every screen open on a monitor closes when it is switched off.
      */
+    @Override
     public boolean shows(final BlockPos machine) {
         return machine != null && switchedOn.get()
                 && (machine.equals(ownerPos()) || machine.equals(remoteSession));
@@ -324,9 +333,13 @@ public class MonitorBlockEntity extends SyncedBlockEntity implements IPeripheral
         }
         final IOsHost host = on && owner != null && level.getBlockEntity(owner) instanceof IOsHost running
                 ? running : null;
-        final boolean driven = host != null && host.isRunning() && !host.isDisabled(worldPosition.asLong());
+        // A machine of Quince's at a hardware fault drives its screen too: its board's self-test shows the fault.
+        final boolean fault = host != null && MonitorBlock.standsAtFault(host);
+        final boolean driven = host != null && (host.isRunning() || fault)
+                && !host.isDisabled(worldPosition.asLong());
         // A running computer lights this screen only while its video memory has room for it.
-        final VideoMemory.Screen share = driven ? VideoMemory.of(level, host).screen(worldPosition.asLong()) : null;
+        final VideoMemory.Screen share = driven && !fault
+                ? VideoMemory.of(level, host).screen(worldPosition.asLong()) : null;
         final boolean starvedNow = share != null && !share.fits();
         starvedNeedKb.set(starvedNow ? share.needKb() : 0L);
         starvedFreeKb.set(starvedNow ? share.freeKb() : 0L);

@@ -1,13 +1,33 @@
 {
   "values": [
     "jsc:vintage_personal_computer",
+    "jsc:russet_128k",
     "jsc:legacy_personal_computer",
+    "jsc:qrusset_g3_bondi",
+    "jsc:qrusset_g3_blueberry",
+    "jsc:qrusset_g3_strawberry",
+    "jsc:qrusset_g3_lime",
+    "jsc:qrusset_g3_grape",
+    "jsc:qrusset_g3_tangerine",
+    "jsc:russet_power_g4",
     "jsc:transition_personal_computer",
+    "jsc:qrusset_white",
+    "jsc:russet_pro_t",
     "jsc:personal_computer",
     "jsc:high_performance_personal_computer",
     "jsc:aesthetic_personal_computer",
+    "jsc:qrusset_thin",
+    "jsc:russet_pro_s",
     "jsc:advanced_personal_computer",
     "jsc:advanced_high_performance_personal_computer",
-    "jsc:advanced_aesthetic_personal_computer"
+    "jsc:advanced_aesthetic_personal_computer",
+    "jsc:qrusset_colour_blue",
+    "jsc:qrusset_colour_green",
+    "jsc:qrusset_colour_pink",
+    "jsc:qrusset_colour_silver",
+    "jsc:qrusset_colour_yellow",
+    "jsc:qrusset_colour_orange",
+    "jsc:qrusset_colour_purple",
+    "jsc:russet_studio"
   ]
 }

@@ -61,6 +61,7 @@ final class PartModels {
     private static final String[] PSU_SEATS = {"seat_psu_top", "seat_psu_floor", "seat_psu_cover"};
     /** The ticks a fan takes to turn once. */
     private static final int FAN_TICKS = 20;
+    private static final double TICKS_PER_SECOND = 20.0;
     private static final float FULL_TURN = 360f;
     /** Half a supply's height, in the model's units: a supply turned over turns about its middle. */
     private static final float PSU_HALF_HEIGHT = 1.75f;
@@ -146,27 +147,24 @@ final class PartModels {
                 roots++;
             }
         }
-        final List<Integer> spins = new ArrayList<>();
         final List<Integer> leads = new ArrayList<>();
         final List<Integer> ways = new ArrayList<>();
         for (int i = 0; i < bones.size(); i++) {
             final String name = bones.get(i).name();
             final boolean onRoot = root != null && root.equals(bones.get(i).parent());
-            if (name.startsWith(SPIN) && name.length() > SPIN.length()) {
-                spins.add(i);
-            } else if (name.startsWith(LEAD) && onRoot) {
+            if (name.startsWith(LEAD) && onRoot) {
                 leads.add(i);
             } else if (name.startsWith(WAY) && onRoot) {
                 ways.add(i);
             }
         }
-        final int[] spinBones = indices(spins);
-        final char[] axes = new char[spinBones.length];
-        for (int k = 0; k < spinBones.length; k++) {
-            axes[k] = bones.get(spinBones[k]).name().charAt(SPIN.length());
-        }
-        return new PartShape(roots == 1 ? root : null, spinBones, axes, indices(leads), names(bones, leads),
+        return new PartShape(roots == 1 ? root : null, Spins.of(bones), indices(leads), names(bones, leads),
                 indices(ways), names(bones, ways));
+    }
+
+    /** How far a running machine's fans have turned at {@code seconds}, in degrees: once round every second. */
+    static float fanTurn(final double seconds) {
+        return (float) (seconds * TICKS_PER_SECOND % FAN_TICKS / FAN_TICKS * FULL_TURN);
     }
 
     private static int[] indices(final List<Integer> picked) {
@@ -194,11 +192,39 @@ final class PartModels {
      * part, or none for a model of more roots than one; the bones of its fans and the axes they turn about; the leads
      * of a supply, each named for the age of the board it runs to; and the ways it sits.
      */
-    record PartShape(@Nullable String kind, int[] spins, char[] axes, int[] leads, String[] leadNames,
-                     int[] ways, String[] wayNames) {
+    record PartShape(@Nullable String kind, Spins spins, int[] leads, String[] leadNames, int[] ways,
+                     String[] wayNames) {
 
         boolean moves() {
-            return spins.length > 0 || leads.length > 0 || ways.length > 0;
+            return spins.bones().length > 0 || leads.length > 0 || ways.length > 0;
+        }
+    }
+
+    /** A model's fans: its bones named spin_x_, spin_y_ or spin_z_ and a name, and the axis each turns about. */
+    record Spins(int[] bones, char[] axes) {
+
+        static Spins of(final List<ModelBone> model) {
+            final List<Integer> found = new ArrayList<>();
+            for (int i = 0; i < model.size(); i++) {
+                final String name = model.get(i).name();
+                if (name.startsWith(SPIN) && name.length() > SPIN.length()) {
+                    found.add(i);
+                }
+            }
+            final int[] at = indices(found);
+            final char[] axes = new char[at.length];
+            for (int k = 0; k < at.length; k++) {
+                axes[k] = model.get(at[k]).name().charAt(SPIN.length());
+            }
+            return new Spins(at, axes);
+        }
+
+        /** Turns each fan {@code degrees} about its axis. */
+        void turn(final ModelPose pose, final float degrees) {
+            for (int k = 0; k < bones.length; k++) {
+                pose.addEuler(bones[k], axes[k] == 'x' ? degrees : 0f, axes[k] == 'y' ? degrees : 0f,
+                        axes[k] == 'z' ? degrees : 0f);
+            }
         }
     }
 
@@ -231,11 +257,7 @@ final class PartModels {
 
         /* Turns the fans about their axes, keeps only the supply's lead asked for and only the way it sits. */
         void move(final ModelPose pose) {
-            for (int k = 0; k < shape.spins().length; k++) {
-                final char axis = shape.axes()[k];
-                pose.addEuler(shape.spins()[k], axis == 'x' ? turned : 0f, axis == 'y' ? turned : 0f,
-                        axis == 'z' ? turned : 0f);
-            }
+            shape.spins().turn(pose, turned);
             if (lead != null) {
                 for (int k = 0; k < shape.leads().length; k++) {
                     pose.setHidden(shape.leads()[k], !shape.leadNames()[k].equals(lead));
@@ -272,8 +294,7 @@ final class PartModels {
             this.overlay = overlay;
             this.seconds = KitClock.seconds(partialTick);
             final Level level = machine.getLevel();
-            this.turned = running && level != null
-                    ? (level.getGameTime() % FAN_TICKS + partialTick) / FAN_TICKS * FULL_TURN : 0f;
+            this.turned = running && level != null ? fanTurn(seconds) : 0f;
         }
 
         /** The part in hardware slot {@code slot}, {@code item}, on {@code seat} of {@code on}; drawn or not. */

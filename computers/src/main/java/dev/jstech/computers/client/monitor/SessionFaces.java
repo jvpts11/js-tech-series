@@ -130,7 +130,7 @@ public final class SessionFaces {
         return switch (picture.opening()) {
             case OpenPostPayload post -> {
                 BootSequenceScreen.faceWith(FirmwareKind.byId(post.firmwareKind()), post.name(), left, post.halted(),
-                        GameText.resolve(post.complaint()), picture.state());
+                        GameText.resolve(post.complaint()), post.quince(), picture.state());
                 yield AbstractComputerScreen.face(() -> new BootSequenceScreen(
                         menu(inventory, monitor, post.host(), picture, MonitorSessionMenu.Phase.POST), inventory,
                         Component.empty()), AROUND_X, AROUND_Y);

@@ -152,10 +152,12 @@ public final class MonitorScreenRenderer implements BlockEntityRenderer<MonitorB
      * inside one bezel and above one chin. The picture keeps its shape, centred where the glass is a shade off it.
      */
     private static float[] glass(final MonitorKind kind, final int wide, final int tall) {
-        final float x0 = kind.glass(0);
-        final float y0 = kind.glass(1);
-        final float x1 = wide * FRONT - (FRONT - kind.glass(2));
-        final float y1 = tall * FRONT - (FRONT - kind.glass(3));
+        return fitted(kind.glass(0), kind.glass(1), wide * FRONT - (FRONT - kind.glass(2)),
+                tall * FRONT - (FRONT - kind.glass(3)));
+    }
+
+    /** The picture on the glass from (x0, y0) to (x1, y1), keeping its shape, centred where the glass is off it. */
+    static float[] fitted(final float x0, final float y0, final float x1, final float y1) {
         final float gw = x1 - x0;
         final float gh = y1 - y0;
         final float aspect = (float) MonitorGlass.WIDTH / MonitorGlass.HEIGHT;

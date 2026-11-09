@@ -143,7 +143,7 @@
     }
   ],
   "id": "jsc:bus_conditions",
-  "order": 93,
+  "order": 94,
   "section": "jsc:bus_settings",
   "title": "jsc.guide.bus_conditions.title"
 }

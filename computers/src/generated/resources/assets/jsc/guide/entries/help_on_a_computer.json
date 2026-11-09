@@ -205,7 +205,7 @@
   ],
   "icon": "jsc:guide_to_operations",
   "id": "jsc:help_on_a_computer",
-  "order": 65,
+  "order": 66,
   "section": "jsc:getting_help",
   "title": "jsc.guide.help_on_a_computer.title"
 }

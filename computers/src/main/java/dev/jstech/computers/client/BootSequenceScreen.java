@@ -32,12 +32,16 @@ import com.mojang.blaze3d.platform.InputConstants;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.layout.BootSequenceLayout;
+import dev.jstech.computers.gui.layout.QuinceStartLayout;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
+import dev.jstech.computers.operation.payload.MachinePowerPayload;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.QuincePost;
+import dev.jstech.computers.os.QuinceStart;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -73,6 +77,13 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
 
     /** How long a self-test is drawn for when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 70;
+    /* Open Firmware's prompt: the words it runs, the most a line takes, and where printable letters end. */
+    private static final String QUINCE_BOOT = "quince-boot";
+    private static final String SHUT_DOWN = "shut-down";
+    private static final String PROMPT = "0 > ";
+    private static final int MOST_TYPED = 40;
+    private static final char DEL_CHAR = 127;
+    private static final int BLINK_TICKS = 10;
 
     /*
      * The self-test in each firmware's look: {@code jsc:firmware/post_cli} (written in greys the Vintage tube's
@@ -110,6 +121,11 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
 
     /** Whether the machine is standing at the end of a self-test that refused to go on. */
     private final boolean halted;
+    /** What a machine of Quince's puts on the glass instead: its start, its start-up choices, its Sad Quince. */
+    private final QuincePost quince;
+    /* Open Firmware's page as the player has typed it: what came back from each word, and the word being typed. */
+    private final List<String> openFirmwareLog = new ArrayList<>();
+    private final StringBuilder openFirmwareInput = new StringBuilder();
 
     private static BootSequenceScreen active;
 
@@ -132,7 +148,8 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         this.computerPos = session.hostPos();
         this.monitorPos = session.monitorPos();
         final Testing testing = forFace != null ? forFace : pending != null ? pending
-                : new Testing(FirmwareKind.forEra(HardwareEra.STANDARD), "", FALLBACK_TICKS, false, "");
+                : new Testing(FirmwareKind.forEra(HardwareEra.STANDARD), "", FALLBACK_TICKS, false, "",
+                        QuincePost.NONE);
         // A face is handed the parts the machine reads, since it asks the machine nothing itself.
         this.state = forFace != null ? forFaceState : null;
         forFace = null;
@@ -141,6 +158,7 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         this.machineName = testing.machineName();
         this.complaint = testing.complaint();
         this.halted = testing.halted();
+        this.quince = testing.quince();
         this.postTicks = testing.remainingTicks() > 0 ? testing.remainingTicks() : FALLBACK_TICKS;
         /*
          * A machine standing at a self-test that found nothing to boot opens at the end of that test rather
@@ -154,24 +172,24 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
 
     /** The self-test the machine is in, said before the session that shows it is opened. */
     public static void expect(final FirmwareKind kind, final String machineName, final int remainingTicks,
-                              final boolean halted, final String complaint) {
-        pending = new Testing(kind, machineName, remainingTicks, halted, complaint);
+                              final boolean halted, final String complaint, final QuincePost quince) {
+        pending = new Testing(kind, machineName, remainingTicks, halted, complaint, quince);
     }
 
     /** The same, for the next screen built to draw a monitor's face, with the parts the machine reads. */
     public static void faceWith(final FirmwareKind kind, final String machineName, final int remainingTicks,
-                                final boolean halted, final String complaint,
+                                final boolean halted, final String complaint, final QuincePost quince,
                                 @Nullable final FirmwareStatePayload state) {
-        forFace = new Testing(kind, machineName, remainingTicks, halted, complaint);
+        forFace = new Testing(kind, machineName, remainingTicks, halted, complaint, quince);
         forFaceState = state;
     }
 
     /**
-     * One machine testing itself: which firmware it wears, what it is called, where it has got to, and what
-     * it found wrong with the system on its disk, if the disk had one at all.
+     * One machine testing itself: which firmware it wears, what it is called, where it has got to, what it found
+     * wrong with the system on its disk, if the disk had one at all, and what a machine of Quince's shows instead.
      */
     private record Testing(FirmwareKind kind, String machineName, int remainingTicks, boolean halted,
-                           String complaint) {
+                           String complaint, QuincePost quince) {
     }
 
     /** The machine's own generation, so the bezel is the monitor that machine would really have. */
@@ -234,10 +252,28 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
 
     @Override
     public boolean keyPressed(final int keyCode, final int scanCode, final int modifiers) {
+        /*
+         * A machine of Quince's at its Sad Quince waits for its power, and at its start-up choices for a choice: every
+         * key but Escape belongs to the glass, so a letter typed at Open Firmware is never the key that shuts a window.
+         */
+        if (quince.fault() || choosing()) {
+            if (keyCode == InputConstants.KEY_ESCAPE) {
+                return super.keyPressed(keyCode, scanCode, modifiers);
+            }
+            if (choosing()) {
+                if (quince.start() == QuinceStart.OPEN_FIRMWARE) {
+                    openFirmwareKey(keyCode);
+                } else {
+                    chooserKey(keyCode);
+                }
+            }
+            return true;
+        }
         if (bootMenu) {
             return bootMenuKey(keyCode);
         }
-        if (keyCode == InputConstants.KEY_F12 && !setupRequested && !bootable().isEmpty()) {
+        if (keyCode == InputConstants.KEY_F12 && !setupRequested && !bootable().isEmpty()
+                && (!quince.quince() || quince.start().hasChoices())) {
             bootMenu = true;
             menuAt = 0;
             return true;
@@ -259,6 +295,18 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         return super.keyPressed(keyCode, scanCode, modifiers);
     }
 
+    /* Open Firmware takes the words typed at its prompt. */
+    @Override
+    public boolean charTyped(final char typed, final int modifiers) {
+        if (choosing() && quince.start() == QuinceStart.OPEN_FIRMWARE) {
+            if (typed >= ' ' && typed < DEL_CHAR && openFirmwareInput.length() < MOST_TYPED) {
+                openFirmwareInput.append(typed);
+            }
+            return true;
+        }
+        return super.charTyped(typed, modifiers);
+    }
+
     @Override
     public boolean isPauseScreen() {
         return false;
@@ -271,6 +319,10 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         final int x = this.leftPos;
         final int y = this.topPos;
         MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
+        if (quince.quince()) {
+            renderQuince(g, x, y);
+            return;
+        }
 
         /*
          * A Legacy machine posts on black with the maker's badge, the way the boards of that time did; the
@@ -336,20 +388,136 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
                 final FirmwareBootMenus.Choice chosen = choices.get(Math.min(menuAt, choices.size() - 1));
                 bootMenu = false;
                 setupRequested = true;
-                /*
-                 * A disk boots this once and the saved order stays where it is; a medium boots the way it does
-                 * from the setup, since booting one is already a thing that happens once.
-                 */
-                send(chosen.slot() >= 0
-                        ? new FirmwareActionPayload(computerPos, monitorPos,
-                                FirmwareActionPayload.ACTION_BOOT_ONCE, chosen.slot(), -1,
-                                chosen.entry().osId())
-                        : FirmwareActionPayload.onMedium(computerPos, monitorPos,
-                                FirmwareActionPayload.ACTION_BOOT_MEDIA, chosen.entry(), -1));
+                bootOnce(chosen);
             }
             default -> bootMenu = false;
         }
         return true;
+    }
+
+    /*
+     * Boots what was chosen once: a disk this time with the saved order left where it is, a medium the way it boots
+     * from the setup, since booting one is already a thing that happens once.
+     */
+    private void bootOnce(final FirmwareBootMenus.Choice chosen) {
+        send(chosen.slot() >= 0
+                ? new FirmwareActionPayload(computerPos, monitorPos, FirmwareActionPayload.ACTION_BOOT_ONCE,
+                        chosen.slot(), -1, chosen.entry().osId())
+                : FirmwareActionPayload.onMedium(computerPos, monitorPos, FirmwareActionPayload.ACTION_BOOT_MEDIA,
+                        chosen.entry(), -1));
+    }
+
+    /*
+     * Whether a machine of Quince's has its start-up choices on the glass: a power-on while sneaking opened them, or
+     * F12 did, until one of them is made.
+     */
+    private boolean choosing() {
+        return quince.quince() && quince.start().hasChoices() && !quince.fault() && !setupRequested
+                && (quince.choices() || bootMenu);
+    }
+
+    /* The volumes a start-up chooser offers: what the machine could boot, as many as its row holds with the gear. */
+    private List<FirmwareBootMenus.Choice> chooserVolumes() {
+        final List<FirmwareBootMenus.Choice> all = bootable();
+        final int room = QuinceStartLayout.MOST_VOLUMES - (quince.start() == QuinceStart.CHIP ? 1 : 0);
+        return all.subList(0, Math.min(all.size(), room));
+    }
+
+    /* Left and right walk the chooser, Enter starts the volume picked; the Startup Options' gear opens the setup. */
+    private void chooserKey(final int keyCode) {
+        final List<FirmwareBootMenus.Choice> volumes = chooserVolumes();
+        final int count = volumes.size() + (quince.start() == QuinceStart.CHIP ? 1 : 0);
+        if (count == 0) {
+            return;
+        }
+        switch (keyCode) {
+            case InputConstants.KEY_LEFT, InputConstants.KEY_UP -> menuAt = Math.floorMod(menuAt - 1, count);
+            case InputConstants.KEY_RIGHT, InputConstants.KEY_DOWN -> menuAt = Math.floorMod(menuAt + 1, count);
+            case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
+                setupRequested = true;
+                bootMenu = false;
+                if (menuAt >= volumes.size()) {
+                    send(new PostCompletePayload(computerPos, monitorPos, true));
+                } else {
+                    bootOnce(volumes.get(menuAt));
+                }
+            }
+            default -> {
+            }
+        }
+    }
+
+    /* Open Firmware's prompt: Backspace takes a letter back, Return runs the word. */
+    private void openFirmwareKey(final int keyCode) {
+        if (keyCode == InputConstants.KEY_BACKSPACE && !openFirmwareInput.isEmpty()) {
+            openFirmwareInput.setLength(openFirmwareInput.length() - 1);
+        } else if (keyCode == InputConstants.KEY_RETURN || keyCode == InputConstants.KEY_NUMPADENTER) {
+            runOpenFirmware();
+        }
+    }
+
+    /*
+     * Runs the word at Open Firmware's prompt: "quince-boot" goes on booting and "shut-down" switches the machine off,
+     * as its banner says; any other word it does not know, and says so.
+     */
+    private void runOpenFirmware() {
+        final String word = openFirmwareInput.toString().trim();
+        openFirmwareLog.add(PROMPT + openFirmwareInput);
+        openFirmwareInput.setLength(0);
+        switch (word) {
+            case "" -> {
+            }
+            case QUINCE_BOOT -> {
+                setupRequested = true;
+                send(new PostCompletePayload(computerPos, monitorPos, false));
+            }
+            case SHUT_DOWN -> {
+                setupRequested = true;
+                send(new MachinePowerPayload(computerPos, monitorPos, MachinePowerPayload.ACTION_SHUTDOWN));
+            }
+            default -> openFirmwareLog.add(of(QuinceFirmwareTexts.OF_UNKNOWN.with(word)));
+        }
+    }
+
+    /* Open Firmware's page: its banner, what the player typed and what came back, and the prompt with its cursor. */
+    private List<String> openFirmwarePage() {
+        final List<String> page = new ArrayList<>(List.of(
+                of(QuinceFirmwareTexts.OF_ROM.with(machineName)),
+                QuinceFirmwareTexts.of(QuinceFirmwareTexts.OF_COPYRIGHT),
+                QuinceFirmwareTexts.of(QuinceFirmwareTexts.OF_RIGHTS), "",
+                QuinceFirmwareTexts.of(QuinceFirmwareTexts.OF_WELCOME), "",
+                QuinceFirmwareTexts.of(QuinceFirmwareTexts.OF_TO_BOOT),
+                QuinceFirmwareTexts.of(QuinceFirmwareTexts.OF_TO_SHUT_DOWN),
+                QuinceFirmwareTexts.of(QuinceFirmwareTexts.OF_OK)));
+        page.addAll(openFirmwareLog);
+        page.add(PROMPT + openFirmwareInput + ((ticks / BLINK_TICKS) % 2 == 0 ? "_" : ""));
+        return page;
+    }
+
+    /*
+     * A machine of Quince's draws its firmware's own pictures: the Sad Quince at a fault, its start-up choices while
+     * they are open, the words under its start picture when it has nothing to boot, and else its start picture.
+     */
+    private void renderQuince(final GuiGraphics g, final int x, final int y) {
+        final QuinceStart start = quince.start();
+        if (quince.fault()) {
+            QuinceFirmwarePages.sad(g, font, x, y, start, bezelEra(), complaint);
+        } else if (choosing() && start == QuinceStart.OPEN_FIRMWARE) {
+            QuinceFirmwarePages.openFirmware(g, font, x, y, openFirmwarePage());
+        } else if (choosing()) {
+            final List<String> names = new ArrayList<>();
+            for (final FirmwareBootMenus.Choice volume : chooserVolumes()) {
+                names.add(of(volume.entry().label()));
+            }
+            if (start == QuinceStart.CHIP) {
+                names.add(QuinceFirmwareTexts.of(QuinceFirmwareTexts.OPTIONS));
+            }
+            QuinceFirmwarePages.chooser(g, font, x, y, start, bezelEra(), names, start == QuinceStart.CHIP, menuAt);
+        } else if (completed && bootingFrom().isEmpty()) {
+            QuinceFirmwarePages.noBoot(g, font, x, y, start, bezelEra(), noBootLines());
+        } else {
+            QuinceFirmwarePages.start(g, x, y, start, bezelEra(), ticks, postTicks);
+        }
     }
 
     /**

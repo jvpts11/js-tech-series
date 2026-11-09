@@ -1,0 +1,145 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_computers.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.quince_computers.table1",
+      "heads": [
+        "jsc.guide.quince_computers.table1_head1",
+        "jsc.guide.quince_computers.table1_head2",
+        "jsc.guide.quince_computers.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.quince_computers.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.quince_computers.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.quince_computers.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_computers.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.quince_computers.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.quince_computers.table1_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_computers.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.quince_computers.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.quince_computers.table1_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_computers.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.quince_computers.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.quince_computers.table1_4_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_computers.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.quince_computers.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.quince_computers.table1_5_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_computers.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_computers.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_computers.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_computers.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.quince_computers.fix1",
+          "problem": "jsc.guide.quince_computers.problem1"
+        },
+        {
+          "fix": "jsc.guide.quince_computers.fix2",
+          "problem": "jsc.guide.quince_computers.problem2"
+        },
+        {
+          "fix": "jsc.guide.quince_computers.fix3",
+          "problem": "jsc.guide.quince_computers.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:personal_computers",
+        "jsc:firmware"
+      ]
+    }
+  ],
+  "icon": "jsc:russet_128k",
+  "id": "jsc:quince_computers",
+  "items": [
+    "jsc:russet_128k",
+    "jsc:qrusset_g3_bondi",
+    "jsc:qrusset_g3_blueberry",
+    "jsc:qrusset_g3_strawberry",
+    "jsc:qrusset_g3_lime",
+    "jsc:qrusset_g3_grape",
+    "jsc:qrusset_g3_tangerine",
+    "jsc:russet_power_g4",
+    "jsc:qrusset_white",
+    "jsc:russet_pro_t",
+    "jsc:qrusset_thin",
+    "jsc:russet_pro_s",
+    "jsc:qrusset_colour_blue",
+    "jsc:qrusset_colour_green",
+    "jsc:qrusset_colour_pink",
+    "jsc:qrusset_colour_silver",
+    "jsc:qrusset_colour_yellow",
+    "jsc:qrusset_colour_orange",
+    "jsc:qrusset_colour_purple",
+    "jsc:russet_studio"
+  ],
+  "order": 28,
+  "section": "jsc:computers",
+  "title": "jsc.guide.quince_computers.title"
+}

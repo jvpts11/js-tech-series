@@ -112,7 +112,7 @@
   ],
   "icon": "jsc:personal_computer",
   "id": "jsc:messenger",
-  "order": 62,
+  "order": 63,
   "section": "jsc:social_and_media",
   "title": "jsc.guide.messenger.title"
 }

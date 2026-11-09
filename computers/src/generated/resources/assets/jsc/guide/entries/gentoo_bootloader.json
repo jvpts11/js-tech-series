@@ -97,7 +97,7 @@
     }
   ],
   "id": "jsc:gentoo_bootloader",
-  "order": 267,
+  "order": 268,
   "section": "jsc:gentoo_system",
   "title": "jsc.guide.gentoo_bootloader.title"
 }

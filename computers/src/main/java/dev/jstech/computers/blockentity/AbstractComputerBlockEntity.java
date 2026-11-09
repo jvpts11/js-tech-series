@@ -227,6 +227,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private int controlKeepIn;
     /** Whether it owned links on the industrial control cable at its last look, so a change is told to its cables. */
     private boolean wasController;
+    /*
+     * Whether a power-on while sneaking asked for its firmware's start-up choices, which its self-test waits at until
+     * one is made. Transient: a machine saved there starts again past them.
+     */
+    private boolean startupChoices;
 
     /**
      * The name a player gave this computer: the machine's own, and no part's; the players who see it are sent it.
@@ -872,6 +877,35 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     @Override
     public void resumeFromHalt() {
         power.resume();
+    }
+
+    /**
+     * Its power button was pressed: switched on while sneaking, a machine whose firmware has start-up choices opens
+     * them (computers/docs/design/quince.md); any other press asks for none.
+     */
+    public void askStartupChoices(final boolean sneakingOn) {
+        startupChoices = sneakingOn && quinceStart().hasChoices();
+    }
+
+    @Override
+    public boolean atStartupChoices() {
+        return startupChoices && isRunning() && needsPost();
+    }
+
+    @Override
+    public void leaveStartupChoices() {
+        startupChoices = false;
+    }
+
+    @Override
+    @Nullable
+    public Text hardwareFault() {
+        final ComputerBuild build = currentBuild();
+        if (!power.on() || buildValid() || build == null) {
+            return null;
+        }
+        final List<Text> problems = build.validate().problems();
+        return problems.isEmpty() ? null : problems.getFirst();
     }
 
     /** The ticks the self-test still has to run, for a monitor opened while it is under way. */

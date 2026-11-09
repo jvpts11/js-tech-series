@@ -63,7 +63,7 @@ class LayoutAuditTest {
             "CommandPromptLayout",
             "OsInstallLayout",
             "InstallerLayout",
-            "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
+            "BootSequenceLayout", "QuinceStartLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
             "NetworkServicesLayout", "NetworkLinksLayout", "NetworkEventLogLayout", "PrinterLayout", "DockLayout",
             "PrintedPaperLayout",
             "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
@@ -221,6 +221,11 @@ class LayoutAuditTest {
         c.add(AuditCase.onTheGlass("BootSequenceLayout", BootSequenceLayout.layout()));
         c.add(AuditCase.onTheGlass("BootSequenceLayout.noBoot",
                 BootSequenceLayout.noBootLayout(BootSequenceLayout.MOST_LISTED_DEVICES)));
+        // Quince's firmware draws one of its pictures at a time, the face's or the fruit's, the chooser or the page.
+        c.add(AuditCase.onTheGlass("QuinceStartLayout.face", QuinceStartLayout.faceLayout()));
+        c.add(AuditCase.onTheGlass("QuinceStartLayout.fruit", QuinceStartLayout.fruitLayout()));
+        c.add(AuditCase.onTheGlass("QuinceStartLayout.chooser", QuinceStartLayout.chooserLayout()));
+        c.add(AuditCase.onTheGlass("QuinceStartLayout.openFirmware", QuinceStartLayout.openFirmwareLayout()));
         // The firmware setup never shows two of its three eras' shapes together.
         c.add(AuditCase.onTheGlass("FirmwareLayout(cli)", FirmwareLayout.cliLayout()));
         c.add(AuditCase.onTheGlass("FirmwareLayout(bios)", FirmwareLayout.biosLayout()));

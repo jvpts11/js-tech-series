@@ -10,6 +10,7 @@ package dev.jstech.computers.rack;
 import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.FormFactor;
+import dev.jstech.computers.hardware.QuinceBoards;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -108,6 +109,22 @@ public record RackChassis(ComputerDef computer, int heightU, RackType rackType, 
     /** The Advanced 2U compute server: four sockets, three drives, as many cards as its board takes. */
     public static final RackChassis ADVANCED_COMPUTE_SERVER = of(Look.COMPUTE, 2, 3, 4, CaseParts.AS_THE_BOARD,
             RackType.SERVER, HardwareEra.ADVANCED);
+    /*
+     * Quince's qServe (computers/docs/design/quince.md), a 1U server of the ordinary racks from the Legacy on, as the
+     * real one was a 19-inch unit: it takes only its own logic board, two processors and two cards, and cables as
+     * many of the rack's front bays as its era's 1U server.
+     */
+    /** The Legacy qServe: three drive modules. */
+    public static final RackChassis QSERVE_LEGACY = qServe(QuinceBoards.QSERVE_LEGACY, 3, HardwareEra.LEGACY);
+    /** The Transition qServe: five drives. */
+    public static final RackChassis QSERVE_TRANSITION = qServe(QuinceBoards.QSERVE_TRANSITION, 5,
+            HardwareEra.TRANSITION);
+    /** The Standard qServe: four slim carriers. */
+    public static final RackChassis QSERVE_STANDARD = qServe(QuinceBoards.QSERVE_STANDARD, 4,
+            HardwareEra.STANDARD);
+    /** The Advanced qServe: five drives behind its lattice. */
+    public static final RackChassis QSERVE_ADVANCED = qServe(QuinceBoards.QSERVE_ADVANCED, 5,
+            HardwareEra.ADVANCED);
 
     public RackChassis {
         Objects.requireNonNull(computer, "computer");
@@ -134,7 +151,9 @@ public record RackChassis(ComputerDef computer, int heightU, RackType rackType, 
         /** The 2U compute server. */
         COMPUTE,
         /** The 2U node of a supercomputer. */
-        NODE
+        NODE,
+        /** Quince's 1U qServe. */
+        QSERVE
     }
 
     /**
@@ -169,5 +188,10 @@ public record RackChassis(ComputerDef computer, int heightU, RackType rackType, 
     /** The expansion cards it seats; {@link CaseParts#AS_THE_BOARD} when its board alone decides. */
     public int maxPcie() {
         return computer.parts().cards();
+    }
+
+    private static RackChassis qServe(final FormFactor board, final int driveSlots, final Era era) {
+        return new RackChassis(new ComputerDef(era, Set.of(board), HostScope.SERVER,
+                new CaseParts(2, MEMORY, 2, driveSlots, 0, 0)), 1, RackType.SERVER, Look.QSERVE);
     }
 }

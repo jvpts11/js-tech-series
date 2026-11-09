@@ -1,6 +1,13 @@
 {
   "values": [
     "jsc:legacy_personal_computer",
+    "jsc:qrusset_g3_bondi",
+    "jsc:qrusset_g3_blueberry",
+    "jsc:qrusset_g3_strawberry",
+    "jsc:qrusset_g3_lime",
+    "jsc:qrusset_g3_grape",
+    "jsc:qrusset_g3_tangerine",
+    "jsc:russet_power_g4",
     "jsc:legacy_crafting_computer",
     "jsc:legacy_cluster_management_computer",
     "jsc:legacy_mainframe",
@@ -8,6 +15,8 @@
     "jsc:legacy_server_rack",
     "jsc:legacy_server_case",
     "jsc:legacy_server",
+    "jsc:qserve_legacy_case",
+    "jsc:qserve_legacy",
     "jsc:legacy_storage_server_case",
     "jsc:legacy_storage_server",
     "jsc:legacy_compute_server_case",
@@ -110,6 +119,9 @@
     "jsc:internal_cd_drive",
     "jsc:case_fan_legacy",
     "jsc:stock_cooler_legacy",
+    "jsc:quince_board_qrusset_g3",
+    "jsc:quince_board_power_g4",
+    "jsc:quince_board_qserve_legacy",
     "jsc:cd_rom",
     "jsc:cd_rw"
   ]

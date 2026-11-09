@@ -81,6 +81,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The WAN Gateway Computer: J's Computers' API is at version 13. `HostScope.WAN_GATEWAY_COMPUTER` is the
   machine, and `ExpansionCardKind.WAN_INTERFACE` the kind of the WAN Interface Cards, which go in that machine alone.
   Experimental.
+- Quince's hardware: J's Computers' API is at version 14. `FormFactor` gains `drivesAScreen`, whether a
+  board of that form shows a picture with no graphics card, as an all-in-one's and a server's do (`EEB`'s is true, and
+  the two-part constructor makes a form whose boards do not); `MotherboardSpec.hasOwnVideo` reads it. `CpuSocketId`
+  gains `DIP_64`, `POWERQ_G3`, `POWERQ_G4` and `QUINCE_Q`, the sockets of Quince's logic boards; `RackChassis`
+  gains `QSERVE_LEGACY`, `QSERVE_TRANSITION`, `QSERVE_STANDARD` and `QSERVE_ADVANCED`, the qServe of each era, which
+  a rack draws as `RackChassis.Look.QSERVE`. Experimental.
 
 ### Added
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
@@ -284,6 +290,28 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   of the slowest line on the way, it waits while the far side is not loaded, loses what is on the line when the line
   goes down (or waits for it, with `item_loss.network_split` off), and cancelling it cancels the far half too.
 - The advancement Information Superhighway, a goal: join two networks through their WAN Gateways.
+- Quince, the third maker of computers, and its twenty computers from the Vintage to the Advanced. The
+  Russet 128K, the qRusset G3 in six flavours, the white qRusset of the Transition, the thin one of the Standard and
+  the Advanced qRusset in seven colours are all-in-ones: their glass shows what the machine shows, as a monitor's
+  does, a click on it sits the player down at the machine, and their sound comes from their own case. The Russet
+  Power G4 and the Russet Pro of the Transition and of the Standard are towers whose left side comes off to show the
+  parts inside, with their own fans turning while they run; the Russet Studio is a small box that drives a monitor.
+  The all-in-ones and the Studio take their cables only from behind, where each line plugged in shows its socket on
+  the back and its cord into the machine, and have their power button behind them; a tower's is on its front.
+- Quince's hardware is closed: each of its machines takes only its own logic board, one of sixteen (one
+  for each machine, for the qServe of each era and for the Quince Mainframe of each era), and no other board goes in
+  it; the memory, the disks and the cards are the common ones. The Russet Pros' Quince Heat Sinks sit on the processor
+  where a PC's cooler does. The machines of the Vintage, the Legacy and the Advanced wait for Quince's processors.
+- The qServe, Quince's 1U server for the ordinary racks, one for each era from the Legacy with its case,
+  drawn in the rack with its era's face; and the Quince Mainframe of the Transition, the Standard and the Advanced, the
+  Mainframe's cabinet in Quince's aluminium, which takes Quince's logic board for it.
+- Quince's firmware. A machine of Quince's starts with its own picture: the Happy Quince of the Russet
+  128K's ROM and of Open Firmware, EFI's fruit with its spinner on the Transition's grey and with its bar on the
+  Standard's black, and the Quince chip's on the Advanced. Switched on while sneaking, it opens its start-up choices,
+  as holding the key did, and waits there: Open Firmware's prompt on the Legacy (`quince-boot` goes on, `shut-down`
+  switches it off), the Startup Manager on the Transition and the Standard, with the volumes it can start from, and
+  the Startup Options on the Advanced, whose Options open its setup. Switched on with parts that make no computer, it
+  shows the Sad Quince and what is wrong, where any other machine only beeps.
 - A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the

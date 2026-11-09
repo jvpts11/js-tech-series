@@ -296,7 +296,7 @@
     }
   ],
   "id": "jsc:set_bus",
-  "order": 303,
+  "order": 304,
   "section": "jsc:iql_settings",
   "title": "jsc.guide.set_bus.title"
 }

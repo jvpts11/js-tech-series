@@ -107,7 +107,7 @@
     }
   ],
   "id": "jsc:kernel_gentoo",
-  "order": 265,
+  "order": 266,
   "section": "jsc:gentoo_system",
   "title": "jsc.guide.kernel_gentoo.title"
 }

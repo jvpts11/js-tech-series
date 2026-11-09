@@ -189,6 +189,7 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/datagen/advancement/ConditionalAdvancementProvider.java", 1,
                     BUILD_LOG),
             data(COMPUTERS + "hardware/StorageTier.java", 3, PRODUCTS),
+            data(COMPUTERS + "hardware/QuinceBoards.java", 14, PRODUCTS),
             data(COMPUTERS + "integration/jei/JscJeiPlugin.java", 1, "a description for the log"),
             data(COMPUTERS + "machine/MachinePrograms.java", 1, "a word for the log"),
             data(COMPUTERS + "machine/PortsTree.java", 2, FILES),

@@ -8,6 +8,7 @@
 package dev.jstech.computers.block;
 
 import dev.jstech.computers.os.FirmwareKind;
+import dev.jstech.computers.os.QuincePost;
 import dev.jstech.computers.registry.ClientHook;
 import net.minecraft.core.BlockPos;
 
@@ -31,9 +32,10 @@ public interface IPostScreenOpener {
      *                       opens at the end of it rather than playing one through
      * @param complaint      what the machine found wrong with the system on its disk, in that system's own
      *                       words, or empty when the disk is simply empty and the firmware speaks instead
+     * @param quince         what a machine of Quince's puts on the glass besides
      */
     void open(BlockPos pos, BlockPos monitorPos, FirmwareKind kind, String machineName, int remainingTicks,
-              boolean halted, String complaint);
+              boolean halted, String complaint, QuincePost quince);
 
     final class Holder {
 
@@ -48,9 +50,9 @@ public interface IPostScreenOpener {
 
         public static void open(final BlockPos pos, final BlockPos monitorPos, final FirmwareKind kind,
                                 final String machineName, final int remainingTicks, final boolean halted,
-                                final String complaint) {
+                                final String complaint, final QuincePost quince) {
             HOOK.ifPresent(target ->
-                    target.open(pos, monitorPos, kind, machineName, remainingTicks, halted, complaint));
+                    target.open(pos, monitorPos, kind, machineName, remainingTicks, halted, complaint, quince));
         }
     }
 }

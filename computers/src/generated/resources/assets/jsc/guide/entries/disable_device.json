@@ -119,7 +119,7 @@
     }
   ],
   "id": "jsc:disable_device",
-  "order": 52,
+  "order": 53,
   "section": "jsc:peripherals",
   "title": "jsc.guide.disable_device.title"
 }

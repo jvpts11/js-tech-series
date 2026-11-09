@@ -9,8 +9,8 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.blockentity.IWatchedConsole;
-import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.gui.layout.NetworkInteractorLayout;
+import dev.jstech.computers.monitor.IScreen;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.EraCodecs;
 import dev.jstech.core.menu.CoreMenu;
@@ -264,13 +264,14 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
     }
 
     /**
-     * Valid while the monitor still exists and shows this computer (the screen may be showing it because it is
-     * cabled to it, or because a Remote Control session put it there), the player can still reach that monitor, and
-     * the machine has not died under it: powering off or pulling the system disk closes the desktop.
+     * Valid while the screen still exists and shows this computer (a monitor may be showing it because it is cabled
+     * to it, or because a Remote Control session put it there; an all-in-one shows itself on its own glass), the
+     * player can still reach that screen, and the machine has not died under it: powering off or pulling the system
+     * disk closes the desktop.
      */
     private static Predicate<Player> validity(final Level level, final BlockPos monitorPos, final BlockPos hostPos) {
         final Predicate<Player> monitorShowsHost = player -> level.getBlockEntity(monitorPos)
-                instanceof MonitorBlockEntity monitor && monitor.shows(hostPos);
+                instanceof IScreen monitor && monitor.shows(hostPos);
         return monitorShowsHost.and(MenuValidity.near(level, monitorPos, REACH))
                 .and(player -> CommandPromptMenu.sessionAlive(level, hostPos));
     }

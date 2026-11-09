@@ -305,6 +305,23 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
         return null;
     }
 
+    /** How the machine starts when its logic board is one of Quince's, whose firmware it carries; none otherwise. */
+    default QuinceStart quinceStart() {
+        final ComputerBuild build = currentBuild();
+        return build == null ? QuinceStart.NONE
+                : QuinceStart.of(build.motherboard().formFactor(), build.motherboard().era());
+    }
+
+    /**
+     * What is wrong with a machine switched on with parts that make no computer, a board and a supply with no
+     * processor or no memory, say: the first thing its board's self-test finds; null for a machine that runs, is off,
+     * or has no board and supply to test anything. Only Quince's put it on the glass, as the Sad Quince.
+     */
+    @Nullable
+    default Text hardwareFault() {
+        return null;
+    }
+
     /**
      * The parts seated in this machine as items, which carry the names its system shows them by; nothing when it is
      * not built from parts.

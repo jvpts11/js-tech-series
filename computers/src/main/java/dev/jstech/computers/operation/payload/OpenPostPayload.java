@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.QuincePost;
+import dev.jstech.computers.os.QuinceStart;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
@@ -24,10 +26,12 @@ import net.minecraft.resources.ResourceLocation;
  * detected drives, "press DEL for setup") and answers with {@link PostCompletePayload} only when the player
  * asks for the firmware setup; the machine finishes the self-test itself and boots whoever is watching.
  *
- * @param complaint what the machine found wrong with the system on its disk, read in the player's language
+ * @param complaint what the machine found wrong with the system on its disk, read in the player's language, or the
+ *                  hardware fault a machine of Quince's stands at
+ * @param quince    what a machine of Quince's puts on the glass besides (computers/docs/design/quince.md)
  */
 public record OpenPostPayload(BlockPos host, BlockPos monitorPos, int firmwareKind, String name,
-                              int remainingTicks, boolean halted, Text complaint)
+                              int remainingTicks, boolean halted, Text complaint, QuincePost quince)
         implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<OpenPostPayload> TYPE =
@@ -37,7 +41,7 @@ public record OpenPostPayload(BlockPos host, BlockPos monitorPos, int firmwareKi
     private static final int MOST_LETTERS = 80;
 
     /*
-     * Written out by hand rather than composed: a composed codec takes six parts and this has seven, and the
+     * Written out by hand rather than composed: a composed codec takes six parts and this has eight, and the
      * seventh is the one that tells a player why their machine will not start.
      */
     public static final StreamCodec<RegistryFriendlyByteBuf, OpenPostPayload> STREAM_CODEC =
@@ -54,11 +58,15 @@ public record OpenPostPayload(BlockPos host, BlockPos monitorPos, int firmwareKi
         TextCodecs.STREAM_CODEC.encode(buf, payload.complaint instanceof Text.Literal literal
                 && literal.value().length() > MOST_LETTERS
                 ? Text.literal(TextBounds.clip(literal.value(), MOST_LETTERS)) : payload.complaint);
+        buf.writeVarInt(payload.quince.start().id());
+        buf.writeBoolean(payload.quince.choices());
+        buf.writeBoolean(payload.quince.fault());
     }
 
     private static OpenPostPayload decode(final RegistryFriendlyByteBuf buf) {
         return new OpenPostPayload(buf.readBlockPos(), buf.readBlockPos(), buf.readVarInt(), buf.readUtf(),
-                buf.readVarInt(), buf.readBoolean(), TextCodecs.STREAM_CODEC.decode(buf));
+                buf.readVarInt(), buf.readBoolean(), TextCodecs.STREAM_CODEC.decode(buf),
+                new QuincePost(QuinceStart.byId(buf.readVarInt()), buf.readBoolean(), buf.readBoolean()));
     }
 
     @Override

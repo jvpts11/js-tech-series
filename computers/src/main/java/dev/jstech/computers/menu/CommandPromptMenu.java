@@ -10,7 +10,7 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.IWatchedConsole;
-import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.monitor.IScreen;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellKind;
@@ -219,7 +219,7 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
         final Predicate<Player> nearMonitor = MenuValidity.near(level, monitorPos, REACH);
         final Predicate<Player> nearHost = MenuValidity.near(level, hostPos, REACH);
         final Predicate<Player> reachable = player -> level.getBlockEntity(monitorPos)
-                instanceof MonitorBlockEntity monitor
+                instanceof IScreen monitor
                 ? monitor.shows(hostPos) && nearMonitor.test(player)
                 : nearHost.test(player);
         return hostAlive.and(reachable);

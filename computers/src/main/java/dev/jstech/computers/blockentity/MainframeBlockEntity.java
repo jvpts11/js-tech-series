@@ -189,6 +189,14 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
         return new ComputerDef(era, Set.of(FormFactor.MTX), HostScope.MAINFRAME, PARTS, CaseCooling.MAINFRAME);
     }
 
+    /**
+     * What Quince's Mainframe of {@code era} is (computers/docs/design/quince.md): a Mainframe that takes Quince's
+     * logic board for it, {@code board}, and no other.
+     */
+    public static ComputerDef quince(final Era era, final FormFactor board) {
+        return new ComputerDef(era, Set.of(board), HostScope.MAINFRAME, PARTS, CaseCooling.MAINFRAME);
+    }
+
     public int parallelQueues() {
         return buildValid() ? currentBuild().parallelQueues() : 0;
     }

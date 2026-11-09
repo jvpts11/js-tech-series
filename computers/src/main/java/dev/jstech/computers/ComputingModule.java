@@ -26,6 +26,8 @@ import dev.jstech.computers.block.MonitorKind;
 import dev.jstech.computers.block.NetworkGatewayBlock;
 import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
+import dev.jstech.computers.block.QuinceComputerBlock;
+import dev.jstech.computers.block.QuinceMainframeBlock;
 import dev.jstech.computers.block.PrinterBlock;
 import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.RedstoneInterfaceBlock;
@@ -64,6 +66,9 @@ import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.blockentity.UpsBlockEntity;
 import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.blockentity.WanGatewayPartBlockEntity;
+import dev.jstech.computers.hardware.QuinceBoards;
+import dev.jstech.computers.hardware.QuinceCase;
+import dev.jstech.computers.hardware.QuinceMachines;
 import dev.jstech.computers.hardware.AnchorCardSpec;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
@@ -204,7 +209,7 @@ public final class ComputingModule {
     private static final int CARD_STACK = 16;
     /** A small computer's lamps, dark on its item, and the parts of its bays, which the case as it comes has none of. */
     private static final List<String> COMPUTER_LAMPS = List.of(ComputingLooks.COMPUTER_POWER_LAMP,
-            ComputingLooks.COMPUTER_DISK_LAMP, ComputingLooks.COMPUTER_BAY_PARTS);
+            ComputingLooks.COMPUTER_DISK_LAMP, ComputingLooks.COMPUTER_BAY_PARTS, ComputingLooks.COMPUTER_HOOKUP);
 
     /*
      * Cables. Each data line has a cable of its own in each era, laid in the Core's cable block in the lane of its
@@ -366,9 +371,18 @@ public final class ComputingModule {
             CONTENT.block("mainframe_part", MainframePartBlock::new).properties(ComputingModule::mainframeProperties)
                     .named("Mainframe").look(MAINFRAME_BODY).tag(BlockTags.MINEABLE_WITH_PICKAXE).register();
 
+    /** Quince's Mainframe of each era from the Transition, which takes Quince's logic board alone. */
+    public static final BlockEntry<QuinceMainframeBlock> QUINCE_MAINFRAME_TRANSITION = quinceMainframe(
+            HardwareEra.TRANSITION, QuinceBoards.MAINFRAME_TRANSITION).named("Quince Mainframe (Transition)")
+            .register();
+    public static final BlockEntry<QuinceMainframeBlock> QUINCE_MAINFRAME_STANDARD = quinceMainframe(
+            HardwareEra.STANDARD, QuinceBoards.MAINFRAME_STANDARD).named("Quince Mainframe (Standard)").register();
+    public static final BlockEntry<QuinceMainframeBlock> QUINCE_MAINFRAME_ADVANCED = quinceMainframe(
+            HardwareEra.ADVANCED, QuinceBoards.MAINFRAME_ADVANCED).named("Quince Mainframe (Advanced)").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframeBlockEntity>> MAINFRAME_BE =
             CONTENT.blockEntity("mainframe", MainframeBlockEntity::new, MAINFRAME, VINTAGE_MAINFRAME, LEGACY_MAINFRAME,
-                    TRANSITION_MAINFRAME, ADVANCED_MAINFRAME);
+                    TRANSITION_MAINFRAME, ADVANCED_MAINFRAME, QUINCE_MAINFRAME_TRANSITION, QUINCE_MAINFRAME_STANDARD,
+                    QUINCE_MAINFRAME_ADVANCED);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframePartBlockEntity>>
             MAINFRAME_PART_BE = CONTENT.blockEntity("mainframe_part", MainframePartBlockEntity::new, MAINFRAME_PART);
 
@@ -461,12 +475,44 @@ public final class ComputingModule {
     public static final BlockEntry<PersonalComputerBlock> ADVANCED_AESTHETIC_PERSONAL_COMPUTER =
             personalComputer("advanced_aesthetic_personal_computer", HardwareEra.ADVANCED, CaseStyle.AESTHETIC)
                     .named("Advanced Aesthetic Personal Computer").register();
+    /*
+     * Quince's computers (computers/docs/design/quince.md): Personal Computers in every way but their cases, each
+     * taking only its own logic board.
+     */
+    public static final BlockEntry<QuinceComputerBlock> RUSSET_128K =
+            quinceComputer(QuinceMachines.RUSSET_128K).named("Russet 128K").register();
+    /** The qRusset G3 in each of its flavours, in QuinceMachines.G3_FLAVOURS' order. */
+    public static final List<BlockEntry<QuinceComputerBlock>> QRUSSET_G3 = List.of(
+            quinceComputer(QuinceMachines.QRUSSET_G3.get(0)).named("qRusset G3 (Bondi Blue)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_G3.get(1)).named("qRusset G3 (Blueberry)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_G3.get(2)).named("qRusset G3 (Strawberry)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_G3.get(3)).named("qRusset G3 (Lime)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_G3.get(4)).named("qRusset G3 (Grape)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_G3.get(5)).named("qRusset G3 (Tangerine)").register());
+    public static final BlockEntry<QuinceComputerBlock> RUSSET_POWER_G4 =
+            quinceComputer(QuinceMachines.RUSSET_POWER_G4).named("Russet Power G4").register();
+    public static final BlockEntry<QuinceComputerBlock> QRUSSET_WHITE =
+            quinceComputer(QuinceMachines.QRUSSET_WHITE).named("qRusset (White)").register();
+    public static final BlockEntry<QuinceComputerBlock> TRANSITION_RUSSET_PRO =
+            quinceComputer(QuinceMachines.RUSSET_PRO_TRANSITION).named("Russet Pro (Transition)").register();
+    public static final BlockEntry<QuinceComputerBlock> QRUSSET_SLIM =
+            quinceComputer(QuinceMachines.QRUSSET_THIN).named("qRusset (Slim)").register();
+    public static final BlockEntry<QuinceComputerBlock> RUSSET_PRO =
+            quinceComputer(QuinceMachines.RUSSET_PRO_STANDARD).named("Russet Pro (Standard)").register();
+    /** The Advanced qRusset in each of its colours, in QuinceMachines.COLOURS' order. */
+    public static final List<BlockEntry<QuinceComputerBlock>> QRUSSET_COLOURS = List.of(
+            quinceComputer(QuinceMachines.QRUSSET_COLOURS.get(0)).named("qRusset (Blue)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_COLOURS.get(1)).named("qRusset (Green)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_COLOURS.get(2)).named("qRusset (Pink)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_COLOURS.get(3)).named("qRusset (Silver)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_COLOURS.get(4)).named("qRusset (Yellow)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_COLOURS.get(5)).named("qRusset (Orange)").register(),
+            quinceComputer(QuinceMachines.QRUSSET_COLOURS.get(6)).named("qRusset (Purple)").register());
+    public static final BlockEntry<QuinceComputerBlock> RUSSET_STUDIO =
+            quinceComputer(QuinceMachines.RUSSET_STUDIO).named("Russet Studio").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PersonalComputerBlockEntity>>
             PERSONAL_COMPUTER_BE = CONTENT.blockEntity("personal_computer", PersonalComputerBlockEntity::new,
-                    PERSONAL_COMPUTER, HIGH_PERFORMANCE_PERSONAL_COMPUTER, AESTHETIC_PERSONAL_COMPUTER,
-                    VINTAGE_PERSONAL_COMPUTER, LEGACY_PERSONAL_COMPUTER, TRANSITION_PERSONAL_COMPUTER,
-                    ADVANCED_PERSONAL_COMPUTER, ADVANCED_HIGH_PERFORMANCE_PERSONAL_COMPUTER,
-                    ADVANCED_AESTHETIC_PERSONAL_COMPUTER);
+                    personalComputers());
     /* The small computers other mods bring, which no block of this mod makes: each joins once blocks are in. */
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<SmallComputerBlockEntity>>
             SMALL_COMPUTER_BE = CONTENT.blockEntity("small_computer", SmallComputerBlockEntity::new);
@@ -875,6 +921,23 @@ public final class ComputingModule {
             serverCase("advanced_server_case", RackChassis.ADVANCED_SERVER).named("Advanced Server Case").register();
     public static final ItemEntry<ServerItem> ADVANCED_SERVER =
             server("advanced_server", RackChassis.ADVANCED_SERVER).named("Advanced Server").register();
+    // Quince's qServe, a 1U server of each era from the Legacy, with its case.
+    public static final ItemEntry<ServerCaseItem> QSERVE_LEGACY_CASE =
+            serverCase("qserve_legacy_case", RackChassis.QSERVE_LEGACY).named("qServe Case (Legacy)").register();
+    public static final ItemEntry<ServerItem> QSERVE_LEGACY =
+            server("qserve_legacy", RackChassis.QSERVE_LEGACY).named("qServe (Legacy)").register();
+    public static final ItemEntry<ServerCaseItem> QSERVE_TRANSITION_CASE = serverCase("qserve_transition_case",
+            RackChassis.QSERVE_TRANSITION).named("qServe Case (Transition)").register();
+    public static final ItemEntry<ServerItem> QSERVE_TRANSITION =
+            server("qserve_transition", RackChassis.QSERVE_TRANSITION).named("qServe (Transition)").register();
+    public static final ItemEntry<ServerCaseItem> QSERVE_STANDARD_CASE = serverCase("qserve_standard_case",
+            RackChassis.QSERVE_STANDARD).named("qServe Case (Standard)").register();
+    public static final ItemEntry<ServerItem> QSERVE_STANDARD =
+            server("qserve_standard", RackChassis.QSERVE_STANDARD).named("qServe (Standard)").register();
+    public static final ItemEntry<ServerCaseItem> QSERVE_ADVANCED_CASE = serverCase("qserve_advanced_case",
+            RackChassis.QSERVE_ADVANCED).named("qServe Case (Advanced)").register();
+    public static final ItemEntry<ServerItem> QSERVE_ADVANCED =
+            server("qserve_advanced", RackChassis.QSERVE_ADVANCED).named("qServe (Advanced)").register();
     // Every era has a 2U storage server and a 2U compute server, with their cases.
     public static final ItemEntry<ServerCaseItem> VINTAGE_STORAGE_SERVER_CASE = serverCase(
             "vintage_storage_server_case", RackChassis.VINTAGE_STORAGE_SERVER).named("Vintage Storage Server Case")
@@ -1205,6 +1268,7 @@ public final class ComputingModule {
          * event bus below.
          */
         HardwareItems.init();
+        QuinceItems.init();
         CoolingItems.init();
         ComputingSounds.init();
         ComputingAudioDevices.init();
@@ -1365,6 +1429,18 @@ public final class ComputingModule {
                 .tab(shelf(Shelf.MAINFRAMES, era));
     }
 
+    /* Quince's Mainframe of {@code era}, named by its cabinet's model: quince_mainframe_transition. */
+    private static BlockBuilder<QuinceMainframeBlock> quinceMainframe(final Era era, final FormFactor board) {
+        final String id = "quince_mainframe_" + era.path();
+        OwnComputers.computer(id, MainframeBlockEntity.quince(era, board));
+        return CONTENT.block(id, properties -> new QuinceMainframeBlock(properties, era))
+                .properties(ComputingModule::mainframeProperties).look(MAINFRAME_BODY)
+                .geo(ComputingLooks.MAINFRAME)
+                .item((block, properties) -> new MainframeBlockItem(block, properties, id))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tag(BlockTags.MINEABLE_WITH_PICKAXE)
+                .tab(shelf(Shelf.MAINFRAMES, era));
+    }
+
     private static BlockBuilder<WanGatewayBlock> wanGateway(final String id, final Era era) {
         OwnComputers.computer(id, WanGatewayBlockEntity.computer(era));
         return CONTENT.block(id, properties -> new WanGatewayBlock(properties, era))
@@ -1399,6 +1475,32 @@ public final class ComputingModule {
         OwnComputers.computer(id, PersonalComputerBlockEntity.computer(era, style));
         return computer(id, era, style, Shelf.PERSONAL_COMPUTERS,
                 properties -> new PersonalComputerBlock(properties, era, style));
+    }
+
+    /* One of Quince's computers, named by its model without the maker's prefix: russet_128k. */
+    private static BlockBuilder<QuinceComputerBlock> quinceComputer(final QuinceCase machine) {
+        final String id = machine.model().substring("quince_".length());
+        OwnComputers.computer(id, PersonalComputerBlockEntity.quince(machine));
+        return CONTENT.block(id, properties -> new QuinceComputerBlock(properties, machine))
+                .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(2.0F).noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body",
+                        "block/computer/" + machine.model() + "_particle")))
+                .geo(ComputingLooks.COMPUTER)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.COMPUTER,
+                        block.caseModel(), DEVICE_FIT, COMPUTER_LAMPS))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.PERSONAL_COMPUTERS, machine.era()));
+    }
+
+    /* Every block the Personal Computer's entity serves: the PCs of every era and Quince's computers. */
+    private static BlockEntry<?>[] personalComputers() {
+        final List<BlockEntry<?>> out = new ArrayList<>(List.of(PERSONAL_COMPUTER, HIGH_PERFORMANCE_PERSONAL_COMPUTER,
+                AESTHETIC_PERSONAL_COMPUTER, VINTAGE_PERSONAL_COMPUTER, LEGACY_PERSONAL_COMPUTER,
+                TRANSITION_PERSONAL_COMPUTER, ADVANCED_PERSONAL_COMPUTER, ADVANCED_HIGH_PERFORMANCE_PERSONAL_COMPUTER,
+                ADVANCED_AESTHETIC_PERSONAL_COMPUTER, RUSSET_128K, RUSSET_POWER_G4, QRUSSET_WHITE,
+                TRANSITION_RUSSET_PRO, QRUSSET_SLIM, RUSSET_PRO, RUSSET_STUDIO));
+        out.addAll(QRUSSET_G3);
+        out.addAll(QRUSSET_COLOURS);
+        return out.toArray(BlockEntry<?>[]::new);
     }
 
     private static BlockBuilder<CraftingComputerBlock> craftingComputer(final String id, final Era era,

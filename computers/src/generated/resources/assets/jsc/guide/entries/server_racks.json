@@ -276,6 +276,14 @@
     "jsc:server",
     "jsc:advanced_server_case",
     "jsc:advanced_server",
+    "jsc:qserve_legacy_case",
+    "jsc:qserve_legacy",
+    "jsc:qserve_transition_case",
+    "jsc:qserve_transition",
+    "jsc:qserve_standard_case",
+    "jsc:qserve_standard",
+    "jsc:qserve_advanced_case",
+    "jsc:qserve_advanced",
     "jsc:vintage_storage_server_case",
     "jsc:vintage_storage_server",
     "jsc:legacy_storage_server_case",
@@ -299,7 +307,7 @@
     "jsc:supercomputer_node",
     "jsc:advanced_supercomputer_node"
   ],
-  "order": 31,
+  "order": 32,
   "section": "jsc:racks",
   "title": "jsc.guide.server_racks.title"
 }

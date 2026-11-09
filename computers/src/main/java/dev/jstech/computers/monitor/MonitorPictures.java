@@ -8,7 +8,6 @@
 package dev.jstech.computers.monitor;
 
 import dev.jstech.computers.block.MonitorBlock;
-import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
@@ -50,15 +49,19 @@ public final class MonitorPictures {
     private MonitorPictures() {
     }
 
-    /** What the face of {@code monitor} shows right now. */
-    public static IMonitorPicture describe(final ServerLevel level, final MonitorBlockEntity monitor) {
-        final BlockPos owner = monitor.remoteSession() != null ? monitor.remoteSession() : monitor.ownerPos();
+    /** What the face of {@code monitor}, a monitor or a computer's own glass, shows right now. */
+    public static IMonitorPicture describe(final ServerLevel level, final IScreen monitor) {
+        final BlockPos owner = monitor.shownMachine();
         if (!monitor.lit() || owner == null) {
             return IMonitorPicture.DARK;
         }
         final BlockEntity be = Loaded.blockEntity(level, owner);
-        // A system that crashed off its own parts has no power left, and its page still stands its time.
-        if (!(be instanceof IOsHost host) || !host.isRunning() && host.crashPage() == null) {
+        /*
+         * A system that crashed off its own parts has no power left, and its page still stands its time; a machine of
+         * Quince's whose parts make no computer has none either, and its Sad Quince stands while it is switched on.
+         */
+        if (!(be instanceof IOsHost host)
+                || !host.isRunning() && host.crashPage() == null && !MonitorBlock.standsAtFault(host)) {
             return IMonitorPicture.DARK;
         }
         final BlockPos at = monitor.getBlockPos();
@@ -71,7 +74,7 @@ public final class MonitorPictures {
                 // A machine standing at a failed self-test shows the end of it, which no clock runs out. The self-test
                 // shows no temperature, so its picture holds still while the machine warms.
                 yield new IMonitorPicture.Session(era, new OpenPostPayload(post.host(), post.monitorPos(),
-                        post.firmwareKind(), post.name(), 0, post.halted(), post.complaint()),
+                        post.firmwareKind(), post.name(), 0, post.halted(), post.complaint(), post.quince()),
                         state(level, host, owner).withoutTemperature(),
                         post.halted() ? 0L : now + post.remainingTicks());
             }

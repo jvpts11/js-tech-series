@@ -196,6 +196,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public static final int UNIT_DRIVE_SHELF = 45;
     /* The Vent Panel, drawn in its rack's colour: five in a row from the Vintage's to the Advanced's, by the rack. */
     public static final int UNIT_VENT_PANEL_VINTAGE = 46;
+    /* Quince's qServe, four in a row from the Legacy's to the Advanced's. */
+    public static final int UNIT_QSERVE_LEGACY = 51;
+    public static final int UNIT_QSERVE_ADVANCED = 54;
     /* The 1U server's face of each era, and the supercomputer node's, which only the Standard and the Advanced make. */
     private static final EraTable<Integer> SERVER_FACES = EraTable.ofFive(UNIT_SERVER_VINTAGE, UNIT_SERVER_LEGACY,
             UNIT_SERVER_TRANSITION, UNIT_SERVER_STANDARD, UNIT_SERVER_ADVANCED);
@@ -214,7 +217,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             "ups_battery_vintage", "ups_battery_legacy", "ups_battery_transition", "ups_battery_standard",
             "ups_battery_advanced", "pdu_vintage", "pdu_legacy", "pdu_transition", "pdu_standard", "pdu_advanced",
             "drive_shelf", "vent_panel_vintage", "vent_panel_legacy", "vent_panel_transition", "vent_panel_standard",
-            "vent_panel_advanced"};
+            "vent_panel_advanced", "qserve_legacy", "qserve_transition", "qserve_standard", "qserve_advanced"};
 
     /*
      * What the client copy knows about the cabinet: it holds no inventory, so the server sends the unit
@@ -251,6 +254,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 case NODE -> NODE_FACES.get(chassis.era());
                 case STORAGE -> eraUnit(UNIT_STORAGE_2U, UNIT_STORAGE_2U_VINTAGE, chassis.era());
                 case COMPUTE -> eraUnit(UNIT_COMPUTE_2U, UNIT_COMPUTE_2U_VINTAGE, chassis.era());
+                case QSERVE -> Math.max(UNIT_QSERVE_LEGACY,
+                        UNIT_QSERVE_LEGACY - 1 + HardwareEra.partsIndex(chassis.era()));
             };
         }
         if (!(stack.getItem() instanceof RackUnitItem unit)) {
@@ -277,7 +282,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /** Whether a unit code is a computer's, rather than a unit's that serves the cabinet. */
     public static boolean isComputerUnit(final int unitCode) {
         return unitCode > UNIT_NONE && unitCode <= UNIT_NODE_2U_ADVANCED
-                || unitCode >= UNIT_STORAGE_2U_VINTAGE && unitCode < UNIT_UPS_BATTERY_VINTAGE;
+                || unitCode >= UNIT_STORAGE_2U_VINTAGE && unitCode < UNIT_UPS_BATTERY_VINTAGE
+                || unitCode >= UNIT_QSERVE_LEGACY && unitCode <= UNIT_QSERVE_ADVANCED;
     }
 
     /** Whether the bay at {@code slot} is switched on, on either side. */

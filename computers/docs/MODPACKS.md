@@ -48,12 +48,12 @@ One tag per kind of thing, holding it in every era:
 
 | Tag | Holds |
 | --- | --- |
-| `#jsc:personal_computers` | The Personal Computers, in every case of their era. |
+| `#jsc:personal_computers` | The Personal Computers, in every case of their era, and Quince's computers. |
 | `#jsc:crafting_computers` | The Crafting Computers. |
 | `#jsc:cluster_management_computers` | The Cluster Management Computers. |
-| `#jsc:mainframes` | The Mainframes, which run a network. |
+| `#jsc:mainframes` | The Mainframes, Quince's too, which run a network. |
 | `#jsc:wan_gateways` | The WAN Gateway Computers, at either end of a long-distance line. |
-| `#jsc:racks_and_servers` | Server racks and supercomputer racks, the server cases, the servers and the nodes. |
+| `#jsc:racks_and_servers` | Server racks and supercomputer racks, the server cases, the servers (Quince's qServe too) and the nodes. |
 | `#jsc:rack_bays` | What a rack carries in its bays besides servers: the rack units. |
 | `#jsc:peripherals` | The devices at a desk: monitors, drives, encoders, printers, speakers, hubs, peripheral cables. |
 | `#jsc:network` | The data network: its cables, routers, repeaters and interfaces, and the buses on a cable. |

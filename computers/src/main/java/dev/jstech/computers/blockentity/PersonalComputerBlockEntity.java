@@ -10,13 +10,22 @@ package dev.jstech.computers.blockentity;
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.CaseStyle;
+import dev.jstech.computers.block.IComputerCase;
+import dev.jstech.computers.block.MonitorBlock;
+import dev.jstech.computers.client.monitor.MonitorPictureCache;
+import dev.jstech.computers.hardware.CaseGlass;
 import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.hardware.QuinceCase;
 import dev.jstech.computers.hardware.TowerBoards;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
+import dev.jstech.computers.monitor.IMonitorPicture;
+import dev.jstech.computers.monitor.IScreen;
+import dev.jstech.computers.monitor.MonitorPicturePayload;
+import dev.jstech.computers.monitor.MonitorPictures;
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.program.Programs;
@@ -38,6 +47,7 @@ import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.live.LiveFeed;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.uuid.NetworkUuid;
 import net.minecraft.core.BlockPos;
@@ -50,18 +60,23 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The Personal Computer: the player's hands-on access point to the network, assembled on a consumer ATX board (one CPU,
  * four RAM, four PCIe, one PSU, two disks), or from the Transition on a workstation's EATX board, which may carry a
  * second processor and four more modules.
+ *
+ * <p>One that is its own screen, as Quince's all-in-ones are, is a screen too ({@link IScreen}): its glass shows the
+ * machine, and a Remote Control session started at it, as a monitor does.
  */
 public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntity
-        implements IComputerTerminalHost, IAssemblyComputer, IEnergyAccount {
+        implements IComputerTerminalHost, IAssemblyComputer, IEnergyAccount, IScreen {
 
     // Slot layout, kept public so the assembly Menu and Screen address slots by name.
     public static final int MOTHERBOARD_SLOT = 0;
@@ -97,6 +112,8 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
      */
     public static final CaseParts PARTS =
             new CaseParts(2, 2 * RAM_SLOTS, GPU_SLOTS, DISK_SLOTS, BAY_SLOTS, STORAGE_SLOTS, RAM_SLOTS);
+    /* How often an all-in-one's glass is described for the players near it: twice a second, as a monitor's. */
+    private static final int FACE_INTERVAL = 10;
 
     /*
      * Bumped on any change to the disk contents (insert/extract/disk swap) AND on a privacy-slider
@@ -122,6 +139,14 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
     private final ValueField<Integer> updateProgress = fields().value("UpdateProgress", Codec.INT, 0).save();
     private final ValueField<Integer> updateCard = fields().value("UpdateCard", Codec.INT, -1).save();
     private final UpdateDrawer updateDrawer = new UpdateDrawer(updateSlots, updateProgress, updateCard);
+    /* What an all-in-one's glass shows, sent to whoever is near and only when it changes. */
+    private final LiveFeed<IMonitorPicture> face = new LiveFeed<>();
+    /*
+     * The machine an all-in-one's glass is showing on someone else's behalf, as a monitor's does: transient, a
+     * Remote Control session does not outlive the window it was opened in.
+     */
+    @Nullable
+    private BlockPos remoteSession;
 
     public PersonalComputerBlockEntity(final BlockPos pos, final BlockState state) {
         this(ComputingModule.PERSONAL_COMPUTER_BE.get(), pos, state);
@@ -140,6 +165,16 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
     public static ComputerDef computer(final Era era, final CaseStyle style) {
         return new ComputerDef(era, TowerBoards.personalComputer(era), HostScope.PERSONAL_COMPUTER, PARTS,
                 style.cooling(era));
+    }
+
+    /**
+     * What one of Quince's computers is: a Personal Computer that takes only its own logic board, with no bay for a
+     * drive, cooled by its case alone (computers/docs/design/quince.md).
+     */
+    public static ComputerDef quince(final QuinceCase machine) {
+        return new ComputerDef(machine.era(), Set.of(machine.board()), HostScope.PERSONAL_COMPUTER,
+                new CaseParts(PARTS.processors(), PARTS.memory(), PARTS.cards(), PARTS.disks(), 0, PARTS.storage(),
+                        PARTS.memoryPerProcessor()), machine.cooling());
     }
 
     /** What the personal-use cards hold and do on this computer. */
@@ -247,6 +282,56 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
         if (level instanceof ServerLevel serverLevel) {
             be.tickNode(serverLevel);
             be.tickWorkshop(serverLevel);
+            be.tickFace(serverLevel);
+        }
+    }
+
+    /** The glass it shows its own screen on, as an all-in-one does; null for a computer shown on a monitor. */
+    @Nullable
+    public CaseGlass glass() {
+        return getBlockState().getBlock() instanceof IComputerCase chassis ? chassis.glass() : null;
+    }
+
+    /** Whether its glass is lit: it runs, or, one of Quince's, it stands at a hardware fault and shows it. */
+    @Override
+    public boolean lit() {
+        return glass() != null && (isRunning() || MonitorBlock.standsAtFault(this));
+    }
+
+    @Override
+    @Nullable
+    public BlockPos shownMachine() {
+        if (glass() == null) {
+            return null;
+        }
+        return remoteSession != null ? remoteSession : worldPosition;
+    }
+
+    @Override
+    public boolean shows(final BlockPos machine) {
+        return glass() != null && (worldPosition.equals(machine) || machine.equals(remoteSession));
+    }
+
+    @Override
+    public void setRemoteSession(@Nullable final BlockPos machine) {
+        this.remoteSession = machine;
+    }
+
+    @Override
+    public void setRemoved() {
+        super.setRemoved();
+        if (level != null && level.isClientSide) {
+            MonitorPictureCache.forget(worldPosition);
+        }
+    }
+
+    /* An all-in-one tells whoever is near what its glass shows, as a monitor does. */
+    private void tickFace(final ServerLevel level) {
+        if (glass() != null
+                && level.getGameTime() % FACE_INTERVAL == Math.floorMod(worldPosition.asLong(), FACE_INTERVAL)) {
+            face.tick(level, worldPosition, () -> MonitorPictures.describe(level, this),
+                    (player, picture) -> PacketDistributor.sendToPlayer(player,
+                            new MonitorPicturePayload(worldPosition, picture)));
         }
     }
 

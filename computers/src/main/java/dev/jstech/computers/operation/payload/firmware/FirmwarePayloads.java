@@ -142,7 +142,7 @@ public final class FirmwarePayloads {
                                 payload.host(), payload.monitorPos(),
                                 FirmwareKind.byId(payload.firmwareKind()),
                                 payload.name(), payload.remainingTicks(), payload.halted(),
-                                GameText.resolve(payload.complaint()))));
+                                GameText.resolve(payload.complaint()), payload.quince())));
         // A finished installer still waiting for its reboot: the monitor comes back to that prompt.
         registrar.playToClient(OpenInstallDonePayload.TYPE, OpenInstallDonePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) ->
@@ -354,6 +354,8 @@ public final class FirmwarePayloads {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer)) {
             return;
         }
+        // Whatever the player picked, a machine waiting at its start-up choices has had its answer.
+        computer.leaveStartupChoices();
         switch (payload.action()) {
             case FirmwareActionPayload.ACTION_BOOT_DISK -> {
                 computer.setBootDiskSlot((int) payload.ref());
@@ -648,6 +650,7 @@ public final class FirmwarePayloads {
         if (!computer.isRunning()) {
             return; // powered off mid-POST: the screen just stays dark
         }
+        computer.leaveStartupChoices();
         computer.setNeedsPost(false);
         /*
          * A key at a failed self-test is what ends the standing about. Until it is pressed the machine is

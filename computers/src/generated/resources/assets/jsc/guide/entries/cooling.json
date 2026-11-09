@@ -293,7 +293,9 @@
     "jsc:aqualoop_240_standard",
     "jsc:aqualoop_360_standard",
     "jsc:aqualoop_240_advanced",
-    "jsc:aqualoop_360_advanced"
+    "jsc:aqualoop_360_advanced",
+    "jsc:cooler_quince_pro_2006",
+    "jsc:cooler_quince_pro_2019"
   ],
   "order": 24,
   "section": "jsc:hardware",

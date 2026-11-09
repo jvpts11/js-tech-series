@@ -13,10 +13,15 @@ import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
+import dev.jstech.computers.client.monitor.GlassFaces;
 import dev.jstech.computers.hardware.CaseCooling;
+import dev.jstech.computers.hardware.CaseGlass;
 import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.os.media.DiscTray;
 import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.core.cable.BundleShape;
+import dev.jstech.core.cable.CableBlockEntity;
+import dev.jstech.core.cable.Lane;
 import dev.jstech.core.client.model.kit.IKitDriver;
 import dev.jstech.core.client.model.kit.IKitExtras;
 import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
@@ -24,10 +29,10 @@ import dev.jstech.core.client.model.kit.KitInstance;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.model.ModelAnimator;
-import dev.jstech.core.model.ModelBone;
 import dev.jstech.core.model.ModelData;
 import dev.jstech.core.model.ModelPose;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,9 +40,12 @@ import java.util.Set;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -45,7 +53,8 @@ import org.jetbrains.annotations.Nullable;
  * front toward whoever placed it and its left side on or off as the player left it. The power lamp is lit while the
  * machine runs and the disk lamp blinks while it works its disk; each bay shows the part in it, or its cover, and a
  * drive's lamp blinks while the machine reads its disc, the hot-swap bay's while it works its disk; the fans of the
- * parts in it turn while the machine runs.
+ * parts in it, and the case's own when it comes with some, turn while the machine runs. A computer that is its own
+ * screen, as an all-in-one is, shows the picture on its glass as a monitor does ({@link GlassFaces}).
  *
  * <p>Inside it, each part the player installed is drawn by a model of its own ({@link PartModels}): the board on the
  * tray, and on the board's seats the processor, the memory, the cards and an M.2 drive; on the case's seats the supply,
@@ -89,6 +98,14 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
     private static final String SEAT_FAN = "seat_fan_";
     /** The mark of the light a case gives the fans and coolers in it: lit_<light>. */
     private static final String LIT = "lit_";
+    /* The cable block's lanes on a face, across and up. */
+    private static final int LANES = 3;
+    /*
+     * What a case that takes its cables only from behind shows for a line plugged in at each lane of the cable block
+     * behind it, its socket and its cord: hookup_<column>_<row>, the column counted from the model's -x side and the
+     * row from the bottom, kept at column * 3 + row.
+     */
+    private static final String[] HOOKUP_BONES = hookupBones();
 
     /* The seats of each form of disk, on the board or in the case: seat_<form>_<n>. */
     private static final Map<String, String[]> DISK_SEATS = new HashMap<>();
@@ -124,6 +141,11 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
         DeviceLamps.show(pose, ComputingLooks.COMPUTER_POWER_LAMP, running);
         DeviceLamps.show(pose, ComputingLooks.COMPUTER_DISK_LAMP, running && computer.visualDiskBusy() && blink);
         DeviceLamps.show(pose, ComputingLooks.COMPUTER_SIDE_PANEL, !computer.sidePanelOff());
+        final CaseSeats seats = CASES.of(pose.model());
+        if (running) {
+            seats.ownFans().turn(pose, PartModels.fanTurn(seconds));
+        }
+        showHookups(computer, pose, seats.hookups());
         // A bay's model carries every part it takes, each hidden but the one installed; an empty bay shows its cover.
         final CaseFront front = computer.front();
         for (int bay = 0; bay < CaseFront.BAYS; bay++) {
@@ -149,12 +171,59 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
                      final PoseStack poses, final MultiBufferSource buffers, final int light, final int overlay,
                      final float partialTick) {
         CaseFrontMedia.draw(computer, instance, poses, buffers, light, overlay);
+        // A computer that is its own screen shows on its glass what a monitor would, as the machine describes it.
+        final CaseGlass glass = computer.getBlockState().getBlock() instanceof IComputerCase own ? own.glass() : null;
+        if (glass != null && computer.getLevel() != null) {
+            GlassFaces.draw(computer.getBlockPos(), glass, poses, buffers);
+        }
         if (!(computer.getBlockState().getBlock() instanceof IComputerCase chassis)
                 || !computer.sidePanelOff() && instance.pose().index(SEE_THROUGH) < 0) {
             return;
         }
         new Drawing(computer, chassis, instance, new PartModels.Drawer(computer, computer.visualRunning(), poses,
                 buffers, light, overlay, partialTick)).parts();
+    }
+
+    /*
+     * A case that takes its cables only from behind shows the hookup of each lane a line is plugged in at: the plugs
+     * the cable block behind it ends its wires in at its back face, each where its lane meets the face.
+     */
+    private static void showHookups(final AbstractSmallComputerBlockEntity computer, final ModelPose pose,
+                                    final int[] hookups) {
+        if (Arrays.stream(hookups).allMatch(bone -> bone < 0)) {
+            return;
+        }
+        final boolean[] plugged = new boolean[hookups.length];
+        final Level level = computer.getLevel();
+        final Direction facing = computer.getBlockState().getValue(HorizontalDirectionalBlock.FACING);
+        if (level != null && level.getBlockEntity(computer.getBlockPos().relative(facing.getOpposite()))
+                instanceof CableBlockEntity cable) {
+            // The model's +x runs the world's way clockwise of its facing; a plug's across runs east or south.
+            final Direction modelX = facing.getClockWise();
+            final int sign = modelX.getStepX() + modelX.getStepZ();
+            for (final BundleShape.Plug plug : cable.shape().plugs()) {
+                if (plug.face() == facing.get3DDataValue()) {
+                    final int column = Mth.clamp((int) Math.round(plug.across() * sign / Lane.PITCH) + 1, 0, LANES - 1);
+                    final int row = Mth.clamp((int) Math.round(plug.up() / Lane.PITCH) + 1, 0, LANES - 1);
+                    plugged[column * LANES + row] = true;
+                }
+            }
+        }
+        for (int k = 0; k < hookups.length; k++) {
+            if (hookups[k] >= 0) {
+                pose.setHidden(hookups[k], !plugged[k]);
+            }
+        }
+    }
+
+    private static String[] hookupBones() {
+        final String[] out = new String[LANES * LANES];
+        for (int column = 0; column < LANES; column++) {
+            for (int row = 0; row < LANES; row++) {
+                out[column * LANES + row] = ComputingLooks.COMPUTER_HOOKUP + column + "_" + row;
+            }
+        }
+        return out;
     }
 
     /* The bones of each part in each bay, named once rather than every frame: <prefix><bay>_<part>. */
@@ -179,17 +248,22 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
 
     /**
      * What a case's model offers the parts the player fits, worked out once from its bones: the bone of each fan seat
-     * by its number (none for a number it has no seat for) and the way a fan sits on it, and the light the case gives
-     * its fans and coolers, or none.
+     * by its number (none for a number it has no seat for) and the way a fan sits on it, the light the case gives its
+     * fans and coolers, or none, the fans a case comes with, as Quince's towers do, and the hookup it shows on its back
+     * for a line plugged in at each of the cable block's lanes, by column and row (-1 where it has none).
      */
-    private record CaseSeats(String[] fanSeats, String[] fanWays, @Nullable String light) {
+    private record CaseSeats(String[] fanSeats, String[] fanWays, @Nullable String light, PartModels.Spins ownFans,
+                             int[] hookups) {
 
         static CaseSeats of(final ModelData model) {
             final Map<Integer, String> seats = new HashMap<>();
+            final int[] hookups = new int[HOOKUP_BONES.length];
+            Arrays.fill(hookups, -1);
+            final List<String> hookupNames = Arrays.asList(HOOKUP_BONES);
             String light = null;
             int most = 0;
-            for (final ModelBone bone : model.bones()) {
-                final String name = bone.name();
+            for (int i = 0; i < model.bones().size(); i++) {
+                final String name = model.bones().get(i).name();
                 // seat_fan_<n>_<way>: its number, then the way.
                 final int cut = name.startsWith(SEAT_FAN) ? name.indexOf('_', SEAT_FAN.length()) : -1;
                 if (cut > SEAT_FAN.length()) {
@@ -198,6 +272,8 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
                     most = Math.max(most, seat + 1);
                 } else if (name.startsWith(LIT)) {
                     light = name.substring(LIT.length());
+                } else if (hookupNames.contains(name)) {
+                    hookups[hookupNames.indexOf(name)] = i;
                 }
             }
             final String[] fanSeats = new String[most];
@@ -207,7 +283,7 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
                 fanSeats[seat.getKey()] = name;
                 fanWays[seat.getKey()] = WAY + name.substring(name.indexOf('_', SEAT_FAN.length()) + 1);
             }
-            return new CaseSeats(fanSeats, fanWays, light);
+            return new CaseSeats(fanSeats, fanWays, light, PartModels.Spins.of(model.bones()), hookups);
         }
     }
 
@@ -252,8 +328,10 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
                             PartModels.nth(CARD_SEATS, "seat_card_", k));
                 }
             }
-            drawer.supply(layout.psuSlot(), computer.installedPart(layout.psuSlot()), caseInstance,
-                    LEADS.computeIfAbsent(chassis.chassisEra(), era -> LEAD + HardwareEra.withParts(era).path()));
+            final String lead = chassis.drawsSupplyLead()
+                    ? LEADS.computeIfAbsent(chassis.chassisEra(), era -> LEAD + HardwareEra.withParts(era).path())
+                    : PartModels.Drawer.NO_LEADS;
+            drawer.supply(layout.psuSlot(), computer.installedPart(layout.psuSlot()), caseInstance, lead);
             disks(layout, boardInstance);
             fans(layout, coolers);
         }

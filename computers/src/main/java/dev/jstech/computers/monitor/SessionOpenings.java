@@ -20,6 +20,8 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.QuincePost;
+import dev.jstech.computers.os.QuinceStart;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootSplash;
@@ -63,7 +65,19 @@ public final class SessionOpenings {
          * deleted is found and will not start, and the screen says which file it wanted.
          */
         final Text complaint = machine == null ? Text.EMPTY : SystemIntegrity.check(machine).complaint();
-        return new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining, halted, complaint);
+        final QuincePost quince = quince(machine);
+        // A machine of Quince's switched on with parts that make no computer stands at the Sad Quince, naming why.
+        return quince.fault()
+                ? new OpenPostPayload(owner, monitorPos, kind.id(), name, 0, true, machine.hardwareFault(), quince)
+                : new OpenPostPayload(owner, monitorPos, kind.id(), name, remaining, halted, complaint, quince);
+    }
+
+    /* What a machine of Quince's puts on the glass besides: its start, its start-up choices, its fault. */
+    private static QuincePost quince(@Nullable final IOsHost machine) {
+        if (machine == null || machine.quinceStart() == QuinceStart.NONE) {
+            return QuincePost.NONE;
+        }
+        return new QuincePost(machine.quinceStart(), machine.atStartupChoices(), machine.hardwareFault() != null);
     }
 
     /** The boot manager the machine is standing at, with what is left of its wait. */

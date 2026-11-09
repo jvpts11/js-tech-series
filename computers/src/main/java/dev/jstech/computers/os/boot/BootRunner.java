@@ -171,7 +171,8 @@ public final class BootRunner {
             timePost(machine, phases, now);
             return;
         }
-        if (!phases.postDone(now)) {
+        // A machine at the start-up choices a sneaking power-on opened waits there for the player's choice.
+        if (!phases.postDone(now) || machine.atStartupChoices()) {
             return;
         }
         machine.setNeedsPost(false);

@@ -293,6 +293,7 @@ stable 7
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId AM3_PLUS
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId AM4
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId AM5
+14 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId DIP_64
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId FM2_PLUS
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId G34
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_1150
@@ -310,6 +311,9 @@ stable 7
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_4677
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_771
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId LGA_775
+14 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId POWERQ_G3
+14 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId POWERQ_G4
+14 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId QUINCE_Q
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SLOT_1
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_3
 8 dev.jstech.computers.hardware.CpuSocketId  static final CpuSocketId SOCKET_370
@@ -364,7 +368,8 @@ stable 7
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind SOUND
 13 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind WAN_INTERFACE
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind WORKSHOP
-8 dev.jstech.computers.hardware.FormFactor  type record(String id, String label)
+14 dev.jstech.computers.hardware.FormFactor  type record(String id, String label, boolean drivesAScreen)
+14 dev.jstech.computers.hardware.FormFactor  new(String, String)
 8 dev.jstech.computers.hardware.FormFactor  static FormFactor byId(String)
 8 dev.jstech.computers.hardware.FormFactor  static FormFactor declare(FormFactor)
 8 dev.jstech.computers.hardware.FormFactor  static List<FormFactor> all()
@@ -533,6 +538,10 @@ stable 7
 8 dev.jstech.computers.rack.RackChassis  static final RackChassis LEGACY_COMPUTE_SERVER
 8 dev.jstech.computers.rack.RackChassis  static final RackChassis LEGACY_SERVER
 8 dev.jstech.computers.rack.RackChassis  static final RackChassis LEGACY_STORAGE_SERVER
+14 dev.jstech.computers.rack.RackChassis  static final RackChassis QSERVE_ADVANCED
+14 dev.jstech.computers.rack.RackChassis  static final RackChassis QSERVE_LEGACY
+14 dev.jstech.computers.rack.RackChassis  static final RackChassis QSERVE_STANDARD
+14 dev.jstech.computers.rack.RackChassis  static final RackChassis QSERVE_TRANSITION
 8 dev.jstech.computers.rack.RackChassis  static final RackChassis SERVER
 8 dev.jstech.computers.rack.RackChassis  static final RackChassis STORAGE_SERVER
 8 dev.jstech.computers.rack.RackChassis  static final RackChassis SUPERCOMPUTER_NODE
@@ -546,6 +555,7 @@ stable 7
 8 dev.jstech.computers.rack.RackChassis.Look  type enum
 8 dev.jstech.computers.rack.RackChassis.Look  COMPUTE
 8 dev.jstech.computers.rack.RackChassis.Look  NODE
+14 dev.jstech.computers.rack.RackChassis.Look  QSERVE
 8 dev.jstech.computers.rack.RackChassis.Look  SERVER
 8 dev.jstech.computers.rack.RackChassis.Look  STORAGE
 8 dev.jstech.computers.rack.RackChassis.RackType  type enum

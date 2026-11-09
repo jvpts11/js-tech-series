@@ -150,7 +150,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:first_network",
-  "order": 68,
+  "order": 69,
   "section": "jsc:network_basics",
   "shows": [
     "jsc:mainframe",

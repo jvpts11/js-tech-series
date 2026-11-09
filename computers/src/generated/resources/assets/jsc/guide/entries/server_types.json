@@ -59,7 +59,7 @@
     }
   ],
   "id": "jsc:server_types",
-  "order": 32,
+  "order": 33,
   "section": "jsc:racks",
   "title": "jsc.guide.server_types.title"
 }

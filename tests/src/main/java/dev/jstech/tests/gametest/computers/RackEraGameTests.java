@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.QuinceItems;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.PartRefusals;
@@ -261,6 +262,47 @@ public final class RackEraGameTests {
                             "storage_2u_advanced", "the Advanced storage server's face");
                     helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[advanced.unitCodeAt(6)],
                             "compute_2u_advanced", "the Advanced compute server's face");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * Quince's qServe of each era seats in a rack of its era or a newer one, wears its era's own face in the cabinet,
+     * counts as a computer there, and takes only Quince's logic board for it (computers/docs/design/quince.md).
+     */
+    @GameTest(template = ARENA)
+    public static void qServe_seatsInRacksOfItsEraAndWearsItsFace(final GameTestHelper helper) {
+        final ServerRackBlockEntity legacy = placeRack(helper, new BlockPos(1, 2, 2),
+                ComputingModule.LEGACY_SERVER_RACK.get());
+        final ServerRackBlockEntity advanced = placeRack(helper, new BlockPos(5, 2, 2),
+                ComputingModule.ADVANCED_SERVER_RACK.get());
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(legacy.getServers().insertItem(0, stack(ComputingModule.QSERVE_LEGACY.get()),
+                            false).isEmpty(), "a Legacy rack seats the Legacy qServe");
+                    helper.assertFalse(legacy.getServers().isItemValid(2,
+                            stack(ComputingModule.QSERVE_TRANSITION.get())), "but not the Transition one");
+                    helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[legacy.unitCodeAt(0)], "qserve_legacy",
+                            "the Legacy qServe's face");
+                    helper.assertTrue(legacy.computerSlots().size() == 1, "it is a computer");
+                    final ItemStackHandler rows = advanced.getServers();
+                    rows.setStackInSlot(0, stack(ComputingModule.QSERVE_LEGACY.get()));
+                    rows.setStackInSlot(1, stack(ComputingModule.QSERVE_TRANSITION.get()));
+                    rows.setStackInSlot(2, stack(ComputingModule.QSERVE_STANDARD.get()));
+                    rows.setStackInSlot(3, stack(ComputingModule.QSERVE_ADVANCED.get()));
+                    final String[] faces = {"qserve_legacy", "qserve_transition", "qserve_standard",
+                            "qserve_advanced"};
+                    for (int row = 0; row < faces.length; row++) {
+                        helper.assertValueEqual(ServerRackBlockEntity.UNIT_BONES[advanced.unitCodeAt(row)],
+                                faces[row], "row " + row + " wears its own era's qServe face");
+                    }
+                    final RackChassis chassis = RackChassis.QSERVE_STANDARD;
+                    helper.assertTrue(chassis.computer().takesBoard(
+                            EraParts.board(QuinceItems.BOARD_QSERVE_STANDARD.get())),
+                            "the Standard qServe takes its Quince logic board");
+                    helper.assertFalse(chassis.computer().takesBoard(
+                            EraParts.board(ComputingModule.MOTHERBOARD_EEB_S_2011.get())),
+                            "and no other server board");
                 })
                 .thenSucceed();
     }

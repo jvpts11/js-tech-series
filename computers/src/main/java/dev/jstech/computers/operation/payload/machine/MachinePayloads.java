@@ -15,7 +15,6 @@ import dev.jstech.computers.audio.ProgramCue;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.IKvmScreenOpener;
 import dev.jstech.computers.block.MonitorBlock;
-import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
@@ -31,6 +30,7 @@ import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.KvmSelectPayload;
 import dev.jstech.computers.monitor.IMonitorPictureSink;
+import dev.jstech.computers.monitor.IScreen;
 import dev.jstech.computers.monitor.MonitorPicturePayload;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
 import dev.jstech.computers.operation.payload.OpenKvmPayload;
@@ -189,7 +189,7 @@ public final class MachinePayloads {
          * for showing a computer the cable does not link.
          */
         if (level.getBlockEntity(payload.monitorPos())
-                instanceof MonitorBlockEntity monitor) {
+                instanceof IScreen monitor) {
             monitor.setRemoteSession(target);
         }
         player.closeContainer();

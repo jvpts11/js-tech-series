@@ -9,6 +9,7 @@ package dev.jstech.computers.block;
 
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.computers.ComputingLooks;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ChunkAnchor;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -94,6 +95,11 @@ public class MainframeBlock extends AbstractBigBlock
     @Override
     public Era chassisEra() {
         return era();
+    }
+
+    /** The model its cabinet is drawn with: its era's Mainframe cabinet. */
+    public String cabinetModel() {
+        return ComputingLooks.mainframe(era);
     }
 
     @Override
@@ -204,6 +210,8 @@ public class MainframeBlock extends AbstractBigBlock
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (!level.isClientSide()) {
+            // Switched on while sneaking, a Mainframe whose firmware has start-up choices opens them.
+            mainframe.askStartupChoices(!mainframe.isManualOn() && player.isShiftKeyDown());
             mainframe.togglePower();
             mainframe.showPowerPressed();
         }

@@ -9,7 +9,6 @@ package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.client.monitor.MonitorPainter;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
@@ -30,6 +29,7 @@ import dev.jstech.computers.operation.payload.SetDesktopPrefsPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
+import dev.jstech.computers.monitor.IScreen;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -113,10 +113,10 @@ public final class DesktopPayloads {
      */
     private static void handleRequestFaceListing(final RequestFaceListingPayload payload, final ServerPlayer player,
                                                  final ServerLevel level) {
-        if (!(Loaded.blockEntity(level, payload.monitor()) instanceof MonitorBlockEntity monitor) || !monitor.lit()) {
+        if (!(Loaded.blockEntity(level, payload.monitor()) instanceof IScreen monitor) || !monitor.lit()) {
             return;
         }
-        final BlockPos owner = monitor.remoteSession() != null ? monitor.remoteSession() : monitor.ownerPos();
+        final BlockPos owner = monitor.shownMachine();
         if (owner == null || !(Loaded.blockEntity(level, owner) instanceof IOsHost shown) || !shown.isRunning()) {
             return;
         }

@@ -8,6 +8,7 @@
 package dev.jstech.computers;
 
 import dev.jstech.computers.block.IComputerCase;
+import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
@@ -35,7 +36,8 @@ public final class ComputingLooks {
 
     /** The Mainframe's cabinets, by era; they share the roof fans' and the tape reels' animation. */
     public static final GeoLook<MainframeBlockEntity> MAINFRAME = GeoLook.of(JsComputers.MODID, "mainframe",
-            "mainframe", mainframe -> mainframe(mainframe.cabinetEra()));
+            "mainframe", mainframe -> mainframe.getBlockState().getBlock() instanceof MainframeBlock block
+                    ? block.cabinetModel() : mainframe(mainframe.cabinetEra()));
     /** The WAN Gateway Computer's cabinets, by era, beside the Mainframe's; they share the roof fans' animation. */
     public static final GeoLook<WanGatewayBlockEntity> WAN_GATEWAY = GeoLook.of(JsComputers.MODID, "mainframe",
             "wan_gateway", gateway -> wanGateway(gateway.cabinetEra()));
@@ -97,6 +99,12 @@ public final class ComputingLooks {
     public static final String COMPUTER_DISK_LAMP = "led_disk";
     /** A small computer's left side, the panel that comes off. */
     public static final String COMPUTER_SIDE_PANEL = "side_panel";
+    /**
+     * What every hookup on the back of a computer that takes its cables only from behind is named from:
+     * {@code hookup_<column>_<row>}, the socket and the cord shown for a line plugged in at that lane of the cable
+     * block.
+     */
+    public static final String COMPUTER_HOOKUP = "hookup_";
     /**
      * What every part a small computer's bay can hold is named from: {@code drive_<bay>_<part>}, with its tray, its
      * disc and its lamp under it. The case as it comes holds none, and shows each bay's cover.

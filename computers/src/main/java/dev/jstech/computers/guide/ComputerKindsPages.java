@@ -13,6 +13,7 @@ import dev.jstech.computers.block.CraftingComputerBlock;
 import dev.jstech.computers.block.HbwInterfaceBlock;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
+import dev.jstech.computers.block.QuinceComputerBlock;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.block.WanGatewayBlock;
@@ -89,6 +90,7 @@ final class ComputerKindsPages {
         final ModGuide.SectionRef section = guide.section("computers").titled("Computers")
                 .icon(ComputingModule.MAINFRAME).in(chapter).register();
         personalComputers(guide, section);
+        quinceComputers(guide, section);
         craftingComputers(guide, section);
         mainframes(guide, section);
         wanGateways(guide, section);
@@ -167,6 +169,49 @@ final class ComputerKindsPages {
                         "The screen says the board does not take that kind of memory.",
                         "Use memory of a kind the board takes ([](jsc:memory)).")
                 .seeAlso("jsc:first_computer", "jsc:firmware")
+                .register();
+    }
+
+    private static void quinceComputers(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("quince_computers", section).titled("Quince's computers")
+                .icon(ComputingModule.RUSSET_128K)
+                .coversAll(ComputersGuide.blocksOf(QuinceComputerBlock.class))
+                .paragraph("Quince makes its own computers, from the Russet 128K of the Vintage to the coloured"
+                        + " qRusset of the Advanced. Each is a Personal Computer in every way but its case: you"
+                        + " install a system on it, run programs and reach the network from it"
+                        + " ([](jsc:personal_computers)).")
+                .table("Quince's computers by era", "Era", "All-in-ones", "Towers and the Studio")
+                .row(GuideCell.words("Vintage"), GuideCell.words("Russet 128K"), GuideCell.words("None"))
+                .row(GuideCell.words("Legacy"), GuideCell.words("qRusset G3, in six flavours"),
+                        GuideCell.words("Russet Power G4"))
+                .row(GuideCell.words("Transition"), GuideCell.words("qRusset (White)"),
+                        GuideCell.words("Russet Pro (Transition)"))
+                .row(GuideCell.words("Standard"), GuideCell.words("qRusset (Slim)"),
+                        GuideCell.words("Russet Pro (Standard)"))
+                .row(GuideCell.words("Advanced"), GuideCell.words("qRusset, in seven colours"),
+                        GuideCell.words("Russet Studio"))
+                .paragraph("Quince's hardware is closed. Each machine takes only its own Quince Logic Board, and"
+                        + " that board goes in no other case. The memory, the disks and the cards are the common"
+                        + " ones. The Russet Pros take the Quince Heat Sink of their era over the processor.")
+                .paragraph("An all-in-one carries its screen in its own block. Its glass shows what the machine"
+                        + " shows, as a monitor does: use the glass to sit down at it, and use the case anywhere"
+                        + " else to open its parts. Its sound comes from its own case.")
+                .paragraph("The all-in-ones and the Studio take their cables only from behind, and their power"
+                        + " button is behind them too. A tower takes cables as a Personal Computer does, its power"
+                        + " button is on its front, and sneaking as you use it takes its left side off.")
+                .paragraph("Switch a Quince machine on while you sneak, and it stops at its start-up choices before"
+                        + " it starts: Open Firmware's prompt on the Legacy (type quince-boot to go on, or shut-down"
+                        + " to switch it off), the Startup Manager on the Transition and the Standard, and the Startup"
+                        + " Options on the Advanced. Pick a disk with the arrow keys and press Enter. The Russet 128K"
+                        + " has no choices.")
+                .ifSomethingGoesWrong("A motherboard will not go in.",
+                        "A Quince machine takes only its own Quince Logic Board.",
+                        "The screen shows the Sad Quince.",
+                        "The parts do not make a computer: the line under it says what is missing, such as a"
+                                + " processor or memory. Switch the machine off and put the part in.",
+                        "The machine stays at the Startup Manager.",
+                        "You switched it on while you sneaked. Pick a disk and press Enter.")
+                .seeAlso("jsc:personal_computers", "jsc:firmware")
                 .register();
     }
 

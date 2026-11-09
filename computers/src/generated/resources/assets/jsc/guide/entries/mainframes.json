@@ -463,9 +463,12 @@
     "jsc:vintage_mainframe",
     "jsc:legacy_mainframe",
     "jsc:transition_mainframe",
-    "jsc:advanced_mainframe"
+    "jsc:advanced_mainframe",
+    "jsc:quince_mainframe_transition",
+    "jsc:quince_mainframe_standard",
+    "jsc:quince_mainframe_advanced"
   ],
-  "order": 29,
+  "order": 30,
   "section": "jsc:computers",
   "title": "jsc.guide.mainframes.title"
 }
