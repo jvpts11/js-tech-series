@@ -10,8 +10,8 @@ package dev.jstech.core.tool;
 /**
  * What a building tool does with the face of a block it is used on: lays copies of the block out from it along a line
  * or over the plane of that face, as the Construction Wand does, or copies a region and pastes it, as Building
- * Gadgets does. The blocks placed come from the player's inventory, or from any other supply a mod adds
- * ({@link BuildSupplies}).
+ * Gadgets does. The blocks placed come from the player's inventory, or from any other source a mod declares
+ * ({@link BuildSources}).
  */
 public sealed interface BuildMode {
 

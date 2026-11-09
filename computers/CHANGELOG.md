@@ -472,6 +472,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 ### Changed
 - A computer, or a server in its rack, that its UPS takes over writes it in the network's log: "On its
   UPS's battery: the power went".
+- Building from the network: a player who carries a portable joined to a network builds from its storage.
+  J's Core's building tools take from it what the inventory lacks, and the Multiblock Builder takes from it when
+  Network storage is the source chosen on its display, which shows what the network holds of each block. A block that
+  cannot stay goes back to the network, or to the player when the network has no room; out of every access point's
+  reach, the network is no source.
 - IQL: the computers table gives every computer its era, a Cluster Management Computer's too, and names a
   WAN Gateway Computer as one; the network's log calls a gateway `WAN-` and its short id, This PC "WAN Gateway
   Computer".

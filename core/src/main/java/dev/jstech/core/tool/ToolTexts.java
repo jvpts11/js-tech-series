@@ -37,6 +37,8 @@ public final class ToolTexts {
     public static final TextKey NOTHING_COPIED = TextKey.of("jscore.tool.nothing_copied",
             "Nothing copied yet: mark two corners in copy mode");
     public static final TextKey OUT_OF = TextKey.of("jscore.tool.out_of", "Out of %s");
+    /* The player's inventory, as a place to build from: the key it had when the Multiblock Builder alone had it. */
+    public static final TextKey YOUR_INVENTORY = TextKey.of("jscore.builder.inventory", "Your inventory");
     public static final TextKey HOLDS_COPY = TextKey.of("jscore.tool.holds_copy",
             "Holds a copy of %s blocks, %s by %s by %s");
 

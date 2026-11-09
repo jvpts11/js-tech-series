@@ -15,8 +15,9 @@
  * plane, a copy, a paste); it runs on a {@link ToolPower} (energy, a fuel, a gas) and heats as a {@link ToolHeat} says.
  * {@link Tools} keeps the rules: a tool works while it holds what it works on and has not overheated, and otherwise
  * does no more than a bare hand. {@link AreaMining} breaks the rest of an area or a vein, each block as the player
- * would break it, and {@link BuildingTools} places blocks taken from the player's supplies: the inventory first, then
- * each {@link IBuildSupply} a mod adds to {@link BuildSupplies}. A region a tool copies is kept in it as a
+ * would break it, and {@link BuildingTools} places blocks taken from the player's sources: the inventory first, then
+ * each {@link IBuildSource} a mod declares in {@link BuildSources}, which a Multiblock Builder takes from too. A
+ * region a tool copies is kept in it as a
  * {@link CopiedRegion}. A mod's own item that acts on use asks {@link Tools#ready} first and tells {@link Tools#used}
  * after; a {@link ChargingItem} does both for an item held in use to charge and let go to act.
  *

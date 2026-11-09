@@ -393,6 +393,9 @@ final class NetworkPages {
                         + " network's Mainframe, its access points and their reach; prospecting shows which way the"
                         + " veins near you lie and how strongly, never where. The Messenger talks to the network's own"
                         + " Messenger service.")
+                .paragraph("While you carry a portable on a network, you build from that network's storage too: a"
+                        + " building tool takes from it what your inventory lacks, and the Multiblock Builder takes"
+                        + " from it when you choose Network storage as its source.")
                 .subheading("Its battery")
                 .paragraph("A portable runs on its battery while you carry it: about two game days on a smartphone or"
                         + " a tablet, a day and a half on a PDA. Its battery is the bar under its icon, and its tooltip"

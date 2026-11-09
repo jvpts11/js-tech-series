@@ -32,7 +32,6 @@ public final class BuilderTexts {
     public static final TextKey PLACES_EITHER = TextKey.of("jscore.builder.places_either", "%s PLACES TAKE EITHER");
     public static final TextKey CHOICE_MORE = TextKey.of("jscore.builder.choice_more", "+%s more");
     public static final TextKey SOURCE = TextKey.of("jscore.builder.source", "SOURCE");
-    public static final TextKey INVENTORY = TextKey.of("jscore.builder.inventory", "Your inventory");
     public static final TextKey CREATIVE = TextKey.of("jscore.builder.creative", "Creative: nothing is taken");
     public static final TextKey READY = TextKey.of("jscore.builder.ready", "READY");
     public static final TextKey READY_LINE = TextKey.of("jscore.builder.ready_line", "OK builds it, block by block");

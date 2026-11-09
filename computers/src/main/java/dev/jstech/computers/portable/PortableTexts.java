@@ -56,6 +56,8 @@ public final class PortableTexts {
     public static final TextKey CHIP_Q1 = TextKey.of("jsc.portable.chip.q1", "Quince Q1");
     /** A chip with a name of its own: the name, then its cores. */
     public static final TextKey CHIP_NAMED = TextKey.of("jsc.portable.chip.named", "%s, %s");
+    /** The network's store as a place to build from, reached through a portable the player carries. */
+    public static final TextKey BUILD_SOURCE = TextKey.of("jsc.portable.build_source", "Network storage");
 
     private PortableTexts() {
     }

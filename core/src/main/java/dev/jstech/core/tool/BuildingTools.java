@@ -49,8 +49,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 /**
  * Building tools at work: used on the face of a block, a tool that builds ({@link BuildMode}) lays out copies of it
  * along a line or over a plane, marks the corners of a region and copies it, or pastes the region it holds. Each block
- * placed comes from the player's supplies ({@link BuildSupplies}), goes only where the player may place it and where
- * nothing stands, is placed as the player would place it (every protection's say comes as for a block placed by
+ * placed comes from one of the player's sources ({@link BuildSources}), goes only where the player may place it and
+ * where nothing stands, is placed as the player would place it (every protection's say comes as for a block placed by
  * hand), and spends a use of the tool. A copy keeps only blocks, never what a block keeps inside.
  */
 public final class BuildingTools {
@@ -293,7 +293,8 @@ public final class BuildingTools {
                 || !Protection.may(Actor.of(player), ProtectedAction.PLACE, level, pos)) {
             return Placed.SKIPPED;
         }
-        if (!BuildSupplies.takeOne(player, item)) {
+        final IBuildSource from = BuildSources.takeOne(player, item);
+        if (from == null) {
             tell(player, ToolTexts.OUT_OF.with(GameText.of(item.getDescription())));
             return Placed.OUT;
         }
@@ -301,7 +302,8 @@ public final class BuildingTools {
         level.setBlock(pos, state, Block.UPDATE_ALL);
         if (EventHooks.onBlockPlace(player, before, face)) {
             before.restore(Block.UPDATE_ALL);
-            BuildSupplies.giveBack(player, item);
+            // A block that could not stay goes back where it came from.
+            from.giveBack(player, new ItemStack(item));
             return Placed.SKIPPED;
         }
         Tools.spend(player, tool);

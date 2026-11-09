@@ -446,6 +446,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Notifications that say where they came from: J's Core's API is at version 47. `Notification` gains `origin`,
   said after the mod's name at its foot ("J's Computers · from your qPhone 5"), set with `withOrigin(Text)`;
   `NotificationTexts.FROM` writes the two together. The record without it stays as a constructor of five. Experimental.
+- One hook for every place blocks are built from: J's Core's API is at version 48. `BuildSources` and
+  `IBuildSource`, in `dev.jstech.core.tool`, serve the building tools and the Multiblock Builder alike: a source has a
+  name, says whether the player may use it now, counts on the server, hands over one block and takes back what was not
+  placed; `BuildSources.takeOne` says which source a block came from. `BuildSupplies` and `IBuildSupply` are gone, and
+  so are the builder's own `BuildSources` and `IBuildSource` in `dev.jstech.core.jstechseries.builder`; a supply
+  becomes a source declared with an id. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -857,7 +863,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   each block, stopping and saying why when it runs out, the player walks away, a place is protected or something it
   cannot move is in the way. Used on a controller, it reads how the multiblock stands from the way the controller
   faces. HOLD holds it, SHOW shows the multiblock's ghosts, LIGHT lights the display. Servers set how fast it builds
-  and how far the player may walk; other mods can add a source of blocks of their own.
+  and how far the player may walk; other mods can add a source of blocks of their own, which the server counts and
+  tells the display of.
 - Microblocks of any full block of any mod: covers, panels, slabs and the thicknesses between, hollow pieces,
   posts and corners, drawn from the block's own textures. Several share one block space, a cable's included, each
   placed where the click puts it, hit, outlined and broken on its own with its own drop, and a block space of pieces
@@ -1412,8 +1419,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   (`ChargingItem`), and one that waits between uses shows the wait over its icon.
 - Building tools: a tool lays copies of a block out along a line or over a plane from the face it is used on,
   copies the region between two corners and pastes it turned as the player has turned, every block from the player's
-  inventory or from a supply a mod adds (`IBuildSupply`, for J's Computers' network), placed where the player may
-  place it.
+  inventory or from a source a mod declares (`BuildSources`, the same the Multiblock Builder takes from, for J's
+  Computers' network), placed where the player may place it.
 - Modules in tools: a tool whose modules work while it is held takes them as worn things do, and they make it
   mine an area or a vein, work as though enchanted (silk touch, fortune), or change the reach and speed of the hand
   holding it, spending its energy each use.

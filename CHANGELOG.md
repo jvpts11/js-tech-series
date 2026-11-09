@@ -576,6 +576,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Notifications that say where they came from: J's Core's API is at version 47. `Notification` gains `origin`,
   said after the mod's name at its foot ("J's Computers · from your qPhone 5"), set with `withOrigin(Text)`;
   `NotificationTexts.FROM` writes the two together. The record without it stays as a constructor of five. Experimental.
+- (Core) One hook for every place blocks are built from: J's Core's API is at version 48. `BuildSources` and
+  `IBuildSource`, in `dev.jstech.core.tool`, serve the building tools and the Multiblock Builder alike: a source has a
+  name, says whether the player may use it now, counts on the server, hands over one block and takes back what was not
+  placed; `BuildSources.takeOne` says which source a block came from. `BuildSupplies` and `IBuildSupply` are gone, and
+  so are the builder's own `BuildSources` and `IBuildSource` in `dev.jstech.core.jstechseries.builder`; a supply
+  becomes a source declared with an id. Experimental.
 - (Computers) Wi-Fi cards: J's Computers' API is at version 17. `ExpansionCardKind.WIFI` is the kind of the Wi-Fi
   cards, which the Personal, Crafting and Cluster Management Computers alone seat. Experimental.
 - (Computers) Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
@@ -1037,7 +1043,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   each block, stopping and saying why when it runs out, the player walks away, a place is protected or something it
   cannot move is in the way. Used on a controller, it reads how the multiblock stands from the way the controller
   faces. HOLD holds it, SHOW shows the multiblock's ghosts, LIGHT lights the display. Servers set how fast it builds
-  and how far the player may walk; other mods can add a source of blocks of their own.
+  and how far the player may walk; other mods can add a source of blocks of their own, which the server counts and
+  tells the display of.
 - (Core) Microblocks of any full block of any mod: covers, panels, slabs and the thicknesses between, hollow pieces,
   posts and corners, drawn from the block's own textures. Several share one block space, a cable's included, each
   placed where the click puts it, hit, outlined and broken on its own with its own drop, and a block space of pieces
@@ -1592,8 +1599,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   (`ChargingItem`), and one that waits between uses shows the wait over its icon.
 - (Core) Building tools: a tool lays copies of a block out along a line or over a plane from the face it is used on,
   copies the region between two corners and pastes it turned as the player has turned, every block from the player's
-  inventory or from a supply a mod adds (`IBuildSupply`, for J's Computers' network), placed where the player may
-  place it.
+  inventory or from a source a mod declares (`BuildSources`, the same the Multiblock Builder takes from, for J's
+  Computers' network), placed where the player may place it.
 - (Core) Modules in tools: a tool whose modules work while it is held takes them as worn things do, and they make it
   mine an area or a vein, work as though enchanted (silk touch, fortune), or change the reach and speed of the hand
   holding it, spending its energy each use.
@@ -3400,6 +3407,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) A computer, or a server in its rack, that its UPS takes over writes it in the network's log: "On its
   UPS's battery: the power went".
 - (Core) A notification that says where it came from says so after its mod's name, on the screen and in the history.
+- (Computers) Building from the network: a player who carries a portable joined to a network builds from its storage.
+  J's Core's building tools take from it what the inventory lacks, and the Multiblock Builder takes from it when
+  Network storage is the source chosen on its display, which shows what the network holds of each block. A block that
+  cannot stay goes back to the network, or to the player when the network has no room; out of every access point's
+  reach, the network is no source.
 - (Computers) IQL: the computers table gives every computer its era, a Cluster Management Computer's too, and names a
   WAN Gateway Computer as one; the network's log calls a gateway `WAN-` and its short id, This PC "WAN Gateway
   Computer".

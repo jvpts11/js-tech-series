@@ -29,6 +29,7 @@ import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.portable.AlertKind;
 import dev.jstech.computers.portable.MobileApp;
 import dev.jstech.computers.portable.PortableAlert;
+import dev.jstech.computers.portable.PortableBuildSource;
 import dev.jstech.computers.portable.PortableDevices;
 import dev.jstech.computers.portable.PortableGallery;
 import dev.jstech.computers.portable.PortableItem;
@@ -47,9 +48,19 @@ import dev.jstech.computers.wireless.WirelessStandard;
 import dev.jstech.core.audio.media.MediaId;
 import dev.jstech.core.audio.media.MediaInfo;
 import dev.jstech.core.audio.media.MediaStore;
+import dev.jstech.core.item.ItemStates;
+import dev.jstech.core.jstechseries.builder.BuildJobs;
+import dev.jstech.core.jstechseries.builder.BuilderPlan;
+import dev.jstech.core.jstechseries.builder.BuilderState;
+import dev.jstech.core.jstechseries.builder.SourceAskPayload;
+import dev.jstech.core.jstechseries.builder.SourceCounts;
+import dev.jstech.core.jstechseries.builder.SourceCountsPayload;
 import dev.jstech.core.jstechseries.operation.OperationStatus;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.tool.BuildSources;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.TestStructures;
+import dev.jstech.tests.TestTools;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -60,16 +71,20 @@ import java.util.UUID;
 import javax.imageio.ImageIO;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -80,7 +95,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * storage, as much as its room takes, and takes them to the inventory or returns them, and deposits the inventory; the
  * alerts reach the devices on the network that take their kind, a watched item below its level is told once, a failed
  * Operation is told; the Messenger is the network's; the gallery keeps a picture and sends it to a personal computer as
- * a PNG file; the maps mark the Mainframe and the access points; and a device lost is let go.
+ * a PNG file; the maps mark the Mainframe and the access points; a device lost is let go; and a player carrying a
+ * portable on a network builds from its storage, with J's Core's building tools and Multiblock Builder, only while an
+ * access point reaches them.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -93,6 +110,10 @@ public final class PortableAppsGameTests {
     private static final BlockPos ACCESS_POINT = new BlockPos(5, 2, 2);
     private static final BlockPos COMPUTER = new BlockPos(4, 2, 3);
     private static final BlockPos NEAR = new BlockPos(5, 2, 6);
+    /* The test baker's terminal, its box of three running south of it, clear of the network. */
+    private static final BlockPos BAKER = new BlockPos(3, 3, 6);
+    /* Far enough east that no access point reaches the player. */
+    private static final int FAR = 400;
 
     private PortableAppsGameTests() {
     }
@@ -376,6 +397,103 @@ public final class PortableAppsGameTests {
         helper.succeed();
     }
 
+    /** A Multiblock Builder set to the network's storage builds from it while a portable joined to it is carried. */
+    @GameTest(template = ARENA, timeoutTicks = 800)
+    public static void build_builderTakesFromTheNetworkThroughACarriedPortable(final GameTestHelper helper) {
+        final Stocked base = stocked(helper);
+        base.rack().getServerStorage(0).insert(Items.IRON_BLOCK, 64);
+        final ServerPlayer player = player(helper);
+        final ItemStack phone = carry(player, PortableItems.QPHONE_5.get());
+        helper.setBlock(BAKER, TestStructures.BAKER.get());
+        final BlockPos terminal = helper.absolutePos(BAKER);
+        final BuilderState fromNetwork = BuilderState.DEFAULT.from(PortableBuildSource.ID);
+        final StorageKey iron = StorageKey.of(Items.IRON_BLOCK);
+        final ResourceLocation ironId = BuiltInRegistries.ITEM.getKey(Items.IRON_BLOCK);
+        final int wanted = BuilderPlan.of(helper.getLevel(), terminal, player, fromNetwork).orElseThrow().wants()
+                .size();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(base.mainframe().networkUuid() != null, "the network is up"))
+                .thenExecuteFor(Portables.LOOK_EVERY * 2, () -> tick(player, phone))
+                .thenExecute(() -> {
+                    final SourceAskPayload ask = new SourceAskPayload(PortableBuildSource.ID, List.of(ironId));
+                    final SourceCountsPayload told = SourceCounts.answer(player, ask).orElseThrow();
+                    helper.assertValueEqual(told.counts().getOrDefault(ironId, 0L), 64L,
+                            "the server tells the builder's display what the network holds");
+                    helper.assertTrue(SourceCounts.answer(player, ask).isEmpty(),
+                            "and does not answer the same player again within a few ticks");
+                    helper.assertTrue(BuilderPlan.of(helper.getLevel(), terminal, player, fromNetwork).orElseThrow()
+                            .order().ready(), "the network's iron builds it all");
+                    BuildJobs.start(player, terminal, fromNetwork);
+                })
+                .thenWaitUntil(() -> {
+                    // The portable keeps saying it is on the network while the builder works.
+                    tick(player, phone);
+                    helper.assertTrue(BuilderPlan.of(helper.getLevel(), terminal, player, fromNetwork).orElseThrow()
+                            .wants().isEmpty() && BuildJobs.building(player).isEmpty(), "still building");
+                })
+                .thenExecute(() -> helper.assertValueEqual(stock(helper, base, iron), 64L - wanted,
+                        "each block placed came out of the network's storage"))
+                .thenSucceed();
+    }
+
+    /** A building tool takes from the network's storage what the inventory lacks. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void build_toolTakesFromTheNetworkWhatTheInventoryLacks(final GameTestHelper helper) {
+        final Stocked base = stocked(helper);
+        base.rack().getServerStorage(0).insert(Items.STONE, 10);
+        final ServerPlayer player = player(helper);
+        final ItemStack phone = carry(player, PortableItems.QPHONE_5.get());
+        final ItemStack wand = new ItemStack(TestTools.WAND.get());
+        ItemStates.setMode(wand, TestTools.LINE);
+        player.setItemInHand(InteractionHand.MAIN_HAND, wand);
+        for (int x = 2; x <= 4; x++) {
+            helper.setBlock(x, 2, 8, Blocks.STONE);
+        }
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(base.mainframe().networkUuid() != null, "the network is up"))
+                .thenExecuteFor(Portables.LOOK_EVERY * 2, () -> tick(player, phone))
+                .thenExecute(() -> {
+                    final BlockPos at = helper.absolutePos(new BlockPos(3, 2, 8));
+                    player.gameMode.useItemOn(player, helper.getLevel(), wand, InteractionHand.MAIN_HAND,
+                            new BlockHitResult(Vec3.atCenterOf(at).add(0, 0, -0.5), Direction.NORTH, at, false));
+                    for (int x = 2; x <= 4; x++) {
+                        helper.assertBlockPresent(Blocks.STONE, x, 2, 7);
+                    }
+                    helper.assertValueEqual(stock(helper, base, StorageKey.of(Items.STONE)), 7L,
+                            "the line of three came out of the network, the inventory having none");
+                })
+                .thenSucceed();
+    }
+
+    /** Out of every access point's reach the network's storage is no place to build from, though it holds the block. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void build_networkIsNoSourceOutOfTheAccessPointsReach(final GameTestHelper helper) {
+        final Stocked base = stocked(helper);
+        base.rack().getServerStorage(0).insert(Items.STONE, 10);
+        final ServerPlayer player = player(helper);
+        final ItemStack phone = carry(player, PortableItems.QPHONE_5.get());
+        final PortableBuildSource network = new PortableBuildSource();
+        player.setPos(Vec3.atCenterOf(helper.absolutePos(NEAR)).add(FAR, 0, 0));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(base.mainframe().networkUuid() != null, "the network is up"))
+                .thenExecuteFor(Portables.LOOK_EVERY * 2, () -> tick(player, phone))
+                .thenExecute(() -> {
+                    helper.assertFalse(network.usable(player), "no access point reaches the player");
+                    helper.assertValueEqual(BuildSources.available(player, Items.STONE), 0L,
+                            "so nothing of the network's is there to build with");
+                    helper.assertTrue(BuildSources.takeOne(player, Items.STONE) == null, "and nothing is taken");
+                    player.setPos(Vec3.atCenterOf(helper.absolutePos(NEAR)));
+                })
+                .thenExecuteFor(Portables.LOOK_EVERY * 2, () -> tick(player, phone))
+                .thenExecute(() -> {
+                    helper.assertTrue(network.usable(player), "back in reach, the network is a source again");
+                    helper.assertValueEqual(BuildSources.available(player, Items.STONE), 10L, "with its ten stone");
+                    helper.assertValueEqual(stock(helper, base, StorageKey.of(Items.STONE)), 10L,
+                            "none was taken while it was out of reach");
+                })
+                .thenSucceed();
+    }
+
     /* The network of the tests: a running Mainframe, a stocked server beside its cable, the access line and point. */
     private static Stocked stocked(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
@@ -405,6 +523,14 @@ public final class PortableAppsGameTests {
         final ItemStack held = player.getItemInHand(InteractionHand.MAIN_HAND);
         tick(player, held);
         return held;
+    }
+
+    /* A new device of {@code item} at the end of {@code player}'s hotbar, carried once, so it is on; the hand free. */
+    private static ItemStack carry(final ServerPlayer player, final PortableItem item) {
+        player.getInventory().setItem(Inventory.getSelectionSize() - 1, new ItemStack(item));
+        final ItemStack carried = player.getInventory().getItem(Inventory.getSelectionSize() - 1);
+        tick(player, carried);
+        return carried;
     }
 
     /* The game's tick of a carried device. */

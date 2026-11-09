@@ -149,20 +149,35 @@ Used on the face of a block, a building tool:
 - **Paste**: places the copy with its lowest corner in front of the face, reaching away from the player, to the right
   and up, turned as the player has turned since copying it, the lowest layer first.
 
-Each block placed comes from the player's supplies, goes only where nothing stands, where it can stay and where the
-player may place it, is placed as the player would place it (so protections and other mods see it), and spends a use
-of the tool. The player's inventory is asked first, only its plain stacks (a named or changed stack is kept); then
-every supply a mod added, which is how J's Computers gives the blocks of its network:
+Each block placed comes from one of the player's sources, goes only where nothing stands, where it can stay and where
+the player may place it, is placed as the player would place it (so protections and other mods see it), and spends a
+use of the tool. The player's inventory is asked first, only its plain stacks (a named or changed stack is kept); then
+every source a mod declared that the player may use now, in the order declared. A block that cannot stay goes back to
+the source it came from. The [Multiblock Builder](MULTIBLOCKS.md#building-a-multiblock-for-the-player) takes from the
+same sources, from the one its player chose. This is how J's Computers gives the blocks of its network's storage to a
+player who carries a portable joined to it (*changed 2026-11-09*: one hook for both, where there were two):
 
 ```java
-BuildSupplies.add(new IBuildSupply() {
+BuildSources.declare(ResourceLocation.fromNamespaceAndPath(MODID, "network"), new IBuildSource() {
     @Override
-    public long available(final ServerPlayer player, final Item item) { /* what the network holds */ }
+    public Text name() { return NETWORK_STORAGE.text(); }        // what the builder's display calls it
 
     @Override
-    public long take(final ServerPlayer player, final Item item, final long count, final boolean simulate) { /* ... */ }
+    public boolean usable(final Player player) { /* either side: whether the player may take from it now */ }
+
+    @Override
+    public long count(final Player player, final Item item) { /* the server: how many it holds, 0 when unusable */ }
+
+    @Override
+    public ItemStack take(final ServerPlayer player, final Item item) { /* one, or empty */ }
+
+    @Override
+    public void giveBack(final ServerPlayer player, final ItemStack stack) { /* what was not placed */ }
 });
 ```
+
+A source is counted on the server only: J's Core asks it there for what the builder's display shows, twice a second
+while the display is read, so the player's game never needs to know what a network holds.
 
 | Setting | Default | What it tunes |
 | --- | --- | --- |

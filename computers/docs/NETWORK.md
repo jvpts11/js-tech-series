@@ -119,6 +119,11 @@ Pocket, 8 on the Pocket Pro with its card, 112 on the qPhone 5, 480 on the Nebul
 Frames Pocket the left soft key requests the item picked and the Menu holds the other pages, as the Pocket PC's
 programs did.
 
+A player who carries a portable joined to a network also builds from that network's storage: J's Core's building
+tools take from it when the inventory has none of a block, and its Multiblock Builder takes from it when **Network
+storage** is the source chosen on its display. A block that cannot stay goes back to the network, or to the player
+when the network has no room.
+
 The network sends **alerts** to the portables on it: an item below the level a portable watches it at, an Operation
 that failed, a degraded power supply, a UPS on its battery (a line in the network's log too), and a network conflict.
 The **Alerts** app turns the five kinds on or off for its portable and keeps up to 12 watched items, each with its

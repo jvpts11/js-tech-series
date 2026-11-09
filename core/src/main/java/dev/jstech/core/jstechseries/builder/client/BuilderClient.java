@@ -11,6 +11,7 @@ import dev.jstech.core.jstechseries.builder.BuildStatus;
 import dev.jstech.core.jstechseries.builder.BuilderPlan;
 import dev.jstech.core.jstechseries.builder.BuilderState;
 import dev.jstech.core.jstechseries.builder.MultiblockBuilder;
+import dev.jstech.core.jstechseries.builder.SourceCounts;
 import dev.jstech.core.jstechseries.projector.StructureProjectorBlockEntity;
 import dev.jstech.core.jstechseries.projector.client.ProjectorClient;
 import dev.jstech.core.jstechseries.projector.client.ScreenWords;
@@ -24,6 +25,7 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -51,6 +53,7 @@ public final class BuilderClient {
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
             status = BuildStatus.IDLE;
             cached = null;
+            SourceCounts.forget();
         });
     }
 
@@ -79,6 +82,8 @@ public final class BuilderClient {
         }
         final Optional<BuilderPlan> plan = BuilderPlan.of(minecraft.level, aim.get(), player, state);
         cached = new Cached(aim.get(), state, now, plan);
+        // A place only the server counts is asked again for what the display wanted, at the pace it is read.
+        SourceCounts.ask().ifPresent(ask -> PacketDistributor.sendToServer(ask));
         return plan;
     }
 

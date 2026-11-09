@@ -889,7 +889,8 @@ which suits a terminal that stands off the ground, as a dock's booth up on its w
   place that takes it (a structure's one power entry, though casing was chosen for its places), and never more than
   its most (*added 2026-10-24*): what it builds forms. A shape gives its counts with `IStructureShape.quotas()`, which
   a pattern works out from its `limit`s.
-- **Source**: where the blocks come from, the player's inventory first.
+- **Source**: where the blocks come from, the player's inventory first; a source the player may not use now is
+  dimmed, such as J's Computers' network storage while no portable joined to the network is carried.
 
 OK builds: a block at a time, at the pace the settings give. First it takes out, from the top down, whatever stands
 where the multiblock must be left empty (a dock's pit is dug) and any other block standing in one of its places, as
@@ -908,8 +909,11 @@ inventory without using it up, and what it takes out is not given back.
   first the source has, with what it uses and what the source lacks; `BuilderPlan.of(...)` works it out from the
   world, alike on either side.
 - A mod with a store of blocks of its own, such as a network's, declares it as a source with
-  `BuildSources.declare(id, source)`: what it is called, whether the player may use it now, how many of an item it
-  holds, and taking one out and putting one back.
+  `BuildSources.declare(id, source)` (in `dev.jstech.core.tool`, the same hook the building tools take from;
+  *changed 2026-11-09*): what it is called, whether the player may use it now, how many of an item it holds, and
+  taking one out and putting one back. Only the inventory is counted on the player's game; any other source is
+  counted on the server, which tells the display what it holds for the blocks it shows, twice a second
+  ([Tools](TOOLS.md#building-tools)).
 
 ## Machines entirely as data
 

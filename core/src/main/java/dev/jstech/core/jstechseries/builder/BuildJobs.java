@@ -15,6 +15,8 @@ import dev.jstech.core.protection.Actor;
 import dev.jstech.core.protection.ProtectedAction;
 import dev.jstech.core.protection.Protection;
 import dev.jstech.core.team.CorePermissions;
+import dev.jstech.core.tool.BuildSources;
+import dev.jstech.core.tool.IBuildSource;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

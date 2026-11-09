@@ -28,6 +28,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -119,6 +120,14 @@ public final class MultiblockBuilder {
                 });
         ClientPayloads.accept(event.registrar(NETWORK_VERSION), BuilderActionPayload.TYPE,
                 BuilderActionPayload.STREAM_CODEC, holdingToAct, MultiblockBuilder::act);
+        // Only a player holding a builder asks what a place holds, and only for themselves.
+        final IPayloadGate<SourceAskPayload> holdingToAsk = (player, payload) -> held(player, true).is(ITEM.get())
+                || held(player, false).is(ITEM.get());
+        ClientPayloads.accept(event.registrar(NETWORK_VERSION), SourceAskPayload.TYPE, SourceAskPayload.STREAM_CODEC,
+                holdingToAsk, (payload, player, level) -> SourceCounts.answer(player, payload)
+                        .ifPresent(answer -> PacketDistributor.sendToPlayer(player, answer)));
+        event.registrar(NETWORK_VERSION).playToClient(SourceCountsPayload.TYPE, SourceCountsPayload.STREAM_CODEC,
+                (payload, context) -> context.enqueueWork(() -> SourceCounts.heard(payload)));
     }
 
     /* Runs on the server: a key of the builder in the player's hand asks it to build, hold or stop. */

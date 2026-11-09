@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableCodecs;
+import dev.jstech.core.tool.BuildSources;
 import io.netty.buffer.ByteBuf;
 import java.util.HashMap;
 import java.util.List;

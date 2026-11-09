@@ -109,7 +109,8 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
     /** How many blocks the source holds of {@code block}, by id, for {@code player}. */
     public static int has(final Player player, final BuilderState state, final String block) {
         final Block known = MultiblockBlocks.blockOf(block);
-        return known == null ? 0 : BuildSources.get(state.source()).count(player, known.asItem());
+        return known == null ? 0
+                : (int) Math.min(Integer.MAX_VALUE, SourceCounts.count(player, state.source(), known.asItem()));
     }
 
     /* How many of each count of {@code quotas} already stand in their places, a merged block as the block it was. */
@@ -203,12 +204,12 @@ public record BuilderPlan(Text name, ShapePreview preview, Direction facing, Pro
         if (terminal != null) {
             wants.add(terminal);
         }
-        final IBuildSource source = BuildSources.get(state.source());
         final Map<String, Integer> held = new HashMap<>();
         final List<Quota> quotas = aimed.shape().quotas();
         final BuildOrder order = BuildOrder.plan(wants, state.chosen(), block -> held.computeIfAbsent(block, id -> {
             final Block known = MultiblockBlocks.blockOf(id);
-            return known == null ? 0 : source.count(player, known.asItem());
+            return known == null ? 0
+                    : (int) Math.min(Integer.MAX_VALUE, SourceCounts.count(player, state.source(), known.asItem()));
         }), quotas, standing(level, view, quotas));
         return new BuilderPlan(aimed.name(), aimed.preview(), aimed.facing(), view, wants,
                 List.copyOf(groups.values()), order);

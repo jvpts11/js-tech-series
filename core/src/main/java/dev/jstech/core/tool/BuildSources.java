@@ -5,7 +5,7 @@
  *
  * This file is part of J's Core.
  */
-package dev.jstech.core.jstechseries.builder;
+package dev.jstech.core.tool;
 
 import dev.jstech.core.JsCore;
 import dev.jstech.core.text.Text;
@@ -20,17 +20,24 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * Every place a Multiblock Builder may take its blocks from, by id: the player's inventory, the Core's own, and what
- * other mods declare, such as a network's storage. A player in creative takes from the inventory without using it up.
+ * Every place the blocks a player builds with may come from, by id: the player's inventory first, then what each mod
+ * declares, such as a network's storage. The building tools take from the first that has the block, the inventory
+ * before the rest; a Multiblock Builder takes from the one chosen. Only the inventory's plain stacks are taken: a named
+ * or changed stack is the player's to keep. A player in creative takes from the inventory without using it up.
+ *
+ * <pre>{@code
+ * BuildSources.declare(ResourceLocation.fromNamespaceAndPath(MODID, "network"), new NetworkSource());
+ * }</pre>
  */
 public final class BuildSources {
 
     /** The player's own inventory. */
     public static final ResourceLocation INVENTORY = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "inventory");
     /* Creative players hold as many of every block as a build may want. */
-    private static final int CREATIVE_HOLDS = Integer.MAX_VALUE / 2;
+    private static final long CREATIVE_HOLDS = Integer.MAX_VALUE / 2;
     private static final Map<ResourceLocation, IBuildSource> SOURCES = new LinkedHashMap<>();
 
     static {
@@ -62,12 +69,54 @@ public final class BuildSources {
         return new ArrayList<>(SOURCES.keySet());
     }
 
+    /** How many of {@code item} {@code player} can build with, from every place they may use now. */
+    public static long available(final ServerPlayer player, final Item item) {
+        long total = 0;
+        for (final IBuildSource source : usable(player)) {
+            total += source.count(player, item);
+            if (total < 0) {
+                return Long.MAX_VALUE;
+            }
+        }
+        return total;
+    }
+
+    /**
+     * Takes one {@code item} for {@code player} to place, from the first place they may use that has one, the
+     * inventory first; the place it came from, which takes it back if it cannot stay, or null when none had one.
+     */
+    @Nullable
+    public static IBuildSource takeOne(final ServerPlayer player, final Item item) {
+        for (final IBuildSource source : usable(player)) {
+            if (!source.take(player, item).isEmpty()) {
+                return source;
+            }
+        }
+        return null;
+    }
+
+    /* The places {@code player} may take from now, in order. */
+    private static synchronized List<IBuildSource> usable(final Player player) {
+        final List<IBuildSource> out = new ArrayList<>();
+        for (final IBuildSource source : SOURCES.values()) {
+            if (source.usable(player)) {
+                out.add(source);
+            }
+        }
+        return out;
+    }
+
+    /* A stack of {@code item} the inventory may give: one nobody named or changed. */
+    private static boolean plain(final ItemStack stack, final Item item) {
+        return stack.is(item) && stack.getComponentsPatch().isEmpty();
+    }
+
     /** The player's inventory, which a player in creative takes from without using it up. */
     private static final class InventorySource implements IBuildSource {
 
         @Override
         public Text name() {
-            return BuilderTexts.INVENTORY.text();
+            return ToolTexts.YOUR_INVENTORY.text();
         }
 
         @Override
@@ -76,8 +125,17 @@ public final class BuildSources {
         }
 
         @Override
-        public int count(final Player player, final Item item) {
-            return player.getAbilities().instabuild ? CREATIVE_HOLDS : player.getInventory().countItem(item);
+        public long count(final Player player, final Item item) {
+            if (player.getAbilities().instabuild) {
+                return CREATIVE_HOLDS;
+            }
+            long count = 0;
+            for (final ItemStack stack : player.getInventory().items) {
+                if (plain(stack, item)) {
+                    count += stack.getCount();
+                }
+            }
+            return count;
         }
 
         @Override
@@ -86,9 +144,8 @@ public final class BuildSources {
                 return new ItemStack(item);
             }
             final Inventory inventory = player.getInventory();
-            for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
-                final ItemStack stack = inventory.getItem(slot);
-                if (stack.is(item)) {
+            for (final ItemStack stack : inventory.items) {
+                if (plain(stack, item)) {
                     return stack.split(1);
                 }
             }

@@ -12800,11 +12800,13 @@ stable 4
 10 dev.jstech.core.tool.BuildMode.Paste  type enum implements BuildMode
 10 dev.jstech.core.tool.BuildMode.Paste  INSTANCE
 10 dev.jstech.core.tool.BuildMode.Plane  type record(int most) implements BuildMode
-10 dev.jstech.core.tool.BuildSupplies  type final class
-10 dev.jstech.core.tool.BuildSupplies  static boolean takeOne(ServerPlayer, Item)
-10 dev.jstech.core.tool.BuildSupplies  static long available(ServerPlayer, Item)
-10 dev.jstech.core.tool.BuildSupplies  static void add(IBuildSupply)
-10 dev.jstech.core.tool.BuildSupplies  static void giveBack(ServerPlayer, Item)
+48 dev.jstech.core.tool.BuildSources  type final class
+48 dev.jstech.core.tool.BuildSources  static IBuildSource get(ResourceLocation)
+48 dev.jstech.core.tool.BuildSources  static IBuildSource takeOne(ServerPlayer, Item)
+48 dev.jstech.core.tool.BuildSources  static List<ResourceLocation> ids()
+48 dev.jstech.core.tool.BuildSources  static final ResourceLocation INVENTORY
+48 dev.jstech.core.tool.BuildSources  static long available(ServerPlayer, Item)
+48 dev.jstech.core.tool.BuildSources  static void declare(ResourceLocation, IBuildSource)
 10 dev.jstech.core.tool.BuildingTools  type final class
 10 dev.jstech.core.tool.BuildingTools  static List<BlockPos> targets(Level, Player, BlockPos, Direction, BuildMode)
 10 dev.jstech.core.tool.BuildingTools  static List<Text> describe(ItemStack)
@@ -12830,9 +12832,12 @@ stable 4
 10 dev.jstech.core.tool.CopiedRegion  static final Codec<CopiedRegion> CODEC
 10 dev.jstech.core.tool.CopiedRegion  static final StreamCodec<ByteBuf, CopiedRegion> STREAM_CODEC
 10 dev.jstech.core.tool.CopiedRegion  static long volume(Vec3i)
-10 dev.jstech.core.tool.IBuildSupply  type interface
-10 dev.jstech.core.tool.IBuildSupply  abstract long available(ServerPlayer, Item)
-10 dev.jstech.core.tool.IBuildSupply  abstract long take(ServerPlayer, Item, long, boolean)
+48 dev.jstech.core.tool.IBuildSource  type interface
+48 dev.jstech.core.tool.IBuildSource  abstract ItemStack take(ServerPlayer, Item)
+48 dev.jstech.core.tool.IBuildSource  abstract Text name()
+48 dev.jstech.core.tool.IBuildSource  abstract boolean usable(Player)
+48 dev.jstech.core.tool.IBuildSource  abstract long count(Player, Item)
+48 dev.jstech.core.tool.IBuildSource  abstract void giveBack(ServerPlayer, ItemStack)
 10 dev.jstech.core.tool.MiningShape  type sealed interface
 10 dev.jstech.core.tool.MiningShape  abstract String type()
 10 dev.jstech.core.tool.MiningShape  abstract int most()
@@ -12913,6 +12918,7 @@ stable 4
 10 dev.jstech.core.tool.ToolTexts  static final TextKey OUT_OF
 10 dev.jstech.core.tool.ToolTexts  static final TextKey RELEASE_TO_CHOOSE
 10 dev.jstech.core.tool.ToolTexts  static final TextKey TOO_BIG
+48 dev.jstech.core.tool.ToolTexts  static final TextKey YOUR_INVENTORY
 10 dev.jstech.core.tool.Tools  type final class
 10 dev.jstech.core.tool.Tools  static Optional<BuildMode> builds(ItemStack)
 10 dev.jstech.core.tool.Tools  static Optional<MiningShape> mines(Level, ItemStack)
