@@ -77,7 +77,7 @@
     }
   ],
   "id": "jsc:maintenance_analyze_vacuum_reindex",
-  "order": 308,
+  "order": 309,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.maintenance_analyze_vacuum_reindex.title"
 }

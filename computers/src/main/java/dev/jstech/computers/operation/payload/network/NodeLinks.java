@@ -85,7 +85,7 @@ final class NodeLinks {
         }
         if (best == null) {
             return optical ? new NodeLink("", true, true, 0, NodeLink.REASON_NONE, NodeLink.NO_PLACE,
-                    NodeLink.NO_PLACE) : NodeLink.NONE;
+                    NodeLink.NO_PLACE, null) : NodeLink.NONE;
         }
         return NodeLink.up(best, optical, index.runLength(bestCable),
                 best.straight() ? routerOf(bestCable) : NodeLink.NO_PLACE);

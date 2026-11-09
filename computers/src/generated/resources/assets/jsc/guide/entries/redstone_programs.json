@@ -181,7 +181,7 @@
   ],
   "icon": "jsc:standard_redstone_interface",
   "id": "jsc:redstone_programs",
-  "order": 120,
+  "order": 121,
   "section": "jsc:automation_jobs",
   "title": "jsc.guide.redstone_programs.title"
 }

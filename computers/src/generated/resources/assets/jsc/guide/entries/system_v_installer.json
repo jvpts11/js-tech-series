@@ -127,7 +127,7 @@
     }
   ],
   "id": "jsc:system_v_installer",
-  "order": 286,
+  "order": 287,
   "section": "jsc:system_v_start",
   "title": "jsc.guide.system_v_installer.title"
 }

@@ -41,6 +41,30 @@ Mainframe's operator) reaches an era of hardware, or one of J's Industrial's tie
 ("Era Standard reached by" the team); a team reaches an era the first time one of its players assembles a working
 computer of it (added 2026-11-08).
 
+## Wi-Fi
+
+*Added 2026-11-09.*
+
+From the Legacy on, a small computer can join the network with no cable of its own: a **Wi-Fi card** in it
+([Hardware](HARDWARE.md#cards)) and a **Wireless Access Point** on the network within its reach. The access point is a
+network device: it takes the access cable of its era or an older one and the energy cable, both through one face, and
+gives the network it is cabled to to every computer with a card round it. Each computer joins the nearest access point
+that reaches it; several in one place do not conflict, and one takes any number of computers. A computer with a cable
+keeps its cable for its link.
+
+| Access point | Standard | Reach | Speed | Draw | Where it goes |
+| --- | --- | ---: | ---: | ---: | --- |
+| Legacy | 802.11b/g | 24 blocks | 4 it/t | 10 W | on a desk, its cables from behind |
+| Transition | 802.11n | 32 blocks | 16 it/t | 12 W | on a desk, its cables from behind |
+| Standard | 802.11ac | 48 blocks | 64 it/t | 15 W | on a ceiling or a wall, its cables through that face |
+| Advanced | Wi-Fi 6 | 64 blocks | 128 it/t | 20 W | on a ceiling or a wall, its cables through that face |
+
+A link goes at the speed of the older of its two ends, the card or the access point, as real Wi-Fi does, and copies
+of files and songs to and from a computer on Wi-Fi go no faster. An access point fixed to a ceiling or a wall comes
+off with the block it is fixed to. The Network Manager lists each access point as an ACCESS POINT node on its cable,
+and shows a computer's link as Wi-Fi with its speed; the line under the Devices list says which end sets it for the
+computer picked. The numbers are estimates.
+
 ## Two places over a long-distance line
 
 *Added 2026-11-09.*

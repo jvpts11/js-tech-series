@@ -91,7 +91,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:cde_style_manager",
-  "order": 217,
+  "order": 218,
   "section": "jsc:cde_desktop",
   "title": "jsc.guide.cde_style_manager.title"
 }

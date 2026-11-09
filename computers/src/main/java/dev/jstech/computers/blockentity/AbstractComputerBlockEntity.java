@@ -36,7 +36,9 @@ import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.hardware.ThermalModel;
 import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.ExpansionCardKind;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.hardware.WifiCardSpec;
 import dev.jstech.computers.hardware.MachinePorts;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PartFitting;
@@ -97,6 +99,7 @@ import dev.jstech.computers.storage.DiskCorruption;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
+import dev.jstech.computers.wireless.WirelessLink;
 import dev.jstech.core.audio.IAudioHost;
 import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.audio.StereoSide;
@@ -1513,10 +1516,54 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return DataWires.isNetwork(wire);
     }
 
-    /** The data cables this computer is wired to the network by: for most, the one cable at its side. */
+    /**
+     * The data cables this computer is wired to the network by: for most, the one cable at its side; for one on Wi-Fi,
+     * its access point's, which is as far along the network as it reaches.
+     */
     public Set<Long> networkCables(final ServerLevel level) {
         final long cable = attachment.cable(level);
-        return cable == NetworkAttachment.NO_CABLE ? Set.of() : Set.of(cable);
+        if (cable != NetworkAttachment.NO_CABLE) {
+            return Set.of(cable);
+        }
+        final BlockPos through = attachment.joinedThrough();
+        return through != null && Loaded.blockEntity(level, through) instanceof AccessPointBlockEntity point
+                ? Set.copyOf(point.cables(level)) : Set.of();
+    }
+
+    /** The Wi-Fi card in it, or null: a small computer with one joins the network through an access point. */
+    @Nullable
+    public WifiCardSpec wifiCard() {
+        final ComputerBuild build = currentBuild();
+        if (build == null) {
+            return null;
+        }
+        for (final IExpansionCardSpec card : build.cardsOfKind(ExpansionCardKind.WIFI)) {
+            if (card instanceof WifiCardSpec wifi) {
+                return wifi;
+            }
+        }
+        return null;
+    }
+
+    /** How it is on its network by Wi-Fi, or null when it is on a cable or on none. */
+    @Nullable
+    public WirelessLink wirelessLink(final ServerLevel level) {
+        final BlockPos through = attachment.joinedThrough();
+        final WifiCardSpec card = wifiCard();
+        if (through == null || card == null
+                || !(Loaded.blockEntity(level, through) instanceof AccessPointBlockEntity point)) {
+            return null;
+        }
+        return new WirelessLink(through, point.nodeUuid(), card.standard(), point.standard());
+    }
+
+    /**
+     * The most items a tick its own link carries: its Wi-Fi's, which no cable on the way makes faster; no bound of its
+     * own on a cable, where the cables decide.
+     */
+    public int ownLinkItemsPerTick(final ServerLevel level) {
+        final WirelessLink link = wirelessLink(level);
+        return link == null ? Integer.MAX_VALUE : link.itemsPerTick();
     }
 
     /**

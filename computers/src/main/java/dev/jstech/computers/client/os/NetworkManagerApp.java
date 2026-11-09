@@ -30,6 +30,7 @@ import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
 import dev.jstech.computers.operation.payload.SetOperationPriorityPayload;
 import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.program.OperationPalette;
+import dev.jstech.computers.wireless.WirelessStandard;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ColumnHeader;
 import dev.jstech.core.client.gui.component.Draw;
@@ -268,6 +269,8 @@ public final class NetworkManagerApp implements IDesktopApp {
                 () -> countKind(NetworkNodeInfo.KIND_PC)));
         hardwareRows.add(new HardwareRow(NetworkManagerTexts.CLUSTER_MANAGERS,
                 () -> countKind(NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.ACCESS_POINTS,
+                () -> countKind(NetworkNodeInfo.KIND_ACCESS_POINT)));
         hardwareRows.add(new HardwareRow(NetworkLinkTexts.LINKS, null));
         hardwareRows.add(new HardwareRow(NetworkLinkTexts.OPTICAL_LINKS, () -> GameText.resolve(
                 NetworkLinkTexts.OPTICAL_VALUE.with(hardware().opticalUp() + hardware().opticalDown(),
@@ -619,6 +622,22 @@ public final class NetworkManagerApp implements IDesktopApp {
         return null;
     }
 
+    /*
+     * The node the line under the Devices list tells of: the first that lost its link; with none lost, the node picked
+     * when it is on Wi-Fi, whose speed the line explains.
+     */
+    @Nullable
+    private NetworkNodeInfo footerNode() {
+        final NetworkNodeInfo lost = firstLost();
+        if (lost != null) {
+            return lost;
+        }
+        final int picked = devList.selected();
+        final List<NetworkNodeInfo> shown = nodes();
+        return picked >= 0 && picked < shown.size() && shown.get(picked).link().wifi() != null ? shown.get(picked)
+                : null;
+    }
+
     private int lostCount() {
         int lost = 0;
         for (final NetworkNodeInfo node : nodes()) {
@@ -790,7 +809,7 @@ public final class NetworkManagerApp implements IDesktopApp {
         devColumns.setVisible(devices && wide);
         devColumnsNarrow.setVisible(devices && !wide);
         devList.setVisible(devices);
-        lostShown = devices ? firstLost() : null;
+        lostShown = devices ? footerNode() : null;
         if (devices) {
             devColumns.setBounds(px, top - 1, pw, 12);
             devColumns.setColumnX(px + NetworkLinksLayout.NAME_X, px + NetworkLinksLayout.typeX(pw),
@@ -1247,6 +1266,14 @@ public final class NetworkManagerApp implements IDesktopApp {
         lines.add(n.name().isEmpty() ? GameText.resolve(NetworkManagerTexts.UNNAMED) : n.name());
         lines.add(GameText.resolve(NetworkManagerTexts.KIND_AND_STATE.with(n.kindLabel(),
                 n.online() ? NetworkManagerTexts.ONLINE : NetworkManagerTexts.OFFLINE)));
+        if (n.kind() == NetworkNodeInfo.KIND_ACCESS_POINT) {
+            // An access point tells its Wi-Fi, which its detail names: the standard, its reach and speed, its draw.
+            final WirelessStandard standard = WirelessStandard.byName(n.detail());
+            lines.add(standard.accessPointName());
+            lines.add(GameText.resolve(NetworkManagerTexts.REACH_AND_SPEED.with(standard.reachBlocks(),
+                    standard.itemsPerTick())));
+            lines.add(GameText.resolve(NetworkManagerTexts.DRAWS.with(standard.watts())));
+        }
         if (n.cpuMhz() > 0) {
             lines.add(GameText.resolve(n.vramMb() > 0
                     ? NetworkManagerTexts.CPU_AND_VRAM.with(cpuClock(n.cpuMhz()), JsTechTheme.fmt(n.vramMb()))

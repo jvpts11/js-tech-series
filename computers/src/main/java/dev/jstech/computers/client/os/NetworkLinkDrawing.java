@@ -12,6 +12,7 @@ import dev.jstech.computers.block.DataLinkNames;
 import dev.jstech.computers.gui.layout.NetworkLinksLayout;
 import dev.jstech.computers.operation.payload.NetworkNodeInfo;
 import dev.jstech.computers.operation.payload.NodeLink;
+import dev.jstech.computers.wireless.WirelessStandard;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.jstechseries.network.DataLink;
@@ -52,7 +53,7 @@ final class NetworkLinkDrawing {
     /** The lines' colours on the Map and in the LINK column, a link down's, and the words of a link that is neither. */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/network_links",
             new Colours(0xFF1FB8C8, 0xFF6B7FB0, 0xFF9FB4E6, 0xFFC94FB0, 0xFF8A6F3A, 0xFFD98A3A, 0xFFD1495B,
-                    0xFF8A8F9A));
+                    0xFF8A8F9A, 0xFF7A52C8));
     private static final int DASH = 4;
     private static final int DASH_GAP = 3;
     private static final int ROUTER = 9;
@@ -62,6 +63,10 @@ final class NetworkLinkDrawing {
 
     /** A link in the LINK column: its cable and speed, or that it is down; nothing for a link the screen cannot tell. */
     static String words(final NodeLink link) {
+        if (link.wifi() != null) {
+            return GameText.resolve(NetworkLinkTexts.SPEED.with(NetworkLinkTexts.WIFI.text(),
+                    JsTechTheme.fmt(speedOf(link.wifi()).itemsPerTick())));
+        }
         final DataLink cable = link.dataLink();
         if (cable == null) {
             return "";
@@ -92,6 +97,9 @@ final class NetworkLinkDrawing {
         if (!link.up()) {
             return colours().down();
         }
+        if (link.wifi() != null) {
+            return colours().wireless();
+        }
         return cable != null && cable.straight() ? colours().fibre() : colours().other();
     }
 
@@ -100,6 +108,10 @@ final class NetworkLinkDrawing {
         final DataLink cable = link.dataLink();
         if (!link.up()) {
             return new Style(colours().down(), 1, true);
+        }
+        // A link through the air is drawn in dashes of its own colour.
+        if (link.wifi() != null) {
+            return new Style(colours().wireless(), 1, true);
         }
         if (cable == null) {
             return new Style(colours().access(), 1, false);
@@ -151,9 +163,19 @@ final class NetworkLinkDrawing {
         return GameText.resolve(NetworkLinkTexts.PLACE.with(at.getX(), at.getY(), at.getZ()));
     }
 
-    /** Why {@code node} lost its link, the line under the Devices list says; empty for a node whose link is up. */
+    /**
+     * Why {@code node} lost its link, the line under the Devices list says, or how a node on Wi-Fi goes at its speed;
+     * empty for a node whose link is up on a cable.
+     */
     static String reason(final NetworkNodeInfo node) {
         final NodeLink link = node.link();
+        final NodeLink.Wifi wifi = link.wifi();
+        if (wifi != null) {
+            final WirelessStandard card = WirelessStandard.byName(wifi.card());
+            final WirelessStandard point = WirelessStandard.byName(wifi.accessPoint());
+            return GameText.resolve(NetworkLinkTexts.WIFI_EXPLAINED.with(node.displayName(), wifi.through(),
+                    card.cardName(), card.itemsPerTick(), point.accessPointName(), point.itemsPerTick()));
+        }
         final DataLink cable = link.dataLink();
         if (link.reason() == NodeLink.REASON_BENDS) {
             return GameText.resolve(NetworkLinkTexts.BENDS.with(node.displayName(), place(link.where())));
@@ -169,6 +191,14 @@ final class NetworkLinkDrawing {
     static List<String> cardLines(final NodeLink link) {
         final DataLink cable = link.dataLink();
         final List<String> lines = new ArrayList<>();
+        if (link.wifi() != null) {
+            final WirelessStandard speed = speedOf(link.wifi());
+            lines.add(GameText.resolve(NetworkLinkTexts.SECTION));
+            lines.add(GameText.resolve(NetworkLinkTexts.CARD_WIFI.with(speed.cardName(),
+                    JsTechTheme.fmt(speed.itemsPerTick()))));
+            lines.add(GameText.resolve(NetworkLinkTexts.WIFI_THROUGH.with(link.wifi().through())));
+            return lines;
+        }
         if (cable == null && !link.optical()) {
             return lines;
         }
@@ -207,6 +237,7 @@ final class NetworkLinkDrawing {
         boolean down = false;
         boolean card = false;
         boolean router = false;
+        NodeLink wireless = null;
         for (final NetworkNodeInfo node : nodes) {
             final NodeLink link = node.link();
             down |= !link.up();
@@ -215,14 +246,20 @@ final class NetworkLinkDrawing {
             if (link.up() && link.dataLink() != null) {
                 up.add(link);
             }
+            if (link.wifi() != null) {
+                wireless = link;
+            }
         }
         up.sort(Comparator.comparingLong((NodeLink link) -> -link.dataLink().throughput()));
         for (final NodeLink link : up) {
             lines.putIfAbsent(legendWords(link.dataLink()), style(link, era));
         }
+        if (wireless != null) {
+            lines.put(GameText.resolve(NetworkLinkTexts.WIFI), style(wireless, era));
+        }
         if (down) {
             lines.put(GameText.resolve(NetworkLinkTexts.MAP_DOWN), style(new NodeLink("", false, false, 0,
-                    NodeLink.REASON_NONE, NodeLink.NO_PLACE, NodeLink.NO_PLACE), era));
+                    NodeLink.REASON_NONE, NodeLink.NO_PLACE, NodeLink.NO_PLACE, null), era));
         }
         final int entries = lines.size() + (card ? 1 : 0) + (router ? 1 : 0);
         int widest = font.width(GameText.resolve(NetworkLinkTexts.LEGEND));
@@ -310,11 +347,18 @@ final class NetworkLinkDrawing {
         return PALETTE.get();
     }
 
+    /* The Wi-Fi a link goes at: the older of its card's and its access point's. */
+    private static WirelessStandard speedOf(final NodeLink.Wifi wifi) {
+        return WirelessStandard.older(WirelessStandard.byName(wifi.card()),
+                WirelessStandard.byName(wifi.accessPoint()));
+    }
+
     /**
      * The links' colours: the fibre (and what marks a card or an optical router), a copper backbone, the access line,
-     * the high compute fabric, a long distance line, the crafting cable, a link down, and the words of any other link.
+     * the high compute fabric, a long distance line, the crafting cable, a link down, the words of any other link, and
+     * Wi-Fi.
      */
     private record Colours(int fibre, int copper, int access, int compute, int longDistance, int crafting, int down,
-                           int other) {
+                           int other, int wireless) {
     }
 }

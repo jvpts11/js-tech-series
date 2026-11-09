@@ -10,10 +10,12 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.DataWires;
+import dev.jstech.computers.wireless.AccessPoints;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.connect.Neighbours;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import net.minecraft.core.BlockPos;
@@ -50,9 +52,20 @@ final class NetworkAttachment {
      * gone falls back to the full look. Never saved: a machine that has just loaded looks properly once.
      */
     private long cable;
+    /*
+     * The access point this machine joined its network through, with no cable to read one off and a Wi-Fi card in it,
+     * or null. Held from tick to tick while that one still gives it the network; once a second the machine looks for
+     * the nearest again, which is the one a device joins. Never saved, as the cable is not.
+     */
+    @Nullable
+    private BlockPos accessPoint;
+    /* Ticks until this machine looks again for the nearest access point. */
+    private int lookForPointIn;
 
     /** No cable on any face this computer would take one on. */
     static final long NO_CABLE = Long.MIN_VALUE;
+    /* How often a machine on Wi-Fi looks for a nearer access point: once a second. */
+    private static final int LOOK_FOR_POINT_TICKS = 20;
 
     /* Every face, held once: Direction.values() hands back a fresh copy of the array on every call. */
     /*
@@ -115,6 +128,12 @@ final class NetworkAttachment {
             final long found = cable(level);
             resolved = found == NO_CABLE ? null : system.connectivity().networkOf(found).orElse(null);
         }
+        // A cable is the machine's link when it has one; with none, a Wi-Fi card joins it through an access point.
+        final AccessPointBlockEntity point = resolved == null && this.machine.isRunning() ? accessPoint(level) : null;
+        this.accessPoint = point == null ? null : point.getBlockPos();
+        if (point != null) {
+            resolved = point.serving();
+        }
         if (this.registered != null && !this.registered.equals(resolved)) {
             this.machine.unregisterNode(system, this.registered);
             this.registered = null;
@@ -147,6 +166,33 @@ final class NetworkAttachment {
                         resolved != null ? SystemSound.DEVICE_CONNECT : SystemSound.DEVICE_DISCONNECT);
             }
         }
+    }
+
+    /**
+     * The access point this machine joins its network through: with a Wi-Fi card in it, the one it joined last while
+     * that one still gives it the network, and once a second the nearest that reaches it; null with no card or none in
+     * reach.
+     */
+    @Nullable
+    AccessPointBlockEntity accessPoint(final ServerLevel level) {
+        if (this.machine.wifiCard() == null) {
+            return null;
+        }
+        if (--this.lookForPointIn <= 0 || this.accessPoint == null) {
+            this.lookForPointIn = LOOK_FOR_POINT_TICKS;
+            return AccessPoints.nearest(level, this.machine.getBlockPos());
+        }
+        if (Loaded.blockEntity(level, this.accessPoint) instanceof AccessPointBlockEntity point
+                && point.serving() != null && point.reaches(this.machine.getBlockPos())) {
+            return point;
+        }
+        return AccessPoints.nearest(level, this.machine.getBlockPos());
+    }
+
+    /** The access point this machine joined its network through last, or null when it is on a cable or on none. */
+    @Nullable
+    BlockPos joinedThrough() {
+        return this.accessPoint;
     }
 
     /** Lets go of the network this machine was registered with, if any. Safe to run twice. */

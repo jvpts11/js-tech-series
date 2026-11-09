@@ -157,7 +157,10 @@ final class CopyPlans {
             return Double.MAX_VALUE;
         }
         final Optional<DataLink> slowest = here.slowestCableTo(level, there);
-        return slowest.map(link -> CopyTiming.cableRate(link.throughput())).orElse(Double.MAX_VALUE);
+        // An end on Wi-Fi goes no faster than its Wi-Fi, whatever the cables between the two carry.
+        final long wireless = Math.min(here.ownLinkItemsPerTick(level), there.ownLinkItemsPerTick(level));
+        return slowest.map(link -> CopyTiming.cableRate(Math.min(link.throughput(), wireless)))
+                .orElse(Double.MAX_VALUE);
     }
 
     /* The part of an explorer path that is a path on its volume, past "media:<drive>" or "net:". */

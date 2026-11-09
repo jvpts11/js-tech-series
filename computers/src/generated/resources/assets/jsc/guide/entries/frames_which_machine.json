@@ -297,7 +297,7 @@
   ],
   "icon": "jsc:personal_computer",
   "id": "jsc:frames_which_machine",
-  "order": 146,
+  "order": 147,
   "section": "jsc:midsoft_installs",
   "title": "jsc.guide.frames_which_machine.title"
 }

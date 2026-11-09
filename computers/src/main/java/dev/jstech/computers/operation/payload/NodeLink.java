@@ -26,9 +26,10 @@ import org.jetbrains.annotations.Nullable;
  * @param reason    why it is off the network: {@link #REASON_NONE}, {@link #REASON_BENDS} or {@link #REASON_TOO_LONG}
  * @param where     where its fibre bends, a block position, or {@link #NO_PLACE}
  * @param router    the optical router its fibre goes through, a block position, or {@link #NO_PLACE}
+ * @param wifi      how it is on the network by Wi-Fi, for a computer that joined it through an access point; or null
  */
 public record NodeLink(String link, boolean optical, boolean up, int runLength, byte reason, long where,
-                       long router) {
+                       long router, @Nullable Wifi wifi) {
 
     /** A position no block can have, for a link with no bend or no router to tell of. */
     public static final long NO_PLACE = Long.MIN_VALUE;
@@ -36,24 +37,39 @@ public record NodeLink(String link, boolean optical, boolean up, int runLength, 
     public static final byte REASON_BENDS = 1;
     public static final byte REASON_TOO_LONG = 2;
     /** A node whose link the screen does not tell: a subframe, a supercomputer, a machine on no cable it knows. */
-    public static final NodeLink NONE = new NodeLink("", false, true, 0, REASON_NONE, NO_PLACE, NO_PLACE);
+    public static final NodeLink NONE = new NodeLink("", false, true, 0, REASON_NONE, NO_PLACE, NO_PLACE, null);
 
     public static final StreamCodec<RegistryFriendlyByteBuf, NodeLink> STREAM_CODEC =
             StreamCodec.of(NodeLink::encode, NodeLink::decode);
+    /* The longest name a node goes by on the screen. */
+    private static final int MOST_NAME = 64;
+
+    /**
+     * A computer's Wi-Fi (computers/docs/design/wireless.md): its card's and its access point's, by their serialized
+     * names, and the access point it joined through, by the name the screen shows it by.
+     */
+    public record Wifi(String card, String accessPoint, String through) {
+    }
 
     /** A node on the network over {@code link}, through {@code router} when its fibre passes one. */
     public static NodeLink up(final DataLink link, final boolean optical, final int runLength, final long router) {
-        return new NodeLink(link.serializedName(), optical, true, runLength, REASON_NONE, NO_PLACE, router);
+        return new NodeLink(link.serializedName(), optical, true, runLength, REASON_NONE, NO_PLACE, router, null);
     }
 
     /** A node whose fibre bends at {@code where}, with no optical router there to turn it. */
     public static NodeLink bends(final DataLink link, final boolean optical, final long where) {
-        return new NodeLink(link.serializedName(), optical, false, 0, REASON_BENDS, where, NO_PLACE);
+        return new NodeLink(link.serializedName(), optical, false, 0, REASON_BENDS, where, NO_PLACE, null);
     }
 
     /** A node cut off by a run of {@code link}, {@code runLength} cables long, longer than the cable reaches. */
     public static NodeLink tooLong(final DataLink link, final boolean optical, final int runLength) {
-        return new NodeLink(link.serializedName(), optical, false, runLength, REASON_TOO_LONG, NO_PLACE, NO_PLACE);
+        return new NodeLink(link.serializedName(), optical, false, runLength, REASON_TOO_LONG, NO_PLACE, NO_PLACE,
+                null);
+    }
+
+    /** A computer on the network by Wi-Fi, through an access point. */
+    public static NodeLink wireless(final Wifi wifi) {
+        return new NodeLink("", false, true, 0, REASON_NONE, NO_PLACE, NO_PLACE, wifi);
     }
 
     /** The cable's link, or null when the node is plugged into none the screen can tell. */
@@ -70,10 +86,23 @@ public record NodeLink(String link, boolean optical, boolean up, int runLength, 
         buf.writeByte(link.reason);
         buf.writeLong(link.where);
         buf.writeLong(link.router);
+        buf.writeBoolean(link.wifi != null);
+        if (link.wifi != null) {
+            buf.writeUtf(link.wifi.card(), 32);
+            buf.writeUtf(link.wifi.accessPoint(), 32);
+            buf.writeUtf(link.wifi.through(), MOST_NAME);
+        }
     }
 
     private static NodeLink decode(final RegistryFriendlyByteBuf buf) {
-        return new NodeLink(buf.readUtf(32), buf.readBoolean(), buf.readBoolean(), buf.readVarInt(), buf.readByte(),
-                buf.readLong(), buf.readLong());
+        final String link = buf.readUtf(32);
+        final boolean optical = buf.readBoolean();
+        final boolean up = buf.readBoolean();
+        final int runLength = buf.readVarInt();
+        final byte reason = buf.readByte();
+        final long where = buf.readLong();
+        final long router = buf.readLong();
+        final Wifi wifi = buf.readBoolean() ? new Wifi(buf.readUtf(32), buf.readUtf(32), buf.readUtf(MOST_NAME)) : null;
+        return new NodeLink(link, optical, up, runLength, reason, where, router, wifi);
     }
 }

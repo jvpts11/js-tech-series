@@ -60,6 +60,11 @@ final class NetworkManagerTexts {
     static final TextKey PERSONAL_COMPUTERS =
             TextKey.of("jsc.network_manager.personal_computers", "Personal computers");
     static final TextKey CLUSTER_MANAGERS = TextKey.of("jsc.network_manager.cluster_managers", "Cluster managers");
+    static final TextKey ACCESS_POINTS = TextKey.of("jsc.network_manager.access_points", "Access points");
+    // An access point's hover card (computers/docs/design/wireless.md).
+    static final TextKey REACH_AND_SPEED = TextKey.of("jsc.network_manager.reach_and_speed",
+            "Reach %s blocks · %s it/t");
+    static final TextKey DRAWS = TextKey.of("jsc.network_manager.draws", "Draws %s W");
     static final TextKey NODES = TextKey.of("jsc.network_manager.nodes", "NODES");
 
     // The map and a node's tooltip.

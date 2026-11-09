@@ -19,9 +19,6 @@ import dev.jstech.computers.hardware.CaseGlass;
 import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.os.media.DiscTray;
 import dev.jstech.computers.registry.HardwareRegistry;
-import dev.jstech.core.cable.BundleShape;
-import dev.jstech.core.cable.CableBlockEntity;
-import dev.jstech.core.cable.Lane;
 import dev.jstech.core.client.model.kit.IKitDriver;
 import dev.jstech.core.client.model.kit.IKitExtras;
 import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
@@ -40,10 +37,8 @@ import java.util.Set;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import org.jetbrains.annotations.Nullable;
@@ -98,14 +93,11 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
     private static final String SEAT_FAN = "seat_fan_";
     /** The mark of the light a case gives the fans and coolers in it: lit_<light>. */
     private static final String LIT = "lit_";
-    /* The cable block's lanes on a face, across and up. */
-    private static final int LANES = 3;
     /*
      * What a case that takes its cables only from behind shows for a line plugged in at each lane of the cable block
-     * behind it, its socket and its cord: hookup_<column>_<row>, the column counted from the model's -x side and the
-     * row from the bottom, kept at column * 3 + row.
+     * behind it, its socket and its cord (BackHookups).
      */
-    private static final String[] HOOKUP_BONES = hookupBones();
+    private static final String[] HOOKUP_BONES = BackHookups.bones(ComputingLooks.COMPUTER_HOOKUP);
 
     /* The seats of each form of disk, on the board or in the case: seat_<form>_<n>. */
     private static final Map<String, String[]> DISK_SEATS = new HashMap<>();
@@ -193,37 +185,13 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
         if (Arrays.stream(hookups).allMatch(bone -> bone < 0)) {
             return;
         }
-        final boolean[] plugged = new boolean[hookups.length];
-        final Level level = computer.getLevel();
-        final Direction facing = computer.getBlockState().getValue(HorizontalDirectionalBlock.FACING);
-        if (level != null && level.getBlockEntity(computer.getBlockPos().relative(facing.getOpposite()))
-                instanceof CableBlockEntity cable) {
-            // The model's +x runs the world's way clockwise of its facing; a plug's across runs east or south.
-            final Direction modelX = facing.getClockWise();
-            final int sign = modelX.getStepX() + modelX.getStepZ();
-            for (final BundleShape.Plug plug : cable.shape().plugs()) {
-                if (plug.face() == facing.get3DDataValue()) {
-                    final int column = Mth.clamp((int) Math.round(plug.across() * sign / Lane.PITCH) + 1, 0, LANES - 1);
-                    final int row = Mth.clamp((int) Math.round(plug.up() / Lane.PITCH) + 1, 0, LANES - 1);
-                    plugged[column * LANES + row] = true;
-                }
-            }
-        }
+        final boolean[] plugged = BackHookups.plugged(computer.getLevel(), computer.getBlockPos(),
+                computer.getBlockState().getValue(HorizontalDirectionalBlock.FACING), wire -> true);
         for (int k = 0; k < hookups.length; k++) {
             if (hookups[k] >= 0) {
                 pose.setHidden(hookups[k], !plugged[k]);
             }
         }
-    }
-
-    private static String[] hookupBones() {
-        final String[] out = new String[LANES * LANES];
-        for (int column = 0; column < LANES; column++) {
-            for (int row = 0; row < LANES; row++) {
-                out[column * LANES + row] = ComputingLooks.COMPUTER_HOOKUP + column + "_" + row;
-            }
-        }
-        return out;
     }
 
     /* The bones of each part in each bay, named once rather than every frame: <prefix><bay>_<part>. */

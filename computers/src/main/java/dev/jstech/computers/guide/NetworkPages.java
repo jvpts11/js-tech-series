@@ -9,10 +9,13 @@ package dev.jstech.computers.guide;
 
 import static dev.jstech.computers.guide.ComputersGuide.blocksOf;
 import static dev.jstech.computers.guide.ComputersGuide.cablesOn;
+import static dev.jstech.computers.guide.ComputersGuide.hardwareOf;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.AccessPointBlock;
 import dev.jstech.computers.block.RepeaterBlock;
 import dev.jstech.computers.block.RouterBlock;
+import dev.jstech.computers.hardware.WifiCardSpec;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.core.cable.CoreCables;
@@ -321,6 +324,60 @@ final class NetworkPages {
                         "Put a router of the newer era between them.",
                         "The far end is still off the network.",
                         "A run on one side of the repeater is still longer than its range. Add a repeater inside it.")
+                .register();
+        wireless(guide, section);
+    }
+
+    /* Wi-Fi: the access points and the cards that join a small computer through one (wireless.md). */
+    private static void wireless(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("wireless", section).titled("Wi-Fi: access points and Wi-Fi cards")
+                .icon(ComputingModule.STANDARD_ACCESS_POINT)
+                .coversAll(blocksOf(AccessPointBlock.class))
+                .coversAll(hardwareOf(WifiCardSpec.class))
+                .paragraph("From the Legacy era on, a small computer can join the network with no cable of its own."
+                        + " You put a Wi-Fi card in it, and set a Wireless Access Point on the network within its"
+                        + " reach. The access point gives the network it is cabled to to every computer with a card"
+                        + " round it.")
+                .define("Wireless Access Point", "A network device that gives its network to the computers with a"
+                        + " Wi-Fi card within its reach.")
+                .define("Wi-Fi card", "An expansion card that joins a small computer to the network through an"
+                        + " access point instead of a cable.")
+                .table("The access points", "Era", "Standard", "Reach", "Speed", "Draw")
+                .row(GuideCell.words("Legacy"), GuideCell.words("802.11b/g"), GuideCell.words("24 blocks"),
+                        GuideCell.words("4 items a tick"), GuideCell.words("10 W"))
+                .row(GuideCell.words("Transition"), GuideCell.words("802.11n"), GuideCell.words("32 blocks"),
+                        GuideCell.words("16 items a tick"), GuideCell.words("12 W"))
+                .row(GuideCell.words("Standard"), GuideCell.words("802.11ac"), GuideCell.words("48 blocks"),
+                        GuideCell.words("64 items a tick"), GuideCell.words("15 W"))
+                .row(GuideCell.words("Advanced"), GuideCell.words("Wi-Fi 6"), GuideCell.words("64 blocks"),
+                        GuideCell.words("128 items a tick"), GuideCell.words("20 W"))
+                .subheading("Setting up an access point")
+                .paragraph("An access point takes two lines: the access cable of its era or an older one, and the"
+                        + " energy cable. Both come in through one face. The Legacy's and the Transition's stand on a"
+                        + " desk, facing you, and take their cables from behind. The Standard's and the Advanced's are"
+                        + " fixed to a ceiling or a wall on their mounting plate, and take their cables through the face"
+                        + " they are fixed to; take that block away and the access point comes off with it.")
+                .paragraph("Its lamps tell how it stands: the power lamp while it has its energy, and the two traffic"
+                        + " lamps blinking while it is on a network. Several access points in one place do not"
+                        + " conflict: each computer joins the nearest one that reaches it, and an access point takes"
+                        + " any number of computers.")
+                .subheading("The cards")
+                .paragraph("Each era has its Wi-Fi card: PCI on the Legacy, PCI Express later. It goes in a Personal"
+                        + " Computer, a Crafting Computer or a Cluster Management Computer; the Mainframe and the racks"
+                        + " stay on the backbone, by cable. The card draws nothing. A computer that has a cable keeps"
+                        + " the cable for its link, card or no card.")
+                .paragraph("A link goes at the speed of the older of its two ends, as real Wi-Fi does: a Standard card"
+                        + " through a Legacy access point goes at 4 items a tick. Copies of files and songs over the"
+                        + " network go no faster than that. The Network Manager lists each access point as an ACCESS"
+                        + " POINT node on its cable, and shows the computer's link as Wi-Fi; pick the computer in the"
+                        + " Devices list to read which end sets its speed ([](jsc:network_manager)).")
+                .ifSomethingGoesWrong("A computer with a card does not join the network.",
+                        "Move it within the access point's reach, or check that the access point has its energy"
+                                + " and its cable: its power lamp is lit and its traffic lamps blink.",
+                        "A fixed access point will not go where you click.",
+                        "It goes under a ceiling or on a wall, never on a floor, and the face it is fixed to must be"
+                                + " solid.")
+                .seeAlso("jsc:routers", "jsc:data_cables", "jsc:network_manager")
                 .register();
     }
 

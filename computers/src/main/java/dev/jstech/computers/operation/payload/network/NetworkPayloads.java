@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.network;
 
 import dev.jstech.computers.block.part.AbstractBusPart;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
@@ -47,6 +48,8 @@ import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.wireless.AccessPoints;
+import dev.jstech.computers.wireless.WirelessLink;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.format.Unit;
 import dev.jstech.core.format.UnitFormatter;
@@ -323,6 +326,16 @@ public final class NetworkPayloads {
                         ShortId.of(sc.nodeUuid().asString()), scName, sc.parallelCrafts() + " crafts",
                         sc.parallelCrafts() > 0, 0, 0, 0L, 0L, NetworkNodeInfo.SHARE_UNKNOWN, "", NodeLink.NONE));
             }
+            // The access points on its cables, each a node of its own, online while it has its energy.
+            for (final AccessPointBlockEntity point : AccessPoints.on(level, net)) {
+                if (nodes.size() >= NetworkManagerPayload.MAX_NODES) {
+                    break;
+                }
+                nodes.add(new NetworkNodeInfo(NetworkNodeInfo.KIND_ACCESS_POINT,
+                        ShortId.of(point.nodeUuid().asString()), AccessPointBlockEntity.hostname(point.nodeUuid()),
+                        point.standard().serializedName(), point.isOn(), 0, 0, 0L, 0L,
+                        NetworkNodeInfo.SHARE_UNKNOWN, "", linkOf(level, links, point.getBlockPos())));
+            }
             lostNodes(level, links, nodes);
         }
         return nodes;
@@ -365,8 +378,17 @@ public final class NetworkPayloads {
         if (links == null) {
             return NodeLink.NONE;
         }
-        final Set<Long> cables = Loaded.blockEntity(level, pos) instanceof AbstractComputerBlockEntity computer
-                ? computer.networkCables(level)
+        final BlockEntity at = Loaded.blockEntity(level, pos);
+        if (at instanceof AbstractComputerBlockEntity computer) {
+            // A computer on Wi-Fi is on the network through the air, whatever cable its access point is on.
+            final WirelessLink wireless = computer.wirelessLink(level);
+            if (wireless != null) {
+                return NodeLink.wireless(new NodeLink.Wifi(wireless.card().serializedName(),
+                        wireless.accessPoint().serializedName(), AccessPointBlockEntity.hostname(wireless.pointNode())));
+            }
+        }
+        final Set<Long> cables = at instanceof AbstractComputerBlockEntity computer ? computer.networkCables(level)
+                : at instanceof AccessPointBlockEntity point ? Set.copyOf(point.cables(level))
                 : NetworkSystem.get(level).connectivity().bridgedBy(pos.asLong());
         return links.of(cables, links.optical(pos));
     }

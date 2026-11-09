@@ -322,8 +322,17 @@ public final class MusicDownloads {
         return Math.max(1, running);
     }
 
-    /* A way whose cable is unknown is taken at the slowest cable's speed. */
-    private static long speedOf(@Nullable final DataLink link) {
-        return ComputersServerConfig.songBytesPerSecond(link);
+    /*
+     * A way whose cable is unknown is taken at the slowest cable's speed; a computer on Wi-Fi takes the song no faster
+     * than its Wi-Fi carries, whatever the cables beyond it do.
+     */
+    private long speedOf(@Nullable final DataLink link) {
+        final long cable = ComputersServerConfig.songBytesPerSecond(link);
+        if (!(computer.getLevel() instanceof ServerLevel level)) {
+            return cable;
+        }
+        final int wireless = computer.ownLinkItemsPerTick(level);
+        return wireless == Integer.MAX_VALUE ? cable
+                : Math.min(cable, ComputersServerConfig.songBytesPerSecond((long) wireless));
     }
 }

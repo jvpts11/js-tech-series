@@ -394,4 +394,10 @@ public final class ComputersServerConfig {
         }
         return Math.max(1L, base * link.throughput() / ETHERNET.throughput());
     }
+
+    /** How fast a song comes over a way that carries {@code itemsPerTick}, a Wi-Fi's, scaled as a cable's is. */
+    public static long songBytesPerSecond(final long itemsPerTick) {
+        final long base = FILE.get(ETHERNET_KILOBYTES_PER_SECOND) * 1_024L;
+        return Math.max(1L, base * itemsPerTick / ETHERNET.throughput());
+    }
 }

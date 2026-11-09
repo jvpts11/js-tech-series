@@ -35,6 +35,7 @@ public record NetworkNodeInfo(int kind, String id, String name, String detail, b
     private static final TextKey CLUSTER_MANAGEMENT =
             TextKey.of("jsc.network_node.cluster_management", "CLUSTER MGMT");
     private static final TextKey NODE = TextKey.of("jsc.network_node.node", "NODE");
+    private static final TextKey ACCESS_POINT = TextKey.of("jsc.network_node.access_point", "ACCESS POINT");
 
     public static final int KIND_MAINFRAME = 0;
     public static final int KIND_SERVER = 1;
@@ -43,6 +44,8 @@ public record NetworkNodeInfo(int kind, String id, String name, String detail, b
     public static final int KIND_CRAFTING = 4;
     public static final int KIND_SUPERCOMPUTER = 5;
     public static final int KIND_CLUSTER_MANAGEMENT = 6;
+    /** A Wireless Access Point: its detail names the Wi-Fi it gives (computers/docs/design/wireless.md). */
+    public static final int KIND_ACCESS_POINT = 7;
 
     /** Sentinel for {@link #publicPermille} when a node has no directly readable disk share. */
     public static final int SHARE_UNKNOWN = -1;
@@ -99,6 +102,7 @@ public record NetworkNodeInfo(int kind, String id, String name, String detail, b
             case KIND_CRAFTING -> CRAFTING;
             case KIND_SUPERCOMPUTER -> SUPERCOMPUTER;
             case KIND_CLUSTER_MANAGEMENT -> CLUSTER_MANAGEMENT;
+            case KIND_ACCESS_POINT -> ACCESS_POINT;
             default -> NODE;
         }).text();
     }

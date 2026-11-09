@@ -56,6 +56,13 @@ final class NetworkLinkTexts {
     static final TextKey SLOWEST = TextKey.of("jsc.network_links.slowest", "Slowest link in use");
     static final TextKey SLOWEST_VALUE = TextKey.of("jsc.network_links.slowest_value", "%s, %s it/t (%s)");
     static final TextKey NONE = TextKey.of("jsc.network_links.none", "none");
+    // A computer on Wi-Fi (computers/docs/design/wireless.md).
+    static final TextKey WIFI = TextKey.of("jsc.network_links.wifi", "Wi-Fi");
+    static final TextKey WIFI_EXPLAINED = TextKey.of("jsc.network_links.wifi_explained",
+            "%s, Wi-Fi through %s: its card is %s (%s it/t), the access point %s (%s it/t); the older one sets the"
+                    + " speed, as real Wi-Fi does.");
+    static final TextKey CARD_WIFI = TextKey.of("jsc.network_links.card_wifi", "Wi-Fi %s: %s it/t");
+    static final TextKey WIFI_THROUGH = TextKey.of("jsc.network_links.wifi_through", "through the access point %s");
 
     private NetworkLinkTexts() {
     }

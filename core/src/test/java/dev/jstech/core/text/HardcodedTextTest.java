@@ -214,6 +214,8 @@ class HardcodedTextTest {
             data(COMPUTERS + "os/boot/SystemIntegrity.java", 1, FILES),
             data(COMPUTERS + "os/install/InstallerStyle.java", 1, FILES),
             data(COMPUTERS + "client/os/QuinceArt.java", 9, "small pictures drawn in characters"),
+            data(COMPUTERS + "wireless/WirelessStandard.java", 2,
+                    "the names of the Wi-Fi standards, which are names in every language"),
             data(COMPUTERS + "os/edit/NanoWords.java", 1, "an editor's name and version on its title row"),
             data(COMPUTERS + "os/edit/project/ProjectTemplate.java", 6, "the source files a new project starts with"),
             data(COMPUTERS + "os/fs/InstallerLayout.java", 29, FILES),

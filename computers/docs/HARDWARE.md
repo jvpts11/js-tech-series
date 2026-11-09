@@ -431,6 +431,12 @@ and mends a quarter of the bad sectors left; while it runs, that disk answers th
   Nouvell BorderLink with the port on and each card takes the line between them, which the gateway's line modules
   and its screen's LINES lamps show. What an up line does is in
   [The network](NETWORK.md#two-places-over-a-long-distance-line).
+- **Wi-Fi cards** (added 2026-11-09), one for each era from the Legacy on, only for the small computers (Personal,
+  Crafting and Cluster Management Computers): the Legacy's PCI (802.11g, one antenna), the Transition's PCI-e 2.0
+  (802.11n, three antennas), the Standard's PCI-e 3.0 (802.11ac, three) and the Advanced's PCI-e 4.0 (Wi-Fi 6, two,
+  with its Bluetooth); the antennas stand out of the computer's back. A computer with one and no cable joins the
+  network through the nearest Wireless Access Point that reaches it, at the speed of the older of the card and the
+  access point ([The network](NETWORK.md#wi-fi)). A card draws nothing.
 - **Integra Phi** coprocessors (four of them), for supercomputer nodes.
 
 ## What can go wrong

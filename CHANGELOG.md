@@ -573,6 +573,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   machine. `CpuDesign` gains `memoryItems`, the memory in a chip's package, and `heatSinkWatts`, a heat sink it
   carries on itself, with `withMemory` and `withHeatSink`, as `CpuSpec` does; `ComputerBuild.packageMemory` adds the
   memory up. Experimental.
+- (Computers) Wi-Fi cards: J's Computers' API is at version 17. `ExpansionCardKind.WIFI` is the kind of the Wi-Fi
+  cards, which the Personal, Crafting and Cluster Management Computers alone seat. Experimental.
 - (Computers) Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
   up at a desktop of its own, the one under its own id, with the shell its terminal opens and the manager its
   packages come through. `Platform` gains `QUINCE`, `PackageManagerKind` gains `KEG`, `PanelStyle` gains
@@ -2345,6 +2347,20 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   at the Terminal.
 - (Computers) A program's source started on a computer is built for the computer's own processor, so it runs on a
   PowerPC or a 68k as it does on the x86 line.
+- (Computers) Wi-Fi: a Wireless Access Point for each era from the Legacy on, a network device that takes its era's
+  access cable and the energy cable through one face and gives its network to the small computers with a Wi-Fi card
+  within its reach (24, 32, 48 and 64 blocks) while it has its energy (10, 12, 15 and 20 W). The Legacy's blue and black
+  box and the Transition's piano-black one stand on a desk with their antennas, their lamps for power and traffic, and
+  a socket and cord on their back for each line plugged in, the data's in the colour of the era's access cable; the
+  Standard's white saucer and the Advanced's rounded square are fixed to a ceiling or a wall on their mounting plate,
+  take their cables through it, and come off with the block they are fixed to.
+- (Computers) The Wi-Fi cards, one for each era from the Legacy on (PCI, then PCI Express), for the Personal, Crafting
+  and Cluster Management Computers alone, their antennas standing out of the computer's back. A computer with one and
+  no cable joins the network through the nearest access point that reaches it, at the speed of the older of the card
+  and the access point (4, 16, 64 and 128 items a tick), and its copies of files and songs go no faster. The Network
+  Manager lists each access point as an ACCESS POINT node on its cable and counts them on its Hardware tab, shows a
+  computer's link as Wi-Fi, in a colour and dashes of its own on the Map, and says which end sets its speed for the
+  computer picked.
 - (Computers) A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the

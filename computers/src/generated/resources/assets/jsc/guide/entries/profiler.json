@@ -281,7 +281,7 @@
     }
   ],
   "id": "jsc:profiler",
-  "order": 333,
+  "order": 334,
   "section": "jsc:iql_profiler_section",
   "title": "jsc.guide.profiler.title"
 }

@@ -36,7 +36,12 @@ public final class DeviceLamps {
 
     /** Whether a blinking lamp is lit at this moment of the level's clock. */
     public static boolean blinkLit(@Nullable final Level level) {
-        return level == null || (level.getGameTime() / BLINK_TICKS) % 2 == 0;
+        return blinkLit(level, 0L);
+    }
+
+    /** The same for a lamp {@code lagTicks} behind the clock, which blinks out of step with the others. */
+    public static boolean blinkLit(@Nullable final Level level, final long lagTicks) {
+        return level == null || ((level.getGameTime() + lagTicks) / BLINK_TICKS) % 2 == 0;
     }
 
     /** The names of {@code count} numbered bones, {@code <prefix>0} on, made once rather than every frame. */

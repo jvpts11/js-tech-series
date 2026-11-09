@@ -373,6 +373,7 @@ stable 7
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind READ_CACHE
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind SOUND
 13 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind WAN_INTERFACE
+17 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind WIFI
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind WORKSHOP
 14 dev.jstech.computers.hardware.FormFactor  type record(String id, String label, boolean drivesAScreen)
 14 dev.jstech.computers.hardware.FormFactor  new(String, String)

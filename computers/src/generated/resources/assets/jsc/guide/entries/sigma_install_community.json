@@ -62,7 +62,7 @@
     }
   ],
   "id": "jsc:sigma_install_community",
-  "order": 404,
+  "order": 405,
   "section": "jsc:sharing_packages",
   "title": "jsc.guide.sigma_install_community.title"
 }

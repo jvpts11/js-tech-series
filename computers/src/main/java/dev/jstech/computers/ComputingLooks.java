@@ -7,9 +7,11 @@
  */
 package dev.jstech.computers;
 
+import dev.jstech.computers.block.AccessPointBlock;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
+import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PrinterBlockEntity;
@@ -19,10 +21,13 @@ import dev.jstech.computers.blockentity.UpsBlockEntity;
 import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.wireless.AccessPointMount;
+import dev.jstech.computers.wireless.WirelessStandard;
 import dev.jstech.core.content.GeoLook;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -89,6 +94,21 @@ public final class ComputingLooks {
     public static final String UPS_BATTERY_LAMP = "lamp_battery";
     public static final String UPS_REPLACE_LAMP = "lamp_replace";
     /**
+     * The Wireless Access Points, one model each era and, for the Standard's and the Advanced's, each place they are
+     * fixed: on a ceiling or on a wall. They share no clip.
+     */
+    public static final GeoLook<AccessPointBlockEntity> ACCESS_POINT = GeoLook.of(JsComputers.MODID, "wireless",
+            "access_point", point -> accessPoint(point.getBlockState()));
+    /** A desk access point's three lamps: its power, its Wi-Fi and its network. */
+    public static final String ACCESS_POINT_POWER_LAMP = "lamp_power";
+    public static final String ACCESS_POINT_WLAN_LAMP = "lamp_wlan";
+    public static final String ACCESS_POINT_LAN_LAMP = "lamp_lan";
+    /**
+     * What a desk access point's data hookups are named from, {@code hookup_data_<column>_<row>}, its data cord in its
+     * era's access cable's colour; its energy's are named as a computer's ({@link #COMPUTER_HOOKUP}).
+     */
+    public static final String ACCESS_POINT_DATA_HOOKUP = "hookup_data_";
+    /**
      * The small computers' cases, a model for each machine in each case: the tower of each age, and from the Standard
      * age on the three cases a machine comes in. They share the fans' turning.
      */
@@ -143,6 +163,35 @@ public final class ComputingLooks {
     /** The model of an MF PowerGuard of {@code era}; an era after the Advanced has the Advanced's. */
     public static String ups(final Era era) {
         return HardwareEra.withParts(era).path() + "_ups";
+    }
+
+    /** The model of the access point in {@code state}: its era's, and where a fixed one is fixed. */
+    public static String accessPoint(final BlockState state) {
+        if (!(state.getBlock() instanceof AccessPointBlock block)) {
+            return accessPoint(HardwareEra.LEGACY, AccessPointMount.DESK);
+        }
+        return accessPoint(block.era(), state.getValue(AccessPointBlock.MOUNT));
+    }
+
+    /** The model of the access point of {@code era} fixed as {@code mount}. */
+    public static String accessPoint(final Era era, final AccessPointMount mount) {
+        final WirelessStandard standard = WirelessStandard.of(era);
+        final String name = "access_point_" + (standard == null ? WirelessStandard.LEGACY : standard).serializedName();
+        return mount == AccessPointMount.DESK ? name : name + "_" + mount.getSerializedName();
+    }
+
+    /** What a desk access point's item does not show: its lamps and its hookups. */
+    public static List<String> accessPointAtRest() {
+        final List<String> out = new ArrayList<>(List.of(ACCESS_POINT_POWER_LAMP, ACCESS_POINT_WLAN_LAMP,
+                ACCESS_POINT_LAN_LAMP));
+        for (final String prefix : List.of(COMPUTER_HOOKUP, ACCESS_POINT_DATA_HOOKUP)) {
+            for (int column = 0; column < 3; column++) {
+                for (int row = 0; row < 3; row++) {
+                    out.add(prefix + column + "_" + row);
+                }
+            }
+        }
+        return List.copyOf(out);
     }
 
     /** The model of a Mainframe cabinet of {@code era}. */

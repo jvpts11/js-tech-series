@@ -142,7 +142,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:priorities",
-  "order": 102,
+  "order": 103,
   "section": "jsc:operations",
   "title": "jsc.guide.priorities.title"
 }

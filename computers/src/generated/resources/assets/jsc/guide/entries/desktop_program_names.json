@@ -244,7 +244,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:desktop_program_names",
-  "order": 214,
+  "order": 215,
   "section": "jsc:desktop_environments",
   "title": "jsc.guide.desktop_program_names.title"
 }

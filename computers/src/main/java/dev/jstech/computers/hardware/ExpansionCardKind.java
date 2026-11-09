@@ -43,6 +43,8 @@ public record ExpansionCardKind(String id, List<HostScope> machines, @Nullable T
             "Only a Cluster Management Computer seats a cluster card");
     private static final TextKey WAN_ONLY = TextKey.of("jsc.part_refusal.wan_card",
             "A WAN Interface Card only goes in a WAN Gateway Computer");
+    private static final TextKey SMALL_ONLY = TextKey.of("jsc.part_refusal.wifi_card",
+            "A Wi-Fi card only goes in a Personal, Crafting or Cluster Management Computer");
 
     public static final ExpansionCardKind GPU = own("gpu");
     public static final ExpansionCardKind CRAFTING = own("crafting");
@@ -65,6 +67,13 @@ public record ExpansionCardKind(String id, List<HostScope> machines, @Nullable T
     /** A WAN Interface Card: what a WAN Gateway Computer's port takes its long-distance line by, and it alone. */
     public static final ExpansionCardKind WAN_INTERFACE = KINDS.declare(new ExpansionCardKind(
             HardwareIds.own("wan_interface")).onlyIn(WAN_ONLY, HostScope.WAN_GATEWAY_COMPUTER));
+    /**
+     * A Wi-Fi card: joins a small computer to the network through an access point instead of a cable. The Mainframe
+     * and the racks stay on the backbone, by cable.
+     */
+    public static final ExpansionCardKind WIFI = KINDS.declare(new ExpansionCardKind(HardwareIds.own("wifi"))
+            .onlyIn(SMALL_ONLY, HostScope.PERSONAL_COMPUTER, HostScope.CRAFTING_COMPUTER,
+                    HostScope.CLUSTER_MANAGEMENT_COMPUTER));
 
     public ExpansionCardKind {
         HardwareIds.requireNamespaced(id, "a kind of expansion card");

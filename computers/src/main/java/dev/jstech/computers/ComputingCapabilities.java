@@ -8,6 +8,7 @@
 package dev.jstech.computers;
 
 import dev.jstech.computers.blockentity.AbstractCabinetComputerBlockEntity;
+import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
@@ -76,6 +77,11 @@ public final class ComputingCapabilities {
         event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.UPS_BE.get(), UpsBlockEntity::energyPort);
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ComputingModule.UPS_BE.get(),
                 UpsBlockEntity::feEnergy);
+        // An access point takes its energy on the face its cables come in by, and no other.
+        event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.ACCESS_POINT_BE.get(),
+                AccessPointBlockEntity::energyPort);
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ComputingModule.ACCESS_POINT_BE.get(),
+                AccessPointBlockEntity::feEnergy);
         // A rack takes the energy of the machines in it, on any of its blocks.
         event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.SERVER_RACK_BE.get(),
                 (rack, side) -> rack.energyPort());

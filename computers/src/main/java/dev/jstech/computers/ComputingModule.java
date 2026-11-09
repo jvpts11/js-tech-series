@@ -12,6 +12,7 @@ import static dev.jstech.computers.registry.ComputingContent.shelf;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.block.AccessPointBlock;
 import dev.jstech.computers.block.CableRunTexts;
 import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
@@ -44,6 +45,7 @@ import dev.jstech.computers.block.WanGatewayBlock;
 import dev.jstech.computers.block.WanGatewayPartBlock;
 import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
+import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
@@ -89,6 +91,7 @@ import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.StorageCardSpec;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.hardware.WanCardSpec;
+import dev.jstech.computers.hardware.WifiCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.CabinetBlockItem;
 import dev.jstech.computers.item.MainframeBlockItem;
@@ -112,6 +115,7 @@ import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.registry.OwnComputers;
+import dev.jstech.computers.wireless.AccessPointMount;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
 import dev.jstech.core.cable.Lane;
@@ -746,6 +750,27 @@ public final class ComputingModule {
                     ADVANCED_UPS);
 
     /*
+     * The Wireless Access Points, one each era from the Legacy on, when Wi-Fi came (computers/docs/design/wireless.md):
+     * the Legacy's and the Transition's stand on a desk, the Standard's and the Advanced's are fixed to a ceiling or a
+     * wall on their mounting plate.
+     */
+    public static final BlockEntry<AccessPointBlock> LEGACY_ACCESS_POINT =
+            accessPoint("legacy_access_point", HardwareEra.LEGACY, false)
+                    .named("Legacy Wireless Access Point").register();
+    public static final BlockEntry<AccessPointBlock> TRANSITION_ACCESS_POINT =
+            accessPoint("transition_access_point", HardwareEra.TRANSITION, false)
+                    .named("Transition Wireless Access Point").register();
+    public static final BlockEntry<AccessPointBlock> STANDARD_ACCESS_POINT =
+            accessPoint("standard_access_point", HardwareEra.STANDARD, true)
+                    .named("Standard Wireless Access Point").register();
+    public static final BlockEntry<AccessPointBlock> ADVANCED_ACCESS_POINT =
+            accessPoint("advanced_access_point", HardwareEra.ADVANCED, true)
+                    .named("Advanced Wireless Access Point").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AccessPointBlockEntity>> ACCESS_POINT_BE =
+            CONTENT.blockEntity("access_point", AccessPointBlockEntity::new, LEGACY_ACCESS_POINT,
+                    TRANSITION_ACCESS_POINT, STANDARD_ACCESS_POINT, ADVANCED_ACCESS_POINT);
+
+    /*
      * The speakers, which carry a computer's sound out beside its monitor, a model each era from the Legacy on; and the
      * subwoofer of the Transition set, which takes no cable: set against a satellite, it plays the bass they leave out.
      */
@@ -1216,6 +1241,19 @@ public final class ComputingModule {
             new AnchorCardSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 15, 2)).named("Network Anchor Card")
             .register();
     /*
+     * The Wi-Fi cards, one each era from the Legacy on (computers/docs/design/wireless.md): PCI on the Legacy, PCI
+     * Express later, only in the small computers, each speaking its era's Wi-Fi; they draw nothing.
+     */
+    public static final ItemEntry<Item> WIFI_CARD_LEGACY = wifiCard("wifi_card_legacy",
+            new WifiCardSpec(HardwareEra.LEGACY, PcieGeneration.PCI)).named("Legacy Wi-Fi Card").register();
+    public static final ItemEntry<Item> WIFI_CARD_TRANSITION = wifiCard("wifi_card_transition",
+            new WifiCardSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0)).named("Transition Wi-Fi Card")
+            .register();
+    public static final ItemEntry<Item> WIFI_CARD_STANDARD = wifiCard("wifi_card_standard",
+            new WifiCardSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0)).named("Standard Wi-Fi Card").register();
+    public static final ItemEntry<Item> WIFI_CARD_ADVANCED = wifiCard("wifi_card_advanced",
+            new WifiCardSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0)).named("Advanced Wi-Fi Card").register();
+    /*
      * The WAN Interface Cards, one for each era's long-distance line, each in its era's slot and only in a WAN Gateway
      * Computer, a port each. Their draws are estimates.
      */
@@ -1613,6 +1651,24 @@ public final class ComputingModule {
     }
 
     /**
+     * An access point of {@code era}: drawn by its block entity, its item the desk one or, for one that is fixed, the one
+     * on a wall, which shows its front; the item's lamps dark and its hookups away.
+     */
+    private static BlockBuilder<AccessPointBlock> accessPoint(final String id, final Era era, final boolean mounted) {
+        final String model = ComputingLooks.accessPoint(era, mounted ? AccessPointMount.WALL : AccessPointMount.DESK);
+        final String particle = "block/wireless/" + ComputingLooks.accessPoint(era, AccessPointMount.DESK)
+                + "_particle";
+        return CONTENT.block(id, properties -> new AccessPointBlock(properties, era, mounted))
+                .properties(properties -> properties.mapColor(mounted ? MapColor.SNOW : MapColor.COLOR_BLACK)
+                        .strength(0.5F).sound(SoundType.METAL).noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body", particle)))
+                .geo(ComputingLooks.ACCESS_POINT)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.ACCESS_POINT,
+                        model, DEVICE_FIT, mounted ? List.of() : ComputingLooks.accessPointAtRest()))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.NETWORK, era));
+    }
+
+    /**
      * A speaker: its grille in front, its sockets behind, set down facing whoever places it. Its model, written by
      * hand as {@code block/speaker/<id>}, carries its power light, lit in the {@code _on} model while its computer
      * runs.
@@ -1711,6 +1767,10 @@ public final class ComputingModule {
     }
 
     private static ItemBuilder<Item> wanCard(final String id, final WanCardSpec spec) {
+        return PartItems.card(id, spec, spec.era(), CARD_STACK);
+    }
+
+    private static ItemBuilder<Item> wifiCard(final String id, final WifiCardSpec spec) {
         return PartItems.card(id, spec, spec.era(), CARD_STACK);
     }
 

@@ -24,6 +24,7 @@ import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.StorageCardSpec;
 import dev.jstech.computers.hardware.WanCardSpec;
+import dev.jstech.computers.hardware.WifiCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.registry.HardwareRegistry;
 import java.util.ArrayList;
@@ -81,6 +82,7 @@ public final class PartTooltips {
             case NetworkCardSpec network -> NetworkCardTooltip.append(network, lines);
             case AnchorCardSpec anchor -> AnchorCardTooltip.append(anchor, lines);
             case WanCardSpec wan -> WanCardTooltip.append(wan, lines);
+            case WifiCardSpec wifi -> WifiCardTooltip.append(wifi, lines);
             case StorageCardSpec storage -> StorageCardTooltip.append(storage, stack, lines);
             case CraftingCardSpec crafting -> CraftingCardTooltip.append(crafting, stack, lines);
             case WorkshopCardSpec workshop -> WorkshopCardTooltip.append(workshop, lines);
