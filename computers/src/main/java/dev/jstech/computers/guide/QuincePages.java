@@ -91,8 +91,8 @@ final class QuincePages {
                 .subheading("The Quince System, from three floppies")
                 .paragraph("The Quince System comes on three floppy disks: Install 1, System Tools and Utilities."
                         + " Each floppy's tooltip says which of the three it is. Put the first in a Floppy Drive and"
-                        + " press Install. When the installer has copied what is on it, it asks for the next one:"
-                        + " take the first out, put the next in, and the copy goes on by itself.")
+                        + " press Install. When the installer has copied what is on it, it asks for the next one and"
+                        + " puts the first out of the drive: put the next in, and the copy goes on by itself.")
                 .define("Easy Install", "The Quince System's installer page, which installs the whole system onto"
                         + " the disk it shows.")
                 .subheading("The others, from one disc")
@@ -148,12 +148,13 @@ final class QuincePages {
         guide.page("quince_memory", section).titled("Memory on Quince's systems")
                 .subheading("The classic systems: a block for each program")
                 .paragraph("On the Quince System and Quince OS 9, each program you open gets a block of memory of"
-                        + " its own, which it keeps while it runs. Two sizes set the block: the preferred size and the"
-                        + " minimum size. The program opens in its preferred size while that much is free, in what"
-                        + " is left above its minimum otherwise, and not at all below its minimum.")
+                        + " its own, which it keeps while it runs. On the Quince System the block has one size. On"
+                        + " Quince OS 9 two sizes set it, the preferred size and the minimum size: the program opens"
+                        + " in its preferred size while that much is free, in what is left above its minimum"
+                        + " otherwise, and not at all below its minimum.")
                 .define("Preferred size", "The block a program opens in while that much memory is free.")
-                .define("Minimum size", "The smallest block a program opens in on a classic system.")
-                .paragraph("With a program's window in front, choose Get Info from the File menu to change its two"
+                .define("Minimum size", "The smallest block a program opens in on Quince OS 9.")
+                .paragraph("With a program's window in front, choose Get Info from the File menu to change its"
                         + " sizes. The suggested size beside them is what the program's maker suggests. About This"
                         + " Computer, in the fruit's menu, shows each open program's block as a bar, the part in use"
                         + " darker.")
@@ -204,7 +205,7 @@ final class QuincePages {
                 .define("Quince Store", "The store, from Quince OS X. From the Standard era, it lists the programs"
                         + " the network's Mirror serves, and GET installs one, free.")
                 .define("Server Admin", "On Quince OS X Server: the Mainframe's services, and buttons that stop and"
-                        + " start the Mirror and the Automation Engine.")
+                        + " start the IQL Engine, the Mirror and the Automation Engine.")
                 .paragraph("The classic systems take their programs from media only. The later ones take them from"
                         + " media too, and from the Standard era from the network's Mirror, with the Quince Store or"
                         + " with keg at the Terminal ([](jsc:quince_keg)).")

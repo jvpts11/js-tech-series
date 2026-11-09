@@ -52,9 +52,9 @@ does the same for Integra programs on Quince's chips.
 - **Installing.** The Quince System comes on three floppies: its installer copies the first, asks for the next, and
   goes on once it is in the drive. The others install from one disc. On Quince's own chips, Options on the start-up
   screen opens quinceOS's recovery, to reinstall it, repair its disk with First Aid, or choose the startup disk.
-- **Memory.** Quince OS 9 and the Quince System open each program in a block of its own, set in the program's Get
-  Info (its minimum and preferred sizes): a program opens in its preferred block while that much is free, in what is
-  left above its minimum otherwise, and not at all below it. About This Computer shows the blocks. Quince OS X and
+- **Memory.** The Quince System and Quince OS 9 open each program in a block of its own, set in the program's Get
+  Info: one size on the Quince System; on Quince OS 9 a minimum and a preferred size, the program opening in its
+  preferred block while that much is free, in what is left above its minimum otherwise, and not at all below it. About This Computer shows the blocks. Quince OS X and
   quinceOS share the memory as the other systems do, but when it runs out they end nothing themselves: the programs
   pause and Force Quit Applications asks which to quit, and they go on once there is room.
 - **When it crashes.** The classic systems show the bomb with its error's number (Quince OS 9 names the program that

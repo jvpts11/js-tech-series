@@ -2329,8 +2329,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Aid prints what fsck_hfs does. Help is the Help Center, and the Help Viewer from Quince OS X, and opens on The
   Daemon Handbook, which gains a chapter on Quince's systems; the classic systems have no command line.
 - (Computers) Quince's classic systems open each program in a block of memory of its own, as its Get Info sets it:
-  in its preferred size while that much is free, in what is left above its minimum otherwise, and not at all below
-  it. About This Computer shows each program's block and how much of it is in use.
+  of one size on the Quince System; on Quince OS 9 in its preferred size while that much is free, in what is left
+  above its minimum otherwise, and not at all below it. About This Computer shows each program's block and how much
+  of it is in use.
 - (Computers) Quince OS X and quinceOS out of memory end nothing themselves: the programs pause and Force Quit
   Applications asks which to quit, and they go on once there is room; only with nothing left to quit does the
   system go down.
@@ -2340,8 +2341,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) Quince's programs: Preview, qTunes (the machine's music, the same player every music program on it
   shares), Expedition (a browser, waiting for a web the world has yet to build), the Quince Store (the programs the
   network's Mirror serves, free, from the Standard) and, on Quince OS X Server, Server Admin, which starts and stops
-  the Mainframe's Mirror and Automation Engine. From the Standard, `keg` installs the Mirror's programs at the
-  Terminal.
+  the Mainframe's IQL Engine, Mirror and Automation Engine. From the Standard, `keg` installs the Mirror's programs
+  at the Terminal.
 - (Computers) A program's source started on a computer is built for the computer's own processor, so it runs on a
   PowerPC or a 68k as it does on the x86 line.
 - (Computers) A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
