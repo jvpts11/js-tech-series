@@ -49,7 +49,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:mc_net",
-  "order": 83,
+  "order": 85,
   "section": "jsc:mc_net_terminal",
   "title": "jsc.guide.mc_net.title"
 }

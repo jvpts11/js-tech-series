@@ -13,6 +13,10 @@ import dev.jstech.computers.advancement.PendingAwards;
 import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.api.JsComputersApi;
+import dev.jstech.computers.chain.ChainBenches;
+import dev.jstech.computers.chain.ChainDeposits;
+import dev.jstech.computers.chain.ChainMaterials;
+import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.audio.MusicImports;
 import dev.jstech.computers.block.SmallComputerBlock;
 import dev.jstech.computers.block.part.ComputingParts;
@@ -130,6 +134,11 @@ public class JsComputers {
 
         // The mod's chapter of the manuals and its own Guide to Operations, with the manual's item.
         ComputersGuide.declare();
+        // What the own chain uses of J's Core's catalogue, and the veins its ores lie in.
+        ChainMaterials.declare();
+        ChainDeposits.declare();
+        ChainParts.declare();
+        ChainBenches.declare();
         ComputingModule.register(modEventBus);
         // The buses mounted on cables, registered with the Core's parts.
         ComputingParts.register(modEventBus);

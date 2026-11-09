@@ -59,6 +59,7 @@ One tag per kind of thing, holding it in every era:
 | `#jsc:network` | The data network: its cables, routers, repeaters and interfaces, and the buses on a cable. |
 | `#jsc:components` | The parts a machine is built from: boards, processors, memory, cards, supplies and disks. |
 | `#jsc:programs` | The blank media and the manuals. |
+| `#jsc:chain` | The mod's own chain: the Electronics Workbenches and the parts they assemble on the way to a computer's. |
 
 What every era shares, in the tab J's Computers, is in the tags of its kind and in no era's tag. An installer is in
 the tags of its blank medium.

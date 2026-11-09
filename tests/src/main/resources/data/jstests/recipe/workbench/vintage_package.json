@@ -1,0 +1,11 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {"item": "jsc:memory_chip_vintage", "count": 2},
+    {"item": "jsc:etched_board_vintage", "count": 1}
+  ],
+  "outputs": [
+    {"id": "jsc:ceramic_package", "count": 1}
+  ],
+  "ticks": 20
+}

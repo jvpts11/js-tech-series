@@ -8,10 +8,12 @@
 package dev.jstech.core.material;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
+import java.util.Set;
 
 /**
  * How a material's item looks in each form, drawn as the game loads: every form the game has a texture for comes from
@@ -102,8 +104,8 @@ public final class FormArt {
             {190, 140, 255}};
     private static final double RAINBOW_SHARE = 0.2;
 
-    /* How far a texel of an ore has to be from its rock's, the three channels summed, to be a speck of it. */
-    private static final int SPECK_DIFFERENCE = 40;
+    /* How far a texel of an ore has to be from every colour of its rock, the three channels summed, to be a speck. */
+    private static final int SPECK_DIFFERENCE = 36;
     /* A speck greyer than this keeps the mineral's main colour, whatever its hue. */
     private static final double SECOND_SATURATION = 0.25;
     /* A shining speck's darkest outline, as a share of the mineral's colour, which is at the specks' middle light. */
@@ -204,19 +206,23 @@ public final class FormArt {
     }
 
     /**
-     * The specks of a game's ore: the texels where it differs from the rock it is drawn on, as they are in the ore,
-     * every other texel empty. Both are read 16 by 16; the ore is {@code oreWidth} texels wide, the rock
-     * {@code rockWidth}.
+     * The specks of a game's ore: its texels whose colour is far from every colour of the rock it is drawn on, as they
+     * are in the ore, every other texel empty. Told by colour, not by place: the game draws its ores on a stone that is
+     * not its stone's own picture, so a texel of the ore's rock seldom matches the rock's texel at the same place. Both
+     * are read 16 by 16; the ore is {@code oreWidth} texels wide, the rock {@code rockWidth}.
      */
     public static int[] specks(final int[] ore, final int oreWidth, final int[] rock, final int rockWidth) {
+        final Set<Integer> palette = new HashSet<>();
+        for (int y = 0; y < SIZE; y++) {
+            for (int x = 0; x < SIZE; x++) {
+                palette.add(rock[y * rockWidth + x] | OPAQUE);
+            }
+        }
         final int[] out = new int[SIZE * SIZE];
         for (int y = 0; y < SIZE; y++) {
             for (int x = 0; x < SIZE; x++) {
                 final int a = ore[y * oreWidth + x];
-                final int b = rock[y * rockWidth + x];
-                final int difference = Math.abs(red(a) - red(b)) + Math.abs(green(a) - green(b))
-                        + Math.abs(blue(a) - blue(b));
-                if (difference > SPECK_DIFFERENCE) {
+                if (nearest(a, palette) > SPECK_DIFFERENCE) {
                     out[y * SIZE + x] = a;
                 }
             }
@@ -411,6 +417,16 @@ public final class FormArt {
 
     private static int alpha(final int argb) {
         return argb >>> 24;
+    }
+
+    /* How far {@code argb} is from the nearest colour of {@code palette}, the three channels summed. */
+    private static int nearest(final int argb, final Set<Integer> palette) {
+        int least = Integer.MAX_VALUE;
+        for (final int colour : palette) {
+            least = Math.min(least, Math.abs(red(argb) - red(colour)) + Math.abs(green(argb) - green(colour))
+                    + Math.abs(blue(argb) - blue(colour)));
+        }
+        return least;
     }
 
     private static int red(final int argb) {

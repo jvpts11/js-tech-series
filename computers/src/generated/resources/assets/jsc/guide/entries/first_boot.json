@@ -177,7 +177,7 @@
     }
   ],
   "id": "jsc:first_boot",
-  "order": 239,
+  "order": 241,
   "section": "jsc:installing_linux",
   "title": "jsc.guide.first_boot.title"
 }

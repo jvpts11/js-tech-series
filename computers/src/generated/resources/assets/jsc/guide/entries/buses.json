@@ -324,7 +324,7 @@
     "jsc:external_storage_bus",
     "jsc:advanced_external_storage_bus"
   ],
-  "order": 92,
+  "order": 94,
   "section": "jsc:buses_and_eras",
   "title": "jsc.guide.buses.title"
 }

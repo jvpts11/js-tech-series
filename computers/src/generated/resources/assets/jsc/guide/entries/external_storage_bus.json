@@ -215,7 +215,7 @@
   ],
   "icon": "jsc:external_storage_bus",
   "id": "jsc:external_storage_bus",
-  "order": 89,
+  "order": 91,
   "section": "jsc:storage",
   "title": "jsc.guide.external_storage_bus.title"
 }

@@ -135,6 +135,19 @@ class FormArtTest {
     }
 
     @Test
+    void specks_areToldByColourNotByPlace() {
+        final int[] rock = flat(grey(120));
+        rock[0] = grey(60);
+        final int[] ore = flat(grey(120));
+        // The rock's own dark grey, at another place than the rock has it, is still the rock.
+        ore[7 * FormArt.SIZE + 7] = grey(60);
+        ore[2 * FormArt.SIZE + 9] = grey(220);
+        final int[] specks = FormArt.specks(ore, FormArt.SIZE, rock, FormArt.SIZE);
+        assertEquals(0, texel(specks, 7, 7));
+        assertEquals(grey(220), texel(specks, 9, 2));
+    }
+
+    @Test
     void ore_laysTheSpecksOnTheRockInTheMaterialsColour() {
         final int[] rock = diagonal();
         final int[] specks = new int[FormArt.SIZE * FormArt.SIZE];

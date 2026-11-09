@@ -35,6 +35,7 @@ import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.menu.ServerRouterMenu;
 import dev.jstech.computers.menu.SpeakerMenu;
 import dev.jstech.computers.menu.WanGatewayMenu;
+import dev.jstech.computers.menu.WorkbenchMenu;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.inventory.MenuType;
@@ -148,6 +149,9 @@ public final class ComputingMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<DesktopMenu>> DESKTOP_MENU =
             menu("desktop", DesktopMenu::fromNetwork);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<WorkbenchMenu>> WORKBENCH_MENU =
+            menu("electronics_workbench", WorkbenchMenu::new);
 
     private ComputingMenus() {
     }

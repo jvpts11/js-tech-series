@@ -164,7 +164,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:shutting_down",
-  "order": 168,
+  "order": 170,
   "section": "jsc:desktop_settings",
   "title": "jsc.guide.shutting_down.title"
 }

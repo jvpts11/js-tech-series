@@ -556,7 +556,7 @@
     "jsc:advanced_high_performance_cluster_management_computer",
     "jsc:advanced_aesthetic_cluster_management_computer"
   ],
-  "order": 39,
+  "order": 41,
   "section": "jsc:clusters",
   "title": "jsc.guide.cluster_management_computers.title"
 }

@@ -216,7 +216,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:frames_memory",
-  "order": 153,
+  "order": 155,
   "section": "jsc:midsoft_installs",
   "title": "jsc.guide.frames_memory.title"
 }

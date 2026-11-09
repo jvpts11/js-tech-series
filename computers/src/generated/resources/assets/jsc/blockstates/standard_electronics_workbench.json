@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/standard_electronics_workbench_body"
+    }
+  }
+}

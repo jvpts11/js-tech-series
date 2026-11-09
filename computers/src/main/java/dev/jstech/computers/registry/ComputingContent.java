@@ -90,6 +90,11 @@ public final class ComputingContent {
         NETWORK("network"),
         /** The parts a machine is built from: boards, processors, memory, cards, supplies and disks. */
         COMPONENTS("components"),
+        /**
+         * What the mod's own chain makes on the way to those parts, and the bench of the era: chips, masks, wafers,
+         * passive components, screens, boards and their laminates, fibres and wires.
+         */
+        CHAIN("chain"),
         /** Blank media, then an installer of every system and every installable program. */
         PROGRAMS("programs");
 

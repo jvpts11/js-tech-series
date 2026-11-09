@@ -107,8 +107,9 @@ public final class Forms {
     public static final Form ORE = form("ore", Form.Shape.ORE, "ores", ORE_NAME)
             .fits(MaterialKind.MINERAL, MaterialKind.METAL, MaterialKind.GEM, MaterialKind.CRYSTAL,
                     MaterialKind.NONMETAL_SOLID, MaterialKind.LIQUID).declare();
+    /* A metal's or a mineral's raw ore, and a liquid metal's too: mercury's cinnabar. */
     public static final Form RAW = form("raw", Form.Shape.ITEM, "raw_materials", RAW_NAME)
-            .fits(MaterialKind.METAL, MaterialKind.MINERAL).oreColoured().declare();
+            .fits(MaterialKind.METAL, MaterialKind.MINERAL, MaterialKind.LIQUID).oreColoured().declare();
     /*
      * An ore broken in a crusher, for any mod's crusher, of anything that has an ore; drawn from the Core's own picture
      * of broken ore, in the ore's colour.

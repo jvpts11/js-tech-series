@@ -1,0 +1,10 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {"item": "jsc:memory_chip_legacy", "count": 1}
+  ],
+  "outputs": [
+    {"id": "jsc:cold_cathode_lamp", "count": 1}
+  ],
+  "ticks": 20
+}

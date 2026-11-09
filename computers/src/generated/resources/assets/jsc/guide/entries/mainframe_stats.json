@@ -147,7 +147,7 @@
     }
   ],
   "id": "jsc:mainframe_stats",
-  "order": 376,
+  "order": 378,
   "section": "jsc:library_network",
   "title": "jsc.guide.mainframe_stats.title"
 }

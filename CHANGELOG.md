@@ -2416,6 +2416,31 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Pictures in the media store: the store keeps PNG pictures beside the recordings, read as far as their size
   (`MediaProbe.pngSize`, `MediaInfo.STILL`), and `MediaUploader.upload` brings bytes a game made itself, such as a
   camera's picture.
+- (Computers) The chain's ores, all in the Overworld: lead, zinc, nickel, aluminium, tantalum, chromium, manganese,
+  mercury and fluorspar near the surface (y 0 to 80, a vein about every 12 chunks), cobalt, silver and lithium deeper
+  (y −16 to 40, every 16 chunks), and zirconium, tungsten and molybdenum in the deepslate alone (y −64 to 0, every 24
+  chunks); tin keeps J's Core's veins. Each ore lies in the stone and the deepslate, the last three in the deepslate
+  only and fluorspar in its five rocks, and the forms the chain takes of each metal, compound and alloy (crushed ore,
+  ingots, nuggets, dust, lumps, plates, sheets, foils, wires, rods, boules, wafers, crystals, lenses) come with them,
+  with the chain's liquids: mercury, the acids and solvents, photoresist, ultrapure water, liquid crystal and the
+  batteries' electrolyte.
+- (Computers) The chain's parts: memory and controller chips, their masks and finished wafers for each era from the
+  Vintage to the Advanced; the mask plate, ceramic packages, ceramic and tantalum capacitors, ferrite, inductors and
+  transformers; the laser diodes of the CD, DVD and Blu-ray drives; the cold cathode lamp, the tube, LCD and LED
+  screens and the self-lit panel, their lights animated; FR-2 and FR-4 laminates and each era's etched board; glass
+  and optical fibre, aluminium and gold bonding wire, floppy film, the platters, the blank disc and thermal paste. Each
+  is on the tab of the era it first appears in, and in the new `#jsc:chain` tag.
+- (Computers) The Electronics Workbench, one for each era from the Vintage to the Advanced, where the parts are
+  assembled by hand: a bench makes the parts of its era and of the eras before it from the nine trays of its window,
+  each ingredient in a tray of its own and in any order, with nothing else in the trays. It works as a furnace does,
+  the part waiting in its tray once done, draws 40, 60, 300, 80 and 120 W from the Vintage to the Advanced through the
+  socket on its back, and takes nothing through its sides. Each era's parts are a kind of recipe of their own, shown
+  with the benches that make them.
+- (Core) The generic ores of the electronics chain's metals are drawn as the minerals they are mined from: lead as
+  galena, zinc as sphalerite, nickel as garnierite, aluminium as bauxite, tantalum as coltan, chromium as chromite,
+  manganese as rhodochrosite, mercury as cinnabar, cobalt as cobaltite with its pink bloom, silver native, zirconium as
+  zircon, tungsten as scheelite and molybdenum as molybdenite.
+- (Core) A liquid metal's ore drops its raw ore as a solid metal's does: mercury's drops raw mercury, the cinnabar.
 - (Computers) A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
@@ -3434,6 +3459,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   lighter grey. The gases take their cylinder's colour by the European code: hydrogen red, oxygen white, nitrogen black,
   argon dark green, krypton bright green, chlorine yellow.
 - (Core) Raw ore is drawn in the colour of its ore rather than its metal's: raw tin is cassiterite's brown.
+- (Core) An ore drawn in another rock takes from the game's ore only its specks, told by colour: what is unlike every
+  colour of the stone under it. The game draws its ores on a stone of their own, so telling them by place left grains
+  of that stone around the specks.
 - (Computers) IQL: the computers table gives every computer its era, a Cluster Management Computer's too, and names a
   WAN Gateway Computer as one; the network's log calls a gateway `WAN-` and its short id, This PC "WAN Gateway
   Computer".

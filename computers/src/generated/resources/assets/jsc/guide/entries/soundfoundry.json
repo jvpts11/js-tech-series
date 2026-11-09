@@ -133,7 +133,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:soundfoundry",
-  "order": 64,
+  "order": 66,
   "section": "jsc:social_and_media",
   "title": "jsc.guide.soundfoundry.title"
 }

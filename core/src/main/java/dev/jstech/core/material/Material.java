@@ -200,15 +200,15 @@ public final class Material {
     }
 
     /**
-     * The form its ores drop: its raw form for a metal or a mineral, the gem for a gem, the crystal for a crystal, the
-     * dust for any other solid; none for a liquid, whose ore spills it (native mercury), which its mod sees to.
+     * The form its ores drop: its raw form for a metal, a mineral or a liquid metal (mercury's cinnabar, roasted for
+     * the liquid), the gem for a gem, the crystal for a crystal, the dust for any other solid; none for anything else.
      */
     public Optional<Form> oreDrop() {
         return switch (this.kind) {
             case GEM -> Optional.of(Forms.GEM);
             case CRYSTAL -> Optional.of(Forms.CRYSTAL);
             case NONMETAL_SOLID -> Optional.of(Forms.DUST);
-            case METAL, MINERAL -> Optional.of(Forms.RAW);
+            case METAL, MINERAL, LIQUID -> Optional.of(Forms.RAW);
             default -> Optional.empty();
         };
     }

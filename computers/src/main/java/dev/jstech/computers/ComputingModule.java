@@ -193,7 +193,7 @@ public final class ComputingModule {
      * How a device's body (an encoder, a drive) sits in an item slot: the body is one full block (x -0.5..0.5,
      * y 0..1, z -0.5..0.5 around its origin), so only the height needs re-centring.
      */
-    static final CabinetBlockItem.Fit DEVICE_FIT = new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
+    public static final CabinetBlockItem.Fit DEVICE_FIT = new CabinetBlockItem.Fit(16.0F, 0.0F, -0.5F, 0.0F);
     /** A device's lamps, dark on its item, whatever the devices in the world show. */
     private static final List<String> DEVICE_LAMPS = List.of(MediaBay.POWER_LAMP, MediaBay.BUSY_LAMP);
     /** A printer's lamps and the sheet that comes out of it, none of them on its item. */

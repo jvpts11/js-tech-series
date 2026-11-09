@@ -386,7 +386,7 @@
   ],
   "icon": "jsc:export_bus",
   "id": "jsc:programming_buses",
-  "order": 99,
+  "order": 101,
   "section": "jsc:bus_programming",
   "title": "jsc.guide.programming_buses.title"
 }

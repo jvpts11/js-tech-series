@@ -1,0 +1,155 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.chain_parts.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.chain_parts.table1",
+      "heads": [
+        "jsc.guide.chain_parts.table1_head1",
+        "jsc.guide.chain_parts.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.chain_parts.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.chain_parts.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.chain_parts.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.chain_parts.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.chain_parts.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.chain_parts.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.chain_parts.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.chain_parts.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.chain_parts.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.chain_parts.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.chain_parts.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.chain_parts.table1_6_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.chain_parts.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.chain_parts.table1_7_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.chain_parts.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.chain_parts.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.chain_parts.text2"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:electronics_workbench"
+      ]
+    }
+  ],
+  "icon": "jsc:memory_chip_vintage",
+  "id": "jsc:chain_parts",
+  "items": [
+    "jsc:memory_chip_vintage",
+    "jsc:controller_chip_vintage",
+    "jsc:mask_plate",
+    "jsc:mask_memory_vintage",
+    "jsc:mask_controller_vintage",
+    "jsc:finished_wafer_vintage",
+    "jsc:ceramic_package",
+    "jsc:ceramic_capacitor",
+    "jsc:tantalum_capacitor",
+    "jsc:ferrite",
+    "jsc:inductor",
+    "jsc:transformer",
+    "jsc:tube_screen",
+    "jsc:fr2_laminate",
+    "jsc:etched_board_vintage",
+    "jsc:aluminium_bonding_wire",
+    "jsc:floppy_film",
+    "jsc:platter_vintage",
+    "jsc:memory_chip_legacy",
+    "jsc:controller_chip_legacy",
+    "jsc:mask_memory_legacy",
+    "jsc:mask_controller_legacy",
+    "jsc:finished_wafer_legacy",
+    "jsc:laser_diode_gallium_arsenide",
+    "jsc:cold_cathode_lamp",
+    "jsc:lcd_screen",
+    "jsc:fr4_laminate",
+    "jsc:etched_board_legacy",
+    "jsc:glass_fibre",
+    "jsc:gold_bonding_wire",
+    "jsc:platter",
+    "jsc:blank_disc",
+    "jsc:thermal_paste",
+    "jsc:memory_chip_transition",
+    "jsc:controller_chip_transition",
+    "jsc:mask_memory_transition",
+    "jsc:mask_controller_transition",
+    "jsc:finished_wafer_transition",
+    "jsc:laser_diode_algainp",
+    "jsc:etched_board_transition",
+    "jsc:memory_chip_standard",
+    "jsc:controller_chip_standard",
+    "jsc:mask_memory_standard",
+    "jsc:mask_controller_standard",
+    "jsc:finished_wafer_standard",
+    "jsc:laser_diode_gallium_nitride",
+    "jsc:led_screen",
+    "jsc:etched_board_standard",
+    "jsc:optical_fibre",
+    "jsc:memory_chip_advanced",
+    "jsc:controller_chip_advanced",
+    "jsc:mask_memory_advanced",
+    "jsc:mask_controller_advanced",
+    "jsc:finished_wafer_advanced",
+    "jsc:self_lit_panel",
+    "jsc:etched_board_advanced"
+  ],
+  "order": 28,
+  "section": "jsc:chain",
+  "title": "jsc.guide.chain_parts.title"
+}

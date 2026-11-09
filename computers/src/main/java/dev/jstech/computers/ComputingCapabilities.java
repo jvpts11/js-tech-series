@@ -12,6 +12,8 @@ import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.blockentity.ChargingDockBlockEntity;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.WorkbenchBlockEntity;
+import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.blockentity.ComputerThermalBudget;
 import dev.jstech.computers.blockentity.UpsBlockEntity;
@@ -88,6 +90,10 @@ public final class ComputingCapabilities {
                 ChargingDockBlockEntity::energyPort);
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PortableItems.CHARGING_DOCK_BE.get(),
                 ChargingDockBlockEntity::feEnergy);
+        // An Electronics Workbench takes its energy behind it, at the socket on its drawers, and nowhere else.
+        event.registerBlockEntity(EnergyPorts.PORT, ChainBenches.BENCH_BE.get(), WorkbenchBlockEntity::energyPort);
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ChainBenches.BENCH_BE.get(),
+                WorkbenchBlockEntity::feEnergy);
         // A rack takes the energy of the machines in it, on any of its blocks.
         event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.SERVER_RACK_BE.get(),
                 (rack, side) -> rack.energyPort());

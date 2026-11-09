@@ -67,7 +67,7 @@ class LayoutAuditTest {
             "NetworkServicesLayout", "NetworkLinksLayout", "NetworkEventLogLayout", "PrinterLayout", "DockLayout",
             "PrintedPaperLayout",
             "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
-            "EffectsPageLayout", "TransitionPanelLayout");
+            "EffectsPageLayout", "TransitionPanelLayout", "WorkbenchLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -297,6 +297,8 @@ class LayoutAuditTest {
         c.add(new AuditCase("PrinterLayout", PrinterLayout.layout(), true));
         // The Dock Station's window: each tray and the port with what it holds, the note, the inventory.
         c.add(new AuditCase("DockLayout", DockLayout.layout(), true));
+        // An Electronics Workbench's window: its plate, nine trays, the groove to the part, its strip, the inventory.
+        c.add(new AuditCase("WorkbenchLayout", WorkbenchLayout.layout(), true));
         // A printed sheet being read, the widest: a fanfold page on its side, which the screen scales to fit.
         c.add(new AuditCase("PrintedPaperLayout", PrintedPaperLayout.layout(PrintedPaperLayout.landscape(true),
                 PrintLayout.LANDSCAPE_COLUMNS, PrintLayout.LANDSCAPE_LINES), false));

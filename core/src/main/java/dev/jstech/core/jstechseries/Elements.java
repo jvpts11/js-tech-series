@@ -167,6 +167,20 @@ public final class Elements {
             case TIN -> builder.ore(OreLook.of(OreLook.Pattern.COAL).inColour(0x5A4434));
             // Lithium's ore is drawn as spodumene, the silicate it is mined from, is: pale lilac, glassy crystals.
             case LITHIUM -> builder.ore(OreLook.of(OreLook.Pattern.DIAMOND).inColour(0xC8A0D8).withSheen(0xF0E0F8));
+            // Each other generic ore is drawn as the mineral it is mined from: galena's grey cubes with their shine.
+            case LEAD -> builder.ore(OreLook.of(OreLook.Pattern.IRON).inColour(0x66607A).withSheen(0xD0C8E0));
+            case ZINC -> builder.ore(OreLook.of(OreLook.Pattern.COAL).inColour(0x9A6A2A).withSheen(0xD8A858));
+            case NICKEL -> builder.ore(OreLook.of(OreLook.Pattern.EMERALD).inColour(0x5FA86A));
+            case ALUMINIUM -> builder.ore(OreLook.of(OreLook.Pattern.REDSTONE).inColour(0xA0522D));
+            case TANTALUM -> builder.ore(OreLook.of(OreLook.Pattern.IRON).inColour(0x22222A).withSheen(0x8A7AC8));
+            case CHROMIUM -> builder.ore(OreLook.of(OreLook.Pattern.LAPIS).inColour(0x1E2420).withSheen(0x7FB868));
+            case MANGANESE -> builder.ore(OreLook.of(OreLook.Pattern.EMERALD).inColour(0xD47A9A));
+            case MERCURY -> builder.ore(OreLook.of(OreLook.Pattern.COPPER).inColour(0xB8302A));
+            case COBALT -> builder.ore(OreLook.of(OreLook.Pattern.COPPER, 0xD07090, 0.25, 0.55).inColour(0x8A90A8));
+            case SILVER -> builder.ore(OreLook.of(OreLook.Pattern.GOLD).inColour(0xE8E8F0).withSheen(0xFFFFFF));
+            case ZIRCONIUM -> builder.ore(OreLook.of(OreLook.Pattern.DIAMOND).inColour(0x9A4E2E).withSheen(0xE0A070));
+            case TUNGSTEN -> builder.ore(OreLook.of(OreLook.Pattern.DIAMOND).inColour(0xE8D8A8).withSheen(0xFFF4D0));
+            case MOLYBDENUM -> builder.ore(OreLook.of(OreLook.Pattern.LAPIS).inColour(0x6A7088).withSheen(0xB8C0D8));
             default -> {
             }
         }

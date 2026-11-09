@@ -13,6 +13,7 @@ import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.blockentity.ChargingDockBlockEntity;
+import dev.jstech.computers.blockentity.WorkbenchBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PrinterBlockEntity;
@@ -111,6 +112,13 @@ public final class ComputingLooks {
      */
     public static final String ACCESS_POINT_DATA_HOOKUP = "hookup_data_";
     /**
+     * The Electronics Workbenches, one model each era: the bench of an electronics workshop of its day, its top, its
+     * drawers, its legs and its era's tools on it. Their energy hookups are named as a computer's
+     * ({@link #COMPUTER_HOOKUP}); they share no clip.
+     */
+    public static final GeoLook<WorkbenchBlockEntity> WORKBENCH = GeoLook.of(JsComputers.MODID, "chain",
+            "workbench", bench -> workbench(bench.era()));
+    /**
      * The Mobile Device Charging Docks, one model each era: the PDA's cradle, the white base, the aluminium stand, the
      * wireless stand. Their energy hookups are named as a computer's ({@link #COMPUTER_HOOKUP}); they share no clip.
      */
@@ -201,6 +209,18 @@ public final class ComputingLooks {
         for (final String prefix : List.of(COMPUTER_HOOKUP, ACCESS_POINT_DATA_HOOKUP)) {
             hookups(prefix, out);
         }
+        return List.copyOf(out);
+    }
+
+    /** The model of the Electronics Workbench of {@code era}; an era after the Advanced has the Advanced's. */
+    public static String workbench(final Era era) {
+        return "workbench_" + HardwareEra.withParts(era).path();
+    }
+
+    /** What a bench's item does not show: its hookups. */
+    public static List<String> workbenchAtRest() {
+        final List<String> out = new ArrayList<>();
+        hookups(COMPUTER_HOOKUP, out);
         return List.copyOf(out);
     }
 

@@ -125,7 +125,7 @@
   ],
   "icon": "jsc:personal_computer",
   "id": "jsc:remote_access",
-  "order": 81,
+  "order": 83,
   "section": "jsc:network_remote",
   "title": "jsc.guide.remote_access.title"
 }

@@ -96,7 +96,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:installing_by_hand",
-  "order": 244,
+  "order": 246,
   "section": "jsc:by_hand_basics",
   "title": "jsc.guide.installing_by_hand.title"
 }

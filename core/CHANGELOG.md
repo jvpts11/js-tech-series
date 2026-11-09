@@ -1821,6 +1821,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Pictures in the media store: the store keeps PNG pictures beside the recordings, read as far as their size
   (`MediaProbe.pngSize`, `MediaInfo.STILL`), and `MediaUploader.upload` brings bytes a game made itself, such as a
   camera's picture.
+- The generic ores of the electronics chain's metals are drawn as the minerals they are mined from: lead as
+  galena, zinc as sphalerite, nickel as garnierite, aluminium as bauxite, tantalum as coltan, chromium as chromite,
+  manganese as rhodochrosite, mercury as cinnabar, cobalt as cobaltite with its pink bloom, silver native, zirconium as
+  zircon, tungsten as scheelite and molybdenum as molybdenite.
+- A liquid metal's ore drops its raw ore as a solid metal's does: mercury's drops raw mercury, the cinnabar.
 - A manual leaves out the page of things the game has none of, such as what a mod brings with another mod that
   is not installed.
 - A capsule station is read and set from outside as a machine is (its address, where it sends the rest, what
@@ -2024,6 +2029,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   lighter grey. The gases take their cylinder's colour by the European code: hydrogen red, oxygen white, nitrogen black,
   argon dark green, krypton bright green, chlorine yellow.
 - Raw ore is drawn in the colour of its ore rather than its metal's: raw tin is cassiterite's brown.
+- An ore drawn in another rock takes from the game's ore only its specks, told by colour: what is unlike every
+  colour of the stone under it. The game draws its ores on a stone of their own, so telling them by place left grains
+  of that stone around the specks.
 - A block aboard a moving structure sounds where the structure carries it: a sound played at one of its blocks,
   and a running sound a block entity aboard asks for, are heard from where that block is in the world now, a running
   one following it every tick as the structure moves, where both came from the yard its blocks are kept in, far from

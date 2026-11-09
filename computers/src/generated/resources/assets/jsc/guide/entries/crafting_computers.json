@@ -185,7 +185,7 @@
     "jsc:advanced_high_performance_crafting_computer",
     "jsc:advanced_aesthetic_crafting_computer"
   ],
-  "order": 29,
+  "order": 31,
   "section": "jsc:computers",
   "title": "jsc.guide.crafting_computers.title"
 }

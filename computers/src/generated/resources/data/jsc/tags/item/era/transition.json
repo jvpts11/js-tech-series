@@ -135,6 +135,14 @@
     "jsc:quince_board_qserve_transition",
     "jsc:quince_board_mainframe_t",
     "jsc:cooler_quince_pro_2006",
+    "jsc:memory_chip_transition",
+    "jsc:controller_chip_transition",
+    "jsc:mask_memory_transition",
+    "jsc:mask_controller_transition",
+    "jsc:finished_wafer_transition",
+    "jsc:laser_diode_algainp",
+    "jsc:etched_board_transition",
+    "jsc:transition_electronics_workbench",
     "jsc:dvd_rom",
     "jsc:dvd_rw"
   ]

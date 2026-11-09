@@ -208,6 +208,14 @@
     "jsc:cpu_quince_q1",
     "jsc:cpu_quince_q2",
     "jsc:cpu_quince_q3",
+    "jsc:memory_chip_advanced",
+    "jsc:controller_chip_advanced",
+    "jsc:mask_memory_advanced",
+    "jsc:mask_controller_advanced",
+    "jsc:finished_wafer_advanced",
+    "jsc:self_lit_panel",
+    "jsc:etched_board_advanced",
+    "jsc:advanced_electronics_workbench",
     "jsc:bd_rom",
     "jsc:bd_re"
   ]

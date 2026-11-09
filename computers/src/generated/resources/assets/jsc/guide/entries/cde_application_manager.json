@@ -81,7 +81,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:cde_application_manager",
-  "order": 220,
+  "order": 222,
   "section": "jsc:cde_desktop",
   "title": "jsc.guide.cde_application_manager.title"
 }

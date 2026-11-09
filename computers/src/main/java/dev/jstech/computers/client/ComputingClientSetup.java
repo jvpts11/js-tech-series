@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.PortableItems;
+import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.client.portable.CameraShots;
 import dev.jstech.computers.client.portable.PortableApps;
 import dev.jstech.computers.client.portable.PortableItemRenderer;
@@ -190,6 +191,7 @@ public final class ComputingClientSetup {
         event.register(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), ClusterManagementComputerScreen::new);
         event.register(ComputingMenus.PATTERN_ENCODER_MENU.get(), PatternEncoderScreen::new);
         event.register(ComputingMenus.PRINTER_MENU.get(), PrinterScreen::new);
+        event.register(ComputingMenus.WORKBENCH_MENU.get(), WorkbenchScreen::new);
         event.register(ComputingMenus.DOCK_STATION_MENU.get(), DockStationScreen::new);
         event.register(ComputingMenus.NETWORK_GATEWAY_MENU.get(), NetworkGatewayScreen::new);
         event.register(ComputingMenus.COMMAND_PROMPT_MENU.get(),
@@ -244,6 +246,8 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(ComputingModule.ACCESS_POINT_BE.get(), AccessPointRenderer::create);
         // The Mobile Device Charging Docks: each era's, with the portable standing in it.
         event.registerBlockEntityRenderer(PortableItems.CHARGING_DOCK_BE.get(), ChargingDockRenderer::create);
+        // The Electronics Workbenches: each era's, its socket and cord shown where its energy line comes in.
+        event.registerBlockEntityRenderer(ChainBenches.BENCH_BE.get(), WorkbenchRenderer::create);
         // The small computers: each machine's case, by its age and the case it comes in.
         event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.SMALL_COMPUTER_BE.get(), ComputerRenderer::create);

@@ -154,6 +154,16 @@
     "jsc:quince_board_qserve_standard",
     "jsc:quince_board_mainframe_s",
     "jsc:cooler_quince_pro_2019",
+    "jsc:memory_chip_standard",
+    "jsc:controller_chip_standard",
+    "jsc:mask_memory_standard",
+    "jsc:mask_controller_standard",
+    "jsc:finished_wafer_standard",
+    "jsc:laser_diode_gallium_nitride",
+    "jsc:led_screen",
+    "jsc:etched_board_standard",
+    "jsc:optical_fibre",
+    "jsc:standard_electronics_workbench",
     "jsc:usb_flash_drive"
   ]
 }

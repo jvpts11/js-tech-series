@@ -296,7 +296,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:nextgre_iql",
-  "order": 324,
+  "order": 326,
   "section": "jsc:engine_choice",
   "title": "jsc.guide.nextgre_iql.title"
 }
