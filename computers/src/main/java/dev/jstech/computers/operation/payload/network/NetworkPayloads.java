@@ -43,6 +43,7 @@ import dev.jstech.computers.operation.payload.RequestStorageInsightsPayload;
 import dev.jstech.computers.operation.payload.SetBusNamePayload;
 import dev.jstech.computers.operation.payload.StorageInsightsPayload;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.portable.PortableLinks;
 import dev.jstech.computers.storage.Corruption;
 import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.computers.storage.DriveVolumes;
@@ -336,6 +337,13 @@ public final class NetworkPayloads {
                         point.standard().serializedName(), point.isOn(), 0, 0, 0L, 0L,
                         NetworkNodeInfo.SHARE_UNKNOWN, "", linkOf(level, links, point.getBlockPos())));
             }
+            // The portables carried on it through its access points, each a node while it is there and on.
+            for (final PortableLinks.Joined joined : PortableLinks.on(level, net)) {
+                if (nodes.size() >= NetworkManagerPayload.MAX_NODES) {
+                    break;
+                }
+                nodes.add(portableNode(joined, links));
+            }
             lostNodes(level, links, nodes);
         }
         return nodes;
@@ -371,6 +379,24 @@ public final class NetworkPayloads {
                 nodes.add(computerNodeInfo(kind, computer, computer.nodeUuid().asString(), "", lost.getValue()));
             }
         }
+    }
+
+    /*
+     * A portable's row: its kind, its short id, no name of its own, the device it is as its detail, online, and its
+     * link through the air at the speed of the older end.
+     */
+    private static NetworkNodeInfo portableNode(final PortableLinks.Joined joined, @Nullable final NodeLinks links) {
+        final int kind = switch (joined.model().kind()) {
+            case PDA -> NetworkNodeInfo.KIND_PDA;
+            case SMARTPHONE -> NetworkNodeInfo.KIND_SMARTPHONE;
+            case TABLET -> NetworkNodeInfo.KIND_TABLET;
+        };
+        final WirelessLink link = joined.link();
+        final NodeLink told = links == null ? NodeLink.NONE : NodeLink.wireless(new NodeLink.Wifi(
+                link.card().serializedName(), link.accessPoint().serializedName(),
+                AccessPointBlockEntity.hostname(link.pointNode())));
+        return new NetworkNodeInfo(kind, ShortId.of(joined.device().toString()), "", joined.model().serializedName(),
+                true, 0, 0, 0L, 0L, NetworkNodeInfo.SHARE_UNKNOWN, "", told);
     }
 
     /* The link of the machine at {@code pos}: the cables it is plugged into, and whether it holds a card. */

@@ -13,6 +13,7 @@ import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.PortableItems;
 import dev.jstech.computers.engine.EngineSwap;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.gui.layout.NetworkEventLogLayout;
@@ -28,6 +29,7 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.operation.payload.RequestNetworkManagerPayload;
 import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
 import dev.jstech.computers.operation.payload.SetOperationPriorityPayload;
+import dev.jstech.computers.portable.PortableModel;
 import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.program.OperationPalette;
 import dev.jstech.computers.wireless.WirelessStandard;
@@ -271,6 +273,8 @@ public final class NetworkManagerApp implements IDesktopApp {
                 () -> countKind(NetworkNodeInfo.KIND_CLUSTER_MANAGEMENT)));
         hardwareRows.add(new HardwareRow(NetworkManagerTexts.ACCESS_POINTS,
                 () -> countKind(NetworkNodeInfo.KIND_ACCESS_POINT)));
+        hardwareRows.add(new HardwareRow(NetworkManagerTexts.PORTABLES, () -> countKind(NetworkNodeInfo.KIND_PDA,
+                NetworkNodeInfo.KIND_SMARTPHONE, NetworkNodeInfo.KIND_TABLET)));
         hardwareRows.add(new HardwareRow(NetworkLinkTexts.LINKS, null));
         hardwareRows.add(new HardwareRow(NetworkLinkTexts.OPTICAL_LINKS, () -> GameText.resolve(
                 NetworkLinkTexts.OPTICAL_VALUE.with(hardware().opticalUp() + hardware().opticalDown(),
@@ -660,14 +664,23 @@ public final class NetworkManagerApp implements IDesktopApp {
     }
 
     /* The nodes of a kind on the network; one that lost its link is not on it. */
-    private String countKind(final int kind) {
+    /* How many nodes of any of those kinds are on the network with their link up. */
+    private String countKind(final int... kinds) {
         int n = 0;
         for (final NetworkNodeInfo node : nodes()) {
-            if (node.kind() == kind && node.link().up()) {
-                n++;
+            for (final int kind : kinds) {
+                if (node.kind() == kind && node.link().up()) {
+                    n++;
+                }
             }
         }
         return String.valueOf(n);
+    }
+
+    /* Whether a node of {@code kind} is a portable: a PDA, a smartphone or a tablet. */
+    private static boolean isPortable(final int kind) {
+        return kind == NetworkNodeInfo.KIND_PDA || kind == NetworkNodeInfo.KIND_SMARTPHONE
+                || kind == NetworkNodeInfo.KIND_TABLET;
     }
 
     private void selectTab(final int target) {
@@ -1273,6 +1286,11 @@ public final class NetworkManagerApp implements IDesktopApp {
             lines.add(GameText.resolve(NetworkManagerTexts.REACH_AND_SPEED.with(standard.reachBlocks(),
                     standard.itemsPerTick())));
             lines.add(GameText.resolve(NetworkManagerTexts.DRAWS.with(standard.watts())));
+        }
+        final PortableModel portable = isPortable(n.kind()) ? PortableModel.byName(n.detail()) : null;
+        if (portable != null) {
+            // A portable names the device it is, which its detail carries.
+            lines.add(PortableItems.item(portable).getDescription().getString());
         }
         if (n.cpuMhz() > 0) {
             lines.add(GameText.resolve(n.vramMb() > 0

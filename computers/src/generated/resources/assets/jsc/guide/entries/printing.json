@@ -56,7 +56,7 @@
     }
   ],
   "id": "jsc:printing",
-  "order": 205,
+  "order": 206,
   "section": "jsc:shell_commands",
   "title": "jsc.guide.printing.title"
 }

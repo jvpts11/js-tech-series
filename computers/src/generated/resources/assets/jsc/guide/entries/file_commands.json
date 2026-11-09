@@ -133,7 +133,7 @@
     }
   ],
   "id": "jsc:file_commands",
-  "order": 200,
+  "order": 201,
   "section": "jsc:shell_commands",
   "title": "jsc.guide.file_commands.title"
 }

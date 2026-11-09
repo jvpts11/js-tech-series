@@ -95,7 +95,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:midsoft_boot_manager",
-  "order": 151,
+  "order": 152,
   "section": "jsc:midsoft_installs",
   "title": "jsc.guide.midsoft_boot_manager.title"
 }

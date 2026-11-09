@@ -441,7 +441,7 @@
     }
   ],
   "id": "jsc:sigma_limits",
-  "order": 391,
+  "order": 392,
   "section": "jsc:running_limits",
   "title": "jsc.guide.sigma_limits.title"
 }

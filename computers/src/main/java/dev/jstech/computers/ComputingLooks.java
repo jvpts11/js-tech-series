@@ -12,6 +12,7 @@ import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.blockentity.AccessPointBlockEntity;
+import dev.jstech.computers.blockentity.ChargingDockBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PrinterBlockEntity;
@@ -21,6 +22,7 @@ import dev.jstech.computers.blockentity.UpsBlockEntity;
 import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.portable.PortableModel;
 import dev.jstech.computers.wireless.AccessPointMount;
 import dev.jstech.computers.wireless.WirelessStandard;
 import dev.jstech.core.content.GeoLook;
@@ -109,6 +111,18 @@ public final class ComputingLooks {
      */
     public static final String ACCESS_POINT_DATA_HOOKUP = "hookup_data_";
     /**
+     * The Mobile Device Charging Docks, one model each era: the PDA's cradle, the white base, the aluminium stand, the
+     * wireless stand. Their energy hookups are named as a computer's ({@link #COMPUTER_HOOKUP}); they share no clip.
+     */
+    public static final GeoLook<ChargingDockBlockEntity> CHARGING_DOCK = GeoLook.of(JsComputers.MODID, "wireless",
+            "charging_dock", dock -> chargingDock(dock.era()));
+    /** A dock's lamp while it charges, and the Legacy cradle's second, lit when the battery is full. */
+    public static final String CHARGING_DOCK_LAMP = "lamp_charge";
+    public static final String CHARGING_DOCK_FULL_LAMP = "lamp_full";
+    /** The twelve portables, a model each, drawn in a hand and standing in a dock; they play no clip. */
+    public static final GeoLook<PortableModel> PORTABLE = GeoLook.of(JsComputers.MODID, "portable", "portable",
+            PortableModel::serializedName);
+    /**
      * The small computers' cases, a model for each machine in each case: the tower of each age, and from the Standard
      * age on the three cases a machine comes in. They share the fans' turning.
      */
@@ -185,12 +199,20 @@ public final class ComputingLooks {
         final List<String> out = new ArrayList<>(List.of(ACCESS_POINT_POWER_LAMP, ACCESS_POINT_WLAN_LAMP,
                 ACCESS_POINT_LAN_LAMP));
         for (final String prefix : List.of(COMPUTER_HOOKUP, ACCESS_POINT_DATA_HOOKUP)) {
-            for (int column = 0; column < 3; column++) {
-                for (int row = 0; row < 3; row++) {
-                    out.add(prefix + column + "_" + row);
-                }
-            }
+            hookups(prefix, out);
         }
+        return List.copyOf(out);
+    }
+
+    /** The model of the Mobile Device Charging Dock of {@code era}; an era after the Advanced has the Advanced's. */
+    public static String chargingDock(final Era era) {
+        return "charging_dock_" + HardwareEra.withParts(era).path();
+    }
+
+    /** What a dock's item does not show: its lamps and its hookups. */
+    public static List<String> chargingDockAtRest() {
+        final List<String> out = new ArrayList<>(List.of(CHARGING_DOCK_LAMP, CHARGING_DOCK_FULL_LAMP));
+        hookups(COMPUTER_HOOKUP, out);
         return List.copyOf(out);
     }
 
@@ -218,5 +240,14 @@ public final class ComputingLooks {
     public static String rack(final ServerRackBlockEntity rack) {
         return (rack.getBlockState().getBlock() instanceof SupercomputerRackBlock ? SUPERCOMPUTER_RACKS : SERVER_RACKS)
                 .get(rack.rackEra());
+    }
+
+    /* Adds the nine hookups named from {@code prefix}, one for each lane of the cable block, to {@code out}. */
+    private static void hookups(final String prefix, final List<String> out) {
+        for (int column = 0; column < 3; column++) {
+            for (int row = 0; row < 3; row++) {
+                out.add(prefix + column + "_" + row);
+            }
+        }
     }
 }

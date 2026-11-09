@@ -9,6 +9,12 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.PortableItems;
+import dev.jstech.computers.client.portable.PortableItemRenderer;
+import dev.jstech.computers.client.portable.PortableScreen;
+import dev.jstech.computers.client.portable.PortableViews;
+import dev.jstech.computers.portable.PortableItem;
+import dev.jstech.computers.portable.Portables;
 import dev.jstech.computers.block.IBootMenuScreenOpener;
 import dev.jstech.computers.block.IFirmwareScreenOpener;
 import dev.jstech.computers.block.IInstallDoneScreenOpener;
@@ -93,6 +99,7 @@ public final class ComputingClientSetup {
         SoundfoundryCoverArt.clear();
         PrintedPictureTextures.forgetAll();
         SigmaImages.clear();
+        PortableViews.clear();
     }
 
     /** A printed picture in an item frame shows on it, as a map does. */
@@ -138,6 +145,13 @@ public final class ComputingClientSetup {
                 (pos, monitorPos, sequence, remaining, total, endsDark, splash, who, check) ->
                         SystemBootScreen.expect(sequence, remaining, total, endsDark, splash, who, check));
         ICrashScreenOpener.Holder.set(CrashScreen::expect);
+        // A portable used is held up in the middle of the view.
+        Portables.useOpener(hand -> {
+            final Minecraft game = Minecraft.getInstance();
+            if (game.player != null && game.player.getItemInHand(hand).getItem() instanceof PortableItem item) {
+                game.setScreen(new PortableScreen(hand, item.model()));
+            }
+        });
         IInstallProgressScreenOpener.Holder.set(
                 (pos, monitorPos, kind, osName, targetLabel, ticksLeft, ticksTotal) -> {
                     OsInstallScreen.expectWorking(kind, osName, targetLabel, ticksLeft, ticksTotal);
@@ -223,6 +237,8 @@ public final class ComputingClientSetup {
         // The MF PowerGuards: the UPS of each era, its lamps showing whether the line or the battery carries the load.
         event.registerBlockEntityRenderer(ComputingModule.UPS_BE.get(), UpsRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.ACCESS_POINT_BE.get(), AccessPointRenderer::create);
+        // The Mobile Device Charging Docks: each era's, with the portable standing in it.
+        event.registerBlockEntityRenderer(PortableItems.CHARGING_DOCK_BE.get(), ChargingDockRenderer::create);
         // The small computers: each machine's case, by its age and the case it comes in.
         event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.SMALL_COMPUTER_BE.get(), ComputerRenderer::create);
@@ -233,12 +249,18 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(ComputingModule.MONITOR_BE.get(), MonitorScreenRenderer::new);
     }
 
-    /** The item of every cabinet shows the cabinet, drawn with the same model the world shows. */
+    /**
+     * The item of every cabinet shows the cabinet, drawn with the same model the world shows; a portable in a hand
+     * shows its own model, its screen lit.
+     */
     public static void registerItemRenderers(final RegisterClientExtensionsEvent event) {
         final IClientItemExtensions cabinets = CabinetItemRenderer.extensions();
+        final IClientItemExtensions portables = PortableItemRenderer.extensions();
         for (final Item item : BuiltInRegistries.ITEM) {
             if (item instanceof CabinetBlockItem) {
                 event.registerItem(cabinets, item);
+            } else if (item instanceof PortableItem) {
+                event.registerItem(portables, item);
             }
         }
     }

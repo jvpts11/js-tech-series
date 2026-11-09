@@ -385,6 +385,23 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Manager lists each access point as an ACCESS POINT node on its cable and counts them on its Hardware tab, shows a
   computer's link as Wi-Fi, in a colour and dashes of its own on the Map, and says which end sets its speed for the
   computer picked.
+- The portables: twelve PDAs, smartphones and tablets with the hardware of their era (the Hightide Pocket
+  and Pocket Pro, the qPhone, qPhone 5 and qPhone X, the Motoroller Landmark, the Hightide Wave, the Sunsung Nebula S10,
+  the qPad Air and qPad Pro, the Sunsung Nebula Tab and Tab S7). Carried where an access point reaches you, a portable
+  joins its network at the speed of the older end, and the Network Manager lists it as a PDA, SMARTPHONE or TABLET on
+  Wi-Fi. In the hand it is held as the game holds an item, its screen lit; used, it is held up in the middle of the view
+  over the blurred world, its own face framing its screen, which you press with the mouse.
+- The portables' systems, each in the look of its years: Frames Pocket of 2002 and 2007 on the PDAs, the
+  qOS of 2007, 2013 and 2017 on the qPhones and qPads, Droidix of 2009, 2014 and 2019 on the others. Each starts with
+  its maker's mark, its system's start and its lock, shows the world's time and the day, keeps the network's alerts in
+  its own place (a balloon and the Today, the lock and the Notification Center, the lock and the shade) with a badge on
+  the Alerts icon, shows its hardware, Wi-Fi and battery in its settings, and installs its apps from its store (the
+  Frames Marketplace, the Quince Store, the Droidix Store), served by the network's Mirror, all free.
+- A portable runs on its battery, the bar under its icon (about two game days, a day and a half on a PDA),
+  and switches off flat. A Mobile Device Charging Dock for each era from the Legacy on (the PDA's cradle, a white base,
+  an aluminium stand, a wireless stand) holds a portable of its era by a right click, charges it from the energy behind
+  it at its charger's watts, shows the battery filling on its screen and lights its lamp, and gives it back to an empty
+  hand.
 - A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the

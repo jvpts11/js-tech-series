@@ -192,16 +192,29 @@ public final class MirrorService {
                 new ICliComputer.ServiceStatus("Mirror", this.state().english()));
     }
 
+    /**
+     * Whether the Mirror of {@code network} is serving: what a portable's store asks before it lists anything to
+     * install, as a computer's ways of installing ask {@link #reachable}.
+     */
+    public static boolean servingOn(final ServerLevel level, @Nullable final NetworkUuid network) {
+        final MainframeBlockEntity mainframe = mainframeOf(level, network);
+        return mainframe != null && mainframe.isMirrorActive();
+    }
+
     /** The Mainframe of the machine's network, or null when it is on none, or none is running. */
     @Nullable
     private MainframeBlockEntity mainframe() {
-        final NetworkUuid net = this.terminal.networkUuid();
-        if (net == null) {
+        return mainframeOf(this.level, this.terminal.networkUuid());
+    }
+
+    /* The Mainframe of {@code network} while it is loaded, or null when the network is none or has none. */
+    @Nullable
+    private static MainframeBlockEntity mainframeOf(final ServerLevel level, @Nullable final NetworkUuid network) {
+        if (network == null) {
             return null;
         }
-        return NetworkSystem.get(this.level).mainframePositionOf(net)
-                .map(pos -> Loaded.blockEntity(this.level, BlockPos.of(pos)) instanceof MainframeBlockEntity mf
-                        ? mf : null)
+        return NetworkSystem.get(level).mainframePositionOf(network)
+                .map(pos -> Loaded.blockEntity(level, BlockPos.of(pos)) instanceof MainframeBlockEntity mf ? mf : null)
                 .orElse(null);
     }
 }

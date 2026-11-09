@@ -173,8 +173,12 @@ final class NetworkLinkDrawing {
         if (wifi != null) {
             final WirelessStandard card = WirelessStandard.byName(wifi.card());
             final WirelessStandard point = WirelessStandard.byName(wifi.accessPoint());
-            return GameText.resolve(NetworkLinkTexts.WIFI_EXPLAINED.with(node.displayName(), wifi.through(),
-                    card.cardName(), card.itemsPerTick(), point.accessPointName(), point.itemsPerTick()));
+            // A portable speaks its own Wi-Fi; a computer speaks its card's.
+            final boolean portable = node.kind() == NetworkNodeInfo.KIND_PDA
+                    || node.kind() == NetworkNodeInfo.KIND_SMARTPHONE || node.kind() == NetworkNodeInfo.KIND_TABLET;
+            return GameText.resolve((portable ? NetworkLinkTexts.PORTABLE_WIFI_EXPLAINED
+                    : NetworkLinkTexts.WIFI_EXPLAINED).with(node.displayName(), wifi.through(), card.cardName(),
+                    card.itemsPerTick(), point.accessPointName(), point.itemsPerTick()));
         }
         final DataLink cable = link.dataLink();
         if (link.reason() == NodeLink.REASON_BENDS) {

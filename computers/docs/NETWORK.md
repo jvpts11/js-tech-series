@@ -65,6 +65,50 @@ off with the block it is fixed to. The Network Manager lists each access point a
 and shows a computer's link as Wi-Fi with its speed; the line under the Devices list says which end sets it for the
 computer picked. The numbers are estimates.
 
+### Portables
+
+*Added 2026-11-09.*
+
+The **portables** are computers a player carries: a PDA in the Legacy and the Transition, a smartphone from the
+Transition on, a tablet from the Standard on, each with the hardware of its era and its system from the factory
+(computers/docs/design/wireless.md). A portable carried where an access point reaches its player joins that network at
+the speed of the older end, its own Wi-Fi or the access point's, and the Network Manager lists it as a PDA, SMARTPHONE
+or TABLET node on Wi-Fi.
+
+| Device | Era | System | Chip | Memory | Storage |
+| --- | --- | --- | --- | ---: | ---: |
+| Hightide Pocket | Legacy | Frames Pocket | 400 MHz | 64 MB | 64 MB |
+| Hightide Pocket Pro | Transition | Frames Pocket | 624 MHz | 128 MB | 256 MB + a 2 GB card |
+| qPhone | Transition | qOS | 412 MHz | 128 MB | 8 GB |
+| Motoroller Landmark | Transition | Droidix | 550 MHz | 256 MB | 16 GB |
+| qPhone 5 | Standard | qOS | 2 x 1.3 GHz | 1 GB | 32 GB |
+| Hightide Wave | Standard | Droidix | 4 x 2.3 GHz | 2 GB | 32 GB |
+| qPad Air | Standard | qOS | 3 x 1.5 GHz | 2 GB | 64 GB |
+| Sunsung Nebula Tab | Standard | Droidix | 2 x 1 GHz | 1 GB | 16 GB |
+| qPhone X | Advanced | qOS | 6 x 2.4 GHz | 3 GB | 64 GB |
+| Sunsung Nebula S10 | Advanced | Droidix | 8 x 2.7 GHz | 8 GB | 128 GB |
+| qPad Pro | Advanced | qOS | Quince Q1, 8 x 3.2 GHz | 8 GB | 256 GB |
+| Sunsung Nebula Tab S7 | Advanced | Droidix | 8 x 3.1 GHz | 6 GB | 128 GB |
+
+Used, a portable is held up in the middle of the view over the blurred world, its own face framing its screen, and its
+screen and buttons are pressed with the mouse; the right button goes back. Its system is the one of its years:
+Frames Pocket of 2002 and 2007, the qOS of 2007, 2013 and 2017, Droidix of 2009, 2014 and 2019, the tablets in their
+family's phone look. It starts with its maker's mark, then its system's start, then its lock, which lets go with its
+slider, a swipe up or its Unlock key. It shows the world's time and the day as Day N; the network's alerts wait in each
+system's place (Frames Pocket's balloon and Today, the qOS's lock and Notification Center, Droidix's lock and shade),
+counted by a badge on the Alerts icon; its settings show its hardware, its Wi-Fi and its battery. Its apps come from its
+family's store (the Frames Marketplace, the Quince Store, the Droidix Store), served by the network's Mirror, everything
+free: the network app and the alerts come with every portable, the camera, the gallery and Maps with the smartphones and
+the tablets; the Crypto Wallet installs from the Transition on, the Messenger and prospecting from the Standard on.
+
+A portable carried runs on its battery, the bar under its icon: a full charge lasts about two game days on a smartphone
+or a tablet and a day and a half on a PDA; flat, it switches off. The **Mobile Device Charging Dock** of its era holds
+one by a right click and gives it back to an empty hand; it takes its energy from behind and fills the battery at its
+charger's watts (5 W on the Legacy and the Transition, 10 W on the Standard, 15 W on the Advanced's wireless stand),
+taking from its line only what it gives the battery. A portable in its dock is off, its screen showing the battery
+filling, the dock's lamp lit. What a portable keeps (its apps and its alerts) lives on the server, by the id its item
+carries. The numbers are estimates.
+
 ## Two places over a long-distance line
 
 *Added 2026-11-09.*

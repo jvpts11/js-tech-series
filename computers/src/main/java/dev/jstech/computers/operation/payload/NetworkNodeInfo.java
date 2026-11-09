@@ -36,6 +36,9 @@ public record NetworkNodeInfo(int kind, String id, String name, String detail, b
             TextKey.of("jsc.network_node.cluster_management", "CLUSTER MGMT");
     private static final TextKey NODE = TextKey.of("jsc.network_node.node", "NODE");
     private static final TextKey ACCESS_POINT = TextKey.of("jsc.network_node.access_point", "ACCESS POINT");
+    private static final TextKey PDA = TextKey.of("jsc.network_node.pda", "PDA");
+    private static final TextKey SMARTPHONE = TextKey.of("jsc.network_node.smartphone", "SMARTPHONE");
+    private static final TextKey TABLET = TextKey.of("jsc.network_node.tablet", "TABLET");
 
     public static final int KIND_MAINFRAME = 0;
     public static final int KIND_SERVER = 1;
@@ -46,6 +49,13 @@ public record NetworkNodeInfo(int kind, String id, String name, String detail, b
     public static final int KIND_CLUSTER_MANAGEMENT = 6;
     /** A Wireless Access Point: its detail names the Wi-Fi it gives (computers/docs/design/wireless.md). */
     public static final int KIND_ACCESS_POINT = 7;
+    /**
+     * The portables on the network through an access point: their detail names the device
+     * (computers/docs/design/wireless.md).
+     */
+    public static final int KIND_PDA = 8;
+    public static final int KIND_SMARTPHONE = 9;
+    public static final int KIND_TABLET = 10;
 
     /** Sentinel for {@link #publicPermille} when a node has no directly readable disk share. */
     public static final int SHARE_UNKNOWN = -1;
@@ -103,6 +113,9 @@ public record NetworkNodeInfo(int kind, String id, String name, String detail, b
             case KIND_SUPERCOMPUTER -> SUPERCOMPUTER;
             case KIND_CLUSTER_MANAGEMENT -> CLUSTER_MANAGEMENT;
             case KIND_ACCESS_POINT -> ACCESS_POINT;
+            case KIND_PDA -> PDA;
+            case KIND_SMARTPHONE -> SMARTPHONE;
+            case KIND_TABLET -> TABLET;
             default -> NODE;
         }).text();
     }

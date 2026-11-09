@@ -61,6 +61,9 @@ final class NetworkLinkTexts {
     static final TextKey WIFI_EXPLAINED = TextKey.of("jsc.network_links.wifi_explained",
             "%s, Wi-Fi through %s: its card is %s (%s it/t), the access point %s (%s it/t); the older one sets the"
                     + " speed, as real Wi-Fi does.");
+    static final TextKey PORTABLE_WIFI_EXPLAINED = TextKey.of("jsc.network_links.portable_wifi_explained",
+            "%s, Wi-Fi through %s: it speaks %s (%s it/t), the access point %s (%s it/t); the older one sets the"
+                    + " speed, as real Wi-Fi does.");
     static final TextKey CARD_WIFI = TextKey.of("jsc.network_links.card_wifi", "Wi-Fi %s: %s it/t");
     static final TextKey WIFI_THROUGH = TextKey.of("jsc.network_links.wifi_through", "through the access point %s");
 

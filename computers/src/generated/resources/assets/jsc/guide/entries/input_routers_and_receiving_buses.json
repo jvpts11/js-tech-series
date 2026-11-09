@@ -291,7 +291,7 @@
   ],
   "icon": "jsc:crafting_input_router",
   "id": "jsc:input_routers_and_receiving_buses",
-  "order": 113,
+  "order": 114,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.input_routers_and_receiving_buses.title"
 }

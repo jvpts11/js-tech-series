@@ -11,7 +11,6 @@ import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.AccessPointBlock;
 import dev.jstech.computers.block.DataWires;
-import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.wireless.AccessPoints;
 import dev.jstech.computers.wireless.WirelessStandard;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
@@ -49,8 +48,7 @@ public class AccessPointBlockEntity extends SyncedBlockEntity {
     private final ValueField<Boolean> linked = fields().value("Linked", Codec.BOOL, false).toClient();
     @Nullable
     private NetworkUuid network;
-    /* The part of a joule a tick's draw left over, paid with the next tick's. */
-    private double owed;
+    private final TickDraw draw = new TickDraw();
     /* Ticks until it reads its cable again. */
     private int lookIn;
 
@@ -166,7 +164,7 @@ public class AccessPointBlockEntity extends SyncedBlockEntity {
 
     /* A tick: its draw, and once a second the network off its cable; the lamps follow both. */
     private void tick(final ServerLevel level) {
-        final boolean powered = draw(standard().watts());
+        final boolean powered = draw.draw(store, standard().watts());
         if (--lookIn <= 0) {
             lookIn = TICKS_A_SECOND;
             final List<Long> found = cables(level);
@@ -179,23 +177,5 @@ public class AccessPointBlockEntity extends SyncedBlockEntity {
             linked.set(network != null);
             fields().syncToClients();
         }
-    }
-
-    /* Spends a tick of {@code watts} from its store, sized to a second of them, and says whether it had them. */
-    private boolean draw(final int watts) {
-        store.setCapacity(watts);
-        if (!ComputersServerConfig.drawEnergy()) {
-            return true;
-        }
-        final double need = (double) watts / TICKS_A_SECOND + owed;
-        final long whole = (long) need;
-        // A store with less than this tick's share in it has run dry, though the share rounds down to nothing.
-        if (store.damaged() || store.stored() < (long) Math.ceil(need)) {
-            owed = 0.0;
-            return false;
-        }
-        store.spend(whole);
-        owed = need - whole;
-        return true;
     }
 }

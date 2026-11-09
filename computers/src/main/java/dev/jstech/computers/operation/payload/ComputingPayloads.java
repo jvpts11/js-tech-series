@@ -45,6 +45,7 @@ import dev.jstech.computers.operation.payload.network.NetworkServicesPayloads;
 import dev.jstech.computers.operation.payload.nextgre.NextgrePayloads;
 import dev.jstech.computers.operation.payload.prophet.ProphetPayloads;
 import dev.jstech.computers.operation.payload.operations.OperationsPayloads;
+import dev.jstech.computers.operation.payload.portable.PortablePayloads;
 import dev.jstech.computers.operation.payload.printer.PrintPayloads;
 import dev.jstech.computers.operation.payload.program.ConsolePayloads;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
@@ -117,5 +118,6 @@ public final class ComputingPayloads {
         GatewayManagerPayloads.register(registrar);
         WanPayloads.register(registrar);
         PrintPayloads.register(registrar);
+        PortablePayloads.register(registrar);
     }
 }

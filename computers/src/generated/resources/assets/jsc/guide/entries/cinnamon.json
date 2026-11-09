@@ -90,7 +90,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:cinnamon",
-  "order": 214,
+  "order": 215,
   "section": "jsc:desktop_environments",
   "title": "jsc.guide.cinnamon.title"
 }

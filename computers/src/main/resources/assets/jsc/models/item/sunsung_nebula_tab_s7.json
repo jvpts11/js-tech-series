@@ -1,0 +1,125 @@
+{
+  "loader": "neoforge:separate_transforms",
+  "gui_light": "front",
+  "base": {
+    "parent": "minecraft:builtin/entity",
+    "display": {
+      "firstperson_righthand": {
+        "rotation": [
+          0,
+          -90,
+          25
+        ],
+        "translation": [
+          -1,
+          6.5,
+          0
+        ],
+        "scale": [
+          0.42,
+          0.42,
+          0.42
+        ]
+      },
+      "firstperson_lefthand": {
+        "rotation": [
+          0,
+          90,
+          -25
+        ],
+        "translation": [
+          -1,
+          6.5,
+          0
+        ],
+        "scale": [
+          0.42,
+          0.42,
+          0.42
+        ]
+      },
+      "thirdperson_righthand": {
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "translation": [
+          0,
+          3,
+          1
+        ],
+        "scale": [
+          0.55,
+          0.55,
+          0.55
+        ]
+      },
+      "thirdperson_lefthand": {
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "translation": [
+          0,
+          3,
+          1
+        ],
+        "scale": [
+          0.55,
+          0.55,
+          0.55
+        ]
+      },
+      "ground": {
+        "rotation": [
+          0,
+          0,
+          0
+        ],
+        "translation": [
+          0,
+          2,
+          0
+        ],
+        "scale": [
+          0.5,
+          0.5,
+          0.5
+        ]
+      },
+      "head": {
+        "rotation": [
+          0,
+          180,
+          0
+        ],
+        "translation": [
+          0,
+          13,
+          7
+        ],
+        "scale": [
+          1,
+          1,
+          1
+        ]
+      }
+    }
+  },
+  "perspectives": {
+    "gui": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jsc:item/sunsung_nebula_tab_s7"
+      }
+    },
+    "fixed": {
+      "parent": "minecraft:item/generated",
+      "textures": {
+        "layer0": "jsc:item/sunsung_nebula_tab_s7"
+      }
+    }
+  }
+}

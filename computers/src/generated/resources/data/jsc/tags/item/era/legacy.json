@@ -46,6 +46,8 @@
     "jsc:legacy_export_bus",
     "jsc:legacy_external_storage_bus",
     "jsc:legacy_crafting_interface",
+    "jsc:hightide_pocket",
+    "jsc:legacy_mobile_device_charging_dock",
     "jsc:crafting_card_pci",
     "jsc:management_nic",
     "jsc:vaultis_array_pci",

@@ -124,7 +124,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:kde_plasma",
-  "order": 212,
+  "order": 213,
   "section": "jsc:desktop_environments",
   "title": "jsc.guide.kde_plasma.title"
 }

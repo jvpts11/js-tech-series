@@ -67,7 +67,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:two_systems",
-  "order": 150,
+  "order": 151,
   "section": "jsc:midsoft_installs",
   "title": "jsc.guide.two_systems.title"
 }

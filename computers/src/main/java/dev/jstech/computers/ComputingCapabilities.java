@@ -9,6 +9,7 @@ package dev.jstech.computers;
 
 import dev.jstech.computers.blockentity.AbstractCabinetComputerBlockEntity;
 import dev.jstech.computers.blockentity.AccessPointBlockEntity;
+import dev.jstech.computers.blockentity.ChargingDockBlockEntity;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
@@ -82,6 +83,11 @@ public final class ComputingCapabilities {
                 AccessPointBlockEntity::energyPort);
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ComputingModule.ACCESS_POINT_BE.get(),
                 AccessPointBlockEntity::feEnergy);
+        // A Mobile Device Charging Dock takes its energy behind it, and nowhere else.
+        event.registerBlockEntity(EnergyPorts.PORT, PortableItems.CHARGING_DOCK_BE.get(),
+                ChargingDockBlockEntity::energyPort);
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, PortableItems.CHARGING_DOCK_BE.get(),
+                ChargingDockBlockEntity::feEnergy);
         // A rack takes the energy of the machines in it, on any of its blocks.
         event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.SERVER_RACK_BE.get(),
                 (rack, side) -> rack.energyPort());

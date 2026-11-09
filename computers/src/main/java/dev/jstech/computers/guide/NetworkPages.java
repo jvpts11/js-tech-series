@@ -10,13 +10,17 @@ package dev.jstech.computers.guide;
 import static dev.jstech.computers.guide.ComputersGuide.blocksOf;
 import static dev.jstech.computers.guide.ComputersGuide.cablesOn;
 import static dev.jstech.computers.guide.ComputersGuide.hardwareOf;
+import static dev.jstech.computers.guide.ComputersGuide.itemsOf;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.PortableItems;
 import dev.jstech.computers.block.AccessPointBlock;
+import dev.jstech.computers.block.ChargingDockBlock;
 import dev.jstech.computers.block.RepeaterBlock;
 import dev.jstech.computers.block.RouterBlock;
 import dev.jstech.computers.hardware.WifiCardSpec;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.portable.PortableItem;
 import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.core.cable.CoreCables;
 import dev.jstech.core.grid.GridKind;
@@ -326,6 +330,68 @@ final class NetworkPages {
                         "A run on one side of the repeater is still longer than its range. Add a repeater inside it.")
                 .register();
         wireless(guide, section);
+        portables(guide, section);
+    }
+
+    /* The portables: the PDAs, smartphones and tablets, their systems, their battery and their docks (wireless.md). */
+    private static void portables(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("portables", section).titled("Portables: PDAs, smartphones and tablets")
+                .icon(PortableItems.QPHONE)
+                .coversAll(itemsOf(PortableItem.class))
+                .coversAll(blocksOf(ChargingDockBlock.class))
+                .paragraph("A portable is a computer you carry: a PDA in the Legacy and the Transition, a smartphone"
+                        + " from the Transition on, a tablet from the Standard on. It joins the network of the nearest"
+                        + " access point that reaches you, at the speed of the older of the two, as a computer with a"
+                        + " Wi-Fi card does ([](jsc:wireless)). Use it to hold it up: its own face frames its screen,"
+                        + " and you press its screen and its buttons with the mouse.")
+                .define("Portable", "A PDA, a smartphone or a tablet: a computer you carry, with its own system from"
+                        + " the factory.")
+                .define("Mobile Device Charging Dock", "The dock of an era that holds one portable of its era and"
+                        + " charges its battery.")
+                .table("The portables", "Device", "Era", "System")
+                .row(GuideCell.words("Hightide Pocket"), GuideCell.words("Legacy"), GuideCell.words("Frames Pocket"))
+                .row(GuideCell.words("Hightide Pocket Pro"), GuideCell.words("Transition"),
+                        GuideCell.words("Frames Pocket"))
+                .row(GuideCell.words("qPhone"), GuideCell.words("Transition"), GuideCell.words("qOS"))
+                .row(GuideCell.words("Motoroller Landmark"), GuideCell.words("Transition"), GuideCell.words("Droidix"))
+                .row(GuideCell.words("qPhone 5, qPad Air"), GuideCell.words("Standard"), GuideCell.words("qOS"))
+                .row(GuideCell.words("Hightide Wave, Sunsung Nebula Tab"), GuideCell.words("Standard"),
+                        GuideCell.words("Droidix"))
+                .row(GuideCell.words("qPhone X, qPad Pro"), GuideCell.words("Advanced"), GuideCell.words("qOS"))
+                .row(GuideCell.words("Sunsung Nebula S10, Nebula Tab S7"), GuideCell.words("Advanced"),
+                        GuideCell.words("Droidix"))
+                .subheading("Its system")
+                .paragraph("Each portable runs its system from the factory, in the look of its years: Frames Pocket on"
+                        + " the PDAs, qOS on Quince's qPhones and qPads, Droidix on the others. Switched on, it shows"
+                        + " its maker's mark, then its system starting, then its lock. You let the lock go with its"
+                        + " slider, a swipe up, or the Unlock key, as your system has it. Its screen shows the world's"
+                        + " time and the day as Day N.")
+                .paragraph("The network's alerts reach your portable and wait where its system keeps them: on Frames"
+                        + " Pocket's Today and in a balloon, on the lock and in the Notification Center you pull down"
+                        + " on qOS, on the lock and in the shade you pull down on Droidix; the Alerts icon counts the"
+                        + " ones you have not seen. Its settings show its hardware, its Wi-Fi and its battery.")
+                .paragraph("Its apps come from its store, the Frames Marketplace, the Quince Store or the Droidix"
+                        + " Store, which the network's Mirror serves; everything in it is free. The network app and the"
+                        + " alerts come with every portable, and the camera, the gallery and Maps with the smartphones"
+                        + " and the tablets; the Crypto Wallet installs from the Transition on, the Messenger and"
+                        + " prospecting from the Standard on.")
+                .subheading("Its battery")
+                .paragraph("A portable runs on its battery while you carry it: about two game days on a smartphone or"
+                        + " a tablet, a day and a half on a PDA. Its battery is the bar under its icon, and its tooltip"
+                        + " says its share. Flat, it switches off and leaves the network.")
+                .paragraph("Stand it in the Mobile Device Charging Dock of its era with a right click, and take it out"
+                        + " with an empty hand; the dock has no window. The dock takes its energy from behind and"
+                        + " charges the battery at its charger's watts, using only what it gives the battery. While it"
+                        + " stands there the portable is off, its screen showing the battery filling, and the dock's"
+                        + " lamp is lit; out of the dock it starts again.")
+                .ifSomethingGoesWrong("Your portable says No access point in reach.",
+                        "Walk within an access point's reach, or set one on the network near you.",
+                        "Its store installs nothing.",
+                        "The network's Mainframe has to run the Mirror; a portable off the network cannot reach it.",
+                        "The dock will not take your portable.",
+                        "A dock holds a portable of its own era alone: use the dock of the portable's era.")
+                .seeAlso("jsc:wireless", "jsc:network_manager")
+                .register();
     }
 
     /* Wi-Fi: the access points and the cards that join a small computer through one (wireless.md). */

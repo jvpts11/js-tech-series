@@ -16,6 +16,7 @@ import dev.jstech.computers.hardware.PsuConditions;
 import dev.jstech.computers.os.DiskSystems;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.portable.PortableLink;
 import dev.jstech.computers.printer.PrintedDocument;
 import dev.jstech.computers.printer.PrintedDocuments;
 import dev.jstech.computers.storage.DiskHealth;
@@ -207,6 +208,28 @@ public final class ComputingComponents {
      */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<PsuCondition>>
             PSU_CONDITION = saved("psu_condition", PsuConditions.CODEC, PsuConditions.STREAM_CODEC);
+
+    /*
+     * A portable device's id, which its state on the server is kept by (its apps, its alerts): given the first time
+     * it is carried, so every device is its own. Absent on one never carried, as the creative tab shows it.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<UUID>>
+            PORTABLE_ID = saved("portable_id", UUIDUtil.CODEC, UUIDUtil.STREAM_CODEC);
+
+    /* What a portable's battery holds, in millijoules: its bar under its icon. Absent on one never carried: full. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>>
+            PORTABLE_BATTERY = saved("portable_battery", Codec.INT, ByteBufCodecs.VAR_INT);
+
+    /*
+     * The game time a portable was last switched on, which its start is played from wherever it shows: in the hand,
+     * held up. Absent while it is off, its battery flat or in its dock.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Long>>
+            PORTABLE_ON_SINCE = saved("portable_on_since", Codec.LONG, ByteBufCodecs.VAR_LONG);
+
+    /* The link a portable is on, while an access point reaches it: for its tooltip and its system. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PortableLink>>
+            PORTABLE_LINK = saved("portable_link", PortableLink.CODEC, PortableLink.STREAM_CODEC);
 
     private ComputingComponents() {
     }

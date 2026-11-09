@@ -164,7 +164,7 @@
   ],
   "icon": "jsc:disk_vaultis_trench_20m",
   "id": "jsc:local_storage",
-  "order": 86,
+  "order": 87,
   "section": "jsc:storage",
   "title": "jsc.guide.local_storage.title"
 }
