@@ -27,6 +27,8 @@ public final class NetworkAdvancements extends JscAdvancementTab {
 
         this.task("series_of_tubes", "root", ComputingModule.ETHERNET_CABLE.item(), "Series of Tubes",
                 "Join a computer to a Mainframe's network", on(JscEvents.COMPUTER_JOINED));
+        this.goal("information_superhighway", "root", ComputingModule.WAN_GATEWAY.item(), "Information Superhighway",
+                "Join two networks through their WAN Gateways", on(JscEvents.WAN_JOINED));
         this.task("select_from_chest", "series_of_tubes", Items.CHEST, "SELECT * FROM chest",
                 "Take items out of network storage with an Operation", on(JscEvents.SELECT_DONE));
         this.task("drop_database", "select_from_chest", Items.WRITABLE_BOOK, "DROP DATABASE production_database",

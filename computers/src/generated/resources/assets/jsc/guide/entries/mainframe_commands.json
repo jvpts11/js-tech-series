@@ -75,6 +75,14 @@
           {
             "words": "jsc.guide.mainframe_commands.table1_8_2"
           }
+        ],
+        [
+          {
+            "literal": "borderlink"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table1_9_2"
+          }
         ]
       ]
     },
@@ -201,12 +209,20 @@
       "text": "jsc.guide.mainframe_commands.text8"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.mainframe_commands.text9"
+    },
+    {
       "type": "command",
       "command": "jsc:command/linux/cluster"
     },
     {
       "type": "command",
       "command": "jsc:command/linux/gateway"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/borderlink"
     },
     {
       "type": "heading",

@@ -662,6 +662,9 @@ final class NetworkPages {
                         + " on the whole screen.")
                 .define("Operating space", "The full screen a system draws around its prompt, with its own store and"
                         + " work. A system with no operating space is only a prompt.")
+                .paragraph("On a WAN Gateway Computer, Nouvell BorderLink brings an operating space of its own, which"
+                        + " takes the screen in the Interactor's place: Ports, Log and Console on its rail"
+                        + " ([](jsc:wan_gateways)).")
                 .ifSomethingGoesWrong("The screen is only a prompt.",
                         "The Interactor is missing from MC-NET. Follow the message on the screen, which names what is"
                                 + " missing and how to put it back.")
@@ -736,6 +739,7 @@ final class NetworkPages {
                 .command(CommandGuidePages.id(Platform.MC_NET, "ssh"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "cluster"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "gateway"))
+                .command(CommandGuidePages.id(Platform.MC_NET, "borderlink"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "mirror"))
                 .subheading("The files and the text")
                 .command(CommandGuidePages.id(Platform.MC_NET, "listfiles"))

@@ -52,6 +52,7 @@ import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.program.iql.IqlCatalog;
 import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.wan.FederatedOperation;
 import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.computers.workshop.UpdateRequest;
 import dev.jstech.core.blockentity.DerivedInt;
@@ -672,6 +673,21 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
         return operation;
     }
 
+    /**
+     * Takes on an Operation that crosses a WAN link to a network this one is federated with: it runs here, at the
+     * asking end, and the far network runs its own half. Refused, with nothing started, when this Mainframe cannot
+     * run Operations.
+     */
+    @Nullable
+    public FederatedOperation submitFederated(final FederatedOperation operation, final OperationPriority priority) {
+        if (!isRunning() || !hasOs() || networkUuid() == null) {
+            return null;
+        }
+        operation.setPriority(priority);
+        track(operation);
+        return operation;
+    }
+
     // CRAFT: recursive autocrafting over the network's Crafting Computers
 
     public List<BlockPos> craftingComputerPositions() {
@@ -1173,6 +1189,11 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
 
     public boolean failoverEnabled() {
         return networking.failoverEnabled();
+    }
+
+    /** Whether this Mainframe is up as the owner of a network: its engine orchestrating, not on standby in failover. */
+    public boolean ownsANetwork() {
+        return isRunning() && !failoverEnabled() && engineRole() == EngineRole.ORCHESTRATOR;
     }
 
     public FailoverRole failoverRole() {

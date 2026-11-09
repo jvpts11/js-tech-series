@@ -51,6 +51,8 @@ public final class JsTests {
          */
         Arenas.declare(MODID, "empty", 9, 6, 9);
         Arenas.declare(MODID, "bench", 48, 8, 48);
+        // Room for two WAN Gateway Computers a long-distance line apart, each with its own place's machines.
+        Arenas.declare(MODID, "wan", 16, 6, 16);
         Arenas.declare(MODID, "tall", 12, 32, 12);
         // A deep floor for caves, pits and lava tubes to be hollowed under, with their reach round them.
         Arenas.declare(MODID, "cavern", 41, 24, 41);

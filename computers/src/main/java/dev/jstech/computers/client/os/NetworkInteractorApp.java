@@ -30,7 +30,9 @@ import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
 import dev.jstech.computers.operation.payload.RequestNiServersPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.printer.PrintLayout;
+import dev.jstech.computers.operation.payload.wan.FederationStatePayload;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.wan.WanRight;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
 import dev.jstech.core.client.gui.component.Checkbox;
@@ -220,14 +222,16 @@ import static dev.jstech.computers.client.os.NetworkInteractorTexts.USED_OF;
 public final class NetworkInteractorApp implements IInventoryBandApp {
 
     // Labels kept short so all the tabs fit the strip; "Local"/"Network" abbreviate the longer mock names.
-    private static final List<TextKey> BASE_TABS = List.of(STATUS_TAB, LOCAL_TAB, NETWORK_TAB, CRAFTING_TAB,
-            OPERATIONS_TAB);
+    private static final List<TextKey> BASE_TABS = List.of(STATUS_TAB, LOCAL_TAB, NETWORK_TAB,
+            NetworkInteractorTexts.FEDERATED_TAB, CRAFTING_TAB, OPERATIONS_TAB);
     private static final int TAB_STATUS = 0;
     private static final int TAB_LOCAL = 1;
     private static final int TAB_NETWORK = 2;
-    private static final int TAB_CRAFTING = 3;
-    private static final int TAB_OPS = 4;
-    private static final int TAB_FAV = 5;
+    /** A network this one is federated with, in a view of its own: {@link InteractorFederation}. */
+    private static final int TAB_FEDERATED = 3;
+    private static final int TAB_CRAFTING = 4;
+    private static final int TAB_OPS = 5;
+    private static final int TAB_FAV = 6;
     private static final String STAR = "★";
     /** Below this content width the Favourites tab goes by its star alone. */
     private static final int FAV_LABEL_MIN_W = 372;
@@ -406,6 +410,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     /** The Operations tab: what the network is doing and what it has just done. */
     private final InteractorOps ops = new InteractorOps(this);
+    /** The Federated tab: a network this one is federated with, in a view of its own. */
+    private final InteractorFederation federation;
+    /** Whether the request dialog crafts on the federated network rather than taking from it. */
+    private boolean popupCraftThere;
 
     // The content tree.
     private final Panel root = new Panel();
@@ -422,6 +430,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     private final Button detailCraft;
     private final Button detailStar;
     private final Button detailUpdate;
+    private final Button federationNext;
     private final Button printButton;
     private final PrintDialog printDialog;
     private final ContextMenu filterMenu = new ContextMenu(72, 10);
@@ -465,6 +474,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         detailStar = root.add(new Button(STAR, this::detailStarPressed).setLabelScale(Texts.SMALL));
         detailUpdate = root.add(new Button(GameText.resolve(UpdatePopupTexts.OPEN), this::detailUpdatePressed)
                 .setLabelScale(Texts.SMALL));
+        federation = new InteractorFederation(host, monitorPos);
+        federationNext = root.add(new Button(GameText.resolve(InteractorFederation.NEXT), federation::next)
+                .setLabelScale(Texts.SMALL));
         printDialog = new PrintDialog(host, this);
         printButton = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::printList)
                 .setLabelScale(Texts.SMALL));
@@ -474,6 +486,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         updatePopup.setDim(InteractorPalette.get().popupDim());
 
         active = this;
+        federation.markActive();
         request();
     }
 
@@ -484,6 +497,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
      */
     public void markActive() {
         active = this;
+        federation.markActive();
     }
 
     @Override
@@ -495,6 +509,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         PacketDistributor.sendToServer(new RequestNetworkInteractorPayload(host, monitorPos));
         if (tab == TAB_OPS || cardShown) {
             requestOps();
+        }
+        if (tab == TAB_FEDERATED) {
+            federation.ask(false);
         }
     }
 
@@ -717,12 +734,12 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     }
 
     private boolean gridTab() {
-        return tab == TAB_NETWORK || tab == TAB_LOCAL || tab == TAB_CRAFTING || tab == TAB_FAV;
+        return entryTab() || tab == TAB_CRAFTING;
     }
 
     /** The tabs that list network entries (as opposed to craftable results). */
     private boolean entryTab() {
-        return tab == TAB_NETWORK || tab == TAB_LOCAL || tab == TAB_FAV;
+        return tab == TAB_NETWORK || tab == TAB_LOCAL || tab == TAB_FAV || tab == TAB_FEDERATED;
     }
 
     private List<String> tabLabels() {
@@ -828,6 +845,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         detailCraft.setVisible(false);
         detailStar.setVisible(false);
         detailUpdate.setVisible(false);
+        federationNext.setVisible(false);
         cardShown = false;
         if (tab == TAB_OPS) {
             renderOpDetails(g, font, x, y, z);
@@ -867,6 +885,11 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** What the well says when the active tab has nothing to list, or null when it has. */
     @Nullable
     private String emptyMessage() {
+        if (tab == TAB_FEDERATED) {
+            // A search or a filter that hides everything says so; otherwise the federation says what is there.
+            return !gridEntries().isEmpty() ? null : federation.entries().isEmpty() ? federation.emptyMessage()
+                    : GameText.resolve(NOTHING_MATCHES);
+        }
         final TextKey message = switch (tab) {
             case TAB_CRAFTING -> filteredCrafts().isEmpty()
                     ? (!search.query().isEmpty() || filtering() ? NO_CRAFTS_MATCH : NO_PATTERNS)
@@ -895,6 +918,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     /** The caption's left side: the tab's name for what it lists. */
     private String gridCaptionText() {
+        if (tab == TAB_FEDERATED) {
+            return federation.caption();
+        }
         return GameText.resolve(switch (tab) {
             case TAB_LOCAL -> LOCAL_STORAGE;
             case TAB_CRAFTING -> CRAFTABLE_CAPTION;
@@ -911,6 +937,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             case TAB_CRAFTING -> GameText.resolve((crafts.size() == 1 ? ONE_RECIPE : RECIPES).with(crafts.size()));
             case TAB_FAV -> GameText.resolve(STARRED.with(favourites.size()));
             case TAB_OPS -> ops.caption();
+            case TAB_FEDERATED -> federation.count();
             default -> GameText.resolve(TYPES_AND_SIZE.with(networkItems.size(), DiskSpec.sizeLabel(usedMb)));
         };
     }
@@ -921,6 +948,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         skin.statusBar(g, x, y, width, h);
         final int ty = y + 2;
         int sx = x + 3;
+        if (tab == TAB_FEDERATED) {
+            renderFederationStatus(g, font, x, y, width);
+            return;
+        }
         sx = statusSegment(g, font, sx, ty, GameText.resolve(online ? MAINFRAME_ONLINE : MAINFRAME_OFFLINE),
                 online ? InteractorPalette.get().online() : InteractorPalette.get().offline(), y, h);
         sx = statusSegment(g, font, sx, ty, GameText.resolve(TYPES.with(networkItems.size())), skin.text(), y, h);
@@ -941,6 +972,27 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             final int fill = (int) Math.min(bw - 2, Math.round((bw - 2) * (double) usedItems / capacityItems));
             g.fill(bx + 1, ty + 2, bx + 1 + fill, ty + 5, gaugeColor());
         }
+    }
+
+    /** The status bar on the Federated tab: whose network it shows, its counts, and how full its storage is. */
+    private void renderFederationStatus(final GuiGraphics g, final Font font, final int x, final int y,
+                                        final int width) {
+        final int h = NetworkInteractorLayout.STATUS_H;
+        final int ty = y + 2;
+        final FederationStatePayload.Peer peer = federation.peer();
+        if (peer == null) {
+            statusSegment(g, font, x + 3, ty, federation.caption(), skin.dim(), y, h);
+            return;
+        }
+        int sx = statusSegment(g, font, x + 3, ty, GameText.resolve(InteractorFederation.FEDERATED.with(peer.name())),
+                InteractorPalette.get().online(), y, h);
+        sx = statusSegment(g, font, sx, ty, GameText.resolve(TYPES.with(peer.types())), skin.text(), y, h);
+        statusSegment(g, font, sx, ty, GameText.resolve((peer.servers() == 1 ? ONE_SERVER : SERVERS_COUNT)
+                .with(peer.servers())), skin.text(), y, h);
+        final String figures = GameText.resolve(peer.capacityMb() > 0
+                ? USED_OF.with(DiskSpec.sizeLabel(peer.usedMb()), DiskSpec.sizeLabel(peer.capacityMb()))
+                : STORED.with(DiskSpec.sizeLabel(peer.usedMb())));
+        Texts.small(g, font, figures, x + width - 3 - Texts.smallWidth(font, figures), ty, skin.dim());
     }
 
     /** Draws one status segment and returns where the next begins; a thin rule closes it. */
@@ -1005,6 +1057,9 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             ops.clearSelection();
             opList.setScroll(0);
             requestOps();
+        }
+        if (index == TAB_FEDERATED) {
+            federation.ask(true);
         }
     }
 
@@ -1142,6 +1197,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         return switch (tab) {
             case TAB_LOCAL -> localItems;
             case TAB_FAV -> favouriteEntries();
+            case TAB_FEDERATED -> federation.entries();
             default -> networkItems;
         };
     }
@@ -1190,7 +1246,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** The number of cells the active grid tab has, for the grid to draw and click that many. */
     private int gridCount() {
         return switch (tab) {
-            case TAB_NETWORK, TAB_LOCAL, TAB_FAV -> gridEntries().size();
+            case TAB_NETWORK, TAB_LOCAL, TAB_FAV, TAB_FEDERATED -> gridEntries().size();
             case TAB_CRAFTING -> filteredCrafts().size();
             default -> 0;
         };
@@ -1445,6 +1501,15 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     /** Opens the entry's dialog: the request/storage one, or the craft one for a starred result not in stock. */
     private void activateEntry(final NetworkItemEntry entry) {
+        if (tab == TAB_FEDERATED) {
+            // What the network shown holds is taken from it; what it holds none of but can craft is crafted there.
+            if (entry.total() > 0 && federation.allows(WanRight.TAKE)) {
+                openPopup(List.of(entry), false);
+            } else if (federation.canCraft(entry.key())) {
+                openCraftTherePopup(entry);
+            }
+            return;
+        }
         if (entry.total() <= 0) {
             final CraftCatalogPayload.Entry craftable = craftEntryFor(entry.key());
             if (craftable != null) {
@@ -1581,6 +1646,51 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         }
     }
 
+    /**
+     * The federated network's card, which the details panel shows on the Federated tab when nothing is chosen: whose
+     * network, over which line, what this network may do there, what is on it, and what crosses to it now.
+     */
+    private void renderFederationCard(final GuiGraphics g, final Font font, final int dx, final int dy, final int dw,
+                                      final int dh) {
+        final int px = dx + 5;
+        final FederationStatePayload.Peer peer = federation.peer();
+        federationNext.setVisible(false);
+        if (peer == null) {
+            Texts.small(g, font, federation.caption(), px, dy + 5, skin.dim());
+            return;
+        }
+        int py = cardRow(g, font, px, dy + 5, dw, peer.name(), InteractorFederation.idOf(peer), skin.text(),
+                skin.dim());
+        Texts.small(g, font, Texts.clip(font, InteractorFederation.reachOf(peer), Texts.smallFits(dw - 10)), px,
+                py + 1, InteractorPalette.get().online());
+        Texts.small(g, font, Texts.clip(font, InteractorFederation.lineOf(peer), Texts.smallFits(dw - 10)), px,
+                py + 10, skin.dim());
+        py = sectionRule(g, font, px, py + 22, dw, GameText.resolve(InteractorFederation.MAY));
+        for (final WanRight right : WanRight.values()) {
+            final boolean may = peer.allows(right);
+            py = cardRow(g, font, px, py, dw, GameText.resolve(InteractorFederation.rightLabel(right)),
+                    GameText.resolve(may ? InteractorFederation.YES : InteractorFederation.NO), skin.dim(),
+                    may ? InteractorPalette.get().online() : skin.dim());
+        }
+        py = sectionRule(g, font, px, py + 2, dw, GameText.resolve(InteractorFederation.ON_THAT));
+        py = cardRow(g, font, px, py, dw, GameText.resolve(ITEM_TYPES), Integer.toString(peer.types()));
+        py = cardRow(g, font, px, py, dw, GameText.resolve(SERVERS), Integer.toString(peer.servers()));
+        py = cardRow(g, font, px, py, dw, GameText.resolve(CRAFTABLE), Integer.toString(peer.craftables()));
+        py = sectionRule(g, font, px, py + 2, dw, GameText.resolve(InteractorFederation.CROSSING));
+        py = cardRow(g, font, px, py, dw, GameText.resolve(OPERATIONS), GameText.resolve(LIVE.with(peer.live())));
+        if (federation.peerCount() > 1) {
+            // More than one network is federated with this one: the card shows one, and steps to the next.
+            Texts.small(g, font, GameText.resolve(InteractorFederation.OF_NETWORKS.with(federation.peerIndex(),
+                    federation.peerCount())), px, py + 3, skin.dim());
+            federationNext.setBounds(px, py + 12, dw - 10, 12);
+            federationNext.setVisible(true);
+            py += 26;
+        }
+        if (py + 10 < dy + dh) {
+            Texts.small(g, font, GameText.resolve(InteractorFederation.HINT), px, py + 4, skin.dim());
+        }
+    }
+
     /** A caption with a thin rule under it; returns the y of the first line below. */
     private int sectionRule(final GuiGraphics g, final Font font, final int px, final int py, final int dw,
                             final String caption) {
@@ -1592,8 +1702,14 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** A "label ... value" row of the card. */
     private int cardRow(final GuiGraphics g, final Font font, final int px, final int py, final int dw,
                         final String label, final String value) {
-        Texts.small(g, font, label, px, py, skin.dim());
-        Texts.small(g, font, value, px + dw - 12 - Texts.smallWidth(font, value), py, skin.text());
+        return cardRow(g, font, px, py, dw, label, value, skin.dim(), skin.text());
+    }
+
+    /** The same row in the colours given. */
+    private int cardRow(final GuiGraphics g, final Font font, final int px, final int py, final int dw,
+                        final String label, final String value, final int labelColour, final int valueColour) {
+        Texts.small(g, font, label, px, py, labelColour);
+        Texts.small(g, font, value, px + dw - 12 - Texts.smallWidth(font, value), py, valueColour);
         return py + 8;
     }
 
@@ -1641,7 +1757,11 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         }
         final NetworkItemEntry e = detailEntry(mouseX, mouseY);
         if (e == null) {
-            renderNetworkCard(g, font, dx, dy, dw, dh);
+            if (tab == TAB_FEDERATED) {
+                renderFederationCard(g, font, dx, dy, dw, dh);
+            } else {
+                renderNetworkCard(g, font, dx, dy, dw, dh);
+            }
             Draw.popScissor(g);
             return;
         }
@@ -1661,20 +1781,22 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 : resolveAll(known.usedIn()));
         if (withButtons) {
             final int bw = Math.max(30, (dw - 10 - 8 - 14) / 2);
+            // On the Federated tab both ask the network shown, which allows them or not by its own switches.
+            final boolean across = tab == TAB_FEDERATED;
             detailRequest.setBounds(px, py, bw, 12);
             detailRequest.setVisible(true);
-            detailRequest.setEnabled(e.total() > 0);
+            detailRequest.setEnabled(e.total() > 0 && (!across || federation.allows(WanRight.TAKE)));
             detailCraft.setBounds(px + bw + 2, py, bw, 12);
             detailCraft.setVisible(true);
-            detailCraft.setEnabled(craftEntryFor(key) != null);
+            detailCraft.setEnabled(across ? federation.canCraft(key) : craftEntryFor(key) != null);
             detailStar.setBounds(px + 2 * bw + 4, py, 14, 12);
             detailStar.setVisible(true);
             detailStar.setPrimary(starred);
-            // A card's work on the item, through the Update window: only something the network holds as an item.
+            // A card's work on the item, through the Update window: only something this network holds as an item.
             detailUpdate.setBounds(px, py + 14, 2 * bw + 2, 12);
-            detailUpdate.setVisible(true);
+            detailUpdate.setVisible(!across);
             detailUpdate.setEnabled(e.total() > 0 && key.isItem());
-            py += 30;
+            py += across ? 16 : 30;
         }
         py = detail(g, font, px, py, dw, GameText.resolve(ID), id.toString());
         py = detail(g, font, px, py, dw, GameText.resolve(KIND), GameText.resolve(kindLabel(key)));
@@ -1795,6 +1917,12 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     private void detailCraftPressed() {
         final NetworkItemEntry e = detailEntry(lastMouseX, lastMouseY);
+        if (tab == TAB_FEDERATED) {
+            if (e != null && federation.canCraft(e.key())) {
+                openCraftTherePopup(e);
+            }
+            return;
+        }
         final CraftCatalogPayload.Entry craftable = e == null ? null : craftEntryFor(e.key());
         if (craftable != null) {
             openCraftPopup(craftable);
@@ -2330,6 +2458,21 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
      * {@code -1} when the click is not over a depositable grid. The desktop screen (which owns the
      * cursor) calls this to route a cursor deposit to the network or to local storage.
      */
+    /**
+     * Whether a held stack dropped at the content-local point goes to the federated network shown: on the Federated
+     * tab's grid, when that network lets this one send.
+     */
+    public boolean sendsAcross(final double lx, final double ly) {
+        final NetworkInteractorLayout.Zones z = zones();
+        return tab == TAB_FEDERATED && federation.allows(WanRight.SEND) && ly >= z.gridY()
+                && ly < z.gridY() + z.gridH() && lx >= 0 && lx < contentW;
+    }
+
+    /** Sends the held stack to the federated network shown, as an Operation that crosses. */
+    public void sendAcross() {
+        federation.sendCursor();
+    }
+
     public int cursorDepositTarget(final double lx, final double ly) {
         if (tab != TAB_NETWORK && tab != TAB_LOCAL) {
             return -1;
@@ -2501,6 +2644,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         popupEntries.addAll(entries);
         popupEntry = entries.get(0);
         popupStorage = storage;
+        popupCraftThere = false;
         // Default to one stack, clamped to what is available.
         popupQty = Math.max(1L, Math.min(popupMax(), popupEntry.key().batch()));
         popupAdvanced = false;
@@ -2511,19 +2655,29 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         requestPopup.rebuildSources();
         requestPopup.open();
         requestPopup.placeIn(lastX, lastY, contentW, contentH);
-        if (!storage) {
+        if (!storage && tab != TAB_FEDERATED) {
             // Fetch the network's computers so advanced mode can list sources and destinations.
             PacketDistributor.sendToServer(new RequestNiServersPayload(host, monitorPos));
         }
+    }
+
+    /** The same dialog crafting {@code entry} on the federated network shown, where what is made stays. */
+    private void openCraftTherePopup(final NetworkItemEntry entry) {
+        openPopup(List.of(entry), false);
+        popupCraftThere = true;
+        popupQty = 1L;
     }
 
     private void closePopup() {
         requestPopup.close();
     }
 
-    /** Whether the advanced sections are shown (only the Network request popup has them). */
+    /**
+     * Whether the advanced sections are shown: only the Network request popup has them, since the servers it picks
+     * from and sends to are this network's.
+     */
     private boolean advancedShown() {
-        return popupAdvanced && !popupStorage;
+        return popupAdvanced && !popupStorage && tab != TAB_FEDERATED;
     }
 
     private int popupHeight() {
@@ -2536,8 +2690,11 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         requestPopup.placeIn(lastX, lastY, contentW, contentH);
     }
 
-    /** The most the dialog's quantity can be: the largest amount held of any item it is for. */
+    /** The most the dialog's quantity can be: the largest amount held of any item it is for, or a craft's most. */
     private long popupMax() {
+        if (popupCraftThere) {
+            return MAX_CRAFT_QTY;
+        }
         long max = 0L;
         for (final NetworkItemEntry e : popupEntries) {
             max = Math.max(max, e.total());
@@ -2574,6 +2731,18 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     }
 
     private void popupAction(final int mode) {
+        if (tab == TAB_FEDERATED) {
+            // The federated network shown is asked: to hand items over, or to craft them where they stay.
+            for (final NetworkItemEntry e : popupEntries) {
+                if (popupCraftThere) {
+                    federation.craft(e.key(), popupQty);
+                } else {
+                    federation.take(e.key(), Math.min(popupQty, e.total()));
+                }
+            }
+            closePopup();
+            return;
+        }
         if (popupQty > 0) {
             // One request per item, each for the quantity or what there is of it, whichever is less.
             for (final NetworkItemEntry e : popupEntries) {
@@ -2728,7 +2897,8 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 () -> popupAction(NiGridClickPayload.MODE_LOCAL_TO_INV)).setLabelScale(Texts.SMALL));
         private final Button toNetwork = add(new Button(GameText.resolve(TO_NETWORK),
                 () -> popupAction(NiGridClickPayload.MODE_LOCAL_TO_NET)).setLabelScale(Texts.SMALL));
-        private final Button request = add(new Button(GameText.resolve(REQUEST),
+        private final Button request = add(new Button(() -> GameText.resolve(popupCraftThere
+                ? InteractorFederation.CRAFT : REQUEST),
                 () -> popupAction(NiGridClickPayload.MODE_NET_TO_LOCAL)).setLabelScale(Texts.SMALL));
         private final Button update = add(new Button(GameText.resolve(UpdatePopupTexts.OPEN),
                 NetworkInteractorApp.this::requestUpdatePressed).setLabelScale(Texts.SMALL));
@@ -2761,8 +2931,10 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             final int px = x();
             final int py = y();
             header.setBounds(px + 4, py + 4, POPUP_W - 8, 20);
+            // The servers and the level are this network's: a federated network's ask has neither.
+            final boolean across = tab == TAB_FEDERATED;
             adv.setBounds(px + POPUP_W - 34, py + 4, 30, 11);
-            adv.setVisible(!popupStorage);
+            adv.setVisible(!popupStorage && !across);
             qty.setBounds(px + 4, py + 27, POPUP_W - 44, 12);
             max.setBounds(px + POPUP_W - 36, py + 27, 32, 12);
             for (int i = 0; i < steps.length; i++) {
@@ -2773,9 +2945,13 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
             prioDown.setBounds(px + 56, py + 60, 12, 12);
             prioBox.setBounds(px + 70, py + 60, 40, 12);
             prioUp.setBounds(px + 112, py + 60, 12, 12);
+            prioLabel.setVisible(!across);
+            prioDown.setVisible(!across);
+            prioBox.setVisible(!across);
+            prioUp.setVisible(!across);
             // A card's work on the one item the dialog is for, beside the level, for what the network holds.
             update.setBounds(px + 130, py + 60, POPUP_W - 134, 12);
-            update.setVisible(!popupStorage && popupEntries.size() == 1 && popupEntry != null
+            update.setVisible(!popupStorage && !across && popupEntries.size() == 1 && popupEntry != null
                     && popupEntry.key().isItem());
             final boolean advanced = advancedShown();
             pullLabel.setBounds(px + 4, py + 74, POPUP_W - 8, 8);
@@ -3391,6 +3567,11 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
     /** Content-local centre of the Local tab: what this computer holds on its own disks. */
     public int[] localTabCenter() {
         return local(tabs.tabCenter(TAB_LOCAL));
+    }
+
+    /** Content-local centre of the Federated tab: a network this one is federated with. */
+    public int[] federatedTabCenter() {
+        return local(tabs.tabCenter(TAB_FEDERATED));
     }
 
     /** The centre of the storage dialog's To Inventory button. */

@@ -124,6 +124,7 @@ public final class BuiltinCommands {
                 new MachineCommands.Reboot(),
                 new ClusterCommand(),
                 new GatewayCommand(),
+                new BorderLinkCommand(),
                 new SoftwareCommands.MirrorCommand(),
                 new SoftwareCommands.Uninstall(CommandScope.everywhere(), List.of()),
                 new DosFileCommands.Format(),

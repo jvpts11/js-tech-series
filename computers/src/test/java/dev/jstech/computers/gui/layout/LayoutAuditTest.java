@@ -59,6 +59,7 @@ class LayoutAuditTest {
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "WanGatewayLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CrashLayout", "DiskCheckLayout", "DefragLayout", "SectionDiagnosticsLayout",
+            "BorderLinkLayout",
             "CommandPromptLayout",
             "OsInstallLayout",
             "InstallerLayout",
@@ -184,6 +185,9 @@ class LayoutAuditTest {
                 c.add(new AuditCase("DefragLayout(" + look.serializedName() + ")", DefragLayout.layout(look), true));
             }
         }
+        // Nouvell BorderLink's window on the Frames desktops, with Frames 7's status bar and without.
+        c.add(new AuditCase("BorderLinkLayout", BorderLinkLayout.layout(false), true));
+        c.add(new AuditCase("BorderLinkLayout(status bar)", BorderLinkLayout.layout(true), true));
         // A section's Diagnostics tab in the Cluster Manager, at the window's own size and at its least.
         c.add(new AuditCase("SectionDiagnosticsLayout(default)", SectionDiagnosticsLayout.layout(
                 SectionDiagnosticsLayout.DEFAULT_W, SectionDiagnosticsLayout.DEFAULT_H, 4), false));

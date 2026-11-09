@@ -34,6 +34,10 @@
     },
     {
       "type": "command",
+      "command": "jsc:command/mc_net/borderlink"
+    },
+    {
+      "type": "command",
       "command": "jsc:command/mc_net/mirror"
     },
     {

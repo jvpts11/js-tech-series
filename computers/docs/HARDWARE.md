@@ -354,8 +354,10 @@ and mends a quarter of the bad sectors left; while it runs, that disk answers th
   T1 Card (Legacy, PCI, Leased Line, 8 it/t), the T3 Card (Transition, PCI-e 2.0, T3 Line, 24 it/t), the VLDC Card
   (Standard, PCI-e 3.0, VLDC, 64 it/t) and the Optical Transport Card (Advanced, PCI-e 4.0, Dark Fibre, 256 it/t).
   Each takes the line of its era and the older ones. The n-th card in the gateway's slots works port n, the ports
-  numbered 1 to 4 from the left seen from behind; a port's line is up while the gateway runs and a cable the card
-  takes is plugged in, which the gateway's line modules and its screen's LINES lamps show.
+  numbered 1 to 4 from the left seen from behind; a port's line is up while the gateways at both its ends run
+  Nouvell BorderLink with the port on and each card takes the line between them, which the gateway's line modules
+  and its screen's LINES lamps show. What an up line does is in
+  [The network](NETWORK.md#two-places-over-a-long-distance-line).
 - **Integra Phi** coprocessors (four of them), for supercomputer nodes.
 
 ## What can go wrong

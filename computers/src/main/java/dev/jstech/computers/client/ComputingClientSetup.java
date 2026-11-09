@@ -44,6 +44,7 @@ import dev.jstech.computers.item.CabinetBlockItem;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.registry.ComputingMenus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -190,6 +191,9 @@ public final class ComputingClientSetup {
          * space nobody draws falls back to the Interactor, never to a blank screen.
          */
         OperatingSpaceScreens.register(INTERACTOR, (space, inv, title) ->
+                new ComputerTerminalScreen(((TerminalSpaceOpening) space).terminal(), inv, title));
+        // BorderLink's space is the same glass with its own headings: the gateway's ports, its log and the prompt.
+        OperatingSpaceScreens.register(Programs.BORDERLINK, (space, inv, title) ->
                 new ComputerTerminalScreen(((TerminalSpaceOpening) space).terminal(), inv, title));
         event.register(ComputingMenus.COMPUTER_TERMINAL_MENU.get(), ComputingClientSetup::spaceScreen);
         event.register(ComputingMenus.EXPORT_BUS_MENU.get(), ExportBusScreen::new);

@@ -91,6 +91,10 @@ public final class Programs {
     public static final ResourceLocation GATEWAY_MANAGER =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gateway_manager");
 
+    /** Nouvell BorderLink: what makes a WAN Gateway Computer carry its long-distance lines. */
+    public static final ResourceLocation BORDERLINK =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "borderlink");
+
     /** Minesweeper: the classic game, installed by the player like any other add-on. */
     public static final ResourceLocation MINESWEEPER =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "minesweeper");

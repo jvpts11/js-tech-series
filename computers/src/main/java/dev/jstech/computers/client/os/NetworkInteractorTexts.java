@@ -21,6 +21,8 @@ final class NetworkInteractorTexts {
     static final TextKey STATUS_TAB = TextKey.of("jsc.interactor.status_tab", "Status");
     static final TextKey LOCAL_TAB = TextKey.of("jsc.interactor.local_tab", "Local");
     static final TextKey NETWORK_TAB = TextKey.of("jsc.interactor.network_tab", "Network");
+    static final TextKey FEDERATED_TAB = TextKey.of("jsc.interactor.federated_tab", "Federated");
+    static final TextKey CROSSING_TO = TextKey.of("jsc.interactor.crossing_to", "CROSSING TO %s");
     static final TextKey CRAFTING_TAB = TextKey.of("jsc.interactor.crafting_tab", "Crafting");
     static final TextKey OPERATIONS_TAB = TextKey.of("jsc.interactor.operations_tab", "Operations");
     static final TextKey FAVOURITES_TAB = TextKey.of("jsc.interactor.favourites_tab", "%s Favourites");

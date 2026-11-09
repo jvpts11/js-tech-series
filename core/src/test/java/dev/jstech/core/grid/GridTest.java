@@ -127,6 +127,23 @@ class GridTest {
     }
 
     @Test
+    void devicesMet_countsAPartsDevicesAndNeverStepsOnABlockedPosition() {
+        grid.place(1, ACCESS, List.of());
+        grid.place(2, ACCESS, List.of(1L));
+        grid.place(3, BACKBONE, List.of());
+        grid.place(4, ACCESS, List.of());
+        // Two devices joining a run each to the cable 3 between them, one device on each side.
+        grid.bridge(100, List.of(2L, 3L));
+        grid.bridge(200, List.of(3L, 4L));
+        grid.bridge(300, List.of(1L));
+        grid.bridge(400, List.of(4L));
+
+        assertEquals(Set.of(100L, 300L), grid.devicesMet(List.of(1L), pos -> pos == 3L),
+                "the device at the edge is met, nothing past the blocked cable");
+        assertEquals(Set.of(100L, 200L, 300L, 400L), grid.devicesMet(List.of(1L), pos -> false));
+    }
+
+    @Test
     void forgetBridge_splitsTheRunsTheDeviceJoined() {
         grid.place(1, ACCESS, List.of());
         grid.place(2, BACKBONE, List.of());

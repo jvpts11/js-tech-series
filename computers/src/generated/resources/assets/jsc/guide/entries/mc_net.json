@@ -23,6 +23,10 @@
       "term": "jsc.guide.mc_net.term2"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.mc_net.text4"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },

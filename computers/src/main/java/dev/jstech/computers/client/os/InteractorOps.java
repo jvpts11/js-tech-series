@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.OperationPalette;
+import dev.jstech.computers.wan.FederatedOperation;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -18,6 +19,9 @@ import java.util.List;
 import java.util.UUID;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
 
 /**
  * The Operations tab of the Network Interactor: what the network is doing and what it has just done.
@@ -56,13 +60,13 @@ final class InteractorOps {
     /** The short word a row ends with, which is where an Operation has got to. */
     static String statusShort(final byte status) {
         return GameText.resolve(switch (status) {
-            case 0 -> NetworkInteractorTexts.SHORT_DONE;
-            case 1 -> NetworkInteractorTexts.SHORT_PARTIAL;
-            case 2 -> NetworkInteractorTexts.SHORT_FAILED;
-            case 3 -> NetworkInteractorTexts.SHORT_RUNNING;
-            case 4 -> NetworkInteractorTexts.SHORT_WAITING;
-            case 5 -> NetworkInteractorTexts.SHORT_LOCKED;
-            case 6 -> NetworkInteractorTexts.SHORT_PENDING;
+            case OperationRecord.STATUS_COMPLETED -> NetworkInteractorTexts.SHORT_DONE;
+            case OperationRecord.STATUS_PARTIAL -> NetworkInteractorTexts.SHORT_PARTIAL;
+            case OperationRecord.STATUS_FAILED -> NetworkInteractorTexts.SHORT_FAILED;
+            case OperationRecord.STATUS_PROCESSING -> NetworkInteractorTexts.SHORT_RUNNING;
+            case OperationRecord.STATUS_WAITING -> NetworkInteractorTexts.SHORT_WAITING;
+            case OperationRecord.STATUS_RESOURCE_LOCKED -> NetworkInteractorTexts.SHORT_LOCKED;
+            case OperationRecord.STATUS_PENDING -> NetworkInteractorTexts.SHORT_PENDING;
             default -> NetworkInteractorTexts.SHORT_DROPPED;
         });
     }
@@ -70,13 +74,13 @@ final class InteractorOps {
     /** The same thing written out, for the detail panel where there is room for it. */
     static String statusLong(final byte status) {
         return GameText.resolve(switch (status) {
-            case 0 -> NetworkInteractorTexts.COMPLETED;
-            case 1 -> NetworkInteractorTexts.COMPLETED_PARTIAL;
-            case 2 -> NetworkInteractorTexts.FAILED;
-            case 3 -> NetworkInteractorTexts.PROCESSING;
-            case 4 -> NetworkInteractorTexts.WAITING;
-            case 5 -> NetworkInteractorTexts.RESOURCE_LOCKED;
-            case 6 -> NetworkInteractorTexts.PENDING;
+            case OperationRecord.STATUS_COMPLETED -> NetworkInteractorTexts.COMPLETED;
+            case OperationRecord.STATUS_PARTIAL -> NetworkInteractorTexts.COMPLETED_PARTIAL;
+            case OperationRecord.STATUS_FAILED -> NetworkInteractorTexts.FAILED;
+            case OperationRecord.STATUS_PROCESSING -> NetworkInteractorTexts.PROCESSING;
+            case OperationRecord.STATUS_WAITING -> NetworkInteractorTexts.WAITING;
+            case OperationRecord.STATUS_RESOURCE_LOCKED -> NetworkInteractorTexts.RESOURCE_LOCKED;
+            case OperationRecord.STATUS_PENDING -> NetworkInteractorTexts.PENDING;
             default -> NetworkInteractorTexts.DISCARDED;
         });
     }
@@ -85,9 +89,11 @@ final class InteractorOps {
     static int statusColor(final byte status) {
         final InteractorPalette.Colours c = InteractorPalette.get();
         return switch (status) {
-            case 0 -> c.online();              // completed
-            case 1, 3, 4, 6 -> c.opPending();  // partial / processing / waiting / pending: amber
-            case 2, 5, 7 -> c.opFailed();      // failed / locked / discarded: red
+            case OperationRecord.STATUS_COMPLETED -> c.online();
+            case OperationRecord.STATUS_PARTIAL, OperationRecord.STATUS_PROCESSING, OperationRecord.STATUS_WAITING,
+                 OperationRecord.STATUS_PENDING -> c.opPending();
+            case OperationRecord.STATUS_FAILED, OperationRecord.STATUS_RESOURCE_LOCKED,
+                 OperationRecord.STATUS_DISCARDED -> c.opFailed();
             default -> c.opOther();
         };
     }
@@ -191,8 +197,14 @@ final class InteractorOps {
         final int nameX = x + 8 + font.width(type) + 3;
         final String st = statusShort(op.status());
         final int stW = font.width(st);
-        Draw.text(g, font, Texts.trim(font, op.name().getString(), x + w - nameX - stW - 6), nameX, y + 2,
+        // One that crosses to a federated network says where, beside its status.
+        final String where = FederatedOperation.KIND.equals(op.kind()) ? op.machine() : "";
+        final int whereW = where.isEmpty() ? 0 : font.width(where) + 6;
+        Draw.text(g, font, Texts.trim(font, op.name().getString(), x + w - nameX - stW - whereW - 6), nameX, y + 2,
                 ctx.skin().text());
+        if (!where.isEmpty()) {
+            Draw.text(g, font, where, x + w - stW - whereW - 2, y + 2, ctx.skin().dim());
+        }
         Draw.text(g, font, st, x + w - stW - 2, y + 2, statusColor(op.status()));
     }
 
@@ -222,6 +234,18 @@ final class InteractorOps {
         py += 10;
         Texts.small(g, font, statusLong(op.status()), px, py, statusColor(op.status()));
         py += 12;
+        if (FederatedOperation.KIND.equals(op.kind())) {
+            // Where a crossing has got to: on the line, waiting for the far side, or what became of it.
+            py = app.sectionRuleIn(g, font, px, py, dw, GameText.resolve(NetworkInteractorTexts.CROSSING_TO
+                    .with(op.machine())));
+            final String note = op.failureText().map(Component::getString).orElse("");
+            for (final FormattedText line : font.getSplitter().splitLines(note, Texts.smallFits(dw - 10),
+                    Style.EMPTY)) {
+                Texts.small(g, font, line.getString(), px, py, app.panelSkin().text());
+                py += 9;
+            }
+            return;
+        }
         if (!op.subs().isEmpty()) {
             py = app.sectionRuleIn(g, font, px, py, dw, GameText.resolve(NetworkInteractorTexts.SUBOPERATIONS));
             for (final var sub : op.subs()) {

@@ -175,6 +175,17 @@
           {
             "words": "jsc.guide.network_interactor.table2_6_3"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_interactor.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.network_interactor.table2_7_3"
+          }
         ]
       ]
     },
@@ -392,6 +403,18 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.network_interactor.heading8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text17"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_interactor.text18"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -416,6 +439,10 @@
         {
           "fix": "jsc.guide.network_interactor.fix5",
           "problem": "jsc.guide.network_interactor.problem5"
+        },
+        {
+          "fix": "jsc.guide.network_interactor.fix6",
+          "problem": "jsc.guide.network_interactor.problem6"
         }
       ]
     },

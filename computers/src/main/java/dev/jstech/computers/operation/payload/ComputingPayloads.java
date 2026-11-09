@@ -50,6 +50,7 @@ import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.operation.payload.program.ProgramPayloads;
 import dev.jstech.computers.operation.payload.terminal.TerminalLocalPayloads;
 import dev.jstech.computers.operation.payload.terminal.TerminalPayloads;
+import dev.jstech.computers.operation.payload.wan.WanPayloads;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
@@ -112,6 +113,7 @@ public final class ComputingPayloads {
         AutomationPayloads.register(registrar);
         ClusterManagerPayloads.register(registrar);
         GatewayManagerPayloads.register(registrar);
+        WanPayloads.register(registrar);
         PrintPayloads.register(registrar);
     }
 }

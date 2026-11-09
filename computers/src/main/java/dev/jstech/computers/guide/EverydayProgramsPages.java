@@ -452,7 +452,7 @@ final class EverydayProgramsPages {
                 .table("Parts of the Network window", "Part", "What it does")
                 .row(GuideCell.words("Toolbar"),
                         GuideCell.words("The search field, and the buttons Sort, Mod and Category."))
-                .row(GuideCell.words("Tabs"), GuideCell.words("Five tabs, and the Favourites tab at the end."))
+                .row(GuideCell.words("Tabs"), GuideCell.words("Six tabs, and the Favourites tab at the end."))
                 .row(GuideCell.words("Grid"),
                         GuideCell.words("The items of the tab, in a well of cells with a caption over it."))
                 .row(GuideCell.words("Details panel"),
@@ -481,6 +481,9 @@ final class EverydayProgramsPages {
                         GuideCell.words("No operations on the network."))
                 .row(GuideCell.words("Favourites"), GuideCell.words("The items you have starred."),
                         GuideCell.words("Nothing starred yet."))
+                .row(GuideCell.words("Federated"),
+                        GuideCell.words("The items of a network federated with this one, after the Network tab."),
+                        GuideCell.words("No network is federated with this one."))
                 .paragraph("Press [[F]] on an item, or its star in the details, to star it. The status card on the"
                         + " Status tab shows the network's state. Its header says This network, and then Mainframe"
                         + " online or Mainframe offline. Below it, a STORAGE gauge shows the disk space in use and"
@@ -554,6 +557,17 @@ final class EverydayProgramsPages {
                         + " sub-operation for each machine that works on it, or its sources. With a Supercomputer,"
                         + " the caption also shows how many parallel crafts run, out of the number the"
                         + " Supercomputer has.")
+                .subheading("Federated networks")
+                .paragraph("When this network is federated with another through [WAN Gateway"
+                        + " Computers](jsc:wan_gateways), the Federated tab shows that network's items in a view of"
+                        + " their own, never mixed with this network's. Its card says over which port and line it is"
+                        + " reached, what this network may do there, and what is on it. With several, Next network"
+                        + " steps through them.")
+                .paragraph("Request takes items from that network into the local storage of this computer, and"
+                        + " Craft there has it craft something, which stays on that network. Drop a stack on its"
+                        + " grid to send it there. The far network decides which of these it allows, in its own"
+                        + " gateway's BorderLink, and each crosses the line as an Operation. On the Operations tab its"
+                        + " row says which network it went to, and its details say where it has got to.")
                 .ifSomethingGoesWrong("The status card says Mainframe offline.",
                         "This window cannot reach the network. Place the computer on a network whose Mainframe is"
                                 + " running.",
@@ -566,7 +580,10 @@ final class EverydayProgramsPages {
                                 + " Computer.",
                         "The Craft dialog shows EST --.",
                         "The plan is still being prepared, or no route exists yet. Wait a moment, then look"
-                                + " again.")
+                                + " again.",
+                        "The Federated tab says the far network does not let this one see its items.",
+                        "Its own gateway decides that. Turn on See our items for this network's port, in that"
+                                + " gateway's BorderLink.")
                 .seeAlso("jsc:mc_net", "jsc:what_a_network_is", "jsc:states_and_queues", "jsc:crafting_computers")
                 .register();
         guide.page("remote_control", section).titled("Remote Control").icon(ComputingModule.MONITOR)

@@ -153,33 +153,22 @@ public final class WanGatewayGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void line_isUpWithItsCardsLineWhileTheGatewayRuns(final GameTestHelper helper) {
+    public static void line_isDownWithNothingAnsweringAtTheFarEnd(final GameTestHelper helper) {
         final WanGatewayBlockEntity gateway = formRunningGateway(helper, ORIGIN, FACING);
         final int slot = MainframeBlockEntity.GPU_SLOTS_START;
         gateway.getInventory().setStackInSlot(slot, new ItemStack(ComputingModule.VLDC_CARD.get()));
         gateway.getInventory().setStackInSlot(slot + 1, new ItemStack(ComputingModule.VLDC_CARD.get()));
-        gateway.getInventory().setStackInSlot(slot + 2, new ItemStack(ComputingModule.T3_CARD.get()));
-        gateway.getInventory().setStackInSlot(slot + 3, new ItemStack(ComputingModule.T3_CARD.get()));
-        final Direction back = FACING.getOpposite();
-        // Port 1 its card's own line, port 2 nothing, port 3 an older line, port 4 one newer than its card.
-        TestCables.lay(helper, WanGatewayStructure.portBlock(ORIGIN, FACING, 1).relative(back),
-                ComputingModule.VLDC_CABLE);
-        TestCables.lay(helper, WanGatewayStructure.portBlock(ORIGIN, FACING, 3).relative(back),
-                ComputingModule.LEASED_LINE);
-        TestCables.lay(helper, WanGatewayStructure.portBlock(ORIGIN, FACING, 4).relative(back),
+        // Port 1 has its card's line plugged in and nothing at the other end of it; port 2 has no cable.
+        TestCables.lay(helper, WanGatewayStructure.portBlock(ORIGIN, FACING, 1).relative(FACING.getOpposite()),
                 ComputingModule.VLDC_CABLE);
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    helper.assertTrue(gateway.line(1) == WanGatewayBlockEntity.LINE_UP, "its own line is up");
+                    helper.assertTrue(gateway.line(1) == WanGatewayBlockEntity.LINE_DOWN,
+                            "a line with no gateway answering at its far end is down");
                     helper.assertTrue(gateway.line(2) == WanGatewayBlockEntity.LINE_DOWN, "no cable, no line");
-                    helper.assertTrue(gateway.line(3) == WanGatewayBlockEntity.LINE_UP, "an older line is up too");
-                    helper.assertTrue(gateway.line(4) == WanGatewayBlockEntity.LINE_DOWN,
-                            "a line newer than the card is down");
-                    helper.assertTrue(gateway.portsUp() == 2 && gateway.cardedPorts() == 4, "two up of four");
+                    helper.assertTrue(gateway.line(3) == WanGatewayBlockEntity.LINE_NONE, "no card, no port");
+                    helper.assertTrue(gateway.portsUp() == 0 && gateway.cardedPorts() == 2, "none up of two");
                 })
-                .thenExecute(gateway::togglePower)
-                .thenExecuteAfter(SETTLE, () -> helper.assertTrue(gateway.portsUp() == 0,
-                        "a gateway switched off has no line up"))
                 .thenSucceed();
     }
 

@@ -335,8 +335,9 @@ final class ComputerKindsPages {
                         + " block, numbered 1 to 4 from the left as you stand behind it. Each port takes the line of"
                         + " the gateway's era and of every earlier era. The first WAN Interface Card in its card slots"
                         + " works port 1, the second works port 2, and so on, so a port with no card does nothing.")
-                .paragraph("A line is up while the gateway runs and a cable of a line its card takes is plugged into"
-                        + " the port. A card takes the line of its own era and the older ones, as a port does.")
+                .paragraph("A line is up while the gateways at both of its ends run Nouvell BorderLink, both ports"
+                        + " are on, and each card takes the line between them. A card takes the line of its own era"
+                        + " and the older ones, as a port does.")
                 .define("WAN Interface Card", "The card that works one port of a WAN Gateway Computer, for the"
                         + " long-distance line of its era and the older ones.")
                 .paragraph("A gateway is no orchestrator. It joins the network it stands on through the backbone, on"
@@ -364,6 +365,36 @@ final class ComputerKindsPages {
                         + " screen, and a sneak-click opens or closes the service panel.")
                 .paragraph("If you break a gateway, it drops the gateway of its own era, and the items in its"
                         + " inventory spill out.")
+                .paragraph("Nouvell BorderLink is the gateway's own service, with a version for each era. Without it"
+                        + " the gateway's lines stay down. On a Frames desktop it is a window. On MC-NET it fills the"
+                        + " screen, with Ports, Log and Console on its rail. At the prompt, the borderlink command does"
+                        + " the same things.")
+                .paragraph("BorderLink lists the four ports: the line in each, the gateway at the far end, what the"
+                        + " line does, and whether it is up. Pick a port to see what the far side may do here, whether"
+                        + " the port relays for other networks, and whether the port is on.")
+                .paragraph("What a line does depends on where the Mainframes are. With a Mainframe on one side only,"
+                        + " the line extends that network over the other place: the computers, racks and cables there"
+                        + " join it, as if one cable ran between them. With a Mainframe on each side, the two networks"
+                        + " federate. They stay two networks, each with its own storage, and each works with the other"
+                        + " as far as the other allows.")
+                .define("Extension", "A long-distance line with a Mainframe on one side only: the network reaches"
+                        + " over the line into the other place.")
+                .define("Federation", "A long-distance line with a Mainframe on each side: two networks that stay"
+                        + " two, and work with each other as far as each allows.")
+                .define("Nouvell BorderLink", "The WAN Gateway Computer's own service, which carries its"
+                        + " long-distance lines and says what each far side may do here.")
+                .paragraph("Each port decides what the network at its far end may do here: see our items, take"
+                        + " items, send items, and craft here. A new port lets the far side see, and nothing more."
+                        + " Relay lets the networks behind the far side reach through this one, up to three lines"
+                        + " away.")
+                .paragraph("A federated network shows in the Network Interactor's Federated tab, in a view of its"
+                        + " own. From there you can take its items into your computer, drop a stack on its grid to send"
+                        + " it there, and have it craft something, which stays on that network. Each of these crosses"
+                        + " the line as an Operation, at the speed of the slowest line on the way, and the Operations"
+                        + " tab says where it has got to.")
+                .paragraph("A line that goes down while items cross it loses them, when the server is set to lose"
+                        + " items when a network splits. When it is not, the Operation waits for the line to come back."
+                        + " An Operation whose far side is not loaded waits for its chunks.")
                 .ifSomethingGoesWrong("The gateway does not form.",
                         "Clear the whole 4 by 2 by 2 space, then place it again. The blocked spaces show particles.",
                         "A WAN Interface Card does not go into a Mainframe or a Personal Computer.",
@@ -372,8 +403,14 @@ final class ComputerKindsPages {
                         "The gateway has four ports, so it takes four cards. Put another kind of card in the rest.",
                         "A line stays down.",
                         "Check that the gateway runs, that the cable is in the port of that card, and that the card"
-                                + " is as new as the line.")
-                .seeAlso("jsc:mainframes", "jsc:expansion_cards")
+                                + " is as new as the line. Both gateways must run BorderLink, with the port on.",
+                        "The line is up, but neither network sees the other's items.",
+                        "The two federate only with a Mainframe on each side. Then check, in the far gateway's"
+                                + " BorderLink, what its port lets this network do.",
+                        "A Mainframe across an extension does not make a network conflict.",
+                        "That is how it should be: it makes a federation. A network conflict comes only from two"
+                                + " Mainframes in the same place.")
+                .seeAlso("jsc:mainframes", "jsc:expansion_cards", "jsc:network_interactor")
                 .register();
     }
 

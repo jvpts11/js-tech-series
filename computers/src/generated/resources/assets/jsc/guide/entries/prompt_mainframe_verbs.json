@@ -75,6 +75,14 @@
           {
             "words": "jsc.guide.prompt_mainframe_verbs.table1_8_2"
           }
+        ],
+        [
+          {
+            "literal": "borderlink"
+          },
+          {
+            "words": "jsc.guide.prompt_mainframe_verbs.table1_9_2"
+          }
         ]
       ]
     },
@@ -201,12 +209,20 @@
       "text": "jsc.guide.prompt_mainframe_verbs.text8"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.prompt_mainframe_verbs.text9"
+    },
+    {
       "type": "command",
       "command": "jsc:command/mc_dos/cluster"
     },
     {
       "type": "command",
       "command": "jsc:command/mc_dos/gateway"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/borderlink"
     },
     {
       "type": "heading",

@@ -65,6 +65,8 @@ public final class JscEvents {
     // Networks and Operations
     public static final String MAINFRAME_NETWORK = "mainframe_network";
     public static final String COMPUTER_JOINED = "computer_joined";
+    /** Two networks federated through their WAN Gateway Computers. */
+    public static final String WAN_JOINED = "wan_joined";
     public static final String SELECT_DONE = "select_done";
     public static final String IQL_QUERY = "iql_query";
     public static final String IQL_JOB = "iql_job";

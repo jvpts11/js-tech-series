@@ -13,7 +13,6 @@ import dev.jstech.computers.gui.layout.TransitionPanelLayout;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.core.client.gui.component.ContextMenu;
 import dev.jstech.core.client.gui.component.Draw;
-import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -608,7 +607,7 @@ final class TransitionPanels {
             out.put(id, TransitionTexts.GRAPHICS);
         }
         for (final String id : List.of("network_manager", "messenger", "remote_control", "gateway_manager",
-                "knothub", "mirror")) {
+                "borderlink", "knothub", "mirror")) {
             out.put(id, TransitionTexts.INTERNET);
         }
         for (final String id : List.of("virtual_studio", "virtual_studio_code", "sigma", "sigma_program", "emacs",

@@ -328,13 +328,15 @@ public final class OsBootstrap {
     }
 
     /**
-     * The built-in operating spaces: the one MC-NET ships with, and the only one the mod has.
+     * The built-in operating spaces: the one MC-NET ships with, and BorderLink's on a WAN Gateway Computer.
      *
-     * <p>Its name is the Network Interactor's, because it is the same thing that runs as a window on a desktop
-     * and at the prompt: one way of working a network, drawn wherever the machine can draw it.
+     * <p>The first's name is the Network Interactor's, because it is the same thing that runs as a window on a
+     * desktop and at the prompt: one way of working a network, drawn wherever the machine can draw it.
      */
     private static final List<OperatingSpaceDef> BUILTIN_SPACES = List.of(
-            new OperatingSpaceDef(rl("interactor"), "Interactor", SoftwareHouse.NOUVELL)
+            new OperatingSpaceDef(rl("interactor"), "Interactor", SoftwareHouse.NOUVELL),
+            // BorderLink's panel on a gateway that runs MC-NET, which has no desktop to put a window on.
+            new OperatingSpaceDef(rl("borderlink"), "BorderLink", SoftwareHouse.NOUVELL)
     );
 
     /** The built-in operating spaces, so tooling reads them from one source. */
@@ -552,6 +554,17 @@ public final class OsBootstrap {
                     .described("Manage the Network Gateways on this computer's ports, and what ComputerCraft may"
                             + " do through them.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.JSC).withRam(32),
+            /*
+             * Nouvell BorderLink, what a WAN Gateway Computer carries its long-distance lines with: a service on the
+             * gateway alone, its panel a window where the system has a desktop and the gateway's operating space on
+             * MC-NET, one version for each era (computers/docs/design/network.md). Size and memory are estimates.
+             */
+            ProgramSpec.of(rl("borderlink"), "borderlink", false, ALL_PLATFORMS, 24, ProgramKind.HYBRID, 0,
+                            HostScope.WAN_GATEWAY_COMPUTER)
+                    .named("Nouvell BorderLink")
+                    .described("Carries this gateway's long-distance lines: extends the network over a place with no"
+                            + " Mainframe, or federates it with a network that has one, and says what each may do.")
+                    .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.NOUVELL).withRam(4),
             // Minesweeper: a small game available on any desktop (rank 0 = Frames 95 and newer).
             ProgramSpec.of(rl("minesweeper"), "mines", false, DESKTOPS, 16, ProgramKind.APP, 0, HostScope.ANY)
                     .named("Minesweeper").described("Minesweeper.")

@@ -392,6 +392,30 @@ public final class ConnectivityIndex {
         return grid.reachableFrom(start, blocked);
     }
 
+    /**
+     * The bridging devices (a Mainframe, a rack, a gateway's link) of the place {@code from} lies in: every one met on
+     * a way through cables and devices that never steps on a long-distance line. A place a WAN link joins this one to
+     * lies beyond such a line, so its devices are not counted, joined or not.
+     */
+    public Set<Long> devicesThisSide(final Collection<Long> from) {
+        return grid.devicesMet(from, pos -> {
+            final GridMember member = grid.memberOf(pos);
+            return member != null && !member.isDevice() && DataLine.ofLineId(member.line()) == DataLine.LONG_DISTANCE;
+        });
+    }
+
+    /**
+     * The part {@code encodedPos} lies in belongs to no network any more. When a WAN link that extended a network over
+     * a far place is taken down, that place keeps the network's id by position as any part cut off does; it is let go
+     * of here, so a Mainframe put there later makes a network of its own rather than taking that one's.
+     */
+    public void forgetNetworkOf(final long encodedPos) {
+        final int root = grid.rootOf(encodedPos);
+        if (root >= 0) {
+            rootToUuid.remove(root);
+        }
+    }
+
     public void clear() {
         grid.clear();
         rootToUuid.clear();

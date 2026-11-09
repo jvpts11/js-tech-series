@@ -827,6 +827,7 @@ final class CommandPromptPages {
                 .row(GuideCell.code("mirror"), GuideCell.words("The network's Mainframe"))
                 .row(GuideCell.code("cluster"), GuideCell.words("A Cluster Management Computer"))
                 .row(GuideCell.code("gateway"), GuideCell.words("A computer with ports, for its Network Gateways"))
+                .row(GuideCell.code("borderlink"), GuideCell.words("A WAN Gateway Computer with Nouvell BorderLink"))
                 .paragraph("The Mainframe's verbs are there only while it is on a network. A Mainframe running MC-DOS"
                         + " or Frames offers them at its Command Prompt.")
                 .subheading("The engine and the services")
@@ -870,8 +871,12 @@ final class CommandPromptPages {
                 .paragraph("gateway does what the Gateway Manager does for the Network Gateways on this computer's"
                         + " ports, the bridge to ComputerCraft ([](jsc:network_gateway)). It lists them, shows the"
                         + " status, permissions, computers and log of one, and changes its settings.")
+                .paragraph("borderlink does on a WAN Gateway Computer what Nouvell BorderLink does in its window"
+                        + " ([](jsc:wan_gateways)). It lists the four ports, shows one, sets what the far side may do"
+                        + " here, and shows the gateway's log: borderlink port 2 relay on.")
                 .command(CommandGuidePages.id(Platform.MC_DOS, "cluster"))
                 .command(CommandGuidePages.id(Platform.MC_DOS, "gateway"))
+                .command(CommandGuidePages.id(Platform.MC_DOS, "borderlink"))
                 .ifSomethingGoesWrong(
                         "The prompt says it does not know the command.",
                         "Type it at the prompt of the computer the table names for it.",

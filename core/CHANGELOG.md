@@ -439,6 +439,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   none in the Vintage, then 4, 8, 16 and 32 from the Legacy to the Advanced, and the Advanced's past it.
   `ChunkQuotas.held()` and `limit()` give, on a player's own game, how many chunks their machines keep loaded and how
   many they may, as the server tells them when they join and whenever the count changes. Experimental.
+- A place on this side of a long-distance line: J's Core's API is at version 46. `Grid.devicesMet(from,
+  blocked)` gives the devices a walk from some positions meets, never stepping on a position `blocked` names;
+  `ConnectivityIndex.devicesThisSide(positions)` gives the devices of a place without crossing a long-distance line,
+  and `forgetNetworkOf(position)` drops the network id a part of the grid kept after it was cut off. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

@@ -112,6 +112,10 @@ final class MainframeNetworking {
     // The orchestrator a Subframe last saw run its network: what it tells the log of if that one falls.
     @Nullable
     private Seen orchestratorSeen;
+    // The devices of this Mainframe's own place, this side of every long-distance line, and the grid read for them.
+    @Nullable
+    private Set<Long> thisSide;
+    private long thisSideVersion;
 
     MainframeNetworking(final MainframeBlockEntity mainframe) {
         this.mainframe = mainframe;
@@ -237,6 +241,23 @@ final class MainframeNetworking {
         }
 
         final List<MainframeBlockEntity> peers = otherRunningMainframesOnSegment(level, index, cables);
+        /*
+         * A Mainframe beyond a long-distance line stands in another place, which a WAN link joined to this one
+         * (computers/docs/design/network.md): it contests nothing here. When the network this one would take is that
+         * Mainframe's, the link is extending its network over this place, and this one holds off for the tick the
+         * gateways take to make the link a federation of two networks instead.
+         */
+        if (!peers.isEmpty() || adopted != null && !mainframe.getBlockPos().equals(ownerOf(system, adopted))) {
+            final Set<Long> thisSide = thisSide(index, cables);
+            peers.removeIf(peer -> !thisSide.contains(peer.getBlockPos().asLong()));
+            final BlockPos owner = adopted == null ? null : ownerOf(system, adopted);
+            if (owner != null && !owner.equals(mainframe.getBlockPos()) && !thisSide.contains(owner.asLong())
+                    && Loaded.blockEntity(level, owner) instanceof MainframeBlockEntity across
+                    && across.ownsANetwork()) {
+                standBy(system, null);
+                return;
+            }
+        }
         // A Subframe owns nothing and a standby only stands by, so only another owner contests the network.
         final boolean primaryPeerPresent = peers.stream().anyMatch(MainframeNetworking::owns);
 
@@ -601,6 +622,22 @@ final class MainframeNetworking {
             }
         }
         return new ArrayList<>(found.values());
+    }
+
+    /* The devices of this Mainframe's own place, read off the grid again only when the grid has changed. */
+    private Set<Long> thisSide(final ConnectivityIndex index, final Set<Long> cables) {
+        final long version = index.grid().version();
+        if (thisSide == null || thisSideVersion != version) {
+            thisSide = index.devicesThisSide(cables);
+            thisSideVersion = version;
+        }
+        return thisSide;
+    }
+
+    /* Where the Mainframe that runs {@code network} stands, or null when none does. */
+    @Nullable
+    private static BlockPos ownerOf(final NetworkSystem system, final NetworkUuid network) {
+        return system.mainframePositionOf(network).map(BlockPos::of).orElse(null);
     }
 
     /** The Mainframe at that position, whether the block there is the cabinet itself or one of its parts. */

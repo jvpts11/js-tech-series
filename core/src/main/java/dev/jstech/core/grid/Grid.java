@@ -23,6 +23,7 @@ import java.util.Objects;
 import java.util.OptionalLong;
 import java.util.PriorityQueue;
 import java.util.Set;
+import java.util.function.LongPredicate;
 
 /**
  * A grid: positions joined into connected runs, each position holding a {@link GridMember}, a cable or a device that
@@ -277,6 +278,41 @@ public final class Grid {
             }
         }
         return visited;
+    }
+
+    /**
+     * The bridging devices a way out from {@code from} meets, through cables and across those devices, never stepping
+     * on a position {@code blocked} picks. A device is met when the way reaches a position it touches, even when every
+     * other position it touches is blocked, so what stands at the edge of the part walked is counted too.
+     */
+    public Set<Long> devicesMet(final Collection<Long> from, final LongPredicate blocked) {
+        final Set<Long> met = new LinkedHashSet<>();
+        final Set<Long> visited = new HashSet<>();
+        final Deque<Long> queue = new ArrayDeque<>();
+        for (final long start : from) {
+            if (this.posToId.containsKey(start) && !blocked.test(start) && visited.add(start)) {
+                queue.add(start);
+            }
+        }
+        while (!queue.isEmpty()) {
+            final long current = queue.poll();
+            for (final long neighbour : this.adjacency.getOrDefault(current, Set.of())) {
+                if (!blocked.test(neighbour) && visited.add(neighbour)) {
+                    queue.add(neighbour);
+                }
+            }
+            for (final long device : this.bridgedBy.getOrDefault(current, Set.of())) {
+                if (!met.add(device)) {
+                    continue;
+                }
+                for (final long pos : this.bridges.getOrDefault(device, Set.of())) {
+                    if (!blocked.test(pos) && visited.add(pos)) {
+                        queue.add(pos);
+                    }
+                }
+            }
+        }
+        return met;
     }
 
     /**

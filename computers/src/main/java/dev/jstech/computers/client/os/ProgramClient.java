@@ -110,6 +110,8 @@ public final class ProgramClient {
         register(rl("workshop"), (host, mon, os) -> new WorkshopApp(host, mon));
         register(rl("cluster_manager"), (host, mon, os) -> new ClusterManagerApp(host));
         register(rl("gateway_manager"), (host, mon, os) -> new GatewayManagerApp(host));
+        // The WAN Gateway Computer's own service, a window on the Frames and an operating space on MC-NET.
+        register(rl("borderlink"), (host, mon, os) -> new BorderLinkApp(host, os));
         register(rl("minesweeper"), (host, mon, os) -> new MinesweeperApp(host));
         register(rl("solitaire"), (host, mon, os) -> new SolitaireApp());
         register(rl("snake"), (host, mon, os) -> new SnakeApp());

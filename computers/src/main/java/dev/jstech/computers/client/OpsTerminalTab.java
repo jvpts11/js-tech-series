@@ -10,10 +10,12 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.wan.FederatedOperation;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
@@ -98,9 +100,14 @@ final class OpsTerminalTab extends AbstractTerminalTab {
             Draw.text(g, font(), sub, cx + 24, cy + DETAIL_Y + 16, statusColor(op.status()));
             /*
              * A craft carries its stages as sub-operations; show those (what it is made of, how far each is)
-             * rather than provenance rows, which is what makes a multi-stage craft legible here.
+             * rather than provenance rows, which is what makes a multi-stage craft legible here. One that crosses to
+             * a federated network says instead where it has got to.
              */
-            if (!op.subs().isEmpty()) {
+            if (FederatedOperation.KIND.equals(op.kind())) {
+                Draw.text(g, font(), op.machine(), cx + 6, cy + DETAIL_Y + 28, ACCENT2());
+                Draw.text(g, font(), font().plainSubstrByWidth(op.failureText().map(Component::getString).orElse(""),
+                        cw - 12), cx + 6, cy + DETAIL_Y + 38, DIM());
+            } else if (!op.subs().isEmpty()) {
                 subRows(g, cx, cy + DETAIL_Y + 28, op.subs());
             } else {
                 final List<OperationRecord.MoveRow> mv = op.moves();
@@ -147,9 +154,15 @@ final class OpsTerminalTab extends AbstractTerminalTab {
         final byte type = op.type();
         Draw.text(g, font(), opTypeLabel(type), cx + 4, ry, opTypeColor(type));
         final String q = fmt(op.moved());
-        final int nameW = Math.max(0, cw - 44 - font().width(q) - 8);
+        // One that crosses to a federated network says where, beside how much has come.
+        final String where = FederatedOperation.KIND.equals(op.kind()) ? op.machine() : "";
+        final int whereW = where.isEmpty() ? 0 : font().width(where) + 6;
+        final int nameW = Math.max(0, cw - 44 - font().width(q) - whereW - 8);
         final String name = font().plainSubstrByWidth(op.name().getString(), nameW);
         Draw.text(g, font(), name, cx + 44, ry, TEXT());
+        if (!where.isEmpty()) {
+            Draw.text(g, font(), where, cx + cw - font().width(q) - whereW - 4, ry, DIM());
+        }
         Draw.text(g, font(), q, cx + cw - font().width(q) - 4, ry, statusColor(op.status()));
     }
 }

@@ -554,6 +554,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The WAN Gateway Computer: J's Computers' API is at version 13. `HostScope.WAN_GATEWAY_COMPUTER` is the
   machine, and `ExpansionCardKind.WAN_INTERFACE` the kind of the WAN Interface Cards, which go in that machine alone.
   Experimental.
+- (Core) A place on this side of a long-distance line: J's Core's API is at version 46. `Grid.devicesMet(from,
+  blocked)` gives the devices a walk from some positions meets, never stepping on a position `blocked` names;
+  `ConnectivityIndex.devicesThisSide(positions)` gives the devices of a place without crossing a long-distance line,
+  and `forgetNetworkOf(position)` drops the network id a part of the grid kept after it was cut off. Experimental.
 
 ### Added
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2235,6 +2239,27 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   cable its card takes in the port. The cabinet shows a line module for each card, a green lamp for a line up and a
   red one for a line down, and a blank where no card is; its assembly screen, the Mainframe's without the operations,
   shows how many lines are up ("2 / 3 UP") and a lamp for each port.
+- (Computers) Two places over a long-distance line. With a Mainframe on one side only, an up line extends that network
+  over the other place, whose computers, racks and cables join it as if one cable ran between them; with a Mainframe on
+  each side, the two networks federate and stay two, each with its own storage, index and Operations, and a Mainframe
+  put across an extension makes a federation, never a network conflict. Each port says what the network at its far end
+  may do here: see this network's items, take items, send items and craft here (a new port lets it see and nothing
+  more), and whether it relays for the networks behind it, up to three lines away. A line coming up, with what it
+  does, and going down are lines in the network's log, and the first federation earns Information Superhighway.
+- (Computers) Nouvell BorderLink, the WAN Gateway Computer's service, a version for each era (1.0, 2.1, 3.8, 4.6 and
+  5.2): without it a gateway's lines stay down. On the Frames desktops it is a window with the four ports (the line,
+  the gateway at the far end, the mode and whether it is up), and under them the port picked, with what the far side
+  may do here, its relay and whether it is on, set with OK, Cancel and Apply; on MC-NET it is its own operating space,
+  with Ports, Log (the gateway's own lines of the network's log) and Console; at the prompt, `borderlink` lists the
+  ports, shows one (`borderlink port 2`), sets its switches (`borderlink port 2 relay on`) and shows the log.
+- (Computers) The Network Interactor's Federated tab, after Network, and MC-NET's Federated heading: a network this one
+  is federated with, in a view of its own, with its card (over which port and line, at what speed, what this network
+  may do there, its item types, servers and craftable items, and what crosses to it now). From it, Request takes items
+  into this computer, Craft there has it craft something that stays there, and a stack dropped on its grid is sent to
+  it. Each crosses the line as an Operation that runs on both networks: the line holds what is on its way at the speed
+  of the slowest line on the way, it waits while the far side is not loaded, loses what is on the line when the line
+  goes down (or waits for it, with `item_loss.network_split` off), and cancelling it cancels the far half too.
+- (Computers) The advancement Information Superhighway, a goal: join two networks through their WAN Gateways.
 - (Computers) A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
@@ -3230,6 +3255,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) IQL: the computers table gives every computer its era, a Cluster Management Computer's too, and names a
   WAN Gateway Computer as one; the network's log calls a gateway `WAN-` and its short id, This PC "WAN Gateway
   Computer".
+- (Computers) A WAN Gateway Computer's line is up while the gateways at both its ends run Nouvell BorderLink with the
+  port on and each card takes the line, where it was up while the gateway ran with a cable in the port.
+- (Computers) The Network Interactor's Operations tab and MC-NET's Ops heading name the network an Operation crosses
+  to, and its details say where the crossing has got to: on the line, waiting for the far side, or what became of it.
 - (Computers) The Network Manager's Services tab lists the Subframes right under the engine's card, by machine, engine
   and what each does, and no longer shows a note under a Subframe that runs another engine: it is a reserve now.
 - (Computers) The Server Router of before is the Standard's, and manages 16 racks where it managed 8; it takes the data
@@ -3435,6 +3464,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Computers) The Network Interactor's Operations tab gives each Operation its own state, where it read the states in
+  another order and showed a finished Operation as waiting and a running one as failed.
 - (Space) A small starship's faces no longer fight as the eye moves: only its windows' glass is drawn see-through,
   the rest of it solid, where the whole ship was drawn see-through and faces in one plane swapped places from frame to
   frame; and no two of its faces lie on one another any more: a doorway's frame on the bulkhead's wall, the raised

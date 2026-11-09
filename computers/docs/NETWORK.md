@@ -41,6 +41,35 @@ Mainframe's operator) reaches an era of hardware, or one of J's Industrial's tie
 ("Era Standard reached by" the team); a team reaches an era the first time one of its players assembles a working
 computer of it (added 2026-11-08).
 
+## Two places over a long-distance line
+
+*Added 2026-11-09.*
+
+A long-distance line runs between the ports of two WAN Gateway Computers ([Hardware](HARDWARE.md)). It is up while
+both gateways run **Nouvell BorderLink**, their service, with both ports on and each card taking the line. What it
+does depends on where the Mainframes are, which each gateway reads off its own place, never across the line:
+
+- **Extension**: a Mainframe on one side only. The network reaches over the line, and the other place's computers,
+  racks and cables join it as if one cable ran between them. Taking the line down cuts the far place off again.
+- **Federation**: a Mainframe on each side. The two stay two networks, each with its own storage, index and
+  Operations, and each works with the other as far as the other allows. A Mainframe put on the far side of an
+  extension makes a federation, never a network conflict.
+
+Each gateway's port decides what the network at its far end may do here: **see** its items, **take** items, **send**
+items and **craft** there; a new port lets it see and nothing more. **Relay** lets the networks behind the far side
+reach through this one, up to three lines away; a way through other networks runs at its slowest line.
+
+The Network Interactor's **Federated** tab shows a federated network in a view of its own: take its items into the
+computer, drop a stack on its grid to send it, or have it craft something, which stays there. Each is an Operation
+that crosses: it runs on both networks, each side logs it, its line holds what is on its way, and cancelling it here
+cancels the other half too. While the far side is not loaded it waits for its chunks; when the line goes down, what is
+on it is lost if `item_loss.network_split` is on (the default), and otherwise the Operation waits for the line.
+
+BorderLink shows the four ports, the line, the far end, the mode and the state of each, and the switches of the port
+picked; on MC-NET it is its own operating space, with Ports, Log and Console, and at the prompt `borderlink` lists the
+ports, shows one (`borderlink port 2`) and sets its switches (`borderlink port 2 relay on`). Its Log is the gateway's
+own lines of the network's log: a line coming up, and with what, or going down.
+
 ## Storage: items are data
 
 *Added 2026-06-05.*

@@ -619,6 +619,11 @@ final class DesktopInput {
         if (!ni.hasPopup() && !desktop.carried().isEmpty() && (button == 0 || button == 1)) {
             final double lx = mouseX - (w.x() + 4);
             final double ly = mouseY - (w.y() + 18);
+            // On the Federated tab the whole stack crosses to the network shown, when it lets this one send.
+            if (button == 0 && ni.sendsAcross(lx, ly)) {
+                ni.sendAcross();
+                return Click.TAKEN;
+            }
             final int target = ni.cursorDepositTarget(lx, ly);
             if (target >= 0) {
                 PacketDistributor.sendToServer(new NiDepositPayload(desktop.hostPos(), desktop.monitorPos(), target,

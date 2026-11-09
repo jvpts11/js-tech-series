@@ -12,19 +12,23 @@ import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.OpticalPort;
 import dev.jstech.computers.block.WanGatewayBlock;
 import dev.jstech.computers.block.WanGatewayStructure;
+import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.hardware.CaseCooling;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.FormFactor;
 import dev.jstech.computers.hardware.WanCardSpec;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.wan.GatewayLinks;
+import dev.jstech.computers.wan.PortSettings;
 import dev.jstech.core.blockentity.DerivedInt;
-import dev.jstech.core.cable.Cables;
+import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.jstechseries.network.DataLine;
 import dev.jstech.core.jstechseries.network.DataLink;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
@@ -36,7 +40,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +53,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public class WanGatewayBlockEntity extends AbstractCabinetComputerBlockEntity {
 
+    /* Each port's switches, as BorderLink sets them, six bits a port. */
+    private final IntField ports = fields().integer("Ports", PortSettings.newPorts(WanGatewayStructure.PORTS)).save();
+    /* What the lines do between the places they join, worked out once a tick on the server. */
+    private final GatewayLinks links = new GatewayLinks(this);
     /* What each port's line is doing, two bits a port, for the cabinet's line modules and the screen's lamps. */
     private final DerivedInt lines = fields().derived("Lines", this::linesMask).toClient().toMenu();
     /* Whether it is on a network and whether its disks are at work, for its assembly menu. */
@@ -59,9 +66,12 @@ public class WanGatewayBlockEntity extends AbstractCabinetComputerBlockEntity {
 
     /** A port with no card in it. */
     public static final int LINE_NONE = 0;
-    /** A port whose card has its line: the cable of a line it takes is plugged in, and the gateway runs. */
+    /**
+     * A port whose line is up: both gateways run BorderLink with the port on, and both cards take the line laid
+     * between them.
+     */
     public static final int LINE_UP = 1;
-    /** A port whose card has no line: nothing plugged in, a line newer than the card, or the gateway off. */
+    /** A port whose card has no line: nothing at the far end that answers, a line its card does not take, or off. */
     public static final int LINE_DOWN = 2;
     private static final String PRESS = "animation.wan_gateway.press_power";
     private static final int LINE_BITS = 2;
@@ -84,7 +94,40 @@ public class WanGatewayBlockEntity extends AbstractCabinetComputerBlockEntity {
                                   final WanGatewayBlockEntity be) {
         if (level instanceof ServerLevel serverLevel) {
             be.tickNode(serverLevel);
+            be.links.tick(serverLevel);
         }
+    }
+
+    /** What the gateway's lines do, as the last tick worked out. */
+    public GatewayLinks links() {
+        return links;
+    }
+
+    /** Port {@code port}'s switches, 1 to 4. */
+    public PortSettings portSettings(final int port) {
+        return PortSettings.ofPort(ports.get(), port);
+    }
+
+    /** Sets port {@code port}'s switches. */
+    public void setPortSettings(final int port, final PortSettings settings) {
+        ports.set(settings.into(ports.get(), port));
+    }
+
+    /** What the gateway is called on the far side of its lines: the name a player gave it, else its id. */
+    public String displayName() {
+        return customName().isEmpty() ? machineId() : customName();
+    }
+
+    /** Writes {@code message} into the log of the gateway's network, under its name. */
+    public void log(final ServerLevel level, final EventLevel what, final Text message) {
+        logEvent(level, what, message);
+    }
+
+    /* A gateway taken down lets go of every line it joined or federated. */
+    @Override
+    public void onBroken(final ServerLevel level) {
+        links.leave(level);
+        super.onBroken(level);
     }
 
     /** What port {@code port}'s line is doing, 1 to 4: {@link #LINE_NONE}, {@link #LINE_UP} or {@link #LINE_DOWN}. */
@@ -216,32 +259,13 @@ public class WanGatewayBlockEntity extends AbstractCabinetComputerBlockEntity {
         return PRESS;
     }
 
-    /* Each port's line, two bits a port; a line is up only while the gateway runs. */
+    /* Each port's line, two bits a port, as the gateway's links last worked it out. */
     private int linesMask() {
-        if (!(level instanceof ServerLevel serverLevel)
-                || !getBlockState().hasProperty(HorizontalDirectionalBlock.FACING)) {
-            return 0;
-        }
-        final Direction facing = getBlockState().getValue(HorizontalDirectionalBlock.FACING);
-        final boolean running = isRunning() && buildValid();
-        final List<WanCardSpec> cards = wanCards();
         int mask = 0;
-        for (int i = 0; i < cards.size(); i++) {
-            final int line = running && plugged(serverLevel, facing, i + 1, cards.get(i)) ? LINE_UP : LINE_DOWN;
-            mask |= line << (LINE_BITS * i);
+        for (int port = 1; port <= WanGatewayStructure.PORTS; port++) {
+            mask |= links.state(port) << (LINE_BITS * (port - 1));
         }
         return mask;
-    }
-
-    /* Whether a cable of a line {@code card} takes is plugged into port {@code port} on the cabinet's back. */
-    private boolean plugged(final ServerLevel level, final Direction facing, final int port, final WanCardSpec card) {
-        final BlockPos at = WanGatewayStructure.portBlock(worldPosition, facing, port);
-        for (final Wire wire : Cables.reaching(level, at, facing.getOpposite())) {
-            if (card.takes(DataWires.linkOf(wire))) {
-                return true;
-            }
-        }
-        return false;
     }
 
     /* How many WAN Interface Cards the card slots hold, but for {@code slot}. */

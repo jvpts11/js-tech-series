@@ -121,7 +121,8 @@ it spends, and how to end it). Others are installed:
   from media only.
 
 Some programs only run on one kind of computer: the Network Manager on the Mainframe, the Crafting Manager on a
-Crafting Computer, the Cluster Manager on a Cluster Management Computer, the Workshop on a Personal Computer. Some
+Crafting Computer, the Cluster Manager on a Cluster Management Computer, the Workshop on a Personal Computer, Nouvell
+BorderLink on a WAN Gateway Computer. Some
 need the network to run a particular engine ([The network](NETWORK.md#engines)), and say so when opened.
 
 | Program | First era | What it does |
@@ -131,6 +132,7 @@ need the network to run a particular engine ([The network](NETWORK.md#engines)),
 | Workshop | Legacy | Crafts, smelts, enchants and repairs with the workshop cards. |
 | Automation Manager | Legacy | Writes and watches the jobs the network runs on its own. |
 | Gateway Manager | Legacy | Manages the Network Gateways on this computer's ports, and what ComputerCraft may do through them. |
+| Nouvell BorderLink | Vintage | A WAN Gateway Computer's service: its long-distance lines, what each far side may do here, and its log; a window on Frames, its own operating space on MC-NET, `borderlink` at the prompt (added 2026-11-09). |
 | Storage Insights | Standard | The biggest stocks, what is running low, how full each server is. |
 | Craft Planner | Standard | Shows what a craft needs, what is missing and what it costs, before it starts. |
 | Cluster Manager | Standard | Runs every supercomputer and datacenter section as one machine. |

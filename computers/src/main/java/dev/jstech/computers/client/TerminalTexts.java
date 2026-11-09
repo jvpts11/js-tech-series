@@ -28,6 +28,11 @@ final class TerminalTexts {
     static final TextKey TAB_PROGRAMS = TextKey.of("jsc.terminal.tab.programs", "Programs");
     static final TextKey TAB_CONSOLE = TextKey.of("jsc.terminal.tab.console", "Console");
     static final TextKey TAB_PATTERNS = TextKey.of("jsc.terminal.tab.patterns", "Patterns");
+    static final TextKey TAB_PORTS = TextKey.of("jsc.terminal.tab.ports", "Ports");
+    static final TextKey TAB_LOG = TextKey.of("jsc.terminal.tab.log", "Log");
+    static final TextKey TAB_FEDERATED = TextKey.of("jsc.terminal.tab.federated", "Federated");
+    static final TextKey ONE_LINE_UP = TextKey.of("jsc.terminal.borderlink.one_line_up", "1 line up");
+    static final TextKey LINES_UP = TextKey.of("jsc.terminal.borderlink.lines_up", "%s lines up");
 
     // The screen round the headings.
     static final TextKey SEARCH = TextKey.of("jsc.terminal.search", "Search");

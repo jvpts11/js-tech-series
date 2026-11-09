@@ -10,6 +10,7 @@ package dev.jstech.computers.menu;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
+import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
 import dev.jstech.computers.operation.index.IndexHealth;
 import dev.jstech.computers.operation.payload.CraftCatalogPayload;
@@ -26,6 +27,11 @@ import dev.jstech.computers.operation.payload.operations.OperationsPayloads;
 import dev.jstech.computers.operation.payload.program.ProgramPayloads;
 import dev.jstech.computers.operation.payload.terminal.TerminalLocalPayloads;
 import dev.jstech.computers.operation.payload.terminal.TerminalPayloads;
+import dev.jstech.computers.operation.payload.wan.BorderLinkStatePayload;
+import dev.jstech.computers.operation.payload.wan.FederationPayloads;
+import dev.jstech.computers.operation.payload.wan.FederationStatePayload;
+import dev.jstech.computers.operation.payload.wan.WanPayloads;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -43,6 +49,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -72,6 +79,14 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
     private int refreshTick;
     private boolean initialDataSent;
     private int activeTab;
+    /* Ticks since BorderLink's headings were last sent how the gateway's lines stand. */
+    private int borderLinkTick;
+    /* What BorderLink's headings show of the gateway, its ports and its log; null until the gateway answers. */
+    @Nullable
+    private BorderLinkStatePayload borderLink;
+    /* What the Federated heading shows; null until the server answers. */
+    @Nullable
+    private FederationStatePayload federation;
 
     private List<NetworkItemEntry> networkItems = List.of();
     private List<NetworkItemEntry> localItems = List.of();
@@ -114,14 +129,25 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
      * one player this system exists for could not autocraft with recipes of their own.
      */
     public static final int TAB_PATTERNS = 9;
+    /**
+     * Nouvell BorderLink's ports, the first heading of its operating space on a WAN Gateway Computer: each port's
+     * line, far end, mode and state, and the switches of the one picked.
+     */
+    public static final int TAB_PORTS = 10;
+    /** BorderLink's log: the lines the gateway wrote into its network's log, its lines coming up and going down. */
+    public static final int TAB_LOG = 11;
+    /** A network this one is federated with, in a view of its own: what it holds, and taking from it. */
+    public static final int TAB_FEDERATED = 12;
 
     /** The highest heading that shows content, which is what an incoming tab id is clamped to. */
-    public static final int TAB_LAST = TAB_PATTERNS;
+    public static final int TAB_LAST = TAB_FEDERATED;
 
     /** How long a system's name may be on the wire; a name is a name, not a paragraph. */
     private static final int MAX_SYSTEM_NAME = 64;
 
     private static final double MONITOR_REACH = 16.0;
+    /* How often, in ticks, BorderLink's headings are sent how the gateway's lines stand. */
+    private static final int BORDERLINK_REFRESH = 20;
 
     public ComputerTerminalMenu(final int containerId, final Inventory playerInventory,
                                 @Nullable final IComputerTerminalHost host,
@@ -144,7 +170,8 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
          * cannot see the network, so it only keeps the tab in range.
          */
         final int inRange = initialTab >= TAB_LOCAL && initialTab <= TAB_LAST ? initialTab : TAB_NETWORK;
-        this.activeTab = level instanceof ServerLevel server ? openingTab(host, server, inRange) : inRange;
+        this.activeTab = forSpace(spaceId,
+                level instanceof ServerLevel server ? openingTab(host, server, inRange) : inRange);
 
         for (int tab = TAB_LOCAL; tab <= TAB_LAST; tab++) {
             final int id = tab;
@@ -158,7 +185,8 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
          * declared here and the inherited quickMoveStack always answers empty.
          */
         final GuiLayout layout = ComputerTerminalLayout.layout();
-        playerInventory(playerInventory, layout.playerInventoryAt());
+        // BorderLink's space carries lines, never items: its headings fill the glass and the inventory is not there.
+        playerInventory(playerInventory, layout.playerInventoryAt(), () -> !borderLinkSpace());
 
         this.readings = new ComputerReadings(host, level, this::value, this::flag);
     }
@@ -397,6 +425,43 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         return activeOps;
     }
 
+    /** Whether the space drawn here is Nouvell BorderLink's, whose headings are Ports, Log and Console. */
+    public boolean borderLinkSpace() {
+        return Programs.BORDERLINK.equals(spaceId);
+    }
+
+    public void setBorderLink(final BorderLinkStatePayload state) {
+        this.borderLink = state;
+    }
+
+    /** What BorderLink's headings show of the gateway, or null until it has answered. */
+    @Nullable
+    public BorderLinkStatePayload borderLink() {
+        return borderLink;
+    }
+
+    public void setFederation(final FederationStatePayload state) {
+        this.federation = state;
+    }
+
+    /** What the Federated heading shows, or null until the server has answered. */
+    @Nullable
+    public FederationStatePayload federation() {
+        return federation;
+    }
+
+    /**
+     * The heading a window drawing the space {@code spaceId} opens on, given {@code tab}: BorderLink's space has only
+     * Ports, Log and Console, and BorderLink's two headings are on no other.
+     */
+    public static int forSpace(@Nullable final ResourceLocation spaceId, final int tab) {
+        final boolean borderLinkTab = tab == TAB_PORTS || tab == TAB_LOG;
+        if (Programs.BORDERLINK.equals(spaceId)) {
+            return borderLinkTab || tab == TAB_CONSOLE ? tab : TAB_PORTS;
+        }
+        return borderLinkTab ? TAB_NETWORK : tab;
+    }
+
     @Override
     public void broadcastChanges() {
         super.broadcastChanges();
@@ -406,6 +471,11 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         // Populate the first-shown tab once, right after the terminal opens; a tab button only sends data when pressed.
         if (!initialDataSent) {
             initialDataSent = true;
+            dispatchTabData(activeTab, serverPlayer, serverLevel);
+        }
+        // BorderLink's headings keep up with the gateway's lines, network or none.
+        if ((activeTab == TAB_PORTS || activeTab == TAB_LOG) && ++borderLinkTick >= BORDERLINK_REFRESH) {
+            borderLinkTick = 0;
             dispatchTabData(activeTab, serverPlayer, serverLevel);
         }
         if (host.networkUuid() == null) {
@@ -627,6 +697,17 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
 
     private void dispatchTabData(final int id, final ServerPlayer serverPlayer, final ServerLevel serverLevel) {
         if (host == null) {
+            return;
+        }
+        if (id == TAB_PORTS || id == TAB_LOG) {
+            if (host instanceof WanGatewayBlockEntity gateway) {
+                PacketDistributor.sendToPlayer(serverPlayer, WanPayloads.state(gateway, serverLevel));
+            }
+            return;
+        }
+        if (id == TAB_FEDERATED) {
+            // The nearest network first; the heading asks for another itself, as it changes which it shows.
+            PacketDistributor.sendToPlayer(serverPlayer, FederationPayloads.state(serverLevel, host, hostPos, ""));
             return;
         }
         if (id == TAB_STORAGE) {

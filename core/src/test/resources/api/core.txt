@@ -4246,6 +4246,7 @@ stable 4
 10 dev.jstech.core.grid.Grid  Set<Integer> place(long, GridMember, Collection<Long>)
 10 dev.jstech.core.grid.Grid  Set<Long> bridgedBy(long)
 10 dev.jstech.core.grid.Grid  Set<Long> componentPositions(long)
+46 dev.jstech.core.grid.Grid  Set<Long> devicesMet(Collection<Long>, LongPredicate)
 10 dev.jstech.core.grid.Grid  Set<Long> neighbours(long)
 10 dev.jstech.core.grid.Grid  Set<Long> positions()
 10 dev.jstech.core.grid.Grid  Set<Long> reachableFrom(long, Set<Long>)
@@ -6685,6 +6686,7 @@ stable 4
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> bridgedBy(long)
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> componentPositions(long)
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> cutOffPositions(NetworkUuid)
+46 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> devicesThisSide(Collection<Long>)
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> positionsOf(NetworkUuid)
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  Set<Long> reachableFrom(long, Set<Long>)
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  boolean contains(long)
@@ -6701,6 +6703,7 @@ stable 4
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void clear()
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void clearNetwork(NetworkUuid)
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void forgetBridge(long)
+46 dev.jstech.core.jstechseries.network.ConnectivityIndex  void forgetNetworkOf(long)
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void onCableRemovedIfRegistered(long)
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex  void unanchor(long)
 12 dev.jstech.core.jstechseries.network.ConnectivityIndex.IPlacementResult  type sealed interface permits IPlacementResult.Isolated, IPlacementResult.MergedWithoutUuid, IPlacementResult.Inherited, IPlacementResult.Conflict

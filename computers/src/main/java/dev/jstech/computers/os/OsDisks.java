@@ -359,15 +359,28 @@ public final class OsDisks {
         if (os == null || os.capability() != OsCapability.NETWORK_GUI || console == null) {
             return null;
         }
+        /*
+         * A space made for this kind of machine (BorderLink, a WAN Gateway Computer's) is what the machine is for, so
+         * it draws before one any machine takes. A program installs only on the machine it is made for, so one
+         * installed here that names a machine names this one. A program with a panel of its own counts as a space when
+         * it has one.
+         */
+        ResourceLocation any = null;
         for (final String id : console.installed()) {
             final ResourceLocation rl = ResourceLocation.tryParse(id);
             final ProgramSpec spec = rl == null ? null : OsRegistry.getProgram(rl);
-            if (spec != null && spec.kind() == ProgramKind.OPERATING_SPACE
-                    && OsRegistry.getSpace(rl) != null) {
+            if (spec == null || OsRegistry.getSpace(rl) == null
+                    || spec.kind() != ProgramKind.OPERATING_SPACE && spec.kind() != ProgramKind.HYBRID) {
+                continue;
+            }
+            if (spec.hostScope() != HostScope.ANY) {
                 return rl;
             }
+            if (any == null) {
+                any = rl;
+            }
         }
-        return null;
+        return any;
     }
 
     /**

@@ -24,6 +24,9 @@ import dev.jstech.computers.operation.payload.TerminalDiskPrivacyPayload;
 import dev.jstech.computers.operation.payload.TerminalInsertPayload;
 import dev.jstech.computers.operation.payload.TerminalLocalDepositPayload;
 import dev.jstech.computers.operation.payload.TerminalMaintenancePayload;
+import dev.jstech.computers.client.os.ProgramClient;
+import dev.jstech.computers.operation.payload.wan.BorderLinkStatePayload;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
@@ -154,7 +157,11 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
      */
     private static final TextKey[] TAB_NAMES = {TerminalTexts.TAB_LOCAL, TerminalTexts.TAB_STORAGE,
             TerminalTexts.TAB_NETWORK, TerminalTexts.TAB_OPS, TerminalTexts.TAB_TASKS, TerminalTexts.TAB_UPKEEP,
-            TerminalTexts.TAB_CRAFT, TerminalTexts.TAB_PROGRAMS, TerminalTexts.TAB_CONSOLE, TerminalTexts.TAB_PATTERNS};
+            TerminalTexts.TAB_CRAFT, TerminalTexts.TAB_PROGRAMS, TerminalTexts.TAB_CONSOLE, TerminalTexts.TAB_PATTERNS,
+            TerminalTexts.TAB_PORTS, TerminalTexts.TAB_LOG, TerminalTexts.TAB_FEDERATED};
+    /* Nouvell BorderLink's space offers its own headings, the gateway's ports and log, and the prompt. */
+    private static final int[] BORDERLINK_RAIL = {ComputerTerminalMenu.TAB_PORTS, ComputerTerminalMenu.TAB_LOG,
+            ComputerTerminalMenu.TAB_CONSOLE};
 
     private int netScrollRow;
     int selectedOp;
@@ -311,6 +318,9 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             new ProcessesTerminalTab(this, menu),
             new ConsoleTerminalTab(this, menu),
             new PatternsTerminalTab(this, menu),
+            new BorderLinkPortsTab(this, menu),
+            new BorderLinkLogTab(this, menu),
+            new FederatedTerminalTab(this, menu),
         };
     }
 
@@ -369,6 +379,9 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
      * last on every one of them, because a machine always has a prompt.
      */
     private int[] railTabs() {
+        if (menu.borderLinkSpace()) {
+            return BORDERLINK_RAIL;
+        }
         final int shape = (menu.craftAvailable() ? 1 : 0)
                 | (menu.patternsAvailable() ? 2 : 0)
                 | (menu.mainframeHost() ? 4 : 0);
@@ -379,6 +392,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         rail.add(ComputerTerminalMenu.TAB_LOCAL);
         rail.add(ComputerTerminalMenu.TAB_STORAGE);
         rail.add(ComputerTerminalMenu.TAB_NETWORK);
+        // A network this one is federated with, in a view of its own, after this network's.
+        rail.add(ComputerTerminalMenu.TAB_FEDERATED);
         if (menu.craftAvailable()) {
             rail.add(ComputerTerminalMenu.TAB_CRAFT);
         }
@@ -582,9 +597,11 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             heading.renderTabBg(g, x, y, cx, cy, cw, mouseX, mouseY, partialTick);
         }
 
-        // The rule that separates the machine's own screen from the player's own rows.
-        g.fill(x + RAIL_X + RAIL_W, y + ComputerTerminalLayout.INV_LINE_Y,
-                x + imageWidth, y + ComputerTerminalLayout.INV_LINE_Y + 1, LINE);
+        // The rule that separates the machine's own screen from the player's own rows, where they are shown.
+        if (!menu.borderLinkSpace()) {
+            g.fill(x + RAIL_X + RAIL_W, y + ComputerTerminalLayout.INV_LINE_Y,
+                    x + imageWidth, y + ComputerTerminalLayout.INV_LINE_Y + 1, LINE);
+        }
         // Every slot this menu holds is a player-inventory slot, drawn at the position the menu itself placed it.
         drawSlotFrames(g, SLOT_EDGE, SLOT_BG);
     }
@@ -847,8 +864,10 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         }
 
         // The player's own rows, named so the two halves of the glass are never confused for one another.
-        Draw.text(g, font, GameText.resolve(TerminalTexts.YOUR_INVENTORY), CONTENT_X,
-                ComputerTerminalLayout.INV_LABEL_Y, DIM);
+        if (!menu.borderLinkSpace()) {
+            Draw.text(g, font, GameText.resolve(TerminalTexts.YOUR_INVENTORY), CONTENT_X,
+                    ComputerTerminalLayout.INV_LABEL_Y, DIM);
+        }
     }
 
     /**
@@ -858,6 +877,10 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
      * time they look at the screen and should never have to change headings to ask.
      */
     private void renderStatusBar(final GuiGraphics g) {
+        if (menu.borderLinkSpace()) {
+            renderBorderLinkBar(g);
+            return;
+        }
         Draw.text(g, font, this.title, 6, 4, ACCENT);
         final int netState = menu.networkLinkState();
         int at = 6 + font.width(this.title) + 10;
@@ -893,6 +916,21 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             stateColor = live == 0 ? DIM : GREEN;
         }
         Draw.text(g, font, state, imageWidth - font.width(state) - 6, 4, stateColor);
+    }
+
+    /* BorderLink's bar: the gateway's name, the service and its version, and how many of its lines are up. */
+    private void renderBorderLinkBar(final GuiGraphics g) {
+        final BorderLinkStatePayload state = menu.borderLink();
+        final String name = state == null ? this.title.getString() : state.name();
+        Draw.text(g, font, name, 6, 4, ACCENT);
+        if (state == null) {
+            return;
+        }
+        Draw.text(g, font, ProgramClient.nameOf(Programs.BORDERLINK) + " " + state.version(),
+                6 + font.width(name) + 10, 4, DIM);
+        final String up = GameText.resolve(state.linesUp() == 1 ? TerminalTexts.ONE_LINE_UP.text()
+                : TerminalTexts.LINES_UP.with(state.linesUp()));
+        Draw.text(g, font, up, imageWidth - font.width(up) - 6, 4, state.linesUp() > 0 ? GREEN : DIM);
     }
 
     // Craft tab: catalog grid + running/recent panels + request popup
@@ -1645,8 +1683,10 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             onRail = true;
         }
         if (!onRail) {
-            menu.setActiveTab(ComputerTerminalMenu.TAB_NETWORK);
-            sendButton(ComputerTerminalMenu.TAB_NETWORK);
+            // Network on every space but BorderLink's, which has no such heading and falls back to its ports.
+            final int fallback = ComputerTerminalMenu.forSpace(menu.spaceId(), ComputerTerminalMenu.TAB_NETWORK);
+            menu.setActiveTab(fallback);
+            sendButton(fallback);
             syncSearchBoxVisibility();
         }
         craft.tick();

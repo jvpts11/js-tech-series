@@ -323,6 +323,45 @@
       "text": "jsc.guide.wan_gateways.text10"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text11"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text13"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.wan_gateways.definition3",
+      "term": "jsc.guide.wan_gateways.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.wan_gateways.definition4",
+      "term": "jsc.guide.wan_gateways.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.wan_gateways.definition5",
+      "term": "jsc.guide.wan_gateways.term5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text14"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text15"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text16"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -344,6 +383,14 @@
         {
           "fix": "jsc.guide.wan_gateways.fix4",
           "problem": "jsc.guide.wan_gateways.problem4"
+        },
+        {
+          "fix": "jsc.guide.wan_gateways.fix5",
+          "problem": "jsc.guide.wan_gateways.problem5"
+        },
+        {
+          "fix": "jsc.guide.wan_gateways.fix6",
+          "problem": "jsc.guide.wan_gateways.problem6"
         }
       ]
     },
@@ -351,7 +398,8 @@
       "type": "see",
       "entries": [
         "jsc:mainframes",
-        "jsc:expansion_cards"
+        "jsc:expansion_cards",
+        "jsc:network_interactor"
       ]
     }
   ],

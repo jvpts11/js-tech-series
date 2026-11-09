@@ -400,7 +400,8 @@ final class LinuxLaunchers {
         }
         for (final String id : List.of("files", "this_pc", "disks", "workstation_info", "system_monitor",
                 "task_manager", "device_manager", "command_prompt", "network", "network_manager", "help_viewer",
-                "cluster_manager", "gateway_manager", "remote_control", "isms", "nextgre_studio", "prophet_console")) {
+                "cluster_manager", "gateway_manager", "borderlink", "remote_control", "isms", "nextgre_studio",
+                "prophet_console")) {
             out.put(id, DesktopTexts.SYSTEM);
         }
         out.put("settings", DesktopTexts.PREFERENCES);
