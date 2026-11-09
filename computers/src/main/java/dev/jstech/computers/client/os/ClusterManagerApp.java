@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.ClusterManagerStatePayload.Detail;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload.WireCluster;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload.WireCraft;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload.WireDest;
+import dev.jstech.computers.operation.payload.ClusterManagerStatePayload.WireDiagnostics;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload.WireJob;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload.WireLane;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload.WireNode;
@@ -147,6 +148,7 @@ public final class ClusterManagerApp implements IDesktopApp {
     private final Label inventoryHint;
     private final CellGrid inventoryGrid;
     private final Label emptyInventoryLabel;
+    private final SectionDiagnosticsView diagnosticsView;
     private final Button systemAll;
     private final Button programAll;
     private final Button powerAll;
@@ -220,8 +222,8 @@ public final class ClusterManagerApp implements IDesktopApp {
         jobBar = root.add(new ProgressBar(this::jobPercent));
         scSubTabs = root.add(new TabStrip(words(ClusterManagerTexts.NODES_TAB, ClusterManagerTexts.MAP_TAB,
                 ClusterManagerTexts.QUEUE_TAB)).fitToLabels(10).setOnSelect(this::selectSubTab));
-        dcSubTabs = root.add(new TabStrip(words(ClusterManagerTexts.SERVERS_TAB, ClusterManagerTexts.INVENTORY_TAB))
-                .fitToLabels(10).setOnSelect(this::selectSubTab));
+        dcSubTabs = root.add(new TabStrip(words(ClusterManagerTexts.SERVERS_TAB, ClusterManagerTexts.INVENTORY_TAB,
+                ClusterManagerTexts.DIAGNOSTICS_TAB)).fitToLabels(10).setOnSelect(this::selectSubTab));
         scNodeColumns = root.add(new ColumnHeader(words(ClusterManagerTexts.RACK_UNIT_COLUMN,
                 ClusterManagerTexts.NODE_COLUMN, ClusterManagerTexts.SYSTEM_COLUMN, ClusterManagerTexts.STATUS_COLUMN,
                 ClusterManagerTexts.PHI_COLUMN)).setSortable(false));
@@ -243,6 +245,8 @@ public final class ClusterManagerApp implements IDesktopApp {
                 .setRenderer(this::renderInventoryCell)
                 .setOnClick((index, button, shift) -> openMove(index)));
         emptyInventoryLabel = root.add(new Label(GameText.resolve(ClusterManagerTexts.SECTION_EMPTY), Label.Tone.DIM));
+        diagnosticsView = root.add(new SectionDiagnosticsView(this::diagnostics, () -> new SectionDiagnosticsView.Tones(
+                PALETTE.get().good(), PALETTE.get().busy(), PALETTE.get().bad())));
         systemAll = root.add(new Button(GameText.resolve(ClusterManagerTexts.SYSTEM_ALL),
                 () -> act(ClusterManagerActionPayload.ACTION_INSTALL_SYSTEM_ALL)));
         programAll = root.add(new Button(GameText.resolve(ClusterManagerTexts.PROGRAM_ALL),
@@ -395,6 +399,11 @@ public final class ClusterManagerApp implements IDesktopApp {
 
     private List<NetworkItemEntry> items() {
         return state == null ? List.of() : state.items();
+    }
+
+    private WireDiagnostics diagnostics() {
+        final Detail d = detail();
+        return d == null ? WireDiagnostics.NONE : d.diagnostics();
     }
 
     private boolean jobRunning() {
@@ -683,6 +692,7 @@ public final class ClusterManagerApp implements IDesktopApp {
         final boolean mapTab = showDetail && tab == 0 && subTab == 1;
         final boolean queueTab = showDetail && tab == 0 && subTab == 2;
         final boolean inventoryTab = showDetail && tab != 0 && subTab == 1;
+        final boolean diagnosticsTab = showDetail && tab != 0 && subTab == 2;
         scNodeColumns.setVisible(nodesTab && tab == 0);
         dcNodeColumns.setVisible(nodesTab && tab != 0);
         nodeList.setVisible(nodesTab && !nodes().isEmpty());
@@ -696,9 +706,11 @@ public final class ClusterManagerApp implements IDesktopApp {
         inventoryHint.setVisible(inventoryTab);
         inventoryGrid.setVisible(inventoryTab && !items().isEmpty());
         emptyInventoryLabel.setVisible(inventoryTab && items().isEmpty());
+        diagnosticsView.setVisible(diagnosticsTab);
         cancelJob.setVisible(running);
         balance.setVisible(showDetail && !running && tab == 1 && subTab == 1);
-        final boolean bulk = showDetail && !running && !(tab == 1 && subTab == 1);
+        // The section's inventory has its balancing button below it, and its diagnostics go down to the foot.
+        final boolean bulk = showDetail && !running && !(tab == 1 && subTab == 1) && !diagnosticsTab;
         systemAll.setVisible(bulk);
         programAll.setVisible(bulk);
         powerAll.setVisible(bulk);
@@ -765,6 +777,10 @@ public final class ClusterManagerApp implements IDesktopApp {
             inventoryGrid.setColumns(cols).setVisibleRows(rows).setTotalRows((items().size() + cols - 1) / cols)
                     .setCellCount(items().size()).place(dx + PAD, dy + ROW_H);
             emptyInventoryLabel.setBounds(dx + PAD, dy + ROW_H, dw - PAD * 2, 8);
+        } else if (diagnosticsTab) {
+            // Down to the foot, unless a job's button stands there.
+            final int foot = running ? bottom : top + bodyH - PAD;
+            diagnosticsView.setBounds(dx + PAD, dy, dw - PAD * 2, Math.max(0, foot - dy));
         }
 
         // The footer: one wide button while a job runs or on the inventory, else the three bulk actions.

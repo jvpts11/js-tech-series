@@ -544,6 +544,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) System tools under the menu: `DesktopEnvironmentDef` gains `menuOnly`, the bundled programs its menus
   list with no icon on the wallpaper, and `onWallpaper`; the six-part constructor is kept for a desktop that puts an
   icon of every program on it. Experimental.
+- (Core) Server Routers by era, and a player's own chunk count: J's Core's API is at version 45. `ServerRouterElement`
+  carries its router's `era` where it carried an industrial tier, and `maxRacksFor(Era)` gives the rack budget by era:
+  none in the Vintage, then 4, 8, 16 and 32 from the Legacy to the Advanced, and the Advanced's past it.
+  `ChunkQuotas.held()` and `limit()` give, on a player's own game, how many chunks their machines keep loaded and how
+  many they may, as the server tells them when they join and whenever the count changes. Experimental.
+- (Computers) A kind of card that keeps chunks loaded: J's Computers' API is at version 12. `ExpansionCardKind.ANCHOR`
+  is the Network Anchor Card's kind. Experimental.
 
 ### Added
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2205,6 +2212,24 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   glowing from its centre, a supercritical fluid half liquid and half gas, a slurry grainy, exotic matter changing
   colour), names its kind, and its category filter lists Liquids, Gases, Plasmas, Supercritical, Slurries and Exotic
   matter, with Chemicals for what has no state.
+- (Computers) A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
+  ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
+  Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
+  corner and its racks against that budget.
+- (Computers) The Network Anchor Card, one for each era's slot: while its computer runs, it keeps the chunks round it
+  loaded through J's Core's chunk loading, under the name of whoever works the computer and within their quota: the
+  computer's own chunk in the Vintage (5 W) and the Legacy (8 W), the 3 by 3 round it in the Transition (10 W) and the
+  Standard (12 W), the 5 by 5 in the Advanced (15 W). A server in a rack takes one too, and the rack keeps the chunks
+  round it. A full quota leaves out the farthest chunks and the network's log says so; the card's tooltip shows the
+  area it keeps, how much of their quota its reader keeps already, and its draw. It is drawn in its slot inside the
+  computer and on the assembly screen.
+- (Computers) A datacenter section's diagnostics: the Cluster Manager's section gains a Diagnostics tab with the last
+  minute's latency (from a request entering the router to its server's answer) against the section's base, its
+  throughput against the most it can move, and how many alerts stand; the last hour, minute by minute, the latency and
+  the throughput each on its own scale; and the alerts standing and since when: a server's disks over 90% full (WARN)
+  or 98% (ERROR), a rack over its thermal budget, the router at its rack budget, and the latency over twice the base
+  while it lasts. Each alert goes into the network's event log as it is raised, and the router keeps the hour across
+  restarts.
 - (Computers) A network conflict costs: what the discarded Operations were carrying is lost, and the log says what.
   The network splitting under an Operation (a cable pulled between the Mainframe and a server it was reading or
   writing) loses what it was carrying too. The server's `[item_loss]` settings gain `network_split`,
@@ -3179,6 +3204,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole blocks.
 
 ### Changed
+- (Computers) The Server Router of before is the Standard's, and manages 16 racks where it managed 8; it takes the data
+  cables up to the Standard's, where it took every era's.
 - (Computers) A rack's heat is a temperature: the cabinet has one temperature for every machine in it, from its
   heat budget (1,000 W, its Cooling Units and now its Vent Panels) and the load of its powered bays, by the same rules
   as a computer's. The cut the rack had, the budget over the load down to a quarter, is now its throttling at 90 °C;

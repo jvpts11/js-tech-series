@@ -15,6 +15,8 @@ import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.ServerRouterBlock;
 import dev.jstech.computers.datacenter.DatacenterSection;
 import dev.jstech.computers.datacenter.LoadBalanceMode;
+import dev.jstech.computers.datacenter.SectionDiagnostics;
+import dev.jstech.computers.datacenter.SectionReading;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
@@ -26,7 +28,9 @@ import dev.jstech.core.jstechseries.network.ConnectivityIndex;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.network.ServerNode;
 import dev.jstech.core.jstechseries.network.ServerRouterElement;
-import dev.jstech.core.jstechseries.tier.IndustrialTier;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -46,6 +50,7 @@ import java.util.EnumMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -65,6 +70,8 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
     private final Map<Direction, String> sectionNames = new EnumMap<>(Direction.class);
     // Where the next spreading write on each face starts, so round-robin actually takes turns.
     private final Map<Direction, Integer> balanceCursors = new EnumMap<>(Direction.class);
+    // What it watches of each section once a second, for the Cluster Manager's diagnostics; kept with the faces.
+    private final SectionWatch watch = new SectionWatch();
     private final PartField faces = fields().part("Faces", new FacesPart()).save();
     @Nullable
     private NetworkUuid registeredNetwork;
@@ -86,8 +93,6 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
             fields().derived("SectionCount", () -> Math.min(sections.size(), MAX_SECTIONS)).toMenu();
     /** One row per section: face 3D value, racks, servers, mode id, filled in the constructor. */
     private final DerivedInt[][] sectionShown = new DerivedInt[MAX_SECTIONS][4];
-
-    public static final IndustrialTier TIER = IndustrialTier.T3;
 
     /** A block has six faces; one is the auto-detected input, leaving at most five output sections. */
     public static final int MAX_SECTIONS = 5;
@@ -235,6 +240,33 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
         return sectionNames.getOrDefault(face, "");
     }
 
+    /** What the section on {@code face} is called: the player's name for it, or the router's and the face's. */
+    public String sectionLabel(final Direction face) {
+        final String custom = sectionName(face);
+        if (!custom.isEmpty()) {
+            return custom;
+        }
+        final String router = customName().isEmpty() ? GameText.resolve(ClusterJobTexts.ROUTER_NAME) : customName();
+        return router + " · " + face.getName().toUpperCase(Locale.ROOT);
+    }
+
+    /** What the section on {@code face} has been doing, for its diagnostics; null for a face that never had one. */
+    @Nullable
+    public SectionDiagnostics diagnostics(final Direction face) {
+        return watch.diagnostics(face);
+    }
+
+    /** The last reading of the section on {@code face}: its base, its most and its alerts; null before its first. */
+    @Nullable
+    public SectionReading reading(final Direction face) {
+        return watch.reading(face);
+    }
+
+    /* A reading changed what the sections' diagnostics keep, which is saved with the faces. */
+    void diagnosticsChanged() {
+        faces.changed();
+    }
+
     public void setSectionName(final Direction face, @Nullable final String name) {
         if (name == null || name.isEmpty()) {
             sectionNames.remove(face);
@@ -262,7 +294,12 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
     }
 
     public int maxRacks() {
-        return ServerRouterElement.maxRacksFor(TIER);
+        return ServerRouterElement.maxRacksFor(era());
+    }
+
+    /** The era of the router this is, which sets its rack budget; a router read before its block is the Standard. */
+    public Era era() {
+        return getBlockState().getBlock() instanceof ServerRouterBlock router ? router.era() : HardwareEra.STANDARD;
     }
 
     public int managedRackCount() {
@@ -306,17 +343,18 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
         if (registeredNetwork != null && !registeredNetwork.equals(network)) {
             system.unregisterRouter(registeredNetwork, encodedPos);
         }
-        system.registerRouter(new ServerRouterElement(network, encodedPos, TIER));
+        system.registerRouter(new ServerRouterElement(network, encodedPos, era()));
         registeredNetwork = network;
 
         if (--recomputeCooldown <= 0) {
             recomputeCooldown = RECOMPUTE_INTERVAL;
             recomputeSections(level, system, network);
         }
+        watch.tick(level, network, this);
         if (overCapacity && --warnCooldown <= 0) {
             warnCooldown = WARN_INTERVAL;
             JsComputers.LOGGER.warn(
-                    "Server Router at {} manages {} racks but its tier budget is {}; {} rack(s) left unmanaged.",
+                    "Server Router at {} manages {} racks but its era's budget is {}; {} rack(s) left unmanaged.",
                     worldPosition, managedRackCount(), maxRacks(), unmanagedRacks.size());
         }
     }
@@ -474,6 +512,7 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
             if (!modes.isEmpty()) {
                 tag.put("LoadBalance", modes);
             }
+            watch.save(tag);
         }
 
         @Override
@@ -496,6 +535,7 @@ public class ServerRouterBlockEntity extends SyncedBlockEntity {
                     loadBalanceModes.put(direction, LoadBalanceMode.byId(modes.getByte(key)));
                 }
             }
+            watch.load(tag);
         }
     }
 }

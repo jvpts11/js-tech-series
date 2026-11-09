@@ -54,6 +54,8 @@ public final class NetworkEvents {
             "The thermal trip corrupted %s of its disks: the Defrag can try to give it back");
     public static final TextKey DEFRAG_DONE = TextKey.of("jsc.event_log.defrag_done",
             "Defrag of %s: %s corrupted, %s recovered, %s lost; bad sectors %s, now %s");
+    public static final TextKey ANCHOR_SHORT = TextKey.of("jsc.event_log.anchor_short",
+            "The Network Anchor Card keeps %s of its %s chunks loaded: the owner's quota or the server's is full");
     /** What the machine column shows for something of the whole network. */
     public static final TextKey WHOLE_NETWORK = TextKey.of("jsc.event_log.network", "network");
     /* One kind lost: so many of an item, so many millibuckets of a fluid or a chemical; and the kinds not named. */

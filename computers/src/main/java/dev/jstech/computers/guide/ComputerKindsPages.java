@@ -744,13 +744,16 @@ final class ComputerKindsPages {
         datacenterScene(page);
         page.paragraph("The label of a section shows its racks (R) and its servers (S). A section's default"
                         + " name is the router's name and its face.")
-                .paragraph("A Server Router has one budget for all its sections together. At its tier, T3, it manages 8"
-                        + " Server Racks in all, counted section by section. Racks past the eighth are counted as"
-                        + " unmanaged, and the router shows its rack count in red when it goes over.")
+                .paragraph("A Server Router has one budget for all its sections together, and its era sets it: 4 Server"
+                        + " Racks for the Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the"
+                        + " Advanced's, counted section by section. Racks past the budget are counted as unmanaged, and"
+                        + " the router shows its rack count in red when it goes over. The Vintage has no Server Router:"
+                        + " its racks join the backbone directly.")
                 .paragraph("More faces do not add budget. To manage more racks, use a second Server Router, which has a"
-                        + " budget of its own.")
+                        + " budget of its own, or one of a newer era.")
                 .ifSomethingGoesWrong("The rack count shows in red.",
-                        "The router manages 8 racks at most. Use a second Server Router for the others.",
+                        "The router manages as many racks as its era allows. Use a second Server Router, or one of a"
+                                + " newer era, for the others.",
                         "A section has racks that are unmanaged.",
                         "Take racks off that router, or put some on a second Server Router"
                                 + " ([](jsc:server_router)).")
@@ -762,18 +765,21 @@ final class ComputerKindsPages {
         guide.page("server_router", section).titled("Server Router").icon(ComputingModule.SERVER_ROUTER)
                 .coversAll(ComputersGuide.blocksOf(ServerRouterBlock.class))
                 .paragraph("The Server Router is how you organise a datacenter. It groups Server Racks into sections,"
-                        + " one for each of its faces besides the uplink ([](jsc:datacenters)). Its faces take any data"
-                        + " cable, of any era ([](jsc:data_cables)).")
+                        + " one for each of its faces besides the uplink ([](jsc:datacenters)). Each era from the Legacy"
+                        + " on has its own, and its faces take the data cables of its era and of every earlier one"
+                        + " ([](jsc:data_cables)).")
                 .steps("Join its uplink face to the network.",
                         "Join a section of racks to each of its other faces.",
                         "Open it to see each section and its rack count.")
-                .paragraph("A Server Router manages up to 8 Server Racks in all, across sections. Racks past that are"
-                        + " counted as unmanaged, and the router shows its rack count in red.")
+                .paragraph("A Server Router manages a number of Server Racks in all, across sections, which its era"
+                        + " sets: 4 in the Legacy, 8 in the Transition, 16 in the Standard and 32 in the Advanced. Its"
+                        + " window shows its era in the corner and its rack count against that budget. Racks past it"
+                        + " are counted as unmanaged, and the router shows its rack count in red.")
                 .paragraph("The Cluster Manager runs each section as one machine, as far as its card reaches"
                         + " ([](jsc:cluster_management_computers)).")
                 .ifSomethingGoesWrong("The rack count shows in red.",
-                        "More than 8 racks sit on the router. Move some to a second Server Router, which has its own"
-                                + " budget.")
+                        "More racks sit on the router than its era manages. Move some to a second Server Router, which"
+                                + " has its own budget, or use a router of a newer era.")
                 .seeAlso("jsc:datacenters", "jsc:load_balancing")
                 .register();
     }

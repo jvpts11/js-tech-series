@@ -353,6 +353,7 @@ stable 7
 8 dev.jstech.computers.hardware.ExpansionCardKind  static ExpansionCardKind byId(String)
 8 dev.jstech.computers.hardware.ExpansionCardKind  static ExpansionCardKind declare(ExpansionCardKind)
 8 dev.jstech.computers.hardware.ExpansionCardKind  static List<ExpansionCardKind> all()
+12 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind ANCHOR
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind CLUSTER_INTERFACE
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind CRAFTING
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind GPU

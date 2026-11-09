@@ -8,19 +8,24 @@
 package dev.jstech.computers.operation;
 
 import dev.jstech.computers.block.part.ExternalStorageBusPart;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.datacenter.RackTraffic;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.operation.ILatencyScheduler;
 import dev.jstech.core.jstechseries.operation.OperationFailure;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.jstechseries.operation.exec.EqualShare;
 import dev.jstech.core.jstechseries.operation.exec.OperationProgress;
 import dev.jstech.core.jstechseries.operation.exec.TransferState;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,14 +76,23 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
         final long hardwareCap;
         volatile boolean diskReady;
         volatile boolean ramReady;
+        /* The tally of the rack the server sits in, which its section's diagnostics read; null outside a rack. */
+        @Nullable
+        final RackTraffic traffic;
+        /* When the server was asked, and whether it has answered yet: the wait its section's latency counts. */
+        final long askedAt;
+        boolean answered;
 
         Source(final NodeUuid server, final TransferState state, final long hardwareCap,
-               final boolean diskReady, final boolean ramReady) {
+               final boolean diskReady, final boolean ramReady, @Nullable final RackTraffic traffic,
+               final long askedAt) {
             this.server = server;
             this.state = state;
             this.hardwareCap = hardwareCap;
             this.diskReady = diskReady;
             this.ramReady = ramReady;
+            this.traffic = traffic;
+            this.askedAt = askedAt;
         }
     }
 
@@ -108,16 +122,22 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
          */
         final long cap = Math.min(NetworkIndex.serverThroughputCap(level, server),
                 NetworkIndex.serverLinkCap(level, network, server));
+        final RackTraffic traffic = NetworkSystem.get(level).locationOf(server)
+                .map(at -> Loaded.blockEntity(level, BlockPos.of(at.rackPos())) instanceof ServerRackBlockEntity rack
+                        ? rack.traffic() : null)
+                .orElse(null);
+        final long now = level.getGameTime();
         final Source source;
         if (scheduler != null) {
-            source = new Source(server, new TransferState(quantity, 0), cap, false, ramLatencyTicks <= 0);
+            source = new Source(server, new TransferState(quantity, 0), cap, false, ramLatencyTicks <= 0, traffic,
+                    now);
             scheduler.afterTicks(diskLatency, () -> source.diskReady = true);
             if (ramLatencyTicks > 0) {
                 scheduler.afterTicks(ramLatencyTicks, () -> source.ramReady = true);
             }
         } else {
             // No VT scheduler: absorb the disk latency through TransferState; RAM gate opens immediately.
-            source = new Source(server, new TransferState(quantity, diskLatency), cap, true, true);
+            source = new Source(server, new TransferState(quantity, diskLatency), cap, true, true, traffic, now);
         }
         sources.add(source);
     }
@@ -164,6 +184,7 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
                 movedTotal += moved;
                 movedPerServer.merge(source.server, moved, Long::sum);
                 movedAny = true;
+                counted(source, moved);
             }
         }
 
@@ -178,6 +199,22 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
 
     /** Hook run once at the start of each transfer tick, before the sources are advanced. */
     protected void onTickStart() {
+    }
+
+    /*
+     * Counts what a server moved on its rack's tally, which its section's diagnostics read: its first items are its
+     * answer, as long after it was asked as it took.
+     */
+    private void counted(final Source source, final long moved) {
+        if (source.traffic == null) {
+            return;
+        }
+        final long now = level.getGameTime();
+        if (!source.answered) {
+            source.answered = true;
+            source.traffic.answered(now, now - source.askedAt);
+        }
+        source.traffic.moved(now, moved);
     }
 
     /** Moves up to {@code planned} of the key through a single server, returning the amount moved. */

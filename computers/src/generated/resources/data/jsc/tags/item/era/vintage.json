@@ -40,6 +40,7 @@
     "jsc:serial_console_card",
     "jsc:vaultis_array_isa",
     "jsc:vaultis_cache_isa",
+    "jsc:network_anchor_card_vintage",
     "jsc:cpu_integra_486sx",
     "jsc:cpu_integra_486dx2",
     "jsc:cpu_integra_486dx4",

@@ -14,6 +14,9 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.crafting.NetworkCraftOperation;
 import dev.jstech.computers.datacenter.LoadBalanceMode;
+import dev.jstech.computers.datacenter.SectionAlert;
+import dev.jstech.computers.datacenter.SectionDiagnostics;
+import dev.jstech.computers.datacenter.SectionReading;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.ClusterManagerStatePayload;
@@ -214,7 +217,8 @@ public final class ClusterManagerStateBuilder {
                         hub.craftSlotsInUse(), hub.parallelCrafts()),
                 hub.clusterOnline(), 0, nodes,
                 queue.size() > ClusterManagerStatePayload.MAX_QUEUE
-                        ? queue.subList(0, ClusterManagerStatePayload.MAX_QUEUE) : queue);
+                        ? queue.subList(0, ClusterManagerStatePayload.MAX_QUEUE) : queue,
+                ClusterManagerStatePayload.WireDiagnostics.NONE);
     }
 
     /* Fills {@code items} with the section's inventory and {@code dests} with where a move-out can go. */
@@ -252,7 +256,8 @@ public final class ClusterManagerStateBuilder {
                 ClusterManagerStatePayload.KIND_DATACENTER, selIndex, ref.label(),
                 SECTION_DETAIL.with(racks(ref.section().rackCount()), ref.section().serverCount(),
                         rp.getX(), rp.getY(), rp.getZ()),
-                ref.section().serverCount() > 0, balanceModeId(level, ref.routerPos(), ref.face()), nodes, List.of());
+                ref.section().serverCount() > 0, balanceModeId(level, ref.routerPos(), ref.face()), nodes, List.of(),
+                diagnostics(level, ref.routerPos(), ref.face()));
         final Map<StorageKey, Long> totals = NetworkStorage
                 .ofServers(level, ref.section().servers()).query();
         totals.entrySet().stream().limit(ClusterManagerStatePayload.MAX_ITEMS)
@@ -319,6 +324,34 @@ public final class ClusterManagerStateBuilder {
         return new ClusterManagerStatePayload.WireJob(true, running.kind().id(), running.medium().label(),
                 clusterKind, clusterIndex, running.done(), running.skipped(), running.queued(), running.total(),
                 running.elapsedTicks(), running.cancelled(), lanes, cmc.lastJobSummary());
+    }
+
+    /*
+     * What the section's router has watched of it: the last minute, the last hour, the alerts standing and for how
+     * long, and how long ago its latency last went over twice its base; nothing before the router has read it.
+     */
+    private static ClusterManagerStatePayload.WireDiagnostics diagnostics(final ServerLevel level,
+                                                                         final BlockPos routerPos,
+                                                                         final Direction face) {
+        if (!(Loaded.blockEntity(level, routerPos) instanceof ServerRouterBlockEntity router)) {
+            return ClusterManagerStatePayload.WireDiagnostics.NONE;
+        }
+        final SectionDiagnostics diag = router.diagnostics(face);
+        final SectionReading reading = router.reading(face);
+        if (diag == null || reading == null) {
+            return ClusterManagerStatePayload.WireDiagnostics.NONE;
+        }
+        final long now = level.getGameTime();
+        final List<ClusterManagerStatePayload.WireAlert> alerts = new ArrayList<>();
+        for (final SectionAlert alert : reading.alerts()) {
+            final long since = diag.since(alert.key());
+            alerts.add(new ClusterManagerStatePayload.WireAlert(alert.level().id(), alert.what(),
+                    since == SectionDiagnostics.NONE ? 0L : now - since));
+        }
+        final long ended = diag.lastOverEnded();
+        return new ClusterManagerStatePayload.WireDiagnostics(diag.latencyTenths(), reading.baseTenths(),
+                diag.throughput(), reading.maxThroughput(), diag.hourLatency(), diag.hourThroughput(), alerts,
+                ended == SectionDiagnostics.NONE ? -1L : now - ended, diag.lastOverTicks());
     }
 
     /* How the section's router spreads what is stored, as the id the wire carries. */

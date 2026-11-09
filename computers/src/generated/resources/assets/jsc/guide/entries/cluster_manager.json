@@ -145,6 +145,82 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.cluster_manager.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text9"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.cluster_manager.definition4",
+      "term": "jsc.guide.cluster_manager.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text10"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.cluster_manager.table3",
+      "heads": [
+        "jsc.guide.cluster_manager.table3_head1",
+        "jsc.guide.cluster_manager.table3_head2",
+        "jsc.guide.cluster_manager.table3_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table3_1_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table3_1_2"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table3_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table3_2_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table3_2_2"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table3_2_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table3_3_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table3_3_2"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table3_3_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.cluster_manager.table3_4_1"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table3_4_2"
+          },
+          {
+            "words": "jsc.guide.cluster_manager.table3_4_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.cluster_manager.text11"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {

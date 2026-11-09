@@ -18,8 +18,6 @@ import dev.jstech.core.text.TextKey;
 final class ServerRouterTexts {
 
     static final TextKey TITLE = TextKey.of("jsc.server_router.title", "SERVER ROUTER");
-    /* The router's industrial tier. */
-    static final TextKey TIER = TextKey.of("jsc.server_router.tier", "T3");
     static final TextKey NAME = TextKey.of("jsc.server_router.name", "NAME");
     static final TextKey NAME_FIELD = TextKey.of("jsc.server_router.name_field", "Name");
     static final TextKey INPUT = TextKey.of("jsc.server_router.input", "INPUT");

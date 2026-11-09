@@ -58,6 +58,8 @@ public record ExpansionCardKind(String id, List<HostScope> machines, @Nullable T
     public static final ExpansionCardKind RAID_CONTROLLER = own("raid_controller");
     /** A read cache, the Vaultis Cache: answers the reads of the drives of the server it sits in faster. */
     public static final ExpansionCardKind READ_CACHE = own("read_cache");
+    /** A Network Anchor Card: keeps the chunks round the computer it sits in loaded while the computer runs. */
+    public static final ExpansionCardKind ANCHOR = own("anchor");
 
     public ExpansionCardKind {
         HardwareIds.requireNamespaced(id, "a kind of expansion card");

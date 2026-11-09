@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.audio.MachineVoices;
 import dev.jstech.computers.audio.MusicDownloads;
@@ -173,6 +174,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final PsuWearing.Clock psuClock = new PsuWearing.Clock();
     /** How hot it is against what its case, coolers and fans take away; nothing for a machine cooled from outside. */
     private final ComputerHeat heat = new ComputerHeat();
+    /** The chunks round it its Network Anchor Card keeps loaded while it runs. */
+    private final ChunkAnchor anchor = new ChunkAnchor();
     /**
      * The item in each hardware slot, air where there is none, told to the players who see the machine so they see
      * each part inside it. It is the hardware's own record, worked out again whenever the hardware changes or is read.
@@ -1972,6 +1975,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         Acting.asOperatorOf(this, sigmaTick);
         SetupRunner.tick(this, level, worldPosition);
         DefragRunner.tick(this, level);
+        keepAnchored(level);
         attachment.tick(level);
         // A computer whose cards read machines keeps its links on the industrial control cable, once a second.
         if (--controlKeepIn <= 0) {
@@ -1989,6 +1993,20 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         final VramLedger video = VideoMemory.of(level, this).ledger();
         vramTotalKb.set(video.totalKb());
         vramMonitorsKb.set(video.usedKb(VramLedger.Kind.MONITOR));
+    }
+
+    /*
+     * While it runs, its Network Anchor Card keeps the chunks round it loaded under its operator's name; the network's
+     * log says so once when their quota or the server's budget leaves some of them out.
+     */
+    private void keepAnchored(final ServerLevel level) {
+        final int reach = isRunning() ? ChunkAnchor.reachOf(currentBuild()) : -1;
+        final ChunkAnchor.Refusal refused =
+                anchor.tick(level, worldPosition, MachineOperators.idOf(this).orElse(null), reach);
+        if (refused != null && networkUuid() != null && nodeUuid() != null) {
+            logEvent(level, EventLevel.WARN, NetworkEvents.ANCHOR_SHORT.with(refused.kept(), refused.wanted()));
+            anchor.told();
+        }
     }
 
     /** The video memory this machine has, in kilobytes, as its players were last told. */

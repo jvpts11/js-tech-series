@@ -60,6 +60,7 @@ import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.blockentity.SmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.blockentity.UpsBlockEntity;
+import dev.jstech.computers.hardware.AnchorCardSpec;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
@@ -320,17 +321,24 @@ public final class ComputingModule {
             CONTENT.blockEntity("hub", HubBlockEntity::new, VINTAGE_HUB, LEGACY_HUB, TRANSITION_HUB, STANDARD_HUB,
                     ADVANCED_HUB);
 
+    /*
+     * The Server Routers, one per era from the Legacy on (the Vintage's racks join the backbone directly): each face a
+     * bank of copper jacks over its era's backbone ports, and a rack budget that doubles with every era. The Standard
+     * one keeps the name the router had before it had eras.
+     */
+
+    public static final BlockEntry<ServerRouterBlock> LEGACY_SERVER_ROUTER = serverRouter("legacy_server_router",
+            HardwareEra.LEGACY, "server_router_legacy").named("Legacy Server Router").register();
+    public static final BlockEntry<ServerRouterBlock> TRANSITION_SERVER_ROUTER = serverRouter(
+            "transition_server_router", HardwareEra.TRANSITION, "server_router_transition")
+            .named("Transition Server Router").register();
     public static final BlockEntry<ServerRouterBlock> SERVER_ROUTER =
-            CONTENT.block("server_router", ServerRouterBlock::new)
-            .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(0.6F).sound(SoundType.METAL)
-                    .noOcclusion())
-            .named("Server Router")
-            // Every face is a port bank, one datacenter section each, so all six look alike and the facing shows none.
-            .look(IBlockLook.fixed(new IBlockModel.Handmade("network/server_router")))
-            .item().itemLook(IItemLook.parent("block/network/server_router")).tab(shelf(Shelf.NETWORK, null))
-            .register();
+            serverRouter("server_router", HardwareEra.STANDARD, "server_router").named("Server Router").register();
+    public static final BlockEntry<ServerRouterBlock> ADVANCED_SERVER_ROUTER = serverRouter("advanced_server_router",
+            HardwareEra.ADVANCED, "server_router_advanced").named("Advanced Server Router").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ServerRouterBlockEntity>> SERVER_ROUTER_BE =
-            CONTENT.blockEntity("server_router", ServerRouterBlockEntity::new, SERVER_ROUTER);
+            CONTENT.blockEntity("server_router", ServerRouterBlockEntity::new, LEGACY_SERVER_ROUTER,
+                    TRANSITION_SERVER_ROUTER, SERVER_ROUTER, ADVANCED_SERVER_ROUTER);
 
     /*
      * Mainframes: the same orchestrator and block entity in every era, differing by era, accepted board, cabinet and
@@ -1091,6 +1099,24 @@ public final class ComputingModule {
     public static final ItemEntry<Item> OPTICAL_NETWORK_CARD = PartItems.card("optical_network_card",
                     new NetworkCardSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 15), HardwareEra.STANDARD)
             .named("Optical Network Card").register();
+    /*
+     * The Network Anchor Cards, one for each era's slot: while its computer runs, each keeps the chunks round it
+     * loaded within its operator's quota, the computer's own chunk in the Vintage and the Legacy, the 3 by 3 round it
+     * in the Transition and the Standard, the 5 by 5 in the Advanced. Their draws are estimates.
+     */
+    public static final ItemEntry<Item> NETWORK_ANCHOR_CARD_VINTAGE = anchorCard("network_anchor_card_vintage",
+            new AnchorCardSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 5, 0)).named("Network Anchor Card").register();
+    public static final ItemEntry<Item> NETWORK_ANCHOR_CARD_LEGACY = anchorCard("network_anchor_card_legacy",
+            new AnchorCardSpec(HardwareEra.LEGACY, PcieGeneration.PCI, 8, 0)).named("Network Anchor Card").register();
+    public static final ItemEntry<Item> NETWORK_ANCHOR_CARD_TRANSITION = anchorCard("network_anchor_card_transition",
+            new AnchorCardSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 10, 1)).named("Network Anchor Card")
+            .register();
+    public static final ItemEntry<Item> NETWORK_ANCHOR_CARD_STANDARD = anchorCard("network_anchor_card_standard",
+            new AnchorCardSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 12, 1)).named("Network Anchor Card")
+            .register();
+    public static final ItemEntry<Item> NETWORK_ANCHOR_CARD_ADVANCED = anchorCard("network_anchor_card_advanced",
+            new AnchorCardSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 15, 2)).named("Network Anchor Card")
+            .register();
     // The Supercomputer's co-processors, all on the PCIe 3.0 slot of the Standard's boards.
     public static final ItemEntry<Item> PHI_5100 = PartItems.card("phi_5100",
             new PhiCoprocessorSpec(IndustrialTier.T3, 2, 60, 1050, 225), HardwareEra.STANDARD, CARD_STACK)
@@ -1244,6 +1270,18 @@ public final class ComputingModule {
                                                     final String model) {
         return networkDevice(CONTENT.block(id, properties -> new RouterBlock(properties, era, optical)), model,
                 shelf(Shelf.NETWORK, era));
+    }
+
+    /*
+     * The Server Router of {@code era}, wearing the model of the same name. Every face is a port bank, one datacenter
+     * section each, so all six look alike and the facing shows none.
+     */
+    private static BlockBuilder<ServerRouterBlock> serverRouter(final String id, final Era era, final String model) {
+        return CONTENT.block(id, properties -> new ServerRouterBlock(properties, era))
+                .properties(properties -> properties.mapColor(MapColor.COLOR_GRAY).strength(0.6F)
+                        .sound(SoundType.METAL).noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.Handmade("network/" + model)))
+                .item().itemLook(IItemLook.parent("block/network/" + model)).tab(shelf(Shelf.NETWORK, era));
     }
 
     /* The repeater of {@code era}. */
@@ -1503,6 +1541,10 @@ public final class ComputingModule {
     }
 
     private static ItemBuilder<Item> clusterCard(final String id, final ClusterInterfaceCardSpec spec) {
+        return PartItems.card(id, spec, spec.era(), CARD_STACK);
+    }
+
+    private static ItemBuilder<Item> anchorCard(final String id, final AnchorCardSpec spec) {
         return PartItems.card(id, spec, spec.era(), CARD_STACK);
     }
 

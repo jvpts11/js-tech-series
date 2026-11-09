@@ -502,6 +502,14 @@ public final class NetworkIndex {
         return rack.throttled(Math.min(build.totalCapacity(), build.ramBuffer()));
     }
 
+    /**
+     * How long a read or a write of the server in {@code slot} of {@code rack} waits for its drives with nothing else
+     * in its way, in ticks: what a transfer pays before its first items, by the fastest drive the server claims.
+     */
+    public static int answerTicks(final ServerRackBlockEntity rack, final int slot) {
+        return tierOf(rack, slot).latencyTicks();
+    }
+
     private static StorageTier tierOf(final ServerRackBlockEntity rack, final int slot) {
         /*
          * A server's drives live in the rack's front-panel bays, so its access tier is the fastest

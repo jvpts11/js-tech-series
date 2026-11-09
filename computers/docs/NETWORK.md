@@ -45,6 +45,16 @@ The network's storage is the disks of the **Servers** in its racks. An **Externa
 use a chest beside it as storage too, ten times slower than a server. **Import** and **Export Buses** bring items
 in from an inventory and send them out to one ([Cables](CABLES.md#buses)).
 
+**Datacenter sections** (added 2026-11-08). The racks behind one face of a **Server Router** are a section, which
+the **Cluster Manager** runs as one machine ([Hardware](HARDWARE.md#servers-and-their-racks)). Its **Diagnostics** tab
+shows, over the last minute, the section's latency (the ticks from a request entering the router to its server's
+answer) against its base (what the servers' drives take with nothing in the way), its throughput in items a second
+against the most it can move, and how many alerts stand; the last hour, minute by minute, with the latency and the
+throughput each on its own scale; and the alerts standing and since when. A section's alerts are a server's disks
+over 90% full (WARN) or 98% (ERROR), a rack over its thermal budget, the router at its rack budget, and the latency
+over twice the base (WARN, while it lasts). Each goes into the network's event log as it is raised. The router keeps
+the hour with itself, across restarts.
+
 ## Operations
 
 *Added 2026-06-05.*

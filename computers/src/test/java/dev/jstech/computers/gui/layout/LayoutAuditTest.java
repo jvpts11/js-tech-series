@@ -58,7 +58,8 @@ class LayoutAuditTest {
             "RedstoneInterfaceLayout", "DeviceManagerLayout", "InfoCenterLayout", "PowerStripLayout",
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
-            "SystemBootLayout", "CrashLayout", "DiskCheckLayout", "DefragLayout", "CommandPromptLayout",
+            "SystemBootLayout", "CrashLayout", "DiskCheckLayout", "DefragLayout", "SectionDiagnosticsLayout",
+            "CommandPromptLayout",
             "OsInstallLayout",
             "InstallerLayout",
             "BootSequenceLayout", "FirmwareLayout", "SettingsLayout", "StudioPropertiesLayout",
@@ -181,6 +182,11 @@ class LayoutAuditTest {
                 c.add(new AuditCase("DefragLayout(" + look.serializedName() + ")", DefragLayout.layout(look), true));
             }
         }
+        // A section's Diagnostics tab in the Cluster Manager, at the window's own size and at its least.
+        c.add(new AuditCase("SectionDiagnosticsLayout(default)", SectionDiagnosticsLayout.layout(
+                SectionDiagnosticsLayout.DEFAULT_W, SectionDiagnosticsLayout.DEFAULT_H, 4), false));
+        c.add(new AuditCase("SectionDiagnosticsLayout(least)", SectionDiagnosticsLayout.layout(
+                SectionDiagnosticsLayout.MIN_W, SectionDiagnosticsLayout.MIN_H, 4), false));
         /*
          * The Command Prompt window is resizable, so audit it at the full glass size and at a compact one
          * that still leaves the console panel and the input strip room to draw; a bare terminal (MC-DOS, the

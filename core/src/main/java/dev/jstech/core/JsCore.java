@@ -242,6 +242,7 @@ import dev.jstech.core.protection.Protection;
 import dev.jstech.core.protection.ProtectionCommands;
 import dev.jstech.core.region.AwayOwners;
 import dev.jstech.core.region.ChunkLoaders;
+import dev.jstech.core.region.ChunkQuotas;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.research.Discoveries;
@@ -612,6 +613,7 @@ public final class JsCore {
         // The chunks machines keep loaded for their owners, under the game's own forced-chunk file.
         modEventBus.addListener(RegisterTicketControllersEvent.class, ChunkLoaders::onRegisterControllers);
         AwayOwners.listen();
+        ChunkQuotas.listen(modEventBus);
         // What each part of the Core answers on the mod's bus and the game's, declared here one class at a time
         // rather than found by a scan for annotations, so what runs is what this list says.
         Advancements.listen();

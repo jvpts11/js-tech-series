@@ -434,6 +434,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `ThermalBudgets.BUDGET`, the same on every block of it. Experimental.
 - Asking a layout for a slot: J's Core's API is at version 44. `GuiLayout.hasSlot(name)` says whether a layout
   has a slot of that name, for a screen whose case may seat a part or not. Experimental.
+- Server Routers by era, and a player's own chunk count: J's Core's API is at version 45. `ServerRouterElement`
+  carries its router's `era` where it carried an industrial tier, and `maxRacksFor(Era)` gives the rack budget by era:
+  none in the Vintage, then 4, 8, 16 and 32 from the Legacy to the Advanced, and the Advanced's past it.
+  `ChunkQuotas.held()` and `limit()` give, on a player's own game, how many chunks their machines keep loaded and how
+  many they may, as the server tells them when they join and whenever the count changes. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

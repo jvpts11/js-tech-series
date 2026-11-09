@@ -15,6 +15,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.CoolingItems;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.block.UpsBlock;
+import dev.jstech.computers.hardware.AnchorCardSpec;
 import dev.jstech.computers.hardware.CaseFanSpec;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CoolerSpec;
@@ -1008,7 +1009,7 @@ final class BuildingPages {
     private static void expansionCards(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("expansion_cards", section).titled("Expansion cards").icon(ComputingModule.FURNACE_CARD)
                 .coversAll(hardwareOf(WorkshopCardSpec.class, ClusterInterfaceCardSpec.class, NetworkCardSpec.class,
-                        PhiCoprocessorSpec.class))
+                        AnchorCardSpec.class, PhiCoprocessorSpec.class))
                 .paragraph("Besides graphics and sound, the expansion slots of a board take cards that give a"
                         + " computer a"
                         + " job it could not do before. Each card goes in a slot of its own bus family"
@@ -1079,6 +1080,26 @@ final class BuildingPages {
                 .paragraph("Vaultis makes a RAID controller and a read cache for each era's slot. In a server they"
                         + " join its drives into one volume and answer their reads faster; in another computer they"
                         + " sit in their slot and do nothing ([RAID modes](jsc:raid_arrays)).")
+                .subheading("Network Anchor Cards")
+                .paragraph("A Network Anchor Card keeps the chunks round its computer loaded while the computer runs,"
+                        + " so the machines there go on working when you are far away. Any computer takes one, and a"
+                        + " server in a rack too: the rack then keeps the chunks round it for the farthest card of its"
+                        + " running servers.")
+                .table("The Network Anchor Cards", "Era", "Slot", "Keeps loaded", "Draws")
+                .row(GuideCell.words("Vintage"), GuideCell.words("ISA"), GuideCell.words("The computer's chunk"),
+                        GuideCell.amount(5, "W"))
+                .row(GuideCell.words("Legacy"), GuideCell.words("PCI"), GuideCell.words("The computer's chunk"),
+                        GuideCell.amount(8, "W"))
+                .row(GuideCell.words("Transition"), GuideCell.words("PCI-e 2.0"), GuideCell.words("3 by 3 chunks"),
+                        GuideCell.amount(10, "W"))
+                .row(GuideCell.words("Standard"), GuideCell.words("PCI-e 3.0"), GuideCell.words("3 by 3 chunks"),
+                        GuideCell.amount(12, "W"))
+                .row(GuideCell.words("Advanced"), GuideCell.words("PCI-e 4.0"), GuideCell.words("5 by 5 chunks"),
+                        GuideCell.amount(15, "W"))
+                .paragraph("The chunks count against the quota of whoever works the computer: the last player to"
+                        + " place it or use it. The server sets that quota, 25 chunks unless it says otherwise, and the"
+                        + " card's tooltip shows how much of yours you keep already. When the quota is full the card"
+                        + " keeps what fits, nearest first, and the network's log says so.")
                 .ifSomethingGoesWrong("The Workshop shows \"No fuel\" or \"No lapis\".",
                         "Give smelting its fuel, or give enchanting its lapis.",
                         "A Workshop card does not go into a computer.",
@@ -1088,7 +1109,10 @@ final class BuildingPages {
                         "A Cluster Interface Card does nothing.",
                         "Only a Cluster Management Computer uses it. Put it in one.",
                         "The build says there are too many PCI-e cards.",
-                        "Take cards out, or use a board with more PCI-e slots.")
+                        "Take cards out, or use a board with more PCI-e slots.",
+                        "The machines round a computer with a Network Anchor Card stop when you go away.",
+                        "The card works only while the computer runs and someone works it. If the network's log says"
+                                + " the quota is full, it keeps only what fits: let go of chunks you keep elsewhere.")
                 .seeAlso("jsc:graphics_cards", "jsc:sound_cards", "jsc:build_refusals")
                 .register();
     }

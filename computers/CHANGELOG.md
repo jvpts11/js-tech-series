@@ -76,6 +76,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - System tools under the menu: `DesktopEnvironmentDef` gains `menuOnly`, the bundled programs its menus
   list with no icon on the wallpaper, and `onWallpaper`; the six-part constructor is kept for a desktop that puts an
   icon of every program on it. Experimental.
+- A kind of card that keeps chunks loaded: J's Computers' API is at version 12. `ExpansionCardKind.ANCHOR`
+  is the Network Anchor Card's kind. Experimental.
 
 ### Added
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
@@ -238,6 +240,24 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   glowing from its centre, a supercritical fluid half liquid and half gas, a slurry grainy, exotic matter changing
   colour), names its kind, and its category filter lists Liquids, Gases, Plasmas, Supercritical, Slurries and Exotic
   matter, with Chemicals for what has no state.
+- A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
+  ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
+  Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
+  corner and its racks against that budget.
+- The Network Anchor Card, one for each era's slot: while its computer runs, it keeps the chunks round it
+  loaded through J's Core's chunk loading, under the name of whoever works the computer and within their quota: the
+  computer's own chunk in the Vintage (5 W) and the Legacy (8 W), the 3 by 3 round it in the Transition (10 W) and the
+  Standard (12 W), the 5 by 5 in the Advanced (15 W). A server in a rack takes one too, and the rack keeps the chunks
+  round it. A full quota leaves out the farthest chunks and the network's log says so; the card's tooltip shows the
+  area it keeps, how much of their quota its reader keeps already, and its draw. It is drawn in its slot inside the
+  computer and on the assembly screen.
+- A datacenter section's diagnostics: the Cluster Manager's section gains a Diagnostics tab with the last
+  minute's latency (from a request entering the router to its server's answer) against the section's base, its
+  throughput against the most it can move, and how many alerts stand; the last hour, minute by minute, the latency and
+  the throughput each on its own scale; and the alerts standing and since when: a server's disks over 90% full (WARN)
+  or 98% (ERROR), a rack over its thermal budget, the router at its rack budget, and the latency over twice the base
+  while it lasts. Each alert goes into the network's event log as it is raised, and the router keeps the hour across
+  restarts.
 - A network conflict costs: what the discarded Operations were carrying is lost, and the log says what.
   The network splitting under an Operation (a cable pulled between the Mainframe and a server it was reading or
   writing) loses what it was carrying too. The server's `[item_loss]` settings gain `network_split`,
@@ -267,6 +287,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its autocrafting.
 
 ### Changed
+- The Server Router of before is the Standard's, and manages 16 racks where it managed 8; it takes the data
+  cables up to the Standard's, where it took every era's.
 - A rack's heat is a temperature: the cabinet has one temperature for every machine in it, from its
   heat budget (1,000 W, its Cooling Units and now its Vent Panels) and the load of its powered bays, by the same rules
   as a computer's. The cut the rack had, the budget over the load down to a quarter, is now its throttling at 90 °C;

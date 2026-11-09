@@ -9,6 +9,7 @@ package dev.jstech.computers.block;
 
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.CaseFront;
+import dev.jstech.computers.blockentity.ChunkAnchor;
 import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CaseFrontLayout;
 import dev.jstech.core.connect.FacePorts;
@@ -229,8 +230,9 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
             if (!settled.remove(pos)) {
                 spillHardware(serverLevel, pos, computer);
             }
-            // Drops this computer's network-node registration.
+            // Drops this computer's network-node registration, and the chunks its anchor card kept.
             computer.onBroken(serverLevel);
+            ChunkAnchor.letGo(serverLevel, pos);
             dropWhenRemoved(serverLevel, pos, computer);
         }
         super.onRemove(state, level, pos, newState, movedByPiston);

@@ -1271,6 +1271,10 @@ ChunkLoaders.releaseAll(level, machinePos);
 - `/jstech chunks <player>` shows what a player keeps loaded, place by place with each one's reason, and releases
   it; `/jstech chunks` counts every owner's against the budget, and `/jstech chunks map` shows an operator every place
   keeping chunks, whose it is and why, on their own map ([Commands](COMMANDS.md)).
+- *Added 2026-11-08.* A player's own game knows their count: `ChunkQuotas.held()` and `ChunkQuotas.limit()` give how
+  many chunks they keep loaded and how many they may, as the server told it when they joined and each time one of
+  their machines took or let go of a chunk. It is what a machine's tooltip shows before it is set down ("Your quota: 9
+  of 25 chunks").
 
 *Added 2026-10-22.* **While the owner is away**, their chunks stay loaded unless the server says otherwise:
 

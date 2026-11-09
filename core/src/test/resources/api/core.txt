@@ -6867,9 +6867,9 @@ stable 4
 12 dev.jstech.core.jstechseries.network.NetworkTables  static boolean hasInstrument(ServerLevel, NetworkUuid, ResourceLocation)
 12 dev.jstech.core.jstechseries.network.ServerNode  type record(NodeUuid nodeUuid, NetworkUuid networkUuid, long storageItems) implements IServiceNode
 12 dev.jstech.core.jstechseries.network.ServerNode  NetworkCategory category()
-12 dev.jstech.core.jstechseries.network.ServerRouterElement  type record(NetworkUuid networkUuid, long pos, IndustrialTier tier) implements INetworkTopologyElement
+45 dev.jstech.core.jstechseries.network.ServerRouterElement  type record(NetworkUuid networkUuid, long pos, Era era) implements INetworkTopologyElement
 12 dev.jstech.core.jstechseries.network.ServerRouterElement  int maxRacks()
-12 dev.jstech.core.jstechseries.network.ServerRouterElement  static int maxRacksFor(IndustrialTier)
+45 dev.jstech.core.jstechseries.network.ServerRouterElement  static int maxRacksFor(Era)
 12 dev.jstech.core.jstechseries.network.StateColumn  type record(String name, TextKey title, StateValueKind kind, String unit)
 12 dev.jstech.core.jstechseries.network.StateRow  type final class
 12 dev.jstech.core.jstechseries.network.StateRow  NodeUuid member()
@@ -12323,6 +12323,9 @@ stable 4
 12 dev.jstech.core.region.ChunkLoadingBalance  static void setKeepWhileAway(boolean)
 10 dev.jstech.core.region.ChunkLoadingBalance  static void setLimit(int)
 10 dev.jstech.core.region.ChunkLoadingBalance  static void setServerBudget(int)
+45 dev.jstech.core.region.ChunkQuotas  type final class
+45 dev.jstech.core.region.ChunkQuotas  static int held()
+45 dev.jstech.core.region.ChunkQuotas  static int limit()
 10 dev.jstech.core.region.LoadedChunkMarkers  type final class
 10 dev.jstech.core.region.LoadedChunkMarkers  static String ownId(ServerLevel, BlockPos)
 10 dev.jstech.core.region.LoadedChunkMarkers  static final MarkerLayer LAYER

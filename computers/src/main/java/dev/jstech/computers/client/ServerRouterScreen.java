@@ -23,6 +23,8 @@ import net.minecraft.world.entity.player.Inventory;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.Locale;
+
 /**
  * Config GUI for the Server Router: a flat-dark panel matching the computer-OS theme.
  */
@@ -96,7 +98,8 @@ public final class ServerRouterScreen extends CoreContainerScreen<ServerRouterMe
         // Header.
         JsTechTheme.text(g, font, GameText.resolve(ServerRouterTexts.TITLE), ServerRouterLayout.TITLE_X,
                 ServerRouterLayout.TITLE_Y, JsTechTheme.text());
-        JsTechTheme.textRight(g, font, GameText.resolve(ServerRouterTexts.TIER),
+        // The router's era in the corner, which is what sets its rack budget.
+        JsTechTheme.textRight(g, font, GameText.resolve(menu.era().name()).toUpperCase(Locale.ROOT),
                 ServerRouterLayout.WIDTH - ServerRouterLayout.TITLE_X, ServerRouterLayout.TITLE_Y,
                 JsTechTheme.accent());
 

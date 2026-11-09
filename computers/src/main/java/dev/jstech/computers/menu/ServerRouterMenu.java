@@ -14,6 +14,7 @@ import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.core.menu.CoreMenu;
 import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
+import dev.jstech.core.jstechseries.tier.Era;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -57,6 +58,11 @@ public class ServerRouterMenu extends CoreMenu {
 
     public String initialName() {
         return initialName;
+    }
+
+    /** The router's era, which its block says on either side. */
+    public Era era() {
+        return blockEntity.era();
     }
 
     @Nullable

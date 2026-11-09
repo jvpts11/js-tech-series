@@ -17,6 +17,8 @@ import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.advancement.MachineOperators;
+import dev.jstech.computers.datacenter.RackTraffic;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -1014,6 +1016,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private final UpsBattery ups = new UpsBattery();
     /* How hot the cabinet is: one temperature for every machine in it (computers/docs/design/temperature.md). */
     private final ComputerHeat heat = new ComputerHeat();
+    /* The chunks round the cabinet its servers' Network Anchor Cards keep loaded while they run. */
+    private final ChunkAnchor anchor = new ChunkAnchor();
+    /* What its servers moved for the network since its section's router last read it. */
+    private final RackTraffic traffic = new RackTraffic();
 
     /** Whether the bay whose unit tops at {@code slot} has its power switch on. */
     public boolean bayPowerOn(final int slot) {
@@ -1390,6 +1396,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         arrays.tick();
 
         final Set<UUID> present = new HashSet<>();
+        int anchorReach = -1;
         for (int i = 0; i < CAPACITY_U; i++) {
             final ItemStack stack = servers.getStackInSlot(i);
             if (!(stack.getItem() instanceof ServerItem)) {
@@ -1408,6 +1415,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             if (build == null || !build.isPowered() || !bayPowerOn(i)) {
                 continue;
             }
+            anchorReach = Math.max(anchorReach, ChunkAnchor.reachOf(build));
             final UUID node = ensureNodeUuid(stack);
             present.add(node);
             /*
@@ -1454,6 +1462,19 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             }
             return false;
         });
+        // The farthest anchor card of a running server keeps the chunks round the cabinet loaded.
+        final ChunkAnchor.Refusal refused =
+                anchor.tick(level, worldPosition, MachineOperators.idOf(this).orElse(null), anchorReach);
+        if (refused != null && network != null) {
+            NetworkEvents.record(level, network, EventLevel.WARN, null, "",
+                    NetworkEvents.ANCHOR_SHORT.with(refused.kept(), refused.wanted()));
+            anchor.told();
+        }
+    }
+
+    /** What its servers moved for the network since its section's router last read it. */
+    public RackTraffic traffic() {
+        return traffic;
     }
 
     private UUID ensureNodeUuid(final ItemStack stack) {
@@ -3092,14 +3113,25 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         final ItemStack stack = servers.getStackInSlot(slot);
         final UUID node = stack.getItem() instanceof ServerItem ? ServerItem.nodeUuid(stack) : null;
         if (node != null) {
-            final RackChassis chassis = ServerItem.chassisOf(stack);
-            final NodeUuid machine = new NodeUuid(node);
             // A server gone dark has left the network it ran on, which is the cabinet's: it is written down there.
             final NetworkUuid network = registered.containsKey(node) ? registered.get(node) : cableNetwork;
-            NetworkEvents.record(level, network, what, machine, NetworkEvents.machineName(
-                    ServerItem.customName(stack), chassis == null ? HostScope.SERVER : chassis.computer().machine(),
-                    machine), message);
+            NetworkEvents.record(level, network, what, new NodeUuid(node), machineNameIn(slot), message);
         }
+    }
+
+    /**
+     * What the network's log calls the machine in {@code slot}: the name it was given, or its kind's mark and its short
+     * id ({@code SRV-96174f}); empty for a bay with no server that has joined a network yet.
+     */
+    public String machineNameIn(final int slot) {
+        final ItemStack stack = servers.getStackInSlot(slot);
+        final UUID node = stack.getItem() instanceof ServerItem ? ServerItem.nodeUuid(stack) : null;
+        if (node == null) {
+            return "";
+        }
+        final RackChassis chassis = ServerItem.chassisOf(stack);
+        return NetworkEvents.machineName(ServerItem.customName(stack),
+                chassis == null ? HostScope.SERVER : chassis.computer().machine(), new NodeUuid(node));
     }
 
     /*

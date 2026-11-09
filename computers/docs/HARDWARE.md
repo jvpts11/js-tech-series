@@ -110,6 +110,11 @@ the rack, and room for processors and expansion cards:
   Advanced's, in an Advanced rack, the OM5 Fibre Cable as well.
 - A **supercomputer** is every Supercomputer Rack tied together by the high compute cable, meeting the network at
   one **HBW Interface**.
+- A **Server Router** groups the racks behind each of its faces into a datacenter section (added 2026-11-08: one per
+  era from the Legacy on). It takes the data cables of its era and the earlier ones, and manages racks across all its
+  sections by its era: 4 for the Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's.
+  Its window shows the era in its corner and the racks against that budget. The Vintage has none: its racks join the
+  backbone directly.
 
 ## Parts
 
@@ -335,6 +340,14 @@ and mends a quarter of the bad sectors left; while it runs, that disk answers th
   Computer reach racked machines; each newer one reaches more, and installs on several at once.
 - **Optical Network Card**: lets a Mainframe or a Cluster Management Computer take fibre on the backbone (a rack
   takes it through a Fibre Optic Interface, and a server never seats the card).
+- **Network Anchor Cards** (added 2026-11-08), one for each era's slot: while the computer runs, it keeps the chunks
+  round it loaded through J's Core's chunk loading, under the name of whoever works the computer (the last player to
+  place it or use it) and within their quota (`world.chunks_per_owner`, 25 unless the server says otherwise). The
+  Vintage card (ISA, 5 W) and the Legacy one (PCI, 8 W) keep the computer's own chunk, the Transition (PCI-e 2.0,
+  10 W) and the Standard (PCI-e 3.0, 12 W) the 3 by 3 round it, the Advanced (PCI-e 4.0, 15 W) the 5 by 5. A server
+  in a rack takes one too, and the rack keeps the chunks round it for the farthest card of its running servers. A
+  full quota leaves out the farthest chunks, and the network's log says so once; the card's tooltip shows how much of
+  their quota its reader keeps already.
 - **Integra Phi** coprocessors (four of them), for supercomputer nodes.
 
 ## What can go wrong

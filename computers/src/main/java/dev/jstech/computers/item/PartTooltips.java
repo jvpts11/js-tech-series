@@ -16,6 +16,7 @@ import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
 import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.hardware.AnchorCardSpec;
 import dev.jstech.computers.hardware.NetworkCardSpec;
 import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.hardware.PsuSpec;
@@ -77,6 +78,7 @@ public final class PartTooltips {
         switch (card) {
             case SoundCardSpec sound -> SoundCardTooltip.append(sound, lines);
             case NetworkCardSpec network -> NetworkCardTooltip.append(network, lines);
+            case AnchorCardSpec anchor -> AnchorCardTooltip.append(anchor, lines);
             case StorageCardSpec storage -> StorageCardTooltip.append(storage, stack, lines);
             case CraftingCardSpec crafting -> CraftingCardTooltip.append(crafting, stack, lines);
             case WorkshopCardSpec workshop -> WorkshopCardTooltip.append(workshop, lines);

@@ -295,6 +295,105 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading7"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text11"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.expansion_cards.table4",
+      "heads": [
+        "jsc.guide.expansion_cards.table4_head1",
+        "jsc.guide.expansion_cards.table4_head2",
+        "jsc.guide.expansion_cards.table4_head3",
+        "jsc.guide.expansion_cards.table4_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table4_1_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table4_1_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table4_1_3"
+          },
+          {
+            "amount": 5,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table4_2_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table4_2_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table4_2_3"
+          },
+          {
+            "amount": 8,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table4_3_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table4_3_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table4_3_3"
+          },
+          {
+            "amount": 10,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table4_4_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table4_4_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table4_4_3"
+          },
+          {
+            "amount": 12,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table4_5_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table4_5_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table4_5_3"
+          },
+          {
+            "amount": 15,
+            "unit": "W"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text12"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -319,6 +418,10 @@
         {
           "fix": "jsc.guide.expansion_cards.fix5",
           "problem": "jsc.guide.expansion_cards.problem5"
+        },
+        {
+          "fix": "jsc.guide.expansion_cards.fix6",
+          "problem": "jsc.guide.expansion_cards.problem6"
         }
       ]
     },
@@ -343,6 +446,11 @@
     "jsc:fabric_host_adapter",
     "jsc:fabric_dpu",
     "jsc:optical_network_card",
+    "jsc:network_anchor_card_vintage",
+    "jsc:network_anchor_card_legacy",
+    "jsc:network_anchor_card_transition",
+    "jsc:network_anchor_card_standard",
+    "jsc:network_anchor_card_advanced",
     "jsc:phi_5100",
     "jsc:phi_7120",
     "jsc:phi_7290",

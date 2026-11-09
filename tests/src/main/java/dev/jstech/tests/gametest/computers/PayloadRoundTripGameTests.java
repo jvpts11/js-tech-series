@@ -401,7 +401,10 @@ public final class PayloadRoundTripGameTests {
                 Text.literal("8 nodes"), true, 50,
                 List.of(new ClusterManagerStatePayload.WireNode(123L, 0, 1, "node-1", "Ubuntu", "sigma", 1, true, 0,
                         0, 1024L, 2048L, 1)),
-                List.of(new ClusterManagerStatePayload.WireCraft(Text.literal("Iron Block x64"), "desk", 2, false)));
+                List.of(new ClusterManagerStatePayload.WireCraft(Text.literal("Iron Block x64"), "desk", 2, false)),
+                new ClusterManagerStatePayload.WireDiagnostics(62, 38, 1240, 2048, List.of(40, -1, 45),
+                        List.of(1200, 0, 1260), List.of(new ClusterManagerStatePayload.WireAlert(2,
+                        Text.literal("SRV-96174f: disks 98% full"), 3600L)), 32_400L, 2400L));
         final ClusterManagerStatePayload.WireJob job = new ClusterManagerStatePayload.WireJob(true, 0, "Install Ubuntu",
                 0, 0, 3, 0, 5, 8, 120, false, List.of(new ClusterManagerStatePayload.WireLane("lane 1", 500)),
                 Text.literal("3 of 8"));

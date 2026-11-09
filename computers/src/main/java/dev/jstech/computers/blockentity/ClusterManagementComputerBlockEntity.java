@@ -61,7 +61,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -288,12 +287,9 @@ public class ClusterManagementComputerBlockEntity extends AbstractSmallComputerB
                 if (refresh) {
                     routerBe.recomputeNow();
                 }
-                final String routerName = routerBe.customName().isEmpty()
-                        ? GameText.resolve(ClusterJobTexts.ROUTER_NAME) : routerBe.customName();
                 for (final DatacenterSection section : routerBe.sections()) {
-                    final String custom = routerBe.sectionName(section.face());
-                    refs.add(new SectionRef(BlockPos.of(router.pos()), section.face(), custom.isEmpty()
-                            ? routerName + " · " + section.face().getName().toUpperCase(Locale.ROOT) : custom, section));
+                    refs.add(new SectionRef(BlockPos.of(router.pos()), section.face(),
+                            routerBe.sectionLabel(section.face()), section));
                 }
             }
         }

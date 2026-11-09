@@ -44,7 +44,10 @@
   "icon": "jsc:server_router",
   "id": "jsc:server_router",
   "items": [
-    "jsc:server_router"
+    "jsc:legacy_server_router",
+    "jsc:transition_server_router",
+    "jsc:server_router",
+    "jsc:advanced_server_router"
   ],
   "order": 41,
   "section": "jsc:clusters",

@@ -10,6 +10,7 @@ package dev.jstech.computers.block;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.blockentity.ChunkAnchor;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.FrontArea;
 import dev.jstech.computers.menu.MainframeMenu;
@@ -172,6 +173,7 @@ public class MainframeBlock extends AbstractBigBlock
         if (level.getBlockEntity(origin) instanceof MainframeBlockEntity be) {
             be.onBroken();
         }
+        ChunkAnchor.letGo(level, origin);
     }
 
     @Override

@@ -11,6 +11,7 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.blockentity.ChunkAnchor;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerItem;
@@ -215,6 +216,7 @@ public class ServerRackBlock extends AbstractBigBlock
         if (level.getBlockEntity(origin) instanceof ServerRackBlockEntity rack) {
             rack.onBroken(level); // unregister the housed Server nodes
         }
+        ChunkAnchor.letGo(level, origin);
     }
 
     @Override

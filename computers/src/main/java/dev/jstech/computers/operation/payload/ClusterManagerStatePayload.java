@@ -132,9 +132,9 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                 WireCraft::new);
     }
 
-    /** The selected cluster: which one, its header line, and what it holds. */
+    /** The selected cluster: which one, its header line, what it holds, and a datacenter section's diagnostics. */
     public record Detail(int kind, int index, String name, Text sub, boolean online, int balance,
-                         List<WireNode> nodes, List<WireCraft> queue) {
+                         List<WireNode> nodes, List<WireCraft> queue, WireDiagnostics diagnostics) {
         public static final StreamCodec<RegistryFriendlyByteBuf, Detail> STREAM_CODEC = StreamCodec.of(
                 (buf, d) -> {
                     buf.writeVarInt(d.kind()).writeVarInt(d.index()).writeUtf(d.name(), 64);
@@ -152,6 +152,7 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                     for (final WireCraft c : sentQueue) {
                         WireCraft.STREAM_CODEC.encode(buf, c);
                     }
+                    WireDiagnostics.STREAM_CODEC.encode(buf, d.diagnostics());
                 },
                 buf -> {
                     final int kind = buf.readVarInt();
@@ -170,7 +171,8 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
                     for (int i = 0; i < q; i++) {
                         queue.add(WireCraft.STREAM_CODEC.decode(buf));
                     }
-                    return new Detail(kind, index, name, sub, online, balance, nodes, queue);
+                    return new Detail(kind, index, name, sub, online, balance, nodes, queue,
+                            WireDiagnostics.STREAM_CODEC.decode(buf));
                 });
 
         /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
@@ -180,8 +182,101 @@ public record ClusterManagerStatePayload(Head head, List<WireCluster> clusters, 
         }
 
         public static Detail none() {
-            return new Detail(-1, -1, "", Text.EMPTY, false, 0, List.of(), List.of());
+            return new Detail(-1, -1, "", Text.EMPTY, false, 0, List.of(), List.of(), WireDiagnostics.NONE);
         }
+    }
+
+    /**
+     * A datacenter section's diagnostics: its last minute, its last hour, its alerts and the last time its latency went
+     * over twice its base.
+     *
+     * @param latencyTenths  the last minute's latency, in tenths of a tick; -1 when nothing was answered
+     * @param baseTenths     its base latency, in tenths of a tick; 0 with no servers to tell
+     * @param throughput     the items a second through it over the last minute
+     * @param maxThroughput  the most items a second it can move
+     * @param hourLatency    the last hour's latency, a minute to an entry, the oldest first; -1 for no answer
+     * @param hourThroughput the last hour's throughput, the same way
+     * @param alerts         its alerts standing now
+     * @param lastOverAgo    how long ago its latency last stopped being over twice its base, in ticks; -1 for never
+     * @param lastOverTicks  how long it was over then, in ticks
+     */
+    public record WireDiagnostics(int latencyTenths, int baseTenths, int throughput, int maxThroughput,
+                                  List<Integer> hourLatency, List<Integer> hourThroughput, List<WireAlert> alerts,
+                                  long lastOverAgo, long lastOverTicks) {
+
+        public static final int MAX_MINUTES = 60;
+        public static final int MAX_ALERTS = 64;
+        public static final WireDiagnostics NONE =
+                new WireDiagnostics(-1, 0, 0, 0, List.of(), List.of(), List.of(), -1L, 0L);
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, WireDiagnostics> STREAM_CODEC = StreamCodec.of(
+                (buf, d) -> {
+                    buf.writeVarInt(d.latencyTenths() + 1).writeVarInt(d.baseTenths()).writeVarInt(d.throughput())
+                            .writeVarInt(d.maxThroughput());
+                    writeInts(buf, d.hourLatency());
+                    writeInts(buf, d.hourThroughput());
+                    final List<WireAlert> sent = d.alerts().subList(0, Math.min(MAX_ALERTS, d.alerts().size()));
+                    buf.writeVarInt(sent.size());
+                    for (final WireAlert alert : sent) {
+                        WireAlert.STREAM_CODEC.encode(buf, alert);
+                    }
+                    buf.writeVarLong(d.lastOverAgo() + 1L).writeVarLong(d.lastOverTicks());
+                },
+                buf -> {
+                    final int latency = buf.readVarInt() - 1;
+                    final int base = buf.readVarInt();
+                    final int throughput = buf.readVarInt();
+                    final int most = buf.readVarInt();
+                    final List<Integer> hourLatency = readInts(buf);
+                    final List<Integer> hourThroughput = readInts(buf);
+                    final int count = Math.min(MAX_ALERTS, buf.readVarInt());
+                    final List<WireAlert> alerts = new ArrayList<>(count);
+                    for (int i = 0; i < count; i++) {
+                        alerts.add(WireAlert.STREAM_CODEC.decode(buf));
+                    }
+                    return new WireDiagnostics(latency, base, throughput, most, hourLatency, hourThroughput, alerts,
+                            buf.readVarLong() - 1L, buf.readVarLong());
+                });
+
+        /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+        public WireDiagnostics {
+            hourLatency = List.copyOf(hourLatency);
+            hourThroughput = List.copyOf(hourThroughput);
+            alerts = List.copyOf(alerts);
+        }
+
+        /* A minute's latency may be -1 for no answer, so each value goes one up on the wire to stay unsigned. */
+        private static void writeInts(final RegistryFriendlyByteBuf buf, final List<Integer> values) {
+            final List<Integer> sent = values.subList(0, Math.min(MAX_MINUTES, values.size()));
+            buf.writeVarInt(sent.size());
+            for (final int value : sent) {
+                buf.writeVarInt(value + 1);
+            }
+        }
+
+        private static List<Integer> readInts(final RegistryFriendlyByteBuf buf) {
+            final int count = Math.min(MAX_MINUTES, buf.readVarInt());
+            final List<Integer> out = new ArrayList<>(count);
+            for (int i = 0; i < count; i++) {
+                out.add(buf.readVarInt() - 1);
+            }
+            return out;
+        }
+    }
+
+    /**
+     * One alert standing on a section.
+     *
+     * @param level    how much it matters, by its id: 0 info, 1 warn, 2 error
+     * @param what     what it says
+     * @param standing how long it has stood, in ticks
+     */
+    public record WireAlert(int level, Text what, long standing) {
+        public static final StreamCodec<RegistryFriendlyByteBuf, WireAlert> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, WireAlert::level,
+                TextCodecs.STREAM_CODEC, WireAlert::what,
+                ByteBufCodecs.VAR_LONG, WireAlert::standing,
+                WireAlert::new);
     }
 
     /** One node being written by the job. */

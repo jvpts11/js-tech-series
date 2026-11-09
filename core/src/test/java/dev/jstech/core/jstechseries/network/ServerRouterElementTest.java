@@ -7,7 +7,7 @@
  */
 package dev.jstech.core.jstechseries.network;
 
-import dev.jstech.core.jstechseries.tier.IndustrialTier;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import org.junit.jupiter.api.Test;
 
@@ -17,34 +17,39 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class ServerRouterElementTest {
 
     @Test
-    void maxRacksFor_followsTierBudget() {
-        assertEquals(4, ServerRouterElement.maxRacksFor(IndustrialTier.T2));
-        assertEquals(8, ServerRouterElement.maxRacksFor(IndustrialTier.T3));
-        assertEquals(16, ServerRouterElement.maxRacksFor(IndustrialTier.T4));
-        assertEquals(32, ServerRouterElement.maxRacksFor(IndustrialTier.T5));
+    void maxRacksFor_followsEraBudget() {
+        assertEquals(4, ServerRouterElement.maxRacksFor(HardwareEra.LEGACY));
+        assertEquals(8, ServerRouterElement.maxRacksFor(HardwareEra.TRANSITION));
+        assertEquals(16, ServerRouterElement.maxRacksFor(HardwareEra.STANDARD));
+        assertEquals(32, ServerRouterElement.maxRacksFor(HardwareEra.ADVANCED));
     }
 
     @Test
-    void maxRacksFor_outsideRouterBand_isZero() {
-        assertEquals(0, ServerRouterElement.maxRacksFor(IndustrialTier.T1));
-        assertEquals(0, ServerRouterElement.maxRacksFor(IndustrialTier.T6));
+    void maxRacksFor_vintage_isZero() {
+        assertEquals(0, ServerRouterElement.maxRacksFor(HardwareEra.VINTAGE));
     }
 
     @Test
-    void maxRacks_matchesTier() {
+    void maxRacksFor_pastTheAdvanced_keepsTheAdvancedBudget() {
+        assertEquals(32, ServerRouterElement.maxRacksFor(HardwareEra.EXA));
+        assertEquals(32, ServerRouterElement.maxRacksFor(HardwareEra.SINGULARITY));
+    }
+
+    @Test
+    void maxRacks_matchesEra() {
         final ServerRouterElement element =
-                new ServerRouterElement(NetworkUuid.random(), 5L, IndustrialTier.T3);
+                new ServerRouterElement(NetworkUuid.random(), 5L, HardwareEra.TRANSITION);
         assertEquals(8, element.maxRacks());
     }
 
     @Test
     void constructor_rejectsNullNetwork() {
         assertThrows(NullPointerException.class,
-                () -> new ServerRouterElement(null, 0L, IndustrialTier.T3));
+                () -> new ServerRouterElement(null, 0L, HardwareEra.STANDARD));
     }
 
     @Test
-    void constructor_rejectsNullTier() {
+    void constructor_rejectsNullEra() {
         assertThrows(NullPointerException.class,
                 () -> new ServerRouterElement(NetworkUuid.random(), 0L, null));
     }

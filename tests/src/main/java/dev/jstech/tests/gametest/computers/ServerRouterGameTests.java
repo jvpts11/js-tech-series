@@ -13,6 +13,8 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.datacenter.DatacenterSection;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
@@ -21,8 +23,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import java.util.List;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -43,6 +47,45 @@ public final class ServerRouterGameTests {
     private static final int SETTLE = 4;
 
     private ServerRouterGameTests() {
+    }
+
+    /** Each era's router manages racks by its era, and registers on the network with that era. */
+    @GameTest(template = ARENA)
+    public static void serverRouter_budgetFollowsItsEra(final GameTestHelper helper) {
+        final BlockPos m = new BlockPos(1, 2, 2);
+        final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
+        final List<Block> routers = List.of(ComputingModule.LEGACY_SERVER_ROUTER.get(),
+                ComputingModule.TRANSITION_SERVER_ROUTER.get(), ComputingModule.SERVER_ROUTER.get(),
+                ComputingModule.ADVANCED_SERVER_ROUTER.get());
+        final List<Era> eras = List.of(HardwareEra.LEGACY, HardwareEra.TRANSITION, HardwareEra.STANDARD,
+                HardwareEra.ADVANCED);
+        final int[] budgets = {4, 8, 16, 32};
+        // A row of cables east of the Mainframe, each router on a branch of its own to the north of it.
+        for (int i = 0; i < routers.size(); i++) {
+            TestCables.lay(helper, new BlockPos(2 + i, 2, 2), ComputingModule.HBW_CABLE);
+            helper.setBlock(new BlockPos(2 + i, 2, 1), routers.get(i).defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH)); // its back meets the cable
+        }
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    final NetworkUuid net = mainframe.networkUuid();
+                    helper.assertTrue(net != null, "mainframe owns a network");
+                    for (int i = 0; i < routers.size(); i++) {
+                        final BlockPos at = new BlockPos(2 + i, 2, 1);
+                        if (!(helper.getBlockEntity(at) instanceof ServerRouterBlockEntity router)) {
+                            throw new IllegalStateException("no Server Router at " + at);
+                        }
+                        final Era era = eras.get(i);
+                        helper.assertTrue(router.era().equals(era) && router.maxRacks() == budgets[i],
+                                "the " + era.path() + " router manages " + budgets[i] + " racks; got "
+                                        + router.maxRacks());
+                        final long pos = helper.absolutePos(at).asLong();
+                        helper.assertTrue(NetworkSystem.get(helper.getLevel()).routersOf(net).stream()
+                                        .anyMatch(element -> element.pos() == pos && element.era().equals(era)),
+                                "it registers on the network with its era");
+                    }
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA)

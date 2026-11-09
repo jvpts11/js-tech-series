@@ -43,6 +43,7 @@ final class ClusterManagerTexts {
     static final TextKey QUEUE_TAB = TextKey.of("jsc.cluster_manager.queue_tab", "QUEUE");
     static final TextKey SERVERS_TAB = TextKey.of("jsc.cluster_manager.servers_tab", "SERVERS");
     static final TextKey INVENTORY_TAB = TextKey.of("jsc.cluster_manager.inventory_tab", "INVENTORY");
+    static final TextKey DIAGNOSTICS_TAB = TextKey.of("jsc.cluster_manager.diagnostics_tab", "DIAGNOSTICS");
     /* A job running on it: what it writes, how far it got, and the first node being written. */
     static final TextKey INSTALLING_JOB = TextKey.of("jsc.cluster_manager.installing_job", "Installing %s · %s of %s");
     static final TextKey CANCELLING = TextKey.of("jsc.cluster_manager.cancelling", "%s · cancelling");

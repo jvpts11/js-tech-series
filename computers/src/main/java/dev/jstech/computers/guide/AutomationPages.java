@@ -304,7 +304,7 @@ final class AutomationPages {
                 .row(GuideCell.words("Top tabs"), GuideCell.words("Supercomputers, Datacenters and AI. Each tab lists"
                         + " the clusters of its kind."))
                 .row(GuideCell.words("Supercomputer tabs"), GuideCell.words("NODES, CLUSTER MAP and QUEUE."))
-                .row(GuideCell.words("Datacenter tabs"), GuideCell.words("SERVERS and INVENTORY."))
+                .row(GuideCell.words("Datacenter tabs"), GuideCell.words("SERVERS, INVENTORY and DIAGNOSTICS."))
                 .row(GuideCell.words("Footer buttons"), GuideCell.words("SYSTEM ALL, PROGRAM ALL, ALL ON or ALL OFF,"
                         + " and CANCEL JOB, explained below."))
                 .table("The footer buttons", "Button", "What it does")
@@ -334,6 +334,29 @@ final class AutomationPages {
                 .paragraph("Each node row shows its state in capitals. NO SYSTEM means the node has no system"
                         + " installed. BAY OFF means the node is switched off. INSTALLING means a system or a"
                         + " program is being written to it now.")
+                .subheading("Diagnostics")
+                .paragraph("Open DIAGNOSTICS to see how a section is doing. At the top are three numbers of the last"
+                        + " minute: the latency, the ticks from a request entering the router to its server's answer,"
+                        + " beside the section's base; the throughput, the items a second through the section, beside"
+                        + " the most it can move; and how many alerts stand.")
+                .define("Base latency", "The ticks a section's servers take to answer when nothing else is in the"
+                        + " way, by the drives they have.")
+                .paragraph("Under them you see the last hour, a minute at a time: the latency in amber and the"
+                        + " throughput in blue, each on its own scale. Under the chart are the alerts standing now,"
+                        + " and for how long.")
+                .table("The alerts of a section", "Alert", "Level", "When it stands")
+                .row(GuideCell.words("Disks nearly full"), GuideCell.words("WARN, then ERROR"),
+                        GuideCell.words("A server's disks are 90% full, then 98%."))
+                .row(GuideCell.words("Rack over its thermal budget"), GuideCell.words("WARN"),
+                        GuideCell.words("A rack makes more heat than it sheds, and says how much its machines are"
+                                + " held back."))
+                .row(GuideCell.words("Router at its budget"), GuideCell.words("WARN"),
+                        GuideCell.words("The router manages as many racks as its era allows."))
+                .row(GuideCell.words("Latency over twice the base"), GuideCell.words("WARN"),
+                        GuideCell.words("The last minute's latency is more than twice the section's base."))
+                .paragraph("Every alert also goes into the network's event log as it is raised. A latency over twice"
+                        + " the base stands only while it lasts; then the chart keeps it, and the foot of the tab says"
+                        + " how long ago it was and how long it lasted.")
                 .ifSomethingGoesWrong("The window says \"A Cluster Interface Card is required.\"",
                         "Install a Cluster Interface Card in the computer ([](jsc:expansion_cards)).",
                         "The list shows no supercomputer and no section.",

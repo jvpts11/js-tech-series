@@ -114,6 +114,7 @@ public final class ChunkLoaders {
         ledger.sources.put(source.immutable(), kept);
         ledger.setDirty();
         LoadedChunkMarkers.changed(level, source, owner, kept.reason, kept.chunks);
+        ChunkQuotas.changed(level.getServer(), owner);
         if (AwayOwners.letGoOf(owner)) {
             return LoadOutcome.OWNER_AWAY;
         }
@@ -134,6 +135,7 @@ public final class ChunkLoaders {
         }
         ledger.setDirty();
         LoadedChunkMarkers.changed(level, source, held.owner, held.reason, held.chunks);
+        ChunkQuotas.changed(level.getServer(), held.owner);
     }
 
     /** Lets go of every chunk the source kept loaded, as a broken machine does. */
@@ -148,6 +150,7 @@ public final class ChunkLoaders {
         }
         ledger.setDirty();
         LoadedChunkMarkers.changed(level, source, held.owner, held.reason, LongSet.of());
+        ChunkQuotas.changed(level.getServer(), held.owner);
     }
 
     /**
