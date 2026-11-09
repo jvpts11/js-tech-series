@@ -1,0 +1,72 @@
+{
+  "blocks": [
+    {
+      "type": "heading",
+      "text": "jsc.guide.quince_memory.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_memory.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_memory.definition1",
+      "term": "jsc.guide.quince_memory.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_memory.definition2",
+      "term": "jsc.guide.quince_memory.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_memory.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_memory.definition3",
+      "term": "jsc.guide.quince_memory.term3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.quince_memory.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_memory.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_memory.definition4",
+      "term": "jsc.guide.quince_memory.term4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.quince_memory.fix1",
+          "problem": "jsc.guide.quince_memory.problem1"
+        },
+        {
+          "fix": "jsc.guide.quince_memory.fix2",
+          "problem": "jsc.guide.quince_memory.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:quince_systems",
+        "jsc:quince_crashes"
+      ]
+    }
+  ],
+  "id": "jsc:quince_memory",
+  "order": 294,
+  "section": "jsc:quince_desktop_section",
+  "title": "jsc.guide.quince_memory.title"
+}

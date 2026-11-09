@@ -10,6 +10,7 @@ package dev.jstech.computers.operation.payload.network;
 import dev.jstech.computers.blockentity.EngineReplacement;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.NetworkManagerApp;
+import dev.jstech.computers.client.os.ServerAdminApp;
 import dev.jstech.computers.engine.EngineCapability;
 import dev.jstech.computers.engine.EngineDef;
 import dev.jstech.computers.engine.EngineRole;
@@ -130,6 +131,18 @@ public final class NetworkServicesPayloads {
                 }
             }
             case EngineActionPayload.ROLE -> EngineRole.byWord(payload.program()).ifPresent(mainframe::setEngineRole);
+            // The Mirror and the Automation Engine, which Server Admin stops and starts on Quince OS X Server.
+            case EngineActionPayload.SERVICE_STOP, EngineActionPayload.SERVICE_START -> {
+                if (program == null || !Programs.MIRROR.equals(program)
+                        && !Programs.AUTOMATION_ENGINE.equals(program)) {
+                    return;
+                }
+                if (payload.action() == EngineActionPayload.SERVICE_STOP) {
+                    mainframe.endService(program);
+                } else {
+                    mainframe.startService(program);
+                }
+            }
             default -> {
                 return;
             }
@@ -139,6 +152,7 @@ public final class NetworkServicesPayloads {
 
     private static void handleServices(final NetworkServicesPayload payload, final Player player) {
         NetworkManagerApp.acceptServices(payload);
+        ServerAdminApp.accept(payload);
     }
 
     /* The engine chosen, or the one a replacement is bringing up, with what it spends and does. */
@@ -204,8 +218,8 @@ public final class NetworkServicesPayloads {
     }
 
     private static NetworkServicesPayload.ServiceRow serviceRow(final ResourceLocation program, final boolean running) {
-        return new NetworkServicesPayload.ServiceRow(clip(nameOf(program)), clip(vendorOf(program)),
-                clip(ProgramVersions.of(program)),
+        return new NetworkServicesPayload.ServiceRow(program.toString(), clip(nameOf(program)),
+                clip(vendorOf(program)), clip(ProgramVersions.of(program)),
                 running ? NetworkServicesPayload.SERVICE_RUNNING : NetworkServicesPayload.SERVICE_ABSENT);
     }
 

@@ -10,7 +10,10 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.DesktopIconLayout;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
+import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.os.OsMotions;
+import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -22,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.client.gui.GuiGraphics;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * The icons on the wallpaper: where each one sits, what it looks like, and which ones are picked.
@@ -120,6 +124,14 @@ final class DesktopIcons {
         return pinned;
     }
 
+    /** Lets every icon go back into the flow, as a Clean Up puts them in their rows, and tells the machine so. */
+    void unpinAll() {
+        for (final String key : List.copyOf(pinned.keySet())) {
+            pinned.remove(key);
+            PacketDistributor.sendToServer(new SetIconPositionPayload(desktop.hostPos(), key, -1));
+        }
+    }
+
     /** The icons a band has caught, which draw picked and which an action applies to. */
     Set<Integer> selection() {
         return selected;
@@ -183,6 +195,13 @@ final class DesktopIcons {
         final List<String> keys = new ArrayList<>(total);
         for (int i = 0; i < total; i++) {
             keys.add(keyOf(i));
+        }
+        // Quince's classic systems keep the Trash at the foot of the right edge until somebody moves it.
+        final String trash = "app:" + WindowKeys.TRASH;
+        if (desktop.quince() && keys.contains(trash) && !pinned.containsKey(trash)) {
+            final Map<String, Integer> withTrash = new HashMap<>(pinned);
+            withTrash.put(trash, DesktopIconLayout.pack(0, perCol - 1));
+            return DesktopIconLayout.resolve(keys, withTrash, perCol);
         }
         return DesktopIconLayout.resolve(keys, pinned, perCol);
     }
@@ -393,6 +412,11 @@ final class DesktopIcons {
     private void drawLine(final GuiGraphics g, final String line, final int cx, final int y,
                           final int color, final boolean shadow) {
         final int lx = cx - Texts.smallWidth(desktop.textFont(), line) / 2;
+        // Quince's classic systems wrote an icon's name on a ground of its own, white over the desktop's pattern.
+        if (desktop.panelStyle() == PanelStyle.QUINCE_CLASSIC) {
+            final int lw = Texts.smallWidth(desktop.textFont(), line);
+            g.fill(lx - 1, y - 1, lx + lw + 1, y + LABEL_LINE_H - 1, desktop.themeColours().menuBg());
+        }
         if (shadow) {
             Texts.small(g, desktop.textFont(), line, lx + 1, y + 1, PALETTE.get().shadow());
         }

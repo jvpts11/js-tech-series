@@ -64,7 +64,7 @@ final class DesktopListings {
             return new DesktopFilesPayload(List.of(), "", "", "", List.of(), List.of(), List.of(),
                     new DesktopFilesPayload.Prefs(0, 100, false, true, false, 0, DesktopEffects.ALL_ON), community,
                     List.of(), List.of(), Map.of(),
-                    false, Map.of(), (float) ProgramLoading.REFERENCE_MB_PER_SECOND);
+                    false, Map.of(), (float) ProgramLoading.REFERENCE_MB_PER_SECOND, List.of());
         }
         final ComputerConsoleState console = computer.console();
         final ComputerSettings settings = console.settings();
@@ -79,7 +79,15 @@ final class DesktopListings {
                         MachineEffects.of(computer, settings)),
                 community, settings.pinned(), settings.startTiles().encoded(), settings.defaultApps(), trashFull,
                 versions(console),
-                (float) loadRate(computer, disk));
+                (float) loadRate(computer, disk), partitions(settings));
+    }
+
+    /** The memory blocks a classic Quince system was told to open its programs in. */
+    private static List<DesktopFilesPayload.WirePartition> partitions(final ComputerSettings settings) {
+        final List<DesktopFilesPayload.WirePartition> out = new ArrayList<>();
+        settings.partitions().forEach((program, block) ->
+                out.add(new DesktopFilesPayload.WirePartition(program, block.minimumMb(), block.preferredMb())));
+        return out;
     }
 
     /* How fast the machine loads a program: the disk it starts from, at its processor's pace. */

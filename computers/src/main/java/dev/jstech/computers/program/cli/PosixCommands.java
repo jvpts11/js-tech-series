@@ -72,6 +72,8 @@ public final class PosixCommands {
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.PACMAN),
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.EMERGE),
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.PKG),
+                // Quince's keg, from the Standard on, which brews only what the Mirror serves.
+                new PackageCommands.PackageManagerCommand(PackageManagerKind.KEG),
                 // FreeBSD's other way of installing: the ports tree and the builds made from it.
                 new PortsCommands.Portsnap(),
                 new PortsCommands.Make());

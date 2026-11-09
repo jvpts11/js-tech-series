@@ -1,0 +1,211 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_systems.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_systems.definition1",
+      "term": "jsc.guide.quince_systems.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_systems.definition2",
+      "term": "jsc.guide.quince_systems.term2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_systems.definition3",
+      "term": "jsc.guide.quince_systems.term3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_systems.definition4",
+      "term": "jsc.guide.quince_systems.term4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_systems.definition5",
+      "term": "jsc.guide.quince_systems.term5"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.quince_systems.table1",
+      "heads": [
+        "jsc.guide.quince_systems.table1_head1",
+        "jsc.guide.quince_systems.table1_head2",
+        "jsc.guide.quince_systems.table1_head3",
+        "jsc.guide.quince_systems.table1_head4",
+        "jsc.guide.quince_systems.table1_head5"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.quince_systems.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_1_3"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_1_4"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_1_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_systems.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_2_3"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_2_4"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_2_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_systems.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_3_3"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_3_4"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_3_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_systems.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_4_3"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_4_4"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_4_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_systems.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_5_3"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_5_4"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table1_5_5"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_systems.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_systems.definition6",
+      "term": "jsc.guide.quince_systems.term6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_systems.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.quince_systems.table2",
+      "heads": [
+        "jsc.guide.quince_systems.table2_head1",
+        "jsc.guide.quince_systems.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.quince_systems.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_systems.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_systems.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.quince_systems.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.quince_systems.table2_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.quince_systems.fix1",
+          "problem": "jsc.guide.quince_systems.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:the_systems",
+        "jsc:quince_installing",
+        "jsc:quince_desktop"
+      ]
+    }
+  ],
+  "id": "jsc:quince_systems",
+  "order": 291,
+  "section": "jsc:quince_systems_section",
+  "title": "jsc.guide.quince_systems.title"
+}

@@ -28,7 +28,12 @@ public enum FileSystemType implements IStableName {
     EXT3("ext3", "ext3", Recovery.JOURNAL),
     EXT4("ext4", "ext4", Recovery.JOURNAL),
     BTRFS("btrfs", "btrfs", Recovery.COPY_ON_WRITE),
-    UFS("ufs", "UFS", Recovery.LONG_CHECK);
+    UFS("ufs", "UFS", Recovery.LONG_CHECK),
+    /* Quince's own, which only its systems read and write (computers/docs/design/quince.md). */
+    HFS("hfs", "HFS", Recovery.LONG_CHECK),
+    HFS_PLUS("hfs_plus", "HFS+", Recovery.LONG_CHECK),
+    HFS_PLUS_JOURNALED("hfs_plus_journaled", "HFS+ (Journaled)", Recovery.JOURNAL),
+    APFS("apfs", "APFS", Recovery.COPY_ON_WRITE);
 
     private final String serializedName;
     private final String displayName;
@@ -47,8 +52,9 @@ public enum FileSystemType implements IStableName {
     /**
      * What the installer of a system formats with on a machine of {@code era}, as each real one did: FAT16 on MC-DOS
      * and MC-NET (FAT32 from the Legacy), FAT32 on Frames 95, NTFS on the later Frames, ext3 on a distribution of the
-     * Legacy and ext4 later, btrfs on Fedora from the Standard, ext4 wherever the player formats the root by hand, and
-     * UFS on UNIX and FreeBSD.
+     * Legacy and ext4 later, btrfs on Fedora from the Standard, ext4 wherever the player formats the root by hand,
+     * UFS on UNIX and FreeBSD, and on Quince's systems HFS on the Quince System, HFS+ on Quince OS 9, HFS+ with its
+     * journal from Quince OS X on and APFS on quinceOS.
      *
      * @param platform   the system's family
      * @param familyRank where it sits in its family, counting from one (Frames 95 is the first)
@@ -73,6 +79,12 @@ public enum FileSystemType implements IStableName {
                 yield legacy ? EXT3 : EXT4;
             }
             case FREEBSD, UNIX -> UFS;
+            case QUINCE -> switch (familyRank) {
+                case QuinceFamily.QUINCE_SYSTEM -> HFS;
+                case QuinceFamily.OS_9 -> HFS_PLUS;
+                case QuinceFamily.OS_X -> HFS_PLUS_JOURNALED;
+                default -> APFS;
+            };
         };
     }
 

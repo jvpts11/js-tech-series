@@ -47,7 +47,14 @@ public enum Platform implements IStableName {
      * UNIX System V, the oldest of the families met at a Unix prompt and the only one a machine of the first age
      * runs. It takes its programs from media and from nowhere else, so what is built for it is its own.
      */
-    UNIX("unix", "UNIX");
+    UNIX("unix", "UNIX"),
+
+    /**
+     * Quince's systems (computers/docs/design/quince.md), from the Quince System of the first age to quinceOS: one
+     * family, made in one place, whose programs are its own. The classic ones have no command line at all; the later
+     * ones are met at a zsh prompt on a POSIX kernel, and still are not Unix to what is built for the others.
+     */
+    QUINCE("quince", "Quince");
 
     private final String serializedName;
     private final String label;
@@ -76,10 +83,11 @@ public enum Platform implements IStableName {
 
     /**
      * Whether this is one of the families met at a Unix prompt, whose media carry a shell script where the
-     * others carry a setup program, and whose files sit under one root rather than on lettered drives.
+     * others carry a setup program, and whose files sit under one root rather than on lettered drives. Quince is
+     * one: its classic systems have no prompt, but their files hang from one root as the later ones' do.
      */
     public boolean unixLike() {
-        return this == LINUX || this == FREEBSD || this == UNIX;
+        return this == LINUX || this == FREEBSD || this == UNIX || this == QUINCE;
     }
 
     /** Whether everything in that set is of those families, so what is made for it is made for them alone. */

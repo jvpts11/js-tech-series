@@ -52,6 +52,7 @@ import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
+import dev.jstech.computers.operation.payload.crash.MemoryAskPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.HostScope;
@@ -1125,6 +1126,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     @Override
+    public void startService(final ResourceLocation service) {
+        kernel.startService(service);
+        setChanged();
+    }
+
+    @Override
     public void systemCameUp() {
         kernel.cameUp(this);
         // The self-test on the way up warned of the trip that last shut it down; once up, that is said.
@@ -1144,6 +1151,23 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             programFeed.frontKilled(level);
         }
         ClientReplication.windowsEnded(consoleViewers(level), worldPosition, windows);
+    }
+
+    @Override
+    public void memoryAsked(final ServerLevel level, final List<MemoryAskPayload.Asked> programs) {
+        ClientReplication.memoryAsked(consoleViewers(level), worldPosition, programs);
+    }
+
+    @Override
+    public boolean askingForMemory() {
+        return kernel.asking();
+    }
+
+    @Override
+    public void forceQuit(final List<String> tokens) {
+        if (level instanceof ServerLevel server) {
+            kernel.forceQuit(this, server, tokens);
+        }
     }
 
     /**

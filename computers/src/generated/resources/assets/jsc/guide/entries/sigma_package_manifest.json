@@ -240,7 +240,7 @@
     }
   ],
   "id": "jsc:sigma_package_manifest",
-  "order": 393,
+  "order": 400,
   "section": "jsc:sharing_packages",
   "title": "jsc.guide.sigma_package_manifest.title"
 }

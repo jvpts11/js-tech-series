@@ -290,7 +290,7 @@ public final class ThisPcPayloads {
         final String operatingSystem = platform == Platform.LINUX ? os.displayName()
                 : WorkstationInfoPayloads.systemOf(os);
         return new ThisPcPayload.AboutFacts(Text.literal(operatingSystem),
-                Text.literal(KernelNames.architecture(platform, computer.processorBits())),
+                Text.literal(KernelNames.architecture(platform, computer.processorBits(), computer.processorIsa())),
                 Text.literal(KernelNames.kernelLine(platform)),
                 Text.literal(WorkstationInfoPayloads.desktopName(computer)),
                 Text.literal(Installers.hostName(computer)),

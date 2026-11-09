@@ -82,6 +82,14 @@ public final class RamLedger {
         public Entry(final String name, final int mb, final Kind kind) {
             this(name, mb, mb * BYTES_PER_MB, kind, 0, "");
         }
+
+        /**
+         * What tells this entry from every other of the ledger, as a screen names it back: its kind, its number and its
+         * key, which no two entries share.
+         */
+        public String token() {
+            return kind.serializedName() + "|" + id + "|" + key;
+        }
     }
 
     private final int totalMb;

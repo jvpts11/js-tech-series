@@ -11,7 +11,9 @@ import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.jstechseries.tier.Era;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -83,11 +85,44 @@ public final class MachineMemory {
         if (host instanceof BlockEntity be && be.getLevel() instanceof ServerLevel level) {
             ledger.add("graphics", VideoMemory.sharedHeldMb(level, host), RamLedger.Kind.GRAPHICS);
         }
-        for (final OpenWindow window : host.openWindows()) {
-            ledger.add(window.key(), windowRamMb(window.key(), era, spec -> builtHere(console, spec)),
+        final List<OpenWindow> windows = host.openWindows();
+        final List<Integer> weights = classic(os)
+                ? classicBlocks(console, era, keysOf(windows), host.ramTotalMb() - ledger.usedMb())
+                : null;
+        for (int at = 0; at < windows.size(); at++) {
+            final OpenWindow window = windows.get(at);
+            ledger.add(window.key(), weights != null ? weights.get(at)
+                    : windowRamMb(window.key(), era, spec -> builtHere(console, spec)),
                     RamLedger.Kind.WINDOW, window.key());
         }
         return ledger;
+    }
+
+    /**
+     * The block each window holds on a classic Quince system, in the order they opened: the partition its program's
+     * Get Info set, or the one its maker suggests, as {@link QuincePartitions} weighs them in {@code freeMb}.
+     */
+    public static List<Integer> classicBlocks(@Nullable final ComputerConsoleState console, @Nullable final Era era,
+                                              final List<String> keys, final int freeMb) {
+        final List<QuincePartitions.Partition> blocks = new ArrayList<>(keys.size());
+        for (final String key : keys) {
+            blocks.add(partitionOf(console == null ? Map.of() : console.settings().partitions(), key,
+                    windowRamMb(key, era, spec -> builtHere(console, spec))));
+        }
+        return QuincePartitions.weigh(blocks, freeMb);
+    }
+
+    /** The block a window's program opens in: what its Get Info set, or the size its maker suggests. */
+    public static QuincePartitions.Partition partitionOf(final Map<String, QuincePartitions.Partition> set,
+                                                         final String key, final int suggestedMb) {
+        final ProgramSpec spec = WindowKeys.program(key);
+        final QuincePartitions.Partition chosen = spec == null ? null : set.get(spec.id().getPath());
+        return chosen != null ? chosen : QuincePartitions.Partition.suggested(suggestedMb);
+    }
+
+    /** Whether that system opens its programs in fixed blocks of memory, as Quince's classic systems do. */
+    public static boolean classic(@Nullable final OsDef os) {
+        return os != null && os.platform() == Platform.QUINCE && QuinceFamily.classic(os.familyRank());
     }
 
     /** Everything the session holds before the player opens a window: the system, its desktop, its services. */
@@ -106,9 +141,26 @@ public final class MachineMemory {
         }
         final Era era = host.displayEra();
         final ComputerConsoleState console = host.console();
+        final int budget = host.ramTotalMb() - host.ramReservedMb();
+        if (classic(host.installedOs())) {
+            // A classic system's blocks are what was free when each opened, so every window fits until one gets nothing.
+            final List<Integer> blocks = classicBlocks(console, era, keysOf(windows), budget);
+            final List<OpenWindow> kept = new ArrayList<>();
+            for (int at = 0; at < windows.size() && blocks.get(at) > 0; at++) {
+                kept.add(windows.get(at));
+            }
+            return kept;
+        }
         return RamLedger.withinBudget(windows,
-                window -> windowRamMb(window.key(), era, spec -> builtHere(console, spec)),
-                host.ramTotalMb() - host.ramReservedMb());
+                window -> windowRamMb(window.key(), era, spec -> builtHere(console, spec)), budget);
+    }
+
+    private static List<String> keysOf(final List<OpenWindow> windows) {
+        final List<String> keys = new ArrayList<>(windows.size());
+        for (final OpenWindow window : windows) {
+            keys.add(window.key());
+        }
+        return keys;
     }
 
     /**

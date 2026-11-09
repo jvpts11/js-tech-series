@@ -10,8 +10,10 @@ package dev.jstech.computers.blockentity;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.operation.payload.ScreenSessions;
+import dev.jstech.computers.operation.payload.crash.MemoryAskPayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.QuinceFamily;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.boot.BootPhases;
 import dev.jstech.computers.os.crash.CrashCause;
@@ -19,6 +21,7 @@ import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.crash.CrashStyle;
 import dev.jstech.computers.os.crash.OomKiller;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
@@ -49,6 +52,16 @@ final class MachineKernel {
     private OsDef up;
     /** The number the next process the kernel names takes, on a machine that keeps no programs to count them. */
     private int nextPid = MachinePrograms.FIRST_PID;
+    /**
+     * Whether the system is asking the player what to force quit, its programs paused, as Quince's later systems do
+     * when the memory runs out (computers/docs/design/quince.md). Part of the run, as the pause is.
+     */
+    private boolean asking;
+    /**
+     * What the program that asked needs on top of what the machine holds, which never enters the ledger while it waits:
+     * the question stands until that much is free, and not only until what is held fits.
+     */
+    private int askedMb;
 
     /** How often what the system holds is weighed against what it has: once a second. */
     private static final int WEIGH_TICKS = 20;
@@ -74,6 +87,40 @@ final class MachineKernel {
         this.up = null;
         this.oom.reset();
         this.nextPid = MachinePrograms.FIRST_PID;
+        this.asking = false;
+        this.askedMb = 0;
+    }
+
+    /** Whether the system has paused what it runs to ask the player what to force quit. */
+    boolean asking() {
+        return this.asking;
+    }
+
+    /**
+     * The player chose what to force quit from the question: what they named ends, by the tokens the question gave
+     * it, and the memory is weighed again, which lets the programs go on once it is enough. Short of that, the question
+     * stands with what is left to choose from; with nothing left, it closes, the program that asked not started.
+     */
+    void forceQuit(final IKernelHost machine, final ServerLevel level, final List<String> tokens) {
+        if (!this.asking) {
+            return;
+        }
+        final List<RamLedger.Entry> chosen = new ArrayList<>();
+        for (final RamLedger.Entry entry : machine.ramLedger().entries()) {
+            if (tokens.contains(entry.token())) {
+                chosen.add(entry);
+            }
+        }
+        oom.forceQuit(machine, level, chosen);
+        weigh(machine, level);
+        if (this.asking) {
+            final List<MemoryAskPayload.Asked> left = endable(machine);
+            if (left.isEmpty()) {
+                closeQuestion(machine, level);
+            } else {
+                machine.memoryAsked(level, left);
+            }
+        }
     }
 
     /** The system that came up in this run, or null when none has. */
@@ -118,6 +165,10 @@ final class MachineKernel {
             machine.setNeedsPost(true);
         } else {
             machine.goDown(now, page.totalTicks());
+            if (crash.held()) {
+                // A page that waits for the player keeps the machine down until it is let go.
+                phases.holdDown();
+            }
         }
         // Whatever each of them had up, a desktop, a prompt or a session of the monitor's own, the page takes it over.
         if (machine.onScreen()) {
@@ -149,8 +200,48 @@ final class MachineKernel {
             }
             case LINUX, FREEBSD, UNIX -> oom.makeRoom(machine, level, system, program, needMb,
                     phases.upFor(level.getGameTime()), () -> takePid(machine));
+            // Quince's classic systems refuse what does not fit its partition; the later ones ask the player.
+            case QUINCE -> !QuinceFamily.classic(system.familyRank()) && ask(machine, level, program, needMb);
             case MC_DOS, MC_NET -> false;
         };
+    }
+
+    /**
+     * Quince OS X and quinceOS out of memory (computers/docs/design/quince.md): the programs pause, and the player is
+     * asked which of them to force quit, nothing ending without them; only when nothing is left to end does the kernel
+     * panic. The program that asked does not start; it may once the player has made room.
+     *
+     * @param needMb what the program asks for on top of what the machine holds, or zero when it holds it already
+     * @return false: there is no room for it now
+     */
+    private boolean ask(final IKernelHost machine, final ServerLevel level, final String program, final int needMb) {
+        final List<MemoryAskPayload.Asked> endable = endable(machine);
+        if (endable.isEmpty()) {
+            crash(machine, level, CrashCause.MEMORY, CrashPages.Moment.memory(program, 0, List.of()));
+            return false;
+        }
+        this.asking = true;
+        this.askedMb = Math.max(0, needMb);
+        machine.memoryAsked(level, endable);
+        return false;
+    }
+
+    /* What the player may force quit: every window, program and service the kernel could end. */
+    private static List<MemoryAskPayload.Asked> endable(final IKernelHost machine) {
+        final List<MemoryAskPayload.Asked> endable = new ArrayList<>();
+        for (final RamLedger.Entry entry : machine.ramLedger().entries()) {
+            if (OomKiller.killable(entry.kind())) {
+                endable.add(new MemoryAskPayload.Asked(entry.token(), entry.name(), entry.mb()));
+            }
+        }
+        return endable;
+    }
+
+    /* The question is over: the programs go on, and whoever is watching sees it close. */
+    private void closeQuestion(final IKernelHost machine, final ServerLevel level) {
+        this.asking = false;
+        this.askedMb = 0;
+        machine.memoryAsked(level, List.of());
     }
 
     /** Whether the machine's system ends programs for their memory, and so lets every window open first. */
@@ -174,6 +265,10 @@ final class MachineKernel {
             this.up = machine.installedOs();
         }
         final RamLedger ledger = machine.ramLedger();
+        if (this.asking && ledger.usedMb() + this.askedMb <= ledger.totalMb()) {
+            // The player made room: the question closes and the programs go on.
+            closeQuestion(machine, level);
+        }
         if (this.up == null || ledger.usedMb() <= ledger.totalMb()) {
             return;
         }
@@ -237,6 +332,11 @@ final class MachineKernel {
     /** Ends that service for the rest of this run, as a signal sent to its process does. */
     void endService(final ResourceLocation service) {
         oom.stop(service);
+    }
+
+    /** Starts that service again after it was ended in this run. */
+    void startService(final ResourceLocation service) {
+        oom.start(service);
     }
 
     /** Writes the run's memory down in {@code tag}, under a key of its own. */

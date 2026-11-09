@@ -131,6 +131,10 @@ final class ProgramHost {
             this.machine.setChanged();
             return false;
         }
+        // A system asking the player what to force quit for want of memory holds every program where it is meanwhile.
+        if (this.machine.askingForMemory()) {
+            return false;
+        }
         /*
          * The server's clock, not this machine's worth, is what bounds the tick: a machine the server has
          * no time for this tick runs nothing and is first next tick.

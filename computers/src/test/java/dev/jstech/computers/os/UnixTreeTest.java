@@ -17,6 +17,24 @@ import org.junit.jupiter.api.Test;
 
 class UnixTreeTest {
 
+    private static final List<UnixTree> TREES = List.of(UnixTree.SYSTEM_V, UnixTree.HOME_AND_MEDIA,
+            UnixTree.QUINCE_SYSTEM, UnixTree.QUINCE_OS_9, UnixTree.QUINCE_X);
+
+    @Test
+    void of_givesQuinceATreeForEachOfItsAges() {
+        assertSame(UnixTree.QUINCE_SYSTEM, UnixTree.of(Platform.QUINCE, QuinceFamily.QUINCE_SYSTEM));
+        assertSame(UnixTree.QUINCE_OS_9, UnixTree.of(Platform.QUINCE, QuinceFamily.OS_9));
+        assertSame(UnixTree.QUINCE_X, UnixTree.of(Platform.QUINCE, QuinceFamily.OS_X));
+        assertSame(UnixTree.QUINCE_X, UnixTree.of(Platform.QUINCE, QuinceFamily.QUINCE_OS));
+    }
+
+    @Test
+    void quinceX_keepsItsHomeUnderUsersAndItsDesktopInIt() {
+        assertEquals("Users/player", UnixTree.QUINCE_X.homePath());
+        assertEquals("Users/player/Desktop", UnixTree.QUINCE_X.desktopPath());
+        assertEquals("Desktop Folder", UnixTree.QUINCE_SYSTEM.desktopPath());
+    }
+
     @Test
     void of_givesSystemVItsOwnTreeAndTheOthersTheCommonOne() {
         assertSame(UnixTree.SYSTEM_V, UnixTree.of(Platform.UNIX));
@@ -33,7 +51,7 @@ class UnixTreeTest {
 
     @Test
     void directories_holdTheHomeTheDesktopAndTheMountPointOfTheirOwnTree() {
-        for (final UnixTree tree : List.of(UnixTree.SYSTEM_V, UnixTree.HOME_AND_MEDIA)) {
+        for (final UnixTree tree : TREES) {
             assertTrue(tree.directories().contains(tree.homePath()), tree.toString());
             assertTrue(tree.directories().contains(tree.desktopPath()), tree.toString());
             assertTrue(tree.directories().contains(tree.mounts()), tree.toString());
@@ -42,7 +60,7 @@ class UnixTreeTest {
 
     @Test
     void directories_listEveryParentBeforeItsChildren() {
-        for (final UnixTree tree : List.of(UnixTree.SYSTEM_V, UnixTree.HOME_AND_MEDIA)) {
+        for (final UnixTree tree : TREES) {
             final List<String> dirs = tree.directories();
             for (int i = 0; i < dirs.size(); i++) {
                 final int slash = dirs.get(i).lastIndexOf('/');

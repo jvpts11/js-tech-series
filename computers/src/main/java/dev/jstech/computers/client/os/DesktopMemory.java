@@ -15,6 +15,7 @@ import dev.jstech.computers.os.MachineMemory;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.QuincePartitions;
 import dev.jstech.computers.os.SchedulerKind;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.crash.OomKiller;
@@ -26,6 +27,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
@@ -80,6 +82,13 @@ final class DesktopMemory {
     /** Everything held right now: the system's share, its desktop and services, and the open windows. */
     int usedMb() {
         int sum = reservedMb;
+        if (classic()) {
+            // A classic Quince system holds each window's whole block, whatever the program uses inside it.
+            for (final int block : classicBlocks()) {
+                sum += block;
+            }
+            return sum;
+        }
         for (final DesktopWindow w : windows) {
             // A dialog is part of its program, not another copy of it.
             if (!w.dialog()) {
@@ -87,6 +96,22 @@ final class DesktopMemory {
             }
         }
         return sum;
+    }
+
+    /** The block each open program holds on a classic Quince system, in the order the windows are kept. */
+    private List<Integer> classicBlocks() {
+        final List<QuincePartitions.Partition> blocks = new ArrayList<>();
+        for (final DesktopWindow w : windows) {
+            if (!w.dialog()) {
+                blocks.add(MachineMemory.partitionOf(desktop.partitions(), w.appKey(), windowRamMb(w.appKey())));
+            }
+        }
+        return QuincePartitions.weigh(blocks, totalMb - reservedMb);
+    }
+
+    /** Whether the system opens its programs in fixed blocks, as Quince's classic systems do. */
+    private boolean classic() {
+        return MachineMemory.classic(OsRegistry.getOs(osId));
     }
 
     int totalMb() {
@@ -108,8 +133,20 @@ final class DesktopMemory {
         if (!videoMemoryAllows(key)) {
             return false;
         }
-        final int need = windowRamMb(key);
         final int free = totalMb - usedMb();
+        if (classic()) {
+            // A classic Quince system opens a program in its block or not at all, and says so in its own words.
+            final QuincePartitions.Partition block =
+                    MachineMemory.partitionOf(desktop.partitions(), key, windowRamMb(key));
+            if (QuincePartitions.opening(block, free) > 0) {
+                return true;
+            }
+            final DesktopNotices notices = desktop.notices();
+            notices.ask("", GameText.resolve(DesktopTexts.QUINCE_NO_MEMORY.with(desktop.nameOf(key),
+                    thousands(block.preferredMb() * 1024L), thousands(Math.max(0, free) * 1024L))), null);
+            return false;
+        }
+        final int need = windowRamMb(key);
         if (need <= free) {
             warnIfLow(key, need);
             return true;
@@ -196,6 +233,11 @@ final class DesktopMemory {
         }
         desktop.notices().showBalloon(GameText.resolve(DesktopTexts.LOW_MEMORY),
                 GameText.resolve(DesktopTexts.LOW_MEMORY_WARNING.with(String.join(", ", heaviest))));
+    }
+
+    /** A number of K with its thousands marked by commas, as the classic systems printed memory. */
+    private static String thousands(final long k) {
+        return String.format(Locale.ROOT, "%,d", k);
     }
 
     /** Whether the system is an edition of Frames, which goes down rather than refuse a program. */

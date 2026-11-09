@@ -36,7 +36,9 @@ import dev.jstech.computers.gui.layout.QuinceStartLayout;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
+import dev.jstech.computers.client.os.QuinceRecovery;
 import dev.jstech.computers.operation.payload.PostCompletePayload;
+import dev.jstech.computers.operation.payload.firmware.RecoveryPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.FirmwareKind;
@@ -137,6 +139,12 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     private boolean bootMenu;
     /** Which entry the menu is on. */
     private int menuAt;
+    /** Whether quinceOS's recovery is up, which the Quince chip's start-up options open. */
+    private boolean recovery;
+    /** The choice picked in the recovery. */
+    private int recoveryAt;
+    /** Whether First Aid was asked for from the recovery, which leaves a line saying so. */
+    private boolean recoveryChecking;
 
     public BootSequenceScreen(final MonitorSessionMenu session, final Inventory inventory,
                               final Component title) {
@@ -261,7 +269,9 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
                 return super.keyPressed(keyCode, scanCode, modifiers);
             }
             if (choosing()) {
-                if (quince.start() == QuinceStart.OPEN_FIRMWARE) {
+                if (recovery) {
+                    recoveryKey(keyCode);
+                } else if (quince.start() == QuinceStart.OPEN_FIRMWARE) {
                     openFirmwareKey(keyCode);
                 } else {
                     chooserKey(keyCode);
@@ -318,7 +328,7 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = this.leftPos;
         final int y = this.topPos;
-        MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
+        MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font, screenPos());
         if (quince.quince()) {
             renderQuince(g, x, y);
             return;
@@ -434,17 +444,69 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
             case InputConstants.KEY_LEFT, InputConstants.KEY_UP -> menuAt = Math.floorMod(menuAt - 1, count);
             case InputConstants.KEY_RIGHT, InputConstants.KEY_DOWN -> menuAt = Math.floorMod(menuAt + 1, count);
             case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
+                if (menuAt >= volumes.size()) {
+                    // The Quince chip's Options gear opens quinceOS's recovery, from which the setup is one choice.
+                    recovery = true;
+                    recoveryAt = 0;
+                    return;
+                }
                 setupRequested = true;
                 bootMenu = false;
-                if (menuAt >= volumes.size()) {
-                    send(new PostCompletePayload(computerPos, monitorPos, true));
-                } else {
-                    bootOnce(volumes.get(menuAt));
-                }
+                bootOnce(volumes.get(menuAt));
             }
             default -> {
             }
         }
+    }
+
+    /* quinceOS's recovery: up and down pick, Return goes on with the choice picked, Escape is the screen's. */
+    private void recoveryKey(final int keyCode) {
+        switch (keyCode) {
+            case InputConstants.KEY_UP -> recoveryAt = Math.floorMod(recoveryAt - 1, 3);
+            case InputConstants.KEY_DOWN -> recoveryAt = Math.floorMod(recoveryAt + 1, 3);
+            case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> recoveryGo();
+            default -> {
+            }
+        }
+    }
+
+    /*
+     * Goes on with the choice picked: Startup Disk is the firmware's setup, where the disk the machine starts from is
+     * chosen; Reinstall puts a fresh copy of quinceOS on its disk from the network; Disk Utility runs First Aid on it.
+     */
+    private void recoveryGo() {
+        switch (recoveryAt) {
+            case QuinceRecovery.STARTUP_DISK -> {
+                setupRequested = true;
+                recovery = false;
+                send(new PostCompletePayload(computerPos, monitorPos, true));
+            }
+            case QuinceRecovery.REINSTALL -> send(new RecoveryPayload(computerPos, monitorPos,
+                    RecoveryPayload.REINSTALL));
+            default -> {
+                recoveryChecking = true;
+                send(new RecoveryPayload(computerPos, monitorPos, RecoveryPayload.FIRST_AID));
+            }
+        }
+    }
+
+    @Override
+    public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
+        if (recovery && choosing()) {
+            final double gx = mouseX - leftPos;
+            final double gy = mouseY - topPos;
+            final int at = QuinceRecovery.choiceAt(gx, gy);
+            if (at >= 0) {
+                recoveryAt = at;
+                return true;
+            }
+            final int[] go = QuinceRecovery.continueButton(font);
+            if (gx >= go[0] && gx < go[0] + go[2] && gy >= go[1] && gy < go[1] + go[3]) {
+                recoveryGo();
+            }
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
     }
 
     /* Open Firmware's prompt: Backspace takes a letter back, Return runs the word. */
@@ -502,6 +564,11 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         final QuinceStart start = quince.start();
         if (quince.fault()) {
             QuinceFirmwarePages.sad(g, font, x, y, start, bezelEra(), complaint);
+        } else if (choosing() && recovery) {
+            g.pose().pushPose();
+            g.pose().translate(x, y, 0.0F);
+            QuinceRecovery.draw(g, font, W, H, recoveryAt, recoveryChecking);
+            g.pose().popPose();
         } else if (choosing() && start == QuinceStart.OPEN_FIRMWARE) {
             QuinceFirmwarePages.openFirmware(g, font, x, y, openFirmwarePage());
         } else if (choosing()) {

@@ -24,6 +24,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Inventory;
@@ -183,6 +184,15 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
     /** That line cut to the room it has, so a name somebody else chose cannot run past its column. */
     protected String wallClip(final String line, final int room) {
         return TextWall.clip(font, line, room);
+    }
+
+    /**
+     * The block this screen is shown on, so the frame round it is that block's: a monitor's, or the face of one of
+     * Quince's all-in-ones, which is its own screen. Null for a screen shown on no block.
+     */
+    @Nullable
+    protected BlockPos screenPos() {
+        return this.menu instanceof IMonitorMenu monitor ? monitor.monitorPos() : null;
     }
 
     /**

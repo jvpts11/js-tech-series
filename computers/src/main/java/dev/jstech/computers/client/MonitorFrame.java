@@ -7,12 +7,18 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.block.QuinceComputerBlock;
+import dev.jstech.computers.client.theme.AioFace;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
+import dev.jstech.computers.hardware.QuinceCase;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.core.BlockPos;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Draws the physical monitor frame a software screen is shown inside, in the host computer's hardware-era style
@@ -60,6 +66,61 @@ public final class MonitorFrame {
         }
 
         renderChin(g, font, s, geo);
+    }
+
+    /**
+     * The same, for a screen shown on the block at {@code screen}: when that block is one of Quince's all-in-ones, the
+     * glass is its own and the frame is its face, its colours and its name (computers/docs/design/quince.md); any
+     * other block, or none, wears its era's monitor.
+     */
+    public static void renderBody(final GuiGraphics g, final int sx, final int sy, final int sw, final int sh,
+                                  final Era era, final Font font, @Nullable final BlockPos screen) {
+        final AioFace face = faceAt(screen);
+        if (face == null) {
+            renderBody(g, sx, sy, sw, sh, era, font);
+            return;
+        }
+        final MonitorFrameStyle s = MonitorFrameStyle.LCD;
+        final MonitorFrameStyle.Geometry geo = s.geometry(sx, sy, sw, sh);
+        final AioFace.Inks inks = face.inks().get();
+        g.fill(geo.x(), geo.y(), geo.right(), geo.bottom(), inks.face());
+        if (face.chin()) {
+            g.fill(geo.x(), geo.chinY() - 6, geo.right(), geo.bottom(), inks.chin());
+            g.fill(geo.x(), geo.chinY() - 6, geo.right(), geo.chinY() - 5, inks.chinLight());
+        }
+        if (face.foot()) {
+            // The translucent shell under the face shows along the foot, in its two tones.
+            for (int x = geo.x() + 1; x < geo.right() - 1; x += 2) {
+                g.fill(x, geo.bottom() - 9, x + 1, geo.bottom() - 1, ((x - geo.x()) / 2) % 2 == 0
+                        ? inks.chinLight() : inks.chinDeep());
+            }
+        }
+        g.fill(geo.x(), geo.y(), geo.right(), geo.y() + 1, inks.light());
+        g.fill(geo.x(), geo.y(), geo.x() + 1, geo.bottom(), inks.light());
+        g.fill(geo.x(), geo.bottom() - 1, geo.right(), geo.bottom(), inks.dark());
+        g.fill(geo.right() - 1, geo.y(), geo.right(), geo.bottom(), inks.dark());
+        g.fill(sx - 1, sy - 1, sx + sw + 1, sy + sh + 1, inks.dark());
+        final int rowY = geo.chinY() + Math.max(0, (s.chinHeight() - GLYPH_H) / 2);
+        Draw.text(g, font, face.label(), geo.x() + 8, rowY, inks.label());
+        final int ledX = geo.right() - 11;
+        g.fill(ledX, rowY, ledX + 5, rowY + 5, s.ledColor());
+        int vx = ledX - 8;
+        for (int i = 0; i < 2; i++) {
+            g.fill(vx - 12, rowY + 1, vx, rowY + 4, inks.dark());
+            vx -= 16;
+        }
+    }
+
+    /** The face of the all-in-one at {@code screen}, or null when no all-in-one stands there. */
+    @Nullable
+    public static AioFace faceAt(@Nullable final BlockPos screen) {
+        final Minecraft minecraft = Minecraft.getInstance();
+        if (screen == null || minecraft.level == null) {
+            return null;
+        }
+        return minecraft.level.getBlockState(screen).getBlock() instanceof QuinceComputerBlock machine
+                && machine.machine().kind() == QuinceCase.Kind.ALL_IN_ONE
+                ? AioFace.of(machine.machine().model()) : null;
     }
 
     /** Draws the chin strip below the glass: the model label on the left, then vents and the power LED on the right. */

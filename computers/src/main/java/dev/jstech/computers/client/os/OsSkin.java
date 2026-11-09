@@ -72,12 +72,37 @@ public final class OsSkin implements ISkin {
         /** GNOME 2 of the Transition: Clearlooks, a blue title with white words, glossy studs, warm grey bodies. */
         CLEARLOOKS,
         /** Motif, which is CDE: one grey, light and shade for relief, and a palette everything is read from. */
-        MOTIF
+        MOTIF,
+        /** The Quince System: one bit, black on white, its titles striped. */
+        ONE_BIT,
+        /** Quince OS 9's Platinum: light greys, bevels and pinstripes. */
+        PLATINUM,
+        /** Quince OS X's Pulp: gel buttons and lights, brushed greys and pinstripes. */
+        PULP
     }
 
     /** A window-control glyph, so the control's shape can vary independently of its meaning. */
     public enum Control {
         MINIMIZE, MAXIMIZE, RESTORE, CLOSE
+    }
+
+    /** Where a window's buttons stand on its title bar. */
+    public enum Controls {
+        /** All three at the right end, close outermost: every Frames edition and most Unix desktops. */
+        RIGHT,
+        /** Motif's: the window's menu, its one way out, at the left end; minimise and maximise at the right. */
+        MENU_LEFT,
+        /** The Quince System's: the close box at the left end, and nothing else on the bar. */
+        CLOSE_LEFT,
+        /** Quince OS 9's: the close box at the left end, the zoom and collapse boxes at the right. */
+        CLASSIC,
+        /** Quince OS X's and after: the three lights at the left end, close, minimise and zoom. */
+        LIGHTS;
+
+        /** Whether the window has a minimise and a maximise of its own. */
+        public boolean both() {
+            return this != CLOSE_LEFT;
+        }
     }
 
     private final IFormChrome chrome;
@@ -197,6 +222,36 @@ public final class OsSkin implements ISkin {
                     0xFFFFFFFF, 0xFFEDEDED, 0xFF6D8FB8, 0xFF6A96CF, 0xFF1A1A1A, 0xFF6B6964, 0xFFFFFFFF,
                     0xFF86ABD9, 0xFFFFFFFF, 0xFFDCE5F2)));
 
+    /*
+     * Quince's five faces (computers/docs/design/quince.md): the Quince System in one bit, Quince OS 9 in Platinum,
+     * Quince OS X in Pulp up to the Transition and flat after it, and quinceOS's own; their icons are the three sets
+     * Quince drew, classic, Platinum, and the one every system from Quince OS X on shares.
+     */
+    static final OsSkin QUINCE_ONE_BIT = new OsSkin(QuinceChrome.ONE_BIT, 0, 0, false, "quince_system",
+            Palettes.declare(JsComputers.MODID, "skin/quince_system", new SkinColours(
+                    0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFF000000, 0xFF000000, 0xFF000000, 0xFFFFFFFF,
+                    0xFF000000, 0xFFFFFFFF, 0xFFFFFFFF)));
+
+    static final OsSkin QUINCE_PLATINUM = new OsSkin(QuinceChrome.PLATINUM, 0, 0, false, "quince_os_9",
+            Palettes.declare(JsComputers.MODID, "skin/quince_os_9", new SkinColours(
+                    0xFF000000, 0xFFDDDDDD, 0xFF555555, 0xFF3A3A9C, 0xFF000000, 0xFF6A6A6A, 0xFFFFFFFF,
+                    0xFF3A3A9C, 0xFFFFFFFF, 0xFFCCCCDD)));
+
+    static final OsSkin QUINCE_PULP = new OsSkin(QuinceChrome.PULP, 0, 0, false, "quince_os_x",
+            Palettes.declare(JsComputers.MODID, "skin/quince_pulp", new SkinColours(
+                    0xFF2A2A2A, 0xFFECECEC, 0xFF6A6A6A, 0xFF3D7FD8, 0xFF1A1A1A, 0xFF6A6A6A, 0xFFFFFFFF,
+                    0xFF3D7FD8, 0xFFFFFFFF, 0xFFDCE8F8)));
+
+    static final OsSkin QUINCE_FLAT = new OsSkin(QuinceChrome.FLAT, 0, 0, false, "quince_os_x",
+            Palettes.declare(JsComputers.MODID, "skin/quince_flat", new SkinColours(
+                    0xFF2A2A2A, 0xFFF4F4F6, 0xFFB8B8BC, 0xFF2A6FE0, 0xFF1A1A1A, 0xFF7A7E86, 0xFFFFFFFF,
+                    0xFF2A6FE0, 0xFFFFFFFF, 0xFFE4ECFA)));
+
+    static final OsSkin QUINCE_OS = new OsSkin(QuinceChrome.QUINCE_OS, 5, 5, false, "quince_os_x",
+            Palettes.declare(JsComputers.MODID, "skin/quinceos", new SkinColours(
+                    0xFF2A2A2A, 0xFFF4F2F6, 0xFFB8B8BC, 0xFF6A5AE0, 0xFF1A1A1A, 0xFF7A7490, 0xFFFFFFFF,
+                    0xFF6A5AE0, 0xFFFFFFFF, 0xFFEAE6F6)));
+
     /** CDE in each of its schemes, made once, so choosing one in the Style Manager builds nothing. */
     private static final Map<CdeScheme, OsSkin> MOTIF = motifSkins();
 
@@ -266,7 +321,8 @@ public final class OsSkin implements ISkin {
     public OsSkin darkVariant() {
         return switch (form()) {
             case METRO -> FRAMES_10_DARK;
-            case FLAT -> FRAMES_11_DARK;
+            // Quince's flat faces had no dark mode here; the others flat ones take Frames 11's.
+            case FLAT -> quince() ? this : FRAMES_11_DARK;
             default -> this;
         };
     }
@@ -293,6 +349,11 @@ public final class OsSkin implements ISkin {
      */
     public boolean glossForm() {
         return form() == Form.LUNA || form() == Form.AERO;
+    }
+
+    /** Whether this is one of Quince's faces, whose windows and widgets keep their rounded corners. */
+    public boolean quince() {
+        return chrome instanceof QuinceChrome;
     }
 
     /** Whether this is the dark-theme variant. */
@@ -470,6 +531,16 @@ public final class OsSkin implements ISkin {
      */
     public boolean menuAtLeft() {
         return chrome.menuAtLeft();
+    }
+
+    /** Where this skin stands a window's buttons on its title bar. */
+    public Controls controls() {
+        return chrome.controls();
+    }
+
+    /** Whether the window in front is outlined in the accent; the Quince faces mark it by its title alone. */
+    public boolean focusOutline() {
+        return chrome.focusOutline();
     }
 
     /** The thickness of the window frame in pixels; the GNOME and Motif forms draw a chunky border. */

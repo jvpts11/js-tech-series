@@ -42,6 +42,7 @@ import dev.jstech.computers.power.UpsRating;
 import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
+import dev.jstech.computers.operation.payload.crash.MemoryAskPayload;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
@@ -2253,6 +2254,19 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     }
 
     @Override
+    public boolean askingForMemory() {
+        return onKernel(false, (kernel, server) -> kernel.asking());
+    }
+
+    @Override
+    public void forceQuit(final List<String> tokens) {
+        onKernel(null, (kernel, server) -> {
+            kernel.forceQuit(this, server, tokens);
+            return null;
+        });
+    }
+
+    @Override
     public void weighMemory() {
         onKernel(null, (kernel, server) -> {
             kernel.weigh(this, server);
@@ -2359,6 +2373,14 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             terminals.frontKilled(level, slot);
         }
         ClientReplication.windowsEnded(watching, worldPosition, windows);
+    }
+
+    @Override
+    public void memoryAsked(final ServerLevel level, final List<MemoryAskPayload.Asked> programs) {
+        final int slot = soleComputerSlot();
+        if (slot >= 0) {
+            ClientReplication.memoryAsked(terminals.watching(level, slot), worldPosition, programs);
+        }
     }
 
     @Override

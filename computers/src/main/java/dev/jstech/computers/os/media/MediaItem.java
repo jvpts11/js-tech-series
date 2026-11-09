@@ -79,6 +79,21 @@ public class MediaItem extends Item {
         stack.set(ComputingComponents.MEDIA_PAYLOAD.get(), payload);
     }
 
+    /** Which disk of a system on several this medium is, counting from one; one for any medium that says nothing. */
+    public static int part(final ItemStack stack) {
+        final Integer stored = stack.get(ComputingComponents.MEDIA_PART.get());
+        return stored != null ? stored : 1;
+    }
+
+    /** Marks a medium as that disk of a system on several; the first is left unmarked, as a single medium is. */
+    public static void setPart(final ItemStack stack, final int part) {
+        if (part <= 1) {
+            stack.remove(ComputingComponents.MEDIA_PART.get());
+        } else {
+            stack.set(ComputingComponents.MEDIA_PART.get(), part);
+        }
+    }
+
     // ─── Data contents (DATA) ────────────────────────────────────────────────
 
     /**

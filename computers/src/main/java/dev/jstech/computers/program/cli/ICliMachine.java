@@ -230,6 +230,11 @@ public interface ICliMachine {
         return 64;
     }
 
+    /** The id of the processor's instruction set, which Quince's systems name their architecture after; empty if none. */
+    default String processorIsa() {
+        return "";
+    }
+
     /** The system information for {@code screenfetch}, or null when no OS is installed. */
     default ICliComputer.SystemInfo systemInfo() {
         return null;

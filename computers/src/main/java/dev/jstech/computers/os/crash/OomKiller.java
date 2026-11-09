@@ -70,7 +70,8 @@ public final class OomKiller {
     public static boolean runsOn(final Platform platform) {
         return switch (platform) {
             case LINUX, FREEBSD, UNIX -> true;
-            case FRAMES, MC_DOS, MC_NET -> false;
+            // Quince's systems end nothing without the player: the classic ones refuse, the later ones ask.
+            case FRAMES, MC_DOS, MC_NET, QUINCE -> false;
         };
     }
 

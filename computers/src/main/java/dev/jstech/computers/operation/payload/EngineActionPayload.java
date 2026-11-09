@@ -34,6 +34,10 @@ public record EngineActionPayload(BlockPos hostPos, byte action, String program)
     public static final byte REPLACE = 2;
     /** Gives the Mainframe's engine a role, orchestrator or Subframe, named by its word. */
     public static final byte ROLE = 3;
+    /** Stops one of the Mainframe's other services, named by its program id, for the rest of the run. */
+    public static final byte SERVICE_STOP = 4;
+    /** Starts one of the Mainframe's other services again, named by its program id. */
+    public static final byte SERVICE_START = 5;
 
     public static final CustomPacketPayload.Type<EngineActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "engine_action"));

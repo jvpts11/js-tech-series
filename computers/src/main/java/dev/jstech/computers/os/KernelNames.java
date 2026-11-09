@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.hardware.Isas;
 import java.util.List;
 
 /**
@@ -33,6 +34,9 @@ public final class KernelNames {
     public static final String SYSTEM_V_RELEASE = "3.2";
     public static final String SYSTEM_V_VERSION = "2";
 
+    /** The release of wallace, Quince's kernel from Quince OS X on (computers/docs/design/quince.md). */
+    public static final String WALLACE_RELEASE = "8.0.0";
+
     private KernelNames() {
     }
 
@@ -41,6 +45,7 @@ public final class KernelNames {
         return switch (platform) {
             case FREEBSD -> "FreeBSD";
             case UNIX -> "UNIX";
+            case QUINCE -> "Wallace";
             default -> "Linux";
         };
     }
@@ -50,6 +55,7 @@ public final class KernelNames {
         return switch (platform) {
             case FREEBSD -> FREEBSD_RELEASE;
             case UNIX -> SYSTEM_V_RELEASE;
+            case QUINCE -> WALLACE_RELEASE;
             default -> LINUX_VERSION;
         };
     }
@@ -81,6 +87,24 @@ public final class KernelNames {
         };
     }
 
+    /**
+     * What a system of that family calls the architecture of the processor of instruction set {@code isa}, that many
+     * bits wide. Quince's name theirs after the instruction set, as the real ones did, and call an Integra processor
+     * i386 whatever its width, as the first of them on Intel did; the others go by the width alone.
+     */
+    public static String architecture(final Platform platform, final int bits, final String isa) {
+        if (platform != Platform.QUINCE) {
+            return architecture(platform, bits);
+        }
+        if (Isas.M68K.id().equals(isa)) {
+            return "m68k";
+        }
+        if (Isas.POWERPC.id().equals(isa)) {
+            return "ppc";
+        }
+        return Isas.ARM64.id().equals(isa) ? "arm64" : "i386";
+    }
+
     /** What a system of that family calls the architecture of a processor that many bits wide. */
     public static String architecture(final Platform platform, final int bits) {
         if (platform != Platform.FREEBSD && platform != Platform.UNIX) {
@@ -98,6 +122,7 @@ public final class KernelNames {
         return switch (platform) {
             case FREEBSD -> "ttyv0";
             case UNIX -> "console";
+            case QUINCE -> "ttys000";
             default -> "tty1";
         };
     }
@@ -106,17 +131,20 @@ public final class KernelNames {
      * What a medium of that family starts a machine from, by the names that family gives them: a kernel and its
      * first filesystem on a Linux, the loader and the kernel on FreeBSD, the one file System V keeps at its root.
      */
-    public static List<String> bootFiles(final Platform platform) {
+    public static List<String> bootFiles(final Platform platform, final int familyRank) {
         return switch (platform) {
             case FREEBSD -> List.of("boot/loader", "boot/kernel/kernel");
             case UNIX -> List.of("unix");
+            // Quince's classic systems start from the System Folder; the later ones from their EFI loader.
+            case QUINCE -> QuinceFamily.classic(familyRank) ? List.of("System Folder/System", "System Folder/Seeker")
+                    : List.of("System/Library/CoreServices/boot.efi");
             default -> List.of("boot/vmlinuz", "boot/initrd.img");
         };
     }
 
     /** The three together, as a system report gives them: the name, the release, the architecture. */
-    public static String kernel(final Platform platform, final int bits) {
-        return name(platform) + " " + release(platform) + " " + architecture(platform, bits);
+    public static String kernel(final Platform platform, final int bits, final String isa) {
+        return name(platform) + " " + release(platform) + " " + architecture(platform, bits, isa);
     }
 
     /**
@@ -124,9 +152,11 @@ public final class KernelNames {
      *
      * @param host the name the machine answers to
      */
-    public static String everything(final Platform platform, final String host, final int bits) {
-        final String arch = architecture(platform, bits);
+    public static String everything(final Platform platform, final String host, final int bits, final String isa) {
+        final String arch = architecture(platform, bits, isa);
         return switch (platform) {
+            case QUINCE -> "Wallace " + host + " " + WALLACE_RELEASE + " Wallace Kernel Version " + WALLACE_RELEASE
+                    + ": " + arch;
             case FREEBSD -> "FreeBSD " + host + " " + FREEBSD_RELEASE + " FreeBSD " + kernelLine(platform)
                     + " " + arch;
             // System V gives the system, the node, the release, the version and the machine, and no more.

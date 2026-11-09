@@ -45,5 +45,12 @@ public enum InstallerChrome {
     METRO,
 
     /** The whole screen in one blue, the question large in the middle and one button under it. */
-    FIRST_SETUP
+    FIRST_SETUP,
+
+    /**
+     * Quince's own: the installer is a program on the system's desktop, under the menu bar, with the disks it reads
+     * and writes lying on the desktop beside it; a classic dialog on the Quince System, and an assistant listing its
+     * steps down its left side on Quince OS 9 and Quince OS X.
+     */
+    QUINCE_DESKTOP
 }

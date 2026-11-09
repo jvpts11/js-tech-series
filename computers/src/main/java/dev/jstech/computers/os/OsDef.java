@@ -157,6 +157,19 @@ public record OsDef(
                 InstallerStyle.PLAIN, 0, SystemIsas.UNNAMED);
     }
 
+    /**
+     * A system that comes up at a desktop of its own, the one under its own id, with the shell its terminal opens
+     * and the manager its packages come through: what each of Quince's systems is.
+     */
+    public static OsDef desktopSystem(final ResourceLocation id, final ResourceLocation kernelId,
+                                      final Platform platform, final Era minEra, final int footprintMb,
+                                      final String displayName, final ShellKind shell,
+                                      final PackageManagerKind packageManager, final SoftwareHouse house) {
+        return new OsDef(id, OsCapability.FULL_DESKTOP, minEra, kernelId, footprintMb, Optional.empty(), platform,
+                displayName, shell, packageManager, InstallMode.GUIDED, Optional.of(id), house, 0,
+                InstallerStyle.PLAIN, 0, SystemIsas.UNNAMED);
+    }
+
     /** The same system, holding {@code megabytes} of RAM for itself while it runs. */
     public OsDef withRam(final int megabytes) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,

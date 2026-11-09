@@ -38,7 +38,8 @@ final class MachineCrash {
         this.page = page;
         this.endsAt = now + page.totalTicks();
         this.endsDark = endsDark;
-        this.held = false;
+        // Quince's pages stand from the first until the player restarts the machine, which the next key does.
+        this.held = page.style().quince();
     }
 
     /** The page standing on the glass at {@code now}, or null when there is none or its time is up. */

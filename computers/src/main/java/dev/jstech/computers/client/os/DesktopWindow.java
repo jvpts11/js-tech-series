@@ -88,8 +88,8 @@ public final class DesktopWindow {
     private boolean maximized;
     // Which title-bar button is currently held down: 0 none, 1 minimize, 2 maximize, 3 close.
     private int pressedBtn;
-    // Whether the skin last drawn with keeps the way out at the left end of the bar, as Motif does.
-    private boolean menuAtLeft;
+    // Where the skin last drawn with stands the window's buttons, which the hit tests have to agree with.
+    private OsSkin.Controls controls = OsSkin.Controls.RIGHT;
     // Which workspaces the window is on, as a WorkspaceSet: one of them, several, or all.
     private int workspaces = WorkspaceSet.only(0);
     // Geometry saved before maximizing, to restore on un-maximize.
@@ -543,7 +543,7 @@ public final class DesktopWindow {
         resolveGeometry(screenW, screenH, taskbarH, workTop);
         this.drawn = true;
         // Where the buttons stand is the skin's to say, and the hit tests below have to agree with the drawing.
-        this.menuAtLeft = skin.menuAtLeft();
+        this.controls = skin.controls();
         final int wx = curX;
         final int wy = curY;
         final int ww = curW;
@@ -583,9 +583,9 @@ public final class DesktopWindow {
          */
         final String title = titleOn(desktop);
         final int textLeft = wx + (titleIcon ? 3 + ICON + 3 : 4);
-        final int titleFloor = menuAtLeft ? closeX() + BTN + 5 : wx + 4;
         final int titleX = skin.titleCentered()
-                ? Math.max(titleFloor, Math.min(wx + (ww - font.width(title)) / 2, minX() - font.width(title) - 4))
+                ? Math.max(titleFloor(), Math.min(wx + (ww - font.width(title)) / 2,
+                        titleCeiling() - font.width(title)))
                 : textLeft;
         if (focused) {
             skin.titleGlow(g, titleX, wy + 3, font.width(title));
@@ -593,9 +593,9 @@ public final class DesktopWindow {
         Draw.text(g, font, title, titleX, wy + 3, focused ? skin.titleText() : PALETTE.get().unfocusedTitle());
         /*
          * The focused window also carries an accent outline, so "which one am I typing into" reads
-         * at a glance even when several windows overlap.
+         * at a glance even when several windows overlap; a face that marks it by its title alone draws none.
          */
-        if (focused) {
+        if (focused && skin.focusOutline()) {
             final int accent = skin.accent();
             g.fill(wx, wy, wx + ww, wy + 1, accent);
             g.fill(wx, wy + wh - 1, wx + ww, wy + wh, accent);
@@ -609,7 +609,7 @@ public final class DesktopWindow {
          */
         final int by = wy + 2;
         final int hover = buttonAt(mouseX, mouseY);
-        if (!dialog()) {
+        if (!dialog() && controls.both()) {
             skin.windowControl(g, font, minX(), by, BTN, BTN, OsSkin.Control.MINIMIZE, hover == 1, pressedBtn == 1);
             skin.windowControl(g, font, maxX(), by, BTN, BTN,
                     maximized ? OsSkin.Control.RESTORE : OsSkin.Control.MAXIMIZE, hover == 2, pressedBtn == 2);
@@ -690,19 +690,53 @@ public final class DesktopWindow {
     }
 
     /*
-     * Three buttons at the right end, close outermost, on every desktop but Motif's, where the one way out is
-     * the menu button at the LEFT end and minimise and maximise have the right end to themselves.
+     * Three buttons at the right end, close outermost, on most desktops. Motif keeps its one way out, the menu
+     * button, at the LEFT end with minimise and maximise alone at the right; the Quince System has only its close
+     * box at the left, Quince OS 9 its close box there and the zoom and collapse boxes at the right, and Quince OS
+     * X and after their three lights together at the left.
      */
     private int closeX() {
-        return menuAtLeft ? curX + 3 : curX + curW - BTN - 3;
+        return switch (controls) {
+            case RIGHT -> curX + curW - BTN - 3;
+            case MENU_LEFT -> curX + 3;
+            case CLOSE_LEFT -> curX + 7;
+            case CLASSIC -> curX + 5;
+            case LIGHTS -> curX + 2;
+        };
     }
 
     private int maxX() {
-        return menuAtLeft ? curX + curW - BTN - 3 : curX + curW - 2 * BTN - 5;
+        return switch (controls) {
+            case RIGHT -> curX + curW - 2 * BTN - 5;
+            case MENU_LEFT -> curX + curW - BTN - 3;
+            case CLOSE_LEFT, CLASSIC -> curX + curW - 2 * BTN - 5;
+            case LIGHTS -> curX + 2 + 2 * BTN;
+        };
     }
 
     private int minX() {
-        return menuAtLeft ? curX + curW - 2 * BTN - 5 : curX + curW - 3 * BTN - 7;
+        return switch (controls) {
+            case RIGHT -> curX + curW - 3 * BTN - 7;
+            case MENU_LEFT -> curX + curW - 2 * BTN - 5;
+            case CLOSE_LEFT, CLASSIC -> curX + curW - BTN - 3;
+            case LIGHTS -> curX + 2 + BTN;
+        };
+    }
+
+    /* Where the title may start, past the buttons at the left end, and where it must stop short of those at the right. */
+    private int titleFloor() {
+        return switch (controls) {
+            case RIGHT -> curX + 4;
+            case MENU_LEFT, CLOSE_LEFT, CLASSIC -> closeX() + BTN + 5;
+            case LIGHTS -> maxX() + BTN + 5;
+        };
+    }
+
+    private int titleCeiling() {
+        return switch (controls) {
+            case RIGHT, MENU_LEFT, CLASSIC -> minX() - 4;
+            case CLOSE_LEFT, LIGHTS -> curX + curW - 4;
+        };
     }
 
     public boolean closeBoxHit(final double mx, final double my) {
@@ -711,11 +745,12 @@ public final class DesktopWindow {
 
     public boolean maximizeBoxHit(final double mx, final double my) {
         return ownFrame() ? app.ownFrameFills() && ownControlAt(mx, my) == BUTTON_MAXIMIZE
-                : !dialog() && inBtn(mx, my, maxX());
+                : !dialog() && controls.both() && inBtn(mx, my, maxX());
     }
 
     public boolean minimizeBoxHit(final double mx, final double my) {
-        return ownFrame() ? ownControlAt(mx, my) == BUTTON_MINIMIZE : !dialog() && inBtn(mx, my, minX());
+        return ownFrame() ? ownControlAt(mx, my) == BUTTON_MINIMIZE
+                : !dialog() && controls.both() && inBtn(mx, my, minX());
     }
 
     /** The middle of a title-bar button, in desktop pixels, by the numbers {@link #buttonAt} answers with. */

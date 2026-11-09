@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.operation.payload.crash.MemoryAskPayload;
 import dev.jstech.computers.os.IOsHost;
 import java.util.List;
 import net.minecraft.core.BlockPos;
@@ -36,4 +37,10 @@ interface IKernelHost extends IOsHost {
      * close on the desktops showing the machine, and a program ended in front of a terminal gives the prompt back.
      */
     void memoryFreed(ServerLevel level, List<String> lines, List<String> windows, boolean frontKilled);
+
+    /**
+     * The system ran out of memory and asks the player what to force quit: the desktops showing the machine show the
+     * question with {@code programs}; an empty list takes the question down.
+     */
+    void memoryAsked(ServerLevel level, List<MemoryAskPayload.Asked> programs);
 }

@@ -35,6 +35,18 @@ class FsckLinesTest {
     }
 
     @Test
+    void summary_onQuinceNamesTheVolumeAndSaysWhetherItWasRepaired() {
+        assertEquals(List.of("** The volume Quince HD appears to be OK."), FsckLines.summary(DefragLook.QUINCE, null,
+                new DefragState.Result(0, 0L, 0L, 0L, 0, 0)));
+        final List<String> lines = FsckLines.summary(DefragLook.QUINCE, null,
+                new DefragState.Result(1, 7L, 7L, 0L, 0, 0));
+        assertEquals("** The volume Untitled was repaired successfully.", lines.getLast());
+        assertEquals(List.of("** /dev/rdisk0s2", "** Checking HFS Plus volume."),
+                FsckLines.opening(DefragLook.QUINCE, 0));
+        assertEquals(5, FsckLines.phases(DefragLook.QUINCE).size());
+    }
+
+    @Test
     void phasesBy_printsTheFirstAtOnceAndTheRestAsItGoes() {
         assertEquals(1, FsckLines.phasesBy(0));
         assertEquals(3, FsckLines.phasesBy(45));

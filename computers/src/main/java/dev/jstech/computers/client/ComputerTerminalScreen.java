@@ -551,7 +551,7 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         final int y = topPos;
 
         // The host computer's hardware-era monitor frame wraps the whole terminal window.
-        MonitorFrame.renderBody(g, x, y, imageWidth, imageHeight, screenEra(), font);
+        MonitorFrame.renderBody(g, x, y, imageWidth, imageHeight, screenEra(), font, screenPos());
 
         g.fill(x - 1, y - 1, x + imageWidth + 1, y + imageHeight + 1, OUTER);
         g.fill(x, y, x + imageWidth, y + imageHeight, SCREEN);

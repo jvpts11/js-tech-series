@@ -155,7 +155,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = this.leftPos;
         final int y = this.topPos;
-        MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font);
+        MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font, screenPos());
         if (!this.menu.manager().listsSystems()) {
             LoaderMenuPainter.draw(g, font, x, y, this.menu, this.remaining, this.held);
             return;

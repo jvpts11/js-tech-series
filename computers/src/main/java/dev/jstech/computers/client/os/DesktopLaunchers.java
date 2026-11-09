@@ -18,6 +18,8 @@ import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
  * present when the desktop bundles it and the machine and the system allow it; one installed later is present when
  * the machine's listing names it. The wallpaper wears the same launchers as icons, with the trash ahead of them.
  */
+@TextHolder
 final class DesktopLaunchers {
 
     private final DesktopState desktop;
@@ -55,6 +58,13 @@ final class DesktopLaunchers {
 
     /** What a player's own program is known by, ahead of the listing it starts at: it has no window to go by. */
     private static final String RUN_KEY = "run:";
+    /** The file explorer, which the startup disk on Quince's desktops opens at the root. */
+    private static final ResourceLocation FILES = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "files");
+    /** The startup disk's picture on Quince's desktops, drawn from the program pictures of each set. */
+    private static final ResourceLocation QUINCE_DISK_ICON =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "quince_disk");
+    /** The startup disk's name, as Quince's systems name the disk they install on. */
+    static final TextKey QUINCE_DISK = TextKey.of("jsc.quince.disk_name", "Quince HD");
 
     DesktopLaunchers(final DesktopState desktop, final BlockPos host, final BlockPos monitorPos,
                      final ResourceLocation desktopId, final ResourceLocation osId,
@@ -148,6 +158,11 @@ final class DesktopLaunchers {
     /** Makes the wallpaper's icons again, after the programs or the trash's picture changed. */
     void rebuildIcons() {
         icons.clear();
+        // Quince's desktops show the startup disk first, at the top of the right edge; opening it opens the Seeker.
+        if (desktop.quince()) {
+            icons.add(new Launcher(WindowKeys.of(FILES), GameText.resolve(QUINCE_DISK), QUINCE_DISK_ICON,
+                    () -> new FilesApp(host, desktopId.getPath(), "/", monitorPos)));
+        }
         final DeskTrash trash = desktop.trash();
         if (trash.onWallpaper()) {
             icons.add(trash.launcher());

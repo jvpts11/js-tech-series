@@ -204,7 +204,8 @@ final class CopyProgressApp implements IDesktopApp {
             case KDE -> period ? Style.KDE2 : null;
             case GNOME -> period ? Style.GNOME1 : null;
             case CINNAMON -> Style.CINNAMON;
-            case CDE -> null;
+            // Neither CDE nor Quince's Seeker shows a copy in a window of its own here.
+            case CDE, QUINCE_CLASSIC, QUINCE_X -> null;
         };
     }
 

@@ -24,6 +24,14 @@ class DefragLookTest {
         assertEquals(DefragLook.FRAMES_7, DefragLook.of(Platform.FRAMES, 3));
         assertEquals(DefragLook.FRAMES_11, DefragLook.of(Platform.FRAMES, 5));
         assertEquals(DefragLook.UNIX, DefragLook.of(Platform.UNIX, 1));
+        assertEquals(DefragLook.QUINCE, DefragLook.of(Platform.QUINCE, 3));
+    }
+
+    @Test
+    void drive_onQuinceIsTheSecondSliceOfTheDisk() {
+        assertEquals("disk0s2", DefragLook.QUINCE.drive(0));
+        assertEquals("/dev/disk1s2", DefragLook.QUINCE.device(1));
+        assertEquals(1, DefragLook.QUINCE.diskNamed("disk1s2", 2));
     }
 
     @Test

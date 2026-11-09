@@ -75,6 +75,18 @@ public final class DesktopTheme {
                     0xFF2B2B2B, 0xFF3A3A3A, 0xFF69B03B, 0xFFE3E3E3, 0xFF3A3A3A,
                     0xFFFFFFFF, 0xFF2F2F2F, 0xFFE8E8E8, 0xFF69B03B)), false);
 
+    // Quince's classic systems: the menu bar in white and grey, the icons' names in black on a white ground.
+    static final DesktopTheme QUINCE_CLASSIC = new DesktopTheme(Palettes.declare(JsComputers.MODID,
+            "desktop/quince_classic", new DesktopColours(
+                    0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFFFFFFFF,
+                    0xFF000000, 0xFFFFFFFF, 0xFF000000, 0xFF000000)), false);
+
+    // Quince OS X and after: the light menu bar and Dock, the icons' names in white over the picture.
+    static final DesktopTheme QUINCE_X = new DesktopTheme(Palettes.declare(JsComputers.MODID, "desktop/quince_x",
+            new DesktopColours(
+                    0xFFF2F2F4, 0xFFC0C0C8, 0xFF3D7FD8, 0xFF000000, 0xFFE8E8EC,
+                    0xFFFFFFFF, 0xFFF2F2F4, 0xFF000000, 0xFF3D7FD8)), true);
+
     // CDE in the scheme it ships with.
     static final DesktopTheme CDE_DEFAULT = cde(CdeScheme.DEFAULT);
 

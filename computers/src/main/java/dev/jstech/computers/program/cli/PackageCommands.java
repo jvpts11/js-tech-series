@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli;
 
 
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -60,6 +61,8 @@ final class PackageCommands {
                 "[--ask] <package> | --unmerge <package> | --search [term] | --sync | --update @world");
         private static final TextKey USAGE_PKG = TextKey.of("jsc.cli.package.pkg.usage",
                 "install <package> | delete <package> | search [term] | info | update | upgrade");
+        private static final TextKey USAGE_KEG = TextKey.of("jsc.cli.package.keg.usage",
+                "install <formula> | uninstall <formula> | search [term] | list | update | upgrade");
         private static final TextKey USAGE = TextKey.of("jsc.cli.package.usage",
                 "install <package> | remove <package> | search [term] | list | update | upgrade");
         /* How the apt family opens a line about a repository it could not read, and one about a refusal. */
@@ -115,12 +118,18 @@ final class PackageCommands {
                 case PACMAN -> USAGE_PACMAN.text();
                 case EMERGE -> USAGE_EMERGE.text();
                 case PKG -> USAGE_PKG.text();
+                case KEG -> USAGE_KEG.text();
                 default -> USAGE.text();
             };
         }
 
+        /*
+         * keg came to Quince OS X with the Standard: on a machine of the ages before it, Quince OS X installs from its
+         * packages and its discs alone.
+         */
         @Override public boolean available(final ICliComputer computer) {
-            return computer.packageManager() == kind;
+            return computer.packageManager() == kind
+                    && (kind != PackageManagerKind.KEG || !computer.era().isAtMost(HardwareEra.TRANSITION));
         }
 
         @Override public void run(final CliContext ctx) {
@@ -148,6 +157,18 @@ final class PackageCommands {
                         case "--ask", "-a", "-av" -> install(ctx, arg, true);
                         case "--unmerge", "-C", "--depclean", "-c" -> remove(ctx, arg);
                         default -> install(ctx, ctx.rest(0), false);
+                    }
+                }
+                case KEG -> {
+                    // keg's words, after Homebrew's: a formula is uninstalled, and what is installed is listed.
+                    switch (verb) {
+                        case "install" -> install(ctx, arg, false);
+                        case "search" -> search(ctx, arg);
+                        case "list" -> installed(ctx);
+                        case "update" -> sync(ctx);
+                        case "upgrade" -> upgrade(ctx);
+                        case "uninstall", "remove", "rm" -> remove(ctx, arg);
+                        default -> ctx.out().error(usageLine());
                     }
                 }
                 case PKG -> {

@@ -32,7 +32,19 @@ public enum CrashStyle implements IStableId {
     FRAMES_11(4),
 
     /** A Unix kernel's panic, written on the text console in the kernel's own words. */
-    CONSOLE(5);
+    CONSOLE(5),
+
+    /**
+     * The bomb of the Quince System (computers/docs/design/quince.md): "Sorry, a system error occurred", the error's
+     * ID, a Resume that never works and a Restart that loses whatever was open.
+     */
+    QUINCE_BOMB(6),
+
+    /** The grey page of Quince OS X and quinceOS: you need to restart your computer, in four languages. */
+    QUINCE_RESTART(7),
+
+    /** Quince OS 9's bomb, in Platinum: the program that was running in quotes, the error's type, and Restart. */
+    QUINCE_OS_9_BOMB(8);
 
     private static final StableIds<CrashStyle> IDS = StableIds.of(CrashStyle.class);
 
@@ -49,7 +61,12 @@ public enum CrashStyle implements IStableId {
 
     /** Whether this is one of the Frames family's pages, which the hardware turns red. */
     public boolean frames() {
-        return this != CONSOLE;
+        return this != CONSOLE && !quince();
+    }
+
+    /** Whether this is one of Quince's pages, which stand until the player restarts the machine. */
+    public boolean quince() {
+        return this == QUINCE_BOMB || this == QUINCE_RESTART || this == QUINCE_OS_9_BOMB;
     }
 
     @Override

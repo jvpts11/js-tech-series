@@ -33,7 +33,8 @@ public final class HelpShelf {
             case MC_DOS, FRAMES -> ComputersGuide.FRAMES_RESOURCE_KIT;
             case LINUX -> install == InstallMode.GUIDED ? ComputersGuide.LINUX_DESK_REFERENCE
                     : ComputersGuide.LINUX_BY_HAND;
-            case UNIX, FREEBSD -> ComputersGuide.DAEMON_HANDBOOK;
+            // Quince OS X and what came after it are a UNIX of the BSD line underneath, so Quince's chapter is there.
+            case UNIX, FREEBSD, QUINCE -> ComputersGuide.DAEMON_HANDBOOK;
             case MC_NET -> ComputersGuide.GUIDE_TO_OPERATIONS;
         };
     }

@@ -26,9 +26,44 @@ memory while it runs.
 | Frames 7 | Transition | the Frames 7 desktop | from DVD, guided |
 | Frames 10 | Standard | the Frames 10 desktop | from USB stick, guided |
 | Frames 11 | Advanced | the Frames 11 desktop | from USB stick, guided |
+| Quince System | Vintage | the Quince System desktop, on the Russet 128K's 68k | from three floppies, guided |
+| Quince OS 9 | Legacy | the Quince OS 9 desktop, on the PowerQ G3 and G4 | from CD, guided |
+| Quince OS X | Legacy | the Quince OS X desktop and its Dock, on PowerPC and Integra | from CD, guided |
+| Quince OS X Server | Transition | Quince OS X with Server Admin, for servers | from CD, guided |
+| quinceOS | Advanced | the quinceOS desktop, on Quince's own chips | guided, and from its recovery |
 
 The space a system takes is counted in items of the disk's era: Frames 11 takes 80 items of a 64-bit disk, and
 MC-DOS a fifth of a 20 MB Vintage drive.
+
+### Quince's systems
+
+*Added 2026-11-09.*
+
+Quince's systems run on Quince's computers ([Hardware](HARDWARE.md)), each on the processors it was built for: the
+Quince System on the 68k, Quince OS 9 on the PowerPC, Quince OS X on the PowerPC and on Integra, its Server on
+Integra and on Quince's own chips, and quinceOS on Quince's own chips. Quince OS X carries Champollion, which runs a
+program built for the PowerPC on an Integra machine, more slowly; the Server and quinceOS carry Champollion 2, which
+does the same for Integra programs on Quince's chips.
+
+- **The desktop.** A menu bar across the top, the fruit's menu at its left and the program in front named beside it;
+  the disks and the Trash on the desktop; the Seeker for files. From Quince OS X, the Dock along the bottom holds the
+  programs and what is open. The classic systems have no command line; from Quince OS X the Terminal opens zsh, and
+  The Daemon Handbook has a chapter on Quince's systems.
+- **Installing.** The Quince System comes on three floppies: its installer copies the first, asks for the next, and
+  goes on once it is in the drive. The others install from one disc. On Quince's own chips, Options on the start-up
+  screen opens quinceOS's recovery, to reinstall it, repair its disk with First Aid, or choose the startup disk.
+- **Memory.** Quince OS 9 and the Quince System open each program in a block of its own, set in the program's Get
+  Info (its minimum and preferred sizes): a program opens in its preferred block while that much is free, in what is
+  left above its minimum otherwise, and not at all below it. About This Computer shows the blocks. Quince OS X and
+  quinceOS share the memory as the other systems do, but when it runs out they end nothing themselves: the programs
+  pause and Force Quit Applications asks which to quit, and they go on once there is room.
+- **When it crashes.** The classic systems show the bomb with its error's number (Quince OS 9 names the program that
+  was running), and the later ones the grey page asking you to restart in four languages. Both stand until you press
+  Restart or a key; the machine then starts over.
+- **Programs.** qTunes (the machine's music) and Expedition (a browser, waiting for a web the world has yet to
+  build) come from Quince OS 9; Preview (pictures), the Terminal and the Quince Store from Quince OS X; Server Admin
+  (start and stop a Mainframe's services) with the Server. From the Standard, Quince OS X and quinceOS install
+  programs from the Mirror with `keg` at the Terminal or from the Quince Store, free.
 
 ## Desktops
 
@@ -59,6 +94,7 @@ reads them is its system's own:
 | Frames 10 and 11 | Get Help | One search across the top, the books, and the page. |
 | KDE Plasma | Help Center | The books on the left, the page on the right. |
 | GNOME, Cinnamon | Help | No tree: each page lists what it holds, and the line above it says where it is. |
+| Quince's systems | Help Center, Help Viewer from Quince OS X | As GNOME's: each page lists what it holds. |
 | CDE | Help Viewer | The topic hierarchy above the page; Backtrack, History..., Index... and Top Level. |
 | MC-DOS, MC-NET | `help`, `help <topic>` | The whole screen in the sixteen colours: Tab picks a link and Enter follows it; Alt+C the contents, Alt+N the next topic, Alt+B back, Alt+I the index; Alt+S finds, Escape leaves. |
 | Linux (a shell) | `info`, `info <topic>` | info: every chapter, section and entry is a node; n, p and u move, Tab and Enter follow a link, m goes to a menu item, s searches, l goes back, q leaves. |
@@ -105,6 +141,7 @@ there; nothing is erased, and a clean shutdown leaves no mark.
 | Frames 10, Frames 11 | NTFS | "Scanning and repairing drive" under the mark | 2 seconds |
 | Linux | ext3 on the Legacy, ext4 later, btrfs on Fedora from the Standard; ext4 when the root is formatted by hand | the journal replayed on the console; btrfs nothing | 2 seconds; none on btrfs |
 | FreeBSD, UNIX | UFS | fsck's five passes on the console | a second for every 64 items in use, 5 seconds to a minute |
+| Quince's systems | HFS on the Quince System, HFS+ on Quince OS 9, HFS+ journaled from Quince OS X, APFS on quinceOS | nothing at start-up; Disk Utility's First Aid checks a disk when asked | as fsck |
 
 A disk is checked as the file system its computer's system formats with, until disks hold partitions of their own.
 
@@ -116,9 +153,9 @@ Every system comes with its programs (the list under Desktops, and Task Manager:
 it spends, and how to end it). Others are installed:
 
 - **From media**, like a system: the program's disc in a joined drive, then its setup from Files.
-- **From the Mirror**, with the system's package manager (`apt`, `dnf`, `pacman`, `emerge`, `pkg` or Frames'
-  `pckmgr`), with no media at all, when the network has a Mirror (below). MC-DOS, MC-NET and UNIX System V install
-  from media only.
+- **From the Mirror**, with the system's package manager (`apt`, `dnf`, `pacman`, `emerge`, `pkg`, Frames'
+  `pckmgr` or Quince's `keg`, from the Standard), with no media at all, when the network has a Mirror (below).
+  MC-DOS, MC-NET, UNIX System V and Quince's classic systems install from media only.
 
 Some programs only run on one kind of computer: the Network Manager on the Mainframe, the Crafting Manager on a
 Crafting Computer, the Cluster Manager on a Cluster Management Computer, the Workshop on a Personal Computer, Nouvell

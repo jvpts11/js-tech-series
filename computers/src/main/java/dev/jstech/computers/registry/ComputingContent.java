@@ -186,7 +186,10 @@ public final class ComputingContent {
     private static void installers(final CreativeModeTab.Output output, final Era era) {
         for (final OsDef os : OsBootstrap.builtinOses()) {
             if (os.minEra() == era) {
-                output.accept(InstallerStacks.forSystem(os));
+                // Every disk of a system that comes on several, the Quince System's three floppies.
+                for (final ItemStack disk : InstallerStacks.disksOf(os)) {
+                    output.accept(disk);
+                }
             }
         }
         // Then each of those systems already on a disk of the era, for a machine that should simply come up.

@@ -55,6 +55,11 @@ final class DesktopPointers {
             art("gnome_busy", 14, 14, 16, 7, 7), art("gnome_working", 22, 24, 16, 0, 0), null);
     private static final Set CINNAMON = new Set(art("cinnamon_arrow", 15, 22, 1, 0, 0),
             art("cinnamon_busy", 14, 14, 8, 7, 7), art("cinnamon_working", 22, 24, 8, 0, 0), null);
+    /* Quince's arrow on every one of its systems: the watch on the classic two, the spinning disc after them. */
+    private static final Set QUINCE_CLASSIC = new Set(art("quince_arrow", 11, 15, 1, 0, 0),
+            art("quince_watch", 9, 10, 1, 4, 5), null, null);
+    private static final Set QUINCE_X = new Set(art("quince_arrow", 11, 15, 1, 0, 0),
+            art("quince_spin", 16, 16, 8, 8, 8), null, null);
 
     DesktopPointers(final DesktopState desktop) {
         this.desktop = desktop;
@@ -146,6 +151,8 @@ final class DesktopPointers {
             case GNOME -> period ? GNOME1 : GNOME;
             case CINNAMON -> CINNAMON;
             case CDE -> CDE;
+            case QUINCE_CLASSIC -> QUINCE_CLASSIC;
+            case QUINCE_X -> QUINCE_X;
         };
     }
 

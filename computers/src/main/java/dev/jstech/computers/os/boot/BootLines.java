@@ -162,7 +162,7 @@ public final class BootLines {
             }
             case FREEBSD -> BsdBootLines.kernel(machine, system);
             case UNIX -> SysVBootLines.kernel(machine, system);
-            case FRAMES, MC_DOS, MC_NET -> List.of();
+            case FRAMES, MC_DOS, MC_NET, QUINCE -> List.of();
         };
     }
 

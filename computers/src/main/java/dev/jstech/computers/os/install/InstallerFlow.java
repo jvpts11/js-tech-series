@@ -463,9 +463,33 @@ public final class InstallerFlow {
             case SETTINGS -> !this.wants(InstallerPage.DISK) && !this.wants(InstallerPage.NAME);
             case NAME -> !this.wants(InstallerPage.NAME);
             case HUB -> !this.wants(InstallerPage.DISK) && !this.wants(InstallerPage.NAME);
-            case COPY, DONE -> false;
+            // Only the drive answers a page asking for the next disk, when that disk goes in.
+            case COPY, DONE, INSERT -> false;
+            // The Quince System's Easy Install is its disk page too: it installs onto the disk it shows.
+            case WELCOME -> this.style != InstallerStyle.QUINCE_SYSTEM || !this.wants(InstallerPage.DISK);
             default -> true;
         };
+    }
+
+    /**
+     * Which of the system's disks the installer is on, counting from one: the one being read on a page of the copy,
+     * and the one wanted on a page asking for the next. A system on one medium is always on its first.
+     */
+    public int disk() {
+        int disk = 1;
+        for (int i = 0; i <= this.stageIndex && i < this.stages.size(); i++) {
+            if (this.stages.get(i).page() == InstallerPage.INSERT) {
+                disk++;
+            }
+        }
+        return disk;
+    }
+
+    /** Moves on from a page asking for the next disk, once the drive holds it. */
+    public void diskInserted() {
+        if (this.page() == InstallerPage.INSERT) {
+            this.goToStage(this.stageIndex + 1);
+        }
     }
 
     /** Whether that disk has room for the system, counting one that is about to be erased as empty. */

@@ -7,6 +7,7 @@
   "chapters": [
     "jsc:freebsd",
     "jsc:system_v",
+    "jsc:quince",
     "jsc:shell",
     "jsc:unix_desktops",
     "jsc:terminal_editors",

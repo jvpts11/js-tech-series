@@ -286,6 +286,19 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public boolean askingForMemory() {
+        return rack.asUnit(row, rack::askingForMemory);
+    }
+
+    @Override
+    public void forceQuit(final List<String> tokens) {
+        rack.asUnit(row, () -> {
+            rack.forceQuit(tokens);
+            return null;
+        });
+    }
+
+    @Override
     public void weighMemory() {
         rack.asUnit(row, () -> {
             rack.weighMemory();

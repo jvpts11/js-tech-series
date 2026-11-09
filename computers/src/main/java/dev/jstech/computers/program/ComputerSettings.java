@@ -8,6 +8,7 @@
 package dev.jstech.computers.program;
 
 import dev.jstech.computers.audio.SoundOutput;
+import dev.jstech.computers.os.QuincePartitions;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The per-computer settings owned by the Settings app and the MC-DOS {@code config} command: the
@@ -54,6 +56,8 @@ public final class ComputerSettings {
 
     /** How many names the shell keeps on one machine, which is far more than anybody sets by hand. */
     public static final int MAX_VARIABLES = 64;
+    /** The most programs whose memory block one classic Quince machine remembers. */
+    public static final int MAX_PARTITIONS = 64;
     /** What a fresh machine pins: its file explorer. */
     public static final String DEFAULT_PINNED = "files";
 
@@ -144,6 +148,11 @@ public final class ComputerSettings {
      * there in a window on the desktop, in a session opened from another machine, and after a restart.
      */
     private final Map<String, String> variables = new LinkedHashMap<>();
+    /**
+     * The memory blocks the classic Quince systems open programs in, by program id path, as their Get Info set them;
+     * a program not here opens in the block its maker suggests.
+     */
+    private final Map<String, QuincePartitions.Partition> partitions = new LinkedHashMap<>();
 
     public int accent() {
         return accent;
@@ -481,6 +490,36 @@ public final class ComputerSettings {
             return String.valueOf(Character.toLowerCase(last.charAt(0)));
         }
         return last;
+    }
+
+    /** The blocks the classic Quince systems were told to open programs in, by program id path. */
+    public Map<String, QuincePartitions.Partition> partitions() {
+        return Collections.unmodifiableMap(partitions);
+    }
+
+    /**
+     * Sets the block a program opens in on the classic Quince systems; null forgets it, so it opens in its suggested
+     * one again. The oldest past the cap makes room.
+     */
+    public void setPartition(final String program, @Nullable final QuincePartitions.Partition partition) {
+        final String key = program == null ? "" : program.trim();
+        if (key.isEmpty()) {
+            return;
+        }
+        partitions.remove(key);
+        if (partition == null) {
+            return;
+        }
+        while (partitions.size() >= MAX_PARTITIONS) {
+            partitions.remove(partitions.keySet().iterator().next());
+        }
+        partitions.put(key, partition);
+    }
+
+    /** Replaces every block at once, as a saved machine brings them back. */
+    public void putPartitions(final Map<String, QuincePartitions.Partition> all) {
+        partitions.clear();
+        all.forEach(this::setPartition);
     }
 
     /** The recipe the player picked last for a data id, or {@code -1} when none was picked. */

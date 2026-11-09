@@ -85,7 +85,10 @@ public final class SettingsApp implements IDesktopApp {
     /** The pages, by the index the navigation lists them at, for a menu that opens one directly. */
     public static final int PAGE_PERSONALIZE = 0;
     public static final int PAGE_SYSTEM = 1;
+    public static final int PAGE_NETWORK = 2;
+    public static final int PAGE_STORAGE = 3;
     public static final int PAGE_DISPLAY = 4;
+    public static final int PAGE_PROGRAMS = 5;
     public static final int PAGE_SOUND = 6;
     /** The system's effects page, which the list does not show: it is reached from its own page. */
     public static final int PAGE_EFFECTS = 8;

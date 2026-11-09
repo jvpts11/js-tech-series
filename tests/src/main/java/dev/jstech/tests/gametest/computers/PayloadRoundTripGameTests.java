@@ -154,7 +154,8 @@ public final class PayloadRoundTripGameTests {
                 new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100,
                         new DesktopEffects(List.of("animations"), 60, true)), List.of(), List.of(),
                 List.of("files:m", "system_monitor:w", "network_manager:s"), Map.of(),
-                false, Map.of("sgsc", "2.0", "scc", "1.0"), 160.0F));
+                false, Map.of("sgsc", "2.0", "scc", "1.0"), 160.0F,
+                List.of(new DesktopFilesPayload.WirePartition("calculator", 4, 8))));
         helper.succeed();
     }
 
@@ -166,7 +167,7 @@ public final class PayloadRoundTripGameTests {
                 List.of(new DiskFilesPayload.WireFile("Users/Public/Desktop/Projects", "", 0L, false, true)), "", "",
                 "Desk", List.of(), List.of(), List.of(),
                 new DesktopFilesPayload.Prefs(0, 100, false, true, false, 100, DesktopEffects.ALL_ON), List.of(),
-                List.of("calculator", "files"), List.of(), Map.of(), false, Map.of(), 160.0F)));
+                List.of("calculator", "files"), List.of(), Map.of(), false, Map.of(), 160.0F, List.of())));
         helper.succeed();
     }
 
@@ -203,8 +204,8 @@ public final class PayloadRoundTripGameTests {
                                 NetworkServicesPayload.SUBFRAME_LENDS, 1_382L, 2),
                         new NetworkServicesPayload.SubframeRow("MF-8f10bb", "jsc:iqlengine", longest,
                                 NetworkServicesPayload.SUBFRAME_RESERVE, 0L, 0)),
-                List.of(new NetworkServicesPayload.ServiceRow("Automation Engine", "Red Cap", "4.0",
-                        NetworkServicesPayload.SERVICE_RUNNING)),
+                List.of(new NetworkServicesPayload.ServiceRow("jsc:automation_engine", "Automation Engine", "Red Cap",
+                        "4.0", NetworkServicesPayload.SERVICE_RUNNING)),
                 new NetworkServicesPayload.Replacement("Midsoft IQL Server", "NextgreIQL 16", 120, 341, 3, 1_204)));
         roundTrip(helper, EngineActionPayload.STREAM_CODEC,
                 new EngineActionPayload(HOST, EngineActionPayload.REPLACE, "jstests:plain_engine"));

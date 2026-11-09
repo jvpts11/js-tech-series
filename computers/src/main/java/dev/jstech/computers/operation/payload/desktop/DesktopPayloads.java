@@ -14,6 +14,8 @@ import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.SettingsApp;
 import dev.jstech.computers.client.os.SystemMonitorApp;
+import dev.jstech.computers.client.os.QuinceAboutApp;
+import dev.jstech.computers.client.os.QuincePreferencesApp;
 import dev.jstech.computers.client.os.TaskManagerApp;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -175,6 +177,8 @@ public final class DesktopPayloads {
         SettingsApp.accept(payload);
         SystemMonitorApp.accept(payload);
         TaskManagerApp.accept(payload);
+        QuinceAboutApp.accept(payload);
+        QuincePreferencesApp.accept(payload);
     }
 
     private static void handleSetIconPosition(final SetIconPositionPayload payload, final ServerPlayer player,

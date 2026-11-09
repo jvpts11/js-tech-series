@@ -9,6 +9,7 @@ package dev.jstech.computers.os.crash;
 
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.QuinceFamily;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -33,6 +34,8 @@ public final class CrashPages {
     private static final int LINUX_TICKS = 200;
     private static final int FREEBSD_TICKS = 300;
     private static final int UNIX_TICKS = 100;
+    /* What a Quince page stands once the player lets it go: the machine starts over at once. */
+    private static final int QUINCE_TICKS = 20;
     /** The moment the kernels' clocks count from, so the time a panic prints is a plausible one. */
     private static final long EPOCH_BASE = 1_728_741_600L;
     private static final String LINUX_REBOOT = "Rebooting in 10 seconds..";
@@ -116,6 +119,8 @@ public final class CrashPages {
                 default -> CrashStyle.FRAMES_11;
             };
             case LINUX, FREEBSD, UNIX -> CrashStyle.CONSOLE;
+            case QUINCE -> familyRank <= QuinceFamily.QUINCE_SYSTEM ? CrashStyle.QUINCE_BOMB
+                    : QuinceFamily.classic(familyRank) ? CrashStyle.QUINCE_OS_9_BOMB : CrashStyle.QUINCE_RESTART;
             case MC_DOS, MC_NET -> null;
         };
     }
@@ -136,6 +141,29 @@ public final class CrashPages {
                 default -> new CrashPage(style, cause, "", "", facts.part(), linux(cause, facts), LINUX_TICKS,
                         false);
             };
+            /*
+             * Quince's pages stand until the player restarts the machine, as the real ones did: the bomb's Restart and
+             * the grey page's power button. Its time only matters once it is let go.
+             */
+            case QUINCE_BOMB -> new CrashPage(style, cause, "ID = " + bombId(cause), "", facts.part(), List.of(),
+                    QUINCE_TICKS, true);
+            // Quince OS 9 names the program that was running when it fell, as a quoted line over the error's type.
+            case QUINCE_OS_9_BOMB -> new CrashPage(style, cause, "Error Type: " + Integer.parseInt(bombId(cause)),
+                    facts.asking().isEmpty() ? "" : "\"" + facts.asking() + "\"", facts.part(), List.of(),
+                    QUINCE_TICKS, true);
+            case QUINCE_RESTART -> new CrashPage(style, cause, "", "", facts.part(), List.of(), QUINCE_TICKS, true);
+        };
+    }
+
+    /**
+     * The number the bomb gives the error, the classic systems' own: 25 for memory that ran out, 02 for an address
+     * that was no longer there, as a part pulled out from under a running program leaves it, and 01 for anything else.
+     */
+    static String bombId(final CrashCause cause) {
+        return switch (cause) {
+            case MEMORY -> "25";
+            case HARDWARE -> "02";
+            default -> "01";
         };
     }
 

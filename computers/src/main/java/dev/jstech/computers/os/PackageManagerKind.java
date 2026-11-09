@@ -38,7 +38,13 @@ public enum PackageManagerKind implements IStableName {
      * The Frames package manager: every edition ships with it, so a player who never touches a Linux
      * distribution still installs software from the network Mirror instead of hunting install discs.
      */
-    PCKMGR("pckmgr", "pckmgr", "install");
+    PCKMGR("pckmgr", "pckmgr", "install"),
+
+    /**
+     * Quince's {@code keg}, after Homebrew, from the Standard on: it brews what the Mirror serves into the machine,
+     * and takes from {@code mirror://mainframe} alone (computers/docs/design/quince.md).
+     */
+    KEG("keg", "keg", "install");
 
     private final String serializedName;
     private final String command;

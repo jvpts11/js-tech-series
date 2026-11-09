@@ -74,7 +74,7 @@ public final class SystemLayout {
         if (kernel == null || kernel.shellFamily() != ShellFamily.POSIX) {
             return DESKTOP_DIR;
         }
-        return os == null ? POSIX_DESKTOP_DIR : UnixTree.of(os.platform()).desktopPath();
+        return os == null ? POSIX_DESKTOP_DIR : UnixTree.of(os.platform(), os.familyRank()).desktopPath();
     }
 
     /** The music folder for an OS: under that system's own home on a POSIX kernel, the Windows-style one otherwise. */
@@ -82,7 +82,7 @@ public final class SystemLayout {
         if (kernel == null || kernel.shellFamily() != ShellFamily.POSIX) {
             return MUSIC_DIR;
         }
-        return (os == null ? UnixTree.HOME_AND_MEDIA : UnixTree.of(os.platform())).musicPath();
+        return (os == null ? UnixTree.HOME_AND_MEDIA : UnixTree.of(os.platform(), os.familyRank())).musicPath();
     }
 
     /**
@@ -93,7 +93,7 @@ public final class SystemLayout {
     public static List<String> directoriesFor(final OsDef os,
                                               final KernelDef kernel) {
         if (kernel != null && kernel.shellFamily() == ShellFamily.POSIX) {
-            return UnixTree.of(os.platform()).directories();
+            return UnixTree.of(os.platform(), os.familyRank()).directories();
         }
         return directoriesFor(os.capability());
     }

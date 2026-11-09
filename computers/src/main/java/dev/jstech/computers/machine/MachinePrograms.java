@@ -9,6 +9,8 @@ package dev.jstech.computers.machine;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.api.JsComputersApi;
+import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramEntry;
@@ -239,6 +241,12 @@ public final class MachinePrograms {
 
     /** The language that only compiles and is written in files with that extension, or null. */
     @Nullable
+    /* The instruction set of the machine's processor, or nothing for a host that is not a computer with one. */
+    private static String isaOf(final BlockEntity machine) {
+        final ComputerBuild build = machine instanceof IOsHost host ? host.currentBuild() : null;
+        return build == null || build.isa() == null ? "" : build.isa().id();
+    }
+
     private static IProgrammingLanguage compilerOnly(final String extension) {
         final IProgrammingLanguage language = JsComputersApi.languages().sourceOf(extension);
         return language != null && language.binaryExtensions().isEmpty() ? language : null;
@@ -312,7 +320,10 @@ public final class MachinePrograms {
         if (writtenIn != null) {
             final List<IProgrammingLanguage.SourceText> sources = new ArrayList<>();
             sources.add(new IProgrammingLanguage.SourceText(name, binary));
-            final IProgrammingLanguage.CompileResult built = writtenIn.compile(sources);
+            // Built for the machine's own processor, so source written for it runs on a PowerPC or a 68k as well.
+            final String isa = isaOf(machine);
+            final IProgrammingLanguage.CompileResult built = isa.isEmpty() ? writtenIn.compile(sources)
+                    : writtenIn.compile(sources, isa);
             if (!built.ok()) {
                 final List<IProgrammingLanguage.Complaint> complaints = built.complaints();
                 if (complaints.isEmpty()) {

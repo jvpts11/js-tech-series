@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.OsCapability;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -79,10 +80,14 @@ public final class EraCommandsGameTests {
         answers(helper, EraKit.ADVANCED);
     }
 
-    /** The systems a Personal Computer of {@code kit}'s era runs: every system of the era but the network's own. */
+    /**
+     * The systems a Personal Computer of {@code kit}'s era runs: every system of the era built for its x86 processor,
+     * but the network's own. Quince's systems for Quince's own processors are run on Quince's machines
+     * (QuinceSystemGameTests).
+     */
     public static List<ResourceLocation> systems(final EraKit kit) {
         return OsRegistry.oses().stream().filter(os -> os.minEra() == kit.era()
-                        && os.capability() != OsCapability.NETWORK_GUI)
+                        && os.capability() != OsCapability.NETWORK_GUI && os.runsOn(Isas.of(kit.era())))
                 .map(OsDef::id).sorted(Comparator.comparing(ResourceLocation::toString)).toList();
     }
 
@@ -114,7 +119,7 @@ public final class EraCommandsGameTests {
     }
 
     /** The lines typed at {@code host} that answer with an error, each with what it said. */
-    private static List<String> failures(final GameTestHelper helper, final IComputerTerminalHost host,
+    public static List<String> failures(final GameTestHelper helper, final IComputerTerminalHost host,
                                          final String where) {
         final ServerCliComputer computer = new ServerCliComputer(host, helper.getLevel());
         final List<String> failures = new ArrayList<>();

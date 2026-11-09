@@ -19,7 +19,7 @@ import net.minecraft.client.gui.GuiGraphics;
  * what most of them do.
  */
 sealed interface IFormChrome permits BevelChrome, LunaChrome, AeroChrome, MetroChrome, FlatChrome, Kde2Chrome,
-        Gnome1Chrome, OxygenChrome, ClearlooksChrome, MotifFormChrome {
+        Gnome1Chrome, OxygenChrome, ClearlooksChrome, MotifFormChrome, QuinceChrome {
 
     /** The form this chrome draws. */
     OsSkin.Form form();
@@ -116,6 +116,16 @@ sealed interface IFormChrome permits BevelChrome, LunaChrome, AeroChrome, MetroC
     /** Whether a window's one way out sits at the left end of its bar, with minimise and maximise at the right. */
     default boolean menuAtLeft() {
         return false;
+    }
+
+    /** Where a window's buttons stand: Motif's menu at the left, everyone else's three at the right. */
+    default OsSkin.Controls controls() {
+        return menuAtLeft() ? OsSkin.Controls.MENU_LEFT : OsSkin.Controls.RIGHT;
+    }
+
+    /** Whether the window in front carries an outline in the accent, so which one is typed into reads at a glance. */
+    default boolean focusOutline() {
+        return true;
     }
 
     /** How many pixels a window's shadow reaches past it. */

@@ -16,6 +16,8 @@ import dev.jstech.computers.gui.CdeStyle;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
+import dev.jstech.computers.operation.payload.crash.MemoryAskPayload;
+import dev.jstech.computers.operation.payload.crash.PartitionPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
@@ -32,6 +34,7 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramLoading;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.QuincePartitions;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.fs.SystemLayout;
@@ -43,6 +46,7 @@ import dev.jstech.core.motion.MotionScope;
 import dev.jstech.core.motion.Rhythm;
 import dev.jstech.core.text.GameText;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
@@ -137,6 +141,10 @@ final class DesktopState {
     private final DeskFiles deskFiles = new DeskFiles(this);
     /** The trash: its icon, full or empty, and what deleting a thing on this desktop means. */
     private final DeskTrash trash = new DeskTrash(this);
+    /** Quince's menu bar and Dock, on the desktops of Quince's systems. */
+    private final QuinceShell quinceShell = new QuinceShell(this);
+    /** The memory blocks a classic Quince system was told to open programs in, by program id path. */
+    private final Map<String, QuincePartitions.Partition> partitions = new HashMap<>();
     /** The machine's memory as the desktop weighs it, and the crash of a cooperative kernel run out of it. */
     private final DesktopMemory memory;
     /** The wallpaper's right-click menu, for whatever the cursor is on. */
@@ -187,6 +195,8 @@ final class DesktopState {
     private double startingMs;
     /** How fast this machine loads a program, as it last said; the reference pace until it has. */
     private double loadMbPerSecond = ProgramLoading.REFERENCE_MB_PER_SECOND;
+    /** What the machine's system asks the player to choose from to force quit, its programs paused; empty for none. */
+    private List<MemoryAskPayload.Asked> memoryAsk = List.of();
 
     DesktopState(final DesktopSurface surface, final BlockPos host, final BlockPos monitorPos,
                  final ResourceLocation osId, final ResourceLocation desktopId, final int ramTotalMb,
@@ -767,7 +777,34 @@ final class DesktopState {
      * top left to the icons of the windows that were put away.
      */
     boolean objectsStandRight() {
-        return is(PanelStyle.CDE);
+        return is(PanelStyle.CDE) || quince();
+    }
+
+    /** Whether this is one of Quince's desktops, with the menu bar along the top and, from Quince OS X, the Dock. */
+    boolean quince() {
+        return is(PanelStyle.QUINCE_CLASSIC) || is(PanelStyle.QUINCE_X);
+    }
+
+    QuinceShell quinceShell() {
+        return quinceShell;
+    }
+
+    /** The memory blocks a classic Quince system opens programs in, by program id path, as the machine keeps them. */
+    Map<String, QuincePartitions.Partition> partitions() {
+        return partitions;
+    }
+
+    /** A program's Get Info set its block: kept here at once, and told to the machine, which keeps it. */
+    void setPartition(final String program, final QuincePartitions.Partition partition) {
+        partitions.put(program, partition);
+        PacketDistributor.sendToServer(new PartitionPayload(host, program, partition.minimumMb(),
+                partition.preferredMb()));
+    }
+
+    /** Puts away the launcher and the window menu, as switching workspaces or opening a bar's menu does. */
+    void closeMenus() {
+        cdeWindowMenu.close();
+        start.close();
     }
 
     /**
@@ -776,7 +813,8 @@ final class DesktopState {
      */
     boolean menuOrDialogOpen() {
         return start.isOpen() || panelMenu.isOpen() || taskbar.menu().isOpen() || cdeWindowMenu.isOpen()
-                || actionCenter.isOpen() || taskView.isOpen() || notices.popupUp() || power.isOpen();
+                || actionCenter.isOpen() || taskView.isOpen() || notices.popupUp() || power.isOpen()
+                || quinceShell.menuOpen();
     }
 
     /** The program whose windows the panel's popup is showing, or null while none is up. */
@@ -988,7 +1026,7 @@ final class DesktopState {
      * everywhere else).
      */
     String wallpaperId() {
-        return WallpaperPainter.styleFor(desktopId, platform(), prefs.wallpaper()).id();
+        return WallpaperPainter.styleFor(desktopId, platform(), prefs.wallpaper(), prefs.era()).id();
     }
 
     /**
@@ -1020,6 +1058,28 @@ final class DesktopState {
      */
     void takeWindows(final DesktopWindowsPayload payload) {
         layouts.apply(payload);
+    }
+
+    /**
+     * The machine's system ran out of memory and asks what to force quit, its programs paused; an empty list takes the
+     * question down (computers/docs/design/quince.md).
+     */
+    void memoryAsked(final List<MemoryAskPayload.Asked> programs) {
+        this.memoryAsk = List.copyOf(programs);
+        // The question is a window of its own while it stands, and goes once the machine has room again.
+        final DesktopWindow asking = windowFor(QuinceMemoryApp.KEY);
+        if (programs.isEmpty()) {
+            if (asking != null) {
+                wm.close(asking);
+            }
+        } else if (asking == null) {
+            wm.open(QuinceMemoryApp.KEY, new QuinceMemoryApp(this));
+        }
+    }
+
+    /** What the machine's system asks the player to choose from to force quit; empty when it asks nothing. */
+    List<MemoryAskPayload.Asked> memoryAsk() {
+        return this.memoryAsk;
     }
 
     /**
@@ -1082,6 +1142,10 @@ final class DesktopState {
         computerName = payload.computerName();
         packageVersions = payload.versions();
         loadMbPerSecond = payload.loadMbPerSecond();
+        partitions.clear();
+        for (final DesktopFilesPayload.WirePartition one : payload.partitions()) {
+            partitions.put(one.program(), new QuincePartitions.Partition(one.minimumMb(), one.preferredMb()));
+        }
         view.setScalePercent(payload.prefs().scale());
         // The look the machine keeps goes in first, so the skin the choices rebuild is drawn from it.
         prefs.takeCdeStyle(CdeStyle.parse(payload.cdeStyle()));

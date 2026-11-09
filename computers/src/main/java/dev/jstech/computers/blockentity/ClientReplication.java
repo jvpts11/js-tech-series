@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.operation.payload.WireLine;
+import dev.jstech.computers.operation.payload.crash.MemoryAskPayload;
 import dev.jstech.computers.operation.payload.crash.MemoryKilledPayload;
 import dev.jstech.computers.operation.payload.program.ProgramKeyboard;
 import dev.jstech.computers.operation.payload.program.TerminalTools;
@@ -322,6 +323,16 @@ final class ClientReplication {
     }
 
     /** The desktops among {@code viewers} showing the machine at {@code host} close the windows its kernel ended. */
+    /** Shows the desktops in front of the machine its system's question of what to force quit, or takes it down. */
+    static void memoryAsked(final List<ServerPlayer> viewers, final BlockPos host,
+                            final List<MemoryAskPayload.Asked> programs) {
+        for (final ServerPlayer viewer : viewers) {
+            if (viewer.containerMenu instanceof DesktopMenu) {
+                PacketDistributor.sendToPlayer(viewer, new MemoryAskPayload(host, programs));
+            }
+        }
+    }
+
     static void windowsEnded(final List<ServerPlayer> viewers, final BlockPos host, final List<String> windows) {
         if (windows.isEmpty()) {
             return;

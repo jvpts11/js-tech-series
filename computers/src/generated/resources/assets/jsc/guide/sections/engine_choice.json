@@ -2,6 +2,6 @@
   "chapter": "jsc:iql_engines",
   "icon": "jsc:mainframe",
   "id": "jsc:engine_choice",
-  "order": 80,
+  "order": 83,
   "title": "jsc.guide.section.engine_choice"
 }

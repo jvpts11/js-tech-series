@@ -200,7 +200,7 @@
     }
   ],
   "id": "jsc:gateway_library",
-  "order": 374,
+  "order": 381,
   "section": "jsc:library_machine",
   "title": "jsc.guide.gateway_library.title"
 }

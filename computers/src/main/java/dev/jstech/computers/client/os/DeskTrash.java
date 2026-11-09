@@ -110,9 +110,12 @@ final class DeskTrash {
         return TrashApp.kindOf(this.desktop.panelStyle()).title();
     }
 
-    /** Whether the wallpaper wears the trash: every desktop does but CDE, which keeps it on its Front Panel. */
+    /**
+     * Whether the wallpaper wears the trash: every desktop does but CDE, which keeps it on its Front Panel, and Quince
+     * OS X and after, which keep it at the end of the Dock.
+     */
     boolean onWallpaper() {
-        return this.desktop.panelStyle() != PanelStyle.CDE;
+        return this.desktop.panelStyle() != PanelStyle.CDE && this.desktop.panelStyle() != PanelStyle.QUINCE_X;
     }
 
     /** The trash's picture, full or empty. */
@@ -145,7 +148,23 @@ final class DeskTrash {
         final Text trash = TrashApp.kindOf(this.desktop.panelStyle()).titleText();
         return List.of(new ContextMenu.Item(GameText.resolve(TrashTexts.OPEN), true, this::open),
                 ContextMenu.Item.separator(),
-                new ContextMenu.Item(GameText.resolve(TrashTexts.EMPTY_NAMED.with(trash)), this.full, this::empty));
+                new ContextMenu.Item(GameText.resolve(TrashTexts.EMPTY_NAMED.with(trash)), this.full,
+                        this::emptyNow));
+    }
+
+    /**
+     * Empties the trash from a menu: at once on Quince's systems but Quince OS 9, the only one of them that asked
+     * first (computers/docs/design/quince.md), and once the player says yes everywhere else.
+     */
+    void emptyNow() {
+        final QuinceLook look = QuinceLook.of(this.desktop.desktopId(), this.desktop.prefs().era());
+        if (look != null && look != QuinceLook.PLATINUM) {
+            PacketDistributor.sendToServer(new TrashActionPayload(this.desktop.hostPos(),
+                    TrashActionPayload.Action.EMPTY, List.of()));
+            FilesApps.diskChanged();
+            return;
+        }
+        empty();
     }
 
     /** Empties the trash from its icon, once the player says yes. */

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import net.minecraft.core.BlockPos;
@@ -98,6 +99,16 @@ public final class ScreenSessions {
         for (int at = 0; at < watching.size(); at++) {
             action.accept(watching.get(at), monitors.get(at));
         }
+    }
+
+    /** The first player watching that machine, for something the machine hands to whoever is in front of it. */
+    public static Optional<ServerPlayer> firstWatcher(final ServerLevel level, final BlockPos host) {
+        for (final ServerPlayer player : level.players()) {
+            if (player.containerMenu instanceof MonitorSessionMenu session && session.hostPos().equals(host)) {
+                return Optional.of(player);
+            }
+        }
+        return Optional.empty();
     }
 
     /**

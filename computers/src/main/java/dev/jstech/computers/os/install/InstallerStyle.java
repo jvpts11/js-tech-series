@@ -85,7 +85,19 @@ public enum InstallerStyle implements IStableName {
     BSD_INSTALL("bsd_install"),
 
     /** UNIX System V's: one banner in reverse video and a settings page that asks the disk and the name together. */
-    SYSTEM_V("system_v");
+    SYSTEM_V("system_v"),
+
+    /**
+     * The Quince System's: an Easy Install dialog on the desktop, and the system on three floppy disks, the installer
+     * putting each out of the slot when it has read it and asking for the next (computers/docs/design/quince.md).
+     */
+    QUINCE_SYSTEM("quince_system"),
+
+    /** Quince OS 9's, from its CD: an assistant of five steps listed down its left side, in Platinum. */
+    QUINCE_OS_9("quince_os_9"),
+
+    /** Quince OS X's, and that of every Quince system after it: an assistant of seven steps, a dot beside each. */
+    QUINCE_OS_X("quince_os_x");
 
     private static final TextKey TITLE_INSTALLER = TextKey.of("jsc.install.installer_style.title_installer",
             "%s installer");
@@ -273,6 +285,63 @@ public enum InstallerStyle implements IStableName {
             TextKey.of("jsc.install.installer_style.step_installation_environment",
                     "Setting up the installation environment");
 
+    private static final TextKey TITLE_QUINCE_SYSTEM =
+            TextKey.of("jsc.install.installer_style.title_quince_system", "Installer");
+    private static final TextKey QUINCE_EASY_INSTALL =
+            TextKey.of("jsc.install.installer_style.quince_easy_install", "Easy Install");
+    private static final TextKey QUINCE_INSERT =
+            TextKey.of("jsc.install.installer_style.quince_insert", "Please insert the disk:");
+    private static final TextKey QUINCE_SUCCESS =
+            TextKey.of("jsc.install.installer_style.quince_success", "Installation was successful.");
+    private static final TextKey QUINCE_WELCOME = TextKey.of("jsc.install.installer_style.quince_welcome", "Welcome");
+    private static final TextKey QUINCE_INFO =
+            TextKey.of("jsc.install.installer_style.quince_info", "Important Information");
+    private static final TextKey QUINCE_LICENSE =
+            TextKey.of("jsc.install.installer_style.quince_license", "Software License Agreement");
+    private static final TextKey QUINCE_DESTINATION =
+            TextKey.of("jsc.install.installer_style.quince_destination", "Select Destination");
+    private static final TextKey QUINCE_A_DESTINATION =
+            TextKey.of("jsc.install.installer_style.quince_a_destination", "Select a Destination");
+    private static final TextKey QUINCE_INSTALL_SOFTWARE =
+            TextKey.of("jsc.install.installer_style.quince_install_software", "Install Software");
+    private static final TextKey QUINCE_X_WELCOME =
+            TextKey.of("jsc.install.installer_style.quince_x_welcome", "Welcome to the %s Installer");
+    private static final TextKey QUINCE_TYPE =
+            TextKey.of("jsc.install.installer_style.quince_type", "Standard Install");
+    private static final TextKey QUINCE_X_DONE =
+            TextKey.of("jsc.install.installer_style.quince_x_done", "The software was successfully installed");
+    /* The steps an assistant lists down its left side, in its own words. */
+    private static final TextKey SIDE_INFO = TextKey.of("jsc.install.installer_style.side_info", "Important Info...");
+    private static final TextKey SIDE_LICENSE =
+            TextKey.of("jsc.install.installer_style.side_license", "Software License");
+    private static final TextKey SIDE_INTRODUCTION =
+            TextKey.of("jsc.install.installer_style.side_introduction", "Introduction");
+    private static final TextKey SIDE_READ_ME = TextKey.of("jsc.install.installer_style.side_read_me", "Read Me");
+    private static final TextKey SIDE_LICENSE_X = TextKey.of("jsc.install.installer_style.side_license_x", "License");
+    private static final TextKey SIDE_TYPE =
+            TextKey.of("jsc.install.installer_style.side_type", "Installation Type");
+    private static final TextKey SIDE_INSTALL = TextKey.of("jsc.install.installer_style.side_install", "Install");
+    private static final TextKey SIDE_FINISH = TextKey.of("jsc.install.installer_style.side_finish", "Finish Up");
+    /* The Quince System's three disks, by the names on their labels, and what its copy writes off each. */
+    private static final TextKey DISK_INSTALL_1 = TextKey.of("jsc.install.installer_style.disk_install_1",
+            "Install 1");
+    private static final TextKey DISK_SYSTEM_TOOLS =
+            TextKey.of("jsc.install.installer_style.disk_system_tools", "System Tools");
+    private static final TextKey DISK_UTILITIES = TextKey.of("jsc.install.installer_style.disk_utilities",
+            "Utilities");
+    private static final TextKey STEP_WRITING = TextKey.of("jsc.install.installer_style.step_writing",
+            "Writing \"%s\"...");
+    private static final TextKey STEP_QUINCE_UPDATING =
+            TextKey.of("jsc.install.installer_style.step_quince_updating", "Updating the disk");
+    private static final TextKey STEP_QUINCE_PREPARING =
+            TextKey.of("jsc.install.installer_style.step_quince_preparing", "Preparing to install");
+    private static final TextKey STEP_QUINCE_SYSTEM_FOLDER =
+            TextKey.of("jsc.install.installer_style.step_quince_system_folder", "Installing the System Folder");
+    private static final TextKey STEP_QUINCE_APPLICATIONS =
+            TextKey.of("jsc.install.installer_style.step_quince_applications", "Installing the applications");
+    private static final TextKey STEP_QUINCE_OPTIMIZING =
+            TextKey.of("jsc.install.installer_style.step_quince_optimizing", "Optimizing system performance");
+
     private final String serializedName;
 
     InstallerStyle(final String serializedName) {
@@ -416,7 +485,81 @@ public enum InstallerStyle implements IStableName {
                     new Stage(InstallerPage.COPY, InstallerChrome.FULL_TEXT,
                             steps(STEP_SYSV_BASE, STEP_SYSV_UTILITIES, STEP_SYSV_HELP, STEP_SYSV_MANUAL)),
                     new Stage(InstallerPage.DONE, InstallerChrome.FULL_TEXT, List.of()));
+            /*
+             * Easy Install, then a copy off each of the three disks in turn, the installer asking for the next one
+             * between them; what each copy writes is named as the real one named it, file by file.
+             */
+            case QUINCE_SYSTEM -> List.of(
+                    new Stage(InstallerPage.WELCOME, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.QUINCE_DESKTOP, List.of(
+                            STEP_WRITING.with("System"), STEP_WRITING.with("Seeker"))),
+                    new Stage(InstallerPage.INSERT, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.QUINCE_DESKTOP, List.of(
+                            STEP_WRITING.with("Control Panels"), STEP_WRITING.with("TextPad"))),
+                    new Stage(InstallerPage.INSERT, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.QUINCE_DESKTOP, List.of(
+                            STEP_WRITING.with("Calculator"), STEP_QUINCE_UPDATING.text())),
+                    new Stage(InstallerPage.DONE, InstallerChrome.QUINCE_DESKTOP, List.of()));
+            case QUINCE_OS_9 -> List.of(
+                    new Stage(InstallerPage.WELCOME, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.READ_ME, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.LICENSE, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.DISK, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.QUINCE_DESKTOP, steps(
+                            STEP_QUINCE_PREPARING, STEP_QUINCE_SYSTEM_FOLDER, STEP_QUINCE_APPLICATIONS,
+                            STEP_QUINCE_UPDATING)),
+                    new Stage(InstallerPage.DONE, InstallerChrome.QUINCE_DESKTOP, List.of()));
+            case QUINCE_OS_X -> List.of(
+                    new Stage(InstallerPage.WELCOME, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.READ_ME, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.LICENSE, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.DISK, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.COMPONENTS, InstallerChrome.QUINCE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.QUINCE_DESKTOP, steps(
+                            STEP_QUINCE_PREPARING, STEP_QUINCE_SYSTEM_FOLDER, STEP_QUINCE_APPLICATIONS,
+                            STEP_QUINCE_OPTIMIZING)),
+                    new Stage(InstallerPage.DONE, InstallerChrome.QUINCE_DESKTOP, List.of()));
         };
+    }
+
+    /**
+     * The names on the labels of the disks this system comes on, in the order the installer reads them: one name for
+     * each disk of a system on several, and none for one that comes on a single medium.
+     */
+    public List<Text> disks() {
+        return this == QUINCE_SYSTEM
+                ? List.of(DISK_INSTALL_1.text(), DISK_SYSTEM_TOOLS.text(), DISK_UTILITIES.text())
+                : List.of();
+    }
+
+    /**
+     * What an assistant's list down its left side calls that page, or nothing for a page it does not list (the
+     * Quince System's installer is a dialog and lists nothing).
+     */
+    public Text sideLabel(final InstallerPage page) {
+        if (this == QUINCE_OS_9) {
+            return switch (page) {
+                case WELCOME -> QUINCE_WELCOME.text();
+                case READ_ME -> SIDE_INFO.text();
+                case LICENSE -> SIDE_LICENSE.text();
+                case DISK -> QUINCE_DESTINATION.text();
+                case COPY, DONE -> QUINCE_INSTALL_SOFTWARE.text();
+                default -> Text.EMPTY;
+            };
+        }
+        if (this == QUINCE_OS_X) {
+            return switch (page) {
+                case WELCOME -> SIDE_INTRODUCTION.text();
+                case READ_ME -> SIDE_READ_ME.text();
+                case LICENSE -> SIDE_LICENSE_X.text();
+                case DISK -> QUINCE_DESTINATION.text();
+                case COMPONENTS -> SIDE_TYPE.text();
+                case COPY -> SIDE_INSTALL.text();
+                case DONE -> SIDE_FINISH.text();
+                default -> Text.EMPTY;
+            };
+        }
+        return Text.EMPTY;
     }
 
     /**
@@ -448,6 +591,8 @@ public enum InstallerStyle implements IStableName {
             // The family's name, not the edition's: that is what the window across the top said.
             case FRAMES_7 -> TITLE_INSTALL.with("Frames");
             case FRAMES_10 -> TITLE_SETUP.with("Frames");
+            case QUINCE_SYSTEM -> TITLE_QUINCE_SYSTEM.text();
+            case QUINCE_OS_9, QUINCE_OS_X -> TITLE_INSTALL.with(systemName);
             default -> TITLE_SETUP.with(systemName);
         };
     }
@@ -543,6 +688,29 @@ public enum InstallerStyle implements IStableName {
             };
             /* One banner in reverse video the whole way through: the page says what it is by its own content. */
             case SYSTEM_V -> Text.EMPTY;
+            case QUINCE_SYSTEM -> switch (page) {
+                case WELCOME -> QUINCE_EASY_INSTALL.text();
+                case INSERT -> QUINCE_INSERT.text();
+                case COPY -> INSTALLING_SYSTEM.with(systemName);
+                default -> QUINCE_SUCCESS.text();
+            };
+            case QUINCE_OS_9 -> switch (page) {
+                case WELCOME -> QUINCE_WELCOME.text();
+                case READ_ME -> QUINCE_INFO.text();
+                case LICENSE -> QUINCE_LICENSE.text();
+                case DISK -> QUINCE_DESTINATION.text();
+                case COPY -> INSTALLING_SYSTEM.with(systemName);
+                default -> QUINCE_SUCCESS.text();
+            };
+            case QUINCE_OS_X -> switch (page) {
+                case WELCOME -> QUINCE_X_WELCOME.with(systemName);
+                case READ_ME -> QUINCE_INFO.text();
+                case LICENSE -> QUINCE_LICENSE.text();
+                case DISK -> QUINCE_A_DESTINATION.text();
+                case COMPONENTS -> QUINCE_TYPE.text();
+                case COPY -> INSTALLING_SYSTEM.with(systemName);
+                default -> QUINCE_X_DONE.text();
+            };
         };
     }
 

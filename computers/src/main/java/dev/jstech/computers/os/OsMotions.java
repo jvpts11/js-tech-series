@@ -78,6 +78,8 @@ public final class OsMotions {
     private static final int VGA_CURSOR_MS = 229;
     /* The caret blink time Frames has always shipped with, in the console and in every text box alike. */
     private static final int WINDOWS_CARET_MS = 530;
+    /** Thirty-two sixtieths of a second, the caret's blink on Quince's systems. */
+    private static final int QUINCE_CARET_MS = 533;
 
     public static final DeclaredMotion FRAMES_95 = declare("frames_95", MotionProfile.builder()
             // The caption flies to the taskbar and back, as DrawAnimatedRects drew it; everything else is instant.
@@ -257,6 +259,31 @@ public final class OsMotions {
             .kind(MotionKinds.CARET_BLINK, blink(250))
             .build());
 
+    /*
+     * Quince's classic systems: a window rolls up into its title and down again as the outlines of the zoom rectangles
+     * drew it, in eight steps; the caret blinks at the thirty-two sixtieths of a second those systems set.
+     */
+    public static final DeclaredMotion QUINCE_CLASSIC = declare("quince_classic", MotionProfile.builder()
+            .kind(MotionKinds.WINDOW_MINIMIZE, outline(160, "steps(8)", ANIMATIONS, true, 0))
+            .kind(MotionKinds.WINDOW_RESTORE, outline(160, "steps(8)", ANIMATIONS, false, 0))
+            .kind(MotionKinds.CARET_BLINK, blink(QUINCE_CARET_MS))
+            .build());
+
+    /*
+     * Quince OS X and after: a window minimised pours into the Dock and back, menus fade in, an attached sheet slides
+     * down out of its window's title, and the busy disc turns eight pictures to the second.
+     */
+    public static final DeclaredMotion QUINCE_X = declare("quince_x", MotionProfile.builder()
+            .kind(MotionKinds.WINDOW_MINIMIZE, zoomOut(500, "ease-in-cubic", MINIMIZE))
+            .kind(MotionKinds.WINDOW_RESTORE, zoomIn(500, "ease-out-cubic", MINIMIZE))
+            .kind(MotionKinds.MENU_SHOW, appear(150, "linear", MENUS, false))
+            .kind(MotionKinds.DIALOG_OPEN, slide(250, "ease-out-cubic", ANIMATIONS, 1.0))
+            .kind(MotionKinds.SCENE_FADE, fade(300, "ease-out"))
+            .kind(MotionKinds.PROGRESS_WAIT, waiting(MotionStyles.SEGMENT, 1500, "linear").with("length", 0.3))
+            .kind(MotionKinds.POINTER_BUSY, loop(1000, 8))
+            .kind(MotionKinds.CARET_BLINK, blink(QUINCE_CARET_MS))
+            .build());
+
     /** A text console on a VGA card, MC-DOS's and UNIX's: the hardware cursor turns over every sixteen frames. */
     public static final DeclaredMotion CONSOLE_VGA = declare("console_vga", MotionProfile.builder()
             .kind(MotionKinds.CARET_BLINK, blink(VGA_CURSOR_MS))
@@ -297,6 +324,8 @@ public final class OsMotions {
             case GNOME -> period ? GNOME_CLASSIC : GNOME;
             case CINNAMON -> CINNAMON;
             case CDE -> CDE;
+            case QUINCE_CLASSIC -> QUINCE_CLASSIC;
+            case QUINCE_X -> QUINCE_X;
         };
     }
 
@@ -313,7 +342,8 @@ public final class OsMotions {
             case MC_DOS, MC_NET, UNIX -> CONSOLE_VGA;
             case LINUX -> CONSOLE_FBCON;
             case FREEBSD -> CONSOLE_SYSCONS;
-            case FRAMES -> CONSOLE_FRAMES;
+            // Quince's Terminal is a window on its desktop, as a Frames prompt is.
+            case FRAMES, QUINCE -> CONSOLE_FRAMES;
         };
     }
 

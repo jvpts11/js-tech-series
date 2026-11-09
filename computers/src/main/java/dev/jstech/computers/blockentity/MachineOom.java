@@ -62,6 +62,11 @@ final class MachineOom {
         stopped.add(service);
     }
 
+    /** Starts that service again, as its administrator does from the machine's console. */
+    void start(final ResourceLocation service) {
+        stopped.remove(service);
+    }
+
     /** What the kernel logged in this run about the memory, oldest first. */
     List<String> logged() {
         return List.copyOf(logged);
@@ -89,16 +94,84 @@ final class MachineOom {
         if (plan.victims().isEmpty() && plan.fits()) {
             return true;
         }
-        final MachinePrograms programs = machine.programs();
         final List<CrashPages.Victim> victims = new ArrayList<>();
         final List<String> lines = new ArrayList<>();
-        final List<String> windows = new ArrayList<>();
-        final List<OpenWindow> open = new ArrayList<>(machine.openWindows());
-        boolean front = false;
         for (final RamLedger.Entry entry : plan.victims()) {
             final CrashPages.Victim victim = new CrashPages.Victim(pid(entry, pids), comm(entry), entry.mb());
             victims.add(victim);
             lines.add(CrashPages.killLine(system.platform(), upFor, victim));
+        }
+        final Ended ended = end(machine, plan.victims());
+        log(lines);
+        machine.setChanged();
+        if (!plan.fits()) {
+            machine.crash(CrashCause.MEMORY, CrashPages.Moment.memory(asking, pids.getAsInt(), victims));
+            return false;
+        }
+        machine.memoryFreed(level, lines, ended.windows(), ended.front());
+        return true;
+    }
+
+    /**
+     * Ends what the player chose to force quit when the machine ran out of memory, as Quince's later systems let them
+     * choose (computers/docs/design/quince.md): each window, program or service named, and nothing else.
+     */
+    void forceQuit(final IKernelHost machine, final ServerLevel level, final List<RamLedger.Entry> chosen) {
+        final List<RamLedger.Entry> endable = new ArrayList<>();
+        for (final RamLedger.Entry entry : chosen) {
+            if (OomKiller.killable(entry.kind())) {
+                endable.add(entry);
+            }
+        }
+        if (endable.isEmpty()) {
+            return;
+        }
+        final Ended ended = end(machine, endable);
+        machine.setChanged();
+        machine.memoryFreed(level, List.of(), ended.windows(), ended.front());
+    }
+
+    /** Writes the run's memory down under a key of its own in {@code tag}. */
+    void save(final CompoundTag tag) {
+        final CompoundTag own = new CompoundTag();
+        final ListTag services = new ListTag();
+        for (final ResourceLocation id : stopped) {
+            services.add(StringTag.valueOf(id.toString()));
+        }
+        own.put(STOPPED, services);
+        final ListTag lines = new ListTag();
+        for (final String line : logged) {
+            lines.add(StringTag.valueOf(line));
+        }
+        own.put(LOGGED, lines);
+        tag.put(KEY, own);
+    }
+
+    void load(final CompoundTag tag) {
+        reset();
+        final CompoundTag own = tag.getCompound(KEY);
+        for (final Tag one : own.getList(STOPPED, Tag.TAG_STRING)) {
+            final ResourceLocation id = ResourceLocation.tryParse(one.getAsString());
+            if (id != null) {
+                stopped.add(id);
+            }
+        }
+        for (final Tag one : own.getList(LOGGED, Tag.TAG_STRING)) {
+            logged.add(one.getAsString());
+        }
+    }
+
+    /*
+     * Ends each of those entries: a window closes, a program stops, a service stays down for the run, and a language's
+     * runtime takes every program it runs with it. Answers the windows closed and whether the program at the terminal
+     * was among what ended.
+     */
+    private Ended end(final IKernelHost machine, final List<RamLedger.Entry> entries) {
+        final MachinePrograms programs = machine.programs();
+        final List<String> windows = new ArrayList<>();
+        final List<OpenWindow> open = new ArrayList<>(machine.openWindows());
+        boolean front = false;
+        for (final RamLedger.Entry entry : entries) {
             switch (entry.kind()) {
                 case WINDOW -> {
                     if (removeLatest(open, entry.key())) {
@@ -130,44 +203,7 @@ final class MachineOom {
         if (!windows.isEmpty()) {
             machine.setOpenWindows(open);
         }
-        log(lines);
-        machine.setChanged();
-        if (!plan.fits()) {
-            machine.crash(CrashCause.MEMORY, CrashPages.Moment.memory(asking, pids.getAsInt(), victims));
-            return false;
-        }
-        machine.memoryFreed(level, lines, windows, front);
-        return true;
-    }
-
-    /** Writes the run's memory down under a key of its own in {@code tag}. */
-    void save(final CompoundTag tag) {
-        final CompoundTag own = new CompoundTag();
-        final ListTag services = new ListTag();
-        for (final ResourceLocation id : stopped) {
-            services.add(StringTag.valueOf(id.toString()));
-        }
-        own.put(STOPPED, services);
-        final ListTag lines = new ListTag();
-        for (final String line : logged) {
-            lines.add(StringTag.valueOf(line));
-        }
-        own.put(LOGGED, lines);
-        tag.put(KEY, own);
-    }
-
-    void load(final CompoundTag tag) {
-        reset();
-        final CompoundTag own = tag.getCompound(KEY);
-        for (final Tag one : own.getList(STOPPED, Tag.TAG_STRING)) {
-            final ResourceLocation id = ResourceLocation.tryParse(one.getAsString());
-            if (id != null) {
-                stopped.add(id);
-            }
-        }
-        for (final Tag one : own.getList(LOGGED, Tag.TAG_STRING)) {
-            logged.add(one.getAsString());
-        }
+        return new Ended(windows, front);
     }
 
     private void log(final List<String> lines) {
@@ -227,5 +263,9 @@ final class MachineOom {
             }
         }
         return false;
+    }
+
+    /* The windows a run of ending closed, and whether it took the program at the terminal with it. */
+    private record Ended(List<String> windows, boolean front) {
     }
 }

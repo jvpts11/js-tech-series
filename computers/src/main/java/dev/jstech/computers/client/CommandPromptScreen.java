@@ -476,7 +476,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         final int x = leftPos;
         final int y = topPos;
         // The monitor frame wraps the whole software window in the host computer's hardware-era bezel.
-        MonitorFrame.renderBody(g, x, y, imageWidth, imageHeight, screenEra(), font);
+        MonitorFrame.renderBody(g, x, y, imageWidth, imageHeight, screenEra(), font, screenPos());
         if (bareTerminal()) {
             // A raw console: the whole glass is the terminal, no program window around it.
             g.fill(x, y, x + imageWidth, y + imageHeight, bareGlass());

@@ -17,10 +17,13 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSocketId;
 import dev.jstech.computers.hardware.CpuSpec;
+import dev.jstech.computers.hardware.IsaFit;
 import dev.jstech.computers.hardware.IsaSpec;
+import dev.jstech.computers.hardware.IsaTranslators;
 import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.machine.SigmaLanguage;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.vm.listing.AsmWriter;
@@ -57,6 +60,7 @@ public final class QuinceProcessorGameTests {
     private static final BlockPos BESIDE = new BlockPos(5, 2, 2);
     private static final BlockPos THIRD = new BlockPos(8, 2, 2);
     private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath("jsc", "mc_dos");
+    private static final ResourceLocation QUINCE_OS_X = ResourceLocation.fromNamespaceAndPath("jsc", "quince_os_x");
     /* Room enough for a program that does nothing. */
     private static final long ROOM = 1024L * 1024L;
     /* The memory the Quince Q1 carries in its package, in buffer items: 8 GB. */
@@ -194,6 +198,27 @@ public final class QuinceProcessorGameTests {
         helper.assertTrue(why != null
                         && why.message().english().contains("built for PowerPC, x86-64; this machine is ARM64"),
                 "naming every build it carries: " + (why == null ? "nothing" : why.message().english()));
+        helper.succeed();
+    }
+
+    /**
+     * Quince OS X carries Champollion: an Integra qRusset running it runs a program built for the PowerPC, at half its
+     * speed, where the same machine with no system carrying a translator runs none.
+     */
+    @GameTest(template = ARENA)
+    public static void champollion_runsAPowerPcProgramOnIntegraUnderQuinceOsX(final GameTestHelper helper) {
+        final String listing = compiled(helper, Isas.POWERPC);
+        final PersonalComputerBlockEntity white = built(helper, AT, ComputingModule.QRUSSET_WHITE.get(),
+                QuinceItems.BOARD_QRUSSET_WHITE.get(), null, HardwareEra.TRANSITION, true);
+        helper.assertTrue(MachineListing.start(listing, ROOM, white, List.of()) == null,
+                "with no system carrying a translator, the program does not run");
+        helper.assertTrue(white.installOs(QUINCE_OS_X), "Quince OS X goes on the Integra machine");
+        helper.assertTrue(MachineListing.start(listing, ROOM, white, List.of()) != null,
+                "and through Champollion it runs");
+        final IsaFit fit = IsaFit.of(Isas.X86_64, List.of(Isas.POWERPC.id()),
+                OsRegistry.getOs(QUINCE_OS_X).translators()).orElse(null);
+        helper.assertTrue(fit != null && fit.through() == IsaTranslators.CHAMPOLLION && fit.speedPercent() == 50,
+                "at half its speed; got " + fit);
         helper.succeed();
     }
 

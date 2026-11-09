@@ -210,7 +210,7 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         final int x = this.leftPos;
         final int y = this.topPos;
         final Era era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
-        MonitorFrame.renderBody(g, x, y, W, H, era, font);
+        MonitorFrame.renderBody(g, x, y, W, H, era, font, screenPos());
         final Colours c = PALETTE.get();
         g.fill(x, y, x + W, y + H, c.ground());
 

@@ -459,7 +459,8 @@ public final class ShellView extends Panel implements ShellViews.IListener {
         if (this.ownGround != 0) {
             return this.ownGround;
         }
-        return this.ownWindow && this.osSkin.form() == OsSkin.Form.MOTIF
+        // CDE's terminal window and Quince's Terminal were paper, written on in black.
+        return this.ownWindow && (this.osSkin.form() == OsSkin.Form.MOTIF || this.osSkin.quince())
                 ? TermPalette.PAPER.get().ground()
                 : groundOf(this.osSkin);
     }
@@ -482,6 +483,8 @@ public final class ShellView extends Panel implements ShellViews.IListener {
             case GNOME1, CLEARLOOKS -> c.gnomeGround();
             // A slate with the cast of CDE's own backdrop, for a panel inside another program.
             case MOTIF -> c.motifGround();
+            // Quince's classic faces have no prompt of their own; a panel inside a program there is the flat one's.
+            case ONE_BIT, PLATINUM, PULP -> c.flatGround();
         };
     }
 

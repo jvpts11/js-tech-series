@@ -19,6 +19,18 @@ public enum InstallerPage {
     /** What is about to happen, and what the installer found before it starts. */
     WELCOME,
 
+    /** What the maker wants read before anything is installed, as an assistant's second page shows it. */
+    READ_ME,
+
+    /** The licence the system is installed under, agreed to before the disk is chosen. */
+    LICENSE,
+
+    /**
+     * The next disk of a system that comes on several, asked for when the copy has read everything on the one in the
+     * drive. The installer puts that one out of the slot and waits for the next one to go in.
+     */
+    INSERT,
+
     /** Every answer in one list, each marked given or still wanted, for the installer that works that way. */
     HUB,
 

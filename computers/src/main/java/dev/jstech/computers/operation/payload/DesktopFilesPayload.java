@@ -49,8 +49,25 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
                                   List<WireIconCell> iconCells, Prefs prefs,
                                   List<WireCommunity> community, List<String> pinned, List<String> startTiles,
                                   Map<String, String> defaultApps, boolean trashFull, Map<String, String> versions,
-                                  float loadMbPerSecond)
+                                  float loadMbPerSecond, List<WirePartition> partitions)
         implements CustomPacketPayload {
+
+    /**
+     * The memory block a classic Quince system was told to open a program in, by its Get Info.
+     *
+     * @param program     the program's id path
+     * @param minimumMb   the least it opens in
+     * @param preferredMb what it opens in when that much is free
+     */
+    public record WirePartition(String program, int minimumMb, int preferredMb) {
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, WirePartition> STREAM_CODEC =
+                StreamCodec.composite(
+                        ByteBufCodecs.stringUtf8(32), WirePartition::program,
+                        ByteBufCodecs.VAR_INT, WirePartition::minimumMb,
+                        ByteBufCodecs.VAR_INT, WirePartition::preferredMb,
+                        WirePartition::new);
+    }
 
     public static final int MAX_FILES = 256;
     /*
@@ -165,6 +182,9 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
             buf.writeUtf(TextBounds.clip(one.getValue(), 16), 16);
         }
         buf.writeFloat(payload.loadMbPerSecond);
+        WirePartition.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_PROGRAMS)).encode(buf,
+                payload.partitions.size() > MAX_PROGRAMS ? payload.partitions.subList(0, MAX_PROGRAMS)
+                        : payload.partitions);
     }
 
     private static DesktopFilesPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -199,8 +219,10 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         for (int i = 0; i < versionCount; i++) {
             versions.put(buf.readUtf(32), buf.readUtf(16));
         }
+        final float loadMbPerSecond = buf.readFloat();
         return new DesktopFilesPayload(files, wallpaper, cdeStyle, computerName, programs, sourceBuilt, cells, prefs,
-                community, pinned, startTiles, defaultApps, trashFull, versions, buf.readFloat());
+                community, pinned, startTiles, defaultApps, trashFull, versions, loadMbPerSecond,
+                WirePartition.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_PROGRAMS)).decode(buf));
     }
 
     /*
@@ -217,6 +239,7 @@ public record DesktopFilesPayload(List<DiskFilesPayload.WireFile> files, String 
         startTiles = List.copyOf(startTiles);
         defaultApps = Map.copyOf(defaultApps);
         versions = Map.copyOf(versions);
+        partitions = List.copyOf(partitions);
     }
 
     @Override

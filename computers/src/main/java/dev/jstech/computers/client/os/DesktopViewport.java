@@ -128,7 +128,13 @@ final class DesktopViewport {
      * desktop although the slab itself is only as wide as what it holds.
      */
     int panelBand() {
-        return desktop.panelStyle() == PanelStyle.CDE ? CdeFrontPanelLayout.BAND_H : DesktopScreen.TASKBAR_H;
+        return switch (desktop.panelStyle()) {
+            case CDE -> CdeFrontPanelLayout.BAND_H;
+            // Quince's classic systems keep nothing along the foot; the later ones keep the Dock there.
+            case QUINCE_CLASSIC -> 0;
+            case QUINCE_X -> QuinceBars.DOCK_H;
+            default -> DesktopScreen.TASKBAR_H;
+        };
     }
 
     /**
@@ -136,11 +142,14 @@ final class DesktopViewport {
      * and its notification area while its windows are listed along the foot.
      */
     boolean barOnTop() {
-        return panelOnTop() || desktop.gnome2();
+        return panelOnTop() || desktop.gnome2() || desktop.quince();
     }
 
-    /** The first desktop-local row of the work area. */
+    /** The first desktop-local row of the work area: under Quince's menu bar, or under a top panel. */
     int workAreaTop() {
+        if (desktop.quince()) {
+            return QuinceBars.BAR_H;
+        }
         return barOnTop() ? DesktopScreen.TASKBAR_H : 0;
     }
 

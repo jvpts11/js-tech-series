@@ -32,9 +32,12 @@ import org.jetbrains.annotations.Nullable;
  * @param freeBsdWallpaper the wallpaper it hangs when it comes from FreeBSD instead, or null when this desktop
  *                         hangs the same one everywhere (a Frames edition, which is never on FreeBSD; CDE, which
  *                         hangs no picture at all)
+ * @param earlyWallpaper   the wallpaper it shipped with on hardware up to the Transition, when it wore another face
+ *                         there and a picture with it (Quince OS X's Pulp), or null when the picture never changed
  */
 public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, @Nullable OsSkin transitionSkin,
-                          DesktopTheme theme, WallpaperStyle wallpaper, @Nullable WallpaperStyle freeBsdWallpaper) {
+                          DesktopTheme theme, WallpaperStyle wallpaper, @Nullable WallpaperStyle freeBsdWallpaper,
+                          @Nullable WallpaperStyle earlyWallpaper) {
 
     /** What a desktop nobody registered a look for is drawn as: the first Frames edition, the plainest. */
     private static final DesktopLook FALLBACK =
@@ -55,18 +58,33 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, @Nullable Os
          * it, which a machine installed on FreeBSD hangs instead of the Linux one; the era never changes it.
          */
         register("kde_plasma", new DesktopLook(OsSkin.KDE_PLASMA, OsSkin.KDE_PLASMA_LEGACY,
-                OsSkin.KDE_PLASMA_TRANSITION, DesktopTheme.KDE, WallpaperStyle.BREEZE, WallpaperStyle.FREEBSD_PLASMA));
+                OsSkin.KDE_PLASMA_TRANSITION, DesktopTheme.KDE, WallpaperStyle.BREEZE, WallpaperStyle.FREEBSD_PLASMA,
+                null));
         register("gnome", new DesktopLook(OsSkin.GNOME, OsSkin.GNOME_LEGACY, OsSkin.GNOME_TRANSITION,
-                DesktopTheme.GNOME, WallpaperStyle.ADWAITA, WallpaperStyle.FREEBSD_GNOME));
+                DesktopTheme.GNOME, WallpaperStyle.ADWAITA, WallpaperStyle.FREEBSD_GNOME, null));
         register("cinnamon", new DesktopLook(OsSkin.CINNAMON, null, null, DesktopTheme.CINNAMON,
-                WallpaperStyle.MINT_Y, WallpaperStyle.FREEBSD_CINNAMON));
+                WallpaperStyle.MINT_Y, WallpaperStyle.FREEBSD_CINNAMON, null));
         register("cde", new DesktopLook(OsSkin.CDE, null, DesktopTheme.CDE_DEFAULT, WallpaperStyle.MOTIF));
+        /*
+         * Quince's: each of its classic systems has the one face, and Quince OS X and its Server wear Pulp on the
+         * Legacy and the Transition and the flat face from the Standard on, each with the picture it came with.
+         */
+        register("quince_system", new DesktopLook(OsSkin.QUINCE_ONE_BIT, null, DesktopTheme.QUINCE_CLASSIC,
+                WallpaperStyle.QUINCE_CHECKER));
+        register("quince_os_9", new DesktopLook(OsSkin.QUINCE_PLATINUM, null, DesktopTheme.QUINCE_CLASSIC,
+                WallpaperStyle.QUINCE_BLUE));
+        final DesktopLook osX = new DesktopLook(OsSkin.QUINCE_FLAT, OsSkin.QUINCE_PULP, OsSkin.QUINCE_PULP,
+                DesktopTheme.QUINCE_X, WallpaperStyle.QUINCE_RIDGE, null, WallpaperStyle.QUINCE_PULP);
+        register("quince_os_x", osX);
+        register("quince_os_x_server", osX);
+        register("quinceos", new DesktopLook(OsSkin.QUINCE_OS, null, DesktopTheme.QUINCE_X,
+                WallpaperStyle.QUINCE_HILLS));
     }
 
     /** The same look, with no FreeBSD wallpaper of its own and no Transition face (a Frames edition, or CDE). */
     public DesktopLook(final OsSkin skin, @Nullable final OsSkin periodSkin, final DesktopTheme theme,
                        final WallpaperStyle wallpaper) {
-        this(skin, periodSkin, null, theme, wallpaper, null);
+        this(skin, periodSkin, null, theme, wallpaper, null, null);
     }
 
     /** The look of the desktop under that id, or the plainest one when none was registered for it. */
@@ -100,6 +118,14 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, @Nullable Os
      */
     public WallpaperStyle wallpaperOn(final Platform platform) {
         return platform == Platform.FREEBSD && this.freeBsdWallpaper != null ? this.freeBsdWallpaper : this.wallpaper;
+    }
+
+    /** The same, on hardware of {@code era}: the earlier picture there when this desktop shipped one up to it. */
+    public WallpaperStyle wallpaperOn(final Platform platform, @Nullable final Era era) {
+        if (this.earlyWallpaper != null && era != null && era.isAtMost(HardwareEra.TRANSITION)) {
+            return this.earlyWallpaper;
+        }
+        return wallpaperOn(platform);
     }
 
     private static void register(final String path, final DesktopLook look) {

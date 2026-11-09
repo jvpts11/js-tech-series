@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
+import dev.jstech.computers.operation.payload.crash.MemoryAskPayload;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
@@ -298,6 +299,17 @@ public final class ActiveDesktop {
         }
     }
 
+    /**
+     * The machine ran out of memory and asks what to force quit, as Quince's later systems ask; an empty list takes the
+     * question down.
+     */
+    public static void memoryAsked(final BlockPos host, final List<MemoryAskPayload.Asked> programs) {
+        final DesktopState desktop = DesktopScreen.current();
+        if (desktop != null && desktop.host().equals(host)) {
+            desktop.memoryAsked(programs);
+        }
+    }
+
     /** Restores the windows the machine has open, when the server hands them over. */
     public static void applyWindows(final DesktopWindowsPayload payload) {
         final DesktopState desktop = DesktopScreen.current();
@@ -323,6 +335,20 @@ public final class ActiveDesktop {
         if (desktop != null) {
             desktop.notices().ask(title, message, yes);
         }
+    }
+
+    /** Opens this computer's settings on one of their pages, as a panel of Quince's System Preferences does. */
+    static void openSettingsPage(final int page) {
+        final DesktopState desktop = DesktopScreen.current();
+        if (desktop != null) {
+            desktop.opener().openSettingsPage(page);
+        }
+    }
+
+    /** The name of the machine whose desktop is up, as its account shows it; empty with no desktop up. */
+    static String machineName() {
+        final DesktopState desktop = DesktopScreen.current();
+        return desktop == null ? "" : desktop.accountLabel();
     }
 
     /** Tells the player something over the whole desktop, in a note they close with OK. */

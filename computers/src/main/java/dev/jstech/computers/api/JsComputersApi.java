@@ -74,7 +74,7 @@ public final class JsComputersApi {
      * <p>How settled it is, and how long something lives once it is marked as going, are the series'
      * answers rather than this mod's: see the Core's.
      */
-    public static final int VERSION = 15;
+    public static final int VERSION = 16;
 
     /* The languages the computers of a world can be programmed in. */
     private static final LanguageRegistry LANGUAGES = new LanguageRegistry();

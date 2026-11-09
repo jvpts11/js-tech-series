@@ -62,6 +62,21 @@ public enum WallpaperStyle {
     /** FreeBSD's own wallpaper for Cinnamon: the folded sheets in FreeBSD's crimson, with the orb. */
     FREEBSD_CINNAMON("freebsd_cinnamon", true),
 
+    /** The Quince System's desktop: its grey of black and white pixels, checked. */
+    QUINCE_CHECKER("quince_system", true),
+
+    /** Quince OS 9's: a deep blue, faintly textured. */
+    QUINCE_BLUE("quince_os_9", true),
+
+    /** Quince OS X's in Pulp: the deep blue with its soft bands of light. */
+    QUINCE_PULP("quince_pulp", true),
+
+    /** Quince OS X's from the Standard on: a sky over mountains at dusk, in flat bands. */
+    QUINCE_RIDGE("quince_flat", true),
+
+    /** quinceOS's: soft hills in its own colours. */
+    QUINCE_HILLS("quinceos", true),
+
     /**
      * CDE's backdrop: no picture to hang, only a pattern in two colours of its palette. It is CDE's own and
      * no other desktop offers it.

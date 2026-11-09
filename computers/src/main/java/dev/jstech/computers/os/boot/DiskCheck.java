@@ -196,7 +196,8 @@ public record DiskCheck(Look look, FileSystemType type, long usedMb, long capaci
                 case LINUX -> LINUX;
                 case FREEBSD -> FREEBSD;
                 case UNIX -> UNIX;
-                case MC_DOS, MC_NET -> NONE;
+                // Quince's start shows its own picture and no check of its disk.
+                case MC_DOS, MC_NET, QUINCE -> NONE;
             };
         }
 

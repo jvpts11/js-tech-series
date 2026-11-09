@@ -8,6 +8,7 @@
 package dev.jstech.computers.program;
 
 import dev.jstech.computers.audio.SoundOutput;
+import dev.jstech.computers.os.QuincePartitions;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -68,6 +69,12 @@ final class SettingsStorage {
             final CompoundTag choices = new CompoundTag();
             settings.recipeChoices().forEach(choices::putInt);
             s.put("RecipeChoices", choices);
+        }
+        if (!settings.partitions().isEmpty()) {
+            final CompoundTag blocks = new CompoundTag();
+            settings.partitions().forEach((program, block) ->
+                    blocks.putIntArray(program, new int[] {block.minimumMb(), block.preferredMb()}));
+            s.put("Partitions", blocks);
         }
         if (!settings.themePreset().isEmpty()) {
             s.putString("Theme", settings.themePreset());
@@ -131,6 +138,15 @@ final class SettingsStorage {
             choices.put(key, choicesTag.getInt(key));
         }
         settings.putRecipeChoices(choices);
+        final Map<String, QuincePartitions.Partition> blocks = new LinkedHashMap<>();
+        final CompoundTag blocksTag = s.getCompound("Partitions");
+        for (final String program : blocksTag.getAllKeys()) {
+            final int[] sizes = blocksTag.getIntArray(program);
+            if (sizes.length == 2) {
+                blocks.put(program, new QuincePartitions.Partition(sizes[0], sizes[1]));
+            }
+        }
+        settings.putPartitions(blocks);
         settings.setThemePreset(s.getString("Theme"));
         settings.putDefaultApps(texts(s.getCompound("DefaultApps")));
         settings.putVariables(texts(s.getCompound("Variables")));

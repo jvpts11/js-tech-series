@@ -520,7 +520,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         exitHit = null;
         final int x = this.leftPos;
         final int y = this.topPos;
-        MonitorFrame.renderBody(g, x, y, W, H, era(), font);
+        MonitorFrame.renderBody(g, x, y, W, H, era(), font, screenPos());
         switch (kind) {
             case CLI_BIOS  -> renderCliBios(g, x, y, mouseX, mouseY);
             case BLUE_BIOS -> renderBlueBios(g, x, y, mouseX, mouseY);

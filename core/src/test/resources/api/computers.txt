@@ -502,6 +502,7 @@ stable 7
 1 dev.jstech.computers.os.OsDef  String titleKey()
 15 dev.jstech.computers.os.OsDef  boolean runsOn(IsaSpec)
 8 dev.jstech.computers.os.OsDef  long footprintItemsOn(Era)
+16 dev.jstech.computers.os.OsDef  static OsDef desktopSystem(ResourceLocation, ResourceLocation, Platform, Era, int, String, ShellKind, PackageManagerKind, SoftwareHouse)
 2 dev.jstech.computers.os.OsDef  static OsDef linuxDistro(ResourceLocation, int, String, ShellKind, PackageManagerKind, InstallMode, SoftwareHouse)
 8 dev.jstech.computers.os.OsDef  static OsDef mediaInstalled(ResourceLocation, OsCapability, Era, ResourceLocation, int, Platform, String, Optional<ResourceLocation>, SoftwareHouse)
 8 dev.jstech.computers.os.OsDef  static OsDef terminalSystem(ResourceLocation, ResourceLocation, Platform, Era, int, String, ShellKind, PackageManagerKind, InstallMode, SoftwareHouse)

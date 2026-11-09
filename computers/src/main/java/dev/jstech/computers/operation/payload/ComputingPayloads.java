@@ -31,6 +31,7 @@ import dev.jstech.computers.operation.payload.files.FilePayloads;
 import dev.jstech.computers.operation.payload.files.FileTransferPayloads;
 import dev.jstech.computers.operation.payload.files.TrashPayloads;
 import dev.jstech.computers.operation.payload.crash.CrashPayloads;
+import dev.jstech.computers.operation.payload.program.StorePayloads;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.operation.payload.firmware.InstallerPayloads;
 import dev.jstech.computers.operation.payload.gateway.GatewayManagerPayloads;
@@ -109,6 +110,7 @@ public final class ComputingPayloads {
         MachinePayloads.register(registrar);
         FirmwarePayloads.register(registrar);
         CrashPayloads.register(registrar);
+        StorePayloads.register(registrar);
         InstallerPayloads.register(registrar);
         AutomationPayloads.register(registrar);
         ClusterManagerPayloads.register(registrar);

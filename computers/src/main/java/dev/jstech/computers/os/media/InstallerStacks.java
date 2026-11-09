@@ -11,6 +11,8 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -31,9 +33,24 @@ public final class InstallerStacks {
         return os == null ? ItemStack.EMPTY : forSystem(os);
     }
 
-    /** The installer of {@code os}, on the medium of the era it first runs in. */
+    /** The installer of {@code os}, on the medium of the era it first runs in; its first disk, if it comes on several. */
     public static ItemStack forSystem(final OsDef os) {
         return stamped(InstallMedia.forSystem(os.minEra()), MediaKind.OS_INSTALL, os.id());
+    }
+
+    /**
+     * Every disk of the installer of {@code os}, in the order it reads them: the one medium of most systems, or each
+     * of the floppies of one that comes on several, the Quince System's three among them.
+     */
+    public static List<ItemStack> disksOf(final OsDef os) {
+        final int count = Math.max(1, os.installerStyle().disks().size());
+        final List<ItemStack> disks = new ArrayList<>(count);
+        for (int part = 1; part <= count; part++) {
+            final ItemStack disk = forSystem(os);
+            MediaItem.setPart(disk, part);
+            disks.add(disk);
+        }
+        return disks;
     }
 
     /**

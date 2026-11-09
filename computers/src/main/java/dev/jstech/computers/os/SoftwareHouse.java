@@ -66,6 +66,8 @@ public record SoftwareHouse(String name, String legalName) {
     /** NextgreIQL's house: an open group that writes the engine in the open, the next thing after the last. */
     public static final SoftwareHouse NEXTGRE =
             new SoftwareHouse("Nextgre", "the Nextgre Global Development Group");
+    /** The house that makes its machines and its systems both, from the Quince System on. */
+    public static final SoftwareHouse QUINCE = new SoftwareHouse("Quince", "Quince Inc.");
     /** Prophet YourIQL's house, which sees what a network will need before it needs it. */
     public static final SoftwareHouse PROPHET = new SoftwareHouse("Prophet", "Prophet Corporation");
 

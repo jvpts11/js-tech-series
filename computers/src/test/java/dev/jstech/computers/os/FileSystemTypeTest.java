@@ -31,6 +31,19 @@ class FileSystemTypeTest {
     }
 
     @Test
+    void installedBy_givesEachQuinceSystemTheVolumeFormatOfItsDay() {
+        assertEquals(FileSystemType.HFS, FileSystemType.installedBy(Platform.QUINCE, QuinceFamily.QUINCE_SYSTEM,
+                false, "quince_system", HardwareEra.VINTAGE));
+        assertEquals(FileSystemType.HFS_PLUS, FileSystemType.installedBy(Platform.QUINCE, QuinceFamily.OS_9, false,
+                "quince_os_9", HardwareEra.LEGACY));
+        assertEquals(FileSystemType.HFS_PLUS_JOURNALED, FileSystemType.installedBy(Platform.QUINCE,
+                QuinceFamily.OS_X, false, "quince_os_x", HardwareEra.LEGACY));
+        assertEquals(FileSystemType.APFS, FileSystemType.installedBy(Platform.QUINCE, QuinceFamily.QUINCE_OS, false,
+                "quinceos", HardwareEra.ADVANCED));
+        assertEquals("HFS+ (Journaled)", FileSystemType.HFS_PLUS_JOURNALED.displayName());
+    }
+
+    @Test
     void installedBy_givesLinuxItsEraAndFedoraBtrfs() {
         assertEquals(FileSystemType.EXT3, FileSystemType.installedBy(Platform.LINUX, 0, false, "debian",
                 HardwareEra.LEGACY));

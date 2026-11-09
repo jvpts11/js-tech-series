@@ -31,6 +31,10 @@ final class DesktopTexts {
             "This computer is running out of RAM for programs. %s needs %s MB and only %s MB are free.");
     static final TextKey LOW_MEMORY_WARNING = TextKey.of("jsc.desktop.low_memory_warning",
             "This computer is running low on memory. Close some programs before you open more: %s.");
+    /** Quince's classic systems refusing a program its block, in their words. */
+    static final TextKey QUINCE_NO_MEMORY = TextKey.of("jsc.desktop.quince_no_memory",
+            "There is not enough memory to open \"%s\" (%sK needed, %sK available). Closing windows or quitting"
+                    + " programs can make more memory available.");
     /** One program in that list, with what it holds. */
     static final TextKey LOW_MEMORY_HOLDS = TextKey.of("jsc.desktop.low_memory_holds", "%s (%s MB)");
     /* What a desktop says when the kernel under it ended its windows to make room. */

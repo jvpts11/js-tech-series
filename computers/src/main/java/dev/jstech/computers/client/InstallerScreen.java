@@ -498,7 +498,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = this.leftPos;
         final int y = this.topPos;
-        MonitorFrame.renderBody(g, x, y, InstallerLayout.WIDTH, InstallerLayout.HEIGHT, screenEra(), font);
+        MonitorFrame.renderBody(g, x, y, InstallerLayout.WIDTH, InstallerLayout.HEIGHT, screenEra(), font,
+                screenPos());
 
         this.listRows = 0;
         final InstallerFrames.Frame frame = InstallerFrames.paint(g, font, this.flow, this.ticksDone, x, y,
@@ -514,6 +515,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
          * for nothing. Nothing else about the button moves, because a button of these ages did not move.
          */
         this.markHovered(g, mouseX, mouseY);
+        // Quince's installers draw their whole window themselves, the pages in it included.
+        if (this.flow.chrome() == InstallerChrome.QUINCE_DESKTOP) {
+            return;
+        }
 
         switch (this.flow.page()) {
             case DISK, SETTINGS -> this.drawDisks(g, frame);
@@ -816,11 +821,35 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             case BACK -> this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
                     InstallerActionPayload.ACTION_BACK));
             case CANCEL -> this.quit();
-            case ERASE -> this.offerErase();
+            case ERASE -> {
+                // Quince's installers have no erase here: the same place is their Switch Disk, the next disk along.
+                if (this.flow.chrome() == InstallerChrome.QUINCE_DESKTOP) {
+                    this.switchDisk();
+                } else {
+                    this.offerErase();
+                }
+            }
             default -> {
             }
         }
         return true;
+    }
+
+    /** Puts the installer on the next disk of the machine, round to the first after the last. */
+    private void switchDisk() {
+        final List<InstallerFlow.Disk> disks = this.flow.disks();
+        if (disks.isEmpty()) {
+            return;
+        }
+        final InstallerFlow.Disk now = this.flow.target();
+        int at = 0;
+        for (int i = 0; i < disks.size(); i++) {
+            if (now != null && disks.get(i).slot() == now.slot()) {
+                at = i;
+            }
+        }
+        this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                InstallerActionPayload.ACTION_SELECT_DISK, disks.get((at + 1) % disks.size()).slot()));
     }
 
     /** Which of the frame's buttons is under that point, or none. */

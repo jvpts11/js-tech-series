@@ -1,0 +1,70 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_installing.text1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.quince_installing.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_installing.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_installing.definition1",
+      "term": "jsc.guide.quince_installing.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.quince_installing.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_installing.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.quince_installing.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_installing.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_installing.definition2",
+      "term": "jsc.guide.quince_installing.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.quince_installing.fix1",
+          "problem": "jsc.guide.quince_installing.problem1"
+        },
+        {
+          "fix": "jsc.guide.quince_installing.fix2",
+          "problem": "jsc.guide.quince_installing.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:quince_systems",
+        "jsc:installing"
+      ]
+    }
+  ],
+  "id": "jsc:quince_installing",
+  "order": 292,
+  "section": "jsc:quince_systems_section",
+  "title": "jsc.guide.quince_installing.title"
+}

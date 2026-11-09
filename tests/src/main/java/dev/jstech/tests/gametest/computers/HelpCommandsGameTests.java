@@ -55,9 +55,13 @@ public final class HelpCommandsGameTests {
             "help_viewer");
 
     /** What each desktop calls its help, which is what its launcher shows. */
-    private static final Map<String, String> NAMES = Map.of("frames_95", "Help", "frames_xp", "Help and Support",
-            "frames_7", "Help and Support", "frames_10", "Get Help", "frames_11", "Get Help",
-            "kde_plasma", "Help Center", "gnome", "Help", "cinnamon", "Help", "cde", "Help Viewer");
+    private static final Map<String, String> NAMES = Map.ofEntries(Map.entry("frames_95", "Help"),
+            Map.entry("frames_xp", "Help and Support"), Map.entry("frames_7", "Help and Support"),
+            Map.entry("frames_10", "Get Help"), Map.entry("frames_11", "Get Help"),
+            Map.entry("kde_plasma", "Help Center"), Map.entry("gnome", "Help"), Map.entry("cinnamon", "Help"),
+            Map.entry("cde", "Help Viewer"), Map.entry("quince_system", "Help Center"),
+            Map.entry("quince_os_9", "Help Center"), Map.entry("quince_os_x", "Help Viewer"),
+            Map.entry("quince_os_x_server", "Help Viewer"), Map.entry("quinceos", "Help Viewer"));
 
     private HelpCommandsGameTests() {
     }

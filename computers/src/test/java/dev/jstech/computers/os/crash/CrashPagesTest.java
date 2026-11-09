@@ -13,6 +13,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.QuinceFamily;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -196,6 +197,26 @@ class CrashPagesTest {
         assertEquals("pid 1234 (calc), jid 0, uid 0, was killed: out of swap space",
                 CrashPages.killLine(Platform.FREEBSD, UP, victim));
         assertEquals("NOTICE: out of memory: process 1234 (calc) killed", CrashPages.killLine(Platform.UNIX, UP, victim));
+    }
+
+    @Test
+    void styleFor_givesQuinceTheBombOnItsClassicSystemsAndTheGreyPageAfter() {
+        assertEquals(CrashStyle.QUINCE_BOMB, CrashPages.styleFor(Platform.QUINCE, QuinceFamily.QUINCE_SYSTEM));
+        assertEquals(CrashStyle.QUINCE_OS_9_BOMB, CrashPages.styleFor(Platform.QUINCE, QuinceFamily.OS_9));
+        assertEquals(CrashStyle.QUINCE_RESTART, CrashPages.styleFor(Platform.QUINCE, QuinceFamily.OS_X));
+        assertEquals(CrashStyle.QUINCE_RESTART, CrashPages.styleFor(Platform.QUINCE, QuinceFamily.QUINCE_OS));
+    }
+
+    @Test
+    void of_givesTheBombItsIdAndQuinceOs9TheProgramAndTheErrorType() {
+        final CrashPage bomb = page(CrashStyle.QUINCE_BOMB, Platform.QUINCE, CrashCause.HARDWARE,
+                CrashPages.Moment.hardware("RAM"));
+        assertEquals("ID = 02", bomb.stopCode());
+        assertTrue(bomb.holdsOnKey());
+        final CrashPage nine = page(CrashStyle.QUINCE_OS_9_BOMB, Platform.QUINCE, CrashCause.MEMORY,
+                CrashPages.Moment.memory("Expedition", 12, List.of()));
+        assertEquals("\"Expedition\"", nine.stopLine());
+        assertEquals("Error Type: 25", nine.stopCode());
     }
 
     private static CrashPage page(final CrashStyle style, final Platform platform, final CrashCause cause,

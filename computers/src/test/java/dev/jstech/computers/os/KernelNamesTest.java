@@ -9,6 +9,7 @@ package dev.jstech.computers.os;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import dev.jstech.computers.hardware.Isas;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -34,16 +35,29 @@ class KernelNamesTest {
 
     @Test
     void kernel_givesTheNameTheReleaseAndTheArchitecture() {
-        assertEquals("FreeBSD 14.1-RELEASE vel64", KernelNames.kernel(Platform.FREEBSD, 64));
-        assertEquals("Linux 6.8-jsc x86_64", KernelNames.kernel(Platform.LINUX, 64));
+        assertEquals("FreeBSD 14.1-RELEASE vel64", KernelNames.kernel(Platform.FREEBSD, 64, ""));
+        assertEquals("Linux 6.8-jsc x86_64", KernelNames.kernel(Platform.LINUX, 64, ""));
+        assertEquals("Wallace 8.0.0 ppc", KernelNames.kernel(Platform.QUINCE, 32, Isas.POWERPC.id()));
     }
 
     @Test
     void everything_followsEachFamilysOwnOrder() {
         assertEquals("FreeBSD desk 14.1-RELEASE FreeBSD 14.1-RELEASE GENERIC IA-32",
-                KernelNames.everything(Platform.FREEBSD, "desk", 32));
+                KernelNames.everything(Platform.FREEBSD, "desk", 32, ""));
         assertEquals("Linux desk 6.8-jsc #1 SMP x86_64 GNU/Linux",
-                KernelNames.everything(Platform.LINUX, "desk", 64));
+                KernelNames.everything(Platform.LINUX, "desk", 64, ""));
+        assertEquals("Wallace desk 8.0.0 Wallace Kernel Version 8.0.0: arm64",
+                KernelNames.everything(Platform.QUINCE, "desk", 64, Isas.ARM64.id()));
+    }
+
+    @Test
+    void architecture_namesQuincesAfterTheInstructionSetAndAnyIntegraOneI386() {
+        assertEquals("m68k", KernelNames.architecture(Platform.QUINCE, 16, Isas.M68K.id()));
+        assertEquals("ppc", KernelNames.architecture(Platform.QUINCE, 64, Isas.POWERPC.id()));
+        assertEquals("arm64", KernelNames.architecture(Platform.QUINCE, 64, Isas.ARM64.id()));
+        assertEquals("i386", KernelNames.architecture(Platform.QUINCE, 64, "x86_64"));
+        assertEquals("x86_64", KernelNames.architecture(Platform.LINUX, 64, Isas.ARM64.id()),
+                "the other families go by the width alone");
     }
 
     @Test
@@ -74,14 +88,24 @@ class KernelNamesTest {
 
     @Test
     void everything_onSystemVIsTheSystemTheNodeTheReleaseTheVersionAndTheMachine() {
-        assertEquals("UNIX desk 3.2 2 IA-16", KernelNames.everything(Platform.UNIX, "desk", 16));
+        assertEquals("UNIX desk 3.2 2 IA-16", KernelNames.everything(Platform.UNIX, "desk", 16, ""));
         assertEquals("console", KernelNames.terminal(Platform.UNIX));
     }
 
     @Test
     void bootFiles_areNamedTheWayEachFamilyNamesThem() {
-        assertEquals(List.of("boot/vmlinuz", "boot/initrd.img"), KernelNames.bootFiles(Platform.LINUX));
-        assertEquals(List.of("boot/loader", "boot/kernel/kernel"), KernelNames.bootFiles(Platform.FREEBSD));
-        assertEquals(List.of("unix"), KernelNames.bootFiles(Platform.UNIX));
+        assertEquals(List.of("boot/vmlinuz", "boot/initrd.img"), KernelNames.bootFiles(Platform.LINUX, 0));
+        assertEquals(List.of("boot/loader", "boot/kernel/kernel"), KernelNames.bootFiles(Platform.FREEBSD, 0));
+        assertEquals(List.of("unix"), KernelNames.bootFiles(Platform.UNIX, 0));
+        assertEquals(List.of("System Folder/System", "System Folder/Seeker"),
+                KernelNames.bootFiles(Platform.QUINCE, QuinceFamily.OS_9));
+        assertEquals(List.of("System/Library/CoreServices/boot.efi"),
+                KernelNames.bootFiles(Platform.QUINCE, QuinceFamily.OS_X));
+    }
+
+    @Test
+    void name_andTerminal_areWallaceAndTheFirstPseudoTerminalOnQuince() {
+        assertEquals("Wallace", KernelNames.name(Platform.QUINCE));
+        assertEquals("ttys000", KernelNames.terminal(Platform.QUINCE));
     }
 }

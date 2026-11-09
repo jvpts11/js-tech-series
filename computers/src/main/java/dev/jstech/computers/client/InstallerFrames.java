@@ -191,6 +191,7 @@ final class InstallerFrames {
             case GLASS -> glass(g, font, flow, ticksDone, sx, sy, sw, sh, held);
             case METRO -> metro(g, font, flow, sx, sy, sw, sh, held);
             case FIRST_SETUP -> firstSetup(g, font, flow, sx, sy, sw, sh, held);
+            case QUINCE_DESKTOP -> InstallerQuince.paint(g, font, flow, ticksDone, sx, sy, sw, sh, held);
         };
     }
 
@@ -902,8 +903,11 @@ final class InstallerFrames {
             case FEDORA -> FEDORA_INK.get();
             case PLAIN -> PLAIN_INK.get();
             case SYSTEM_V -> SYSTEM_V_INK.get();
-            /* bsdinstall paints its own navy ground in dialogBox() and never asks the plain-text ink for it. */
-            case BSD_INSTALL -> PLAIN_INK.get();
+            /*
+             * bsdinstall paints its own navy ground in dialogBox(), and Quince's installers their own desktop, and
+             * neither asks the plain-text ink for it.
+             */
+            case BSD_INSTALL, QUINCE_SYSTEM, QUINCE_OS_9, QUINCE_OS_X -> PLAIN_INK.get();
         };
     }
 

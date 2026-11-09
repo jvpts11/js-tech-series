@@ -10,6 +10,7 @@ package dev.jstech.computers.program.cli;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.QuinceFamily;
 import java.util.EnumSet;
 import java.util.Set;
 
@@ -49,8 +50,9 @@ public record CommandScope(Set<Platform> platforms, int minOsRank, HostScope hos
     /** The DOS-speaking systems: MC-DOS and every Frames edition. */
     public static final Set<Platform> DOS_SYSTEMS = Set.of(Platform.MC_DOS, Platform.FRAMES);
 
-    /** The Unix-speaking systems: the distributions, UNIX and FreeBSD. */
-    public static final Set<Platform> UNIX_SYSTEMS = Set.of(Platform.LINUX, Platform.UNIX, Platform.FREEBSD);
+    /** The Unix-speaking systems: the distributions, UNIX, FreeBSD, and Quince's from Quince OS X on. */
+    public static final Set<Platform> UNIX_SYSTEMS = Set.of(Platform.LINUX, Platform.UNIX, Platform.FREEBSD,
+            Platform.QUINCE);
 
     /**
      * The network appliance, which speaks neither of the above.
@@ -111,7 +113,10 @@ public record CommandScope(Set<Platform> platforms, int minOsRank, HostScope hos
 
     /** Whether a system of that family and edition has it at all, before anything about the machine is asked. */
     public boolean onSystem(final Platform platform, final int edition) {
-        return this.platforms.contains(platform) && (this.minOsRank == 0 || edition == 0 || edition >= this.minOsRank);
+        // Quince's classic systems have no command line at all, so no command is on them.
+        final boolean noPrompt = platform == Platform.QUINCE && edition > 0 && QuinceFamily.classic(edition);
+        return this.platforms.contains(platform) && !noPrompt
+                && (this.minOsRank == 0 || edition == 0 || edition >= this.minOsRank);
     }
 
     /** Whether the machine must have that. */

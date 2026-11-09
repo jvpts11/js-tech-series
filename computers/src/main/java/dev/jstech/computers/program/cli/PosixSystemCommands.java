@@ -74,7 +74,8 @@ final class PosixSystemCommands {
                 }
             }
             if (asked.indexOf("a") >= 0) {
-                ctx.out().line(KernelNames.everything(platform, ctx.computer().hostname(), bits));
+                ctx.out().line(KernelNames.everything(platform, ctx.computer().hostname(), bits,
+                        ctx.computer().processorIsa()));
                 return;
             }
             // Asked nothing, it names the kernel, which is what -s alone says.
@@ -90,7 +91,7 @@ final class PosixSystemCommands {
                 said.add(KernelNames.release(platform));
             }
             if (wanted.indexOf('m') >= 0) {
-                said.add(KernelNames.architecture(platform, bits));
+                said.add(KernelNames.architecture(platform, bits, ctx.computer().processorIsa()));
             }
             ctx.out().line(String.join(" ", said));
         }

@@ -1,0 +1,61 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_crashes.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.quince_crashes.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.quince_crashes.definition1",
+      "term": "jsc.guide.quince_crashes.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.quince_crashes.table1",
+      "heads": [
+        "jsc.guide.quince_crashes.table1_head1",
+        "jsc.guide.quince_crashes.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "25"
+          },
+          {
+            "words": "jsc.guide.quince_crashes.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "02"
+          },
+          {
+            "words": "jsc.guide.quince_crashes.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "01"
+          },
+          {
+            "words": "jsc.guide.quince_crashes.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:quince_memory"
+      ]
+    }
+  ],
+  "id": "jsc:quince_crashes",
+  "order": 295,
+  "section": "jsc:quince_desktop_section",
+  "title": "jsc.guide.quince_crashes.title"
+}

@@ -8,12 +8,15 @@
 package dev.jstech.computers.os.fs;
 
 import dev.jstech.computers.os.Branding;
+import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
+import dev.jstech.computers.os.QuinceFamily;
 import dev.jstech.computers.os.SoftwareHouse;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.program.ComputerConsoleState;
@@ -53,6 +56,10 @@ public final class ProgramFilesProjection {
             "editor", "command_prompt", "system_monitor", "calculator", "network_manager", "task_manager",
             "workstation_info", "help_viewer", "disks");
 
+    /** The programs Quince OS X keeps in Applications/Utilities rather than in Applications itself. */
+    private static final Set<String> QUINCE_UTILITIES = Set.of("command_prompt", "system_monitor", "defrag",
+            "network_manager", "server_admin");
+
     /** Where each Unix-like system keeps what a program brings along, which is also where its readme goes. */
     private static final String SYSV_SHARE = "usr/lib/";
     private static final String FREEBSD_SHARE = "usr/local/share/";
@@ -78,8 +85,49 @@ public final class ProgramFilesProjection {
             systemV(host, out);
         } else if (os.platform() == Platform.MC_DOS) {
             out.addAll(McDosTree.entries(dosFacts(host, os)));
+        } else if (os.platform() == Platform.QUINCE) {
+            quince(host, os, out);
         }
         return out;
+    }
+
+    /*
+     * Quince keeps its programs by the names the desktop calls them: the Quince System beside its System Folder at the
+     * disk's root, Quince OS 9 in Applications, and from Quince OS X on as bundles named .app in Applications, its
+     * own tools in Applications/Utilities (computers/docs/design/quince.md).
+     */
+    private static void quince(final IOsHost host, final OsDef os, final List<InstallerLayout.Entry> out) {
+        final DesktopEnvironmentDef desktop = os.bundledDesktop().map(OsRegistry::getDesktop).orElse(null);
+        final List<ProgramSpec> programs = new ArrayList<>();
+        for (final ProgramSpec spec : OsRegistry.programs()) {
+            if (spec.preinstalled() && desktop != null && desktop.bundles(spec.id())
+                    && spec.kind() == ProgramKind.APP) {
+                programs.add(spec);
+            }
+        }
+        programs.addAll(installed(host));
+        if (QuinceFamily.classic(os.familyRank())) {
+            final String folder = os.familyRank() <= QuinceFamily.QUINCE_SYSTEM ? "" : "Applications/";
+            if (!folder.isEmpty()) {
+                out.add(dir("Applications"));
+            }
+            for (final ProgramSpec spec : programs) {
+                out.add(file(folder + nameOn(desktop, spec), FileType.BIN));
+            }
+            return;
+        }
+        out.add(dir("Applications"));
+        out.add(dir("Applications/Utilities"));
+        for (final ProgramSpec spec : programs) {
+            final String where = QUINCE_UTILITIES.contains(spec.id().getPath()) ? "Applications/Utilities/"
+                    : "Applications/";
+            out.add(dir(where + nameOn(desktop, spec) + ".app"));
+        }
+    }
+
+    /** What the desktop calls a program, in English, which is how its file is named on the disk. */
+    private static String nameOn(@Nullable final DesktopEnvironmentDef desktop, final ProgramSpec spec) {
+        return desktop == null ? spec.displayName() : desktop.launcherLabel(spec).text().english();
     }
 
     /*

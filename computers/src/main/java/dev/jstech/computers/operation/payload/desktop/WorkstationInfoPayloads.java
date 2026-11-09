@@ -58,7 +58,8 @@ public final class WorkstationInfoPayloads {
         final long diskMb = DiskShares.capacityMbOf(disk);
         return new WorkstationFacts(UnixTree.of(platform).home().getLast(), Installers.hostName(computer),
                 network == null ? "" : network.value().toString(), systemOf(system),
-                KernelNames.architecture(platform, computer.processorBits()), windowSystemOf(computer),
+                KernelNames.architecture(platform, computer.processorBits(), computer.processorIsa()),
+                windowSystemOf(computer),
                 WelcomePayloads.cpuText(computer), computer.maxCpuMhz(), computer.ramTotalMb(),
                 computer.ramLedger().usedMb(), computer.totalVramMb(), diskMb, SettingsSnapshots.usedMb(disk));
     }

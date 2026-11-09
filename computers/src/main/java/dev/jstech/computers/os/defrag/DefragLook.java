@@ -13,8 +13,8 @@ import dev.jstech.core.id.StableNames;
 
 /**
  * How a system shows its Defrag, the program every computer comes with (computers/docs/design/storage.md): DEFRAG's
- * map of clusters on MC-DOS, the Disk Defragmenter of each Frames up to 7, Optimize Drives on 10 and 11, and fsck on
- * the Unix systems, which is what repairs a disk there.
+ * map of clusters on MC-DOS, the Disk Defragmenter of each Frames up to 7, Optimize Drives on 10 and 11, fsck on
+ * the Unix systems, which is what repairs a disk there, and Disk Utility's First Aid on Quince's.
  *
  * <p>Pure: no game types.
  */
@@ -37,7 +37,9 @@ public enum DefragLook implements IStableName {
     /** fsck on FreeBSD. */
     FREEBSD("freebsd"),
     /** fsck on UNIX System V. */
-    UNIX("unix");
+    UNIX("unix"),
+    /** Disk Utility's First Aid on Quince's systems, which prints what fsck_hfs says (computers/docs/design/quince.md). */
+    QUINCE("quince");
 
     private static final StableNames<DefragLook> NAMES = StableNames.of(DefragLook.class);
 
@@ -61,6 +63,7 @@ public enum DefragLook implements IStableName {
             case LINUX -> LINUX;
             case FREEBSD -> FREEBSD;
             case UNIX -> UNIX;
+            case QUINCE -> QUINCE;
         };
     }
 
@@ -98,6 +101,7 @@ public enum DefragLook implements IStableName {
             case LINUX -> "sd" + (char) ('a' + index) + "1";
             case FREEBSD -> "ada" + index + "p1";
             case UNIX -> index + "s1";
+            case QUINCE -> "disk" + index + "s2";
             default -> (char) ('C' + index) + ":";
         };
     }

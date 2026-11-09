@@ -77,6 +77,7 @@ public final class ComputersBooks {
         RebootRefusesPages.declare(guide, chapter(guide, "when_reboot_refuses"));
         FreeBsdPages.declare(guide, chapter(guide, "freebsd"));
         SystemVPages.declare(guide, chapter(guide, "system_v"));
+        QuincePages.declare(guide, chapter(guide, "quince"));
         IqlStartPages.declare(guide, chapter(guide, "iql_getting_started"));
         IqlLanguagePages.declare(guide, chapter(guide, "iql_language"));
         IqlEnginesPages.declare(guide, chapter(guide, "iql_engines"));
@@ -296,13 +297,18 @@ public final class ComputersBooks {
                 .about("The UNIX of the first era: installing it, adding its packages from the medium, and working"
                         + " in it.")
                 .register());
+        chapters.add(guide.chapter("quince").titled("Quince's systems").ownBooksOnly()
+                .about("Quince's six systems for its own computers: installing them, their desktop, how they share"
+                        + " their memory, their crash pages, and their programs.")
+                .register());
         chapters.addAll(unix);
         guide.manual("daemon_handbook").titled("The Daemon Handbook")
                 .cover("The Daemon", "Handbook", "FreeBSD and UNIX System V", "Daemon Foundation")
                 .style(ComputersGuide.DAEMON_HANDBOOK).priority(50)
                 .chapters(chapters.toArray(GuideChapter[]::new))
-                .about("This handbook covers the two UNIX systems, FreeBSD and UNIX System V: how each one is"
-                                + " installed and started, how programs are added, and how to work at its prompt.",
+                .about("This handbook covers the two UNIX systems, FreeBSD and UNIX System V, and Quince's systems,"
+                                + " the later of which are a UNIX underneath: how each one is installed and started, how"
+                                + " programs are added, and how to work at its prompt.",
                         "The ribbon keeps the pages you were reading when you closed the book.",
                         "The magnifier on the top edge finds anything by name, and the blocks down the edge of the"
                                 + " right page each open a chapter.")

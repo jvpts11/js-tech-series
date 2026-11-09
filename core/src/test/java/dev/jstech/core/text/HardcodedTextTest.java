@@ -200,14 +200,20 @@ class HardcodedTextTest {
                     + " shutdown: no fsck ever printed in anything but its own words"),
             data(COMPUTERS + "os/boot/BsdBootLines.java", 2, KERNEL_LOG),
             data(COMPUTERS + "os/boot/SysVBootLines.java", 3, KERNEL_LOG),
-            data(COMPUTERS + "os/crash/CrashPages.java", 104, "what a kernel prints as it panics, and where a"
+            data(COMPUTERS + "os/crash/CrashPages.java", 105, "what a kernel prints as it panics, and where a"
                     + " crashed system says it failed: no kernel ever printed them in anything but its own words"),
-            data(COMPUTERS + "os/defrag/FsckLines.java", 27, "what fsck prints as it repairs a corrupted disk: no"
+            data(COMPUTERS + "os/defrag/FsckLines.java", 37, "what fsck prints as it repairs a corrupted disk: no"
                     + " fsck ever printed in anything but its own words"),
-            data(COMPUTERS + "os/KernelNames.java", 4, "kernel names as a system reports them"),
-            data(COMPUTERS + "os/OsBootstrap.java", 5, PRODUCTS),
+            data(COMPUTERS + "os/KernelNames.java", 7, "kernel names as a system reports them, and the files a"
+                    + " system starts from"),
+            data(COMPUTERS + "os/OsBootstrap.java", 13, PRODUCTS),
             data(COMPUTERS + "os/OsRegistry.java", 2, "the kind of entry a registration names in the log"),
-            data(COMPUTERS + "os/SoftwareHouse.java", 34, PRODUCTS),
+            data(COMPUTERS + "os/SoftwareHouse.java", 35, PRODUCTS),
+            data(COMPUTERS + "os/FileSystemType.java", 1, PRODUCTS),
+            data(COMPUTERS + "os/UnixTree.java", 9, FILES),
+            data(COMPUTERS + "os/boot/SystemIntegrity.java", 1, FILES),
+            data(COMPUTERS + "os/install/InstallerStyle.java", 1, FILES),
+            data(COMPUTERS + "client/os/QuinceArt.java", 9, "small pictures drawn in characters"),
             data(COMPUTERS + "os/edit/NanoWords.java", 1, "an editor's name and version on its title row"),
             data(COMPUTERS + "os/edit/project/ProjectTemplate.java", 6, "the source files a new project starts with"),
             data(COMPUTERS + "os/fs/InstallerLayout.java", 29, FILES),
@@ -216,7 +222,8 @@ class HardcodedTextTest {
             data(COMPUTERS + "os/fs/SystemLayout.java", 2, FILES),
             data(COMPUTERS + "os/fs/TrashFolder.java", 1, FILES),
             data(COMPUTERS + "program/KnotRepository.java", 1, "a revision's message as the repository stores it"),
-            data(COMPUTERS + "program/cli/ConsoleGreeting.java", 3, PRODUCTS),
+            data(COMPUTERS + "program/cli/ConsoleGreeting.java", 4, PRODUCTS
+                    + ", and the pattern of the date a login line gives"),
             data(COMPUTERS + "program/cli/DeviceCommands.java", 19,
                     "the PCI classes and the words of the device tools, which read the same in every language"),
             data(COMPUTERS + "program/cli/ICliFiles.java", 1, COMMANDS),

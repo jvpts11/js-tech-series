@@ -111,7 +111,8 @@ final class ScreenfetchCommand implements ICliCommand {
     private static List<Field> readout(final CliContext ctx, final ICliComputer.SystemInfo info) {
         final List<Field> out = new ArrayList<>();
         out.add(new Field(OS, info.os() + " "
-                + KernelNames.architecture(ctx.computer().platform(), ctx.computer().processorBits())));
+                + KernelNames.architecture(ctx.computer().platform(), ctx.computer().processorBits(),
+                ctx.computer().processorIsa())));
         out.add(new Field(KERNEL, info.kernel()));
         out.add(new Field(UPTIME, uptime(info.uptimeTicks())));
         out.add(new Field(PACKAGES, info.packages() + " (" + ctx.computer().packageManager().command() + ")"));

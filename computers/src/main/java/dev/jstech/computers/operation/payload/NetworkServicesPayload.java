@@ -236,14 +236,16 @@ public record NetworkServicesPayload(BlockPos hostPos, Engine engine, List<Engin
     /**
      * One of the other services a Mainframe runs.
      *
+     * @param program its program id, which an action on it names it by
      * @param name    what it is called
      * @param vendor  who makes it
      * @param version its version
      * @param state   one of the {@code SERVICE_} states
      */
-    public record ServiceRow(String name, String vendor, String version, byte state) {
+    public record ServiceRow(String program, String name, String vendor, String version, byte state) {
         public static final StreamCodec<RegistryFriendlyByteBuf, ServiceRow> STREAM_CODEC =
                 StreamCodec.composite(
+                        ByteBufCodecs.stringUtf8(MAX_NAME), ServiceRow::program,
                         ByteBufCodecs.stringUtf8(MAX_NAME), ServiceRow::name,
                         ByteBufCodecs.stringUtf8(MAX_NAME), ServiceRow::vendor,
                         ByteBufCodecs.stringUtf8(MAX_NAME), ServiceRow::version,

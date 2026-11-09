@@ -8,6 +8,9 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.monitor.MonitorPainter;
+import dev.jstech.computers.client.os.OffscreenDesktop;
+import dev.jstech.computers.client.os.QuincePages;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.layout.CrashLayout;
 import dev.jstech.computers.menu.MonitorSessionMenu;
@@ -53,6 +56,9 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
     private final boolean endsDark;
     private boolean held;
     private int ticks;
+    /** Where a Quince bomb's Restart was last drawn on the glass, {@code {x, y, w, h}}; null on every other page. */
+    @Nullable
+    private int[] restartButton;
 
     private static final int W = MonitorGlass.WIDTH;
     private static final int H = MonitorGlass.HEIGHT;
@@ -184,12 +190,29 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
         }
     }
 
+    /** The bomb's Restart answers a click as a key on the console does: the machine starts over. */
+    @Override
+    public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
+        final int[] restart = this.restartButton;
+        if (restart != null && this.page.holdsOnKey() && !onFace()
+                && mouseX >= this.leftPos + restart[0] && mouseX < this.leftPos + restart[0] + restart[2]
+                && mouseY >= this.topPos + restart[1] && mouseY < this.topPos + restart[1] + restart[3]) {
+            PacketDistributor.sendToServer(new CrashKeyPayload(this.host));
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
     @Override
     protected void renderBg(final GuiGraphics g, final float partialTick, final int mouseX, final int mouseY) {
         final int x = this.leftPos;
         final int y = this.topPos;
         final Era era = screenEra() == null ? HardwareEra.STANDARD : screenEra();
-        MonitorFrame.renderBody(g, x, y, W, H, era, font);
+        if (this.page.style().quince()) {
+            quince(g, x, y, era, partialTick);
+            return;
+        }
+        MonitorFrame.renderBody(g, x, y, W, H, era, font, screenPos());
         final Colours c = PALETTE.get();
         g.fill(x, y, x + W, y + H, ground(c));
         g.pose().pushPose();
@@ -199,7 +222,28 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
             case FRAMES_XP, FRAMES_7 -> framesNt(g, c);
             case FRAMES_10, FRAMES_11 -> framesModern(g, c);
             case CONSOLE -> console(g, c);
+            case QUINCE_BOMB, QUINCE_RESTART, QUINCE_OS_9_BOMB -> {
+                // Drawn by quince() above, over the desktop the system went down on.
+            }
         }
+        g.pose().popPose();
+    }
+
+    /**
+     * A Quince page: the desktop the system went down on, as the monitor's face last drew it, stands still under the
+     * bomb or the grey sheet, as the real ones stood over whatever was open.
+     */
+    private void quince(final GuiGraphics g, final int x, final int y, final Era era, final float partialTick) {
+        final OffscreenDesktop desktop = MonitorPainter.desktopOf(this.getMenu().monitorPos());
+        if (desktop != null && !onFace()) {
+            desktop.paint(g, this.width, this.height, Integer.MIN_VALUE / 2, Integer.MIN_VALUE / 2, partialTick);
+        } else {
+            MonitorFrame.renderBody(g, x, y, W, H, era, font, screenPos());
+            g.fill(x, y, x + W, y + H, QuincePages.ground(this.page.style()));
+        }
+        g.pose().pushPose();
+        g.pose().translate(x, y, 0.0F);
+        this.restartButton = QuincePages.draw(g, font, this.page, W, H);
         g.pose().popPose();
     }
 
@@ -218,6 +262,7 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
             case FRAMES_10 -> red ? c.redModern() : c.blue10();
             case FRAMES_11 -> red ? c.redModern() : c.blue11();
             case CONSOLE -> c.consoleGround();
+            case QUINCE_BOMB, QUINCE_RESTART, QUINCE_OS_9_BOMB -> QuincePages.ground(this.page.style());
         };
     }
 

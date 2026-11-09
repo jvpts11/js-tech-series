@@ -11,6 +11,7 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.QuinceFamily;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.core.text.Text;
@@ -44,6 +45,11 @@ public final class SystemIntegrity {
             "Put in an installation medium and press F10 to install over it.");
     private static final TextKey REPAIR_BY_BOOTING = TextKey.of("jsc.boot.system_integrity.repair_by_booting",
             "Boot an installation medium and install over it to repair.");
+
+    /* Quince's classic systems keep their System file in the System Folder; the later ones start from their loader. */
+    private static final String CLASSIC_SYSTEM_FOLDER = "System Folder";
+    private static final String CLASSIC_SYSTEM_FILE = "System";
+    private static final String QUINCE_LOADER = "boot.efi";
 
     private SystemIntegrity() {
     }
@@ -120,6 +126,7 @@ public final class SystemIntegrity {
             case MC_DOS -> "DOS";
             case LINUX, UNIX, FREEBSD -> "boot";
             case MC_NET -> "";
+            case QUINCE -> classicQuince(os) ? CLASSIC_SYSTEM_FOLDER : "System";
         };
     }
 
@@ -135,6 +142,8 @@ public final class SystemIntegrity {
             case LINUX -> "boot/vmlinuz";
             case UNIX, FREEBSD -> "boot/kernel";
             case MC_NET -> "netstart.sys";
+            case QUINCE -> classicQuince(os) ? CLASSIC_SYSTEM_FOLDER + "/" + CLASSIC_SYSTEM_FILE
+                    : "System/Library/CoreServices/" + QUINCE_LOADER;
         };
     }
 
@@ -145,6 +154,7 @@ public final class SystemIntegrity {
             case MC_DOS -> NO_INTERPRETER.text();
             case LINUX, UNIX, FREEBSD -> Text.literal("kernel panic - not syncing: no init found");
             case MC_NET -> FILE_MISSING.with("netstart.sys");
+            case QUINCE -> FILE_MISSING.with(classicQuince(os) ? CLASSIC_SYSTEM_FILE : QUINCE_LOADER);
         };
     }
 
@@ -152,5 +162,10 @@ public final class SystemIntegrity {
     public static Text repairLine(final Platform platform) {
         return (platform == Platform.MC_DOS || platform == Platform.FRAMES
                 ? REPAIR_FROM_SETUP : REPAIR_BY_BOOTING).text();
+    }
+
+    /* Whether it is one of Quince's classic systems, the Quince System or Quince OS 9, which start from a System Folder. */
+    private static boolean classicQuince(final OsDef os) {
+        return QuinceFamily.classic(os.familyRank());
     }
 }

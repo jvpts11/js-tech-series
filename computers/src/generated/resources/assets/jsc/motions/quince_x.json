@@ -1,0 +1,53 @@
+{
+  "caret_blink": {
+    "duration": 533,
+    "easing": "linear",
+    "steady": 1.0,
+    "style": "blink"
+  },
+  "dialog_open": {
+    "distance": 1.0,
+    "duration": 250,
+    "easing": "ease-out-cubic",
+    "group": "animations",
+    "style": "slide"
+  },
+  "menu_show": {
+    "duration": 150,
+    "easing": "linear",
+    "group": "menus",
+    "style": "appear"
+  },
+  "pointer_busy": {
+    "duration": 1000,
+    "easing": "linear",
+    "frames": 8.0,
+    "steady": 1.0,
+    "style": "loop"
+  },
+  "progress_wait": {
+    "duration": 1500,
+    "easing": "linear",
+    "length": 0.3,
+    "steady": 1.0,
+    "style": "segment"
+  },
+  "scene_fade": {
+    "duration": 300,
+    "easing": "ease-out",
+    "style": "fade"
+  },
+  "window_minimize": {
+    "duration": 500,
+    "easing": "ease-in-cubic",
+    "group": "minimize",
+    "out": 1.0,
+    "style": "zoom"
+  },
+  "window_restore": {
+    "duration": 500,
+    "easing": "ease-out-cubic",
+    "group": "minimize",
+    "style": "zoom"
+  }
+}

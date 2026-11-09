@@ -14,7 +14,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * What a Unix's fsck prints as it repairs a corrupted disk, in each system's own words, which no fsck ever printed in
  * anything but its own (computers/docs/design/storage.md): e2fsck's five passes on Linux, the five phases of UFS's on
- * FreeBSD and of System V's, and at the end what it found and gave back, and the bad sectors before and after.
+ * FreeBSD and of System V's, fsck_hfs's checks under Disk Utility's First Aid on Quince's systems, and at the end what
+ * it found and gave back, and the bad sectors before and after.
  *
  * <p>Pure: no game types.
  */
@@ -29,6 +30,9 @@ public final class FsckLines {
     private static final int EXT_RESERVED_INODES = 11;
     private static final int UFS_SYSTEM_FILES = 3;
     private static final int SYSTEM_V_SYSTEM_FILES = 30;
+    /* What Quince's systems call the disk they start from, and any other. */
+    private static final String QUINCE_SYSTEM_VOLUME = "Quince HD";
+    private static final String QUINCE_OTHER_VOLUME = "Untitled";
 
     private FsckLines() {
     }
@@ -38,6 +42,7 @@ public final class FsckLines {
         return switch (look) {
             case LINUX -> List.of("fsck from util-linux 2.38.1", "e2fsck 1.47.0 (5-Feb-2023)");
             case FREEBSD -> List.of("** " + look.device(index));
+            case QUINCE -> List.of("** /dev/r" + look.drive(index), "** Checking HFS Plus volume.");
             default -> List.of("", look.device(index), "File System: " + (index == 0 ? "root" : "usr") + " Volume: 1",
                     "");
         };
@@ -52,6 +57,8 @@ public final class FsckLines {
             case FREEBSD -> List.of("** Phase 1 - Check Blocks and Sizes", "** Phase 2 - Check Pathnames",
                     "** Phase 3 - Check Connectivity", "** Phase 4 - Check Reference Counts",
                     "** Phase 5 - Check Cyl groups");
+            case QUINCE -> List.of("** Checking Extents Overflow file.", "** Checking Catalog file.",
+                    "** Checking Catalog hierarchy.", "** Checking volume bitmap.", "** Checking volume information.");
             default -> List.of("** Phase 1 - Check Blocks and Sizes", "** Phase 2 - Check Pathnames",
                     "** Phase 3 - Check Connectivity", "** Phase 4 - Check Reference Counts",
                     "** Phase 5 - Check Free List");
@@ -85,6 +92,8 @@ public final class FsckLines {
         final long usedMb = capacityMb - freeMb;
         final int types = disk == null ? 0 : disk.types();
         switch (look) {
+            case QUINCE -> out.add("** The volume " + (result.disk() == 0 ? QUINCE_SYSTEM_VOLUME : QUINCE_OTHER_VOLUME)
+                    + (modified ? " was repaired successfully." : " appears to be OK."));
             case LINUX -> {
                 if (modified) {
                     out.add("");

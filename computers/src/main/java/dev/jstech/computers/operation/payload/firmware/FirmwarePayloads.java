@@ -59,6 +59,8 @@ import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -67,6 +69,7 @@ import dev.jstech.computers.os.install.SetupTiming;
 import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.LiveMedium;
 import dev.jstech.computers.os.media.MachineMedia;
+import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.registry.HardwareRegistry;
@@ -180,6 +183,11 @@ public final class FirmwarePayloads {
                 ComputerAccess.screenAt(PostCompletePayload::hostPos, PostCompletePayload::monitorPos,
                         MonitorSessionMenu.Phase.POST),
                 FirmwarePayloads::handlePostComplete);
+        // quinceOS's recovery, chosen at the start-up options of the very screen the machine starts on.
+        ComputerAccess.accept(registrar, RecoveryPayload.TYPE, RecoveryPayload.STREAM_CODEC,
+                ComputerAccess.screenAt(RecoveryPayload::hostPos, RecoveryPayload::monitorPos,
+                        MonitorSessionMenu.Phase.POST),
+                FirmwarePayloads::handleRecovery);
     }
 
     private static void handleRequestFirmwareState(final RequestFirmwareStatePayload payload, final ServerPlayer player,
@@ -653,6 +661,40 @@ public final class FirmwarePayloads {
             MonitorBlock.openFirmware(
                     player, level, payload.monitorPos(), payload.hostPos());
         }
+    }
+
+    /**
+     * quinceOS's recovery: Reinstall puts a fresh copy of the system on the disk it runs from, brought over the
+     * network rather than read from a medium, through the system's own installer; First Aid checks and repairs that
+     * disk as Disk Utility does.
+     */
+    private static void handleRecovery(final RecoveryPayload payload, final ServerPlayer player,
+                                       final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost machine) || !machine.isRunning()) {
+            return;
+        }
+        final OsDef system = machine.installedOs();
+        if (system == null || system.platform() != Platform.QUINCE) {
+            return;
+        }
+        if (payload.action() == RecoveryPayload.FIRST_AID) {
+            DefragRunner.begin(machine, level, Math.max(0, machine.defaultInstallSlot()));
+            return;
+        }
+        if (!machine.keepsInstalls()) {
+            return;
+        }
+        final double rate = SetupTiming.installRate(MediaFormat.USB, 1, machine.cpuCores(), machine.maxCpuMhz());
+        final InstallerFlow flow = Installers.beginning(machine, level, system, rate);
+        if (flow.disks().isEmpty()) {
+            return;
+        }
+        flow.select(machine.defaultInstallSlot());
+        machine.leaveStartupChoices();
+        machine.setInstaller(flow);
+        machine.setInstalling(new OsInstallJob(system.id().toString(), flow.targetSlot(), OsInstallJob.NO_READER, 0,
+                flow.ticksTotal(), flow.ticksTotal()));
+        OsInstallRunner.show(level, machine, payload.hostPos(), flow);
     }
 
     private static void handlePostComplete(final PostCompletePayload payload, final ServerPlayer player,

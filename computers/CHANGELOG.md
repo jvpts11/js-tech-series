@@ -96,6 +96,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   machine. `CpuDesign` gains `memoryItems`, the memory in a chip's package, and `heatSinkWatts`, a heat sink it
   carries on itself, with `withMemory` and `withHeatSink`, as `CpuSpec` does; `ComputerBuild.packageMemory` adds the
   memory up. Experimental.
+- Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
+  up at a desktop of its own, the one under its own id, with the shell its terminal opens and the manager its
+  packages come through. `Platform` gains `QUINCE`, `PackageManagerKind` gains `KEG`, `PanelStyle` gains
+  `QUINCE_CLASSIC` and `QUINCE_X`, and `InstallerStyle` gains `QUINCE_SYSTEM`, `QUINCE_OS_9` and `QUINCE_OS_X`.
+  Experimental.
 
 ### Added
 - Eras of other mods: an era another mod declares between the series' own is an era of hardware
@@ -337,6 +342,32 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   neither installs nor starts it: the setup lists it "for ... processors", a cluster's installation leaves such a
   node out, and a disk carried from one maker's machine to another's shows the firmware nothing to start. The
   systems there were are built for the x86 line, as before.
+- Quince's six systems: the Quince System on the Russet 128K's 68k, from three floppies its installer
+  asks for one after another, each floppy saying which of the three it is; Quince OS 9 on the PowerPC; Quince OS X
+  on the PowerPC and on Integra, carrying Champollion; Quince OS X Server on Integra and on Quince's own chips; and
+  quinceOS on Quince's chips, whose recovery (reinstall it, First Aid on its disk, the startup disk) opens from the
+  start-up screen's Options. Each comes up at a desktop of its own: the menu bar with the fruit's menu and the
+  program in front, the Seeker for files, the disks and the Trash on the desktop, and from Quince OS X the Dock, in
+  the looks of their days, with their own wallpapers, icons and pointers. They run on the kernels quince_classic and
+  wallace (`uname` says Wallace), format their disks as HFS, HFS+, HFS+ journaled and APFS, and Disk Utility's First
+  Aid prints what fsck_hfs does. Help is the Help Center, and the Help Viewer from Quince OS X, and opens on The
+  Daemon Handbook, which gains a chapter on Quince's systems; the classic systems have no command line.
+- Quince's classic systems open each program in a block of memory of its own, as its Get Info sets it:
+  in its preferred size while that much is free, in what is left above its minimum otherwise, and not at all below
+  it. About This Computer shows each program's block and how much of it is in use.
+- Quince OS X and quinceOS out of memory end nothing themselves: the programs pause and Force Quit
+  Applications asks which to quit, and they go on once there is room; only with nothing left to quit does the
+  system go down.
+- Quince's crash pages: the bomb of the classic systems, with its error's number and, on Quince OS 9,
+  the program that was running, and the grey page of the later ones asking you to restart in four languages. Both
+  stand until the player presses Restart or a key.
+- Quince's programs: Preview, qTunes (the machine's music, the same player every music program on it
+  shares), Expedition (a browser, waiting for a web the world has yet to build), the Quince Store (the programs the
+  network's Mirror serves, free, from the Standard) and, on Quince OS X Server, Server Admin, which starts and stops
+  the Mainframe's Mirror and Automation Engine. From the Standard, `keg` installs the Mirror's programs at the
+  Terminal.
+- A program's source started on a computer is built for the computer's own processor, so it runs on a
+  PowerPC or a 68k as it does on the x86 line.
 - A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the

@@ -109,7 +109,8 @@ public final class TaskManagerApp implements IDesktopApp {
             return Form.LUNA;
         }
         return switch (desktop.panelStyle()) {
-            case FRAMES_95 -> Form.CLOSE_BOX;
+            // Quince's Force Quit is the same short list with one button to end what is chosen.
+            case FRAMES_95, QUINCE_CLASSIC, QUINCE_X -> Form.CLOSE_BOX;
             // Frames 10's Task Manager was already the one 11 kept, with its graphs; 7's was still XP's tabs.
             case FRAMES_10, FRAMES_11 -> Form.MODERN;
             case KDE -> Form.PLASMA;

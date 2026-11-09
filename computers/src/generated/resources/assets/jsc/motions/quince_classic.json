@@ -1,0 +1,23 @@
+{
+  "caret_blink": {
+    "duration": 533,
+    "easing": "linear",
+    "steady": 1.0,
+    "style": "blink"
+  },
+  "window_minimize": {
+    "duration": 160,
+    "easing": "steps(8)",
+    "group": "animations",
+    "out": 1.0,
+    "style": "outline",
+    "trail": 0.0
+  },
+  "window_restore": {
+    "duration": 160,
+    "easing": "steps(8)",
+    "group": "animations",
+    "style": "outline",
+    "trail": 0.0
+  }
+}

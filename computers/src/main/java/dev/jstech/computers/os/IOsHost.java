@@ -340,6 +340,15 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     }
 
     /**
+     * The id of the instruction set of this machine's processor, which Quince's systems name their architecture after;
+     * empty for a machine that cannot say what it is built of.
+     */
+    default String processorIsa() {
+        final ComputerBuild build = this.currentBuild();
+        return build == null || build.cpus().isEmpty() ? "" : build.cpus().getFirst().isa().id();
+    }
+
+    /**
      * How many bits wide this machine's processor is, which is what a system names its architecture from. A
      * machine that cannot say what it is built of is taken for one of today's.
      */
@@ -482,6 +491,10 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     default void endService(final ResourceLocation service) {
     }
 
+    /** Starts that service again after it was ended in this run, as Server Admin's Start does. */
+    default void startService(final ResourceLocation service) {
+    }
+
     /**
      * Brings the running system down on its crash page for {@code cause}: everything it was running dies where it
      * stands, and whoever is watching is shown the page.
@@ -507,6 +520,18 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     /** Whether this machine's system ends programs for their memory, and so lets every window open first. */
     default boolean killsForMemory() {
         return false;
+    }
+
+    /**
+     * Whether this machine's system has paused what it runs to ask the player what to force quit, as Quince's later
+     * systems do when the memory runs out.
+     */
+    default boolean askingForMemory() {
+        return false;
+    }
+
+    /** The player chose what to force quit from the system's question of its memory, by the tokens it gave them. */
+    default void forceQuit(final List<String> tokens) {
     }
 
     /**

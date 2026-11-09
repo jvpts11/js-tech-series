@@ -15,6 +15,7 @@ import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.operation.payload.NetworkServicesPayload;
 import dev.jstech.computers.operation.payload.network.NetworkServicesPayloads;
 import dev.jstech.computers.program.IqlEngine;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.network.SubframeNode;
@@ -177,6 +178,21 @@ public final class NetworkServicesGameTests {
                     mainframe.loadWithComponents(saved, helper.getLevel().registryAccess());
                     helper.assertValueEqual(mainframe.engineReplacement(), before,
                             "the replacement under way is written down with the Mainframe");
+                })
+                .thenSucceed();
+    }
+
+    /** A service its administrator stopped, as Server Admin stops one, runs again once they start it. */
+    @GameTest(template = ARENA)
+    public static void startService_bringsBackAServiceTheAdministratorStopped(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = storageNetwork(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    mainframe.installMirror();
+                    mainframe.endService(Programs.MIRROR);
+                    helper.assertTrue(mainframe.serviceEnded(Programs.MIRROR), "the Mirror is stopped");
+                    mainframe.startService(Programs.MIRROR);
+                    helper.assertTrue(!mainframe.serviceEnded(Programs.MIRROR), "and runs again once started");
                 })
                 .thenSucceed();
     }

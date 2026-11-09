@@ -80,9 +80,18 @@ public final class ProgramClient {
     private static void registerBuiltins() {
         // Built-in Frames apps.
         register(rl("network"), (host, mon, os) -> new NetworkInteractorApp(host, mon));
-        register(rl("this_pc"), (host, mon, os) -> new ThisPcApp(host, os));
+        // Quince calls it About This Computer, and it is its own window: the memory, or the machine in brief.
+        register(rl("this_pc"), (host, mon, os) -> QuinceLook.of(os, null) != null ? new QuinceAboutApp(host, os)
+                : new ThisPcApp(host, os));
         // CDE's settings are its Style Manager, which the approved desktop keeps to what CDE itself offered.
-        register(rl("settings"), (host, mon, os) -> onCde(os) ? new StyleManagerApp() : new SettingsApp(host, mon));
+        register(rl("settings"), (host, mon, os) -> onCde(os) ? new StyleManagerApp()
+                : quinceX(os) ? new QuincePreferencesApp(host, os) : new SettingsApp(host, mon));
+        // Quince's own programs (computers/docs/design/quince.md).
+        register(rl("preview"), (host, mon, os) -> new PreviewApp(host));
+        register(rl("qtunes"), (host, mon, os) -> new QTunesApp(host));
+        register(rl("expedition"), (host, mon, os) -> new ExpeditionApp());
+        register(rl("quince_store"), (host, mon, os) -> new QuinceStoreApp(host, os));
+        register(rl("server_admin"), (host, mon, os) -> new ServerAdminApp(host, os));
         register(rl("workstation_info"), (host, mon, os) -> new WorkstationInfoApp(host));
         // Its Devices dialog, which Devices... opens and which comes back with the session.
         register(rl("workstation_info/devices"), (host, mon, os) -> new WorkstationDevicesApp(host));
@@ -141,6 +150,12 @@ public final class ProgramClient {
     }
 
     /** Whether a program is being opened on CDE, whatever system CDE stands on. */
+    /** Whether that desktop is one of Quince's from Quince OS X on, whose settings are its System Preferences. */
+    private static boolean quinceX(final ResourceLocation desktopId) {
+        final DesktopEnvironmentDef desktop = desktopId == null ? null : OsRegistry.getDesktop(desktopId);
+        return desktop != null && desktop.panelStyle() == PanelStyle.QUINCE_X;
+    }
+
     private static boolean onCde(final ResourceLocation desktopId) {
         final DesktopEnvironmentDef desktop = desktopId == null ? null : OsRegistry.getDesktop(desktopId);
         return desktop != null && desktop.panelStyle() == PanelStyle.CDE;

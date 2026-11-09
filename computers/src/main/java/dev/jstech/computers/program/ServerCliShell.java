@@ -292,6 +292,11 @@ abstract class ServerCliShell implements ICliComputer {
     }
 
     @Override
+    public String processorIsa() {
+        return hostBlock instanceof IOsHost computer ? computer.processorIsa() : "";
+    }
+
+    @Override
     public void requestFirmwareReboot() {
         this.firmwareReboot = true;
     }
@@ -328,7 +333,7 @@ abstract class ServerCliShell implements ICliComputer {
                 os.id().getPath(),
                 os.displayName(),
                 shellFamily() == ShellFamily.POSIX
-                        ? KernelNames.kernel(os.platform(), computer.processorBits())
+                        ? KernelNames.kernel(os.platform(), computer.processorBits(), computer.processorIsa())
                         : os.platform() == Platform.FRAMES ? KernelNames.frames(os.familyRank())
                         : "JSC " + os.id().getPath(),
                 hostname(),

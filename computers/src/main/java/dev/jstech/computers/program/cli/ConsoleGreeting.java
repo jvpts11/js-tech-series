@@ -14,7 +14,10 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * What a Unix console says when somebody sits down at it: the line the terminal names itself with, the login,
@@ -66,6 +69,7 @@ public final class ConsoleGreeting {
     private static final TextKey TAB_TWICE = TextKey.of("jsc.cli.greeting.tab_twice", ", twice");
     private static final TextKey FREEBSD_TIP =
             TextKey.of("jsc.cli.greeting.freebsd_tip", "Tip: pkg info lists every package installed here.");
+    private static final TextKey LAST_LOGIN = TextKey.of("jsc.cli.greeting.last_login", "Last login: %s on %s");
 
     private ConsoleGreeting() {
     }
@@ -81,6 +85,9 @@ public final class ConsoleGreeting {
         if (console.platform() == Platform.UNIX) {
             return systemV(console);
         }
+        if (console.platform() == Platform.QUINCE) {
+            return quince();
+        }
         return console.platform() == Platform.FREEBSD ? freeBsd(console) : linux(console);
     }
 
@@ -92,6 +99,16 @@ public final class ConsoleGreeting {
                 CliLine.of(new CliSpan(HELP_BEFORE.text(), CliStyle.PLAIN), new CliSpan("help", CliStyle.CYAN),
                         new CliSpan(HELP_AFTER.text(), CliStyle.PLAIN)),
                 CliLine.plain(""));
+    }
+
+    /**
+     * Quince's Terminal says nothing but when the player last logged in and on which terminal, then gives the prompt:
+     * the player is logged in already, by the desktop.
+     */
+    private static List<CliLine> quince() {
+        final String when = LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss",
+                Locale.ENGLISH));
+        return List.of(CliLine.plain(LAST_LOGIN.with(when, KernelNames.terminal(Platform.QUINCE))));
     }
 
     /** An installer medium: its own banner, and root already logged in, as such a medium comes up. */
@@ -111,7 +128,7 @@ public final class ConsoleGreeting {
                 CliLine.plain(""),
                 CliLine.plain(LOGIN_AS.with(console.hostname(), PLAYER)),
                 CliLine.plain(PASSWORD.text()),
-                new CliLine(WELCOME.with(console.osLabel(), KernelNames.kernel(Platform.LINUX, console.bits())),
+                new CliLine(WELCOME.with(console.osLabel(), KernelNames.kernel(Platform.LINUX, console.bits(), "")),
                         CliStyle.DIM),
                 CliLine.plain(""));
     }

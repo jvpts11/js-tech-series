@@ -83,7 +83,8 @@ public final class TrashPayloads {
         final KernelDef kernel = OsRegistry.getKernel(os.kernelId());
         final boolean unix = kernel != null && kernel.shellFamily() == ShellFamily.POSIX;
         final boolean cde = desktop != null && desktop.panelStyle() == PanelStyle.CDE;
-        return TrashFolder.of(TrashKind.of(unix, cde), unix ? UnixTree.of(os.platform()).homePath() : "");
+        return TrashFolder.of(TrashKind.of(unix, cde), unix ? UnixTree.of(os.platform(), os.familyRank()).homePath()
+                : "");
     }
 
     private static void handleTrashFile(final TrashFilePayload payload, final ServerPlayer player,

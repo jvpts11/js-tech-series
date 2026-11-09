@@ -20,6 +20,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.MachineMedia;
+import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
@@ -66,13 +67,17 @@ public final class OsInstallRunner {
             return;
         }
         final OsDef system = OsRegistry.getOs(ResourceLocation.tryParse(job.osId()));
-        if (mediumGone(machine, level, job)) {
+        final InstallerFlow flow = machine.installer();
+        if (flow != null && flow.page() == InstallerPage.INSERT) {
+            waitForDisk(machine, level, pos, job, flow);
+            return;
+        }
+        if (mediumGone(machine, level, job, flow)) {
             machine.setInstalling(null);
             machine.setInstaller(null);
             tell(level, machine, pos, job, system, MEDIUM_TAKEN_OUT.text());
             return;
         }
-        final InstallerFlow flow = machine.installer();
         if (flow != null && !carry(machine, level, pos, job, flow)) {
             return;
         }
@@ -192,14 +197,40 @@ public final class OsInstallRunner {
         }
     }
 
-    /** Whether what was being read has left the drive it was in. */
-    private static boolean mediumGone(final IOsHost machine, final ServerLevel level, final OsInstallJob job) {
+    /**
+     * Whether what was being read has left the drive it was in: taken out, or swapped for another of the system's
+     * disks than the one the copy is reading.
+     */
+    private static boolean mediumGone(final IOsHost machine, final ServerLevel level, final OsInstallJob job,
+                                      @Nullable final InstallerFlow flow) {
         if (!job.hasReader()) {
             return false;
         }
         final IMediaDrive drive = MachineMedia.of(machine, level).find(job.volume());
         return drive == null || !drive.installs(MediaKind.OS_INSTALL)
-                || !drive.payload().toString().equals(job.osId());
+                || !drive.payload().toString().equals(job.osId())
+                || flow != null && MediaItem.part(drive.medium()) != flow.disk();
+    }
+
+    /**
+     * A page asking for the next disk: the one already read is put out of the slot to whoever is at the machine, and
+     * the copy goes on once the disk asked for is in. With nobody there the disk waits in the drive for a hand.
+     */
+    private static void waitForDisk(final IOsHost machine, final ServerLevel level, final BlockPos pos,
+                                     final OsInstallJob job, final InstallerFlow flow) {
+        final IMediaDrive drive = MachineMedia.of(machine, level).find(job.volume());
+        if (drive == null || !drive.installs(MediaKind.OS_INSTALL)
+                || !drive.payload().toString().equals(job.osId())) {
+            return;
+        }
+        final int part = MediaItem.part(drive.medium());
+        if (part == flow.disk()) {
+            flow.diskInserted();
+            machine.markUnsaved();
+            show(level, machine, pos, flow);
+        } else if (part < flow.disk()) {
+            ScreenSessions.firstWatcher(level, pos).ifPresent(player -> drive.eject(level, player));
+        }
     }
 
     /** Puts every player watching this machine on the installer's page, wherever it has got to. */

@@ -313,6 +313,10 @@ final class DesktopInput {
         if (desktop.power().click(x, y)) {
             return true;
         }
+        // A menu down from Quince's bar takes the next click wherever it lands.
+        if (desktop.quince() && desktop.quinceShell().menuOpen()) {
+            return desktop.quinceShell().click(x, y, button, view.width(), view.height());
+        }
         // The volume control takes the next click like a menu: on it, it turns what it lands on; anywhere else it goes.
         final VolumePopup volume = desktop.volume();
         if (volume.isOpen()) {
@@ -369,6 +373,10 @@ final class DesktopInput {
         // Plasma's copy notification over the panel: its pause button and its cross, and nothing under it.
         if (desktop.copies().click(mouseX, mouseY)) {
             return true;
+        }
+        // Quince's bar and Dock are its whole panel: a click anywhere else goes on to the windows and the desktop.
+        if (desktop.quince()) {
+            return desktop.quinceShell().click(mouseX, mouseY, button, view.width(), view.height());
         }
         // The panel's menu takes the next click wherever it lands: on an entry it runs it, anywhere else it closes.
         final PanelMenu panelMenu = desktop.panelMenu();

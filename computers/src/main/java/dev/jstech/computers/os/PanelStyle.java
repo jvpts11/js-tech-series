@@ -49,7 +49,20 @@ public enum PanelStyle {
      * all (a minimised window is an icon on its workspace), and the applications found through a manager that
      * opens like a folder (CDE).
      */
-    CDE(true);
+    CDE(true),
+
+    /**
+     * Quince's classic menu bar across the top, with the fruit's menu at its left and no list of what is open but the
+     * application menu at its right on Quince OS 9; the disks and the Trash lie on the desktop (the Quince System and
+     * Quince OS 9).
+     */
+    QUINCE_CLASSIC(true),
+
+    /**
+     * Quince's menu bar over a Dock at the bottom centre that holds the system's programs, what is open, and the
+     * Trash at its end (Quince OS X, its Server, and quinceOS).
+     */
+    QUINCE_X(true);
 
     /**
      * Whether the desktop stands on a system of a Unix family. Every style says so for itself, so that a

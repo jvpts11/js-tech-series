@@ -74,7 +74,8 @@ final class DesktopPainter {
         final int oy = view.top();
         desktop.taskPopup().update(lmx, lmy, sw, sh - view.panelBand());
         // The monitor's frame wraps the glass, and the desktop draws inside it in its own coordinates and scale.
-        MonitorFrame.renderBody(g, ox, oy, view.glassWidth(), view.glassHeight(), prefs.era(), desktop.textFont());
+        MonitorFrame.renderBody(g, ox, oy, view.glassWidth(), view.glassHeight(), prefs.era(), desktop.textFont(),
+                desktop.monitorPos());
         g.pose().pushPose();
         g.pose().translate(ox, oy, 0);
         g.pose().scale((float) view.scale(), (float) view.scale(), 1);
@@ -145,7 +146,7 @@ final class DesktopPainter {
         if (!PixWallpaper.paint(g, sw, sh)) {
             WallpaperPainter.paint(g, sw, sh, desktop.desktopId(), desktop.platform(), prefs.wallpaper(),
                     prefs.darkMode() && (desktop.panelStyle() == PanelStyle.FRAMES_11
-                            || desktop.panelStyle() == PanelStyle.FRAMES_10));
+                            || desktop.panelStyle() == PanelStyle.FRAMES_10), prefs.era());
         }
     }
 
@@ -269,6 +270,9 @@ final class DesktopPainter {
         if (style == PanelStyle.CDE) {
             // CDE has no bar at all: a slab of controls at the bottom centre, in its palette's relief.
             desktop.cdePanels().render(g, sw, sh, desktop.prefs().cdePalette());
+        } else if (desktop.quince()) {
+            // Quince's menu bar along the top, and from Quince OS X the Dock along the foot.
+            desktop.quinceShell().render(g, sw, sh, lmx, lmy);
         } else if (style == PanelStyle.FRAMES_11) {
             desktop.framesPanels().renderModern(g, tbY, sw, lmx, lmy);
         } else if (style == PanelStyle.FRAMES_7) {
@@ -334,6 +338,13 @@ final class DesktopPainter {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.MENU);
             desktop.cdePanels().renderTip(g, view.width(), view.height(), prefs.cdePalette());
+            g.pose().popPose();
+        }
+        // A menu pulled down from Quince's bar stands over every window.
+        if (desktop.quince() && desktop.quinceShell().menuOpen()) {
+            g.pose().pushPose();
+            g.pose().translate(0, 0, DesktopZ.MENU);
+            desktop.quinceShell().renderMenu(g, lmx, lmy);
             g.pose().popPose();
         }
         final VolumePopup volume = desktop.volume();

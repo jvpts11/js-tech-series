@@ -61,6 +61,7 @@ public class FormattedMediaItem extends MediaItem {
     private static final TextKey OS_HINT = TextKey.of("jsc.media.formatted_media_item.os_hint",
             "%s, then install from the firmware or This PC.");
     private static final TextKey BLANK = TextKey.of("jsc.media.formatted_media_item.blank", "blank · no files");
+    private static final TextKey DISK_OF = TextKey.of("jsc.media.formatted_media_item.disk_of", "%s · disk %s of %s");
     private static final TextKey SERVICE_DISC = TextKey.of("jsc.media.formatted_media_item.service_disc",
             "Service disc");
     private static final TextKey PROGRAM_DISC = TextKey.of("jsc.media.formatted_media_item.program_disc",
@@ -113,7 +114,10 @@ public class FormattedMediaItem extends MediaItem {
         }
 
         switch (MediaItem.kind(stack)) {
-            case OS_INSTALL -> appendOsInstallerLines(MediaItem.payload(stack), tooltip);
+            case OS_INSTALL -> {
+                appendOsInstallerLines(MediaItem.payload(stack), tooltip);
+                appendDiskLine(stack, tooltip);
+            }
             case PROGRAM_INSTALL -> appendProgramInstallerLines(MediaItem.payload(stack), tooltip);
             case DATA -> appendDataLines(MediaItem.data(stack), tooltip);
         }
@@ -140,6 +144,21 @@ public class FormattedMediaItem extends MediaItem {
         tooltip.add(GameText.component(PACKAGE.with(payload.getPath())).withStyle(ChatFormatting.GOLD));
         tooltip.add(GameText.component(OS_HINT.with(insertHint(format)))
                 .withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC));
+    }
+
+    /** Which of its system's disks this one is, by the name on its label, for a system that comes on several. */
+    private static void appendDiskLine(final ItemStack stack, final List<Component> tooltip) {
+        final ResourceLocation payload = MediaItem.payload(stack);
+        final OsDef os = payload == null ? null : OsRegistry.getOs(payload);
+        if (os == null) {
+            return;
+        }
+        final List<Text> disks = os.installerStyle().disks();
+        final int part = MediaItem.part(stack);
+        if (disks.size() > 1 && part <= disks.size()) {
+            tooltip.add(GameText.component(DISK_OF.with(disks.get(part - 1), part, disks.size()))
+                    .withStyle(ChatFormatting.YELLOW));
+        }
     }
 
     private void appendProgramInstallerLines(@Nullable final ResourceLocation payload,

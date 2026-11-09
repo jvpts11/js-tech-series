@@ -72,8 +72,15 @@ public final class DesktopLayout {
         return Map.copyOf(this.iconCells);
     }
 
-    /** Pins a desktop icon ({@code key}) to a packed grid cell, replacing any previous position for it. */
+    /**
+     * Pins a desktop icon ({@code key}) to a packed grid cell, replacing any previous position for it; a cell below
+     * nought lets it go back into the flow, as a Clean Up does.
+     */
     public void setIconCell(final String key, final int packedCell) {
+        if (packedCell < 0) {
+            clearIconCell(key);
+            return;
+        }
         if (key != null && !key.isEmpty()
                 && (this.iconCells.containsKey(key) || this.iconCells.size() < MOST_ICON_CELLS)) {
             this.iconCells.put(key, packedCell);

@@ -8,8 +8,10 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.os.Platform;
+import dev.jstech.core.jstechseries.tier.Era;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Hangs a desktop's wallpaper: the one the player chose, or the one the desktop ships with. Which pictures there
@@ -32,8 +34,14 @@ final class WallpaperPainter {
      * @param choice    the player's chosen style id, or empty for the desktop's own
      */
     static WallpaperStyle styleFor(final ResourceLocation desktopId, final Platform platform, final String choice) {
+        return styleFor(desktopId, platform, choice, null);
+    }
+
+    /** The same on hardware of {@code era}, where a desktop that wore an earlier face hangs that face's picture. */
+    static WallpaperStyle styleFor(final ResourceLocation desktopId, final Platform platform, final String choice,
+                                   @Nullable final Era era) {
         final WallpaperStyle chosen = WallpaperStyle.byId(choice);
-        return chosen != null ? chosen : DesktopLook.of(desktopId).wallpaperOn(platform);
+        return chosen != null ? chosen : DesktopLook.of(desktopId).wallpaperOn(platform, era);
     }
 
     /**
@@ -43,7 +51,7 @@ final class WallpaperPainter {
      * @param dark whether the desktop is set to its dark theme
      */
     static void paint(final GuiGraphics g, final int w, final int h, final ResourceLocation desktopId,
-                      final Platform platform, final String choice, final boolean dark) {
-        styleFor(desktopId, platform, choice).paint(g, w, h, dark);
+                      final Platform platform, final String choice, final boolean dark, @Nullable final Era era) {
+        styleFor(desktopId, platform, choice, era).paint(g, w, h, dark);
     }
 }

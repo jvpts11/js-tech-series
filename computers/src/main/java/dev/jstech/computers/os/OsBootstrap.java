@@ -7,8 +7,11 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.hardware.IsaTranslators;
+import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.text.TextKey;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -91,7 +94,16 @@ public final class OsBootstrap {
              * System V's kernel: the one here that ran several programs at once on a machine of the first age,
              * and the oldest thing in this list that a Unix prompt is met on.
              */
-            new KernelDef(rl("unix"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX));
+            new KernelDef(rl("unix"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX),
+            /*
+             * Quince's classic kernel: each program hands the machine to the next when it is done with it, and there
+             * is no command line at all, so it always comes up at its desktop. Its folders hang from one root, which
+             * is all its shell family says, since nothing is ever typed at it.
+             */
+            new KernelDef(rl("quince_classic"), SchedulerKind.COOPERATIVE, FilesystemKind.HIERARCHICAL,
+                    ShellFamily.POSIX),
+            // Wallace, Quince's kernel from Quince OS X on: preemptive, and POSIX under the desktop, with zsh.
+            new KernelDef(rl("wallace"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX));
 
     /**
      * The built-in operating systems, in install order. A static list (built eagerly) so datagen (lang and the
@@ -176,7 +188,34 @@ public final class OsBootstrap {
             OsDef.terminalSystem(rl("unix"), rl("unix"), Platform.UNIX, HardwareEra.VINTAGE, 10,
                     "UNIX System V", ShellKind.SH, PackageManagerKind.NONE, InstallMode.GUIDED,
                     SoftwareHouse.BELLWETHER_LABS)
-                    .withRam(2).withInstaller(InstallerStyle.SYSTEM_V)
+                    .withRam(2).withInstaller(InstallerStyle.SYSTEM_V),
+            /*
+             * Quince's systems (computers/docs/design/quince.md), each bundling its own desktop under its own id and
+             * built for the processors of its machines alone. They are one family with an order, so a program can ask
+             * for one no older than another. The classic two take their programs from media only; Quince OS X and
+             * what came after it brew them from the Mirror with keg from the Standard on, and carry Champollion
+             * across the switch of processors. The shell of the classic two is never met: they have no prompt.
+             */
+            OsDef.desktopSystem(rl("quince_system"), rl("quince_classic"), Platform.QUINCE, HardwareEra.VINTAGE, 1,
+                            "Quince System", ShellKind.SH, PackageManagerKind.NONE, SoftwareHouse.QUINCE)
+                    .withRam(1).withInstaller(InstallerStyle.QUINCE_SYSTEM).withRank(QuinceFamily.QUINCE_SYSTEM)
+                    .withIsas(Isas.M68K),
+            OsDef.desktopSystem(rl("quince_os_9"), rl("quince_classic"), Platform.QUINCE, HardwareEra.LEGACY, 400,
+                            "Quince OS 9", ShellKind.SH, PackageManagerKind.NONE, SoftwareHouse.QUINCE)
+                    .withRam(32).withInstaller(InstallerStyle.QUINCE_OS_9).withRank(QuinceFamily.OS_9)
+                    .withIsas(Isas.POWERPC),
+            OsDef.desktopSystem(rl("quince_os_x"), rl("wallace"), Platform.QUINCE, HardwareEra.LEGACY, 2_048,
+                            "Quince OS X", ShellKind.ZSH, PackageManagerKind.KEG, SoftwareHouse.QUINCE)
+                    .withRam(128).withInstaller(InstallerStyle.QUINCE_OS_X).withRank(QuinceFamily.OS_X)
+                    .withIsas(Isas.POWERPC, Isas.X86_64).withTranslators(IsaTranslators.CHAMPOLLION),
+            OsDef.desktopSystem(rl("quince_os_x_server"), rl("wallace"), Platform.QUINCE, HardwareEra.TRANSITION,
+                            4_096, "Quince OS X Server", ShellKind.ZSH, PackageManagerKind.KEG, SoftwareHouse.QUINCE)
+                    .withRam(256).withInstaller(InstallerStyle.QUINCE_OS_X).withRank(QuinceFamily.OS_X)
+                    .withIsas(Isas.X86_64, Isas.ARM64).withTranslators(IsaTranslators.CHAMPOLLION_2),
+            OsDef.desktopSystem(rl("quinceos"), rl("wallace"), Platform.QUINCE, HardwareEra.ADVANCED, 16_384,
+                            "quinceOS", ShellKind.ZSH, PackageManagerKind.KEG, SoftwareHouse.QUINCE)
+                    .withRam(4_096).withInstaller(InstallerStyle.QUINCE_OS_X).withRank(QuinceFamily.QUINCE_OS)
+                    .withIsas(Isas.ARM64).withTranslators(IsaTranslators.CHAMPOLLION_2)
             /*
              * OS case (c): PDA/Tablet/Smartphone portables ship with a factory mobile OS. Those item/block
              * types do not exist yet; register the mobile OS here once they do.
@@ -210,12 +249,13 @@ public final class OsBootstrap {
      * Frames they arrive on install media; on Linux the same programs are packages the Mirror serves.
      */
     private static final Set<Platform> DESKTOPS =
-            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
+            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.UNIX, Platform.QUINCE);
     /**
      * The same without UNIX, for the few desktop programs written for machines later than any UNIX desktop
      * reaches: the automation front-end, which asks for the newest Frames, and the two later code editors.
      */
-    private static final Set<Platform> LATER_DESKTOPS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
+    private static final Set<Platform> LATER_DESKTOPS =
+            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.QUINCE);
     private static final Set<Platform> LINUX_ONLY = Set.of(Platform.LINUX);
     /**
      * Where CDE runs: on UNIX, which has no other desktop, and on FreeBSD and the Linux distributions beside the
@@ -235,7 +275,12 @@ public final class OsBootstrap {
      * GNOME or Cinnamon is on it (the desktop that bundles it). Not UNIX, whose only desktop is CDE and whose
      * own answer to the question is Workstation Info.
      */
-    private static final Set<Platform> THIS_PC_SYSTEMS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD);
+    private static final Set<Platform> THIS_PC_SYSTEMS =
+            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.QUINCE);
+    /** Where the disk tool that repairs runs: the Frames' Defrag, and Quince's Disk First Aid and Disk Utility. */
+    private static final Set<Platform> FRAMES_AND_QUINCE = Set.of(Platform.FRAMES, Platform.QUINCE);
+    /** What only Quince's own systems run: its viewer, its music, its browser, its store and its server tool. */
+    private static final Set<Platform> QUINCE_ONLY = Set.of(Platform.QUINCE);
 
     /** The ten built-in desktop apps every desktop environment can bundle, in rail order. */
     private static final List<ResourceLocation> BUILTIN_APPS = List.of(
@@ -256,6 +301,51 @@ public final class OsBootstrap {
             rl("network"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("workstation_info"),
             rl("help_viewer"));
+
+    /**
+     * What the Quince System bundles: the Seeker, TextPad, the Calculator, its Control Panels, its About box and the
+     * Help Center every desktop reads the manuals in.
+     */
+    private static final List<ResourceLocation> QUINCE_SYSTEM_APPS = List.of(
+            rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("calculator"),
+            rl("help_viewer"));
+
+    /** What Quince OS 9 bundles: the same, qTunes, Expedition and Disk First Aid. */
+    private static final List<ResourceLocation> QUINCE_OS_9_APPS = List.of(
+            rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("calculator"),
+            rl("qtunes"), rl("expedition"), rl("help_viewer"), rl("defrag"));
+
+    /**
+     * What Quince OS X and quinceOS bundle: the same with the Terminal, Activity Monitor, Preview, the Quince Store
+     * (from the Standard on, which the store itself says) and the Mainframe's Network Manager.
+     */
+    private static final List<ResourceLocation> QUINCE_X_APPS = List.of(
+            rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("preview"), rl("qtunes"),
+            rl("expedition"), rl("quince_store"), rl("help_viewer"), rl("defrag"));
+
+    /** What Quince OS X Server bundles: Quince OS X's, and Server Admin for the services it runs. */
+    private static final List<ResourceLocation> QUINCE_SERVER_APPS = List.of(
+            rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("preview"), rl("qtunes"),
+            rl("expedition"), rl("quince_store"), rl("help_viewer"), rl("defrag"), rl("server_admin"));
+
+    private static final Map<ResourceLocation, TextKey> QUINCE_CLASSIC_NAMES = Map.of(
+            rl("files"), DesktopNames.QUINCE_FILES, rl("editor"), DesktopNames.QUINCE_EDITOR,
+            rl("settings"), DesktopNames.QUINCE_CONTROL_PANELS, rl("this_pc"), DesktopNames.QUINCE_ABOUT,
+            rl("help_viewer"), DesktopNames.QUINCE_HELP_CENTER);
+
+    private static final Map<ResourceLocation, TextKey> QUINCE_OS_9_NAMES = Map.of(
+            rl("files"), DesktopNames.QUINCE_FILES, rl("editor"), DesktopNames.QUINCE_EDITOR,
+            rl("settings"), DesktopNames.QUINCE_CONTROL_PANELS, rl("this_pc"), DesktopNames.QUINCE_ABOUT,
+            rl("help_viewer"), DesktopNames.QUINCE_HELP_CENTER, rl("defrag"), DesktopNames.QUINCE_DISK_FIRST_AID);
+
+    private static final Map<ResourceLocation, TextKey> QUINCE_X_NAMES = Map.of(
+            rl("files"), DesktopNames.QUINCE_FILES, rl("editor"), DesktopNames.QUINCE_EDITOR,
+            rl("settings"), DesktopNames.QUINCE_PREFERENCES, rl("command_prompt"), DesktopNames.QUINCE_TERMINAL,
+            rl("this_pc"), DesktopNames.QUINCE_ABOUT, rl("system_monitor"), DesktopNames.QUINCE_MONITOR,
+            rl("task_manager"), DesktopNames.QUINCE_FORCE_QUIT, rl("help_viewer"), DesktopNames.QUINCE_HELP_VIEWER,
+            rl("defrag"), DesktopNames.QUINCE_DISK_UTILITY);
 
     /**
      * The built-in desktop environments. The Frames editions bundle their own (the id equals the OS id, so the
@@ -313,12 +403,32 @@ public final class OsBootstrap {
                     rl("files"), DesktopNames.CDE_FILES, rl("editor"), DesktopNames.CDE_EDITOR,
                     rl("command_prompt"), DesktopNames.CDE_TERMINAL, rl("calculator"), DesktopNames.CDE_CALCULATOR,
                     rl("system_monitor"), DesktopNames.CDE_MONITOR, rl("settings"), DesktopNames.CDE_SETTINGS,
-                    rl("help_viewer"), DesktopNames.CDE_HELP), SoftwareHouse.OPEN_DESK_CONSORTIUM)
+                    rl("help_viewer"), DesktopNames.CDE_HELP), SoftwareHouse.OPEN_DESK_CONSORTIUM),
+            /*
+             * Quince's desktops, one per system under the system's id. Nothing of theirs lies on the desktop but the
+             * disks and the Trash: their programs are opened from the Seeker, the fruit's menu and, from Quince OS X,
+             * the Dock.
+             */
+            quinceDesktop("quince_system", "Quince System", PanelStyle.QUINCE_CLASSIC, QUINCE_SYSTEM_APPS,
+                    QUINCE_CLASSIC_NAMES),
+            quinceDesktop("quince_os_9", "Quince OS 9", PanelStyle.QUINCE_CLASSIC, QUINCE_OS_9_APPS,
+                    QUINCE_OS_9_NAMES),
+            quinceDesktop("quince_os_x", "Quince OS X", PanelStyle.QUINCE_X, QUINCE_X_APPS, QUINCE_X_NAMES),
+            quinceDesktop("quince_os_x_server", "Quince OS X Server", PanelStyle.QUINCE_X, QUINCE_SERVER_APPS,
+                    QUINCE_X_NAMES),
+            quinceDesktop("quinceos", "quinceOS", PanelStyle.QUINCE_X, QUINCE_X_APPS, QUINCE_X_NAMES)
     );
 
     /** The built-in desktop environments, so tooling reads them from one source. */
     public static List<DesktopEnvironmentDef> builtinDesktops() {
         return BUILTIN_DESKTOPS;
+    }
+
+    /** One of Quince's desktops: its own house's, with none of what it bundles lying on the desktop. */
+    private static DesktopEnvironmentDef quinceDesktop(final String id, final String name, final PanelStyle style,
+                                                       final List<ResourceLocation> apps,
+                                                       final Map<ResourceLocation, TextKey> names) {
+        return new DesktopEnvironmentDef(rl(id), name, style, apps, names, SoftwareHouse.QUINCE, Set.copyOf(apps));
     }
 
     private static void registerDesktops() {
@@ -355,11 +465,11 @@ public final class OsBootstrap {
 
     /* What runs on every system, at a terminal as well as on a desktop. */
     private static final Set<Platform> ALL_PLATFORMS = Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES,
-            Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
+            Platform.LINUX, Platform.FREEBSD, Platform.UNIX, Platform.QUINCE);
 
     /** Every system whose prompt is a thing that can be opened, which is every one but the network's. */
     private static final Set<Platform> PROMPT_PLATFORMS = Set.of(Platform.MC_DOS, Platform.FRAMES,
-            Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
+            Platform.LINUX, Platform.FREEBSD, Platform.UNIX, Platform.QUINCE);
 
     /** Where {@code vi} comes bundled: the two systems that have their own, and nowhere else. */
     private static final Set<Platform> FREEBSD_AND_UNIX = Set.of(Platform.FREEBSD, Platform.UNIX);
@@ -451,10 +561,32 @@ public final class OsBootstrap {
              * corrupted items on a disk and mends its bad sectors; MC-DOS has its DEFRAG and the Unix systems fsck at
              * the prompt.
              */
-            ProgramSpec.of(rl("defrag"), "dfrgui", true, FRAMES_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("defrag"), "dfrgui", true, FRAMES_AND_QUINCE, 0, ProgramKind.APP, 0, HostScope.ANY)
                     .named("Disk Defragmenter")
                     .described("Repairs the corrupted items on a disk, gives back what it can and mends a quarter of"
                             + " its bad sectors on every pass."),
+            /*
+             * Quince's own programs, which come with its systems and run on nothing else (computers/docs/design/
+             * quince.md): Preview shows a picture, qTunes plays the machine's songs, Expedition is the browser
+             * waiting for a web, the Quince Store serves the Mirror's programs from the Standard on, and Server Admin
+             * runs the Mainframe's services on Quince OS X Server.
+             */
+            ProgramSpec.of(rl("preview"), "preview", true, QUINCE_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Preview").described("Look at a picture on this computer.")
+                    .withHouse(SoftwareHouse.QUINCE),
+            ProgramSpec.of(rl("qtunes"), "qtunes", true, QUINCE_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("qTunes").described("Play the songs on this computer, and keep them in lists.")
+                    .withHouse(SoftwareHouse.QUINCE),
+            ProgramSpec.of(rl("expedition"), "expedition", true, QUINCE_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Expedition").described("Browse the web, which the world has yet to build.")
+                    .withHouse(SoftwareHouse.QUINCE),
+            ProgramSpec.of(rl("quince_store"), "store", true, QUINCE_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Quince Store").described("Get the programs the network's Mirror serves, all for free.")
+                    .withMinEra(STANDARD).withHouse(SoftwareHouse.QUINCE),
+            ProgramSpec.of(rl("server_admin"), "serveradmin", true, QUINCE_ONLY, 0, ProgramKind.APP, 0,
+                            HostScope.MAINFRAME)
+                    .named("Server Admin").described("Start and stop the services this Mainframe runs.")
+                    .withHouse(SoftwareHouse.QUINCE),
 
             /*
              * Installables. The OS rank only gates the Frames editions (a Linux distribution ranks 0, so any

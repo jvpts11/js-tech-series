@@ -103,7 +103,7 @@ public final class InstallerProjection {
                 // A system declares no line of its own about what it does, so its disc has none to print.
                 Branding.osYear(os.displayName(), os.minEra()), os.house().name(), "",
                 english(MinSpecTooltip.osMinSpecText(os.id())), os.platform().label(), hostLabel(HostScope.ANY),
-                List.of(), KernelNames.bootFiles(os.platform()));
+                List.of(), KernelNames.bootFiles(os.platform(), os.familyRank()));
     }
 
     private static InstallerLayout.Facts programFacts(final ProgramSpec spec) {

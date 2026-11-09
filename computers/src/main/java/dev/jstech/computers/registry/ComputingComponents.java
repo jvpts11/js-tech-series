@@ -135,6 +135,10 @@ public final class ComputingComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceLocation>>
             MEDIA_PAYLOAD = saved("media_payload", ResourceLocation.CODEC, ResourceLocation.STREAM_CODEC);
 
+    // Which disk of a system that comes on several this one is, counting from one; absent on the first or only one.
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>>
+            MEDIA_PART = saved("media_part", Codec.intRange(1, 16), ByteBufCodecs.VAR_INT);
+
     /*
      * Which of the three content kinds this medium carries. Absent component → OS_INSTALL (safe
      * default that keeps legacy blank media behaving as installer media).

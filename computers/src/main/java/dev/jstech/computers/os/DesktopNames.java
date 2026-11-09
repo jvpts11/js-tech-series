@@ -62,6 +62,23 @@ final class DesktopNames {
     static final TextKey CDE_MONITOR = TextKey.of("jsc.desktop.cde.system_monitor", "Performance Meter");
     static final TextKey CDE_SETTINGS = TextKey.of("jsc.desktop.cde.settings", "Style Manager");
 
+    /*
+     * Quince's names, the same on each of its systems where the program is there at all: the Seeker and TextPad on
+     * every one, Control Panels on the classic two and System Preferences from Quince OS X on.
+     */
+    static final TextKey QUINCE_FILES = TextKey.of("jsc.desktop.quince.files", "Seeker");
+    static final TextKey QUINCE_EDITOR = TextKey.of("jsc.desktop.quince.editor", "TextPad");
+    static final TextKey QUINCE_TERMINAL = TextKey.of("jsc.desktop.quince.command_prompt", "Terminal");
+    static final TextKey QUINCE_CONTROL_PANELS = TextKey.of("jsc.desktop.quince.control_panels", "Control Panels");
+    static final TextKey QUINCE_PREFERENCES = TextKey.of("jsc.desktop.quince.settings", "System Preferences");
+    static final TextKey QUINCE_ABOUT = TextKey.of("jsc.desktop.quince.this_pc", "About This Computer");
+    static final TextKey QUINCE_MONITOR = TextKey.of("jsc.desktop.quince.system_monitor", "Activity Monitor");
+    static final TextKey QUINCE_FORCE_QUIT = TextKey.of("jsc.desktop.quince.task_manager", "Force Quit");
+    static final TextKey QUINCE_HELP_CENTER = TextKey.of("jsc.desktop.quince.help_center", "Help Center");
+    static final TextKey QUINCE_HELP_VIEWER = TextKey.of("jsc.desktop.quince.help_viewer", "Help Viewer");
+    static final TextKey QUINCE_DISK_FIRST_AID = TextKey.of("jsc.desktop.quince.disk_first_aid", "Disk First Aid");
+    static final TextKey QUINCE_DISK_UTILITY = TextKey.of("jsc.desktop.quince.defrag", "Disk Utility");
+
     private DesktopNames() {
     }
 }
