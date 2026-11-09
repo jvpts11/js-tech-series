@@ -54,6 +54,15 @@ public final class NetworkEvents {
             "The thermal trip corrupted %s of its disks: the Defrag can try to give it back");
     public static final TextKey DEFRAG_DONE = TextKey.of("jsc.event_log.defrag_done",
             "Defrag of %s: %s corrupted, %s recovered, %s lost; bad sectors %s, now %s");
+    // A Subframe taking a fallen orchestrator's place: who stopped, who took over, the engine, what was lost.
+    public static final TextKey STOPPED_ANSWERING = TextKey.of("jsc.event_log.stopped_answering",
+            "Stopped answering (%s ticks)");
+    public static final TextKey TOOK_OVER = TextKey.of("jsc.event_log.took_over", "Took the network over");
+    public static final TextKey ENGINE_STAYS = TextKey.of("jsc.event_log.engine_stays", "Engine stays %s");
+    public static final TextKey ENGINE_NOW = TextKey.of("jsc.event_log.engine_now", "Engine is now %s");
+    public static final TextKey NO_ENGINE = TextKey.of("jsc.event_log.no_engine", "The network has no engine now");
+    public static final TextKey OPERATIONS_DISCARDED = TextKey.of("jsc.event_log.operations_discarded",
+            "%s of its Operations DISCARDED");
     public static final TextKey ANCHOR_SHORT = TextKey.of("jsc.event_log.anchor_short",
             "The Network Anchor Card keeps %s of its %s chunks loaded: the owner's quota or the server's is full");
     /** What the machine column shows for something of the whole network. */

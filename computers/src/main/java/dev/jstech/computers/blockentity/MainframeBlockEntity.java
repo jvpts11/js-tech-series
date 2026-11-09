@@ -27,6 +27,7 @@ import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.PendingCraftOperation;
 import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.engine.EngineRole;
 import dev.jstech.computers.engine.INetworkEngine;
 import dev.jstech.computers.engine.NetworkOperationsService;
 import dev.jstech.computers.eventlog.NetworkEvents;
@@ -76,6 +77,7 @@ import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.time.GameCalendar;
+import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayDeque;
@@ -1361,6 +1363,41 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         if (networking.failoverEnabled() && level instanceof ServerLevel serverLevel) {
             networking.eraseOwnedNetwork(serverLevel);
         }
+    }
+
+    /** The part this Mainframe's network engine plays: the network's orchestrator, or a Subframe lending to it. */
+    public EngineRole engineRole() {
+        return networking.role();
+    }
+
+    /**
+     * Gives this Mainframe's network engine the part it is to play; false when it plays it already. A Subframe lets go
+     * of what it ran as an orchestrator; an orchestrator on a network that already has one is a network conflict.
+     */
+    public boolean setEngineRole(final EngineRole role) {
+        return networking.setRole(role);
+    }
+
+    /** Who takes this orchestrator's network over should it fall, or null for nobody or off a world. */
+    @Nullable
+    public MainframeBlockEntity successor() {
+        return level instanceof ServerLevel serverLevel ? networking.successor(serverLevel) : null;
+    }
+
+    /** The Mainframe orchestrating this one's network: itself when it does, the one it lends to, or null for none. */
+    @Nullable
+    public MainframeBlockEntity orchestrator() {
+        if (!(level instanceof ServerLevel serverLevel) || networkUuid() == null) {
+            return null;
+        }
+        final NetworkSystem system = NetworkSystem.get(serverLevel);
+        if (system.mainframeOf(networkUuid()).isEmpty()) {
+            return null;
+        }
+        return system.mainframePositionOf(networkUuid())
+                .map(pos -> Loaded.blockEntity(serverLevel, BlockPos.of(pos)) instanceof MainframeBlockEntity found
+                        ? found : null)
+                .orElse(null);
     }
 
     // IComputerTerminalHost: read-only monitoring for the Monitor terminal

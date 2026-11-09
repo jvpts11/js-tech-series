@@ -74,17 +74,33 @@ final class NetworkServicesTexts {
     static final TextKey ROW_STOPPED = TextKey.of("jsc.network_services.row_stopped", "stopped");
     static final TextKey ROW_INSTALLED = TextKey.of("jsc.network_services.row_installed", "installed");
     static final TextKey ROW_STARTING = TextKey.of("jsc.network_services.row_starting", "starting");
-    static final TextKey SUBFRAMES = TextKey.of("jsc.network_services.subframes", "SUBFRAMES");
+    // The role the engine plays, and the Subframes.
+    static final TextKey ROLE_ON = TextKey.of("jsc.network_services.role_on", "Role on %s");
+    static final TextKey ORCHESTRATOR = TextKey.of("jsc.network_services.orchestrator", "Orchestrator");
+    static final TextKey SUBFRAME = TextKey.of("jsc.network_services.subframe", "Subframe");
+    static final TextKey SUBFRAMES_COUNT = TextKey.of("jsc.network_services.subframes_count", "SUBFRAMES - %s");
+    static final TextKey MACHINE_COLUMN = TextKey.of("jsc.network_services.machine_column", "MACHINE");
+    static final TextKey WORK_COLUMN = TextKey.of("jsc.network_services.work_column", "WHAT IT DOES");
     static final TextKey NO_SUBFRAMES =
             TextKey.of("jsc.network_services.no_subframes", "No Subframes on this network.");
     static final TextKey FOLLOWS_MAINFRAME =
             TextKey.of("jsc.network_services.follows_mainframe", "whatever %s runs");
-    static final TextKey MATCHES = TextKey.of("jsc.network_services.matches", "matches");
+    static final TextKey LENDS = TextKey.of("jsc.network_services.lends", "lends %s it/t");
+    static final TextKey LENDS_AND_QUEUE =
+            TextKey.of("jsc.network_services.lends_and_queue", "lends %s it/t and %s queue");
+    static final TextKey LENDS_AND_QUEUES =
+            TextKey.of("jsc.network_services.lends_and_queues", "lends %s it/t and %s queues");
+    static final TextKey RESERVE = TextKey.of("jsc.network_services.reserve", "takes no work: a reserve");
     static final TextKey TAKES_NO_WORK = TextKey.of("jsc.network_services.takes_no_work", "takes no work");
-    static final TextKey MISMATCH_NOTE = TextKey.of("jsc.network_services.mismatch_note",
-            "%s runs another engine than %s: it takes no SubOperations until it runs %s, or %s switches to %s.");
-    static final TextKey MISMATCH_NOTE_NONE = TextKey.of("jsc.network_services.mismatch_note_none",
-            "%s runs %s, and %s runs no engine: it takes no SubOperations until the two run the same one.");
+    static final TextKey SUCCESSION = TextKey.of("jsc.network_services.succession",
+            "If %s falls, %s takes the network over.");
+    static final TextKey NO_SUCCESSOR = TextKey.of("jsc.network_services.no_successor",
+            "If %s falls, nobody takes the network over.");
+    static final TextKey NO_ORCHESTRATOR = TextKey.of("jsc.network_services.no_orchestrator",
+            "No orchestrator runs the network.");
+    /* The prompt's words are typed as they are in every language. */
+    static final TextKey ROLE_HINT = TextKey.of("jsc.network_services.role_hint",
+            "Set the role here or at the prompt: iqlengine role subframe");
     static final TextKey OTHER_SERVICES = TextKey.of("jsc.network_services.other_services", "OTHER SERVICES");
     static final TextKey SERVICE_RUNNING = TextKey.of("jsc.network_services.service_running", "running");
     static final TextKey SERVICE_ABSENT = TextKey.of("jsc.network_services.service_absent", "not installed");

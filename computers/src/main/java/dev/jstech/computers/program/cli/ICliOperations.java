@@ -171,6 +171,14 @@ public interface ICliOperations {
         return ICliComputer.OpResult.fail(Refusals.ENGINE_OFF_NETWORK);
     }
 
+    /**
+     * Gives this machine's network engine the part it plays, {@code orchestrator} or {@code subframe}, or says which
+     * it plays when {@code word} is empty; only a Mainframe's engine plays one.
+     */
+    default ICliComputer.OpResult engineRole(final String word) {
+        return ICliComputer.OpResult.fail(Refusals.ENGINE_OFF_NETWORK);
+    }
+
     /** The services the network exposes (the IQL Engine, and any future service) with their current state. */
     default List<ICliComputer.ServiceStatus> services() {
         return List.of();

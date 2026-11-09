@@ -8,12 +8,15 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.engine.EngineRole;
 import dev.jstech.computers.engine.EngineSwap;
 import dev.jstech.computers.gui.layout.NetworkServicesLayout;
 import dev.jstech.computers.operation.payload.EngineActionPayload;
 import dev.jstech.computers.operation.payload.NetworkServicesPayload;
 import dev.jstech.computers.operation.payload.RequestNetworkServicesPayload;
+import dev.jstech.core.client.GameLocale;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Checkbox;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Grounds;
 import dev.jstech.core.client.gui.component.Popup;
@@ -27,6 +30,7 @@ import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +59,8 @@ final class NetworkServicesView {
     private final Button stop;
     private final Button start;
     private final Button replace;
+    private final Checkbox orchestratorBox;
+    private final Checkbox subframeBox;
     private final Popup chooser;
     private final Options options = new Options();
     private final Button chooserCancel;
@@ -81,6 +87,8 @@ final class NetworkServicesView {
     private int lastW;
     private int lastH;
 
+    /* The side of the role's boxes, the series' dense size. */
+    private static final int ROLE_BOX = 7;
     private static final int REFRESH_FRAMES = 100;
     private static final int REPLACING_REFRESH_FRAMES = 20;
     private static final int CHOOSER_W = 260;
@@ -109,6 +117,11 @@ final class NetworkServicesView {
                 .setPrimary(true));
         replace = body.add(new Button(GameText.resolve(NetworkServicesTexts.REPLACE), () -> openChooser(false))
                 .setPrimary(true));
+        // The part this Mainframe's engine plays, one of the two always ticked; ticking the other changes it.
+        orchestratorBox = body.add(new Checkbox(() -> GameText.resolve(NetworkServicesTexts.ORCHESTRATOR),
+                () -> role() == EngineRole.ORCHESTRATOR, () -> setRole(EngineRole.ORCHESTRATOR)));
+        subframeBox = body.add(new Checkbox(() -> GameText.resolve(NetworkServicesTexts.SUBFRAME),
+                () -> role() == EngineRole.SUBFRAME, () -> setRole(EngineRole.SUBFRAME)));
 
         chooser = new Popup(() -> GameText.resolve(starting ? NetworkServicesTexts.START_TITLE
                 : NetworkServicesTexts.REPLACE_TITLE), CHOOSER_W, 120).setDim(colours().dialogDim())
@@ -255,6 +268,29 @@ final class NetworkServicesView {
             shownButtons.get(i).setBounds(x + xs[i], body.contentY(NetworkServicesLayout.CARD_ACTIONS_Y), widths[i],
                     NetworkServicesLayout.BUTTON_H);
         }
+        final int[] boxWidths = {roleBoxWidth(measure, NetworkServicesTexts.ORCHESTRATOR),
+                roleBoxWidth(measure, NetworkServicesTexts.SUBFRAME)};
+        final int[] boxXs = NetworkServicesLayout.roleBoxesX(contentW, boxWidths);
+        orchestratorBox.setBounds(x + boxXs[0], body.contentY(NetworkServicesLayout.ROLE_Y), boxWidths[0],
+                NetworkServicesLayout.LINE_H);
+        subframeBox.setBounds(x + boxXs[1], body.contentY(NetworkServicesLayout.ROLE_Y), boxWidths[1],
+                NetworkServicesLayout.LINE_H);
+    }
+
+    /* A role's box with its word: the box, the gap before the word, the word, and a little room after. */
+    private static int roleBoxWidth(final Font measure, final TextKey word) {
+        return ROLE_BOX + 4 + measure.width(GameText.resolve(word)) + 2;
+    }
+
+    /** The part this Mainframe's engine plays, as the server last said. */
+    private EngineRole role() {
+        return data == null ? EngineRole.ORCHESTRATOR : EngineRole.byId(data.engine().role());
+    }
+
+    private void setRole(final EngineRole to) {
+        if (data != null && role() != to) {
+            send(EngineActionPayload.ROLE, to.word());
+        }
     }
 
     boolean modalOpen() {
@@ -297,22 +333,8 @@ final class NetworkServicesView {
     }
 
     private NetworkServicesLayout.Sections sections() {
-        return NetworkServicesLayout.sections(data.installed().size(), data.subframes().size(), mismatch() != null,
+        return NetworkServicesLayout.sections(data.installed().size(), data.subframes().size(),
                 data.services().size());
-    }
-
-    /** The first Subframe that takes no work, which the note under the list speaks of; {@code null} when none. */
-    @Nullable
-    private NetworkServicesPayload.SubframeRow mismatch() {
-        if (data == null) {
-            return null;
-        }
-        for (final NetworkServicesPayload.SubframeRow row : data.subframes()) {
-            if (!row.takesWork()) {
-                return row;
-            }
-        }
-        return null;
     }
 
     /** How far the replacement under way has gone, run on from what the server said by the client's own clock. */
@@ -544,6 +566,10 @@ final class NetworkServicesView {
         final int top = sheet.y();
         final int vendorX = x + NetworkServicesLayout.secondColumnX(w);
         final int versionX = x + NetworkServicesLayout.versionX(w);
+        Draw.text(g, f, Texts.clip(f, GameText.resolve(NetworkServicesTexts.ROLE_ON.with(data.engine().host())),
+                        orchestratorBox.x() - x - NetworkServicesLayout.PAD - NetworkServicesLayout.ROLE_BOX_GAP),
+                x + NetworkServicesLayout.PAD, top + NetworkServicesLayout.ROLE_Y + 1, skin.dim());
+        renderSubframes(g, f, x, w, at);
         heading(g, f, x, top + at.installedHeading(),
                 GameText.resolve(NetworkServicesTexts.INSTALLED_ON.with(data.engine().host())));
         final int columnsY = top + at.installedColumns();
@@ -571,37 +597,6 @@ final class NetworkServicesView {
                     top + at.installedRows() + 2, skin.dim());
         }
 
-        heading(g, f, x, top + at.subframesHeading(), GameText.resolve(NetworkServicesTexts.SUBFRAMES));
-        final List<NetworkServicesPayload.SubframeRow> subframes = data.subframes();
-        for (int i = 0; i < subframes.size(); i++) {
-            final NetworkServicesPayload.SubframeRow row = subframes.get(i);
-            final int rowY = top + at.subframeRows() + i * NetworkServicesLayout.ROW_H;
-            if (!row.takesWork()) {
-                Grounds.fill(g, x, rowY, x + w, rowY + NetworkServicesLayout.ROW_H - 1, colours().hotRow());
-            }
-            final int squareX = x + NetworkServicesLayout.PAD;
-            g.fill(squareX, rowY + 3, squareX + NetworkServicesLayout.SQUARE, rowY + 3 + NetworkServicesLayout.SQUARE,
-                    colours().subframe());
-            Draw.text(g, f, row.name(), x + NetworkServicesLayout.NAME_X, rowY + 2, skin.text());
-            final String engine = row.engine().isEmpty()
-                    ? GameText.resolve(NetworkServicesTexts.FOLLOWS_MAINFRAME.with(data.engine().host()))
-                    : row.engine();
-            Draw.text(g, f, Texts.clip(f, engine, w - (vendorX - x) - 70), vendorX, rowY + 2,
-                    row.engine().isEmpty() ? skin.dim() : skin.text());
-            rightText(g, f, GameText.resolve(row.takesWork() ? NetworkServicesTexts.MATCHES
-                    : NetworkServicesTexts.TAKES_NO_WORK), x + w, rowY + 2,
-                    row.takesWork() ? colours().good() : colours().warn());
-            rule(g, x, rowY + NetworkServicesLayout.ROW_H - 1, w);
-        }
-        if (subframes.isEmpty()) {
-            Draw.text(g, f, GameText.resolve(NetworkServicesTexts.NO_SUBFRAMES), x + NetworkServicesLayout.PAD,
-                    top + at.subframeRows() + 2, skin.dim());
-        }
-        final NetworkServicesPayload.SubframeRow odd = mismatch();
-        if (odd != null) {
-            renderMismatchNote(g, f, odd, x, top + at.note(), w);
-        }
-
         heading(g, f, x, top + at.servicesHeading(), GameText.resolve(NetworkServicesTexts.OTHER_SERVICES));
         final List<NetworkServicesPayload.ServiceRow> services = data.services();
         for (int i = 0; i < services.size(); i++) {
@@ -618,24 +613,75 @@ final class NetworkServicesView {
         }
     }
 
-    private void renderMismatchNote(final GuiGraphics g, final Font f, final NetworkServicesPayload.SubframeRow odd,
-                                    final int x, final int y, final int w) {
-        final NetworkServicesPayload.Engine engine = data.engine();
-        final String text = engine.chosen()
-                ? GameText.resolve(NetworkServicesTexts.MISMATCH_NOTE.with(odd.name(), engine.host(), engine.name(),
-                        engine.host(), odd.engine()))
-                : GameText.resolve(NetworkServicesTexts.MISMATCH_NOTE_NONE.with(odd.name(), odd.engine(),
-                        engine.host()));
-        Grounds.fill(g, x, y, x + w, y + NetworkServicesLayout.NOTE_H, colours().noteGround());
-        Draw.outline(g, x, y, w, NetworkServicesLayout.NOTE_H, colours().noteEdge());
-        final List<String> lines = wrap(text, w - 8);
-        final int last = NetworkServicesLayout.NOTE_LINES - 1;
-        for (int i = 0; i < lines.size() && i <= last; i++) {
-            // A note longer than its room ends cut on its last line, with the rest of it marked as cut.
-            final String line = i == last && lines.size() > NetworkServicesLayout.NOTE_LINES
-                    ? Texts.clip(f, lines.get(i) + " " + lines.get(i + 1), w - 8) : lines.get(i);
-            Draw.text(g, f, line, x + 4, y + 3 + i * NetworkServicesLayout.LINE_H, skin.text());
+    /*
+     * The Subframes of the network: the machine, the engine it runs and what it does for the orchestrator; the note on
+     * one kept in reserve; and who takes the network over should the orchestrator fall, and where the role is set.
+     */
+    private void renderSubframes(final GuiGraphics g, final Font f, final int x, final int w,
+                                 final NetworkServicesLayout.Sections at) {
+        final int top = sheet.y();
+        final int engineX = x + NetworkServicesLayout.subframeEngineX(w);
+        final int workX = x + NetworkServicesLayout.subframeWorkX(w);
+        final List<NetworkServicesPayload.SubframeRow> subframes = data.subframes();
+        heading(g, f, x, top + at.subframesHeading(),
+                GameText.resolve(NetworkServicesTexts.SUBFRAMES_COUNT.with(subframes.size())));
+        final int columnsY = top + at.subframeColumns();
+        Draw.text(g, f, GameText.resolve(NetworkServicesTexts.MACHINE_COLUMN), x + NetworkServicesLayout.PAD,
+                columnsY + 2, skin.dim());
+        Draw.text(g, f, GameText.resolve(NetworkServicesTexts.ENGINE_COLUMN), engineX, columnsY + 2, skin.dim());
+        Draw.text(g, f, GameText.resolve(NetworkServicesTexts.WORK_COLUMN), workX, columnsY + 2, skin.dim());
+        g.fill(x, columnsY + NetworkServicesLayout.COLUMNS_H - 1, x + w, columnsY + NetworkServicesLayout.COLUMNS_H,
+                skin.edge());
+        for (int i = 0; i < subframes.size(); i++) {
+            final NetworkServicesPayload.SubframeRow row = subframes.get(i);
+            final int rowY = top + at.subframeRows() + i * NetworkServicesLayout.ROW_H;
+            if (row.work() == NetworkServicesPayload.SUBFRAME_RESERVE) {
+                Grounds.fill(g, x, rowY, x + w, rowY + NetworkServicesLayout.ROW_H - 1, colours().hotRow());
+            }
+            final int squareX = x + NetworkServicesLayout.PAD;
+            g.fill(squareX, rowY + 3, squareX + NetworkServicesLayout.SQUARE, rowY + 3 + NetworkServicesLayout.SQUARE,
+                    row.takesWork() ? colours().good() : colours().warn());
+            Draw.text(g, f, Texts.clip(f, row.name(), engineX - x - NetworkServicesLayout.NAME_X - 4),
+                    x + NetworkServicesLayout.NAME_X, rowY + 2, skin.text());
+            final String engine = row.engine().isEmpty()
+                    ? GameText.resolve(NetworkServicesTexts.FOLLOWS_MAINFRAME.with(data.engine().orchestrator()))
+                    : row.engine();
+            Draw.text(g, f, Texts.clip(f, engine, workX - engineX - 4), engineX, rowY + 2,
+                    row.engine().isEmpty() ? skin.dim() : skin.text());
+            Draw.text(g, f, Texts.clip(f, GameText.resolve(work(row)), x + w - NetworkServicesLayout.PAD - workX),
+                    workX, rowY + 2, row.takesWork() ? colours().good()
+                            : row.work() == NetworkServicesPayload.SUBFRAME_RESERVE ? colours().warn() : skin.dim());
+            rule(g, x, rowY + NetworkServicesLayout.ROW_H - 1, w);
         }
+        if (subframes.isEmpty()) {
+            Draw.text(g, f, GameText.resolve(NetworkServicesTexts.NO_SUBFRAMES), x + NetworkServicesLayout.PAD,
+                    top + at.subframeRows() + 2, skin.dim());
+        }
+        final NetworkServicesPayload.Engine engine = data.engine();
+        final TextKey succession;
+        if (engine.orchestrator().isEmpty()) {
+            succession = NetworkServicesTexts.NO_ORCHESTRATOR;
+        } else {
+            succession = engine.successor().isEmpty() ? NetworkServicesTexts.NO_SUCCESSOR
+                    : NetworkServicesTexts.SUCCESSION;
+        }
+        final String line = GameText.resolve(succession.with(engine.orchestrator(), engine.successor()));
+        final int room = w - 2 * NetworkServicesLayout.PAD;
+        Draw.text(g, f, Texts.clip(f, line, room), x + NetworkServicesLayout.PAD, top + at.succession(), skin.dim());
+        Draw.text(g, f, Texts.clip(f, GameText.resolve(NetworkServicesTexts.ROLE_HINT), room),
+                x + NetworkServicesLayout.PAD, top + at.succession() + NetworkServicesLayout.LINE_H, skin.dim());
+    }
+
+    /* What a Subframe does for the orchestrator: what it lends, or why it takes no work. */
+    private static Text work(final NetworkServicesPayload.SubframeRow row) {
+        return switch (row.work()) {
+            case NetworkServicesPayload.SUBFRAME_LENDS -> row.queues() == 0
+                    ? NetworkServicesTexts.LENDS.with(GameLocale.count(row.lends()))
+                    : (row.queues() == 1 ? NetworkServicesTexts.LENDS_AND_QUEUE : NetworkServicesTexts.LENDS_AND_QUEUES)
+                            .with(GameLocale.count(row.lends()), row.queues());
+            case NetworkServicesPayload.SUBFRAME_RESERVE -> NetworkServicesTexts.RESERVE.text();
+            default -> NetworkServicesTexts.TAKES_NO_WORK.text();
+        };
     }
 
     private void heading(final GuiGraphics g, final Font f, final int x, final int y, final String text) {

@@ -11,6 +11,7 @@ import dev.jstech.computers.advancement.Acting;
 import dev.jstech.computers.block.part.NamedBus;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.engine.EngineRole;
 import dev.jstech.computers.engine.EngineVerb;
 import dev.jstech.computers.engine.NetworkEngines;
 import dev.jstech.computers.operation.INetworkOperation;
@@ -50,6 +51,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -110,6 +112,13 @@ public final class IqlService {
     private static final TextKey ALREADY_STOPPED =
             TextKey.of("jsc.service.iql.already_stopped", "the Midsoft IQL Server is already stopped");
     private static final TextKey STATUS = TextKey.of("jsc.service.iql.status", "Midsoft IQL Server: %s");
+    private static final TextKey ROLE_NOT_MAINFRAME = TextKey.of("jsc.service.iql.role_not_mainframe",
+            "only a Mainframe's engine plays a role on the network");
+    private static final TextKey ROLE_IS = TextKey.of("jsc.service.iql.role_is", "this Mainframe's engine plays %s");
+    private static final TextKey ROLE_SET = TextKey.of("jsc.service.iql.role_set",
+            "this Mainframe's engine now plays %s");
+    private static final TextKey ROLE_ALREADY = TextKey.of("jsc.service.iql.role_already",
+            "this Mainframe's engine already plays %s");
     private static final TextKey STATE_NOT_INSTALLED =
             TextKey.of("jsc.service.iql.state.not_installed", "not installed");
     private static final TextKey STATE_RUNNING = TextKey.of("jsc.service.iql.state.running", "running");
@@ -406,11 +415,38 @@ public final class IqlService {
         };
     }
 
-    /** Whether the network's Mainframe has the Midsoft IQL Server installed. */
+    /**
+     * Whether the network's Mainframe has the Midsoft IQL Server installed, or this machine's own when it is a
+     * Mainframe whose network runs on no other: a Subframe left without an orchestrator still reaches its own engine's
+     * role.
+     */
     public boolean installed() {
-        final MainframeBlockEntity mainframe = this.mainframe();
+        final MainframeBlockEntity network = this.mainframe();
+        final MainframeBlockEntity mainframe = network != null ? network
+                : this.terminal instanceof MainframeBlockEntity self ? self : null;
         return mainframe != null
                 && mainframe.installedEngines().containsKey(NetworkEngines.MIDSOFT_IQL_SERVER.program());
+    }
+
+    /**
+     * Gives this machine's network engine the part it plays, orchestrator or Subframe, or says which it plays when no
+     * part is named; only a Mainframe's engine plays one (computers/docs/design/computers.md).
+     */
+    public ICliComputer.OpResult role(final String word) {
+        if (!(this.terminal instanceof MainframeBlockEntity self)) {
+            return ICliComputer.OpResult.fail(ROLE_NOT_MAINFRAME);
+        }
+        if (word.isEmpty()) {
+            return ICliComputer.OpResult.ok(ROLE_IS.with(self.engineRole().word()));
+        }
+        final Optional<EngineRole> role = EngineRole.byWord(word);
+        if (role.isEmpty()) {
+            // The words are what is typed, so they are written as typed in every language.
+            return ICliComputer.OpResult.fail(CliTexts.USAGE.with(Text.literal("iqlengine role"),
+                    Text.literal("orchestrator|subframe")));
+        }
+        return self.setEngineRole(role.get()) ? ICliComputer.OpResult.ok(ROLE_SET.with(role.get().word()))
+                : ICliComputer.OpResult.fail(ROLE_ALREADY.with(role.get().word()));
     }
 
     /** How the Midsoft IQL Server stands on the network's Mainframe, in the words every view shows. */

@@ -388,9 +388,9 @@ class LayoutAuditTest {
         }
         // The Network Manager's Services tab scrolls, so it is held to being clean at its widest and its narrowest.
         c.add(new AuditCase("NetworkServicesLayout(default)", NetworkServicesLayout.layout(
-                NetworkServicesLayout.DEFAULT_CONTENT_W, 16, 32, true, 2, new int[] {84, 44, 72}, 64), false));
+                NetworkServicesLayout.DEFAULT_CONTENT_W, 16, 32, 2, new int[] {84, 44, 72}, 64), false));
         c.add(new AuditCase("NetworkServicesLayout(narrowest)", NetworkServicesLayout.layout(
-                NetworkServicesLayout.MIN_CONTENT_W, 3, 2, true, 2, new int[] {84, 44, 72}, 64), false));
+                NetworkServicesLayout.MIN_CONTENT_W, 3, 2, 2, new int[] {84, 44, 72}, 64), false));
         c.add(new AuditCase("NetworkLinksLayout(default)", NetworkLinksLayout.devices(
                 NetworkServicesLayout.DEFAULT_W - NetworkServicesLayout.WINDOW_PAD, NetworkServicesLayout.DEFAULT_H - 38,
                 true), false));

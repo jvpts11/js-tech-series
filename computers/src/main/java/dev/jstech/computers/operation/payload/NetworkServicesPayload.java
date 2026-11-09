@@ -61,6 +61,13 @@ public record NetworkServicesPayload(BlockPos hostPos, Engine engine, List<Engin
     /** An installed engine a replacement is bringing up. */
     public static final byte ROW_STARTING = 3;
 
+    /** A Subframe lending the orchestrator its share. */
+    public static final byte SUBFRAME_LENDS = 0;
+    /** A Subframe running another engine than the orchestrator's: no work, a reserve should the orchestrator fall. */
+    public static final byte SUBFRAME_RESERVE = 1;
+    /** A Subframe with no orchestrator to lend to, or whose own engine is stopped. */
+    public static final byte SUBFRAME_IDLE = 2;
+
     /** A service installed and serving. */
     public static final byte SERVICE_RUNNING = 0;
     /** A service that is not installed. */
@@ -114,10 +121,14 @@ public record NetworkServicesPayload(BlockPos hostPos, Engine engine, List<Engin
      * @param upTicks      how long it has been up
      * @param plansToday   how many requests it planned today
      * @param inFlight     how many Operations are in flight on the network
+     * @param role         the part it plays on its Mainframe, by the {@code EngineRole}'s id
+     * @param orchestrator what the network calls its orchestrator, or empty with none
+     * @param successor    what the network calls the one that takes it over should its orchestrator fall, or empty
      */
     public record Engine(String program, String name, String version, String vendor, String host, byte state,
                          String dialect, int memoryMb, List<String> capabilities, int itemTypes, int servers,
-                         long upTicks, int plansToday, int inFlight) {
+                         long upTicks, int plansToday, int inFlight, byte role, String orchestrator,
+                         String successor) {
 
         // Hand-written because the field count is past what StreamCodec.composite overloads accept.
         public static final StreamCodec<RegistryFriendlyByteBuf, Engine> STREAM_CODEC =
@@ -150,6 +161,9 @@ public record NetworkServicesPayload(BlockPos hostPos, Engine engine, List<Engin
             buf.writeVarLong(engine.upTicks);
             buf.writeVarInt(engine.plansToday);
             buf.writeVarInt(engine.inFlight);
+            buf.writeByte(engine.role);
+            buf.writeUtf(engine.orchestrator, MAX_NAME);
+            buf.writeUtf(engine.successor, MAX_NAME);
         }
 
         private static Engine decode(final RegistryFriendlyByteBuf buf) {
@@ -167,7 +181,8 @@ public record NetworkServicesPayload(BlockPos hostPos, Engine engine, List<Engin
                 capabilities.add(buf.readUtf(MAX_NAME));
             }
             return new Engine(program, name, version, vendor, host, state, dialect, memoryMb, capabilities,
-                    buf.readVarInt(), buf.readVarInt(), buf.readVarLong(), buf.readVarInt(), buf.readVarInt());
+                    buf.readVarInt(), buf.readVarInt(), buf.readVarLong(), buf.readVarInt(), buf.readVarInt(),
+                    buf.readByte(), buf.readUtf(MAX_NAME), buf.readUtf(MAX_NAME));
         }
     }
 
@@ -197,16 +212,25 @@ public record NetworkServicesPayload(BlockPos hostPos, Engine engine, List<Engin
      * @param name      the network's name for it
      * @param software  the package of the engine it runs, or empty when it runs whatever its Mainframe runs
      * @param engine    that engine's name and version, or empty with no software of its own
-     * @param takesWork whether it takes the Mainframe's work now
+     * @param work     one of the {@code SUBFRAME_} states: lending, a reserve, or idle
+     * @param lends    the items a tick of capacity it lends the orchestrator now
+     * @param queues   the queues of Operations it lends the orchestrator now
      */
-    public record SubframeRow(String name, String software, String engine, boolean takesWork) {
+    public record SubframeRow(String name, String software, String engine, byte work, long lends, int queues) {
         public static final StreamCodec<RegistryFriendlyByteBuf, SubframeRow> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.stringUtf8(MAX_NAME), SubframeRow::name,
                         ByteBufCodecs.stringUtf8(MAX_NAME * 2), SubframeRow::software,
                         ByteBufCodecs.stringUtf8(MAX_NAME), SubframeRow::engine,
-                        ByteBufCodecs.BOOL, SubframeRow::takesWork,
+                        ByteBufCodecs.BYTE, SubframeRow::work,
+                        ByteBufCodecs.VAR_LONG, SubframeRow::lends,
+                        ByteBufCodecs.VAR_INT, SubframeRow::queues,
                         SubframeRow::new);
+
+        /** Whether it takes the orchestrator's work now. */
+        public boolean takesWork() {
+            return work == SUBFRAME_LENDS;
+        }
     }
 
     /**

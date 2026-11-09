@@ -261,6 +261,11 @@ abstract class ServerCliNetwork extends ServerCliFiles {
     }
 
     @Override
+    public OpResult engineRole(final String word) {
+        return iql().role(word);
+    }
+
+    @Override
     public List<ServiceStatus> services() {
         return packages().mirror().services();
     }

@@ -21,7 +21,7 @@ class NetworkServicesLayoutTest {
 
     @Test
     void layout_isCleanAtTheDefaultWidthWithEveryRowItCanSend() {
-        final GuiLayout layout = NetworkServicesLayout.layout(NetworkServicesLayout.DEFAULT_CONTENT_W, 16, 32, true, 2,
+        final GuiLayout layout = NetworkServicesLayout.layout(NetworkServicesLayout.DEFAULT_CONTENT_W, 16, 32, 2,
                 THREE_BUTTONS, 64);
 
         assertTrue(layout.isClean(), "overlaps " + layout.overlaps() + ", out of bounds " + layout.outOfBounds());
@@ -29,14 +29,14 @@ class NetworkServicesLayoutTest {
 
     @Test
     void layout_isCleanAtTheNarrowestWindow() {
-        final GuiLayout layout = NetworkServicesLayout.layout(NARROWEST, 3, 2, true, 2, THREE_BUTTONS, 64);
+        final GuiLayout layout = NetworkServicesLayout.layout(NARROWEST, 3, 2, 2, THREE_BUTTONS, 64);
 
         assertTrue(layout.isClean(), "overlaps " + layout.overlaps() + ", out of bounds " + layout.outOfBounds());
     }
 
     @Test
     void layout_isCleanWithNothingListed() {
-        final GuiLayout layout = NetworkServicesLayout.layout(NetworkServicesLayout.DEFAULT_CONTENT_W, 0, 0, false, 2,
+        final GuiLayout layout = NetworkServicesLayout.layout(NetworkServicesLayout.DEFAULT_CONTENT_W, 0, 0, 2,
                 new int[] {50}, 20);
 
         assertTrue(layout.isClean(), "overlaps " + layout.overlaps() + ", out of bounds " + layout.outOfBounds());
@@ -52,6 +52,24 @@ class NetworkServicesLayoutTest {
     }
 
     @Test
+    void roleBoxesX_layTheBoxesFromTheRightEndAndLeaveTheLabelRoom() {
+        final int[] xs = NetworkServicesLayout.roleBoxesX(NARROWEST, NetworkServicesLayout.ROLE_BOX_WIDTHS);
+
+        assertEquals(NARROWEST - NetworkServicesLayout.PAD - NetworkServicesLayout.ROLE_BOX_WIDTHS[1], xs[1]);
+        assertEquals(xs[1] - NetworkServicesLayout.ROLE_BOX_GAP - NetworkServicesLayout.ROLE_BOX_WIDTHS[0], xs[0]);
+        assertTrue(xs[0] > NetworkServicesLayout.PAD + 60, "\"Role on\" and the machine keep some room");
+    }
+
+    @Test
+    void sections_putTheSubframesRightUnderTheRole() {
+        final NetworkServicesLayout.Sections at = NetworkServicesLayout.sections(2, 2, 2);
+
+        assertTrue(at.subframesHeading() > NetworkServicesLayout.ROLE_Y + NetworkServicesLayout.LINE_H);
+        assertTrue(at.installedHeading() > at.succession() + NetworkServicesLayout.SUCCESSION_LINES
+                * NetworkServicesLayout.LINE_H);
+    }
+
+    @Test
     void buttonsX_leaveTheHostLineRoomAtTheNarrowestWindow() {
         final int[] xs = NetworkServicesLayout.buttonsX(NARROWEST, THREE_BUTTONS);
 
@@ -59,19 +77,20 @@ class NetworkServicesLayoutTest {
     }
 
     @Test
-    void sections_growWithTheRowsAndTheNote() {
-        final NetworkServicesLayout.Sections plain = NetworkServicesLayout.sections(1, 0, false, 2);
-        final NetworkServicesLayout.Sections busy = NetworkServicesLayout.sections(3, 2, true, 2);
+    void sections_growWithTheRows() {
+        final NetworkServicesLayout.Sections plain = NetworkServicesLayout.sections(1, 0, 2);
+        final NetworkServicesLayout.Sections busy = NetworkServicesLayout.sections(3, 2, 2);
 
-        assertEquals(plain.subframesHeading() + 2 * NetworkServicesLayout.ROW_H, busy.subframesHeading());
-        assertTrue(busy.servicesHeading() - plain.servicesHeading()
-                >= 2 * NetworkServicesLayout.ROW_H + NetworkServicesLayout.NOTE_H, "the note takes its own room");
+        assertEquals(plain.installedHeading() + NetworkServicesLayout.ROW_H, busy.installedHeading());
+        assertEquals(busy.installedHeading() - plain.installedHeading() + 2 * NetworkServicesLayout.ROW_H,
+                busy.servicesHeading() - plain.servicesHeading());
     }
 
     @Test
-    void sections_startUnderTheCard() {
-        final NetworkServicesLayout.Sections at = NetworkServicesLayout.sections(1, 1, false, 2);
+    void sections_startUnderTheCardAndTheRole() {
+        final NetworkServicesLayout.Sections at = NetworkServicesLayout.sections(1, 1, 2);
 
-        assertTrue(at.installedHeading() >= NetworkServicesLayout.CARD_H, "the first heading is under the card");
+        assertTrue(at.subframesHeading() >= NetworkServicesLayout.ROLE_Y + NetworkServicesLayout.LINE_H,
+                "the first heading is under the card and the role");
     }
 }

@@ -562,8 +562,10 @@ final class ShellPages {
                 .subheading("The engine and the services")
                 .paragraph("iqlengine starts and stops the Midsoft IQL Server, the engine that plans the network's"
                         + " work ([](jsc:midsoft_iql_server)). Type iqlengine start, iqlengine stop or iqlengine"
-                        + " status. services lists the network's services, each with its state. The prompt offers"
-                        + " both only while the Midsoft IQL Server is installed on the Mainframe.")
+                        + " status. At a Mainframe's own prompt, iqlengine role subframe or iqlengine role"
+                        + " orchestrator gives its engine that role ([](jsc:subframes)). services lists the network's"
+                        + " services, each with its state. The prompt offers both only while the Midsoft IQL Server is"
+                        + " installed on the Mainframe.")
                 .command(CommandGuidePages.id(Platform.LINUX, "iqlengine"))
                 .command(CommandGuidePages.id(Platform.LINUX, "services"))
                 .subheading("The storage index")

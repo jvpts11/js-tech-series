@@ -240,6 +240,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   glowing from its centre, a supercritical fluid half liquid and half gas, a slurry grainy, exotic matter changing
   colour), names its kind, and its category filter lists Liquids, Gases, Plasmas, Supercritical, Slurries and Exotic
   matter, with Chemicals for what has no state.
+- Subframes: a Mainframe's network engine plays orchestrator or Subframe, ticked on the Network Manager's
+  Services tab or typed at its prompt, `iqlengine role subframe`. A Subframe counts for no network conflict, keeps no
+  index and runs no Operations; it lends the orchestrator its share of capacity and its graphics cards' queues when
+  both run the same engine, and is a reserve when it runs another. When the orchestrator falls and nobody runs the
+  network for 60 ticks, a Mainframe in failover takes it over first, then a Subframe running the same engine, then one
+  running another, the lowest-placed first; the network's engine becomes the new orchestrator's, and the event log
+  says who stopped answering, who took the network over, which engine runs now and how many Operations were
+  discarded. The Services tab shows the role with its two boxes, every Subframe with what it lends ("lends 1,382 it/t
+  and 2 queues", or "takes no work: a reserve"), and who takes the network over should the orchestrator fall.
 - A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
@@ -287,6 +296,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its autocrafting.
 
 ### Changed
+- The Network Manager's Services tab lists the Subframes right under the engine's card, by machine, engine
+  and what each does, and no longer shows a note under a Subframe that runs another engine: it is a reserve now.
 - The Server Router of before is the Standard's, and manages 16 racks where it managed 8; it takes the data
   cables up to the Standard's, where it took every era's.
 - A rack's heat is a temperature: the cabinet has one temperature for every machine in it, from its

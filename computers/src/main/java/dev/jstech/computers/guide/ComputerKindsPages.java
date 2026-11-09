@@ -576,6 +576,22 @@ final class ComputerKindsPages {
                         + " Subframe without graphics cards lends capacity only.")
                 .paragraph("A Subframe works only for a Mainframe that runs the same engine as it does"
                         + " ([](jsc:engines)). A Subframe without a Mainframe lends nothing.")
+                .paragraph("You make a Subframe out of a Mainframe by giving its engine the Subframe's role: tick"
+                        + " Subframe on the Services tab of its Network Manager, or type iqlengine role subframe at its"
+                        + " prompt. It then counts for no network conflict, keeps no index of its own and lends to the"
+                        + " network's orchestrator. Tick Orchestrator, or type iqlengine role orchestrator, to make it"
+                        + " run the network again; if the network already has an orchestrator, that is a network"
+                        + " conflict.")
+                .define("Orchestrator", "The Mainframe that runs its network: its index, its Operations and its"
+                        + " engine.")
+                .paragraph("When the orchestrator falls and nobody runs the network for 60 ticks, the network is"
+                        + " taken over. A Mainframe in failover goes first if there is one; otherwise a Subframe that"
+                        + " runs the same engine, then one that runs another, the lowest-placed first. The network's"
+                        + " engine becomes the engine of the one that took over, and the Operations the fallen"
+                        + " orchestrator was carrying are lost. The network's event log says who stopped, who took"
+                        + " over, which engine runs now and how many Operations were lost.")
+                .paragraph("The Services tab lists the Subframes with what each lends, marks one that runs another"
+                        + " engine as a reserve, and says who takes the network over if the orchestrator falls.")
                 .ifSomethingGoesWrong("The screen says \"No Subframes on this network.\"",
                         "The network has no Subframe, so the Mainframe does all the work by itself.",
                         "The screen says a Subframe will take no work until it runs the same engine too.",
@@ -765,9 +781,9 @@ final class ComputerKindsPages {
         guide.page("server_router", section).titled("Server Router").icon(ComputingModule.SERVER_ROUTER)
                 .coversAll(ComputersGuide.blocksOf(ServerRouterBlock.class))
                 .paragraph("The Server Router is how you organise a datacenter. It groups Server Racks into sections,"
-                        + " one for each of its faces besides the uplink ([](jsc:datacenters)). Each era from the Legacy"
-                        + " on has its own, and its faces take the data cables of its era and of every earlier one"
-                        + " ([](jsc:data_cables)).")
+                        + " one for each of its faces besides the uplink ([](jsc:datacenters)). Each era from the"
+                        + " Legacy on has its own, and its faces take the data cables of its era and of every earlier"
+                        + " one ([](jsc:data_cables)).")
                 .steps("Join its uplink face to the network.",
                         "Join a section of racks to each of its other faces.",
                         "Open it to see each section and its rack count.")

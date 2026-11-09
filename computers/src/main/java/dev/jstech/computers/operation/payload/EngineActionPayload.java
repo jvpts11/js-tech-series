@@ -20,8 +20,9 @@ import net.minecraft.resources.ResourceLocation;
  * {@link NetworkServicesPayload}.
  *
  * @param hostPos the Mainframe
- * @param action  {@link #STOP}, {@link #START} or {@link #REPLACE}
- * @param program the engine to start or to replace with; ignored by {@link #STOP}
+ * @param action  {@link #STOP}, {@link #START}, {@link #REPLACE} or {@link #ROLE}
+ * @param program the engine to start or to replace with, or for {@link #ROLE} the role's word; ignored by
+ *                {@link #STOP}
  */
 public record EngineActionPayload(BlockPos hostPos, byte action, String program) implements CustomPacketPayload {
 
@@ -31,6 +32,8 @@ public record EngineActionPayload(BlockPos hostPos, byte action, String program)
     public static final byte START = 1;
     /** Replaces the running engine with an installed one, through the steps a replacement takes. */
     public static final byte REPLACE = 2;
+    /** Gives the Mainframe's engine a role, orchestrator or Subframe, named by its word. */
+    public static final byte ROLE = 3;
 
     public static final CustomPacketPayload.Type<EngineActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "engine_action"));

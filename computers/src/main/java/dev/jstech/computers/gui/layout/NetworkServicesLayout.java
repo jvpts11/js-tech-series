@@ -11,8 +11,9 @@ import dev.jstech.core.gui.layout.GuiLayout;
 
 /**
  * Where everything sits on the Network Manager's Services tab, which scrolls: the card of the engine that plans the
- * network's work at the top, then the engines installed, the Subframes and the other services, each a heading over
- * its rows. Every y here is measured down the scrolled content, from its top.
+ * network's work at the top, the line of the role the engine plays, then the Subframes with who takes the network over
+ * should its orchestrator fall, the engines installed and the other services, each a heading over its rows. Every y
+ * here is measured down the scrolled content, from its top.
  *
  * <p>The card's first line names the engine with its state; the second says which Mainframe it runs on and carries
  * the buttons at its right end; under them, the facts in two columns, then the two that need a whole line.
@@ -60,9 +61,13 @@ public final class NetworkServicesLayout {
     public static final int SECTION_GAP = 6;
     public static final int HEADING_H = LINE_H + 2;
     public static final int COLUMNS_H = 12;
-    /** The lines the note under the Subframes may take; a longer note is cut at the last. */
-    public static final int NOTE_LINES = 3;
-    public static final int NOTE_H = NOTE_LINES * LINE_H + 4;
+    /** The line of the engine's role, with its two boxes at the right end. */
+    public static final int ROLE_Y = CARD_H + 2;
+    public static final int ROLE_BOX_GAP = 8;
+    /** The lines under the Subframes: who takes the network over, and where the role is set. */
+    public static final int SUCCESSION_LINES = 2;
+    /** How wide the role's boxes are drawn, Orchestrator then Subframe: a box, its gap and the longest word. */
+    public static final int[] ROLE_BOX_WIDTHS = {72, 52};
 
     private NetworkServicesLayout() {
     }
@@ -70,40 +75,64 @@ public final class NetworkServicesLayout {
     /**
      * Where each block below the card starts, down the content.
      *
+     * @param subframesHeading the heading over the Subframes
+     * @param subframeColumns  their column names
+     * @param subframeRows     their first row, or the line that says there are none
+     * @param succession       the lines that say who takes the network over and where the role is set
      * @param installedHeading the heading over the engines installed
      * @param installedColumns their column names
      * @param installedRows    their first row
-     * @param subframesHeading the heading over the Subframes
-     * @param subframeRows     their first row, or the line that says there are none
-     * @param note             the line under them that says why one takes no work
      * @param servicesHeading  the heading over the other services
      * @param serviceRows      their first row
      * @param height           the whole content's height
      */
-    public record Sections(int installedHeading, int installedColumns, int installedRows, int subframesHeading,
-                           int subframeRows, int note, int servicesHeading, int serviceRows, int height) {
+    public record Sections(int subframesHeading, int subframeColumns, int subframeRows, int succession,
+                           int installedHeading, int installedColumns, int installedRows, int servicesHeading,
+                           int serviceRows, int height) {
     }
 
     /**
-     * The blocks below the card for {@code engines} engines installed, {@code subframes} Subframes (none still
-     * takes a line, to say so), {@code note} when one of them takes no work, and {@code services} other services.
+     * The blocks below the card and the role for {@code engines} engines installed, {@code subframes} Subframes (none
+     * still takes a line, to say so) and {@code services} other services.
      */
-    public static Sections sections(final int engines, final int subframes, final boolean note, final int services) {
-        final int installedHeading = CARD_H + SECTION_GAP;
+    public static Sections sections(final int engines, final int subframes, final int services) {
+        final int subframesHeading = ROLE_Y + LINE_H + SECTION_GAP;
+        final int subframeColumns = subframesHeading + HEADING_H;
+        final int subframeRows = subframeColumns + COLUMNS_H;
+        final int succession = subframeRows + Math.max(1, subframes) * ROW_H + 2;
+        final int installedHeading = succession + SUCCESSION_LINES * LINE_H + SECTION_GAP;
         final int installedColumns = installedHeading + HEADING_H;
         final int installedRows = installedColumns + COLUMNS_H;
-        final int subframesHeading = installedRows + Math.max(1, engines) * ROW_H + SECTION_GAP;
-        final int subframeRows = subframesHeading + HEADING_H;
-        final int noteY = subframeRows + Math.max(1, subframes) * ROW_H + 2;
-        final int servicesHeading = noteY + (note ? NOTE_H : 0) + SECTION_GAP - 2;
+        final int servicesHeading = installedRows + Math.max(1, engines) * ROW_H + SECTION_GAP;
         final int serviceRows = servicesHeading + HEADING_H;
-        return new Sections(installedHeading, installedColumns, installedRows, subframesHeading, subframeRows,
-                noteY, servicesHeading, serviceRows, serviceRows + services * ROW_H + PAD);
+        return new Sections(subframesHeading, subframeColumns, subframeRows, succession, installedHeading,
+                installedColumns, installedRows, servicesHeading, serviceRows, serviceRows + services * ROW_H + PAD);
     }
 
     /** Where a list's second column starts in content {@code width} wide: the vendor, or a Subframe's engine. */
     public static int secondColumnX(final int width) {
         return width * 2 / 5;
+    }
+
+    /** Where a Subframe's engine starts in content {@code width} wide, after the machine's name. */
+    public static int subframeEngineX(final int width) {
+        return width * 3 / 10;
+    }
+
+    /** Where what a Subframe does starts, after its engine. */
+    public static int subframeWorkX(final int width) {
+        return width * 11 / 20;
+    }
+
+    /** The left edge of each of the role's two boxes, {@code widths} wide in order, laid from the line's right end. */
+    public static int[] roleBoxesX(final int width, final int... widths) {
+        final int[] xs = new int[widths.length];
+        int right = width - PAD;
+        for (int i = widths.length - 1; i >= 0; i--) {
+            xs[i] = right - widths[i];
+            right = xs[i] - ROLE_BOX_GAP;
+        }
+        return xs;
     }
 
     /** Where a list's third column starts: the version. */
@@ -136,9 +165,9 @@ public final class NetworkServicesLayout {
      * Everything solid on the tab and every line of text, for content {@code width} wide with those blocks, the
      * card's buttons {@code buttonWidths} wide and its host line {@code hostChars} letters long.
      */
-    public static GuiLayout layout(final int width, final int engines, final int subframes, final boolean note,
-                                   final int services, final int[] buttonWidths, final int hostChars) {
-        final Sections at = sections(engines, subframes, note, services);
+    public static GuiLayout layout(final int width, final int engines, final int subframes, final int services,
+                                   final int[] buttonWidths, final int hostChars) {
+        final Sections at = sections(engines, subframes, services);
         final GuiLayout layout = new GuiLayout(width, at.height());
         layout.box("cardSquare", PAD, CARD_NAME_Y + 1, SQUARE, SQUARE);
         final int[] xs = buttonsX(width, buttonWidths);
@@ -156,15 +185,23 @@ public final class NetworkServicesLayout {
             layout.text("fact label " + row + "b", secondFactX(width), y, FACT_LABEL_CHARS - 1, 1.0f);
             layout.text("fact value " + row + "b", secondFactX(width) + factValueOffset(), y, valueChars, 1.0f);
         }
-        layout.box("installedColumns", 0, at.installedColumns(), width, COLUMNS_H - 1);
-        for (int i = 0; i < Math.max(1, engines); i++) {
-            layout.box("engineRow" + i, 0, at.installedRows() + i * ROW_H, width, ROW_H);
+        // The role's two boxes, each a box and its word, at the right end of the line under the card.
+        final int[] roleXs = roleBoxesX(width, ROLE_BOX_WIDTHS);
+        for (int i = 0; i < roleXs.length; i++) {
+            layout.box("role" + i, roleXs[i], ROLE_Y, ROLE_BOX_WIDTHS[i], LINE_H);
         }
+        layout.text("roleLabel", PAD, ROLE_Y + 1, (int) ((roleXs[0] - ROLE_BOX_GAP - PAD) / GuiLayout.GLYPH_WIDTH),
+                1.0f);
+        layout.box("subframeColumns", 0, at.subframeColumns(), width, COLUMNS_H - 1);
         for (int i = 0; i < Math.max(1, subframes); i++) {
             layout.box("subframeRow" + i, 0, at.subframeRows() + i * ROW_H, width, ROW_H);
         }
-        if (note) {
-            layout.box("note", 0, at.note(), width, NOTE_H);
+        for (int i = 0; i < SUCCESSION_LINES; i++) {
+            layout.textBox("succession" + i, PAD, at.succession() + i * LINE_H, width - 2 * PAD, LINE_H);
+        }
+        layout.box("installedColumns", 0, at.installedColumns(), width, COLUMNS_H - 1);
+        for (int i = 0; i < Math.max(1, engines); i++) {
+            layout.box("engineRow" + i, 0, at.installedRows() + i * ROW_H, width, ROW_H);
         }
         for (int i = 0; i < services; i++) {
             layout.box("serviceRow" + i, 0, at.serviceRows() + i * ROW_H, width, ROW_H);

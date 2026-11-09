@@ -13,6 +13,23 @@
       "text": "jsc.guide.subframes.text3"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.subframes.text4"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.subframes.definition1",
+      "term": "jsc.guide.subframes.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.subframes.text5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.subframes.text6"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },

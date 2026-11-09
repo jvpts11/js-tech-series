@@ -194,17 +194,22 @@ public final class PayloadRoundTripGameTests {
         final String longest = "M".repeat(NetworkServicesPayload.MAX_NAME);
         final NetworkServicesPayload.Engine engine = new NetworkServicesPayload.Engine("jstests:plain_engine",
                 longest, "16", "Nextgre", "MF-1a2b3c", NetworkServicesPayload.ENGINE_REPLACING, "IQL", 96,
-                List.of("procedures_and_views", "subscriptions"), 1_204, 3, 3_744_000L, 318, 3);
+                List.of("procedures_and_views", "subscriptions"), 1_204, 3, 3_744_000L, 318, 3, (byte) 1,
+                "MF-c7c123", longest);
         roundTrip(helper, NetworkServicesPayload.STREAM_CODEC, new NetworkServicesPayload(HOST, engine,
                 List.of(new NetworkServicesPayload.EngineRow("jsc:iqlengine", "Midsoft IQL Server", "Midsoft", "2022",
                         NetworkServicesPayload.ROW_INSTALLED)),
-                List.of(new NetworkServicesPayload.SubframeRow("SUB-52ddaa", "", "", true),
-                        new NetworkServicesPayload.SubframeRow("SUB-8f10bb", "jsc:iqlengine", longest, false)),
+                List.of(new NetworkServicesPayload.SubframeRow("MF-52ddaa", "", "",
+                                NetworkServicesPayload.SUBFRAME_LENDS, 1_382L, 2),
+                        new NetworkServicesPayload.SubframeRow("MF-8f10bb", "jsc:iqlengine", longest,
+                                NetworkServicesPayload.SUBFRAME_RESERVE, 0L, 0)),
                 List.of(new NetworkServicesPayload.ServiceRow("Automation Engine", "Red Cap", "4.0",
                         NetworkServicesPayload.SERVICE_RUNNING)),
                 new NetworkServicesPayload.Replacement("Midsoft IQL Server", "NextgreIQL 16", 120, 341, 3, 1_204)));
         roundTrip(helper, EngineActionPayload.STREAM_CODEC,
                 new EngineActionPayload(HOST, EngineActionPayload.REPLACE, "jstests:plain_engine"));
+        roundTrip(helper, EngineActionPayload.STREAM_CODEC,
+                new EngineActionPayload(HOST, EngineActionPayload.ROLE, "subframe"));
         helper.succeed();
     }
 

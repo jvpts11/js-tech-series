@@ -18,6 +18,17 @@ graphics card adds a queue of work done alongside the others.
 The **Network Manager**, which only runs on the Mainframe, is the network's control room: every machine on it,
 the storage, and the Operations being worked.
 
+**Subframes** (added 2026-11-09). A Mainframe's network engine plays one of two roles, set on the Network Manager's
+Services tab or at the prompt with `iqlengine role subframe` and `iqlengine role orchestrator`. The **orchestrator**
+runs the network. A **Subframe** counts for no network conflict, keeps no index and runs no Operations of its own: it
+lends the orchestrator its share of capacity (`balance.subframe_efficiency_factor`) and its graphics cards' queues
+when both run the same engine, and is a reserve when it runs another. When the orchestrator falls and nobody runs the
+network for 60 ticks, a Mainframe in failover takes it over first; otherwise a Subframe running the same engine, then
+one running another, the lowest-placed first. The network's engine becomes the new orchestrator's, the fallen one's
+Operations are lost, and the event log says who stopped answering, who took the network over, which engine runs now
+and how many Operations were discarded. The Services tab lists every Subframe with what it lends and says who would
+take the network over. Giving a Subframe the orchestrator's role on a network that already has one is a conflict.
+
 **The network's event log** (added 2026-10-25), in the Network Manager's Log tab beside the Operations, writes
 down what happens to every machine: INFO (a machine switched on or off), WARN (a degraded power supply, or a
 redundant one that lost a unit) and ERROR (two Mainframes on one network, a machine that went dark because no energy

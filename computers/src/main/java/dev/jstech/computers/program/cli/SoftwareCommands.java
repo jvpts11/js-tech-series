@@ -410,7 +410,7 @@ final class SoftwareCommands {
 
         /** Nothing but the words it takes, which are typed as they are in every language. */
         @Override public Text usage() {
-            return Text.literal("start|stop|status");
+            return Text.literal("start|stop|status|role [orchestrator|subframe]");
         }
 
         @Override public boolean available(final ICliComputer computer) {
@@ -419,7 +419,10 @@ final class SoftwareCommands {
         }
 
         @Override public void run(final CliContext ctx) {
-            final ICliComputer.OpResult result = ctx.computer().engineControl(ctx.hasArgs() ? ctx.arg(0) : "status");
+            // The role is this Mainframe's own engine's; the rest is the network's engine's.
+            final ICliComputer.OpResult result = ctx.hasArgs() && "role".equalsIgnoreCase(ctx.arg(0))
+                    ? ctx.computer().engineRole(ctx.argCount() > 1 ? ctx.arg(1) : "")
+                    : ctx.computer().engineControl(ctx.hasArgs() ? ctx.arg(0) : "status");
             ctx.out().styled(result.message(), result.ok() ? CliStyle.OK : CliStyle.ERROR);
         }
     }

@@ -12,18 +12,20 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.NetworkManagerApp;
 import dev.jstech.computers.engine.EngineCapability;
 import dev.jstech.computers.engine.EngineDef;
+import dev.jstech.computers.engine.EngineRole;
 import dev.jstech.computers.engine.NetworkEngines;
+import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.EngineActionPayload;
 import dev.jstech.computers.operation.payload.NetworkServicesPayload;
 import dev.jstech.computers.operation.payload.RequestNetworkServicesPayload;
+import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.core.jstechseries.network.SubframeNode;
-import dev.jstech.core.util.ShortId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -69,13 +71,25 @@ public final class NetworkServicesPayloads {
             installed.add(new NetworkServicesPayload.EngineRow(program.toString(), clip(nameOf(program)),
                     clip(vendorOf(program)), clip(entry.getValue()), rowState(mainframe, program, replacing)));
         }
+        // A Subframe lends to the network's orchestrator, whichever Mainframe the tab is open on.
+        final MainframeBlockEntity orchestrator = mainframe.orchestrator();
         final List<NetworkServicesPayload.SubframeRow> subframes = new ArrayList<>();
         for (final SubframeNode subframe : mainframe.networkSubframes()) {
             if (subframes.size() >= NetworkServicesPayload.MAX_SUBFRAMES) {
                 break;
             }
-            subframes.add(new NetworkServicesPayload.SubframeRow("SUB-" + ShortId.of(subframe.nodeUuid().asString()),
-                    clip(subframe.software()), clip(subframeEngine(subframe)), mainframe.takesWork(subframe)));
+            final byte work;
+            if (orchestrator == null || subframe.orchestratingMainframeUuid().isEmpty()) {
+                work = NetworkServicesPayload.SUBFRAME_IDLE;
+            } else {
+                work = orchestrator.takesWork(subframe) ? NetworkServicesPayload.SUBFRAME_LENDS
+                        : NetworkServicesPayload.SUBFRAME_RESERVE;
+            }
+            final boolean lends = work == NetworkServicesPayload.SUBFRAME_LENDS;
+            subframes.add(new NetworkServicesPayload.SubframeRow(
+                    NetworkEvents.machineId(HostScope.MAINFRAME, subframe.nodeUuid()), clip(subframe.software()),
+                    clip(subframeEngine(subframe)), work, lends ? subframe.contributedCapacity() : 0L,
+                    lends ? subframe.contributedQueues() : 0));
         }
         final List<NetworkServicesPayload.ServiceRow> services = List.of(
                 serviceRow(Programs.AUTOMATION_ENGINE, mainframe.isAutomationEngineActive()),
@@ -115,6 +129,7 @@ public final class NetworkServicesPayloads {
                     mainframe.replaceEngine(program);
                 }
             }
+            case EngineActionPayload.ROLE -> EngineRole.byWord(payload.program()).ifPresent(mainframe::setEngineRole);
             default -> {
                 return;
             }
@@ -133,10 +148,15 @@ public final class NetworkServicesPayloads {
         final ResourceLocation shown = replacing != null ? replacing.to() : active;
         final String host = clip(hostName(mainframe));
         final int inFlight = mainframe.liveOperations().size();
+        final byte role = (byte) mainframe.engineRole().id();
+        final MainframeBlockEntity orchestrator = mainframe.orchestrator();
+        final MainframeBlockEntity successor = orchestrator == null ? null : orchestrator.successor();
+        final String orchestratorName = orchestrator == null ? "" : clip(hostName(orchestrator));
+        final String successorName = successor == null ? "" : clip(hostName(successor));
         if (shown == null) {
             return new NetworkServicesPayload.Engine("", "", "", "", host, NetworkServicesPayload.ENGINE_NONE, "", 0,
                     List.of(), mainframe.indexedTypes(), mainframe.indexedServers(), 0L, mainframe.plansToday(),
-                    inFlight);
+                    inFlight, role, orchestratorName, successorName);
         }
         final byte state = replacing != null ? NetworkServicesPayload.ENGINE_REPLACING
                 : mainframe.runningEngine() != null ? NetworkServicesPayload.ENGINE_RUNNING
@@ -155,7 +175,7 @@ public final class NetworkServicesPayloads {
                 clip(mainframe.installedEngines().getOrDefault(shown, "")), clip(vendorOf(shown)), host, state,
                 clip(def == null ? "" : def.dialect()), spec == null ? 0 : spec.ramMb(), capabilities,
                 mainframe.indexedTypes(), mainframe.indexedServers(), mainframe.engineUpTicks(),
-                mainframe.plansToday(), inFlight);
+                mainframe.plansToday(), inFlight, role, orchestratorName, successorName);
     }
 
     private static NetworkServicesPayload.Replacement replacementOf(final MainframeBlockEntity mainframe,
@@ -198,12 +218,12 @@ public final class NetworkServicesPayloads {
         return program == null ? subframe.software() : nameOf(program);
     }
 
-    /** What the network calls its Mainframe: the name a player gave it, or its kind and short id. */
+    /** What the network calls a Mainframe: the name a player gave it, or its kind and short id. */
     private static String hostName(final MainframeBlockEntity mainframe) {
         if (!mainframe.customName().isEmpty()) {
             return mainframe.customName();
         }
-        return mainframe.nodeUuid() == null ? "MF" : "MF-" + ShortId.of(mainframe.nodeUuid().asString());
+        return mainframe.nodeUuid() == null ? "MF" : NetworkEvents.machineId(HostScope.MAINFRAME, mainframe.nodeUuid());
     }
 
     private static String nameOf(final ResourceLocation program) {
