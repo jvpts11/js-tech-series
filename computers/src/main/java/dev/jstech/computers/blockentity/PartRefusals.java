@@ -43,6 +43,8 @@ public final class PartRefusals {
             "A node seats one Phi co-processor");
     public static final TextKey ONE_CLUSTER_CARD = TextKey.of("jsc.part_refusal.one_cluster_card",
             "The machine already has a cluster interface card");
+    public static final TextKey FOUR_WAN_CARDS = TextKey.of("jsc.part_refusal.four_wan_cards",
+            "The gateway has four ports: a WAN Interface Card for each");
     public static final TextKey SERVER_CARD = TextKey.of("jsc.part_refusal.server_card",
             "A server's slots take a graphics card or a storage card");
     public static final TextKey DISK_TOO_NEW = TextKey.of("jsc.part_refusal.disk_too_new",

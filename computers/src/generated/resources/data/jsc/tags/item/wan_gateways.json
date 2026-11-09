@@ -1,0 +1,9 @@
+{
+  "values": [
+    "jsc:vintage_wan_gateway",
+    "jsc:legacy_wan_gateway",
+    "jsc:transition_wan_gateway",
+    "jsc:wan_gateway",
+    "jsc:advanced_wan_gateway"
+  ]
+}

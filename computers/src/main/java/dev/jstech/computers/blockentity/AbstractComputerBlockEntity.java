@@ -19,6 +19,7 @@ import dev.jstech.computers.audio.MusicPlayer;
 import dev.jstech.computers.audio.ProgramCue;
 import dev.jstech.computers.audio.ProgramSounds;
 import dev.jstech.computers.audio.SystemSound;
+import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.crafting.PatternWorkbench;
@@ -104,6 +105,7 @@ import dev.jstech.core.blockentity.LongField;
 import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.core.cable.Wire;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -1423,6 +1425,16 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     /** Where this computer stands on the data network, for a Mainframe, which owns its network itself. */
     protected NetworkAttachment attachment() {
         return attachment;
+    }
+
+    /** The blocks this computer's body fills, whose faces a cable meets it on: its own block, for most. */
+    public List<BlockPos> bodyBlocks() {
+        return List.of(worldPosition);
+    }
+
+    /** Whether this computer reads its network off {@code wire}: any line of the network's, for most. */
+    protected boolean readsNetworkOff(final Wire wire) {
+        return DataWires.isNetwork(wire);
     }
 
     /** The data cables this computer is wired to the network by: for most, the one cable at its side. */

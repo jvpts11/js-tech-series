@@ -331,7 +331,7 @@ public abstract sealed class AbstractBusPart implements IFacePart
             return era;
         }
         final MainframeBlockEntity mainframe = mainframe();
-        return mainframe == null ? HardwareEra.STANDARD : mainframe.mainframeEra();
+        return mainframe == null ? HardwareEra.STANDARD : mainframe.cabinetEra();
     }
 
     /** Sets the bus name, trimmed and cut to fit; an empty name means the bus is unaddressable by query. */

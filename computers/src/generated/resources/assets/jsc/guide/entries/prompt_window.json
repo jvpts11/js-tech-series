@@ -169,7 +169,7 @@
     }
   ],
   "id": "jsc:prompt_window",
-  "order": 180,
+  "order": 181,
   "section": "jsc:prompt_basics",
   "title": "jsc.guide.prompt_window.title"
 }

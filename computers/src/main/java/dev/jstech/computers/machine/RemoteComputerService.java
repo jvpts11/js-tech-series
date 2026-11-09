@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.program.ComputerConsoleState;
@@ -86,6 +87,8 @@ public final class RemoteComputerService {
             TextKey.of("jsc.service.remote.type.personal", "Personal Computer");
     private static final TextKey TYPE_CLUSTER =
             TextKey.of("jsc.service.remote.type.cluster", "Cluster Management Computer");
+    private static final TextKey TYPE_WAN_GATEWAY =
+            TextKey.of("jsc.service.remote.type.wan_gateway", "WAN Gateway Computer");
 
     public RemoteComputerService(final IComputerTerminalHost terminal, final ServerLevel level) {
         this.terminal = terminal;
@@ -282,6 +285,9 @@ public final class RemoteComputerService {
         }
         if (machine instanceof ClusterManagementComputerBlockEntity) {
             return TYPE_CLUSTER.text();
+        }
+        if (machine instanceof WanGatewayBlockEntity) {
+            return TYPE_WAN_GATEWAY.text();
         }
         return TYPE_COMPUTER.text();
     }

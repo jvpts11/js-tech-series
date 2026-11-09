@@ -78,6 +78,8 @@ public final class ComputingContent {
         CLUSTER_MANAGEMENT_COMPUTERS("cluster_management_computers"),
         /** The Mainframes, which run a network. */
         MAINFRAMES("mainframes"),
+        /** The WAN Gateway Computers, at either end of a long-distance line. */
+        WAN_GATEWAYS("wan_gateways"),
         /** Server racks and supercomputer racks, the server cases, the servers and the nodes. */
         SERVER_RACK("racks_and_servers"),
         /** What a rack carries in its bays besides servers: the rack units. */

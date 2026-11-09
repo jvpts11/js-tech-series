@@ -28,6 +28,7 @@ import dev.jstech.computers.hardware.PhiCoprocessorSpec;
 import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
+import dev.jstech.computers.hardware.WanCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.BayDriveItem;
 import dev.jstech.core.guide.GuideBlock;
@@ -1009,7 +1010,7 @@ final class BuildingPages {
     private static void expansionCards(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("expansion_cards", section).titled("Expansion cards").icon(ComputingModule.FURNACE_CARD)
                 .coversAll(hardwareOf(WorkshopCardSpec.class, ClusterInterfaceCardSpec.class, NetworkCardSpec.class,
-                        AnchorCardSpec.class, PhiCoprocessorSpec.class))
+                        AnchorCardSpec.class, PhiCoprocessorSpec.class, WanCardSpec.class))
                 .paragraph("Besides graphics and sound, the expansion slots of a board take cards that give a"
                         + " computer a"
                         + " job it could not do before. Each card goes in a slot of its own bus family"
@@ -1100,6 +1101,22 @@ final class BuildingPages {
                         + " place it or use it. The server sets that quota, 25 chunks unless it says otherwise, and the"
                         + " card's tooltip shows how much of yours you keep already. When the quota is full the card"
                         + " keeps what fits, nearest first, and the network's log says so.")
+                .subheading("WAN Interface Cards")
+                .paragraph("A WAN Interface Card works one port of a WAN Gateway Computer, and only a gateway takes"
+                        + " one ([WAN Gateway Computers](jsc:wan_gateways)). There is one for each era's long-distance"
+                        + " line, in that era's slot. Each takes the line of its own era and the older ones, and a"
+                        + " gateway takes four, one for each of its ports.")
+                .table("The WAN Interface Cards", "Card", "Era and bus", "Line", "Speed")
+                .row(GuideCell.words("Modem Card"), GuideCell.words("Vintage, ISA"),
+                        GuideCell.words("Telephone Line"), GuideCell.amount(1, "it/t"))
+                .row(GuideCell.words("T1 Card"), GuideCell.words("Legacy, PCI"),
+                        GuideCell.words("Leased Line"), GuideCell.amount(8, "it/t"))
+                .row(GuideCell.words("T3 Card"), GuideCell.words("Transition, PCI-e 2.0"),
+                        GuideCell.words("T3 Line"), GuideCell.amount(24, "it/t"))
+                .row(GuideCell.words("VLDC Card"), GuideCell.words("Standard, PCI-e 3.0"),
+                        GuideCell.words("VLDC"), GuideCell.amount(64, "it/t"))
+                .row(GuideCell.words("Optical Transport Card"), GuideCell.words("Advanced, PCI-e 4.0"),
+                        GuideCell.words("Dark Fibre"), GuideCell.amount(256, "it/t"))
                 .ifSomethingGoesWrong("The Workshop shows \"No fuel\" or \"No lapis\".",
                         "Give smelting its fuel, or give enchanting its lapis.",
                         "A Workshop card does not go into a computer.",
@@ -1112,7 +1129,9 @@ final class BuildingPages {
                         "Take cards out, or use a board with more PCI-e slots.",
                         "The machines round a computer with a Network Anchor Card stop when you go away.",
                         "The card works only while the computer runs and someone works it. If the network's log says"
-                                + " the quota is full, it keeps only what fits: let go of chunks you keep elsewhere.")
+                                + " the quota is full, it keeps only what fits: let go of chunks you keep elsewhere.",
+                        "A WAN Interface Card does not go into a computer.",
+                        "Only a WAN Gateway Computer takes one, four at most.")
                 .seeAlso("jsc:graphics_cards", "jsc:sound_cards", "jsc:build_refusals")
                 .register();
     }

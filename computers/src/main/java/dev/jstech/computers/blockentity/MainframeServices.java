@@ -207,7 +207,7 @@ final class MainframeServices {
      */
     boolean installEngine(final ResourceLocation program) {
         final EngineDef def = NetworkEngines.def(program);
-        final String version = def == null ? null : def.versionFor(mainframe.mainframeEra());
+        final String version = def == null ? null : def.versionFor(mainframe.cabinetEra());
         if (version == null || engines.containsKey(program)) {
             return false;
         }
@@ -563,7 +563,7 @@ final class MainframeServices {
      */
     private void shipFactoryEngine() {
         final EngineDef midsoft = NetworkEngines.MIDSOFT_IQL_SERVER;
-        final String version = midsoft.versionFor(mainframe.mainframeEra());
+        final String version = midsoft.versionFor(mainframe.cabinetEra());
         if (version != null) {
             engines.put(midsoft.program(), version);
             activeEngine = midsoft.program();

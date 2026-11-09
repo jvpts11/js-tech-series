@@ -90,7 +90,7 @@ public final class NextgreGameTests {
             if (!(helper.getBlockEntity(at) instanceof MainframeBlockEntity mainframe)) {
                 throw new IllegalStateException("no Mainframe at " + at);
             }
-            final Era era = mainframe.mainframeEra();
+            final Era era = mainframe.cabinetEra();
             final boolean installed = mainframe.installEngine(NEXTGRE);
             helper.assertTrue(installed == (age.version() != null),
                     "NextgreIQL on a " + era + " Mainframe: " + installed);

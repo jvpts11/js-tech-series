@@ -7,8 +7,6 @@
  */
 package dev.jstech.computers;
 
-import dev.jstech.computers.blockentity.MainframePartBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Wire;
 import dev.jstech.core.grid.GridKind;
@@ -173,9 +171,8 @@ public final class PeripheralLinks {
         if (be instanceof IPeripheralOwner owner && owner.linksOver(type)) {
             return OptionalLong.of(pos);
         }
-        // A mainframe or a rack cabinet spans several blocks; a cable touching any part links to its origin.
-        if ((be instanceof MainframePartBlockEntity || be instanceof ServerRackPartBlockEntity)
-                && be instanceof BigBlockPartBlockEntity part) {
+        // A cabinet (a Mainframe, a gateway, a rack) spans several blocks; a cable at any part links to its origin.
+        if (be instanceof BigBlockPartBlockEntity part) {
             final BlockPos origin = part.originPos();
             if (origin != null && Loaded.blockEntity(level, origin) instanceof IPeripheralOwner owner
                     && owner.linksOver(type)) {

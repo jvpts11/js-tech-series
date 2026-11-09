@@ -151,9 +151,9 @@ public final class MainframeModelGameTests {
                 ComputingModule.LEGACY_MAINFRAME.get());
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
-                    helper.assertTrue(standard.mainframeEra() == HardwareEra.STANDARD
-                                    && vintage.mainframeEra() == HardwareEra.VINTAGE
-                                    && legacy.mainframeEra() == HardwareEra.LEGACY,
+                    helper.assertTrue(standard.cabinetEra() == HardwareEra.STANDARD
+                                    && vintage.cabinetEra() == HardwareEra.VINTAGE
+                                    && legacy.cabinetEra() == HardwareEra.LEGACY,
                             "each cabinet reports its own era, which picks its model and atlas");
                     /*
                      * The cabinet is three wide, two tall and two deep; culling by the origin's own

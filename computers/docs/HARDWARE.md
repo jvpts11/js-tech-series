@@ -42,6 +42,7 @@ joined to it. To do anything useful it needs a disk with a system installed on i
 | **Crafting Computer** | Runs the network's crafting ([Autocrafting](AUTOCRAFTING.md)). Needs a Crafting Card. | 1 CPU, 4 RAM, 4 expansion cards, 2 disks, 1 PSU. |
 | **Cluster Management Computer** | Installs systems on racked machines and watches them. Without a Cluster Interface Card it is an ordinary computer. | 1 CPU, 4 RAM (2 and 8 on a two-socket board), 4 expansion cards, 2 disks, 1 PSU, 18 storage slots. |
 | **Mainframe** | The network's brain: it keeps the index of everything stored, moves it and crafts it. | A block of 3 wide, 2 tall, 2 deep. 1 MTX board, 1 PSU, 4 CPUs, 8 RAM, 6 GPUs, 4 disks, 27 storage slots. |
+| **WAN Gateway Computer** | Stands at either end of a long-distance line, a port on its back for each of its WAN Interface Cards. It joins its own network through the backbone, as the Mainframe does. | A block of 4 wide, 2 tall, 2 deep. 1 MTX board, 1 PSU, 4 CPUs, 8 RAM, 6 expansion cards (up to 4 of them WAN Interface Cards), 4 disks. |
 | **Server Rack** | A cabinet of 8 rack units (U) for Servers and the rack's own units: a KVM Switch, a Rack UPS and its battery expansions, a PDU, a Cooling Unit, a Vent Panel, a Drive Shelf. | A block of 2 wide, 3 tall, 2 deep. |
 | **Supercomputer Rack** | The same cabinet for Supercomputer Nodes only (Standard and Advanced). | As the Server Rack. |
 
@@ -348,6 +349,13 @@ and mends a quarter of the bad sectors left; while it runs, that disk answers th
   in a rack takes one too, and the rack keeps the chunks round it for the farthest card of its running servers. A
   full quota leaves out the farthest chunks, and the network's log says so once; the card's tooltip shows how much of
   their quota its reader keeps already.
+- **WAN Interface Cards** (added 2026-11-09), one for each era's long-distance line and only for a WAN Gateway
+  Computer, four at most, one for each port on its back: the Modem Card (Vintage, ISA, Telephone Line, 1 it/t), the
+  T1 Card (Legacy, PCI, Leased Line, 8 it/t), the T3 Card (Transition, PCI-e 2.0, T3 Line, 24 it/t), the VLDC Card
+  (Standard, PCI-e 3.0, VLDC, 64 it/t) and the Optical Transport Card (Advanced, PCI-e 4.0, Dark Fibre, 256 it/t).
+  Each takes the line of its era and the older ones. The n-th card in the gateway's slots works port n, the ports
+  numbered 1 to 4 from the left seen from behind; a port's line is up while the gateway runs and a cable the card
+  takes is plugged in, which the gateway's line modules and its screen's LINES lamps show.
 - **Integra Phi** coprocessors (four of them), for supercomputer nodes.
 
 ## What can go wrong

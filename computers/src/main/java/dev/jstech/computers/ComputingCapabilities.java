@@ -7,15 +7,15 @@
  */
 package dev.jstech.computers;
 
+import dev.jstech.computers.blockentity.AbstractCabinetComputerBlockEntity;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
-import dev.jstech.computers.blockentity.MainframeBlockEntity;
-import dev.jstech.computers.blockentity.MainframePartBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.blockentity.ComputerThermalBudget;
 import dev.jstech.computers.blockentity.UpsBlockEntity;
 import dev.jstech.computers.integration.computercraft.ComputerCraftIntegration;
 import dev.jstech.computers.rack.RackThermalBudget;
+import dev.jstech.core.bigblock.BigBlockPartBlockEntity;
 import dev.jstech.core.energy.EnergyPorts;
 import dev.jstech.core.heat.ThermalBudgets;
 import dev.jstech.core.signal.Signals;
@@ -63,22 +63,15 @@ public final class ComputingCapabilities {
         offerEnergy(event, ComputingModule.CRAFTING_COMPUTER_BE.get());
         offerEnergy(event, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get());
         offerEnergy(event, ComputingModule.MAINFRAME_BE.get());
+        offerEnergy(event, ComputingModule.WAN_GATEWAY_BE.get());
         offerHeat(event, ComputingModule.PERSONAL_COMPUTER_BE.get());
         offerHeat(event, ComputingModule.SMALL_COMPUTER_BE.get());
         offerHeat(event, ComputingModule.CRAFTING_COMPUTER_BE.get());
         offerHeat(event, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get());
         offerHeat(event, ComputingModule.MAINFRAME_BE.get());
-        ThermalBudgets.BUDGET.onBlockEntity(event, ComputingModule.MAINFRAME_PART_BE.get(),
-                (part, side) -> ComputerThermalBudget.of(mainframeOf(part)));
-        event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.MAINFRAME_PART_BE.get(), (part, side) -> {
-            final AbstractComputerBlockEntity mainframe = mainframeOf(part);
-            return mainframe == null ? null : mainframe.energyPort();
-        });
-        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ComputingModule.MAINFRAME_PART_BE.get(),
-                (part, side) -> {
-                    final AbstractComputerBlockEntity mainframe = mainframeOf(part);
-                    return mainframe == null ? null : mainframe.feEnergy();
-                });
+        offerHeat(event, ComputingModule.WAN_GATEWAY_BE.get());
+        offerThroughParts(event, ComputingModule.MAINFRAME_PART_BE.get());
+        offerThroughParts(event, ComputingModule.WAN_GATEWAY_PART_BE.get());
         // A UPS takes the line only at its inlet, on its back and sides; the computers against it it feeds itself.
         event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.UPS_BE.get(), UpsBlockEntity::energyPort);
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ComputingModule.UPS_BE.get(),
@@ -130,13 +123,31 @@ public final class ComputingCapabilities {
         return Loaded.blockEntity(part.getLevel(), origin) instanceof ServerRackBlockEntity rack ? rack : null;
     }
 
-    /* The Mainframe a block of it belongs to, or none while it is bound to no Mainframe that is loaded. */
+    /*
+     * A cabinet's other blocks take its energy for it and answer for its heat, the Mainframe's and the gateway's alike,
+     * on every face.
+     */
+    private static <P extends BigBlockPartBlockEntity> void offerThroughParts(final RegisterCapabilitiesEvent event,
+                                                                             final BlockEntityType<P> parts) {
+        ThermalBudgets.BUDGET.onBlockEntity(event, parts, (part, side) -> ComputerThermalBudget.of(cabinetOf(part)));
+        event.registerBlockEntity(EnergyPorts.PORT, parts, (part, side) -> {
+            final AbstractComputerBlockEntity cabinet = cabinetOf(part);
+            return cabinet == null ? null : cabinet.energyPort();
+        });
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, parts, (part, side) -> {
+            final AbstractComputerBlockEntity cabinet = cabinetOf(part);
+            return cabinet == null ? null : cabinet.feEnergy();
+        });
+    }
+
+    /* The cabinet a block of it belongs to, or none while it is bound to no cabinet that is loaded. */
     @Nullable
-    private static AbstractComputerBlockEntity mainframeOf(final MainframePartBlockEntity part) {
+    private static AbstractComputerBlockEntity cabinetOf(final BigBlockPartBlockEntity part) {
         final BlockPos origin = part.originPos();
         if (origin == null || part.getLevel() == null) {
             return null;
         }
-        return Loaded.blockEntity(part.getLevel(), origin) instanceof MainframeBlockEntity mainframe ? mainframe : null;
+        return Loaded.blockEntity(part.getLevel(), origin) instanceof AbstractCabinetComputerBlockEntity cabinet
+                ? cabinet : null;
     }
 }

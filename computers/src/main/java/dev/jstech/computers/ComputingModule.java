@@ -38,6 +38,8 @@ import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SubwooferBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.block.UpsBlock;
+import dev.jstech.computers.block.WanGatewayBlock;
+import dev.jstech.computers.block.WanGatewayPartBlock;
 import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
@@ -60,6 +62,8 @@ import dev.jstech.computers.blockentity.ServerRouterBlockEntity;
 import dev.jstech.computers.blockentity.SmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.SpeakerBlockEntity;
 import dev.jstech.computers.blockentity.UpsBlockEntity;
+import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
+import dev.jstech.computers.blockentity.WanGatewayPartBlockEntity;
 import dev.jstech.computers.hardware.AnchorCardSpec;
 import dev.jstech.computers.hardware.ClusterInterfaceCardSpec;
 import dev.jstech.computers.hardware.CpuSocketId;
@@ -79,6 +83,7 @@ import dev.jstech.computers.hardware.RamGeneration;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.StorageCardSpec;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.computers.hardware.WanCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.CabinetBlockItem;
 import dev.jstech.computers.item.MainframeBlockItem;
@@ -86,6 +91,7 @@ import dev.jstech.computers.item.PrintedPaperItem;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerCaseItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.item.WanGatewayBlockItem;
 import dev.jstech.computers.os.media.DockStationBlock;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.FormattedMediaItem;
@@ -365,6 +371,35 @@ public final class ComputingModule {
                     TRANSITION_MAINFRAME, ADVANCED_MAINFRAME);
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MainframePartBlockEntity>>
             MAINFRAME_PART_BE = CONTENT.blockEntity("mainframe_part", MainframePartBlockEntity::new, MAINFRAME_PART);
+
+    /*
+     * WAN Gateway Computers, a computer at either end of a long-distance line, one for each era as the line is: a
+     * 4x2x2 cabinet a block wider than the Mainframe's, drawn as one model by the origin, which hands its item over
+     * itself when broken; the part blocks are taken down without drops.
+     */
+    public static final BlockEntry<WanGatewayBlock> WAN_GATEWAY =
+            wanGateway("wan_gateway", HardwareEra.STANDARD).named("WAN Gateway Computer").register();
+    public static final BlockEntry<WanGatewayBlock> VINTAGE_WAN_GATEWAY =
+            wanGateway("vintage_wan_gateway", HardwareEra.VINTAGE).named("Vintage WAN Gateway Computer").register();
+    public static final BlockEntry<WanGatewayBlock> LEGACY_WAN_GATEWAY =
+            wanGateway("legacy_wan_gateway", HardwareEra.LEGACY).named("Legacy WAN Gateway Computer").register();
+    public static final BlockEntry<WanGatewayBlock> TRANSITION_WAN_GATEWAY =
+            wanGateway("transition_wan_gateway", HardwareEra.TRANSITION).named("Transition WAN Gateway Computer")
+                    .register();
+    public static final BlockEntry<WanGatewayBlock> ADVANCED_WAN_GATEWAY =
+            wanGateway("advanced_wan_gateway", HardwareEra.ADVANCED).named("Advanced WAN Gateway Computer")
+                    .register();
+    public static final BlockEntry<WanGatewayPartBlock> WAN_GATEWAY_PART =
+            CONTENT.block("wan_gateway_part", WanGatewayPartBlock::new).properties(ComputingModule::mainframeProperties)
+                    .named("WAN Gateway Computer").look(MAINFRAME_BODY).tag(BlockTags.MINEABLE_WITH_PICKAXE)
+                    .register();
+
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WanGatewayBlockEntity>> WAN_GATEWAY_BE =
+            CONTENT.blockEntity("wan_gateway", WanGatewayBlockEntity::new, WAN_GATEWAY, VINTAGE_WAN_GATEWAY,
+                    LEGACY_WAN_GATEWAY, TRANSITION_WAN_GATEWAY, ADVANCED_WAN_GATEWAY);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WanGatewayPartBlockEntity>>
+            WAN_GATEWAY_PART_BE = CONTENT.blockEntity("wan_gateway_part", WanGatewayPartBlockEntity::new,
+                    WAN_GATEWAY_PART);
 
     /*
      * Monitors, era by era: the Vintage terminal tubes (paper-white, green, amber, and the sixteen-colour CGA), the
@@ -1117,6 +1152,21 @@ public final class ComputingModule {
     public static final ItemEntry<Item> NETWORK_ANCHOR_CARD_ADVANCED = anchorCard("network_anchor_card_advanced",
             new AnchorCardSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 15, 2)).named("Network Anchor Card")
             .register();
+    /*
+     * The WAN Interface Cards, one for each era's long-distance line, each in its era's slot and only in a WAN Gateway
+     * Computer, a port each. Their draws are estimates.
+     */
+    public static final ItemEntry<Item> MODEM_CARD = wanCard("modem_card",
+            new WanCardSpec(HardwareEra.VINTAGE, PcieGeneration.ISA, 3)).named("Modem Card").register();
+    public static final ItemEntry<Item> T1_CARD = wanCard("t1_card",
+            new WanCardSpec(HardwareEra.LEGACY, PcieGeneration.PCI, 6)).named("T1 Card").register();
+    public static final ItemEntry<Item> T3_CARD = wanCard("t3_card",
+            new WanCardSpec(HardwareEra.TRANSITION, PcieGeneration.PCIE_2_0, 12)).named("T3 Card").register();
+    public static final ItemEntry<Item> VLDC_CARD = wanCard("vldc_card",
+            new WanCardSpec(HardwareEra.STANDARD, PcieGeneration.PCIE_3_0, 18)).named("VLDC Card").register();
+    public static final ItemEntry<Item> OPTICAL_TRANSPORT_CARD = wanCard("optical_transport_card",
+            new WanCardSpec(HardwareEra.ADVANCED, PcieGeneration.PCIE_4_0, 25)).named("Optical Transport Card")
+            .register();
     // The Supercomputer's co-processors, all on the PCIe 3.0 slot of the Standard's boards.
     public static final ItemEntry<Item> PHI_5100 = PartItems.card("phi_5100",
             new PhiCoprocessorSpec(IndustrialTier.T3, 2, 60, 1050, 225), HardwareEra.STANDARD, CARD_STACK)
@@ -1313,6 +1363,16 @@ public final class ComputingModule {
                 .item((block, properties) -> new MainframeBlockItem(block, properties, id))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tag(BlockTags.MINEABLE_WITH_PICKAXE)
                 .tab(shelf(Shelf.MAINFRAMES, era));
+    }
+
+    private static BlockBuilder<WanGatewayBlock> wanGateway(final String id, final Era era) {
+        OwnComputers.computer(id, WanGatewayBlockEntity.computer(era));
+        return CONTENT.block(id, properties -> new WanGatewayBlock(properties, era))
+                .properties(ComputingModule::mainframeProperties).look(MAINFRAME_BODY)
+                .geo(ComputingLooks.WAN_GATEWAY)
+                .item((block, properties) -> new WanGatewayBlockItem(block, properties, id))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tag(BlockTags.MINEABLE_WITH_PICKAXE)
+                .tab(shelf(Shelf.WAN_GATEWAYS, era));
     }
 
     /**
@@ -1545,6 +1605,10 @@ public final class ComputingModule {
     }
 
     private static ItemBuilder<Item> anchorCard(final String id, final AnchorCardSpec spec) {
+        return PartItems.card(id, spec, spec.era(), CARD_STACK);
+    }
+
+    private static ItemBuilder<Item> wanCard(final String id, final WanCardSpec spec) {
         return PartItems.card(id, spec, spec.era(), CARD_STACK);
     }
 

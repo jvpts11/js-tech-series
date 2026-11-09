@@ -394,6 +394,101 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.expansion_cards.heading8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.expansion_cards.text13"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.expansion_cards.table5",
+      "heads": [
+        "jsc.guide.expansion_cards.table5_head1",
+        "jsc.guide.expansion_cards.table5_head2",
+        "jsc.guide.expansion_cards.table5_head3",
+        "jsc.guide.expansion_cards.table5_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table5_1_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table5_1_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table5_1_3"
+          },
+          {
+            "amount": 1,
+            "unit": "it/t"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table5_2_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table5_2_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table5_2_3"
+          },
+          {
+            "amount": 8,
+            "unit": "it/t"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table5_3_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table5_3_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table5_3_3"
+          },
+          {
+            "amount": 24,
+            "unit": "it/t"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table5_4_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table5_4_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table5_4_3"
+          },
+          {
+            "amount": 64,
+            "unit": "it/t"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.expansion_cards.table5_5_1"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table5_5_2"
+          },
+          {
+            "words": "jsc.guide.expansion_cards.table5_5_3"
+          },
+          {
+            "amount": 256,
+            "unit": "it/t"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -422,6 +517,10 @@
         {
           "fix": "jsc.guide.expansion_cards.fix6",
           "problem": "jsc.guide.expansion_cards.problem6"
+        },
+        {
+          "fix": "jsc.guide.expansion_cards.fix7",
+          "problem": "jsc.guide.expansion_cards.problem7"
         }
       ]
     },
@@ -451,6 +550,11 @@
     "jsc:network_anchor_card_transition",
     "jsc:network_anchor_card_standard",
     "jsc:network_anchor_card_advanced",
+    "jsc:modem_card",
+    "jsc:t1_card",
+    "jsc:t3_card",
+    "jsc:vldc_card",
+    "jsc:optical_transport_card",
     "jsc:phi_5100",
     "jsc:phi_7120",
     "jsc:phi_7290",

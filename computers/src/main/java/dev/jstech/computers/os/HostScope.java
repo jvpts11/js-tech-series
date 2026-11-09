@@ -45,6 +45,8 @@ public record HostScope(String id, TextKey name, @Nullable TextKey refusal) {
             TextKey.of("jsc.install.setup_gate.on_a_cluster_manager", "a Cluster Management Computer");
     private static final TextKey A_PERSONAL_COMPUTER =
             TextKey.of("jsc.install.setup_gate.on_a_personal_computer", "a Personal Computer");
+    private static final TextKey A_WAN_GATEWAY =
+            TextKey.of("jsc.install.setup_gate.on_a_wan_gateway", "a WAN Gateway Computer");
     private static final TextKey MAINFRAME_ONLY =
             TextKey.of("jsc.service.gates.mainframe_only", "%s only installs on the Mainframe");
     private static final TextKey SERVER_ONLY =
@@ -55,6 +57,8 @@ public record HostScope(String id, TextKey name, @Nullable TextKey refusal) {
             TextKey.of("jsc.service.gates.personal_only", "%s only installs on a Personal Computer");
     private static final TextKey CRAFTING_ONLY =
             TextKey.of("jsc.service.gates.crafting_only", "%s only installs on a Crafting Computer");
+    private static final TextKey WAN_GATEWAY_ONLY =
+            TextKey.of("jsc.service.gates.wan_gateway_only", "%s only installs on a WAN Gateway Computer");
     private static final DeclaredKinds<HostScope> KINDS = new DeclaredKinds<>("machine", HostScope::id);
 
     /** No host restriction: the program may exist on any computer that meets its platform and specs. */
@@ -70,6 +74,9 @@ public record HostScope(String id, TextKey name, @Nullable TextKey refusal) {
             own("cluster_management_computer", A_CLUSTER_MANAGER, CLUSTER_ONLY);
     /** Only on a Personal Computer, the player's own machine (where the personal-use cards are worked). */
     public static final HostScope PERSONAL_COMPUTER = own("personal_computer", A_PERSONAL_COMPUTER, PERSONAL_ONLY);
+    /** Only on a WAN Gateway Computer, the machine at either end of a long-distance line. */
+    public static final HostScope WAN_GATEWAY_COMPUTER =
+            own("wan_gateway_computer", A_WAN_GATEWAY, WAN_GATEWAY_ONLY);
 
     public HostScope {
         Objects.requireNonNull(id, "id");

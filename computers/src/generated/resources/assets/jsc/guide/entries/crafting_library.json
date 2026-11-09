@@ -183,7 +183,7 @@
     }
   ],
   "id": "jsc:crafting_library",
-  "order": 369,
+  "order": 370,
   "section": "jsc:library_machine",
   "title": "jsc.guide.crafting_library.title"
 }

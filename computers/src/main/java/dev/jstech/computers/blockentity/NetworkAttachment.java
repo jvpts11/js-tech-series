@@ -197,28 +197,42 @@ final class NetworkAttachment {
     }
 
     /**
-     * Looks round every face for a data wire that crosses into this computer, which the cable decides from what the
-     * block's {@link IFaceConnector#accepts} takes on that face, so the device's attachment and the cable's drawn
-     * connection always agree. A standalone computer takes its network cable on its rear only; the Mainframe (a
-     * separate block entity) and the cluster nodes on every face. The crafting cable is never the machine's network
-     * link.
+     * Looks round every outer face of the computer's body for a data wire that crosses into it, which the cable
+     * decides from what the block's {@link IFaceConnector#accepts} takes on that face, so the device's attachment and
+     * the cable's drawn connection always agree. A standalone computer takes its network cable on its rear only; the
+     * cluster nodes on every face; a computer of several blocks on the faces of all of them. The crafting cable is
+     * never the machine's network link, and the computer says which other lines are not ({@code readsNetworkOff}).
      */
     private long adjacentCable(final ServerLevel level) {
-        final BlockPos pos = this.machine.getBlockPos();
-        for (final Direction direction : FACES) {
-            final List<Long> numbers = DataWires.numbersReaching(level, pos, direction, DataWires::isNetwork);
-            if (!numbers.isEmpty()) {
-                return numbers.getFirst();
+        final List<BlockPos> body = this.machine.bodyBlocks();
+        for (final BlockPos pos : body) {
+            for (final Direction direction : FACES) {
+                if (body.size() > 1 && body.contains(pos.relative(direction))) {
+                    continue;
+                }
+                final List<Long> numbers = DataWires.numbersReaching(level, pos, direction,
+                        this.machine::readsNetworkOff);
+                if (!numbers.isEmpty()) {
+                    return numbers.getFirst();
+                }
             }
         }
         return NO_CABLE;
     }
 
-    /* Whether the wire {@code number} stands for still lies beside this computer and still crosses into it. */
+    /* Whether the wire {@code number} stands for still lies beside this computer's body and still crosses into it. */
     private boolean stillReaches(final ServerLevel level, final long number) {
         final BlockPos at = Cables.blockOf(level, number);
-        final BlockPos pos = this.machine.getBlockPos();
-        final Direction face = at == null ? null : Neighbours.faceTowards(pos, at);
-        return face != null && DataWires.numbersReaching(level, pos, face, DataWires::isNetwork).contains(number);
+        if (at == null) {
+            return false;
+        }
+        for (final BlockPos pos : this.machine.bodyBlocks()) {
+            final Direction face = Neighbours.faceTowards(pos, at);
+            if (face != null && DataWires.numbersReaching(level, pos, face, this.machine::readsNetworkOff)
+                    .contains(number)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

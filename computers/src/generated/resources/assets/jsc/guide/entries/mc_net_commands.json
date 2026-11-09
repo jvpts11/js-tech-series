@@ -250,7 +250,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:mc_net_commands",
-  "order": 81,
+  "order": 82,
   "section": "jsc:mc_net_terminal",
   "title": "jsc.guide.mc_net_commands.title"
 }

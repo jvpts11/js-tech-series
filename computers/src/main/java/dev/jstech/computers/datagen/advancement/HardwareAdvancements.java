@@ -12,6 +12,7 @@ import dev.jstech.computers.advancement.HardwareMilestones;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.MainframeBlock;
+import dev.jstech.computers.block.WanGatewayBlock;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.advancements.Criterion;
@@ -81,11 +82,14 @@ public final class HardwareAdvancements extends JscAdvancementTab {
         return on(JscEvents.ERA_BUILT, HardwareMilestones.eraDetail(era));
     }
 
-    /** Every computer a player can hold: the small ones in every age and case, and the Mainframes of every age. */
+    /**
+     * Every computer a player can hold: the small ones in every age and case, and the Mainframes and the WAN Gateway
+     * Computers of every age.
+     */
     private static ItemLike[] computers() {
         return BuiltInRegistries.ITEM.stream()
                 .filter(item -> item instanceof BlockItem held && (held.getBlock() instanceof IComputerCase
-                        || held.getBlock() instanceof MainframeBlock))
+                        || held.getBlock() instanceof MainframeBlock || held.getBlock() instanceof WanGatewayBlock))
                 .toArray(ItemLike[]::new);
     }
 }

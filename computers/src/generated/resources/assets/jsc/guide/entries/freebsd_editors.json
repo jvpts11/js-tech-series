@@ -85,7 +85,7 @@
     }
   ],
   "id": "jsc:freebsd_editors",
-  "order": 280,
+  "order": 281,
   "section": "jsc:freebsd_tools",
   "title": "jsc.guide.freebsd_editors.title"
 }

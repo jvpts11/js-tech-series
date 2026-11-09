@@ -32,8 +32,8 @@ era's plug where it meets a device.
 | Line | What it joins | Vintage | Legacy | Transition | Standard | Advanced |
 |---|---|---|---|---|---|---|
 | Access | the small computers to a router | Thin Coaxial | Ethernet | Cat 5e | Gigabit Ethernet | Cat 6a |
-| Backbone | the routers, the Mainframe and the racks | Thick Coaxial | HBW | 10GBASE-CX4 | Fibre Optic | OM5 Fibre |
-| Long distance | two networks, between two Gateway computers | Telephone Line | Leased Line | T3 Line | VLDC | Dark Fibre |
+| Backbone | the routers, the Mainframe, the WAN Gateway Computers and the racks | Thick Coaxial | HBW | 10GBASE-CX4 | Fibre Optic | OM5 Fibre |
+| Long distance | two networks, between the ports of two WAN Gateway Computers ([Hardware](HARDWARE.md)) | Telephone Line | Leased Line | T3 Line | VLDC | Dark Fibre |
 | High compute | a supercomputer's nodes to its HBW Interface | | | InfiniBand | High Compute | OSFP |
 | Crafting | a Crafting Computer to the parts that feed its machines | Crafting Cable, the same in every era | | | | |
 

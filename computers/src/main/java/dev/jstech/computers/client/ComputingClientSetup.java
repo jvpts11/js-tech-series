@@ -164,6 +164,7 @@ public final class ComputingClientSetup {
                         });
         event.register(ComputingMenus.DESKTOP_MENU.get(), DesktopScreen::new);
         event.register(ComputingMenus.MAINFRAME_MENU.get(), MainframeScreen::new);
+        event.register(ComputingMenus.WAN_GATEWAY_MENU.get(), WanGatewayScreen::new);
         event.register(ComputingMenus.PERSONAL_COMPUTER_MENU.get(), PersonalComputerScreen::new);
         event.register(ComputingMenus.CRAFTING_COMPUTER_MENU.get(), CraftingComputerScreen::new);
         event.register(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), ClusterManagementComputerScreen::new);
@@ -203,7 +204,9 @@ public final class ComputingClientSetup {
         // Every rack cabinet (server, per era, and supercomputer) is one model on its origin.
         event.registerBlockEntityRenderer(ComputingModule.SERVER_RACK_BE.get(), RackRenderer::create);
         // The Mainframe is the same idea: one cabinet per era, drawn from the origin block.
-        event.registerBlockEntityRenderer(ComputingModule.MAINFRAME_BE.get(), MainframeRenderer::create);
+        event.registerBlockEntityRenderer(ComputingModule.MAINFRAME_BE.get(), CabinetRenderer::mainframe);
+        // And the WAN Gateway Computer, a block wider, with its line modules.
+        event.registerBlockEntityRenderer(ComputingModule.WAN_GATEWAY_BE.get(), WanGatewayRenderer::create);
         // The Pattern Encoder: one burner body per era, with its bay and lamps.
         event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.PRINTER_BE.get(), PrinterRenderer::create);

@@ -165,6 +165,17 @@ class AssemblyGeometryTest {
     }
 
     @Test
+    void wanGateway_isTheMainframesCabinetWithNoOperationsStrip() {
+        final AssemblyGeometry mainframe = AssemblyGeometry.mainframe(6);
+        final AssemblyGeometry gateway = AssemblyGeometry.wanGateway(6);
+        assertTrue(gateway.operations() == null, "a gateway runs no Operations of its own");
+        assertEquals(mainframe.seats(SeatKind.CARD), gateway.seats(SeatKind.CARD), "the same six card slots");
+        assertEquals(mainframe.seats(SeatKind.COOLER), gateway.seats(SeatKind.COOLER), "and coolers");
+        assertEquals(2, gateway.switches(), "auto start, and the row of its lines' lamps");
+        assertTrue(gateway.inventoryY() <= mainframe.inventoryY(), "its inventory never lower than the Mainframe's");
+    }
+
+    @Test
     void tabs_standUnderTheLampsInsideTheScreen() {
         for (final AssemblyGeometry geo : everyGeometry()) {
             if (!geo.cooled()) {
@@ -195,6 +206,7 @@ class AssemblyGeometryTest {
             }
         }
         out.add(AssemblyGeometry.mainframe(6));
+        out.add(AssemblyGeometry.wanGateway(6));
         out.add(AssemblyGeometry.server(5));
         return out;
     }

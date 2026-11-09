@@ -30,6 +30,7 @@ final class AssemblyTexts {
     static final TextKey TITLE_CRAFTING = TextKey.of("jsc.assembly.title_crafting", "CC");
     static final TextKey TITLE_CLUSTER_MANAGEMENT = TextKey.of("jsc.assembly.title_cluster_management", "CMC");
     static final TextKey TITLE_MAINFRAME = TextKey.of("jsc.assembly.title_mainframe", "MAINFRAME");
+    static final TextKey TITLE_WAN_GATEWAY = TextKey.of("jsc.assembly.title_wan_gateway", "WAN GATEWAY");
     static final TextKey TITLE_SERVER = TextKey.of("jsc.assembly.title_server", "SERVER");
     static final TextKey TITLE_SUPERCOMPUTER_NODE = TextKey.of("jsc.assembly.title_supercomputer_node",
             "SUPERCOMPUTER NODE");
@@ -112,6 +113,8 @@ final class AssemblyTexts {
     static final TextKey AUTO_START = TextKey.of("jsc.assembly.auto_start", "AUTO START");
     static final TextKey SIDE_PANEL = TextKey.of("jsc.assembly.side_panel", "SIDE PANEL");
     static final TextKey FAILOVER = TextKey.of("jsc.assembly.failover", "FAILOVER");
+    static final TextKey LINES = TextKey.of("jsc.assembly.lines", "LINES");
+    static final TextKey LINES_UP = TextKey.of("jsc.assembly.lines_up", "%s / %s UP");
     static final TextKey OPERATIONS = TextKey.of("jsc.assembly.operations", "OPERATIONS");
     static final TextKey LAMP_POWER = TextKey.of("jsc.assembly.lamp_power", "PWR");
     static final TextKey LAMP_DISK = TextKey.of("jsc.assembly.lamp_disk", "DISK");

@@ -32,7 +32,6 @@ import dev.jstech.computers.engine.INetworkEngine;
 import dev.jstech.computers.engine.NetworkOperationsService;
 import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.CaseCooling;
-import dev.jstech.computers.hardware.CaseParts;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.FormFactor;
@@ -46,20 +45,15 @@ import dev.jstech.computers.operation.NetworkSelectOperation;
 import dev.jstech.computers.operation.NetworkUpdateOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.os.HostScope;
-import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.program.iql.IqlCatalog;
 import dev.jstech.computers.storage.IDataSink;
-import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.StorageKey;
-import dev.jstech.computers.storage.StoreSink;
-import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.trace.TracePoints;
 import dev.jstech.computers.workshop.UpdateRequest;
-import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.jstechseries.network.FailoverRole;
@@ -75,7 +69,6 @@ import dev.jstech.core.jstechseries.operation.SelfTestOperationTask;
 import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
-import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.time.GameCalendar;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -105,10 +98,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.AABB;
-import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
@@ -119,155 +109,27 @@ import java.util.Set;
  * passive computers it shares a base with, the Mainframe OWNS and orchestrates a data network rather
  * than reading one from a cable.
  */
-public class MainframeBlockEntity extends AbstractComputerBlockEntity
-        implements IComputerTerminalHost {
+public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
 
-    @Override
-    public Set<Long> occupiedPositions(final long ownerPos) {
-        // The whole 3x2x2 footprint is one connection surface: a peripheral cable
-        final Direction facing = getBlockState().getValue(HorizontalDirectionalBlock.FACING);
-        final Set<Long> positions = new HashSet<>();
-        for (final BlockPos p : MainframeStructure.allPositions(worldPosition, facing)) {
-            positions.add(p.asLong());
-        }
-        return positions;
-    }
-
-    public static final int MOTHERBOARD_SLOT = 0;
-    public static final int CPU_SLOTS_START = 1;
-    public static final int CPU_SLOTS = 4;
-    public static final int RAM_SLOTS_START = 5;
-    public static final int RAM_SLOTS = 8;
-    public static final int GPU_SLOTS_START = 13;
-    public static final int GPU_SLOTS = 6;
-    public static final int PSU_SLOT = 19;
-    public static final int DISK_SLOTS_START = 20;
-    public static final int DISK_SLOTS = 4;
-    /** A cooler over each processor's socket, after the disks so a cabinet saved before them keeps its parts. */
-    public static final int COOLER_SLOTS_START = 24;
-    public static final int COOLER_SLOTS = 4;
-    public static final int TOTAL_SLOTS = 28;
-
-    public static final int STORAGE_SLOTS = 27;
-    /** What a Mainframe's cabinet counts, whatever its era: the slots above are where they sit; it has no bays. */
-    public static final CaseParts PARTS = new CaseParts(CPU_SLOTS, RAM_SLOTS, GPU_SLOTS, DISK_SLOTS, 0, STORAGE_SLOTS);
-
-    /*
-     * the cabinet as one model: what the renderer needs to know
-     *
-     * The Mainframe is drawn as a single GeckoLib cabinet by its controller, with a bone per installed
-     * part. The client copy of a computer does not carry the hardware handler, so the visual state
-     * travels as three small numbers the server works out and sends when they change: which hardware
-     * slots are filled, which disks carry a system, and the machine's own condition. Worked out every
-     * tick rather than pushed from each place that installs a part or flips the power, no path can
-     * leave the model showing hardware that is no longer there.
-     */
-
-    private static final int FLAG_RUNNING = 1;
-    private static final int FLAG_BUILD_VALID = 2;
-    private static final int FLAG_NETWORKED = 4;
-    private static final int FLAG_PANEL_OFF = 8;
-
-    /** The controller the power button's press plays on, and the press. */
-    private static final String POWER = "power";
+    /** The press of the power button on the Mainframe's cabinet. */
     private static final String PRESS = "animation.mainframe.press_power";
-
-    /** The service panel taken off, showing the card bay and everything seated in it. */
-    private final BoolField servicePanelOff = fields().flag("ServicePanelOff", false).save();
-    private final DerivedInt visualSystems = fields().derived("VisualSystems", () -> systemsMask()).toClient();
-    private final DerivedInt visualFlags = fields().derived("VisualFlags", () -> machineFlags()).toClient();
-
-    /** The power button pressed on the sill: the button goes in for whoever sees the cabinet. */
-    public void showPowerPressed() {
-        ModelAnimations.replay(this, POWER, PRESS);
-    }
 
     /** A Vintage cabinet's tape reels are heard turning while it runs, as they are seen turning. */
     @Override
     public List<LoopRequest> machineLoops() {
-        return mainframeEra() == HardwareEra.VINTAGE && visualRunning()
+        return cabinetEra() == HardwareEra.VINTAGE && visualRunning()
                 ? List.of(LoopRequest.of(ComputingSounds.MAINFRAME_TAPE)) : List.of();
     }
 
-    /** The era of this cabinet, read from its block; it picks the model and the atlas. */
-    public Era mainframeEra() {
-        return getBlockState().getBlock()
-                instanceof MainframeBlock mainframe
-                ? mainframe.era() : HardwareEra.STANDARD;
+    /** The whole 3 x 2 x 2 footprint. */
+    @Override
+    protected List<BlockPos> cabinetBlocks(final Direction facing) {
+        return MainframeStructure.allPositions(worldPosition, facing);
     }
 
-    /** Whether hardware slot {@code slot} holds a part, on either side. */
-    public boolean hardwareInstalled(final int slot) {
-        return installedPart(slot) != null;
-    }
-
-    /** Whether the disk in bay {@code bay} carries a system, which is what lights its lamp. */
-    public boolean diskCarriesSystem(final int bay) {
-        if (bay < 0 || bay >= DISK_SLOTS) {
-            return false;
-        }
-        if (level != null && level.isClientSide()) {
-            return (visualSystems.getAsInt() & (1 << bay)) != 0;
-        }
-        return OsDisks.hasSystem(
-                getHardware().getStackInSlot(DISK_SLOTS_START + bay));
-    }
-
-    public boolean visualRunning() {
-        return (visualFlags.getAsInt() & FLAG_RUNNING) != 0;
-    }
-
-    public boolean visualBuildValid() {
-        return (visualFlags.getAsInt() & FLAG_BUILD_VALID) != 0;
-    }
-
-    public boolean visualNetworked() {
-        return (visualFlags.getAsInt() & FLAG_NETWORKED) != 0;
-    }
-
-    public boolean servicePanelOff() {
-        return (visualFlags.getAsInt() & FLAG_PANEL_OFF) != 0;
-    }
-
-    /** Takes the service panel off the card bay or puts it back. */
-    public void toggleServicePanel() {
-        servicePanelOff.set(!servicePanelOff.get());
-    }
-
-    /* Which disk bays hold a disk carrying a system, a bit each. */
-    private int systemsMask() {
-        int systems = 0;
-        for (int bay = 0; bay < DISK_SLOTS; bay++) {
-            if (OsDisks.hasSystem(
-                    getHardware().getStackInSlot(DISK_SLOTS_START + bay))) {
-                systems |= 1 << bay;
-            }
-        }
-        return systems;
-    }
-
-    /* The machine's own condition as the lamps and the panel show it. */
-    private int machineFlags() {
-        int flags = 0;
-        flags |= isRunning() ? FLAG_RUNNING : 0;
-        flags |= buildValid() ? FLAG_BUILD_VALID : 0;
-        flags |= networkUuid() != null ? FLAG_NETWORKED : 0;
-        flags |= servicePanelOff.get() ? FLAG_PANEL_OFF : 0;
-        return flags;
-    }
-
-    /** The whole 3 x 2 x 2 footprint: the renderer draws the cabinet from this block alone. */
-    public AABB renderBox() {
-        final BlockState state = getBlockState();
-        if (!state.hasProperty(HorizontalDirectionalBlock.FACING)) {
-            return new AABB(worldPosition);
-        }
-        AABB box = new AABB(worldPosition);
-        for (final BlockPos part : MainframeStructure.allPositions(
-                worldPosition, state.getValue(HorizontalDirectionalBlock.FACING))) {
-            box = box.minmax(new AABB(part));
-        }
-        return box;
+    @Override
+    protected String pressClip() {
+        return PRESS;
     }
 
     /** Which network this Mainframe owns, who else is claiming it, and whose turn it is to run it. */
@@ -324,41 +186,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
      */
     public static ComputerDef computer(final Era era) {
         return new ComputerDef(era, Set.of(FormFactor.MTX), HostScope.MAINFRAME, PARTS, CaseCooling.MAINFRAME);
-    }
-
-    /*
-     * The hardware handler is inherited; this shim keeps the historic public name so the Menu/Screen,
-     * block drops and GameTests address it unchanged.
-     */
-    public ItemStackHandler getInventory() {
-        return getHardware();
-    }
-
-    @Override
-    protected String hardwareNbtKey() {
-        // Preserve the historic key so every existing saved Mainframe keeps its installed hardware.
-        return "Inventory";
-    }
-
-    public LocalStore localStore() {
-        final List<ItemStack> disks = new ArrayList<>(DISK_SLOTS);
-        for (int i = 0; i < DISK_SLOTS; i++) {
-            disks.add(getHardware().getStackInSlot(DISK_SLOTS_START + i));
-        }
-        return new LocalStore(disks, this::setChanged);
-    }
-
-    /**
-     * The net storage capacity in item-equivalents after subtracting the installed OS footprint.
-     * This is the capacity available for data held on the network and in the local store; the OS
-     * occupies disk space from installation.
-     */
-    public long storageItems() {
-        final ComputerBuild build = currentBuild();
-        if (build == null) {
-            return 0L;
-        }
-        return Math.max(0L, build.totalStorageItems() - reservedByOs());
     }
 
     public int parallelQueues() {
@@ -1479,42 +1306,8 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
         return List.of();
     }
 
-    @Override
-    public long computerRamBuffer() {
-        return ramBuffer();
-    }
-
-    @Override
-    public int networkServerCount() {
-        if (networkUuid() != null && level instanceof ServerLevel serverLevel) {
-            return NetworkSystem.get(serverLevel).serversOf(networkUuid()).size();
-        }
-        return 0;
-    }
-
-    @Override
-    public long localStorageUsed() {
-        return localStore().used();
-    }
-
-    @Override
-    public long localStorageCapacity() {
-        return storageItems();
-    }
-
-    @Override
-    public IDataSink localStorage() {
-        return new StoreSink(localStore());
-    }
-
     public Map<StorageKey, Long> localSnapshot() {
         return localStore().view();
-    }
-
-    @Override
-    public int usableStorageSlots() {
-        final long capacity = storageItems(); // already net of OS footprint
-        return capacity <= 0 ? 0 : (int) Math.min(computer().parts().storage(), (capacity + 63) / 64);
     }
 
     @Override
@@ -1602,17 +1395,11 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
     public static final int NET_STATE_LINKED = 1;
     public static final int NET_STATE_CONFLICT = 2;
 
-    /* Values the assembly menu shows: worked out on the server, received by the client while the menu is open. */
-    private final DerivedInt assemblyRunning = fields().derived("AssemblyRunning", this::isRunning).toMenu();
-    private final DerivedInt assemblyBuildValid = fields().derived("AssemblyBuildValid", this::buildValid).toMenu();
-    private final DerivedInt assemblyCapacity = fields().derived("AssemblyCapacity",
-            () -> (int) Math.min(Integer.MAX_VALUE, capacity())).toMenu();
+    /* The Mainframe's own values on its assembly menu, beside the ones every cabinet shows. */
     private final DerivedInt assemblyParallelQueues = fields().derived("AssemblyParallelQueues",
             this::parallelQueues).toMenu();
     private final DerivedInt assemblyRamBuffer = fields().derived("AssemblyRamBuffer",
             () -> (int) Math.min(Integer.MAX_VALUE, ramBuffer())).toMenu();
-    private final DerivedInt assemblyAutoStart = fields().derived("AssemblyAutoStart", this::isAutoStart).toMenu();
-    private final DerivedInt assemblyManualOn = fields().derived("AssemblyManualOn", this::isManualOn).toMenu();
     private final DerivedInt assemblyNetworkState = fields().derived("AssemblyNetworkState",
             this::linkState).toMenu();
     private final DerivedInt assemblyPendingOps = fields().derived("AssemblyPendingOps", this::pendingOps).toMenu();
@@ -1625,18 +1412,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             () -> networking.failoverRole().id()).toMenu();
     /* The speed of each of its own queues, the processor's first, for the screen to show. */
     private final DerivedInt[] assemblyQueueSpeeds = queueSpeedFields();
-
-    public boolean assemblyRunning() {
-        return assemblyRunning.isSet();
-    }
-
-    public boolean assemblyBuildValid() {
-        return assemblyBuildValid.isSet();
-    }
-
-    public long assemblyCapacity() {
-        return assemblyCapacity.getAsInt();
-    }
 
     public int assemblyParallelQueues() {
         return assemblyParallelQueues.getAsInt();
@@ -1659,14 +1434,6 @@ public class MainframeBlockEntity extends AbstractComputerBlockEntity
             out[i] = fields().derived("AssemblyQueueSpeed" + i, () -> queueSpeed(queue)).toMenu();
         }
         return out;
-    }
-
-    public boolean assemblyAutoStart() {
-        return assemblyAutoStart.isSet();
-    }
-
-    public boolean assemblyManualOn() {
-        return assemblyManualOn.isSet();
     }
 
     public int assemblyNetworkState() {

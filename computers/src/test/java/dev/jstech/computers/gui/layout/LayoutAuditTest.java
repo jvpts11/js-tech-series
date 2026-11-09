@@ -57,7 +57,7 @@ class LayoutAuditTest {
             "CdeStyleLayout", "WorkstationInfoLayout", "WorkstationDevicesLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
             "RedstoneInterfaceLayout", "DeviceManagerLayout", "InfoCenterLayout", "PowerStripLayout",
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
-            "PersonalComputerLayout", "MainframeLayout", "ServerAssemblyLayout", "KvmChannelLayout",
+            "PersonalComputerLayout", "MainframeLayout", "WanGatewayLayout", "ServerAssemblyLayout", "KvmChannelLayout",
             "SystemBootLayout", "CrashLayout", "DiskCheckLayout", "DefragLayout", "SectionDiagnosticsLayout",
             "CommandPromptLayout",
             "OsInstallLayout",
@@ -166,6 +166,8 @@ class LayoutAuditTest {
         }
         c.add(new AuditCase("MainframeLayout", MainframeLayout.layout(), true));
         c.add(new AuditCase("MainframeLayout.cooling", MainframeLayout.coolingLayout(), true));
+        c.add(new AuditCase("WanGatewayLayout", WanGatewayLayout.layout(), true));
+        c.add(new AuditCase("WanGatewayLayout.cooling", WanGatewayLayout.coolingLayout(), true));
         c.add(new AuditCase("ServerAssemblyLayout", ServerAssemblyLayout.layout(), true));
         // The KVM channel bar grows a row per channel; audit an empty bar and the most a switch reports.
         c.add(new AuditCase("KvmChannelLayout(0)", KvmChannelLayout.layout(0), true));

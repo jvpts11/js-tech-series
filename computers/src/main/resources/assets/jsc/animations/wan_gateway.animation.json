@@ -1,0 +1,92 @@
+{
+  "format_version": "1.8.0",
+  "animations": {
+    "animation.wan_gateway.work": {
+      "loop": true,
+      "animation_length": 4.0,
+      "bones": {
+        "fan_1": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "4.0": [
+              0,
+              1440.0,
+              0
+            ]
+          }
+        },
+        "fan_2": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "4.0": [
+              0,
+              1440.0,
+              0
+            ]
+          }
+        },
+        "fan_3": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "4.0": [
+              0,
+              1440.0,
+              0
+            ]
+          }
+        },
+        "fan_4": {
+          "rotation": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "4.0": [
+              0,
+              1440.0,
+              0
+            ]
+          }
+        }
+      }
+    },
+    "animation.wan_gateway.press_power": {
+      "loop": false,
+      "animation_length": 0.3,
+      "bones": {
+        "power_button": {
+          "position": {
+            "0.0": [
+              0,
+              0,
+              0
+            ],
+            "0.08": [
+              0,
+              0,
+              0.35
+            ],
+            "0.2": [
+              0,
+              0,
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+}

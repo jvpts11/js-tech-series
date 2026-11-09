@@ -174,7 +174,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "scripting/ScriptedHardware.java", 18, DECLARED_WHAT
                     + ", from a modpack's startup script"),
             data(COMPUTERS + "blockentity/AbstractComputerBlockEntity.java", 1, SAVE_TAG),
-            data(COMPUTERS + "blockentity/MainframeBlockEntity.java", 1, SAVE_TAG),
+            data(COMPUTERS + "blockentity/AbstractCabinetComputerBlockEntity.java", 1, SAVE_TAG),
             data(COMPUTERS + "blockentity/UpsNotices.java", 2, "what the Unixes' UPS daemon broadcasts on every"
                     + " terminal, in its own words, as no daemon ever printed in anything but its own"),
             data(COMPUTERS + "client/os/ItemCategories.java", 13,

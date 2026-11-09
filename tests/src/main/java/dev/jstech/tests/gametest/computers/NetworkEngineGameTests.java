@@ -86,7 +86,7 @@ public final class NetworkEngineGameTests {
             if (!(helper.getBlockEntity(at) instanceof MainframeBlockEntity mainframe)) {
                 throw new IllegalStateException("no Mainframe at " + at);
             }
-            final Era era = mainframe.mainframeEra();
+            final Era era = mainframe.cabinetEra();
             helper.assertValueEqual(mainframe.installedEngines(), Map.of(MIDSOFT, shipped.version()),
                     "a new " + era + " Mainframe ships with the Midsoft IQL Server of its age");
             helper.assertTrue(MIDSOFT.equals(mainframe.activeEngine()) && mainframe.engineRunning(),

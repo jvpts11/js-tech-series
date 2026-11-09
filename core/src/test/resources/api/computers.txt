@@ -362,6 +362,7 @@ stable 7
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind RAID_CONTROLLER
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind READ_CACHE
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind SOUND
+13 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind WAN_INTERFACE
 8 dev.jstech.computers.hardware.ExpansionCardKind  static final ExpansionCardKind WORKSHOP
 8 dev.jstech.computers.hardware.FormFactor  type record(String id, String label)
 8 dev.jstech.computers.hardware.FormFactor  static FormFactor byId(String)
@@ -473,6 +474,7 @@ stable 7
 8 dev.jstech.computers.os.HostScope  static final HostScope MAINFRAME
 8 dev.jstech.computers.os.HostScope  static final HostScope PERSONAL_COMPUTER
 8 dev.jstech.computers.os.HostScope  static final HostScope SERVER
+13 dev.jstech.computers.os.HostScope  static final HostScope WAN_GATEWAY_COMPUTER
 1 dev.jstech.computers.os.KernelDef  type record(ResourceLocation id, SchedulerKind scheduler, FilesystemKind filesystem, ShellFamily shellFamily)
 1 dev.jstech.computers.os.KernelDef  static final Codec<KernelDef> CODEC
 1 dev.jstech.computers.os.OperatingSpaceDef  type record(ResourceLocation id, String displayName, SoftwareHouse house)

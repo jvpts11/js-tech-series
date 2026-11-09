@@ -9,10 +9,12 @@ package dev.jstech.tests.testkit.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.MainframeBlock;
+import dev.jstech.computers.block.WanGatewayBlock;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.core.persistence.NetworkRegistry;
@@ -120,6 +122,24 @@ public final class NetworkFixtures {
         installValidBuild(be);
         be.togglePower();
         return be;
+    }
+
+    /**
+     * Places a Standard WAN Gateway Computer at {@code origin} facing {@code facing}, forms its 16 blocks as a player's
+     * placement does, installs the standard cabinet build and switches it on. Its card slots are left empty.
+     */
+    public static WanGatewayBlockEntity formRunningGateway(final GameTestHelper helper, final BlockPos origin,
+                                                           final Direction facing) {
+        helper.setBlock(origin, ComputingModule.WAN_GATEWAY.get().defaultBlockState()
+                .setValue(WanGatewayBlock.FACING, facing));
+        ComputingModule.WAN_GATEWAY.get().setPlacedBy(helper.getLevel(), helper.absolutePos(origin),
+                helper.getBlockState(origin), null, ItemStack.EMPTY);
+        if (!(helper.getBlockEntity(origin) instanceof WanGatewayBlockEntity gateway)) {
+            throw new IllegalStateException("no gateway at " + origin);
+        }
+        TestWorldBuilder.installMainframeBuild(gateway, null);
+        gateway.togglePower();
+        return gateway;
     }
 
     public static MainframeBlockEntity mainframeAt(final GameTestHelper helper, final BlockPos relative) {

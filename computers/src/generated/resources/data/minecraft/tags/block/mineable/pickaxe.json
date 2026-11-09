@@ -5,6 +5,12 @@
     "jsc:legacy_mainframe",
     "jsc:transition_mainframe",
     "jsc:advanced_mainframe",
-    "jsc:mainframe_part"
+    "jsc:mainframe_part",
+    "jsc:wan_gateway",
+    "jsc:vintage_wan_gateway",
+    "jsc:legacy_wan_gateway",
+    "jsc:transition_wan_gateway",
+    "jsc:advanced_wan_gateway",
+    "jsc:wan_gateway_part"
   ]
 }

@@ -551,6 +551,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   many they may, as the server tells them when they join and whenever the count changes. Experimental.
 - (Computers) A kind of card that keeps chunks loaded: J's Computers' API is at version 12. `ExpansionCardKind.ANCHOR`
   is the Network Anchor Card's kind. Experimental.
+- (Computers) The WAN Gateway Computer: J's Computers' API is at version 13. `HostScope.WAN_GATEWAY_COMPUTER` is the
+  machine, and `ExpansionCardKind.WAN_INTERFACE` the kind of the WAN Interface Cards, which go in that machine alone.
+  Experimental.
 
 ### Added
 - (Core) Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2221,6 +2224,17 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   says who stopped answering, who took the network over, which engine runs now and how many Operations were
   discarded. The Services tab shows the role with its two boxes, every Subframe with what it lends ("lends 1,382 it/t
   and 2 queues", or "takes no work: a reserve"), and who takes the network over should the orchestrator fall.
+- (Computers) The WAN Gateway Computer, one for each era from the Vintage to the Advanced: a computer of a 4x2x2
+  cabinet, a block wider than the Mainframe's, at either end of a long-distance line. It takes the Mainframe's
+  hardware and runs a system, joins its own network through the backbone as a Personal Computer does, and has four
+  ports for the long-distance line on its back, one in the middle of each lower block, each taking the line of the
+  gateway's era and the older ones. Its WAN Interface Cards, only for it and four at most, work its ports in turn:
+  the Modem Card (Vintage, Telephone Line, 1 it/t), the T1 Card (Legacy, Leased Line, 8 it/t), the T3 Card
+  (Transition, T3 Line, 24 it/t), the VLDC Card (Standard, VLDC, 64 it/t) and the Optical Transport Card (Advanced,
+  Dark Fibre, 256 it/t), each taking its era's line and the older ones. A line is up while the gateway runs with a
+  cable its card takes in the port. The cabinet shows a line module for each card, a green lamp for a line up and a
+  red one for a line down, and a blank where no card is; its assembly screen, the Mainframe's without the operations,
+  shows how many lines are up ("2 / 3 UP") and a lamp for each port.
 - (Computers) A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
@@ -3213,6 +3227,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole blocks.
 
 ### Changed
+- (Computers) IQL: the computers table gives every computer its era, a Cluster Management Computer's too, and names a
+  WAN Gateway Computer as one; the network's log calls a gateway `WAN-` and its short id, This PC "WAN Gateway
+  Computer".
 - (Computers) The Network Manager's Services tab lists the Subframes right under the engine's card, by machine, engine
   and what each does, and no longer shows a note under a Subframe that runs another engine: it is a reserve now.
 - (Computers) The Server Router of before is the Standard's, and manages 16 racks where it managed 8; it takes the data

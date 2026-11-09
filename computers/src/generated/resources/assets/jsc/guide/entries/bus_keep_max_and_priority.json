@@ -128,7 +128,7 @@
     }
   ],
   "id": "jsc:bus_keep_max_and_priority",
-  "order": 91,
+  "order": 92,
   "section": "jsc:bus_settings",
   "title": "jsc.guide.bus_keep_max_and_priority.title"
 }

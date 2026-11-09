@@ -191,13 +191,19 @@ public final class AssemblyGeometry {
      */
     public AssemblyGeometry(final Kind kind, final int bays, final boolean supplyAtTop, final boolean secondRow,
                             final CaseCooling cooling, final int readouts) {
+        this(kind, bays, supplyAtTop, secondRow, cooling, readouts, kind == Kind.MAINFRAME);
+    }
+
+    /* As the public one, with or without the operations strip under the case, which only a Mainframe's cabinet has. */
+    private AssemblyGeometry(final Kind kind, final int bays, final boolean supplyAtTop, final boolean secondRow,
+                             final CaseCooling cooling, final int readouts, final boolean operations) {
         this.kind = kind;
         this.bays = kind == Kind.TOWER ? bays : 0;
         this.supplyAtTop = kind == Kind.TOWER && supplyAtTop;
         this.secondRow = kind == Kind.TOWER && secondRow;
         this.cooling = kind == Kind.SERVER ? CaseCooling.NONE : cooling;
         this.readouts = readouts;
-        this.operations = kind == Kind.MAINFRAME;
+        this.operations = kind == Kind.MAINFRAME && operations;
         // A server has no switches of its own: it is switched on and off in its rack.
         this.switches = kind == Kind.SERVER ? 0 : 2;
         final boolean tower = kind == Kind.TOWER;
@@ -237,6 +243,14 @@ public final class AssemblyGeometry {
     /** The Mainframe's geometry: its cabinet cools as {@link CaseCooling#MAINFRAME}, a cooler over each socket. */
     public static AssemblyGeometry mainframe(final int readouts) {
         return new AssemblyGeometry(Kind.MAINFRAME, 0, false, false, CaseCooling.MAINFRAME, readouts);
+    }
+
+    /**
+     * The WAN Gateway Computer's geometry: the Mainframe's cabinet, the same board in it and the same cooling, with no
+     * operations strip, since a gateway runs no Operations of its own.
+     */
+    public static AssemblyGeometry wanGateway(final int readouts) {
+        return new AssemblyGeometry(Kind.MAINFRAME, 0, false, false, CaseCooling.MAINFRAME, readouts, false);
     }
 
     /** A rack server's geometry: its rack cools it, so it has no cooling face. */

@@ -102,6 +102,24 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     }
 
     /**
+     * A row of the service panel that shows lamps where another has a rocker: the WAN Gateway's lines.
+     *
+     * @param caption its caption
+     * @param lamps   each lamp, numbered from 1 by its place
+     */
+    protected record LampRow(String caption, List<RowLamp> lamps) {
+    }
+
+    /**
+     * One lamp of a {@link LampRow}.
+     *
+     * @param colour its colour when lit
+     * @param lit    whether it is lit; a dark one is drawn dim
+     */
+    protected record RowLamp(int colour, boolean lit) {
+    }
+
+    /**
      * The machine's name in its header, which the player edits there.
      *
      * @param hint      what the empty field says
@@ -338,6 +356,18 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         for (int i = 0; i < switches.size(); i++) {
             AssemblyPainter.drawSwitch(g, font, x, y, geo.serviceSwitch(i), switches.get(i).caption(),
                     switches.get(i).on());
+        }
+        final List<LampRow> lampRows = lampRows();
+        for (int i = 0; i < lampRows.size(); i++) {
+            final List<RowLamp> lamps = lampRows.get(i).lamps();
+            final int[] colours = new int[lamps.size()];
+            final boolean[] on = new boolean[lamps.size()];
+            for (int k = 0; k < lamps.size(); k++) {
+                colours[k] = lamps.get(k).colour();
+                on[k] = lamps.get(k).lit();
+            }
+            AssemblyPainter.drawLampRow(g, font, x, y, geo.serviceSwitch(switches.size() + i),
+                    lampRows.get(i).caption(), colours, on);
         }
         final boolean[] lit = lampsLit();
         AssemblyPainter.drawLamps(g, font, x, y, geo.lamps(),
@@ -621,6 +651,11 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     @Nullable
     protected Operations operations() {
         return null;
+    }
+
+    /** The service panel's rows of lamps, under its switches and in the places they leave: none on most machines. */
+    protected List<LampRow> lampRows() {
+        return List.of();
     }
 
     /* The face drawn: the board's on a machine whose case does not cool. */

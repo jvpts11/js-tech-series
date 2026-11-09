@@ -1,0 +1,370 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.wan_gateways.definition1",
+      "term": "jsc.guide.wan_gateways.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.wan_gateways.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table1_1"
+          },
+          {
+            "literal": "1 MTX"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table1_2"
+          },
+          {
+            "literal": "up to 4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table1_3"
+          },
+          {
+            "literal": "up to 8"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table1_4"
+          },
+          {
+            "literal": "up to 6, of them up to 4 WAN Interface Cards"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table1_5"
+          },
+          {
+            "literal": "up to 4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table1_6"
+          },
+          {
+            "literal": "1"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.wan_gateways.definition2",
+      "term": "jsc.guide.wan_gateways.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text7"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.wan_gateways.table2",
+      "heads": [
+        "jsc.guide.wan_gateways.table2_head1",
+        "jsc.guide.wan_gateways.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.wan_gateways.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.wan_gateways.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.wan_gateways.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.wan_gateways.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.wan_gateways.table2_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.wan_gateways.table2_6_1"
+          },
+          {
+            "words": "jsc.guide.wan_gateways.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "scene",
+      "balloons": [
+        {
+          "detail": "jsc.guide.wan_gateways.balloon1_detail",
+          "number": 1,
+          "part": {
+            "box": [
+              0,
+              6,
+              11,
+              13,
+              16,
+              13
+            ],
+            "x": 18,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.wan_gateways.balloon1"
+        },
+        {
+          "detail": "jsc.guide.wan_gateways.balloon2_detail",
+          "number": 2,
+          "part": {
+            "box": [
+              7,
+              3,
+              14,
+              9,
+              6,
+              16
+            ],
+            "x": 16,
+            "y": 0,
+            "z": 16
+          },
+          "text": "jsc.guide.wan_gateways.balloon2"
+        },
+        {
+          "detail": "jsc.guide.wan_gateways.balloon3_detail",
+          "number": 3,
+          "part": {
+            "box": [
+              0,
+              9,
+              14,
+              11,
+              11,
+              16
+            ],
+            "x": 17,
+            "y": 1,
+            "z": 16
+          },
+          "text": "jsc.guide.wan_gateways.balloon3"
+        }
+      ],
+      "blocks": [
+        {
+          "data": "{VisualSystems:0,VisualFlags:15,Lines:37}",
+          "state": "jsc:wan_gateway[facing=south,optical=false]",
+          "x": 16,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 18,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 17,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 15,
+          "y": 0,
+          "z": 16
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=1]",
+          "x": 18,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=2]",
+          "x": 17,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=3]",
+          "x": 16,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=4]",
+          "x": 15,
+          "y": 0,
+          "z": 15
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 18,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 17,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 16,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 15,
+          "y": 1,
+          "z": 16
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 18,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 17,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 16,
+          "y": 1,
+          "z": 15
+        },
+        {
+          "state": "jsc:wan_gateway_part[facing=south,era=3,optical=false,port=0]",
+          "x": 15,
+          "y": 1,
+          "z": 15
+        }
+      ],
+      "caption": "jsc.guide.wan_gateways.figure1",
+      "height": 130
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text9"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wan_gateways.text10"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.wan_gateways.fix1",
+          "problem": "jsc.guide.wan_gateways.problem1"
+        },
+        {
+          "fix": "jsc.guide.wan_gateways.fix2",
+          "problem": "jsc.guide.wan_gateways.problem2"
+        },
+        {
+          "fix": "jsc.guide.wan_gateways.fix3",
+          "problem": "jsc.guide.wan_gateways.problem3"
+        },
+        {
+          "fix": "jsc.guide.wan_gateways.fix4",
+          "problem": "jsc.guide.wan_gateways.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:mainframes",
+        "jsc:expansion_cards"
+      ]
+    }
+  ],
+  "icon": "jsc:wan_gateway",
+  "id": "jsc:wan_gateways",
+  "items": [
+    "jsc:wan_gateway",
+    "jsc:vintage_wan_gateway",
+    "jsc:legacy_wan_gateway",
+    "jsc:transition_wan_gateway",
+    "jsc:advanced_wan_gateway"
+  ],
+  "order": 30,
+  "section": "jsc:computers",
+  "title": "jsc.guide.wan_gateways.title"
+}

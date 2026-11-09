@@ -95,7 +95,7 @@
   ],
   "icon": "jsc:gigabit_cable",
   "id": "jsc:data_cable_colours",
-  "order": 69,
+  "order": 70,
   "section": "jsc:network_basics",
   "title": "jsc.guide.data_cable_colours.title"
 }

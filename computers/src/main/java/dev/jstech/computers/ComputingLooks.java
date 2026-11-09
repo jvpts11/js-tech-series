@@ -15,6 +15,7 @@ import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.UpsBlockEntity;
+import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.core.content.GeoLook;
@@ -34,7 +35,10 @@ public final class ComputingLooks {
 
     /** The Mainframe's cabinets, by era; they share the roof fans' and the tape reels' animation. */
     public static final GeoLook<MainframeBlockEntity> MAINFRAME = GeoLook.of(JsComputers.MODID, "mainframe",
-            "mainframe", mainframe -> mainframe(mainframe.mainframeEra()));
+            "mainframe", mainframe -> mainframe(mainframe.cabinetEra()));
+    /** The WAN Gateway Computer's cabinets, by era, beside the Mainframe's; they share the roof fans' animation. */
+    public static final GeoLook<WanGatewayBlockEntity> WAN_GATEWAY = GeoLook.of(JsComputers.MODID, "mainframe",
+            "wan_gateway", gateway -> wanGateway(gateway.cabinetEra()));
     /** The racks: the Supercomputer Rack's own, the Server Rack's by era; they share the roof fans. */
     public static final GeoLook<ServerRackBlockEntity> RACK = GeoLook.of(JsComputers.MODID, "rack", "rack",
             ComputingLooks::rack);
@@ -104,6 +108,8 @@ public final class ComputingLooks {
     /* Each era's model of each family; an era after the Advanced is drawn as the Advanced is, until it has its own. */
     private static final EraTable<String> MAINFRAMES = EraTable.ofFive("vintage_mainframe", "legacy_mainframe",
             "transition_mainframe", "mainframe", "advanced_mainframe");
+    private static final EraTable<String> WAN_GATEWAYS = EraTable.ofFive("vintage_wan_gateway",
+            "legacy_wan_gateway", "transition_wan_gateway", "wan_gateway", "advanced_wan_gateway");
     private static final EraTable<String> PATTERN_ENCODERS = EraTable.ofFive("vintage_pattern_encoder",
             "legacy_pattern_encoder", "transition_pattern_encoder", "pattern_encoder", "advanced_pattern_encoder");
     private static final EraTable<String> PRINTERS = EraTable.ofFive("vintage_printer", "legacy_printer",
@@ -134,6 +140,11 @@ public final class ComputingLooks {
     /** The model of a Mainframe cabinet of {@code era}. */
     public static String mainframe(final Era era) {
         return MAINFRAMES.get(era);
+    }
+
+    /** The model of a WAN Gateway Computer's cabinet of {@code era}. */
+    public static String wanGateway(final Era era) {
+        return WAN_GATEWAYS.get(era);
     }
 
     /** The model of a Pattern Encoder body of {@code era}. */

@@ -102,7 +102,7 @@
     }
   ],
   "id": "jsc:set_redstone",
-  "order": 304,
+  "order": 305,
   "section": "jsc:iql_settings",
   "title": "jsc.guide.set_redstone.title"
 }

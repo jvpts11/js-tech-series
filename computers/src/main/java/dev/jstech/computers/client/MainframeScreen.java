@@ -13,31 +13,23 @@ import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Seat;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.gui.layout.MainframeLayout;
-import dev.jstech.computers.hardware.CaseCooling;
-import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.menu.MainframeMenu;
-import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.jstechseries.network.FailoverRole;
-import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.ItemStack;
 
 /**
  * The Mainframe's assembly screen: its cabinet with its cards in two I/O cages and its disks at the front, the
  * operations it has queued, running and done under the case, and on its front panel what it moves a tick, its parallel
  * queues (each queue's speed in the tooltip), its RAM buffer and its network; its switches are auto start and failover.
  */
-public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu> {
-
-    /* Where the cabinet's own share stands among the cooling face's readouts: after the budget. */
-    private static final int CABINET_ROW = 3;
+public class MainframeScreen extends AbstractCabinetScreen<MainframeMenu> {
 
     public MainframeScreen(final MainframeMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -52,12 +44,6 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
     public static int powerButtonY() {
         final Box power = MainframeLayout.geometry().power();
         return power.y() + power.h() / 2;
-    }
-
-    @Override
-    protected Era caseEra() {
-        final Era era = menu.hardwareEra();
-        return era == null ? HardwareEra.STANDARD : era;
     }
 
     @Override
@@ -101,43 +87,6 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
     }
 
     @Override
-    protected AssemblyGeometry.Face face() {
-        return menu.face();
-    }
-
-    @Override
-    protected void showFace(final AssemblyGeometry.Face face) {
-        menu.showFace(face);
-    }
-
-    @Override
-    protected int faceButton(final AssemblyGeometry.Face face) {
-        return face == AssemblyGeometry.Face.BOARD ? MainframeMenu.BUTTON_FACE_BOARD
-                : MainframeMenu.BUTTON_FACE_COOLING;
-    }
-
-    @Override
-    protected boolean coolingSlot(final Slot slot) {
-        return menu.coolingSlot(slot);
-    }
-
-    @Override
-    protected ThermalState thermal() {
-        return menu.thermal();
-    }
-
-    /** The cooling face's readouts, with what the cabinet takes away on its own between the budget and the air. */
-    @Override
-    protected List<Readout> coolingReadouts() {
-        final List<Readout> rows = new ArrayList<>(super.coolingReadouts());
-        final String cabinet = JsTechTheme.fmt(CaseCooling.MAINFRAME.caseWatts());
-        rows.add(CABINET_ROW, new Readout(GameText.resolve(AssemblyTexts.CABINET),
-                GameText.resolve(AssemblyTexts.WATTS.with(cabinet)), JsTechTheme.text(),
-                List.of(GameText.component(AssemblyTexts.CABINET_TIP.with(cabinet)))));
-        return rows;
-    }
-
-    @Override
     protected List<Readout> readouts() {
         final int net = menu.networkState();
         final String network = net == MainframeBlockEntity.NET_STATE_CONFLICT ? GameText.resolve(AssemblyTexts.CONFLICT)
@@ -166,9 +115,7 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
 
     @Override
     protected List<ServiceSwitch> serviceSwitches() {
-        return List.of(
-                new ServiceSwitch(GameText.resolve(AssemblyTexts.AUTO_START), menu.isAutoStart(),
-                        MainframeMenu.BUTTON_AUTOSTART),
+        return List.of(autoStartSwitch(),
                 new ServiceSwitch(GameText.resolve(AssemblyTexts.FAILOVER), menu.failoverEnabled(),
                         MainframeMenu.BUTTON_FAILOVER));
     }
@@ -178,52 +125,6 @@ public class MainframeScreen extends AbstractMachineAssemblyScreen<MainframeMenu
         // The disk lamp shows the Mainframe working its disks, which it does while operations run.
         return new boolean[] {menu.isRunning(), menu.runningOps() > 0,
                 menu.networkState() == MainframeBlockEntity.NET_STATE_LINKED};
-    }
-
-    @Override
-    protected boolean boardIn() {
-        return menu.hasBoard();
-    }
-
-    @Override
-    protected int powerButton() {
-        return MainframeMenu.BUTTON_POWER;
-    }
-
-    @Override
-    protected boolean powerActive() {
-        return !menu.isAutoStart();
-    }
-
-    @Override
-    protected int powerLamp() {
-        return menu.isRunning() ? JsTechTheme.green() : JsTechTheme.red();
-    }
-
-    @Override
-    protected Component refusal(final Slot slot, final ItemStack carried) {
-        return menu.refusal(slot, carried);
-    }
-
-    @Override
-    protected List<Component> powerTooltip() {
-        final List<Component> failure = psuFailure(menu.psu());
-        if (!failure.isEmpty()) {
-            return failure;
-        }
-        final List<Component> hot = tooHot(menu.thermal());
-        if (!hot.isEmpty() && !menu.isRunning()) {
-            return hot;
-        }
-        if (!menu.buildValid()) {
-            return List.of(GameText.component(AssemblyTexts.NOT_A_COMPUTER),
-                    GameText.component(AssemblyTexts.NEEDS_PARTS).withStyle(ChatFormatting.GOLD),
-                    GameText.component(AssemblyTexts.THEN_SWITCH_ON).withStyle(ChatFormatting.GRAY));
-        }
-        if (menu.isAutoStart()) {
-            return List.of(GameText.component(AssemblyTexts.AUTO_KEEPS_ON).withStyle(ChatFormatting.GRAY));
-        }
-        return List.of();
     }
 
     /* Each queue's speed: the processor's, then each card's in its cage, a card that holds its queue in amber. */

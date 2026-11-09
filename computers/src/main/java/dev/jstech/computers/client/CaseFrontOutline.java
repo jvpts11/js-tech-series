@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.block.AbstractSmallComputerBlock;
 import dev.jstech.computers.block.DeviceFront;
 import dev.jstech.computers.block.MainframeBlock;
+import dev.jstech.computers.block.WanGatewayBlock;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.CaseFront;
 import dev.jstech.computers.hardware.BayDriveSpec;
@@ -66,7 +67,8 @@ public final class CaseFrontOutline {
         final BlockHitResult hit = event.getTarget();
         final BlockPos pos = hit.getBlockPos();
         final BlockState state = minecraft.level.getBlockState(pos);
-        if (!(state.getBlock() instanceof AbstractSmallComputerBlock<?>) && !(state.getBlock() instanceof MainframeBlock)) {
+        if (!(state.getBlock() instanceof AbstractSmallComputerBlock<?>)
+                && !(state.getBlock() instanceof MainframeBlock) && !(state.getBlock() instanceof WanGatewayBlock)) {
             return;
         }
         final Direction facing = state.getValue(HorizontalDirectionalBlock.FACING);
@@ -79,8 +81,10 @@ public final class CaseFrontOutline {
                 && minecraft.level.getBlockEntity(pos) instanceof AbstractSmallComputerBlockEntity computer) {
             box = casePart(block.frontLayout(), computer.front(), facing, at);
         } else {
-            box = MainframeBlock.POWER_BUTTON.contains(at[0], at[1])
-                    ? DeviceFront.box(MainframeBlock.POWER_BUTTON, SILL_BUTTON_NEAR, SILL_BUTTON_FAR, facing) : null;
+            // A cabinet's power button on its sill: the Mainframe's, or the gateway's in the same place.
+            final FrontArea sill = state.getBlock() instanceof WanGatewayBlock ? WanGatewayBlock.POWER_BUTTON
+                    : MainframeBlock.POWER_BUTTON;
+            box = sill.contains(at[0], at[1]) ? DeviceFront.box(sill, SILL_BUTTON_NEAR, SILL_BUTTON_FAR, facing) : null;
         }
         if (box == null) {
             return;

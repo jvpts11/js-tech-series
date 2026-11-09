@@ -15,6 +15,8 @@ import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRouterBlock;
+import dev.jstech.computers.block.WanGatewayBlock;
+import dev.jstech.computers.block.WanGatewayStructure;
 import dev.jstech.computers.hardware.StorageCardSpec;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerCaseItem;
@@ -63,6 +65,10 @@ final class ComputerKindsPages {
      * running, built right, on a network and with its service panel off so that its parts show.
      */
     private static final String MAINFRAME_DATA = "{VisualHardware:3695079,VisualSystems:0,VisualFlags:15}";
+    /* A gateway running with its panel off, ports 1 and 2 up and port 3 down: two bits a port, 1 up and 2 down. */
+    private static final String GATEWAY_DATA = "{VisualSystems:0,VisualFlags:15,Lines:37}";
+    /* The column of the gateway's pattern its origin stands in, the second of four. */
+    private static final int GATEWAY_ORIGIN_COLUMN = 2;
     /** The rack units, from the top row down, of a rack with a server, a KVM switch, a storage server and the rest. */
     private static final int[] MIXED_RACK = {1, 10, 0, 4, 0, 1, 12, 11};
     private static final int[] PLAIN_RACK = {1, 1, 1, 1, 1, 1, 12, 11};
@@ -85,6 +91,7 @@ final class ComputerKindsPages {
         personalComputers(guide, section);
         craftingComputers(guide, section);
         mainframes(guide, section);
+        wanGateways(guide, section);
     }
 
     private static void racks(final ModGuide guide, final GuideChapter chapter) {
@@ -296,6 +303,77 @@ final class ComputerKindsPages {
                         "The chat reports a network conflict: two Mainframes share one network.",
                         "Keep one Mainframe on each network, and separate the cables between them.")
                 .seeAlso("jsc:states_and_queues", "jsc:failover")
+                .register();
+    }
+
+    private static void wanGateways(final ModGuide guide, final ModGuide.SectionRef section) {
+        final ModGuide.EntryBuilder page = guide.page("wan_gateways", section).titled("WAN Gateway Computers")
+                .icon(ComputingModule.WAN_GATEWAY)
+                .coversAll(ComputersGuide.blocksOf(WanGatewayBlock.class))
+                .paragraph("A WAN Gateway Computer stands at either end of a long-distance line: the Telephone Line,"
+                        + " the Leased Line, the T3 Line, the VLDC and the Dark Fibre, one for each era"
+                        + " ([Data cables](jsc:data_cables)). It is a computer like any other. It takes a board,"
+                        + " processors, memory, a power supply and disks, and it runs a system. What makes it a gateway"
+                        + " is its WAN Interface Cards.")
+                .define("WAN Gateway Computer", "The computer at either end of a long-distance line, with a port for"
+                        + " the line for each of its WAN Interface Cards.")
+                .paragraph("A gateway is a block wider than a Mainframe: four blocks wide, two tall and two deep."
+                        + " Place it on the bottom front row, second from the left as you face it. If the whole 4 by 2"
+                        + " by 2 space is clear, the cabinet forms. If not, the item stays in your hand, and particles"
+                        + " outline the blocked spaces.")
+                .paragraph("There is one gateway for each era: the WAN Gateway Computer (Standard), and the Vintage,"
+                        + " Legacy, Transition and Advanced ones. Each takes an MTX motherboard of its own era, as a"
+                        + " Mainframe does.")
+                .table("What a gateway holds")
+                .fixed("Motherboard", "1 MTX")
+                .fixed("Processors", "up to 4")
+                .fixed("Memory", "up to 8")
+                .fixed("Expansion cards", "up to 6, of them up to 4 WAN Interface Cards")
+                .fixed("Disks", "up to 4")
+                .fixed("Power supply", "1")
+                .paragraph("Its four ports for the long-distance line are on its back, one in the middle of each lower"
+                        + " block, numbered 1 to 4 from the left as you stand behind it. Each port takes the line of"
+                        + " the gateway's era and of every earlier era. The first WAN Interface Card in its card slots"
+                        + " works port 1, the second works port 2, and so on, so a port with no card does nothing.")
+                .paragraph("A line is up while the gateway runs and a cable of a line its card takes is plugged into"
+                        + " the port. A card takes the line of its own era and the older ones, as a port does.")
+                .define("WAN Interface Card", "The card that works one port of a WAN Gateway Computer, for the"
+                        + " long-distance line of its era and the older ones.")
+                .paragraph("A gateway is no orchestrator. It joins the network it stands on through the backbone, on"
+                        + " any face, as a Mainframe does, and it takes fibre only with an Optical Network Card. It"
+                        + " never joins a network through a long-distance line: that line goes to the far end.")
+                .paragraph("The assembly screen is the Mainframe's, with the lines in place of the operations:")
+                .table("The assembly screen", "Part", "What it shows")
+                .row(GuideCell.words("CAPACITY (it/t)"),
+                        GuideCell.words("The items per tick its processors can handle, added up."))
+                .row(GuideCell.words("LINES"),
+                        GuideCell.words("How many of its lines are up, of the ports with a card, as \"2 / 3 UP\"."))
+                .row(GuideCell.words("NETWORK"),
+                        GuideCell.words("LINKED while it is on a network."))
+                .row(GuideCell.words("AUTO START"),
+                        GuideCell.words("Turns the gateway on by itself when its build stands."))
+                .row(GuideCell.words("LINES lamps 1 to 4"),
+                        GuideCell.words("Each port's line: green when up, red when down, dark with no card."))
+                .row(GuideCell.words("PWR, DISK and NET"),
+                        GuideCell.words("Three lamps: power, disk and network."));
+        wanGatewayScene(page);
+        page.paragraph("The cabinet shows its lines too. Its line bay has a line module for each card, with the"
+                        + " port's number at the top and its lamps down the front, and a blank where no card is.")
+                .paragraph("Its power button sits on the sill in the middle of the block you placed. A click on it"
+                        + " switches the gateway on or off. A click anywhere else on the cabinet opens its assembly"
+                        + " screen, and a sneak-click opens or closes the service panel.")
+                .paragraph("If you break a gateway, it drops the gateway of its own era, and the items in its"
+                        + " inventory spill out.")
+                .ifSomethingGoesWrong("The gateway does not form.",
+                        "Clear the whole 4 by 2 by 2 space, then place it again. The blocked spaces show particles.",
+                        "A WAN Interface Card does not go into a Mainframe or a Personal Computer.",
+                        "Only a WAN Gateway Computer takes one.",
+                        "A fifth WAN Interface Card does not go in.",
+                        "The gateway has four ports, so it takes four cards. Put another kind of card in the rest.",
+                        "A line stays down.",
+                        "Check that the gateway runs, that the cable is in the port of that card, and that the card"
+                                + " is as new as the line.")
+                .seeAlso("jsc:mainframes", "jsc:expansion_cards")
                 .register();
     }
 
@@ -854,6 +932,35 @@ final class ComputerKindsPages {
         entry.balloon(6, GuideBlock.ScenePart.of(16, 0, 16).box(7, 3, 14, 9, 6, 16), "Power button",
                 "Click it to switch the Mainframe on or off.");
         entry.balloon(7, GuideBlock.ScenePart.of(17, 1, 16).box(0, 9, 14, 11, 11, 16), "Status lamps",
+                "They show that it runs, that it is on a network, and when it has a fault.");
+    }
+
+    private static void wanGatewayScene(final ModGuide.EntryBuilder entry) {
+        entry.scene("A Standard WAN Gateway Computer, running, with three WAN Interface Cards: two lines up and one"
+                + " down. Drag it to turn it.", 130);
+        entry.place(16, 0, 16, () -> ComputingModule.WAN_GATEWAY.get(), "facing=south,optical=false", GATEWAY_DATA);
+        /*
+         * The cabinet is drawn whole by its origin; its other fifteen blocks only hold the places. Facing south, the
+         * pattern's columns run from east to west and its back row is to the north.
+         */
+        for (int up = 0; up < 2; up++) {
+            for (int back = 0; back < 2; back++) {
+                for (int column = 0; column < WanGatewayStructure.WIDTH; column++) {
+                    final int across = column - GATEWAY_ORIGIN_COLUMN;
+                    if (up == 0 && back == 0 && across == 0) {
+                        continue;
+                    }
+                    final int port = up == 0 && back == 1 ? column + 1 : 0;
+                    entry.place(16 - across, up, 16 - back, () -> ComputingModule.WAN_GATEWAY_PART.get(),
+                            "facing=south,era=3,optical=false,port=" + port, "");
+                }
+            }
+        }
+        entry.balloon(1, GuideBlock.ScenePart.of(18, 0, 16).box(0, 6, 11, 13, 16, 13), "Line modules",
+                "One for each WAN Interface Card, its line's lamps down its front.");
+        entry.balloon(2, GuideBlock.ScenePart.of(16, 0, 16).box(7, 3, 14, 9, 6, 16), "Power button",
+                "Click it to switch the gateway on or off.");
+        entry.balloon(3, GuideBlock.ScenePart.of(17, 1, 16).box(0, 9, 14, 11, 11, 16), "Status lamps",
                 "They show that it runs, that it is on a network, and when it has a fault.");
     }
 

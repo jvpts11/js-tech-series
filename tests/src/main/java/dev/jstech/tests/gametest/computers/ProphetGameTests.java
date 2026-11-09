@@ -70,7 +70,7 @@ public final class ProphetGameTests {
             if (!(helper.getBlockEntity(at) instanceof MainframeBlockEntity mainframe)) {
                 throw new IllegalStateException("no Mainframe at " + at);
             }
-            final Era era = mainframe.mainframeEra();
+            final Era era = mainframe.cabinetEra();
             helper.assertTrue(mainframe.installEngine(PROPHET) == (age.version() != null),
                     "Prophet YourIQL on a " + era + " Mainframe");
             if (age.version() != null) {

@@ -50,7 +50,7 @@
     }
   ],
   "id": "jsc:knothub_service",
-  "order": 398,
+  "order": 399,
   "section": "jsc:sharing_knot",
   "title": "jsc.guide.knothub_service.title"
 }

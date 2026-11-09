@@ -203,7 +203,7 @@
     }
   ],
   "id": "jsc:computer_info",
-  "order": 360,
+  "order": 361,
   "section": "jsc:library_basics",
   "title": "jsc.guide.computer_info.title"
 }

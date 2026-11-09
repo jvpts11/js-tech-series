@@ -10,6 +10,7 @@ package dev.jstech.tests.testkit.computers;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.CoolingItems;
 import dev.jstech.computers.HardwareItems;
+import dev.jstech.computers.blockentity.AbstractCabinetComputerBlockEntity;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
@@ -130,21 +131,22 @@ public final class TestWorldBuilder extends ScenarioBuilder {
     }
 
     /**
-     * The standard Mainframe hardware (board, CPU, RAM, power supply) with {@code disk} in the first disk slot, or
-     * no disk when it is null. No system is installed, so a test can put its own on the disk afterwards.
+     * The standard cabinet hardware (board, CPU, RAM, power supply) with {@code disk} in the first disk slot, or no
+     * disk when it is null: a Standard Mainframe's or WAN Gateway Computer's. No system is installed, so a test can
+     * put its own on the disk afterwards.
      */
-    public static void installMainframeBuild(final MainframeBlockEntity be, final ItemStack disk) {
+    public static void installMainframeBuild(final AbstractCabinetComputerBlockEntity be, final ItemStack disk) {
         final ItemStackHandler inv = be.getInventory();
-        inv.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT,
+        inv.setStackInSlot(AbstractCabinetComputerBlockEntity.MOTHERBOARD_SLOT,
                 new ItemStack(ComputingModule.MOTHERBOARD_MTX_S_2011.get()));
-        inv.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START,
+        inv.setStackInSlot(AbstractCabinetComputerBlockEntity.CPU_SLOTS_START,
                 new ItemStack(ComputingModule.CPU_SERVO_2620.get()));
-        inv.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START,
+        inv.setStackInSlot(AbstractCabinetComputerBlockEntity.RAM_SLOTS_START,
                 new ItemStack(ComputingModule.RAM_DDR3_8192.get()));
-        inv.setStackInSlot(MainframeBlockEntity.PSU_SLOT,
+        inv.setStackInSlot(AbstractCabinetComputerBlockEntity.PSU_SLOT,
                 new ItemStack(ComputingModule.PSU_650G.get()));
         if (disk != null) {
-            inv.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START, disk);
+            inv.setStackInSlot(AbstractCabinetComputerBlockEntity.DISK_SLOTS_START, disk);
         }
     }
 

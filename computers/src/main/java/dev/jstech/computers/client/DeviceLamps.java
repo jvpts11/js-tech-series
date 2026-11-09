@@ -41,9 +41,14 @@ public final class DeviceLamps {
 
     /** The names of {@code count} numbered bones, {@code <prefix>0} on, made once rather than every frame. */
     static String[] numbered(final String prefix, final int count) {
+        return numbered(prefix, count, 0);
+    }
+
+    /** As {@link #numbered(String, int)}, numbered from {@code first}: a model whose parts count from 1. */
+    static String[] numbered(final String prefix, final int count, final int first) {
         final String[] out = new String[count];
         for (int k = 0; k < count; k++) {
-            out[k] = prefix + k;
+            out[k] = prefix + (first + k);
         }
         return out;
     }

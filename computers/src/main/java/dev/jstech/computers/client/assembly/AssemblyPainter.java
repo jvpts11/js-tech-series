@@ -85,6 +85,9 @@ public final class AssemblyPainter {
     private static final int BRACKET_PLAIN = 4;
     private static final int BRACKETS = 5;
     private static final int LAMP = 4;
+    /* A lamp row's lamps: where the first starts from the row's right edge, and one lamp and its number to the next. */
+    private static final int ROW_LAMPS_W = 52;
+    private static final int ROW_LAMP_PITCH = 12;
 
     private AssemblyPainter() {
     }
@@ -297,6 +300,20 @@ public final class AssemblyPainter {
         frame(g, kx, y + 2, kx + 12, y + 11, JsTechTheme.line());
         final int knob = on ? kx + 6 : kx + 1;
         g.fill(knob, y + 3, knob + 5, y + 10, on ? JsTechTheme.accent() : JsTechTheme.dim());
+    }
+
+    /** A row of the service panel with lamps in place of a rocker: its caption, then a numbered lamp for each. */
+    public static void drawLampRow(final GuiGraphics g, final Font font, final int left, final int top, final Box box,
+                                   final String caption, final int[] colours, final boolean[] lit) {
+        final int x = left + box.x();
+        final int y = top + box.y();
+        JsTechTheme.panel(g, x, y, box.w(), box.h());
+        JsTechTheme.textS(g, font, caption, x + 3, y + 3, JsTechTheme.dim());
+        for (int i = 0; i < colours.length; i++) {
+            final int lx = x + box.w() - ROW_LAMPS_W + i * ROW_LAMP_PITCH;
+            drawLamp(g, lx, y + 4, colours[i], lit[i]);
+            JsTechTheme.textS(g, font, String.valueOf(i + 1), lx + LAMP + 1, y + 3, JsTechTheme.dim());
+        }
     }
 
     /** The lamps' panel: a lamp over each caption, lit or dark. */

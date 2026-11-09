@@ -312,7 +312,7 @@
   ],
   "icon": "jsc:dock_station",
   "id": "jsc:dock_station",
-  "order": 46,
+  "order": 47,
   "section": "jsc:peripherals",
   "title": "jsc.guide.dock_station.title"
 }

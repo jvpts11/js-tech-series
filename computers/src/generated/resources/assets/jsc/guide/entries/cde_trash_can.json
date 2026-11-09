@@ -53,7 +53,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:cde_trash_can",
-  "order": 218,
+  "order": 219,
   "section": "jsc:cde_desktop",
   "title": "jsc.guide.cde_trash_can.title"
 }

@@ -7,14 +7,13 @@
  */
 package dev.jstech.computers.machine;
 
-import dev.jstech.computers.block.CraftingComputerBlock;
-import dev.jstech.computers.block.MainframeBlock;
-import dev.jstech.computers.block.PersonalComputerBlock;
+import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.eventlog.NetworkWorldEvents;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -109,6 +108,7 @@ public final class IqlTables {
             "Personal Computer");
     private static final TextKey CRAFTING_COMPUTER = TextKey.of("jsc.iql.table.crafting_computer",
             "Crafting Computer");
+    private static final TextKey WAN_GATEWAY = TextKey.of("jsc.iql.table.wan_gateway", "WAN Gateway Computer");
     private static final TextKey RUNNING = TextKey.of("jsc.iql.table.running", "running");
     private static final TextKey OFF = TextKey.of("jsc.iql.table.off", "off");
     private static final TextKey BENCH = TextKey.of("jsc.iql.table.bench", "bench");
@@ -491,8 +491,10 @@ public final class IqlTables {
             rows.add(row);
         }
         for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
+            // A WAN Gateway Computer is on its network as a Personal Computer is, and named as what it is.
             if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof AbstractComputerBlockEntity computer) {
-                rows.add(computer(computer, PERSONAL_COMPUTER));
+                rows.add(computer(computer, computer instanceof WanGatewayBlockEntity ? WAN_GATEWAY
+                        : PERSONAL_COMPUTER));
             }
         }
         for (final NetworkSystem.CraftingComputerNode cc : system.craftingComputersOf(network)) {
@@ -508,9 +510,7 @@ public final class IqlTables {
         row.put("name", Text.literal(computer instanceof IComputerTerminalHost host ? host.hostname() : ""));
         row.put("kind", kind.text());
         final Block block = computer.getBlockState().getBlock();
-        row.put("era", block instanceof MainframeBlock mainframe ? mainframe.era().text()
-                : block instanceof PersonalComputerBlock pc ? pc.era().text()
-                : block instanceof CraftingComputerBlock cc ? cc.era().text() : Text.EMPTY);
+        row.put("era", block instanceof IEraChassisBlock chassis ? chassis.chassisEra().text() : Text.EMPTY);
         row.put("state", (computer.isRunning() ? RUNNING : OFF).text());
         final OsDef os = computer.installedOs();
         row.put("os", os == null ? Text.EMPTY : Text.literal(os.displayName()));

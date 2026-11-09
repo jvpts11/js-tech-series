@@ -41,6 +41,8 @@ public record ExpansionCardKind(String id, List<HostScope> machines, @Nullable T
             ExpansionCardKind::id);
     private static final TextKey CLUSTER_ONLY = TextKey.of("jsc.part_refusal.cluster_card",
             "Only a Cluster Management Computer seats a cluster card");
+    private static final TextKey WAN_ONLY = TextKey.of("jsc.part_refusal.wan_card",
+            "A WAN Interface Card only goes in a WAN Gateway Computer");
 
     public static final ExpansionCardKind GPU = own("gpu");
     public static final ExpansionCardKind CRAFTING = own("crafting");
@@ -60,6 +62,9 @@ public record ExpansionCardKind(String id, List<HostScope> machines, @Nullable T
     public static final ExpansionCardKind READ_CACHE = own("read_cache");
     /** A Network Anchor Card: keeps the chunks round the computer it sits in loaded while the computer runs. */
     public static final ExpansionCardKind ANCHOR = own("anchor");
+    /** A WAN Interface Card: what a WAN Gateway Computer's port takes its long-distance line by, and it alone. */
+    public static final ExpansionCardKind WAN_INTERFACE = KINDS.declare(new ExpansionCardKind(
+            HardwareIds.own("wan_interface")).onlyIn(WAN_ONLY, HostScope.WAN_GATEWAY_COMPUTER));
 
     public ExpansionCardKind {
         HardwareIds.requireNamespaced(id, "a kind of expansion card");

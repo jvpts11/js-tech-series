@@ -154,6 +154,8 @@ public final class NetworkEvents {
             mark = "CC";
         } else if (machine == HostScope.CLUSTER_MANAGEMENT_COMPUTER) {
             mark = "CMC";
+        } else if (machine == HostScope.WAN_GATEWAY_COMPUTER) {
+            mark = "WAN";
         } else {
             mark = "PC";
         }

@@ -14,8 +14,8 @@ import dev.jstech.computers.block.RouterBlock;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
-import dev.jstech.computers.blockentity.ServerRackPartBlockEntity;
 import dev.jstech.computers.operation.payload.NodeLink;
+import dev.jstech.core.bigblock.BigBlockPartBlockEntity;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.Cables;
 import dev.jstech.core.cable.Wire;
@@ -198,7 +198,8 @@ final class NodeLinks {
 
     private void addMachine(final BlockPos pos, final Set<BlockPos> machines) {
         final BlockEntity entity = Loaded.blockEntity(level, pos);
-        if (entity instanceof ServerRackPartBlockEntity part && part.originPos() != null) {
+        // A cabinet's other blocks stand for its origin, where the machine is.
+        if (entity instanceof BigBlockPartBlockEntity part && part.originPos() != null) {
             addMachine(part.originPos(), machines);
         } else if (entity instanceof ServerRackBlockEntity rack && !network.equals(rack.networkUuid())) {
             machines.add(pos.immutable());
