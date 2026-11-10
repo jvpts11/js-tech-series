@@ -8,6 +8,7 @@
 package dev.jstech.computers.chain;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SeriesMinerals;
@@ -71,9 +72,12 @@ public final class ChainDeposits {
      */
     private static ResourceLocation vein(final String path, final Material material, final int low, final int high,
                                          final double frequency, final HostRock... rocks) {
-        return Deposits.deposit(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path))
+        final ResourceLocation id = Deposits.deposit(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path))
                 .mineral(material, 1).heights(low, high).frequency(frequency).size(18, 6).density(0.45)
                 .rocks(rocks).biomes(BiomeTags.IS_OVERWORLD).declare();
+        // The server's own_chain switch lays the chain's veins or none of them.
+        Deposits.layWhile(id, ComputersServerConfig::ownChain);
+        return id;
     }
 
     /* How often a zone holds a vein of a kind whose veins lie {@code spacing} chunks apart on average. */

@@ -13093,7 +13093,9 @@ stable 4
 10 dev.jstech.core.worldgen.vein.Deposits  static Map<ResourceLocation, DepositType> declared()
 10 dev.jstech.core.worldgen.vein.Deposits  static Optional<Entry> get(ResourceLocation)
 12 dev.jstech.core.worldgen.vein.Deposits  static Set<ResourceLocation> superseded()
+53 dev.jstech.core.worldgen.vein.Deposits  static boolean laid(ResourceLocation)
 10 dev.jstech.core.worldgen.vein.Deposits  static final DataRegistry<DepositType> FILES
+53 dev.jstech.core.worldgen.vein.Deposits  static void layWhile(ResourceLocation, BooleanSupplier)
 10 dev.jstech.core.worldgen.vein.Deposits  static void register()
 12 dev.jstech.core.worldgen.vein.Deposits  static void supersede(ResourceLocation)
 10 dev.jstech.core.worldgen.vein.Deposits.DepositBuilder  type static final class

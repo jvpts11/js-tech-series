@@ -501,6 +501,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   eight in the Advanced, each step with the gases and liquids of its era, and its tooltip names its chip, its layer
   and the machine it goes to next. The Packaging Line cuts the finished wafer into its chips, eight small or four big.
 - The Air Separation Unit takes in the air itself and gives nitrogen, oxygen, argon and krypton.
+- A server can switch the mod's own chain off with `survival.own_chain` in `jscomputers-server.toml`: off,
+  the recipes of the chain's machines do not load and the chain's veins are not laid in the chunks made afterwards, so
+  the parts are made by J's Industrial's chain where it is installed, or found and bought only.
 - A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the

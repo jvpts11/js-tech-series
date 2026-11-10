@@ -29,6 +29,11 @@ ore of its own: its indium comes from the zinc already mined.
 
 Mining an ore gives its raw ore, as the game's ores do.
 
+A server can switch the chain off with `survival.own_chain` in `jscomputers-server.toml` (*added 2026-11-10*): off,
+its machines' recipes, from the ore to the chip, do not load and its veins are not laid in the chunks made
+afterwards. The parts are then made by J's Industrial's chain where J's Industrial is installed, or only found and
+bought. The benches and their recipes stay.
+
 ## The Electronics Workbench
 
 There is one Electronics Workbench for each era: Vintage, Legacy, Transition, Standard and Advanced. A bench assembles

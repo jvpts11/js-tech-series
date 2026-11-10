@@ -68,7 +68,9 @@ public final class Veins {
     public static VeinField field(final List<Deposits.Entry> kinds) {
         final List<VeinField.Kind> placed = new ArrayList<>(kinds.size());
         for (final Deposits.Entry kind : kinds) {
-            placed.add(kind.type().kind(VeinBalance.rarity(kind.id()), VeinBalance.spread(kind.id())));
+            // A kind its mod switched off is as rare as none: it keeps its place and lays nothing.
+            final double rarity = Deposits.laid(kind.id()) ? VeinBalance.rarity(kind.id()) : 0;
+            placed.add(kind.type().kind(rarity, VeinBalance.spread(kind.id())));
         }
         return new VeinField(placed);
     }

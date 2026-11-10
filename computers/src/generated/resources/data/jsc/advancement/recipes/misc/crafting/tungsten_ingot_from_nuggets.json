@@ -1,4 +1,11 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "jscore:setting",
+      "file": "jscomputers-server",
+      "setting": "survival.own_chain"
+    }
+  ],
   "parent": "minecraft:recipes/root",
   "criteria": {
     "has_it": {

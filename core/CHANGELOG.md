@@ -469,6 +469,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   says a kind's recipes are made only from exactly what they take: while a slot or a tank holds anything the recipe
   does not take, the machine makes nothing of it, so no recipe is made from part of another's inputs. `exact()` says
   whether a kind is so. Experimental.
+- A mod's switch for its veins: J's Core's API is at version 53. `Deposits.layWhile(id, when)` lays a kind of
+  vein only while `when` holds, read as a world's veins are worked out, and `Deposits.laid(id)` says whether it is laid
+  now. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

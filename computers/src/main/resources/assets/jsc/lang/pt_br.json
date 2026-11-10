@@ -29220,5 +29220,9 @@
   "jsc.wafer.step.etch": "o Gravador a Plasma",
   "jsc.wafer.step.implant": "o Implantador de Íons",
   "jsc.wafer.step.lithography": "uma Estação de Litografia",
-  "jsc.wafer.step.packaging": "a Linha de Encapsulamento"
+  "jsc.wafer.step.packaging": "a Linha de Encapsulamento",
+  "jsc.configuration.survival": "Sobrevivência",
+  "jsc.configuration.survival.own_chain": "Cadeia própria",
+  "jsc.configuration.survival.own_chain.tooltip": "Se a cadeia própria do J's Computers é posta: as receitas das máquinas da sua cadeia, do minério ao chip, e os veios dos seus minérios. Desligada, as suas peças são feitas pela cadeia do J's Industrial onde ele estiver instalado, ou só achadas e compradas.\nOs veios de um mundo são postos como ele foi feito: uma mudança aparece nos chunks feitos depois.",
+  "jsc.configuration.survival.tooltip": "Como um jogador no sobrevivência consegue os computadores: a cadeia própria do mod."
 }

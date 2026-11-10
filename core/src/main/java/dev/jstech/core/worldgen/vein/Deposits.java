@@ -19,6 +19,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.biome.Biome;
@@ -48,6 +49,7 @@ public final class Deposits {
 
     private static final Map<ResourceLocation, DepositType> DECLARED = new ConcurrentHashMap<>();
     private static final Set<ResourceLocation> SUPERSEDED = ConcurrentHashMap.newKeySet();
+    private static final Map<ResourceLocation, BooleanSupplier> GATES = new ConcurrentHashMap<>();
     private static volatile Known known = new Known(-1, -1, -1, -1, List.of());
 
     private Deposits() {
@@ -74,6 +76,20 @@ public final class Deposits {
     /** The kinds superseded, by id. */
     public static Set<ResourceLocation> superseded() {
         return Set.copyOf(SUPERSEDED);
+    }
+
+    /**
+     * Lays the kind {@code id} only while {@code when} holds, as a mod's own switch for its veins says: read as a
+     * world's veins are worked out, so a world made with the switch off lays none of them.
+     */
+    public static void layWhile(final ResourceLocation id, final BooleanSupplier when) {
+        GATES.put(Objects.requireNonNull(id, "id"), Objects.requireNonNull(when, "when"));
+    }
+
+    /** Whether the kind {@code id} is laid now, as the switch its mod gave it says; one with none always is. */
+    public static boolean laid(final ResourceLocation id) {
+        final BooleanSupplier gate = GATES.get(id);
+        return gate == null || gate.getAsBoolean();
     }
 
     /** Every kind declared in code, by id. */

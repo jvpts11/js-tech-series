@@ -599,6 +599,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   says a kind's recipes are made only from exactly what they take: while a slot or a tank holds anything the recipe
   does not take, the machine makes nothing of it, so no recipe is made from part of another's inputs. `exact()` says
   whether a kind is so. Experimental.
+- (Core) A mod's switch for its veins: J's Core's API is at version 53. `Deposits.layWhile(id, when)` lays a kind of
+  vein only while `when` holds, read as a world's veins are worked out, and `Deposits.laid(id)` says whether it is laid
+  now. Experimental.
 - (Computers) Wi-Fi cards: J's Computers' API is at version 17. `ExpansionCardKind.WIFI` is the kind of the Wi-Fi
   cards, which the Personal, Crafting and Cluster Management Computers alone seat. Experimental.
 - (Computers) Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
@@ -2507,6 +2510,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   eight in the Advanced, each step with the gases and liquids of its era, and its tooltip names its chip, its layer
   and the machine it goes to next. The Packaging Line cuts the finished wafer into its chips, eight small or four big.
 - (Computers) The Air Separation Unit takes in the air itself and gives nitrogen, oxygen, argon and krypton.
+- (Computers) A server can switch the mod's own chain off with `survival.own_chain` in `jscomputers-server.toml`: off,
+  the recipes of the chain's machines do not load and the chain's veins are not laid in the chunks made afterwards, so
+  the parts are made by J's Industrial's chain where it is installed, or found and bought only.
 - (Core) Glass is one of the series' materials, made into lenses.
 - (Core) The generic ores of the electronics chain's metals are drawn as the minerals they are mined from: lead as
   galena, zinc as sphalerite, nickel as garnierite, aluminium as bauxite, tantalum as coltan, chromium as chromite,

@@ -7,9 +7,13 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.WorkbenchBlock;
+import dev.jstech.computers.config.ComputersServerConfig;
+import dev.jstech.core.JsCore;
 import dev.jstech.computers.blockentity.WorkbenchBlockEntity;
 import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.chain.ChainParts;
@@ -31,6 +35,9 @@ import dev.jstech.core.worldgen.vein.Deposits;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestComputerEnergy;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -40,6 +47,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -53,9 +61,9 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * J's Computers' own chain (computers/docs/design/survival.md): the ores of each era in the rocks of their veins and
  * the forms the chain asks for, its liquids, the veins of each era near the surface, deeper and in the deepslate, the
- * parts on the chain's shelf, and the Electronics Workbench of each era: it assembles from its nine trays a part of its
- * era or an older one, and nothing when the trays hold anything besides; it draws its energy behind it and nowhere
- * else, and nothing reaches its trays through its sides.
+ * server's switch that lays the chain or none of it, the parts on the chain's shelf, and the Electronics Workbench of
+ * each era: it assembles from its nine trays a part of its era or an older one, and nothing when the trays hold
+ * anything besides; it draws its energy behind it and nowhere else, and nothing reaches its trays through its sides.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -104,6 +112,27 @@ public final class ChainGameTests {
                 && tungsten.rocks().equals(List.of(HostRocks.DEEPSLATE.id())), "the later eras' only in the deepslate");
         helper.assertTrue(fluorspar.minerals().getFirst().material().equals(SeriesMinerals.FLUORSPAR.id())
                 && fluorspar.rocks().size() == 5, "fluorspar lies in veins of its own, through each of its rocks");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void ownChain_offLaysNoneOfTheChainsVeinsAndLoadsNoneOfItsRecipes(final GameTestHelper helper) {
+        final ResourceLocation lead = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "lead");
+        final ResourceLocation iron = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "iron");
+        helper.assertTrue(Deposits.laid(lead) && Deposits.laid(iron), "on, the chain's veins are laid");
+        try {
+            ComputersServerConfig.FILE.set(ComputersServerConfig.OWN_CHAIN, false);
+            helper.assertTrue(!Deposits.laid(lead), "off, none of the chain's veins");
+            helper.assertTrue(Deposits.laid(iron), "and the Core's still are");
+        } finally {
+            ComputersServerConfig.FILE.set(ComputersServerConfig.OWN_CHAIN, true);
+        }
+        final ResourceLocation leadFromOre = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+                "recipe/crusher/lead_from_ore.json");
+        final JsonObject recipe = helper.getLevel().getServer().getResourceManager().getResource(leadFromOre)
+                .map(ChainGameTests::json).orElseThrow();
+        helper.assertTrue(recipe.toString().contains("survival.own_chain"),
+                "the chain's machines' recipes load only while the switch is on");
         helper.succeed();
     }
 
@@ -237,5 +266,13 @@ public final class ChainGameTests {
 
     private static DepositType deposit(final String path) {
         return Deposits.declared().get(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, path));
+    }
+
+    private static JsonObject json(final Resource resource) {
+        try (Reader reader = resource.openAsReader()) {
+            return JsonParser.parseReader(reader).getAsJsonObject();
+        } catch (final IOException failed) {
+            throw new UncheckedIOException(failed);
+        }
     }
 }

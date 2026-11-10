@@ -1,4 +1,11 @@
 {
+  "neoforge:conditions": [
+    {
+      "type": "jscore:setting",
+      "file": "jscomputers-server",
+      "setting": "survival.own_chain"
+    }
+  ],
   "type": "jsc:chemical_reactor",
   "inputs": [
     {

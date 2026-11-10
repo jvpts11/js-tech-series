@@ -97,6 +97,9 @@ data pack can add kinds of its own there:
 - **A mod's deposits may stand in for another's** (*added 2026-10-24*). `Deposits.supersede(id)` lays a kind no more,
   neither as declared nor as its file says: J's Industrial's real deposits supersede the Core's plain veins of iron,
   copper, gold and tin, each of its deposits bringing the ore of its minerals' elements with them.
+- **A mod switches its own veins** (*added 2026-11-10*). `Deposits.layWhile(id, when)` lays a kind only while
+  `when` holds, read as a world's veins are worked out: J's Computers lays its chain's veins only while its server's
+  `own_chain` switch is on. A kind switched off keeps its place among the others and lays nothing.
 - **An ore lies only where a mod uses it.** A material's ore in a rock exists only when the game has it (iron in stone)
   or an installed mod declares it (`MaterialUses.ore(...)`, [Materials](CONTENT.md#materials)); a block of a vein
   whose material has no ore in that rock is left as it was. So any mod may declare a kind for materials it does not

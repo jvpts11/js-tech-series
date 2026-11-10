@@ -235,6 +235,14 @@ public final class ComputersServerConfig {
             .named("Lost devices")
             .unit("h");
 
+    /** Whether J's Computers' own chain is the path to its parts: its machines' recipes and its veins. */
+    public static final ConfigKey<Boolean> OWN_CHAIN = ConfigKey.flag("survival.own_chain", true)
+            .comment("Whether J's Computers' own chain is laid: the recipes of its chain's machines, from the ore to "
+                            + "the chip, and the veins of its ores. Off, its parts are made by J's Industrial's chain "
+                            + "where J's Industrial is installed, or found and bought only.",
+                    "The veins of a world are laid as it was made: a change shows in chunks made afterwards.")
+            .named("Own chain");
+
     public static final ConfigFile FILE = ConfigFile.builder("jscomputers-server", ConfigSide.SERVER,
                     ConfigFormats.TOML)
             .comment("How the computers of J's Computers behave, and what they lend the Operations engine, whose own "
@@ -251,6 +259,8 @@ public final class ComputersServerConfig {
             .sectionNamed("soundfoundry", "Soundfoundry")
             .sectionNamed("programs", "Programs")
             .sectionNamed("wireless", "Wireless")
+            .sectionNamed("survival", "Survival")
+            .sectionComment("survival", "How a player in survival comes by the computers: the mod's own chain.")
             .sectionComment("wireless", "The portable devices: how long a lost one keeps what was on it.")
             .sectionComment("power", "What the computers run on: the energy their power supplies draw.")
             .sectionComment("update", "What the personal-use cards charge for changing an item: smelting, "
@@ -296,6 +306,7 @@ public final class ComputersServerConfig {
             .key(ETHERNET_KILOBYTES_PER_SECOND)
             .key(OUTSIDE_COMPONENTS)
             .key(LOST_DEVICE_HOURS)
+            .key(OWN_CHAIN)
             .build();
 
     private ComputersServerConfig() {
@@ -309,6 +320,11 @@ public final class ComputersServerConfig {
     /** Whether the computers draw energy for what their parts take, and the chain's benches and machines too. */
     public static boolean drawEnergy() {
         return FILE.get(DRAW_ENERGY);
+    }
+
+    /** Whether the mod's own chain is laid, as a world's data reads it while it loads and once it runs. */
+    public static boolean ownChain() {
+        return ConfigFiles.forData(FILE).get(OWN_CHAIN);
     }
 
     /** How long a portable may be out of every inventory and dock before what was on it is let go, in hours. */

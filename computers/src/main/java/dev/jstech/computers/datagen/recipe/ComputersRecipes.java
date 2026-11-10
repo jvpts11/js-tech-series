@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.datagen.recipe;
 
+import dev.jstech.computers.config.ComputersServerConfig;
+import dev.jstech.core.condition.SettingCondition;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.PackOutput;
@@ -27,7 +29,9 @@ public final class ComputersRecipes extends RecipeProvider {
 
     @Override
     protected void buildRecipes(final RecipeOutput output) {
-        MaterialRecipes.write(output);
+        // The chain's machines' recipes load only while the server's own_chain switch is on.
+        MaterialRecipes.write(output.withConditions(SettingCondition.on(ComputersServerConfig.FILE,
+                ComputersServerConfig.OWN_CHAIN)));
         BenchRecipes.write(output);
         HardwareRecipes.write(output);
         MachineBlockRecipes.write(output);
