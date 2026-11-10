@@ -245,6 +245,13 @@ public final class OsInstallRunner {
      */
     private static void waitForDisk(final IOsHost machine, final ServerLevel level, final BlockPos pos,
                                      final OsInstallJob job, final InstallerFlow flow) {
+        // A system the network brings has every disk at once: there is nothing to swap, so the copy goes on.
+        if (!job.hasReader()) {
+            flow.diskInserted();
+            machine.markUnsaved();
+            show(level, machine, pos, flow);
+            return;
+        }
         final IMediaDrive drive = MachineMedia.of(machine, level).find(job.volume());
         if (drive == null || !drive.installs(MediaKind.OS_INSTALL)
                 || !drive.payload().toString().equals(job.osId())) {

@@ -324,7 +324,7 @@
     "jsc:standard_repeater",
     "jsc:advanced_repeater"
   ],
-  "order": 85,
+  "order": 87,
   "section": "jsc:network_basics",
   "title": "jsc.guide.routers.title"
 }

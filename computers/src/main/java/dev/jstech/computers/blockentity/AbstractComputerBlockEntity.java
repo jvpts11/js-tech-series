@@ -59,6 +59,7 @@ import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.player.SystemRun;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
@@ -209,6 +210,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final DiskConsole diskConsole = new DiskConsole(this);
     /** The programs it is running and what they reach through it. */
     private final ProgramHost host = new ProgramHost(this);
+    /** What an operating system a player wrote has said while it runs here, when the machine runs one. */
+    private final SystemRun systemRun = new SystemRun();
     /** The program tick, made once rather than on every tick it is run inside its operator's scope. */
     private final Runnable sigmaTick = this::tickSigma;
     /** The players with this computer's console on screen. */
@@ -330,6 +333,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         fields().part("Studio", IFieldPart.of(this::saveStudio, this::loadStudio)).save();
         fields().part("Programs", IFieldPart.of((tag, registries) -> host.save(tag),
                 (tag, registries) -> host.load(tag))).save();
+        fields().part("PlayerSystem", IFieldPart.of((tag, registries) -> systemRun.save(tag),
+                (tag, registries) -> systemRun.load(tag))).save();
         // The console now rides on the disk; a machine saved before that still carries its own, read once here.
         fields().part("LegacyConsole", IFieldPart.of((tag, registries) -> { },
                 (tag, registries) -> diskConsole.loadLegacy(tag))).save();
@@ -1123,6 +1128,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     @Override
+    public boolean panic(final CrashPage page) {
+        return level instanceof ServerLevel server && kernel.panic(this, server, page);
+    }
+
+    @Override
     public boolean memoryShort(final String program, final int needMb) {
         return level instanceof ServerLevel server && kernel.memoryShort(this, server, program, needMb);
     }
@@ -1657,9 +1667,14 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     @Override
-    public boolean startLiveSession(final ResourceLocation systemId) {
-        session.requestLive(systemId);
+    public boolean startLiveSession(final ResourceLocation systemId, final boolean overNetwork) {
+        session.requestLive(systemId, overNetwork);
         return true;
+    }
+
+    @Override
+    public boolean liveOverNetwork() {
+        return session.liveOverNetwork();
     }
 
     @Override
@@ -2354,6 +2369,18 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     @Override
     public MachinePrograms programs() {
         return host.programs();
+    }
+
+    /** What the system a player wrote has said while it runs here (computers/docs/design/player-systems.md). */
+    @Override
+    public SystemRun systemRun() {
+        return systemRun;
+    }
+
+    /** A computer a player sits at runs a system a player wrote. */
+    @Override
+    public boolean runsPlayerSystems() {
+        return true;
     }
 
     /** What the Σ# programs on this machine reach through it. */

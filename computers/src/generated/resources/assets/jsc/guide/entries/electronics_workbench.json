@@ -108,7 +108,7 @@
     "jsc:standard_electronics_workbench",
     "jsc:advanced_electronics_workbench"
   ],
-  "order": 27,
+  "order": 29,
   "section": "jsc:chain",
   "title": "jsc.guide.electronics_workbench.title"
 }

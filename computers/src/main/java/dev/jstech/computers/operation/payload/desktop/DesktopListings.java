@@ -23,6 +23,8 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.DiskTrash;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.os.fs.TrashFolder;
+import dev.jstech.computers.os.player.PlayerDesktop;
+import dev.jstech.computers.os.player.PlayerSystems;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ComputerSettings;
 import dev.jstech.computers.program.DesktopLayout;
@@ -209,6 +211,10 @@ final class DesktopListings {
         final ComputerConsoleState console = terminal == null ? null : terminal.console();
         if (console != null) {
             for (final ComputerConsoleState.Community one : console.community()) {
+                // A desktop is drawn rather than run, so it gets no launcher of its own.
+                if (PlayerSystems.knownDesktop(PlayerDesktop.idOf(one.name())) != null) {
+                    continue;
+                }
                 community.add(new DesktopFilesPayload.WireCommunity(one.name(), one.icon(), one.entry()));
             }
         }

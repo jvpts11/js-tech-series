@@ -245,7 +245,7 @@
     }
   ],
   "id": "jsc:buses_library",
-  "order": 403,
+  "order": 405,
   "section": "jsc:library_machine",
   "title": "jsc.guide.buses_library.title"
 }

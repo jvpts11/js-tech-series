@@ -10,6 +10,8 @@ package dev.jstech.computers.os.boot;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsCapability;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.player.PlayerSystem;
+import dev.jstech.computers.os.player.PlayerSystems;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +39,12 @@ public final class BootController {
         /** A network-GUI OS (e.g. Network OS); opens the Network Interactor tabbed screen. */
         NETWORK_GUI,
         /** A full-desktop OS; opens the graphical desktop environment. */
-        FULL_DESKTOP
+        FULL_DESKTOP,
+        /**
+         * An operating system a player wrote with a shell of its own and no desktop; opens its own text screen
+         * (computers/docs/design/player-systems.md).
+         */
+        SYSTEM_SCREEN
     }
 
     // Pure logic (no MC imports, safe for JUnit)
@@ -106,6 +113,11 @@ public final class BootController {
          */
         if (def != null && computer.hasOs() && computer.bootedDesktopId() != null) {
             return BootTarget.FULL_DESKTOP;
+        }
+        // A player's system that speaks a shell of its own draws its own screen; one on a mod's family, its prompt.
+        final PlayerSystem player = def == null ? null : PlayerSystems.withFiles(def.id());
+        if (player != null && computer.hasOs() && "own".equals(player.facts().kernel().shell())) {
+            return BootTarget.SYSTEM_SCREEN;
         }
         return targetFor(computer.hasOs(), def != null ? def.capability() : null);
     }

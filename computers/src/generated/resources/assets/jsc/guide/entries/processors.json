@@ -428,7 +428,7 @@
     "jsc:cpu_quince_q2",
     "jsc:cpu_quince_q3"
   ],
-  "order": 17,
+  "order": 19,
   "section": "jsc:hardware",
   "title": "jsc.guide.processors.title"
 }

@@ -1,0 +1,131 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.system_desktop_library.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_desktop_library.table1",
+      "heads": [
+        "jsc.guide.system_desktop_library.table1_head1",
+        "jsc.guide.system_desktop_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Name, Version, Author"
+          },
+          {
+            "words": "jsc.guide.system_desktop_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Menu, PanelAt"
+          },
+          {
+            "words": "jsc.guide.system_desktop_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Frames"
+          },
+          {
+            "words": "jsc.guide.system_desktop_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "DesktopColour, PanelColour, TextColour, AccentColour, WindowColour, TitleColour"
+          },
+          {
+            "words": "jsc.guide.system_desktop_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Icons, Wallpaper"
+          },
+          {
+            "words": "jsc.guide.system_desktop_library.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Programs"
+          },
+          {
+            "words": "jsc.guide.system_desktop_library.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_desktop_library.table2",
+      "heads": [
+        "jsc.guide.system_desktop_library.table2_head1",
+        "jsc.guide.system_desktop_library.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Desktop.Start(package)"
+          },
+          {
+            "words": "jsc.guide.system_desktop_library.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Desktop.Stop()"
+          },
+          {
+            "words": "jsc.guide.system_desktop_library.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Desktop.Current"
+          },
+          {
+            "words": "jsc.guide.system_desktop_library.table2_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_desktop_library.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.system_desktop_library.fix1",
+          "problem": "jsc.guide.system_desktop_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.system_desktop_library.fix2",
+          "problem": "jsc.guide.system_desktop_library.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:system_os_library"
+      ]
+    }
+  ],
+  "id": "jsc:system_desktop_library",
+  "order": 418,
+  "section": "jsc:library_systems",
+  "title": "jsc.guide.system_desktop_library.title"
+}

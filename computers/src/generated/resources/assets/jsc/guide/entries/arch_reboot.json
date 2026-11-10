@@ -120,7 +120,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:arch_reboot",
-  "order": 278,
+  "order": 280,
   "section": "jsc:arch_finish",
   "title": "jsc.guide.arch_reboot.title"
 }

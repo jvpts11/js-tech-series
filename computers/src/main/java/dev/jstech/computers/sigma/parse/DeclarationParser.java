@@ -423,6 +423,13 @@ final class DeclarationParser {
         if (this.cursor.check(TokenKind.LEFT_BRACE)) {
             return this.parseProperty(modifiers, type, name, start);
         }
+        // A property written with an arrow: "string Name => "Lantern OS";", read only.
+        if (this.cursor.match(TokenKind.ARROW)) {
+            final IExpr value = this.expressions.parseExpression();
+            this.cursor.expect(TokenKind.SEMICOLON);
+            final IDecl.Accessor getter = new IDecl.Accessor(Set.of(), start.line(), start.column());
+            return new IDecl.PropertyDecl(modifiers, type, name, getter, null, value, start.line(), start.column());
+        }
 
         IExpr initializer = null;
         if (this.cursor.match(TokenKind.ASSIGN)) {

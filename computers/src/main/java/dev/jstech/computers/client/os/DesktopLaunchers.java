@@ -13,6 +13,7 @@ import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
@@ -162,6 +163,10 @@ final class DesktopLaunchers {
     /** Makes the wallpaper's icons again, after the programs or the trash's picture changed. */
     void rebuildIcons() {
         icons.clear();
+        // A player's desktop lists what it starts in its menu alone (computers/docs/design/player-systems.md).
+        if (desktop.panelStyle() == PanelStyle.PLAYER) {
+            return;
+        }
         // Quince's desktops show the startup disk first, at the top of the right edge; opening it opens the Seeker.
         if (desktop.quince()) {
             icons.add(new Launcher(WindowKeys.of(FILES), GameText.resolve(QUINCE_DISK), QUINCE_DISK_ICON,

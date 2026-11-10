@@ -170,7 +170,13 @@ public class MonitorSessionMenu extends CoreMenu implements IMonitorMenu {
         KVM(6),
 
         /** The page a system crashed onto, standing until the machine starts over or the monitor goes dark. */
-        SYSTEM_CRASH(7);
+        SYSTEM_CRASH(7),
+
+        /**
+         * The text screen of an operating system a player wrote with a shell of its own and no desktop
+         * (computers/docs/design/player-systems.md), which the system writes on and hears the keys of.
+         */
+        PLAYER_SCREEN(8);
 
         private static final StableIds<Phase> IDS = StableIds.of(Phase.class);
 

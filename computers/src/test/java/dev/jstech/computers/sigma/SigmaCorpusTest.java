@@ -41,7 +41,7 @@ class SigmaCorpusTest {
 
     /** The programs of the corpus, kept under {@code sigma/corpus} as source and as the listing each compiles to. */
     private static final List<String> PROGRAMS = List.of("Library", "Programs", "Machine", "Network", "Gateway",
-            "Ui", "Steps", "Values", "Sound", "OldNames", "Buses", "Redstone", "Crafting", "Widgets");
+            "Ui", "Steps", "Values", "Sound", "OldNames", "Buses", "Redstone", "Crafting", "Widgets", "Systems");
     /** The programs built on what came after the first version, which that version refuses for it. */
     private static final Set<String> LATER = Set.of("Sound", "OldNames", "Buses", "Redstone", "Crafting",
             "Widgets");
@@ -50,10 +50,11 @@ class SigmaCorpusTest {
      * The types the compiler declares as the language's own core, which the corpus is not about.
      *
      * <p>Both shapes of entry point are here for the same reason: their three methods are what a program that
-     * stays up is made of, not something a program reaches for, and the corpus programs run at a terminal.
+     * stays up is made of, not something a program reaches for, and the corpus programs run at a terminal. A
+     * player's system and desktop are entry points too: what they declare, they declare, and reach for nothing.
      */
     private static final Set<String> CORE =
-            Set.of("object", "string", "List", "Map", "Action", "Func", "IScript", "Script");
+            Set.of("object", "string", "List", "Map", "Action", "Func", "IScript", "Script", "ISystem", "IDesktop");
 
     @Test
     void compile_writesTheListingsItWroteBefore() throws IOException {

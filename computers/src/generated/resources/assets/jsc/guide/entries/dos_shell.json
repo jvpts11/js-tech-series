@@ -495,7 +495,7 @@
     }
   ],
   "id": "jsc:dos_shell",
-  "order": 170,
+  "order": 172,
   "section": "jsc:dos_programs",
   "title": "jsc.guide.dos_shell.title"
 }

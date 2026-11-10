@@ -84,6 +84,14 @@ public final class SetupTiming {
         return rateOf(format) * Math.max(1, diskSpeedMultiplier) * cpuFactor(cores, mhz);
     }
 
+    /**
+     * What a system brought over the network from the Mirror installs at, with the disk left out: the network's own
+     * rate, unpacked by the machine's processor as a medium's would be.
+     */
+    public static double networkInstallRate(final int cores, final int mhz) {
+        return NETWORK_MB_PER_SECOND * cpuFactor(cores, mhz);
+    }
+
     /** How much faster than the reference processor this one is, never counting for less than the floor. */
     public static double cpuFactor(final int cores, final int mhz) {
         final double power = (double) Math.max(0, cores) * Math.max(0, mhz);

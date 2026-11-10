@@ -112,6 +112,10 @@ final class OsSession {
      */
     @Nullable
     private ResourceLocation liveRequested;
+    /* Whether that live desktop is to come over the network from the Mirror rather than off a medium. */
+    private boolean liveRequestedOverNetwork;
+    /* Whether the live desktop running came over the network, so its installer copies from the Mirror. */
+    private boolean liveOverNetwork;
 
     OsSession(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
@@ -122,10 +126,16 @@ final class OsSession {
         return !this.liveDisk.isEmpty();
     }
 
-    /** Asks for the live desktop of that system at the next start. */
-    void requestLive(final ResourceLocation systemId) {
+    /** Asks for the live desktop of that system at the next start, off its medium or over the network. */
+    void requestLive(final ResourceLocation systemId, final boolean overNetwork) {
         this.liveRequested = systemId;
+        this.liveRequestedOverNetwork = overNetwork;
         this.machine.setChanged();
+    }
+
+    /** Whether the live desktop running came over the network rather than off a medium in a drive. */
+    boolean liveOverNetwork() {
+        return this.liveOverNetwork;
     }
 
     /** At the end of the self-test: the live desktop asked for comes up, and none was running any more. */
@@ -135,6 +145,8 @@ final class OsSession {
         final OsDef system = asked == null ? null : OsRegistry.getOs(asked);
         final Era era = this.machine.installedEra();
         this.liveDisk = system == null || era == null ? ItemStack.EMPTY : LiveOverlay.build(system, era);
+        this.liveOverNetwork = !this.liveDisk.isEmpty() && this.liveRequestedOverNetwork;
+        this.liveRequestedOverNetwork = false;
         this.machine.setChanged();
     }
 
@@ -238,6 +250,7 @@ final class OsSession {
         this.bootOnceOs = null;
         // A live session lives in the machine's memory, which the stop empties.
         this.liveDisk = ItemStack.EMPTY;
+        this.liveOverNetwork = false;
     }
 
     /**
@@ -454,7 +467,7 @@ final class OsSession {
     boolean validateOsSession() {
         final LiveInstallState live = liveInstall();
         if (live != null && LiveMedium.holding(this.machine.getLevel(), this.machine,
-                live.distro()) != LiveMedium.Answer.GONE) {
+                live) != LiveMedium.Answer.GONE) {
             /*
              * Asked, never acted on. This is a predicate: it is called by the network gate on every payload
              * a screen sends and by the container on every tick, and one that threw the session away on a
@@ -478,7 +491,7 @@ final class OsSession {
         if (live == null) {
             return false;
         }
-        if (LiveMedium.holding(this.machine.getLevel(), this.machine, live.distro())
+        if (LiveMedium.holding(this.machine.getLevel(), this.machine, live)
                 != LiveMedium.Answer.GONE) {
             return false;
         }
@@ -564,6 +577,12 @@ final class OsSession {
         if (this.liveRequested != null) {
             tag.putString("LiveRequested", this.liveRequested.toString());
         }
+        if (this.liveRequestedOverNetwork) {
+            tag.putBoolean("LiveRequestedOverNetwork", true);
+        }
+        if (this.liveOverNetwork) {
+            tag.putBoolean("LiveOverNetwork", true);
+        }
         /*
          * The running session survives a reload, exactly like the POST flag: a machine that was left up
          * with a desktop on screen must come back to that desktop, not fall to a shell.
@@ -619,6 +638,8 @@ final class OsSession {
                 ? ItemStack.parse(registries, tag.getCompound("LiveDisk")).orElse(ItemStack.EMPTY) : ItemStack.EMPTY;
         this.liveRequested = tag.contains("LiveRequested")
                 ? ResourceLocation.tryParse(tag.getString("LiveRequested")) : null;
+        this.liveRequestedOverNetwork = tag.getBoolean("LiveRequestedOverNetwork");
+        this.liveOverNetwork = tag.getBoolean("LiveOverNetwork");
         this.bootedDesktop = tag.contains("BootedDesktop")
                 ? ResourceLocation.tryParse(tag.getString("BootedDesktop")) : null;
         this.openWindows.clear();

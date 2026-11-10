@@ -18,6 +18,7 @@ import dev.jstech.computers.operation.payload.InstallerActionPayload;
 import dev.jstech.computers.operation.payload.LiveInstallPayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.os.LiveOverlay;
+import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.InstallerFlow;
@@ -97,7 +98,11 @@ public final class InstallerPayloads {
             return;
         }
         if (machine.installer() == null) {
-            final Text failure = FirmwarePayloads.beginInstall(level, machine, FirmwarePayloads.ANY_READER, -1);
+            // A live session the network brought copies from the Mirror it came from; one off a medium, from that.
+            final OsDef live = machine.installedOs();
+            final Text failure = machine.liveOverNetwork() && live != null
+                    ? NetworkBoot.install(level, machine, live, -1)
+                    : FirmwarePayloads.beginInstall(level, machine, FirmwarePayloads.ANY_READER, -1);
             if (failure != null) {
                 final ProgramSpec installer = OsRegistry.getProgram(LiveOverlay.INSTALLER);
                 PacketDistributor.sendToPlayer(player, new DesktopBalloonPayload(payload.hostPos(),

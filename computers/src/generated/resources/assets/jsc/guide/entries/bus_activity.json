@@ -146,7 +146,7 @@
     }
   ],
   "id": "jsc:bus_activity",
-  "order": 111,
+  "order": 113,
   "section": "jsc:bus_windows",
   "title": "jsc.guide.bus_activity.title"
 }

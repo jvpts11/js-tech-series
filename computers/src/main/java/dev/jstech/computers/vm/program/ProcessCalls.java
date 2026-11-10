@@ -45,6 +45,8 @@ final class ProcessCalls {
     private static final List<String> SCANNED = List.of("int", "long", "double", STRING, "char");
     /** What a watch on the network calls when it goes off. */
     private static final String STOCK_HANDLER = "Action<StockEvent>";
+    /** What a kernel's declaration holds at most: its name, its four policies, its slice and its drivers. */
+    private static final int KERNEL_FIELDS = 7;
     private static final TextKey NO_WIDGET = TextKey.of("jsc.vm.process_calls.no_widget", "there is no %s here to %s");
 
     /** A read has to wait while nothing has been typed at the terminal the program is in front of. */
@@ -81,7 +83,46 @@ final class ProcessCalls {
         network(bindings);
         gateway(bindings);
         ui(bindings);
+        system(bindings);
         return Map.copyOf(bindings);
+    }
+
+    /*
+     * What a system a player writes declares its kernel with (computers/docs/design/player-systems.md): one of the
+     * mod's by its name, or its own, each policy chosen on a copy of the one before, so a declaration is a value that
+     * never changes. And Processes.Yield, which gives the rest of the turn away as Thread.Yield does.
+     */
+    private static void system(final Map<MemberId, Binding> bindings) {
+        bind(bindings, "Kernel", "Of", null, (process, target, arguments, line) ->
+                kernel(process, null, "Name", String.valueOf(arguments[0]), line), STRING);
+        bind(bindings, "Kernel", "Own", null, (process, target, arguments, line) ->
+                kernel(process, null, "Name", "own", line));
+        for (final String policy : List.of("Scheduler", "FileSystem", "Drivers", "MemoryRule", "Shell")) {
+            bind(bindings, "Kernel", policy, null, (process, target, arguments, line) ->
+                    kernel(process, target, policy, String.valueOf(arguments[0]), line), STRING);
+        }
+        bind(bindings, "Kernel", "Scheduler", null, (process, target, arguments, line) -> {
+            final Values.Obj chosen = kernel(process, target, "Scheduler", String.valueOf(arguments[0]), line);
+            chosen.set("Slice", Numbers.toInt(arguments[1]));
+            return chosen;
+        }, STRING, "int");
+        bind(bindings, "Processes", "Yield", null, (process, target, arguments, line) -> {
+            process.yieldTurn();
+            return null;
+        });
+    }
+
+    /* A kernel's declaration with one more thing said of it: a copy of {@code before}, or a new one. */
+    private static Values.Obj kernel(final Process process, final Object before, final String field,
+                                     final String value, final int line) {
+        final Values.Obj made = new Values.Obj("Kernel");
+        if (before instanceof Values.Obj kept) {
+            for (final Map.Entry<String, Object> held : kept.fields().entrySet()) {
+                made.set(held.getKey(), held.getValue());
+            }
+        }
+        made.set(field, process.heap().text(value, line));
+        return process.heap0().allocate(made, Heap.HEADER + KERNEL_FIELDS * Heap.REFERENCE, line);
     }
 
     /*

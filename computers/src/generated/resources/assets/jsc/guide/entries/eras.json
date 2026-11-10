@@ -221,7 +221,7 @@
   ],
   "icon": "jsc:vintage_personal_computer",
   "id": "jsc:eras",
-  "order": 8,
+  "order": 10,
   "section": "jsc:systems_and_eras",
   "shows": [
     "jsc:vintage_personal_computer",

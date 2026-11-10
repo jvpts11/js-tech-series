@@ -255,7 +255,7 @@
     }
   ],
   "id": "jsc:pkg",
-  "order": 298,
+  "order": 300,
   "section": "jsc:freebsd_software",
   "title": "jsc.guide.pkg.title"
 }

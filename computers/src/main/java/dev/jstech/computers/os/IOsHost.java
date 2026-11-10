@@ -19,8 +19,11 @@ import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.os.boot.IBootingMachine;
 import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.install.IInstallingMachine;
+import dev.jstech.computers.os.player.PlayerSystems;
+import dev.jstech.computers.os.player.SystemRun;
 import dev.jstech.computers.power.UpsReading;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
@@ -216,6 +219,19 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      * live sessions at all, which only the computers a player sits at do.
      */
     default boolean startLiveSession(final ResourceLocation systemId) {
+        return startLiveSession(systemId, false);
+    }
+
+    /**
+     * The same, off the medium or, with {@code overNetwork}, brought from the Mirror through the firmware's network
+     * boot, which the live desktop's installer then copies from too.
+     */
+    default boolean startLiveSession(final ResourceLocation systemId, final boolean overNetwork) {
+        return false;
+    }
+
+    /** Whether the live desktop running came over the network rather than off a medium. */
+    default boolean liveOverNetwork() {
         return false;
     }
 
@@ -367,6 +383,10 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      * processor to ask, or built from no parts at all, holds no system against it.
      */
     default boolean runsSystem(final OsDef os) {
+        // A system a player wrote runs only where a player sits, as the machine's process 1.
+        if (PlayerSystems.os(os.id()) != null && !runsPlayerSystems()) {
+            return false;
+        }
         final ComputerBuild build = currentBuild();
         return os.runsOn(build == null ? null : build.isa());
     }
@@ -452,6 +472,23 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     }
 
     /**
+     * What the operating system a player wrote has said while it runs here (computers/docs/design/player-systems.md),
+     * or null on a host that runs none.
+     */
+    @Nullable
+    default SystemRun systemRun() {
+        return null;
+    }
+
+    /**
+     * Whether this host runs operating systems players wrote: a computer a player sits at does; a server in a rack runs
+     * the mod's own systems only.
+     */
+    default boolean runsPlayerSystems() {
+        return false;
+    }
+
+    /**
      * What the programs on this machine reach through it, which is the host they run on; null on a host that runs
      * none, where a program is given a clock that never moves and nothing else.
      */
@@ -534,6 +571,16 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
      * @return whether it went down; a host whose system cannot crash, or one that is not up, stays as it is
      */
     default boolean crash(final CrashCause cause, final CrashPages.Moment moment) {
+        return false;
+    }
+
+    /**
+     * Brings an operating system a player wrote down on {@code page} (computers/docs/design/player-systems.md), even
+     * while it is still coming up, since a system that faults in its own start is down all the same.
+     *
+     * @return whether it went down; a host that runs no such system, or one that is not up, stays as it is
+     */
+    default boolean panic(final CrashPage page) {
         return false;
     }
 

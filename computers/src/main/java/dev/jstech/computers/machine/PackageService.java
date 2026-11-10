@@ -21,6 +21,7 @@ import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.install.SetupRunner;
+import dev.jstech.computers.os.player.PlayerDesktop;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
@@ -96,6 +97,11 @@ public final class PackageService {
     /** The network's Mirror, as this machine reaches it. */
     public MirrorService mirror() {
         return this.mirror;
+    }
+
+    /** Lays a player's desktop on the machine as its package installs, for a system of theirs that starts it. */
+    public ICliComputer.OpResult layDesktop(final PlayerDesktop desktop) {
+        return this.community.lay(desktop);
     }
 
     /** The system installed on the machine, or null when it has none, or is not a machine that takes one. */

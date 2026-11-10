@@ -298,6 +298,14 @@ public final class OsSkin implements ISkin {
     }
 
     /**
+     * The skin of a desktop a player wrote: its frames drawn by {@code chrome} in the colours it declared, square at
+     * every corner, with the icons of today's Unix desktops for the mod's own programs on it.
+     */
+    static OsSkin player(final IFormChrome chrome, final Supplier<SkinColours> colours) {
+        return new OsSkin(chrome, 0, 0, false, "kde_plasma", colours);
+    }
+
+    /**
      * Returns this skin with its accent replaced by {@code argb} (a per-computer override chosen in
      * Settings), or this skin unchanged when {@code argb} is {@code 0} (no override) or already the
      * current accent. Every control the skin draws (primary buttons, tab and field accents, the flat

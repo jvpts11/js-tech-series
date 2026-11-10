@@ -71,6 +71,20 @@ final class ProcessValues {
         onType(bindings, "Time", "Tick", (process, target, line) -> process.host().tick());
         onType(bindings, "Time", "DayTime", (process, target, line) -> process.host().dayTime());
         onType(bindings, "Time", "Day", (process, target, line) -> process.host().day());
+        /*
+         * What a system a player writes names, which never changes (computers/docs/design/player-systems.md): the eras
+         * and the instruction sets, each an object that says its name; the answers to running out of memory; and the
+         * process asking, which is the system itself when the system asks.
+         */
+        for (final String era : SystemApi.ERAS) {
+            onType(bindings, "Era", era, (process, target, line) -> named(process, "Era", era, line));
+        }
+        for (final String isa : SystemApi.ISAS) {
+            onType(bindings, "Isa", isa, (process, target, line) -> named(process, "Isa", isa, line));
+        }
+        onType(bindings, "Memory", "Refuse", (process, target, line) -> SystemApi.MEMORY_REFUSE);
+        onType(bindings, "Memory", "GoDown", (process, target, line) -> SystemApi.MEMORY_GO_DOWN);
+        onType(bindings, "Processes", "Current", (process, target, line) -> process.selfToken(line));
         // What the language's core keeps on a text and on the two collections.
         core(bindings, "string", "Length",
                 (process, target, line) -> target instanceof String text ? text.length() : nothing("Length", line));
@@ -107,6 +121,13 @@ final class ProcessValues {
                 add(bindings, new Binding(member.id(), read, write, false));
             }
         }
+    }
+
+    /* One of the library's named values, an era or an instruction set: an object of that type that says its name. */
+    private static Values.Obj named(final Process process, final String type, final String name, final int line) {
+        final Values.Obj made = new Values.Obj(type);
+        made.set("Name", process.heap().text(name, line));
+        return process.heap0().allocate(made, Heap.HEADER + Heap.REFERENCE, line);
     }
 
     private static Object readWidget(final Process process, final Object target, final String name, final int line) {

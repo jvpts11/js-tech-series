@@ -264,7 +264,7 @@
     }
   ],
   "id": "jsc:sigma_run",
-  "order": 371,
+  "order": 373,
   "section": "jsc:sigma_start",
   "title": "jsc.guide.sigma_run.title"
 }

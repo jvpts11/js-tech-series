@@ -14,6 +14,7 @@ import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.Declarations;
 import dev.jstech.computers.sigma.sem.SemanticModel;
 import dev.jstech.computers.sigma.sem.SubsetRules;
+import dev.jstech.computers.sigma.sem.SystemDeclarations;
 import dev.jstech.computers.sigma.sem.TypeRules;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -118,7 +119,7 @@ public final class SigmaSemantics {
      * source in the order the sources were given, for an editor asking where in a file a caret is.
      */
     record Analysis(SemanticModel model, BuiltIns builtIns, TypeRules rules, Declarations declarations,
-                    List<CompilationUnit> units, Lowerer lowered) {
+                    List<CompilationUnit> units, Lowerer lowered, SystemDeclarations systems) {
     }
 
     /**
@@ -128,21 +129,29 @@ public final class SigmaSemantics {
      * over a tree the parser had to guess at; the level and the version say how much of the language a
      * source may use.
      */
-    record Options(boolean wholeProgram, boolean tolerant, LanguageLevel level, int version) {
+    record Options(boolean wholeProgram, boolean tolerant, LanguageLevel level, int version, String entry) {
 
         /** Every type, member and body, but no entry point, in the whole language. */
         static Options check() {
-            return new Options(false, false, LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST);
+            return new Options(false, false, LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST, null);
         }
 
         /** A whole program held to this level and version. */
         static Options program(final LanguageLevel level, final int version) {
-            return new Options(true, false, level, version);
+            return new Options(true, false, level, version, null);
+        }
+
+        /**
+         * The same, started at the class called {@code entry} rather than at the one the program would start at: a
+         * service a system's build makes out of the system's own sources.
+         */
+        static Options startingAt(final LanguageLevel level, final int version, final String entry) {
+            return new Options(true, false, level, version, entry);
         }
 
         /** What an editor asks for while a file is being typed. */
         static Options whileTyping() {
-            return new Options(false, true, LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST);
+            return new Options(false, true, LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST, null);
         }
     }
 
@@ -175,13 +184,16 @@ public final class SigmaSemantics {
          * An editor asks anyway, since a file being typed is that tree most of the time.
          */
         if (bag.hasErrors() && !tolerant) {
-            return new Analysis(model, builtIns, rules, declarations, units, null);
+            return new Analysis(model, builtIns, rules, declarations, units, null, null);
         }
         declarations.declare(units);
         declarations.fill();
         declarations.checkInterfaces();
         declarations.checkOverrides();
         new BodyChecker(builtIns, rules, declarations, bag, model).check(model.declaredTypes());
+        // A system's and a desktop's declarations, read once their values are known to be ones the compiler knows.
+        final SystemDeclarations systems = new SystemDeclarations(declarations, builtIns, bag);
+        systems.read(model.declaredTypes());
         /*
          * After the checking and before anything is written: every question about what the player wrote has
          * been asked by now, and the stage that writes the assembly has fewer shapes to know.
@@ -190,8 +202,8 @@ public final class SigmaSemantics {
         lowered.lower(units);
         if (wholeProgram) {
             bag.setFile(sources.isEmpty() ? "" : sources.getFirst().name());
-            declarations.checkEntryPoint(1, 1);
+            declarations.checkEntryPoint(1, 1, options.entry());
         }
-        return new Analysis(model, builtIns, rules, declarations, units, lowered);
+        return new Analysis(model, builtIns, rules, declarations, units, lowered, systems);
     }
 }

@@ -191,7 +191,7 @@
     "jsc:lithography_euv_source",
     "jsc:lithography_mirror_optics"
   ],
-  "order": 34,
+  "order": 36,
   "section": "jsc:chain_machines",
   "title": "jsc.guide.lithography_stations.title"
 }

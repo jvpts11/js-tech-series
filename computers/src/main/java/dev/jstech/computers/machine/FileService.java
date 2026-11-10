@@ -279,6 +279,24 @@ public final class FileService {
             final ICliComputer.FsResult refused = unwritable(net, reached);
             return refused != null ? refused : reached.remote().writeFile(reached.path(), content);
         }
+        // Any extension will do: a kind the machine does not know is kept as text under the name it was given.
+        final FileType type = FileType.of(extensionOf(path));
+        if (!type.userEditable()) {
+            return ICliComputer.FsResult.fail(NOT_EDITABLE.with(path, type.extension()));
+        }
+        return this.store(path, content, type);
+    }
+
+    /**
+     * Puts a file a package brings at that path on this machine, whatever its kind: a picture a desktop hangs is no
+     * file a player edits, but it is one a package lays down (computers/docs/design/player-systems.md).
+     */
+    public ICliComputer.FsResult installFile(final String path, final String content) {
+        return this.store(path, content, FileType.of(extensionOf(path)));
+    }
+
+    /* Writes the file at that path on this machine's own drives, in the kind its extension says. */
+    private ICliComputer.FsResult store(final String path, final String content, final FileType type) {
         final Resolved r = this.resolve(path);
         final ICliComputer.FsResult unready = unready(r);
         if (unready != null) {
@@ -287,11 +305,6 @@ public final class FileService {
         this.heard(r);
         final DriveTable.Drive drive = r.drive();
         final String real = r.path();
-        // Any extension will do: a kind the machine does not know is kept as text under the name it was given.
-        final FileType type = FileType.of(extensionOf(path));
-        if (!type.userEditable()) {
-            return ICliComputer.FsResult.fail(NOT_EDITABLE.with(path, type.extension()));
-        }
         // Free space available, crediting back the file being overwritten so a same-size rewrite fits.
         final long oldWeight = DiskFilesystem.weightOf(drive.disk(), real);
         final DiskFilesystem.WriteResult result = DiskFilesystem.write(drive.disk(), real, type, content,

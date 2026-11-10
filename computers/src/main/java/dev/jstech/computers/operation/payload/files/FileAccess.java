@@ -142,8 +142,7 @@ public final class FileAccess {
         if (os == null) {
             return FilesystemKind.NONE;
         }
-        final KernelDef kernel =
-                OsRegistry.getKernel(os.kernelId());
+        final KernelDef kernel = OsRegistry.kernelOf(os);
         return kernel != null ? kernel.filesystem()
                 : FilesystemKind.NONE;
     }

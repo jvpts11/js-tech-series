@@ -148,7 +148,7 @@
   ],
   "icon": "jsc:import_bus",
   "id": "jsc:bus_window",
-  "order": 110,
+  "order": 112,
   "section": "jsc:bus_windows",
   "title": "jsc.guide.bus_window.title"
 }

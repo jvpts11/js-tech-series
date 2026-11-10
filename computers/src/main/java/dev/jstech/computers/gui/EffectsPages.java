@@ -222,8 +222,8 @@ public final class EffectsPages {
             case KDE -> period ? KDE_CLASSIC : PLASMA;
             case GNOME -> period ? GNOME_CLASSIC : GNOME;
             case CINNAMON -> CINNAMON;
-            // CDE has no page of effects, and Quince's System Preferences none of the kind.
-            case CDE, QUINCE_CLASSIC, QUINCE_X -> null;
+            // CDE has no page of effects, Quince's System Preferences none of the kind, and a player's desktop none.
+            case CDE, QUINCE_CLASSIC, QUINCE_X, PLAYER -> null;
         };
     }
 

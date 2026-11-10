@@ -215,6 +215,34 @@ public final class FirmwareScreenTexts {
     static final TextKey LOADER_COUNTDOWN = TextKey.of("jsc.firmware.screen.loader_countdown",
             "The highlighted entry will be executed automatically in %ss.");
 
+    // The network boot: the help beside its entry, the PXE agent's screen, and the UEFI's HTTP Boot list.
+    static final TextKey NET_HELP = TextKey.of("jsc.firmware.screen.net_help",
+            "Boot from the network: the firmware asks the Mainframe's Mirror for the systems it serves, and boots the"
+                    + " installer of the one you choose.");
+    static final TextKey PXE_AGENT = TextKey.of("jsc.firmware.screen.pxe_agent", "%s PXE Boot Agent v2.1");
+    static final TextKey PXE_CARD = TextKey.of("jsc.firmware.screen.pxe_card", "CLIENT MAC ADDR: %s");
+    static final TextKey PXE_ADDRESSES = TextKey.of("jsc.firmware.screen.pxe_addresses",
+            "CLIENT IP: %s  MASK: %s  DHCP IP: %s");
+    static final TextKey PXE_MIRROR = TextKey.of("jsc.firmware.screen.pxe_mirror", "Mirror: %s (%s)");
+    static final TextKey PXE_TITLE = TextKey.of("jsc.firmware.screen.pxe_title", "Network boot - the Mirror on %s");
+    static final TextKey NET_INSTALLER = TextKey.of("jsc.firmware.screen.net_installer", "%s installer");
+    static final TextKey PXE_COMMUNITY = TextKey.of("jsc.firmware.screen.pxe_community", "%s, community");
+    static final TextKey LOCAL_DISK = TextKey.of("jsc.firmware.screen.local_disk", "Boot from the local disk");
+    static final TextKey ONLY_RUNS = TextKey.of("jsc.firmware.screen.only_runs",
+            "Only what this computer can run is listed.");
+    static final TextKey PXE_ENTER = TextKey.of("jsc.firmware.screen.pxe_enter", "Enter: boot");
+    static final TextKey PXE_CHOOSE = TextKey.of("jsc.firmware.screen.pxe_choose", "Up/Down: choose");
+    static final TextKey PXE_BACK = TextKey.of("jsc.firmware.screen.pxe_back", "Esc: back to the firmware");
+    static final TextKey HTTP_TITLE = TextKey.of("jsc.firmware.screen.http_title", "HTTP Boot - the Mirror on %s");
+    static final TextKey HTTP_WHERE = TextKey.of("jsc.firmware.screen.http_where", "%s - %s");
+    static final TextKey HTTP_COMMUNITY = TextKey.of("jsc.firmware.screen.http_community", "%s - community");
+    static final TextKey HTTP_MORE = TextKey.of("jsc.firmware.screen.http_more", "%s more");
+    static final TextKey HTTP_SCROLL = TextKey.of("jsc.firmware.screen.http_scroll", "scroll");
+    static final TextKey HTTP_STARTED = TextKey.of("jsc.firmware.screen.http_started",
+            "Start HTTP Boot over IPv4 ... the list came from %s.");
+    static final TextKey HTTP_INSTALL = TextKey.of("jsc.firmware.screen.http_install", "INSTALL");
+    static final TextKey HTTP_BACK = TextKey.of("jsc.firmware.screen.http_back", "BACK");
+
     private FirmwareScreenTexts() {
     }
 

@@ -11,8 +11,8 @@ import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.os.FileSystemType;
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.HardwareRegistry;
@@ -27,7 +27,7 @@ import net.minecraft.world.item.ItemStack;
  * disk moved to another machine is checked there; a clean shutdown leaves none.
  *
  * <p>A disk carries no partitions yet, so every disk of the machine is taken to be formatted the way its system's
- * installer formats its own ({@link FileSystemType#installedBy}), and checked as one.
+ * installer formats its own ({@link OsRegistry#fileSystemOf}), and checked as one.
  */
 public final class DiskChecks {
 
@@ -89,8 +89,7 @@ public final class DiskChecks {
         if (!any) {
             return DiskCheck.NONE;
         }
-        final FileSystemType type = FileSystemType.installedBy(system.platform(), system.familyRank(),
-                system.installMode() != InstallMode.GUIDED, system.id().getPath(), machine.installedEra());
+        final FileSystemType type = OsRegistry.fileSystemOf(system, machine.installedEra());
         return new DiskCheck(look, type, usedMb, capacityMb, kinds, type.recovery().ticksFor(items));
     }
 

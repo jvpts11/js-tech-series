@@ -755,17 +755,43 @@ public final class Declarations {
      * act and a method called Main is only a name.
      */
     public void checkEntryPoint(final int line, final int column) {
+        this.checkEntryPoint(line, column, null);
+    }
+
+    /**
+     * The same, started at the class called {@code entry} when one is named. A program that declares a system starts
+     * there, at the system, whatever services it holds beside it: those are started from the same sources, each at
+     * its own class, when the system's build names them.
+     */
+    public void checkEntryPoint(final int line, final int column, final String entry) {
+        final List<NamedType> systems = new ArrayList<>();
         final List<NamedType> scripts = new ArrayList<>();
         final List<NamedType> consoles = new ArrayList<>();
         for (final NamedType type : this.declared.values()) {
             if (type.kind() != NamedType.Kind.CLASS) {
                 continue;
             }
-            if (type.isOrDescendsFrom(this.builtIns.scriptType())) {
+            if (type.isOrDescendsFrom(this.builtIns.systemType())) {
+                systems.add(type);
+            } else if (type.isOrDescendsFrom(this.builtIns.scriptType())) {
                 scripts.add(type);
             } else if (mainOf(type) != null) {
                 consoles.add(type);
             }
+        }
+        if (entry != null) {
+            for (final NamedType type : scripts) {
+                if (type.name().equals(entry)) {
+                    this.model.setEntryPoint(type, Shape.SCRIPT);
+                    return;
+                }
+            }
+            this.diagnostics.error(line, column, SigmaError.ENTRY_POINT, 0);
+            return;
+        }
+        if (systems.size() == 1) {
+            this.model.setEntryPoint(systems.getFirst(), Shape.SYSTEM);
+            return;
         }
         if (scripts.size() + consoles.size() != 1) {
             this.diagnostics.error(line, column, SigmaError.ENTRY_POINT,

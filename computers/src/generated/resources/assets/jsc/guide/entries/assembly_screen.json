@@ -534,7 +534,7 @@
   ],
   "icon": "jsc:personal_computer",
   "id": "jsc:assembly_screen",
-  "order": 13,
+  "order": 15,
   "section": "jsc:assembly",
   "shows": [
     "jsc:motherboard_atx_standard_lga1150",

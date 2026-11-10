@@ -147,7 +147,8 @@ final class DesktopPointers {
             case FRAMES_XP -> FRAMES_XP;
             // The Aero pointers came with 7 and stayed through 10 and 11.
             case FRAMES_7, FRAMES_10, FRAMES_11 -> AERO;
-            case KDE -> period ? KDE2 : PLASMA;
+            // A player's desktop draws no pointers of its own, so it points with the plainest of today's.
+            case KDE, PLAYER -> period ? KDE2 : PLASMA;
             case GNOME -> period ? GNOME1 : GNOME;
             case CINNAMON -> CINNAMON;
             case CDE -> CDE;

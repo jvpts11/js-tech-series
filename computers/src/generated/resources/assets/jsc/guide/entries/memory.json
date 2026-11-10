@@ -555,7 +555,7 @@
     "jsc:ram_ddr5_65536_rdimm",
     "jsc:ram_ddr5_131072_rdimm"
   ],
-  "order": 18,
+  "order": 20,
   "section": "jsc:hardware",
   "title": "jsc.guide.memory.title"
 }

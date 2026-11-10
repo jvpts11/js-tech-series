@@ -10,6 +10,7 @@ package dev.jstech.computers.machine;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliRemote;
 import dev.jstech.computers.program.iql.IIqlCondition;
@@ -56,6 +57,8 @@ public final class NetworkReadService {
 
     /** How many ways of making a thing, and things it goes into, one answer names before it stops. */
     private static final int MOST_RECIPE_LINES = 12;
+    /* The class of device a network is reached through, as a system's drivers name it. */
+    private static final String NETWORK = "network";
 
     /* The rows a query of the network's machines and Operations reads back; names and keywords are data. */
     private static final TextKey ON_SERVERS = TextKey.of("jsc.network.read.on_servers", "%s servers");
@@ -77,7 +80,9 @@ public final class NetworkReadService {
 
     /** Whether the machine is on a network at all. */
     public boolean online() {
-        return this.terminal.networkUuid() != null;
+        // A player's system with no network driver has no network, whatever the cable says.
+        return this.terminal.networkUuid() != null
+                && (!(this.terminal instanceof IOsHost machine) || PlayerSystemService.drives(machine, NETWORK));
     }
 
     /** The short id of the network the machine is on, or {@code ""} when it is on none. */

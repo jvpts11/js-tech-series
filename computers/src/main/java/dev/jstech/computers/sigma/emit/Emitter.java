@@ -204,9 +204,17 @@ public final class Emitter {
                                 .add(field);
                     }
                 }
-                case IDecl.PropertyDecl property -> written.addField(new AsmType.Field(property.name(),
-                        this.declarations.resolve(property.type()).describe(),
-                        property.modifiers().contains(IDecl.Modifier.STATIC)));
+                case IDecl.PropertyDecl property -> {
+                    final boolean isStatic = property.modifiers().contains(IDecl.Modifier.STATIC);
+                    written.addField(new AsmType.Field(property.name(),
+                            this.declarations.resolve(property.type()).describe(), isStatic));
+                    // One written with an arrow holds a known value, set as a field's would be when it is made.
+                    if (property.arrow()) {
+                        (isStatic ? staticStart : instanceStart).add(new IDecl.FieldDecl(property.modifiers(),
+                                property.type(), property.name(), property.value(), property.line(),
+                                property.column()));
+                    }
+                }
                 case IDecl.EventDecl event -> written.addEvent(new AsmType.Event(event.name(),
                         this.declarations.resolve(event.type()).describe()));
                 default -> { }

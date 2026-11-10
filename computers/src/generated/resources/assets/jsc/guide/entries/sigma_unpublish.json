@@ -44,7 +44,7 @@
     }
   ],
   "id": "jsc:sigma_unpublish",
-  "order": 429,
+  "order": 435,
   "section": "jsc:sharing_packages",
   "title": "jsc.guide.sigma_unpublish.title"
 }

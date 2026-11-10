@@ -62,7 +62,12 @@ public enum PanelStyle {
      * Quince's menu bar over a Dock at the bottom centre that holds the system's programs, what is open, and the
      * Trash at its end (Quince OS X, its Server, and quinceOS).
      */
-    QUINCE_X(true);
+    QUINCE_X(true),
+    /**
+     * A desktop a player wrote: one panel along the top or the foot, its name opening the menu of its programs, and
+     * the clock, in the colours it declares (computers/docs/design/player-systems.md).
+     */
+    PLAYER(true);
 
     /**
      * Whether the desktop stands on a system of a Unix family. Every style says so for itself, so that a

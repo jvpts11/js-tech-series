@@ -201,7 +201,7 @@
   ],
   "icon": "jsc:disk_vaultis_trench_20m",
   "id": "jsc:corruption_and_the_defrag",
-  "order": 21,
+  "order": 23,
   "section": "jsc:hardware",
   "title": "jsc.guide.corruption_and_the_defrag.title"
 }

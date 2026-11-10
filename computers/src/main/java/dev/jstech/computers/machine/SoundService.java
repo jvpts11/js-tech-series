@@ -22,6 +22,9 @@ public final class SoundService {
     private final AbstractComputerBlockEntity machine;
     private final ServerLevel level;
 
+    /* The class of device sound is played through, as a system's drivers name it. */
+    private static final String SOUND = "sound";
+
     public SoundService(final AbstractComputerBlockEntity machine, final ServerLevel level) {
         this.machine = machine;
         this.level = level;
@@ -29,7 +32,9 @@ public final class SoundService {
 
     /** A beep of that pitch and length from the speaker in the case, which cuts the one before it off. */
     public void beep(final int frequency, final int millis) {
-        this.sounds().beep(this.level, frequency, millis);
+        if (this.driven()) {
+            this.sounds().beep(this.level, frequency, millis);
+        }
     }
 
     /**
@@ -38,12 +43,12 @@ public final class SoundService {
      * @throws IllegalArgumentException when an item of it is no note, naming it
      */
     public boolean tones(final String tune) {
-        return this.sounds().tones(this.level, tune);
+        return this.driven() && this.sounds().tones(this.level, tune);
     }
 
     /** Plays a recording from the machine's disks out of its monitors and speakers. */
     public boolean play(final String path) {
-        return this.sounds().play(this.level, path);
+        return this.driven() && this.sounds().play(this.level, path);
     }
 
     /** Stops the recordings the machine's programs are playing. */
@@ -60,10 +65,15 @@ public final class SoundService {
     /** Plays a recording out of the speaker of that name alone; false when there is none, or it cannot play it. */
     public boolean playOn(final String name, final String path) {
         final SpeakerBlockEntity speaker = this.speaker(name);
-        return speaker != null && this.sounds().playOn(this.level, speaker, path);
+        return speaker != null && this.driven() && this.sounds().playOn(this.level, speaker, path);
     }
 
     private ProgramSounds sounds() {
         return this.machine.programSounds();
+    }
+
+    /* Whether the system drives sound: a player's that has no sound driver plays nothing. */
+    private boolean driven() {
+        return PlayerSystemService.drives(this.machine, SOUND);
     }
 }

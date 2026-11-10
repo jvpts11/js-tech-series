@@ -527,6 +527,32 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   each day and the newest arrivals, with no ratings, and the Update Manager, which installs the updates ticked, a
   program at once and the desktop the next time it starts, its shield on the panel while there are any. The Linux
   Desk Reference has a chapter on it.
+- Starting through the network: from the Legacy on, the firmware starts a system's installer from the
+  Mirror of the network's Mainframe, with no medium in a drive. The Legacy and the Transition have Network (PXE) on
+  the Boot page of the Setup, which shows the network card's agent and then the Mirror's menu in the BIOS's blue; the
+  Standard and the Advanced have HTTP Boot in the Boot Manager, the Mirror's list on the firmware's own page with
+  INSTALL and BACK. The menu lists only the systems the machine runs, each with its house, and Boot from the local disk
+  last; with no Mirror on the network it says so and goes back to the firmware. A live medium's desktop starts the same
+  way, its installer copying over the network.
+- Systems that players write: an operating system written in Sigma#, a class that implements `ISystem` in
+  the new namespace `System.OS`, declaring its name, version, author, era, instruction set, memory and kernel with
+  `=>` and a value the compiler knows. The machine runs it as its process 1: `OnBoot` draws its own boot page
+  (`Boot.Logo`, `Line`, `Progress` and `Done`), `OnTick` and `OnInput` run it, `OnShutdown` says goodbye, and a fault
+  it does not catch, `Panic.Halt` or its end brings the machine down on its own panic page, in its own colours, with
+  the error and its lines, restarting after the seconds it asked for or when the player restarts the machine. It
+  stands on one of the mod's kernels or a kernel of its own, whose scheduler (none, cooperative, or preemptive in
+  slices of 16 to 256 instructions, a high program getting two a round and an idle one running only when the others
+  wait), file system, drivers, memory rule and shell it chooses, answering `OnSchedule` and `OnOutOfMemory` if it
+  wants; with a shell of its own it writes its own text screen (`Screen`, `Input`). It starts services, processes and
+  a desktop, and reads the machine's disk, memory and devices (`Processes`, `Disk`, `Memory`, `Services`, `Drivers`),
+  which Sigma reaches through `Standard`. `sigma build --os` writes its installer onto a blank medium of its era,
+  `sigma build --desktop` makes a desktop's package, and `sgpack --publish` puts both on the Mirror as the author's,
+  marked community; the boot manager lists it by its name. The Book of Sigma has a section on it, and the guide a page.
+- Desktops that players write: a class that implements `IDesktop` declares its menu's word, where its panel
+  runs, the style of its window frames, its six colours, its icons, its wallpaper and its programs. It is drawn as the
+  mod's desktops are, one panel with its name and the clock, the menu listing its programs, the Terminal and Settings,
+  any window put away, and Shut down. A system that starts it brings it, and the package managers of the mod's systems
+  install it from the Mirror by its name.
 - Abandoned buildings: twenty kinds lie across the Overworld, each of one era, the Vintage near the
   world's spawn and the Advanced far away: a house with an old computer in its attic, an electronic waste dump, an
   overturned delivery van, a computer shop, a LAN house, a school computer room, a public library, a radio and

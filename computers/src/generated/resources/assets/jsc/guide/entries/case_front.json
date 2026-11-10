@@ -368,7 +368,7 @@
     "jsc:internal_dvd_drive",
     "jsc:internal_blu_ray_drive"
   ],
-  "order": 14,
+  "order": 16,
   "section": "jsc:assembly",
   "title": "jsc.guide.case_front.title"
 }

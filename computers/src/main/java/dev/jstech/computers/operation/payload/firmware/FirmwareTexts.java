@@ -37,6 +37,12 @@ final class FirmwareTexts {
             "The target disk has no room for %s (%s MB needed).");
     static final TextKey NO_MEDIUM = TextKey.of("jsc.firmware.no_medium",
             "No installation medium is in a drive linked to this machine.");
+    /* The network boot's entry: the BIOS's card boots through PXE, the UEFI over HTTP. */
+    static final TextKey NETWORK_PXE = TextKey.of("jsc.firmware.network_pxe", "Network (PXE)");
+    static final TextKey HTTP_BOOT = TextKey.of("jsc.firmware.http_boot", "HTTP Boot");
+    /* Where the entry boots from: the network, or the Mirror that answers on it. */
+    static final TextKey NETWORK = TextKey.of("jsc.firmware.network", "Network");
+    static final TextKey MIRROR_ON = TextKey.of("jsc.firmware.mirror_on", "the Mirror on %s");
 
     private FirmwareTexts() {
     }

@@ -63,6 +63,7 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.MORE;
 import static dev.jstech.computers.client.FirmwareScreenTexts.MOUNT_CONTROLLER;
 import static dev.jstech.computers.client.FirmwareScreenTexts.NEEDS_DRIVES;
 import static dev.jstech.computers.client.FirmwareScreenTexts.NEEDS_HARDWARE;
+import static dev.jstech.computers.client.FirmwareScreenTexts.NET_HELP;
 import static dev.jstech.computers.client.FirmwareScreenTexts.NONE;
 import static dev.jstech.computers.client.FirmwareScreenTexts.NONE_INDEPENDENT;
 import static dev.jstech.computers.client.FirmwareScreenTexts.NO_BOOTABLE;
@@ -108,6 +109,7 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
 import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
+import dev.jstech.computers.operation.payload.firmware.NetBootPayloads;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.InstallMode;
@@ -163,10 +165,10 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      */
     private static final Palette<Cli> CLI = Palettes.declare(JsComputers.MODID, "firmware/cli",
             new Cli(0xFF121212, 0xFFD1D1D1, 0xFFFFFFFF, 0xFF7C7C7C));
-    private static final Palette<Bios> BIOS = Palettes.declare(JsComputers.MODID, "firmware/bios",
+    static final Palette<Bios> BIOS = Palettes.declare(JsComputers.MODID, "firmware/bios",
             new Bios(0xFF0000A8, 0xFFB9B9B9, 0xFF6FB7FF, 0xFFFFFFFF, 0xFF39D6C4, 0xFFFFE14D, 0xFFB9C4D6,
                     0xFFD9D9D9));
-    private static final Palette<Uefi> UEFI = Palettes.declare(JsComputers.MODID, "firmware/uefi",
+    static final Palette<Uefi> UEFI = Palettes.declare(JsComputers.MODID, "firmware/uefi",
             new Uefi(0xFF1E2030, 0xFF11131F, 0xFF2A2D3E, 0xFF3A4060, 0xFFE6ECF6, 0xFFA8B2C6, 0xFF5FA8D3,
                     0xFFF0B23A, 0xFF5FE07A, 0xFF8090A8, 0xFF23405A, 0xFF0B1018));
     /** The storage controller's page, whatever look it is in: a degraded array, and the mode in force. */
@@ -222,6 +224,9 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     // A refusal shown in the footer for a few seconds, where every firmware look draws its key hints.
     private String notice = "";
     private long noticeUntil;
+    /* The Mirror's menu once the network has been asked and answered, over the boot page; null when not open. */
+    @Nullable
+    private NetBootMenu network;
 
     public FirmwareScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
         super(session, inventory, title);
@@ -305,9 +310,33 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         }
     }
 
+    /**
+     * Routes the Mirror's answer to the open setup: its menu when one answered, and the reason in the footer when
+     * none did or a choice was refused.
+     */
+    public static void acceptNetwork(final NetBootPayloads.Menu menu) {
+        final FirmwareScreen screen = active;
+        if (screen == null || !screen.computerPos.equals(menu.host())) {
+            return;
+        }
+        if (!menu.refusal().isEmpty()) {
+            screen.notice(menu.refusal());
+        }
+        if (!menu.answered()) {
+            screen.network = null;
+        } else if (screen.network != null) {
+            screen.network.update(menu);
+        } else if (menu.refusal().isEmpty()) {
+            screen.network = new NetBootMenu(screen.kind == FirmwareKind.BLUE_BIOS, menu);
+        }
+    }
+
     // Model
 
-    /** The entries shown on the current page: all of them on Boot, only disks on Boot Order. */
+    /**
+     * The entries shown on the current page: all of them on Boot, with the network's last when the machine boots from
+     * it, and only disks on Boot Order.
+     */
     private List<FirmwareStatePayload.Entry> rows() {
         if (state == null) {
             return List.of();
@@ -320,6 +349,11 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                 }
             }
             return disks;
+        }
+        if (page == PAGE_BOOT && state.network() != null) {
+            final List<FirmwareStatePayload.Entry> all = new ArrayList<>(state.entries());
+            all.add(state.network());
+            return all;
         }
         return state.entries();
     }
@@ -365,6 +399,11 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             }
             return;
         }
+        // The network: the firmware asks the Mirror first, and its menu comes up when it answers.
+        if (e.kind() == FirmwareStatePayload.KIND_NETWORK) {
+            send(new NetBootPayloads.Ask(computerPos, monitorPos));
+            return;
+        }
         if (!e.bootable()) {
             return;
         }
@@ -398,6 +437,10 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      */
     private void install() {
         final FirmwareStatePayload.Entry e = selectedEntry();
+        if (e != null && e.kind() == FirmwareStatePayload.KIND_NETWORK) {
+            activateSelected();
+            return;
+        }
         if (e != null && e.kind() == FirmwareStatePayload.KIND_MEDIA && page == PAGE_BOOT) {
             if (!e.bootable()) {
                 /*
@@ -433,6 +476,24 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     private void notice(final Text text) {
         notice = of(text);
         noticeUntil = System.currentTimeMillis() + 5000L;
+    }
+
+    /*
+     * Boots what the Mirror's menu has chosen: one of its systems, which the machine restarts into, or the local
+     * disk, which boots as the boot page's disk would.
+     */
+    private void chooseNetwork() {
+        final NetBootMenu menu = this.network;
+        if (menu == null) {
+            return;
+        }
+        if (menu.onLocalDisk()) {
+            this.network = null;
+            send(FirmwareActionPayload.of(computerPos, monitorPos, FirmwareActionPayload.ACTION_BOOT_DISK,
+                    state == null ? -1 : state.bootSlot(), -1));
+            return;
+        }
+        send(new NetBootPayloads.Boot(computerPos, monitorPos, menu.chosenSystem()));
     }
 
     /** The system a medium carries, by its own name, asked of the registry rather than read out of the row. */
@@ -521,6 +582,11 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         final int x = this.leftPos;
         final int y = this.topPos;
         MonitorFrame.renderBody(g, x, y, W, H, era(), font, screenPos());
+        // The card's PXE agent takes the whole screen while its menu is up; the UEFI's list stays in its panel.
+        if (network != null && kind == FirmwareKind.BLUE_BIOS) {
+            network.renderAgent(g, font, x, y);
+            return;
+        }
         switch (kind) {
             case CLI_BIOS  -> renderCliBios(g, x, y, mouseX, mouseY);
             case BLUE_BIOS -> renderBlueBios(g, x, y, mouseX, mouseY);
@@ -706,7 +772,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
                         : "";
                 Draw.text(g, font, order + of(e.label()), boxX + FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
                         sel ? BIOS.get().ground() : (e.bootable() ? BIOS.get().text() : BIOS.get().dim()));
-                final String right = of(e.kind() == FirmwareStatePayload.KIND_DISK ? DISK.with(e.ref()) : DRIVE.text());
+                final String right = of(e.kind() == FirmwareStatePayload.KIND_DISK ? DISK.with(e.ref())
+                        : e.kind() == FirmwareStatePayload.KIND_NETWORK ? e.device() : DRIVE.text());
                 Draw.text(g, font, right, boxX + boxW - font.width(right) - FirmwareLayout.BIOS_CONTENT_INSET_X, ry,
                         sel ? BIOS.get().ground() : BIOS.get().value());
                 ry += FirmwareLayout.ROW_H;
@@ -731,7 +798,9 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             Draw.text(g, font, "> " + of(INSTALL_SYSTEM), installHit[0] + 6, installHit[1] + 3,
                     in(installHit, mouseX, mouseY) ? BIOS.get().ground()
                             : (hasInstaller() ? BIOS.get().amber() : BIOS.get().dim()));
+            final FirmwareStatePayload.Entry chosen = selectedEntry();
             help = of(page == PAGE_ORDER ? ORDER_HELP.text()
+                    : chosen != null && chosen.kind() == FirmwareStatePayload.KIND_NETWORK ? NET_HELP.text()
                     : BOOT_HELP.with(state == null ? "-" : Integer.toString(state.installTargetSlot())));
         }
         drawBox(g, helpX, top, helpW, boxH, of(ITEM_HELP));
@@ -811,6 +880,9 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             renderStorageLines(g, mainX + uefiInsetX, top + uefiInsetY, FirmwareLayout.UEFI_LINE_STEP,
                     UEFI.get().key(), UEFI.get().text(), UEFI.get().dim(),
                     mainW - FirmwareLayout.UEFI_CONTENT_WIDTH_MARGIN);
+        } else if (network != null) {
+            panel(g, mainX, top, mainW, panelH, network.httpTitle());
+            network.renderHttp(g, font, mainX, top, mainW, panelH, mouseX, mouseY);
         } else {
             panel(g, mainX, top, mainW, panelH, of(page == PAGE_ORDER ? PAGE_BOOT_ORDER : BOOT_MANAGER));
             int ry = top + FirmwareLayout.UEFI_LIST_TOP_DY;
@@ -1106,6 +1178,9 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         if (button != 0) {
             return super.mouseClicked(mouseX, mouseY, button);
         }
+        if (network != null && clickedNetwork(mouseX, mouseY)) {
+            return true;
+        }
         for (int i = 0; i < tabHits.length; i++) {
             if (in(tabHits[i], mouseX, mouseY)) {
                 page = i;
@@ -1139,8 +1214,67 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
+    /*
+     * A click while the Mirror's menu is up: a row picks it and a second click boots it, INSTALL boots, BACK goes back
+     * to the setup. On the UEFI the side's pages and Exit still answer, and leave the menu; answers whether the click
+     * was the menu's to take.
+     */
+    private boolean clickedNetwork(final double mouseX, final double mouseY) {
+        final NetBootMenu menu = this.network;
+        final int row = menu.rowAt(mouseX, mouseY);
+        if (row >= 0) {
+            if (menu.pick(row)) {
+                chooseNetwork();
+            }
+            return true;
+        }
+        if (menu.overInstall(mouseX, mouseY)) {
+            chooseNetwork();
+            return true;
+        }
+        if (menu.overBack(mouseX, mouseY)) {
+            this.network = null;
+            return true;
+        }
+        if (kind == FirmwareKind.BLUE_BIOS) {
+            return true; // the agent's screen has nothing else to click
+        }
+        for (final int[] tab : tabHits) {
+            if (in(tab, mouseX, mouseY)) {
+                this.network = null;
+                return false;
+            }
+        }
+        if (in(exitHit, mouseX, mouseY)) {
+            this.network = null;
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean mouseScrolled(final double mouseX, final double mouseY, final double scrollX,
+                                 final double scrollY) {
+        if (network != null && scrollY != 0) {
+            network.move(scrollY > 0 ? -1 : 1);
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
+
     @Override
     public boolean keyPressed(final int key, final int scan, final int mods) {
+        if (network != null) {
+            switch (key) {
+                case 256 -> network = null; // ESC: back to the setup
+                case 265 -> network.move(-1);
+                case 264 -> network.move(1);
+                case 257, 335 -> chooseNetwork();
+                default -> {
+                }
+            }
+            return true;
+        }
         switch (key) {
             case 256 -> { // ESC
                 onClose();
@@ -1234,7 +1368,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      * Legacy's classic blue setup: the ground, the title bar, the frame, the text, a value, what wants the eye, the
      * quiet lines, and the bar of the chosen line.
      */
-    private record Bios(int ground, int title, int border, int text, int value, int amber, int dim, int selection) {
+    record Bios(int ground, int title, int border, int text, int value, int amber, int dim, int selection) {
     }
 
     /**
@@ -1242,7 +1376,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
      * accent, what wants the eye, what is fine, the quiet lines, the chosen row, and the words written on the
      * accent.
      */
-    private record Uefi(int ground, int head, int panel, int placeholder, int text, int key, int accent, int amber,
+    record Uefi(int ground, int head, int panel, int placeholder, int text, int key, int accent, int amber,
                         int ok, int dim, int selection, int onAccent) {
     }
 

@@ -178,7 +178,7 @@
     "jsc:advanced_high_performance_personal_computer",
     "jsc:advanced_aesthetic_personal_computer"
   ],
-  "order": 40,
+  "order": 42,
   "section": "jsc:computers",
   "title": "jsc.guide.personal_computers.title"
 }

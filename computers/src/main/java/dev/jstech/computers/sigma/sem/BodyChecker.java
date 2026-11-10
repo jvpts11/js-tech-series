@@ -76,7 +76,7 @@ public final class BodyChecker {
                 case IDecl.FieldDecl field -> this.checkFieldInitializer(field);
                 case IDecl.MethodDecl method -> this.checkMethod(method);
                 case IDecl.ConstructorDecl constructor -> this.checkConstructor(type, constructor);
-                case IDecl.PropertyDecl ignored -> { }
+                case IDecl.PropertyDecl property -> this.checkArrowValue(property);
                 case IDecl.EventDecl ignored -> { }
                 case IDecl.TypeMember ignored -> { } // checked as a type of its own, in its turn
             }
@@ -111,6 +111,24 @@ public final class BodyChecker {
         final ITypeSymbol declared = this.scope.declarations().resolve(field.type(), this.scope.currentType());
         this.scope.begin(field.modifiers().contains(IDecl.Modifier.STATIC), ITypeSymbol.Primitive.VOID, false);
         this.scope.expect(this.expressions.check(field.initializer(), declared), declared, field.initializer());
+    }
+
+    /*
+     * A property written with an arrow holds a value the compiler knows. It is checked as if nothing of the object
+     * were there yet, which it is not when the value is worked out, and then held to being known.
+     */
+    private void checkArrowValue(final IDecl.PropertyDecl property) {
+        if (!property.arrow()) {
+            return;
+        }
+        final ITypeSymbol declared = this.scope.declarations().resolve(property.type(), this.scope.currentType());
+        this.scope.begin(true, ITypeSymbol.Primitive.VOID, false);
+        final ITypeSymbol given = this.expressions.check(property.value(), declared);
+        this.scope.expect(given, declared, property.value());
+        if (!this.scope.rules().isError(given) && !KnownValues.known(property.value(), this.scope.model())) {
+            this.scope.report(property.value().line(), property.value().column(), SigmaError.VALUE_NOT_KNOWN,
+                    property.name());
+        }
     }
 
     private void checkMethod(final IDecl.MethodDecl method) {

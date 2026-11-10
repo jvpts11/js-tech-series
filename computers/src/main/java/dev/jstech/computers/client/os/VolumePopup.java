@@ -251,8 +251,11 @@ final class VolumePopup {
             case KDE -> Look.PLASMA;
             case GNOME -> Look.SYSTEM_MENU;
             case CINNAMON -> Look.APPLET;
-            // CDE has none, and Quince's menu bar keeps no volume beside its clock; its Sound is a panel.
-            case CDE, QUINCE_CLASSIC, QUINCE_X -> null;
+            /*
+             * CDE has none, and Quince's menu bar keeps no volume beside its clock; its Sound is a panel. A player's
+             * desktop has its name and its clock on its panel, and nothing else.
+             */
+            case CDE, QUINCE_CLASSIC, QUINCE_X, PLAYER -> null;
         };
     }
 

@@ -210,7 +210,7 @@
     }
   ],
   "id": "jsc:sigma_no_exceptions",
-  "order": 387,
+  "order": 389,
   "section": "jsc:sigma_failures",
   "title": "jsc.guide.sigma_no_exceptions.title"
 }

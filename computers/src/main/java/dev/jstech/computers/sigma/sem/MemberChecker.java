@@ -39,6 +39,24 @@ final class MemberChecker {
         this.expressions = expressions;
     }
 
+    /**
+     * What stands before the dot. A name that is both a member and that member's own type, as in
+     * {@code Era Era => Era.Legacy;}, is read as the type when what follows the dot is one of the type's own
+     * static members, as C# reads it; anything else is checked as it is written.
+     */
+    ITypeSymbol targetOf(final IExpr.Member member) {
+        if (member.target() instanceof IExpr.Name name) {
+            final NamedType type = this.typeNamedLikeItsMember(name, member.name());
+            if (type != null) {
+                this.scope.declarations().reportIfNewer(type, name.line(), name.column());
+                this.scope.model().setBinding(name, new IBinding.TypeName(type));
+                this.scope.model().setType(name, type);
+                return type;
+            }
+        }
+        return this.expressions.check(member.target(), null);
+    }
+
     ITypeSymbol memberType(final IExpr.Member member, final ITypeSymbol expected) {
         /*
          * A type named with its namespace in front, Tools.Counter, is read as a member access, so the
@@ -56,7 +74,7 @@ final class MemberChecker {
                 return named;
             }
         }
-        final ITypeSymbol target = this.expressions.check(member.target(), null);
+        final ITypeSymbol target = this.targetOf(member);
         if (this.scope.rules().isError(target)) {
             return ITypeSymbol.Special.ERROR;
         }
@@ -277,5 +295,33 @@ final class MemberChecker {
         final ITypeSymbol wantedReturn = this.scope.rules().substitute(shape.returnType(), wantedArguments);
         return this.scope.rules().isAssignable(
                 this.scope.rules().substitute(candidate.returnType(), ownArguments), wantedReturn);
+    }
+
+    /*
+     * The type a name spells when the name is also a member of the current type whose own type is that very type,
+     * and {@code following} is a static member of it; null otherwise. A local of that name always wins.
+     */
+    private NamedType typeNamedLikeItsMember(final IExpr.Name name, final String following) {
+        if (this.scope.currentType() == null || this.scope.scope().lookup(name.identifier()) != null) {
+            return null;
+        }
+        final NamedType type = this.scope.declarations().lookup(name.identifier(), this.scope.currentType());
+        final List<IMemberSymbol> members = BodyScope.lookup(this.scope.currentType(), name.identifier());
+        if (type == null || members.isEmpty()) {
+            return null;
+        }
+        for (final IMemberSymbol member : members) {
+            final ITypeSymbol held = member instanceof IMemberSymbol.PropertySymbol property ? property.type()
+                    : member instanceof IMemberSymbol.FieldSymbol field ? field.type() : null;
+            if (!type.equals(held)) {
+                return null;
+            }
+        }
+        for (final IMemberSymbol found : BodyScope.lookup(type, following)) {
+            if (found.isStatic()) {
+                return type;
+            }
+        }
+        return null;
     }
 }

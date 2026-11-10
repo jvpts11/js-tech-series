@@ -207,7 +207,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:achievements_sigma",
-  "order": 153,
+  "order": 155,
   "section": "jsc:the_achievements",
   "title": "jsc.guide.achievements_sigma.title"
 }

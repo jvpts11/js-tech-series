@@ -267,7 +267,7 @@
     "jsc:disk_vaultis_link_ide_40g",
     "jsc:disk_vaultis_link_sata_ssd_64g"
   ],
-  "order": 20,
+  "order": 22,
   "section": "jsc:hardware",
   "title": "jsc.guide.disks.title"
 }

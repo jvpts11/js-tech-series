@@ -123,7 +123,7 @@
     }
   ],
   "id": "jsc:install_debian",
-  "order": 249,
+  "order": 251,
   "section": "jsc:installing_linux",
   "title": "jsc.guide.install_debian.title"
 }

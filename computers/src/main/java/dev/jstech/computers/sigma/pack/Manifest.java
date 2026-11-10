@@ -25,10 +25,20 @@ import java.util.Map;
  */
 @TextHolder
 public record Manifest(String name, String version, String house, String entry, String icon,
-                       int minRamMb, List<String> files, String about) {
+                       int minRamMb, List<String> files, String about, String kind) {
 
     /** The name of the manifest a project keeps beside its source. */
     public static final String FILE = "package.cpk";
+
+    /** What most packages are: a program, which a package manager installs. */
+    public static final String PROGRAM = "program";
+    /**
+     * An operating system a player wrote (computers/docs/design/player-systems.md), which the firmware installs from
+     * the Mirror through its network boot rather than a package manager.
+     */
+    public static final String SYSTEM = "system";
+    /** A desktop a player wrote, which a package manager installs as it installs KDE Plasma. */
+    public static final String DESKTOP = "desktop";
 
     /** The icons a package may wear, since it cannot bring artwork of its own. */
     public static final List<String> ICONS =
@@ -60,6 +70,18 @@ public record Manifest(String name, String version, String house, String entry, 
 
     public Manifest {
         files = List.copyOf(files);
+        kind = kind == null || kind.isBlank() ? PROGRAM : kind;
+    }
+
+    /** A manifest of a program, as every package was before systems and desktops came. */
+    public Manifest(final String name, final String version, final String house, final String entry,
+                    final String icon, final int minRamMb, final List<String> files, final String about) {
+        this(name, version, house, entry, icon, minRamMb, files, about, PROGRAM);
+    }
+
+    /** Whether a package manager installs this as a program, which is everything but a system and a desktop. */
+    public boolean program() {
+        return PROGRAM.equals(this.kind);
     }
 
     /** Whether this could be published as it stands, and what is wrong if not, in English, as data. */
@@ -112,6 +134,9 @@ public record Manifest(String name, String version, String house, String entry, 
         if (!this.about.isBlank()) {
             text.append("about: ").append(this.about).append('\n');
         }
+        if (!this.program()) {
+            text.append("kind: ").append(this.kind).append('\n');
+        }
         for (final String file : this.files) {
             text.append("file: ").append(file).append('\n');
         }
@@ -146,7 +171,7 @@ public record Manifest(String name, String version, String house, String entry, 
         return new Manifest(said.getOrDefault("name", ""), said.getOrDefault("version", ""),
                 said.getOrDefault("house", ""), said.getOrDefault("entry", ""),
                 said.getOrDefault("icon", DEFAULT_ICON), whole(said.get("ram")), files,
-                said.getOrDefault("about", ""));
+                said.getOrDefault("about", ""), said.getOrDefault("kind", PROGRAM));
     }
 
     /** A manifest for a project that has just been started. */
@@ -158,7 +183,7 @@ public record Manifest(String name, String version, String house, String entry, 
     /** The same, with these files in it. */
     public Manifest with(final List<String> found) {
         return new Manifest(this.name, this.version, this.house, this.entry, this.icon, this.minRamMb,
-                found, this.about);
+                found, this.about, this.kind);
     }
 
     /** What the package is called on the shelf: its name and what it is a build of. */

@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.OpenBootMenuPayload;
 import dev.jstech.computers.operation.payload.OpenPostPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.OsInstallProgressPayload;
+import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.operation.payload.crash.OpenCrashPayload;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.IOsHost;
@@ -21,6 +22,7 @@ import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -93,6 +95,7 @@ public final class MonitorPictures {
                         state(level, host, owner), 0L);
                 case FULL_DESKTOP -> desktop(owner, host);
                 case TERMINAL_ONLY, NETWORK_GUI -> console(level, host, be);
+                case SYSTEM_SCREEN -> playerScreen(host);
             };
         };
     }
@@ -147,6 +150,22 @@ public final class MonitorPictures {
         }
         return new IMonitorPicture.Desktop(owner, system, desktop, host.ramTotalMb(), host.ramReservedMb(), windows,
                 host.desktopWorkspace());
+    }
+
+    /*
+     * A player's system's own screen, as its rows of text, on the monitor's face: a console with no prompt, since what
+     * stands on the glass is the system's own writing (computers/docs/design/player-systems.md).
+     */
+    private static IMonitorPicture playerScreen(final IOsHost host) {
+        if (host.systemRun() == null) {
+            return IMonitorPicture.DARK;
+        }
+        final Era era = host.displayEra() == null ? HardwareEra.STANDARD : host.displayEra();
+        final List<WireLine> lines = new ArrayList<>();
+        for (final String row : host.systemRun().screen().rows()) {
+            lines.add(WireLine.of(CliLine.plain(row.stripTrailing())));
+        }
+        return new IMonitorPicture.Console(era, lines, "", null, 100);
     }
 
     private static IMonitorPicture console(final ServerLevel level, final IOsHost host, final BlockEntity be) {

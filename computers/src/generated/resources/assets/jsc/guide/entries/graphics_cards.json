@@ -271,7 +271,7 @@
     "jsc:gpu_tessera_a100",
     "jsc:gpu_tessera_h100"
   ],
-  "order": 19,
+  "order": 21,
   "section": "jsc:hardware",
   "title": "jsc.guide.graphics_cards.title"
 }

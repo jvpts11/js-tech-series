@@ -27,6 +27,7 @@ final class SigmaLibraryPages {
         libraryNetwork(guide, chapter);
         libraryMachine(guide, chapter);
         libraryWindows(guide, chapter);
+        librarySystems(guide, chapter);
     }
 
     private static void libraryBasics(final ModGuide guide, final GuideChapter chapter) {
@@ -1503,6 +1504,227 @@ final class SigmaLibraryPages {
                         "The program stops and says this window already has a dialog open over it.",
                         "Close the open dialog first, then open the next one.")
                 .seeAlso("jsc:monitors", "jsc:windows_and_layout")
+                .register();
+    }
+
+    /* The namespace a player's own operating system and desktop are made with. */
+    private static void librarySystems(final ModGuide guide, final GuideChapter chapter) {
+        final ModGuide.SectionRef section = guide.section("library_systems").titled("Systems of your own")
+                .in(chapter).register();
+        guide.page("system_os_library", section).titled("System.OS: an operating system of your own")
+                .paragraph("You can write an operating system of your own in Sigma#. It is a class that implements"
+                        + " ISystem, in the namespace System.OS. The machine runs it as its process 1, and draws its"
+                        + " pages, its files and its windows for it, so even a weak machine keeps up.")
+                .define("System", "The class that implements ISystem: it declares what the system is, and its"
+                        + " events run the machine.")
+                .define("Kernel", "The rules a system runs by: how it shares the processor, its file system, its"
+                        + " drivers, what it does when the memory runs out, and its shell.")
+                .table("What a system declares", "Property", "What it says")
+                .row(GuideCell.code("Name, Version, Author"), GuideCell.words("The system's name, its version and"
+                        + " who wrote it, as text."))
+                .row(GuideCell.code("Era"), GuideCell.words("The oldest era of hardware the system installs on."))
+                .row(GuideCell.code("Isa"), GuideCell.words("The instruction set the system is built for."))
+                .row(GuideCell.code("MemoryMb"), GuideCell.words("The memory the system keeps for itself, in"
+                        + " megabytes (MB)."))
+                .row(GuideCell.code("Kernel"), GuideCell.words("One of the mod's kernels, or one of the system's"
+                        + " own."))
+                .paragraph("You write each of these with => and a value the compiler knows: one written out, or one"
+                        + " the library names. The compiler reads them to know the system before it runs.")
+                .table("Events of a system", "Event", "When it runs")
+                .row(GuideCell.code("OnBoot()"), GuideCell.words("Once, as the machine comes up."))
+                .row(GuideCell.code("OnTick()"), GuideCell.words("On every tick while the system is up."))
+                .row(GuideCell.code("OnInput(InputEvent e)"), GuideCell.words("When a key is pressed or the mouse"
+                        + " is clicked on the system's own screen."))
+                .row(GuideCell.code("OnShutdown()"), GuideCell.words("Once, as the machine goes down."))
+                .row(GuideCell.code("int OnSchedule(List<int> ready)"), GuideCell.words("Optional. Before each"
+                        + " slice, with the numbers of the processes ready to run, on a kernel of its own. It gives"
+                        + " the number of the process that runs next."))
+                .row(GuideCell.code("int OnOutOfMemory(string asker, int mb)"), GuideCell.words("Optional. When a"
+                        + " program asks for more memory than the machine has, on a kernel of its own. It gives"
+                        + " Memory.Refuse, Memory.GoDown, or the number of a process to end."))
+                .table("Era and Isa members", "Member", "What it is")
+                .row(GuideCell.code("Era.Vintage, Era.Legacy, Era.Transition, Era.Standard, Era.Advanced"),
+                        GuideCell.words("The eras of hardware."))
+                .row(GuideCell.code("Isa.IA16, Isa.IA32, Isa.X86_64, Isa.M68K, Isa.PowerPC, Isa.ARM64"),
+                        GuideCell.words("The instruction sets."))
+                .row(GuideCell.code("Era.Name, Isa.Name"), GuideCell.words("The era or the instruction set, as"
+                        + " text."))
+                .table("Kernel members", "Member", "What it does")
+                .row(GuideCell.code("Kernel.Of(name)"), GuideCell.words("One of the mod's kernels, with all its"
+                        + " rules: dos, win9x, nt, linux, freebsd, unix or net_min."))
+                .row(GuideCell.code("Kernel.Own()"), GuideCell.words("A kernel of the system's own, which you"
+                        + " choose the rules of with the members below."))
+                .row(GuideCell.code("Kernel.Scheduler(kind), Kernel.Scheduler(kind, slice)"), GuideCell.words(
+                        "How the processor is shared: none, cooperative or preemptive, with a slice of 16 to 256"
+                                + " instructions. A slice is 64 instructions when you give none."))
+                .row(GuideCell.code("Kernel.FileSystem(kind)"), GuideCell.words("The file system: dos, posix or"
+                        + " flat."))
+                .row(GuideCell.code("Kernel.Drivers(classes)"), GuideCell.words("The devices the system drives,"
+                        + " named in one text with commas: text, graphics, sound, network, disks, optical, usb and"
+                        + " printer."))
+                .row(GuideCell.code("Kernel.MemoryRule(rule)"), GuideCell.words("What happens when the memory runs"
+                        + " out: refuse, end or down."))
+                .row(GuideCell.code("Kernel.Shell(family)"), GuideCell.words("The shell: dos, posix, mc-net, or"
+                        + " own for a screen the system writes itself."))
+                .row(GuideCell.code("Kernel.Name"), GuideCell.words("The kernel's name, as text."))
+                .subheading("The rules of a kernel of its own")
+                .paragraph("With no scheduler, only the system and the program in front run, and the others wait."
+                        + " A cooperative program runs until it calls Processes.Yield, waits or ends. A preemptive"
+                        + " kernel shares the processor in slices, and a program of high priority gets two slices a"
+                        + " round, a low one sits out one round in two, and an idle one runs only when every other"
+                        + " program waits.")
+                .paragraph("A device with no driver is not there for the system: with no sound driver it plays"
+                        + " nothing, and with no network driver it is on no network.")
+                .listing("LanternOs.sgs",
+                        "using System.OS.*;",
+                        "namespace Lantern;",
+                        "",
+                        "class LanternOs : ISystem {",
+                        "    public string Name => \"Lantern OS\";",
+                        "    public string Version => \"1.2\";",
+                        "    public string Author => \"Alex\";",
+                        "    public Era Era => Era.Legacy;",
+                        "    public Isa Isa => Isa.IA32;",
+                        "    public int MemoryMb => 48;",
+                        "    public Kernel Kernel => Kernel.Of(\"linux\");",
+                        "",
+                        "    public void OnBoot() {",
+                        "        Boot.Line(\"Lighting the lantern...\");",
+                        "        Boot.Done();",
+                        "        Desktop.Start(\"lantern-desktop\");",
+                        "    }",
+                        "    public void OnTick() { }",
+                        "    public void OnInput(InputEvent e) { }",
+                        "    public void OnShutdown() { }",
+                        "}")
+                .paragraph("sigma build --os writes the system onto a blank medium of its era in one of the"
+                        + " machine's drives, and sgpack --publish puts it on the network's Mirror, where every"
+                        + " machine of the network can boot its installer through the firmware.")
+                .ifSomethingGoesWrong(
+                        "The build stops with S3062.",
+                        "The system leaves out a property it has to declare. Add it, written with =>.",
+                        "The system goes down on its own page as soon as it starts.",
+                        "The page names the error and its line. Fix that line, build again and install again.")
+                .seeAlso("jsc:system_screen_library", "jsc:system_processes_library", "jsc:system_desktop_library")
+                .register();
+        guide.page("system_screen_library", section).titled("Boot, Panic, Screen and Input")
+                .paragraph("With these you draw your system's pages: the page it shows while it comes up, the page it"
+                        + " shows when it goes down, and its own text screen. Only the system itself, process 1,"
+                        + " draws its boot and panic pages.")
+                .table("Boot members", "Member", "What it does")
+                .row(GuideCell.code("Boot.Logo(path)"), GuideCell.words("Shows a picture from the disk in the"
+                        + " middle of the boot page."))
+                .row(GuideCell.code("Boot.Line(text)"), GuideCell.words("Writes the line under the progress bar."))
+                .row(GuideCell.code("Boot.Progress(percent)"), GuideCell.words("Fills the progress bar, from 0 to"
+                        + " 100 percent (%)."))
+                .row(GuideCell.code("Boot.Done()"), GuideCell.words("Says the system is up, which ends the boot"
+                        + " page."))
+                .table("Panic members", "Member", "What it does")
+                .row(GuideCell.code("Panic.Halt(message)"), GuideCell.words("Brings the machine down on the panic"
+                        + " page, with that message at the top."))
+                .row(GuideCell.code("Panic.Page(kind)"), GuideCell.words("The look of the panic page: blue, red,"
+                        + " console or own."))
+                .row(GuideCell.code("Panic.Colours(background, text)"), GuideCell.words("The colours of your own"
+                        + " panic page, each written #RRGGBB."))
+                .row(GuideCell.code("Panic.RebootAfter(seconds)"), GuideCell.words("Restarts the machine that many"
+                        + " seconds after it goes down. With none, the page stays until you restart the machine."))
+                .table("Screen members", "Member", "What it does")
+                .row(GuideCell.code("Screen.Write(text), Screen.WriteLine(text)"), GuideCell.words("Writes on the"
+                        + " system's text screen, the second one ending the line."))
+                .row(GuideCell.code("Screen.Clear()"), GuideCell.words("Clears the screen."))
+                .row(GuideCell.code("Screen.Cursor(column, row)"), GuideCell.words("Moves the cursor."))
+                .row(GuideCell.code("Screen.Colours(text, background)"), GuideCell.words("The colours of what is"
+                        + " written next: one of the 16 named colours, or #RRGGBB."))
+                .row(GuideCell.code("Screen.Columns, Screen.Rows"), GuideCell.words("The size of the screen: 80"
+                        + " columns by 25 rows."))
+                .table("Input members", "Member", "What it does")
+                .row(GuideCell.code("Input.Focus(process)"), GuideCell.words("Hands what is typed to that"
+                        + " program, a line at a time. Hand it back with Processes.Current."))
+                .row(GuideCell.code("InputEvent.Kind"), GuideCell.words("key, char, move or click."))
+                .row(GuideCell.code("InputEvent.Key, InputEvent.Char"), GuideCell.words("The key pressed, and the"
+                        + " letter typed."))
+                .row(GuideCell.code("InputEvent.X, InputEvent.Y, InputEvent.Button"), GuideCell.words("Where the"
+                        + " mouse is, in columns and rows, and the button clicked."))
+                .paragraph("The text screen is shown when the system's shell is its own and it starts no desktop."
+                        + " A system with no text driver has no screen, so what it writes goes nowhere.")
+                .ifSomethingGoesWrong(
+                        "The program stops and says Boot.Line answers only to the system itself.",
+                        "Call Boot, Panic and Desktop.Start from the system's own class, not from a service.")
+                .seeAlso("jsc:system_os_library", "jsc:system_processes_library")
+                .register();
+        guide.page("system_processes_library", section).titled("Processes, memory, disks, services and drivers")
+                .paragraph("With these you read the machine your system runs on, and run its programs. Any program can"
+                        + " read the machine with them, and only a player's system has services of its own.")
+                .table("Processes members", "Member", "What it does")
+                .row(GuideCell.code("Processes.Start(path), Processes.Start(path, args)"), GuideCell.words("Starts"
+                        + " a program from the disk, and gives its process."))
+                .row(GuideCell.code("Processes.Stop(pid, signal)"), GuideCell.words("Stops the process with that"
+                        + " number."))
+                .row(GuideCell.code("Processes.List()"), GuideCell.words("Every process the machine runs."))
+                .row(GuideCell.code("Processes.SetPriority(pid, level)"), GuideCell.words("high, normal, low or"
+                        + " idle."))
+                .row(GuideCell.code("Processes.Yield()"), GuideCell.words("Gives the rest of the turn to the next"
+                        + " program."))
+                .row(GuideCell.code("Processes.Current"), GuideCell.words("The process that asks."))
+                .table("Disk and Memory members", "Member", "What it gives")
+                .row(GuideCell.code("Disk.FreeMb, Disk.SizeMb"), GuideCell.words("The room left on the system's disk"
+                        + " and its size, in megabytes (MB)."))
+                .row(GuideCell.code("Disk.Mounted()"), GuideCell.words("The other disks and media the machine"
+                        + " reads."))
+                .row(GuideCell.code("Memory.TotalMb, Memory.FreeMb"), GuideCell.words("The machine's memory and"
+                        + " what is free of it, in megabytes (MB)."))
+                .row(GuideCell.code("Memory.HeldBy(pid)"), GuideCell.words("What one process holds, in megabytes"
+                        + " (MB)."))
+                .row(GuideCell.code("Memory.Ledger()"), GuideCell.words("A line for each thing that holds memory."))
+                .row(GuideCell.code("Memory.Refuse, Memory.GoDown"), GuideCell.words("What OnOutOfMemory gives to"
+                        + " refuse, and to go down."))
+                .table("Services and Drivers members", "Member", "What it does")
+                .row(GuideCell.code("Services.Register(name, path)"), GuideCell.words("Names a program on the disk as"
+                        + " a service, which starts when the system comes up."))
+                .row(GuideCell.code("Services.Start(name), Services.Stop(name)"), GuideCell.words("Starts or stops"
+                        + " a service. Each gives true when it did."))
+                .row(GuideCell.code("Services.Status(name)"), GuideCell.words("running, stopped or unknown."))
+                .row(GuideCell.code("Drivers.Devices()"), GuideCell.words("The devices the system drives."))
+                .row(GuideCell.code("Drivers.Has(class)"), GuideCell.words("Whether the machine has a device of"
+                        + " that class that the system drives."))
+                .row(GuideCell.code("Device.Name, Device.Class"), GuideCell.words("A device's name, and its class."))
+                .paragraph("Sigma reaches the members that take and give plain values through Standard, and leaves"
+                        + " what gives a list or a process to Sigma#.")
+                .ifSomethingGoesWrong(
+                        "Services.Start gives false.",
+                        "No program of that name is on the disk. Build the service into the system's folder.")
+                .seeAlso("jsc:system_os_library")
+                .register();
+        guide.page("system_desktop_library", section).titled("IDesktop and Desktop: a desktop of your own")
+                .paragraph("A desktop of your own is a class that implements IDesktop. It declares its look, and"
+                        + " brings its own programs in Sigma#. The mod moves its windows and keeps the focus, so it"
+                        + " is as smooth as the mod's desktops.")
+                .table("What a desktop declares", "Property", "What it says")
+                .row(GuideCell.code("Name, Version, Author"), GuideCell.words("The desktop's package name, its"
+                        + " version and who wrote it."))
+                .row(GuideCell.code("Menu, PanelAt"), GuideCell.words("The word on the panel that opens the menu,"
+                        + " and where the panel runs: top or bottom."))
+                .row(GuideCell.code("Frames"), GuideCell.words("The style of the window frames: flat, bevel, luna,"
+                        + " aero, metro, kde2, gnome1, oxygen, clearlooks, motif or platinum."))
+                .row(GuideCell.code("DesktopColour, PanelColour, TextColour, AccentColour, WindowColour,"
+                        + " TitleColour"), GuideCell.words("Its colours, each written #RRGGBB."))
+                .row(GuideCell.code("Icons, Wallpaper"), GuideCell.words("The folder of its programs' pictures, and"
+                        + " the picture it hangs."))
+                .row(GuideCell.code("Programs"), GuideCell.words("Its programs, named in one text with commas."))
+                .table("Desktop members", "Member", "What it does")
+                .row(GuideCell.code("Desktop.Start(package)"), GuideCell.words("Starts a desktop: one of the mod's,"
+                        + " or one a player built."))
+                .row(GuideCell.code("Desktop.Stop()"), GuideCell.words("Goes back to the system's text screen or"
+                        + " prompt."))
+                .row(GuideCell.code("Desktop.Current"), GuideCell.words("The desktop that is up, or nothing."))
+                .paragraph("sigma build --desktop makes the desktop's package. A system that starts it brings it,"
+                        + " and the package managers of the mod's systems install it from the Mirror.")
+                .ifSomethingGoesWrong(
+                        "Desktop.Start stops the system and says there is no desktop of that name.",
+                        "Build the desktop with sigma build --desktop, and start it by its package name.",
+                        "Desktop.Start says the system drives no graphics screen.",
+                        "Add graphics to the kernel's drivers.")
+                .seeAlso("jsc:system_os_library")
                 .register();
     }
 }

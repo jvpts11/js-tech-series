@@ -14,6 +14,7 @@ import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
+import dev.jstech.computers.machine.PlayerSystemBoot;
 import dev.jstech.computers.machine.ServerTickDeadline;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -143,7 +144,8 @@ final class ProgramHost {
         final long deadline = level instanceof ServerLevel server
                 ? ServerTickDeadline.shared().claim(server, this.block.getBlockPos())
                 : Long.MAX_VALUE;
-        this.programs.tick(credits(), deadline, this.stockLookup, this.parentWaiting);
+        this.programs.tick(credits(), deadline, this.stockLookup, this.parentWaiting,
+                PlayerSystemBoot.policy(this.machine));
         if (level != null && level.getGameTime() % UPTIME_CHECK_TICKS == 0
                 && this.programs.anyUpFor(level.getGameTime(), FIVE_NINES_TICKS)) {
             JscEvents.awardOperator(this.block, JscEvents.SIGMA_UPTIME);

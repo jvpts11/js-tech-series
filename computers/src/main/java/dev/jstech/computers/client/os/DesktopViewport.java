@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.player.PlayerDesktop;
 
 /**
  * Where a desktop sits on the game's screen and how big it draws: the monitor's glass, centred in the game's window,
@@ -115,10 +116,15 @@ final class DesktopViewport {
     }
 
     /**
-     * Whether the panel sits at the top. Only the modern GNOME shell does that: the GNOME of the Legacy era put its
-     * panel at the bottom, and its top bar did not exist for another decade.
+     * Whether the panel sits at the top. Of the mod's desktops only the modern GNOME shell does that: the GNOME of the
+     * Legacy era put its panel at the bottom, and its top bar did not exist for another decade.
      */
     boolean panelOnTop() {
+        // A player's desktop puts its one panel where it said, along the top or the foot.
+        final PlayerDesktop player = desktop.player();
+        if (player != null) {
+            return "top".equals(player.facts().panelAt());
+        }
         return desktop.panelStyle() == PanelStyle.GNOME && !desktop.periodPanel();
     }
 

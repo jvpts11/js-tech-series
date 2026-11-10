@@ -87,7 +87,7 @@
     }
   ],
   "id": "jsc:load_balancing",
-  "order": 57,
+  "order": 59,
   "section": "jsc:clusters",
   "title": "jsc.guide.load_balancing.title"
 }

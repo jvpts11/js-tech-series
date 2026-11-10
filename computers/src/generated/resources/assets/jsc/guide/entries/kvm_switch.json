@@ -104,7 +104,7 @@
   ],
   "icon": "jsc:kvm_switch",
   "id": "jsc:kvm_switch",
-  "order": 65,
+  "order": 67,
   "section": "jsc:peripherals",
   "title": "jsc.guide.kvm_switch.title"
 }

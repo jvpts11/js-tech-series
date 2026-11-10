@@ -143,7 +143,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:cde_front_panel",
-  "order": 231,
+  "order": 233,
   "section": "jsc:cde_desktop",
   "title": "jsc.guide.cde_front_panel.title"
 }

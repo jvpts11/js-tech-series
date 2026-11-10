@@ -33,8 +33,11 @@ import dev.jstech.computers.monitor.SessionOpenings;
 import dev.jstech.computers.operation.payload.OpenComputerUiPayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.operation.payload.OpenKvmPayload;
+import dev.jstech.computers.machine.PlayerSystemBoot;
+import dev.jstech.computers.operation.payload.desktop.PlayerScreenPayloads;
 import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.player.PlayerBoot;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.Platform;
@@ -438,6 +441,10 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
      */
     public static void openSystemBoot(final ServerPlayer player, final Level level, final BlockPos monitorPos,
                                       final BlockPos owner, final IOsHost computer) {
+        // A player's system comes up on a page of its own, which the monitor is handed as it stands now.
+        PacketDistributor.sendToPlayer(player, PlayerSystemBoot.isPlayers(computer) && computer.installedOs() != null
+                ? PlayerSystemBoot.pictureOf(owner, computer.installedOs(), computer.systemRun())
+                : PlayerBoot.none(owner));
         PacketDistributor.sendToPlayer(player, SessionOpenings.systemBoot(monitorPos, owner, computer));
         openSession(player, level, monitorPos, owner, computer, MonitorSessionMenu.Phase.SYSTEM_BOOT);
     }
@@ -591,6 +598,13 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
                     openTerminal(player, level, monitorPos, owner);
                 } else {
                     openCommandPrompt(player, level, monitorPos, owner);
+                }
+            }
+            // A player's system with a shell of its own: its own screen, as it stands now.
+            case SYSTEM_SCREEN -> {
+                if (ownerBe instanceof IOsHost machine && machine.systemRun() != null) {
+                    PacketDistributor.sendToPlayer(player, PlayerScreenPayloads.screenOf(owner, machine.systemRun()));
+                    openSession(player, level, monitorPos, owner, machine, MonitorSessionMenu.Phase.PLAYER_SCREEN);
                 }
             }
         }

@@ -130,7 +130,7 @@
     "jsc:sound_card_tone_blaster_audigy",
     "jsc:sound_card_tone_blaster_hi_fi"
   ],
-  "order": 25,
+  "order": 27,
   "section": "jsc:hardware",
   "title": "jsc.guide.sound_cards.title"
 }

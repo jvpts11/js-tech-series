@@ -295,7 +295,7 @@
     "jsc:quince_board_mainframe_s",
     "jsc:quince_board_mainframe_a"
   ],
-  "order": 16,
+  "order": 18,
   "section": "jsc:hardware",
   "title": "jsc.guide.motherboards.title"
 }

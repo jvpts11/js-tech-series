@@ -12,6 +12,7 @@ import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.config.ComputersServerConfig;
+import dev.jstech.computers.machine.PlayerSystemBoot;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
@@ -83,6 +84,7 @@ public final class BootRunner {
         halted(machine, phases, level, pos);
         menu(machine, phases, level);
         boot(machine, phases, level, pos);
+        PlayerSystemBoot.tick(machine, level, pos);
     }
 
     /**
@@ -122,6 +124,10 @@ public final class BootRunner {
      */
     @Nullable
     public static ResourceLocation desktopAtBoot(final IOsHost machine) {
+        // A player's system chooses its desktop as it comes up, with Desktop.Start, and none is known before.
+        if (PlayerSystemBoot.isPlayers(machine)) {
+            return machine.systemRun().desktop();
+        }
         final OsDef system = machine.installedOs();
         final boolean xenodmOff = system != null && system.platform() == Platform.OPENBSD
                 && (machine.console() == null || !machine.console().settings().xenodmEnabled());
@@ -345,9 +351,15 @@ public final class BootRunner {
             return;
         }
         final long now = level.getGameTime();
+        // A player's system comes up until it says it is up (computers/docs/design/player-systems.md).
+        final boolean players = PlayerSystemBoot.isPlayers(machine);
         if (phases.bootUntimed()) {
+            if (players) {
+                PlayerSystemBoot.start(machine);
+            }
             // Disks a sudden shutdown left unclean are checked first, as long as their file system takes.
-            phases.timeBoot(now, bootLength(machine), DiskChecks.atBoot(machine));
+            phases.timeBoot(now, players ? PlayerSystemBoot.BOOT_TICKS : bootLength(machine),
+                    DiskChecks.atBoot(machine));
             /*
              * Whoever watched the self-test end is still looking at it, so they are shown the system coming up the
              * moment the machine knows how long that takes.
@@ -359,7 +371,7 @@ public final class BootRunner {
             }
             return;
         }
-        if (!phases.bootDone(now)) {
+        if (players ? !PlayerSystemBoot.done(machine) : !phases.bootDone(now)) {
             return;
         }
         phases.endBoot();
@@ -370,6 +382,8 @@ public final class BootRunner {
         machine.systemCameUp();
         // OpenBSD's rc starts only the services rcctl switched on.
         OpenBsdServices.cameUp(machine);
+        // A player's system starts what it registered, and the desktop it chose.
+        PlayerSystemBoot.cameUp(machine);
         machine.systemSound(level, SystemSound.STARTUP);
         final boolean balloon = greet(machine);
         if (machine.onScreen()) {

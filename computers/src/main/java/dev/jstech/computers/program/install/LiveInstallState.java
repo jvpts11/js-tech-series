@@ -34,6 +34,7 @@ import java.util.Locale;
 public final class LiveInstallState {
 
     private final Distro distro;
+    private final boolean overNetwork;
     private final LiveFiles files;
     private final LiveDisks disks;
     private final LiveProgress progress = new LiveProgress();
@@ -92,7 +93,16 @@ public final class LiveInstallState {
             "Rebooting into the new system ...");
 
     public LiveInstallState(final Distro distro) {
+        this(distro, false);
+    }
+
+    /**
+     * A live session of that distribution, started from its medium or, with {@code overNetwork}, brought over the
+     * network from the Mirror: then no drive holds it, and taking a disc out ends nothing.
+     */
+    public LiveInstallState(final Distro distro, final boolean overNetwork) {
         this.distro = distro;
+        this.overNetwork = overNetwork;
         this.files = new LiveFiles(distro == Distro.GENTOO ? "/mnt/gentoo" : "/mnt", LiveGuide.of(distro));
         this.disks = new LiveDisks(this.files.root());
         this.gentoo = new GentooSteps(this.files, this.disks, this.progress);
@@ -174,6 +184,11 @@ public final class LiveInstallState {
 
     public Distro distro() {
         return this.distro;
+    }
+
+    /** Whether this session came over the network rather than from a medium in a drive. */
+    public boolean overNetwork() {
+        return this.overNetwork;
     }
 
     public boolean inChroot() {
@@ -316,6 +331,9 @@ public final class LiveInstallState {
     public String serialize() {
         final LiveSaved out = new LiveSaved();
         out.put("distro", this.distro.serializedName());
+        if (this.overNetwork) {
+            out.put("network", "yes");
+        }
         this.files.save(out);
         this.disks.save(out);
         this.progress.save(out);
@@ -328,7 +346,7 @@ public final class LiveInstallState {
         if (distro == null) {
             return null;
         }
-        final LiveInstallState state = new LiveInstallState(distro);
+        final LiveInstallState state = new LiveInstallState(distro, "yes".equals(saved.value("network", "")));
         state.files.load(saved);
         state.disks.load(saved);
         state.progress.load(saved);

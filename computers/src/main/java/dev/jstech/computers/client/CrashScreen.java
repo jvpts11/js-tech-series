@@ -10,6 +10,7 @@ package dev.jstech.computers.client;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.monitor.MonitorPainter;
 import dev.jstech.computers.client.os.OffscreenDesktop;
+import dev.jstech.computers.client.os.PlayerPages;
 import dev.jstech.computers.client.os.QuincePages;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.layout.CrashLayout;
@@ -251,6 +252,15 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
             return;
         }
         MonitorFrame.renderBody(g, x, y, W, H, era, font, screenPos());
+        // A player's system comes down on its own page, in its own colours.
+        if (this.page.player() != null) {
+            g.pose().pushPose();
+            g.pose().translate(x, y, 0.0F);
+            PlayerPages.panic(g, font, this.host, this.page.player(), Math.max(0, this.totalTicks - this.ticks),
+                    this.endsDark);
+            g.pose().popPose();
+            return;
+        }
         final Colours c = PALETTE.get();
         g.fill(x, y, x + W, y + H, ground(c));
         g.pose().pushPose();
@@ -261,8 +271,8 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
             case FRAMES_10, FRAMES_11 -> framesModern(g, c);
             case CONSOLE -> console(g, c);
             case DDB -> debugger(g, c);
-            case QUINCE_BOMB, QUINCE_RESTART, QUINCE_OS_9_BOMB -> {
-                // Drawn by quince() above, over the desktop the system went down on.
+            case QUINCE_BOMB, QUINCE_RESTART, QUINCE_OS_9_BOMB, PLAYER -> {
+                // Drawn above: Quince's over the desktop the system went down on, a player's on its own page.
             }
         }
         g.pose().popPose();
@@ -300,7 +310,7 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
             case FRAMES_XP, FRAMES_7 -> red ? c.redNt() : c.blueNt();
             case FRAMES_10 -> red ? c.redModern() : c.blue10();
             case FRAMES_11 -> red ? c.redModern() : c.blue11();
-            case CONSOLE, DDB -> c.consoleGround();
+            case CONSOLE, DDB, PLAYER -> c.consoleGround();
             case QUINCE_BOMB, QUINCE_RESTART, QUINCE_OS_9_BOMB -> QuincePages.ground(this.page.style());
         };
     }

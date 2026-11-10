@@ -1,0 +1,63 @@
+using System.*;
+using System.IO.*;
+using System.Machine.*;
+using System.OS.*;
+namespace Corpus;
+class SystemsCorpus {
+    static void Main() {
+        Era era = Era.Legacy;
+        Console.PrintLine(era.Name + Era.Vintage.Name + Era.Transition.Name + Era.Standard.Name + Era.Advanced.Name);
+        Isa isa = Isa.IA32;
+        Console.PrintLine(isa.Name + Isa.IA16.Name + Isa.X86_64.Name + Isa.M68K.Name + Isa.PowerPC.Name
+                + Isa.ARM64.Name);
+        Kernel linux = Kernel.Of("linux");
+        Kernel own = Kernel.Own().Scheduler("cooperative").Scheduler("preemptive", 64).FileSystem("posix")
+                .Drivers("text, graphics, sound").MemoryRule("end").Shell("own");
+        Console.PrintLine(linux.Name + own.Name);
+        Screen.Clear();
+        Screen.Cursor(0, 0);
+        Screen.Colours("white", "#241733");
+        Screen.Write("Lantern ");
+        Screen.WriteLine("is up: " + Screen.Columns + " by " + Screen.Rows);
+        Process notes = Processes.Start("lantern/notes.asm");
+        Process files = Processes.Start("lantern/files.asm", new List<string>());
+        Input.Focus(Processes.Current);
+        Processes.SetPriority(2, "high");
+        Processes.Stop(3, "term");
+        Processes.Yield();
+        foreach (ProcessInfo running in Processes.List()) {
+            Console.PrintLine(running.Name);
+        }
+        Console.PrintLine("" + Disk.FreeMb + " of " + Disk.SizeMb);
+        foreach (string mounted in Disk.Mounted()) {
+            Console.PrintLine(mounted);
+        }
+        Console.PrintLine("" + Memory.TotalMb + Memory.FreeMb + Memory.HeldBy(1) + Memory.Refuse + Memory.GoDown);
+        foreach (string held in Memory.Ledger()) {
+            Console.PrintLine(held);
+        }
+        Services.Register("watchman", "lantern/watchman.asm");
+        bool up = Services.Start("watchman");
+        bool down = Services.Stop("watchman");
+        Console.PrintLine(Services.Status("watchman") + up + down);
+        foreach (Device device in Drivers.Devices()) {
+            Console.PrintLine(device.Name + device.Class);
+        }
+        Console.PrintLine("" + Drivers.Has("sound"));
+        Boot.Logo("/lantern/logo.pix");
+        Boot.Line("Lighting the lantern...");
+        Boot.Progress(60);
+        Boot.Done();
+        Panic.Colours("#241733", "#FFD27A");
+        Panic.RebootAfter(20);
+        Panic.Page("own");
+        Desktop.Start("lantern-desktop");
+        Console.PrintLine(Desktop.Current);
+        Desktop.Stop();
+        Panic.Halt("The lantern went out.");
+    }
+
+    static void Heard(InputEvent e) {
+        Console.PrintLine(e.Kind + e.Key + e.Char + e.X + e.Y + e.Button);
+    }
+}

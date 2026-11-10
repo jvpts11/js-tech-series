@@ -145,7 +145,7 @@
     }
   ],
   "id": "jsc:shell_prompt",
-  "order": 211,
+  "order": 213,
   "section": "jsc:shell_basics",
   "title": "jsc.guide.shell_prompt.title"
 }

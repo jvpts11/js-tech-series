@@ -101,7 +101,7 @@
     "jsc:preinstaller_disk_dock",
     "jsc:preinstaller_board_fixture"
   ],
-  "order": 37,
+  "order": 39,
   "section": "jsc:chain_machines",
   "title": "jsc.guide.computer_making_machines.title"
 }

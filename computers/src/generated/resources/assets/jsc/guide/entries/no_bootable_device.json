@@ -132,7 +132,7 @@
   ],
   "icon": "jsc:floppy_disk",
   "id": "jsc:no_bootable_device",
-  "order": 7,
+  "order": 9,
   "section": "jsc:starting_a_computer",
   "title": "jsc.guide.no_bootable_device.title"
 }

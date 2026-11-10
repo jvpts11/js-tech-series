@@ -11,9 +11,13 @@ import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.BY_H
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.EMPTY_DRIVE;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.ERA_OR_NEWER;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.FOR_PROCESSORS;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.HTTP_BOOT;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.INSTALLER;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.LIVE;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.MIRROR_ON;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NEEDS_ERA;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NETWORK;
+import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NETWORK_PXE;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NOT_ITS_PROCESSOR;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_DISK;
 import static dev.jstech.computers.operation.payload.firmware.FirmwareTexts.NO_MEDIUM;
@@ -60,6 +64,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.QuinceStart;
 import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.install.InstallerFlow;
@@ -262,7 +267,25 @@ public final class FirmwarePayloads {
         return new FirmwareStatePayload(pos, EraCodecs.placeOf(era), machineOf(level, computer, pos),
                 computer.bootDiskSlot(),
                 computer.defaultInstallSlot(), entries, raidInfoOf(level, computer), psuOf(computer),
-                thermalOf(computer));
+                thermalOf(computer), networkEntry(level, computer, era));
+    }
+
+    /*
+     * The network boot's entry, always there from the Legacy on (the Vintage's firmware cannot boot from the network,
+     * and a Quince machine starts its own way): it names the Mirror when one answers, and says so when it is chosen
+     * with none.
+     */
+    @Nullable
+    private static FirmwareStatePayload.Entry networkEntry(final ServerLevel level, final IOsHost computer,
+                                                            final Era era) {
+        final FirmwareKind kind = FirmwareKind.forEra(era);
+        if (kind == FirmwareKind.CLI_BIOS || computer.quinceStart() != QuinceStart.NONE) {
+            return null;
+        }
+        final String mirror = Installers.mirrorHost(computer, level);
+        return new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_NETWORK, 0, "",
+                (kind == FirmwareKind.UEFI ? HTTP_BOOT : NETWORK_PXE).text(),
+                mirror.isEmpty() ? NETWORK.text() : MIRROR_ON.with(mirror), "", Text.EMPTY, true, -1);
     }
 
     /* The processor's temperature and the case fans the firmware reads, and the last trip; null for none. */
@@ -606,44 +629,11 @@ public final class FirmwarePayloads {
                 failure = UNKNOWN_SYSTEM.text();
                 continue;
             }
-            if (!OsGating.canInstall(def.minEra(), hostEra)) {
-                failure = NEEDS_ERA.with(def.displayName(), def.minEra().text(), hostEra.text());
+            final Text refused = refusal(computer, def, hostEra);
+            if (refused != null) {
+                failure = refused;
                 continue;
             }
-            final ComputerBuild build = computer.currentBuild();
-            if (!computer.runsSystem(def) && build != null) {
-                failure = NOT_ITS_PROCESSOR.with(def.displayName(), processorsOf(def), build.isa().name());
-                continue;
-            }
-            /*
-             * A live/source medium (Arch, Gentoo) never one-click installs: it must be BOOTED and the
-             * system put on the disk by hand through its shell. Only guided installers land here.
-             */
-            if (def.installMode() != InstallMode.GUIDED) {
-                failure = BY_HAND.with(def.displayName());
-                continue;
-            }
-            final Text noRoom = computer.defaultInstallSlot() < 0
-                    ? NO_DISK.with(def.displayName())
-                    : NO_ROOM.with(def.displayName(), def.footprintMb());
-            /*
-             * A machine that holds a copy of its own takes as long over it as the system is big and the medium
-             * is slow, and goes on with it whether or not anybody is watching. A host with nowhere to keep the
-             * work writes the system there and then, the way every machine used to.
-             */
-            if (!computer.keepsInstalls()) {
-                if (computer.installOs(def.id(), targetSlot)) {
-                    computer.setPendingInstallSlot(targetSlot);
-                    return null;
-                }
-                return noRoom;
-            }
-            final IOsHost machine = computer;
-            /*
-             * Room is no longer asked once and for all here: the installer offers the disks and the player
-             * chooses one, and a disk that is full can be erased on the way. What still stops it before it
-             * starts is a machine with no disk at all, which has nothing to offer.
-             */
             /*
              * How fast this machine copies, from the parts it is made of rather than from its generation: the
              * medium it reads and the processor that unpacks it here, and the disk it writes to added by the
@@ -651,19 +641,72 @@ public final class FirmwarePayloads {
              * every other machine of that age, so nothing a player put in it ever showed.
              */
             final double baseRate = SetupTiming.installRate(reader.format(), 1,
-                    machine.cpuCores(), machine.maxCpuMhz());
-            final InstallerFlow flow =
-                    Installers.beginning(machine, level, def, baseRate);
-            if (flow.disks().isEmpty()) {
-                return noRoom;
-            }
-            flow.select(targetSlot);
-            machine.setInstaller(flow);
-            machine.setInstalling(new OsInstallJob(def.id().toString(),
-                    flow.targetSlot(), volume.readerPos(), volume.bay(), flow.ticksTotal(), flow.ticksTotal()));
-            return null;
+                    computer.cpuCores(), computer.maxCpuMhz());
+            return copy(level, computer, def, baseRate, volume.readerPos(), volume.bay(), targetSlot);
         }
         return failure != null ? failure : NO_MEDIUM.text();
+    }
+
+    /**
+     * Why this machine cannot be given {@code def} by its installer, or null when it can: a system newer than the
+     * machine, one built for another processor, or one that is put on the disk by hand.
+     */
+    @Nullable
+    public static Text refusal(final IOsHost computer, final OsDef def, final Era hostEra) {
+        if (!OsGating.canInstall(def.minEra(), hostEra)) {
+            return NEEDS_ERA.with(def.displayName(), def.minEra().text(), hostEra.text());
+        }
+        final ComputerBuild build = computer.currentBuild();
+        if (!computer.runsSystem(def) && build != null) {
+            return NOT_ITS_PROCESSOR.with(def.displayName(), processorsOf(def), build.isa().name());
+        }
+        /*
+         * A live/source medium (Arch, Gentoo) never one-click installs: it must be BOOTED and the
+         * system put on the disk by hand through its shell. Only guided installers land here.
+         */
+        if (def.installMode() != InstallMode.GUIDED) {
+            return BY_HAND.with(def.displayName());
+        }
+        return null;
+    }
+
+    /**
+     * Starts copying {@code def}, read at {@code baseRate} megabytes a second from the volume {@code readerPos} and
+     * {@code bay} name, or from no drive at all with {@link OsInstallJob#NO_READER} when the network brings it. Answers
+     * why it did not start, or null once the machine is copying.
+     */
+    @Nullable
+    public static Text copy(final ServerLevel level, final IOsHost computer, final OsDef def, final double baseRate,
+                            final long readerPos, final int bay, final int targetSlot) {
+        final Text noRoom = computer.defaultInstallSlot() < 0
+                ? NO_DISK.with(def.displayName())
+                : NO_ROOM.with(def.displayName(), def.footprintMb());
+        /*
+         * A machine that holds a copy of its own takes as long over it as the system is big and the medium
+         * is slow, and goes on with it whether or not anybody is watching. A host with nowhere to keep the
+         * work writes the system there and then, the way every machine used to.
+         */
+        if (!computer.keepsInstalls()) {
+            if (computer.installOs(def.id(), targetSlot)) {
+                computer.setPendingInstallSlot(targetSlot);
+                return null;
+            }
+            return noRoom;
+        }
+        /*
+         * Room is no longer asked once and for all here: the installer offers the disks and the player
+         * chooses one, and a disk that is full can be erased on the way. What still stops it before it
+         * starts is a machine with no disk at all, which has nothing to offer.
+         */
+        final InstallerFlow flow = Installers.beginning(computer, level, def, baseRate);
+        if (flow.disks().isEmpty()) {
+            return noRoom;
+        }
+        flow.select(targetSlot);
+        computer.setInstaller(flow);
+        computer.setInstalling(new OsInstallJob(def.id().toString(),
+                flow.targetSlot(), readerPos, bay, flow.ticksTotal(), flow.ticksTotal()));
+        return null;
     }
 
     private static void handleRequestFirmware(final RequestFirmwarePayload payload, final ServerPlayer player,

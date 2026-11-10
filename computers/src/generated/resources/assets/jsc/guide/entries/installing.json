@@ -129,7 +129,7 @@
     "jsc:bd_re",
     "jsc:usb_flash_drive"
   ],
-  "order": 10,
+  "order": 12,
   "section": "jsc:systems_and_eras",
   "title": "jsc.guide.installing.title"
 }

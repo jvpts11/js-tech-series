@@ -1005,4 +1005,53 @@ class ProcessTest {
                 String.valueOf(process.message()));
         assertFalse(process.console().contains("never"));
     }
+
+    @Test
+    void answer_givesBackWhatTheMethodReturned() {
+        final ProgramImage program = load("", "");
+        final Process process = new Process(program, ROOM, IHost.still());
+        final Values.Obj self = process.create(program.entryPoint());
+
+        final Process.Answer answer = process.answer(self, "Twice", List.of(21), PLENTY);
+
+        assertTrue(answer.given());
+        assertEquals(42, ((Number) answer.value()).intValue());
+        assertTrue(answer.used() > 0);
+        assertEquals(1, process.threads(), "the question ran on no thread of the program's own");
+    }
+
+    @Test
+    void answer_givesNothingForAMethodThatIsNotThere() {
+        final ProgramImage program = load("", "");
+        final Process process = new Process(program, ROOM, IHost.still());
+        final Values.Obj self = process.create(program.entryPoint());
+
+        assertFalse(process.answer(self, "Thrice", List.of(1), PLENTY).given());
+        assertFalse(process.answers(self, "Twice", 2), "Twice takes one argument, not two");
+        assertTrue(process.answers(self, "Twice", 1));
+    }
+
+    @Test
+    void answer_givesNothingWhenTheMethodDoesNotReturnInTime() {
+        final ProgramImage program = loadSource("class Monitor : IScript {\n"
+                + "    int Spin(int n) { while (true) { n = n + 1; } return n; }\n"
+                + "    public void OnInit() { }\n    public void OnTick() { }\n    public void OnDestroy() { }\n}\n");
+        final Process process = new Process(program, ROOM, IHost.still());
+        final Values.Obj self = process.create(program.entryPoint());
+
+        final Process.Answer answer = process.answer(self, "Spin", List.of(0), 200);
+
+        assertFalse(answer.given());
+        assertTrue(answer.used() >= 200);
+        assertFalse(process.state() == Process.State.HALTED, () -> String.valueOf(process.message()));
+        assertEquals(1, process.threads(), "the question left behind is ended, not kept as a thread");
+    }
+
+    @Test
+    void takeGaveUpTurn_isTrueOnceAfterAYield() {
+        final Process process = run("        Thread.Yield();");
+
+        assertTrue(process.takeGaveUpTurn());
+        assertFalse(process.takeGaveUpTurn(), "asking forgets it");
+    }
 }

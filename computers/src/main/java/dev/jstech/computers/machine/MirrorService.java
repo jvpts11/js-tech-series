@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliPackages;
+import dev.jstech.computers.sigma.pack.Manifest;
 import dev.jstech.computers.sigma.pack.Packed;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
@@ -168,7 +169,8 @@ public final class MirrorService {
         final List<ICliComputer.PackageInfo> out = new ArrayList<>();
         for (final var shelved : mirror.shelvedPackages().entrySet()) {
             final Packed packed = Packed.read(shelved.getValue());
-            if (packed == null) {
+            // A system is not a program: the firmware boots its installer from the Mirror, not a package manager.
+            if (packed == null || Manifest.SYSTEM.equals(packed.manifest().kind())) {
                 continue;
             }
             final String about = packed.manifest().about();

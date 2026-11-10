@@ -428,7 +428,7 @@
     "jsc:storage_m2",
     "jsc:socket_quince_q"
   ],
-  "order": 28,
+  "order": 30,
   "section": "jsc:chain",
   "title": "jsc.guide.chain_parts.title"
 }

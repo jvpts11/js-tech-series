@@ -214,7 +214,7 @@
     "jsc:standard_mobile_device_charging_dock",
     "jsc:advanced_mobile_device_charging_dock"
   ],
-  "order": 87,
+  "order": 89,
   "section": "jsc:network_basics",
   "title": "jsc.guide.portables.title"
 }

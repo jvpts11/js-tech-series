@@ -110,7 +110,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:arch_fstab",
-  "order": 272,
+  "order": 274,
   "section": "jsc:arch_base",
   "title": "jsc.guide.arch_fstab.title"
 }

@@ -404,6 +404,59 @@ final class StartingPages {
                         "Turn off boot.show_boot_menu in the jscomputers-server config file.")
                 .seeAlso("jsc:two_systems", "jsc:help_on_a_computer", "jsc:firmware")
                 .register();
+        guide.page("network_boot", section).titled("Starting through the network")
+                .icon(ComputingModule.MAINFRAME)
+                .paragraph("From the Legacy era on, the firmware can start the installer of a system through the"
+                        + " network, from the Mirror of the network's Mainframe ([](jsc:mirror)). You need no medium"
+                        + " in a drive: the installer comes over the cable, and the install runs as it does from a"
+                        + " medium.")
+                .table("Network boot in each era", "Era", "Where you find it", "What it opens")
+                .row(GuideCell.words("Vintage"), GuideCell.words("Nowhere"), GuideCell.words("A Vintage board has"
+                        + " no network boot."))
+                .row(GuideCell.words("Legacy and Transition"), GuideCell.words("Network (PXE), on the Boot page of"
+                        + " the Setup"), GuideCell.words("The network card's agent, then the Mirror's menu in the"
+                        + " BIOS's blue."))
+                .row(GuideCell.words("Standard and Advanced"), GuideCell.words("HTTP Boot, in the Boot Manager"),
+                        GuideCell.words("The Mirror's list on the firmware's own page, with INSTALL and BACK."))
+                .paragraph("The menu lists only the systems this machine runs, for its era and its processor, each"
+                        + " with its house. A system a player wrote shows its author and the word community. Boot from"
+                        + " the local disk is always the last entry.")
+                .define("PXE", "Preboot Execution Environment: the way a BIOS starts a program it gets from the"
+                        + " network.")
+                .define("Community", "What a system or a desktop a player wrote is marked with, beside its author.")
+                .ifSomethingGoesWrong("It says \"No Mirror answered on the network\".",
+                        "No Mainframe of this machine's network serves a Mirror. Connect the machine to the network,"
+                                + " and turn the Mirror on in the Mainframe ([](jsc:mirror)).",
+                        "A system is not in the list.",
+                        "It does not run on this machine. Check the system's era and processor against the"
+                                + " machine's.")
+                .seeAlso("jsc:boot_menu", "jsc:player_systems", "jsc:mirror")
+                .register();
+        guide.page("player_systems", section).titled("Systems that players write")
+                .icon(ComputingModule.FLOPPY_DISK)
+                .paragraph("A player can write an operating system of their own in Sigma#, and a desktop of their own"
+                        + " to go with it. The language and every call are in [The Book of Sigma]"
+                        + "(jsc:system_os_library). This page is about you installing and sharing one.")
+                .steps("Write the system in a folder, with the desktop and its services beside it.",
+                        "Type sigma build --os and the folder's name, with a blank medium in a drive: the installer"
+                                + " is written onto it.",
+                        "Type sigma build --desktop and the desktop's name to make its package.",
+                        "Type sgpack --publish and the folder's name to put both on the network's Mirror.")
+                .paragraph("A player's system installs as any other: from its medium through the firmware, or through"
+                        + " the network ([](jsc:network_boot)). The boot manager lists it by its name. Its desktop"
+                        + " comes with it the first time the system starts it, and the package managers of the mod's"
+                        + " systems install the desktop from the Mirror by its name.")
+                .paragraph("A system shows its own page while it comes up, and its own page when it goes down: the"
+                        + " message at the top, the error with its lines, the system, its author, the process and the"
+                        + " memory, and at the foot when it restarts.")
+                .ifSomethingGoesWrong("The machine goes down on the system's own page.",
+                        "Read the error and its line on the page, fix the system, build it again and install it"
+                                + " again. Restart the machine from its power button when the page says so.",
+                        "The build says no blank medium can be written.",
+                        "Put a blank floppy, CD or USB stick of the system's era in a drive. The system is kept"
+                                + " anyway, and sgpack --publish can still put it on the Mirror.")
+                .seeAlso("jsc:network_boot", "jsc:system_os_library", "jsc:the_systems")
+                .register();
         guide.page("no_bootable_device", section).titled("When nothing will boot")
                 .icon(ComputingModule.FLOPPY_DISK)
                 .paragraph("Sometimes the firmware finds nothing it can start. Then it says so on the screen and waits"

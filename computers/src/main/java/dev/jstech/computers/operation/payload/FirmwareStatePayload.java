@@ -34,6 +34,9 @@ import java.util.List;
  * disk, with or without a system; each linked drive holding a bootable medium), the preferred boot disk,
  * the hardware summary, and the power supply, whose wear the self-test warns of. Sent in reply to
  * {@link RequestFirmwareStatePayload} and after every {@link FirmwareActionPayload} that changes the state.
+ *
+ * <p>The network boot's entry comes apart from the others, in {@code network}: only the setup's boot page offers it,
+ * so the self-test never lists it among the drives nor starts it on its own.
  */
 public record FirmwareStatePayload(
         BlockPos hostPos,
@@ -44,7 +47,8 @@ public record FirmwareStatePayload(
         List<Entry> entries,
         RaidInfo raid,
         @Nullable Psu psu,
-        @Nullable Thermal thermal
+        @Nullable Thermal thermal,
+        @Nullable Entry network
 ) implements CustomPacketPayload {
 
     /**
@@ -79,7 +83,7 @@ public record FirmwareStatePayload(
             return this;
         }
         return new FirmwareStatePayload(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, psu,
-                new Thermal(0, thermal.fans(), thermal.fanSeats(), thermal.lastTrip()));
+                new Thermal(0, thermal.fans(), thermal.fanSeats(), thermal.lastTrip()), network);
     }
 
     /**
@@ -156,6 +160,8 @@ public record FirmwareStatePayload(
 
     public static final int KIND_DISK = 0;
     public static final int KIND_MEDIA = 1;
+    /** Booting from the network: the Mirror's systems, through the card's PXE agent or the UEFI's HTTP boot. */
+    public static final int KIND_NETWORK = 2;
     public static final int MAX_ENTRIES = 32;
 
     /** The most capacities a RAID summary carries, one per mode, so the encoder and the decoder agree on the cap. */
@@ -167,7 +173,8 @@ public record FirmwareStatePayload(
      * <p>A self-test prints these in columns, a boot menu names the device beside what is on it, and a setup
      * page lists them a third way, so they arrive apart and each screen puts them together as its own age did.
      *
-     * @param kind        {@link #KIND_DISK} (an installed disk) or {@link #KIND_MEDIA} (a drive's medium)
+     * @param kind        {@link #KIND_DISK} (an installed disk), {@link #KIND_MEDIA} (a drive's medium) or
+     *                    {@link #KIND_NETWORK} (the network)
      * @param ref         the disk slot index, or the media reader's packed block position, the computer's own for a
      *                    drive on its front
      * @param osId        the OS on it ({@code ""} when the disk has no system / the medium is not an installer)
@@ -206,14 +213,21 @@ public record FirmwareStatePayload(
     /** The state of a machine whose power supply is not read: the guide's pictures, a host with none. */
     public FirmwareStatePayload(final BlockPos hostPos, final int eraPlace, final Machine machine, final int bootSlot,
                                 final int installTargetSlot, final List<Entry> entries, final RaidInfo raid) {
-        this(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, null, null);
+        this(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, null, null, null);
     }
 
     /** The state of a machine whose temperature is not read: one with none of its own. */
     public FirmwareStatePayload(final BlockPos hostPos, final int eraPlace, final Machine machine, final int bootSlot,
                                 final int installTargetSlot, final List<Entry> entries, final RaidInfo raid,
                                 @Nullable final Psu psu) {
-        this(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, psu, null);
+        this(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, psu, null, null);
+    }
+
+    /** The state of a machine that cannot boot from the network: the Vintage's, or a Quince machine. */
+    public FirmwareStatePayload(final BlockPos hostPos, final int eraPlace, final Machine machine, final int bootSlot,
+                                final int installTargetSlot, final List<Entry> entries, final RaidInfo raid,
+                                @Nullable final Psu psu, @Nullable final Thermal thermal) {
+        this(hostPos, eraPlace, machine, bootSlot, installTargetSlot, entries, raid, psu, thermal, null);
     }
 
     /** The supply {@code stack} as the self-test reads it, or null for anything that is no supply. */
@@ -236,19 +250,11 @@ public record FirmwareStatePayload(
         buf.writeVarInt(p.installTargetSlot);
         buf.writeVarInt(Math.min(p.entries.size(), MAX_ENTRIES));
         for (int i = 0; i < p.entries.size() && i < MAX_ENTRIES; i++) {
-            final Entry e = p.entries.get(i);
-            buf.writeVarInt(e.kind());
-            buf.writeVarLong(e.ref());
-            buf.writeUtf(e.osId(), 64);
-            TextCodecs.STREAM_CODEC.encode(buf, e.label());
-            // A model's name is cut to the column it is drawn in; a drive's kind is put together at the other end.
-            TextCodecs.STREAM_CODEC.encode(buf, e.device() instanceof Text.Literal model && model.value().length() > 48
-                    ? Text.literal(TextBounds.clip(model.value(), 48)) : e.device());
-            buf.writeUtf(e.size(), 16);
-            TextCodecs.STREAM_CODEC.encode(buf, e.note());
-            buf.writeBoolean(e.bootable());
-            buf.writeVarInt(e.installMode());
-            buf.writeInt(e.bay());
+            writeEntry(buf, p.entries.get(i));
+        }
+        buf.writeBoolean(p.network != null);
+        if (p.network != null) {
+            writeEntry(buf, p.network);
         }
         final RaidInfo raid = p.raid == null ? RaidInfo.ABSENT : p.raid;
         buf.writeBoolean(raid.present());
@@ -291,10 +297,9 @@ public record FirmwareStatePayload(
         final int count = Math.min(buf.readVarInt(), MAX_ENTRIES);
         final List<Entry> entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
-            entries.add(new Entry(buf.readVarInt(), buf.readVarLong(), buf.readUtf(64),
-                    TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readUtf(16),
-                    TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readVarInt(), buf.readInt()));
+            entries.add(readEntry(buf));
         }
+        final Entry network = buf.readBoolean() ? readEntry(buf) : null;
         RaidInfo raid = RaidInfo.ABSENT;
         if (buf.readBoolean()) {
             final int mode = buf.readVarInt();
@@ -316,7 +321,28 @@ public record FirmwareStatePayload(
         }
         final Thermal thermal = buf.readBoolean()
                 ? new Thermal(buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt()) : null;
-        return new FirmwareStatePayload(pos, era, machine, bootSlot, target, entries, raid, psu, thermal);
+        return new FirmwareStatePayload(pos, era, machine, bootSlot, target, entries, raid, psu, thermal, network);
+    }
+
+    private static void writeEntry(final RegistryFriendlyByteBuf buf, final Entry e) {
+        buf.writeVarInt(e.kind());
+        buf.writeVarLong(e.ref());
+        buf.writeUtf(e.osId(), 64);
+        TextCodecs.STREAM_CODEC.encode(buf, e.label());
+        // A model's name is cut to the column it is drawn in; a drive's kind is put together at the other end.
+        TextCodecs.STREAM_CODEC.encode(buf, e.device() instanceof Text.Literal model && model.value().length() > 48
+                ? Text.literal(TextBounds.clip(model.value(), 48)) : e.device());
+        buf.writeUtf(e.size(), 16);
+        TextCodecs.STREAM_CODEC.encode(buf, e.note());
+        buf.writeBoolean(e.bootable());
+        buf.writeVarInt(e.installMode());
+        buf.writeInt(e.bay());
+    }
+
+    private static Entry readEntry(final RegistryFriendlyByteBuf buf) {
+        return new Entry(buf.readVarInt(), buf.readVarLong(), buf.readUtf(64),
+                TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readUtf(16),
+                TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readVarInt(), buf.readInt());
     }
 
     private static void writeMachine(final RegistryFriendlyByteBuf buf, final Machine m) {

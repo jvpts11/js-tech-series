@@ -19,7 +19,7 @@
     "jsc:programmers_desk",
     "jsc:repair_bench"
   ],
-  "order": 39,
+  "order": 41,
   "section": "jsc:found_in_the_world",
   "title": "jsc.guide.computer_villagers.title"
 }

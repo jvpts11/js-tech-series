@@ -34,6 +34,8 @@ final class ProgramEvents {
 
     /** What an event handed to a handler holds before its text: a header and its three fields. */
     static final long EVENT_BYTES = Heap.HEADER + 3L * Heap.REFERENCE;
+    /** What an input event handed to a system holds before its text: a header and its six fields. */
+    static final long INPUT_BYTES = Heap.HEADER + 6L * Heap.REFERENCE;
 
     private final Process process;
     private final Heap heap;
@@ -80,6 +82,21 @@ final class ProgramEvents {
         final String said = text == null ? "" : text;
         return this.offer(handler, EVENT_BYTES + Heap.sizeOfText(said),
                 () -> List.of(this.gatewayMessageOf(from, said, tick)));
+    }
+
+    /**
+     * Hands an operating system a player wrote what came from the monitor: a key, a character, the mouse moving or a
+     * click, queued for its {@code OnInput} (computers/docs/design/player-systems.md). False when it is over, has no
+     * {@code OnInput}, or has too many calls waiting to take this one, which a key held down can cause.
+     */
+    boolean deliverInput(final InputSent sent) {
+        final Values.Obj system = this.process.script();
+        final Values.DelegateValue handler = system == null ? null : this.handlerFor(system, "OnInput");
+        if (this.identity.over() || handler == null) {
+            return false;
+        }
+        return this.offer(handler, INPUT_BYTES + Heap.sizeOfText(sent.kind()) + Heap.sizeOfText(sent.character()),
+                () -> List.of(this.inputOf(sent)));
     }
 
     /**
@@ -231,6 +248,18 @@ final class ProgramEvents {
         made.set("Name", this.heap.text(name, 0));
         made.set("Value", this.heap.adopt(ComponentValues.toSigma(value), 0));
         this.heap.allocate(made, Heap.HEADER + 2L * Heap.REFERENCE, 0);
+        return made;
+    }
+
+    private Values.Obj inputOf(final InputSent sent) {
+        final Values.Obj made = new Values.Obj("InputEvent");
+        made.set("Kind", this.heap.text(sent.kind(), 0));
+        made.set("Key", sent.key());
+        made.set("Char", this.heap.text(sent.character(), 0));
+        made.set("X", sent.x());
+        made.set("Y", sent.y());
+        made.set("Button", sent.button());
+        this.heap.allocate(made, INPUT_BYTES, 0);
         return made;
     }
 

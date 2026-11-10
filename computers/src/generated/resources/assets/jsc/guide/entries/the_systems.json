@@ -369,7 +369,7 @@
   ],
   "icon": "jsc:floppy_disk",
   "id": "jsc:the_systems",
-  "order": 9,
+  "order": 11,
   "section": "jsc:systems_and_eras",
   "title": "jsc.guide.the_systems.title"
 }

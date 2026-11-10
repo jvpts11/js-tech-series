@@ -152,6 +152,105 @@ class TickSchedulerTest {
     }
 
     @Test
+    void run_dealsQuantaOfTheSizeAsked() {
+        final Greedy one = new Greedy();
+        final Greedy two = new Greedy();
+        new TickScheduler().run(List.of(one, two), 64, () -> 0L, NO_DEADLINE, 16);
+        assertEquals(List.of(16, 16), one.offers);
+        assertEquals(List.of(16, 16), two.offers);
+    }
+
+    @Test
+    void run_givesAHeavyTaskTwoQuantaARound() {
+        final Heavy one = new Heavy();
+        final Greedy two = new Greedy();
+        new TickScheduler().run(List.of(one, two), 30 * TickScheduler.QUANTUM, () -> 0L, NO_DEADLINE);
+        assertEquals(30 * TickScheduler.QUANTUM, one.total + two.total, "the tick is still spent whole");
+        assertEquals(2 * TickScheduler.QUANTUM, (int) one.offers.getFirst());
+        assertTrue(one.total >= 2 * two.total - TickScheduler.QUANTUM,
+                "the heavy one gets about twice as much; " + one.total + " against " + two.total);
+    }
+
+    @Test
+    void run_keepsAnIdleTaskWaitingWhileAnotherRuns() {
+        final Idle idle = new Idle();
+        final Greedy busy = new Greedy();
+        new TickScheduler().run(List.of(idle, busy), 10 * TickScheduler.QUANTUM, () -> 0L, NO_DEADLINE);
+        assertEquals(0, idle.total);
+        assertEquals(10 * TickScheduler.QUANTUM, busy.total);
+    }
+
+    @Test
+    void run_runsAnIdleTaskOnceTheOthersStop() {
+        final Idle idle = new Idle();
+        final Brief brief = new Brief(30);
+        new TickScheduler().run(List.of(idle, brief), 10 * TickScheduler.QUANTUM, () -> 0L, NO_DEADLINE);
+        assertEquals(10 * TickScheduler.QUANTUM - 30, idle.total, "the idle one takes what the other left");
+    }
+
+    @Test
+    void runInTurn_keepsTheTurnUntilTheTaskYields() {
+        final Yielding one = new Yielding(3);
+        final Greedy two = new Greedy();
+        new TickScheduler().runInTurn(List.of(one, two), 10 * TickScheduler.QUANTUM, () -> 0L, NO_DEADLINE);
+        assertEquals(3 * TickScheduler.QUANTUM, one.total, "the first runs until its third step yields");
+        assertEquals(7 * TickScheduler.QUANTUM, two.total, "the second has every quantum after that");
+    }
+
+    @Test
+    void runInTurn_carriesATurnTheCreditsRanOutOnIntoTheNextTick() {
+        final Greedy one = new Greedy();
+        final Greedy two = new Greedy();
+        final TickScheduler scheduler = new TickScheduler();
+        scheduler.runInTurn(List.of(one, two), 4 * TickScheduler.QUANTUM, () -> 0L, NO_DEADLINE);
+        scheduler.runInTurn(List.of(one, two), 4 * TickScheduler.QUANTUM, () -> 0L, NO_DEADLINE);
+        assertEquals(8 * TickScheduler.QUANTUM, one.total, "a task that never yields keeps every tick");
+        assertEquals(0, two.total);
+    }
+
+    @Test
+    void runInTurn_passesTheTurnOnWhenATaskStops() {
+        final Brief brief = new Brief(10);
+        final Greedy two = new Greedy();
+        new TickScheduler().runInTurn(List.of(brief, two), 3 * TickScheduler.QUANTUM, () -> 0L, NO_DEADLINE);
+        assertEquals(3 * TickScheduler.QUANTUM - 10, two.total);
+    }
+
+    @Test
+    void runChosen_givesEachSliceToTheTaskChosenAndChargesTheChoosing() {
+        final Greedy one = new Greedy();
+        final Greedy two = new Greedy();
+        new TickScheduler().runChosen(List.of(one, two), 3 * (TickScheduler.QUANTUM + 4), () -> 0L, NO_DEADLINE,
+                TickScheduler.QUANTUM, (running, budget) -> new TickScheduler.Choice(1, 4));
+        assertEquals(0, one.total, "the first is never chosen");
+        assertEquals(3 * TickScheduler.QUANTUM, two.total, "each slice goes to the second, after the choosing");
+    }
+
+    @Test
+    void runChosen_goesInTurnWhenNothingIsChosen() {
+        final Greedy one = new Greedy();
+        final Greedy two = new Greedy();
+        new TickScheduler().runChosen(List.of(one, two), 4 * TickScheduler.QUANTUM, () -> 0L, NO_DEADLINE,
+                TickScheduler.QUANTUM, (running, budget) -> new TickScheduler.Choice(-1, 0));
+        assertEquals(2 * TickScheduler.QUANTUM, one.total);
+        assertEquals(2 * TickScheduler.QUANTUM, two.total);
+    }
+
+    @Test
+    void runChosen_offersTheChooserOnlyTheTasksStillRunning() {
+        final Brief brief = new Brief(5);
+        final Greedy two = new Greedy();
+        final List<List<Integer>> asked = new ArrayList<>();
+        new TickScheduler().runChosen(List.of(brief, two), 3 * TickScheduler.QUANTUM, () -> 0L, NO_DEADLINE,
+                TickScheduler.QUANTUM, (running, budget) -> {
+                    asked.add(running);
+                    return new TickScheduler.Choice(running.getFirst(), 0);
+                });
+        assertEquals(List.of(0, 1), asked.getFirst());
+        assertEquals(List.of(1), asked.get(1), "the brief one stopped, so it is offered no more");
+    }
+
+    @Test
     void run_isNothingWithNothingToRunOrNothingToSpend() {
         assertEquals(TickScheduler.Outcome.NOTHING,
                 new TickScheduler().run(List.of(), 500, () -> 0L, NO_DEADLINE));
@@ -221,6 +320,45 @@ class TickSchedulerTest {
         @Override
         public boolean low() {
             return true;
+        }
+    }
+
+    /** A task that is to get on faster: two quanta a round. */
+    private static final class Heavy extends Greedy {
+        @Override
+        public int weight() {
+            return 2;
+        }
+    }
+
+    /** A task that runs only once every other task has stopped for the tick. */
+    private static final class Idle extends Greedy {
+        @Override
+        public boolean idle() {
+            return true;
+        }
+    }
+
+    /** A task with work for ever that gives up its turn on its {@code every}-th step. */
+    private static final class Yielding extends Greedy {
+        private final int every;
+        private int steps;
+        private boolean yielded;
+
+        Yielding(final int every) {
+            this.every = every;
+        }
+
+        @Override
+        public int step(final int budget) {
+            this.steps++;
+            this.yielded = this.steps % this.every == 0;
+            return super.step(budget);
+        }
+
+        @Override
+        public boolean yielded() {
+            return this.yielded;
         }
     }
 

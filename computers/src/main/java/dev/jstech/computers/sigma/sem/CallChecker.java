@@ -122,7 +122,7 @@ final class CallChecker {
     }
 
     private ITypeSymbol callThroughMember(final IExpr.Call call, final IExpr.Member member) {
-        final ITypeSymbol target = this.expressions.check(member.target(), null);
+        final ITypeSymbol target = this.members.targetOf(member);
         if (this.scope.rules().isError(target)) {
             this.checkArguments(call.arguments());
             return ITypeSymbol.Special.ERROR;

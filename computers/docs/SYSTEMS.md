@@ -99,6 +99,21 @@ the whole disk. Besides `apt`, it has two programs of its own: the **Software Ma
 Mint's categories with Network and Desktops, and the **Update Manager**, which installs what you tick, a program at
 once and the desktop the next time it starts, its shield on the panel while there are updates.
 
+### Systems that players write
+
+*Added 2026-11-10.*
+
+A player can write an operating system of their own in Σ#: a class that implements `ISystem` in the namespace
+`System.OS`, which declares its name, version, author, era, instruction set, memory and kernel. The machine runs it as
+its process 1; it draws its own boot page and its own panic page, starts its services and a desktop, and stands on one
+of the mod's kernels or on one of its own, whose scheduler, file system, drivers, memory rule and shell it chooses.
+`sigma build --os` writes its installer onto a blank medium of its era, and `sgpack --publish` puts it on the Mirror,
+marked with its author and *community*; it then installs like any other system, from its medium or through the network
+([Starting through the network](#starting-through-the-network)). A desktop of a player's own implements `IDesktop`
+(its panel, its menu, its frames, its colours, its wallpaper and its programs), is built with `sigma build --desktop`,
+comes with the system that starts it, and the package managers of the mod's systems install it from the Mirror. The
+Book of Sigma has a section on both ([design](design/player-systems.md)).
+
 ## Desktops
 
 *Added 2026-08-26.*
@@ -152,6 +167,17 @@ system but the BSDs still has `help` for its commands at the prompt; on Frames i
    guide; Gentoo compiles first. (A server setting can make both ask for every step.)
 
 The installer puts the system on the first disk that has none, unless you choose another.
+
+### Starting through the network
+
+*Added 2026-11-10.*
+
+From the Legacy on, a computer on a network whose Mainframe runs the Mirror needs no medium: the firmware starts the
+installer through the network. On the Legacy and the Transition, choose **Network (PXE)** on the Boot page of the
+Setup; the network card's agent asks the Mainframe, and the Mirror's menu opens in the BIOS's blue. On the Standard
+and the Advanced, choose **HTTP Boot** in the Boot Manager, and the Mirror's list opens on the firmware's own page.
+Only the systems the computer runs are listed, each with its house, and *Boot from the local disk* is last. With no
+Mirror on the network, the firmware says so and goes back.
 
 ### Two systems on one computer
 

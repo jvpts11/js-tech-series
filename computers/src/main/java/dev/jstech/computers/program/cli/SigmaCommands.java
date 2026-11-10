@@ -376,7 +376,8 @@ public final class SigmaCommands {
                 "run %s [--heap <n>M] | build <source> [--isa <isa>[,<isa>...]] | stop <id> | ps");
         private static final TextKey RUN_USAGE = TextKey.of("jsc.cli.sigma.run.run_usage", "run %s [--heap <n>M]");
         private static final TextKey BUILD_USAGE = TextKey.of("jsc.cli.sigma.run.build_usage",
-                "build <source> [more ...] [-o <out.asm>] [--isa <isa>[,<isa>...]] [--lang <version>]");
+                "build <source> [more ...] [-o <out.asm>] [--isa <isa>[,<isa>...]] [--lang <version>]"
+                        + " | build --os <folder> | build --desktop <name>");
         /* The source's extension. */
         private static final TextKey NOT_FOR_A_PROCESSOR = TextKey.of("jsc.cli.sigma.run.not_for_a_processor",
                 "'.%s' is not the source of a language that builds for a processor");
@@ -483,6 +484,17 @@ public final class SigmaCommands {
          */
         private void build(final CliContext ctx) {
             final String verb = this.runtime.verb();
+            // A system or a desktop a player wrote (computers/docs/design/player-systems.md), built from its folder.
+            if ("--os".equals(ctx.arg(1)) || "--desktop".equals(ctx.arg(1))) {
+                if (ctx.arg(2).isEmpty()) {
+                    ctx.out().error(CliTexts.USAGE.with(verb, BUILD_USAGE));
+                } else if ("--os".equals(ctx.arg(1))) {
+                    SystemBuild.os(ctx, verb, ctx.arg(2));
+                } else {
+                    SystemBuild.desktop(ctx, verb, ctx.arg(2));
+                }
+                return;
+            }
             final List<String> paths = new ArrayList<>();
             String out = null;
             String isas = null;
@@ -663,7 +675,7 @@ public final class SigmaCommands {
         private static final TextKey SUMMARY = TextKey.of("jsc.cli.sigma.sgpack.summary",
                 "start a package, and build one from what is here");
         private static final TextKey USAGE = TextKey.of("jsc.cli.sigma.sgpack.usage",
-                "init [name] | build | publish [file] | unpublish <name>");
+                "init [name] | build | publish [file] | unpublish <name> | --publish <folder>");
         /* The verbs as the usage lists them, each with what it does; the spacing keeps the second column straight. */
         private static final TextKey VERB_INIT = TextKey.of("jsc.cli.sigma.sgpack.verb.init",
                 "  init [name]       write a %s to fill in");
@@ -687,6 +699,19 @@ public final class SigmaCommands {
                 "name the package to publish, or run this beside a %s");
         private static final TextKey UNPUBLISH_USAGE = TextKey.of("jsc.cli.sigma.sgpack.unpublish_usage",
                 "unpublish <name>");
+        private static final TextKey VERB_PUBLISH_SYSTEMS = TextKey.of("jsc.cli.sigma.sgpack.verb.publish_systems",
+                "  --publish <folder> put the system and desktop built from it on the Mirror");
+        private static final TextKey PUBLISH_SYSTEMS_USAGE = TextKey.of("jsc.cli.sigma.sgpack.publish_systems_usage",
+                "--publish <folder>");
+        /* The packages, each its name and version: the system's, or the system's and the desktop's. */
+        private static final TextKey PACKING = TextKey.of("jsc.cli.sigma.sgpack.packing", "Packing %s... ok");
+        private static final TextKey PACKING_BOTH = TextKey.of("jsc.cli.sigma.sgpack.packing_both", "%s and %s");
+        /* The Mainframe that serves the Mirror, and the author. */
+        private static final TextKey PUBLISHED_AS = TextKey.of("jsc.cli.sigma.sgpack.published_as",
+                "Published to the Mirror on %s as %s's (community).");
+        private static final TextKey ANY_COMPUTER = TextKey.of("jsc.cli.sigma.sgpack.any_computer",
+                "Any computer of the network can now install it from the Mirror, or boot its installer from the"
+                        + " firmware through the network.");
 
         @Override
         public String name() {
@@ -720,14 +745,44 @@ public final class SigmaCommands {
                 case "build" -> this.build(ctx);
                 case "publish" -> this.publish(ctx);
                 case "unpublish" -> this.unpublish(ctx);
+                case "--publish" -> this.publishSystems(ctx);
                 default -> {
                     ctx.out().error(CliTexts.USAGE.with(this.name(), this.usage()));
                     ctx.out().line(VERB_INIT.with(Manifest.FILE));
                     ctx.out().line(VERB_BUILD);
                     ctx.out().line(VERB_PUBLISH);
                     ctx.out().line(VERB_UNPUBLISH);
+                    ctx.out().line(VERB_PUBLISH_SYSTEMS);
                 }
             }
+        }
+
+        /*
+         * Publishes the system and the desktop last built from a folder (computers/docs/design/player-systems.md):
+         * the Mirror keeps them as the author's, beside the mod's own, for the network to install and to boot.
+         */
+        private void publishSystems(final CliContext ctx) {
+            final String folder = ctx.arg(1);
+            if (folder.isEmpty()) {
+                ctx.out().error(CliTexts.USAGE.with(this.name(), PUBLISH_SYSTEMS_USAGE));
+                return;
+            }
+            final ICliSystems.Published published = ctx.computer().publishSystems(folder);
+            if (published.packages().isEmpty()) {
+                ctx.out().error(CliTexts.SAID_BY.with(this.name(), published.failure()));
+                return;
+            }
+            final List<String> names = published.packages();
+            ctx.out().ok(PACKING.with(names.size() == 1 ? Text.literal(names.getFirst())
+                    : PACKING_BOTH.with(names.get(0), names.get(1))));
+            if (!published.failure().isEmpty()) {
+                ctx.out().error(CliTexts.SAID_BY.with(this.name(), published.failure()));
+                return;
+            }
+            ctx.out().ok(PUBLISHED_AS.with(published.mirror(), published.author()));
+            ctx.out().line(Text.EMPTY);
+            ctx.out().dim(ANY_COMPUTER.text());
+            ctx.computer().report(JscEvents.SIGMA_PUBLISHED, "");
         }
 
         /** Writes a manifest for a project that has none, filled in as far as it can be guessed. */

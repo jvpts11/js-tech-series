@@ -8,6 +8,10 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.os.player.PlayerDesktop;
+import dev.jstech.computers.os.player.PlayerSystem;
+import dev.jstech.computers.os.player.PlayerSystems;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.util.DeclarationError;
 import dev.jstech.core.text.TextHolder;
@@ -104,7 +108,13 @@ public final class OsRegistry {
 
     /** Returns the {@link DesktopEnvironmentDef} registered under {@code id}, or {@code null} if absent. */
     public static DesktopEnvironmentDef getDesktop(ResourceLocation id) {
-        return id == null ? null : DESKTOPS.get(id);
+        final DesktopEnvironmentDef registered = id == null ? null : DESKTOPS.get(id);
+        // A player's desktop is made while the game runs, so it is kept by the world rather than registered here.
+        if (registered != null) {
+            return registered;
+        }
+        final PlayerDesktop player = PlayerSystems.knownDesktop(id);
+        return player == null ? null : player.def();
     }
 
     /** Returns an unmodifiable view of all registered desktop environments. */
@@ -132,10 +142,36 @@ public final class OsRegistry {
     }
 
     /**
+     * The kernel that system stands on, as its file system, scheduler and shell read it: one of the mod's, or, for a
+     * player's system with a kernel of its own, that kernel as the system chose it; null for none known.
+     */
+    @Nullable
+    public static KernelDef kernelOf(final OsDef os) {
+        final PlayerSystem player = PlayerSystems.withFiles(os.id());
+        final KernelDef own = player == null ? null : player.ownKernel();
+        return own != null ? own : getKernel(os.kernelId());
+    }
+
+    /**
+     * The file system that system's installer formats its disk with on a machine of {@code era}: the one a player's
+     * system with a kernel of its own chose, or the one each of the mod's does.
+     */
+    public static FileSystemType fileSystemOf(final OsDef os, @Nullable final Era era) {
+        final PlayerSystem player = PlayerSystems.withFiles(os.id());
+        if (player != null && player.facts().kernel().own()) {
+            return FileSystemType.chosen(player.facts().kernel().fileSystem(), era);
+        }
+        return FileSystemType.installedBy(os.platform(), os.familyRank(), os.installMode() != InstallMode.GUIDED,
+                os.id().getPath(), era);
+    }
+
+    /**
      * Returns the {@link OsDef} registered under {@code id}, or {@code null} if absent.
      */
     public static OsDef getOs(ResourceLocation id) {
-        return OSES.get(id);
+        final OsDef registered = id == null ? null : OSES.get(id);
+        // A player's system is made while the game runs, so it is kept by the world rather than registered here.
+        return registered != null ? registered : PlayerSystems.os(id);
     }
 
     /**

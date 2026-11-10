@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.client.MonitorFrame;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.player.PlayerDesktop;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.motion.FadeLayer;
 import dev.jstech.core.gui.layout.DesktopZ;
@@ -142,6 +143,16 @@ final class DesktopPainter {
             MotifChrome.backdrop(g, sw, sh, prefs.cdePalette(), prefs.cdeStyle().backdrop(desktop.wm().workspace()));
             return;
         }
+        // A player's desktop hangs its own picture, on its desktop colour until the picture is read.
+        final PlayerDesktop player = desktop.player();
+        if (player != null) {
+            PixWallpaper.want(desktop.hostPos(), prefs.wallpaper().isEmpty()
+                    ? PixWallpaper.choiceFor(player.wallpaperPath()) : prefs.wallpaper());
+            if (!PixWallpaper.paint(g, sw, sh)) {
+                g.fill(0, 0, sw, sh, PlayerLooks.colours(player.facts()).desktop());
+            }
+            return;
+        }
         PixWallpaper.want(desktop.hostPos(), prefs.wallpaper());
         if (!PixWallpaper.paint(g, sw, sh)) {
             WallpaperPainter.paint(g, sw, sh, desktop.desktopId(), desktop.platform(), prefs.wallpaper(),
@@ -273,6 +284,8 @@ final class DesktopPainter {
         } else if (desktop.quince()) {
             // Quince's menu bar along the top, and from Quince OS X the Dock along the foot.
             desktop.quinceShell().render(g, sw, sh, lmx, lmy);
+        } else if (style == PanelStyle.PLAYER) {
+            desktop.playerShell().render(g, sw, sh, lmx, lmy);
         } else if (style == PanelStyle.FRAMES_11) {
             desktop.framesPanels().renderModern(g, tbY, sw, lmx, lmy);
         } else if (style == PanelStyle.FRAMES_7) {
@@ -307,8 +320,8 @@ final class DesktopPainter {
             notices.renderBalloon(g, tbY, sw);
             g.pose().popPose();
         }
-        // The figures behind the notification area, while the pointer rests on it. CDE has no such area.
-        if (!desktop.view().barOnTop() && style != PanelStyle.CDE) {
+        // The figures behind the notification area, while the pointer rests on it. CDE has none, nor a player's.
+        if (!desktop.view().barOnTop() && style != PanelStyle.CDE && style != PanelStyle.PLAYER) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.TASKBAR + 8);
             desktop.tray().drawTip(g, tbY, sw);
@@ -340,11 +353,17 @@ final class DesktopPainter {
             desktop.cdePanels().renderTip(g, view.width(), view.height(), prefs.cdePalette());
             g.pose().popPose();
         }
-        // A menu pulled down from Quince's bar stands over every window.
+        // A menu pulled down from Quince's bar stands over every window, and so does a player's desktop's.
         if (desktop.quince() && desktop.quinceShell().menuOpen()) {
             g.pose().pushPose();
             g.pose().translate(0, 0, DesktopZ.MENU);
             desktop.quinceShell().renderMenu(g, lmx, lmy);
+            g.pose().popPose();
+        }
+        if (desktop.playerShell().menuOpen()) {
+            g.pose().pushPose();
+            g.pose().translate(0, 0, DesktopZ.MENU);
+            desktop.playerShell().renderMenu(g, view.height(), lmx, lmy);
             g.pose().popPose();
         }
         final VolumePopup volume = desktop.volume();

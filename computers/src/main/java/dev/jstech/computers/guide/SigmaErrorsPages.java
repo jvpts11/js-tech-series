@@ -478,6 +478,32 @@ final class SigmaErrorsPages {
                         GuideCell.words("<name>: '%<letter>' takes <type>, and this is <type>"),
                         GuideCell.words("A hole takes one kind of value, and the call gives another. Give a value of"
                                 + " the kind the hole takes."))
+                .table("A system and a desktop of your own", "Code", "Message", "What it means and the fix")
+                .row(GuideCell.code("S3061"),
+                        GuideCell.words("'<name>' is written with =>, so its value has to be one the compiler knows:"
+                                + " one written out, or one the library names"),
+                        GuideCell.words("A property written with => holds a value worked out while the program runs."
+                                + " Write the value out, such as \"Lantern OS\" or 48, or name one of the library's,"
+                                + " such as Era.Legacy."))
+                .row(GuideCell.code("S3062"),
+                        GuideCell.words("'<type>' says what it is with '<property>', written with => and a value the"
+                                + " compiler knows, and has none"),
+                        GuideCell.words("A system or a desktop leaves out one of the properties it has to declare."
+                                + " Add the property the message names, written with =>."))
+                .row(GuideCell.code("S3063"),
+                        GuideCell.words("'<value>' is not one of <choices>"),
+                        GuideCell.words("A word a system or a desktop declares is not one the mod knows, such as a"
+                                + " scheduler or a panel place. Use one of the words the message lists."))
+                .row(GuideCell.code("S3064"),
+                        GuideCell.words("a program holds at most one system and one desktop, and this one has"
+                                + " <count> <kind>"),
+                        GuideCell.words("Two classes in one build implement ISystem, or two implement IDesktop. Keep"
+                                + " one of each, and build the other in a folder of its own."))
+                .row(GuideCell.code("S3065"),
+                        GuideCell.words("'<name>' chooses for a kernel of the system's own: start it with"
+                                + " Kernel.Own(), since Kernel.Of takes one of the mod's kernels as it is"),
+                        GuideCell.words("A policy such as Scheduler is chosen after Kernel.Of. Start the kernel with"
+                                + " Kernel.Own() to choose its policies, or keep Kernel.Of alone."))
                 .ifSomethingGoesWrong("It says '<name>' does not name anything here.",
                         "The name is spelled wrong, or it is declared after this line. Check its spelling, or"
                                 + " declare it above.",

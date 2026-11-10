@@ -111,11 +111,12 @@ final class DeskTrash {
     }
 
     /**
-     * Whether the wallpaper wears the trash: every desktop does but CDE, which keeps it on its Front Panel, and Quince
-     * OS X and after, which keep it at the end of the Dock.
+     * Whether the wallpaper wears the trash: every desktop does but CDE, which keeps it on its Front Panel, Quince OS X
+     * and after, which keep it at the end of the Dock, and a player's desktop, which keeps its wallpaper clear.
      */
     boolean onWallpaper() {
-        return this.desktop.panelStyle() != PanelStyle.CDE && this.desktop.panelStyle() != PanelStyle.QUINCE_X;
+        final PanelStyle style = this.desktop.panelStyle();
+        return style != PanelStyle.CDE && style != PanelStyle.QUINCE_X && style != PanelStyle.PLAYER;
     }
 
     /** The trash's picture, full or empty. */

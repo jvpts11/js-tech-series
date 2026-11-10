@@ -34,6 +34,12 @@ import dev.jstech.computers.operation.payload.crash.CrashPayloads;
 import dev.jstech.computers.operation.payload.program.StorePayloads;
 import dev.jstech.computers.operation.payload.program.UpdatePayloads;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.operation.payload.firmware.NetBootPayloads;
+import dev.jstech.computers.client.os.PlayerPages;
+import dev.jstech.computers.operation.payload.desktop.PlayerScreenPayloads;
+import dev.jstech.computers.os.player.PlayerBoot;
+import dev.jstech.computers.os.player.PlayerSystems;
+import dev.jstech.computers.os.player.PlayerSystemsPayload;
 import dev.jstech.computers.operation.payload.firmware.InstallerPayloads;
 import dev.jstech.computers.operation.payload.gateway.GatewayManagerPayloads;
 import dev.jstech.computers.operation.payload.interactor.ItemInfoPayloads;
@@ -111,6 +117,14 @@ public final class ComputingPayloads {
         NetworkEventPayloads.register(registrar);
         MachinePayloads.register(registrar);
         FirmwarePayloads.register(registrar);
+        NetBootPayloads.register(registrar);
+        // The systems and desktops the world's players built, which every lookup of a system falls back to.
+        registrar.playToClient(PlayerSystemsPayload.TYPE, PlayerSystemsPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) -> PlayerSystems.know(payload)));
+        PlayerScreenPayloads.register(registrar);
+        // A player's system coming up: the picture its own calls set, for the monitor to draw.
+        registrar.playToClient(PlayerBoot.TYPE, PlayerBoot.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) -> PlayerPages.accept(payload)));
         CrashPayloads.register(registrar);
         StorePayloads.register(registrar);
         UpdatePayloads.register(registrar);

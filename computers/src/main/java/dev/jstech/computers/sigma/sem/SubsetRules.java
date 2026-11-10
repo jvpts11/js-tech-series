@@ -74,7 +74,20 @@ public final class SubsetRules {
             Map.entry("CraftInterface", Set.of("Named", "Name", "Exclusive", "MaxJobs", "Pause", "Resume", "Route")),
             Map.entry("CraftRouter", Set.of("Named", "Name", "Only", "AllBut", "Any", "Tag", "Fuzzy")),
             // What rand and srand come down to, and nothing past them: a whole number drawn, and a start chosen.
-            Map.entry("Random", Set.of("Next", "Seed")));
+            Map.entry("Random", Set.of("Next", "Seed")),
+            /*
+             * The calls of a player's system that take and give plain values (computers/docs/design/player-systems.md):
+             * what hands over a list or a process is the full language's, which has those to hold them in.
+             */
+            Map.entry("Boot", Set.of("Line", "Logo", "Progress", "Done")),
+            Map.entry("Panic", Set.of("Halt", "Page", "Colours", "RebootAfter")),
+            Map.entry("Screen", Set.of("Write", "WriteLine", "Clear", "Cursor", "Colours", "Columns", "Rows")),
+            Map.entry("Processes", Set.of("Stop", "SetPriority", "Yield")),
+            Map.entry("Disk", Set.of("FreeMb", "SizeMb")),
+            Map.entry("Memory", Set.of("TotalMb", "FreeMb", "HeldBy", "Refuse", "GoDown")),
+            Map.entry("Services", Set.of("Register", "Start", "Stop", "Status")),
+            Map.entry("Drivers", Set.of("Has")),
+            Map.entry("Desktop", Set.of("Start", "Stop", "Current")));
 
     /*
      * What the subset does not have, and what to write instead, in pairs: the first fills "Sigma has no %s", the

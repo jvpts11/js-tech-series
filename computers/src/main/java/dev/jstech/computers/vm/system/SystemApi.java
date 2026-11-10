@@ -9,8 +9,10 @@ package dev.jstech.computers.vm.system;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The types of the language's library and of the machine a program runs on, declared once: what the compiler lets a
@@ -28,6 +30,15 @@ public final class SystemApi {
     private static final String THREADING = "System.Threading";
     private static final String MACHINE = "System.Machine";
     private static final String NETWORK = "System.Network";
+    /** The namespace an operating system or a desktop a player writes is made with. */
+    public static final String OS = "System.OS";
+    /** The eras a system names, by the words a program writes them with. */
+    public static final List<String> ERAS = List.of("Vintage", "Legacy", "Transition", "Standard", "Advanced");
+    /** The instruction sets a system names, by the words a program writes them with. */
+    public static final List<String> ISAS = List.of("IA16", "IA32", "X86_64", "M68K", "PowerPC", "ARM64");
+    /** What a system's OnOutOfMemory answers to refuse the memory asked for, and to go down instead. */
+    public static final int MEMORY_REFUSE = -1;
+    public static final int MEMORY_GO_DOWN = 0;
     private static final String OPERATIONS = "System.Operations";
     private static final String UI = "System.UI";
     private static final String SOUND = "System.Sound";
@@ -52,6 +63,13 @@ public final class SystemApi {
     /* Writing a file and closing one it was opened to write cost the same, a block at a time. */
     private static final CallCost FILE_WRITE = CallCost.perBlock(SigmaCosts.WRITE, SigmaCosts.WRITE_PER_BLOCK);
 
+    /*
+     * The members whose value never changes, "Owner.Name": the eras and instruction sets a system names, and the calls
+     * that declare its kernel. A property written with an arrow may hold only values made of these and of what is
+     * written out. Filled while the types below are declared, so it comes before them.
+     */
+    private static final Set<String> KNOWN = new HashSet<>();
+
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
             processMessage(), thread(), time(), random(), openFile(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
             computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
@@ -62,7 +80,8 @@ public final class SystemApi {
             groupBox(), scrollView(), table(), treeView(), menuBar(), contextMenu(), statusBar(), image(), chart(),
             logView(), fileDialog("OpenFileDialog"), fileDialog("SaveFileDialog"), itemSlot(), itemPicker(),
             operationView(), componentAction(), genericComponent(), sound(), speaker(), bus(), busItem(), redstone(),
-            craftInterface(), craftRouter());
+            craftInterface(), craftRouter(), era(), isa(), kernel(), inputEvent(), screen(), input(), processes(),
+            disk(), memory(), services(), device(), drivers(), boot(), panic(), desktop());
 
     private static final Map<String, TypeSpec> BY_TYPE = new HashMap<>();
     /** Every way of writing a call, under its owner and name, so a lookup does not walk the whole system. */
@@ -94,6 +113,14 @@ public final class SystemApi {
     /** Every way of writing the call {@code owner.name}, in the order they were declared; empty when there is none. */
     public static List<IMemberSpec> members(final String owner, final String name) {
         return BY_NAME.getOrDefault(owner + "." + name, List.of());
+    }
+
+    /**
+     * Whether {@code owner.name} is a value that never changes, or a call that makes one from such values: what a
+     * property written with an arrow may be made of.
+     */
+    public static boolean isKnown(final String owner, final String name) {
+        return KNOWN.contains(owner + "." + name);
     }
 
     /** The call {@code owner.name} that takes exactly {@code parameters}, or null when the system has no such call. */
@@ -1128,6 +1155,167 @@ public final class SystemApi {
         return new TypeSpec(NETWORK, "CraftRouter", router.members);
     }
 
+    /*
+     * System.OS (computers/docs/design/player-systems.md): what an operating system a player writes declares itself
+     * with and runs on. The work the machine does for it, drawing, files and windows, costs it nothing more than the
+     * call; what it starts costs what any program pays.
+     */
+
+    private static TypeSpec era() {
+        final Members era = new Members("Era");
+        for (final String name : ERAS) {
+            era.knownOnType("Era", name);
+        }
+        era.recordValue(STRING, "Name");
+        return new TypeSpec(OS, "Era", era.members);
+    }
+
+    private static TypeSpec isa() {
+        final Members isa = new Members("Isa");
+        for (final String name : ISAS) {
+            isa.knownOnType("Isa", name);
+        }
+        isa.recordValue(STRING, "Name");
+        return new TypeSpec(OS, "Isa", isa.members);
+    }
+
+    /*
+     * The kernel a system stands on: one of the mod's, by its name, or one of its own, each policy chosen. The drivers
+     * are named in one text, "text, graphics, sound", since a list written out is not a value the compiler knows.
+     */
+    private static TypeSpec kernel() {
+        final Members kernel = new Members("Kernel");
+        kernel.knownCall(true, "Kernel", "Of", STRING);
+        kernel.knownCall(true, "Kernel", "Own");
+        kernel.knownCall(false, "Kernel", "Scheduler", STRING);
+        kernel.knownCall(false, "Kernel", "Scheduler", STRING, INT);
+        kernel.knownCall(false, "Kernel", "FileSystem", STRING);
+        kernel.knownCall(false, "Kernel", "Drivers", STRING);
+        kernel.knownCall(false, "Kernel", "MemoryRule", STRING);
+        kernel.knownCall(false, "Kernel", "Shell", STRING);
+        kernel.recordValue(STRING, "Name");
+        return new TypeSpec(OS, "Kernel", kernel.members);
+    }
+
+    /** A key, a character, the mouse moving or a click, as it comes from the monitor to the system. */
+    private static TypeSpec inputEvent() {
+        final Members event = new Members("InputEvent");
+        event.recordValue(STRING, "Kind");
+        event.recordValue(INT, "Key");
+        event.recordValue(STRING, "Char");
+        event.recordValue(INT, "X");
+        event.recordValue(INT, "Y");
+        event.recordValue(INT, "Button");
+        return new TypeSpec(OS, "InputEvent", event.members);
+    }
+
+    /** The monitor's text screen, which a system with no desktop and a shell of its own writes on. */
+    private static TypeSpec screen() {
+        final Members screen = new Members("Screen");
+        screen.onType(VOID, "Write", MemberKind.WORLD, CallCost.FREE, STRING);
+        screen.onType(VOID, "WriteLine", MemberKind.WORLD, CallCost.FREE, STRING);
+        screen.onType(VOID, "Clear", MemberKind.WORLD, CallCost.FREE);
+        screen.onType(VOID, "Cursor", MemberKind.WORLD, CallCost.FREE, INT, INT);
+        screen.onType(VOID, "Colours", MemberKind.WORLD, CallCost.FREE, STRING, STRING);
+        screen.valueOnType(INT, "Columns", MemberKind.WORLD, CallCost.FREE);
+        screen.valueOnType(INT, "Rows", MemberKind.WORLD, CallCost.FREE);
+        return new TypeSpec(OS, "Screen", screen.members);
+    }
+
+    /** The keyboard and the mouse: the events come to the system's OnInput, and Focus hands them to a program. */
+    private static TypeSpec input() {
+        final Members input = new Members("Input");
+        input.onType(VOID, "Focus", MemberKind.WORLD, CallCost.FREE, "Process");
+        return new TypeSpec(OS, "Input", input.members);
+    }
+
+    private static TypeSpec processes() {
+        final Members processes = new Members("Processes");
+        processes.onType("Process", "Start", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING);
+        processes.onType("Process", "Start", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING, STRINGS);
+        processes.onType(VOID, "Stop", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), INT, STRING);
+        processes.onType("List<ProcessInfo>", "List", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        processes.onType(VOID, "SetPriority", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), INT, STRING);
+        processes.onType(VOID, "Yield", MemberKind.PROCESS, CallCost.FREE);
+        processes.valueOnType("Process", "Current", MemberKind.PROCESS, CallCost.FREE);
+        return new TypeSpec(OS, "Processes", processes.members);
+    }
+
+    /** The disk the system is on, beyond what File reads and writes: its room, and the other disks it mounts. */
+    private static TypeSpec disk() {
+        final Members disk = new Members("Disk");
+        disk.valueOnType(LONG, "FreeMb", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        disk.valueOnType(LONG, "SizeMb", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        disk.onType(STRINGS, "Mounted", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        return new TypeSpec(OS, "Disk", disk.members);
+    }
+
+    /** What the machine's memory holds and has free, and the answers a system gives when it runs out. */
+    private static TypeSpec memory() {
+        final Members memory = new Members("Memory");
+        memory.valueOnType(INT, "TotalMb", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        memory.valueOnType(INT, "FreeMb", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        memory.onType(INT, "HeldBy", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), INT);
+        memory.onType(STRINGS, "Ledger", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        memory.knownOnType(INT, "Refuse");
+        memory.knownOnType(INT, "GoDown");
+        return new TypeSpec(OS, "Memory", memory.members);
+    }
+
+    /** Programs run as services, up while the system is: the registered ones come up at boot, in order. */
+    private static TypeSpec services() {
+        final Members services = new Members("Services");
+        services.onType(VOID, "Register", MemberKind.WORLD, CallCost.FREE, STRING, STRING);
+        services.onType(BOOL, "Start", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING);
+        services.onType(BOOL, "Stop", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        services.onType(STRING, "Status", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        return new TypeSpec(OS, "Services", services.members);
+    }
+
+    private static TypeSpec device() {
+        final Members device = new Members("Device");
+        device.recordValue(STRING, "Name");
+        device.recordValue(STRING, "Class");
+        return new TypeSpec(OS, "Device", device.members);
+    }
+
+    /** The devices the machine has, and whether the system drives each class of them. */
+    private static TypeSpec drivers() {
+        final Members drivers = new Members("Drivers");
+        drivers.onType("List<Device>", "Devices", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        drivers.onType(BOOL, "Has", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        return new TypeSpec(OS, "Drivers", drivers.members);
+    }
+
+    /** What the screen shows while the system comes up. */
+    private static TypeSpec boot() {
+        final Members boot = new Members("Boot");
+        boot.onType(VOID, "Line", MemberKind.WORLD, CallCost.FREE, STRING);
+        boot.onType(VOID, "Logo", MemberKind.WORLD, CallCost.FREE, STRING);
+        boot.onType(VOID, "Progress", MemberKind.WORLD, CallCost.FREE, INT);
+        boot.onType(VOID, "Done", MemberKind.WORLD, CallCost.FREE);
+        return new TypeSpec(OS, "Boot", boot.members);
+    }
+
+    /** Bringing the machine down on a crash page with the system's own message, and what that page looks like. */
+    private static TypeSpec panic() {
+        final Members panic = new Members("Panic");
+        panic.onType(VOID, "Halt", MemberKind.WORLD, CallCost.FREE, STRING);
+        panic.onType(VOID, "Page", MemberKind.WORLD, CallCost.FREE, STRING);
+        panic.onType(VOID, "Colours", MemberKind.WORLD, CallCost.FREE, STRING, STRING);
+        panic.onType(VOID, "RebootAfter", MemberKind.WORLD, CallCost.FREE, INT);
+        return new TypeSpec(OS, "Panic", panic.members);
+    }
+
+    /** The desktop the system starts: one of the mod's desktop packages, or a player's. */
+    private static TypeSpec desktop() {
+        final Members desktop = new Members("Desktop");
+        desktop.onType(VOID, "Start", MemberKind.WORLD, CallCost.FREE, STRING);
+        desktop.onType(VOID, "Stop", MemberKind.WORLD, CallCost.FREE);
+        desktop.valueOnType(STRING, "Current", MemberKind.WORLD, CallCost.FREE);
+        return new TypeSpec(OS, "Desktop", desktop.members);
+    }
+
     /** Gathers the members of one type, in the order they are declared. */
     private static final class Members {
 
@@ -1158,6 +1346,19 @@ public final class SystemApi {
         /** A value read from the type. */
         void valueOnType(final String type, final String name, final MemberKind kind, final CallCost cost) {
             this.members.add(new PropertySpec(this.id(name), type, true, false, kind, cost, CallCost.FREE));
+        }
+
+        /** A value read from the type that never changes, one the compiler knows: an era, an instruction set. */
+        void knownOnType(final String type, final String name) {
+            this.valueOnType(type, name, MemberKind.PROCESS, CallCost.FREE);
+            KNOWN.add(this.owner + "." + name);
+        }
+
+        /** A call that makes a value the compiler knows out of values it knows, as a system declares its kernel. */
+        void knownCall(final boolean onType, final String returns, final String name, final String... parameters) {
+            this.members.add(new MethodSpec(this.id(name, parameters), returns, onType, MemberKind.PROCESS,
+                    CallCost.FREE));
+            KNOWN.add(this.owner + "." + name);
         }
 
         /** A value read from an object of the type. */

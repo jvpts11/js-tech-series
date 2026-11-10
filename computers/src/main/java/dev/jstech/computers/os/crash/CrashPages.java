@@ -158,6 +158,12 @@ public final class CrashPages {
                     QUINCE_TICKS, true);
             case QUINCE_RESTART -> new CrashPage(style, cause, "", "", facts.part(), List.of(), QUINCE_TICKS, true);
             case DDB -> openBsd(cause, facts);
+            /*
+             * A player's system makes its own page from what it said (CrashPage.of a PlayerPanic); asked for here, with
+             * nothing of the system's to show, the machine falls back to a kernel's panic.
+             */
+            case PLAYER -> new CrashPage(CrashStyle.CONSOLE, cause, "", "", facts.part(), linux(cause, facts),
+                    LINUX_TICKS, false);
         };
     }
 

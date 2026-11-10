@@ -49,6 +49,9 @@ public record Packed(Manifest manifest, Map<String, String> files) {
     /** The extension a built package is written under. */
     public static final String EXTENSION = ".cpk";
 
+    /** The folder a player's packages are installed into on a machine, one folder each. */
+    public static final String INSTALL_DIR = "PROGRAMS";
+
     /* A file the manifest and the package disagree about, on the manifest's files line, which goes in as data. */
     private static final TextKey NAMED_NOT_PACKED = TextKey.of("jsc.sigma.packed.named_not_packed",
             "%s: %s is named but not in the package");
@@ -174,6 +177,11 @@ public record Packed(Manifest manifest, Map<String, String> files) {
             }
         }
         return found;
+    }
+
+    /** The folder the package of that name is installed into on a machine. */
+    public static String folderOf(final String name) {
+        return INSTALL_DIR + "/" + name;
     }
 
     /**

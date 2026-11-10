@@ -255,6 +255,12 @@ final class CallDispatch {
         final Deque<Frame> frames = this.process.current().frames;
         frames.pop();
         if (frames.isEmpty()) {
+            // A call the machine asked for keeps its answer, for the machine to read once it has returned.
+            if (frame.asked) {
+                frame.answered = true;
+                frame.answer = answer;
+                return;
+            }
             // A program's Main has nobody to give its answer to but the machine, which takes it as the exit code.
             if (answer != null && this.process.isMain(frame.method)) {
                 this.process.mainGave(Numbers.toInt(answer));

@@ -69,6 +69,8 @@ public final class Process {
     private static final int START_COST = SigmaCosts.THREAD_START;
     /** Where a program that runs at a terminal starts. */
     private static final String MAIN = "Main";
+    /* The number of the thread a question the machine asks runs on, which no thread a program starts is given. */
+    private static final int ANSWERING = 0;
     /** The machine's close of a file a program opened, which a program that ends with one open is given. */
     private static final MemberId CLOSE_FILE = new MemberId(OpenFile.TYPE, "Close", List.of());
     /** Text, as a listing names its type. */
@@ -145,6 +147,10 @@ public final class Process {
     private final WorldCalls worldCalls;
     /** Whether the host has been told the program ended, so it is told once. */
     private boolean told;
+    /** Whether a thread gave up its turn since the machine last asked, which a cooperative system waits for. */
+    private boolean gaveUpTurn;
+    /** Whether one of its threads is running instructions now, when it cannot be asked anything. */
+    private boolean running;
     /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
     private final ProgramListeners listeners = new ProgramListeners();
     private Values.Obj self;
@@ -615,6 +621,55 @@ public final class Process {
     }
 
     /**
+     * Runs that method on that object at once, on a thread of its own, for at most {@code budget} instructions, and
+     * gives back what it returned: for a question the machine asks the system it runs and waits on, as which program
+     * runs next (computers/docs/design/player-systems.md). One that does not return in time, or waits on something,
+     * answers nothing and is ended; one that faults halts the program, as any fault does.
+     */
+    public Answer answer(final Values.Obj target, final String method, final List<Object> arguments,
+                         final int budget) {
+        final MethodImage found = this.methodTaking(target, method, arguments.size());
+        // A program in the middle of its own instructions cannot be asked anything until it stops.
+        if (found == null || budget <= 0 || this.identity.halted() || this.running) {
+            return Answer.NONE;
+        }
+        // A thread kept out of the program's own, so its threads' turns and numbers never see it.
+        final ProgramThread thread = new ProgramThread(ANSWERING);
+        final Frame frame = new Frame(found, target);
+        CallDispatch.fill(frame, arguments);
+        frame.asked = true;
+        thread.frames.push(frame);
+        final ProgramThread before = this.current;
+        final int used;
+        try {
+            used = this.run(thread, budget);
+        } finally {
+            if (!thread.frames.isEmpty()) {
+                this.end(thread);
+            }
+            this.current = before;
+        }
+        return frame.answered ? new Answer(true, frame.answer, used) : new Answer(false, null, used);
+    }
+
+    /** Whether that object's type has a method of that name taking that many arguments, for a question to ask it. */
+    public boolean answers(final Values.Obj target, final String method, final int arguments) {
+        return this.methodTaking(target, method, arguments) != null;
+    }
+
+    /** Whether one of its threads is running instructions now, so it cannot be asked anything until it stops. */
+    public boolean busy() {
+        return this.running;
+    }
+
+    /** Whether a thread gave up its turn since the last time this was asked; asking forgets it. */
+    public boolean takeGaveUpTurn() {
+        final boolean gave = this.gaveUpTurn;
+        this.gaveUpTurn = false;
+        return gave;
+    }
+
+    /**
      * Runs up to {@code budget} instructions and says how many it used.
      *
      * <p>The budget is dealt out between the threads that can run, in turns of a slice each, so that
@@ -689,6 +744,7 @@ public final class Process {
     private int run(final ProgramThread thread, final int allowance) {
         this.current = thread;
         thread.yielded = false;
+        this.running = true;
         int used = 0;
         try {
             while (used < allowance && !this.identity.halted() && !thread.waiting() && !thread.yielded) {
@@ -722,6 +778,7 @@ public final class Process {
              * instruction costs.
              */
             this.identity.spend(used);
+            this.running = false;
         }
         return used;
     }
@@ -857,6 +914,14 @@ public final class Process {
         return this.events.post(handler, arguments);
     }
 
+    /**
+     * Hands an operating system a player wrote what came from the monitor, queued for its {@code OnInput}; false when
+     * it was not taken.
+     */
+    public boolean deliverInput(final InputSent sent) {
+        return this.events.deliverInput(sent);
+    }
+
     /** How many calls are still waiting their turn, handlers among them. */
     public int waiting() {
         return this.waiting.size();
@@ -972,9 +1037,13 @@ public final class Process {
         }
     }
 
-    /** Gives up the rest of the running thread's turn, so another thread has one sooner. */
+    /**
+     * Gives up the rest of the running thread's turn, so another thread has one sooner; on a cooperative system it
+     * gives the machine to the next program as well.
+     */
     void yieldTurn() {
         this.current.yielded = true;
+        this.gaveUpTurn = true;
     }
 
     /** Stops the thread a program holds: stopping the main one ends the program's run, another one simply ends. */
@@ -1190,5 +1259,32 @@ public final class Process {
 
     String text(final String value, final int line) {
         return this.heap.text(value, line);
+    }
+
+    /* The method of that name on that object's type taking that many arguments, or null: events go by name. */
+    private MethodImage methodTaking(final Values.Obj target, final String name, final int arguments) {
+        final TypeImage type = this.program.type(target.type());
+        if (type == null) {
+            return null;
+        }
+        for (final MethodImage method : type.methods().values()) {
+            if (method.name().equals(name) && method.parameters().size() == arguments) {
+                return method;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * What a question the machine asked came to.
+     *
+     * @param given whether the method returned in time
+     * @param value what it returned, or null for no answer
+     * @param used  the instructions it took
+     */
+    public record Answer(boolean given, Object value, int used) {
+
+        /** No answer, and nothing spent: the method is not there, or the program is down. */
+        public static final Answer NONE = new Answer(false, null, 0);
     }
 }

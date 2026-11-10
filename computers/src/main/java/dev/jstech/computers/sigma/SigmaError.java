@@ -143,6 +143,17 @@ public enum SigmaError {
     CIRCULAR_BASE(TextKey.of("jsc.sigma.error.s3059",
             "'%s' already stands behind '%s', so it cannot also stand in front of it")),
     NOT_ACCESSIBLE(TextKey.of("jsc.sigma.error.s3060", "'%s' is %s to '%s', so it cannot be reached from here")),
+    VALUE_NOT_KNOWN(TextKey.of("jsc.sigma.error.s3061",
+            "'%s' is written with =>, so its value has to be one the compiler knows: one written out, or one the"
+                    + " library names")),
+    NOT_DECLARED(TextKey.of("jsc.sigma.error.s3062",
+            "'%s' says what it is with '%s', written with => and a value the compiler knows, and has none")),
+    NOT_ONE_OF(TextKey.of("jsc.sigma.error.s3063", "'%s' is not one of %s")),
+    ONE_SYSTEM(TextKey.of("jsc.sigma.error.s3064",
+            "a program holds at most one system and one desktop, and this one has %s %s")),
+    POLICY_OF_ITS_OWN(TextKey.of("jsc.sigma.error.s3065",
+            "'%s' chooses for a kernel of the system's own: start it with Kernel.Own(), since Kernel.Of takes one"
+                    + " of the mod's kernels as it is")),
 
     // A4001 to A4010 are the listing's own problems, reported by reading one back (ListingError).
     NOT_YET_BUILT(TextKey.of("jsc.sigma.error.s4011", "%s is not built yet")),

@@ -126,6 +126,13 @@ public final class Installers {
         return desktops;
     }
 
+    /** The Mainframe whose Mirror serves this machine, or null when none answers. */
+    @Nullable
+    public static MainframeBlockEntity mirrorOf(final IOsHost machine, final ServerLevel level) {
+        final MainframeBlockEntity mainframe = mainframeOf(machine, level);
+        return mainframe == null || !mainframe.isMirrorActive() ? null : mainframe;
+    }
+
     /** The Mirror serving this machine, by the name its Mainframe goes by; empty when none answers. */
     public static String mirrorHost(final IOsHost machine, final ServerLevel level) {
         final MainframeBlockEntity mainframe = mainframeOf(machine, level);

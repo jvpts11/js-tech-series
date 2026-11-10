@@ -69,6 +69,14 @@ public interface IMachineRuntime extends ILanguageProcess, IProgramRuntime {
     }
 
     /**
+     * Whether the program gave up its turn since it was last asked, answered true once: what a cooperative system waits
+     * for before the next program runs. A runtime that cannot yield never does.
+     */
+    default boolean gaveUpTurn() {
+        return false;
+    }
+
+    /**
      * Whether the program has ended for good without saying so, answered true once. A program of the machine's own
      * language tells the machine the moment it ends; one of another language cannot, so the tick asks when it finds
      * the program over.

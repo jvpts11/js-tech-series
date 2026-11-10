@@ -67,6 +67,14 @@ public final class LiveMedium {
         return media.complete() ? Answer.GONE : Answer.UNKNOWN;
     }
 
+    /**
+     * The same, for a session that is running: one brought over the network was never in a drive, and stands as long
+     * as the machine does.
+     */
+    public static Answer holding(@Nullable final Level level, final IOsHost machine, final LiveInstallState live) {
+        return live.overNetwork() ? Answer.PRESENT : holding(level, machine, live.distro());
+    }
+
     /** The distribution a live medium is of, or nothing when it is not a live medium at all. */
     public static LiveInstallState.Distro distroOf(final ResourceLocation os) {
         if (os == null) {

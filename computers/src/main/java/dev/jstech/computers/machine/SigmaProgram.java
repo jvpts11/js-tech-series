@@ -10,6 +10,7 @@ package dev.jstech.computers.machine;
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.hardware.IsaFit;
 import dev.jstech.computers.vm.listing.Shape;
+import dev.jstech.computers.vm.program.InputSent;
 import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.computers.vm.program.Values;
@@ -111,10 +112,41 @@ final class SigmaProgram implements IMachineRuntime {
         return this.process.heap().budget();
     }
 
-    /* A script stays up until it says it is done: one that called Program.Exit is over like any other. */
+    /*
+     * A script stays up until it says it is done: one that called Program.Exit is over like any other. A player's
+     * operating system stays up the same way, for as long as the machine runs it.
+     */
     @Override
     public boolean isService() {
-        return this.process.shape() == Shape.SCRIPT && !this.process.exited();
+        return (this.process.shape() == Shape.SCRIPT || this.process.shape() == Shape.SYSTEM)
+                && !this.process.exited();
+    }
+
+    /** Hands a player's operating system what came from the monitor; false when it was not taken. */
+    public boolean deliverInput(final InputSent sent) {
+        return this.process.deliverInput(sent);
+    }
+
+    @Override
+    public boolean gaveUpTurn() {
+        return this.process.takeGaveUpTurn();
+    }
+
+    /** Whether the program's own object has that method, taking that many arguments, for a question to ask it. */
+    boolean answers(final String method, final int arguments) {
+        final Values.Obj script = this.process.script();
+        return script != null && this.process.answers(script, method, arguments);
+    }
+
+    /** Whether it is running instructions now, so it cannot be asked anything until it stops. */
+    boolean busy() {
+        return this.process.busy();
+    }
+
+    /** Asks the program's own object that question at once, for at most {@code budget} instructions. */
+    Process.Answer answer(final String method, final List<Object> arguments, final int budget) {
+        final Values.Obj script = this.process.script();
+        return script == null ? Process.Answer.NONE : this.process.answer(script, method, arguments, budget);
     }
 
     @Override
@@ -133,11 +165,13 @@ final class SigmaProgram implements IMachineRuntime {
     @Override
     public int farewell(final int budget) {
         final Values.Obj script = this.process.script();
+        // A system is told the machine is going down; a script, that it is being stopped.
+        final String told = this.process.shape() == Shape.SYSTEM ? "OnShutdown" : "OnDestroy";
         if (budget <= 0 || script == null || this.process.state() == Process.State.HALTED
-                || !this.process.declares(script, "OnDestroy")) {
+                || !this.process.declares(script, told)) {
             return 0;
         }
-        this.process.beginFirst(script, "OnDestroy");
+        this.process.beginFirst(script, told);
         return this.paced(budget);
     }
 

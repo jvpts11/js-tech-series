@@ -93,6 +93,7 @@ final class MachineCalls {
         BusCalls.bind(bindings);
         RedstoneCalls.bind(bindings);
         CraftingCalls.bind(bindings);
+        SystemCalls.bind(bindings);
         return Map.copyOf(bindings);
     }
 

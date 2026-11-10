@@ -76,6 +76,10 @@ public final class MachineListing {
         if (program == null || program.entryPoint() == null) {
             return null;
         }
+        // A player's operating system is booted by the machine, never started at a prompt.
+        if (program.shape() == Shape.SYSTEM) {
+            return null;
+        }
         final Process process = new Process(program, heapBytes, hostOf(machine));
         process.setArgs(arguments);
         if (program.shape() == Shape.CONSOLE) {
@@ -90,6 +94,36 @@ public final class MachineListing {
             }
         }
         return new SigmaProgram(process, loaded.speedPercent());
+    }
+
+    /**
+     * Boots the operating system a listing holds (computers/docs/design/player-systems.md): its object is made and told
+     * the machine is coming up, through its {@code OnBoot}.
+     *
+     * @return the system running, or null when the listing holds no system this machine runs
+     */
+    @Nullable
+    public static SigmaProgram boot(final String listing, final long heapBytes, final BlockEntity machine) {
+        final Loaded loaded = load(listing, machine);
+        final ProgramImage program = loaded.problems().isEmpty() ? loaded.image() : null;
+        if (program == null || program.entryPoint() == null || program.shape() != Shape.SYSTEM) {
+            return null;
+        }
+        final Process process = new Process(program, heapBytes, hostOf(machine));
+        final Values.Obj system = process.create(program.entryPoint());
+        if (system == null) {
+            return null;
+        }
+        if (process.declares(system, "OnBoot")) {
+            process.begin(system, "OnBoot");
+        }
+        return new SigmaProgram(process, loaded.speedPercent());
+    }
+
+    /** Whether the listing holds an operating system, which a machine boots rather than starts at a prompt. */
+    public static boolean holdsSystem(final String listing) {
+        final Loaded loaded = load(listing, null);
+        return loaded.image() != null && loaded.image().shape() == Shape.SYSTEM;
     }
 
     /**

@@ -70,7 +70,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:remote_control",
-  "order": 74,
+  "order": 76,
   "section": "jsc:network_tools",
   "title": "jsc.guide.remote_control.title"
 }

@@ -8,9 +8,11 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.Process;
 import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.ProgramTable;
+import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.api.language.ILanguageProcess;
 import dev.jstech.core.schedule.TickScheduler;
 import java.util.ArrayList;
@@ -97,9 +99,9 @@ final class ProgramTicker {
         return count <= 0 ? 0 : this.farewellLeft / count;
     }
 
-    /** Runs one tick; see {@link MachinePrograms#tick(int, long, ToLongFunction, Predicate)}. */
+    /** Runs one tick; see {@link MachinePrograms#tick(int, long, ToLongFunction, Predicate, SchedulePolicy)}. */
     void tick(final int credits, final long deadline, final ToLongFunction<String> stock,
-              final Predicate<IProgramParent.Remote> waiting) {
+              final Predicate<IProgramParent.Remote> waiting, final SchedulePolicy policy) {
         this.farewellLeft = MachinePrograms.FAREWELL_PER_TICK;
         if (stock != null && !this.table.isEmpty()) {
             this.deliverWatched(stock);
@@ -114,14 +116,48 @@ final class ProgramTicker {
         final List<ProgramEntry<IMachineRuntime>> done = new ArrayList<>();
         this.sort(waiting, ready, done);
         this.table.removeAll(done);
+        // With no scheduler, only the system itself and the program in front run; the others wait, as on DOS.
+        if (policy.kind() == SchedulePolicy.Kind.NONE) {
+            ready.removeIf(one -> one.id() != MachinePrograms.SYSTEM_PID && !this.focus.holds(one.id()));
+        }
         if (ready.isEmpty()) {
             return;
         }
         final List<Slot> slots = new ArrayList<>(ready.size());
         for (final ProgramEntry<IMachineRuntime> one : ready) {
-            slots.add(new Slot(one.process(), one.priority() == ProgramPriority.LOW));
+            slots.add(Slot.of(one.process(), one.priority(), policy.highTwice()));
         }
-        this.scheduler.run(slots, available, System::nanoTime, deadline);
+        final ProgramEntry<IMachineRuntime> system = this.table.byId(MachinePrograms.SYSTEM_PID);
+        if (policy.chooses() && system != null && system.process() instanceof SigmaProgram chooser) {
+            this.scheduler.runChosen(slots, available, System::nanoTime, deadline, policy.slice(),
+                    (running, budget) -> choose(chooser, ready, running, budget));
+        } else if (policy.kind() == SchedulePolicy.Kind.COOPERATIVE) {
+            this.scheduler.runInTurn(slots, available, System::nanoTime, deadline);
+        } else {
+            this.scheduler.run(slots, available, System::nanoTime, deadline, policy.slice());
+        }
+    }
+
+    /*
+     * Asks the system which program has the next slice, handing its OnSchedule the numbers of the programs still
+     * running; an answer that is no number of theirs chooses none, and the slice goes to the next in turn.
+     */
+    private static TickScheduler.Choice choose(final SigmaProgram system,
+                                               final List<ProgramEntry<IMachineRuntime>> ready,
+                                               final List<Integer> running, final int budget) {
+        final Values.ListValue numbers = new Values.ListValue();
+        for (final int place : running) {
+            numbers.items().add(ready.get(place).id());
+        }
+        final Process.Answer answer = system.answer(SchedulePolicy.ON_SCHEDULE, List.of(numbers), budget);
+        if (answer.given() && answer.value() instanceof Number chosen) {
+            for (final int place : running) {
+                if (ready.get(place).id() == chosen.intValue()) {
+                    return new TickScheduler.Choice(place, answer.used());
+                }
+            }
+        }
+        return new TickScheduler.Choice(-1, answer.used());
     }
 
     /**
@@ -213,12 +249,26 @@ final class ProgramTicker {
         };
     }
 
-    /** One program as the tick deals it out: what it runs and whether it may be passed over. */
-    private record Slot(ILanguageProcess process, boolean low) implements TickScheduler.ITask {
+    /**
+     * One program as the tick deals it out: what it runs, whether it may be passed over, how many slices it takes a
+     * round, and whether it waits for every other program to wait.
+     */
+    private record Slot(IMachineRuntime process, boolean low, int weight, boolean idle) implements TickScheduler.ITask {
+
+        /* A program at its priority; a high one takes two slices a round only where the kernel says so. */
+        static Slot of(final IMachineRuntime process, final ProgramPriority priority, final boolean highTwice) {
+            return new Slot(process, priority == ProgramPriority.LOW,
+                    highTwice && priority == ProgramPriority.HIGH ? 2 : 1, priority == ProgramPriority.IDLE);
+        }
 
         @Override
         public int step(final int budget) {
             return this.process.step(budget);
+        }
+
+        @Override
+        public boolean yielded() {
+            return this.process.gaveUpTurn();
         }
     }
 }

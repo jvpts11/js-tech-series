@@ -49,6 +49,8 @@ public final class BuiltIns {
     private final NamedType funcType;
     private final NamedType scriptType;
     private final NamedType scriptBase;
+    private final NamedType systemType;
+    private final NamedType desktopType;
 
     public BuiltIns() {
         this.objectType = this.declare("object", NamedType.Kind.CLASS);
@@ -60,6 +62,8 @@ public final class BuiltIns {
         this.funcType = this.declare("Func", NamedType.Kind.DELEGATE, "T", "R");
         this.scriptType = this.declare("IScript", NamedType.Kind.INTERFACE);
         this.scriptBase = this.declare("Script", NamedType.Kind.CLASS);
+        this.systemType = this.declare("ISystem", NamedType.Kind.INTERFACE);
+        this.desktopType = this.declare("IDesktop", NamedType.Kind.INTERFACE);
 
         this.fillString();
         this.fillCharacter(this.declare("char", NamedType.Kind.CLASS));
@@ -68,6 +72,17 @@ public final class BuiltIns {
         this.fillDelegates();
         this.fillScript();
         this.fillDeclared();
+        this.fillSystem();
+    }
+
+    /** The interface an operating system a player writes implements (computers/docs/design/player-systems.md). */
+    public NamedType systemType() {
+        return this.systemType;
+    }
+
+    /** The interface a desktop a player writes implements. */
+    public NamedType desktopType() {
+        return this.desktopType;
     }
 
     /** The root of every reference type. */
@@ -156,8 +171,20 @@ public final class BuiltIns {
     private static final String UI = "System.UI";
     private static final String SOUND = "System.Sound";
 
+    /** What a system and a desktop both say of themselves, as text: their name, their version, who wrote them. */
+    public static final List<String> SYSTEM_TEXTS = List.of("Name", "Version", "Author");
+    /**
+     * What a desktop says of its look and its programs, as text: the word on its menu button, where its panel is
+     * ("top" or "bottom"), the style of its window frames, its colours, the folder of its icons, its wallpaper, and its
+     * programs, by name and in their order on the menu.
+     */
+    public static final List<String> DESKTOP_TEXTS = List.of("Menu", "PanelAt", "Frames", "DesktopColour",
+            "PanelColour", "TextColour", "AccentColour", "WindowColour", "TitleColour", "Icons", "Wallpaper",
+            "Programs");
+
     private static final Map<String, String> HOMES = Map.ofEntries(
             Map.entry("IScript", SYSTEM), Map.entry("Script", SUBSET_LIBRARY),
+            Map.entry("ISystem", SystemApi.OS), Map.entry("IDesktop", SystemApi.OS),
             Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
             Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS));
 
@@ -170,7 +197,9 @@ public final class BuiltIns {
      */
     private static final Set<String> SUBSET_TYPES =
             Set.of("Console", "File", "Program", "Math", "Convert", "Time", "Computer", "Script", "Sound", "Speaker",
-                    "Random", "FILE", "Bus", "BusItem", "Redstone", "CraftInterface", "CraftRouter");
+                    "Random", "FILE", "Bus", "BusItem", "Redstone", "CraftInterface", "CraftRouter",
+                    // The calls of a player's system (computers/docs/design/player-systems.md), as Standard has them.
+                    "Boot", "Panic", "Screen", "Processes", "Disk", "Memory", "Services", "Drivers", "Desktop");
 
     /**
      * The type known by exactly {@code fullName}, its namespace in front ({@code System.IO.Console}),
@@ -242,7 +271,7 @@ public final class BuiltIns {
     /** Every namespace the language has, System first, for a list that offers them. */
     public List<String> namespaces() {
         return List.of(SYSTEM, COLLECTIONS, IO, UTILS, MACHINE, NETWORK, OPERATIONS, EXECUTION, UI, SOUND,
-                SUBSET_LIBRARY);
+                SystemApi.OS, SUBSET_LIBRARY);
     }
 
     private static String key(final String name, final int arity) {
@@ -377,6 +406,31 @@ public final class BuiltIns {
         this.method(this.scriptBase, "OnInit", ITypeSymbol.Primitive.VOID, PUBLIC_VIRTUAL);
         this.method(this.scriptBase, "OnTick", ITypeSymbol.Primitive.VOID, PUBLIC_VIRTUAL);
         this.method(this.scriptBase, "OnDestroy", ITypeSymbol.Primitive.VOID, PUBLIC_VIRTUAL);
+    }
+
+    /*
+     * What a player's system and desktop declare and answer to. Filled after the library, whose eras, instruction
+     * sets, kernels and input events they speak of. The values are properties written with an arrow, which the build
+     * reads; the system's methods are what the machine calls on it.
+     */
+    private void fillSystem() {
+        final ITypeSymbol text = this.stringType;
+        for (final String name : SYSTEM_TEXTS) {
+            this.property(this.systemType, name, text, PUBLIC);
+            this.property(this.desktopType, name, text, PUBLIC);
+        }
+        this.property(this.systemType, "Era", this.types.get(key("Era", 0)), PUBLIC);
+        this.property(this.systemType, "Isa", this.types.get(key("Isa", 0)), PUBLIC);
+        this.property(this.systemType, "MemoryMb", ITypeSymbol.Primitive.INT, PUBLIC);
+        this.property(this.systemType, "Kernel", this.types.get(key("Kernel", 0)), PUBLIC);
+        this.method(this.systemType, "OnBoot", ITypeSymbol.Primitive.VOID, PUBLIC);
+        this.method(this.systemType, "OnTick", ITypeSymbol.Primitive.VOID, PUBLIC);
+        this.method(this.systemType, "OnInput", ITypeSymbol.Primitive.VOID, PUBLIC,
+                this.types.get(key("InputEvent", 0)));
+        this.method(this.systemType, "OnShutdown", ITypeSymbol.Primitive.VOID, PUBLIC);
+        for (final String name : DESKTOP_TEXTS) {
+            this.property(this.desktopType, name, text, PUBLIC);
+        }
     }
 
     /**

@@ -88,6 +88,21 @@ public enum FileSystemType implements IStableName {
         };
     }
 
+    /**
+     * The file system of the kind a player's kernel chose (computers/docs/design/player-systems.md) on a machine of
+     * {@code era}: of the DOS kind, FAT as MC-DOS formats; of the POSIX kind, ext as a distribution does; and a flat
+     * one with no folders, FAT16, the plainest.
+     */
+    public static FileSystemType chosen(final String kind, final Era era) {
+        final boolean vintage = era == null || era.isAtMost(HardwareEra.VINTAGE);
+        final boolean legacy = era == null || era.isAtMost(HardwareEra.LEGACY);
+        return switch (kind) {
+            case "dos" -> vintage ? FAT16 : FAT32;
+            case "posix" -> legacy ? EXT3 : EXT4;
+            default -> FAT16;
+        };
+    }
+
     /** The file system called {@code name}; an unknown one reads as FAT16, the oldest. */
     public static FileSystemType byName(final String name) {
         return NAMES.byName(name, FAT16);

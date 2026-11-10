@@ -8,7 +8,9 @@
 package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.client.os.PlayerPages;
 import dev.jstech.computers.client.os.SceneHandoff;
+import dev.jstech.computers.os.player.PlayerBoot;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.layout.SystemBootLayout;
 import dev.jstech.computers.menu.MonitorSessionMenu;
@@ -217,6 +219,13 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
         // A sudden shutdown left disks unclean: the system checks them before anything else of its own.
         if (checking()) {
             DiskCheckArt.draw(g, font, this.check, x, y, this.ticks, MotionClock.loopTicks());
+            return;
+        }
+
+        // A player's system comes up on its own page, as its code draws it (computers/docs/design/player-systems.md).
+        final PlayerBoot player = this.endsDark ? null : PlayerPages.booting(this.getMenu().hostPos());
+        if (player != null) {
+            PlayerPages.boot(g, font, x, y, player);
             return;
         }
 

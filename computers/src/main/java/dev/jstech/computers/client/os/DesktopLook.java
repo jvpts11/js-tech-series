@@ -9,6 +9,8 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.player.PlayerDesktop;
+import dev.jstech.computers.os.player.PlayerSystems;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.HashMap;
@@ -89,7 +91,13 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, @Nullable Os
 
     /** The look of the desktop under that id, or the plainest one when none was registered for it. */
     public static DesktopLook of(@Nullable final ResourceLocation desktopId) {
-        return desktopId == null ? FALLBACK : BY_DESKTOP.getOrDefault(desktopId, FALLBACK);
+        final DesktopLook registered = desktopId == null ? null : BY_DESKTOP.get(desktopId);
+        if (registered != null) {
+            return registered;
+        }
+        // A player's desktop is made while the game runs, so its look is made from what it declared.
+        final PlayerDesktop player = PlayerSystems.knownDesktop(desktopId);
+        return player == null ? FALLBACK : PlayerLooks.of(player);
     }
 
     /** Says how the desktop under that id looks, replacing whatever was said for it before. */

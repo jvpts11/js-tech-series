@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.machine.PlayerMemory;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.operation.payload.crash.MemoryAskPayload;
 import dev.jstech.computers.os.IOsHost;
@@ -181,9 +182,39 @@ final class MachineKernel {
     }
 
     /**
+     * Brings an operating system a player wrote down on its own page (computers/docs/design/player-systems.md), even in
+     * the middle of its coming up, which ends there. The page stands for the reboot the system asked for, or until the
+     * player restarts the machine.
+     *
+     * @return whether it went down: a machine that is off, or already down or on its way, stays as it is
+     */
+    boolean panic(final IKernelHost machine, final ServerLevel level, final CrashPage page) {
+        final long now = level.getGameTime();
+        if (!machine.isManualOn() || phases.goingDown() || page(now) != null) {
+            return false;
+        }
+        if (phases.booting()) {
+            phases.endBoot();
+        }
+        crash.begin(page, now, false);
+        machine.goDown(now, page.totalTicks());
+        if (crash.held()) {
+            phases.holdDown();
+        }
+        if (machine.onScreen()) {
+            final BlockPos pos = machine.getBlockPos();
+            ScreenSessions.eachAtMachine(level, pos,
+                    (player, monitor) -> MonitorBlock.openCrash(player, level, monitor, pos, machine));
+        }
+        machine.setChanged();
+        return true;
+    }
+
+    /**
      * A program asked the machine for memory it no longer has: a window opened on its desktop, a program started at its
      * prompt, a service. A system of the Frames family does not refuse it: it goes down on its blue page. A Unix kernel
      * ends what holds the most until it fits, and panics only once nothing is left to end. MC-DOS and MC-NET refuse it.
+     * A player's system on a kernel of its own does as that kernel chose, or as the system answers.
      *
      * @param needMb what the program asks for on top of what the machine holds, or zero when it holds it already
      * @return whether there is room for it now
@@ -192,6 +223,15 @@ final class MachineKernel {
         final OsDef system = running(machine);
         if (system == null) {
             return false;
+        }
+        final String rule = PlayerMemory.rule(machine);
+        if (rule != null) {
+            return switch (PlayerMemory.whenShort(machine, program, needMb, rule)) {
+                case ROOM -> true;
+                case REFUSED, DOWN -> false;
+                case END_HEAVIEST -> oom.makeRoom(machine, level, system, program, needMb,
+                        phases.upFor(level.getGameTime()), () -> takePid(machine));
+            };
         }
         return switch (system.platform()) {
             case FRAMES -> {

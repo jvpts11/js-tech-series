@@ -119,7 +119,7 @@ public final class HelpViewerApp implements IDesktopApp {
             case FRAMES_10, FRAMES_11 -> HelpForm.GET_HELP;
             case KDE -> HelpForm.KDE;
             // Quince's Help Center and Help Viewer were the same plain reader of pages GNOME's is.
-            case GNOME, CINNAMON, QUINCE_CLASSIC, QUINCE_X -> HelpForm.YELP;
+            case GNOME, CINNAMON, QUINCE_CLASSIC, QUINCE_X, PLAYER -> HelpForm.YELP;
             case CDE -> HelpForm.CDE;
         };
     }

@@ -86,7 +86,7 @@
   ],
   "icon": "jsc:disk_vaultis_trench_20m",
   "id": "jsc:items_as_data",
-  "order": 11,
+  "order": 13,
   "section": "jsc:how_things_are_counted",
   "title": "jsc.guide.items_as_data.title"
 }

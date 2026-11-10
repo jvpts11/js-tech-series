@@ -265,7 +265,12 @@ public final class ComputerConsoleState {
 
     /** Boots a live medium: starts a fresh manual installation of the given distribution. */
     public void startLiveInstall(final LiveInstallState.Distro distro) {
-        this.liveInstall = new LiveInstallState(distro);
+        startLiveInstall(distro, false);
+    }
+
+    /** The same, from the medium or, with {@code overNetwork}, from the Mirror through the network boot. */
+    public void startLiveInstall(final LiveInstallState.Distro distro, final boolean overNetwork) {
+        this.liveInstall = new LiveInstallState(distro, overNetwork);
     }
 
     /** Ends the live session (the install completed, or the medium was abandoned). */

@@ -271,7 +271,7 @@
     "jsc:psu_2000p",
     "jsc:psu_3000p"
   ],
-  "order": 22,
+  "order": 24,
   "section": "jsc:hardware",
   "title": "jsc.guide.power_supplies.title"
 }

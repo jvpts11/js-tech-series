@@ -87,7 +87,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:states_and_queues",
-  "order": 116,
+  "order": 118,
   "section": "jsc:operations",
   "title": "jsc.guide.states_and_queues.title"
 }

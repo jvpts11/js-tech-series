@@ -82,7 +82,7 @@ public final class DriveTable {
         char letter = 'C';
         if (!system.isEmpty()) {
             final OsDef os = computer.installedOs();
-            final KernelDef kernel = os != null ? OsRegistry.getKernel(os.kernelId()) : null;
+            final KernelDef kernel = os != null ? OsRegistry.kernelOf(os) : null;
             final FilesystemKind kind = kernel != null ? kernel.filesystem() : FilesystemKind.NONE;
             table.add(new Drive('C', system, kind, computer::setChanged));
             letter = 'D';

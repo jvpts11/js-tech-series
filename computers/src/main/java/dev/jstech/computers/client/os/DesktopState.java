@@ -40,6 +40,8 @@ import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.os.player.PlayerDesktop;
+import dev.jstech.computers.os.player.PlayerSystems;
 import dev.jstech.computers.power.UpsReading;
 import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -145,6 +147,8 @@ final class DesktopState {
     private final DeskTrash trash = new DeskTrash(this);
     /** Quince's menu bar and Dock, on the desktops of Quince's systems. */
     private final QuinceShell quinceShell = new QuinceShell(this);
+    /** The panel and the menu of a desktop a player wrote. */
+    private final PlayerShell playerShell = new PlayerShell(this);
     /** The memory blocks a classic Quince system was told to open programs in, by program id path. */
     private final Map<String, QuincePartitions.Partition> partitions = new HashMap<>();
     /** The machine's memory as the desktop weighs it, and the crash of a cooperative kernel run out of it. */
@@ -792,6 +796,16 @@ final class DesktopState {
 
     QuinceShell quinceShell() {
         return quinceShell;
+    }
+
+    /** The desktop a player wrote that this is, or null when it is one of the mod's. */
+    @Nullable
+    PlayerDesktop player() {
+        return is(PanelStyle.PLAYER) ? PlayerSystems.knownDesktop(desktopId) : null;
+    }
+
+    PlayerShell playerShell() {
+        return playerShell;
     }
 
     /** The memory blocks a classic Quince system opens programs in, by program id path, as the machine keeps them. */

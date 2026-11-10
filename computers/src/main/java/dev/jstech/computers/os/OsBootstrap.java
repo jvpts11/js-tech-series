@@ -11,6 +11,7 @@ import dev.jstech.computers.hardware.IsaTranslators;
 import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.computers.os.player.PlayerSystem;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
@@ -106,7 +107,14 @@ public final class OsBootstrap {
             new KernelDef(rl("quince_classic"), SchedulerKind.COOPERATIVE, FilesystemKind.HIERARCHICAL,
                     ShellFamily.POSIX),
             // Wallace, Quince's kernel from Quince OS X on: preemptive, and POSIX under the desktop, with zsh.
-            new KernelDef(rl("wallace"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX));
+            new KernelDef(rl("wallace"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX),
+            /*
+             * What a player's system with a kernel of its own stands on (computers/docs/design/player-systems.md):
+             * its scheduler, its file system and its shell are the system's own choices, read from what it declared,
+             * so this kernel only says what such a system is to everything that asks the registry.
+             */
+            new KernelDef(PlayerSystem.OWN_KERNEL, SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL,
+                    ShellFamily.POSIX));
 
     /**
      * The built-in operating systems, in install order. A static list (built eagerly) so datagen (lang and the

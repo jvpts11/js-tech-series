@@ -135,7 +135,7 @@
     "jsc:standard_ups",
     "jsc:advanced_ups"
   ],
-  "order": 23,
+  "order": 25,
   "section": "jsc:hardware",
   "title": "jsc.guide.upses.title"
 }

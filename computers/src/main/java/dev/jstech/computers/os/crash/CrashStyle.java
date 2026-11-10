@@ -50,7 +50,13 @@ public enum CrashStyle implements IStableId {
      * OpenBSD's panic, which stops in the kernel debugger at {@code ddb>} and waits there, never rebooting by itself,
      * until the player types {@code boot reboot} (computers/docs/design/operating-systems.md).
      */
-    DDB(9);
+    DDB(9),
+
+    /**
+     * The page of an operating system a player wrote (computers/docs/design/player-systems.md), in its own colours: its
+     * message, the error with its file and line, the system and its author, and the reboot it asked for.
+     */
+    PLAYER(10);
 
     private static final StableIds<CrashStyle> IDS = StableIds.of(CrashStyle.class);
 
@@ -67,7 +73,7 @@ public enum CrashStyle implements IStableId {
 
     /** Whether this is one of the Frames family's pages, which the hardware turns red. */
     public boolean frames() {
-        return this != CONSOLE && this != DDB && !quince();
+        return this != CONSOLE && this != DDB && this != PLAYER && !quince();
     }
 
     /** Whether this page stands until the player restarts the machine: Quince's, and OpenBSD's debugger. */

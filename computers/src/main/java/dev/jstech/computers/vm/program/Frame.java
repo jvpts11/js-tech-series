@@ -24,6 +24,10 @@ final class Frame {
     int at;
     /** Set on all but the last handler of a run, whose answers nobody is waiting for. */
     boolean discard;
+    /** Set on a call the machine waits on for its answer, which is kept here when it returns. */
+    boolean asked;
+    boolean answered;
+    Object answer;
 
     Frame(final MethodImage method, final Object self) {
         this.method = method;

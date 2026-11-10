@@ -141,9 +141,24 @@ public sealed interface IDecl extends INode {
     record Accessor(Set<Modifier> modifiers, int line, int column) implements INode {
     }
 
-    /** A property in the short form; either accessor may be absent. */
+    /**
+     * A property in the short form, either accessor of which may be absent, or written with an arrow,
+     * {@code string Name => "Lantern OS";}: read only, its {@code value} one the compiler knows, so reading it once
+     * when the object is made is reading it every time.
+     */
     record PropertyDecl(Set<Modifier> modifiers, TypeRef type, String name, Accessor getter, Accessor setter,
-                        int line, int column) implements IMemberDecl {
+                        IExpr value, int line, int column) implements IMemberDecl {
+
+        /** A property in the short form, with no arrow. */
+        public PropertyDecl(final Set<Modifier> modifiers, final TypeRef type, final String name,
+                            final Accessor getter, final Accessor setter, final int line, final int column) {
+            this(modifiers, type, name, getter, setter, null, line, column);
+        }
+
+        /** Whether it was written with an arrow and its value, rather than with get and set. */
+        public boolean arrow() {
+            return this.value != null;
+        }
     }
 
     /** An event, whose type is a delegate. */

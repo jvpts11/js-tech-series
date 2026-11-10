@@ -103,6 +103,9 @@ public final class MachineServices implements IHost {
     @Nullable
     private CraftingService crafting;
 
+    @Nullable
+    private PlayerSystemService system;
+
     /**
      * The services of {@code machine}: a computer, or one server in a rack. A rack answers for whichever of its servers
      * is being addressed, so each server keeps services of its own, and its programs are run with the rack addressing
@@ -387,6 +390,17 @@ public final class MachineServices implements IHost {
     public CraftingService crafting() {
         this.follow();
         return this.crafting;
+    }
+
+    /**
+     * What the machine does for the operating system a player wrote that runs on it (computers/docs/design/
+     * player-systems.md): made once, since it keeps nothing of its own beyond the machine it serves.
+     */
+    public PlayerSystemService system() {
+        if (this.system == null) {
+            this.system = new PlayerSystemService(this.machine, this);
+        }
+        return this.system;
     }
 
     /** Makes the shell and what goes through it again when the machine is in another world than before. */

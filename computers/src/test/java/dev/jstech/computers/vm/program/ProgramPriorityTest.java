@@ -28,5 +28,12 @@ class ProgramPriorityTest {
         assertEquals("low", ProgramPriority.LOW.serializedName());
         assertEquals("medium", ProgramPriority.MEDIUM.serializedName());
         assertEquals("high", ProgramPriority.HIGH.serializedName());
+        assertEquals("idle", ProgramPriority.IDLE.serializedName());
+    }
+
+    @Test
+    void named_readsAPlayersSystemsWords() {
+        assertEquals(ProgramPriority.MEDIUM, ProgramPriority.named("normal"));
+        assertEquals(ProgramPriority.IDLE, ProgramPriority.named("Idle"));
     }
 }

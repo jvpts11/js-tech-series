@@ -320,7 +320,8 @@ public final class OsMotions {
             case FRAMES_7 -> FRAMES_7;
             case FRAMES_10 -> FRAMES_10;
             case FRAMES_11 -> FRAMES_11;
-            case KDE -> period ? KDE_CLASSIC : PLASMA;
+            // A player's desktop moves its windows as the mod's own do, so it moves as Plasma.
+            case KDE, PLAYER -> period ? KDE_CLASSIC : PLASMA;
             case GNOME -> period ? GNOME_CLASSIC : GNOME;
             case CINNAMON -> CINNAMON;
             case CDE -> CDE;

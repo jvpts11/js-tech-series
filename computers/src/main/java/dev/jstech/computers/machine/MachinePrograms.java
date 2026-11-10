@@ -13,6 +13,7 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.InputSent;
 import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.ProgramPriority;
@@ -74,6 +75,13 @@ public final class MachinePrograms {
     private static final TextKey STARTED_AS = TextKey.of("jsc.service.programs.started_as", "%s started as %s");
     private static final TextKey NOT_BROUGHT_BACK = TextKey.of("jsc.service.programs.not_brought_back",
             "the programs that were running could not be brought back from the save");
+    private static final TextKey A_SYSTEM = TextKey.of("jsc.service.programs.a_system",
+            "%s is an operating system: install it, and the machine boots it");
+    private static final TextKey NOT_A_SYSTEM = TextKey.of("jsc.service.programs.not_a_system",
+            "%s holds no operating system this machine runs");
+
+    /** The process an operating system a player wrote runs as: the machine's process 1. */
+    public static final int SYSTEM_PID = 1;
 
     /** The most a program may ask for, because a script is not what a machine's memory is for. */
     public static final int MAX_HEAP_MB = 64;
@@ -339,6 +347,9 @@ public final class MachinePrograms {
         final long heapBytes = (long) room * 1024 * 1024;
         final List<String> given = args == null ? List.of() : args;
         final IMachineRuntime process;
+        if (runner == null && MachineListing.holdsSystem(runnable)) {
+            return Started.failed(A_SYSTEM.with(name));
+        }
         if (runner == null) {
             process = MachineListing.start(runnable, heapBytes, machine, given);
             if (process == null) {
@@ -360,6 +371,49 @@ public final class MachinePrograms {
         final long now = machine.getLevel() == null ? ProgramEntry.STARTED_UNKNOWN : machine.getLevel().getGameTime();
         this.table.add(new ProgramEntry<>(id, name, runnable, room, process, parent, args, priority, now));
         return new Started(id, STARTED_AS.with(name, id));
+    }
+
+    /**
+     * Boots an operating system a player wrote from its listing (computers/docs/design/player-systems.md): it runs as
+     * the machine's process 1, holding up to {@code heapMb} of memory, and is told the machine is coming up. One that
+     * was running is stopped first.
+     */
+    public Started boot(final String name, final String listing, final int heapMb, final BlockEntity machine) {
+        final int room = Math.max(1, heapMb);
+        final SigmaProgram system = MachineListing.boot(listing, (long) room * 1024 * 1024, machine);
+        if (system == null) {
+            return Started.failed(NOT_A_SYSTEM.with(name));
+        }
+        this.stop(SYSTEM_PID);
+        system.identify(SYSTEM_PID);
+        final long now = machine.getLevel() == null ? ProgramEntry.STARTED_UNKNOWN : machine.getLevel().getGameTime();
+        this.table.add(new ProgramEntry<>(SYSTEM_PID, name, listing, room, system, IProgramParent.NONE, List.of(),
+                ProgramPriority.MEDIUM, now));
+        return new Started(SYSTEM_PID, STARTED_AS.with(name, SYSTEM_PID));
+    }
+
+    /** Gives the program of that number another priority; false when there is none of that number here. */
+    public boolean setPriority(final int id, final ProgramPriority priority) {
+        final ProgramEntry<IMachineRuntime> one = this.table.byId(id);
+        if (one == null) {
+            return false;
+        }
+        this.table.add(new ProgramEntry<>(one.id(), one.file(), one.binary(), one.heapMb(), one.process(),
+                one.parent(), one.args(), priority, one.startedAt()));
+        return true;
+    }
+
+    /** The operating system a player wrote running here as process 1, or null when none is. */
+    @Nullable
+    SigmaProgram system() {
+        final ProgramEntry<IMachineRuntime> one = this.byId(SYSTEM_PID);
+        return one != null && one.process() instanceof SigmaProgram system ? system : null;
+    }
+
+    /** Hands the system a player wrote what came from the monitor; false when none runs or it was not taken. */
+    public boolean deliverSystemInput(final InputSent sent) {
+        final SigmaProgram system = this.system();
+        return system != null && system.deliverInput(sent);
     }
 
     /**
@@ -510,7 +564,16 @@ public final class MachinePrograms {
      */
     public void tick(final int credits, final long deadline, final ToLongFunction<String> stock,
                      final Predicate<IProgramParent.Remote> waiting) {
-        this.ticker.tick(credits, deadline, stock, waiting);
+        this.tick(credits, deadline, stock, waiting, SchedulePolicy.MOD);
+    }
+
+    /**
+     * The same, with the credits handed out as {@code policy} says: as the mod's systems do, or as the kernel of a
+     * player's system says (computers/docs/design/player-systems.md).
+     */
+    public void tick(final int credits, final long deadline, final ToLongFunction<String> stock,
+                     final Predicate<IProgramParent.Remote> waiting, final SchedulePolicy policy) {
+        this.ticker.tick(credits, deadline, stock, waiting, policy);
     }
 
     // across a reload

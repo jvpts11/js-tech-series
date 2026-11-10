@@ -30,7 +30,7 @@ public final class SigmaImages {
     }
 
     /** The picture at that path, asking the machine for it the first time; empty while it is on its way or missing. */
-    static Optional<PixImage> get(final BlockPos host, final String path) {
+    public static Optional<PixImage> get(final BlockPos host, final String path) {
         if (path.isEmpty()) {
             return Optional.empty();
         }
@@ -59,7 +59,8 @@ public final class SigmaImages {
      * Draws a picture inside a rectangle, scaled by whole pixels where it fits and centred, a run of colour at a time;
      * a picture bigger than the rectangle is shown at its own size from its top left, clipped by the rectangle.
      */
-    static void paint(final GuiGraphics g, final PixImage image, final int x, final int y, final int w, final int h) {
+    public static void paint(final GuiGraphics g, final PixImage image, final int x, final int y, final int w,
+                             final int h) {
         final int scale = Math.max(1, Math.min(w / image.width(), h / image.height()));
         final int ox = x + Math.max(0, (w - image.width() * scale) / 2);
         final int oy = y + Math.max(0, (h - image.height() * scale) / 2);

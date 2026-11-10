@@ -30,7 +30,15 @@ public enum Shape {
      * <p>It is set up once, called again every tick for as long as the machine is on, told when it is
      * being stopped, and comes back with the machine after a reload.
      */
-    SCRIPT("script");
+    SCRIPT("script"),
+
+    /**
+     * An operating system a player wrote (computers/docs/design/player-systems.md).
+     *
+     * <p>The machine runs it as its process 1 when it boots it: it is told the machine is coming up, called every
+     * tick, handed what is typed and clicked, and told when the machine goes down. It is never started at a prompt.
+     */
+    SYSTEM("system");
 
     /** The word the assembly writes on its start line. */
     private final String written;
@@ -46,6 +54,9 @@ public enum Shape {
 
     /** The shape that word names, or {@link #SCRIPT} for anything unrecognised. */
     public static Shape of(final String written) {
-        return CONSOLE.written.equals(written) ? CONSOLE : SCRIPT;
+        if (CONSOLE.written.equals(written)) {
+            return CONSOLE;
+        }
+        return SYSTEM.written.equals(written) ? SYSTEM : SCRIPT;
     }
 }

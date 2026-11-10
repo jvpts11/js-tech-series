@@ -232,6 +232,10 @@ final class DesktopInput {
             volume.close();
             return Click.TAKEN;
         }
+        if (key == 256 && desktop.playerShell().menuOpen()) {
+            desktop.playerShell().close();
+            return Click.TAKEN;
+        }
         // The power dialog decides the fate of the whole machine, so it keeps the keyboard as it keeps the mouse.
         if (desktop.power().keyPressed(key)) {
             return Click.TAKEN;
@@ -294,7 +298,8 @@ final class DesktopInput {
         final double y = view.localY(absY);
         final VolumePopup volume = desktop.volume();
         final int panelY = view.panelOnTop() ? 0 : view.height() - view.panelBand();
-        if (dy != 0 && desktop.panelStyle() != PanelStyle.CDE && (volume.over(x, y) || !desktop.gnome2()
+        if (dy != 0 && desktop.panelStyle() != PanelStyle.CDE && desktop.panelStyle() != PanelStyle.PLAYER
+                && (volume.over(x, y) || !desktop.gnome2()
                 && desktop.tray().onSpeaker(x, y, view.width(), panelY, view.panelOnTop()))) {
             volume.nudge(dy > 0 ? 1 : -1);
             return true;
@@ -322,6 +327,10 @@ final class DesktopInput {
         // A menu down from Quince's bar takes the next click wherever it lands.
         if (desktop.quince() && desktop.quinceShell().menuOpen()) {
             return desktop.quinceShell().click(x, y, button, view.width(), view.height());
+        }
+        // So does the menu of a player's desktop.
+        if (desktop.player() != null && desktop.playerShell().menuOpen()) {
+            return desktop.playerShell().click(x, y, view.height());
         }
         // The volume control takes the next click like a menu: on it, it turns what it lands on; anywhere else it goes.
         final VolumePopup volume = desktop.volume();
@@ -383,6 +392,10 @@ final class DesktopInput {
         // Quince's bar and Dock are its whole panel: a click anywhere else goes on to the windows and the desktop.
         if (desktop.quince()) {
             return desktop.quinceShell().click(mouseX, mouseY, button, view.width(), view.height());
+        }
+        // A player's desktop has its name and its clock on its one panel, and nothing else to click.
+        if (desktop.player() != null) {
+            return desktop.playerShell().click(mouseX, mouseY, view.height());
         }
         // The panel's menu takes the next click wherever it lands: on an entry it runs it, anywhere else it closes.
         final PanelMenu panelMenu = desktop.panelMenu();

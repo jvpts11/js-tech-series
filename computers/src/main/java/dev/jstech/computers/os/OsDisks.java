@@ -16,7 +16,11 @@ import dev.jstech.computers.os.boot.SystemWelcome;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.os.player.PlayerDesktop;
+import dev.jstech.computers.os.player.PlayerSystem;
+import dev.jstech.computers.os.player.PlayerSystems;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
@@ -26,6 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 import java.util.List;
+import java.util.Map;
 import java.util.function.IntFunction;
 import java.util.function.ObjIntConsumer;
 import org.jetbrains.annotations.Nullable;
@@ -255,8 +260,30 @@ public final class OsDisks {
         }
         writeLoader(updated, def);
         shipPackages(updated, def);
+        layPlayerFiles(updated, def);
         setDiskInSlot.accept(updated, targetSlot);
         return true;
+    }
+
+    /*
+     * A system a player wrote brings its own files (computers/docs/design/player-systems.md), put in the folder it
+     * was built from, so every path it names, its listing and its pictures, is where it says. Nothing for the mod's.
+     */
+    private static void layPlayerFiles(final ItemStack disk, final OsDef def) {
+        final PlayerSystem system = PlayerSystems.withFiles(def.id());
+        if (system == null) {
+            return;
+        }
+        FilesystemContents fs = disk.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY)
+                .withDir(system.folder());
+        for (final Map.Entry<String, String> file : system.files().entrySet()) {
+            final String path = system.folder() + "/" + file.getKey();
+            for (int slash = path.indexOf('/'); slash > 0; slash = path.indexOf('/', slash + 1)) {
+                fs = fs.withDir(path.substring(0, slash));
+            }
+            fs = fs.with(new StoredFile(path, FileType.ofPath(path), file.getValue()));
+        }
+        disk.set(ComputingComponents.FILESYSTEM.get(), fs);
     }
 
     /**
@@ -306,7 +333,7 @@ public final class OsDisks {
          * Written in the kind of filesystem the system's own kernel gives it, not in the one every system
          * used to have. A flat disk keeps its loader at the root because it has no folder to keep it in.
          */
-        final KernelDef kernel = OsRegistry.getKernel(def.kernelId());
+        final KernelDef kernel = OsRegistry.kernelOf(def);
         DiskFilesystem.write(disk, loader, FileType.SYS, def.displayName() + " loader",
                 Long.MAX_VALUE,
                 kernel != null ? kernel.filesystem() : FilesystemKind.HIERARCHICAL);
@@ -346,7 +373,8 @@ public final class OsDisks {
     /**
      * The desktop environment a machine boots into: the OS's bundled one (the Frames editions), else
      * the first desktop-environment package installed on it (a Linux distribution after its desktop
-     * package went in), else null (a TTY-only or network OS).
+     * package went in), else a desktop a player wrote and installed from the Mirror, else null (a TTY-only or
+     * network OS).
      */
     @Nullable
     public static ResourceLocation installedDesktopId(
@@ -368,6 +396,12 @@ public final class OsDisks {
             if (spec != null && spec.kind() == ProgramKind.DESKTOP_ENVIRONMENT
                     && OsRegistry.getDesktop(rl) != null) {
                 return rl;
+            }
+        }
+        for (final ComputerConsoleState.Community theirs : console.community()) {
+            final ResourceLocation desktop = PlayerDesktop.idOf(theirs.name());
+            if (PlayerSystems.knownDesktop(desktop) != null) {
+                return desktop;
             }
         }
         return null;

@@ -12,10 +12,9 @@ import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.machine.DriveTable;
-import dev.jstech.computers.os.FileSystemType;
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.program.ComputerConsoleState;
@@ -321,8 +320,7 @@ public final class DefragRunner {
         final long freeMb = DriveTable.freeWeightOf(disk) / StorageKey.MB_EQ_PER_ITEM * mbPerItem;
         final int used = capacityMb <= 0L ? 0 : (int) Math.min(Corruption.WHOLE,
                 (capacityMb - Math.min(capacityMb, freeMb)) * Corruption.WHOLE / capacityMb);
-        final String fileSystem = os == null ? "" : FileSystemType.installedBy(os.platform(), os.familyRank(),
-                os.installMode() != InstallMode.GUIDED, os.id().getPath(), host.installedEra()).displayName();
+        final String fileSystem = os == null ? "" : OsRegistry.fileSystemOf(os, host.installedEra()).displayName();
         final UUID volume = disk.get(ComputingComponents.DISK_VOLUME.get());
         return new DefragState.Disk(index, look.drive(index), kindOf(spec), fileSystem,
                 capacityMb, freeMb, used, health.damage(), health.badSectors(), health.dead(),

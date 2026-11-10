@@ -207,7 +207,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:games",
-  "order": 72,
+  "order": 74,
   "section": "jsc:desktop_apps",
   "title": "jsc.guide.games.title"
 }

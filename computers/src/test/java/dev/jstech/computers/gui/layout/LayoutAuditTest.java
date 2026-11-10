@@ -68,7 +68,8 @@ class LayoutAuditTest {
             "PrintedPaperLayout",
             "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
             "EffectsPageLayout", "TransitionPanelLayout", "WorkbenchLayout",
-            "SoftwareManagerLayout", "UpdateManagerLayout");
+            "SoftwareManagerLayout", "UpdateManagerLayout", "NetBootLayout", "PlayerPagesLayout",
+            "PlayerPanelLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -231,6 +232,13 @@ class LayoutAuditTest {
         c.add(AuditCase.onTheGlass("FirmwareLayout(cli)", FirmwareLayout.cliLayout()));
         c.add(AuditCase.onTheGlass("FirmwareLayout(bios)", FirmwareLayout.biosLayout()));
         c.add(AuditCase.onTheGlass("FirmwareLayout(uefi)", FirmwareLayout.uefiLayout()));
+        c.add(AuditCase.onTheGlass("NetBootLayout(agent)", NetBootLayout.agent()));
+        c.add(AuditCase.onTheGlass("PlayerPagesLayout(boot)", PlayerPagesLayout.boot()));
+        c.add(AuditCase.onTheGlass("PlayerPagesLayout(panic)", PlayerPagesLayout.panic()));
+        // A player's desktop is as wide as its glass; the smallest one, with the panel along the top and the foot.
+        c.add(AuditCase.onTheGlass("PlayerPanelLayout(top)", PlayerPanelLayout.layout(320, 200, 24, true, 8, 16, 8)));
+        c.add(AuditCase.onTheGlass("PlayerPanelLayout(foot)",
+                PlayerPanelLayout.layout(320, 200, 24, false, 8, 16, 8)));
         // The studio is a resizable window: its smallest, its default and a large size, then its dialogs.
         c.add(new AuditCase("IsmsLayout(min)", IsmsLayout.layout(IsmsLayout.MIN_W, IsmsLayout.MIN_H,
                 IsmsLayout.EXPLORER_W, IsmsLayout.defaultEditorH(IsmsLayout.MIN_H)), false));

@@ -1,0 +1,209 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.system_processes_library.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_processes_library.table1",
+      "heads": [
+        "jsc.guide.system_processes_library.table1_head1",
+        "jsc.guide.system_processes_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Processes.Start(path), Processes.Start(path, args)"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Processes.Stop(pid, signal)"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Processes.List()"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Processes.SetPriority(pid, level)"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Processes.Yield()"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Processes.Current"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_processes_library.table2",
+      "heads": [
+        "jsc.guide.system_processes_library.table2_head1",
+        "jsc.guide.system_processes_library.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Disk.FreeMb, Disk.SizeMb"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Disk.Mounted()"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.TotalMb, Memory.FreeMb"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.HeldBy(pid)"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.Ledger()"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.Refuse, Memory.GoDown"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table2_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.system_processes_library.table3",
+      "heads": [
+        "jsc.guide.system_processes_library.table3_head1",
+        "jsc.guide.system_processes_library.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Services.Register(name, path)"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Services.Start(name), Services.Stop(name)"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Services.Status(name)"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table3_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Drivers.Devices()"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table3_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Drivers.Has(class)"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table3_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Device.Name, Device.Class"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table3_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.system_processes_library.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.system_processes_library.fix1",
+          "problem": "jsc.guide.system_processes_library.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:system_os_library"
+      ]
+    }
+  ],
+  "id": "jsc:system_processes_library",
+  "order": 417,
+  "section": "jsc:library_systems",
+  "title": "jsc.guide.system_processes_library.title"
+}

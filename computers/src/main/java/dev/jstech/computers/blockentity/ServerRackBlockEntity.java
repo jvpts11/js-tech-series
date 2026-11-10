@@ -2575,14 +2575,14 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         final LiveInstallState live = liveInstall();
         /* Asked, never acted on: see the same method on a personal computer for why that matters. */
         return (live != null
-                && LiveMedium.holding(level, this, live.distro()) != LiveMedium.Answer.GONE)
+                && LiveMedium.holding(level, this, live) != LiveMedium.Answer.GONE)
                 || installedOsId() != null;
     }
 
     @Override
     public boolean settleLiveInstall() {
         final LiveInstallState live = liveInstall();
-        if (live == null || LiveMedium.holding(level, this, live.distro())
+        if (live == null || LiveMedium.holding(level, this, live)
                 != LiveMedium.Answer.GONE) {
             return false;
         }

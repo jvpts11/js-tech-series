@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.crash;
 
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPage;
+import dev.jstech.computers.os.crash.PlayerPanic;
 import dev.jstech.computers.os.crash.CrashStyle;
 import dev.jstech.core.text.TextBounds;
 import java.util.ArrayList;
@@ -62,9 +63,42 @@ public record OpenCrashPayload(BlockPos hostPos, BlockPos monitorPos, CrashPage 
         }
         buf.writeVarInt(page.totalTicks());
         buf.writeBoolean(page.holdsOnKey());
+        buf.writeBoolean(page.player() != null);
+        if (page.player() != null) {
+            writePlayer(buf, page.player());
+        }
         buf.writeVarInt(p.remainingTicks());
         buf.writeBoolean(p.held());
         buf.writeBoolean(p.endsDark());
+    }
+
+    private static void writePlayer(final RegistryFriendlyByteBuf buf, final PlayerPanic panic) {
+        buf.writeUtf(TextBounds.clip(panic.system(), MAX_FIELD), MAX_FIELD);
+        buf.writeUtf(TextBounds.clip(panic.author(), MAX_FIELD), MAX_FIELD);
+        buf.writeUtf(TextBounds.clip(panic.message(), MAX_LINE), MAX_LINE);
+        buf.writeVarInt(panic.trace().size());
+        for (final String line : panic.trace()) {
+            buf.writeUtf(TextBounds.clip(line, MAX_LINE), MAX_LINE);
+        }
+        buf.writeVarInt(panic.pid());
+        buf.writeVarInt(panic.memoryMb());
+        buf.writeUtf(TextBounds.clip(panic.background(), MAX_FIELD), MAX_FIELD);
+        buf.writeUtf(TextBounds.clip(panic.text(), MAX_FIELD), MAX_FIELD);
+        buf.writeUtf(TextBounds.clip(panic.logo(), MAX_LINE), MAX_LINE);
+        buf.writeInt(panic.rebootSeconds());
+    }
+
+    private static PlayerPanic readPlayer(final RegistryFriendlyByteBuf buf) {
+        final String system = buf.readUtf(MAX_FIELD);
+        final String author = buf.readUtf(MAX_FIELD);
+        final String message = buf.readUtf(MAX_LINE);
+        final int count = Math.min(buf.readVarInt(), PlayerPanic.MOST_TRACE);
+        final List<String> trace = new ArrayList<>(count);
+        for (int i = 0; i < count; i++) {
+            trace.add(buf.readUtf(MAX_LINE));
+        }
+        return new PlayerPanic(system, author, message, trace, buf.readVarInt(), buf.readVarInt(),
+                buf.readUtf(MAX_FIELD), buf.readUtf(MAX_FIELD), buf.readUtf(MAX_LINE), buf.readInt());
     }
 
     private static OpenCrashPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -82,7 +116,8 @@ public record OpenCrashPayload(BlockPos hostPos, BlockPos monitorPos, CrashPage 
         }
         final int total = Math.max(1, buf.readVarInt());
         final boolean holds = buf.readBoolean();
-        final CrashPage page = new CrashPage(style, cause, stopCode, stopLine, part, lines, total, holds);
+        final PlayerPanic player = buf.readBoolean() ? readPlayer(buf) : null;
+        final CrashPage page = new CrashPage(style, cause, stopCode, stopLine, part, lines, total, holds, player);
         return new OpenCrashPayload(host, monitor, page, buf.readVarInt(), buf.readBoolean(), buf.readBoolean());
     }
 }

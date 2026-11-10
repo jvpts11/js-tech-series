@@ -12,6 +12,9 @@ import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.PackageService;
+import dev.jstech.computers.machine.PlayerBuilds;
+import dev.jstech.computers.sigma.DesktopFacts;
+import dev.jstech.computers.sigma.SystemFacts;
 import dev.jstech.computers.machine.ProgramService;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
@@ -174,6 +177,23 @@ public final class ServerCliComputer extends ServerCliNetwork {
     @Override
     public OpResult unpublishPackage(final String name) {
         return packages().mirror().unpublish(name);
+    }
+
+    @Override
+    public Kept keepSystem(final SystemFacts facts, final String folder, final Map<String, String> files) {
+        return host instanceof IOsHost machine ? PlayerBuilds.keepSystem(machine, level, facts, folder, files)
+                : Kept.refused(KEEPS_NOTHING.text());
+    }
+
+    @Override
+    public Kept keepDesktop(final DesktopFacts facts, final String folder, final Map<String, String> files) {
+        return PlayerBuilds.keepDesktop(level, facts, folder, files);
+    }
+
+    @Override
+    public Published publishSystems(final String folder) {
+        return host instanceof IOsHost machine ? PlayerBuilds.publish(machine, level, folder)
+                : Published.refused(KEEPS_NOTHING.text());
     }
 
     @Override

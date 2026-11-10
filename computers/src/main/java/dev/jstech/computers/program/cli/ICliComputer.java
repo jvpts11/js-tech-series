@@ -23,7 +23,7 @@ import java.util.Locale;
  * ordinary failure (unknown item, no network), so commands can print a clean message.
  */
 public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliOperations, ICliPackages,
-        ICliInstallation, ICliConfig, ICliRemote, ICliProcesses {
+        ICliInstallation, ICliConfig, ICliRemote, ICliProcesses, ICliSystems {
 
     /**
      * One server of the network: what it is called, how many items it is holding and how many it could.

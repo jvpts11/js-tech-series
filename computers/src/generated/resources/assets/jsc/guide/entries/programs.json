@@ -276,7 +276,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:programs",
-  "order": 67,
+  "order": 69,
   "section": "jsc:get_programs",
   "title": "jsc.guide.programs.title"
 }

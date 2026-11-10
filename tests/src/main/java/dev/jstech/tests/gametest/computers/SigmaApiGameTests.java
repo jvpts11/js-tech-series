@@ -601,7 +601,8 @@ public final class SigmaApiGameTests {
                     helper.assertTrue(installed.ok(), "it installs: " + installed.message());
                     final var known = computer.console().communityProgram("stockwatch");
                     helper.assertTrue(known != null, "the machine knows it has it");
-                    helper.assertTrue("PROGRAMS/stockwatch/stockwatch.asm".equals(known.entry()),
+                    // From the disk's root, wherever the prompt stood when it was installed.
+                    helper.assertTrue("/PROGRAMS/stockwatch/stockwatch.asm".equals(known.entry()),
                             "and knows what to run; got " + (known == null ? "" : known.entry()));
                     helper.assertTrue(shell.readFile(known.entry()).ok(),
                             "the listing is on the disk where it says it is");

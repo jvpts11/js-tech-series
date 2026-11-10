@@ -192,6 +192,7 @@ public final class ComputingClientSetup {
                             case BOOT_MENU -> new BootMenuScreen(menu, inv, title);
                             case KVM -> new KvmChannelScreen(menu, inv, title);
                             case SYSTEM_CRASH -> new CrashScreen(menu, inv, title);
+                            case PLAYER_SCREEN -> new PlayerTextScreen(menu, inv, title);
                             default -> new SystemBootScreen(menu, inv, title);
                         });
         event.register(ComputingMenus.DESKTOP_MENU.get(), DesktopScreen::new);

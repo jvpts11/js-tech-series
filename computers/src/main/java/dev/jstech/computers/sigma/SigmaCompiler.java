@@ -10,6 +10,7 @@ package dev.jstech.computers.sigma;
 import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.sigma.emit.Emitter;
+import dev.jstech.computers.sigma.sem.SystemDeclarations;
 import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmType;
@@ -33,11 +34,20 @@ public final class SigmaCompiler {
     private SigmaCompiler() {
     }
 
-    /** What compiling produced: the listing when it worked, and everything the compiler had to say. */
-    public record Result(String assembly, List<Diagnostic> diagnostics, boolean truncated) {
+    /**
+     * What compiling produced: the listing when it worked, everything the compiler had to say, and the system and
+     * the desktop the program declares, each null when it declares none.
+     */
+    public record Result(String assembly, List<Diagnostic> diagnostics, boolean truncated, SystemFacts system,
+                         DesktopFacts desktop) {
 
         public Result {
             diagnostics = List.copyOf(diagnostics);
+        }
+
+        /** What compiling produced, for a program that declares no system and no desktop. */
+        public Result(final String assembly, final List<Diagnostic> diagnostics, final boolean truncated) {
+            this(assembly, diagnostics, truncated, null, null);
         }
 
         /** Whether there is a listing to run. */
@@ -87,9 +97,34 @@ public final class SigmaCompiler {
      */
     public static Result compile(final List<SourceFile> sources, final String isa, final LanguageLevel level,
                                  final int version) {
+        return compile(sources, isa, SigmaSemantics.Options.program(level, version));
+    }
+
+    /**
+     * What the sources declare, a system or a desktop, read without making a listing: a desktop is a look and the
+     * programs that come with it, with nothing of its own to run. Its listing is null whatever is found.
+     */
+    public static Result declared(final List<SourceFile> sources) {
         final DiagnosticBag bag = new DiagnosticBag("");
-        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag,
-                SigmaSemantics.Options.program(level, version));
+        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag, SigmaSemantics.Options.check());
+        final SystemDeclarations systems = analysis.systems();
+        return new Result(null, bag.sorted(), bag.wasCapped(), systems == null ? null : systems.system(),
+                systems == null ? null : systems.desktop());
+    }
+
+    /**
+     * The same, started at the class called {@code entry}: one of the services a system holds in its own sources,
+     * which its build writes out as a listing of its own.
+     */
+    public static Result compileStartingAt(final List<SourceFile> sources, final String isa, final String entry) {
+        return compile(sources, isa, SigmaSemantics.Options.startingAt(LanguageLevel.SIGMA_SHARP,
+                SigmaVersions.NEWEST, entry));
+    }
+
+    private static Result compile(final List<SourceFile> sources, final String isa,
+                                  final SigmaSemantics.Options options) {
+        final DiagnosticBag bag = new DiagnosticBag("");
+        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag, options);
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }
@@ -99,7 +134,8 @@ public final class SigmaCompiler {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }
         program.setIsa(targetOf(program, isa), 1);
-        return new Result(AsmWriter.write(program), bag.sorted(), bag.wasCapped());
+        return new Result(AsmWriter.write(program), bag.sorted(), bag.wasCapped(), analysis.systems().system(),
+                analysis.systems().desktop());
     }
 
     /**
