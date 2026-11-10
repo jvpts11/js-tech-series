@@ -1,0 +1,19 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 6,
+      "item": "jsc:optical_fibre"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:om5_cable"
+    }
+  ]
+}

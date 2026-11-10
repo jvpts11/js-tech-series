@@ -1,0 +1,19 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 8,
+      "item": "jsc:optical_fibre"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:hpc_cable"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "jsc:wafer_saw",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:silicon_boule"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jscore:silicon_wafer"
+    }
+  ]
+}

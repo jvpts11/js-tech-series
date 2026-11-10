@@ -1,0 +1,43 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 8,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 2,
+      "item": "jsc:storage_sata"
+    },
+    {
+      "count": 4,
+      "item": "jsc:case_fan_advanced"
+    },
+    {
+      "count": 2,
+      "item": "jscore:steel_rod"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_supercomputer_node"
+    }
+  ]
+}

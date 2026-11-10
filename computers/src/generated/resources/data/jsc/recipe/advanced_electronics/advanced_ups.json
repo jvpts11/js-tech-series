@@ -1,0 +1,35 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 3,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_advanced"
+    },
+    {
+      "count": 5,
+      "item": "jsc:transformer"
+    },
+    {
+      "count": 5,
+      "item": "jscore:lead_acid_battery"
+    },
+    {
+      "count": 4,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_ups"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "type": "jsc:electrolytic_cell",
+  "fluid_inputs": [
+    {
+      "amount": 250,
+      "fluid": "jscore:battery_electrolyte"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:lithium_cobalt_oxide_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:coke_lump"
+    },
+    {
+      "count": 2,
+      "item": "jscore:aluminium_foil"
+    },
+    {
+      "count": 1,
+      "item": "jscore:copper_foil"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:lithium_ion_cell"
+    }
+  ]
+}

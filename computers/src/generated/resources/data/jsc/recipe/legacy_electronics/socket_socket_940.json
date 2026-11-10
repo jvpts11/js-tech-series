@@ -1,0 +1,27 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 11,
+      "item": "jscore:copper_foil"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    },
+    {
+      "count": 1,
+      "item": "jscore:steel_rod"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:socket_socket_940"
+    }
+  ]
+}

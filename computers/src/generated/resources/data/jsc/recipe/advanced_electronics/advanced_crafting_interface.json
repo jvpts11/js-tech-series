@@ -1,0 +1,27 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_advanced"
+    },
+    {
+      "count": 4,
+      "item": "jsc:memory_chip_advanced"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_crafting_interface"
+    }
+  ]
+}

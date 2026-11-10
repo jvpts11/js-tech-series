@@ -1,0 +1,15 @@
+{
+  "type": "jsc:induction_furnace",
+  "fluid_outputs": [
+    {
+      "amount": 100,
+      "id": "jscore:mercury"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:mercury_crushed"
+    }
+  ]
+}

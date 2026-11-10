@@ -1,0 +1,15 @@
+{
+  "type": "jsc:optical_polisher",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 4,
+      "id": "jsc:blank_disc"
+    }
+  ]
+}

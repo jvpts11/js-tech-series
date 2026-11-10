@@ -1,0 +1,45 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:copper_plate"
+    },
+    {
+      "count": 1,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 6,
+      "item": "jscore:aluminium_sheet"
+    },
+    {
+      "count": 3,
+      "item": "jsc:case_fan_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "type": "neoforge:components",
+      "components": {
+        "minecraft:potion_contents": {
+          "potion": "minecraft:water"
+        }
+      },
+      "count": 1,
+      "items": "minecraft:potion"
+    },
+    {
+      "count": 1,
+      "item": "jsc:thermal_paste"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:aqualoop_360_advanced"
+    }
+  ]
+}

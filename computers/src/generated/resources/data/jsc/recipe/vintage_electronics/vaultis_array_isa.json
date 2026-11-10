@@ -1,0 +1,31 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    },
+    {
+      "count": 4,
+      "item": "jsc:ceramic_capacitor"
+    },
+    {
+      "count": 4,
+      "item": "jscore:copper_foil"
+    },
+    {
+      "count": 1,
+      "item": "jscore:tin_nugget"
+    },
+    {
+      "count": 2,
+      "item": "jsc:controller_chip_vintage"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:vaultis_array_isa"
+    }
+  ]
+}

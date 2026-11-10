@@ -1,0 +1,43 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:populated_board_vintage"
+    },
+    {
+      "count": 2,
+      "item": "jsc:socket_socket_8"
+    },
+    {
+      "count": 8,
+      "item": "jsc:memory_slot_simm"
+    },
+    {
+      "count": 8,
+      "item": "jsc:memory_slot_edo"
+    },
+    {
+      "count": 8,
+      "item": "jsc:expansion_slot_pci"
+    },
+    {
+      "count": 2,
+      "item": "jsc:expansion_slot_isa"
+    },
+    {
+      "count": 4,
+      "item": "jsc:storage_ide"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_at"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:motherboard_eeb_vintage"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "S": {
+      "item": "jscore:steel_rod"
+    }
+  },
+  "pattern": [
+    "SMS",
+    " C "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:wafer_saw_wire_spool"
+  }
+}

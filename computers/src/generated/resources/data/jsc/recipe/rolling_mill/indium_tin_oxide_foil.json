@@ -1,0 +1,15 @@
+{
+  "type": "jsc:rolling_mill",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:indium_tin_oxide_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jscore:indium_tin_oxide_foil"
+    }
+  ]
+}

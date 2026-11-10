@@ -1,0 +1,15 @@
+{
+  "type": "jsc:optical_polisher",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:calcium_fluoride_boule"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 4,
+      "id": "jscore:calcium_fluoride_lens"
+    }
+  ]
+}

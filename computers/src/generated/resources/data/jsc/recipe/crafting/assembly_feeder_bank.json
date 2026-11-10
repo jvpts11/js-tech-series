@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "P": {
+      "item": "jscore:steel_plate"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "MCM"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:assembly_feeder_bank"
+  }
+}

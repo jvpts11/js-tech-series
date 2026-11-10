@@ -1,0 +1,39 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 2,
+      "item": "jsc:controller_chip_standard"
+    },
+    {
+      "count": 4,
+      "item": "jscore:antenna"
+    },
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jscore:led"
+    },
+    {
+      "count": 1,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:standard_access_point"
+    }
+  ]
+}

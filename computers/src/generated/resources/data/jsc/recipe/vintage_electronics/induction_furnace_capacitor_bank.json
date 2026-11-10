@@ -1,0 +1,23 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:machine_casing"
+    },
+    {
+      "count": 4,
+      "item": "minecraft:copper_ingot"
+    },
+    {
+      "count": 4,
+      "item": "jscore:tin_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:induction_furnace_capacitor_bank"
+    }
+  ]
+}

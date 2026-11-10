@@ -1,0 +1,27 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "minecraft:iron_ingot"
+    },
+    {
+      "count": 2,
+      "item": "minecraft:copper_ingot"
+    },
+    {
+      "count": 2,
+      "item": "minecraft:redstone"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:glass"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:machine_terminal"
+    }
+  ]
+}

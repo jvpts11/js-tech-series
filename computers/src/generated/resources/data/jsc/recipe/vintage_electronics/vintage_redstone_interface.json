@@ -1,0 +1,27 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "minecraft:redstone"
+    },
+    {
+      "count": 1,
+      "item": "jscore:glass_lens"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:vintage_redstone_interface"
+    }
+  ]
+}

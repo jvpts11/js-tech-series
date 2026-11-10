@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    "III",
+    " C ",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:rolling_mill_roller_table"
+  }
+}

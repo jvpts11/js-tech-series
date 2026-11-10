@@ -1,0 +1,31 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:populated_board_legacy"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_quince_card"
+    },
+    {
+      "count": 2,
+      "item": "jsc:memory_slot_sdram"
+    },
+    {
+      "count": 1,
+      "item": "jsc:storage_ide"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_atx20"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:quince_board_qrusset_g3"
+    }
+  ]
+}

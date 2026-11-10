@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "B": {
+      "item": "minecraft:brick"
+    },
+    "R": {
+      "item": "jsc:refractory_casing"
+    }
+  },
+  "pattern": [
+    "BBB",
+    "BRB",
+    "BBB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:coke_oven_oven_chamber"
+  }
+}

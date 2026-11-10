@@ -1,0 +1,21 @@
+{
+  "type": "jsc:crystal_puller",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:gallium_ingot"
+    }
+  ],
+  "matter_inputs": [
+    {
+      "amount": 1000,
+      "material": "jscore:nitrogen"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:gallium_nitride_boule"
+    }
+  ]
+}

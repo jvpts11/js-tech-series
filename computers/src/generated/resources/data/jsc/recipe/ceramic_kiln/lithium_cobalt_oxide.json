@@ -1,0 +1,19 @@
+{
+  "type": "jsc:ceramic_kiln",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:lithium_hydroxide_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:cobalt_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:lithium_cobalt_oxide_dust"
+    }
+  ]
+}

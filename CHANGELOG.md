@@ -595,6 +595,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its status, set with `note(Text)`, which the standard machine screen shows in its lamp's tooltip and its terminal's
   face shows under the status word, as a machine says why it will not work what it was given; `TextCodecs.CODEC` keeps
   a `Text` as data. Experimental.
+- (Core) Recipes made from exactly what they take: J's Core's API is at version 52. `ProcessingKind.exactInputs()`
+  says a kind's recipes are made only from exactly what they take: while a slot or a tank holds anything the recipe
+  does not take, the machine makes nothing of it, so no recipe is made from part of another's inputs. `exact()` says
+  whether a kind is so. Experimental.
 - (Computers) Wi-Fi cards: J's Computers' API is at version 17. `ExpansionCardKind.WIFI` is the kind of the Wi-Fi
   cards, which the Personal, Crafting and Cluster Management Computers alone seat. Experimental.
 - (Computers) Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
@@ -2483,6 +2487,27 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) A motherboard can come with no firmware on it, and its tooltip says so: a computer built on it powers up
   and turns its fans and nothing more, its assembly screen says NO FIRMWARE and its monitor that its board has none,
   until a Preinstaller writes it. A board's tooltip names its firmware: a text BIOS, a blue BIOS or a UEFI.
+- (Computers) Recipes for everything the mod has: every part, computer, server, rack, peripheral, medium, cable,
+  router, bus, card, cooler, UPS and rack unit is made at the Electronics Workbench of its era, or by that era's
+  Electronics Assembly Line, from the chain's parts, by the rule its kind has in the design: a motherboard from its
+  populated boards and its components, a processor or a graphics card from its microarchitecture's chips, a computer
+  as its empty case. The Crafting Computer and the Cluster Management Computer are an empty Personal Computer of the
+  same case with its era's card in it for good; a computer with parts inside is not taken. Quince's logic boards and
+  machines follow the real machines. Every cable recipe gives 8. The chain's machines have theirs, from the ore to the
+  chip, and the benches and the machines' blocks theirs, the mechanical ones at the Crafting Table, as do the Vent
+  Panel and the Guide to Operations. No two recipes a machine or a bench runs take the same things.
+- (Computers) The chips of every microarchitecture: a processor, graphics, hashing or mobile chip of each era's
+  dies, and its mask; the Vintage's Layouts, each chip's drawing cut in PVC film, from which the Vintage's
+  Lithography Station writes a mask on a mask blank; the masks and finished wafers of the laser diodes and the LEDs.
+  The board's components join the chain, sixty of them: the processor sockets, three of them Quince's, the memory and
+  expansion slots, the drive connectors and the power connectors; and each era's populated board, its etched board
+  with its controllers, its clock and its passives; and the copper coil.
+- (Computers) A chip is made layer by layer: a wafer goes from a Lithography Station, which exposes a layer through
+  its mask, to the Plasma Etcher, the Ion Implanter and the Deposition Chamber and back, two layers in the Vintage to
+  eight in the Advanced, each step with the gases and liquids of its era, and its tooltip names its chip, its layer
+  and the machine it goes to next. The Packaging Line cuts the finished wafer into its chips, eight small or four big.
+- (Computers) The Air Separation Unit takes in the air itself and gives nitrogen, oxygen, argon and krypton.
+- (Core) Glass is one of the series' materials, made into lenses.
 - (Core) The generic ores of the electronics chain's metals are drawn as the minerals they are mined from: lead as
   galena, zinc as sphalerite, nickel as garnierite, aluminium as bauxite, tantalum as coltan, chromium as chromite,
   manganese as rhodochrosite, mercury as cinnabar, cobalt as cobaltite with its pink bloom, silver native, zirconium as
@@ -3480,6 +3505,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole blocks.
 
 ### Changed
+- (Computers) The chain's machines, as the benches, make a recipe only from exactly what it takes: while an inlet
+  holds anything the recipe does not take, the machine makes nothing of it.
 - (Computers) Computers draw energy, switched off, lets the chain's machines run free of energy too.
 - (Computers) A one-block computer broken gives itself back whole, once: one item with
   every part in its seat and its name, whose tooltip lists the parts and what it still lacks to run, and which stands

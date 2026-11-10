@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "O": {
+      "item": "jsc:copper_coil"
+    },
+    "S": {
+      "item": "jscore:stainless_steel_plate"
+    },
+    "T": {
+      "item": "jsc:transformer"
+    },
+    "V": {
+      "item": "jsc:vacuum_casing"
+    }
+  },
+  "pattern": [
+    "SOS",
+    " V ",
+    " T "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:deposition_chamber_sputter_chamber"
+  }
+}

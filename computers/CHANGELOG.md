@@ -481,6 +481,26 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A motherboard can come with no firmware on it, and its tooltip says so: a computer built on it powers up
   and turns its fans and nothing more, its assembly screen says NO FIRMWARE and its monitor that its board has none,
   until a Preinstaller writes it. A board's tooltip names its firmware: a text BIOS, a blue BIOS or a UEFI.
+- Recipes for everything the mod has: every part, computer, server, rack, peripheral, medium, cable,
+  router, bus, card, cooler, UPS and rack unit is made at the Electronics Workbench of its era, or by that era's
+  Electronics Assembly Line, from the chain's parts, by the rule its kind has in the design: a motherboard from its
+  populated boards and its components, a processor or a graphics card from its microarchitecture's chips, a computer
+  as its empty case. The Crafting Computer and the Cluster Management Computer are an empty Personal Computer of the
+  same case with its era's card in it for good; a computer with parts inside is not taken. Quince's logic boards and
+  machines follow the real machines. Every cable recipe gives 8. The chain's machines have theirs, from the ore to the
+  chip, and the benches and the machines' blocks theirs, the mechanical ones at the Crafting Table, as do the Vent
+  Panel and the Guide to Operations. No two recipes a machine or a bench runs take the same things.
+- The chips of every microarchitecture: a processor, graphics, hashing or mobile chip of each era's
+  dies, and its mask; the Vintage's Layouts, each chip's drawing cut in PVC film, from which the Vintage's
+  Lithography Station writes a mask on a mask blank; the masks and finished wafers of the laser diodes and the LEDs.
+  The board's components join the chain, sixty of them: the processor sockets, three of them Quince's, the memory and
+  expansion slots, the drive connectors and the power connectors; and each era's populated board, its etched board
+  with its controllers, its clock and its passives; and the copper coil.
+- A chip is made layer by layer: a wafer goes from a Lithography Station, which exposes a layer through
+  its mask, to the Plasma Etcher, the Ion Implanter and the Deposition Chamber and back, two layers in the Vintage to
+  eight in the Advanced, each step with the gases and liquids of its era, and its tooltip names its chip, its layer
+  and the machine it goes to next. The Packaging Line cuts the finished wafer into its chips, eight small or four big.
+- The Air Separation Unit takes in the air itself and gives nitrogen, oxygen, argon and krypton.
 - A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
@@ -528,6 +548,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its autocrafting.
 
 ### Changed
+- The chain's machines, as the benches, make a recipe only from exactly what it takes: while an inlet
+  holds anything the recipe does not take, the machine makes nothing of it.
 - Computers draw energy, switched off, lets the chain's machines run free of energy too.
 - A one-block computer broken gives itself back whole, once: one item with
   every part in its seat and its name, whose tooltip lists the parts and what it still lacks to run, and which stands

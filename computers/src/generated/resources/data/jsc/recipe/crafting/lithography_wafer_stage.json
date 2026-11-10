@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:clean_room_casing"
+    },
+    "G": {
+      "item": "minecraft:polished_granite"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    }
+  },
+  "pattern": [
+    " M ",
+    "GCG",
+    "G G"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:lithography_wafer_stage"
+  }
+}

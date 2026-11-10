@@ -1,0 +1,39 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:populated_board_legacy"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_lga_775"
+    },
+    {
+      "count": 2,
+      "item": "jsc:memory_slot_ddr"
+    },
+    {
+      "count": 2,
+      "item": "jsc:memory_slot_ddr2"
+    },
+    {
+      "count": 4,
+      "item": "jsc:expansion_slot_pcie"
+    },
+    {
+      "count": 2,
+      "item": "jsc:storage_ide"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_atx20"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:motherboard_atx_legacy_lga775"
+    }
+  ]
+}

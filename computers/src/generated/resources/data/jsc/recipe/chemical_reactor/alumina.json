@@ -1,0 +1,19 @@
+{
+  "type": "jsc:chemical_reactor",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:aluminium_crushed"
+    },
+    {
+      "count": 1,
+      "item": "jscore:caustic_soda_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:alumina_dust"
+    }
+  ]
+}

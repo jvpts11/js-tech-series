@@ -1,0 +1,27 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:clean_room_casing"
+    },
+    {
+      "count": 2,
+      "item": "jsc:transformer"
+    },
+    {
+      "count": 2,
+      "item": "jscore:glass_lens"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:lithography_krf_laser"
+    }
+  ]
+}

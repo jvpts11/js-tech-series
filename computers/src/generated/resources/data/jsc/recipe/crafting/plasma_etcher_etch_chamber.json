@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "O": {
+      "item": "jsc:copper_coil"
+    },
+    "T": {
+      "item": "jsc:transformer"
+    },
+    "V": {
+      "item": "jsc:vacuum_casing"
+    }
+  },
+  "pattern": [
+    "GOG",
+    " V ",
+    " T "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:plasma_etcher_etch_chamber"
+  }
+}

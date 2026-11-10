@@ -110,6 +110,6 @@ public final class ChainBenches {
     /* The kind of recipe of the parts of {@code era}, worked first by its own bench. */
     private static ProcessingKind parts(final Era era, final BlockEntry<WorkbenchBlock> bench) {
         return CONTENT.processing(era.path() + "_electronics", ChainParts.englishName(era) + " Electronics", bench)
-                .runsOn(JsEnergy.ENERGY);
+                .runsOn(JsEnergy.ENERGY).exactInputs();
     }
 }

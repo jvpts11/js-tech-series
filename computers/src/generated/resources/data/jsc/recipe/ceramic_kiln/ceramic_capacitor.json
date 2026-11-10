@@ -1,0 +1,19 @@
+{
+  "type": "jsc:ceramic_kiln",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:alumina_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:nickel_foil"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:ceramic_capacitor"
+    }
+  ]
+}

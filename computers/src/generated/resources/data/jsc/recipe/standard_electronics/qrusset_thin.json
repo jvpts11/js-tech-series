@@ -1,0 +1,35 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:led_screen"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:glass_pane"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:qrusset_thin"
+    }
+  ]
+}

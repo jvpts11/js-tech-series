@@ -1,0 +1,23 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:lcd_screen"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_transition"
+    },
+    {
+      "count": 2,
+      "item": "jscore:polycarbonate_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:transition_monitor"
+    }
+  ]
+}

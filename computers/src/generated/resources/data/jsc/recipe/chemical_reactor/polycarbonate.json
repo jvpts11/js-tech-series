@@ -1,0 +1,27 @@
+{
+  "type": "jsc:chemical_reactor",
+  "fluid_inputs": [
+    {
+      "amount": 500,
+      "fluid": "jscore:phenol"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:coke_lump"
+    }
+  ],
+  "matter_inputs": [
+    {
+      "amount": 250,
+      "material": "jscore:chlorine"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:polycarbonate_sheet"
+    }
+  ]
+}

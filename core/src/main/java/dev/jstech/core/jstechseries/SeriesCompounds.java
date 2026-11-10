@@ -53,6 +53,7 @@ public final class SeriesCompounds {
     public static final TextKey CALCIUM_FLUORIDE_NAME = TextKey.of("jscore.material.calcium_fluoride",
             "Calcium Fluoride");
     public static final TextKey WOOD_PULP_NAME = TextKey.of("jscore.material.wood_pulp", "Wood Pulp");
+    public static final TextKey GLASS_NAME = TextKey.of("jscore.material.glass", "Glass");
     public static final TextKey PHENOLIC_RESIN_NAME = TextKey.of("jscore.material.phenolic_resin", "Phenolic Resin");
     public static final TextKey EPOXY_RESIN_NAME = TextKey.of("jscore.material.epoxy_resin", "Epoxy Resin");
     public static final TextKey POLYCARBONATE_NAME = TextKey.of("jscore.material.polycarbonate", "Polycarbonate");
@@ -108,6 +109,12 @@ public final class SeriesCompounds {
     /* Wood's fibres, its cellulose with what is left of the rest: a mixture, with no one formula. */
     public static final Material WOOD_PULP = Materials.material(id("wood_pulp"), MaterialKind.NONMETAL_SOLID,
             WOOD_PULP_NAME).colour(0xE8DCC0).declare();
+    /*
+     * The game's glass ground and polished into the lenses of microscopes and the first lithography: soda-lime glass,
+     * a mixture with no one formula. It is not a crystal, but it takes the forms a crystal is cut into.
+     */
+    public static final Material GLASS = Materials.material(id("glass"), MaterialKind.CRYSTAL, GLASS_NAME)
+            .colour(0xD8ECF2).declare();
     /** Bakelite, the first plastic: phenol and formaldehyde, the brown board of the first circuits. */
     public static final Material PHENOLIC_RESIN = compound("phenolic_resin", MaterialKind.POLYMER,
             PHENOLIC_RESIN_NAME, 0x7A4A22, "(C₆H₆O·CH₂O)ₙ");

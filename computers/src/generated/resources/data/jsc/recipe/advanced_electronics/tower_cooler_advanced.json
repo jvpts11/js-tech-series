@@ -1,0 +1,27 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "jscore:aluminium_sheet"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_rod"
+    },
+    {
+      "count": 1,
+      "item": "jsc:case_fan_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:thermal_paste"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:tower_cooler_advanced"
+    }
+  ]
+}

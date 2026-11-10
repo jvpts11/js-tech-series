@@ -8,6 +8,7 @@
 package dev.jstech.computers.datagen;
 
 import dev.jstech.computers.datagen.advancement.JscAdvancementTabs;
+import dev.jstech.computers.datagen.recipe.ComputersRecipes;
 import dev.jstech.computers.os.OsBootstrap;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
@@ -39,6 +40,7 @@ public final class JscDataGenerators {
                 .alsoNaming(JscAdvancementTabs::translations);
         data.server(new JscAdvancementProvider(data.output(), data.lookup(), data.existingFiles()));
         data.server(new ConditionalAdvancementProvider(data.output(), data.lookup(), JscAdvancementTabs::all));
+        data.server(new ComputersRecipes(data.output(), data.lookup()));
         data.check();
     }
 

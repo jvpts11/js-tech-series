@@ -1,0 +1,15 @@
+{
+  "type": "jsc:grinder",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:fluorspar_crystal"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:fluorspar_dust"
+    }
+  ]
+}

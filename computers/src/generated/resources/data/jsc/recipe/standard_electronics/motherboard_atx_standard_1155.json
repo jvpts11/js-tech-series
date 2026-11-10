@@ -1,0 +1,35 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:populated_board_standard"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_lga_1155"
+    },
+    {
+      "count": 4,
+      "item": "jsc:memory_slot_ddr3"
+    },
+    {
+      "count": 4,
+      "item": "jsc:expansion_slot_pcie"
+    },
+    {
+      "count": 2,
+      "item": "jsc:storage_sata"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_atx24"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:motherboard_atx_standard_1155"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_advanced"
+    },
+    {
+      "count": 7,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_hub"
+    }
+  ]
+}

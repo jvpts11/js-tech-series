@@ -1,0 +1,35 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:etched_board_legacy"
+    },
+    {
+      "count": 4,
+      "item": "jsc:ceramic_capacitor"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_foil"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_legacy"
+    },
+    {
+      "count": 2,
+      "item": "jsc:memory_chip_legacy"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:crafting_table_card"
+    }
+  ]
+}

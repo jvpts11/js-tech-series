@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "R": {
+      "item": "jscore:steel_rod"
+    },
+    "W": {
+      "item": "jscore:copper_wire"
+    }
+  },
+  "pattern": [
+    "WRW",
+    "WCW",
+    " R "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:coil_winder_supply_spool"
+  }
+}

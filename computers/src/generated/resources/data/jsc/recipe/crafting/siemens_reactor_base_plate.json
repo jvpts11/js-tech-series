@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "R": {
+      "item": "jsc:refractory_casing"
+    },
+    "T": {
+      "item": "jsc:transformer"
+    },
+    "W": {
+      "item": "jscore:copper_wire"
+    }
+  },
+  "pattern": [
+    "WTW",
+    "WRW"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:siemens_reactor_base_plate"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 3,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:redstone"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:crafting_cable"
+    }
+  ]
+}

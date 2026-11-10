@@ -1,0 +1,15 @@
+{
+  "type": "jsc:rolling_mill",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:silver_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jscore:silver_foil"
+    }
+  ]
+}

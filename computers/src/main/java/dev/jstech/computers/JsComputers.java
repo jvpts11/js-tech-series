@@ -13,12 +13,15 @@ import dev.jstech.computers.advancement.PendingAwards;
 import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.api.JsComputersApi;
+import dev.jstech.computers.chain.BoardParts;
 import dev.jstech.computers.chain.ChainBenches;
+import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainDeposits;
 import dev.jstech.computers.chain.ChainMaterials;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.computers.chain.machine.WaferTooltip;
 import dev.jstech.computers.audio.MusicImports;
 import dev.jstech.computers.block.SmallComputerBlock;
 import dev.jstech.computers.block.part.ComputingParts;
@@ -140,6 +143,8 @@ public class JsComputers {
         ChainMaterials.declare();
         ChainDeposits.declare();
         ChainParts.declare();
+        ChainChips.declare();
+        BoardParts.declare();
         ChainBenches.declare();
         // The chain's machines: their blocks before they form, then each machine and what it is made of.
         ChainMachineBlocks.declare(modEventBus);
@@ -181,6 +186,7 @@ public class JsComputers {
         PortableEvents.listen();
         // A part's tooltip, whichever mod's item it is, on both sides: a server's own checks read it too.
         NeoForge.EVENT_BUS.addListener(PartTooltips::onTooltip);
+        NeoForge.EVENT_BUS.addListener(WaferTooltip::onTooltip);
     }
 
     /**

@@ -1,0 +1,19 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 5,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:copper_coil"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:layout_graphics_rage"
+    }
+  ]
+}

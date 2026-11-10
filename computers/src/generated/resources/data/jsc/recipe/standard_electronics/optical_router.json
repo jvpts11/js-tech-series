@@ -1,0 +1,35 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 2,
+      "item": "jsc:controller_chip_standard"
+    },
+    {
+      "count": 1,
+      "item": "jsc:memory_chip_standard"
+    },
+    {
+      "count": 2,
+      "item": "jsc:laser_diode_gallium_arsenide"
+    },
+    {
+      "count": 2,
+      "item": "jsc:optical_fibre"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:optical_router"
+    }
+  ]
+}

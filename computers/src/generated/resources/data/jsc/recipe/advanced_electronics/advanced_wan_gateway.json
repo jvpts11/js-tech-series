@@ -1,0 +1,35 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 16,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 4,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 4,
+      "item": "jsc:case_fan_advanced"
+    },
+    {
+      "count": 2,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 8,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 4,
+      "item": "jsc:controller_chip_advanced"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_wan_gateway"
+    }
+  ]
+}

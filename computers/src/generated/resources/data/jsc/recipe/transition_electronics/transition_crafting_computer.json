@@ -1,0 +1,20 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "type": "jsc:empty_computer",
+      "count": 1,
+      "item": "jsc:transition_personal_computer"
+    },
+    {
+      "count": 1,
+      "item": "jsc:crafting_card_t2"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:transition_crafting_computer"
+    }
+  ]
+}

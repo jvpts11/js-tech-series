@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "R": {
+      "item": "jscore:steel_rod"
+    }
+  },
+  "pattern": [
+    "R R",
+    " C ",
+    " M "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:prebuilder_case_lift"
+  }
+}

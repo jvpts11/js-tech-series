@@ -1,0 +1,35 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    },
+    {
+      "count": 4,
+      "item": "jsc:controller_chip_vintage"
+    },
+    {
+      "count": 1,
+      "item": "jscore:oscillator"
+    },
+    {
+      "count": 4,
+      "item": "jsc:ceramic_capacitor"
+    },
+    {
+      "count": 4,
+      "item": "jsc:tantalum_capacitor"
+    },
+    {
+      "count": 4,
+      "item": "jsc:inductor"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:populated_board_vintage"
+    }
+  ]
+}

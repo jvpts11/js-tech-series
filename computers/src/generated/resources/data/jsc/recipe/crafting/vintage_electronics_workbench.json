@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "O": {
+      "item": "minecraft:oak_planks"
+    },
+    "P": {
+      "item": "minecraft:glass_pane"
+    },
+    "T": {
+      "item": "minecraft:crafting_table"
+    }
+  },
+  "pattern": [
+    "OOO",
+    "ITP",
+    "ICI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:vintage_electronics_workbench"
+  }
+}

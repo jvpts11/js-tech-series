@@ -153,7 +153,10 @@ public class WorkbenchBlockEntity extends SyncedBlockEntity {
         setChanged();
     }
 
-    /* The first recipe of the bench's kinds whose ingredients the trays hold, each in a tray, with nothing besides. */
+    /*
+     * The first recipe of the bench's kinds whose ingredients the trays hold, each in a tray, with nothing besides:
+     * the bench's kinds take exactly their ingredients.
+     */
     @Nullable
     private Match find(final ServerLevel level) {
         final List<ItemStack> items = new ArrayList<>(TRAYS);
@@ -164,7 +167,7 @@ public class WorkbenchBlockEntity extends SyncedBlockEntity {
         for (final ProcessingKind kind : ChainBenches.assembledAt(era())) {
             for (final RecipeHolder<ProcessingRecipe> holder : kind.findAll(level, input)) {
                 final int[] slots = holder.value().slotsFor(input);
-                if (slots != null && holdsNothingElse(items, slots)) {
+                if (slots != null) {
                     return new Match(holder, slots);
                 }
             }
@@ -191,23 +194,6 @@ public class WorkbenchBlockEntity extends SyncedBlockEntity {
         for (final ItemStack made : recipe.outputs()) {
             output.insertItem(0, made.copy(), false);
         }
-    }
-
-    /* Whether the only trays holding anything are those the recipe takes from. */
-    private static boolean holdsNothingElse(final List<ItemStack> items, final int[] slots) {
-        for (int slot = 0; slot < items.size(); slot++) {
-            if (items.get(slot).isEmpty()) {
-                continue;
-            }
-            boolean taken = false;
-            for (final int used : slots) {
-                taken |= used == slot;
-            }
-            if (!taken) {
-                return false;
-            }
-        }
-        return true;
     }
 
     /**

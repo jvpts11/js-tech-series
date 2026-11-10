@@ -9,6 +9,7 @@ package dev.jstech.computers.registry;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.chain.machine.WaferWork;
 import dev.jstech.computers.crafting.CraftingEras;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.hardware.PsuCondition;
@@ -228,6 +229,10 @@ public final class ComputingComponents {
     /* An assembled computer a machine made that has never been started: its first start runs its self-test. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Unit>>
             NEVER_STARTED = saved("never_started", Codec.unit(Unit.INSTANCE), StreamCodec.unit(Unit.INSTANCE));
+
+    /* Where a wafer in process or a finished wafer stands on its way to chips: its chip, layer and next machine. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<WaferWork>>
+            WAFER_WORK = saved("wafer_work", WaferWork.CODEC, WaferWork.STREAM_CODEC);
 
     /*
      * A portable device's id, which its state on the server is kept by (its apps, its alerts): given the first time

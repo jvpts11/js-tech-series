@@ -1,0 +1,23 @@
+{
+  "type": "jsc:ceramic_kiln",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:iron_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:manganese_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:zinc_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 4,
+      "id": "jsc:ferrite"
+    }
+  ]
+}

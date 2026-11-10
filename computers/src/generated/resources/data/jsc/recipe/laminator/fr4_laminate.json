@@ -1,0 +1,23 @@
+{
+  "type": "jsc:laminator",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:glass_fibre"
+    },
+    {
+      "count": 1,
+      "item": "jscore:epoxy_resin_plate"
+    },
+    {
+      "count": 1,
+      "item": "jscore:copper_foil"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:fr4_laminate"
+    }
+  ]
+}

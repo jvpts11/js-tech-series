@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "B": {
+      "item": "minecraft:brick"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "pattern": [
+    "BIB",
+    "IBI",
+    "BIB"
+  ],
+  "result": {
+    "count": 4,
+    "id": "jsc:refractory_casing"
+  }
+}

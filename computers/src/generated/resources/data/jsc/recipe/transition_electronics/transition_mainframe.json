@@ -1,0 +1,31 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 12,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 4,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 4,
+      "item": "jsc:case_fan_transition"
+    },
+    {
+      "count": 2,
+      "item": "jsc:etched_board_transition"
+    },
+    {
+      "count": 8,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:transition_mainframe"
+    }
+  ]
+}

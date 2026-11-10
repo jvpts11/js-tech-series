@@ -12,6 +12,7 @@ import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.blockentity.FieldFluidTank;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.machine.MachineEnergy;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.machine.ProcessingInput;
@@ -31,6 +32,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A chain machine at work (computers/docs/design/survival.md): the terminal of one machine, a processing machine of
@@ -110,9 +112,7 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
             if (found.isPresent()) {
                 final Processing drawn = found.get().energyPerTick() == 0 && worked.joulesATick() > 0
                         ? found.get().withEnergyPerTick(worked.joulesATick()) : found.get();
-                final Optional<Processing> linked = link.allows(level, this, drawn, worked.era());
-                linked.ifPresent(work -> shows(input, work));
-                return linked;
+                return run(level, input, drawn, worked.era());
             }
         }
         return Optional.empty();
@@ -137,6 +137,17 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
                 }
             }
         }
+    }
+
+    /*
+     * {@code work} on {@code input} if the machine may run it, a station of {@code era} only linked to its computer,
+     * what it takes and makes then kept for the players' games.
+     */
+    protected Optional<Processing> run(final Level level, final ProcessingInput input, final Processing work,
+                                       @Nullable final Era era) {
+        final Optional<Processing> linked = link.allows(level, this, work, era);
+        linked.ifPresent(allowed -> shows(input, allowed));
+        return linked;
     }
 
     /** Whether {@code a} and {@code b} hold the same stacks, place for place, counts and components alike. */

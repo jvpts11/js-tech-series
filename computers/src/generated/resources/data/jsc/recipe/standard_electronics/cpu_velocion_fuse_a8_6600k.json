@@ -1,0 +1,31 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:processor_chip_standard_piledriver"
+    },
+    {
+      "count": 1,
+      "item": "jscore:copper_plate"
+    },
+    {
+      "count": 1,
+      "item": "jscore:nickel_foil"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_fm2_plus"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:cpu_velocion_fuse_a8_6600k"
+    }
+  ]
+}

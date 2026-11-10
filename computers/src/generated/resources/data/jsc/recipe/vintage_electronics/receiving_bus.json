@@ -1,0 +1,31 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_vintage"
+    },
+    {
+      "count": 1,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:redstone"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:receiving_bus"
+    }
+  ]
+}

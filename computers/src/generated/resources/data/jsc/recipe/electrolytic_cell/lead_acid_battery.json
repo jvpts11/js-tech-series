@@ -1,0 +1,25 @@
+{
+  "type": "jsc:electrolytic_cell",
+  "fluid_inputs": [
+    {
+      "amount": 250,
+      "fluid": "jscore:sulfuric_acid"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:lead_ingot"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:lead_acid_battery"
+    }
+  ]
+}

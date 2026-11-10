@@ -1,0 +1,19 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 2,
+      "item": "jscore:polycarbonate_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:case_fan_transition"
+    }
+  ]
+}

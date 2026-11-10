@@ -1,0 +1,27 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 9,
+      "item": "jsc:memory_chip_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:disk_nvme_8t"
+    }
+  ]
+}

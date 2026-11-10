@@ -1,0 +1,27 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 5,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:tube_screen"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:russet_128k"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "jsc:rolling_mill",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:aluminium_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 4,
+      "id": "jscore:aluminium_foil"
+    }
+  ]
+}

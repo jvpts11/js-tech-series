@@ -1,0 +1,31 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 16,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 4,
+      "item": "jsc:case_fan_standard"
+    },
+    {
+      "count": 2,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 8,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 2,
+      "item": "minecraft:glass_pane"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:quince_mainframe_standard"
+    }
+  ]
+}

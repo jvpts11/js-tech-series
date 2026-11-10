@@ -1,0 +1,39 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:populated_board_transition"
+    },
+    {
+      "count": 2,
+      "item": "jsc:socket_socket_f"
+    },
+    {
+      "count": 16,
+      "item": "jsc:memory_slot_ddr2"
+    },
+    {
+      "count": 6,
+      "item": "jsc:expansion_slot_pcie"
+    },
+    {
+      "count": 6,
+      "item": "jsc:storage_sata"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_atx24"
+    },
+    {
+      "count": 2,
+      "item": "jsc:power_eps"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:motherboard_eeb_t_f"
+    }
+  ]
+}

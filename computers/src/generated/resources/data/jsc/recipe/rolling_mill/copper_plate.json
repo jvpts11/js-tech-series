@@ -1,0 +1,15 @@
+{
+  "type": "jsc:rolling_mill",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "minecraft:copper_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:copper_plate"
+    }
+  ]
+}

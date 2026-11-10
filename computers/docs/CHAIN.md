@@ -99,6 +99,8 @@ the shape of any of them before you build it.
   no firmware; a computer built on one powers up and turns its fans, and nothing more, until it is written.
 - **A computer broken.** A one-block computer gives itself back whole: one item with its parts in their seats and its
   name, which stands again as it was. Only the media in its front drives come out on their own.
+- **Only what the recipe takes.** A machine, as a bench, makes a recipe only from exactly what it takes: while an inlet
+  holds anything the recipe does not take, it makes nothing of it.
 
 What each machine draws and how long a step takes, as first estimates:
 
@@ -117,6 +119,35 @@ What each machine draws and how long a step takes, as first estimates:
 | Optical Polisher | 10 s | 1 kW | Display Line | 30 s | 3 kW |
 | Prebuilder | 10 s | 1 kW | Preinstaller | 10 s, and 1 s every 100 MB | 1 kW |
 
+## The recipes
+
+*Added 2026-11-10.*
+
+Everything J's Computers has is made from the chain: the materials and parts by the chain's machines, and the rest at
+the bench of its era or by that era's Electronics Assembly Line. Each kind of thing is made by one rule, written out in
+[Recipes](design/recipes.md), so of two alike the bigger takes more, and no two recipes a machine or a bench runs take
+the same things. JEI and EMI show every recipe.
+
+- **The parts.** A motherboard is its populated board, two for the big form factors, and its components: a socket for
+  each processor, its memory and expansion slots, its drive connectors and its power connectors, each made at the
+  bench. A processor is its microarchitecture's chips, one for every eight cores and one more for each faster model of
+  its family, under its heat spreader; a graphics card is its chips, its memory, its capacitors and its heatsink.
+- **The chips.** Every chip is made on a wafer, layer by layer. A Lithography Station exposes a layer through the
+  chip's mask, then the wafer goes to the Plasma Etcher, the Ion Implanter and the Deposition Chamber, and back to
+  the station for the next layer: two layers in the Vintage, three in the Legacy, four in the Transition, six in the
+  Standard and eight in the Advanced. A wafer's tooltip names its chip, the layer it is on and the machine it goes to
+  next. Once its last layer is laid, the Packaging Line cuts it into its chips, eight small ones or four big ones. A
+  mask is a catalyst, never used up; in the Vintage the station writes it from the chip's Layout on a mask blank.
+- **The gases.** The Air Separation Unit takes in the air itself and gives nitrogen, oxygen, argon and krypton, with no
+  inputs.
+- **The computers.** A computer is made as its case, empty, and its parts go in at its assembly window or by a
+  Prebuilder. A Crafting Computer or a Cluster Management Computer is an empty Personal Computer of the same case with
+  its era's card in it for good; a Personal Computer with parts inside is not taken. A server is its chassis with its
+  fans and its rails.
+- **The rest.** Every cable recipe gives 8. The machines' blocks, the Vent Panel and the Guide to Operations are made
+  at the Crafting Table when there is nothing electronic in them, and at a bench when there is. Each era's bench is
+  made at the bench of the era before, the Vintage's at the Crafting Table.
+
 ## What can go wrong
 
 - **The bench does not start.** A tray holds something the part does not take, an ingredient is short of its count,
@@ -127,7 +158,10 @@ What each machine draws and how long a step takes, as first estimates:
 - **The terminal says no machine stands round it.** A block is missing, out of its place, or another stands where the
   shape wants its own; a Structure Projector shows which.
 - **A machine stands formed but does nothing.** No energy reaches its Power Entry, what is in its inlets makes nothing
-  it knows, or its outlets are full.
+  it knows, an inlet holds something besides what the recipe takes, or its outlets are full.
+- **A wafer goes nowhere.** Its tooltip names the machine it goes to next; another machine does nothing with it. A
+  Lithography Station needs the chip's mask among its inputs.
+- **A Personal Computer makes no Crafting Computer.** It has parts inside: take them out at its assembly window.
 - **A Lithography Station exposes nothing.** Its computer is off, of an older era than the recipe asks for, not linked
   to its Peripheral Port, or short of the memory the exposure holds.
 - **The Preinstaller says there is nothing to write.** The board's firmware is written, and no medium brings a system

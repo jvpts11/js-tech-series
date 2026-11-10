@@ -1,0 +1,25 @@
+{
+  "type": "jsc:chemical_reactor",
+  "fluid_inputs": [
+    {
+      "amount": 1000,
+      "fluid": "jscore:sulfuric_acid"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:lithium_crushed"
+    },
+    {
+      "count": 1,
+      "item": "jscore:caustic_soda_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:lithium_hydroxide_dust"
+    }
+  ]
+}

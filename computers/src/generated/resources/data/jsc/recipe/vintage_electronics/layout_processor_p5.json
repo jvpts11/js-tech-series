@@ -1,0 +1,19 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 3,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jscore:oscillator"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:layout_processor_p5"
+    }
+  ]
+}

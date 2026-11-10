@@ -1,0 +1,47 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:mobile_chip_standard_ht"
+    },
+    {
+      "count": 4,
+      "item": "jsc:memory_chip_standard"
+    },
+    {
+      "count": 1,
+      "item": "jsc:led_screen"
+    },
+    {
+      "count": 1,
+      "item": "jscore:lithium_ion_cell"
+    },
+    {
+      "count": 3,
+      "item": "jscore:antenna"
+    },
+    {
+      "count": 1,
+      "item": "jscore:glass_lens"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 1,
+      "item": "jscore:indium_tin_oxide_foil"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:hightide_wave"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "type": "jsc:crusher",
+  "byproducts": [
+    {
+      "chance": 0.15,
+      "item": {
+        "count": 1,
+        "id": "jscore:indium_dust"
+      }
+    },
+    {
+      "chance": 0.1,
+      "item": {
+        "count": 1,
+        "id": "jscore:germanium_dust"
+      }
+    },
+    {
+      "chance": 0.5,
+      "item": {
+        "count": 1,
+        "id": "jscore:sulfur_dust"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:raw_materials/zinc"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:zinc_crushed"
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "type": "jsc:chemical_reactor",
+  "fluid_inputs": [
+    {
+      "amount": 500,
+      "fluid": "jscore:phenol"
+    }
+  ],
+  "fluid_outputs": [
+    {
+      "amount": 250,
+      "id": "jscore:liquid_crystal"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:fluorspar_dust"
+    }
+  ]
+}

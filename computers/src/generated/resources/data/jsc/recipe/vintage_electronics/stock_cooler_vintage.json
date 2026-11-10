@@ -1,0 +1,15 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:stock_cooler_vintage"
+    }
+  ]
+}

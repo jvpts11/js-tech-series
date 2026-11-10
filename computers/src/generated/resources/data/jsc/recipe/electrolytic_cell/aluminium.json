@@ -1,0 +1,19 @@
+{
+  "type": "jsc:electrolytic_cell",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:alumina_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:coke_lump"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:aluminium_ingot"
+    }
+  ]
+}

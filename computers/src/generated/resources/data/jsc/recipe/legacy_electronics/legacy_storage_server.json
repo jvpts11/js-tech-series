@@ -1,0 +1,23 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:legacy_storage_server_case"
+    },
+    {
+      "count": 4,
+      "item": "jsc:case_fan_legacy"
+    },
+    {
+      "count": 2,
+      "item": "jscore:steel_rod"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:legacy_storage_server"
+    }
+  ]
+}

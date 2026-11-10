@@ -1,0 +1,24 @@
+{
+  "type": "jsc:crusher",
+  "byproducts": [
+    {
+      "chance": 0.05,
+      "item": {
+        "count": 1,
+        "id": "jscore:ruthenium_dust"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:raw_materials/nickel"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:nickel_crushed"
+    }
+  ]
+}

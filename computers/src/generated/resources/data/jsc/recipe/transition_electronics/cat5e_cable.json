@@ -1,0 +1,19 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 5,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:cat5e_cable"
+    }
+  ]
+}

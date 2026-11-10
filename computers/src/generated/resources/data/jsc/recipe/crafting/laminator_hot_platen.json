@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "P": {
+      "item": "jscore:steel_plate"
+    },
+    "W": {
+      "item": "jscore:copper_wire"
+    }
+  },
+  "pattern": [
+    "PPP",
+    "WCW",
+    " P "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:laminator_hot_platen"
+  }
+}

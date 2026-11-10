@@ -1,0 +1,24 @@
+{
+  "type": "jsc:crusher",
+  "byproducts": [
+    {
+      "chance": 0.25,
+      "item": {
+        "count": 1,
+        "id": "jscore:hafnium_dust"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:raw_materials/zirconium"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:zirconium_crushed"
+    }
+  ]
+}

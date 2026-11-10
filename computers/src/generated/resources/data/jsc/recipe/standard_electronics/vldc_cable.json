@@ -1,0 +1,23 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "jsc:optical_fibre"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jscore:steel_rod"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:vldc_cable"
+    }
+  ]
+}

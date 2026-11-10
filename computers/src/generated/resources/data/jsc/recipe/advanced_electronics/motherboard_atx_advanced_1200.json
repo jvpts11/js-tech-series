@@ -1,0 +1,35 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:populated_board_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_lga_1200"
+    },
+    {
+      "count": 4,
+      "item": "jsc:memory_slot_ddr4"
+    },
+    {
+      "count": 4,
+      "item": "jsc:expansion_slot_pcie"
+    },
+    {
+      "count": 2,
+      "item": "jsc:storage_m2"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_atx24"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:motherboard_atx_advanced_1200"
+    }
+  ]
+}

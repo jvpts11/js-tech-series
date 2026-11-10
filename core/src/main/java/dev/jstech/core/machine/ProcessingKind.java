@@ -41,6 +41,7 @@ public final class ProcessingKind {
     // Declared while the mod's classes load, read once the game runs: a list safe to read while it was written.
     private final List<Supplier<? extends ItemLike>> machines = new CopyOnWriteArrayList<>();
     private volatile Energy energy = Energies.FE;
+    private volatile boolean exact;
 
     public ProcessingKind(final ResourceLocation id, final TextKey title,
                           final Supplier<RecipeType<ProcessingRecipe>> type,
@@ -92,6 +93,21 @@ public final class ProcessingKind {
         return this.energy;
     }
 
+    /**
+     * Says a recipe of this kind is made only from exactly what it takes: while a slot or a tank holds anything the
+     * recipe does not take, the machine makes nothing of it, so no recipe is ever made from part of another's inputs.
+     * Otherwise a recipe takes what it needs from among whatever the machine holds.
+     */
+    public ProcessingKind exactInputs() {
+        this.exact = true;
+        return this;
+    }
+
+    /** Whether its recipes are made only from exactly what they take ({@link #exactInputs()}). */
+    public boolean exact() {
+        return this.exact;
+    }
+
     /** The machines that work recipes of this kind, the one it was declared with first. */
     public List<ItemLike> machines() {
         return machines.stream().<ItemLike>map(Supplier::get).toList();
@@ -99,12 +115,15 @@ public final class ProcessingKind {
 
     /** The first recipe of this kind the input makes, or none. */
     public Optional<RecipeHolder<ProcessingRecipe>> find(final Level level, final ProcessingInput input) {
-        return level.getRecipeManager().getRecipeFor(type(), input, level);
+        return exact ? findAll(level, input).stream().findFirst()
+                : level.getRecipeManager().getRecipeFor(type(), input, level);
     }
 
     /** Every recipe of this kind the input makes, in the order the game knows them. */
     public List<RecipeHolder<ProcessingRecipe>> findAll(final Level level, final ProcessingInput input) {
-        return level.getRecipeManager().getRecipesFor(type(), input, level);
+        final List<RecipeHolder<ProcessingRecipe>> found = level.getRecipeManager().getRecipesFor(type(), input,
+                level);
+        return exact ? found.stream().filter(holder -> holder.value().usesEverything(input)).toList() : found;
     }
 
     /** Every recipe of this kind the level knows. */

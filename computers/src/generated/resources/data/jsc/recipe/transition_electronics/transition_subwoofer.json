@@ -1,0 +1,31 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:copper_coil"
+    },
+    {
+      "count": 2,
+      "item": "jsc:ferrite"
+    },
+    {
+      "count": 2,
+      "item": "minecraft:paper"
+    },
+    {
+      "count": 2,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_transition"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:transition_subwoofer"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:blank_disc"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_foil"
+    },
+    {
+      "count": 1,
+      "item": "jscore:silver_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:cd_rw"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "jsc:grinder",
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "minecraft:logs"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 4,
+      "id": "jscore:wood_pulp_dust"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:machine_casing"
+    },
+    {
+      "count": 2,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_transition"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_transition"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:assembly_standard_placement_head"
+    }
+  ]
+}

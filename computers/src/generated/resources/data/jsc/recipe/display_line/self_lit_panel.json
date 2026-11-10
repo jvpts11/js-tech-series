@@ -1,0 +1,23 @@
+{
+  "type": "jsc:display_line",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "minecraft:glass"
+    },
+    {
+      "count": 1,
+      "item": "jscore:indium_tin_oxide_foil"
+    },
+    {
+      "count": 16,
+      "item": "jscore:led"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:self_lit_panel"
+    }
+  ]
+}

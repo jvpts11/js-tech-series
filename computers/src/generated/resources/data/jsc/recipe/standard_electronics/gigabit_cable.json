@@ -1,0 +1,19 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 6,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:gigabit_cable"
+    }
+  ]
+}

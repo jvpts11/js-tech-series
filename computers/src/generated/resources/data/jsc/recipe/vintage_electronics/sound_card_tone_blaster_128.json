@@ -1,0 +1,31 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_vintage"
+    },
+    {
+      "count": 4,
+      "item": "jsc:ceramic_capacitor"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    },
+    {
+      "count": 5,
+      "item": "jscore:copper_foil"
+    },
+    {
+      "count": 1,
+      "item": "jscore:tin_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:sound_card_tone_blaster_128"
+    }
+  ]
+}

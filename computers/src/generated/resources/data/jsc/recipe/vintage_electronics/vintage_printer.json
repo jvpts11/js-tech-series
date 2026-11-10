@@ -1,0 +1,31 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 2,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 2,
+      "item": "jsc:copper_coil"
+    },
+    {
+      "count": 2,
+      "item": "jscore:steel_rod"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:vintage_printer"
+    }
+  ]
+}

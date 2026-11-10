@@ -1,0 +1,15 @@
+{
+  "type": "jsc:induction_furnace",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:tantalum_crushed"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:tantalum_ingot"
+    }
+  ]
+}

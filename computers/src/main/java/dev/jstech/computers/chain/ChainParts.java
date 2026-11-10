@@ -10,16 +10,20 @@ package dev.jstech.computers.chain;
 import static dev.jstech.computers.registry.ComputingContent.CONTENT;
 import static dev.jstech.computers.registry.ComputingContent.shelf;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.core.content.IItemLook;
 import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.content.ItemEntry;
+import dev.jstech.core.jstechseries.SharedCatalogue;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.material.CatalogueItems;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import net.minecraft.world.item.Item;
 
 /**
@@ -60,6 +64,9 @@ public final class ChainParts {
             .register();
     public static final ItemEntry<Item> TRANSFORMER = part("transformer", HardwareEra.VINTAGE).named("Transformer")
             .register();
+    /* The coil a tube's deflection and a Graphics Layout take, wound of copper wire. */
+    public static final ItemEntry<Item> COPPER_COIL = part("copper_coil", HardwareEra.VINTAGE).named("Copper Coil")
+            .register();
     /* The lasers of the CD, the DVD and the Blu-ray, in the eras of their drives. */
     public static final ItemEntry<Item> GALLIUM_ARSENIDE_LASER_DIODE = part("laser_diode_gallium_arsenide",
             HardwareEra.LEGACY).named("Gallium Arsenide Laser Diode").register();
@@ -85,6 +92,10 @@ public final class ChainParts {
             .named("FR-4 Laminate").register();
     public static final List<ItemEntry<Item>> ETCHED_BOARDS = perEra(era ->
             part("etched_board_" + era.path(), era).named("Etched Board (" + englishName(era) + ")").register());
+    /* An etched board with its era's controller chips, its oscillator and its passives: every board's first step. */
+    public static final List<ItemEntry<Item>> POPULATED_BOARDS = perEra(era ->
+            part("populated_board_" + era.path(), era).named("Populated Board (" + englishName(era) + ")")
+                    .register());
     public static final ItemEntry<Item> GLASS_FIBRE = part("glass_fibre", HardwareEra.LEGACY).named("Glass Fibre")
             .register();
     public static final ItemEntry<Item> OPTICAL_FIBRE = part("optical_fibre", HardwareEra.STANDARD)
@@ -103,6 +114,19 @@ public final class ChainParts {
     public static final ItemEntry<Item> THERMAL_PASTE = part("thermal_paste", HardwareEra.LEGACY)
             .named("Thermal Paste").register();
 
+    /* The generic components of J's Core's catalogue the chain makes and its parts take, one item for the series. */
+    public static final Supplier<Item> ELECTRIC_MOTOR = CatalogueItems.use(JsComputers.MODID,
+            SharedCatalogue.ELECTRIC_MOTOR);
+    public static final Supplier<Item> LED = CatalogueItems.use(JsComputers.MODID, SharedCatalogue.LED);
+    public static final Supplier<Item> OSCILLATOR = CatalogueItems.use(JsComputers.MODID, SharedCatalogue.OSCILLATOR);
+    public static final Supplier<Item> ANTENNA = CatalogueItems.use(JsComputers.MODID, SharedCatalogue.ANTENNA);
+    public static final Supplier<Item> MAGNETIC_HEAD = CatalogueItems.use(JsComputers.MODID,
+            SharedCatalogue.MAGNETIC_HEAD);
+    public static final Supplier<Item> LEAD_ACID_BATTERY = CatalogueItems.use(JsComputers.MODID,
+            SharedCatalogue.LEAD_ACID_BATTERY);
+    public static final Supplier<Item> LITHIUM_ION_CELL = CatalogueItems.use(JsComputers.MODID,
+            SharedCatalogue.LITHIUM_ION_CELL);
+
     private ChainParts() {
     }
 
@@ -117,6 +141,11 @@ public final class ChainParts {
         return path.substring(0, 1).toUpperCase(Locale.ROOT) + path.substring(1);
     }
 
+    /** A plain part on the chain's shelf of {@code era}, to be named and registered. */
+    static ItemBuilder<Item> part(final String id, final Era era) {
+        return CONTENT.item(id, Item::new).look(IItemLook.FLAT).tab(shelf(Shelf.CHAIN, era));
+    }
+
     /* The part {@code declared} declares for each era, from the oldest. */
     private static List<ItemEntry<Item>> perEra(final Function<Era, ItemEntry<Item>> declared) {
         final List<ItemEntry<Item>> out = new ArrayList<>();
@@ -124,10 +153,5 @@ public final class ChainParts {
             out.add(declared.apply(era));
         }
         return List.copyOf(out);
-    }
-
-    /* A plain part on the chain's shelf of {@code era}, to be named and registered. */
-    private static ItemBuilder<Item> part(final String id, final Era era) {
-        return CONTENT.item(id, Item::new).look(IItemLook.FLAT).tab(shelf(Shelf.CHAIN, era));
     }
 }

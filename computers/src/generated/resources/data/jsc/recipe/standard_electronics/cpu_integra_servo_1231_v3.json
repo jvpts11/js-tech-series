@@ -1,0 +1,31 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "jsc:processor_chip_standard_haswell"
+    },
+    {
+      "count": 1,
+      "item": "jscore:copper_plate"
+    },
+    {
+      "count": 1,
+      "item": "jscore:nickel_foil"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_lga_1150"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:cpu_integra_servo_1231_v3"
+    }
+  ]
+}

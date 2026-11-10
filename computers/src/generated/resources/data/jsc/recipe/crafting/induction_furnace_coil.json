@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "R": {
+      "item": "jsc:refractory_casing"
+    },
+    "U": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "pattern": [
+    "UUU",
+    "URU",
+    "UUU"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:induction_furnace_coil"
+  }
+}

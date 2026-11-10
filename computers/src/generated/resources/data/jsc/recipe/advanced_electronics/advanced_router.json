@@ -1,0 +1,31 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 2,
+      "item": "jsc:controller_chip_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:memory_chip_advanced"
+    },
+    {
+      "count": 4,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_router"
+    }
+  ]
+}

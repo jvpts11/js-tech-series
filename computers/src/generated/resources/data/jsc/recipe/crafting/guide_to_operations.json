@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "P": {
+      "item": "minecraft:paper"
+    },
+    "R": {
+      "item": "jscore:steel_rod"
+    },
+    "V": {
+      "item": "jscore:pvc_sheet"
+    }
+  },
+  "pattern": [
+    "VP",
+    "RP",
+    "VP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:guide_to_operations"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "P": {
+      "item": "jscore:steel_plate"
+    },
+    "S": {
+      "item": "jscore:steel_sheet"
+    }
+  },
+  "pattern": [
+    "PSP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:vent_panel"
+  }
+}

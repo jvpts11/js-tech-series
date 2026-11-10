@@ -1,0 +1,27 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:copper_coil"
+    },
+    {
+      "count": 1,
+      "item": "jsc:ferrite"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:paper"
+    },
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:legacy_speaker"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "type": "jsc:siemens_reactor",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:metallurgical_silicon_lump"
+    }
+  ],
+  "matter_inputs": [
+    {
+      "amount": 1000,
+      "material": "jscore:hydrogen_chloride"
+    },
+    {
+      "amount": 500,
+      "material": "jscore:hydrogen"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:polysilicon_rod"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jscore:magnetic_head"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:layout_controller"
+    }
+  ]
+}

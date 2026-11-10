@@ -1,0 +1,19 @@
+{
+  "type": "jsc:coil_winder",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:permalloy_foil"
+    },
+    {
+      "count": 1,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:magnetic_head"
+    }
+  ]
+}

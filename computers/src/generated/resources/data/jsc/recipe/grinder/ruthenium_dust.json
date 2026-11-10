@@ -1,0 +1,15 @@
+{
+  "type": "jsc:grinder",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:ruthenium_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:ruthenium_dust"
+    }
+  ]
+}

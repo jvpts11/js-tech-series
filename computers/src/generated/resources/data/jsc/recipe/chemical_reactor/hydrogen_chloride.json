@@ -1,0 +1,19 @@
+{
+  "type": "jsc:chemical_reactor",
+  "matter_inputs": [
+    {
+      "amount": 500,
+      "material": "jscore:hydrogen"
+    },
+    {
+      "amount": 500,
+      "material": "jscore:chlorine"
+    }
+  ],
+  "matter_outputs": [
+    {
+      "amount": 1000,
+      "material": "jscore:hydrogen_chloride"
+    }
+  ]
+}

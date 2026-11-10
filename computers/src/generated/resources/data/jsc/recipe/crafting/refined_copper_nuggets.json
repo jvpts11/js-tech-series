@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jscore:refined_copper_ingot"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "jscore:refined_copper_nugget"
+  }
+}

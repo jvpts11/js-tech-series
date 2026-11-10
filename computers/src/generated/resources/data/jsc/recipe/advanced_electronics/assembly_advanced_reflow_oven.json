@@ -1,0 +1,27 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:machine_casing"
+    },
+    {
+      "count": 4,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:assembly_advanced_reflow_oven"
+    }
+  ]
+}

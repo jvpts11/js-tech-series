@@ -1,0 +1,19 @@
+{
+  "type": "jsc:chemical_reactor",
+  "matter_inputs": [
+    {
+      "amount": 1000,
+      "material": "jscore:acetylene"
+    },
+    {
+      "amount": 1000,
+      "material": "jscore:hydrogen_chloride"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:pvc_sheet"
+    }
+  ]
+}

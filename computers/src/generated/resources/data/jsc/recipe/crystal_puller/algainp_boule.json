@@ -1,0 +1,27 @@
+{
+  "type": "jsc:crystal_puller",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:aluminium_ingot"
+    },
+    {
+      "count": 1,
+      "item": "jscore:gallium_ingot"
+    },
+    {
+      "count": 1,
+      "item": "jscore:indium_ingot"
+    },
+    {
+      "count": 1,
+      "item": "jscore:phosphorus_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:algainp_boule"
+    }
+  ]
+}

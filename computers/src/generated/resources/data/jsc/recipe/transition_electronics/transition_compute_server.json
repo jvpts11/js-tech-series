@@ -1,0 +1,23 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:transition_compute_server_case"
+    },
+    {
+      "count": 4,
+      "item": "jsc:case_fan_transition"
+    },
+    {
+      "count": 2,
+      "item": "jscore:steel_rod"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:transition_compute_server"
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "type": "jsc:deposition_chamber",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:mask_plate"
+    },
+    {
+      "count": 1,
+      "item": "jscore:chromium_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:mask_blank"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "type": "jsc:empty_computer",
+      "count": 1,
+      "item": "jsc:advanced_aesthetic_personal_computer"
+    },
+    {
+      "count": 1,
+      "item": "jsc:crafting_card_t4"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_aesthetic_crafting_computer"
+    }
+  ]
+}

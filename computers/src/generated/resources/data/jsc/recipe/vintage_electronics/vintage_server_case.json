@@ -1,0 +1,35 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:storage_ide"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:vintage_server_case"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 8,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_foil"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:cx4_cable"
+    }
+  ]
+}

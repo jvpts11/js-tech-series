@@ -1,0 +1,20 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "type": "jsc:empty_computer",
+      "count": 1,
+      "item": "jsc:aesthetic_personal_computer"
+    },
+    {
+      "count": 1,
+      "item": "jsc:fabric_host_adapter"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:aesthetic_cluster_management_computer"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "jsc:crusher",
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:raw_materials/cobalt"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:cobalt_crushed"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "type": "jsc:empty_computer",
+      "count": 1,
+      "item": "jsc:vintage_personal_computer"
+    },
+    {
+      "count": 1,
+      "item": "jsc:crafting_card_isa"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:vintage_crafting_computer"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "type": "jsc:crusher",
+  "byproducts": [
+    {
+      "chance": 0.15,
+      "item": {
+        "count": 1,
+        "id": "jscore:arsenic_dust"
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "tag": "c:raw_materials/copper"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:copper_crushed"
+    }
+  ]
+}

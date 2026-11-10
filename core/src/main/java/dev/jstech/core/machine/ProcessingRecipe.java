@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.NonNullList;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -269,6 +270,22 @@ public record ProcessingRecipe(ProcessingKind kind, List<SizedIngredient> inputs
                 stacks.decode(buf), fluids.decode(buf), ByteBufCodecs.VAR_INT.decode(buf),
                 ByteBufCodecs.VAR_INT.decode(buf), ingredients.decode(buf), matter.decode(buf), matter.decode(buf),
                 byproducts.decode(buf), RecipeConditions.STREAM_CODEC.decode(buf), KNOWLEDGE_STREAM.decode(buf)));
+    }
+
+    /*
+     * Whether the recipe takes everything held: as many slots hold something as it has item inputs and catalysts, as
+     * many tanks as fluid inputs, and as many matter tanks as matter inputs. Each input takes a slot or tank of its
+     * own that holds it, so once the recipe matches, these counts leave nothing held that it does not take.
+     */
+    boolean usesEverything(final ProcessingInput input) {
+        return held(input.items(), stack -> !stack.isEmpty()) == inputs.size() + catalysts.size()
+                && held(input.fluids(), fluid -> !fluid.isEmpty()) == fluidInputs.size()
+                && held(input.matter(), matter -> matter.isPresent() && matter.get().amount() > 0)
+                == matterInputs.size();
+    }
+
+    private static <C> long held(final List<C> contents, final Predicate<C> holds) {
+        return contents.stream().filter(holds).count();
     }
 
     /* The slot of each item input, then of each catalyst, or null when the slots do not hold them all. */

@@ -1,0 +1,21 @@
+{
+  "type": "jsc:coke_oven",
+  "fluid_outputs": [
+    {
+      "amount": 250,
+      "id": "jscore:coal_tar"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "minecraft:coal"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:coke_lump"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:clean_room_casing"
+    },
+    {
+      "count": 2,
+      "item": "jsc:transformer"
+    },
+    {
+      "count": 2,
+      "item": "jscore:molybdenum_plate"
+    },
+    {
+      "count": 1,
+      "item": "jscore:tin_ingot"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:lithography_euv_source"
+    }
+  ]
+}

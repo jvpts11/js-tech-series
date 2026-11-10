@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "K": {
+      "item": "jscore:coke_lump"
+    },
+    "R": {
+      "item": "jsc:refractory_casing"
+    }
+  },
+  "pattern": [
+    "KGK",
+    "KRK"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:crystal_puller_hot_zone"
+  }
+}

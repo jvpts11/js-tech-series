@@ -1,0 +1,27 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:machine_casing"
+    },
+    {
+      "count": 2,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_vintage"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:assembly_legacy_placement_head"
+    }
+  ]
+}

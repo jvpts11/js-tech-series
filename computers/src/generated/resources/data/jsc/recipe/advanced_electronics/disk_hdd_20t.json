@@ -1,0 +1,35 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 6,
+      "item": "jsc:platter"
+    },
+    {
+      "count": 6,
+      "item": "jscore:magnetic_head"
+    },
+    {
+      "count": 1,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:storage_sata"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:disk_hdd_20t"
+    }
+  ]
+}

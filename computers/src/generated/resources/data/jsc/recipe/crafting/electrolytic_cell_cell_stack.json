@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "L": {
+      "item": "jsc:lined_casing"
+    },
+    "P": {
+      "item": "jscore:lead_ingot"
+    },
+    "U": {
+      "item": "minecraft:copper_ingot"
+    }
+  },
+  "pattern": [
+    "UPU",
+    "PLP",
+    "UPU"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:electrolytic_cell_cell_stack"
+  }
+}

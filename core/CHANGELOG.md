@@ -465,6 +465,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its status, set with `note(Text)`, which the standard machine screen shows in its lamp's tooltip and its terminal's
   face shows under the status word, as a machine says why it will not work what it was given; `TextCodecs.CODEC` keeps
   a `Text` as data. Experimental.
+- Recipes made from exactly what they take: J's Core's API is at version 52. `ProcessingKind.exactInputs()`
+  says a kind's recipes are made only from exactly what they take: while a slot or a tank holds anything the recipe
+  does not take, the machine makes nothing of it, so no recipe is made from part of another's inputs. `exact()` says
+  whether a kind is so. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -1830,6 +1834,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Pictures in the media store: the store keeps PNG pictures beside the recordings, read as far as their size
   (`MediaProbe.pngSize`, `MediaInfo.STILL`), and `MediaUploader.upload` brings bytes a game made itself, such as a
   camera's picture.
+- Glass is one of the series' materials, made into lenses.
 - The generic ores of the electronics chain's metals are drawn as the minerals they are mined from: lead as
   galena, zinc as sphalerite, nickel as garnierite, aluminium as bauxite, tantalum as coltan, chromium as chromite,
   manganese as rhodochrosite, mercury as cinnabar, cobalt as cobaltite with its pink bloom, silver native, zirconium as

@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "L": {
+      "item": "jsc:lined_casing"
+    },
+    "V": {
+      "item": "jscore:pvc_sheet"
+    }
+  },
+  "pattern": [
+    " L ",
+    "V V",
+    "VVV"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:board_etcher_etchant_sump"
+  }
+}

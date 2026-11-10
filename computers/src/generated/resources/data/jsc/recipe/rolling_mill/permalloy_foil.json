@@ -1,0 +1,15 @@
+{
+  "type": "jsc:rolling_mill",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:permalloy_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jscore:permalloy_foil"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "jsc:wire_drawer",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:aluminium_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 16,
+      "id": "jsc:aluminium_bonding_wire"
+    }
+  ]
+}

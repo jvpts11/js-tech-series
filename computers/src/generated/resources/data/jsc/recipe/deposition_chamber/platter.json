@@ -1,0 +1,19 @@
+{
+  "type": "jsc:deposition_chamber",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:aluminium_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jscore:cobalt_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:platter"
+    }
+  ]
+}

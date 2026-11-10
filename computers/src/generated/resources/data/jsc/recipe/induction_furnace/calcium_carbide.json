@@ -1,0 +1,19 @@
+{
+  "type": "jsc:induction_furnace",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "minecraft:calcite"
+    },
+    {
+      "count": 1,
+      "item": "jscore:coke_lump"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:calcium_carbide_lump"
+    }
+  ]
+}

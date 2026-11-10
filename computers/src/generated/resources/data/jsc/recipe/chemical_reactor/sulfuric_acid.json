@@ -1,0 +1,27 @@
+{
+  "type": "jsc:chemical_reactor",
+  "fluid_inputs": [
+    {
+      "amount": 1000,
+      "fluid": "minecraft:water"
+    }
+  ],
+  "fluid_outputs": [
+    {
+      "amount": 1000,
+      "id": "jscore:sulfuric_acid"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:sulfur_dust"
+    }
+  ],
+  "matter_inputs": [
+    {
+      "amount": 500,
+      "material": "jscore:oxygen"
+    }
+  ]
+}

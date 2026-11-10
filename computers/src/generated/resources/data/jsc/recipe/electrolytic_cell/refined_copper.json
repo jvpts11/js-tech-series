@@ -1,0 +1,15 @@
+{
+  "type": "jsc:electrolytic_cell",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "minecraft:copper_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:refined_copper_ingot"
+    }
+  ]
+}

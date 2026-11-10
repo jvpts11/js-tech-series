@@ -3335,5 +3335,6 @@
   "jscore.valve.open": "Aberta",
   "jscore.valve.per_tick": "mB por tick",
   "jscore.machine.screen.tip.recipes": "Ver receitas",
-  "jscore.operation.assemble": "Montar"
+  "jscore.operation.assemble": "Montar",
+  "jscore.material.glass": "Vidro"
 }

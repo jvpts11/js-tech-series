@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    }
+  },
+  "pattern": [
+    "D",
+    "C",
+    "M"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:wire_drawer_capstan"
+  }
+}

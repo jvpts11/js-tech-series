@@ -1,0 +1,15 @@
+{
+  "type": "jsc:rolling_mill",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:wood_pulp_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "minecraft:paper"
+    }
+  ]
+}

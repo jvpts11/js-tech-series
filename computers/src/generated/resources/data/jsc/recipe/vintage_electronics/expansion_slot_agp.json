@@ -1,0 +1,23 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 6,
+      "item": "jscore:copper_foil"
+    },
+    {
+      "count": 1,
+      "item": "jscore:tin_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jsc:expansion_slot_agp"
+    }
+  ]
+}

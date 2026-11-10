@@ -1,0 +1,31 @@
+{
+  "type": "jsc:electrolytic_cell",
+  "fluid_inputs": [
+    {
+      "amount": 1000,
+      "fluid": "minecraft:water"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:salt_dust"
+    }
+  ],
+  "matter_outputs": [
+    {
+      "amount": 500,
+      "material": "jscore:chlorine"
+    },
+    {
+      "amount": 500,
+      "material": "jscore:hydrogen"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:caustic_soda_dust"
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "L": {
+      "item": "jsc:lined_casing"
+    }
+  },
+  "pattern": [
+    "IGI",
+    "GLG",
+    "IGI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:chemical_reactor_vessel"
+  }
+}

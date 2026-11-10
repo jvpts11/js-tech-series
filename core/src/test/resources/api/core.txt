@@ -8296,6 +8296,7 @@ stable 4
 10 dev.jstech.core.machine.ProcessingKind  List<RecipeHolder<ProcessingRecipe>> findAll(Level, ProcessingInput)
 10 dev.jstech.core.machine.ProcessingKind  Optional<RecipeHolder<ProcessingRecipe>> find(Level, ProcessingInput)
 10 dev.jstech.core.machine.ProcessingKind  ProcessingKind alsoWorkedBy(Supplier<? extends ItemLike>)
+52 dev.jstech.core.machine.ProcessingKind  ProcessingKind exactInputs()
 12 dev.jstech.core.machine.ProcessingKind  ProcessingKind runsOn(Energy)
 10 dev.jstech.core.machine.ProcessingKind  RecipeSerializer<ProcessingRecipe> newSerializer()
 10 dev.jstech.core.machine.ProcessingKind  RecipeSerializer<ProcessingRecipe> serializer()
@@ -8303,6 +8304,7 @@ stable 4
 10 dev.jstech.core.machine.ProcessingKind  ResourceLocation id()
 10 dev.jstech.core.machine.ProcessingKind  String toString()
 10 dev.jstech.core.machine.ProcessingKind  TextKey title()
+52 dev.jstech.core.machine.ProcessingKind  boolean exact()
 10 dev.jstech.core.machine.ProcessingKind  new(ResourceLocation, TextKey, Supplier<RecipeType<ProcessingRecipe>>, Supplier<RecipeSerializer<ProcessingRecipe>>)
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  type abstract class extends MachineBlockEntity
 10 dev.jstech.core.machine.ProcessingMachineBlockEntity  FieldFluidTank inputTank(int)

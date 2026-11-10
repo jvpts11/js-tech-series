@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "A": {
+      "item": "jscore:aluminium_plate"
+    },
+    "F": {
+      "item": "jsc:glass_fibre"
+    }
+  },
+  "pattern": [
+    "AFA",
+    "F F",
+    "AFA"
+  ],
+  "result": {
+    "count": 4,
+    "id": "jsc:clean_room_casing"
+  }
+}

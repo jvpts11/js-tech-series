@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "Z": {
+      "item": "jscore:zinc_ingot"
+    }
+  },
+  "pattern": [
+    "ZIZ",
+    "I I",
+    "ZIZ"
+  ],
+  "result": {
+    "count": 4,
+    "id": "jsc:machine_casing"
+  }
+}

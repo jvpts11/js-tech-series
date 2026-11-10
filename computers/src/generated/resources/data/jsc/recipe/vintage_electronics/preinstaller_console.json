@@ -1,0 +1,23 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:machine_casing"
+    },
+    {
+      "count": 1,
+      "item": "jsc:tube_screen"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_vintage"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:preinstaller_console"
+    }
+  ]
+}

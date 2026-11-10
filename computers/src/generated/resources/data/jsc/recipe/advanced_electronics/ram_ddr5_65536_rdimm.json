@@ -1,0 +1,35 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 8,
+      "item": "jsc:memory_chip_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jscore:lead_free_solder_wire"
+    },
+    {
+      "count": 6,
+      "item": "jscore:copper_foil"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_advanced"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:ram_ddr5_65536_rdimm"
+    }
+  ]
+}

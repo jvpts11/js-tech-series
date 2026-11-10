@@ -105,6 +105,7 @@ public final class ChainMaterials {
         uses(SeriesCompounds.ALGAINP, Forms.BOULE, Forms.WAFER);
         uses(SeriesCompounds.GALLIUM_NITRIDE, Forms.BOULE, Forms.WAFER);
         uses(SeriesCompounds.CALCIUM_FLUORIDE, Forms.BOULE, Forms.LENS);
+        uses(SeriesCompounds.GLASS, Forms.LENS);
         uses(SeriesCompounds.WOOD_PULP, Forms.DUST);
         // The resins as the thick boards their icons show, the plastics as the thin sheets the recipes ask for.
         uses(SeriesCompounds.PHENOLIC_RESIN, Forms.PLATE);

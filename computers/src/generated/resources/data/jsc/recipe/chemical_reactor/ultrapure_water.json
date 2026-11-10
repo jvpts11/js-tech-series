@@ -1,0 +1,15 @@
+{
+  "type": "jsc:chemical_reactor",
+  "fluid_inputs": [
+    {
+      "amount": 1000,
+      "fluid": "minecraft:water"
+    }
+  ],
+  "fluid_outputs": [
+    {
+      "amount": 500,
+      "id": "jscore:ultrapure_water"
+    }
+  ]
+}

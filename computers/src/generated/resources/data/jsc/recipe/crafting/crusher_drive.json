@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "B": {
+      "item": "minecraft:iron_block"
+    },
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    }
+  },
+  "pattern": [
+    " C ",
+    "BMB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:crusher_drive"
+  }
+}

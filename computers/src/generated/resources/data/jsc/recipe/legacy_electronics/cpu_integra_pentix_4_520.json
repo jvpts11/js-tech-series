@@ -1,0 +1,27 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:processor_chip_legacy_netburst"
+    },
+    {
+      "count": 1,
+      "item": "jscore:copper_plate"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_lga_775"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:cpu_integra_pentix_4_520"
+    }
+  ]
+}

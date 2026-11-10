@@ -1,0 +1,23 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:compute_server_case"
+    },
+    {
+      "count": 4,
+      "item": "jsc:case_fan_standard"
+    },
+    {
+      "count": 2,
+      "item": "jscore:steel_rod"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:compute_server"
+    }
+  ]
+}

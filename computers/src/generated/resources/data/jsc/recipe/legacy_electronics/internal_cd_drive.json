@@ -1,0 +1,31 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jscore:glass_lens"
+    },
+    {
+      "count": 1,
+      "item": "jsc:laser_diode_gallium_arsenide"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_legacy"
+    },
+    {
+      "count": 1,
+      "item": "jsc:storage_ide"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:internal_cd_drive"
+    }
+  ]
+}

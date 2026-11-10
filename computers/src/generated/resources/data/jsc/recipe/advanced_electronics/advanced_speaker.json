@@ -1,0 +1,31 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:copper_coil"
+    },
+    {
+      "count": 1,
+      "item": "jsc:ferrite"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:paper"
+    },
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_speaker"
+    }
+  ]
+}

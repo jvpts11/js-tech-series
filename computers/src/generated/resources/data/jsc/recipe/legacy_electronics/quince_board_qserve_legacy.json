@@ -1,0 +1,39 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:populated_board_legacy"
+    },
+    {
+      "count": 2,
+      "item": "jsc:socket_quince_card"
+    },
+    {
+      "count": 4,
+      "item": "jsc:memory_slot_ddr"
+    },
+    {
+      "count": 2,
+      "item": "jsc:expansion_slot_pci"
+    },
+    {
+      "count": 2,
+      "item": "jsc:storage_ide"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_atx20"
+    },
+    {
+      "count": 2,
+      "item": "jsc:power_eps"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:quince_board_qserve_legacy"
+    }
+  ]
+}

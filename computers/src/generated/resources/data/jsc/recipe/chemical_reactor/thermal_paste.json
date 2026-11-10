@@ -1,0 +1,19 @@
+{
+  "type": "jsc:chemical_reactor",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:silver_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:zinc_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 4,
+      "id": "jsc:thermal_paste"
+    }
+  ]
+}

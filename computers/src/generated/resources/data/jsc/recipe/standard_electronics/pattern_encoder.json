@@ -1,0 +1,27 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 2,
+      "item": "jsc:controller_chip_standard"
+    },
+    {
+      "count": 2,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jscore:copper_foil"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:pattern_encoder"
+    }
+  ]
+}

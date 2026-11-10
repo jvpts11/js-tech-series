@@ -1,0 +1,35 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 2,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jsc:laser_diode_gallium_arsenide"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:copper_coil"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:printer"
+    }
+  ]
+}

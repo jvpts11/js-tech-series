@@ -1,0 +1,19 @@
+{
+  "type": "jsc:ceramic_kiln",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:tantalum_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:manganese_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:tantalum_capacitor"
+    }
+  ]
+}

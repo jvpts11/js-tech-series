@@ -1,0 +1,19 @@
+{
+  "type": "jsc:induction_furnace",
+  "inputs": [
+    {
+      "count": 9,
+      "item": "jscore:indium_ingot"
+    },
+    {
+      "count": 1,
+      "item": "jscore:tin_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 10,
+      "id": "jscore:indium_tin_oxide_ingot"
+    }
+  ]
+}

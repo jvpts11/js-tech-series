@@ -1,0 +1,20 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "type": "jsc:empty_computer",
+      "count": 1,
+      "item": "jsc:high_performance_personal_computer"
+    },
+    {
+      "count": 1,
+      "item": "jsc:crafting_card_pcie3"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:high_performance_crafting_computer"
+    }
+  ]
+}

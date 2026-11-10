@@ -1,0 +1,19 @@
+{
+  "type": "jsc:deposition_chamber",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:cultured_quartz_crystal"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 4,
+      "id": "jscore:oscillator"
+    }
+  ]
+}

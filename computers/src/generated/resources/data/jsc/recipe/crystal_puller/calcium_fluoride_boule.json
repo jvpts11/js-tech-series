@@ -1,0 +1,15 @@
+{
+  "type": "jsc:crystal_puller",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "jscore:fluorspar_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:calcium_fluoride_boule"
+    }
+  ]
+}

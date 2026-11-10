@@ -1,0 +1,19 @@
+{
+  "type": "jsc:optical_polisher",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "minecraft:glass"
+    },
+    {
+      "count": 1,
+      "item": "jscore:germanium_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:optical_fibre"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:qserve_advanced_case"
+    },
+    {
+      "count": 2,
+      "item": "jsc:case_fan_advanced"
+    },
+    {
+      "count": 2,
+      "item": "jscore:steel_rod"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:qserve_advanced"
+    }
+  ]
+}

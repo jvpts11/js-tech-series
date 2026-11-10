@@ -1,0 +1,19 @@
+{
+  "type": "jsc:vintage_lithography",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:mask_blank"
+    },
+    {
+      "count": 1,
+      "item": "jsc:layout_graphics_rendition"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:mask_graphics_vintage_rendition"
+    }
+  ]
+}

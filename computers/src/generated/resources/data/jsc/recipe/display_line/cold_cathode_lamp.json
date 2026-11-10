@@ -1,0 +1,21 @@
+{
+  "type": "jsc:display_line",
+  "fluid_inputs": [
+    {
+      "amount": 100,
+      "fluid": "jscore:mercury"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "minecraft:glass"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:cold_cathode_lamp"
+    }
+  ]
+}

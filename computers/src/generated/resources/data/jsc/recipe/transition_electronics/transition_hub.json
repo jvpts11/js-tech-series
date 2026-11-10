@@ -1,0 +1,27 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_transition"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_transition"
+    },
+    {
+      "count": 4,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:transition_hub"
+    }
+  ]
+}

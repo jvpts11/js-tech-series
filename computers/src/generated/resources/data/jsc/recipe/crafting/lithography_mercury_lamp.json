@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:clean_room_casing"
+    },
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "H": {
+      "item": "jscore:mercury_bucket"
+    },
+    "T": {
+      "item": "jsc:transformer"
+    }
+  },
+  "pattern": [
+    "GHG",
+    " C ",
+    " T "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:lithography_mercury_lamp"
+  }
+}

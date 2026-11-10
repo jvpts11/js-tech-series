@@ -111,6 +111,7 @@ import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.workshop.WorkshopCard;
 import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.registry.ComputingIngredients;
 import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.computers.registry.ComputingMenus;
@@ -1313,6 +1314,7 @@ public final class ComputingModule {
         ComputingAudioDevices.init();
         CONTENT.register(modEventBus);
         ComputingComponents.register(modEventBus);
+        ComputingIngredients.register(modEventBus);
         ComputingMenus.register(modEventBus);
         JscTriggers.register(modEventBus);
     }

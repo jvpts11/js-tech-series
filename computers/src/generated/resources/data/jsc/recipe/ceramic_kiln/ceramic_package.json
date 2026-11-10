@@ -1,0 +1,15 @@
+{
+  "type": "jsc:ceramic_kiln",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:alumina_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 4,
+      "id": "jsc:ceramic_package"
+    }
+  ]
+}

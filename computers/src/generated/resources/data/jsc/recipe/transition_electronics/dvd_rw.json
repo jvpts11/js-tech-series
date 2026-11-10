@@ -1,0 +1,27 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:blank_disc"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_foil"
+    },
+    {
+      "count": 1,
+      "item": "jscore:silver_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:indium_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:dvd_rw"
+    }
+  ]
+}

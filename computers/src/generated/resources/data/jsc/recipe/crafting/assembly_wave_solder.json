@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "T": {
+      "item": "jscore:tin_ingot"
+    }
+  },
+  "pattern": [
+    "TTT",
+    " C ",
+    "TMT"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:assembly_wave_solder"
+  }
+}

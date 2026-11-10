@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "O": {
+      "item": "jsc:copper_coil"
+    }
+  },
+  "pattern": [
+    "O",
+    "C",
+    "M"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:optical_polisher_draw_tower"
+  }
+}

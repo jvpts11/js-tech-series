@@ -296,8 +296,12 @@ public final class CatalogueGameTests {
         helper.assertTrue(BuiltInRegistries.ITEM.get(TestMaterials.GADGET.id()) == TestMaterials.GADGET_ITEM.get()
                 && english(new ItemStack(TestMaterials.GADGET_ITEM.get()).getHoverName()).equals("Test Gadget"),
                 "an entry a mod uses, named as declared");
-        helper.assertTrue(SharedCatalogue.components().stream().noneMatch(entry ->
-                BuiltInRegistries.ITEM.containsKey(entry.id())), "the series' components, which nobody uses, are not");
+        helper.assertTrue(!BuiltInRegistries.ITEM.containsKey(SharedCatalogue.SERVOMOTOR.id())
+                && !BuiltInRegistries.ITEM.containsKey(SharedCatalogue.SENSOR.id()),
+                "the series' components nobody uses are not: the servomotor and the sensor");
+        helper.assertTrue(BuiltInRegistries.ITEM.containsKey(SharedCatalogue.ELECTRIC_MOTOR.id())
+                && BuiltInRegistries.ITEM.containsKey(SharedCatalogue.LITHIUM_ION_CELL.id()),
+                "the ones J's Computers' chain uses are: the electric motor, the lithium-ion cell");
         helper.assertTrue(SharedCatalogue.fuels().size() == 3 && SharedCatalogue.components().size() == 9,
                 "three fuels and nine components in the catalogue");
         helper.succeed();

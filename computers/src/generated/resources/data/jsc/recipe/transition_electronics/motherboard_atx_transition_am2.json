@@ -1,0 +1,35 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:populated_board_transition"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_am2"
+    },
+    {
+      "count": 4,
+      "item": "jsc:memory_slot_ddr2"
+    },
+    {
+      "count": 4,
+      "item": "jsc:expansion_slot_pcie"
+    },
+    {
+      "count": 4,
+      "item": "jsc:storage_sata"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_atx24"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:motherboard_atx_transition_am2"
+    }
+  ]
+}

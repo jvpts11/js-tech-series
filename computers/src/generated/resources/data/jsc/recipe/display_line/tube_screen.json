@@ -1,0 +1,27 @@
+{
+  "type": "jsc:display_line",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "minecraft:glass"
+    },
+    {
+      "count": 1,
+      "item": "jscore:lead_ingot"
+    },
+    {
+      "count": 1,
+      "item": "jscore:zinc_sulfide_dust"
+    },
+    {
+      "count": 2,
+      "item": "jsc:copper_coil"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:tube_screen"
+    }
+  ]
+}

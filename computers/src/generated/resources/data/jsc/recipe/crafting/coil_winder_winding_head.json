@@ -1,0 +1,22 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "R": {
+      "item": "jscore:steel_rod"
+    }
+  },
+  "pattern": [
+    "MCR"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:coil_winder_winding_head"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:graphics_chip_transition_curie"
+    },
+    {
+      "count": 2,
+      "item": "jsc:memory_chip_transition"
+    },
+    {
+      "count": 2,
+      "item": "jsc:tantalum_capacitor"
+    },
+    {
+      "count": 4,
+      "item": "jsc:ceramic_capacitor"
+    },
+    {
+      "count": 2,
+      "item": "jsc:inductor"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_transition"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:case_fan_transition"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:gpu_vertex_7600_gt"
+    }
+  ]
+}

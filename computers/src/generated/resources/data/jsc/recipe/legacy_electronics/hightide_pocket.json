@@ -1,0 +1,43 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:mobile_chip_legacy_ht"
+    },
+    {
+      "count": 3,
+      "item": "jsc:memory_chip_legacy"
+    },
+    {
+      "count": 1,
+      "item": "jsc:lcd_screen"
+    },
+    {
+      "count": 1,
+      "item": "jscore:lithium_ion_cell"
+    },
+    {
+      "count": 1,
+      "item": "jscore:antenna"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_legacy"
+    },
+    {
+      "count": 1,
+      "item": "jscore:indium_tin_oxide_foil"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:hightide_pocket"
+    }
+  ]
+}

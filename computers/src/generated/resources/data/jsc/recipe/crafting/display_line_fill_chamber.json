@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "V": {
+      "item": "jsc:vacuum_casing"
+    }
+  },
+  "pattern": [
+    "GGG",
+    "GV ",
+    " M "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:display_line_fill_chamber"
+  }
+}

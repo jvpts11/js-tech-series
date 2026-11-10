@@ -1,0 +1,31 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:copper_coil"
+    },
+    {
+      "count": 1,
+      "item": "jsc:ferrite"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:paper"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:speaker"
+    }
+  ]
+}

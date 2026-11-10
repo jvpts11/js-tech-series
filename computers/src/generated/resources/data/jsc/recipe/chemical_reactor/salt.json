@@ -1,0 +1,25 @@
+{
+  "type": "jsc:chemical_reactor",
+  "byproducts": [
+    {
+      "item": {
+        "count": 1,
+        "id": "jscore:boron_dust"
+      },
+      "share": 0.0625
+    }
+  ],
+  "fluid_inputs": [
+    {
+      "amount": 4000,
+      "fluid": "minecraft:water"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:salt_dust"
+    }
+  ],
+  "ticks": 1200
+}

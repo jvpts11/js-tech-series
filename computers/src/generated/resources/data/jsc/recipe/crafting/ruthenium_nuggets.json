@@ -1,0 +1,13 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    {
+      "item": "jscore:ruthenium_ingot"
+    }
+  ],
+  "result": {
+    "count": 9,
+    "id": "jscore:ruthenium_nugget"
+  }
+}

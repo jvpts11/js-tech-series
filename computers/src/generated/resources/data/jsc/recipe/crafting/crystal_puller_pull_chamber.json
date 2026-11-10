@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "R": {
+      "item": "jsc:refractory_casing"
+    },
+    "S": {
+      "item": "jscore:steel_rod"
+    }
+  },
+  "pattern": [
+    "M",
+    "S",
+    "R"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:crystal_puller_pull_chamber"
+  }
+}

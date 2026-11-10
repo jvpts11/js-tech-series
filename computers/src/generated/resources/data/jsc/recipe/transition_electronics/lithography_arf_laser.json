@@ -1,0 +1,27 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:clean_room_casing"
+    },
+    {
+      "count": 2,
+      "item": "jsc:transformer"
+    },
+    {
+      "count": 2,
+      "item": "jscore:calcium_fluoride_lens"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_legacy"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:lithography_arf_laser"
+    }
+  ]
+}

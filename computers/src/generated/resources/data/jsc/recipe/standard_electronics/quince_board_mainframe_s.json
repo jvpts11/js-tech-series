@@ -1,0 +1,39 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:populated_board_standard"
+    },
+    {
+      "count": 4,
+      "item": "jsc:socket_lga_2011"
+    },
+    {
+      "count": 32,
+      "item": "jsc:memory_slot_ddr3"
+    },
+    {
+      "count": 6,
+      "item": "jsc:expansion_slot_pcie"
+    },
+    {
+      "count": 4,
+      "item": "jsc:storage_sata"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_atx24"
+    },
+    {
+      "count": 4,
+      "item": "jsc:power_eps"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:quince_board_mainframe_s"
+    }
+  ]
+}

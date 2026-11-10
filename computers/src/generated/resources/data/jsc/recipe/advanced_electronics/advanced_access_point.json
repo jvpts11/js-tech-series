@@ -1,0 +1,39 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 2,
+      "item": "jsc:controller_chip_advanced"
+    },
+    {
+      "count": 8,
+      "item": "jscore:antenna"
+    },
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 2,
+      "item": "jscore:led"
+    },
+    {
+      "count": 1,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_access_point"
+    }
+  ]
+}

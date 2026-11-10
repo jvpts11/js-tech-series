@@ -1,0 +1,31 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:populated_board_vintage"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_quince_dip64"
+    },
+    {
+      "count": 4,
+      "item": "jsc:memory_slot_simm"
+    },
+    {
+      "count": 1,
+      "item": "jsc:storage_ide"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_at"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:quince_board_russet_128k"
+    }
+  ]
+}

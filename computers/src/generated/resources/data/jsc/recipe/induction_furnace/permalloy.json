@@ -1,0 +1,19 @@
+{
+  "type": "jsc:induction_furnace",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "jscore:nickel_ingot"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:iron_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 5,
+      "id": "jscore:permalloy_ingot"
+    }
+  ]
+}

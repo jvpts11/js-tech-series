@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "O": {
+      "item": "jsc:copper_coil"
+    },
+    "V": {
+      "item": "jsc:vacuum_casing"
+    }
+  },
+  "pattern": [
+    "IOI",
+    "OVO",
+    "IOI"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:ion_implanter_analyzer_magnet"
+  }
+}

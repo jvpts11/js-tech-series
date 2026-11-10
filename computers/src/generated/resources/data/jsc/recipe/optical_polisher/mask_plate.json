@@ -1,0 +1,15 @@
+{
+  "type": "jsc:optical_polisher",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:cultured_quartz_crystal"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:mask_plate"
+    }
+  ]
+}

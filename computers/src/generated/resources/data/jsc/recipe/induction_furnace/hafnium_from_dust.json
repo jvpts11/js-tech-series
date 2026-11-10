@@ -1,0 +1,15 @@
+{
+  "type": "jsc:induction_furnace",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:hafnium_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:hafnium_ingot"
+    }
+  ]
+}

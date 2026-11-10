@@ -1,0 +1,19 @@
+{
+  "type": "jsc:crystal_puller",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "jscore:polysilicon_rod"
+    },
+    {
+      "count": 1,
+      "item": "jscore:phosphorus_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:silicon_boule"
+    }
+  ]
+}

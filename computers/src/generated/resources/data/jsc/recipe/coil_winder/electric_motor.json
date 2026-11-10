@@ -1,0 +1,23 @@
+{
+  "type": "jsc:coil_winder",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:steel_rod"
+    },
+    {
+      "count": 4,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jsc:ferrite"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:electric_motor"
+    }
+  ]
+}

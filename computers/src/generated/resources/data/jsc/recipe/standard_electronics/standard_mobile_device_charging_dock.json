@@ -1,0 +1,35 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_standard"
+    },
+    {
+      "count": 1,
+      "item": "jsc:transformer"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jscore:led"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:standard_mobile_device_charging_dock"
+    }
+  ]
+}

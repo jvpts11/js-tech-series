@@ -1,0 +1,31 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jscore:glass_lens"
+    },
+    {
+      "count": 1,
+      "item": "jsc:laser_diode_gallium_nitride"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:storage_sata"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:internal_blu_ray_drive"
+    }
+  ]
+}

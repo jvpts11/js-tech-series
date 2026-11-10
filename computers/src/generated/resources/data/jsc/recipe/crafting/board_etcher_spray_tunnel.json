@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "L": {
+      "item": "jsc:lined_casing"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "V": {
+      "item": "jscore:pvc_sheet"
+    }
+  },
+  "pattern": [
+    "VVV",
+    " L ",
+    " M "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:board_etcher_spray_tunnel"
+  }
+}

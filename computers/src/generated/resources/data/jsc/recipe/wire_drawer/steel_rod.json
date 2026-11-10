@@ -1,0 +1,15 @@
+{
+  "type": "jsc:wire_drawer",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:steel_ingot"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 2,
+      "id": "jscore:steel_rod"
+    }
+  ]
+}

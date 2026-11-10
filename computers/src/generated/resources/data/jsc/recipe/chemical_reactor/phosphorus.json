@@ -1,0 +1,23 @@
+{
+  "type": "jsc:chemical_reactor",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "minecraft:bone_meal"
+    },
+    {
+      "count": 1,
+      "item": "jscore:coke_lump"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:sand"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:phosphorus_dust"
+    }
+  ]
+}

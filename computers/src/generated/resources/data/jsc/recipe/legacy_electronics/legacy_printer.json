@@ -1,0 +1,31 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 2,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_legacy"
+    },
+    {
+      "count": 1,
+      "item": "jscore:steel_rod"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_legacy"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:legacy_printer"
+    }
+  ]
+}

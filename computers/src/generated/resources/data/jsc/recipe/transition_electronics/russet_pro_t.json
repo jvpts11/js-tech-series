@@ -1,0 +1,31 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 6,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 2,
+      "item": "jscore:aluminium_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_transition"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:russet_pro_t"
+    }
+  ]
+}

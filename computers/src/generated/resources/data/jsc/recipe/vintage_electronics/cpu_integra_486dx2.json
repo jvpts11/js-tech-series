@@ -1,0 +1,27 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:processor_chip_vintage_i486"
+    },
+    {
+      "count": 1,
+      "item": "jscore:copper_plate"
+    },
+    {
+      "count": 1,
+      "item": "jscore:tin_nugget"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_socket_3"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:cpu_integra_486dx2"
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "type": "jsc:optical_polisher",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "minecraft:glass"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 4,
+      "id": "jscore:glass_lens"
+    }
+  ]
+}

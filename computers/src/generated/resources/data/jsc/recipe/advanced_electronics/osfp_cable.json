@@ -1,0 +1,27 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 16,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 8,
+      "item": "jscore:copper_foil"
+    },
+    {
+      "count": 2,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:osfp_cable"
+    }
+  ]
+}

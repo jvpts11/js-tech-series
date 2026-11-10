@@ -40,6 +40,18 @@ public static final ProcessingKind PRESSING = CONTENT.processing("pressing", "Pr
         .runsOn(MyEnergy.ENERGY);
 ```
 
+*Added 2026-11-10:* a kind can ask that its recipes be made only from exactly what they take. With
+`.exactInputs()`, a machine holding anything a recipe does not take, in a slot or a tank, makes nothing of it, so a
+recipe is never made from part of another's inputs; `exact()` says whether a kind is so. Use it where two recipes
+share ingredients and differ by one more, as a bench's parts often do:
+
+```java
+public static final ProcessingKind ASSEMBLY = CONTENT.processing("assembly", "Assembly", () -> MyContent.BENCH)
+        .exactInputs();
+```
+
+Without it, a recipe takes what it needs from among whatever the machine holds.
+
 ## The machine
 
 *Added 2026-10-05.*

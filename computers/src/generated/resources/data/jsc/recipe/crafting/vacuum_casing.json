@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "minecraft:copper_ingot"
+    },
+    "S": {
+      "item": "jscore:stainless_steel_plate"
+    }
+  },
+  "pattern": [
+    "CSC",
+    "S S",
+    "CSC"
+  ],
+  "result": {
+    "count": 4,
+    "id": "jsc:vacuum_casing"
+  }
+}

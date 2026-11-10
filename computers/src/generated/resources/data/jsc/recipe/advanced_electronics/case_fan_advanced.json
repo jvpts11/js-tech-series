@@ -1,0 +1,23 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 3,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jscore:led"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:case_fan_advanced"
+    }
+  ]
+}

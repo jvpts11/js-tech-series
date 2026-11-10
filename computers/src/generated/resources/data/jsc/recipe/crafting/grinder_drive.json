@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "I": {
+      "item": "minecraft:iron_ingot"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    }
+  },
+  "pattern": [
+    " C ",
+    " M ",
+    "III"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:grinder_drive"
+  }
+}

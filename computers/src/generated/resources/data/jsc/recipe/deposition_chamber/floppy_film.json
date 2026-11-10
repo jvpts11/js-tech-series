@@ -1,0 +1,19 @@
+{
+  "type": "jsc:deposition_chamber",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jscore:iron_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 4,
+      "id": "jsc:floppy_film"
+    }
+  ]
+}

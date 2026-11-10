@@ -1,0 +1,27 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:case_fan_transition"
+    },
+    {
+      "count": 1,
+      "item": "jsc:thermal_paste"
+    },
+    {
+      "count": 1,
+      "item": "jscore:copper_rod"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:stock_cooler_transition"
+    }
+  ]
+}

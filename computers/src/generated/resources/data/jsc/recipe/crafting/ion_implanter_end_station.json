@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "S": {
+      "item": "jscore:stainless_steel_plate"
+    },
+    "V": {
+      "item": "jsc:vacuum_casing"
+    }
+  },
+  "pattern": [
+    "SMS",
+    " V "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:ion_implanter_end_station"
+  }
+}

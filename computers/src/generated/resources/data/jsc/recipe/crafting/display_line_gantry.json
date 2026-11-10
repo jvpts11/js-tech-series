@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "S": {
+      "item": "jscore:steel_rod"
+    },
+    "V": {
+      "item": "jsc:vacuum_casing"
+    }
+  },
+  "pattern": [
+    "MSM",
+    " V "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:display_line_gantry"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "type": "jsc:empty_computer",
+      "count": 1,
+      "item": "jsc:legacy_personal_computer"
+    },
+    {
+      "count": 1,
+      "item": "jsc:management_nic"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:legacy_cluster_management_computer"
+    }
+  ]
+}

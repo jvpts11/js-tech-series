@@ -1,0 +1,21 @@
+{
+  "type": "jsc:chemical_reactor",
+  "fluid_outputs": [
+    {
+      "amount": 1000,
+      "id": "jscore:ferric_chloride"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jscore:iron_dust"
+    }
+  ],
+  "matter_inputs": [
+    {
+      "amount": 1000,
+      "material": "jscore:hydrogen_chloride"
+    }
+  ]
+}

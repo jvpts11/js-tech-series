@@ -47,6 +47,11 @@ public final class OwnHardware {
         }
     }
 
+    /** The ids of the parts kept, in the order the mod declared them: the catalogue's own order. */
+    public static synchronized List<ResourceLocation> ids() {
+        return ENTRIES.stream().map(Entry::id).toList();
+    }
+
     private record Entry(ResourceLocation id, BiConsumer<ComputersRegisterEvent, Item> declare) {
     }
 }

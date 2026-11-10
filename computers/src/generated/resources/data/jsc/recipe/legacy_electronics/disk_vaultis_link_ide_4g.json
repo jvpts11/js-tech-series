@@ -1,0 +1,35 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:platter"
+    },
+    {
+      "count": 2,
+      "item": "jscore:magnetic_head"
+    },
+    {
+      "count": 1,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_legacy"
+    },
+    {
+      "count": 1,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:storage_ide"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:disk_vaultis_link_ide_4g"
+    }
+  ]
+}

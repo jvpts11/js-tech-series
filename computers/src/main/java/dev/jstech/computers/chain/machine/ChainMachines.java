@@ -111,7 +111,7 @@ public final class ChainMachines {
                 .legend("a=power_entry,b=air_separation_unit_compressor,c=vacuum_casing,"
                         + "d=air_separation_unit_vaporizer,e=air_separation_unit_adsorber,f=gas_outlet,"
                         + "g=air_separation_unit_column")
-                .declare("air_separation_unit_column");
+                .works(AirSeparationBlockEntity::new).declare("air_separation_unit_column");
         machine("siemens_reactor").named("Siemens Reactor").step(60, 5_000).slots(1, 1, 0, 0, 2, 0)
                 .shape("ab,cd", "e#,fb", "eb,fg")
                 .legend("a=siemens_reactor_base_plate,b=refractory_casing,c=item_outlet,d=power_entry,"
@@ -131,21 +131,21 @@ public final class ChainMachines {
                 .shape("ab,cd", "e#,fd")
                 .legend("a=item_inlet,b=power_entry,c=item_outlet,d=gas_inlet,e=plasma_etcher_etch_chamber,"
                         + "f=liquid_inlet")
-                .declare("plasma_etcher_etch_chamber");
+                .works(WaferMachineBlockEntity::new).declare("plasma_etcher_etch_chamber");
         machine("ion_implanter").named("Ion Implanter").step(10, 4_000).slots(2, 1, 0, 0, 0, 0)
                 .shape("abb,cbd", "ef#,bbb")
                 .legend("a=item_inlet,b=vacuum_casing,c=item_outlet,d=power_entry,e=ion_implanter_end_station,"
                         + "f=ion_implanter_analyzer_magnet")
-                .declare("ion_implanter_analyzer_magnet");
+                .works(WaferMachineBlockEntity::new).declare("ion_implanter_analyzer_magnet");
         machine("deposition_chamber").named("Deposition Chamber").step(10, 3_000).slots(3, 1, 0, 0, 0, 0)
                 .shape("ab,cd", "e#,ee")
                 .legend("a=item_inlet,b=vacuum_casing,c=item_outlet,d=power_entry,e=deposition_chamber_sputter_chamber")
-                .declare("deposition_chamber_sputter_chamber");
+                .works(WaferMachineBlockEntity::new).declare("deposition_chamber_sputter_chamber");
         machine("packaging_line").named("Packaging Line").step(20, 2_000).slots(4, 1, 0, 0, 0, 0)
                 .shape("abc,bdb", "ef#,bbb")
                 .legend("a=item_outlet,b=machine_casing,c=item_inlet,d=power_entry,e=packaging_line_mould_press,"
                         + "f=packaging_line_wire_bonder")
-                .declare("packaging_line_wire_bonder");
+                .works(WaferMachineBlockEntity::new).declare("packaging_line_wire_bonder");
         machine("laminator").named("Laminator").step(10, 1_500).slots(3, 1, 0, 0, 0, 0)
                 .shape("abc,dee", "eb#,efe")
                 .legend("a=item_outlet,b=laminator_hot_platen,c=item_inlet,d=power_entry,e=machine_casing,"
@@ -181,14 +181,14 @@ public final class ChainMachines {
                 .shape("abc,dae", "af#,aga", "aha,aaa")
                 .legend("a=clean_room_casing,b=lithography_wafer_stage,c=item_inlet,d=power_entry,e=item_outlet,"
                         + "f=lithography_glass_optics,g=liquid_inlet,h=lithography_mercury_lamp")
-                .declare("lithography_mercury_lamp");
+                .works(WaferMachineBlockEntity::new).declare("lithography_mercury_lamp");
         machine("lithography_legacy").named("Legacy Lithography Station").era(HardwareEra.LEGACY)
                 .step(20, 3_000).slots(2, 1, 1, 0, 1, 0).linked()
                 .shape("abc,dae", "fg#,hij", "aaa,aaa")
                 .legend("a=clean_room_casing,b=lithography_wafer_stage,c=item_inlet,d=power_entry,e=item_outlet,"
                         + "f=lithography_krf_laser,g=lithography_glass_optics,h=gas_inlet,i=liquid_inlet,"
                         + "j=peripheral_port")
-                .declare("lithography_krf_laser");
+                .works(WaferMachineBlockEntity::new).declare("lithography_krf_laser");
         // The Transition's and the Standard's stations are built of the same blocks, so they are one, of both eras.
         machine("lithography_arf").named("ArF Lithography Station").era(HardwareEra.TRANSITION)
                 .serves(HardwareEra.TRANSITION, 4_000).serves(HardwareEra.STANDARD, 6_000)
@@ -197,13 +197,13 @@ public final class ChainMachines {
                 .legend("a=clean_room_casing,b=lithography_wafer_stage,c=item_inlet,d=power_entry,e=liquid_inlet,"
                         + "f=item_outlet,g=lithography_arf_laser,h=lithography_fluoride_optics,i=gas_inlet,"
                         + "j=peripheral_port")
-                .declare("lithography_arf_laser");
+                .works(WaferMachineBlockEntity::new).declare("lithography_arf_laser");
         machine("lithography_advanced").named("Advanced Lithography Station").era(HardwareEra.ADVANCED)
                 .step(20, 10_000).slots(3, 1, 1, 0, 0, 0).linked()
                 .shape("abc,dae", "fg#,ahi", "aaa,aaa")
                 .legend("a=clean_room_casing,b=lithography_wafer_stage,c=item_inlet,d=power_entry,e=item_outlet,"
                         + "f=lithography_euv_source,g=lithography_mirror_optics,h=liquid_inlet,i=peripheral_port")
-                .declare("lithography_euv_source");
+                .works(WaferMachineBlockEntity::new).declare("lithography_euv_source");
         for (final Era era : List.of(HardwareEra.VINTAGE, HardwareEra.LEGACY, HardwareEra.TRANSITION,
                 HardwareEra.STANDARD, HardwareEra.ADVANCED)) {
             final String solder = era.isAtMost(HardwareEra.LEGACY) ? "assembly_wave_solder"
@@ -450,14 +450,15 @@ public final class ChainMachines {
                 return Collections.unmodifiableList(bench);
             }
             if (era == null) {
-                final ProcessingKind made = CONTENT.processing(id, english, shownBy);
+                final ProcessingKind made = CONTENT.processing(id, english, shownBy).exactInputs();
                 return List.of(new Worked(machine.takesEnergy() ? made.runsOn(JsEnergy.ENERGY) : made, null, 0));
             }
             final List<Worked> stations = new ArrayList<>();
             for (final Map.Entry<Era, Integer> of : (serves.isEmpty() ? Map.of(era, watts) : serves).entrySet()) {
                 final Era served = of.getKey();
                 stations.add(new Worked(CONTENT.processing(served.path() + "_lithography", englishEra(served)
-                        + " Lithography", shownBy).runsOn(JsEnergy.ENERGY), served, of.getValue() / TICKS));
+                        + " Lithography", shownBy).runsOn(JsEnergy.ENERGY).exactInputs(), served,
+                        of.getValue() / TICKS));
             }
             return List.copyOf(stations);
         }

@@ -1,0 +1,35 @@
+{
+  "type": "jsc:vintage_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:populated_board_vintage"
+    },
+    {
+      "count": 1,
+      "item": "jsc:socket_slot_1"
+    },
+    {
+      "count": 8,
+      "item": "jsc:memory_slot_sdram"
+    },
+    {
+      "count": 7,
+      "item": "jsc:expansion_slot_agp"
+    },
+    {
+      "count": 2,
+      "item": "jsc:storage_ide"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_at"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:motherboard_at_vintage_slot1"
+    }
+  ]
+}

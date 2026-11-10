@@ -1,0 +1,23 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 5,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 8,
+      "id": "jsc:transition_peripheral_cable"
+    }
+  ]
+}

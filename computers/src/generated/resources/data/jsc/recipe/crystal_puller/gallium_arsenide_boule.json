@@ -1,0 +1,19 @@
+{
+  "type": "jsc:crystal_puller",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:gallium_ingot"
+    },
+    {
+      "count": 2,
+      "item": "jscore:arsenic_dust"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jscore:gallium_arsenide_boule"
+    }
+  ]
+}

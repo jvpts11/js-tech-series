@@ -1,0 +1,19 @@
+{
+  "type": "jsc:coil_winder",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:ferrite"
+    },
+    {
+      "count": 4,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:transformer"
+    }
+  ]
+}

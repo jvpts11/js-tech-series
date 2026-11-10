@@ -1,0 +1,23 @@
+{
+  "type": "jsc:induction_furnace",
+  "inputs": [
+    {
+      "count": 9,
+      "item": "jscore:tin_ingot"
+    },
+    {
+      "count": 1,
+      "item": "jscore:silver_ingot"
+    },
+    {
+      "count": 1,
+      "item": "jscore:copper_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 10,
+      "id": "jscore:lead_free_solder_wire"
+    }
+  ]
+}

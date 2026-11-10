@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:clean_room_casing"
+    },
+    "O": {
+      "item": "jscore:molybdenum_plate"
+    },
+    "S": {
+      "item": "jscore:silicon_wafer"
+    }
+  },
+  "pattern": [
+    "OSO",
+    "OCO",
+    " S "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:lithography_mirror_optics"
+  }
+}

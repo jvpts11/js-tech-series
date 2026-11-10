@@ -1,0 +1,19 @@
+{
+  "type": "jsc:electrolytic_cell",
+  "fluid_inputs": [
+    {
+      "amount": 1000,
+      "fluid": "minecraft:water"
+    }
+  ],
+  "matter_outputs": [
+    {
+      "amount": 1000,
+      "material": "jscore:hydrogen"
+    },
+    {
+      "amount": 500,
+      "material": "jscore:oxygen"
+    }
+  ]
+}

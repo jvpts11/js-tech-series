@@ -1,0 +1,21 @@
+{
+  "type": "jsc:board_etcher",
+  "fluid_inputs": [
+    {
+      "amount": 250,
+      "fluid": "jscore:ferric_chloride"
+    }
+  ],
+  "inputs": [
+    {
+      "count": 3,
+      "item": "jsc:fr4_laminate"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:etched_board_standard"
+    }
+  ]
+}

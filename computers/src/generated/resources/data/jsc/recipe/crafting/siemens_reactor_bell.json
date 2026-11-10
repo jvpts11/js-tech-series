@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "G": {
+      "item": "minecraft:glass"
+    },
+    "P": {
+      "item": "jscore:steel_plate"
+    },
+    "R": {
+      "item": "jsc:refractory_casing"
+    }
+  },
+  "pattern": [
+    "PGP",
+    "PRP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:siemens_reactor_bell"
+  }
+}

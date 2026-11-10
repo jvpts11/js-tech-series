@@ -1,0 +1,39 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jsc:populated_board_advanced"
+    },
+    {
+      "count": 4,
+      "item": "jsc:socket_lga_4189"
+    },
+    {
+      "count": 48,
+      "item": "jsc:memory_slot_ddr4"
+    },
+    {
+      "count": 8,
+      "item": "jsc:expansion_slot_pcie"
+    },
+    {
+      "count": 6,
+      "item": "jsc:storage_m2"
+    },
+    {
+      "count": 1,
+      "item": "jsc:power_atx24"
+    },
+    {
+      "count": 4,
+      "item": "jsc:power_eps"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:motherboard_mtx_a_4189"
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_standard"
+    },
+    {
+      "count": 2,
+      "item": "jsc:storage_sata"
+    },
+    {
+      "count": 1,
+      "item": "jsc:storage_m2"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:dock_station"
+    }
+  ]
+}

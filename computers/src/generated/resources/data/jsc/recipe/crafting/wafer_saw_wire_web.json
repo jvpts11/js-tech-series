@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:machine_casing"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    },
+    "S": {
+      "item": "jscore:steel_rod"
+    }
+  },
+  "pattern": [
+    "SDS",
+    " C "
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:wafer_saw_wire_web"
+  }
+}

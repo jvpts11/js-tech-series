@@ -1,0 +1,31 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 2,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 2,
+      "item": "jsc:controller_chip_transition"
+    },
+    {
+      "count": 1,
+      "item": "jsc:lcd_screen"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_transition"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:transition_printer"
+    }
+  ]
+}
