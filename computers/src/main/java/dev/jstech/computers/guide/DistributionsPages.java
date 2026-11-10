@@ -333,6 +333,8 @@ final class DistributionsPages {
                         + " It installs nothing."))
                 .row(GuideCell.code("apt upgrade"), GuideCell.words("Upgrades installed packages to the"
                         + " Mirror's versions; full-upgrade and dist-upgrade do the same."))
+                .row(GuideCell.code("apt list --upgradable"), GuideCell.words("Lists the installed packages the"
+                        + " Mirror has a newer version of, each with the version you have. It installs nothing."))
                 .command(CommandGuidePages.id(Platform.LINUX, "apt"))
                 .subheading("Installing a program")
                 .steps("Type apt search and a word from the program's name, then press ENTER.",
@@ -390,6 +392,8 @@ final class DistributionsPages {
                 .row(GuideCell.code("dnf update"), GuideCell.words("Brings the installed packages up to date."))
                 .row(GuideCell.code("dnf upgrade"), GuideCell.words("Brings the installed packages up to date, as dnf"
                         + " update does; full-upgrade and dist-upgrade are the same."))
+                .row(GuideCell.code("dnf check-update"), GuideCell.words("Lists the installed packages the Mirror has"
+                        + " a newer version of, each with the new version. It installs nothing."))
                 .command(CommandGuidePages.id(Platform.LINUX, "dnf"))
                 .paragraph("An install on Fedora prints its own lines, in this order.")
                 .table("What dnf prints for an install", "Line", "What it means")

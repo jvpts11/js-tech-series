@@ -501,6 +501,8 @@ final class GentooPages {
                 .row(GuideCell.code("emerge --update @world"),
                         GuideCell.words("Brings every installed package up to the version the Mirror serves."))
                 .row(GuideCell.code("emerge --unmerge <package>"), GuideCell.words("Removes the package."))
+                .row(GuideCell.code("emerge -pvuD @world"), GuideCell.words("Lists what emerge --update @world would"
+                        + " merge, each package with the version you have, and merges nothing."))
                 .command(CommandGuidePages.id(Platform.LINUX, "emerge"))
                 .ifSomethingGoesWrong(
                         "emerge says there are no ebuilds to satisfy the name you typed.",

@@ -16,8 +16,10 @@ import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.TestSoundPayload;
 import dev.jstech.computers.operation.payload.UninstallProgramPayload;
+import dev.jstech.computers.operation.payload.program.UpdatePayloads;
 import dev.jstech.computers.gui.EffectsPages;
 import dev.jstech.computers.gui.layout.SettingsLayout;
+import dev.jstech.computers.gui.layout.SettingsProgramsLayout;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
@@ -45,11 +47,12 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
-import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -97,6 +100,8 @@ public final class SettingsApp implements IDesktopApp {
     private OsSkin skin = OsSkin.fallback();
     @Nullable
     private SettingsSnapshotPayload data;
+    /** What the Mirror has newer for the machine, by the id of each package, which the Programs page marks. */
+    private Map<String, UpdatePayloads.Update> updates = Map.of();
     private int page;
     private int snapshots;
     private int lastMouseX;
@@ -308,6 +313,15 @@ public final class SettingsApp implements IDesktopApp {
         }
     }
 
+    /** The band behind a program the Mirror has newer, in the skin's own colour for a lit row. */
+    private static final class UpdateBand extends UiComponent {
+
+        @Override
+        public void render(final GuiGraphics g, final UiContext ctx) {
+            g.fill(x(), y(), right(), bottom(), ctx.skin().listHover());
+        }
+    }
+
     /** The desktop form: knows its monitor, so "Restart to firmware" can reopen the setup on it. */
     public SettingsApp(final BlockPos host, @Nullable final BlockPos monitorPos) {
         this(host);
@@ -323,12 +337,32 @@ public final class SettingsApp implements IDesktopApp {
         root.add(pagePanel);
         active = this;
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
+        PacketDistributor.sendToServer(new UpdatePayloads.Ask(host));
     }
 
     @Override
     public void onRestored() {
         active = this;
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
+        PacketDistributor.sendToServer(new UpdatePayloads.Ask(host));
+    }
+
+    /**
+     * Routes what the Mirror has newer to the open Settings window, whose Programs page marks each. Only a listing
+     * that changes something rebuilds the page, so one the desktop asked for leaves a field being typed in alone.
+     */
+    public static void acceptUpdates(final UpdatePayloads.Listing payload) {
+        if (active == null || !active.host.equals(payload.host())) {
+            return;
+        }
+        final Map<String, UpdatePayloads.Update> byId = new HashMap<>();
+        for (final UpdatePayloads.Update update : payload.rows()) {
+            byId.put(update.program(), update);
+        }
+        if (!byId.equals(active.updates)) {
+            active.updates = Map.copyOf(byId);
+            active.snapshots++;
+        }
     }
 
     /** Routes a settings snapshot reply to the open Settings window. */
@@ -1047,30 +1081,73 @@ public final class SettingsApp implements IDesktopApp {
         return new HomeEntry(ResourceLocation.parse(icon), title, line, titlePage, linePage);
     }
 
+    /*
+     * The programs installed, each with its Uninstall, and those the Mirror has newer marked as every package manager
+     * marks them (computers/docs/design/programs.md): an Update button that installs the new version as the manager's
+     * upgrade does, a line under the name saying which, and at the top how many updates there are. The Unix desktops
+     * light such a row in their own colour; Frames lists its rows plain.
+     */
     private void programs(final int x, final int top, final int w, final Font font) {
         final SettingsSnapshotPayload d = data;
-        int y = top;
-        heading(SettingsTexts.PROGRAMS, x, y, w);
-        y += 13;
+        final Label heading = heading(SettingsTexts.PROGRAMS, x, top, w);
+        if (!updates.isEmpty()) {
+            final TextKey counted = updates.size() == 1 ? SettingsTexts.UPDATES_ONE : SettingsTexts.UPDATES_MANY;
+            final String count = GameText.resolve(counted.with(updates.size()));
+            final int countX = SettingsProgramsLayout.countX(w, font.width(heading.text()),
+                    Math.round(font.width(count) * SettingsProgramsLayout.SMALL));
+            pagePanel.add(new Label(count, Label.Tone.ACCENT).setAlign(Label.Align.RIGHT)
+                            .setScale(SettingsProgramsLayout.SMALL))
+                    .setBounds(x + countX, top + SettingsProgramsLayout.NAME_Y, w - countX,
+                            SettingsProgramsLayout.LINE_H);
+        }
+        int y = top + SettingsProgramsLayout.HEADING_H;
         if (d.installed().isEmpty()) {
             caption(SettingsTexts.NO_PROGRAMS, x, y, w);
             return;
         }
-        final String btn = GameText.resolve(SettingsTexts.UNINSTALL);
-        final int bw = font.width(btn) + 8;
+        final String uninstall = GameText.resolve(SettingsTexts.UNINSTALL);
+        final String update = GameText.resolve(SettingsTexts.UPDATE);
+        final int uninstallW = SettingsProgramsLayout.buttonWidth(font.width(uninstall));
+        final int updateW = SettingsProgramsLayout.buttonWidth(font.width(update));
+        final DesktopState desktop = DesktopScreen.current();
+        final boolean bands = desktop != null && desktop.panelStyle().unixLike();
         for (final String id : d.installed()) {
             final ResourceLocation rl = ResourceLocation.tryParse(id);
             final ProgramSpec spec = rl == null ? null : OsRegistry.getProgram(rl);
             final String name = spec != null ? spec.displayName() : (id.contains(":") ? id.substring(id.indexOf(':') + 1) : id);
-            pagePanel.add(new Label("- " + name)).setBounds(x, y + 1, w - bw - 4, 8);
+            final UpdatePayloads.Update waiting = updates.get(id);
+            final int rowH = SettingsProgramsLayout.rowHeight(waiting != null);
+            if (waiting != null && bands) {
+                final int pad = SettingsProgramsLayout.BAND_PAD;
+                pagePanel.add(new UpdateBand()).setBounds(x - pad, y - pad, w + 2 * pad, rowH);
+            }
+            pagePanel.add(new Label("- " + name)).setBounds(x, y + SettingsProgramsLayout.NAME_Y,
+                    SettingsProgramsLayout.nameRoom(w, uninstallW, updateW, waiting != null),
+                    SettingsProgramsLayout.LINE_H);
             // Per-row uninstall: the desktop counterpart of the shell's package removal.
-            pagePanel.add(new Button(btn, () -> {
+            pagePanel.add(new Button(uninstall, () -> {
                 PacketDistributor.sendToServer(new UninstallProgramPayload(host, id));
                 // The uninstall lands before these refreshes are processed (same connection, in order).
                 PacketDistributor.sendToServer(new RequestSettingsPayload(host));
+                PacketDistributor.sendToServer(new UpdatePayloads.Ask(host));
                 ActiveDesktop.refreshActive();
-            }).setLabelScale(0.85f)).setBounds(x + w - bw, y - 1, bw, 11);
-            y += 12;
+            }).setLabelScale(0.85f)).setBounds(x + w - uninstallW, y + SettingsProgramsLayout.BUTTON_Y, uninstallW,
+                    SettingsProgramsLayout.BUTTON_H);
+            if (waiting != null) {
+                pagePanel.add(new Button(update, () -> {
+                    // The Mirror answers with what is left to update, and the desktop then reads the new versions.
+                    PacketDistributor.sendToServer(new UpdatePayloads.Apply(host, List.of(id)));
+                    ActiveDesktop.refreshActive();
+                }).setPrimary(true).setLabelScale(0.85f))
+                        .setBounds(x + SettingsProgramsLayout.updateX(w, uninstallW, updateW),
+                                y + SettingsProgramsLayout.BUTTON_Y, updateW, SettingsProgramsLayout.BUTTON_H);
+                final String installed = waiting.installed().isEmpty() ? "-" : waiting.installed();
+                pagePanel.add(new Label(GameText.resolve(SettingsTexts.UPDATE_AVAILABLE.with(waiting.available(),
+                                installed)), Label.Tone.ACCENT).setScale(SettingsProgramsLayout.SMALL))
+                        .setBounds(x + SettingsProgramsLayout.BADGE_X, y + SettingsProgramsLayout.BADGE_Y,
+                                w - SettingsProgramsLayout.BADGE_X, SettingsProgramsLayout.LINE_H);
+            }
+            y += rowH;
         }
     }
 

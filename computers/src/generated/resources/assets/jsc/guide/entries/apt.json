@@ -63,6 +63,14 @@
           {
             "words": "jsc.guide.apt.table1_6_2"
           }
+        ],
+        [
+          {
+            "literal": "apt list --upgradable"
+          },
+          {
+            "words": "jsc.guide.apt.table1_7_2"
+          }
         ]
       ]
     },

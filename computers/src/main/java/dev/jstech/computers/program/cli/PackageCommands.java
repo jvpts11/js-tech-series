@@ -8,7 +8,9 @@
 package dev.jstech.computers.program.cli;
 
 
+import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.program.install.voice.PackageManagerVoices;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -58,17 +60,18 @@ final class PackageCommands {
                 "install and remove packages from the network mirror");
         /* Each manager's own flags; the words in brackets are the reader's. */
         private static final TextKey USAGE_PACMAN = TextKey.of("jsc.cli.package.pacman.usage",
-                "-S <package> | -R <package> | -Ss [term] | -Q | -Syu");
+                "-S <package> | -R <package> | -Ss [term] | -Q | -Qu | -Syu");
         private static final TextKey USAGE_EMERGE = TextKey.of("jsc.cli.package.emerge.usage",
-                "[--ask] <package> | --unmerge <package> | --search [term] | --sync | --update @world");
+                "[--ask] <package> | --unmerge <package> | --search [term] | --sync | -pvuD @world | --update @world");
         private static final TextKey USAGE_PKG = TextKey.of("jsc.cli.package.pkg.usage",
-                "install <package> | delete <package> | search [term] | info | update | upgrade");
+                "install <package> | delete <package> | search [term] | info | version -vRL= | update | upgrade");
         private static final TextKey USAGE_KEG = TextKey.of("jsc.cli.package.keg.usage",
-                "install <formula> | uninstall <formula> | search [term] | list | update | upgrade");
+                "install <formula> | uninstall <formula> | search [term] | list | outdated | update | upgrade");
         private static final TextKey USAGE = TextKey.of("jsc.cli.package.usage",
-                "install <package> | remove <package> | search [term] | list | update | upgrade");
+                "install <package> | remove <package> | search [term] | list [--upgradable] | check-update | update"
+                        + " | upgrade");
         private static final TextKey USAGE_PKG_ADD = TextKey.of("jsc.cli.package.pkg_add.usage",
-                "<package> | -u");
+                "<package> | -u | -un");
         private static final TextKey USAGE_PKG_DELETE = TextKey.of("jsc.cli.package.pkg_delete.usage",
                 "<package>");
         private static final TextKey USAGE_PKG_INFO = TextKey.of("jsc.cli.package.pkg_info.usage",
@@ -163,6 +166,7 @@ final class PackageCommands {
                         case "-S" -> install(ctx, arg, false);
                         case "-Ss" -> search(ctx, arg);
                         case "-Q" -> installed(ctx);
+                        case "-Qu" -> upgradable(ctx);
                         case "-Sy" -> sync(ctx);
                         case "-Syu", "-Su" -> upgrade(ctx);
                         case "-R", "-Rs", "-Rns" -> remove(ctx, arg);
@@ -175,6 +179,8 @@ final class PackageCommands {
                         case "--sync" -> sync(ctx);
                         // @world after it is every package, which is all an upgrade here ever brings up.
                         case "--update", "-u", "-uDN", "-avuDN" -> upgrade(ctx);
+                        // The same with --pretend in front: what it would merge, and nothing merged.
+                        case "-pvuD", "-puD", "-pvuDN", "-puDN" -> upgradable(ctx);
                         case "" -> ctx.out().error(usageLine());
                         case "--ask", "-a", "-av" -> install(ctx, arg, true);
                         case "--unmerge", "-C", "--depclean", "-c" -> remove(ctx, arg);
@@ -189,6 +195,7 @@ final class PackageCommands {
                         case "list" -> installed(ctx);
                         case "update" -> sync(ctx);
                         case "upgrade" -> upgrade(ctx);
+                        case "outdated" -> upgradable(ctx);
                         case "uninstall", "remove", "rm" -> remove(ctx, arg);
                         default -> ctx.out().error(usageLine());
                     }
@@ -207,6 +214,9 @@ final class PackageCommands {
                         default -> {
                             if (verb.equals("-u")) {
                                 upgrade(ctx);
+                            } else if (verb.equals("-un") || verb.equals("-nu")) {
+                                // -n is pkg_add's dry run: what -u would bring up, and nothing brought.
+                                upgradable(ctx);
                             } else {
                                 install(ctx, ctx.hasArgs() ? ctx.rest(0) : "", false);
                             }
@@ -221,6 +231,8 @@ final class PackageCommands {
                         case "info", "query" -> installed(ctx);
                         case "update" -> sync(ctx);
                         case "upgrade" -> upgrade(ctx);
+                        // Compared against the remote repository and only what is behind it, as -vRL= asks.
+                        case "version" -> upgradable(ctx);
                         case "delete", "remove" -> remove(ctx, arg);
                         default -> ctx.out().error(usageLine());
                     }
@@ -229,7 +241,15 @@ final class PackageCommands {
                     switch (verb) {
                         case "install" -> install(ctx, arg, false);
                         case "search" -> search(ctx, arg);
-                        case "list" -> installed(ctx);
+                        case "list" -> {
+                            if (arg.trim().equals("--upgradable")) {
+                                upgradable(ctx);
+                            } else {
+                                installed(ctx);
+                            }
+                        }
+                        // dnf's own word for the list of what the repository has newer.
+                        case "check-update" -> upgradable(ctx);
                         // apt's update reads the lists and its upgrade installs; dnf's two words both install.
                         case "update" -> {
                             if (kind == PackageManagerKind.DNF) {
@@ -286,6 +306,25 @@ final class PackageCommands {
                 return;
             }
             done(ctx, updated.message());
+        }
+
+        /**
+         * Lists what the Mirror has newer than what is installed, the way this manager's own command for it does, and
+         * installs nothing: each manager's mark for an update, as Settings has its own
+         * (computers/docs/design/programs.md).
+         */
+        private void upgradable(final CliContext ctx) {
+            final ICliComputer computer = ctx.computer();
+            if (!computer.mirrorReachable()) {
+                ctx.out().error(noMirror());
+                ctx.out().dim(NOT_ON_A_MIRROR);
+                return;
+            }
+            final String arch = KernelNames.architecture(computer.platform(), computer.processorBits(),
+                    computer.processorIsa());
+            for (final Text line : PackageManagerVoices.upgradable(kind, computer.packageUpdates(), arch)) {
+                ctx.out().line(line);
+            }
         }
 
         /** What pkg says before anything that reads the repository, which is that it looked at it first. */

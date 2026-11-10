@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
+import dev.jstech.computers.operation.payload.program.UpdatePayloads;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.core.text.GameText;
 import java.util.List;
@@ -285,6 +286,19 @@ public final class ActiveDesktop {
         final DesktopState desktop = DesktopScreen.current();
         if (desktop != null && desktop.host().equals(payload.hostPos())) {
             desktop.volume().accept(payload.sound());
+        }
+    }
+
+    /**
+     * Routes what the Mirror has newer for a machine to the windows that show it, Linux Mint's Update Manager and
+     * Settings, and to the desktop looking at that machine, whose panel carries the Update Manager's shield.
+     */
+    public static void acceptUpdates(final UpdatePayloads.Listing payload) {
+        UpdateManagerApp.accept(payload);
+        SettingsApp.acceptUpdates(payload);
+        final DesktopState desktop = DesktopScreen.current();
+        if (desktop != null && desktop.host().equals(payload.host())) {
+            desktop.takeUpdates(payload);
         }
     }
 

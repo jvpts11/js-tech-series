@@ -2570,6 +2570,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   mod's desktops are, one panel with its name and the clock, the menu listing its programs, the Terminal and Settings,
   any window put away, and Shut down. A system that starts it brings it, and the package managers of the mod's systems
   install it from the Mirror by its name.
+- (Computers) Updates on every desktop: Settings > Programs marks each program the Mirror has a newer version of,
+  with "update available" and the two versions under its name and an Update button that installs it as the package
+  manager's upgrade does, and says at the top how many updates there are; the Unix desktops light the row. Each
+  package manager lists them with its own command and installs nothing while it does: `apt list --upgradable`,
+  `dnf check-update`, `pacman -Qu`, `emerge -pvuD @world`, `pkg version -vRL=`, `pkg_add -un` and `keg outdated`.
+  A package a player publishes again under its name is an update too, which every upgrade, the Update Manager and
+  Settings install from the Mirror's copy, and Settings lists the packages of players with the other programs.
 - (Computers) Abandoned buildings: twenty kinds lie across the Overworld, each of one era, the Vintage near the
   world's spawn and the Advanced far away: a house with an old computer in its attic, an electronic waste dump, an
   overturned delivery van, a computer shop, a LAN house, a school computer room, a public library, a radio and

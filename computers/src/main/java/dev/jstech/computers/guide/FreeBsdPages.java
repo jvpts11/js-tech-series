@@ -322,6 +322,8 @@ final class FreeBsdPages {
                         + " without changing any installed package."))
                 .row(GuideCell.code("pkg upgrade"), GuideCell.words("Installs newer versions of the packages you have"
                         + " installed."))
+                .row(GuideCell.code("pkg version -vRL="), GuideCell.words("Lists the installed packages that need"
+                        + " updating, each with the version the Mirror has."))
                 .paragraph("Three shorter words also work: add means install, remove means delete, and query means"
                         + " info.")
                 .paragraph("pkg search marks a package [installed] when it is on your computer, and [community] when"

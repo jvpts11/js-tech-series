@@ -167,6 +167,8 @@ final class OpenBsdPages {
                 .row(GuideCell.code("pkg_info"), GuideCell.words("Lists the installed packages."))
                 .row(GuideCell.code("pkg_info -Q <term>"), GuideCell.words("Searches the Mirror."))
                 .row(GuideCell.code("pkg_delete <package>"), GuideCell.words("Takes a package off."))
+                .row(GuideCell.code("pkg_add -un"), GuideCell.words("Lists what pkg_add -u would bring up, each"
+                        + " package with its two versions, and installs nothing."))
                 .command(CommandGuidePages.id(Platform.OPENBSD, "pkg_add"))
                 .command(CommandGuidePages.id(Platform.OPENBSD, "pkg_info"))
                 .command(CommandGuidePages.id(Platform.OPENBSD, "pkg_delete"))

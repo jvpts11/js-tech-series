@@ -164,6 +164,14 @@
           {
             "words": "jsc.guide.building_from_source.table2_6_2"
           }
+        ],
+        [
+          {
+            "literal": "emerge -pvuD @world"
+          },
+          {
+            "words": "jsc.guide.building_from_source.table2_7_2"
+          }
         ]
       ]
     },

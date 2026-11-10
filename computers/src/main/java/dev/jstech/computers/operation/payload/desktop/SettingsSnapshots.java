@@ -60,6 +60,10 @@ final class SettingsSnapshots {
         final OsDef os = computer.installedOs();
         final String platform = os == null ? "-" : os.platform().label();
         final List<String> installed = new ArrayList<>(console.installed());
+        // A player's package is installed here like any program: its row takes it off, or updates it.
+        for (final ComputerConsoleState.Community theirs : console.community()) {
+            installed.add(theirs.name());
+        }
         final List<SettingsSnapshotPayload.DiskUse> disks = new ArrayList<>();
         for (final ItemStack stack : computer.diskStacks()) {
             final DiskSpec disk = HardwareRegistry.disk(stack);

@@ -425,6 +425,8 @@ final class ArchPages {
                 .row(GuideCell.code("pacman -Syu"),
                         GuideCell.words("Brings every installed package up to the version the Mirror serves."))
                 .row(GuideCell.code("pacman -R <package>"), GuideCell.words("Removes the package."))
+                .row(GuideCell.code("pacman -Qu"), GuideCell.words("Lists the installed packages the Mirror has a"
+                        + " newer version of, each with the version you have and the new one."))
                 .command(CommandGuidePages.id(Platform.LINUX, "pacman"))
                 .ifSomethingGoesWrong(
                         "The screen says \"error: target not found:\" and then the name you typed.",

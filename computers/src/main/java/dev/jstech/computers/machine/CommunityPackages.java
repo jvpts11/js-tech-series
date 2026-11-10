@@ -12,11 +12,14 @@ import dev.jstech.computers.os.player.PlayerDesktop;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.ICliPackages;
 import dev.jstech.computers.sigma.pack.Manifest;
 import dev.jstech.computers.sigma.pack.Packed;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.function.BooleanSupplier;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -95,6 +98,30 @@ final class CommunityPackages {
             return ICliComputer.OpResult.ok(INSTALLED.with(desktop.facts().label(), desktop.installedFolder()));
         }
         return this.unpack(desktop.facts().name(), desktop.manifest(), desktop.files());
+    }
+
+    /**
+     * The packages of players installed here that the Mirror now holds at another version, each against the one
+     * installed: publishing a package again under its name is how a player puts out its next version. A copy the
+     * machine could not install, unreadable or a system, is no update.
+     */
+    List<ICliPackages.PackageUpdate> updates() {
+        final ComputerConsoleState console = this.terminal.console();
+        final MainframeBlockEntity serving = this.mirror.serving();
+        if (console == null || serving == null) {
+            return List.of();
+        }
+        final List<ICliPackages.PackageUpdate> out = new ArrayList<>();
+        for (final ComputerConsoleState.Community installed : console.community()) {
+            final String held = serving.shelvedPackage(installed.name());
+            final Packed packed = held == null ? null : Packed.read(held);
+            if (packed != null && packed.problems().isEmpty() && !Manifest.SYSTEM.equals(packed.manifest().kind())
+                    && !packed.manifest().version().equals(installed.version())) {
+                out.add(new ICliPackages.PackageUpdate(installed.name(), installed.name(), installed.version(),
+                        packed.manifest().version()));
+            }
+        }
+        return out;
     }
 
     /** Takes a player's package off this machine, or null when no package of theirs goes by that name here. */

@@ -13,7 +13,6 @@ import dev.jstech.computers.operation.payload.program.UpdatePayloads;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
-import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.text.GameText;
@@ -88,19 +87,23 @@ public final class UpdateManagerApp implements IDesktopApp {
     }
 
     /**
-     * Hands the open Update Manager what the Mirror has newer, every update ticked; the desktop is told too, so the
-     * shield on the panel goes once nothing is left to install.
+     * Hands the open Update Manager what the Mirror has newer, every update ticked. A listing that says what the one
+     * shown says, which the desktop asks for whenever it looks at the machine again, leaves the player's ticks alone.
      */
     public static void accept(final UpdatePayloads.Listing payload) {
-        if (active != null && active.host.equals(payload.host())) {
-            active.listing = payload;
-            active.ticked.clear();
-            for (final UpdatePayloads.Update update : payload.rows()) {
-                active.ticked.add(update.program());
-            }
-            active.picked = 0;
-            ActiveDesktop.refreshActive();
+        if (active == null || !active.host.equals(payload.host())) {
+            return;
         }
+        final UpdatePayloads.Listing shown = active.listing;
+        active.listing = payload;
+        if (shown != null && shown.reachable() == payload.reachable() && shown.rows().equals(payload.rows())) {
+            return;
+        }
+        active.ticked.clear();
+        for (final UpdatePayloads.Update update : payload.rows()) {
+            active.ticked.add(update.program());
+        }
+        active.picked = 0;
     }
 
     @Override
@@ -203,6 +206,8 @@ public final class UpdateManagerApp implements IDesktopApp {
             shown.rows().forEach(update -> this.ticked.add(update.program()));
         } else if (shown != null && button == INSTALL_UPDATES && !this.ticked.isEmpty()) {
             PacketDistributor.sendToServer(new UpdatePayloads.Apply(this.host, List.copyOf(this.ticked)));
+            // The updates land before the desktop asks again (one connection, in order), so it reads the new versions.
+            ActiveDesktop.refreshActive();
         }
     }
 
@@ -239,8 +244,7 @@ public final class UpdateManagerApp implements IDesktopApp {
                     this.skin.text());
             Draw.text(g, font, Texts.clip(font, aboutOf(spec), room), x + UpdateManagerLayout.NAME_X,
                     y + UpdateManagerLayout.LINE, this.skin.dim());
-            Draw.text(g, font, ProgramVersions.of(update.program()), x + UpdateManagerLayout.NEW_X, y + 4,
-                    this.skin.text());
+            Draw.text(g, font, update.available(), x + UpdateManagerLayout.NEW_X, y + 4, this.skin.text());
             Draw.text(g, font, update.installed().isEmpty() ? "-" : update.installed(),
                     x + UpdateManagerLayout.INSTALLED_X, y + 4, this.skin.dim());
             Draw.text(g, font, GameText.resolve(MEGABYTES.with(sizeOf(spec))), x + UpdateManagerLayout.SIZE_X, y + 4,
@@ -258,7 +262,7 @@ public final class UpdateManagerApp implements IDesktopApp {
         final UpdatePayloads.Update update = shown.rows().get(this.picked);
         final ProgramSpec spec = specOf(update.program());
         final String name = nameOf(update, spec);
-        Draw.text(g, font, name + " " + ProgramVersions.of(update.program()), this.left + UpdateManagerLayout.CHECK_X,
+        Draw.text(g, font, name + " " + update.available(), this.left + UpdateManagerLayout.CHECK_X,
                 this.top + UpdateManagerLayout.ABOUT_TITLE_Y, this.skin.text());
         final boolean desktop = spec != null && spec.kind() == ProgramKind.DESKTOP_ENVIRONMENT;
         final String said = GameText.resolve(desktop ? ABOUT_DESKTOP.text() : ABOUT_PROGRAM.with(name));

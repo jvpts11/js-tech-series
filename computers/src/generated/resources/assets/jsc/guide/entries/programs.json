@@ -217,6 +217,84 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.programs.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text15"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.programs.text16"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.programs.table3",
+      "heads": [
+        "jsc.guide.programs.table3_head1",
+        "jsc.guide.programs.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "apt"
+          },
+          {
+            "literal": "apt list --upgradable"
+          }
+        ],
+        [
+          {
+            "literal": "dnf"
+          },
+          {
+            "literal": "dnf check-update"
+          }
+        ],
+        [
+          {
+            "literal": "pacman"
+          },
+          {
+            "literal": "pacman -Qu"
+          }
+        ],
+        [
+          {
+            "literal": "emerge"
+          },
+          {
+            "literal": "emerge -pvuD @world"
+          }
+        ],
+        [
+          {
+            "literal": "pkg"
+          },
+          {
+            "literal": "pkg version -vRL="
+          }
+        ],
+        [
+          {
+            "literal": "pkg_add"
+          },
+          {
+            "literal": "pkg_add -un"
+          }
+        ],
+        [
+          {
+            "literal": "keg"
+          },
+          {
+            "literal": "keg outdated"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {

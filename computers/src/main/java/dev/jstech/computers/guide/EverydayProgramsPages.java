@@ -110,6 +110,24 @@ final class EverydayProgramsPages {
                         + " the Editor, Settings, the System Monitor, the Task Manager, a Calculator, Paint,"
                         + " Exceed, and the games. The books of the series, one for each family of systems, go"
                         + " deeper into install and use ([](jsc:library)).")
+                .subheading("Updates")
+                .paragraph("When the Mirror has a newer version of a program you installed, Settings marks it on"
+                        + " its Programs page, on every desktop. Under the program's name you read update"
+                        + " available, then the new version and the one you have, and its Update button installs"
+                        + " the new version. At the top, the page says how many updates the Mirror has. A package"
+                        + " another player published again under the same name is an update too.")
+                .paragraph("Each package manager below also lists the updates, with its own command, and installs"
+                        + " nothing while it lists them. On Frames and on UNIX System V, you see the updates in"
+                        + " Settings only. On OpenBSD, syspatch -c lists the patches of the system itself"
+                        + " ([](jsc:openbsd_patches)).")
+                .table("The command that lists the updates", "Manager", "Command")
+                .row(GuideCell.code("apt"), GuideCell.code("apt list --upgradable"))
+                .row(GuideCell.code("dnf"), GuideCell.code("dnf check-update"))
+                .row(GuideCell.code("pacman"), GuideCell.code("pacman -Qu"))
+                .row(GuideCell.code("emerge"), GuideCell.code("emerge -pvuD @world"))
+                .row(GuideCell.code("pkg"), GuideCell.code("pkg version -vRL="))
+                .row(GuideCell.code("pkg_add"), GuideCell.code("pkg_add -un"))
+                .row(GuideCell.code("keg"), GuideCell.code("keg outdated"))
                 .ifSomethingGoesWrong(
                         "The install says that the program needs its install disc in a linked drive.",
                         "Put the disc of that program in a linked drive of the same computer, then install"

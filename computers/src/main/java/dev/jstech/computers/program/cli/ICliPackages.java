@@ -62,6 +62,18 @@ public interface ICliPackages {
         }
     }
 
+    /**
+     * A package the Mirror holds at another version than the one installed here, which is what an upgrade brings.
+     *
+     * @param id        what the machine knows it by: a program's id ({@code jsc:paint}), or the name a player published
+     *                  their package under
+     * @param name      the name a package manager lists it by
+     * @param installed the version installed, empty when the machine keeps no record of one
+     * @param available the version the Mirror serves
+     */
+    record PackageUpdate(String id, String name, String installed, String available) {
+    }
+
     /** The installed OS's package manager; {@code NONE} on media-installed platforms. */
     default PackageManagerKind packageManager() {
         return PackageManagerKind.NONE;
@@ -94,12 +106,21 @@ public interface ICliPackages {
     }
 
     /**
-     * Brings every installed package up to the current build. Packages installed before a mod update
-     * carry the version they were installed at, so this is what reconciles a repository that moved on
-     * without the machine; it never installs anything new.
+     * Brings every installed package up to the version the Mirror serves. Packages installed before a mod update
+     * carry the version they were installed at, and a player's package was installed at the version they had
+     * published then, so this is what reconciles a repository that moved on without the machine; it never installs
+     * anything new.
      */
     default ICliComputer.OpResult packageUpdate() {
         return ICliComputer.OpResult.fail(NO_MIRROR);
+    }
+
+    /**
+     * What the Mirror holds newer than what is installed here, each against the version installed: the programs it
+     * serves, then the packages players published. Empty when no Mirror answers.
+     */
+    default List<PackageUpdate> packageUpdates() {
+        return List.of();
     }
 
     /**

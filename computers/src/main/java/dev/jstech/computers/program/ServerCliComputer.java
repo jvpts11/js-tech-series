@@ -47,6 +47,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -204,6 +205,21 @@ public final class ServerCliComputer extends ServerCliNetwork {
     @Override
     public OpResult packageUpdate() {
         return packages().update();
+    }
+
+    @Override
+    public List<PackageUpdate> packageUpdates() {
+        return packages().updates();
+    }
+
+    /**
+     * Installs those of the Mirror's updates named, by their ids, as Settings' Update button and Linux Mint's Update
+     * Manager ask; a name that is no update is passed over.
+     *
+     * @return how many were installed
+     */
+    public int packageUpgrade(final Collection<String> ids) {
+        return packages().upgrade(ids::contains).size();
     }
 
     @Override

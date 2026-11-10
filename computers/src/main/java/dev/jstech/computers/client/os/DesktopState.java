@@ -25,6 +25,7 @@ import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
 import dev.jstech.computers.operation.payload.RequestDiskFilesPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
+import dev.jstech.computers.operation.payload.program.UpdatePayloads;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OpenWindow;
@@ -34,7 +35,6 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramLoading;
 import dev.jstech.computers.os.ProgramSpec;
-import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.QuincePartitions;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
@@ -182,6 +182,8 @@ final class DesktopState {
     private String computerName = "";
     /** The version each installed package is at, by id path, as the machine last said. */
     private Map<String, String> packageVersions = Map.of();
+    /** How many updates the Mirror has for the machine, as it last said. */
+    private int updatesWaiting;
     /** The pointer, desktop-local, as the frame being drawn has it, so a menu drawn late in it lights its row. */
     private int hoverX;
     private int hoverY;
@@ -852,17 +854,16 @@ final class DesktopState {
     }
 
     /**
-     * How many installed packages are behind the version the Mirror serves, which Linux Mint's Update Manager shows
-     * its shield on the panel for: the same count {@code apt upgrade} would bring up.
+     * How many updates the Mirror has for the machine, which Linux Mint's Update Manager shows its shield on the panel
+     * for: the same count {@code apt upgrade} would bring up, the packages players published among them.
      */
     int updatesWaiting() {
-        int count = 0;
-        for (final String path : installedPrograms()) {
-            if (!ProgramVersions.of(path).equals(packageVersion(path))) {
-                count++;
-            }
-        }
-        return count;
+        return updatesWaiting;
+    }
+
+    /** Takes what the Mirror has newer for the machine, which the shield on the panel is shown for. */
+    void takeUpdates(final UpdatePayloads.Listing listing) {
+        updatesWaiting = listing.reachable() ? listing.rows().size() : 0;
     }
 
     /**
@@ -1208,6 +1209,12 @@ final class DesktopState {
         }
         // A program installed or removed while the desktop is up gets or loses its launcher at once.
         final boolean programsChanged = catalogue.take(payload.programs(), payload.community());
+        // Where Linux Mint's Update Manager is installed, the panel shows its shield while the Mirror has updates.
+        if (installedPrograms().contains(UPDATE_MANAGER)) {
+            PacketDistributor.sendToServer(new UpdatePayloads.Ask(host));
+        } else {
+            updatesWaiting = 0;
+        }
         memory.takeSourceBuilt(payload.sourceBuilt());
         // The trash's picture changes with what is in it, and the icons are made again when it does.
         final boolean trashChanged = trash.setFull(payload.trashFull());

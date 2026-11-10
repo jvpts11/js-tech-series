@@ -69,7 +69,7 @@ class LayoutAuditTest {
             "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
             "EffectsPageLayout", "TransitionPanelLayout", "WorkbenchLayout",
             "SoftwareManagerLayout", "UpdateManagerLayout", "NetBootLayout", "PlayerPagesLayout",
-            "PlayerPanelLayout");
+            "PlayerPanelLayout", "SettingsProgramsLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -239,6 +239,9 @@ class LayoutAuditTest {
         c.add(AuditCase.onTheGlass("PlayerPanelLayout(top)", PlayerPanelLayout.layout(320, 200, 24, true, 8, 16, 8)));
         c.add(AuditCase.onTheGlass("PlayerPanelLayout(foot)",
                 PlayerPanelLayout.layout(320, 200, 24, false, 8, 16, 8)));
+        // Settings > Programs in its narrowest window, every program with an update under it.
+        c.add(AuditCase.onTheGlass("SettingsProgramsLayout", SettingsProgramsLayout.layout(143, 212, 48, 96,
+                new boolean[] {true, true, true, true, true, true, true, true, true}, 42, 34, 132)));
         // The studio is a resizable window: its smallest, its default and a large size, then its dialogs.
         c.add(new AuditCase("IsmsLayout(min)", IsmsLayout.layout(IsmsLayout.MIN_W, IsmsLayout.MIN_H,
                 IsmsLayout.EXPLORER_W, IsmsLayout.defaultEditorH(IsmsLayout.MIN_H)), false));

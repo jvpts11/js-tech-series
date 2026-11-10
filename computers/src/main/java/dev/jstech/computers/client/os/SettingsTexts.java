@@ -126,6 +126,12 @@ final class SettingsTexts {
     static final TextKey MONITOR = TextKey.of("jsc.settings.monitor", "Monitor: linked display");
     static final TextKey NO_PROGRAMS = TextKey.of("jsc.settings.no_programs", "No programs installed");
     static final TextKey UNINSTALL = TextKey.of("jsc.settings.uninstall", "Uninstall");
+    // A program the Mirror has newer: the button that installs it, the line under its name, and the count above.
+    static final TextKey UPDATE = TextKey.of("jsc.settings.update", "Update");
+    static final TextKey UPDATE_AVAILABLE = TextKey.of("jsc.settings.update_available",
+            "update available: %s (installed %s)");
+    static final TextKey UPDATES_ONE = TextKey.of("jsc.settings.updates_one", "%s update on the Mirror");
+    static final TextKey UPDATES_MANY = TextKey.of("jsc.settings.updates_many", "%s updates on the Mirror");
 
     // Sound.
     static final TextKey VOLUME = TextKey.of("jsc.settings.volume", "Volume");

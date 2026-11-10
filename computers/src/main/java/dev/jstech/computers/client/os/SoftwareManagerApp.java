@@ -12,7 +12,7 @@ import dev.jstech.computers.gui.layout.SoftwareManagerLayout;
 import dev.jstech.computers.gui.layout.SoftwareManagerLayout.Rect;
 import dev.jstech.computers.operation.payload.program.StorePayloads;
 import dev.jstech.computers.os.OsRegistry;
-import dev.jstech.computers.os.ProgramKind;
+import dev.jstech.computers.os.ProgramShelf;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.core.client.gui.component.Draw;
@@ -27,7 +27,6 @@ import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -86,21 +85,10 @@ public final class SoftwareManagerApp implements IDesktopApp {
     private static final List<TextKey> CATEGORIES = List.of(CATEGORY_ACCESSORIES, CATEGORY_GRAPHICS,
             CATEGORY_INTERNET, CATEGORY_OFFICE, CATEGORY_PROGRAMMING, CATEGORY_SOUND_AND_VIDEO, CATEGORY_SYSTEM_TOOLS,
             CATEGORY_NETWORK, CATEGORY_GAMES, CATEGORY_DESKTOPS);
-    private static final int ACCESSORIES = 0;
-    private static final int NETWORK = 7;
-    private static final int DESKTOPS = 9;
-    /* Where each program is filed, by its id's path; a desktop is with the desktops, a service with the network. */
-    private static final Map<String, Integer> FILED = Map.ofEntries(
-            Map.entry("ark", 0), Map.entry("screenfetch", 0), Map.entry("calculator", 0),
-            Map.entry("paint", 1), Map.entry("exposure", 1),
-            Map.entry("messenger", 2), Map.entry("remote_control", 2),
-            Map.entry("exceed", 3),
-            Map.entry("virtual_studio_code", 4), Map.entry("sigma", 4), Map.entry("knot", 4), Map.entry("vim", 4),
-            Map.entry("emacs", 4),
-            Map.entry("soundfoundry", 5),
-            Map.entry("storage_insights", 6), Map.entry("automation_manager", 6),
-            Map.entry("craft_planner", NETWORK),
-            Map.entry("minesweeper", 8), Map.entry("solitaire", 8), Map.entry("snake", 8));
+    /** The shelf each of those categories shows, in the same order. */
+    private static final List<ProgramShelf> SHELVES = List.of(ProgramShelf.ACCESSORIES, ProgramShelf.GRAPHICS,
+            ProgramShelf.INTERNET, ProgramShelf.OFFICE, ProgramShelf.PROGRAMMING, ProgramShelf.SOUND_AND_VIDEO,
+            ProgramShelf.SYSTEM_TOOLS, ProgramShelf.NETWORK, ProgramShelf.GAMES, ProgramShelf.DESKTOPS);
 
     private static final TextKey NAME = TextKey.of("jsc.mint.software.name", "Software Manager");
     private static final TextKey SEARCH_HINT = TextKey.of("jsc.mint.software.search", "Search");
@@ -545,17 +533,7 @@ public final class SoftwareManagerApp implements IDesktopApp {
      * The category a program is filed under: its own, else the desktops for a desktop and the network for a service.
      */
     static int categoryOf(@Nullable final ProgramSpec spec) {
-        if (spec == null) {
-            return ACCESSORIES;
-        }
-        final Integer filed = FILED.get(spec.id().getPath());
-        if (filed != null) {
-            return filed;
-        }
-        if (spec.kind() == ProgramKind.DESKTOP_ENVIRONMENT) {
-            return DESKTOPS;
-        }
-        return spec.kind().runsInBackground() ? NETWORK : ACCESSORIES;
+        return SHELVES.indexOf(ProgramShelf.of(spec));
     }
 
     /** The program a row gets, by the name it is got by. */

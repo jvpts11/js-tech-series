@@ -51,6 +51,14 @@
           {
             "words": "jsc.guide.openbsd_packages.table1_5_2"
           }
+        ],
+        [
+          {
+            "literal": "pkg_add -un"
+          },
+          {
+            "words": "jsc.guide.openbsd_packages.table1_6_2"
+          }
         ]
       ]
     },

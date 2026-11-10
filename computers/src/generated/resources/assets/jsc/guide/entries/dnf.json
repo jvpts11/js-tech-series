@@ -63,6 +63,14 @@
           {
             "words": "jsc.guide.dnf.table1_6_2"
           }
+        ],
+        [
+          {
+            "literal": "dnf check-update"
+          },
+          {
+            "words": "jsc.guide.dnf.table1_7_2"
+          }
         ]
       ]
     },

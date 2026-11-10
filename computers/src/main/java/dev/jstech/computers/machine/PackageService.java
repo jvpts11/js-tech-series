@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
+import java.util.function.Predicate;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -256,38 +257,71 @@ public final class PackageService {
                 .orElse("0");
     }
 
-    /** Brings every installed package up to the build this version ships. */
+    /** Brings every installed package up to the version the Mirror serves, saying what it set up. */
     public ICliComputer.OpResult update() {
         final PackageManagerKind manager = this.manager();
         if (manager == PackageManagerKind.NONE) {
             return ICliComputer.OpResult.fail(NO_MANAGER);
         }
-        final ComputerConsoleState console = this.terminal.console();
-        if (console == null) {
+        if (this.terminal.console() == null) {
             return ICliComputer.OpResult.fail(NO_STORE);
         }
         if (!this.mirror.reachable()) {
             return ICliComputer.OpResult.fail(MirrorService.NO_MIRROR_SERVICE);
         }
-        /*
-         * Each package has a version of its own, and one installed at an older one is what an update
-         * brings up. The program itself always runs the code this build ships, so an update reconciles
-         * the record rather than moving files.
-         */
-        final List<String> outdated = console.outdatedPackages();
-        if (outdated.isEmpty()) {
+        final List<ICliPackages.PackageUpdate> waiting = this.updates();
+        if (waiting.isEmpty()) {
             return ICliComputer.OpResult.ok(UP_TO_DATE);
         }
-        final List<Text> lines = new ArrayList<>(outdated.size() + 1);
-        for (final String id : outdated) {
-            final String version = ProgramVersions.of(id);
-            console.setInstalledVersion(id, version);
-            final String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
-            lines.add(SETTING_UP_VERSION.with(path, version));
+        final List<Text> lines = new ArrayList<>(waiting.size() + 1);
+        int updated = 0;
+        for (final ICliPackages.PackageUpdate update : waiting) {
+            final Text refused = this.bringUp(update);
+            if (refused == null) {
+                lines.add(SETTING_UP_VERSION.with(update.name(), update.available()));
+                updated++;
+            } else {
+                lines.add(refused);
+            }
         }
-        lines.add((outdated.size() == 1 ? UPDATED_ONE : UPDATED_MANY).with(outdated.size()));
-        ((BlockEntity) this.terminal).setChanged();
+        lines.add((updated == 1 ? UPDATED_ONE : UPDATED_MANY).with(updated));
         return ICliComputer.OpResult.ok(ICliPackages.lines(lines));
+    }
+
+    /**
+     * What the Mirror holds at another version than the one installed here, each against the version installed: the
+     * programs it serves, then the packages players published. Nothing without a Mirror to read. A machine with no
+     * package manager has its updates too, which its Settings shows.
+     */
+    public List<ICliPackages.PackageUpdate> updates() {
+        final ComputerConsoleState console = this.terminal.console();
+        if (console == null || !this.mirror.reachable()) {
+            return List.of();
+        }
+        final List<ICliPackages.PackageUpdate> out = new ArrayList<>();
+        for (final String id : console.outdatedPackages()) {
+            final String path = id.contains(":") ? id.substring(id.indexOf(':') + 1) : id;
+            out.add(new ICliPackages.PackageUpdate(id, path, console.installedVersion(id), ProgramVersions.of(id)));
+        }
+        out.addAll(this.community.updates());
+        return out;
+    }
+
+    /**
+     * Installs the updates asked for, the Mirror's version of each over the one installed, as every package manager's
+     * upgrade does; one the machine could not install is passed over.
+     *
+     * @param wanted which updates, by their ids
+     * @return the updates installed
+     */
+    public List<ICliPackages.PackageUpdate> upgrade(final Predicate<String> wanted) {
+        final List<ICliPackages.PackageUpdate> done = new ArrayList<>();
+        for (final ICliPackages.PackageUpdate update : this.updates()) {
+            if (wanted.test(update.id()) && this.bringUp(update) == null) {
+                done.add(update);
+            }
+        }
+        return done;
     }
 
     /** Takes a package off this machine, whether it is a player's or one the Mirror serves. */
@@ -338,6 +372,26 @@ public final class PackageService {
         console.markBuiltFromSource(id);
         machine.setChanged();
         reportInstalled(machine, spec);
+    }
+
+    /*
+     * Installs one update, or says why it could not, in the words of whatever refused it. A program the Mirror serves
+     * always runs the code this build ships, so its update moves the record on rather than files; a player's package
+     * is unpacked again from the Mirror's copy, over the one installed.
+     */
+    @Nullable
+    private Text bringUp(final ICliPackages.PackageUpdate update) {
+        final ComputerConsoleState console = this.terminal.console();
+        if (console != null && console.isInstalled(update.id())) {
+            console.setInstalledVersion(update.id(), update.available());
+            ((BlockEntity) this.terminal).setChanged();
+            return null;
+        }
+        final ICliComputer.OpResult theirs = this.community.install(update.id());
+        if (theirs == null) {
+            return NOT_SET_UP.with(update.name());
+        }
+        return theirs.ok() ? null : theirs.message();
     }
 
     /** What is answered before the Mirror is looked at: a system with no manager, and a player's own package. */

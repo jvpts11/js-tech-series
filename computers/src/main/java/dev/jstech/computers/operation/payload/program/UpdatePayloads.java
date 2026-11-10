@@ -7,12 +7,11 @@
  */
 package dev.jstech.computers.operation.payload.program;
 
-import dev.jstech.computers.client.os.UpdateManagerApp;
+import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
-import dev.jstech.computers.os.ProgramVersions;
-import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.ICliPackages;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.TextBounds;
 import java.util.ArrayList;
@@ -25,17 +24,16 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
- * Linux Mint's Update Manager: which installed packages the Mirror has a newer version of, and installing the ones
- * the player ticked (computers/docs/design/operating-systems.md).
+ * What the Mirror has newer for a machine, and installing the updates a player chose: Linux Mint's Update Manager
+ * ticks them, Settings > Programs has an Update button on each (computers/docs/design/programs.md).
  *
- * <p>The packages are the ones {@code apt upgrade} brings up, and installing one records it at the version the
- * Mirror serves, which is all an upgrade does here. A program is installed at once; the desktop's window says it is
- * installed the next time the desktop starts, since the desktop already running is the one that keeps running.
+ * <p>The packages are the ones {@code apt upgrade} brings up, and installing one installs it as the upgrade does. A
+ * program is installed at once; the desktop's window says it is installed the next time the desktop starts, since
+ * the desktop already running is the one that keeps running.
  */
 public final class UpdatePayloads {
 
@@ -52,32 +50,17 @@ public final class UpdatePayloads {
         ComputerAccess.accept(registrar, Apply.TYPE, Apply.STREAM_CODEC, ComputerAccess.machine(Apply::host),
                 UpdatePayloads::handleApply);
         registrar.playToClient(Listing.TYPE, Listing.STREAM_CODEC,
-                ClientPayloadHandlers.onMainThread((payload, player) -> UpdateManagerApp.accept(payload)));
+                ClientPayloadHandlers.onMainThread((payload, player) -> ActiveDesktop.acceptUpdates(payload)));
     }
 
     /**
-     * Installs those updates on that machine, the ones of them that are updates at all: each recorded at the version
-     * the Mirror serves, as every package manager here records an upgrade. Nothing without a Mirror to fetch from.
+     * Installs those updates on that machine, the ones of them that are updates at all, as every package manager here
+     * installs an upgrade. Nothing without a Mirror to fetch from.
      *
      * @return how many were installed
      */
     public static int apply(final IComputerTerminalHost machine, final ServerLevel level, final List<String> ids) {
-        final ComputerConsoleState console = machine.console();
-        if (console == null || !new ServerCliComputer(machine, level).mirrorReachable()) {
-            return 0;
-        }
-        final List<String> outdated = console.outdatedPackages();
-        int installed = 0;
-        for (final String id : ids) {
-            if (outdated.contains(id)) {
-                console.setInstalledVersion(id, ProgramVersions.of(id));
-                installed++;
-            }
-        }
-        if (installed > 0 && machine instanceof BlockEntity block) {
-            block.setChanged();
-        }
-        return installed;
+        return new ServerCliComputer(machine, level).packageUpgrade(ids);
     }
 
     private static void handleAsk(final Ask payload, final ServerPlayer player, final ServerLevel level) {
@@ -96,28 +79,27 @@ public final class UpdatePayloads {
     /** What the Mirror has newer for that machine, each against the version it has installed. */
     private static Listing listingOf(final BlockPos host, final IComputerTerminalHost machine,
                                      final ServerLevel level) {
-        final ComputerConsoleState console = machine.console();
-        final boolean reachable = new ServerCliComputer(machine, level).mirrorReachable();
+        final ServerCliComputer computer = new ServerCliComputer(machine, level);
         final List<Update> rows = new ArrayList<>();
-        if (console != null && reachable) {
-            for (final String id : console.outdatedPackages()) {
-                rows.add(new Update(id, console.installedVersion(id)));
-            }
+        for (final ICliPackages.PackageUpdate update : computer.packageUpdates()) {
+            rows.add(new Update(update.id(), update.installed(), update.available()));
         }
-        return new Listing(host, reachable, rows);
+        return new Listing(host, computer.mirrorReachable(), rows);
     }
 
     /**
-     * One update: the package, by its id, and the version it is installed at, empty when none was ever recorded.
+     * One update: the package, by its id (a program's, or the name a player published theirs under), the version it
+     * is installed at, empty when none was ever recorded, and the version the Mirror serves.
      */
-    public record Update(String program, String installed) {
+    public record Update(String program, String installed, String available) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Update> STREAM_CODEC = StreamCodec.of(
                 (buf, row) -> {
                     buf.writeUtf(TextBounds.clip(row.program(), MOST_TEXT), MOST_TEXT);
                     buf.writeUtf(TextBounds.clip(row.installed(), MOST_TEXT), MOST_TEXT);
+                    buf.writeUtf(TextBounds.clip(row.available(), MOST_TEXT), MOST_TEXT);
                 },
-                buf -> new Update(buf.readUtf(MOST_TEXT), buf.readUtf(MOST_TEXT)));
+                buf -> new Update(buf.readUtf(MOST_TEXT), buf.readUtf(MOST_TEXT), buf.readUtf(MOST_TEXT)));
     }
 
     /** Client to server: which updates does the Mirror have for this machine? */

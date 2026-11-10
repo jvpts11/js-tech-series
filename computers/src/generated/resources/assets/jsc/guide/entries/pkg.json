@@ -69,6 +69,14 @@
           {
             "words": "jsc.guide.pkg.table1_6_2"
           }
+        ],
+        [
+          {
+            "literal": "pkg version -vRL="
+          },
+          {
+            "words": "jsc.guide.pkg.table1_7_2"
+          }
         ]
       ]
     },
