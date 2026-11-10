@@ -30,9 +30,11 @@ import java.util.Locale;
  * @param platform   the instruction set it is built for, by id (a platform target, as the studio it imitates says)
  * @param languageVersion the version of the language it is held to ({@code langversion}), or 0 for none, which
  *                        leaves it to the compiler installed on the machine
+ * @param defines    the symbols it defines for its sources' directives, besides the ones every build defines
  */
 public record ProjectFile(String name, Kind kind, String language, List<String> sources,
-                          List<String> references, String entry, String platform, int languageVersion) {
+                          List<String> references, String entry, String platform, int languageVersion,
+                          List<String> defines) {
 
     /** The shapes a project can have. */
     public enum Kind {
@@ -73,6 +75,14 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         entry = entry == null ? "" : entry;
         platform = platform == null || platform.isEmpty() ? AsmProgram.DEFAULT_ISA : platform;
         languageVersion = Math.max(0, languageVersion);
+        defines = defines == null ? List.of() : List.copyOf(defines);
+    }
+
+    /** A project that defines no symbols of its own, as every one written before a project could does. */
+    public ProjectFile(final String name, final Kind kind, final String language, final List<String> sources,
+                       final List<String> references, final String entry, final String platform,
+                       final int languageVersion) {
+        this(name, kind, language, sources, references, entry, platform, languageVersion, List.of());
     }
 
     /**
@@ -141,7 +151,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         final List<String> more = new ArrayList<>(this.sources);
         more.add(source);
         return new ProjectFile(this.name, this.kind, this.language, more, this.references, this.entry,
-                this.platform, this.languageVersion);
+                this.platform, this.languageVersion, this.defines);
     }
 
     /** The project without that source, or the same one when it was not there. */
@@ -152,7 +162,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         final List<String> fewer = new ArrayList<>(this.sources);
         fewer.remove(source);
         return new ProjectFile(this.name, this.kind, this.language, fewer, this.references, this.entry,
-                this.platform, this.languageVersion);
+                this.platform, this.languageVersion, this.defines);
     }
 
     /** The project with one more reference, or the same one when it is already there. */
@@ -163,7 +173,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         final List<String> more = new ArrayList<>(this.references);
         more.add(reference);
         return new ProjectFile(this.name, this.kind, this.language, this.sources, more, this.entry,
-                this.platform, this.languageVersion);
+                this.platform, this.languageVersion, this.defines);
     }
 
     /** The project built for that instruction set instead, or the same one when it is already the one. */
@@ -172,7 +182,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
             return this;
         }
         return new ProjectFile(this.name, this.kind, this.language, this.sources, this.references, this.entry, isa,
-                this.languageVersion);
+                this.languageVersion, this.defines);
     }
 
     /** The project held to that version of its language instead, 0 for none; the same one when it already is. */
@@ -181,7 +191,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
             return this;
         }
         return new ProjectFile(this.name, this.kind, this.language, this.sources, this.references, this.entry,
-                this.platform, version);
+                this.platform, version, this.defines);
     }
 
     /** The file's text. */
@@ -203,6 +213,9 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         if (this.languageVersion > 0) {
             out.append("langversion: ").append(this.languageVersion).append('\n');
         }
+        for (final String symbol : this.defines) {
+            out.append("define: ").append(symbol).append('\n');
+        }
         return out.toString();
     }
 
@@ -219,6 +232,7 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
         String entry = "";
         String platform = AsmProgram.DEFAULT_ISA;
         int languageVersion = 0;
+        final List<String> defines = new ArrayList<>();
         for (final String raw : (text == null ? "" : text).split("\n")) {
             final String line = raw.trim();
             final int colon = line.indexOf(':');
@@ -239,10 +253,12 @@ public record ProjectFile(String name, Kind kind, String language, List<String> 
                 case "entry" -> entry = value;
                 case "platform" -> platform = value;
                 case "langversion" -> languageVersion = number(value);
+                case "define" -> addEntry(defines, value);
                 default -> { }
             }
         }
-        return new ProjectFile(name, kind, language, sources, references, entry, platform, languageVersion);
+        return new ProjectFile(name, kind, language, sources, references, entry, platform, languageVersion,
+                defines);
     }
 
     /** A version as a file writes it, or 0 when a hand left something that is not a number. */

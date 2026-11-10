@@ -8,6 +8,9 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.core.text.Text;
+import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -33,7 +36,7 @@ import java.util.Map;
 public record Snapshot(int format, String listing, HeapShot heap, IdentityShot identity, ConsoleShot console,
                        List<String> input, CallbacksShot callbacks, WindowsShot windows, List<WatchShot> watches,
                        ListenersShot listeners, ThreadsShot threads, List<MonitorShot> monitors,
-                       Map<String, Map<String, IValue>> statics, IValue script) {
+                       Map<String, Map<String, IValue>> statics, IValue script, IntercalShot intercal) {
 
     /** The format this runtime writes, and the only one it reads back: an older save is never migrated. */
     public static final int FORMAT = 1;
@@ -44,13 +47,39 @@ public record Snapshot(int format, String listing, HeapShot heap, IdentityShot i
         watches = List.copyOf(watches);
         monitors = List.copyOf(monitors);
         statics = Map.copyOf(statics);
+        intercal = intercal == null ? IntercalShot.NONE : intercal;
     }
 
-    /** What the program had allocated, and the most it may allocate. */
-    public record HeapShot(long budget, List<IHeld> held) {
+    /**
+     * What INTERCAL's words left switched: the regions abstain switched off, by method and label, and the fields of
+     * each type that ignore holds, by type. A save written before these words has none of either.
+     */
+    public record IntercalShot(List<String> switchedOff, Map<String, List<String>> staticsIgnored) {
+
+        /** Nothing switched off and nothing ignored. */
+        public static final IntercalShot NONE = new IntercalShot(List.of(), Map.of());
+
+        public IntercalShot {
+            switchedOff = List.copyOf(switchedOff);
+            final Map<String, List<String>> copied = new LinkedHashMap<>();
+            staticsIgnored.forEach((owner, names) -> copied.put(owner, List.copyOf(names)));
+            staticsIgnored = Collections.unmodifiableMap(copied);
+        }
+    }
+
+    /**
+     * What the program had allocated, the most it may allocate, and the address its raw memory gives the next block,
+     * which is kept because an address is never given out twice.
+     */
+    public record HeapShot(long budget, List<IHeld> held, long nextAddress) {
 
         public HeapShot {
             held = List.copyOf(held);
+        }
+
+        /** A heap with no raw memory ever asked for. */
+        public HeapShot(final long budget, final List<IHeld> held) {
+            this(budget, held, 0);
         }
     }
 
@@ -217,10 +246,11 @@ public record Snapshot(int format, String listing, HeapShot heap, IdentityShot i
 
         /** An instance of a class, with what each of its fields holds. */
         record Object(int id, long bytes, int line, boolean freed, String type,
-                      Map<String, IValue> fields) implements IHeld {
+                      Map<String, IValue> fields, List<String> ignored) implements IHeld {
 
             public Object {
                 fields = Map.copyOf(fields);
+                ignored = ignored == null ? List.of() : List.copyOf(ignored);
             }
         }
 
@@ -259,16 +289,70 @@ public record Snapshot(int format, String listing, HeapShot heap, IdentityShot i
                 chain = List.copyOf(chain);
             }
         }
+
+        /**
+         * A block of raw memory: the address it starts at, every byte it holds, and whether a call frees it.
+         *
+         * <p>The bytes are kept as text of one character each, from 0 to 255, which never changes and compares by
+         * what it holds, and which the JVM keeps at one byte a character.
+         */
+        record Memory(int id, long bytes, int line, boolean freed, long address, String contents, boolean onStack)
+                implements IHeld {
+
+            /** The block holding a copy of those bytes. */
+            public static Memory of(final int id, final long bytes, final int line, final boolean freed,
+                                    final long address, final byte[] held, final boolean onStack) {
+                return new Memory(id, bytes, line, freed, address, new String(held, StandardCharsets.ISO_8859_1),
+                        onStack);
+            }
+
+            /** The bytes it holds, in an array of their own. */
+            public byte[] held() {
+                return this.contents.getBytes(StandardCharsets.ISO_8859_1);
+            }
+        }
     }
 
     /** One call in progress: which method, how far into it, and everything it was holding. */
     public record FrameShot(String owner, String name, List<String> parameters, int at, IValue self,
-                            List<IValue> slots, List<IValue> stack, boolean discard) {
+                            List<IValue> slots, List<IValue> stack, boolean discard, List<Integer> ignored,
+                            List<PendingShot> pendings, List<Long> blocks) {
 
         public FrameShot {
             parameters = List.copyOf(parameters);
             slots = List.copyOf(slots);
             stack = List.copyOf(stack);
+            ignored = ignored == null ? List.of() : List.copyOf(ignored);
+            pendings = pendings == null ? List.of() : List.copyOf(pendings);
+            blocks = blocks == null ? List.of() : List.copyOf(blocks);
+        }
+
+        /** A call that made no block of raw memory with stackalloc. */
+        public FrameShot(final String owner, final String name, final List<String> parameters, final int at,
+                         final IValue self, final List<IValue> slots, final List<IValue> stack, final boolean discard,
+                         final List<Integer> ignored, final List<PendingShot> pendings) {
+            this(owner, name, parameters, at, self, slots, stack, discard, ignored, pendings, List.of());
+        }
+
+        /** A call with no finally running in it. */
+        public FrameShot(final String owner, final String name, final List<String> parameters, final int at,
+                         final IValue self, final List<IValue> slots, final List<IValue> stack, final boolean discard,
+                         final List<Integer> ignored) {
+            this(owner, name, parameters, at, self, slots, stack, discard, ignored, List.of());
+        }
+    }
+
+    /**
+     * What a finally running in a call goes on with when it ends: a way out to the line {@code line}, with the finally
+     * blocks it runs on the way and the one at {@code next} running now; or an exception thrown from the line
+     * {@code line}, whose search takes up again after the handler {@code running}. The exception of a process being
+     * stopped is written as nothing, since no exception a program throws is.
+     */
+    public record PendingShot(boolean leaving, int line, List<Integer> finallies, int next, IValue exception,
+                              int running) {
+
+        public PendingShot {
+            finallies = List.copyOf(finallies);
         }
     }
 }

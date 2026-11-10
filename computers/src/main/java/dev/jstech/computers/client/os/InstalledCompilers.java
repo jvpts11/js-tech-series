@@ -11,6 +11,9 @@ import dev.jstech.computers.machine.SigmaLanguage;
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.api.language.IProgrammingLanguage;
+import dev.jstech.core.jstechseries.tier.Era;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * The version of a language the open desktop's machine can build, which is what its installed compiler knows, and
@@ -41,8 +44,23 @@ final class InstalledCompilers {
      */
     static IProgrammingLanguage.CompileOptions options(final IProgrammingLanguage language, final String isa,
                                                        final int projectVersion) {
+        return options(language, isa, projectVersion, List.of());
+    }
+
+    /**
+     * The same, with the symbols a project defines for its sources' directives, and the era of the machine the
+     * studio runs on, which every build on it defines.
+     */
+    static IProgrammingLanguage.CompileOptions options(final IProgrammingLanguage language, final String isa,
+                                                       final int projectVersion, final List<String> defines) {
         final int version = language instanceof SigmaLanguage sigma
                 ? held(sigma.level(), projectVersion) : IProgrammingLanguage.CompileOptions.NEWEST;
-        return new IProgrammingLanguage.CompileOptions(isa, version);
+        final List<String> defined = new ArrayList<>(defines);
+        final DesktopState desktop = DesktopScreen.current();
+        final Era era = desktop == null ? null : desktop.prefs().era();
+        if (era != null) {
+            defined.add(SigmaVersions.symbolOf(era.id()));
+        }
+        return new IProgrammingLanguage.CompileOptions(isa, version, defined);
     }
 }

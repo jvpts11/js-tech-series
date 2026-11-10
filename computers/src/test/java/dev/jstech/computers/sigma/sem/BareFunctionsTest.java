@@ -39,6 +39,9 @@ class BareFunctionsTest {
 
     private static final String PRELUDE = "using Standard.*; namespace Tests; ";
     private static final String SHARP_PRELUDE = "using System.*; using Standard.*; namespace Tests; ";
+    /** C's calls of raw memory, which came with pointers in the third version. */
+    private static final List<String> RAW_MEMORY =
+            List.of("malloc", "calloc", "realloc", "free", "memcpy", "memset", "memcmp");
 
     /** Each old name beside the call a player would have written the long way, in a method body. */
     private static final List<List<String>> SAME_LISTINGS = List.of(
@@ -122,12 +125,13 @@ class BareFunctionsTest {
     }
 
     @Test
-    void all_printfCameWithTheLanguagesAndTheOldNamesInTheSecondVersion() {
+    void all_printfCameWithTheLanguagesTheOldNamesInTheSecondVersionAndRawMemoryInTheThird() {
         for (final BareFunctions.Function function : BareFunctions.all()) {
             assertFalse(function.forms().isEmpty(), function.name());
             assertTrue(function.in(LanguageLevel.SIGMA) && function.in(LanguageLevel.SIGMA_SHARP), function.name());
-            assertEquals("printf".equals(function.name()) ? SigmaVersions.FIRST : 2, function.since(),
-                    function.name());
+            final int since = "printf".equals(function.name()) ? SigmaVersions.FIRST
+                    : RAW_MEMORY.contains(function.name()) ? 3 : 2;
+            assertEquals(since, function.since(), function.name());
         }
     }
 

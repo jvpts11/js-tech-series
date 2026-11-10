@@ -109,7 +109,7 @@ final class NumberFunctions {
                 default -> throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, FieldAccess.HAS_NO.with(CONVERT, name));
             };
         } catch (final NumberFormatException notANumber) {
-            throw new Halt(Halt.Reason.BAD_CAST, line, NOT_A_NUMBER.with(text));
+            throw new Halt(Halt.Reason.BAD_CAST, line, NOT_A_NUMBER.with(text), Halt.Thrown.FORMAT);
         }
     }
 
@@ -130,7 +130,7 @@ final class NumberFunctions {
         return switch (text.trim().toLowerCase(Locale.ROOT)) {
             case "true", "yes", "y", "on", "1" -> true;
             case "false", "no", "n", "off", "0" -> false;
-            default -> throw new Halt(Halt.Reason.BAD_CAST, line, NOT_A_TRUTH.with(text));
+            default -> throw new Halt(Halt.Reason.BAD_CAST, line, NOT_A_TRUTH.with(text), Halt.Thrown.FORMAT);
         };
     }
 

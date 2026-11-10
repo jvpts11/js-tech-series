@@ -158,7 +158,7 @@ public final class OpenFile {
         final String text = open(file, line);
         final String mode = mode(file);
         if ("r".equals(mode)) {
-            throw new Halt(Halt.Reason.REFUSED, line, NOT_WRITTEN.with(path(file), mode));
+            throw new Halt(Halt.Reason.REFUSED, line, NOT_WRITTEN.with(path(file), mode), Halt.Thrown.IO);
         }
         final int at = mode.startsWith("a") ? text.length() : Math.min(at(file), text.length());
         final String after = text.substring(Math.min(text.length(), at + piece.length()));
@@ -191,7 +191,7 @@ public final class OpenFile {
         final String text = open(file, line);
         final String mode = mode(file);
         if ("w".equals(mode) || "a".equals(mode)) {
-            throw new Halt(Halt.Reason.REFUSED, line, NOT_READ.with(path(file), mode));
+            throw new Halt(Halt.Reason.REFUSED, line, NOT_READ.with(path(file), mode), Halt.Thrown.IO);
         }
         return text;
     }
@@ -199,7 +199,7 @@ public final class OpenFile {
     /** What an open file holds, or a halt for one that is closed. */
     private static String open(final Values.Obj file, final int line) {
         if (!Boolean.TRUE.equals(file.get(OPEN))) {
-            throw new Halt(Halt.Reason.REFUSED, line, CLOSED.with(path(file)));
+            throw new Halt(Halt.Reason.REFUSED, line, CLOSED.with(path(file)), Halt.Thrown.IO);
         }
         return text(file);
     }

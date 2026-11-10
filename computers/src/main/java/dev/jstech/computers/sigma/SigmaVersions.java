@@ -7,7 +7,10 @@
  */
 package dev.jstech.computers.sigma;
 
+import java.util.LinkedHashSet;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The versions of the language, one number for both: Σ N is the subset of Σ# N, so a project has a single number
@@ -23,7 +26,9 @@ public final class SigmaVersions {
     /** The language as it first shipped under these names. */
     public static final int FIRST = 1;
     /** The newest version this compiler knows, which is what a build is held to when nothing lowers it. */
-    public static final int NEWEST = 2;
+    public static final int NEWEST = 3;
+    /** The version that brought the directives, and the first whose symbol a build defines. */
+    private static final int DIRECTIVES = 3;
 
     /** The types of the library that came after the first version, with the version each came in. */
     private static final Map<String, Integer> LIBRARY_TYPES = Map.ofEntries(Map.entry("Sound", 2),
@@ -35,7 +40,14 @@ public final class SigmaVersions {
             Map.entry("ContextMenu", 2), Map.entry("StatusBar", 2), Map.entry("Image", 2), Map.entry("Chart", 2),
             Map.entry("LogView", 2), Map.entry("OpenFileDialog", 2), Map.entry("SaveFileDialog", 2),
             Map.entry("ItemSlot", 2), Map.entry("ItemPicker", 2), Map.entry("OperationView", 2),
-            Map.entry("ComponentAction", 2), Map.entry("GenericComponent", 2));
+            Map.entry("ComponentAction", 2), Map.entry("GenericComponent", 2),
+            // The exceptions came with try and catch.
+            Map.entry("Exception", 3), Map.entry("NullReferenceException", 3), Map.entry("ObjectDisposedException", 3),
+            Map.entry("DivideByZeroException", 3), Map.entry("IndexOutOfRangeException", 3),
+            Map.entry("ArgumentException", 3), Map.entry("ArgumentOutOfRangeException", 3),
+            Map.entry("InvalidOperationException", 3), Map.entry("FormatException", 3), Map.entry("IOException", 3),
+            Map.entry("FileNotFoundException", 3), Map.entry("NetworkException", 3),
+            Map.entry("AccessViolationException", 3));
     /**
      * The members that came after the first version on a type that was already there, each written as its owner,
      * its name and the types it takes, with the version it came in.
@@ -47,7 +59,12 @@ public final class SigmaVersions {
             Map.entry("Console.Scan(out long)", 2), Map.entry("Console.Scan(out double)", 2),
             Map.entry("Console.Scan(out string)", 2), Map.entry("Console.Scan(out char)", 2),
             Map.entry("File.Open(string, string)", 2), Map.entry("File.Move(string, string)", 2),
-            Map.entry("Operations.Update(string, string, long)", 2));
+            Map.entry("Operations.Update(string, string, long)", 2),
+            // The calls of raw memory came with pointers.
+            Map.entry("Memory.Alloc(long)", 3), Map.entry("Memory.AllocZeroed(long, long)", 3),
+            Map.entry("Memory.Resize(void*, long)", 3), Map.entry("Memory.Free(void*)", 3),
+            Map.entry("Memory.Copy(void*, void*, long)", 3), Map.entry("Memory.Fill(void*, int, long)", 3),
+            Map.entry("Memory.Compare(void*, void*, long)", 3));
     /**
      * The types the smaller language's library took in later than the full one had them, with the version each
      * came in there: the full language always had Random, and the smaller one gained it with the old rand.
@@ -89,6 +106,28 @@ public final class SigmaVersions {
     /** Whether {@code asked} is a version this compiler has. */
     public static boolean known(final int asked) {
         return asked >= FIRST && asked <= NEWEST;
+    }
+
+    /**
+     * The symbols a build held to {@code asked} defines for its directives, which came with the third version:
+     * {@code SIGMA_3}, and one for every version after it the build reaches.
+     */
+    public static Set<String> defined(final int asked) {
+        final Set<String> symbols = new LinkedHashSet<>();
+        for (int version = DIRECTIVES; version <= held(asked); version++) {
+            symbols.add("SIGMA_" + version);
+        }
+        return symbols;
+    }
+
+    /**
+     * The symbol a build defines for an instruction set or an era by its id: the id's name in capitals, {@code X86_64}
+     * for {@code jsc:x86_64} and {@code STANDARD} for the Standard, which a directive can name where the id, with its
+     * colon, could not be.
+     */
+    public static String symbolOf(final String id) {
+        final int colon = id.indexOf(':');
+        return (colon < 0 ? id : id.substring(colon + 1)).toUpperCase(Locale.ROOT).replace('-', '_');
     }
 
     /**

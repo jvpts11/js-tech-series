@@ -610,6 +610,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `CableBlockEntity.unsettled` makes a cable for a structure, its wires laid and its faces worked out on its first tick
   in the world (`settleLinks`). `ContentData.alsoLoot` adds a mod's own loot tables to the ones its blocks have, and
   `ContentLootProvider` takes the list of tables it writes, `blocks` the declared blocks'. Experimental.
+- (Computers) Symbols for the directives: J's Computers' API is at version 19. `IProgrammingLanguage.CompileOptions`
+  carries `defined`, the symbols a build defines for `#if` beside the instruction set and the version; the form
+  without them defines none. Experimental.
 - (Computers) OpenBSD and Linux Mint: J's Computers' API is at version 18. `OsDef` carries the packages its installer
   lays down with the system, `withPackages`, and the name of the picture it comes up behind, `splash`. `Platform`
   gains `OPENBSD`, `PackageManagerKind` gains `PKG_ADD`, `ShellKind` gains `KSH`, and `InstallerStyle` gains `OPENBSD`
@@ -2570,6 +2573,22 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   mod's desktops are, one panel with its name and the clock, the menu listing its programs, the Terminal and Settings,
   any window put away, and Shut down. A system that starts it brings it, and the package managers of the mod's systems
   install it from the Mirror by its name.
+- (Computers) Version 3 of Sigma and Sigma#, which `sgsc` and `scc` 3.0 build. Both languages gain `const`, labels and
+  `goto` (`goto case` and `goto default` in Sigma#), INTERCAL's `comefrom`, `abstainfrom`, `reinstate`, `ignore` and
+  `remember`, the directives `#if`, `#elif`, `#else`, `#endif`, `#define`, `#undef`, `#error` and `#warning` (with
+  the instruction set, the era, `SIGMA_3` and a project's own `define:` lines as symbols), and pointers: `&`, `*`,
+  `->`, `p[i]`, the arithmetic and comparisons of pointers, `sizeof` and the type `byte`, with raw memory taken and
+  given back by `Memory.Alloc`, `AllocZeroed`, `Resize`, `Free`, `Copy`, `Fill` and `Compare`, which Sigma writes
+  with C's names (`malloc`, `calloc`, `realloc`, `free`, `memcpy`, `memset`, `memcmp`). Every block knows its size:
+  a read outside a live one stops a Sigma program with its system's own words, such as Segmentation fault (core
+  dumped) on Linux. Sigma# alone gains, in `unsafe` methods and blocks, the pointers and `stackalloc`; `sealed`,
+  static classes, `params`, local functions and `nameof`; tuples and their taking apart; extension methods; operators
+  and indexers on a program's own types; and exceptions: `try`, `catch`, `finally` and `throw`, thirteen exception types
+  from `Exception` to `AccessViolationException`, each with its message, file, line and trace, the halts of the
+  language thrown as them, and `finally` run when a program is stopped by `sigma stop`, the Task Manager or `kill`. A
+  build held to version 2 refuses all of it where it is written, a program written for version 2 compiles to the very
+  listing it always did, and a listing that uses an instruction of version 3 is written in version 4 of the format.
+  The Book of Sigma has a section on version 3, and its pages of errors and stops have every new code.
 - (Computers) Updates on every desktop: Settings > Programs marks each program the Mirror has a newer version of,
   with "update available" and the two versions under its name and an Update button that installs it as the package
   manager's upgrade does, and says at the top how many updates there are; the Unix desktops light the row. Each
@@ -3600,6 +3619,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole blocks.
 
 ### Changed
+- (Computers) `kill -9` stops a program without its `OnDestroy`, as SIGKILL runs nothing; `kill` and `sigma stop`
+  still let it say goodbye.
 - (Computers) The chain's machines, as the benches, make a recipe only from exactly what it takes: while an inlet
   holds anything the recipe does not take, the machine makes nothing of it.
 - (Computers) Computers draw energy, switched off, lets the chain's machines run free of energy too.

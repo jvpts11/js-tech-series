@@ -155,12 +155,35 @@ public final class SigmaSnapshotGameTests {
         helper.succeed();
     }
 
+    /* Raw memory, a block a call made with stackalloc, and a finally on its way, each through a tag every few steps. */
+    @GameTest(template = ARENA)
+    public static void snapshotTag_keepsRawMemoryAndAFinallyOnItsWay(final GameTestHelper helper) {
+        bothWays(helper, """
+                        unsafe {
+                            int* kept = (int*) Memory.Alloc(2 * sizeof(int));
+                            int* scratch = stackalloc int[1];
+                            kept[1] = 40;
+                            scratch[0] = 2;
+                            try {
+                                throw new Exception("kept");
+                            } catch (Exception failed) {
+                                Console.PrintLine(failed.Message + " " + (kept[1] + scratch[0]));
+                            } finally {
+                                Memory.Free(kept);
+                                Console.PrintLine("freed");
+                            }
+                        }
+                """, List.of("kept 42", "freed"));
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void snapshotTag_bringsBackEveryKindItWroteDown(final GameTestHelper helper) {
         final Snapshot written = new Snapshot(Snapshot.FORMAT, "a listing's checksum",
                 new Snapshot.HeapShot(4096, List.of(new Snapshot.IHeld.Text(0, 26, 3, false, "hello"),
+                        Snapshot.IHeld.Memory.of(6, 4, 9, false, 0x10000L, new byte[] {1, -2, 3, 0}, true),
                         new Snapshot.IHeld.Object(1, 24, 4, false, "Tally",
-                                Map.of("count", new Snapshot.IValue.I4(7))),
+                                Map.of("count", new Snapshot.IValue.I4(7)), List.of("count")),
                         new Snapshot.IHeld.Array(2, 32, 5, true, "int",
                                 List.of(new Snapshot.IValue.I8(9), new Snapshot.IValue.R4(1.5f))),
                         new Snapshot.IHeld.Listing(3, 24, 6, false,
@@ -170,13 +193,13 @@ public final class SigmaSnapshotGameTests {
                                 List.of(new Snapshot.IValue.R8(2.25))),
                         new Snapshot.IHeld.Handler(5, 32, 8, false, "Note",
                                 List.of(new Snapshot.BoundShot(new Snapshot.IValue.Ref(1), "Monitor",
-                                        "First", List.of("int"), "void"))))),
+                                        "First", List.of("int"), "void")))), 0x10040L),
                 new Snapshot.IdentityShot("running", Text.EMPTY, 91, "Sorter", List.of("a", "b"), 7, false, 0),
                 new Snapshot.ConsoleShot(List.of(Text.literal("first"), Text.literal("second")), 7,
                         0x2545F4914F6CDD1DL),
                 List.of("typed ahead"),
                 new Snapshot.CallbacksShot(List.of(new Snapshot.FrameShot("Counter", "Counter", List.of(), 0,
-                        new Snapshot.IValue.Nothing(), List.of(), List.of(), true)), 3L),
+                        new Snapshot.IValue.Nothing(), List.of(), List.of(), true, List.of())), 3L),
                 new Snapshot.WindowsShot(List.of(), 1, 1, false),
                 List.of(new Snapshot.WatchShot(1, "minecraft:iron_ingot", "below", 1000L,
                         new Snapshot.IValue.Ref(5), new Snapshot.IValue.Ref(1), 640L, false, true)),
@@ -184,7 +207,10 @@ public final class SigmaSnapshotGameTests {
                 new Snapshot.ThreadsShot(List.of(new Snapshot.ThreadShot(1, List.of(new Snapshot.FrameShot("Monitor",
                                 "OnTick", List.of(), 12, new Snapshot.IValue.Ref(1),
                                 List.of(new Snapshot.IValue.Bool(true)), List.of(new Snapshot.IValue.I4(3)),
-                                false)), "none", 0L, new Snapshot.IValue.Nothing(),
+                                false, List.of(0), List.of(new Snapshot.PendingShot(true, 20, List.of(0, 1), 1,
+                                        new Snapshot.IValue.Nothing(), 0), new Snapshot.PendingShot(false, 14,
+                                        List.of(), 0, new Snapshot.IValue.Ref(1), 2)), List.of(0x10000L))),
+                                "none", 0L, new Snapshot.IValue.Nothing(),
                                 new Snapshot.IValue.Nothing(), false, ""),
                         new Snapshot.ThreadShot(2, List.of(), "join", 700L, new Snapshot.IValue.I4(1),
                                 new Snapshot.IValue.Ref(1), true, ""),
@@ -192,7 +218,8 @@ public final class SigmaSnapshotGameTests {
                                 new Snapshot.IValue.Nothing(), false, "lab")), 4),
                 List.of(new Snapshot.MonitorShot(new Snapshot.IValue.Ref(3), 2, 2)),
                 Map.of("Counter", Map.of("seen", new Snapshot.IValue.I4(2))),
-                new Snapshot.IValue.Ref(1));
+                new Snapshot.IValue.Ref(1),
+                new Snapshot.IntercalShot(List.of("Monitor.OnTick():done"), Map.of("Counter", List.of("seen"))));
         final Snapshot read = SnapshotTag.read(SnapshotTag.write(written));
         helper.assertTrue(read.equals(written), "what came back out of the tag is what went in; got " + read);
         helper.succeed();

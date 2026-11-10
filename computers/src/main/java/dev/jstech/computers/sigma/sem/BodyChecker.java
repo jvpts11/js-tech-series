@@ -13,6 +13,7 @@ import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.Operator;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Checks what every method actually does against what the types say.
@@ -58,6 +59,17 @@ public final class BodyChecker {
 
     /** Checks every body in every type the program declares. */
     public void check(final List<NamedType> types) {
+        /*
+         * The consts first, every one of them, and then their values: any body may read one, and one const may be
+         * worked out from another declared further down, so none is worked out before all have been read.
+         */
+        for (final NamedType type : types) {
+            if (this.scope.declarations().source(type) instanceof IDecl.ClassDecl declaration) {
+                this.scope.file(this.scope.declarations().fileOf(type));
+                this.checkConsts(type, declaration);
+            }
+        }
+        this.workOutConsts();
         for (final NamedType type : types) {
             final IDecl.ITypeDecl source = this.scope.declarations().source(type);
             this.scope.file(this.scope.declarations().fileOf(type));
@@ -104,8 +116,61 @@ public final class BodyChecker {
         }
     }
 
+    /*
+     * A const's value is checked as a static field's would be, before any body: it is written with nothing but its
+     * access and const, and it is given where it is declared.
+     */
+    private void checkConsts(final NamedType type, final IDecl.ClassDecl declaration) {
+        this.scope.currentType(type);
+        for (final IDecl.IMemberDecl member : declaration.members()) {
+            if (!(member instanceof IDecl.FieldDecl field) || !field.modifiers().contains(IDecl.Modifier.CONST)) {
+                continue;
+            }
+            for (final IDecl.Modifier word : List.of(IDecl.Modifier.STATIC, IDecl.Modifier.READONLY)) {
+                if (field.modifiers().contains(word)) {
+                    this.scope.report(field.line(), field.column(), SigmaError.MODIFIER_NOT_ALLOWED, word.text(),
+                            IDecl.Modifier.CONST.text());
+                }
+            }
+            if (field.initializer() == null) {
+                this.scope.report(field.line(), field.column(), SigmaError.CONST_NEEDS_VALUE, field.name());
+                continue;
+            }
+            final ITypeSymbol declared = this.scope.declarations().resolve(field.type(), type);
+            this.scope.begin(true, ITypeSymbol.Primitive.VOID, false);
+            this.scope.expect(this.expressions.check(field.initializer(), declared), declared, field.initializer());
+            for (final IMemberSymbol found : BodyScope.lookup(type, field.name())) {
+                if (found instanceof IMemberSymbol.FieldSymbol symbol && symbol.owner() == type) {
+                    this.scope.constants().declare(symbol, field);
+                }
+            }
+        }
+    }
+
+    /* Works out every const's value once all of them are read, saying which of them have none. */
+    private void workOutConsts() {
+        this.scope.constants().ready();
+        for (final Map.Entry<IMemberSymbol.FieldSymbol, IDecl.FieldDecl> entry
+                : this.scope.constants().fields().entrySet()) {
+            final IMemberSymbol.FieldSymbol field = entry.getKey();
+            final IExpr value = entry.getValue().initializer();
+            this.scope.file(this.scope.declarations().fileOf(field.owner()));
+            final Constants.Known known = this.scope.constants().field(field);
+            if (this.scope.constants().circular(field)) {
+                this.scope.report(value.line(), value.column(), SigmaError.CONST_CIRCULAR, field.name());
+            } else if (known == null) {
+                if (!this.scope.rules().isError(this.scope.model().typeOf(value))) {
+                    this.scope.report(value.line(), value.column(), SigmaError.CONST_NOT_KNOWN, field.name());
+                }
+            } else if (known.value() != null && !Constants.holdsValues(field.type(), this.scope.builtIns())) {
+                this.scope.report(value.line(), value.column(), SigmaError.CONST_TYPE, field.type().describe());
+            }
+        }
+    }
+
     private void checkFieldInitializer(final IDecl.FieldDecl field) {
-        if (field.initializer() == null) {
+        // A const was checked with the others, before any body.
+        if (field.initializer() == null || field.modifiers().contains(IDecl.Modifier.CONST)) {
             return;
         }
         final ITypeSymbol declared = this.scope.declarations().resolve(field.type(), this.scope.currentType());
@@ -138,10 +203,15 @@ public final class BodyChecker {
         final ITypeSymbol declared = this.scope.declarations()
                 .resolve(method.returnType(), this.scope.currentType());
         this.scope.begin(method.modifiers().contains(IDecl.Modifier.STATIC), declared, false);
+        this.scope.unsafe(method.modifiers().contains(IDecl.Modifier.UNSAFE));
         this.declareParameters(method.parameters());
+        final Labels labels = Labels.of(method.body(), this.scope);
+        this.scope.regions(labels.switchable());
         this.statements.checkBlock(method.body(), false);
+        labels.resolve();
         this.scope.checkOutParameters(method.parameters(), method.body(), method);
-        if (declared != ITypeSymbol.Primitive.VOID && !StatementChecker.alwaysReturns(method.body())) {
+        if (declared != ITypeSymbol.Primitive.VOID
+                && !StatementChecker.alwaysReturns(method.body(), labels.switchable())) {
             this.scope.report(method.line(), method.column(),
                     SigmaError.MISSING_RETURN_VALUE, declared.describe());
         }
@@ -154,7 +224,10 @@ public final class BodyChecker {
             this.checkChainedCall(type, constructor.chained());
         }
         if (constructor.body() != null) {
+            final Labels labels = Labels.of(constructor.body(), this.scope);
+            this.scope.regions(labels.switchable());
             this.statements.checkBlock(constructor.body(), false);
+            labels.resolve();
         }
         this.scope.checkOutParameters(constructor.parameters(), constructor.body(), constructor);
     }
@@ -179,6 +252,10 @@ public final class BodyChecker {
                         SigmaError.DUPLICATE_DECLARATION, parameter.name());
             }
             this.scope.model().setDeclared(parameter, variable);
+            // A parameter the method fills in is handed back from where it was put, never from raw memory.
+            if (!parameter.outward()) {
+                this.scope.model().setAddressable(variable);
+            }
         }
     }
 }

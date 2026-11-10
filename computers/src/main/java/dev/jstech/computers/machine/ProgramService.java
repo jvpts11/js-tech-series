@@ -188,8 +188,13 @@ public final class ProgramService {
 
     /** Stops the program under that number, in the words the prompt answers with. */
     public ICliComputer.OpResult stop(final int id) {
+        return this.stop(id, true);
+    }
+
+    /** The same, with its farewell, or at once as kill -9 stops one. */
+    public ICliComputer.OpResult stop(final int id, final boolean farewell) {
         final MachinePrograms programs = this.machine.programs();
-        if (programs == null || !programs.stop(id)) {
+        if (programs == null || !programs.stop(id, farewell)) {
             return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(Text.literal("sigma"),
                     NOTHING_RUNNING_AS.with(id)));
         }

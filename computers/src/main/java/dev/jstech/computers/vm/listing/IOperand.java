@@ -84,6 +84,24 @@ public sealed interface IOperand {
         }
     }
 
+    /** A region a label of the source starts, which abstain switches off and reinstate on again, by that label. */
+    record Region(String name) implements IOperand {
+
+        @Override
+        public String write() {
+            return this.name;
+        }
+    }
+
+    /** A region, and the place a jump past it lands at while it is switched off. */
+    record RegionJump(String name, String label) implements IOperand {
+
+        @Override
+        public String write() {
+            return this.name + " " + this.label;
+        }
+    }
+
     /**
      * A field. {@code owner} is null when it belongs to the type the method is in, which is the
      * common case and reads better without repeating the name on every line.

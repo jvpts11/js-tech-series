@@ -105,9 +105,9 @@ final class SigmaLibraryPages {
                 .paragraph("Programs written in the old style call bare names such as printf, rand and strlen. Sigma"
                         + " and Sigma# still accept them. Each bare name is a call on a library member, so puts(s)"
                         + " does the same as Console.PrintLine(s).")
-                .paragraph("printf is version 1. Every other name on this page is version 2, so a version 1 build"
-                        + " refuses it. Each table row names the member the old name calls, so you can read that"
-                        + " member's entry in this book.")
+                .paragraph("printf is version 1, the calls of raw memory are version 3, and every other name on this"
+                        + " page is version 2, so an older build refuses it. Each table row names the member the old"
+                        + " name calls, so you can read that member's entry in this book.")
                 .table("Printing and reading", "Old name", "Library call")
                 .row(GuideCell.code("printf(format, ...)"), GuideCell.words("Console.Print, filled from the values"
                         + " after the format."))
@@ -172,6 +172,16 @@ final class SigmaLibraryPages {
                 .define("FILE", "A file the program has opened, which it works on a piece at a time.")
                 .define("Null", "No value at all: the program holds nothing, and a call that gives null answers with"
                         + " nothing.")
+                .table("Raw memory, in version 3", "Old name", "Library call")
+                .row(GuideCell.code("malloc(bytes)"), GuideCell.words("Memory.Alloc: a new block of raw memory."))
+                .row(GuideCell.code("calloc(count, size)"), GuideCell.words("Memory.AllocZeroed: a block for count"
+                        + " values of that size."))
+                .row(GuideCell.code("realloc(p, bytes)"), GuideCell.words("Memory.Resize: the block at a new size."))
+                .row(GuideCell.code("free(p)"), GuideCell.words("Memory.Free: gives the block back."))
+                .row(GuideCell.code("memcpy(dest, src, bytes)"), GuideCell.words("Memory.Copy, in the same order."))
+                .row(GuideCell.code("memset(p, value, bytes)"), GuideCell.words("Memory.Fill, in the same order."))
+                .row(GuideCell.code("memcmp(a, b, bytes)"), GuideCell.words("Memory.Compare: below zero, zero or"
+                        + " above zero."))
                 .ifSomethingGoesWrong(
                         "The compiler says a hole is not one printf has.",
                         "Use one of the holes listed above, such as %d for a whole number or %s for text.",
@@ -1678,6 +1688,10 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("Memory.Ledger()"), GuideCell.words("A line for each thing that holds memory."))
                 .row(GuideCell.code("Memory.Refuse, Memory.GoDown"), GuideCell.words("What OnOutOfMemory gives to"
                         + " refuse, and to go down."))
+                .row(GuideCell.code("Memory.Alloc, AllocZeroed, Resize and Free"), GuideCell.words("The program's"
+                        + " own raw memory, which pointers reach, from version 3, as the page on pointers shows."))
+                .row(GuideCell.code("Memory.Copy, Fill and Compare"), GuideCell.words("Bytes of raw memory moved, set"
+                        + " or compared, one instruction for every 64 of them."))
                 .table("Services and Drivers members", "Member", "What it does")
                 .row(GuideCell.code("Services.Register(name, path)"), GuideCell.words("Names a program on the disk as"
                         + " a service, which starts when the system comes up."))

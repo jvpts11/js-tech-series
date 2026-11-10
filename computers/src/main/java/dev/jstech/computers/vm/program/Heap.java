@@ -315,6 +315,7 @@ public final class Heap implements IPureContext {
     /** What a value of that type costs inside an object or an array. */
     public static int sizeOf(final String type) {
         return switch (type) {
+            case "byte" -> 1;
             case "int", "float", "bool", "char" -> 4;
             case "long", "double" -> 8;
             default -> REFERENCE;

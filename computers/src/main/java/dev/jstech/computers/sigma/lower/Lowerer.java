@@ -8,6 +8,7 @@
 package dev.jstech.computers.sigma.lower;
 
 import dev.jstech.computers.sigma.DiagnosticBag;
+import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.ast.CompilationUnit;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
@@ -55,6 +56,8 @@ public final class Lowerer {
      */
     private final BuiltIns builtIns;
     private final TypeRules rules;
+    /** Where the few mistakes only this stage sees are told: an ignore of a variable that lives in raw memory. */
+    private final DiagnosticBag diagnostics;
     /** What a method's lambdas keep hold of, which is a question about the tree and is answered here. */
     private final CaptureFinder finder;
     /** How many locks were held where each loop around the statement being reduced began. */
@@ -92,8 +95,29 @@ public final class Lowerer {
      * nothing, so it is not made.
      */
     private final Set<IExpr> walked = Collections.newSetFromMap(new IdentityHashMap<>());
+    /**
+     * How many locks were held where each statement of the method being reduced began, so a jump knows how many it
+     * lets go of: the ones taken since the statement it lands in began, which is always one it is already inside.
+     */
+    private final Map<INode, Integer> locksAt = new IdentityHashMap<>();
+    /** What each tuple taken apart came to, by the assignment or the declaration that takes it apart. */
+    private final Map<INode, TakenApart> takenApart = new IdentityHashMap<>();
+    /** How many protected stretches were open where each loop around the statement being reduced began. */
+    private final Deque<Integer> loopTries = new ArrayDeque<>();
+    /** The same for whatever a break leaves, the nearest loop or switch. */
+    private final Deque<Integer> breakTries = new ArrayDeque<>();
+    /**
+     * How many protected stretches were open where each statement of the method being reduced began, so a jump knows
+     * whether it leaves one: a way out of a try, or of a catch, goes out so that the finally blocks it leaves run.
+     */
+    private final Map<INode, Integer> triesAt = new IdentityHashMap<>();
+
+    /** What the local a tuple is kept in while it is taken apart is called: a name no source can write. */
+    private static final String KEPT_TUPLE = "0tuple";
 
     private int locksOpen;
+    /** How many protected stretches, the body of a try or one of its catches, stand around what is being reduced. */
+    private int triesOpen;
     /** What the lambdas of the method being walked keep, which is what makes a variable not a slot. */
     private Captures kept;
 
@@ -102,6 +126,7 @@ public final class Lowerer {
         this.model = model;
         this.builtIns = builtIns;
         this.rules = rules;
+        this.diagnostics = diagnostics;
         this.finder = new CaptureFinder(model, diagnostics);
     }
 
@@ -116,17 +141,79 @@ public final class Lowerer {
         this.locksOpen = 0;
         this.loopLocks.clear();
         this.breakLocks.clear();
+        this.locksAt.clear();
+        this.triesOpen = 0;
+        this.loopTries.clear();
+        this.breakTries.clear();
+        this.triesAt.clear();
         return this.statements(block);
     }
 
     private IrStmt statements(final IStmt.Block block) {
-        final List<IrStmt> made = new ArrayList<>();
-        if (block != null) {
-            for (final IStmt statement : block.statements()) {
-                made.add(this.reduce(statement));
+        if (block == null) {
+            return new IrStmt.Block(List.of());
+        }
+        this.locksAt.put(block, this.locksOpen);
+        this.triesAt.put(block, this.triesOpen);
+        return new IrStmt.Block(this.run(block, block.statements()));
+    }
+
+    /*
+     * The statements of a block or a switch's arm, one after the next. A region a label there may switch off runs to
+     * the end of them, which is where it lands while it is switched off.
+     */
+    private List<IrStmt> run(final INode holder, final List<IStmt> statements) {
+        final List<IrStmt> made = new ArrayList<>(statements.size() + 1);
+        // A block's local functions are made where it starts, so a call written above one finds it made.
+        for (final IStmt statement : statements) {
+            if (statement instanceof IStmt.LocalFunction function) {
+                made.add(new IrStmt.Source(function));
             }
         }
-        return new IrStmt.Block(made);
+        boolean regions = false;
+        for (final IStmt statement : statements) {
+            if (statement instanceof IStmt.LocalFunction) {
+                continue;
+            }
+            made.add(statement instanceof IStmt.Labeled labeled ? this.labeled(labeled, holder)
+                    : this.reduce(statement));
+            regions |= statement instanceof IStmt.Labeled labeled && this.model.abstainable(labeled);
+        }
+        if (regions) {
+            made.add(new IrStmt.Landing(holder));
+        }
+        return made;
+    }
+
+    /**
+     * A labelled statement: where its gotos land, what its region does while it is switched off, and where its way
+     * out goes when a comefrom takes it.
+     *
+     * @param holder the block or the arm it stands in, whose end its region runs to; null when it stands alone, as
+     *               the branch of another statement, where its region is the statement itself
+     */
+    private IrStmt labeled(final IStmt.Labeled labeled, final INode holder) {
+        this.locksAt.put(labeled, this.locksOpen);
+        this.triesAt.put(labeled, this.triesOpen);
+        final IrStmt inner = labeled.statement() instanceof IStmt.Labeled nested ? this.labeled(nested, null)
+                : this.reduce(labeled.statement());
+        final boolean switchable = this.model.abstainable(labeled);
+        final Object end = !switchable ? null : holder == null ? new Object() : holder;
+        final IStmt.ComeFrom from = this.model.comeFromOf(labeled);
+        final IrStmt.Jump out = from == null ? null : this.jumpTo(from, this.model.jumpOf(from));
+        return new IrStmt.Labeled(labeled, inner, end, switchable && holder == null, out,
+                from == null ? List.of() : this.model.guardsOf(from));
+    }
+
+    /*
+     * A jump to a landing, letting go of the locks taken since the statement it lands in began, and leaving the
+     * protected stretches opened since then.
+     */
+    private IrStmt.Jump jumpTo(final Object key, final SemanticModel.Jump where) {
+        final Integer before = where == null ? null : this.locksAt.get(where.container());
+        final Integer tries = where == null ? null : this.triesAt.get(where.container());
+        return new IrStmt.Jump(key, before == null ? 0 : this.locksOpen - before,
+                tries != null && tries < this.triesOpen);
     }
 
     /*
@@ -134,8 +221,18 @@ public final class Lowerer {
      * left to reduce; one holding others never is, or what it holds would be hidden from here.
      */
     private IrStmt reduce(final IStmt statement) {
+        if (statement != null) {
+            this.locksAt.put(statement, this.locksOpen);
+            this.triesAt.put(statement, this.triesOpen);
+        }
         return switch (statement) {
             case null -> new IrStmt.Block(List.of());
+            case IStmt.Labeled labeled -> this.labeled(labeled, null);
+            case IStmt.Goto jump -> {
+                final SemanticModel.Jump where = this.model.jumpOf(jump);
+                yield where == null ? new IrStmt.Block(List.of()) : this.jumpTo(where.target(), where);
+            }
+            case IStmt.ComeFrom from -> new IrStmt.Landing(from);
             case IStmt.Block block -> this.statements(block);
             case IStmt.If branch -> new IrStmt.If(branch.condition(), this.reduce(branch.then()),
                     branch.otherwise() == null ? null : this.reduce(branch.otherwise()));
@@ -146,11 +243,34 @@ public final class Lowerer {
             case IStmt.ForEach loop -> this.walked(loop);
             case IStmt.Switch chosen -> this.chosen(chosen);
             case IStmt.Lock held -> this.held(held);
-            case IStmt.Break ignored -> new IrStmt.Break(false, this.leaving(this.breakLocks));
-            case IStmt.Continue ignored -> new IrStmt.Break(true, this.leaving(this.loopLocks));
-            case IStmt.Return give -> new IrStmt.Return(give.value(), this.locksOpen);
+            // Unsafe says what the checker may let through; what runs is the block as it stands.
+            case IStmt.Unsafe unsafe -> this.statements(unsafe.body());
+            case IStmt.Break ignored -> new IrStmt.Break(false, this.leaving(this.breakLocks),
+                    this.leaving(this.breakTries, this.triesOpen) > 0);
+            case IStmt.Continue ignored -> new IrStmt.Break(true, this.leaving(this.loopLocks),
+                    this.leaving(this.loopTries, this.triesOpen) > 0);
+            case IStmt.Return give -> new IrStmt.Return(give.value(), this.locksOpen, this.triesOpen > 0);
+            case IStmt.Try guarded -> this.guarded(guarded);
             default -> new IrStmt.Source(statement);
         };
+    }
+
+    /*
+     * A try: its body and its catches are protected stretches, which a way out of leaves so that the finally runs; the
+     * finally itself is not, since nothing leaves it but its own end.
+     */
+    private IrStmt guarded(final IStmt.Try guarded) {
+        this.triesOpen++;
+        final IrStmt body = this.reduce(guarded.body());
+        final List<IrStmt.Try.Catch> catches = new ArrayList<>(guarded.catches().size());
+        for (final IStmt.Catch one : guarded.catches()) {
+            final ITypeSymbol type = this.model.caughtBy(one);
+            catches.add(new IrStmt.Try.Catch(one, type == null ? BuiltIns.EXCEPTION : type.describe(),
+                    this.model.declaredAt(one), this.reduce(one.body())));
+        }
+        this.triesOpen--;
+        return new IrStmt.Try(guarded, body, catches,
+                guarded.cleanup() == null ? null : this.reduce(guarded.cleanup()));
     }
 
     private List<IrStmt> each(final List<IStmt> statements) {
@@ -164,17 +284,34 @@ public final class Lowerer {
     private IrStmt chosen(final IStmt.Switch choice) {
         final List<IrStmt.Switch.Section> sections = new ArrayList<>(choice.sections().size());
         this.breakLocks.push(this.locksOpen);
+        this.breakTries.push(this.triesOpen);
         for (final IStmt.SwitchSection section : choice.sections()) {
-            sections.add(new IrStmt.Switch.Section(section.labels(), this.each(section.statements()),
-                    section.fallback()));
+            this.locksAt.put(section, this.locksOpen);
+            this.triesAt.put(section, this.triesOpen);
+            sections.add(new IrStmt.Switch.Section(section.labels(), this.run(section, section.statements()),
+                    section.fallback(), section));
         }
+        this.breakTries.pop();
         this.breakLocks.pop();
         return new IrStmt.Switch(choice.value(), sections);
     }
 
-    /** Holding a lock, said as the three things it has always been. */
+    /**
+     * Holding a lock, said as the three things it has always been. In a program that uses exceptions, letting go is
+     * the finally of a try around the body instead, so an exception thrown inside lets go as it leaves; a way out of
+     * the body then leaves that try rather than counting the lock.
+     */
     private IrStmt held(final IStmt.Lock lock) {
         final IrStmt.Temporary place = new IrStmt.Temporary();
+        if (this.model.usesExceptions()) {
+            this.triesOpen++;
+            final IrStmt body = this.reduce(lock.body());
+            this.triesOpen--;
+            return new IrStmt.Block(List.of(
+                    new IrStmt.Keep(place, lock.target()),
+                    new IrStmt.MonitorEnter(place),
+                    new IrStmt.Try(null, body, List.of(), new IrStmt.MonitorExit(place))));
+        }
         this.locksOpen++;
         final IrStmt body = this.reduce(lock.body());
         this.locksOpen--;
@@ -185,11 +322,15 @@ public final class Lowerer {
                 new IrStmt.MonitorExit(place)));
     }
 
-    /** A loop body, remembering how many locks were held when the loop began. */
+    /** A loop body, remembering how many locks were held and stretches protected when the loop began. */
     private IrStmt inLoop(final IStmt body) {
         this.loopLocks.push(this.locksOpen);
         this.breakLocks.push(this.locksOpen);
+        this.loopTries.push(this.triesOpen);
+        this.breakTries.push(this.triesOpen);
         final IrStmt made = this.reduce(body);
+        this.breakTries.pop();
+        this.loopTries.pop();
         this.breakLocks.pop();
         this.loopLocks.pop();
         return made;
@@ -197,7 +338,12 @@ public final class Lowerer {
 
     /** How many locks a break or a continue lets go of: the ones taken inside what it is leaving. */
     private int leaving(final Deque<Integer> boundaries) {
-        return boundaries.isEmpty() ? 0 : this.locksOpen - boundaries.peek();
+        return this.leaving(boundaries, this.locksOpen);
+    }
+
+    /** How many of what is open now were opened inside what a break or a continue is leaving. */
+    private int leaving(final Deque<Integer> boundaries, final int open) {
+        return boundaries.isEmpty() ? 0 : open - boundaries.peek();
     }
 
     /**
@@ -243,6 +389,53 @@ public final class Lowerer {
         return this.copied.contains(expression);
     }
 
+    /** What a tuple taken apart came to, by the assignment or the declaration taking it apart, or null. */
+    public TakenApart takenApartOf(final INode at) {
+        return this.takenApart.get(at);
+    }
+
+    /*
+     * A tuple taken apart into those places, said as the plain assignments it comes down to: each place given the
+     * field of the kept tuple that holds it, typed and bound as the checker would have bound it.
+     */
+    private void takeApart(final INode at, final List<IExpr> places, final IExpr value) {
+        if (!(this.model.typeOf(value) instanceof ITypeSymbol.TupleType tuple)
+                || tuple.places().size() != places.size()) {
+            return;
+        }
+        final IBinding.Variable kept = new IBinding.Variable(KEPT_TUPLE, tuple, false);
+        final List<IExpr.Assign> writes = new ArrayList<>(places.size());
+        for (int i = 0; i < places.size(); i++) {
+            final IExpr.Assign write = new IExpr.Assign(places.get(i), Operator.ASSIGN,
+                    this.itemOf(kept, tuple, i, at), at.line(), at.column());
+            this.model.setType(write, this.model.typeOf(places.get(i)));
+            this.written(write);
+            writes.add(write);
+        }
+        this.takenApart.put(at, new TakenApart(kept, value, writes));
+    }
+
+    /* A place of the kept tuple, read through its field. */
+    private IExpr itemOf(final IBinding.Variable kept, final ITypeSymbol.TupleType tuple, final int index,
+                         final INode at) {
+        final IExpr.Name holder = new IExpr.Name(KEPT_TUPLE, at.line(), at.column());
+        this.model.setBinding(holder, kept);
+        this.model.setType(holder, tuple);
+        final String field = NamedType.ITEM + (index + 1);
+        final IExpr.Member read = new IExpr.Member(holder, field, at.line(), at.column());
+        final ITypeSymbol place = tuple.places().get(index);
+        for (final IMemberSymbol member : tuple.struct().members()) {
+            if (member instanceof IMemberSymbol.FieldSymbol held && held.name().equals(field)) {
+                this.model.setBinding(read, new IBinding.Member(held, place));
+            }
+        }
+        this.model.setType(read, place);
+        if (this.isStruct(place)) {
+            this.copied.add(read);
+        }
+        return read;
+    }
+
     /** Asks what a method's lambdas keep, for the bodies that have one to ask about. */
     private Captures keptBy(final INode written, final List<IDecl.Parameter> parameters,
                             final IStmt.Block body) {
@@ -264,6 +457,9 @@ public final class Lowerer {
      * not being here.
      */
     private Place placeOf(final IExpr target) {
+        if (this.model.inRawMemory(target)) {
+            return new Place.Memory(target);
+        }
         final IBinding binding = this.model.bindingOf(target);
         if (binding instanceof IBinding.Variable variable) {
             return this.kept != null && this.kept.fields().containsKey(variable)
@@ -291,7 +487,13 @@ public final class Lowerer {
             return;
         }
         this.writes.put(assign, new IrWrite(place, assign.operator(), assign.value(),
-                this.model.typeOf(assign.target()), IrWrite.Answer.WRITTEN));
+                this.model.typeOf(assign.target()), IrWrite.Answer.WRITTEN, this.operatorOf(assign)));
+    }
+
+    /* The operator's method of a program's own type that a write combines with, or null for the language's own. */
+    private IMemberSymbol.MethodSymbol operatorOf(final INode written) {
+        return this.model.callOf(written) instanceof IMemberSymbol.MethodSymbol method && method.isOperator()
+                ? method : null;
     }
 
     /**
@@ -306,10 +508,11 @@ public final class Lowerer {
             return;
         }
         final ITypeSymbol type = this.model.typeOf(step.operand());
+        final IMemberSymbol.MethodSymbol through = this.operatorOf(step);
         this.writes.put(step, new IrWrite(place,
                 step.operator() == Operator.INCREMENT ? Operator.ADD : Operator.SUBTRACT,
-                this.one(type, step), type,
-                step.postfix() ? IrWrite.Answer.BEFORE : IrWrite.Answer.AFTER));
+                through == null ? this.one(type, step) : null, type,
+                step.postfix() ? IrWrite.Answer.BEFORE : IrWrite.Answer.AFTER, through));
     }
 
     /** The number one, written as the kind of number that place holds, and typed as it is made. */
@@ -420,6 +623,7 @@ public final class Lowerer {
                 this.replaceIn(held.target());
                 this.statement(held.body());
             }
+            case IStmt.Unsafe unsafe -> this.block(unsafe.body());
             case IStmt.Switch chosen -> {
                 this.replaceIn(chosen.value());
                 for (final IStmt.SwitchSection section : chosen.sections()) {
@@ -427,6 +631,28 @@ public final class Lowerer {
                     section.statements().forEach(this::statement);
                 }
             }
+            case IStmt.Labeled labeled -> this.statement(labeled.statement());
+            case IStmt.Goto jump -> this.replaceIn(jump.caseValue());
+            case IStmt.Ignore place -> {
+                this.replaceIn(place.place());
+                // Writes to raw memory go through an address, past anything ignore could make vanish.
+                if (place.place() instanceof IExpr.Name name
+                        && this.model.bindingOf(name) instanceof IBinding.Variable variable
+                        && this.model.isInMemory(variable)) {
+                    this.diagnostics.error(place.line(), place.column(), SigmaError.IGNORE_IN_MEMORY, variable.name());
+                }
+            }
+            case IStmt.LocalFunction function -> this.replaceIn(function.body());
+            case IStmt.Deconstruct taken -> {
+                this.replaceIn(taken.value());
+                this.takeApart(taken, new ArrayList<>(taken.names()), taken.value());
+            }
+            case IStmt.Try guarded -> {
+                this.block(guarded.body());
+                guarded.catches().forEach(one -> this.block(one.body()));
+                this.block(guarded.cleanup());
+            }
+            case IStmt.Throw thrown -> this.replaceIn(thrown.value());
             default -> { }
         }
     }
@@ -451,8 +677,13 @@ public final class Lowerer {
             case IExpr.Assign assign -> {
                 this.replaceIn(assign.target());
                 this.replaceIn(assign.value());
-                this.written(assign);
+                if (assign.target() instanceof IExpr.Tuple places) {
+                    this.takeApart(assign, places.elements(), assign.value());
+                } else {
+                    this.written(assign);
+                }
             }
+            case IExpr.Tuple tuple -> tuple.elements().forEach(this::replaceIn);
             case IExpr.Conditional chosen -> {
                 this.replaceIn(chosen.condition());
                 this.replaceIn(chosen.whenTrue());
@@ -469,6 +700,7 @@ public final class Lowerer {
             }
             case IExpr.New made -> made.arguments().forEach(this::replaceIn);
             case IExpr.NewArray made -> this.replaceIn(made.length());
+            case IExpr.StackAlloc made -> this.replaceIn(made.length());
             case IExpr.Cast cast -> this.replaceIn(cast.value());
             case IExpr.TypeTest test -> this.replaceIn(test.value());
             case IExpr.Lambda lambda -> {
@@ -482,7 +714,9 @@ public final class Lowerer {
             default -> { }
         }
         this.model.setLowered(expression, this.lowered(expression));
-        if (!(expression instanceof IExpr.New) && this.isStruct(this.model.typeOf(expression))) {
+        // What new and a written tuple make is fresh, held by nobody yet, so there is nothing to copy it away from.
+        if (!(expression instanceof IExpr.New) && !(expression instanceof IExpr.Tuple)
+                && this.isStruct(this.model.typeOf(expression))) {
             this.copied.add(expression);
         }
     }
@@ -514,6 +748,9 @@ public final class Lowerer {
             this.replaceIn(longWay);
             return longWay;
         }
+        if (expression instanceof IExpr.Call call && this.model.extensionOf(call) != null) {
+            return this.extended(call);
+        }
         if (expression instanceof IExpr.Call call && this.model.formattedOf(call) != null) {
             // A formatting call that hands its text to nothing is sprintf, and the text is its value.
             return this.model.callOf(call) == null ? this.joined(this.model.formattedOf(call), call)
@@ -523,6 +760,27 @@ public final class Lowerer {
             return null;
         }
         return this.joined(written.parts(), written);
+    }
+
+    /**
+     * A call of an extension method as what it has always been short for: its static method, called through its
+     * class, handed the value it was called on first and then what the call was handed.
+     */
+    private IExpr extended(final IExpr.Call call) {
+        final IMemberSymbol.MethodSymbol method = (IMemberSymbol.MethodSymbol) this.model.callOf(call);
+        final NamedType home = method.owner();
+        final IExpr.Name owner = new IExpr.Name(home.name(), call.line(), call.column());
+        this.model.setBinding(owner, new IBinding.TypeName(home));
+        this.model.setType(owner, home);
+        final IExpr.Member callee = new IExpr.Member(owner, method.name(), call.line(), call.column());
+        this.model.setBinding(callee, new IBinding.Member(method, method.returnType()));
+        final IExpr.Call made = new IExpr.Call(callee, this.model.extensionOf(call), call.line(), call.column());
+        this.model.setType(made, this.model.typeOf(call));
+        this.model.setCall(made, method);
+        if (this.model.expanded(call)) {
+            this.model.setExpanded(made);
+        }
+        return made;
     }
 
     /**

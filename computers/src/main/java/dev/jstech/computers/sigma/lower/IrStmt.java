@@ -68,8 +68,12 @@ public sealed interface IrStmt {
             sections = List.copyOf(sections);
         }
 
-        /** One arm: the values that reach it, what it does, and whether it is the arm anything else reaches. */
-        public record Section(List<IExpr> labels, List<IrStmt> statements, boolean fallback) {
+        /**
+         * One arm: the values that reach it, what it does, whether it is the arm anything else reaches, and the arm
+         * as it was written, which a goto case or a goto default lands at.
+         */
+        public record Section(List<IExpr> labels, List<IrStmt> statements, boolean fallback,
+                              IStmt.SwitchSection source) {
 
             public Section {
                 labels = List.copyOf(labels);
@@ -130,10 +134,76 @@ public sealed interface IrStmt {
      * <p>Counted here rather than kept on a stack while the assembly is written: how many locks stand between
      * a break and the loop it breaks out of is a fact about where the break was written.
      */
-    record Break(boolean continuing, int unlocks) implements IrStmt {
+    record Break(boolean continuing, int unlocks, boolean leaves) implements IrStmt {
+
+        /** One that leaves no protected stretch. */
+        public Break(final boolean continuing, final int unlocks) {
+            this(continuing, unlocks, false);
+        }
     }
 
-    /** Leaving the method, letting go of every lock still held on the way. */
-    record Return(IExpr value, int unlocks) implements IrStmt {
+    /**
+     * Leaving the method, letting go of every lock still held on the way; one that {@code leaves} a protected stretch
+     * goes out by the method's way out, so the finally blocks it leaves run.
+     */
+    record Return(IExpr value, int unlocks, boolean leaves) implements IrStmt {
+
+        /** One that leaves no protected stretch. */
+        public Return(final IExpr value, final int unlocks) {
+            this(value, unlocks, false);
+        }
+    }
+
+    /** A place a jump lands at, known by what it belongs to: a label, a comefrom, a switch's arm or a block's end. */
+    record Landing(Object key) implements IrStmt {
+    }
+
+    /**
+     * A jump to the landing of {@code key}, letting go of the locks taken since the statement it lands in began; one
+     * that {@code leaves} a protected stretch runs the finally blocks it leaves on the way.
+     */
+    record Jump(Object key, int unlocks, boolean leaves) implements IrStmt {
+
+        /** One that leaves no protected stretch. */
+        public Jump(final Object key, final int unlocks) {
+            this(key, unlocks, false);
+        }
+    }
+
+    /**
+     * A try: what it protects, its catches in the order they are tried, and its finally, null when it has none.
+     *
+     * @param source the try as it was written
+     */
+    record Try(IStmt.Try source, IrStmt body, List<Catch> catches, IrStmt cleanup) implements IrStmt {
+
+        public Try {
+            catches = List.copyOf(catches);
+        }
+
+        /**
+         * One catch: the type it takes as the listing names it, the local it puts the exception in, null when it names
+         * none, and what it does.
+         */
+        public record Catch(IStmt.Catch source, String type, IBinding.Variable variable, IrStmt body) {
+        }
+    }
+
+    /**
+     * A labelled statement: gotos land at its start; when its region may be switched off it is passed over to
+     * {@code regionEnd} while it is; and when a comefrom takes it, its way out jumps there, unless one of the regions
+     * the comefrom stands in is switched off.
+     *
+     * @param regionEnd the landing its region ends at, or null when nothing switches it off
+     * @param endsHere  whether that landing is right after the statement, rather than at the end of a block around it
+     * @param comeFrom  the jump its way out takes, or null when no comefrom takes it
+     * @param guards    the regions the comefrom stands in, by their labels
+     */
+    record Labeled(IStmt.Labeled source, IrStmt statement, Object regionEnd, boolean endsHere, Jump comeFrom,
+                   List<String> guards) implements IrStmt {
+
+        public Labeled {
+            guards = List.copyOf(guards);
+        }
     }
 }

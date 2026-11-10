@@ -49,6 +49,9 @@ final class ExpressionParser {
 
     /** The word a place that is read before it is written starts with, in an argument. */
     private static final String REF = "ref";
+    /** The words of raw memory that came with pointers, each a word only where what follows can be nothing else. */
+    private static final String STACKALLOC = "stackalloc";
+    private static final String SIZEOF = "sizeof";
 
     private static final Set<TokenKind> LITERALS = EnumSet.of(
             TokenKind.INT_LITERAL, TokenKind.LONG_LITERAL, TokenKind.FLOAT_LITERAL, TokenKind.DOUBLE_LITERAL,
@@ -155,7 +158,10 @@ final class ExpressionParser {
         final Token at = this.cursor.advance();
         // Through the depth budget, as every nesting is: a chain of thousands of '=' would overflow the stack.
         final IExpr value = this.parseExpression();
-        if (!isAssignable(left)) {
+        // A tuple of places is a place a tuple is taken apart into, by a plain assignment.
+        final boolean takenApart = operator == Operator.ASSIGN && left instanceof IExpr.Tuple places
+                && places.elements().stream().allMatch(ExpressionParser::isAssignable);
+        if (!isAssignable(left) && !takenApart) {
             this.diagnostics.error(at.line(), at.column(), SigmaError.INVALID_ASSIGNMENT_TARGET);
         }
         return new IExpr.Assign(left, operator, value, left.line(), left.column());
@@ -181,7 +187,9 @@ final class ExpressionParser {
     private static boolean isAssignable(final IExpr expression) {
         return expression instanceof IExpr.Name
                 || expression instanceof IExpr.Member
-                || expression instanceof IExpr.Index;
+                || expression instanceof IExpr.Index
+                // What a pointer points at, *p, is a place as a variable is.
+                || expression instanceof IExpr.Unary unary && unary.operator() == Operator.DEREFERENCE;
     }
 
     private IExpr parseConditional() {
@@ -268,6 +276,12 @@ final class ExpressionParser {
             case MINUS_MINUS:
                 this.cursor.advance();
                 return new IExpr.Unary(Operator.DECREMENT, this.operand(), false, start.line(), start.column());
+            case STAR:
+                this.cursor.advance();
+                return new IExpr.Unary(Operator.DEREFERENCE, this.operand(), false, start.line(), start.column());
+            case AMPERSAND:
+                this.cursor.advance();
+                return new IExpr.Unary(Operator.ADDRESS_OF, this.operand(), false, start.line(), start.column());
             default:
                 break;
         }
@@ -306,7 +320,8 @@ final class ExpressionParser {
             return false;
         }
         final TokenKind next = this.cursor.kindAt(after + 1);
-        if (this.types.isBuiltIn(this.cursor.kindAhead(1))) {
+        // A pointer's type in brackets is never a value, so "(Node*) &x" converts as "(int) x" does.
+        if (this.types.isBuiltIn(this.cursor.kindAhead(1)) || this.cursor.kindAt(after - 1) == TokenKind.STAR) {
             return true;
         }
         return next == TokenKind.IDENTIFIER || next == TokenKind.THIS || next == TokenKind.BASE
@@ -346,6 +361,14 @@ final class ExpressionParser {
                 expression = new IExpr.Member(expression, name,
                         expression == null ? dot.line() : expression.line(),
                         expression == null ? dot.column() : expression.column());
+            } else if (this.cursor.check(TokenKind.POINTER_ARROW)) {
+                // p->F is (*p).F, as C and C# both say.
+                final Token arrow = this.cursor.advance();
+                final String name = this.cursor.expectIdentifier();
+                final int line = expression == null ? arrow.line() : expression.line();
+                final int column = expression == null ? arrow.column() : expression.column();
+                expression = new IExpr.Member(new IExpr.Unary(Operator.DEREFERENCE, expression, false, line, column),
+                        name, line, column);
             } else if (this.cursor.check(TokenKind.LEFT_PAREN)) {
                 final Token at = this.cursor.peek();
                 final List<IExpr> arguments = this.parseArguments();
@@ -459,6 +482,12 @@ final class ExpressionParser {
                 if (this.cursor.kindAhead(1) == TokenKind.ARROW) {
                     return this.parseShorthandLambda();
                 }
+                if (STACKALLOC.equals(start.text()) && this.stackAllocAhead()) {
+                    return this.parseStackAlloc();
+                }
+                if (SIZEOF.equals(start.text()) && this.sizeOfAhead()) {
+                    return this.parseSizeOf();
+                }
                 this.cursor.advance();
                 return new IExpr.Name(start.text(), start.line(), start.column());
             case LEFT_PAREN:
@@ -467,6 +496,9 @@ final class ExpressionParser {
                 }
                 this.cursor.advance();
                 final IExpr grouped = this.parseExpression();
+                if (this.cursor.check(TokenKind.COMMA)) {
+                    return this.parseTuple(start, grouped);
+                }
                 this.cursor.expect(TokenKind.RIGHT_PAREN);
                 return grouped;
             default:
@@ -482,6 +514,68 @@ final class ExpressionParser {
         }
         this.diagnostics.error(start.line(), start.column(), SigmaError.EXPECTED_EXPRESSION, start.describe());
         return null;
+    }
+
+    /*
+     * Whether stackalloc starts what follows: a type and then the count in square brackets, which nothing else written
+     * with the word can be, so a variable called stackalloc is still one.
+     */
+    private boolean stackAllocAhead() {
+        final int after = this.types.scanType(this.cursor.at() + 1);
+        return after > this.cursor.at() + 1 && this.cursor.kindAt(after) == TokenKind.LEFT_BRACKET;
+    }
+
+    /* "stackalloc int[n]". */
+    private IExpr parseStackAlloc() {
+        final Token start = this.cursor.advance();
+        final TypeRef type = this.types.parseTypeRef();
+        this.cursor.expect(TokenKind.LEFT_BRACKET);
+        final IExpr length = this.parseExpression();
+        this.cursor.expect(TokenKind.RIGHT_BRACKET);
+        return new IExpr.StackAlloc(type, length, start.line(), start.column());
+    }
+
+    /*
+     * Whether sizeof starts what follows as a type no value could be: one of the language's own or a pointer. A plain
+     * name in the brackets reads as a call, which the checker takes for sizeof only when nothing is called that.
+     */
+    private boolean sizeOfAhead() {
+        if (this.cursor.kindAhead(1) != TokenKind.LEFT_PAREN) {
+            return false;
+        }
+        final int from = this.cursor.at() + 2;
+        final int after = this.types.scanType(from);
+        if (after <= from || this.cursor.kindAt(after) != TokenKind.RIGHT_PAREN) {
+            return false;
+        }
+        final TokenKind first = this.cursor.kindAt(from);
+        return this.types.isBuiltIn(first) || first == TokenKind.VOID
+                || this.cursor.kindAt(after - 1) == TokenKind.STAR;
+    }
+
+    /* "sizeof(int)". */
+    private IExpr parseSizeOf() {
+        final Token start = this.cursor.advance();
+        this.cursor.expect(TokenKind.LEFT_PAREN);
+        final TypeRef type = this.types.parseTypeRef();
+        this.cursor.expect(TokenKind.RIGHT_PAREN);
+        return new IExpr.SizeOf(type, start.line(), start.column());
+    }
+
+    /* "(count, "name")": values in brackets with commas between, the first already read. */
+    private IExpr parseTuple(final Token start, final IExpr first) {
+        final List<IExpr> elements = new ArrayList<>();
+        if (first != null) {
+            elements.add(first);
+        }
+        while (this.cursor.match(TokenKind.COMMA)) {
+            final IExpr next = this.parseExpression();
+            if (next != null) {
+                elements.add(next);
+            }
+        }
+        this.cursor.expect(TokenKind.RIGHT_PAREN);
+        return new IExpr.Tuple(elements, start.line(), start.column());
     }
 
     private IExpr parseNew() {

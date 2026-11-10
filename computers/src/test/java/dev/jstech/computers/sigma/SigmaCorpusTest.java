@@ -41,10 +41,16 @@ class SigmaCorpusTest {
 
     /** The programs of the corpus, kept under {@code sigma/corpus} as source and as the listing each compiles to. */
     private static final List<String> PROGRAMS = List.of("Library", "Programs", "Machine", "Network", "Gateway",
-            "Ui", "Steps", "Values", "Sound", "OldNames", "Buses", "Redstone", "Crafting", "Widgets", "Systems");
+            "Ui", "Steps", "Values", "Sound", "OldNames", "Buses", "Redstone", "Crafting", "Widgets", "Systems",
+            "Exceptions", "Pointers");
     /** The programs built on what came after the first version, which that version refuses for it. */
     private static final Set<String> LATER = Set.of("Sound", "OldNames", "Buses", "Redstone", "Crafting",
-            "Widgets");
+            "Widgets", "Exceptions", "Pointers");
+    /**
+     * What the first version refuses a later program with: what came later as needing it, and the words it kept back
+     * for a later version, try and throw among them, as kept.
+     */
+    private static final Set<String> REFUSED_FOR_ITS_VERSION = Set.of("S3057", "S2014");
 
     /**
      * The types the compiler declares as the language's own core, which the corpus is not about.
@@ -87,7 +93,8 @@ class SigmaCorpusTest {
             final SigmaCompiler.Result first =
                     SigmaCompiler.compile(files, AsmProgram.DEFAULT_ISA, LanguageLevel.SIGMA_SHARP, 1);
             if (LATER.contains(name)) {
-                assertTrue(!first.ok() && first.diagnostics().stream().allMatch(d -> "S3057".equals(d.code())),
+                assertTrue(!first.ok() && first.diagnostics().stream()
+                                .allMatch(d -> REFUSED_FOR_ITS_VERSION.contains(d.code())),
                         () -> "the first version should refuse " + name + " only for its version: "
                                 + first.diagnostics());
                 continue;

@@ -11,9 +11,11 @@ import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.lower.IrStmt;
+import dev.jstech.computers.sigma.lower.TakenApart;
 import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.ITypeSymbol;
+import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Opcode;
 import java.util.ArrayList;
@@ -98,26 +100,136 @@ final class StatementWriter {
             }
             case IrStmt.Break leaving -> {
                 this.body.letGo(leaving.unlocks());
-                this.body.emit(Opcode.BR, new IOperand.Label(
+                this.body.emit(leaving.leaves() ? Opcode.LEAVE : Opcode.BR, new IOperand.Label(
                         leaving.continuing() ? this.body.continueTo() : this.body.breakTo()));
             }
             case IrStmt.Return give -> this.give(give);
+            case IrStmt.Landing landing -> this.body.mark(this.body.landing(landing.key()));
+            case IrStmt.Jump jump -> this.jump(jump);
+            case IrStmt.Labeled labeled -> this.labeled(labeled);
+            case IrStmt.Try guarded -> this.guarded(guarded);
             case null -> { }
+        }
+    }
+
+    /*
+     * INTERCAL's ignore and remember over the place the checker held it to: a local of this call, or one a lambda
+     * keeps, which lives in the object the method shares with it; a field of an object; or a static field.
+     */
+    private void ignore(final IStmt.Ignore place) {
+        final boolean on = !place.remember();
+        final IBinding binding = this.emitter.model.bindingOf(place.place());
+        if (binding instanceof IBinding.Variable variable) {
+            if (this.body.kept(variable)) {
+                this.body.pushClosure();
+                this.body.emit(on ? Opcode.IGNORE_FLD : Opcode.REMEMBER_FLD, this.body.keptField(variable));
+            } else {
+                this.body.emit(on ? Opcode.IGNORE_LOC : Opcode.REMEMBER_LOC,
+                        new IOperand.Slot(this.body.slot(variable)));
+            }
+            return;
+        }
+        if (!(binding instanceof IBinding.Member member)
+                || !(member.member() instanceof IMemberSymbol.FieldSymbol field)) {
+            return;
+        }
+        if (field.isStatic()) {
+            this.body.emit(on ? Opcode.IGNORE_SFLD : Opcode.REMEMBER_SFLD,
+                    new IOperand.Field(field.owner().qualifiedName(), field.name()));
+            return;
+        }
+        if (place.place() instanceof IExpr.Member reached) {
+            this.values.receiver(reached.target());
+        } else {
+            this.body.pushThis();
+        }
+        this.body.emit(on ? Opcode.IGNORE_FLD : Opcode.REMEMBER_FLD,
+                new IOperand.Field(this.body.ownerOf(field), field.name()));
+    }
+
+    private void jump(final IrStmt.Jump jump) {
+        this.body.letGo(jump.unlocks());
+        this.body.emit(jump.leaves() ? Opcode.LEAVE : Opcode.BR, new IOperand.Label(this.body.landing(jump.key())));
+    }
+
+    /*
+     * A labelled statement: gotos land before the jump past its region, so landing in a region switched off passes
+     * it over as reaching it any other way does; and its way out, taken by a comefrom, is passed over itself while a
+     * region around the comefrom is switched off.
+     */
+    private void labeled(final IrStmt.Labeled labeled) {
+        final String name = labeled.source().label();
+        this.body.mark(this.body.landing(labeled.source()));
+        if (labeled.regionEnd() != null) {
+            this.body.emit(Opcode.BRABST, new IOperand.RegionJump(name, this.body.landing(labeled.regionEnd())));
+        }
+        this.statement(labeled.statement());
+        if (labeled.comeFrom() != null) {
+            final String stays = this.body.label();
+            for (final String region : labeled.guards()) {
+                this.body.emit(Opcode.BRABST, new IOperand.RegionJump(region, stays));
+            }
+            this.jump(labeled.comeFrom());
+            this.body.mark(stays);
+        }
+        if (labeled.endsHere()) {
+            this.body.mark(this.body.landing(labeled.regionEnd()));
         }
     }
 
     /** A statement with nothing inside it left to reduce, written as it stands. */
     private void written(final IStmt statement) {
+        this.body.at(statement.line());
         switch (statement) {
             case IStmt.LocalDecl local -> this.local(local);
             case IStmt.ExprStmt expression -> this.discard(expression.expression());
             case IStmt.Dispose dispose -> this.dispose(dispose);
+            case IStmt.Abstain switched -> this.body.emit(switched.reinstate() ? Opcode.REINSTATE : Opcode.ABSTAIN,
+                    new IOperand.Region(switched.label()));
+            case IStmt.Ignore place -> this.ignore(place);
+            case IStmt.LocalFunction function -> this.localFunction(function);
+            case IStmt.Throw thrown -> this.thrown(thrown);
+            case IStmt.Deconstruct taken -> {
+                final TakenApart parts = this.emitter.lowered.takenApartOf(taken);
+                if (parts != null) {
+                    this.values.takenApart(parts);
+                }
+            }
             default -> { } // an empty statement, and nothing else reaches here
         }
     }
 
+    /* A local function made: its lambda put in its variable, where the lambdas of the method keep it or in a slot. */
+    private void localFunction(final IStmt.LocalFunction function) {
+        final IBinding.Variable variable = this.emitter.model.declaredAt(function);
+        if (variable == null) {
+            return;
+        }
+        if (this.body.kept(variable)) {
+            this.body.pushClosure();
+            this.values.value(function.body(), variable.type());
+            this.body.storeKept(variable);
+            return;
+        }
+        final int place = this.body.slot(variable);
+        this.values.value(function.body(), variable.type());
+        this.body.emit(Opcode.STLOC, new IOperand.Slot(place));
+    }
+
     private void local(final IStmt.LocalDecl local) {
+        // A const is written into every place that reads it, so it is given no place and no instruction of its own.
+        if (local.constant()) {
+            return;
+        }
         final IBinding.Variable variable = this.emitter.model.declaredAt(local);
+        // One whose address is taken lives in the block the method made for it, which starts zeroed.
+        if (variable != null && this.emitter.model.isInMemory(variable)) {
+            if (local.initializer() != null) {
+                this.values.copied(local.initializer(), variable.type());
+                this.values.storeInMemory(variable);
+            }
+            return;
+        }
         if (this.body.kept(variable)) {
             if (local.initializer() != null) {
                 this.body.pushClosure();
@@ -310,7 +422,8 @@ final class StatementWriter {
         final List<String> starts = new ArrayList<>();
         String fallback = end;
         for (final IrStmt.Switch.Section section : choice.sections()) {
-            final String start = this.body.label();
+            // The arm's landing, which a goto case or a goto default lands at too.
+            final String start = this.body.landing(section.source());
             starts.add(start);
             if (section.fallback()) {
                 fallback = start;
@@ -340,7 +453,90 @@ final class StatementWriter {
         }
         // The answer sits under the objects let go of, so it is still on top when the method leaves.
         this.body.letGo(give.unlocks());
+        if (give.leaves()) {
+            // Out of a protected stretch the answer waits in a place of its own while the finally blocks run.
+            if (give.value() != null) {
+                this.body.emit(Opcode.STLOC, new IOperand.Slot(this.body.answerSlot()));
+            }
+            this.body.emit(Opcode.LEAVE, new IOperand.Label(this.body.wayOut()));
+            return;
+        }
         this.body.emit(Opcode.RET);
+    }
+
+    /*
+     * A try: what it protects, then each catch, which finds the exception it took on top and keeps it where a throw
+     * that throws it on can find it, then the finally; every way out of the body and of a catch leaves for the end,
+     * which runs the finally on the way. The catches answer what the body protects, innermost; the finally answers the
+     * body and the catches together, so it runs whichever of them is left.
+     */
+    private void guarded(final IrStmt.Try guarded) {
+        final String start = this.body.label();
+        final String end = this.body.label();
+        this.body.mark(start);
+        this.statement(guarded.body());
+        this.body.emit(Opcode.LEAVE, new IOperand.Label(end));
+        String covered = this.body.label();
+        final List<String> starts = new ArrayList<>();
+        for (final IrStmt.Try.Catch one : guarded.catches()) {
+            final String handler = this.body.label();
+            starts.add(handler);
+            this.body.mark(handler);
+            this.caught(one);
+            this.statement(one.body());
+            this.body.emit(Opcode.LEAVE, new IOperand.Label(end));
+        }
+        if (!guarded.catches().isEmpty()) {
+            this.body.mark(covered);
+            for (int i = 0; i < starts.size(); i++) {
+                final IrStmt.Try.Catch one = guarded.catches().get(i);
+                this.body.protect(new AsmMethod.Handler(start, starts.getFirst(), one.type(), starts.get(i),
+                        i + 1 < starts.size() ? starts.get(i + 1) : covered));
+            }
+        } else {
+            covered = null;
+        }
+        if (guarded.cleanup() != null) {
+            final String cleanup = this.body.label();
+            final String through = this.body.label();
+            this.body.mark(cleanup);
+            this.statement(guarded.cleanup());
+            this.body.emit(Opcode.ENDFINALLY);
+            this.body.mark(through);
+            this.body.protect(new AsmMethod.Handler(start, covered == null ? cleanup : covered, null, cleanup,
+                    through));
+        }
+        this.body.mark(end);
+    }
+
+    /* The exception a catch took, kept where a throw that throws it on finds it, and in its local when it has one. */
+    private void caught(final IrStmt.Try.Catch one) {
+        final int kept = this.body.caughtSlot(one.source());
+        this.body.emit(Opcode.STLOC, new IOperand.Slot(kept));
+        final IBinding.Variable variable = one.variable();
+        if (variable == null) {
+            return;
+        }
+        if (this.body.kept(variable)) {
+            this.body.pushClosure();
+            this.body.emit(Opcode.LDLOC, new IOperand.Slot(kept));
+            this.body.storeKept(variable);
+        } else {
+            this.body.emit(Opcode.LDLOC, new IOperand.Slot(kept));
+            this.body.emit(Opcode.STLOC, new IOperand.Slot(this.body.slot(variable)));
+        }
+    }
+
+    /* A throw: of an exception worked out here, or of the one the catch it stands in took, thrown on as it was. */
+    private void thrown(final IStmt.Throw thrown) {
+        final IStmt.Catch from = this.emitter.model.rethrowsFrom(thrown);
+        if (from != null) {
+            this.body.emit(Opcode.LDLOC, new IOperand.Slot(this.body.caughtSlot(from)));
+            this.body.emit(Opcode.RETHROW);
+            return;
+        }
+        this.values.value(thrown.value(), null);
+        this.body.emit(Opcode.THROW);
     }
 
     // Freeing an object leaves the place that held it empty, so the reference is cleared as well.

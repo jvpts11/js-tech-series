@@ -18,6 +18,7 @@ import dev.jstech.computers.vm.program.IHost;
 import dev.jstech.computers.vm.program.IWorldFunction;
 import dev.jstech.computers.vm.program.ProgramMilestone;
 import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.core.text.Text;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -171,6 +172,12 @@ public final class MachineServices implements IHost {
     public boolean textMode() {
         final ComputerInfoService info = this.computer();
         return this.block instanceof AbstractComputerBlockEntity && info != null && info.textMode();
+    }
+
+    /** What the system the machine runs stops a program with that read or wrote outside its memory. */
+    @Override
+    public Text accessViolation(final Text plain) {
+        return CrashWords.of(this.machine.installedOs(), plain);
     }
 
     /** Whether this server's settings let a program use components that reach outside the game. */

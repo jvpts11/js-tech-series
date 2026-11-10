@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Set;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -136,8 +137,11 @@ public interface IProgrammingLanguage {
      *                        language
      * @param languageVersion the version of the language the sources are held to, or {@link #NEWEST} for the newest
      *                        the compiler knows; a language without versions reads it as nothing
+     * @param defined         the symbols defined for the sources' directives besides the ones the language defines
+     *                        itself, such as the machine's era and the ones a project names; a language without
+     *                        directives reads them as nothing
      */
-    record CompileOptions(String isa, int languageVersion) {
+    record CompileOptions(String isa, int languageVersion, @ApiStatus.Experimental List<String> defined) {
 
         /** A version of none, which leaves a build to the newest version its compiler knows. */
         public static final int NEWEST = 0;
@@ -145,6 +149,12 @@ public interface IProgrammingLanguage {
         public CompileOptions {
             isa = isa == null ? "" : isa;
             languageVersion = Math.max(NEWEST, languageVersion);
+            defined = defined == null ? List.of() : List.copyOf(defined);
+        }
+
+        /** A build with no symbols defined but the language's own. */
+        public CompileOptions(final String isa, final int languageVersion) {
+            this(isa, languageVersion, List.of());
         }
 
         /** A build for that instruction set, at the newest version of the language. */

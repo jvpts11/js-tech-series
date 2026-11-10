@@ -14,7 +14,9 @@ import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -52,49 +54,80 @@ final class StatementChecker {
     }
 
     /*
-     * A method that gives something back has to do it on every way out. This knows the shapes that
-     * certainly leave; anything else counts as a path that falls off the end.
+     * A method that gives something back has to do it on every way out. This knows the shapes that certainly leave;
+     * anything else counts as a path that falls off the end. A goto never falls through, since where it lands is
+     * held to the same rule where the label stands; a label and a comefrom are ways in, which what came before them
+     * does not cover; and the region of a label that may be switched off may be passed over, to its block's end.
      */
-    static boolean alwaysReturns(final IStmt statement) {
+    static boolean alwaysReturns(final IStmt statement, final Set<String> switchable) {
         return switch (statement) {
             case IStmt.Return ignored -> true;
-            case IStmt.Block block -> block.statements().stream().anyMatch(StatementChecker::alwaysReturns);
+            case IStmt.Goto ignored -> true;
+            case IStmt.Throw ignored -> true;
+            // A try returns when what it protects does and so does every catch; a finally adds no way out.
+            case IStmt.Try guarded -> alwaysReturns(guarded.body(), switchable) && guarded.catches().stream()
+                    .allMatch(one -> alwaysReturns(one.body(), switchable));
+            case IStmt.Block block -> runReturns(block.statements(), switchable);
+            case IStmt.Labeled labeled -> !switchable.contains(labeled.label())
+                    && alwaysReturns(labeled.statement(), switchable);
             case IStmt.If branch -> branch.otherwise() != null
-                    && alwaysReturns(branch.then()) && alwaysReturns(branch.otherwise());
+                    && alwaysReturns(branch.then(), switchable) && alwaysReturns(branch.otherwise(), switchable);
             case IStmt.While loop -> isAlwaysTrue(loop.condition()) && !breaksOut(loop.body());
-            case IStmt.DoWhile loop -> (alwaysReturns(loop.body()) || isAlwaysTrue(loop.condition()))
+            case IStmt.DoWhile loop -> (alwaysReturns(loop.body(), switchable) || isAlwaysTrue(loop.condition()))
                     && !breaksOut(loop.body());
             case IStmt.For loop -> (loop.condition() == null || isAlwaysTrue(loop.condition()))
                     && !breaksOut(loop.body());
             case IStmt.Switch choice -> choice.sections().stream().anyMatch(IStmt.SwitchSection::fallback)
-                    && choice.sections().stream().allMatch(StatementChecker::sectionReturns);
-            case IStmt.Lock lock -> alwaysReturns(lock.body());
+                    && choice.sections().stream().allMatch(section -> sectionReturns(section, switchable));
+            case IStmt.Lock lock -> alwaysReturns(lock.body(), switchable);
+            case IStmt.Unsafe unsafe -> alwaysReturns(unsafe.body(), switchable);
             default -> false;
         };
     }
 
+    /* A run of statements returns when one of them does after the last way into it. */
+    private static boolean runReturns(final List<IStmt> statements, final Set<String> switchable) {
+        boolean returned = false;
+        for (final IStmt statement : statements) {
+            if (statement instanceof IStmt.Labeled labeled && switchable.contains(labeled.label())) {
+                return false;
+            }
+            if (statement instanceof IStmt.Labeled || statement instanceof IStmt.ComeFrom) {
+                returned = false;
+            }
+            returned |= alwaysReturns(statement, switchable);
+        }
+        return returned;
+    }
+
     /*
-     * Whether a break in this statement leaves the loop or switch that holds it. A break inside a loop or a
-     * switch nested in it leaves that one instead, and a lambda is an expression, so neither is looked into.
+     * Whether a break in this statement leaves the loop or switch that holds it. A break inside a loop or a switch
+     * nested in it leaves that one instead, and a lambda is an expression, so neither is looked into. A goto may leave
+     * it too, and so may the end of a labelled statement a comefrom takes.
      */
     private static boolean breaksOut(final IStmt statement) {
         return switch (statement) {
             case IStmt.Break ignored -> true;
+            case IStmt.Goto ignored -> true;
+            case IStmt.Labeled ignored -> true;
             case IStmt.Block block -> block.statements().stream().anyMatch(StatementChecker::breaksOut);
             case IStmt.If branch -> breaksOut(branch.then())
                     || branch.otherwise() != null && breaksOut(branch.otherwise());
             case IStmt.Lock lock -> breaksOut(lock.body());
+            case IStmt.Unsafe unsafe -> breaksOut(unsafe.body());
+            case IStmt.Try guarded -> breaksOut(guarded.body())
+                    || guarded.catches().stream().anyMatch(one -> breaksOut(one.body()));
             default -> false;
         };
     }
 
     /* A section returns when a statement of it does and no break comes before that one; one after it never runs. */
-    private static boolean sectionReturns(final IStmt.SwitchSection section) {
+    private static boolean sectionReturns(final IStmt.SwitchSection section, final Set<String> switchable) {
         for (final IStmt statement : section.statements()) {
             if (breaksOut(statement)) {
                 return false;
             }
-            if (alwaysReturns(statement)) {
+            if (alwaysReturns(statement, switchable)) {
                 return true;
             }
         }
@@ -106,10 +139,45 @@ final class StatementChecker {
         if (newScope) {
             this.scope.scope(new Scope(saved));
         }
+        this.declareLocalFunctions(block.statements());
         for (final IStmt statement : block.statements()) {
             this.checkStatement(statement);
         }
         this.scope.scope(saved);
+    }
+
+    /*
+     * A local function may be called anywhere in the block it stands in, before it as well, as C#'s may, so the names
+     * of a block's local functions are declared before any of its statements is read.
+     */
+    private void declareLocalFunctions(final List<IStmt> statements) {
+        for (final IStmt statement : statements) {
+            if (statement instanceof IStmt.LocalFunction function) {
+                this.declareLocalFunction(function);
+            }
+        }
+    }
+
+    /* A local function's name, a variable holding the delegate of its shape, which nothing writes to. */
+    private IBinding.Variable declareLocalFunction(final IStmt.LocalFunction function) {
+        this.scope.declarations().refuseReceiver(function.body().parameters(), function.name());
+        final ITypeSymbol returns = this.scope.declarations().resolve(function.returnType(), this.scope.currentType());
+        final NamedType shape = NamedType.shapeOf(function.name(), returns, this.scope.declarations()
+                .parametersOf(function.body().parameters(), this.scope.currentType()));
+        final IBinding.Variable variable = new IBinding.Variable(function.name(), shape, false);
+        if (!this.scope.scope().declare(variable)) {
+            this.scope.report(function.line(), function.column(), SigmaError.DUPLICATE_DECLARATION, function.name());
+        }
+        this.scope.model().setDeclared(function, variable);
+        this.scope.model().setLocalFunction(variable);
+        return variable;
+    }
+
+    /* A local function's body, checked as its lambda against its own shape, which has to give back on every way out. */
+    private void checkLocalFunction(final IStmt.LocalFunction function) {
+        final IBinding.Variable declared = this.scope.model().declaredAt(function);
+        final IBinding.Variable variable = declared != null ? declared : this.declareLocalFunction(function);
+        this.expressions.localFunction(function, variable.type());
     }
 
     /** Whatever an expression is being used as a condition has to be a yes or a no. */
@@ -157,11 +225,15 @@ final class StatementChecker {
             case IStmt.Break stop -> {
                 if (this.scope.loopDepth() == 0 && this.scope.switchDepth() == 0) {
                     this.scope.report(stop.line(), stop.column(), SigmaError.BREAK_OUTSIDE_LOOP);
+                } else if (this.leavesFinally(false)) {
+                    this.scope.report(stop.line(), stop.column(), SigmaError.FINALLY_EXIT);
                 }
             }
             case IStmt.Continue next -> {
                 if (this.scope.loopDepth() == 0) {
                     this.scope.report(next.line(), next.column(), SigmaError.CONTINUE_OUTSIDE_LOOP);
+                } else if (this.leavesFinally(true)) {
+                    this.scope.report(next.line(), next.column(), SigmaError.FINALLY_EXIT);
                 }
             }
             case IStmt.Return give -> this.checkReturn(give);
@@ -169,7 +241,127 @@ final class StatementChecker {
             case IStmt.ExprStmt expression -> this.expressions.check(expression.expression(), null);
             case IStmt.Dispose dispose -> this.checkDispose(dispose);
             case IStmt.Lock lock -> this.checkLock(lock);
+            case IStmt.Unsafe unsafe -> this.checkUnsafe(unsafe);
+            case IStmt.Labeled labeled -> this.checkStatement(labeled.statement());
+            // Where a jump goes is worked out once the whole body is read: a label may come after it.
+            case IStmt.Goto jump -> {
+                if (jump.caseValue() != null) {
+                    this.expressions.check(jump.caseValue(), null);
+                }
+            }
+            case IStmt.ComeFrom ignored -> { }
+            case IStmt.Abstain ignored -> { }
+            case IStmt.Ignore place -> this.checkIgnore(place);
+            case IStmt.LocalFunction function -> this.checkLocalFunction(function);
+            case IStmt.Deconstruct taken -> this.checkDeconstruct(taken);
+            case IStmt.Try guarded -> this.checkTry(guarded);
+            case IStmt.Throw thrown -> this.checkThrow(thrown);
             case IStmt.Empty ignored -> { }
+        }
+    }
+
+    /*
+     * A try: what it protects; each catch, of an exception and never of one a catch before it already takes, with the
+     * exception it took as a local of its own; and its finally, which nothing leaves but its own end.
+     */
+    private void checkTry(final IStmt.Try guarded) {
+        this.scope.model().setUsesExceptions();
+        this.checkBlock(guarded.body(), true);
+        final NamedType root = this.scope.builtIns().exceptionType();
+        final List<ITypeSymbol> taken = new ArrayList<>();
+        for (final IStmt.Catch one : guarded.catches()) {
+            final ITypeSymbol type = one.type() == null ? root
+                    : this.scope.declarations().resolve(one.type(), this.scope.currentType());
+            final boolean anException = type instanceof NamedType named && named.isOrDescendsFrom(root);
+            if (!this.scope.rules().isError(type) && !anException) {
+                this.scope.report(one.line(), one.column(), SigmaError.CATCH_TYPE, type.describe());
+            } else if (taken.stream().anyMatch(before -> this.scope.rules().isAssignable(type, before))) {
+                this.scope.report(one.line(), one.column(), SigmaError.CATCH_UNREACHABLE, type.describe());
+            }
+            taken.add(type);
+            this.scope.model().setCaught(one, type);
+            final Scope saved = this.scope.scope();
+            this.scope.scope(new Scope(saved));
+            if (one.name() != null) {
+                final IBinding.Variable variable = new IBinding.Variable(one.name(), type, false);
+                if (!this.scope.scope().declare(variable)) {
+                    this.scope.report(one.line(), one.column(), SigmaError.DUPLICATE_DECLARATION, one.name());
+                }
+                this.scope.model().setDeclared(one, variable);
+            }
+            this.scope.enterCatch(one);
+            this.checkBlock(one.body(), false);
+            this.scope.leaveHandler();
+            this.scope.scope(saved);
+        }
+        if (guarded.cleanup() != null) {
+            this.scope.enterFinally();
+            this.checkBlock(guarded.cleanup(), true);
+            this.scope.leaveHandler();
+        }
+    }
+
+    /* A throw: of an exception; or, written bare, of the one the catch it stands in took, thrown on as it was. */
+    private void checkThrow(final IStmt.Throw thrown) {
+        this.scope.model().setUsesExceptions();
+        if (thrown.value() == null) {
+            final IStmt.Catch around = this.scope.innermostCatch();
+            if (around == null) {
+                this.scope.report(thrown.line(), thrown.column(), SigmaError.RETHROW_OUTSIDE);
+            } else {
+                this.scope.model().setRethrows(thrown, around);
+            }
+            return;
+        }
+        final ITypeSymbol type = this.expressions.check(thrown.value(), null);
+        if (!this.scope.rules().isError(type) && !this.scope.rules().isAssignable(type,
+                this.scope.builtIns().exceptionType())) {
+            this.scope.report(thrown.line(), thrown.column(), SigmaError.THROW_TYPE, type.describe());
+        }
+    }
+
+    /* Whether a break or a continue would leave the finally it stands in, which nothing but its end leaves. */
+    private boolean leavesFinally(final boolean continuing) {
+        final BodyScope.Finally around = this.scope.innermostFinally();
+        return around != null && (continuing ? this.scope.loopDepth() == around.loops()
+                : this.scope.loopDepth() + this.scope.switchDepth() == around.loops() + around.choices());
+    }
+
+    /* "var (count, name) = Find();": a new local for each place of the tuple, of that place's type. */
+    private void checkDeconstruct(final IStmt.Deconstruct taken) {
+        final ITypeSymbol value = this.expressions.check(taken.value(), null);
+        final List<ITypeSymbol> places = value instanceof ITypeSymbol.TupleType tuple ? tuple.places() : null;
+        final boolean fits = places != null && places.size() == taken.names().size();
+        if (!fits && !this.scope.rules().isError(value)) {
+            this.scope.report(taken.line(), taken.column(), SigmaError.DECONSTRUCT_SHAPE, value.describe(),
+                    taken.names().size());
+        }
+        for (int i = 0; i < taken.names().size(); i++) {
+            final IExpr.Name name = taken.names().get(i);
+            final ITypeSymbol type = fits ? places.get(i) : ITypeSymbol.Special.ERROR;
+            final IBinding.Variable variable = new IBinding.Variable(name.identifier(), type, false);
+            if (!this.scope.scope().declare(variable)) {
+                this.scope.report(name.line(), name.column(), SigmaError.DUPLICATE_DECLARATION, name.identifier());
+            }
+            this.scope.model().setDeclared(name, variable);
+            this.scope.model().setBinding(name, variable);
+            this.scope.model().setType(name, type);
+        }
+    }
+
+    /* What ignore and remember work on: a local of the running call, a field of an object, or a static field. */
+    private void checkIgnore(final IStmt.Ignore ignore) {
+        final ITypeSymbol type = this.expressions.check(ignore.place(), null);
+        if (this.scope.rules().isError(type)) {
+            return;
+        }
+        final IBinding binding = this.scope.model().bindingOf(ignore.place());
+        final boolean place = binding instanceof IBinding.Variable variable
+                && !this.scope.constants().isLocal(variable) && !this.scope.model().isLocalFunction(variable)
+                || binding instanceof IBinding.Member member
+                && member.member() instanceof IMemberSymbol.FieldSymbol field && !field.isConstant();
+        if (!place) {
+            this.scope.report(ignore.line(), ignore.column(), SigmaError.NOT_A_PLACE_TO_IGNORE);
         }
     }
 
@@ -233,6 +425,7 @@ final class StatementChecker {
             }
             final Scope saved = this.scope.scope();
             this.scope.scope(new Scope(saved));
+            this.declareLocalFunctions(section.statements());
             for (final IStmt statement : section.statements()) {
                 this.checkStatement(statement);
             }
@@ -258,6 +451,9 @@ final class StatementChecker {
     }
 
     private void checkReturn(final IStmt.Return give) {
+        if (this.scope.innermostFinally() != null) {
+            this.scope.report(give.line(), give.column(), SigmaError.FINALLY_EXIT);
+        }
         if (give.value() == null) {
             if (this.scope.returnType() != ITypeSymbol.Primitive.VOID) {
                 this.scope.report(give.line(), give.column(),
@@ -281,6 +477,39 @@ final class StatementChecker {
                     SigmaError.DUPLICATE_DECLARATION, local.name());
         }
         this.scope.model().setDeclared(local, variable);
+        if (local.constant()) {
+            this.workOutConst(local, variable, declared);
+        } else {
+            this.scope.model().setAddressable(variable);
+        }
+    }
+
+    /*
+     * A const local holds a value known when compiling, worked out here from what it was given, and every read of it
+     * further down is written as that value.
+     */
+    private void workOutConst(final IStmt.LocalDecl local, final IBinding.Variable variable,
+                              final ITypeSymbol declared) {
+        if (local.initializer() == null) {
+            this.scope.report(local.line(), local.column(), SigmaError.CONST_NEEDS_VALUE, local.name());
+            return;
+        }
+        final Constants.Known found = this.scope.constants().fold(local.initializer());
+        final Constants.Known held = found == null ? null : Constants.converted(found, declared);
+        if (held == null) {
+            if (!this.scope.rules().isError(this.scope.model().typeOf(local.initializer()))
+                    && !this.scope.rules().isError(declared)) {
+                this.scope.report(local.initializer().line(), local.initializer().column(),
+                        SigmaError.CONST_NOT_KNOWN, local.name());
+            }
+            return;
+        }
+        if (held.value() != null && !Constants.holdsValues(declared, this.scope.builtIns())) {
+            this.scope.report(local.initializer().line(), local.initializer().column(), SigmaError.CONST_TYPE,
+                    declared.describe());
+            return;
+        }
+        this.scope.constants().local(variable, held);
     }
 
     /*
@@ -326,5 +555,13 @@ final class StatementChecker {
             this.scope.report(lock.line(), lock.column(), SigmaError.CANNOT_LOCK, target.describe());
         }
         this.checkStatement(lock.body());
+    }
+
+    /* An unsafe block: its statements may hold pointers, as the whole body of an unsafe method may. */
+    private void checkUnsafe(final IStmt.Unsafe unsafe) {
+        final boolean was = this.scope.unsafe();
+        this.scope.unsafe(true);
+        this.checkBlock(unsafe.body(), true);
+        this.scope.unsafe(was);
     }
 }

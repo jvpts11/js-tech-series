@@ -17,14 +17,15 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
- * The words a later version of the language brings, C#'s try, catch, finally, throw, goto and const and INTERCAL's
- * comefrom, abstainfrom and reinstate, are reserved now: wherever one is written, the program is told so at the word,
- * with what to write until then.
+ * The words version 3 of the language brought that the versions before it kept back for it, C#'s try, catch, finally,
+ * throw, goto and const and INTERCAL's comefrom, abstainfrom and reinstate, are no names: wherever one is written as
+ * one, the program is told so at the word. A catch or a finally with no try before it is told it needs one.
  */
 class LanguageGapsTest {
 
     private static final String PRELUDE = "using System.*; using System.IO.*; namespace Tests; ";
     private static final String NOT_IN_THE_LANGUAGE = "S2014";
+    private static final String EXPECTED_TOKEN = "S2001";
 
     private static List<String> codes(final String source) {
         return SigmaSemantics.checkProgram(List.of(new SourceFile("Test.sgs", PRELUDE + source))).diagnostics()
@@ -36,44 +37,8 @@ class LanguageGapsTest {
     }
 
     @Test
-    void tryAndCatch_areToldThereAreNoExceptions() {
-        assertEquals(List.of(NOT_IN_THE_LANGUAGE),
-                codes(inMain("try { Console.PrintLine(\"a\"); } catch (Failure e) { } finally { }")));
-    }
-
-    @Test
-    void throw_isToldThereAreNoExceptions() {
-        assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes(inMain("throw new Failure(\"no\");")));
-    }
-
-    @Test
-    void goto_isToldToBeALoop() {
-        assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes(inMain("goto again;")));
-    }
-
-    @Test
-    void comefrom_isToldToBeALoop() {
-        assertEquals(List.of(NOT_IN_THE_LANGUAGE), codes(inMain("comefrom again; Console.PrintLine(\"a\");")));
-    }
-
-    /** Each is reported once and passed over, so the statements around them still read without more noise. */
-    @Test
-    void abstainfromAndReinstate_areToldToKeepABool() {
-        assertEquals(List.of(NOT_IN_THE_LANGUAGE, NOT_IN_THE_LANGUAGE),
-                codes(inMain("abstainfrom done; Console.PrintLine(\"a\"); reinstate done;")));
-    }
-
-    /** A const local is reported and then declared all the same, so the lines after it read it without more noise. */
-    @Test
-    void constLocal_isReportedAndStillDeclared() {
-        assertEquals(List.of(NOT_IN_THE_LANGUAGE),
-                codes(inMain("const int most = 5; Console.PrintLine(\"\" + most);")));
-    }
-
-    @Test
-    void constField_isToldToBeStaticReadonly() {
-        assertEquals(List.of(NOT_IN_THE_LANGUAGE),
-                codes("class Box { public const int Most = 5; } class M { static void Main() { } }"));
+    void catch_withNoTryBeforeItIsToldItNeedsOne() {
+        assertEquals(List.of(EXPECTED_TOKEN), codes(inMain("catch (Exception failed) { } finally { }")));
     }
 
     /** The words are kept for the later version that brings them, so no program takes one as a name. */

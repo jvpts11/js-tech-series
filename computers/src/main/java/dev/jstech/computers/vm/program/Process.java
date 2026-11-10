@@ -15,8 +15,10 @@ import dev.jstech.core.id.StableNames;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Predicate;
 
 /**
@@ -92,6 +94,8 @@ public final class Process {
 
     private final ProgramImage program;
     private final Heap heap;
+    /** The blocks of raw memory the program reaches through pointers, held on the heap. */
+    private final RawMemory memory;
     /** What the program has written to its console, within the limits of what the console keeps. */
     private final ProgramConsole console = new ProgramConsole();
     /** The program's own random numbers. */
@@ -128,6 +132,11 @@ public final class Process {
     };
     /** The locks the threads hold, and the threads waiting for each. */
     private final MonitorTable locks = new MonitorTable();
+    /**
+     * The regions INTERCAL's abstain has switched off, each by its method and its label: the process's, so every
+     * thread sees the same, and a call of the method later finds its region as it was left.
+     */
+    private final Set<String> switchedOff = new LinkedHashSet<>();
     private final CallbackQueue waiting = new CallbackQueue();
     /** An object's fields and the fields each type keeps for itself. */
     private final FieldAccess fieldAccess;
@@ -137,6 +146,8 @@ public final class Process {
     private final ObjectMaking objects;
     /** What each instruction does, carried out on the thread whose turn it is. */
     private final InstructionExecutor executor;
+    /** Exceptions thrown, caught and unwound through the finally blocks they leave. */
+    private final Unwinder unwinder;
     /** What the world says to the program, turned into calls waiting their turn. */
     private final ProgramEvents events;
     private Values.Obj script;
@@ -164,6 +175,11 @@ public final class Process {
 
     Heap heap0() {
         return this.heap;
+    }
+
+    /** The raw memory the program reaches through pointers. */
+    RawMemory memory() {
+        return this.memory;
     }
 
     ProgramConsole console0() {
@@ -205,6 +221,11 @@ public final class Process {
 
     FieldAccess fieldAccess() {
         return this.fieldAccess;
+    }
+
+    /** The regions switched off, for writing the process down and putting it back. */
+    Set<String> switchedOff() {
+        return this.switchedOff;
     }
 
     ProgramWatches watches() {
@@ -259,12 +280,14 @@ public final class Process {
         this.host = host;
         this.worldCalls = new WorldCalls(this, program, host);
         this.heap = new Heap(heapBytes);
+        this.memory = new RawMemory(this.heap);
         this.windows = new ProgramWindows(this.heap);
         this.fieldAccess = new FieldAccess(this, this.heap, program);
         this.calls = new CallDispatch(this, this.heap, program);
         this.objects = new ObjectMaking(this, this.heap, program, this.calls);
+        this.unwinder = new Unwinder(this, program, this.heap);
         this.executor = new InstructionExecutor(program, this.heap, this.scheduler, this.locks, this.fieldAccess,
-                this.calls, this.objects);
+                this.calls, this.objects, this.switchedOff, this.unwinder, this.memory);
         this.events = new ProgramEvents(this);
         if (!fresh) {
             return;
@@ -415,7 +438,7 @@ public final class Process {
     /** Ends the program where it stands with that code: every thread stops and nothing is asked again. */
     void exit(final int code) {
         this.identity.exit(code);
-        this.main.frames.clear();
+        this.clearFrames(this.main);
         this.waiting.clear();
         for (final ProgramThread other : List.copyOf(this.scheduler.threads())) {
             if (other != this.main) {
@@ -755,7 +778,10 @@ public final class Process {
                 try {
                     this.executor.one(thread);
                 } catch (final Halt halt) {
-                    this.halt(halt);
+                    // A program that carries exceptions is thrown one in the halt's place, which it may catch.
+                    if (!this.unwinder.caught(thread, halt)) {
+                        this.halt(halt);
+                    }
                 } catch (final RuntimeException fault) {
                     final Frame top = thread.frames.peek();
                     this.halt(this.fault(fault, top == null ? 0 : top.at));
@@ -1018,7 +1044,7 @@ public final class Process {
 
     /** Ends a thread other than the main one: it lets go of what it locked and wakes whoever joined it. */
     private void end(final ProgramThread thread) {
-        thread.frames.clear();
+        this.clearFrames(thread);
         thread.wait = IWait.NONE;
         if (thread.token != null) {
             thread.token.set("Running", false);
@@ -1050,7 +1076,7 @@ public final class Process {
     void stop(final Object token, final int line) {
         final ProgramThread target = this.thread(this.threadId(token, line));
         if (target == this.main) {
-            this.main.frames.clear();
+            this.clearFrames(this.main);
             this.waiting.clear();
             this.ended(this.main);
         } else if (target != null) {
@@ -1200,19 +1226,59 @@ public final class Process {
         return true;
     }
 
+    /**
+     * Stops the program for an exception nothing caught: it says what it was, as a halt does, and then the calls it was
+     * thrown through.
+     */
+    void uncaught(final Text said, final List<Text> trace) {
+        this.halt(new Halt(Halt.Reason.UNCAUGHT, 0, said));
+        for (final Text call : trace) {
+            this.console.write(call);
+        }
+    }
+
+    /**
+     * Unwinds every thread of a program being stopped politely, by sigma stop, the task manager or a kill with TERM:
+     * the finally blocks each is inside run, and nothing else does. False, and nothing done, for a program that does
+     * not carry exceptions, which has no finally block to run.
+     */
+    public boolean stopping() {
+        if (this.identity.halted() || !this.unwinder.carried()) {
+            return false;
+        }
+        boolean any = false;
+        for (final ProgramThread thread : this.scheduler.threads()) {
+            this.current = thread;
+            this.unwinder.stop(thread);
+            any |= !thread.frames.isEmpty();
+        }
+        return any;
+    }
+
     void halt(final Halt halt) {
-        this.identity.halt(halt.text());
+        // A program that cannot catch a read outside its memory dies with its system's own words for it.
+        final Text said = halt.reason() == Halt.Reason.ACCESS_VIOLATION
+                ? this.host.accessViolation(halt.text()) : halt.text();
+        this.identity.halt(said);
         this.console.close();
-        this.console.write(halt.text());
+        this.console.write(said);
         if (halt.reason() == Halt.Reason.STACK_DEPTH) {
             this.host.reached(ProgramMilestone.STACK_OVERFLOW);
         } else if (halt.reason() == Halt.Reason.DIVIDE_BY_ZERO) {
             this.host.reached(ProgramMilestone.DIVIDE_BY_ZERO);
         }
         for (final ProgramThread thread : this.scheduler.threads()) {
-            thread.frames.clear();
+            this.clearFrames(thread);
         }
         this.locks.clear();
+    }
+
+    /** Ends every call a thread has in progress, letting go of the blocks their stackalloc made. */
+    private void clearFrames(final ProgramThread thread) {
+        for (final Frame frame : thread.frames) {
+            frame.releaseBlocks(this.memory);
+        }
+        thread.frames.clear();
     }
 
     // putting it away and back

@@ -14,6 +14,7 @@ import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.sigma.ast.CompilationUnit;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.INode;
+import dev.jstech.computers.sigma.ast.Operator;
 import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.computers.vm.listing.Shape;
 import java.util.ArrayDeque;
@@ -55,8 +56,20 @@ public final class Declarations {
     private final Map<NamedType, NamedType> outers = new LinkedHashMap<>();
     /** Where each method was written, so the override pass can report on the right line. */
     private final Map<IMemberSymbol.MethodSymbol, INode> methodNodes = new LinkedHashMap<>();
+    /** The structs the program's tuples are, by name, in the order they were first written, as they go out. */
+    private final Map<String, NamedType> tuples = new LinkedHashMap<>();
+    /** How values lie in raw memory, which decides what a pointer may point at. */
+    private final Layout layout;
+    /** The pointers written in declarations, whose targets are asked once every struct knows its fields. */
+    private final List<Pointee> pointees = new ArrayList<>();
+    /** Every pointer type read so far, where it was written, so one read twice is spoken about once. */
+    private final Set<TypeRef> pointersRead = new HashSet<>();
     /** The type being filled, whose scope decides what a bare name means. */
     private NamedType current;
+    /** Whether a pointer may be written where types are being resolved now. */
+    private boolean unsafeHere;
+    /** Whether every type has been filled, after which a pointer's target is asked as it is written. */
+    private boolean filled;
     /** The language and the version of it the build is held to, which decide what of the library it may name. */
     private LanguageLevel level = LanguageLevel.SIGMA_SHARP;
     private int version = SigmaVersions.NEWEST;
@@ -66,12 +79,17 @@ public final class Declarations {
         static final Scope TOP = new Scope("", List.of());
     }
 
+    /** A pointer written in a declaration, in that file, to that type. */
+    private record Pointee(TypeRef at, ITypeSymbol type, String file) {
+    }
+
     public Declarations(final BuiltIns builtIns, final TypeRules rules, final DiagnosticBag diagnostics,
                         final SemanticModel model) {
         this.builtIns = builtIns;
         this.rules = rules;
         this.diagnostics = diagnostics;
         this.model = model;
+        this.layout = new Layout(rules);
     }
 
     /**
@@ -177,6 +195,9 @@ public final class Declarations {
         };
         final NamedType type = NamedType.of(name, kind, false);
         type.setNamespace(prefix);
+        // Read now, so a class that stands on one declared further down already knows it may not.
+        type.setStatic(declaration.modifiers().contains(IDecl.Modifier.STATIC) && kind == NamedType.Kind.CLASS);
+        type.setSealed(declaration.modifiers().contains(IDecl.Modifier.SEALED) || type.isStatic());
         this.declared.put(qualified, type);
         this.sources.put(type, declaration);
         this.files.put(type, file);
@@ -273,7 +294,15 @@ public final class Declarations {
     /** The type known by exactly that name with its namespace in front, the program's or the language's. */
     private NamedType find(final String qualified, final int arity) {
         final NamedType own = this.declared.get(qualified);
-        return own != null ? own : this.builtIns.qualified(qualified, arity);
+        if (own != null) {
+            return own;
+        }
+        final NamedType built = this.builtIns.qualified(qualified, arity);
+        // Naming one of the exceptions is using them, and their types then go out with the program.
+        if (built != null && BuiltIns.EXCEPTIONS.containsKey(built.name())) {
+            this.model.setUsesExceptions();
+        }
+        return built;
     }
 
     /**
@@ -326,6 +355,23 @@ public final class Declarations {
                 case IDecl.DelegateDecl declaration -> this.fillDelegate(entry.getKey(), declaration);
             }
         }
+        // What a pointer written in a declaration points at is asked once every struct knows its fields.
+        this.filled = true;
+        for (final Pointee waiting : this.pointees) {
+            if (waiting.file() != null) {
+                this.diagnostics.setFile(waiting.file());
+            }
+            this.checkPointee(waiting.at(), waiting.type());
+        }
+        this.pointees.clear();
+    }
+
+    /**
+     * Says whether pointers may be written where types are resolved from now on: in an unsafe method or block, and
+     * anywhere in Sigma.
+     */
+    void unsafeHere(final boolean on) {
+        this.unsafeHere = on;
     }
 
     /** The declaration a type came from, so the body checker can walk it. */
@@ -345,12 +391,15 @@ public final class Declarations {
 
     private void fillClass(final NamedType type, final IDecl.ClassDecl declaration) {
         type.setAbstract(declaration.modifiers().contains(IDecl.Modifier.ABSTRACT));
+        this.checkClassWords(type, declaration);
         for (final TypeRef base : declaration.bases()) {
             final ITypeSymbol resolved = this.resolve(base);
             if (!(resolved instanceof NamedType named)) {
                 continue;
             }
-            if (named.kind() == NamedType.Kind.INTERFACE) {
+            if (type.isStatic()) {
+                this.diagnostics.error(base.line(), base.column(), SigmaError.STATIC_CLASS_BASE, base.describe());
+            } else if (named.kind() == NamedType.Kind.INTERFACE) {
                 type.addInterface(named);
             } else if (named.kind().classLike() && type.kind() == NamedType.Kind.STRUCT) {
                 this.diagnostics.error(base.line(), base.column(), SigmaError.STRUCT_NO_BASE, base.describe());
@@ -359,6 +408,9 @@ public final class Declarations {
                 this.diagnostics.error(base.line(), base.column(), SigmaError.CIRCULAR_BASE, type.name(),
                         named.name());
             } else if (named.kind().classLike() && type.base() == null) {
+                if (named.isSealed()) {
+                    this.diagnostics.error(base.line(), base.column(), SigmaError.SEALED_BASE, named.name());
+                }
                 type.setBase(named);
             } else {
                 this.diagnostics.error(base.line(), base.column(), SigmaError.INVALID_BASE, base.describe());
@@ -367,15 +419,141 @@ public final class Declarations {
         for (final IDecl.IMemberDecl member : declaration.members()) {
             this.fillMember(type, member);
         }
+        this.checkOperatorPairs(type, declaration);
+    }
+
+    /*
+     * An operator is public and static and takes as many plain values as its sign has sides, one of them of the type
+     * that declares it; one more or one less takes that type and gives it back.
+     */
+    private void checkOperator(final NamedType type, final IMemberSymbol.MethodSymbol method,
+                               final IDecl.MethodDecl written) {
+        final Operator operator = Operator.ofMethod(method.name());
+        final boolean steps = operator == Operator.INCREMENT || operator == Operator.DECREMENT;
+        final boolean shaped = operator != null && method.isStatic()
+                && method.modifiers().contains(IDecl.Modifier.PUBLIC)
+                && method.parameters().size() == (operator.isUnary() ? 1 : 2)
+                && method.parameters().stream().noneMatch(taken -> taken.outward() || taken.many())
+                && (!steps || method.returnType().equals(type) && method.parameters().getFirst().type().equals(type));
+        if (!shaped) {
+            this.diagnostics.error(written.line(), written.column(), SigmaError.OPERATOR_SHAPE,
+                    operator == null ? written.name() : OPERATOR_WORD + operator.text());
+            return;
+        }
+        if (method.parameters().stream().noneMatch(taken -> taken.type().equals(type))) {
+            this.diagnostics.error(written.line(), written.column(), SigmaError.OPERATOR_TYPE, type.name(),
+                    type.name());
+        }
+    }
+
+    /* A comparison declared without its other half, which C# asks for: == with !=, < with >, <= with >=. */
+    private void checkOperatorPairs(final NamedType type, final IDecl.ClassDecl declaration) {
+        for (final IMemberSymbol member : type.members()) {
+            if (!(member instanceof IMemberSymbol.MethodSymbol method) || !method.isOperator()) {
+                continue;
+            }
+            final Operator operator = Operator.ofMethod(method.name());
+            final Operator partner = operator == null ? null : operator.partner();
+            if (partner != null && type.members().stream().noneMatch(other -> other instanceof IMemberSymbol
+                    .MethodSymbol half && half.isOperator() && half.name().equals(partner.methodName())
+                    && half.sameParameters(method))) {
+                final INode at = this.methodNodes.getOrDefault(method, declaration);
+                this.diagnostics.error(at.line(), at.column(), SigmaError.OPERATOR_PAIR, type.name(),
+                        operator.text(), partner.text());
+            }
+        }
+    }
+
+    /* An indexer belongs to an object and takes one value in its brackets: one method reads it, the other writes. */
+    private void checkIndexer(final NamedType type, final IMemberSymbol.MethodSymbol method,
+                              final IDecl.MethodDecl written) {
+        final int keys = method.name().equals(IDecl.INDEXER_SET) ? method.parameters().size() - 1
+                : method.parameters().size();
+        if (method.isStatic() || keys != 1 || method.parameters().getFirst().outward()
+                || method.parameters().getFirst().many()) {
+            this.diagnostics.error(written.line(), written.column(), SigmaError.INDEXER_SHAPE, type.name());
+        }
+    }
+
+    /**
+     * The words a class may not be written with: sealed and static are a class's, never a struct's, and a record may be
+     * sealed but not static; neither goes with abstract, nor with each other, since a static class is sealed already.
+     * A static class holds only static members, and only a method may be sealed among them.
+     */
+    private void checkClassWords(final NamedType type, final IDecl.ClassDecl declaration) {
+        final Set<IDecl.Modifier> words = declaration.modifiers();
+        for (final IDecl.Modifier word : List.of(IDecl.Modifier.SEALED, IDecl.Modifier.STATIC)) {
+            if (!words.contains(word)) {
+                continue;
+            }
+            if (declaration.flavour() == IDecl.ClassDecl.Flavour.STRUCT
+                    || word == IDecl.Modifier.STATIC && declaration.flavour() == IDecl.ClassDecl.Flavour.RECORD) {
+                this.diagnostics.error(declaration.line(), declaration.column(), SigmaError.MODIFIER_NOT_ALLOWED,
+                        declaration.name(), word.text());
+            } else if (words.contains(IDecl.Modifier.ABSTRACT)) {
+                this.diagnostics.error(declaration.line(), declaration.column(), SigmaError.MODIFIER_NOT_ALLOWED,
+                        word.text(), IDecl.Modifier.ABSTRACT.text());
+            }
+        }
+        if (words.contains(IDecl.Modifier.SEALED) && words.contains(IDecl.Modifier.STATIC)) {
+            this.diagnostics.error(declaration.line(), declaration.column(), SigmaError.MODIFIER_NOT_ALLOWED,
+                    IDecl.Modifier.SEALED.text(), IDecl.Modifier.STATIC.text());
+        }
+        for (final IDecl.IMemberDecl member : declaration.members()) {
+            if (member instanceof IDecl.TypeMember) {
+                continue;
+            }
+            if (type.isStatic() && !member.modifiers().contains(IDecl.Modifier.STATIC)
+                    && !member.modifiers().contains(IDecl.Modifier.CONST)) {
+                this.diagnostics.error(member.line(), member.column(), SigmaError.STATIC_CLASS_MEMBER, member.name());
+            }
+            if (!(member instanceof IDecl.MethodDecl)) {
+                this.refuseSealed(member);
+            }
+        }
+    }
+
+    /* A declaration that cannot be sealed, written sealed. */
+    private void refuseSealed(final IDecl declaration) {
+        if (declaration.modifiers().contains(IDecl.Modifier.SEALED)) {
+            this.diagnostics.error(declaration.line(), declaration.column(), SigmaError.MODIFIER_NOT_ALLOWED,
+                    declaration.name(), IDecl.Modifier.SEALED.text());
+        }
     }
 
     private void fillMember(final NamedType type, final IDecl.IMemberDecl member) {
+        // A method or a constructor written unsafe may take and give pointers; nothing else declared may hold one.
+        this.unsafeHere = member.modifiers().contains(IDecl.Modifier.UNSAFE);
+        try {
+            this.fillMemberOf(type, member);
+        } finally {
+            this.unsafeHere = false;
+        }
+    }
+
+    private void fillMemberOf(final NamedType type, final IDecl.IMemberDecl member) {
         switch (member) {
             case IDecl.FieldDecl field -> this.addUnique(type, new IMemberSymbol.FieldSymbol(
                     type, field.name(), this.resolve(field.type()), field.modifiers()), field);
-            case IDecl.MethodDecl method -> this.addMethod(type, this.methodOf(type, method), method);
-            case IDecl.ConstructorDecl constructor -> type.addMember(new IMemberSymbol.ConstructorSymbol(
-                    type, this.parametersOf(constructor.parameters()), constructor.modifiers()));
+            case IDecl.MethodDecl method -> {
+                final IMemberSymbol.MethodSymbol made = this.methodOf(type, method);
+                // An extension method lives in a static class at the top of a namespace, where a using reaches it.
+                if (made.extendsItsFirst() && (!type.isStatic() || this.outers.containsKey(type) || !made.isStatic())) {
+                    this.diagnostics.error(method.line(), method.column(), SigmaError.EXTENSION_PLACE, method.name());
+                }
+                if (made.isOperator()) {
+                    this.checkOperator(type, made, method);
+                }
+                if (made.isIndexer()) {
+                    this.checkIndexer(type, made, method);
+                }
+                this.addMethod(type, made, method);
+            }
+            case IDecl.ConstructorDecl constructor -> {
+                this.refuseReceiver(constructor.parameters(), constructor.name());
+                type.addMember(new IMemberSymbol.ConstructorSymbol(
+                        type, this.parametersOf(constructor.parameters()), constructor.modifiers()));
+            }
             case IDecl.PropertyDecl property -> this.addUnique(type, new IMemberSymbol.PropertySymbol(
                     type, property.name(), this.resolve(property.type()),
                     property.getter() != null, property.setter() != null, property.modifiers(),
@@ -440,16 +618,97 @@ public final class Declarations {
                 this.parametersOf(method.parameters()), method.modifiers());
     }
 
+    /**
+     * The parameters as symbols, and what is wrong with a params among them: it is the last, and an array the method
+     * reads.
+     */
     private List<IMemberSymbol.ParameterSymbol> parametersOf(final List<IDecl.Parameter> parameters) {
+        return this.parametersOf(parameters, this.current);
+    }
+
+    /** The same, for parameters written inside {@code from}, whose scope decides what a bare type name means. */
+    List<IMemberSymbol.ParameterSymbol> parametersOf(final List<IDecl.Parameter> parameters, final NamedType from) {
         final List<IMemberSymbol.ParameterSymbol> symbols = new ArrayList<>();
-        for (final IDecl.Parameter parameter : parameters) {
-            symbols.add(new IMemberSymbol.ParameterSymbol(parameter.name(),
-                    this.resolve(parameter.type()), parameter.outward()));
+        for (int i = 0; i < parameters.size(); i++) {
+            final IDecl.Parameter parameter = parameters.get(i);
+            final ITypeSymbol type = this.resolve(parameter.type(), from);
+            boolean many = parameter.many();
+            final boolean receiver = parameter.receiver() && i == 0 && !many && !parameter.outward();
+            if (parameter.receiver() && !receiver) {
+                this.diagnostics.error(parameter.line(), parameter.column(), SigmaError.EXTENSION_FIRST,
+                        parameter.name());
+            }
+            if (many && i != parameters.size() - 1) {
+                this.diagnostics.error(parameter.line(), parameter.column(), SigmaError.PARAMS_LAST, parameter.name());
+                many = false;
+            } else if (many && (parameter.outward()
+                    || !(type instanceof ITypeSymbol.ArrayType) && !this.rules.isError(type))) {
+                this.diagnostics.error(parameter.line(), parameter.column(), SigmaError.PARAMS_ARRAY,
+                        parameter.name());
+                many = false;
+            }
+            symbols.add(new IMemberSymbol.ParameterSymbol(parameter.name(), type, parameter.outward(), many, receiver));
         }
         return symbols;
     }
 
+    /* A parameter written this where no extension method can be, reported as out of its place. */
+    void refuseReceiver(final List<IDecl.Parameter> parameters, final String where) {
+        for (final IDecl.Parameter parameter : parameters) {
+            if (parameter.receiver()) {
+                this.diagnostics.error(parameter.line(), parameter.column(), SigmaError.EXTENSION_PLACE, where);
+            }
+        }
+    }
+
+    /**
+     * The extension methods called {@code name} that code written in {@code from} reaches: those of the static classes
+     * at the top of its own namespace and the ones around it, and of the namespaces its file brought in with using.
+     */
+    List<IMemberSymbol.MethodSymbol> extensionsNamed(final String name, final NamedType from) {
+        final Scope scope = from == null ? Scope.TOP : this.scopes.getOrDefault(from, Scope.TOP);
+        final List<IMemberSymbol.MethodSymbol> found = new ArrayList<>();
+        for (final NamedType type : this.declared.values()) {
+            if (!type.isStatic() || this.outers.containsKey(type) || !reaches(scope, type)) {
+                continue;
+            }
+            for (final IMemberSymbol member : type.members()) {
+                if (member instanceof IMemberSymbol.MethodSymbol method && method.extendsItsFirst()
+                        && method.name().equals(name)) {
+                    found.add(method);
+                }
+            }
+        }
+        return found;
+    }
+
+    /* Whether code under that scope reaches the types of {@code type}'s namespace without writing it out. */
+    private static boolean reaches(final Scope scope, final NamedType type) {
+        final String home = type.namespace();
+        String around = scope.namespace();
+        while (true) {
+            if (around.equals(home)) {
+                return true;
+            }
+            if (around.isEmpty()) {
+                break;
+            }
+            final int dot = around.lastIndexOf('.');
+            around = dot >= 0 ? around.substring(0, dot) : "";
+        }
+        for (final CompilationUnit.Using using : scope.usings()) {
+            if (using.all() ? home.equals(using.name()) || home.startsWith(using.name() + ".")
+                    : using.name().equals(type.fullName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void fillInterface(final NamedType type, final IDecl.InterfaceDecl declaration) {
+        this.refuseSealed(declaration);
+        declaration.methods().forEach(this::refuseSealed);
+        declaration.methods().forEach(method -> this.refuseReceiver(method.parameters(), method.name()));
         for (final TypeRef base : declaration.bases()) {
             final ITypeSymbol resolved = this.resolve(base);
             if (resolved instanceof NamedType named && named.kind() == NamedType.Kind.INTERFACE
@@ -469,6 +728,7 @@ public final class Declarations {
 
     // Every name in an enum is a value of the enum, held by the type rather than by an instance.
     private void fillEnum(final NamedType type, final IDecl.EnumDecl declaration) {
+        this.refuseSealed(declaration);
         for (final IDecl.EnumConstant constant : declaration.constants()) {
             this.addUnique(type, new IMemberSymbol.FieldSymbol(type, constant.name(), type,
                     Set.of(IDecl.Modifier.PUBLIC, IDecl.Modifier.STATIC, IDecl.Modifier.READONLY)), constant);
@@ -476,6 +736,8 @@ public final class Declarations {
     }
 
     private void fillDelegate(final NamedType type, final IDecl.DelegateDecl declaration) {
+        this.refuseSealed(declaration);
+        this.refuseReceiver(declaration.parameters(), declaration.name());
         type.setInvoke(new IMemberSymbol.MethodSymbol(type, "Invoke", this.resolve(declaration.returnType()),
                 this.parametersOf(declaration.parameters()), Set.of(IDecl.Modifier.PUBLIC)));
     }
@@ -508,6 +770,12 @@ public final class Declarations {
     }
 
     private ITypeSymbol resolveName(final TypeRef reference) {
+        if (reference.isTuple()) {
+            return this.tupleType(reference);
+        }
+        if (reference.isPointer()) {
+            return this.pointerType(reference);
+        }
         final String name = reference.name();
         final ITypeSymbol.Primitive primitive = ITypeSymbol.Primitive.written(name);
         if (primitive != null) {
@@ -532,6 +800,72 @@ public final class Declarations {
             arguments.add(this.resolve(argument));
         }
         return new ITypeSymbol.GenericType(type, arguments);
+    }
+
+    /* A tuple's type: from two to eight places, each holding a value, called what it was written with. */
+    private ITypeSymbol tupleType(final TypeRef reference) {
+        final List<ITypeSymbol> places = new ArrayList<>();
+        boolean known = true;
+        for (final TypeRef place : reference.arguments()) {
+            final ITypeSymbol resolved = this.resolveIn(place);
+            if (resolved == ITypeSymbol.Primitive.VOID) {
+                this.diagnostics.error(place.line(), place.column(), SigmaError.TUPLE_PLACE_TYPE, place.describe());
+            }
+            known &= !this.rules.isError(resolved) && resolved != ITypeSymbol.Primitive.VOID;
+            places.add(resolved);
+        }
+        if (places.size() < 2 || places.size() > MAX_TUPLE) {
+            this.diagnostics.error(reference.line(), reference.column(), SigmaError.TUPLE_SIZE, places.size());
+            return ITypeSymbol.Special.ERROR;
+        }
+        return known ? new ITypeSymbol.TupleType(this.tupleOf(places), reference.names()) : ITypeSymbol.Special.ERROR;
+    }
+
+    /** The struct a tuple of those places is, the same one for every tuple of them. */
+    NamedType tupleOf(final List<ITypeSymbol> places) {
+        final List<String> written = new ArrayList<>();
+        for (final ITypeSymbol place : places) {
+            written.add(place.describe());
+        }
+        return this.tuples.computeIfAbsent("ValueTuple<" + String.join(", ", written) + ">",
+                name -> NamedType.tupleOf(name, places, this.builtIns.stringType()));
+    }
+
+    /** The structs the program's tuples are, in the order they were first written. */
+    public List<NamedType> tuples() {
+        return List.copyOf(this.tuples.values());
+    }
+
+    /*
+     * "Node*": a pointer, written only in unsafe code. What it points at is asked once every struct is filled in,
+     * since a struct that holds a pointer to itself is still being filled when the pointer is read.
+     */
+    private ITypeSymbol pointerType(final TypeRef reference) {
+        final ITypeSymbol pointee = this.resolveIn(reference.arguments().getFirst());
+        // A signature is read again when its body is checked, and what was wrong with it was said the first time.
+        if (this.pointersRead.add(reference)) {
+            if (!this.unsafeHere && this.level != LanguageLevel.SIGMA) {
+                this.diagnostics.error(reference.line(), reference.column(), SigmaError.POINTERS_NEED_UNSAFE);
+            }
+            if (this.filled) {
+                this.checkPointee(reference, pointee);
+            } else {
+                this.pointees.add(new Pointee(reference, pointee, this.files.get(this.current)));
+            }
+        }
+        return this.rules.isError(pointee) ? ITypeSymbol.Special.ERROR : new ITypeSymbol.PointerType(pointee);
+    }
+
+    /** Reports a pointer to a type no pointer may point at. */
+    private void checkPointee(final TypeRef at, final ITypeSymbol pointee) {
+        if (!this.rules.isError(pointee) && !this.layout.pointable(pointee)) {
+            this.diagnostics.error(at.line(), at.column(), SigmaError.POINTER_TARGET, pointee.describe());
+        }
+    }
+
+    /** How values lie in raw memory, for the checks that ask where a field sits or what a type takes. */
+    public Layout layout() {
+        return this.layout;
     }
 
     private ITypeSymbol withoutArguments(final TypeRef reference, final ITypeSymbol resolved) {
@@ -598,18 +932,28 @@ public final class Declarations {
         final boolean overrides = words.contains(IDecl.Modifier.OVERRIDE);
         final boolean virtual = words.contains(IDecl.Modifier.VIRTUAL);
         final boolean isAbstract = words.contains(IDecl.Modifier.ABSTRACT);
+        final boolean sealed = words.contains(IDecl.Modifier.SEALED);
         /*
          * A static method belongs to the type and a struct is copied rather than pointed at, so neither has
          * anything for these words to mean: there is no object whose real type could decide.
          */
         if (method.isStatic() || type.kind() == NamedType.Kind.STRUCT) {
             final IDecl.Modifier offender = virtual ? IDecl.Modifier.VIRTUAL
-                    : overrides ? IDecl.Modifier.OVERRIDE : isAbstract ? IDecl.Modifier.ABSTRACT : null;
+                    : overrides ? IDecl.Modifier.OVERRIDE : isAbstract ? IDecl.Modifier.ABSTRACT
+                    : sealed ? IDecl.Modifier.SEALED : null;
             if (offender != null) {
                 this.diagnostics.error(written.line(), written.column(), SigmaError.MODIFIER_NOT_ALLOWED,
                         method.describe(), offender.text());
             }
             return;
+        }
+        // Sealed stops the replacing at an override, so it goes with override and with nothing left to fill.
+        if (sealed && !overrides) {
+            this.diagnostics.error(written.line(), written.column(), SigmaError.SEALED_NEEDS_OVERRIDE,
+                    method.describe());
+        } else if (sealed && isAbstract) {
+            this.diagnostics.error(written.line(), written.column(), SigmaError.MODIFIER_NOT_ALLOWED,
+                    IDecl.Modifier.SEALED.text(), IDecl.Modifier.ABSTRACT.text());
         }
         this.checkBody(type, method, written, isAbstract);
         final IMemberSymbol.MethodSymbol above = this.methodAbove(type, method);
@@ -620,7 +964,10 @@ public final class Declarations {
             }
             return;
         }
-        if (!replaceable(above)) {
+        if (above.modifiers().contains(IDecl.Modifier.SEALED)) {
+            this.diagnostics.error(written.line(), written.column(), SigmaError.SEALED_BASE,
+                    above.owner().name() + "." + above.describe());
+        } else if (!replaceable(above)) {
             this.diagnostics.error(written.line(), written.column(),
                     SigmaError.CANNOT_OVERRIDE, method.describe(), above.owner().name());
         } else if (!overrides) {
@@ -850,4 +1197,8 @@ public final class Declarations {
     public static final String ARGUMENTS = "string[]";
     /** The version a Main that gives back a code or takes the arguments came in. */
     private static final int LATER_MAIN = 2;
+    /** The most places a tuple has, as C#'s written tuples have before they nest. */
+    static final int MAX_TUPLE = 8;
+    /** How a message writes an operator: the word, then its sign. */
+    private static final String OPERATOR_WORD = "operator ";
 }

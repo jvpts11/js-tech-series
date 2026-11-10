@@ -19,6 +19,11 @@ import java.util.Set;
  */
 public sealed interface IDecl extends INode {
 
+    /** The method an indexer reads with, as C# names it. */
+    String INDEXER_GET = "get_Item";
+    /** The method an indexer writes with, handed the value last, as C# names it. */
+    String INDEXER_SET = "set_Item";
+
     /** The access and storage words a declaration may carry. */
     enum Modifier {
         PUBLIC("public"),
@@ -29,7 +34,17 @@ public sealed interface IDecl extends INode {
         READONLY("readonly"),
         VIRTUAL("virtual"),
         OVERRIDE("override"),
-        ABSTRACT("abstract");
+        ABSTRACT("abstract"),
+        /** A value known when compiling, written into every place that reads it; a field with it is static. */
+        CONST("const"),
+        /** A class nothing stands on, or an override that nothing replaces further down. */
+        SEALED("sealed"),
+        /** A method that gives an operator a meaning on the type that declares it: what operator is written as. */
+        OPERATOR("operator"),
+        /** One of the two methods an indexer is written as, the one that reads and the one that writes. */
+        INDEXER("this"),
+        /** A method whose body, and whose parameters and answer, may hold pointers. */
+        UNSAFE("unsafe");
 
         private final String text;
 
@@ -61,9 +76,18 @@ public sealed interface IDecl extends INode {
      * One parameter of a method, a constructor, a delegate or a lambda.
      *
      * <p>An outward parameter is one the method fills in rather than reads, which is how a method
-     * gives back an answer and a value at the same time.
+     * gives back an answer and a value at the same time. One written with {@code params} is the last, an array a
+     * call may hand over as the values one by one. One written with {@code this} is the first of an extension method,
+     * the value the method is called on as if it were its own.
      */
-    record Parameter(boolean outward, TypeRef type, String name, int line, int column) implements INode {
+    record Parameter(boolean outward, TypeRef type, String name, boolean many, boolean receiver, int line,
+                     int column) implements INode {
+
+        /** A parameter that takes one value. */
+        public Parameter(final boolean outward, final TypeRef type, final String name, final int line,
+                         final int column) {
+            this(outward, type, name, false, false, line, column);
+        }
     }
 
     /**

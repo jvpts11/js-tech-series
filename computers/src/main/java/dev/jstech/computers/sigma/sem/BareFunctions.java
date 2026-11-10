@@ -164,6 +164,10 @@ public final class BareFunctions {
     private static final Set<LanguageLevel> BOTH = Set.of(LanguageLevel.SIGMA, LanguageLevel.SIGMA_SHARP);
     /** The version the old names came in; printf came with the languages themselves. */
     private static final int OLD_NAMES = 2;
+    /** The version pointers came in, and C's calls of raw memory with them. */
+    private static final int POINTERS = 3;
+    /** What the calls of raw memory hand back: an address that says nothing of what lies there. */
+    private static final String VOID_POINTER = "void*";
 
     private static final Map<String, Function> TABLE = new LinkedHashMap<>();
 
@@ -235,6 +239,14 @@ public final class BareFunctions {
         // A Crafting Interface and a Crafting Input Router of the crafting network, by the names their windows give.
         same("craftInterface", "CraftInterface", "Named", form("CraftInterface", "string name"));
         same("craftRouter", "CraftRouter", "Named", form("CraftRouter", "string name"));
+        // Raw memory under C's names, each the call of Memory it always was, its values in C's order.
+        memory("malloc", "Alloc", form(VOID_POINTER, "long size"));
+        memory("calloc", "AllocZeroed", form(VOID_POINTER, "long count", "long size"));
+        memory("realloc", "Resize", form(VOID_POINTER, "void* block", "long size"));
+        memory("free", "Free", form("void", "void* block"));
+        memory("memcpy", "Copy", form("void", "void* dest", "void* src", "long size"));
+        memory("memset", "Fill", form("void", "void* block", "int value", "long size"));
+        memory("memcmp", "Compare", form("int", "void* a", "void* b", "long size"));
     }
 
     private BareFunctions() {
@@ -273,6 +285,11 @@ public final class BareFunctions {
     /** One that is a call on the file handed last. */
     private static void last(final String name, final String member, final Form form) {
         add(new Function(name, List.of(form), Shape.ON_THE_LAST, FILE, member, 0, OLD_NAMES, BOTH));
+    }
+
+    /** One of the calls of raw memory, which came with pointers. */
+    private static void memory(final String name, final String member, final Form form) {
+        add(new Function(name, List.of(form), Shape.SAME_VALUES, "Memory", member, 0, POINTERS, BOTH));
     }
 
     private static void add(final Function function) {

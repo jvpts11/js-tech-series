@@ -34,7 +34,7 @@ final class FileCalls {
             final ICliComputer.FsResult read = files.read(path(arguments));
             // A program reads in the machine's language: the file's own words, or why there were none.
             if (!read.ok()) {
-                throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, read.message());
+                throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, read.message(), Halt.Thrown.FILE_NOT_FOUND);
             }
             final String found = read.message().english();
             call.moved(FileService.bytesOf(found));
@@ -115,7 +115,7 @@ final class FileCalls {
             call.moved(FileService.bytesOf(text));
             final ICliComputer.FsResult written = files.writeFile(OpenFile.path(file), text);
             if (!written.ok()) {
-                throw new Halt(Halt.Reason.REFUSED, line, written.message());
+                throw new Halt(Halt.Reason.REFUSED, line, written.message(), Halt.Thrown.IO);
             }
         }
         return null;

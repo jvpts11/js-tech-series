@@ -138,7 +138,7 @@ public final class AsmReader {
             this.readDirective(program, trimmed, line);
             return;
         }
-        this.readInstruction(trimmed, comment(raw), line);
+        this.readInstruction(program, trimmed, comment(raw), line);
     }
 
     private void readDirective(final AsmProgram program, final String text, final int line) {
@@ -181,8 +181,44 @@ public final class AsmReader {
             case "event" -> this.readEvent(rest, line);
             case "value" -> this.readValue(rest, line);
             case "method" -> this.readMethodHead(rest, line);
+            case "source", "try", "line" -> this.readExceptionDirective(program, word, rest, line);
             default -> this.report(line, ListingError.UNKNOWN_DIRECTIVE, "." + word);
         }
+    }
+
+    /*
+     * The directives exceptions brought, which came with them in the newest version of the format: the file a type was
+     * written in, a protected stretch of the method being read, and the line of the source what follows came from.
+     */
+    private void readExceptionDirective(final AsmProgram program, final String word, final String rest,
+                                        final int line) {
+        if (program.version() < AsmProgram.VERSION) {
+            this.report(line, ListingError.NEEDS_NEWER_FORMAT, "." + word, AsmProgram.VERSION, program.version());
+            return;
+        }
+        if ("source".equals(word)) {
+            if (!this.outsideType(".source", line)) {
+                this.type.setSource(rest);
+            }
+            return;
+        }
+        if (this.method == null || !this.method.hasBody()) {
+            this.report(line, ListingError.DIRECTIVE_OUTSIDE_TYPE, "." + word);
+            return;
+        }
+        if ("line".equals(word)) {
+            this.method.at(this.number(rest, line, 0));
+            return;
+        }
+        // "L1 L2 catch Type L3 L4" or "L1 L2 finally L3 L4".
+        final String[] parts = rest.split("\\s+");
+        final boolean cleanup = parts.length == 5 && "finally".equals(parts[2]);
+        if (!cleanup && (parts.length != 6 || !"catch".equals(parts[2]))) {
+            this.report(line, ListingError.MALFORMED_OPERAND, rest, ".try");
+            return;
+        }
+        this.method.addHandler(cleanup ? new AsmMethod.Handler(parts[0], parts[1], null, parts[3], parts[4])
+                : new AsmMethod.Handler(parts[0], parts[1], parts[3], parts[4], parts[5]), line);
     }
 
     private AsmType readTypeHead(final AsmType.Kind kind, final String rest) {
@@ -287,7 +323,7 @@ public final class AsmReader {
                 isStatic, slots, hasBody);
     }
 
-    private void readInstruction(final String text, final String comment, final int line) {
+    private void readInstruction(final AsmProgram program, final String text, final String comment, final int line) {
         if (this.method == null) {
             this.report(line, ListingError.INSTRUCTION_OUTSIDE_METHOD);
             return;
@@ -311,6 +347,10 @@ public final class AsmReader {
         final Opcode opcode = Opcode.written(word);
         if (opcode == null) {
             this.report(line, ListingError.UNKNOWN_INSTRUCTION, word);
+            return;
+        }
+        if (opcode.since() > program.version()) {
+            this.report(line, ListingError.NEEDS_NEWER_FORMAT, word, opcode.since(), program.version());
             return;
         }
         if (!opcode.takesOperand() && !operandText.isEmpty()) {
@@ -349,6 +389,14 @@ public final class AsmReader {
                 }
                 case METHOD -> this.readMethodOperand(text, line);
                 case CONSTRUCTOR -> this.readConstructorOperand(text, line);
+                case REGION -> new IOperand.Region(text);
+                case REGION_JUMP -> {
+                    final int space = text.indexOf(' ');
+                    if (space <= 0) {
+                        throw new IllegalArgumentException(text);
+                    }
+                    yield new IOperand.RegionJump(text.substring(0, space), text.substring(space + 1).trim());
+                }
                 default -> new IOperand.Type(text);
             };
         } catch (final IllegalArgumentException notReadable) {
@@ -437,6 +485,19 @@ public final class AsmReader {
             if (instructions.get(i).operand() instanceof IOperand.Label target
                     && !marked.contains(target.name())) {
                 this.report(built.lineOf(i), ListingError.UNKNOWN_LABEL, target.name());
+            }
+            if (instructions.get(i).operand() instanceof IOperand.RegionJump target
+                    && !marked.contains(target.label())) {
+                this.report(built.lineOf(i), ListingError.UNKNOWN_LABEL, target.label());
+            }
+        }
+        final List<AsmMethod.Handler> handlers = built.handlers();
+        for (int i = 0; i < handlers.size(); i++) {
+            final AsmMethod.Handler handler = handlers.get(i);
+            for (final String label : List.of(handler.start(), handler.end(), handler.handler(), handler.through())) {
+                if (!marked.contains(label)) {
+                    this.report(built.handlerLineOf(i), ListingError.UNKNOWN_LABEL, label);
+                }
             }
         }
     }

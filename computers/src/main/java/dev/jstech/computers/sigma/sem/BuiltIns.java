@@ -17,6 +17,8 @@ import dev.jstech.computers.vm.system.PropertySpec;
 import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.computers.vm.system.TypeSpec;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -73,6 +75,38 @@ public final class BuiltIns {
         this.fillScript();
         this.fillDeclared();
         this.fillSystem();
+        this.fillExceptions();
+    }
+
+    /** The type every exception stands on. */
+    public NamedType exceptionType() {
+        return this.types.get(key(EXCEPTION, 0));
+    }
+
+    /**
+     * The exceptions (computers/docs/design/sigma.md), each standing on the one above it: what they hold, read but
+     * never written by a program, and the three constructors each has, as C#'s have them.
+     */
+    private void fillExceptions() {
+        final NamedType root = this.declare(EXCEPTION, NamedType.Kind.CLASS);
+        final ITypeSymbol text = this.stringType;
+        this.property(root, "Message", text, PUBLIC);
+        this.property(root, "File", text, PUBLIC);
+        this.property(root, "Line", ITypeSymbol.Primitive.INT, PUBLIC);
+        this.property(root, "Trace", new ITypeSymbol.ArrayType(text), PUBLIC);
+        this.property(root, "Inner", root, PUBLIC);
+        for (final Map.Entry<String, String> one : EXCEPTIONS.entrySet()) {
+            final NamedType made = one.getKey().equals(EXCEPTION) ? root
+                    : this.declare(one.getKey(), NamedType.Kind.CLASS);
+            if (one.getValue() != null) {
+                made.setBase(this.types.get(key(one.getValue(), 0)));
+            }
+            made.addMember(new IMemberSymbol.ConstructorSymbol(made, List.of(), PUBLIC));
+            made.addMember(new IMemberSymbol.ConstructorSymbol(made,
+                    List.of(IMemberSymbol.ParameterSymbol.of("message", text)), PUBLIC));
+            made.addMember(new IMemberSymbol.ConstructorSymbol(made, List.of(IMemberSymbol.ParameterSymbol
+                    .of("message", text), IMemberSymbol.ParameterSymbol.of("inner", root)), PUBLIC));
+        }
     }
 
     /** The interface an operating system a player writes implements (computers/docs/design/player-systems.md). */
@@ -182,11 +216,12 @@ public final class BuiltIns {
             "PanelColour", "TextColour", "AccentColour", "WindowColour", "TitleColour", "Icons", "Wallpaper",
             "Programs");
 
-    private static final Map<String, String> HOMES = Map.ofEntries(
-            Map.entry("IScript", SYSTEM), Map.entry("Script", SUBSET_LIBRARY),
-            Map.entry("ISystem", SystemApi.OS), Map.entry("IDesktop", SystemApi.OS),
-            Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
-            Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS));
+    /** The type every exception stands on. */
+    public static final String EXCEPTION = "Exception";
+    /** The exceptions, each with the one it stands on, a type standing before any that stands on it. */
+    public static final Map<String, String> EXCEPTIONS = exceptions();
+
+    private static final Map<String, String> HOMES = homes();
 
     /**
      * Every type of the subset's library, by the name it has in both languages.
@@ -276,6 +311,37 @@ public final class BuiltIns {
 
     private static String key(final String name, final int arity) {
         return name + "/" + arity;
+    }
+
+    /* The exceptions, in an order that puts a type before every one standing on it. */
+    private static Map<String, String> exceptions() {
+        final Map<String, String> made = new LinkedHashMap<>();
+        made.put(EXCEPTION, null);
+        made.put("NullReferenceException", EXCEPTION);
+        made.put("InvalidOperationException", EXCEPTION);
+        made.put("ObjectDisposedException", "InvalidOperationException");
+        made.put("DivideByZeroException", EXCEPTION);
+        made.put("IndexOutOfRangeException", EXCEPTION);
+        made.put("ArgumentException", EXCEPTION);
+        made.put("ArgumentOutOfRangeException", "ArgumentException");
+        made.put("FormatException", EXCEPTION);
+        made.put("IOException", EXCEPTION);
+        made.put("FileNotFoundException", "IOException");
+        made.put("NetworkException", EXCEPTION);
+        made.put("AccessViolationException", EXCEPTION);
+        return Collections.unmodifiableMap(made);
+    }
+
+    /* Where each type of the language lives that is not one of the system's declared types. */
+    private static Map<String, String> homes() {
+        final Map<String, String> made = new HashMap<>(Map.ofEntries(
+                Map.entry("IScript", SYSTEM), Map.entry("Script", SUBSET_LIBRARY),
+                Map.entry("ISystem", SystemApi.OS), Map.entry("IDesktop", SystemApi.OS),
+                Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
+                Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS)));
+        // The exceptions live under System itself, as C#'s do.
+        EXCEPTIONS.keySet().forEach(name -> made.put(name, SYSTEM));
+        return Collections.unmodifiableMap(made);
     }
 
     private NamedType declare(final String name, final NamedType.Kind kind, final String... parameters) {
@@ -490,6 +556,9 @@ public final class BuiltIns {
      */
     private ITypeSymbol resolve(final String written) {
         final String text = written.strip();
+        if (text.endsWith("*")) {
+            return new ITypeSymbol.PointerType(this.resolve(text.substring(0, text.length() - 1)));
+        }
         final int open = text.indexOf('<');
         if (open > 0 && text.endsWith(">")) {
             final List<ITypeSymbol> arguments = new ArrayList<>();

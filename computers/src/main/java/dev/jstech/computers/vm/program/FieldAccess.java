@@ -67,7 +67,8 @@ final class FieldAccess {
             return;
         }
         if (!(target instanceof Values.Obj object)) {
-            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NOTHING_TO_READ.with(name));
+            throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NOTHING_TO_READ.with(name),
+                    target == null ? Halt.Thrown.NULL_REFERENCE : Halt.Thrown.INVALID_OPERATION);
         }
         if (site.own()) {
             frame.push(object.get(name));
@@ -94,7 +95,23 @@ final class FieldAccess {
         if (!(target instanceof Values.Obj object)) {
             throw new Halt(Halt.Reason.NO_OBJECT, line, NOTHING_TO_WRITE_ON.with(name));
         }
-        object.set(name, value);
+        // A field INTERCAL's ignore holds keeps what it had: the write vanishes, though it has been paid for.
+        if (!object.ignores(name)) {
+            object.set(name, value);
+        }
+    }
+
+    /** Makes every later write to a field of the object vanish, or count again. */
+    void ignore(final Object target, final IOperand.Field field, final boolean on, final int line) {
+        if (!(this.heap.alive(target, line) instanceof Values.Obj object)) {
+            throw new Halt(Halt.Reason.NO_OBJECT, line, NOTHING_TO_WRITE_ON.with(field.name()));
+        }
+        object.ignore(field.name(), on);
+    }
+
+    /** The same for a field a type keeps for itself. */
+    void ignoreStatic(final IOperand.Field field, final boolean on) {
+        this.statics(field.owner().value()).ignore(field.name(), on);
     }
 
     /** Reads a field a type keeps for itself, one of an enum's values, or one the runtime answers. */
@@ -123,7 +140,11 @@ final class FieldAccess {
 
     /** Writes the value on top of the stack into a field a type keeps for itself. */
     void storeStatic(final Frame frame, final ProgramImage.ValueSite site, final int line) {
-        this.statics(site.field().owner().value()).set(site.field().name(), frame.pop());
+        final Values.Obj holder = this.statics(site.field().owner().value());
+        final Object value = frame.pop();
+        if (!holder.ignores(site.field().name())) {
+            holder.set(site.field().name(), value);
+        }
     }
 
     /** The holder of a type's static fields, made the first time the type is touched. */

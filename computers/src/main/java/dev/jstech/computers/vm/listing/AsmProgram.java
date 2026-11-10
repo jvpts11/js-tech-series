@@ -27,8 +27,17 @@ import java.util.List;
  */
 public final class AsmProgram {
 
-    /** The version of the format this build writes; 3 names the instruction set a program was built for. */
-    public static final int VERSION = 3;
+    /**
+     * The newest version of the format this build writes and reads: 4 brings the instructions of version 3 of the
+     * language, such as INTERCAL's abstain, and the handlers of its exceptions.
+     */
+    public static final int VERSION = 4;
+
+    /**
+     * The version a listing is written in when it holds nothing a later one brought, so a program that needs nothing
+     * new runs on a runtime that knows no more than that; 3 names the instruction set a program was built for.
+     */
+    public static final int BASE_VERSION = 3;
 
     /** The oldest version this build still reads correctly. Version 2 names every constructor {@code .ctor}. */
     public static final int OLDEST_VERSION = 2;
@@ -39,15 +48,16 @@ public final class AsmProgram {
      */
     public static final String DEFAULT_ISA = "jsc:x86";
 
-    private final int version;
     private final List<AsmType> types = new ArrayList<>();
+    private int version;
     private String isa = DEFAULT_ISA;
     private int isaLine = 1;
     private String entryPoint;
     private Shape shape = Shape.SCRIPT;
 
+    /** A listing being built, in the version that needs nothing new until something it holds asks for more. */
     public AsmProgram() {
-        this(VERSION);
+        this(BASE_VERSION);
     }
 
     public AsmProgram(final int version) {
@@ -57,6 +67,14 @@ public final class AsmProgram {
     /** The format version this listing was written in. */
     public int version() {
         return this.version;
+    }
+
+    /**
+     * Raises the version the listing is written in to the one an instruction it holds came in, so a runtime that knows
+     * no more than the older version refuses it rather than meeting an instruction it has never heard of.
+     */
+    public void needs(final int atLeast) {
+        this.version = Math.max(this.version, atLeast);
     }
 
     /** The instruction set this program was built for. */

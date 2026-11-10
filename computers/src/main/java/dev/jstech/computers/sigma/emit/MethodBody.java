@@ -8,16 +8,19 @@
 package dev.jstech.computers.sigma.emit;
 
 import dev.jstech.computers.sigma.ast.IDecl;
+import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.lower.IrStmt;
 import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.ITypeSymbol;
 import dev.jstech.computers.sigma.sem.NamedType;
+import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -46,6 +49,17 @@ final class MethodBody {
     private final Deque<IrStmt.Temporary> held = new ArrayDeque<>();
     /** Where each value the program never named ended up living. */
     private final Map<IrStmt.Temporary, Integer> temporaries = new IdentityHashMap<>();
+    /** The label of each landing, by what it belongs to: a label, a comefrom, a switch's arm or a block's end. */
+    private final Map<Object, String> landings = new IdentityHashMap<>();
+    /** The protected stretches written so far, innermost first, by the labels they were made with. */
+    private final List<AsmMethod.Handler> protecting = new ArrayList<>();
+    /** The line of the source each instruction came from. */
+    private final List<Integer> positions = new ArrayList<>();
+    /** The place each catch keeps the exception it took, for a throw that throws it on. */
+    private final Map<IStmt.Catch, Integer> caught = new IdentityHashMap<>();
+    /** Where the address of each variable living in raw memory is kept, in the order they were first reached. */
+    private final Map<IBinding.Variable, Integer> addresses = new IdentityHashMap<>();
+    private final List<IBinding.Variable> inMemory = new ArrayList<>();
     private final NamedType owner;
     private final ITypeSymbol returns;
     private Closure closure;
@@ -53,6 +67,12 @@ final class MethodBody {
     private boolean closureIsThis;
     private int nextLabel;
     private int nextSlot;
+    /** The line of the source the instructions being written now come from. */
+    private int position;
+    /** The way out a return inside a protected stretch leaves for, made the first time one is written. */
+    private String wayOut;
+    /** Where such a return's answer waits while the finally blocks run, or -1 while none has. */
+    private int answerSlot = -1;
 
     MethodBody(final Emitter emitter, final NamedType owner, final ITypeSymbol returns) {
         this.emitter = emitter;
@@ -134,8 +154,12 @@ final class MethodBody {
 
     /** Puts a value already on the stack into the shared object. The object goes on first. */
     void storeKept(final IBinding.Variable variable) {
-        this.emit(Opcode.STFLD,
-                new IOperand.Field(this.closure.type(), this.closure.fields().get(variable)));
+        this.emit(Opcode.STFLD, this.keptField(variable));
+    }
+
+    /** The field of the shared object a kept variable lives in. */
+    IOperand.Field keptField(final IBinding.Variable variable) {
+        return new IOperand.Field(this.closure.type(), this.closure.fields().get(variable));
     }
 
     /*
@@ -195,6 +219,21 @@ final class MethodBody {
         return this.nextSlot++;
     }
 
+    /**
+     * Where the address of a variable living in raw memory is kept. Its block is made where the method starts, so it
+     * has one address for the whole call, as a C local has; a parameter's value is copied into it there.
+     */
+    int addressOf(final IBinding.Variable variable) {
+        final Integer known = this.addresses.get(variable);
+        if (known != null) {
+            return known;
+        }
+        final int given = this.hidden();
+        this.addresses.put(variable, given);
+        this.inMemory.add(variable);
+        return given;
+    }
+
     /** Where a value the program never named ends up living, worked out the first time it is asked for. */
     int placeOf(final IrStmt.Temporary temporary) {
         return this.temporaries.computeIfAbsent(temporary, one -> this.hidden());
@@ -250,16 +289,76 @@ final class MethodBody {
         }
     }
 
+    /** Says the instructions written from here on come from that line of the source; 0 says nothing. */
+    void at(final int line) {
+        if (line > 0) {
+            this.position = line;
+        }
+    }
+
+    /** Adds a protected stretch; the ones inside it were added first, as they were written first. */
+    void protect(final AsmMethod.Handler handler) {
+        this.protecting.add(handler);
+    }
+
+    /** The place a catch keeps the exception it took. */
+    int caughtSlot(final IStmt.Catch one) {
+        return this.caught.computeIfAbsent(one, ignored -> this.hidden());
+    }
+
+    /** Where the answer of a return inside a protected stretch waits while the finally blocks it leaves run. */
+    int answerSlot() {
+        if (this.answerSlot < 0) {
+            this.answerSlot = this.hidden();
+        }
+        return this.answerSlot;
+    }
+
+    /** The way out of the method a return inside a protected stretch leaves for, written once at the method's end. */
+    String wayOut() {
+        if (this.wayOut == null) {
+            this.wayOut = this.label();
+        }
+        return this.wayOut;
+    }
+
+    /** The protected stretches, innermost first, each label read through to the one its line carries. */
+    List<AsmMethod.Handler> handlers() {
+        final List<AsmMethod.Handler> resolved = new ArrayList<>(this.protecting.size());
+        for (final AsmMethod.Handler handler : this.protecting) {
+            resolved.add(new AsmMethod.Handler(this.resolve(handler.start()), this.resolve(handler.end()),
+                    handler.type(), this.resolve(handler.handler()), this.resolve(handler.through())));
+        }
+        return resolved;
+    }
+
+    /** The line of the source each instruction came from, in order. */
+    List<Integer> positions() {
+        return List.copyOf(this.positions);
+    }
+
     List<Instruction> finish() {
+        // A return out of a protected stretch comes here once its finally blocks have run, and gives its answer.
+        if (this.wayOut != null) {
+            this.mark(this.wayOut);
+            if (this.answerSlot >= 0) {
+                this.emit(Opcode.LDLOC, new IOperand.Slot(this.answerSlot));
+            }
+            this.emit(Opcode.RET);
+        }
         if (this.code.isEmpty() || !this.pending.isEmpty()
                 || this.code.getLast().opcode() != Opcode.RET) {
             this.emit(Opcode.RET);
         }
+        this.makeBlocks();
         final List<Instruction> resolved = new ArrayList<>();
         for (final Instruction instruction : this.code) {
             if (instruction.operand() instanceof IOperand.Label target) {
                 resolved.add(new Instruction(instruction.label(), instruction.opcode(),
                         new IOperand.Label(this.resolve(target.name())), instruction.comment()));
+            } else if (instruction.operand() instanceof IOperand.RegionJump target) {
+                resolved.add(new Instruction(instruction.label(), instruction.opcode(),
+                        new IOperand.RegionJump(target.name(), this.resolve(target.label())), instruction.comment()));
             } else {
                 resolved.add(instruction);
             }
@@ -267,7 +366,16 @@ final class MethodBody {
         return resolved;
     }
 
+    /**
+     * The label of the landing of {@code key}, made the first time either a jump to it or the landing itself is
+     * written: a goto may be written before the label it lands at.
+     */
+    String landing(final Object key) {
+        return this.landings.computeIfAbsent(key, ignored -> this.label());
+    }
+
     private void add(final Instruction instruction) {
+        this.emitter.uses(instruction.opcode().since());
         Instruction written = instruction;
         if (!this.pending.isEmpty()) {
             written = written.labelled(this.pending.getFirst());
@@ -277,6 +385,39 @@ final class MethodBody {
             this.pending.clear();
         }
         this.code.add(written);
+        this.positions.add(this.position);
+    }
+
+    /*
+     * The blocks of the variables living in raw memory, made before anything else the method does, each written at
+     * the start once the whole method is known: one block for the whole call, freed when it returns. A parameter's
+     * value is copied in, since a caller handed it in a slot.
+     */
+    private void makeBlocks() {
+        if (this.inMemory.isEmpty()) {
+            return;
+        }
+        final List<Instruction> made = new ArrayList<>();
+        for (final IBinding.Variable variable : this.inMemory) {
+            final int address = this.addresses.get(variable);
+            made.add(Instruction.of(Opcode.LDC_I8,
+                    new IOperand.I8(this.emitter.declarations.layout().sizeOf(variable.type()))));
+            made.add(Instruction.of(Opcode.LOCALLOC));
+            made.add(Instruction.of(Opcode.STLOC, new IOperand.Slot(address)));
+            if (variable.parameter()) {
+                made.add(Instruction.of(Opcode.LDLOC, new IOperand.Slot(address)));
+                made.add(Instruction.of(Opcode.LDLOC, new IOperand.Slot(this.slot(variable))));
+                this.emitter.raw.write(variable.type(), this, made::add);
+            }
+        }
+        this.emitter.uses(Opcode.LOCALLOC.since());
+        this.code.addAll(0, made);
+        this.positions.addAll(0, Collections.nCopies(made.size(), 0));
+    }
+
+    /** Writes an instruction already made, as {@link RawAccess} hands them over. */
+    void emit(final Instruction instruction) {
+        this.add(instruction);
     }
 
     // Two labels can land on the same line, and a line carries one, so the rest point at it.

@@ -10,10 +10,13 @@ package dev.jstech.computers.sigma.emit;
 import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
+import dev.jstech.computers.sigma.ast.Operator;
+import dev.jstech.computers.sigma.lex.TokenKind;
 import dev.jstech.computers.sigma.lower.Lowerer;
 import dev.jstech.computers.sigma.sem.BodyChecker;
 import dev.jstech.computers.sigma.sem.BuiltIns;
 import dev.jstech.computers.sigma.sem.Declarations;
+import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.ITypeSymbol;
 import dev.jstech.computers.sigma.sem.NamedType;
@@ -22,6 +25,7 @@ import dev.jstech.computers.sigma.sem.TypeRules;
 import dev.jstech.computers.vm.listing.AsmMethod;
 import dev.jstech.computers.vm.listing.AsmProgram;
 import dev.jstech.computers.vm.listing.AsmType;
+import dev.jstech.computers.vm.listing.IOperand;
 import dev.jstech.computers.vm.listing.Opcode;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,10 +54,14 @@ public final class Emitter {
     final DiagnosticBag diagnostics;
     /** What each method's statements came to once the shorthand was gone. */
     final Lowerer lowered;
+    /** How a value is read and written through an address. */
+    final RawAccess raw;
     private final List<AsmMethod> synthesized = new ArrayList<>();
     /** What each method's lambdas keep hold of, worked out from the tree before anything is written. */
     private final Closures closures;
     private int lambdaCount;
+    /** The version of the format the instructions written so far need, which the listing is written in. */
+    private int format = AsmProgram.BASE_VERSION;
 
     public Emitter(final SemanticModel model, final TypeRules rules, final BuiltIns builtIns,
                    final Declarations declarations, final DiagnosticBag diagnostics, final Lowerer lowered) {
@@ -63,6 +71,7 @@ public final class Emitter {
         this.declarations = declarations;
         this.diagnostics = diagnostics;
         this.lowered = lowered;
+        this.raw = new RawAccess(declarations.layout(), rules);
         this.closures = new Closures();
     }
 
@@ -76,18 +85,147 @@ public final class Emitter {
             final IDecl.ITypeDecl source = this.declarations.source(type);
             this.diagnostics.setFile(this.declarations.fileOf(type));
             switch (source) {
-                case IDecl.ClassDecl declaration -> program.addType(this.emitClass(type, declaration));
+                case IDecl.ClassDecl declaration -> program.addType(this.placed(this.emitClass(type, declaration),
+                        type));
                 case IDecl.InterfaceDecl ignored -> program.addType(emitInterface(type));
                 case IDecl.EnumDecl declaration -> program.addType(emitEnum(type, declaration));
                 case IDecl.DelegateDecl declaration -> program.addType(this.emitDelegate(type, declaration));
                 case null, default -> { }
             }
             for (final AsmType closure : this.closures.written()) {
-                program.addType(closure);
+                program.addType(this.placed(closure, type));
             }
             this.closures.forget();
         }
+        for (final NamedType tuple : this.declarations.tuples()) {
+            program.addType(this.emitTuple(tuple));
+        }
+        // A program that uses exceptions carries their types and says where it throws, as the newest format has it.
+        if (this.model.usesExceptions()) {
+            this.uses(AsmProgram.VERSION);
+            for (final String name : BuiltIns.EXCEPTIONS.keySet()) {
+                program.addType(this.emitException(this.builtIns.type(name, 0)));
+            }
+        }
+        program.needs(this.format);
         return program;
+    }
+
+    /* A type that says which file it was written in, for the exceptions of a program that uses them. */
+    private AsmType placed(final AsmType written, final NamedType from) {
+        if (this.model.usesExceptions()) {
+            written.setSource(this.declarations.fileOf(from));
+        }
+        return written;
+    }
+
+    /* A method written down with the stretches it protects and, in a program that uses exceptions, its source lines. */
+    AsmMethod finished(final AsmMethod method, final MethodBody body) {
+        final List<AsmMethod.Handler> handlers = body.handlers();
+        if (handlers.isEmpty() && !this.model.usesExceptions()) {
+            return method;
+        }
+        return method.protecting(handlers, this.model.usesExceptions() ? body.positions() : List.of());
+    }
+
+    /*
+     * One of the exceptions, as the listing carries it: what it holds, which the runtime fills in where it is thrown,
+     * and its three constructors, each giving what it is handed to the exception it stands on, or keeping it.
+     */
+    private AsmType emitException(final NamedType type) {
+        final AsmType written = new AsmType(AsmType.Kind.CLASS, type.qualifiedName());
+        if (type.base() != null) {
+            written.addBase(type.base().qualifiedName());
+        } else {
+            for (final IMemberSymbol member : type.members()) {
+                if (member instanceof IMemberSymbol.PropertySymbol property) {
+                    written.addField(new AsmType.Field(property.name(), property.type().describe(), false));
+                }
+            }
+        }
+        final String text = this.builtIns.stringType().describe();
+        final List<List<String>> shapes = List.of(List.of(), List.of(text), List.of(text, BuiltIns.EXCEPTION));
+        final List<String> kept = List.of("Message", "Inner");
+        for (final List<String> takes : shapes) {
+            final MethodBody body = new MethodBody(this, type, ITypeSymbol.Primitive.VOID);
+            if (type.base() != null) {
+                body.emit(Opcode.LDTHIS);
+                for (int i = 0; i < takes.size(); i++) {
+                    body.emit(Opcode.LDLOC, new IOperand.Slot(i));
+                }
+                body.emit(Opcode.CALL, new IOperand.Method(type.base().qualifiedName(), AsmMethod.CONSTRUCTOR,
+                        takes, "void"));
+            } else {
+                for (int i = 0; i < takes.size(); i++) {
+                    body.emit(Opcode.LDTHIS);
+                    body.emit(Opcode.LDLOC, new IOperand.Slot(i));
+                    body.emit(Opcode.STFLD, new IOperand.Field((String) null, kept.get(i)));
+                }
+            }
+            written.addMethod(new AsmMethod(AsmMethod.CONSTRUCTOR, "void", takes, false, takes.size(),
+                    body.finish()));
+        }
+        return written;
+    }
+
+    /*
+     * The struct a tuple is: a field for each place, a constructor taking them in order, and a ToString reading them
+     * as C# does, "(1, two)", each place read the way it reads when it is joined to text.
+     */
+    private AsmType emitTuple(final NamedType type) {
+        final AsmType written = new AsmType(AsmType.Kind.STRUCT, type.qualifiedName());
+        final List<IMemberSymbol.FieldSymbol> places = new ArrayList<>();
+        for (final IMemberSymbol member : type.members()) {
+            if (member instanceof IMemberSymbol.FieldSymbol field) {
+                places.add(field);
+                written.addField(new AsmType.Field(field.name(), field.type().describe(), false));
+            }
+        }
+        final MethodBody made = new MethodBody(this, type, ITypeSymbol.Primitive.VOID);
+        final List<String> taken = new ArrayList<>(places.size());
+        for (int i = 0; i < places.size(); i++) {
+            made.emit(Opcode.LDTHIS);
+            made.emit(Opcode.LDLOC, new IOperand.Slot(i));
+            made.emit(Opcode.STFLD, new IOperand.Field((String) null, places.get(i).name()));
+            taken.add(places.get(i).type().describe());
+        }
+        written.addMethod(new AsmMethod(AsmMethod.CONSTRUCTOR, "void", taken, false, places.size(), made.finish()));
+        final ITypeSymbol text = this.builtIns.stringType();
+        IExpr reads = this.typed(new IExpr.Literal(TokenKind.STRING_LITERAL, "(", 0, 0), text);
+        for (int i = 0; i < places.size(); i++) {
+            if (i > 0) {
+                reads = this.joinedTo(reads, this.typed(new IExpr.Literal(TokenKind.STRING_LITERAL, ", ", 0, 0), text));
+            }
+            final IExpr.Member place = new IExpr.Member(new IExpr.This(0, 0), places.get(i).name(), 0, 0);
+            this.model.setBinding(place, new IBinding.Member(places.get(i), places.get(i).type()));
+            reads = this.joinedTo(reads, this.typed(place, places.get(i).type()));
+        }
+        reads = this.joinedTo(reads, this.typed(new IExpr.Literal(TokenKind.STRING_LITERAL, ")", 0, 0), text));
+        final MethodBody reading = new MethodBody(this, type, text);
+        new ExpressionWriter(this, reading).value(reads, text);
+        reading.emit(Opcode.RET);
+        written.addMethod(new AsmMethod("ToString", text.describe(), List.of(), false, reading.slotCount(),
+                reading.finish()));
+        return written;
+    }
+
+    /* An expression made here rather than written, typed as the checker would have typed it. */
+    private IExpr typed(final IExpr made, final ITypeSymbol type) {
+        this.model.setType(made, type);
+        return made;
+    }
+
+    /* Two pieces joined into text, typed as text. */
+    private IExpr joinedTo(final IExpr left, final IExpr right) {
+        return this.typed(new IExpr.Binary(Operator.ADD, left, right, 0, 0), this.builtIns.stringType());
+    }
+
+    /**
+     * Takes note that an instruction of that version of the format was written, which the listing then needs; one
+     * older than the version listings are written in at the least changes nothing.
+     */
+    void uses(final int version) {
+        this.format = Math.max(this.format, version);
     }
 
     /** One parameter as the assembly names it: its type, marked when it is one the method fills in. */
@@ -131,8 +269,8 @@ public final class Emitter {
             new ExpressionWriter(this, body).value(lambda.body(), gives);
             body.emit(Opcode.RET);
         }
-        final AsmMethod made = new AsmMethod(name, gives.describe(), written, false,
-                body.slotCount(), body.finish());
+        final AsmMethod made = this.finished(new AsmMethod(name, gives.describe(), written, false,
+                body.slotCount(), body.finish()), body);
         if (closure == null) {
             this.synthesized.add(made);
         } else {
@@ -191,6 +329,8 @@ public final class Emitter {
         final List<IDecl.FieldDecl> staticStart = new ArrayList<>();
         for (final IDecl.IMemberDecl member : declaration.members()) {
             switch (member) {
+                // A const is written into every place that reads it, so the listing keeps no field for it.
+                case IDecl.FieldDecl field when field.modifiers().contains(IDecl.Modifier.CONST) -> { }
                 case IDecl.FieldDecl field -> {
                     final ITypeSymbol held = this.declarations.resolve(field.type());
                     written.addField(new AsmType.Field(field.name(), held.describe(),
@@ -253,14 +393,14 @@ public final class Emitter {
         if (!hasConstructor && !instanceStart.isEmpty()) {
             final MethodBody body = new MethodBody(this, type, ITypeSymbol.Primitive.VOID);
             this.statements(body).fieldStarts(instanceStart);
-            written.addMethod(new AsmMethod(AsmMethod.CONSTRUCTOR, "void", List.of(), false,
-                    body.slotCount(), body.finish()));
+            written.addMethod(this.finished(new AsmMethod(AsmMethod.CONSTRUCTOR, "void", List.of(), false,
+                    body.slotCount(), body.finish()), body));
         }
         if (!staticStart.isEmpty()) {
             final MethodBody body = new MethodBody(this, type, ITypeSymbol.Primitive.VOID);
             this.statements(body).fieldStarts(staticStart);
-            written.addMethod(new AsmMethod(AsmMethod.TYPE_SET_UP, "void", List.of(), true,
-                    body.slotCount(), body.finish()));
+            written.addMethod(this.finished(new AsmMethod(AsmMethod.TYPE_SET_UP, "void", List.of(), true,
+                    body.slotCount(), body.finish()), body));
         }
     }
 
@@ -279,8 +419,8 @@ public final class Emitter {
         body.parameters(method.parameters());
         body.openClosure(this.closures.forMethod(type, this.lowered.capturesOf(method)));
         this.statements(body).block(this.lowered.bodyOf(method));
-        return new AsmMethod(method.name(), returns.describe(), this.written(method.parameters()),
-                method.modifiers().contains(IDecl.Modifier.STATIC), body.slotCount(), body.finish());
+        return this.finished(new AsmMethod(method.name(), returns.describe(), this.written(method.parameters()),
+                method.modifiers().contains(IDecl.Modifier.STATIC), body.slotCount(), body.finish()), body);
     }
 
     private AsmMethod emitConstructor(final NamedType type, final IDecl.ConstructorDecl constructor,
@@ -303,8 +443,8 @@ public final class Emitter {
             body.openClosure(this.closures.forMethod(type, this.lowered.capturesOf(constructor)));
             writes.block(this.lowered.bodyOf(constructor));
         }
-        return new AsmMethod(AsmMethod.CONSTRUCTOR, "void", this.written(constructor.parameters()), false,
-                body.slotCount(), body.finish());
+        return this.finished(new AsmMethod(AsmMethod.CONSTRUCTOR, "void", this.written(constructor.parameters()),
+                false, body.slotCount(), body.finish()), body);
     }
 
     /** The pair that fills a body in: what the method does, and, under that, the values it works out. */

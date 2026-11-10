@@ -9,11 +9,15 @@ package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.INode;
+import dev.jstech.computers.sigma.ast.IStmt;
+import dev.jstech.computers.sigma.ast.Operator;
 import dev.jstech.computers.vm.listing.Shape;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * What the checker learned: the types a program declares, and what every expression in it turned out
@@ -47,6 +51,31 @@ public final class SemanticModel {
      * written the long way, checked and typed, over the very values the player handed the short one.
      */
     private final Map<IExpr.Call, IExpr> longWays = new IdentityHashMap<>();
+    /** Where each goto and each comefrom goes, and the statement it lands inside, which it may not enter. */
+    private final Map<INode, Jump> jumps = new IdentityHashMap<>();
+    /** The comefrom that takes each labelled statement's way out, and the regions that keep it from firing. */
+    private final Map<IStmt.Labeled, IStmt.ComeFrom> comeFroms = new IdentityHashMap<>();
+    private final Map<IStmt.ComeFrom, List<String>> guards = new IdentityHashMap<>();
+    /** The labelled statements an abstainfrom or a reinstate names, whose regions can be switched off. */
+    private final Set<IStmt.Labeled> abstainable = Collections.newSetFromMap(new IdentityHashMap<>());
+    /** The calls whose params array is made from the values handed over one by one. */
+    private final Set<INode> expanded = Collections.newSetFromMap(new IdentityHashMap<>());
+    /** Each call of an extension method, with what the static method is handed: the value it was called on first. */
+    private final Map<IExpr.Call, List<IExpr>> extensions = new IdentityHashMap<>();
+    /** The method of an indexer each written index writes with; the one it reads with is its call. */
+    private final Map<IExpr.Index, IMemberSymbol.MethodSymbol> setters = new IdentityHashMap<>();
+    /** The type each catch takes, Exception for one written without a type. */
+    private final Map<IStmt.Catch, ITypeSymbol> caught = new IdentityHashMap<>();
+    /** The catch each throw that throws on stands in, whose exception it throws on. */
+    private final Map<IStmt.Throw, IStmt.Catch> rethrows = new IdentityHashMap<>();
+    /** Whether the program uses the language's exceptions at all, which their types then go out with. */
+    private boolean usesExceptions;
+    /** The variables that are local functions, which nothing writes to and which are made where their block starts. */
+    private final Set<IBinding.Variable> localFunctions = Collections.newSetFromMap(new IdentityHashMap<>());
+    /** The locals and parameters whose address a program may take. */
+    private final Set<IBinding.Variable> addressable = Collections.newSetFromMap(new IdentityHashMap<>());
+    /** The ones whose address it took, which live in raw memory. */
+    private final Set<IBinding.Variable> inMemory = Collections.newSetFromMap(new IdentityHashMap<>());
     private final List<NamedType> declared = new ArrayList<>();
     private final List<DeclaredVariable> variables = new ArrayList<>();
     private String file = "";
@@ -58,6 +87,13 @@ public final class SemanticModel {
      * be: the file and the line it was declared on, and the variable itself.
      */
     public record DeclaredVariable(String file, int line, IBinding.Variable variable) {
+    }
+
+    /**
+     * Where a goto or a comefrom goes: the labelled statement or the switch's section it lands at, and the statement
+     * that holds the place it lands, which every jump to it is already inside.
+     */
+    public record Jump(INode target, INode container) {
     }
 
     /** Says which file the bodies being checked are in, so a variable is recorded with it. */
@@ -132,6 +168,114 @@ public final class SemanticModel {
         return this.calls.get(expression);
     }
 
+    /** Records that a call hands its params array over as the values written one by one. */
+    public void setExpanded(final INode call) {
+        this.expanded.add(call);
+    }
+
+    /** Whether a call hands its params array over as the values written one by one, which make the array. */
+    public boolean expanded(final INode call) {
+        return this.expanded.contains(call);
+    }
+
+    /** Records that a call is of an extension method, handing its static method those values. */
+    public void setExtension(final IExpr.Call call, final List<IExpr> handed) {
+        this.extensions.put(call, List.copyOf(handed));
+    }
+
+    /** What a call of an extension method hands its static method, the value it was called on first, or null. */
+    public List<IExpr> extensionOf(final IExpr.Call call) {
+        return this.extensions.get(call);
+    }
+
+    /** Records the type a catch takes. */
+    public void setCaught(final IStmt.Catch one, final ITypeSymbol type) {
+        this.caught.put(one, type);
+    }
+
+    /** The type a catch takes, or null for one never checked. */
+    public ITypeSymbol caughtBy(final IStmt.Catch one) {
+        return this.caught.get(one);
+    }
+
+    /** Records the catch a throw that throws on stands in. */
+    public void setRethrows(final IStmt.Throw thrown, final IStmt.Catch around) {
+        this.rethrows.put(thrown, around);
+    }
+
+    /** The catch a throw that throws on stands in, or null for one that throws something of its own. */
+    public IStmt.Catch rethrowsFrom(final IStmt.Throw thrown) {
+        return this.rethrows.get(thrown);
+    }
+
+    /** Says the program uses the language's exceptions: a try, a throw, or one of their types named. */
+    public void setUsesExceptions() {
+        this.usesExceptions = true;
+    }
+
+    /** Whether the program uses the language's exceptions, which their types and where it throws then go out with. */
+    public boolean usesExceptions() {
+        return this.usesExceptions;
+    }
+
+    /** Records the method of an indexer a written index writes with. */
+    public void setSetter(final IExpr.Index index, final IMemberSymbol.MethodSymbol setter) {
+        this.setters.put(index, setter);
+    }
+
+    /** The method of an indexer a written index writes with, or null for an index with no indexer behind it. */
+    public IMemberSymbol.MethodSymbol setterOf(final IExpr.Index index) {
+        return this.setters.get(index);
+    }
+
+    /** Records that a variable is a local function. */
+    public void setLocalFunction(final IBinding.Variable variable) {
+        this.localFunctions.add(variable);
+    }
+
+    /** Whether a variable is a local function, which holds its lambda and is never written to. */
+    public boolean isLocalFunction(final IBinding.Variable variable) {
+        return this.localFunctions.contains(variable);
+    }
+
+    /** Records that a variable's address may be taken: a local declared as one, or a parameter a call hands a value. */
+    public void setAddressable(final IBinding.Variable variable) {
+        this.addressable.add(variable);
+    }
+
+    /** Whether a variable's address may be taken. */
+    public boolean isAddressable(final IBinding.Variable variable) {
+        return this.addressable.contains(variable);
+    }
+
+    /** Records that a variable's address was taken, so it lives in raw memory for as long as its call runs. */
+    public void setInMemory(final IBinding.Variable variable) {
+        this.inMemory.add(variable);
+    }
+
+    /** Whether a variable lives in raw memory, read and written through its address. */
+    public boolean isInMemory(final IBinding.Variable variable) {
+        return this.inMemory.contains(variable);
+    }
+
+    /**
+     * Whether an expression already checked names a place in raw memory, read and written through an address: what a
+     * pointer reaches ({@code *p}, {@code p[i]}, {@code p->F}), a variable whose address was taken, or a field of a
+     * struct lying in either.
+     */
+    public boolean inRawMemory(final IExpr expression) {
+        return switch (expression) {
+            case IExpr.Unary unary -> unary.operator() == Operator.DEREFERENCE;
+            case IExpr.Index index -> this.typeOf(index.target()) instanceof ITypeSymbol.PointerType;
+            case IExpr.Name name -> this.bindingOf(name) instanceof IBinding.Variable variable
+                    && this.inMemory.contains(variable);
+            case IExpr.Member member -> this.bindingOf(member) instanceof IBinding.Member held
+                    && !held.member().isStatic() && (held.member() instanceof IMemberSymbol.FieldSymbol
+                    || held.member() instanceof IMemberSymbol.PropertySymbol) && this.inRawMemory(member.target());
+            case null, default -> false;
+        };
+    }
+
     /**
      * Records where a variable comes into being: a parameter, a local, the name a foreach walks with,
      * or a variable declared at a call that fills it in.
@@ -189,5 +333,44 @@ public final class SemanticModel {
     public void setEntryPoint(final NamedType entryPoint, final Shape shape) {
         this.entryPoint = entryPoint;
         this.shape = shape;
+    }
+
+    /** Records where a goto or a comefrom goes. */
+    public void setJump(final INode jump, final Jump to) {
+        this.jumps.put(jump, to);
+    }
+
+    /** Where a goto or a comefrom goes, or null when it goes nowhere the checker found. */
+    public Jump jumpOf(final INode jump) {
+        return this.jumps.get(jump);
+    }
+
+    /**
+     * Records the comefrom that takes a labelled statement's way out, and the regions it stands in, any of which,
+     * switched off, keeps it from firing.
+     */
+    public void setComeFrom(final IStmt.Labeled labeled, final IStmt.ComeFrom from, final List<String> regions) {
+        this.comeFroms.put(labeled, from);
+        this.guards.put(from, List.copyOf(regions));
+    }
+
+    /** The comefrom that takes a labelled statement's way out, or null when none does. */
+    public IStmt.ComeFrom comeFromOf(final IStmt.Labeled labeled) {
+        return this.comeFroms.get(labeled);
+    }
+
+    /** The regions a comefrom stands in, by their labels. */
+    public List<String> guardsOf(final IStmt.ComeFrom from) {
+        return this.guards.getOrDefault(from, List.of());
+    }
+
+    /** Records that an abstainfrom or a reinstate names a labelled statement, whose region can then be switched off. */
+    public void setAbstainable(final IStmt.Labeled labeled) {
+        this.abstainable.add(labeled);
+    }
+
+    /** Whether a labelled statement's region can be switched off. */
+    public boolean abstainable(final IStmt.Labeled labeled) {
+        return this.abstainable.contains(labeled);
     }
 }

@@ -254,6 +254,7 @@ final class CallDispatch {
     void leave(final Frame frame, final Object answer) {
         final Deque<Frame> frames = this.process.current().frames;
         frames.pop();
+        frame.releaseBlocks(this.process.memory());
         if (frames.isEmpty()) {
             // A call the machine asked for keeps its answer, for the machine to read once it has returned.
             if (frame.asked) {

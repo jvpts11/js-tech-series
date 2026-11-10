@@ -52,6 +52,11 @@ public final class SigmaCosts {
     public static final int PER_ARGUMENT_ACROSS = 5;
     /** Saying something to a computer across a Gateway, or turning one on or off. */
     public static final int SEND_ACROSS = 20;
+    /** How many bytes of raw memory moved, set or compared cost one instruction. */
+    public static final int RAW_BYTES_PER_INSTRUCTION = 64;
+    /** Moving, setting or comparing raw memory: one for every so many bytes, said by the block as calls are priced. */
+    public static final CallCost RAW_BYTES =
+            CallCost.perBlock(0, CallCost.BLOCK_BYTES / RAW_BYTES_PER_INSTRUCTION);
 
     private SigmaCosts() {
     }

@@ -37,6 +37,8 @@ final class KnownValues {
             case IExpr.Interpolation written -> allKnown(written, model);
             case IExpr.Member member -> libraryKnows(model.bindingOf(member) instanceof IBinding.Member read
                     ? read.member() : null) && knownTarget(member.target(), model);
+            case IExpr.Call call when model.loweredOf(call) instanceof IExpr.Literal -> true;
+            case IExpr.SizeOf sized -> model.loweredOf(sized) instanceof IExpr.Literal;
             case IExpr.Call call -> libraryKnows(model.callOf(call)) && call.callee() instanceof IExpr.Member callee
                     && knownTarget(callee.target(), model) && call.arguments().stream().allMatch(a -> known(a, model));
             default -> false;

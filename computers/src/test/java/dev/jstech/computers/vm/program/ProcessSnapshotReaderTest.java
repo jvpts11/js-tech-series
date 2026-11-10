@@ -63,7 +63,8 @@ class ProcessSnapshotReaderTest {
                                     final Snapshot.HeapShot heap, final Snapshot.ThreadsShot threads,
                                     final Snapshot.IValue script) {
         return new Snapshot(format, listing, heap, shot.identity(), shot.console(), shot.input(), shot.callbacks(),
-                shot.windows(), shot.watches(), shot.listeners(), threads, shot.monitors(), shot.statics(), script);
+                shot.windows(), shot.watches(), shot.listeners(), threads, shot.monitors(), shot.statics(), script,
+                shot.intercal());
     }
 
     /** The same snapshot with only its main thread, written as {@code main}. */
@@ -134,7 +135,7 @@ class ProcessSnapshotReaderTest {
         final List<Snapshot.FrameShot> frames = new ArrayList<>(main.frames());
         final Snapshot.FrameShot inner = frames.getLast();
         frames.set(frames.size() - 1, new Snapshot.FrameShot(inner.owner(), "Gone", inner.parameters(), inner.at(),
-                inner.self(), inner.slots(), inner.stack(), inner.discard()));
+                inner.self(), inner.slots(), inner.stack(), inner.discard(), inner.ignored()));
 
         assertRefused(withMainThread(shot, new Snapshot.ThreadShot(main.id(), frames, main.parked(), main.until(),
                 main.on(), main.token(), main.timedOut(), main.onHost())));

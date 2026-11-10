@@ -110,7 +110,7 @@
     }
   ],
   "id": "jsc:redstone_library",
-  "order": 407,
+  "order": 416,
   "section": "jsc:library_machine",
   "title": "jsc.guide.redstone_library.title"
 }

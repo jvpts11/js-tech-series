@@ -13,6 +13,7 @@ import dev.jstech.core.text.LongText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextTags;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,16 @@ public final class SnapshotTag {
     private static final String FRAMES = "frames";
     private static final String WAITING = "waiting";
     private static final String STATICS = "statics";
+    /* What INTERCAL's words left switched: absent from a save written before them, which then has nothing switched. */
+    private static final String IGNORED = "ignored";
+    private static final String SWITCHED_OFF = "switched_off";
+    /* What the finally blocks running in a call go on with: absent from a save written before exceptions. */
+    private static final String PENDINGS = "pendings";
+    private static final String LEAVING = "leaving";
+    private static final String FINALLIES = "finallies";
+    private static final String NEXT = "next";
+    private static final String EXCEPTION = "exception";
+    private static final String RUNNING = "running";
     private static final String SCRIPT = "script";
     private static final String CONSOLE = "console";
     private static final String CONSOLE_OPEN = "console_open";
@@ -104,6 +115,11 @@ public final class SnapshotTag {
     private static final String END_WITH_WINDOWS = "endWithWindows";
     private static final String FORMAT = "format";
     private static final String LISTING = "listing";
+    private static final String ADDRESS = "address";
+    private static final String CONTENTS = "contents";
+    private static final String ON_STACK = "onStack";
+    private static final String BLOCKS = "blocks";
+    private static final String NEXT_ADDRESS = "nextAddress";
 
     private SnapshotTag() {
     }
@@ -114,6 +130,9 @@ public final class SnapshotTag {
         tag.putInt(FORMAT, shot.format());
         LongText.put(tag, LISTING, shot.listing());
         tag.putLong(BUDGET, shot.heap().budget());
+        if (shot.heap().nextAddress() != 0) {
+            tag.putLong(NEXT_ADDRESS, shot.heap().nextAddress());
+        }
         final ListTag held = new ListTag();
         for (final Snapshot.IHeld one : shot.heap().held()) {
             held.add(write(one));
@@ -161,9 +180,11 @@ public final class SnapshotTag {
             final CompoundTag owner = new CompoundTag();
             owner.putString(OWNER, entry.getKey());
             owner.put(FIELDS, fields(entry.getValue()));
+            owner.put(IGNORED, names(shot.intercal().staticsIgnored().getOrDefault(entry.getKey(), List.of())));
             statics.add(owner);
         }
         tag.put(STATICS, statics);
+        tag.put(SWITCHED_OFF, names(shot.intercal().switchedOff()));
         tag.put(SCRIPT, write(shot.script()));
         final ListTag watches = new ListTag();
         for (final Snapshot.WatchShot watch : shot.watches()) {
@@ -209,10 +230,15 @@ public final class SnapshotTag {
             held.add(readHeld(written.getCompound(i)));
         }
         final Map<String, Map<String, Snapshot.IValue>> statics = new LinkedHashMap<>();
+        final Map<String, List<String>> staticsIgnored = new LinkedHashMap<>();
         final ListTag owners = tag.getList(STATICS, Tag.TAG_COMPOUND);
         for (int i = 0; i < owners.size(); i++) {
             final CompoundTag owner = owners.getCompound(i);
             statics.put(owner.getString(OWNER), readFields(owner.getList(FIELDS, Tag.TAG_COMPOUND)));
+            final List<String> ignored = readNames(owner.getList(IGNORED, Tag.TAG_STRING));
+            if (!ignored.isEmpty()) {
+                staticsIgnored.put(owner.getString(OWNER), ignored);
+            }
         }
         final List<Text> console = TextTags.readAll(tag.getList(CONSOLE, Tag.TAG_COMPOUND));
         final List<Snapshot.WatchShot> watches = new ArrayList<>();
@@ -241,7 +267,7 @@ public final class SnapshotTag {
                     each.getInt(COUNT)));
         }
         return new Snapshot(format, LongText.get(tag, LISTING),
-                new Snapshot.HeapShot(tag.getLong(BUDGET), held),
+                new Snapshot.HeapShot(tag.getLong(BUDGET), held, tag.getLong(NEXT_ADDRESS)),
                 new Snapshot.IdentityShot(tag.getString(STATE), TextTags.read(tag.getCompound(MESSAGE)),
                         tag.getLong(SPENT),
                         tag.getString(PROGRAM_NAME), readNames(tag.getList(ARGS, Tag.TAG_STRING)),
@@ -258,7 +284,8 @@ public final class SnapshotTag {
                 new Snapshot.ListenersShot(readValue(tag.getCompound(ON_MESSAGE)),
                         readValue(tag.getCompound(ON_GATEWAY_MESSAGE)), tag.getString(GATEWAY)),
                 new Snapshot.ThreadsShot(threads, tag.getInt(NEXT_THREAD)),
-                monitors, statics, readValue(tag.getCompound(SCRIPT)));
+                monitors, statics, readValue(tag.getCompound(SCRIPT)),
+                new Snapshot.IntercalShot(readNames(tag.getList(SWITCHED_OFF, Tag.TAG_STRING)), staticsIgnored));
     }
 
     // what the program allocated
@@ -278,6 +305,9 @@ public final class SnapshotTag {
                 tag.putString(KIND, "object");
                 tag.putString(TYPE, object.type());
                 tag.put(FIELDS, fields(object.fields()));
+                if (!object.ignored().isEmpty()) {
+                    tag.put(IGNORED, names(object.ignored()));
+                }
             }
             case Snapshot.IHeld.Array array -> {
                 tag.putString(KIND, "array");
@@ -308,6 +338,12 @@ public final class SnapshotTag {
                 }
                 tag.put(CHAIN, chain);
             }
+            case Snapshot.IHeld.Memory block -> {
+                tag.putString(KIND, "memory");
+                tag.putLong(ADDRESS, block.address());
+                tag.putByteArray(CONTENTS, block.held());
+                tag.putBoolean(ON_STACK, block.onStack());
+            }
         }
         return tag;
     }
@@ -320,7 +356,7 @@ public final class SnapshotTag {
         return switch (tag.getString(KIND)) {
             case "text" -> new Snapshot.IHeld.Text(id, bytes, line, freed, LongText.get(tag, VALUE));
             case "object" -> new Snapshot.IHeld.Object(id, bytes, line, freed, tag.getString(TYPE),
-                    readFields(tag.getList(FIELDS, Tag.TAG_COMPOUND)));
+                    readFields(tag.getList(FIELDS, Tag.TAG_COMPOUND)), readNames(tag.getList(IGNORED, Tag.TAG_STRING)));
             case "array" -> new Snapshot.IHeld.Array(id, bytes, line, freed, tag.getString(TYPE),
                     readValues(tag.getList(VALUES, Tag.TAG_COMPOUND)));
             case "list" -> new Snapshot.IHeld.Listing(id, bytes, line, freed,
@@ -340,6 +376,8 @@ public final class SnapshotTag {
                 }
                 yield new Snapshot.IHeld.Handler(id, bytes, line, freed, tag.getString(TYPE), chain);
             }
+            case "memory" -> Snapshot.IHeld.Memory.of(id, bytes, line, freed, tag.getLong(ADDRESS),
+                    tag.getByteArray(CONTENTS), tag.getBoolean(ON_STACK));
             default -> throw new SnapshotException("no snapshot writes a held thing of kind '"
                     + tag.getString(KIND) + "'");
         };
@@ -359,9 +397,44 @@ public final class SnapshotTag {
             tag.put(SLOTS, values(frame.slots()));
             tag.put(STACK, values(frame.stack()));
             tag.putBoolean(DISCARD, frame.discard());
+            if (!frame.ignored().isEmpty()) {
+                tag.putIntArray(IGNORED, frame.ignored());
+            }
+            if (!frame.pendings().isEmpty()) {
+                tag.put(PENDINGS, pendings(frame.pendings()));
+            }
+            if (!frame.blocks().isEmpty()) {
+                tag.putLongArray(BLOCKS, frame.blocks());
+            }
             written.add(tag);
         }
         return written;
+    }
+
+    private static ListTag pendings(final List<Snapshot.PendingShot> shots) {
+        final ListTag written = new ListTag();
+        for (final Snapshot.PendingShot pending : shots) {
+            final CompoundTag tag = new CompoundTag();
+            tag.putBoolean(LEAVING, pending.leaving());
+            tag.putInt(LINE, pending.line());
+            tag.putIntArray(FINALLIES, pending.finallies());
+            tag.putInt(NEXT, pending.next());
+            tag.put(EXCEPTION, write(pending.exception()));
+            tag.putInt(RUNNING, pending.running());
+            written.add(tag);
+        }
+        return written;
+    }
+
+    private static List<Snapshot.PendingShot> readPendings(final ListTag written) {
+        final List<Snapshot.PendingShot> shots = new ArrayList<>();
+        for (int i = 0; i < written.size(); i++) {
+            final CompoundTag tag = written.getCompound(i);
+            shots.add(new Snapshot.PendingShot(tag.getBoolean(LEAVING), tag.getInt(LINE),
+                    Arrays.stream(tag.getIntArray(FINALLIES)).boxed().toList(), tag.getInt(NEXT),
+                    readValue(tag.getCompound(EXCEPTION)), tag.getInt(RUNNING)));
+        }
+        return shots;
     }
 
     private static List<Snapshot.FrameShot> readFrames(final ListTag written) {
@@ -371,7 +444,10 @@ public final class SnapshotTag {
             shots.add(new Snapshot.FrameShot(tag.getString(OWNER), tag.getString(NAME),
                     readNames(tag.getList(PARAMETERS, Tag.TAG_STRING)), tag.getInt(AT),
                     readValue(tag.getCompound(SELF)), readValues(tag.getList(SLOTS, Tag.TAG_COMPOUND)),
-                    readValues(tag.getList(STACK, Tag.TAG_COMPOUND)), tag.getBoolean(DISCARD)));
+                    readValues(tag.getList(STACK, Tag.TAG_COMPOUND)), tag.getBoolean(DISCARD),
+                    Arrays.stream(tag.getIntArray(IGNORED)).boxed().toList(),
+                    readPendings(tag.getList(PENDINGS, Tag.TAG_COMPOUND)),
+                    Arrays.stream(tag.getLongArray(BLOCKS)).boxed().toList()));
         }
         return shots;
     }

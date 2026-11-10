@@ -80,6 +80,11 @@ final class CaptureFinder {
                     this.cannotYet(at, LOOP_VARIABLE);
                     return null;
                 }
+                // One whose address was taken lives in the call's raw memory, which the lambda would outlive.
+                if (this.model.isInMemory(variable)) {
+                    this.diagnostics.error(at.line(), at.column(), SigmaError.ADDRESS_KEPT, variable.name());
+                    return null;
+                }
                 fields.putIfAbsent(variable, variable.name());
             }
         }
@@ -162,6 +167,28 @@ final class CaptureFinder {
                 this.walk(lock.target(), depth, found);
                 this.walk(lock.body(), depth + 1, found);
             }
+            case IStmt.Unsafe unsafe -> this.walk(unsafe.body(), depth, found);
+            case IStmt.Labeled labeled -> this.walk(labeled.statement(), depth, found);
+            case IStmt.Goto jump -> this.walk(jump.caseValue(), depth, found);
+            case IStmt.Ignore place -> this.walk(place.place(), depth, found);
+            // A local function is a variable holding its lambda, which keeps what it reads as any lambda does.
+            case IStmt.LocalFunction function -> {
+                keep(found.declared, this.model.declaredAt(function), depth);
+                this.walk(function.body(), depth, found);
+            }
+            case IStmt.Deconstruct taken -> {
+                taken.names().forEach(name -> keep(found.declared, this.model.declaredAt(name), depth));
+                this.walk(taken.value(), depth, found);
+            }
+            case IStmt.Try guarded -> {
+                this.walk(guarded.body(), depth, found);
+                for (final IStmt.Catch one : guarded.catches()) {
+                    keep(found.declared, this.model.declaredAt(one), depth);
+                    this.walk(one.body(), depth, found);
+                }
+                this.walk(guarded.cleanup(), depth, found);
+            }
+            case IStmt.Throw thrown -> this.walk(thrown.value(), depth, found);
             default -> { }
         }
     }
@@ -169,6 +196,8 @@ final class CaptureFinder {
     private void walk(final IExpr expression, final int depth, final Found found) {
         switch (expression) {
             case null -> { }
+            // A const read is written as its value, so there is nothing of the variable for a lambda to take along.
+            case IExpr.Name name when this.model.loweredOf(name) != null -> { }
             case IExpr.Name name -> {
                 final IBinding binding = this.model.bindingOf(name);
                 if (binding instanceof IBinding.Variable variable) {
@@ -201,6 +230,8 @@ final class CaptureFinder {
                 this.walk(conditional.whenTrue(), depth, found);
                 this.walk(conditional.whenFalse(), depth, found);
             }
+            // A nameof is the text of a name, which reads nothing of what it names.
+            case IExpr.Call call when this.model.loweredOf(call) instanceof IExpr.Literal -> { }
             case IExpr.Call call -> {
                 this.walk(call.callee(), depth, found);
                 call.arguments().forEach(argument -> this.walk(argument, depth, found));
@@ -213,6 +244,7 @@ final class CaptureFinder {
             case IExpr.New created -> created.arguments()
                     .forEach(argument -> this.walk(argument, depth, found));
             case IExpr.NewArray created -> this.walk(created.length(), depth, found);
+            case IExpr.StackAlloc created -> this.walk(created.length(), depth, found);
             case IExpr.Cast cast -> this.walk(cast.value(), depth, found);
             case IExpr.TypeTest test -> this.walk(test.value(), depth, found);
             case IExpr.Lambda inner -> {
@@ -222,6 +254,7 @@ final class CaptureFinder {
                 this.walk(inner.block(), depth, found);
                 this.walk(inner.body(), depth, found);
             }
+            case IExpr.Tuple tuple -> tuple.elements().forEach(element -> this.walk(element, depth, found));
             // What a string's holes read is read like any other expression, a lambda written in one included.
             case IExpr.Interpolation written -> Lowerer.holesOf(written).forEach(hole -> this.walk(hole, depth, found));
             default -> { }

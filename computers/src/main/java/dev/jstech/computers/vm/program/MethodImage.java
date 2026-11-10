@@ -25,6 +25,7 @@ import java.util.Map;
 public final class MethodImage {
 
     private static final Instruction[] NO_CODE = new Instruction[0];
+    private static final Handler[] NO_HANDLERS = new Handler[0];
 
     private final String owner;
     private final String name;
@@ -41,6 +42,32 @@ public final class MethodImage {
     private final Object[] sites;
     /** For each line, the line of the listing it was read from, when the method was read from one. */
     private final AsmMethod written;
+    /** The protected stretches as the method's own lines, innermost first, worked out when the program loads. */
+    private Handler[] handlers = NO_HANDLERS;
+
+    /**
+     * One protected stretch of the method, as its own lines: the stretch from {@code start} up to {@code end}, and the
+     * catch or the finally that answers it from {@code handler} up to {@code through}.
+     *
+     * @param type the exceptions a catch takes, or null for a finally
+     */
+    record Handler(int start, int end, String type, int handler, int through) {
+
+        /** Whether this is a finally, run however its stretch is left. */
+        boolean cleanup() {
+            return this.type == null;
+        }
+
+        /** Whether the line at that place is inside the protected stretch. */
+        boolean covers(final int line) {
+            return line >= this.start && line < this.end;
+        }
+
+        /** Whether the line at that place is inside the catch or the finally itself. */
+        boolean runs(final int line) {
+            return line >= this.handler && line < this.through;
+        }
+    }
 
     MethodImage(final String owner, final AsmMethod method) {
         this.owner = owner;
@@ -69,6 +96,12 @@ public final class MethodImage {
             switch (this.code[i].operand()) {
                 // A label nothing carries ends the method; the reader never lets such a listing load in any case.
                 case IOperand.Label label -> this.jumps[i] = labels.getOrDefault(label.name(), this.code.length);
+                // A region is the method's, by its label: two methods may both have one called done.
+                case IOperand.Region region -> this.sites[i] = this.describe() + ":" + region.name();
+                case IOperand.RegionJump region -> {
+                    this.jumps[i] = labels.getOrDefault(region.label(), this.code.length);
+                    this.sites[i] = this.describe() + ":" + region.name();
+                }
                 case IOperand.Method called -> this.sites[i] = program.callSite(called);
                 case IOperand.Constructor made -> this.sites[i] = program.creation(made);
                 case IOperand.Field field -> this.sites[i] = program.valueSite(field, this.code[i].opcode());
@@ -76,6 +109,30 @@ public final class MethodImage {
                 }
             }
         }
+        final List<AsmMethod.Handler> written = this.written.handlers();
+        this.handlers = new Handler[written.size()];
+        for (int i = 0; i < written.size(); i++) {
+            final AsmMethod.Handler one = written.get(i);
+            this.handlers[i] = new Handler(labels.getOrDefault(one.start(), this.code.length),
+                    labels.getOrDefault(one.end(), this.code.length), one.type(),
+                    labels.getOrDefault(one.handler(), this.code.length),
+                    labels.getOrDefault(one.through(), this.code.length));
+        }
+    }
+
+    /** How many protected stretches the method has. */
+    int handlerCount() {
+        return this.handlers.length;
+    }
+
+    /** The protected stretch at that place in the method's list, innermost first. */
+    Handler handler(final int index) {
+        return this.handlers[index];
+    }
+
+    /** The line of the source the line at {@code index} came from, or 0 when the listing does not say. */
+    int positionOf(final int index) {
+        return this.written.positionOf(index);
     }
 
     /** The type the method belongs to. */
@@ -146,6 +203,11 @@ public final class MethodImage {
     /** Where a branch on the line at {@code index} lands. */
     int jump(final int index) {
         return this.jumps[index];
+    }
+
+    /** The region the line at {@code index} names, as the process keeps it: by this method and its label. */
+    String region(final int index) {
+        return (String) this.sites[index];
     }
 
     /** The call the line at {@code index} makes. */

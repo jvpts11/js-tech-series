@@ -260,7 +260,9 @@ public final class SigmaCommands {
                 sources.add(new SourceFile(leaf(path), read.message().english()));
             }
 
-            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, isa, this.level, version);
+            // The machine's era is a symbol its directives can ask about, as the instruction set is.
+            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, isa, this.level, version,
+                    List.of(SigmaVersions.symbolOf(ctx.computer().era().id())));
             final List<Diagnostic> diagnostics = built.diagnostics();
             final String assembly = built.ok() ? built.assembly() : null;
             for (final Diagnostic diagnostic : diagnostics) {
@@ -563,7 +565,8 @@ public final class SigmaCommands {
             final List<String> builds = new ArrayList<>();
             for (final String isa : targets) {
                 final IProgrammingLanguage.CompileResult built = language.compile(sources,
-                        new IProgrammingLanguage.CompileOptions(isa, version));
+                        new IProgrammingLanguage.CompileOptions(isa, version,
+                                List.of(SigmaVersions.symbolOf(ctx.computer().era().id()))));
                 if (!built.ok()) {
                     ctx.computer().report(JscEvents.SIGMA_COMPILE_ERROR, "");
                     for (final IProgrammingLanguage.Complaint complaint : built.complaints()) {

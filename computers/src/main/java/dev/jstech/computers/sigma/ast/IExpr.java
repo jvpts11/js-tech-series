@@ -124,4 +124,23 @@ public sealed interface IExpr extends INode {
             parts = List.copyOf(parts);
         }
     }
+
+    /**
+     * A tuple written as its values, {@code (count, "name")}; on the left of an assignment, the places a tuple is
+     * taken apart into, {@code (a, b) = (b, a)}.
+     */
+    record Tuple(List<IExpr> elements, int line, int column) implements IExpr {
+
+        public Tuple {
+            elements = List.copyOf(elements);
+        }
+    }
+
+    /** {@code stackalloc int[n]}: raw memory for that many values, made by the call and freed when it returns. */
+    record StackAlloc(TypeRef elementType, IExpr length, int line, int column) implements IExpr {
+    }
+
+    /** {@code sizeof(T)}: how many bytes a value of that type takes in raw memory, known when compiling. */
+    record SizeOf(TypeRef type, int line, int column) implements IExpr {
+    }
 }

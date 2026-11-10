@@ -153,6 +153,28 @@ final class SigmaErrorsPages {
                         GuideCell.words("'\\<character>' is not an escape the language knows"),
                         GuideCell.words("A backslash is followed by a character that is not an escape. Use an"
                                 + " escape the language has, or remove the backslash."))
+                .row(GuideCell.code("S1007"),
+                        GuideCell.words("<text>"),
+                        GuideCell.words("An #error line stops the build with its text, and a #warning line tells it."
+                                + " Read the text: the file's author wrote it for you."))
+                .row(GuideCell.code("S1008"),
+                        GuideCell.words("'#<word>' is not a directive the language reads"),
+                        GuideCell.words("A line starts with # and a word that is no directive. Use #if, #elif, #else,"
+                                + " #endif, #define, #undef, #error or #warning."))
+                .row(GuideCell.code("S1009"),
+                        GuideCell.words("'<text>' is not a condition #<word> can read"),
+                        GuideCell.words("The condition holds something other than symbols, true, false, !, &&, ||,"
+                                + " ==, != and brackets. Write it with those."))
+                .row(GuideCell.code("S1010"),
+                        GuideCell.words("#<word> has no #if open before it"),
+                        GuideCell.words("An #elif, #else or #endif stands with no #if before it. Add the #if, or"
+                                + " remove the line."))
+                .row(GuideCell.code("S1011"),
+                        GuideCell.words("this #if is never closed with an #endif"),
+                        GuideCell.words("Add the #endif where the part the #if chooses ends."))
+                .row(GuideCell.code("S1012"),
+                        GuideCell.words("this #if already had its #else, so #<word> comes too late"),
+                        GuideCell.words("An #elif or a second #else comes after the #else. Move it before the #else."))
                 .table("Codes while reading the grammar", "Code", "Message", "What it means and the fix")
                 .row(GuideCell.code("S2001"),
                         GuideCell.words("expected <token> but found <token>"),
@@ -208,10 +230,14 @@ final class SigmaErrorsPages {
                         GuideCell.words("'<word>' is kept for a later version of the language; for now,"
                                 + " <alternative>"),
                         GuideCell.words("The file writes try, catch, finally, throw, goto, const, comefrom,"
-                                + " abstainfrom or reinstate. A later version of the language brings them, so they"
-                                + " are kept already, and no name can be one of them. Until then, write what the"
-                                + " message says: there are no exceptions, so a mistake halts the program and a"
-                                + " call that can fail answers instead."))
+                                + " abstainfrom or reinstate in a build held to version 2 or older. Version 3 brings"
+                                + " them, and the versions before it kept them, so no name can be one of them. Hold"
+                                + " the project to version 3, or write what the message says. Sigma never has"
+                                + " try, catch, finally or throw."))
+                .row(GuideCell.code("S2015"),
+                        GuideCell.words("a label marks a statement, and <token> is not one"),
+                        GuideCell.words("A label stands at the end of a block, or before something that is not a"
+                                + " statement. Put the label in front of a statement."))
                 .ifSomethingGoesWrong("It says \"expected ';' but found '}'\".",
                         "The line before the brace does not end with a semicolon. Add the semicolon at its end.",
                         "It says \"only a call, an assignment, an increment, a decrement or a new object can be used"
@@ -504,6 +530,121 @@ final class SigmaErrorsPages {
                                 + " Kernel.Own(), since Kernel.Of takes one of the mod's kernels as it is"),
                         GuideCell.words("A policy such as Scheduler is chosen after Kernel.Of. Start the kernel with"
                                 + " Kernel.Own() to choose its policies, or keep Kernel.Of alone."))
+                .table("Version 3 of the language", "Code", "Message", "What it means and the fix")
+                .row(GuideCell.code("S3066"), GuideCell.words("'<name>' is a const, so its value never changes"),
+                        GuideCell.words("Something writes to a const. Use a variable for a value that changes."))
+                .row(GuideCell.code("S3067"), GuideCell.words("'<name>' is a const, so its value is one known when"
+                                + " compiling"),
+                        GuideCell.words("The value calls a method or reads a variable. Make it of literals, consts"
+                                + " and operators."))
+                .row(GuideCell.code("S3068"), GuideCell.words("the value of the const '<name>' is worked out from"
+                                + " itself"),
+                        GuideCell.words("Two consts are worked out from each other. Give one of them a value of its"
+                                + " own."))
+                .row(GuideCell.code("S3069"), GuideCell.words("'<name>' is a const, so it is given its value where it"
+                                + " is declared"),
+                        GuideCell.words("Write the value after an = on the line of the const."))
+                .row(GuideCell.code("S3070"), GuideCell.words("a const cannot be a '<type>' unless it is null"),
+                        GuideCell.words("A const holds a number, a bool, a char, a string or an enum's value. Use a"
+                                + " static readonly field for anything else."))
+                .row(GuideCell.code("S3071"), GuideCell.words("the label '<name>' is written twice in this method"),
+                        GuideCell.words("Give each label of a method a name of its own."))
+                .row(GuideCell.code("S3072"), GuideCell.words("there is no label '<name>' in this method"),
+                        GuideCell.words("A goto, a comefrom or an abstainfrom names a label the method lacks. Check"
+                                + " the spelling."))
+                .row(GuideCell.code("S3073"), GuideCell.words("'<name>' is inside a block this cannot enter"),
+                        GuideCell.words("A jump may leave a block, never enter one. Move the label out of the"
+                                + " block."))
+                .row(GuideCell.code("S3074"), GuideCell.words("the switch this stands in has no <arm>"),
+                        GuideCell.words("A goto case or goto default names an arm the switch lacks. Add the arm."))
+                .row(GuideCell.code("S3075"), GuideCell.words("'goto <arm>' jumps inside the switch it stands in, and"
+                                + " there is none"),
+                        GuideCell.words("Write goto case and goto default only inside a switch."))
+                .row(GuideCell.code("S3076"), GuideCell.words("the label '<name>' already has a comefrom"),
+                        GuideCell.words("A label takes one comefrom. Keep one."))
+                .row(GuideCell.code("S3077"), GuideCell.words("a comefrom stands in a block that holds its label"),
+                        GuideCell.words("Move the comefrom to the label's block or a block around it."))
+                .row(GuideCell.code("S3078"), GuideCell.words("only a local, a field or a static field can be"
+                                + " ignored or remembered"),
+                        GuideCell.words("Name a variable or a field after ignore and remember."))
+                .row(GuideCell.code("S3079"), GuideCell.words("'<name>' is sealed, so nothing can stand on it or"
+                                + " replace it"),
+                        GuideCell.words("Take sealed off the class or the method, or stand on another one."))
+                .row(GuideCell.code("S3080"), GuideCell.words("'<name>' replaces nothing: sealed goes with"
+                                + " override"),
+                        GuideCell.words("Write sealed only on a method that overrides."))
+                .row(GuideCell.code("S3081"), GuideCell.words("'<name>' is in a static class, so it has to be static"
+                                + " as well"),
+                        GuideCell.words("Write static on the member."))
+                .row(GuideCell.code("S3082"), GuideCell.words("'<name>' is a static class, so it is never made with"
+                                + " new"),
+                        GuideCell.words("Call its members through the class's name."))
+                .row(GuideCell.code("S3083"), GuideCell.words("a static class stands on nothing"),
+                        GuideCell.words("Take the base class off the static class."))
+                .row(GuideCell.code("S3084"), GuideCell.words("params goes on the last parameter"),
+                        GuideCell.words("Move the params parameter to the end."))
+                .row(GuideCell.code("S3085"), GuideCell.words("a params parameter is an array the method reads"),
+                        GuideCell.words("Write the params parameter as an array, and not with out."))
+                .row(GuideCell.code("S3086"), GuideCell.words("nameof takes one name"),
+                        GuideCell.words("Hand nameof a local, a member or a type, written as you read it."))
+                .row(GuideCell.code("S3087"), GuideCell.words("'<name>' is a local function, so nothing can be"
+                                + " written to it"),
+                        GuideCell.words("Use another name for the variable."))
+                .row(GuideCell.code("S3088"), GuideCell.words("a tuple has from two to eight places"),
+                        GuideCell.words("Keep between two and eight values, or write a struct."))
+                .row(GuideCell.code("S3089"), GuideCell.words("a tuple's place holds a value, and '<type>' is"
+                                + " none"),
+                        GuideCell.words("Give the place a value, or write the tuple's type."))
+                .row(GuideCell.code("S3090"), GuideCell.words("'<type>' is not a tuple of <count> places"),
+                        GuideCell.words("Take the tuple apart into as many places as it has."))
+                .row(GuideCell.code("S3091"), GuideCell.words("'this' goes on the first parameter of an extension"
+                                + " method"),
+                        GuideCell.words("Write this on the first parameter only, a plain one."))
+                .row(GuideCell.code("S3092"), GuideCell.words("an extension method is a static method of a static"
+                                + " class at the top of a namespace"),
+                        GuideCell.words("Move the method to such a class, and make it static."))
+                .row(GuideCell.code("S3093"), GuideCell.words("'<sign>' is not an operator a type can declare"),
+                        GuideCell.words("An operator is public and static, and takes as many values as its sign has"
+                                + " sides."))
+                .row(GuideCell.code("S3094"), GuideCell.words("an operator of '<type>' takes a '<type>' as one of its"
+                                + " values"),
+                        GuideCell.words("Give the operator a parameter of its own type."))
+                .row(GuideCell.code("S3095"), GuideCell.words("'<type>' declares the operator <sign>, so it declares"
+                                + " <sign> as well"),
+                        GuideCell.words("Declare the partner comparison, taking the same values."))
+                .row(GuideCell.code("S3096"), GuideCell.words("an indexer is of an object, and takes one value in its"
+                                + " brackets"),
+                        GuideCell.words("Give the indexer one parameter, and take static off it."))
+                .row(GuideCell.code("S3097"), GuideCell.words("a catch takes an exception, and '<type>' is not"
+                                + " one"),
+                        GuideCell.words("Catch Exception or a class standing on it."))
+                .row(GuideCell.code("S3098"), GuideCell.words("a catch before this one already takes every"
+                                + " '<type>'"),
+                        GuideCell.words("Put the catch of the narrower type first."))
+                .row(GuideCell.code("S3099"), GuideCell.words("nothing leaves a finally but its own end"),
+                        GuideCell.words("Take the return, break, continue or jump out of the finally."))
+                .row(GuideCell.code("S3100"), GuideCell.words("only an exception can be thrown, and '<type>' is not"
+                                + " one"),
+                        GuideCell.words("Throw an object of Exception or of a class standing on it."))
+                .row(GuideCell.code("S3101"), GuideCell.words("'throw;' throws on the exception a catch took"),
+                        GuideCell.words("Write throw alone only in a catch, not in a finally inside one."))
+                .row(GuideCell.code("S3102"), GuideCell.words("a pointer is held only in unsafe code"),
+                        GuideCell.words("Write unsafe on the method, or put the lines in an unsafe block."))
+                .row(GuideCell.code("S3103"), GuideCell.words("'<type>*' is no pointer the language has"),
+                        GuideCell.words("Point at an int, a long, a byte, void or a struct that holds only values."))
+                .row(GuideCell.code("S3104"), GuideCell.words("& takes a local variable, a parameter, or a place a"
+                                + " pointer reaches"),
+                        GuideCell.words("Take the address of a variable, or of what a pointer reaches, and not of a"
+                                + " field of an object or a value."))
+                .row(GuideCell.code("S3105"), GuideCell.words("the address of '<name>' cannot be taken: a lambda or a"
+                                + " local function keeps it"),
+                        GuideCell.words("Copy the value into a variable of its own, and take that one's address."))
+                .row(GuideCell.code("S3106"), GuideCell.words("'<name>' lives in raw memory once its address is"
+                                + " taken"),
+                        GuideCell.words("Do not ignore a variable whose address you took."))
+                .row(GuideCell.code("S3107"), GuideCell.words("sizeof takes a type that lies in raw memory, and"
+                                + " '<type>' does not"),
+                        GuideCell.words("Ask sizeof of a number, a bool, a char, a pointer or a struct of values."))
                 .ifSomethingGoesWrong("It says '<name>' does not name anything here.",
                         "The name is spelled wrong, or it is declared after this line. Check its spelling, or"
                                 + " declare it above.",
@@ -560,7 +701,7 @@ final class SigmaErrorsPages {
                         + " another compiler version, and a machine that does not run the instruction set"
                         + " the program was built for. A listing that the editor builds cleanly shows no listing"
                         + " problem.")
-                .paragraph("The runtime reads listing versions 2 and 3. A listing with no version line gives A4001,"
+                .paragraph("The runtime reads listing versions 2, 3 and 4. A listing with no version line gives A4001,"
                         + " and the reader stops there. A version line with no number is read as the newest version."
                         + " After a version problem, the reader reads no further, so that one problem is the only one"
                         + " shown.")
@@ -622,6 +763,11 @@ final class SigmaErrorsPages {
                 .row(GuideCell.code("A4018"),
                         GuideCell.words("'<name>' labels more than one line of this method"),
                         GuideCell.words("Two lines of one method have the same label. Keep one label for each line."))
+                .row(GuideCell.code("A4019"),
+                        GuideCell.words("'<name>' came in version <version> of the format, and this listing is written"
+                                + " in version <version>"),
+                        GuideCell.words("A listing holds an instruction or a line of a newer format than its version"
+                                + " line says. Compile the source again, which writes the version it needs."))
                 .table("Problems with the program and the machine", "Code", "Message", "What it means and the fix")
                 .row(GuideCell.code("A4013"),
                         GuideCell.words("nothing answers '<name>'"),
@@ -657,17 +803,17 @@ final class SigmaErrorsPages {
                 .in(chapter).register();
         guide.page("sigma_runtime_stops", section).titled("The stops while a program runs")
                 .paragraph("A program can stop while it runs, when it meets an error it cannot go on from. This book"
-                        + " calls that kind of stop a halt, and there are 13 of them. The program ends its run at"
+                        + " calls that kind of stop a halt, and there are 15 of them. The program ends its run at"
                         + " once.")
                 .define("halt", "An error during a program's run, which stops the program at once and writes one"
                         + " message to its console.")
                 .paragraph("When a halt happens, the program's threads stop and the program lets go of its locks."
                         + " The message is all you see of the stop. Most messages do not say which line of the program"
                         + " caused it.")
-                .paragraph("The table below numbers the 13 stops, so you can find each one. The game shows you only"
+                .paragraph("The table below numbers the 15 stops, so you can find each one. The game shows you only"
                         + " the message, not the number. In this chapter a program's memory is counted in megabytes"
                         + " (MB).")
-                .table("The 13 stops", "Stop", "What causes it", "What to do")
+                .table("The 15 stops", "Stop", "What causes it", "What to do")
                 .row(GuideCell.words("1"),
                         GuideCell.words("A division or a remainder by zero, with whole numbers or with real numbers."),
                         GuideCell.words("Check the number you divide by before the division."))
@@ -713,6 +859,15 @@ final class SigmaErrorsPages {
                 .row(GuideCell.words("13"),
                         GuideCell.words("The runtime itself failed while it ran a step of the program."),
                         GuideCell.words("This is not your program's fault. Report the line from the server log."))
+                .row(GuideCell.words("14"),
+                        GuideCell.words("A Sigma# program threw an exception, and nothing caught it."),
+                        GuideCell.words("Catch it where the program can go on. The lines under the message say where it"
+                                + " was thrown."))
+                .row(GuideCell.words("15"),
+                        GuideCell.words("A pointer was read or written outside every block of raw memory: past its end,"
+                                + " in a block already freed, or through null."),
+                        GuideCell.words("Check the index and the size you asked for, and use a block only until it is"
+                                + " freed."))
                 .paragraph("In the messages below, the words in angle brackets stand for the names and the numbers the"
                         + " game fills in.")
                 .table("The messages of the stops", "Stop", "The message as the player sees it")
@@ -796,6 +951,17 @@ final class SigmaErrorsPages {
                         GuideCell.words("calls went <count> deep calling <name>: a method may be calling itself without"
                                 + " end"))
                 .row(GuideCell.words("13"), GuideCell.words("the runtime could not carry this out (<exception>)"))
+                .row(GuideCell.words("2"), GuideCell.words("there is nothing here to throw"))
+                .row(GuideCell.words("4"), GuideCell.words("a block of <bytes> bytes is more than one block may hold"))
+                .row(GuideCell.words("6"), GuideCell.words("a count of bytes cannot be negative: <count>"))
+                .row(GuideCell.words("14"),
+                        GuideCell.words("an exception of the type <type> was thrown, and nothing caught it, then its"
+                                + " message and a line for each call it went through"))
+                .row(GuideCell.words("15"),
+                        GuideCell.words("attempted to read or write protected memory, or in Sigma the system's own"
+                                + " words: Segmentation fault (core dumped) on Linux, the BSDs and Quince OS X, This"
+                                + " program has performed an illegal operation and will be shut down on Frames 95,"
+                                + " and Sorry, a system error occurred on the classic Quince systems"))
                 .paragraph("Stops 10 and 11 can also show a message that the machine writes itself, for a bus, a"
                         + " crafting interface, a file or an [IQL](jsc:iql_getting_started) query. IQL, the Item Query"
                         + " Language, is the network's query language. Those messages come from the part of the"

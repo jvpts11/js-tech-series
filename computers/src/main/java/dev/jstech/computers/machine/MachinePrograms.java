@@ -12,6 +12,7 @@ import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.cli.CliTexts;
+import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.InputSent;
 import dev.jstech.computers.vm.program.ProgramEntry;
@@ -22,6 +23,7 @@ import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.api.language.ExecutionBalance;
 import dev.jstech.computers.api.language.ILanguageProcess;
 import dev.jstech.computers.api.language.IProgrammingLanguage;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.LongText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -330,8 +332,11 @@ public final class MachinePrograms {
             sources.add(new IProgrammingLanguage.SourceText(name, binary));
             // Built for the machine's own processor, so source written for it runs on a PowerPC or a 68k as well.
             final String isa = isaOf(machine);
-            final IProgrammingLanguage.CompileResult built = isa.isEmpty() ? writtenIn.compile(sources)
-                    : writtenIn.compile(sources, isa);
+            // The machine's era is a symbol the source's directives can ask about, as its processor is.
+            final Era era = machine instanceof IOsHost host ? host.installedEra() : null;
+            final IProgrammingLanguage.CompileResult built = writtenIn.compile(sources,
+                    new IProgrammingLanguage.CompileOptions(isa, IProgrammingLanguage.CompileOptions.NEWEST,
+                            era == null ? List.of() : List.of(SigmaVersions.symbolOf(era.id()))));
             if (!built.ok()) {
                 final List<IProgrammingLanguage.Complaint> complaints = built.complaints();
                 if (complaints.isEmpty()) {
@@ -502,11 +507,21 @@ public final class MachinePrograms {
      * stopped once that budget is spent is stopped without one.
      */
     public boolean stop(final int id) {
+        return this.stop(id, true);
+    }
+
+    /**
+     * Stops a program, with its farewell or at once: what kill -9 does gives none, as SIGKILL gives none, so neither
+     * its finally blocks nor its goodbye run.
+     */
+    public boolean stop(final int id, final boolean farewell) {
         final ProgramEntry<IMachineRuntime> one = this.byId(id);
         if (one == null) {
             return false;
         }
-        this.ticker.farewell(one.process());
+        if (farewell) {
+            this.ticker.farewell(one.process());
+        }
         this.ended(id);
         this.table.remove(id);
         this.focus.forget(id);

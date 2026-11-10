@@ -12,6 +12,7 @@ import dev.jstech.computers.sigma.lex.Lexer;
 import dev.jstech.computers.sigma.lex.Token;
 import dev.jstech.computers.sigma.parse.Parser;
 import java.util.List;
+import java.util.Set;
 
 /**
  * The one door into the front of the compiler: source text in, a tree and a list of messages out.
@@ -64,7 +65,15 @@ public final class SigmaFrontEnd {
      * files and everything they have to say belongs in one list, in one order.
      */
     public static CompilationUnit parse(final SourceFile source, final DiagnosticBag diagnostics) {
-        final List<Token> tokens = new Lexer(source, diagnostics).tokenize();
-        return new Parser(tokens, diagnostics).parse(source.name());
+        return parse(source, diagnostics, Set.of());
+    }
+
+    /** The same, with the symbols the build defines for the file's directives. */
+    public static CompilationUnit parse(final SourceFile source, final DiagnosticBag diagnostics,
+                                        final Set<String> defined) {
+        final Lexer lexer = new Lexer(source, diagnostics, defined);
+        final List<Token> tokens = lexer.tokenize();
+        return new Parser(tokens, diagnostics).parse(source.name())
+                .withDirectives(lexer.preprocessor().directives());
     }
 }

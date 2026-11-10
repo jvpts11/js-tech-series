@@ -792,7 +792,7 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         }
         final String body = switch (returnType) {
             case "void" -> "";
-            case "int", "long", "float", "double" -> "return 0;";
+            case "int", "long", "float", "double", "byte" -> "return 0;";
             case "bool" -> "return false;";
             case "string" -> "return \"\";";
             default -> "return null;";

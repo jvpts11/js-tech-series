@@ -1,0 +1,51 @@
+using System.*;
+namespace Corpus;
+struct Cell { public int Value; public long Weight; public byte Mark; }
+class PointersCorpus {
+    unsafe static int Sum(int* values, int count) {
+        int total = 0;
+        for (int i = 0; i < count; i++) {
+            total += values[i];
+        }
+        return total;
+    }
+
+    unsafe static void Main() {
+        int* numbers = (int*) Memory.Alloc(4 * sizeof(int));
+        for (int i = 0; i < 4; i++) {
+            numbers[i] = i + 1;
+        }
+        Console.PrintLine("" + Sum(numbers, 4));
+        numbers = (int*) Memory.Resize(numbers, 8 * sizeof(int));
+        Cell* cells = (Cell*) Memory.AllocZeroed(2, sizeof(Cell));
+        cells->Value = 3;
+        cells[1] = *cells;
+        cells[1].Mark = 255;
+        byte* bytes = stackalloc byte[16];
+        Memory.Fill(bytes, 7, 16);
+        byte* copy = (byte*) malloc(16);
+        memset(copy, 0, 16);
+        memcpy(copy, bytes, 16);
+        Memory.Copy(copy, bytes, 16);
+        Console.PrintLine(Memory.Compare(copy, bytes, 16) + " " + memcmp(copy, bytes, 16));
+        int local = 5;
+        int* at = &local;
+        *at += 1;
+        Console.PrintLine(local + " " + (at == null ? "none" : "some"));
+        long* wide = (long*) calloc(2, sizeof(long));
+        wide = (long*) realloc(wide, 4 * sizeof(long));
+        free(wide);
+        free(copy);
+        Memory.Free(cells);
+        Memory.Free(numbers);
+        try {
+            int gone = numbers[0];
+        } catch (AccessViolationException failed) {
+            Console.PrintLine("freed: " + failed.Message);
+        }
+        Exception made = new AccessViolationException();
+        made = new AccessViolationException("made");
+        made = new AccessViolationException("made again", made);
+        Console.PrintLine(made.Message);
+    }
+}

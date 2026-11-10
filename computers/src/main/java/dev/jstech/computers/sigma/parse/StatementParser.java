@@ -9,6 +9,7 @@ package dev.jstech.computers.sigma.parse;
 
 import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.SigmaError;
+import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.TypeRef;
@@ -32,6 +33,12 @@ final class StatementParser {
     private final TypeParser types;
     private final ExpressionParser expressions;
     private final LanguageGaps gaps;
+
+    /** INTERCAL's two words over a place, which are words only where a statement starts with one and a place. */
+    private static final String IGNORE = "ignore";
+    private static final String REMEMBER = "remember";
+    /** The word a block that may hold pointers starts with. */
+    private static final String UNSAFE = "unsafe";
 
     StatementParser(final TokenCursor cursor, final DiagnosticBag diagnostics, final TypeParser types,
                     final ExpressionParser expressions) {
@@ -108,14 +115,96 @@ final class StatementParser {
                 return this.parseDispose();
             case LOCK:
                 return this.parseLock();
+            case CONST:
+                return this.parseLocalDeclaration(true, this.cursor.advance());
+            case TRY:
+                return this.parseTry();
+            case THROW:
+                return this.parseThrow();
+            case GOTO:
+                return this.parseGoto();
+            case COMEFROM:
+                this.cursor.advance();
+                return new IStmt.ComeFrom(this.labelThenSemicolon(), start.line(), start.column());
+            case ABSTAINFROM, REINSTATE:
+                this.cursor.advance();
+                return new IStmt.Abstain(this.labelThenSemicolon(), start.is(TokenKind.REINSTATE), start.line(),
+                        start.column());
+            case IDENTIFIER:
+                if (this.cursor.kindAhead(1) == TokenKind.COLON) {
+                    return this.parseLabeled();
+                }
+                if (this.placeWordAhead()) {
+                    return this.parseIgnore();
+                }
+                // unsafe and a block, a word only there: nothing else written with it can be followed by one.
+                if (UNSAFE.equals(start.text()) && this.cursor.kindAhead(1) == TokenKind.LEFT_BRACE) {
+                    this.cursor.advance();
+                    return new IStmt.Unsafe(this.parseBlock(), start.line(), start.column());
+                }
+                return this.parseDeclarationOrExpressionStatement();
             default:
-                // A word kept for a later version is reported and passed over; a const, and its variable declared.
+                // A word kept for a later version is reported and passed over.
                 if (this.gaps.passesStatement(this)) {
                     return null;
                 }
-                this.gaps.passesConst(false);
                 return this.parseDeclarationOrExpressionStatement();
         }
+    }
+
+    /* A label and the statement it marks: "done: Console.PrintLine("x");". */
+    private IStmt parseLabeled() {
+        final Token name = this.cursor.advance();
+        this.cursor.advance();
+        // A label at the end of a block marks nothing, which C# refuses, and so does this.
+        final IStmt marked = this.cursor.check(TokenKind.RIGHT_BRACE) ? null : this.parseStatement();
+        if (marked == null) {
+            final Token at = this.cursor.peek();
+            this.diagnostics.error(at.line(), at.column(), SigmaError.EXPECTED_STATEMENT, at.describe());
+        }
+        return new IStmt.Labeled(name.text(), marked == null ? new IStmt.Empty(name.line(), name.column()) : marked,
+                name.line(), name.column());
+    }
+
+    /* "goto done;", "goto case 3;" or "goto default;". */
+    private IStmt parseGoto() {
+        final Token start = this.cursor.advance();
+        if (this.cursor.match(TokenKind.CASE)) {
+            final IExpr value = this.expressions.parseExpression();
+            this.cursor.expect(TokenKind.SEMICOLON);
+            return new IStmt.Goto(IStmt.Goto.Target.CASE, null, value, start.line(), start.column());
+        }
+        if (this.cursor.match(TokenKind.DEFAULT)) {
+            this.cursor.expect(TokenKind.SEMICOLON);
+            return new IStmt.Goto(IStmt.Goto.Target.DEFAULT, null, null, start.line(), start.column());
+        }
+        return new IStmt.Goto(IStmt.Goto.Target.LABEL, this.labelThenSemicolon(), null, start.line(),
+                start.column());
+    }
+
+    private String labelThenSemicolon() {
+        final String label = this.cursor.expectIdentifier();
+        this.cursor.expect(TokenKind.SEMICOLON);
+        return label;
+    }
+
+    /*
+     * Whether the statement starts with ignore or remember and a place: the two words are words only there, so a
+     * program that has a variable called ignore, as one written before them may, still reads it as a variable.
+     */
+    private boolean placeWordAhead() {
+        final String word = this.cursor.peek().text();
+        final TokenKind next = this.cursor.kindAhead(1);
+        return (IGNORE.equals(word) || REMEMBER.equals(word))
+                && (next == TokenKind.IDENTIFIER || next == TokenKind.THIS);
+    }
+
+    /* "ignore count;" or "remember this.count;": the place is any value the checker then holds to being one. */
+    private IStmt parseIgnore() {
+        final Token start = this.cursor.advance();
+        final IExpr place = this.expressions.parseExpression();
+        this.cursor.expect(TokenKind.SEMICOLON);
+        return new IStmt.Ignore(place, REMEMBER.equals(start.text()), start.line(), start.column());
     }
 
     private IStmt parseLock() {
@@ -281,6 +370,12 @@ final class StatementParser {
     }
 
     private IStmt parseDeclarationOrExpressionStatement() {
+        if (this.cursor.check(TokenKind.VAR) && this.cursor.kindAhead(1) == TokenKind.LEFT_PAREN) {
+            return this.parseDeconstruct();
+        }
+        if (this.localFunctionAhead()) {
+            return this.parseLocalFunction();
+        }
         if (this.looksLikeDeclaration()) {
             return this.parseLocalDeclaration(true);
         }
@@ -297,7 +392,16 @@ final class StatementParser {
     }
 
     private IStmt parseLocalDeclaration(final boolean terminated) {
-        final Token start = this.cursor.peek();
+        return this.parseLocalDeclaration(terminated, null);
+    }
+
+    /**
+     * A local declaration; a constant one has had its {@code const} read already, and is placed at that word.
+     *
+     * @param constant the {@code const} it was written with, or null for a local that can change
+     */
+    private IStmt parseLocalDeclaration(final boolean terminated, final Token constant) {
+        final Token start = constant == null ? this.cursor.peek() : constant;
         final TypeRef type = this.types.parseTypeRef();
         final String name = this.cursor.expectIdentifier();
         IExpr initializer = null;
@@ -307,7 +411,7 @@ final class StatementParser {
         if (terminated) {
             this.cursor.expect(TokenKind.SEMICOLON);
         }
-        return new IStmt.LocalDecl(type, name, initializer, start.line(), start.column());
+        return new IStmt.LocalDecl(type, name, initializer, constant != null, start.line(), start.column());
     }
 
     /*
@@ -316,5 +420,87 @@ final class StatementParser {
      */
     private boolean looksLikeDeclaration() {
         return this.types.typedNameAhead();
+    }
+
+    /* A type or void, a name and a bracket: a method declared in a method, which nothing else starts like. */
+    private boolean localFunctionAhead() {
+        final int at = this.cursor.at();
+        final int after = this.cursor.kindAt(at) == TokenKind.VOID ? at + 1 : this.types.scanType(at);
+        return after > at && this.cursor.kindAt(after) == TokenKind.IDENTIFIER
+                && this.cursor.kindAt(after + 1) == TokenKind.LEFT_PAREN;
+    }
+
+    /* "try { } catch (IOException failed) { } catch { } finally { }": a catch or a finally at least. */
+    private IStmt parseTry() {
+        final Token start = this.cursor.advance();
+        final IStmt.Block body = this.parseBlock();
+        final List<IStmt.Catch> catches = new ArrayList<>();
+        while (this.cursor.check(TokenKind.CATCH)) {
+            final Token word = this.cursor.advance();
+            TypeRef type = null;
+            String name = null;
+            if (this.cursor.match(TokenKind.LEFT_PAREN)) {
+                type = this.types.parseTypeRef();
+                if (this.cursor.check(TokenKind.IDENTIFIER)) {
+                    name = this.cursor.advance().text();
+                }
+                this.cursor.expect(TokenKind.RIGHT_PAREN);
+            }
+            catches.add(new IStmt.Catch(type, name, this.parseBlock(), word.line(), word.column()));
+        }
+        final IStmt.Block cleanup = this.cursor.match(TokenKind.FINALLY) ? this.parseBlock() : null;
+        if (catches.isEmpty() && cleanup == null) {
+            final Token at = this.cursor.peek();
+            this.diagnostics.error(at.line(), at.column(), SigmaError.EXPECTED_TOKEN, TokenKind.CATCH.describe(),
+                    at.describe());
+        }
+        return new IStmt.Try(body, catches, cleanup, start.line(), start.column());
+    }
+
+    /* "throw new IOException("full");", or "throw;" in a catch, which throws on the exception it took. */
+    private IStmt parseThrow() {
+        final Token start = this.cursor.advance();
+        final IExpr value = this.cursor.check(TokenKind.SEMICOLON) ? null : this.expressions.parseExpression();
+        this.cursor.expect(TokenKind.SEMICOLON);
+        return new IStmt.Throw(value, start.line(), start.column());
+    }
+
+    /* "var (count, name) = Find();": a tuple taken apart into a new local for each of its places. */
+    private IStmt parseDeconstruct() {
+        final Token start = this.cursor.advance();
+        this.cursor.advance();
+        final List<IExpr.Name> names = new ArrayList<>();
+        do {
+            final Token name = this.cursor.peek();
+            if (!name.is(TokenKind.IDENTIFIER)) {
+                this.cursor.expectIdentifier();
+                break;
+            }
+            this.cursor.advance();
+            names.add(new IExpr.Name(name.text(), name.line(), name.column()));
+        } while (this.cursor.match(TokenKind.COMMA));
+        this.cursor.expect(TokenKind.RIGHT_PAREN);
+        this.cursor.expect(TokenKind.ASSIGN);
+        final IExpr value = this.expressions.parseExpression();
+        this.cursor.expect(TokenKind.SEMICOLON);
+        return new IStmt.Deconstruct(names, value, start.line(), start.column());
+    }
+
+    /* "int Twice(int x) { return x * 2; }" or "int Twice(int x) => x * 2;". */
+    private IStmt parseLocalFunction() {
+        final Token start = this.cursor.peek();
+        final TypeRef returns = this.types.parseReturnType();
+        final String name = this.cursor.expectIdentifier();
+        final List<IDecl.Parameter> parameters = this.types.parseParameters();
+        final Token bodyStart = this.cursor.peek();
+        final IExpr.Lambda body;
+        if (this.cursor.match(TokenKind.ARROW)) {
+            final IExpr value = this.expressions.parseExpression();
+            this.cursor.expect(TokenKind.SEMICOLON);
+            body = new IExpr.Lambda(parameters, value, null, bodyStart.line(), bodyStart.column());
+        } else {
+            body = new IExpr.Lambda(parameters, null, this.parseBlock(), bodyStart.line(), bodyStart.column());
+        }
+        return new IStmt.LocalFunction(returns, name, body, start.line(), start.column());
     }
 }

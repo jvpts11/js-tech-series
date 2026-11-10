@@ -18,12 +18,11 @@ import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * The words a later version of the language brings: C#'s try, catch, finally, throw, goto and const, and INTERCAL's
- * comefrom, abstainfrom and reinstate.
+ * The words version 3 of the language brought that the versions before it kept back for it, so no program takes them
+ * as names: C#'s try, catch, finally, throw, goto and const, and INTERCAL's comefrom, abstainfrom and reinstate.
  *
- * <p>They are reserved now, so no program takes them as names, and a program that writes them is told so at the word,
- * with what to write until then, rather than failing on whatever the parser makes of them. Each statement they begin
- * is passed over whole, so the rest of the method is still read.
+ * <p>A program that writes one as a name is told so at the word. A catch or a finally with no try before it is
+ * reported at the word and passed over whole, blocks and all, so the rest of the method is still read.
  */
 @TextHolder
 final class LanguageGaps {
@@ -34,16 +33,6 @@ final class LanguageGaps {
     private static final Set<TokenKind> LATER = EnumSet.of(TokenKind.TRY, TokenKind.CATCH, TokenKind.FINALLY,
             TokenKind.THROW, TokenKind.GOTO, TokenKind.CONST, TokenKind.COMEFROM, TokenKind.ABSTAINFROM,
             TokenKind.REINSTATE);
-    private static final TextKey EXCEPTIONS_INSTEAD = TextKey.of("jsc.sigma.language_gaps.exceptions_instead",
-            "a mistake halts the program, and a call that can fail answers instead");
-    private static final TextKey GOTO_INSTEAD = TextKey.of("jsc.sigma.language_gaps.goto_instead",
-            "write a loop, and leave it with break or continue");
-    private static final TextKey SWITCH_INSTEAD = TextKey.of("jsc.sigma.language_gaps.switch_instead",
-            "keep a bool, and test it with if");
-    private static final TextKey CONST_INSTEAD = TextKey.of("jsc.sigma.language_gaps.const_instead",
-            "write a plain variable");
-    private static final TextKey CONST_FIELD_INSTEAD = TextKey.of("jsc.sigma.language_gaps.const_field_instead",
-            "write a static readonly field");
     private static final TextKey NAME_INSTEAD = TextKey.of("jsc.sigma.language_gaps.name_instead",
             "give the name another word");
 
@@ -62,46 +51,26 @@ final class LanguageGaps {
         refuse(diagnostics, word, NAME_INSTEAD);
     }
 
-    /** Whether the word being read is a const before a declaration, which it then reports and passes over. */
-    boolean passesConst(final boolean member) {
-        if (!this.cursor.check(TokenKind.CONST)) {
-            return false;
-        }
-        refuse(this.diagnostics, this.cursor.advance(), member ? CONST_FIELD_INSTEAD : CONST_INSTEAD);
-        return true;
-    }
-
     /**
-     * Whether the statement being read begins with a try, a catch, a finally, a throw, a goto, a comefrom, an
-     * abstainfrom or a reinstate, which it then reports and passes over whole, blocks and all.
+     * Whether the statement being read begins with a catch or a finally that no try stands before, which it then
+     * reports and passes over whole, blocks and all.
      */
     boolean passesStatement(final StatementParser statements) {
-        final TokenKind kind = this.cursor.peek().kind();
-        if (kind == TokenKind.TRY || kind == TokenKind.CATCH || kind == TokenKind.FINALLY) {
-            refuse(this.diagnostics, this.cursor.peek(), EXCEPTIONS_INSTEAD);
-            while (this.cursor.check(TokenKind.TRY) || this.cursor.check(TokenKind.CATCH)
-                    || this.cursor.check(TokenKind.FINALLY)) {
-                this.cursor.advance();
-                if (this.cursor.check(TokenKind.LEFT_PAREN)) {
-                    this.skipPast(TokenKind.RIGHT_PAREN);
-                }
-                if (this.cursor.check(TokenKind.LEFT_BRACE)) {
-                    statements.parseBlock();
-                }
-            }
-            return true;
-        }
-        final TextKey instead = switch (kind) {
-            case THROW -> EXCEPTIONS_INSTEAD;
-            case GOTO, COMEFROM -> GOTO_INSTEAD;
-            case ABSTAINFROM, REINSTATE -> SWITCH_INSTEAD;
-            default -> null;
-        };
-        if (instead == null) {
+        final Token word = this.cursor.peek();
+        if (!word.is(TokenKind.CATCH) && !word.is(TokenKind.FINALLY)) {
             return false;
         }
-        refuse(this.diagnostics, this.cursor.advance(), instead);
-        this.skipPast(TokenKind.SEMICOLON);
+        this.diagnostics.error(word.line(), word.column(), SigmaError.EXPECTED_TOKEN, TokenKind.TRY.describe(),
+                word.describe());
+        while (this.cursor.check(TokenKind.CATCH) || this.cursor.check(TokenKind.FINALLY)) {
+            this.cursor.advance();
+            if (this.cursor.check(TokenKind.LEFT_PAREN)) {
+                this.skipPast(TokenKind.RIGHT_PAREN);
+            }
+            if (this.cursor.check(TokenKind.LEFT_BRACE)) {
+                statements.parseBlock();
+            }
+        }
         return true;
     }
 

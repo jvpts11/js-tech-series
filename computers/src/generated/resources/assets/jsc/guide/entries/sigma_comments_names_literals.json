@@ -67,6 +67,14 @@
           {
             "literal": "try catch finally throw goto const comefrom abstainfrom reinstate"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table1_7_1"
+          },
+          {
+            "literal": "sealed params nameof operator unsafe stackalloc sizeof byte ignore remember"
+          }
         ]
       ]
     },
@@ -445,6 +453,28 @@
           },
           {
             "words": "jsc.guide.sigma_comments_names_literals.table4_16_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_17_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_17_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_17_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_18_1"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_18_2"
+          },
+          {
+            "words": "jsc.guide.sigma_comments_names_literals.table4_18_3"
           }
         ]
       ]

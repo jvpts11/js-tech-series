@@ -38,6 +38,8 @@ public final class TypeImage {
     private final MethodImage invoke;
     private final MethodImage setUp;
     private final Map<Integer, MethodImage> constructors = new HashMap<>();
+    /** The file of the source the type was written in, which an exception names; empty when the listing says none. */
+    private final String source;
 
     /* Worked out while the program loads, once every type exists, and never changed afterwards. */
     private TypeImage base;
@@ -57,6 +59,7 @@ public final class TypeImage {
         this.kind = type.kind();
         this.bases = type.bases();
         this.fields = type.fields();
+        this.source = type.source();
         final Map<String, Integer> numbers = new LinkedHashMap<>();
         for (final AsmType.Value value : type.values()) {
             numbers.put(value.name(), value.number());
@@ -136,6 +139,11 @@ public final class TypeImage {
                 collect(written, types, into);
             }
         }
+    }
+
+    /** The file of the source the type was written in, or empty when the listing does not say. */
+    public String source() {
+        return this.source;
     }
 
     /** What the type is called. */

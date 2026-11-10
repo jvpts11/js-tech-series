@@ -117,6 +117,22 @@
           {
             "words": "jsc.guide.system_processes_library.table2_6_2"
           }
+        ],
+        [
+          {
+            "literal": "Memory.Alloc, AllocZeroed, Resize and Free"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table2_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.Copy, Fill and Compare"
+          },
+          {
+            "words": "jsc.guide.system_processes_library.table2_8_2"
+          }
         ]
       ]
     },
@@ -203,7 +219,7 @@
     }
   ],
   "id": "jsc:system_processes_library",
-  "order": 417,
+  "order": 426,
   "section": "jsc:library_systems",
   "title": "jsc.guide.system_processes_library.title"
 }

@@ -35,9 +35,19 @@ public sealed interface IMemberSymbol {
 
     /**
      * One parameter of a method or a constructor. An outward one is filled in by the method rather
-     * than read by it.
+     * than read by it; one written with params is the last, an array a call may hand over one value at a time.
      */
-    record ParameterSymbol(String name, ITypeSymbol type, boolean outward) {
+    record ParameterSymbol(String name, ITypeSymbol type, boolean outward, boolean many, boolean receiver) {
+
+        /** A parameter that takes one value, read or filled in. */
+        public ParameterSymbol(final String name, final ITypeSymbol type, final boolean outward) {
+            this(name, type, outward, false, false);
+        }
+
+        /** A parameter that may be written with params, and is not the value an extension method is called on. */
+        public ParameterSymbol(final String name, final ITypeSymbol type, final boolean outward, final boolean many) {
+            this(name, type, outward, many, false);
+        }
 
         /** A parameter the method reads. */
         public static ParameterSymbol of(final String name, final ITypeSymbol type) {
@@ -52,6 +62,17 @@ public sealed interface IMemberSymbol {
         /** Whether it may only be written where it is declared or in a constructor. */
         public boolean isReadOnly() {
             return this.modifiers.contains(IDecl.Modifier.READONLY);
+        }
+
+        /** Whether it is a const: a value known when compiling, written into every place that reads it. */
+        public boolean isConstant() {
+            return this.modifiers.contains(IDecl.Modifier.CONST);
+        }
+
+        /** A const belongs to its type, as C#'s does, without being written static. */
+        @Override
+        public boolean isStatic() {
+            return this.isConstant() || this.modifiers.contains(IDecl.Modifier.STATIC);
         }
     }
 
@@ -74,6 +95,26 @@ public sealed interface IMemberSymbol {
                 }
             }
             return true;
+        }
+
+        /** Whether its last parameter is written with params, so a call may hand that array over a value at a time. */
+        public boolean takesMany() {
+            return !this.parameters.isEmpty() && this.parameters.getLast().many();
+        }
+
+        /** Whether it gives an operator a meaning on the type that declares it. */
+        public boolean isOperator() {
+            return this.modifiers.contains(IDecl.Modifier.OPERATOR);
+        }
+
+        /** Whether it is one of the two methods an indexer is written as. */
+        public boolean isIndexer() {
+            return this.modifiers.contains(IDecl.Modifier.INDEXER);
+        }
+
+        /** Whether it is an extension method: its first parameter is the value it is called on, written this. */
+        public boolean extendsItsFirst() {
+            return !this.parameters.isEmpty() && this.parameters.getFirst().receiver();
         }
 
         /** How a diagnostic writes the method, with the types it takes. */

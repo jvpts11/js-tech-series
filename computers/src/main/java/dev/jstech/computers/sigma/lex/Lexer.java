@@ -12,6 +12,7 @@ import dev.jstech.computers.sigma.DiagnosticBag;
 import dev.jstech.computers.sigma.SourceFile;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Turns source text into tokens.
@@ -25,13 +26,22 @@ public final class Lexer {
 
     private final SourceFile source;
     private final DiagnosticBag diagnostics;
+    /** The directives, with the symbols the build defined, which decide which lines are read at all. */
+    private final Preprocessor preprocessor;
 
     private int index;
     private int line;
     private int column;
+    /** Whether something other than spaces came on this line yet: a directive is the first thing on its line. */
+    private boolean lineStarted;
 
     public Lexer(final SourceFile source, final DiagnosticBag diagnostics) {
         this(source, diagnostics, 1, 1);
+    }
+
+    /** A lexer for a whole file, with the symbols the build defines for its directives. */
+    public Lexer(final SourceFile source, final DiagnosticBag diagnostics, final Set<String> defined) {
+        this(source, diagnostics, 1, 1, defined);
     }
 
     /**
@@ -40,8 +50,14 @@ public final class Lexer {
      */
     public Lexer(final SourceFile source, final DiagnosticBag diagnostics, final int startLine,
                  final int startColumn) {
+        this(source, diagnostics, startLine, startColumn, Set.of());
+    }
+
+    private Lexer(final SourceFile source, final DiagnosticBag diagnostics, final int startLine,
+                  final int startColumn, final Set<String> defined) {
         this.source = source;
         this.diagnostics = diagnostics;
+        this.preprocessor = new Preprocessor(diagnostics, defined);
         this.line = startLine;
         this.column = startColumn;
     }
@@ -57,17 +73,29 @@ public final class Lexer {
             final Token token = this.scanToken();
             if (token != null) {
                 tokens.add(token);
+                this.lineStarted = true;
             }
         }
+        this.preprocessor.finish();
         tokens.add(Token.of(TokenKind.END_OF_FILE, "", this.line, this.column));
         return tokens;
+    }
+
+    /** The directives of the file and the lines they left out, once it has been read. */
+    public Preprocessor preprocessor() {
+        return this.preprocessor;
     }
 
     // Whitespace and both comment forms carry no meaning, so they are consumed between tokens.
     private void skipTrivia() {
         while (this.index < this.source.length()) {
             final char c = this.peek();
-            if (c == ' ' || c == '\t' || c == '\r' || c == '\n' || c == '\f' || c == 0x0B) {
+            if (c == '\n') {
+                this.advance();
+                this.lineStarted = false;
+            } else if (c == '#' && !this.lineStarted) {
+                this.directiveLine();
+            } else if (c == ' ' || c == '\t' || c == '\r' || c == '\f' || c == 0x0B) {
                 this.advance();
             } else if (c == '/' && this.peek(1) == '/') {
                 while (this.index < this.source.length() && this.peek() != '\n') {
@@ -79,6 +107,48 @@ public final class Lexer {
                 return;
             }
         }
+    }
+
+    /*
+     * A directive, read to the end of its line, and then every line it leaves out passed over whole, but for the
+     * directives among them, which still open and close conditions.
+     */
+    private void directiveLine() {
+        this.readDirective();
+        while (!this.preprocessor.active() && this.index < this.source.length()) {
+            // Past the end of the line just read, onto the next, whose first character decides what it is.
+            this.advance();
+            int ahead = this.index;
+            while (ahead < this.source.length() && (this.source.text().charAt(ahead) == ' '
+                    || this.source.text().charAt(ahead) == '\t')) {
+                ahead++;
+            }
+            if (ahead < this.source.length() && this.source.text().charAt(ahead) == '#') {
+                while (this.index < ahead) {
+                    this.advance();
+                }
+                this.readDirective();
+            } else {
+                this.preprocessor.leftOut(this.line);
+                this.restOfLine();
+            }
+        }
+    }
+
+    /* The directive that starts here, read where it starts. */
+    private void readDirective() {
+        final int startLine = this.line;
+        final int startColumn = this.column;
+        this.preprocessor.directive(this.restOfLine(), startLine, startColumn);
+    }
+
+    /* The text from here to the end of the line, the line break left for whoever comes next. */
+    private String restOfLine() {
+        final int start = this.index;
+        while (this.index < this.source.length() && this.peek() != '\n') {
+            this.advance();
+        }
+        return this.source.text().substring(start, this.index);
     }
 
     private void skipBlockComment() {
@@ -415,7 +485,8 @@ public final class Lexer {
             case '+': kind = this.take('+') ? TokenKind.PLUS_PLUS
                     : this.take('=') ? TokenKind.PLUS_ASSIGN : TokenKind.PLUS; break;
             case '-': kind = this.take('-') ? TokenKind.MINUS_MINUS
-                    : this.take('=') ? TokenKind.MINUS_ASSIGN : TokenKind.MINUS; break;
+                    : this.take('=') ? TokenKind.MINUS_ASSIGN
+                    : this.take('>') ? TokenKind.POINTER_ARROW : TokenKind.MINUS; break;
             case '*': kind = this.take('=') ? TokenKind.STAR_ASSIGN : TokenKind.STAR; break;
             case '/': kind = this.take('=') ? TokenKind.SLASH_ASSIGN : TokenKind.SLASH; break;
             case '%': kind = this.take('=') ? TokenKind.PERCENT_ASSIGN : TokenKind.PERCENT; break;

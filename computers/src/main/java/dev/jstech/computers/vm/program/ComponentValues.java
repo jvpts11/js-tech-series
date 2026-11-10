@@ -151,14 +151,14 @@ public final class ComponentValues {
 
         void check(final Object value, final int depth) {
             if (depth > MOST_DEPTH) {
-                throw new Halt(Halt.Reason.REFUSED, this.line, TOO_DEEP.with(MOST_DEPTH));
+                throw new Halt(Halt.Reason.REFUSED, this.line, TOO_DEEP.with(MOST_DEPTH), Halt.Thrown.ARGUMENT);
             }
             if (++this.nodes > MOST_NODES) {
-                throw new Halt(Halt.Reason.REFUSED, this.line, TOO_MANY.with(MOST_NODES));
+                throw new Halt(Halt.Reason.REFUSED, this.line, TOO_MANY.with(MOST_NODES), Halt.Thrown.ARGUMENT);
             }
             this.bytes += weight(value);
             if (this.bytes > MOST_BYTES) {
-                throw new Halt(Halt.Reason.REFUSED, this.line, TOO_BIG.with(MOST_BYTES));
+                throw new Halt(Halt.Reason.REFUSED, this.line, TOO_BIG.with(MOST_BYTES), Halt.Thrown.ARGUMENT);
             }
             switch (value) {
                 case Values.DelegateValue ignored -> throw new Halt(Halt.Reason.REFUSED, this.line, NO_HANDLER.text());

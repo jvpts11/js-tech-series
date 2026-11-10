@@ -78,6 +78,8 @@ public final class AsmType {
     private final List<Value> values = new ArrayList<>();
     private final List<AsmMethod> methods = new ArrayList<>();
     private AsmMethod invoke;
+    /** The file of the source the type was written in, which an exception names; empty when the listing says none. */
+    private String source = "";
 
     public AsmType(final Kind kind, final String name) {
         this.kind = Objects.requireNonNull(kind, "kind");
@@ -152,5 +154,15 @@ public final class AsmType {
     /** Sets a delegate's shape. */
     public void setInvoke(final AsmMethod invoke) {
         this.invoke = invoke;
+    }
+
+    /** The file of the source the type was written in, or empty when the listing does not say. */
+    public String source() {
+        return this.source;
+    }
+
+    /** Says which file of the source the type was written in. */
+    public void setSource(final String file) {
+        this.source = file == null ? "" : file.trim();
     }
 }

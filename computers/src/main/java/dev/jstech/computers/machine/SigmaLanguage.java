@@ -17,6 +17,7 @@ import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.computers.sigma.SourceFile;
 import dev.jstech.computers.sigma.edit.CommentSpans;
 import dev.jstech.computers.sigma.lex.Lexer;
+import dev.jstech.computers.sigma.lex.Preprocessor;
 import dev.jstech.computers.sigma.lex.TokenKind;
 import dev.jstech.computers.api.language.IProgrammingLanguage;
 import java.util.ArrayList;
@@ -94,12 +95,13 @@ public final class SigmaLanguage implements IProgrammingLanguage {
 
     @Override
     public CompileResult compile(final List<SourceText> sources, final String isa) {
-        return build(sources, isa, CompileOptions.NEWEST);
+        return build(sources, isa, CompileOptions.NEWEST, List.of());
     }
 
     @Override
     public CompileResult compile(final List<SourceText> sources, final CompileOptions options) {
-        return build(sources, options.isa().isEmpty() ? this.baseline : options.isa(), options.languageVersion());
+        return build(sources, options.isa().isEmpty() ? this.baseline : options.isa(), options.languageVersion(),
+                options.defined());
     }
 
     @Override
@@ -110,17 +112,29 @@ public final class SigmaLanguage implements IProgrammingLanguage {
          */
         final DiagnosticBag bag = new DiagnosticBag("editor");
         final List<IProgrammingLanguage.Token> out = new ArrayList<>();
+        final Lexer lexer = new Lexer(new SourceFile("editor", text), bag, SigmaVersions.defined(SigmaVersions.NEWEST));
         /*
          * Both Token and Kind are names this interface itself declares, so the language's own are
          * written out in full rather than imported into a fight with them.
          */
-        for (final dev.jstech.computers.sigma.lex.Token token
-                : new Lexer(new SourceFile("editor", text), bag).tokenize()) {
+        for (final dev.jstech.computers.sigma.lex.Token token : lexer.tokenize()) {
             if (token.kind() == TokenKind.END_OF_FILE) {
                 break;
             }
             out.add(new IProgrammingLanguage.Token(token.line(), token.column(),
                     token.text().length(), kindOf(token.kind())));
+        }
+        // A directive reads as a word of the language, and a line its condition leaves out as a note.
+        for (final Preprocessor.Directive directive : lexer.preprocessor().directives()) {
+            out.add(new IProgrammingLanguage.Token(directive.line(), directive.column(), directive.length(),
+                    Kind.KEYWORD));
+        }
+        final String[] lines = text.split("\n", -1);
+        for (final int line : lexer.preprocessor().leftOutLines()) {
+            final int length = line - 1 < lines.length ? lines[line - 1].length() : 0;
+            if (length > 0) {
+                out.add(new IProgrammingLanguage.Token(line, 1, length, Kind.COMMENT));
+            }
         }
         /*
          * The lexer drops comments the way it drops spaces, because nothing that runs a program cares
@@ -135,8 +149,12 @@ public final class SigmaLanguage implements IProgrammingLanguage {
         return out;
     }
 
-    /** Builds for {@code isa}, held to {@code version} of the language, the newest when it is none. */
-    private CompileResult build(final List<SourceText> sources, final String isa, final int version) {
+    /**
+     * Builds for {@code isa}, held to {@code version} of the language, the newest when it is none, with those symbols
+     * defined for the directives besides the ones every build defines.
+     */
+    private CompileResult build(final List<SourceText> sources, final String isa, final int version,
+                                final List<String> defined) {
         /*
          * The oldest machines run the smaller language and nothing else, and that is kept true where a listing is
          * made and not at the machine: one they could load can only have come from a source they could have held.
@@ -153,7 +171,7 @@ public final class SigmaLanguage implements IProgrammingLanguage {
             files.add(new SourceFile(source.name(), source.text()));
         }
         final SigmaCompiler.Result built =
-                SigmaCompiler.compile(files, isa, this.level, SigmaVersions.held(version));
+                SigmaCompiler.compile(files, isa, this.level, SigmaVersions.held(version), defined);
         if (built.ok()) {
             return CompileResult.of(built.assembly());
         }

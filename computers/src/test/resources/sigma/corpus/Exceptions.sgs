@@ -1,0 +1,42 @@
+using System.*;
+using System.IO.*;
+namespace Corpus;
+class Refused : InvalidOperationException {
+    public Refused(string message, Exception inner) : base(message, inner) { }
+}
+class ExceptionsCorpus {
+    static void Check(int which) {
+        switch (which) {
+            case 0: throw new Exception();
+            case 1: throw new NullReferenceException("nothing");
+            case 2: throw new InvalidOperationException("not now");
+            case 3: throw new ObjectDisposedException("freed");
+            case 4: throw new DivideByZeroException("zero");
+            case 5: throw new IndexOutOfRangeException("past the end");
+            case 6: throw new ArgumentException("wrong");
+            case 7: throw new ArgumentOutOfRangeException("too big");
+            case 8: throw new FormatException("not a number");
+            case 9: throw new IOException("disk");
+            case 10: throw new FileNotFoundException("missing");
+            case 11: throw new NetworkException("no network");
+            default: throw new Refused("refused", new Exception("under"));
+        }
+    }
+
+    static void Main() {
+        for (int which = 0; which <= 12; which++) {
+            try {
+                Check(which);
+            } catch (IOException failed) {
+                Console.PrintLine("io " + failed.Message + " " + failed.File + ":" + failed.Line);
+            } catch (Exception failed) {
+                Console.PrintLine(failed.Message + " " + failed.Trace.Length);
+                if (failed.Inner != null) {
+                    Console.PrintLine("under " + failed.Inner.Message);
+                }
+            } finally {
+                Console.PrintLine("checked " + which);
+            }
+        }
+    }
+}

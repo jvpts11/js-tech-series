@@ -12,6 +12,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
@@ -227,12 +228,13 @@ public final class ShellCoverageGameTests {
                     helper.assertTrue(says(old, "Σ# Compiler 1.0") && says(old, "'Sound' needs Σ# 2"),
                             "an sgsc of 1.0 knows Σ# 1; got " + old);
                     fleet.mainframe().installMirror();
+                    final String newest = ProgramVersions.of(SigmaCommands.COMPILER);
                     final List<String> upgraded = fullShell(helper, fleet.lab(), "pckmgr upgrade");
-                    helper.assertTrue(says(upgraded, "Setting up sgsc (2.0)"),
-                            "the upgrade brings the compiler to 2.0; got " + upgraded);
+                    helper.assertTrue(says(upgraded, "Setting up sgsc (" + newest + ")"),
+                            "the upgrade brings the compiler to " + newest + "; got " + upgraded);
                     final List<String> built = fullShell(helper, fleet.lab(), "sgsc Beeper.sgs");
-                    helper.assertTrue(says(built, "Σ# Compiler 2.0") && says(built, "wrote Beeper.asm"),
-                            "and the program builds with Σ# 2; got " + built);
+                    helper.assertTrue(says(built, "Σ# Compiler " + newest) && says(built, "wrote Beeper.asm"),
+                            "and the program builds with the newer language; got " + built);
                 })
                 .thenSucceed();
     }
@@ -256,7 +258,8 @@ public final class ShellCoverageGameTests {
                     helper.assertTrue("1.0".equals(linux.console().installedVersion(SigmaCommands.COMPILER)),
                             "apt update reads the lists and installs nothing");
                     final List<CliLine> upgraded = posix.run("apt upgrade", cli).lines();
-                    helper.assertTrue("2.0".equals(linux.console().installedVersion(SigmaCommands.COMPILER)),
+                    helper.assertTrue(ProgramVersions.of(SigmaCommands.COMPILER)
+                                    .equals(linux.console().installedVersion(SigmaCommands.COMPILER)),
                             "apt upgrade brings sgsc up; got " + upgraded.stream().map(CliLine::text).toList());
                 })
                 .thenSucceed();

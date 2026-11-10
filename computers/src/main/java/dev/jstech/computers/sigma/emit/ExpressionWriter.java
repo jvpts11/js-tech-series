@@ -13,6 +13,7 @@ import dev.jstech.computers.sigma.ast.Operator;
 import dev.jstech.computers.sigma.ast.TypeRef;
 import dev.jstech.computers.sigma.lower.IrWrite;
 import dev.jstech.computers.sigma.lower.Place;
+import dev.jstech.computers.sigma.lower.TakenApart;
 import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.ITypeSymbol;
@@ -54,6 +55,8 @@ final class ExpressionWriter {
     /** What is not built yet when a string with holes reaches this stage without having been reduced. */
     private static final TextKey UNREDUCED_INTERPOLATION = TextKey.of(
             "jsc.sigma.expression_writer.unreduced_interpolation", "a string with holes that was never reduced");
+    /** The bits a byte keeps, and the largest number it holds. */
+    private static final int BYTE_BITS = 0xFF;
 
     /*
      * The one place the two fold back on each other: a call is a value, and the values a call takes are
@@ -75,6 +78,8 @@ final class ExpressionWriter {
         if (expression == null) {
             return;
         }
+        // Where an exception thrown by what follows says it was thrown.
+        this.body.at(expression.line());
         /*
          * What a richer shape was reduced to is what gets written. The tree still holds what the player
          * wrote, because a message has to point at that; only this stage follows the simpler one.
@@ -82,6 +87,17 @@ final class ExpressionWriter {
         final IExpr simpler = this.emitter.model.loweredOf(expression);
         if (simpler != null) {
             this.value(simpler, wanted);
+            return;
+        }
+        if (this.shortcut(expression, wanted)) {
+            return;
+        }
+        // A place in raw memory is read through its address, as wide as what lies there.
+        if (this.emitter.model.inRawMemory(expression)) {
+            final ITypeSymbol type = this.emitter.model.typeOf(expression);
+            this.address(expression);
+            this.emitter.raw.read(type, this.body, this.body::emit);
+            this.coerce(type, wanted);
             return;
         }
         switch (expression) {
@@ -109,8 +125,97 @@ final class ExpressionWriter {
              */
             case IExpr.Interpolation written -> this.emitter.diagnostics.error(written.line(),
                     written.column(), SigmaError.NOT_YET_BUILT, UNREDUCED_INTERPOLATION);
+            case IExpr.Tuple tuple -> this.tuple(tuple);
+            case IExpr.StackAlloc created -> this.stackAlloc(created);
+            // Never reached: a sizeof is the number it comes to, written in as the checker worked it out.
+            case IExpr.SizeOf sized -> this.body.emit(Opcode.LDC_I4, new IOperand.I4(this.emitter.declarations
+                    .layout().sizeOf(this.emitter.declarations.resolve(sized.type(), this.body.owner()))));
         }
         this.coerce(this.emitter.model.typeOf(expression), wanted);
+    }
+
+    /**
+     * Leaves the address of a place in raw memory on the stack: what a pointer holds, moved past {@code i} values for
+     * {@code p[i]}; the block of a variable whose address was taken; or that, moved to where a struct's field sits.
+     */
+    void address(final IExpr place) {
+        switch (place) {
+            case IExpr.Unary unary when unary.operator() == Operator.DEREFERENCE -> this.value(unary.operand(), null);
+            case IExpr.Index index -> {
+                this.value(index.target(), null);
+                this.moved(index.index(), this.emitter.model.typeOf(index.target()), Opcode.ADD);
+            }
+            case IExpr.Name name when this.emitter.model.bindingOf(name) instanceof IBinding.Variable variable ->
+                    this.body.emit(Opcode.LDLOC, new IOperand.Slot(this.body.addressOf(variable)));
+            case IExpr.Member member when this.emitter.model.bindingOf(member) instanceof IBinding.Member held -> {
+                this.address(member.target());
+                final NamedType struct = this.emitter.rules.named(this.emitter.model.typeOf(member.target()));
+                final int offset = this.emitter.declarations.layout().offsetOf(struct, held.member().name());
+                if (offset != 0) {
+                    this.body.emit(Opcode.LDC_I8, new IOperand.I8(offset));
+                    this.body.emit(Opcode.ADD);
+                }
+            }
+            default -> this.value(place, null);
+        }
+    }
+
+    /** Puts the value on top of the stack into a variable whose address was taken, which lives in raw memory. */
+    void storeInMemory(final IBinding.Variable variable) {
+        final int held = this.body.hidden();
+        this.body.emit(Opcode.STLOC, new IOperand.Slot(held));
+        this.body.emit(Opcode.LDLOC, new IOperand.Slot(this.body.addressOf(variable)));
+        this.body.emit(Opcode.LDLOC, new IOperand.Slot(held));
+        this.emitter.raw.write(variable.type(), this.body, this.body::emit);
+    }
+
+    /*
+     * The two values that need no work of their own where they go: null where a pointer is wanted is the address 0,
+     * and a whole number written out where a byte is wanted already fits it.
+     */
+    private boolean shortcut(final IExpr expression, final ITypeSymbol wanted) {
+        if (wanted instanceof ITypeSymbol.PointerType && expression instanceof IExpr.Literal literal
+                && literal.value() == null) {
+            this.body.emit(Opcode.LDC_I8, new IOperand.I8(0));
+            return true;
+        }
+        if (wanted == ITypeSymbol.Primitive.BYTE && expression instanceof IExpr.Literal literal
+                && literal.value() instanceof Integer number && number >= 0 && number <= BYTE_BITS) {
+            this.body.emit(Opcode.LDC_I4, new IOperand.I4(number));
+            return true;
+        }
+        return false;
+    }
+
+    /*
+     * A whole number of values of what the pointer on the stack points at, added to it or taken from it: the number
+     * made a long, and counted in bytes.
+     */
+    private void moved(final IExpr count, final ITypeSymbol pointer, final Opcode how) {
+        final ITypeSymbol pointee = ((ITypeSymbol.PointerType) pointer).pointee();
+        // A count written out is a distance known now: p[0] is p itself, and p[3] is p and a number of bytes.
+        final IExpr known = this.emitter.model.loweredOf(count) != null ? this.emitter.model.loweredOf(count) : count;
+        if (known instanceof IExpr.Literal literal && literal.value() instanceof Number number
+                && !(number instanceof Float) && !(number instanceof Double)) {
+            final long bytes = number.longValue() * this.emitter.declarations.layout().sizeOf(pointee);
+            if (bytes != 0) {
+                this.body.emit(Opcode.LDC_I8, new IOperand.I8(bytes));
+                this.body.emit(how);
+            }
+            return;
+        }
+        this.value(count, ITypeSymbol.Primitive.LONG);
+        this.emitter.raw.step(pointee, this.body::emit);
+        this.body.emit(how);
+    }
+
+    /* stackalloc T[n]: n values' room, made zeroed and freed when the call returns, its address left on the stack. */
+    private void stackAlloc(final IExpr.StackAlloc created) {
+        this.value(created.length(), ITypeSymbol.Primitive.LONG);
+        if (this.emitter.model.typeOf(created) instanceof ITypeSymbol.PointerType pointer) {
+            this.emitter.raw.step(pointer.pointee(), this.body::emit);
+        }
+        this.body.emit(Opcode.LOCALLOC);
     }
 
     /**
@@ -145,7 +250,36 @@ final class ExpressionWriter {
         this.value(target, null);
     }
 
+    /* A tuple written as its values: each put in as its place's type, then the struct made from them. */
+    private void tuple(final IExpr.Tuple expression) {
+        if (!(this.emitter.model.typeOf(expression) instanceof ITypeSymbol.TupleType tuple)) {
+            this.body.emit(Opcode.LDNULL);
+            return;
+        }
+        final List<ITypeSymbol> places = tuple.places();
+        final List<String> written = new ArrayList<>(places.size());
+        for (int i = 0; i < places.size(); i++) {
+            this.copied(expression.elements().get(i), places.get(i));
+            written.add(places.get(i).describe());
+        }
+        this.body.emit(Opcode.NEWOBJ, new IOperand.Constructor(tuple.describe(), written));
+    }
+
+    /** A tuple taken apart: kept in a place of its own, then each place written from the field that holds it. */
+    void takenApart(final TakenApart parts) {
+        this.copied(parts.value(), parts.kept().type());
+        this.body.emit(Opcode.STLOC, new IOperand.Slot(this.body.slot(parts.kept())));
+        for (final IExpr.Assign write : parts.writes()) {
+            this.assign(write, false);
+        }
+    }
+
     void assign(final IExpr.Assign expression, final boolean leavesValue) {
+        final TakenApart parts = this.emitter.lowered.takenApartOf(expression);
+        if (parts != null) {
+            this.takenApart(parts);
+            return;
+        }
         final IBinding binding = this.emitter.model.bindingOf(expression.target());
         if (binding instanceof IBinding.Member member
                 && member.member() instanceof IMemberSymbol.EventSymbol event) {
@@ -181,6 +315,14 @@ final class ExpressionWriter {
         if (place instanceof Place.Local local) {
             this.body.slot(local.variable());
         }
+        // A plain write through a pointer that nobody reads back needs its address once, and nowhere to keep it.
+        if (place instanceof Place.Memory memory && written.answer() == IrWrite.Answer.WRITTEN && !answerWanted
+                && written.operator() == Operator.ASSIGN) {
+            this.address(memory.target());
+            this.combine(written);
+            this.emitter.raw.write(written.type(), this.body, this.body::emit);
+            return;
+        }
         if (written.answer() == IrWrite.Answer.WRITTEN) {
             final Element kept = this.prepare(place);
             if (written.operator() != Operator.ASSIGN) {
@@ -192,7 +334,7 @@ final class ExpressionWriter {
             }
             this.store(place, kept);
             if (answerWanted && !(place instanceof Place.Local)) {
-                this.reload(place);
+                this.reload(place, kept);
             }
             return;
         }
@@ -204,8 +346,7 @@ final class ExpressionWriter {
         final Element inside = this.prepare(place);
         this.loadOver(place, inside);
         this.answer(written.answer() == IrWrite.Answer.BEFORE, kept);
-        this.value(written.value(), null);
-        this.body.emit(arithmetic(written.operator()));
+        this.operate(written, null);
         this.answer(written.answer() == IrWrite.Answer.AFTER, kept);
         this.store(place, inside);
         if (kept >= 0) {
@@ -290,8 +431,35 @@ final class ExpressionWriter {
     private void index(final IExpr.Index expression) {
         final ITypeSymbol target = this.emitter.model.typeOf(expression.target());
         this.value(expression.target(), null);
-        this.value(expression.index(), null);
-        this.readElement(target);
+        this.key(expression);
+        this.readElement(target, expression);
+    }
+
+    /* The key in an index's brackets: handed to an indexer as what it takes, and to the rest as it stands. */
+    private void key(final IExpr.Index index) {
+        final ITypeSymbol key = this.keyOf(index);
+        if (key == null) {
+            this.value(index.index(), null);
+        } else {
+            this.copied(index.index(), key);
+        }
+    }
+
+    /* What an indexer of the program's own type takes in its brackets, which the key goes in as; null for the rest. */
+    private ITypeSymbol keyOf(final IExpr.Index index) {
+        final IMemberSymbol.MethodSymbol reads = this.indexerOf(index, false);
+        final IMemberSymbol.MethodSymbol writes = this.indexerOf(index, true);
+        final IMemberSymbol.MethodSymbol either = reads != null ? reads : writes;
+        return either == null ? null : either.parameters().getFirst().type();
+    }
+
+    /* The method of an indexer an index reads with, or writes with, or null when no indexer is behind it. */
+    private IMemberSymbol.MethodSymbol indexerOf(final IExpr.Index index, final boolean writes) {
+        if (writes) {
+            return this.emitter.model.setterOf(index);
+        }
+        return this.emitter.model.callOf(index) instanceof IMemberSymbol.MethodSymbol method && method.isIndexer()
+                ? method : null;
     }
 
     /**
@@ -309,9 +477,9 @@ final class ExpressionWriter {
         final int at = this.body.hidden();
         this.value(index.target(), null);
         this.body.emit(Opcode.STLOC, new IOperand.Slot(thing));
-        this.value(index.index(), null);
+        this.key(index);
         this.body.emit(Opcode.STLOC, new IOperand.Slot(at));
-        return new Element(thing, at, of);
+        return new Element(thing, at, of, index);
     }
 
     /** Puts the thing and the place back on the stack, for the read or the write that follows. */
@@ -341,6 +509,14 @@ final class ExpressionWriter {
                 this.pushElement(kept);
                 yield kept;
             }
+            // The address is worked out once and kept, for a read before the write and for an answer after it.
+            case Place.Memory at -> {
+                final int address = this.body.hidden();
+                this.address(at.target());
+                this.body.emit(Opcode.STLOC, new IOperand.Slot(address));
+                this.body.emit(Opcode.LDLOC, new IOperand.Slot(address));
+                yield new Element(address, -1, this.emitter.model.typeOf(at.target()), null);
+            }
             case Place.Local ignored -> null;
             case Place.Shared ignored -> null;
         };
@@ -360,9 +536,16 @@ final class ExpressionWriter {
             }
             case Place.Element ignored -> {
                 this.pushElement(kept);
-                this.readElement(kept.of());
+                this.readElement(kept.of(), kept.node());
             }
+            case Place.Memory ignored -> this.readKept(kept);
         }
+    }
+
+    /* What lies at the address a place in raw memory keeps. */
+    private void readKept(final Element kept) {
+        this.body.emit(Opcode.LDLOC, new IOperand.Slot(kept.thing()));
+        this.emitter.raw.read(kept.of(), this.body, this.body::emit);
     }
 
     /** Writes the value on top into the place, using up whatever {@link #prepare} pushed. */
@@ -374,12 +557,13 @@ final class ExpressionWriter {
             case Place.Shared shared -> this.body.emit(Opcode.STSFLD, sharedField(shared));
             case Place.Held held -> this.body.emit(Opcode.STFLD,
                     new IOperand.Field(this.body.ownerOf(held.member()), held.member().name()));
-            case Place.Element ignored -> this.writeElement(kept.of());
+            case Place.Element ignored -> this.writeElement(kept.of(), kept.node());
+            case Place.Memory ignored -> this.emitter.raw.write(kept.of(), this.body, this.body::emit);
         }
     }
 
-    /** Reads the place again from nothing, for an answer that is wanted after the writing is done. */
-    private void reload(final Place place) {
+    /** Reads the place again, for an answer that is wanted after the writing is done. */
+    private void reload(final Place place, final Element kept) {
         switch (place) {
             case Place.Local local ->
                     this.body.emit(Opcode.LDLOC, new IOperand.Slot(this.body.slot(local.variable())));
@@ -387,6 +571,7 @@ final class ExpressionWriter {
             case Place.Shared shared -> this.loadMember(null, shared.member());
             case Place.Held held -> this.loadMember(held.target(), held.member());
             case Place.Element ignored -> { } // an element written as a value answers nothing, as before
+            case Place.Memory ignored -> this.readKept(kept);
         }
     }
 
@@ -411,8 +596,16 @@ final class ExpressionWriter {
         return new IOperand.Field(shared.member().owner().qualifiedName(), shared.member().name());
     }
 
-    /** Reads the place the index names: an array by its number, a list or a map by its own way in. */
-    private void readElement(final ITypeSymbol target) {
+    /**
+     * Reads the place the index names: an array by its number, a list or a map by its own way in, and a program's own
+     * type through the method its indexer reads with.
+     */
+    private void readElement(final ITypeSymbol target, final IExpr.Index node) {
+        final IMemberSymbol.MethodSymbol reads = this.indexerOf(node, false);
+        if (reads != null) {
+            this.body.emit(Opcode.CALL, CallWriter.methodRef(reads));
+            return;
+        }
         if (target instanceof ITypeSymbol.ArrayType) {
             this.body.emit(Opcode.LDELEM);
             return;
@@ -426,7 +619,12 @@ final class ExpressionWriter {
     }
 
     /** Writes the place the index names, with the thing, the place and the value already on the stack. */
-    private void writeElement(final ITypeSymbol target) {
+    private void writeElement(final ITypeSymbol target, final IExpr.Index node) {
+        final IMemberSymbol.MethodSymbol writes = this.indexerOf(node, true);
+        if (writes != null) {
+            this.body.emit(Opcode.CALL, CallWriter.methodRef(writes));
+            return;
+        }
         if (target instanceof ITypeSymbol.ArrayType) {
             this.body.emit(Opcode.STELEM);
             return;
@@ -448,6 +646,11 @@ final class ExpressionWriter {
     private void cast(final IExpr.Cast expression) {
         final ITypeSymbol from = this.emitter.model.typeOf(expression.value());
         final ITypeSymbol to = this.emitter.model.typeOf(expression);
+        // A pointer cast to another keeps its address; only what it is read as changes, which is the compiler's.
+        if (to instanceof ITypeSymbol.PointerType) {
+            this.value(expression.value(), to);
+            return;
+        }
         this.value(expression.value(), null);
         if (this.emitter.rules.isNumeric(from) && this.emitter.rules.isNumeric(to)) {
             this.convert(to);
@@ -490,11 +693,20 @@ final class ExpressionWriter {
     }
 
     private void unary(final IExpr.Unary expression) {
+        if (expression.operator() == Operator.ADDRESS_OF) {
+            this.address(expression.operand());
+            return;
+        }
         if (expression.operator() == Operator.INCREMENT || expression.operator() == Operator.DECREMENT) {
             final IrWrite written = this.emitter.lowered.writeOf(expression);
             if (written != null) {
                 this.write(written, true);
             }
+            return;
+        }
+        if (this.emitter.model.callOf(expression) instanceof IMemberSymbol.MethodSymbol declared
+                && declared.isOperator()) {
+            this.operator(declared, List.of(expression.operand()));
             return;
         }
         this.value(expression.operand(), null);
@@ -506,6 +718,44 @@ final class ExpressionWriter {
             case NEGATE -> this.body.emit(Opcode.NEG);
             case COMPLEMENT -> this.body.emit(Opcode.NOT);
             default -> { }
+        }
+    }
+
+    /* An operator a program's own type gives a meaning to: its values handed to its static method, in order. */
+    private void operator(final IMemberSymbol.MethodSymbol declared, final List<IExpr> values) {
+        for (int i = 0; i < values.size(); i++) {
+            this.copied(values.get(i), declared.parameters().get(i).type());
+        }
+        this.body.emit(Opcode.CALL, CallWriter.methodRef(declared));
+    }
+
+    /*
+     * The change a step or a combining write makes to the value on top of the stack: the language's arithmetic with
+     * the value pushed first, or the operator's method of the place's type, handed the value when there is one.
+     */
+    private void operate(final IrWrite written, final ITypeSymbol wanted) {
+        // A pointer moves by whole values of what it points at.
+        if (written.type() instanceof ITypeSymbol.PointerType pointer) {
+            this.moved(written.value(), pointer, arithmetic(written.operator()));
+            return;
+        }
+        if (written.through() != null) {
+            // A struct goes to the method as a copy of its own, so what was there before is still there to answer.
+            if (this.isStruct(written.type())) {
+                this.body.emit(Opcode.COPY);
+            }
+            if (written.value() != null) {
+                this.copied(written.value(), written.through().parameters().getLast().type());
+            }
+            this.body.emit(Opcode.CALL, CallWriter.methodRef(written.through()));
+            return;
+        }
+        this.value(written.value(), wanted);
+        this.body.emit(arithmetic(written.operator()));
+        // A byte worked on comes back as a whole number, which is cut to the byte it is written into.
+        if (written.type() == ITypeSymbol.Primitive.BYTE) {
+            this.body.emit(Opcode.LDC_I4, new IOperand.I4(BYTE_BITS));
+            this.body.emit(Opcode.AND);
         }
     }
 
@@ -531,8 +781,7 @@ final class ExpressionWriter {
         }
         this.prepare(captured);
         this.loadOver(captured, null);
-        this.value(written.value(), null);
-        this.body.emit(arithmetic(written.operator()));
+        this.operate(written, null);
         this.store(captured, null);
         if (written.answer() == IrWrite.Answer.AFTER) {
             this.body.loadKept(captured.variable());
@@ -540,6 +789,14 @@ final class ExpressionWriter {
     }
 
     private void binary(final IExpr.Binary expression) {
+        if (this.emitter.model.callOf(expression) instanceof IMemberSymbol.MethodSymbol declared
+                && declared.isOperator()) {
+            this.operator(declared, List.of(expression.left(), expression.right()));
+            return;
+        }
+        if (this.pointerArithmetic(expression)) {
+            return;
+        }
         switch (expression.operator()) {
             case AND, OR -> this.shortCircuit(expression);
             case ADD -> this.plus(expression);
@@ -553,6 +810,37 @@ final class ExpressionWriter {
                 this.wholeDivision(expression, result);
             }
         }
+    }
+
+    /*
+     * p + n, n + p and p - n move a pointer by whole values of what it points at; p - q is how many of them lie
+     * between two. False for anything else, which is written as numbers are.
+     */
+    private boolean pointerArithmetic(final IExpr.Binary expression) {
+        final ITypeSymbol left = this.emitter.model.typeOf(expression.left());
+        final ITypeSymbol right = this.emitter.model.typeOf(expression.right());
+        final boolean adds = expression.operator() == Operator.ADD;
+        if (!adds && expression.operator() != Operator.SUBTRACT
+                || !(left instanceof ITypeSymbol.PointerType) && !(right instanceof ITypeSymbol.PointerType)) {
+            return false;
+        }
+        if (left instanceof ITypeSymbol.PointerType pointer && right instanceof ITypeSymbol.PointerType) {
+            this.value(expression.left(), null);
+            this.value(expression.right(), null);
+            this.body.emit(Opcode.SUB);
+            final int size = this.emitter.declarations.layout().sizeOf(pointer.pointee());
+            if (size != 1) {
+                this.body.emit(Opcode.LDC_I8, new IOperand.I8(size));
+                this.body.emit(Opcode.DIV);
+                this.body.emit(Opcode.CONV_I8);
+            }
+            return true;
+        }
+        final boolean pointerFirst = left instanceof ITypeSymbol.PointerType;
+        this.value(pointerFirst ? expression.left() : expression.right(), null);
+        this.moved(pointerFirst ? expression.right() : expression.left(), pointerFirst ? left : right,
+                adds ? Opcode.ADD : Opcode.SUB);
+        return true;
     }
 
     /**
@@ -613,6 +901,10 @@ final class ExpressionWriter {
             this.body.emit(Opcode.CALL, new IOperand.Method(STRING, "FromChar", List.of("char"), STRING));
             return STRING;
         }
+        // A byte is a whole number while a program runs, and is joined as one.
+        if (type == ITypeSymbol.Primitive.BYTE) {
+            return ITypeSymbol.Primitive.INT.describe();
+        }
         final IMemberSymbol.MethodSymbol reads = readsItself(type);
         if (reads == null) {
             return describe(type);
@@ -623,7 +915,10 @@ final class ExpressionWriter {
 
     /** The {@code ToString()} a type declares for itself, or null when it reads as its name. */
     private static IMemberSymbol.MethodSymbol readsItself(final ITypeSymbol type) {
-        if (!(type instanceof NamedType named) || named.kind() == NamedType.Kind.ENUM
+        // A tuple reads as the struct made for it does, which says how.
+        final NamedType named = type instanceof ITypeSymbol.TupleType tuple ? tuple.struct()
+                : type instanceof NamedType plain ? plain : null;
+        if (named == null || named.kind() == NamedType.Kind.ENUM
                 || named.kind() == NamedType.Kind.DELEGATE || named.isBuiltIn()) {
             return null;
         }
@@ -640,8 +935,13 @@ final class ExpressionWriter {
         final ITypeSymbol left = this.emitter.model.typeOf(expression.left());
         final ITypeSymbol right = this.emitter.model.typeOf(expression.right());
         final ITypeSymbol common = this.emitter.rules.promote(left, right);
-        this.value(expression.left(), common);
-        this.value(expression.right(), common);
+        if (left instanceof ITypeSymbol.PointerType || right instanceof ITypeSymbol.PointerType) {
+            this.comparedAddress(expression.left(), left);
+            this.comparedAddress(expression.right(), right);
+        } else {
+            this.value(expression.left(), common);
+            this.value(expression.right(), common);
+        }
         switch (expression.operator()) {
             case EQUAL -> this.body.emit(Opcode.CEQ);
             case NOT_EQUAL -> {
@@ -659,6 +959,19 @@ final class ExpressionWriter {
                 this.invert();
             }
         }
+    }
+
+    /*
+     * One side of a comparison of pointers, as the address it holds: null is 0, and a pointer a field never given one
+     * holds nothing, which is made 0 too, so the two read as the same.
+     */
+    private void comparedAddress(final IExpr side, final ITypeSymbol type) {
+        if (!(type instanceof ITypeSymbol.PointerType)) {
+            this.body.emit(Opcode.LDC_I8, new IOperand.I8(0));
+            return;
+        }
+        this.value(side, null);
+        this.body.emit(Opcode.CONV_I8);
     }
 
     private void invert() {
@@ -703,14 +1016,13 @@ final class ExpressionWriter {
             this.copied(written.value(), written.type());
             return;
         }
-        if (written.type() == this.emitter.builtIns.stringType()) {
+        if (written.type() == this.emitter.builtIns.stringType() && written.through() == null) {
             final String added = this.joined(written.value());
             this.body.emit(Opcode.CALL,
                     new IOperand.Method(STRING, "Concat", List.of(STRING, added), STRING));
             return;
         }
-        this.value(written.value(), written.type());
-        this.body.emit(arithmetic(written.operator()));
+        this.operate(written, written.type());
     }
 
     /*
@@ -781,7 +1093,12 @@ final class ExpressionWriter {
     }
 
     private void convert(final ITypeSymbol to) {
-        if (to == ITypeSymbol.Primitive.LONG) {
+        if (to == ITypeSymbol.Primitive.BYTE) {
+            // A byte keeps the low eight bits of the whole number, as a cast to one does in C#.
+            this.body.emit(Opcode.CONV_I4);
+            this.body.emit(Opcode.LDC_I4, new IOperand.I4(BYTE_BITS));
+            this.body.emit(Opcode.AND);
+        } else if (to == ITypeSymbol.Primitive.LONG) {
             this.body.emit(Opcode.CONV_I8);
         } else if (to == ITypeSymbol.Primitive.FLOAT) {
             this.body.emit(Opcode.CONV_R4);
@@ -811,7 +1128,11 @@ final class ExpressionWriter {
         };
     }
 
-    /** One place inside an array, a list or a map, as the slots holding the thing and the place in it. */
-    private record Element(int thing, int at, ITypeSymbol of) {
+    /**
+     * One place inside an array, a list, a map or a program's own type with an indexer, as the slots holding the thing
+     * and the place in it, and the index that named it. A place in raw memory is kept the same way, as the slot holding
+     * its address and the type of what lies there, with no place in it and no index.
+     */
+    private record Element(int thing, int at, ITypeSymbol of, IExpr.Index node) {
     }
 }

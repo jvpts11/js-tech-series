@@ -387,6 +387,72 @@
       "term": "jsc.guide.standard_functions.term4"
     },
     {
+      "type": "table",
+      "caption": "jsc.guide.standard_functions.table4",
+      "heads": [
+        "jsc.guide.standard_functions.table4_head1",
+        "jsc.guide.standard_functions.table4_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "malloc(bytes)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table4_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "calloc(count, size)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table4_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "realloc(p, bytes)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table4_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "free(p)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table4_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "memcpy(dest, src, bytes)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table4_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "memset(p, value, bytes)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table4_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "memcmp(a, b, bytes)"
+          },
+          {
+            "words": "jsc.guide.standard_functions.table4_7_2"
+          }
+        ]
+      ]
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -420,7 +486,7 @@
     }
   ],
   "id": "jsc:standard_functions",
-  "order": 393,
+  "order": 402,
   "section": "jsc:library_basics",
   "title": "jsc.guide.standard_functions.title"
 }

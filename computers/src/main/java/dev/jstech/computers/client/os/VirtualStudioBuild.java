@@ -295,7 +295,8 @@ final class VirtualStudioBuild {
             return;
         }
         final IProgrammingLanguage.CompileResult result = language.compile(sources,
-                InstalledCompilers.options(language, project.platform(), project.languageVersion()));
+                InstalledCompilers.options(language, project.platform(), project.languageVersion(),
+                        project.defines()));
         finishBuild(project.name(), join(this.loader.projectDir(project.name()), project.entry()), result, names);
         buildNext();
     }

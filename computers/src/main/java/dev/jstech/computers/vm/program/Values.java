@@ -12,8 +12,10 @@ import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * What a running program holds.
@@ -40,9 +42,36 @@ public final class Values {
 
         private final String type;
         private final Map<String, Object> fields = new LinkedHashMap<>();
+        /** The fields INTERCAL's ignore made every write to vanish from, or null while there are none. */
+        private Set<String> ignored;
 
         public Obj(final String type) {
             this.type = type;
+        }
+
+        /** Makes every later write the program makes to that field vanish, or count again. */
+        public void ignore(final String name, final boolean on) {
+            if (on) {
+                if (this.ignored == null) {
+                    this.ignored = new LinkedHashSet<>();
+                }
+                this.ignored.add(name);
+            } else if (this.ignored != null) {
+                this.ignored.remove(name);
+                if (this.ignored.isEmpty()) {
+                    this.ignored = null;
+                }
+            }
+        }
+
+        /** Whether a write the program makes to that field vanishes. */
+        public boolean ignores(final String name) {
+            return this.ignored != null && this.ignored.contains(name);
+        }
+
+        /** The fields ignored, for writing the object down. */
+        public List<String> ignoredFields() {
+            return this.ignored == null ? List.of() : List.copyOf(this.ignored);
         }
 
         /** The name of the class this is one of. */
@@ -111,7 +140,8 @@ public final class Values {
 
         private void check(final int index, final int line) {
             if (index < 0 || index >= this.values.length) {
-                throw new Halt(Halt.Reason.OUT_OF_RANGE, line, NO_PLACE_IN_ARRAY.with(index, this.values.length));
+                throw new Halt(Halt.Reason.OUT_OF_RANGE, line, NO_PLACE_IN_ARRAY.with(index, this.values.length),
+                        Halt.Thrown.INDEX_OUT_OF_RANGE);
             }
         }
 

@@ -18,10 +18,12 @@ public final class Signals {
 
     /** What {@code kill} sends when it is not told which: the polite request to end. */
     public static final int TERM = 15;
+    /** The signal that ends a program at once, with no farewell of any kind. */
+    public static final int KILL = 9;
 
     /** The signals a process can be sent here, in their numbers' order. */
     public static final List<Signal> ALL = List.of(new Signal(1, "HUP"), new Signal(2, "INT"),
-            new Signal(3, "QUIT"), new Signal(9, "KILL"), new Signal(TERM, "TERM"));
+            new Signal(3, "QUIT"), new Signal(KILL, "KILL"), new Signal(TERM, "TERM"));
 
     private static final String PREFIX = "SIG";
 

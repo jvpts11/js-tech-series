@@ -41,6 +41,12 @@ final class ProcessCalls {
     }
 
     private static final String STRING = "string";
+    private static final String INT = "int";
+    private static final String LONG = "long";
+    /** An address that says nothing of what lies there, as the calls of raw memory take and give it. */
+    private static final String VOID_POINTER = "void*";
+    /** The type the calls of raw memory are on, beside what the machine's memory answers. */
+    private static final String MEMORY = "Memory";
     /** The kinds of variable a read of one value fills in, each a version of Console.Scan of its own. */
     private static final List<String> SCANNED = List.of("int", "long", "double", STRING, "char");
     /** What a watch on the network calls when it goes off. */
@@ -84,7 +90,69 @@ final class ProcessCalls {
         gateway(bindings);
         ui(bindings);
         system(bindings);
+        rawMemory(bindings);
         return Map.copyOf(bindings);
+    }
+
+    /*
+     * The program's raw memory, which pointers reach (computers/docs/design/sigma.md). A pointer is the address it
+     * holds, a long. Moving, setting and comparing bytes is charged by how many there are.
+     */
+    private static void rawMemory(final Map<MemberId, Binding> bindings) {
+        bind(bindings, MEMORY, "Alloc", null, (process, target, arguments, line) ->
+                process.memory().allocate(Numbers.toLong(arguments[0]), false, line), LONG);
+        bind(bindings, MEMORY, "AllocZeroed", null, (process, target, arguments, line) ->
+                process.memory().allocate(times(arguments[0], arguments[1]), false, line), LONG, LONG);
+        bind(bindings, MEMORY, "Resize", null, (process, target, arguments, line) ->
+                process.memory().resize(Numbers.toLong(arguments[0]), Numbers.toLong(arguments[1]), line),
+                VOID_POINTER, LONG);
+        bind(bindings, MEMORY, "Free", null, (process, target, arguments, line) -> {
+            process.memory().free(Numbers.toLong(arguments[0]), line);
+            return null;
+        }, VOID_POINTER);
+        bind(bindings, MEMORY, "Copy", null, (process, target, arguments, line) -> {
+            chargeBytes(process, arguments[2]);
+            process.memory().copy(Numbers.toLong(arguments[1]), Numbers.toLong(arguments[0]),
+                    Numbers.toLong(arguments[2]), line);
+            return null;
+        }, VOID_POINTER, VOID_POINTER, LONG);
+        bind(bindings, MEMORY, "Fill", null, (process, target, arguments, line) -> {
+            chargeBytes(process, arguments[2]);
+            process.memory().fill(Numbers.toLong(arguments[0]), Numbers.toLong(arguments[2]),
+                    Numbers.toInt(arguments[1]), line);
+            return null;
+        }, VOID_POINTER, INT, LONG);
+        bind(bindings, MEMORY, "Compare", null, (process, target, arguments, line) -> {
+            chargeBytes(process, arguments[2]);
+            return process.memory().compare(Numbers.toLong(arguments[0]), Numbers.toLong(arguments[1]),
+                    Numbers.toLong(arguments[2]), line);
+        }, VOID_POINTER, VOID_POINTER, LONG);
+    }
+
+    /* What a count of bytes moved, set or compared costs beyond its call: one for every 64 of them started. */
+    private static void chargeBytes(final Process process, final Object bytes) {
+        final long count = Numbers.toLong(bytes);
+        if (count > 0) {
+            final long per = SigmaCosts.RAW_BYTES_PER_INSTRUCTION;
+            process.charge((int) Math.min(Integer.MAX_VALUE, (count + per - 1) / per));
+        }
+    }
+
+    /*
+     * The bytes calloc asks for, that many of that size: a count past what a long holds is asked as the most there is,
+     * which no budget has room for, and a negative one as the negative it is, which is refused for it.
+     */
+    private static long times(final Object count, final Object size) {
+        final long many = Numbers.toLong(count);
+        final long each = Numbers.toLong(size);
+        if (many < 0 || each < 0) {
+            return Math.min(many, each);
+        }
+        try {
+            return Math.multiplyExact(many, each);
+        } catch (final ArithmeticException tooMany) {
+            return Long.MAX_VALUE;
+        }
     }
 
     /*

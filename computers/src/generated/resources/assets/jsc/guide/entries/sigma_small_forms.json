@@ -1,0 +1,125 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_small_forms.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_small_forms.table1",
+      "heads": [
+        "jsc.guide.sigma_small_forms.table1_head1",
+        "jsc.guide.sigma_small_forms.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "sealed class Tool"
+          },
+          {
+            "words": "jsc.guide.sigma_small_forms.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "static class Tools"
+          },
+          {
+            "words": "jsc.guide.sigma_small_forms.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "int Sum(params int[] values)"
+          },
+          {
+            "words": "jsc.guide.sigma_small_forms.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "int Twice(int n) => n * 2;"
+          },
+          {
+            "words": "jsc.guide.sigma_small_forms.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "nameof(count)"
+          },
+          {
+            "words": "jsc.guide.sigma_small_forms.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "using System.*;",
+        "",
+        "namespace Tools;",
+        "",
+        "static class Small",
+        "{",
+        "    static int Sum(params int[] values)",
+        "    {",
+        "        int total = 0;",
+        "        for (int i = 0; i < values.Length; i++)",
+        "        {",
+        "            total += values[i];",
+        "        }",
+        "        return total;",
+        "    }",
+        "",
+        "    static void Main()",
+        "    {",
+        "        int Twice(int n) => n * 2;",
+        "        int sum = Sum(1, 2, 3);",
+        "        Console.PrintLine(nameof(sum) + \" = \" + Twice(sum));",
+        "    }",
+        "}"
+      ],
+      "name": "Small.sgs"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_small_forms.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_small_forms.definition1",
+      "term": "jsc.guide.sigma_small_forms.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_small_forms.fix1",
+          "problem": "jsc.guide.sigma_small_forms.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_small_forms.fix2",
+          "problem": "jsc.guide.sigma_small_forms.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_methods_out_ref",
+        "jsc:sigma_classes"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_small_forms",
+  "order": 396,
+  "section": "jsc:sigma_version_three_section",
+  "title": "jsc.guide.sigma_small_forms.title"
+}

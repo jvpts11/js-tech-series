@@ -68,7 +68,11 @@ final class ProcessSnapshotReader {
         for (final Snapshot.IHeld written : heapShot.held()) {
             fill(written, byNumber);
             heap.restore(byNumber.get(written.id()), written.bytes(), written.line(), written.freed());
+            if (byNumber.get(written.id()) instanceof RawMemory.Block block && !written.freed()) {
+                process.memory().adopt(block);
+            }
         }
+        process.memory().startFrom(heapShot.nextAddress());
         final ThreadScheduler scheduler = process.scheduler();
         for (final Snapshot.ThreadShot written : shot.threads().running()) {
             final ProgramThread thread = scheduler.restore(written.id());
@@ -103,6 +107,10 @@ final class ProcessSnapshotReader {
                 holder.set(field.getKey(), value(field.getValue(), byNumber));
             }
         }
+        // What INTERCAL's words left switched comes back as it was left.
+        process.switchedOff().addAll(shot.intercal().switchedOff());
+        shot.intercal().staticsIgnored().forEach((owner, names) ->
+                names.forEach(name -> process.fieldAccess().statics(owner).ignore(name, true)));
         if (value(shot.script(), byNumber) instanceof Values.Obj script) {
             process.restoreScript(script);
         }
@@ -173,6 +181,7 @@ final class ProcessSnapshotReader {
             case Snapshot.IHeld.Listing ignored -> new Values.ListValue();
             case Snapshot.IHeld.Keyed ignored -> new Values.MapValue();
             case Snapshot.IHeld.Handler handler -> new Values.DelegateValue(handler.type(), List.of());
+            case Snapshot.IHeld.Memory block -> new RawMemory.Block(block.address(), block.held(), block.onStack());
         };
     }
 
@@ -187,6 +196,7 @@ final class ProcessSnapshotReader {
                 for (final Map.Entry<String, Snapshot.IValue> field : object.fields().entrySet()) {
                     ((Values.Obj) thing).set(field.getKey(), value(field.getValue(), byNumber));
                 }
+                object.ignored().forEach(name -> ((Values.Obj) thing).ignore(name, true));
             }
             case Snapshot.IHeld.Array array -> {
                 for (int i = 0; i < array.values().size(); i++) {
@@ -229,7 +239,37 @@ final class ProcessSnapshotReader {
         }
         frame.at = written.at();
         frame.discard = written.discard();
+        for (final int slot : written.ignored()) {
+            if (slot >= 0 && slot < frame.slots.length) {
+                frame.ignore(slot, true);
+            }
+        }
+        for (final Snapshot.PendingShot pending : written.pendings()) {
+            if (frame.pendings == null) {
+                frame.pendings = new ArrayList<>();
+            }
+            frame.pendings.add(pending(method, pending, byNumber));
+        }
+        if (!written.blocks().isEmpty()) {
+            frame.stackBlocks = new ArrayList<>(written.blocks());
+        }
         return frame;
+    }
+
+    /** A finally's pending way out or exception put back, refusing one that names a handler the method lacks. */
+    private static Unwinder.Pending pending(final MethodImage method, final Snapshot.PendingShot written,
+                                            final Map<Integer, Object> byNumber) {
+        final List<Integer> handlers = written.leaving() ? written.finallies() : List.of(written.running());
+        if (handlers.isEmpty() || written.next() < 0 || written.next() >= Math.max(1, written.finallies().size())
+                || handlers.stream().anyMatch(handler -> handler < 0 || handler >= method.handlerCount())) {
+            throw new SnapshotException("a finally in " + method.describe() + " does not fit its method");
+        }
+        if (written.leaving()) {
+            return new Unwinder.Leaving(written.line(), written.finallies(), written.next());
+        }
+        final Object exception = value(written.exception(), byNumber);
+        return new Unwinder.Throwing(exception == null ? Unwinder.STOPPING : exception, written.line(),
+                written.running());
     }
 
     /**

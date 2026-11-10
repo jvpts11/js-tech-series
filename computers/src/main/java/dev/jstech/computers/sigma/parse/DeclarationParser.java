@@ -41,7 +41,6 @@ final class DeclarationParser {
     private final TypeParser types;
     private final StatementParser statements;
     private final ExpressionParser expressions;
-    private final LanguageGaps gaps;
 
     /** Each word that can stand before a declaration, with the modifier it stands for. */
     private static final Map<TokenKind, IDecl.Modifier> MODIFIERS = new EnumMap<>(Map.of(
@@ -53,7 +52,35 @@ final class DeclarationParser {
             TokenKind.READONLY, IDecl.Modifier.READONLY,
             TokenKind.VIRTUAL, IDecl.Modifier.VIRTUAL,
             TokenKind.OVERRIDE, IDecl.Modifier.OVERRIDE,
-            TokenKind.ABSTRACT, IDecl.Modifier.ABSTRACT));
+            TokenKind.ABSTRACT, IDecl.Modifier.ABSTRACT,
+            TokenKind.CONST, IDecl.Modifier.CONST));
+
+    /** The modifiers that came in a later version, which are words only where a modifier stands. */
+    private static final Map<String, IDecl.Modifier> CONTEXTUAL_MODIFIERS = Map.of("sealed", IDecl.Modifier.SEALED,
+            "unsafe", IDecl.Modifier.UNSAFE);
+
+    /** The word an operator's method is declared with, a word only where an operator and a bracket follow it. */
+    private static final String OPERATOR = "operator";
+    /** Each operator a type may give a meaning to, by how it is written, as the operator taking two values. */
+    private static final Map<TokenKind, Operator> BINARY_OPERATORS = new EnumMap<>(Map.ofEntries(
+            Map.entry(TokenKind.PLUS, Operator.ADD), Map.entry(TokenKind.MINUS, Operator.SUBTRACT),
+            Map.entry(TokenKind.STAR, Operator.MULTIPLY), Map.entry(TokenKind.SLASH, Operator.DIVIDE),
+            Map.entry(TokenKind.PERCENT, Operator.REMAINDER), Map.entry(TokenKind.AMPERSAND, Operator.BIT_AND),
+            Map.entry(TokenKind.PIPE, Operator.BIT_OR), Map.entry(TokenKind.CARET, Operator.BIT_XOR),
+            Map.entry(TokenKind.SHIFT_LEFT, Operator.SHIFT_LEFT),
+            Map.entry(TokenKind.SHIFT_RIGHT, Operator.SHIFT_RIGHT),
+            Map.entry(TokenKind.EQUAL, Operator.EQUAL), Map.entry(TokenKind.NOT_EQUAL, Operator.NOT_EQUAL),
+            Map.entry(TokenKind.LESS, Operator.LESS), Map.entry(TokenKind.LESS_EQUAL, Operator.LESS_EQUAL),
+            Map.entry(TokenKind.GREATER, Operator.GREATER),
+            Map.entry(TokenKind.GREATER_EQUAL, Operator.GREATER_EQUAL)));
+    /** The same, for the operators taking one value. */
+    private static final Map<TokenKind, Operator> UNARY_OPERATORS = new EnumMap<>(Map.of(
+            TokenKind.NOT, Operator.NOT, TokenKind.MINUS, Operator.NEGATE, TokenKind.PLUS, Operator.PLUS,
+            TokenKind.TILDE, Operator.COMPLEMENT, TokenKind.PLUS_PLUS, Operator.INCREMENT,
+            TokenKind.MINUS_MINUS, Operator.DECREMENT));
+    /** The words that say who may reach a member, which an indexer's accessor may give itself apart. */
+    private static final Set<IDecl.Modifier> ACCESS = EnumSet.of(IDecl.Modifier.PUBLIC, IDecl.Modifier.PRIVATE,
+            IDecl.Modifier.PROTECTED, IDecl.Modifier.INTERNAL);
 
     private static final Set<TokenKind> TYPE_DECLARATION_STARTS = EnumSet.of(
             TokenKind.CLASS, TokenKind.STRUCT, TokenKind.RECORD, TokenKind.INTERFACE, TokenKind.ENUM,
@@ -66,7 +93,6 @@ final class DeclarationParser {
         this.types = types;
         this.statements = statements;
         this.expressions = expressions;
-        this.gaps = new LanguageGaps(cursor, diagnostics);
     }
 
     IDecl.ITypeDecl parseTypeDeclaration() {
@@ -156,9 +182,9 @@ final class DeclarationParser {
         try {
             while (!this.cursor.check(TokenKind.RIGHT_BRACE) && !this.cursor.atEnd()) {
                 final int before = this.cursor.at();
-                final IDecl.IMemberDecl member = this.parseMember(name);
-                if (member != null) {
-                    members.add(member);
+                final List<IDecl.IMemberDecl> read = this.parseMembers(name);
+                if (!read.isEmpty()) {
+                    members.addAll(read);
                 } else {
                     this.skipToMember();
                 }
@@ -376,11 +402,22 @@ final class DeclarationParser {
      * before a parenthesis is a constructor, "event" is an event, and otherwise a type and a name
      * are followed by parentheses for a method, a brace for a property, or neither for a field.
      */
-    private IDecl.IMemberDecl parseMember(final String className) {
-        final Set<IDecl.Modifier> modifiers = this.parseModifiers();
-        this.gaps.passesConst(true);
+    /* One member, or the two methods an indexer is written as; nothing when what is there is no member. */
+    private List<IDecl.IMemberDecl> parseMembers(final String className) {
+        final Set<IDecl.Modifier> modifiers = this.parseModifiers(className);
         final Token start = this.cursor.peek();
+        final int at = this.cursor.at();
+        final int afterType = this.types.scanType(at);
+        if (afterType > at && this.cursor.kindAt(afterType) == TokenKind.THIS
+                && this.cursor.kindAt(afterType + 1) == TokenKind.LEFT_BRACKET) {
+            return this.parseIndexer(modifiers, this.types.parseTypeRef(), start);
+        }
+        final IDecl.IMemberDecl member = this.parseMember(className, modifiers, start);
+        return member == null ? List.of() : List.of(member);
+    }
 
+    private IDecl.IMemberDecl parseMember(final String className, final Set<IDecl.Modifier> modifiers,
+                                          final Token start) {
         // A type inside a type: named through the one around it, and read exactly as one at the top is.
         if (TYPE_DECLARATION_STARTS.contains(start.kind())) {
             final IDecl.ITypeDecl nested = this.parseTypeDeclaration(modifiers);
@@ -402,11 +439,15 @@ final class DeclarationParser {
             return this.parseConstructor(modifiers, start, className);
         }
 
-        if (!this.cursor.check(TokenKind.VOID) && !this.types.isTypeStart(start.kind())) {
+        if (!this.cursor.check(TokenKind.VOID) && !this.types.isTypeStart(start.kind())
+                && this.types.scanType(this.cursor.at()) < 0) {
             this.diagnostics.error(start.line(), start.column(), SigmaError.EXPECTED_MEMBER, start.describe());
             return null;
         }
         final TypeRef type = this.types.parseReturnType();
+        if (this.operatorAhead()) {
+            return this.parseOperator(modifiers, type, start);
+        }
         final String name = this.cursor.expectIdentifier();
 
         if (this.cursor.check(TokenKind.LEFT_PAREN)) {
@@ -437,6 +478,138 @@ final class DeclarationParser {
         }
         this.cursor.expect(TokenKind.SEMICOLON);
         return new IDecl.FieldDecl(modifiers, type, name, initializer, start.line(), start.column());
+    }
+
+    /* "operator" followed by an operator and its bracket: the word is a word only there. */
+    private boolean operatorAhead() {
+        final Token word = this.cursor.peek();
+        final TokenKind sign = this.cursor.kindAhead(1);
+        return word.is(TokenKind.IDENTIFIER) && OPERATOR.equals(word.text())
+                && (BINARY_OPERATORS.containsKey(sign) || UNARY_OPERATORS.containsKey(sign))
+                && this.cursor.kindAhead(2) == TokenKind.LEFT_PAREN;
+    }
+
+    /*
+     * "public static Point operator +(Point a, Point b) => ...;": a static method named as C# names the operator, which
+     * the operator written between values of the type calls. The words it was written with say it is one.
+     */
+    private IDecl.IMemberDecl parseOperator(final Set<IDecl.Modifier> modifiers, final TypeRef type,
+                                            final Token start) {
+        this.cursor.advance();
+        final Token sign = this.cursor.advance();
+        final List<IDecl.Parameter> parameters = this.parseParameters();
+        final Operator operator = parameters.size() == 1 ? UNARY_OPERATORS.get(sign.kind())
+                : BINARY_OPERATORS.get(sign.kind());
+        // One that takes the wrong number of values keeps its sign in its name, for the message that refuses it.
+        final String name = operator == null ? OPERATOR + " " + sign.text() : operator.methodName();
+        final IStmt.Block body;
+        if (this.cursor.match(TokenKind.ARROW)) {
+            final IExpr value = this.expressions.parseExpression();
+            this.cursor.expect(TokenKind.SEMICOLON);
+            body = returning(value, start);
+        } else {
+            body = this.cursor.check(TokenKind.LEFT_BRACE) ? this.statements.parseBlock() : null;
+            if (body == null) {
+                this.cursor.expect(TokenKind.LEFT_BRACE);
+            }
+        }
+        return new IDecl.MethodDecl(withWord(modifiers, IDecl.Modifier.OPERATOR), type, name, parameters, body,
+                start.line(), start.column());
+    }
+
+    /*
+     * "public string this[int at] { get { ... } set { ... } }", or "=> value;" for one that is only read: the two
+     * methods it comes down to, as C#'s does, one reading and one writing that is handed the value as value.
+     */
+    private List<IDecl.IMemberDecl> parseIndexer(final Set<IDecl.Modifier> modifiers, final TypeRef type,
+                                                 final Token start) {
+        this.cursor.advance();
+        final List<IDecl.Parameter> keys = this.types.parseParameters(TokenKind.LEFT_BRACKET, TokenKind.RIGHT_BRACKET);
+        final Set<IDecl.Modifier> words = withWord(modifiers, IDecl.Modifier.INDEXER);
+        final List<IDecl.IMemberDecl> made = new ArrayList<>();
+        if (this.cursor.match(TokenKind.ARROW)) {
+            final IExpr value = this.expressions.parseExpression();
+            this.cursor.expect(TokenKind.SEMICOLON);
+            made.add(new IDecl.MethodDecl(words, type, IDecl.INDEXER_GET, keys, returning(value, start),
+                    start.line(), start.column()));
+            return made;
+        }
+        if (this.cursor.expect(TokenKind.LEFT_BRACE)) {
+            while (!this.cursor.check(TokenKind.RIGHT_BRACE) && !this.cursor.atEnd()) {
+                final int before = this.cursor.at();
+                final Set<IDecl.Modifier> own = this.parseModifiers();
+                final Token word = this.cursor.peek();
+                final boolean reads = word.is(TokenKind.IDENTIFIER) && "get".equals(word.text());
+                if (!reads && !(word.is(TokenKind.IDENTIFIER) && "set".equals(word.text()))) {
+                    this.diagnostics.error(word.line(), word.column(), SigmaError.EXPECTED_MEMBER, word.describe());
+                    break;
+                }
+                this.cursor.advance();
+                made.add(this.accessor(reads, accessible(words, own), type, keys, word));
+                if (this.cursor.at() == before) {
+                    this.cursor.advance();
+                }
+            }
+            this.cursor.expect(TokenKind.RIGHT_BRACE);
+        }
+        // One with neither half is refused as a reading method with no body, where it was written.
+        if (made.isEmpty()) {
+            made.add(new IDecl.MethodDecl(words, type, IDecl.INDEXER_GET, keys, null, start.line(), start.column()));
+        }
+        return made;
+    }
+
+    /*
+     * One half of an indexer: "get { ... }", "get => value;", "set { ... }" or "set => what it does;". Each half has
+     * keys of its own, since every later stage keeps what it learns of a parameter by the node it was written as.
+     */
+    private IDecl.MethodDecl accessor(final boolean reads, final Set<IDecl.Modifier> words, final TypeRef type,
+                                      final List<IDecl.Parameter> written, final Token word) {
+        final List<IDecl.Parameter> keys = new ArrayList<>(written.size());
+        for (final IDecl.Parameter key : written) {
+            keys.add(new IDecl.Parameter(key.outward(), key.type(), key.name(), key.many(), key.receiver(), key.line(),
+                    key.column()));
+        }
+        final IStmt.Block body;
+        if (this.cursor.match(TokenKind.ARROW)) {
+            final IExpr value = this.expressions.parseExpression();
+            this.cursor.expect(TokenKind.SEMICOLON);
+            body = reads ? returning(value, word) : new IStmt.Block(
+                    List.of(new IStmt.ExprStmt(value, word.line(), word.column())), word.line(), word.column());
+        } else {
+            body = this.statements.parseBlock();
+        }
+        if (reads) {
+            return new IDecl.MethodDecl(words, type, IDecl.INDEXER_GET, keys, body, word.line(), word.column());
+        }
+        final List<IDecl.Parameter> taken = new ArrayList<>(keys);
+        taken.add(new IDecl.Parameter(false, type, "value", word.line(), word.column()));
+        return new IDecl.MethodDecl(words, TypeRef.named("void", word.line(), word.column()), IDecl.INDEXER_SET,
+                taken, body, word.line(), word.column());
+    }
+
+    /* A body that gives back that value and does nothing else, which is what an arrow writes. */
+    private static IStmt.Block returning(final IExpr value, final Token at) {
+        return new IStmt.Block(List.of(new IStmt.Return(value, at.line(), at.column())), at.line(), at.column());
+    }
+
+    /* The words with one more. */
+    private static Set<IDecl.Modifier> withWord(final Set<IDecl.Modifier> words, final IDecl.Modifier word) {
+        final Set<IDecl.Modifier> more = EnumSet.noneOf(IDecl.Modifier.class);
+        more.addAll(words);
+        more.add(word);
+        return more;
+    }
+
+    /* An accessor's words: the indexer's, with the accessor's own access in place of the indexer's when it has one. */
+    private static Set<IDecl.Modifier> accessible(final Set<IDecl.Modifier> words, final Set<IDecl.Modifier> own) {
+        final Set<IDecl.Modifier> made = EnumSet.noneOf(IDecl.Modifier.class);
+        made.addAll(words);
+        if (own.stream().anyMatch(ACCESS::contains)) {
+            made.removeAll(ACCESS);
+        }
+        made.addAll(own);
+        return made;
     }
 
     private IDecl.IMemberDecl parseConstructor(final Set<IDecl.Modifier> modifiers, final Token start,
@@ -497,10 +670,16 @@ final class DeclarationParser {
     }
 
     private Set<IDecl.Modifier> parseModifiers() {
+        return this.parseModifiers(null);
+    }
+
+    /** The modifiers before a declaration, inside the class called {@code className} when it is in one. */
+    private Set<IDecl.Modifier> parseModifiers(final String className) {
         final Set<IDecl.Modifier> modifiers = EnumSet.noneOf(IDecl.Modifier.class);
-        while (MODIFIERS.containsKey(this.cursor.peek().kind())) {
+        while (MODIFIERS.containsKey(this.cursor.peek().kind()) || this.contextualModifierAhead(className)) {
             final Token word = this.cursor.advance();
-            final IDecl.Modifier modifier = MODIFIERS.get(word.kind());
+            final IDecl.Modifier modifier = word.is(TokenKind.IDENTIFIER) ? CONTEXTUAL_MODIFIERS.get(word.text())
+                    : MODIFIERS.get(word.kind());
             if (!modifiers.add(modifier)) {
                 this.diagnostics.error(word.line(), word.column(),
                         SigmaError.DUPLICATE_MODIFIER, modifier.text());
@@ -510,28 +689,30 @@ final class DeclarationParser {
     }
 
     private List<IDecl.Parameter> parseParameters() {
-        final List<IDecl.Parameter> parameters = new ArrayList<>();
-        if (!this.cursor.expect(TokenKind.LEFT_PAREN)) {
-            return parameters;
+        return this.types.parseParameters();
+    }
+
+    /*
+     * Whether the word here is one of the modifiers that are words only where a modifier stands, which a program
+     * written before them may have used as a name: another modifier or a declaration follows it, a type and a name do,
+     * or the class's own name and a bracket, as a constructor's.
+     */
+    private boolean contextualModifierAhead(final String className) {
+        final Token word = this.cursor.peek();
+        if (!word.is(TokenKind.IDENTIFIER) || !CONTEXTUAL_MODIFIERS.containsKey(word.text())) {
+            return false;
         }
-        while (!this.cursor.check(TokenKind.RIGHT_PAREN) && !this.cursor.atEnd()) {
-            final int before = this.cursor.at();
-            final Token start = this.cursor.peek();
-            final boolean outward = this.cursor.match(TokenKind.OUT);
-            final TypeRef type = this.types.parseTypeRef();
-            if (type == null) {
-                break;
-            }
-            final String name = this.cursor.expectIdentifier();
-            parameters.add(new IDecl.Parameter(outward, type, name, start.line(), start.column()));
-            if (!this.cursor.match(TokenKind.COMMA)) {
-                break;
-            }
-            if (this.cursor.at() == before) {
-                this.cursor.advance();
-            }
+        final Token next = this.cursor.tokenAt(this.cursor.at() + 1);
+        if (MODIFIERS.containsKey(next.kind()) || TYPE_DECLARATION_STARTS.contains(next.kind())
+                || next.is(TokenKind.VOID) || next.is(TokenKind.EVENT)
+                || next.is(TokenKind.IDENTIFIER) && CONTEXTUAL_MODIFIERS.containsKey(next.text())) {
+            return true;
         }
-        this.cursor.expect(TokenKind.RIGHT_PAREN);
-        return parameters;
+        if (className != null && next.is(TokenKind.IDENTIFIER) && next.text().equals(className)
+                && this.cursor.kindAt(this.cursor.at() + 2) == TokenKind.LEFT_PAREN) {
+            return true;
+        }
+        final int after = this.types.scanType(this.cursor.at() + 1);
+        return after > 0 && this.cursor.kindAt(after) == TokenKind.IDENTIFIER;
     }
 }

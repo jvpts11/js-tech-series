@@ -11,6 +11,8 @@ import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.ast.IExpr;
 import dev.jstech.computers.sigma.ast.IStmt;
 import dev.jstech.computers.sigma.ast.Operator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Whether a parameter the method fills in has been given a value by every way out of the method.
@@ -29,9 +31,20 @@ import dev.jstech.computers.sigma.ast.Operator;
 final class DefiniteAssignment {
 
     private final IReporter reporter;
+    /** The labels of the body being checked that start a region that may be switched off. */
+    private Set<String> switchable = Set.of();
 
     DefiniteAssignment(final IReporter reporter) {
         this.reporter = reporter;
+    }
+
+    /** Says which labels of the body being checked start a region that may be switched off. */
+    void regions(final Set<String> labels) {
+        this.switchable = Set.copyOf(labels);
+    }
+
+    Set<String> regions() {
+        return this.switchable;
     }
 
     /** How the checker says something, so a look-ahead can still be taken back. */
@@ -42,13 +55,15 @@ final class DefiniteAssignment {
     /** Whether {@code name} is certainly given a value by the time control leaves {@code statement}. */
     boolean assignedBy(final IStmt statement, final String name, final boolean assigned) {
         return switch (statement) {
-            case IStmt.Block block -> {
-                boolean now = assigned;
-                for (final IStmt inner : block.statements()) {
-                    now = this.assignedBy(inner, name, now);
-                }
-                yield now;
+            case IStmt.Block block -> this.run(block.statements(), name, assigned);
+            // A label is a way in, which what came before it does not cover.
+            case IStmt.Labeled labeled -> {
+                final boolean inside = this.assignedBy(labeled.statement(), name, false);
+                yield !this.switchable.contains(labeled.label()) && inside;
             }
+            // Control never goes on past a goto; where it lands is checked where the label stands.
+            case IStmt.Goto ignored -> true;
+            case IStmt.ComeFrom ignored -> false;
             case IStmt.ExprStmt expression -> assigned || writesTo(expression.expression(), name);
             case IStmt.LocalDecl local -> assigned || writesTo(local.initializer(), name);
             case IStmt.Return give -> {
@@ -65,6 +80,20 @@ final class DefiniteAssignment {
             }
             case IStmt.DoWhile loop -> this.assignedBy(loop.body(), name, assigned);
             case IStmt.Lock lock -> this.assignedBy(lock.body(), name, assigned);
+            case IStmt.Unsafe unsafe -> this.assignedBy(unsafe.body(), name, assigned);
+            // An exception thrown goes on nowhere here, so it owes the caller nothing.
+            case IStmt.Throw ignored -> true;
+            /*
+             * A try gives the value when what it protects gives it and so does every catch, since control may leave by
+             * any of them; or when its finally does, which runs whichever way it is left.
+             */
+            case IStmt.Try guarded -> {
+                boolean every = this.assignedBy(guarded.body(), name, assigned);
+                for (final IStmt.Catch one : guarded.catches()) {
+                    every &= this.assignedBy(one.body(), name, assigned);
+                }
+                yield every || guarded.cleanup() != null && this.assignedBy(guarded.cleanup(), name, assigned);
+            }
             case IStmt.While loop -> this.aside(loop.body(), name, assigned);
             case IStmt.For loop -> this.aside(loop.body(), name, assigned);
             case IStmt.ForEach loop -> this.aside(loop.body(), name, assigned);
@@ -90,6 +119,28 @@ final class DefiniteAssignment {
     }
 
     /*
+     * A run of statements, one after the next. A write made while the name is ignored vanishes, so it gives nothing;
+     * and a region that may be switched off may be passed over to the end of the run, so nothing in it counts after.
+     */
+    private boolean run(final List<IStmt> statements, final String name, final boolean assigned) {
+        boolean now = assigned;
+        boolean ignoring = false;
+        boolean passable = false;
+        for (final IStmt inner : statements) {
+            if (inner instanceof IStmt.Ignore place && place.place() instanceof IExpr.Name named
+                    && named.identifier().equals(name)) {
+                ignoring = !place.remember();
+            }
+            if (inner instanceof IStmt.Labeled labeled && this.switchable.contains(labeled.label())) {
+                passable = true;
+            }
+            final boolean after = this.assignedBy(inner, name, now);
+            now = ignoring ? now : after;
+        }
+        return !passable && now;
+    }
+
+    /*
      * A body that may not run at all cannot be counted on to have given the value, but a way out
      * inside it still has to be checked.
      */
@@ -105,9 +156,10 @@ final class DefiniteAssignment {
     static boolean writesTo(final IExpr expression, final String name) {
         return switch (expression) {
             case null -> false;
-            case IExpr.Assign assign -> (assign.operator() == Operator.ASSIGN
-                    && assign.target() instanceof IExpr.Name target && target.identifier().equals(name))
+            case IExpr.Assign assign -> (assign.operator() == Operator.ASSIGN && takes(assign.target(), name))
                     || writesTo(assign.target(), name) || writesTo(assign.value(), name);
+            // A tuple's values may write; a place it is taken apart into is written by the assignment around it.
+            case IExpr.Tuple tuple -> tuple.elements().stream().anyMatch(element -> writesTo(element, name));
             // A place handed with ref is read before it is written, so it has to have been given a value already.
             case IExpr.OutArgument outward -> !outward.ref() && outward.name().equals(name);
             case IExpr.Binary binary -> writesTo(binary.left(), name) || writesTo(binary.right(), name);
@@ -120,9 +172,17 @@ final class DefiniteAssignment {
             case IExpr.New created -> created.arguments().stream()
                     .anyMatch(argument -> writesTo(argument, name));
             case IExpr.NewArray created -> writesTo(created.length(), name);
+            case IExpr.StackAlloc created -> writesTo(created.length(), name);
             case IExpr.Cast cast -> writesTo(cast.value(), name);
             case IExpr.TypeTest test -> writesTo(test.value(), name);
             default -> false;
         };
+    }
+
+    /* Whether an assignment to that target gives the name a value: the name itself, or a tuple it is taken into. */
+    private static boolean takes(final IExpr target, final String name) {
+        return target instanceof IExpr.Name named && named.identifier().equals(name)
+                || target instanceof IExpr.Tuple places && places.elements().stream()
+                .anyMatch(place -> takes(place, name));
     }
 }

@@ -307,8 +307,14 @@ final class BareFunctionChecker {
         return forms;
     }
 
-    /** The type a form writes by name: a number, a truth or nothing by its keyword, anything else by its name. */
+    /**
+     * The type a form writes by name: a number, a truth or nothing by its keyword, a pointer by what it points at and
+     * a star, anything else by its name.
+     */
     private ITypeSymbol typeNamed(final String name) {
+        if (name.endsWith("*")) {
+            return new ITypeSymbol.PointerType(this.typeNamed(name.substring(0, name.length() - 1)));
+        }
         final ITypeSymbol.Primitive primitive = ITypeSymbol.Primitive.written(name);
         return primitive != null ? primitive : this.scope.builtIns().type(name, 0);
     }

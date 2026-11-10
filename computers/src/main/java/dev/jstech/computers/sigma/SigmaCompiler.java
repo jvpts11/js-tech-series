@@ -17,6 +17,7 @@ import dev.jstech.computers.vm.listing.AsmType;
 import dev.jstech.computers.vm.listing.AsmWriter;
 import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
+import java.util.Collection;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -101,6 +102,15 @@ public final class SigmaCompiler {
     }
 
     /**
+     * The same, with more symbols defined for the sources' directives than every build defines: the era of the
+     * machine building it, and the ones a project names.
+     */
+    public static Result compile(final List<SourceFile> sources, final String isa, final LanguageLevel level,
+                                 final int version, final Collection<String> defined) {
+        return compile(sources, isa, SigmaSemantics.Options.program(level, version).defining(defined));
+    }
+
+    /**
      * What the sources declare, a system or a desktop, read without making a listing: a desktop is a look and the
      * programs that come with it, with nothing of its own to run. Its listing is null whatever is found.
      */
@@ -124,7 +134,9 @@ public final class SigmaCompiler {
     private static Result compile(final List<SourceFile> sources, final String isa,
                                   final SigmaSemantics.Options options) {
         final DiagnosticBag bag = new DiagnosticBag("");
-        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag, options);
+        // Every build defines the instruction set it is for, by the name a directive can write.
+        final SigmaSemantics.Analysis analysis = SigmaSemantics.analyse(sources, bag,
+                options.defining(List.of(SigmaVersions.symbolOf(isa))));
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }

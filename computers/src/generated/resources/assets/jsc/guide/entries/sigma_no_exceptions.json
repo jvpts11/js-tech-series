@@ -135,6 +135,14 @@
           {
             "words": "jsc.guide.sigma_no_exceptions.table2_6_2"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_7_1"
+          },
+          {
+            "words": "jsc.guide.sigma_no_exceptions.table2_7_2"
+          }
         ]
       ]
     },
@@ -205,7 +213,8 @@
       "type": "see",
       "entries": [
         "jsc:sigma_runtime_stops",
-        "jsc:sigma_dispose"
+        "jsc:sigma_dispose",
+        "jsc:sigma_exceptions"
       ]
     }
   ],

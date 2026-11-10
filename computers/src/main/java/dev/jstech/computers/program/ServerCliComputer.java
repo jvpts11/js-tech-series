@@ -34,6 +34,7 @@ import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.CommandScope;
+import dev.jstech.computers.program.cli.Signals;
 import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.ICliMachine;
@@ -388,8 +389,13 @@ public final class ServerCliComputer extends ServerCliNetwork {
 
     @Override
     public OpResult stopSigma(final int id) {
+        return this.stopSigma(id, true);
+    }
+
+    /* A program stopped with its farewell, or at once, as kill -9 stops one. */
+    private OpResult stopSigma(final int id, final boolean farewell) {
         final ProgramService running = sigma();
-        return running == null ? OpResult.fail(CliTexts.SAID_BY.with(SIGMA, CANNOT_RUN)) : running.stop(id);
+        return running == null ? OpResult.fail(CliTexts.SAID_BY.with(SIGMA, CANNOT_RUN)) : running.stop(id, farewell);
     }
 
     @Override
@@ -433,8 +439,10 @@ public final class ServerCliComputer extends ServerCliNetwork {
     @Override
     public OpResult signal(final int pid, final int signal, final String typed) {
         final IOsHost machine = unixMachine();
+        // KILL gives a program no farewell, so neither its finally blocks nor its goodbye run; every other signal does.
+        final boolean farewell = signal != Signals.KILL;
         if (machine == null) {
-            return stopSigma(pid);
+            return stopSigma(pid, farewell);
         }
         if (pid == SystemProcesses.INIT_PID) {
             // The page keeps the line that did it as the console showed it, at the prompt it was typed at.
@@ -450,7 +458,7 @@ public final class ServerCliComputer extends ServerCliNetwork {
                 return OpResult.ok(SERVICE_ENDED.with(pid));
             }
         }
-        return stopSigma(pid);
+        return stopSigma(pid, farewell);
     }
 
     /* Whether that OpenBSD set was left off this machine by its installer; nothing is left off any other system. */

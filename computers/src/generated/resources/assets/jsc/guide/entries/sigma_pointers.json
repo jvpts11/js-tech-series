@@ -1,0 +1,275 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_pointers.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_pointers.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_pointers.table1",
+      "heads": [
+        "jsc.guide.sigma_pointers.table1_head1",
+        "jsc.guide.sigma_pointers.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "&x"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "*p"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "p->Count"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "p[i]"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "p + n, p - n, p++"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "p - q"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "p == q, p < q"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "(byte*) p"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "stackalloc int[n]"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "sizeof(Cell)"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_pointers.table2",
+      "heads": [
+        "jsc.guide.sigma_pointers.table2_head1",
+        "jsc.guide.sigma_pointers.table2_head2",
+        "jsc.guide.sigma_pointers.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Memory.Alloc(bytes)"
+          },
+          {
+            "literal": "malloc(bytes)"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table2_1_3"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.AllocZeroed(count, size)"
+          },
+          {
+            "literal": "calloc(count, size)"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.Resize(p, bytes)"
+          },
+          {
+            "literal": "realloc(p, bytes)"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table2_3_3"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.Free(p)"
+          },
+          {
+            "literal": "free(p)"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table2_4_3"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.Copy(dest, src, bytes)"
+          },
+          {
+            "literal": "memcpy(dest, src, bytes)"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table2_5_3"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.Fill(p, value, bytes)"
+          },
+          {
+            "literal": "memset(p, value, bytes)"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table2_6_3"
+          }
+        ],
+        [
+          {
+            "literal": "Memory.Compare(a, b, bytes)"
+          },
+          {
+            "literal": "memcmp(a, b, bytes)"
+          },
+          {
+            "words": "jsc.guide.sigma_pointers.table2_7_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_pointers.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_pointers.text4"
+    },
+    {
+      "type": "listing",
+      "language": "sg",
+      "lines": [
+        "namespace Tools;",
+        "",
+        "struct Cell",
+        "{",
+        "    public int Value;",
+        "    public Cell* Next;",
+        "}",
+        "",
+        "class Cells",
+        "{",
+        "    static void Main()",
+        "    {",
+        "        Cell* first = null;",
+        "        for (int i = 1; i <= 3; i++)",
+        "        {",
+        "            Cell* made = calloc(1, sizeof(Cell));",
+        "            made->Value = i;",
+        "            made->Next = first;",
+        "            first = made;",
+        "        }",
+        "        int total = 0;",
+        "        for (Cell* at = first; at != null; at = at->Next)",
+        "        {",
+        "            total += at->Value;",
+        "        }",
+        "        printf(\"%d\\n\", total);",
+        "    }",
+        "}"
+      ],
+      "name": "Cells.sg"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_pointers.text5"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_pointers.definition1",
+      "term": "jsc.guide.sigma_pointers.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sigma_pointers.definition2",
+      "term": "jsc.guide.sigma_pointers.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sigma_pointers.fix1",
+          "problem": "jsc.guide.sigma_pointers.problem1"
+        },
+        {
+          "fix": "jsc.guide.sigma_pointers.fix2",
+          "problem": "jsc.guide.sigma_pointers.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sigma_exceptions",
+        "jsc:sigma_dispose"
+      ]
+    }
+  ],
+  "id": "jsc:sigma_pointers",
+  "order": 400,
+  "section": "jsc:sigma_version_three_section",
+  "title": "jsc.guide.sigma_pointers.title"
+}

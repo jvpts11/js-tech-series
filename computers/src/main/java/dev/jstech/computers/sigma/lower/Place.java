@@ -85,4 +85,16 @@ public sealed interface Place {
             return true;
         }
     }
+
+    /**
+     * A place in raw memory: what a pointer reaches, a variable whose address was taken, or a field of a struct lying
+     * in either, reached through the address it is at.
+     */
+    record Memory(IExpr target) implements Place {
+
+        @Override
+        public boolean overSomething() {
+            return true;
+        }
+    }
 }

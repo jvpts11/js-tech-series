@@ -22,6 +22,7 @@ import dev.jstech.computers.vm.listing.AsmReader;
 import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.ListingProblem;
 import dev.jstech.computers.vm.listing.Opcode;
+import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -66,7 +67,8 @@ class InstructionExecutorTest {
         final MonitorTable locks = new MonitorTable();
         final ThreadScheduler scheduler = new ThreadScheduler();
         return new Parts(process, calls, locks, scheduler,
-                new InstructionExecutor(PROGRAM, process.heap0(), scheduler, locks, fields, calls, objects));
+                new InstructionExecutor(PROGRAM, process.heap0(), scheduler, locks, fields, calls, objects,
+                        new HashSet<>(), new Unwinder(process, PROGRAM, process.heap0()), process.memory()));
     }
 
     /** Runs the main thread until the frame it began in is on top again. */

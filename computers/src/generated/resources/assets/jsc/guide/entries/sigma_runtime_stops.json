@@ -168,6 +168,28 @@
           {
             "words": "jsc.guide.sigma_runtime_stops.table1_13_3"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_14_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_14_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_14_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_15_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_15_2"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table1_15_3"
+          }
         ]
       ]
     },
@@ -678,6 +700,46 @@
           {
             "words": "jsc.guide.sigma_runtime_stops.table2_62_2"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_63_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_63_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_64_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_64_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_65_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_65_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_66_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_66_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_67_1"
+          },
+          {
+            "words": "jsc.guide.sigma_runtime_stops.table2_67_2"
+          }
         ]
       ]
     },
@@ -841,7 +903,7 @@
     }
   ],
   "id": "jsc:sigma_runtime_stops",
-  "order": 431,
+  "order": 440,
   "section": "jsc:errors_running",
   "title": "jsc.guide.sigma_runtime_stops.title"
 }

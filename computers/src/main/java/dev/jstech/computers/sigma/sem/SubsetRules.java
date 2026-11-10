@@ -146,6 +146,44 @@ public final class SubsetRules {
             "strings with holes in them");
     private static final TextKey INTERPOLATION_INSTEAD = TextKey.of("jsc.sigma.subset_rules.interpolation_instead",
             "add the pieces together with +");
+    private static final TextKey GOTO_CASE_INSTEAD = TextKey.of("jsc.sigma.subset_rules.goto_case_instead",
+            "put a label of your own before the case's statements, and goto that");
+    private static final TextKey SEALED_INSTEAD = TextKey.of("jsc.sigma.subset_rules.sealed_instead",
+            "leave the word out");
+    private static final TextKey STATIC_CLASSES = TextKey.of("jsc.sigma.subset_rules.static_classes",
+            "static classes");
+    private static final TextKey STATIC_CLASSES_INSTEAD = TextKey.of("jsc.sigma.subset_rules.static_classes_instead",
+            "write a class whose members are all static, and never make one");
+    private static final TextKey PARAMS_INSTEAD = TextKey.of("jsc.sigma.subset_rules.params_instead",
+            "take an array, and make one where you call");
+    private static final TextKey LOCAL_FUNCTIONS = TextKey.of("jsc.sigma.subset_rules.local_functions",
+            "local functions");
+    private static final TextKey LOCAL_FUNCTIONS_INSTEAD = TextKey.of(
+            "jsc.sigma.subset_rules.local_functions_instead", "write a method of the class beside this one");
+    private static final TextKey TUPLES = TextKey.of("jsc.sigma.subset_rules.tuples", "tuples");
+    private static final TextKey EXCEPTIONS = TextKey.of("jsc.sigma.subset_rules.exceptions", "exceptions");
+    private static final TextKey EXCEPTIONS_INSTEAD = TextKey.of("jsc.sigma.subset_rules.exceptions_instead",
+            "give back a code that says what went wrong, and test it where you call");
+    private static final TextKey EXTENSION_METHODS = TextKey.of("jsc.sigma.subset_rules.extension_methods",
+            "extension methods");
+    private static final TextKey EXTENSION_METHODS_INSTEAD = TextKey.of(
+            "jsc.sigma.subset_rules.extension_methods_instead", "write a static method and hand it the value");
+    private static final TextKey OPERATORS = TextKey.of("jsc.sigma.subset_rules.operators",
+            "operators of your own types");
+    private static final TextKey OPERATORS_INSTEAD = TextKey.of("jsc.sigma.subset_rules.operators_instead",
+            "write a static method with a name, and call it");
+    private static final TextKey INDEXERS = TextKey.of("jsc.sigma.subset_rules.indexers", "indexers");
+    private static final TextKey INDEXERS_INSTEAD = TextKey.of("jsc.sigma.subset_rules.indexers_instead",
+            "write a method that takes the key, and one that takes the key and the value");
+    private static final TextKey TUPLES_INSTEAD = TextKey.of("jsc.sigma.subset_rules.tuples_instead",
+            "write a struct with a field for each value");
+    /** What to write instead of nameof, which is refused where a call is checked: a method may be called nameof. */
+    static final TextKey NAMEOF_INSTEAD = TextKey.of("jsc.sigma.subset_rules.nameof_instead",
+            "write the name in quotes");
+    private static final TextKey UNSAFE_INSTEAD = TextKey.of("jsc.sigma.subset_rules.unsafe_instead",
+            "Sigma is unsafe throughout, as C was, so leave the word out");
+    private static final TextKey STACKALLOC_INSTEAD = TextKey.of("jsc.sigma.subset_rules.stackalloc_instead",
+            "take the memory with malloc, and give it back with free");
 
     private final DiagnosticBag diagnostics;
 
@@ -232,12 +270,41 @@ public final class SubsetRules {
         if (klass.modifiers().contains(IDecl.Modifier.ABSTRACT)) {
             this.refuse(klass, ABSTRACT_CLASSES.text(), ABSTRACT_CLASSES_INSTEAD);
         }
+        if (klass.modifiers().contains(IDecl.Modifier.STATIC)) {
+            this.refuse(klass, STATIC_CLASSES.text(), STATIC_CLASSES_INSTEAD);
+        }
+        this.sealed(klass);
         for (final IDecl.IMemberDecl member : klass.members()) {
             this.member(member);
         }
     }
 
+    private void sealed(final IDecl declaration) {
+        if (declaration.modifiers().contains(IDecl.Modifier.SEALED)) {
+            this.refuse(declaration, Text.literal(IDecl.Modifier.SEALED.text()), SEALED_INSTEAD);
+        }
+        if (declaration.modifiers().contains(IDecl.Modifier.UNSAFE)) {
+            this.refuse(declaration, Text.literal(IDecl.Modifier.UNSAFE.text()), UNSAFE_INSTEAD);
+        }
+    }
+
+    /* The types a parameter list writes, and a params among them. */
+    private void parameters(final List<IDecl.Parameter> parameters) {
+        for (final IDecl.Parameter parameter : parameters) {
+            this.typeRef(parameter.type());
+            if (parameter.many()) {
+                this.refuse(parameter, Text.literal("params"), PARAMS_INSTEAD);
+            }
+            if (parameter.receiver()) {
+                this.refuse(parameter, EXTENSION_METHODS.text(), EXTENSION_METHODS_INSTEAD);
+            }
+        }
+    }
+
     private void member(final IDecl.IMemberDecl member) {
+        if (!(member instanceof IDecl.TypeMember)) {
+            this.sealed(member);
+        }
         switch (member) {
             case IDecl.EventDecl event -> this.refuse(event, EVENTS.text(), EVENTS_INSTEAD);
             case IDecl.PropertyDecl property -> this.refuse(property, PROPERTIES.text(), PROPERTIES_INSTEAD);
@@ -247,9 +314,7 @@ public final class SubsetRules {
             }
             case IDecl.MethodDecl method -> this.method(method);
             case IDecl.ConstructorDecl constructor -> {
-                for (final IDecl.Parameter parameter : constructor.parameters()) {
-                    this.typeRef(parameter.type());
-                }
+                this.parameters(constructor.parameters());
                 if (constructor.chained() != null) {
                     this.arguments(constructor.chained().arguments());
                 }
@@ -263,16 +328,29 @@ public final class SubsetRules {
         if (method.modifiers().contains(IDecl.Modifier.ABSTRACT)) {
             this.refuse(method, ABSTRACT_METHODS.text(), ABSTRACT_METHODS_INSTEAD);
         }
-        this.typeRef(method.returnType());
-        for (final IDecl.Parameter parameter : method.parameters()) {
-            this.typeRef(parameter.type());
+        if (method.modifiers().contains(IDecl.Modifier.OPERATOR)) {
+            this.refuse(method, OPERATORS.text(), OPERATORS_INSTEAD);
         }
+        if (method.modifiers().contains(IDecl.Modifier.INDEXER)) {
+            this.refuse(method, INDEXERS.text(), INDEXERS_INSTEAD);
+        }
+        this.typeRef(method.returnType());
+        this.parameters(method.parameters());
         this.block(method.body());
     }
 
     /** A type written anywhere: the absent ones, and any that was given arguments, since there are no generics. */
     private void typeRef(final TypeRef type) {
         if (type == null) {
+            return;
+        }
+        if (type.isTuple()) {
+            this.refuse(type, TUPLES.text(), TUPLES_INSTEAD);
+            return;
+        }
+        // A pointer is C's, and what it points at is what is asked about.
+        if (type.isPointer()) {
+            this.typeRef(type.arguments().getFirst());
             return;
         }
         if (!type.arguments().isEmpty()) {
@@ -310,6 +388,10 @@ public final class SubsetRules {
                 this.refuse(held, Text.literal("lock"), LOCK_INSTEAD);
                 this.expression(held.target());
                 this.statement(held.body());
+            }
+            case IStmt.Unsafe unsafe -> {
+                this.refuse(unsafe, Text.literal(IDecl.Modifier.UNSAFE.text()), UNSAFE_INSTEAD);
+                this.block(unsafe.body());
             }
             case IStmt.Block block -> this.block(block);
             case IStmt.If branch -> {
@@ -351,6 +433,36 @@ public final class SubsetRules {
             case IStmt.ExprStmt expression -> this.expression(expression.expression());
             case IStmt.Return given -> this.expression(given.value());
             case IStmt.Dispose thrown -> this.expression(thrown.target());
+            case IStmt.Labeled labeled -> this.statement(labeled.statement());
+            // C's goto reaches a label, and only a label: a switch's cases are C#'s.
+            case IStmt.Goto jump when jump.target() != IStmt.Goto.Target.LABEL -> this.refuse(jump,
+                    Text.literal(jump.target() == IStmt.Goto.Target.CASE ? "goto case" : "goto default"),
+                    GOTO_CASE_INSTEAD);
+            case IStmt.Ignore place -> this.expression(place.place());
+            case IStmt.Deconstruct taken -> {
+                this.refuse(taken, TUPLES.text(), TUPLES_INSTEAD);
+                this.expression(taken.value());
+            }
+            // Sigma never has exceptions, in any version: a call that can fail answers instead.
+            case IStmt.Try guarded -> {
+                this.refuse(guarded, EXCEPTIONS.text(), EXCEPTIONS_INSTEAD);
+                this.block(guarded.body());
+                for (final IStmt.Catch one : guarded.catches()) {
+                    this.block(one.body());
+                }
+                this.block(guarded.cleanup());
+            }
+            case IStmt.Throw thrown -> {
+                this.refuse(thrown, EXCEPTIONS.text(), EXCEPTIONS_INSTEAD);
+                this.expression(thrown.value());
+            }
+            case IStmt.LocalFunction function -> {
+                this.refuse(function, LOCAL_FUNCTIONS.text(), LOCAL_FUNCTIONS_INSTEAD);
+                this.typeRef(function.returnType());
+                this.parameters(function.body().parameters());
+                this.expression(function.body().body());
+                this.block(function.body().block());
+            }
             case IStmt.Break ignored -> { }
             case IStmt.Continue ignored -> { }
             case IStmt.Empty ignored -> { }
@@ -415,6 +527,16 @@ public final class SubsetRules {
                     this.expression(hole);
                 }
             }
+            case IExpr.Tuple tuple -> {
+                this.refuse(tuple, TUPLES.text(), TUPLES_INSTEAD);
+                this.arguments(tuple.elements());
+            }
+            case IExpr.StackAlloc made -> {
+                this.refuse(made, Text.literal("stackalloc"), STACKALLOC_INSTEAD);
+                this.typeRef(made.elementType());
+                this.expression(made.length());
+            }
+            case IExpr.SizeOf sized -> this.typeRef(sized.type());
             case IExpr.Literal ignored -> { }
             case IExpr.Name ignored -> { }
             case IExpr.This ignored -> { }

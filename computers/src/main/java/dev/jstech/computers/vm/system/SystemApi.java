@@ -44,6 +44,8 @@ public final class SystemApi {
     private static final String SOUND = "System.Sound";
 
     private static final String VOID = "void";
+    /** An address that says nothing of what lies there, which the calls of raw memory take and give. */
+    private static final String VOID_POINTER = "void*";
     private static final String INT = "int";
     private static final String LONG = "long";
     private static final String FLOAT = "float";
@@ -1259,6 +1261,18 @@ public final class SystemApi {
         memory.onType(STRINGS, "Ledger", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
         memory.knownOnType(INT, "Refuse");
         memory.knownOnType(INT, "GoDown");
+        /*
+         * The program's own raw memory, which pointers reach (computers/docs/design/sigma.md): taking a block and
+         * giving it back cost what new and dispose cost, and moving, setting and comparing bytes cost by how many there
+         * are. The values go in C's order, so malloc, memcpy and the rest are these calls under their old names.
+         */
+        memory.onType(VOID_POINTER, "Alloc", MemberKind.PROCESS, CallCost.FREE, LONG);
+        memory.onType(VOID_POINTER, "AllocZeroed", MemberKind.PROCESS, CallCost.FREE, LONG, LONG);
+        memory.onType(VOID_POINTER, "Resize", MemberKind.PROCESS, CallCost.FREE, VOID_POINTER, LONG);
+        memory.onType(VOID, "Free", MemberKind.PROCESS, CallCost.FREE, VOID_POINTER);
+        memory.onType(VOID, "Copy", MemberKind.PROCESS, SigmaCosts.RAW_BYTES, VOID_POINTER, VOID_POINTER, LONG);
+        memory.onType(VOID, "Fill", MemberKind.PROCESS, SigmaCosts.RAW_BYTES, VOID_POINTER, INT, LONG);
+        memory.onType(INT, "Compare", MemberKind.PROCESS, SigmaCosts.RAW_BYTES, VOID_POINTER, VOID_POINTER, LONG);
         return new TypeSpec(OS, "Memory", memory.members);
     }
 

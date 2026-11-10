@@ -83,6 +83,9 @@ public final class AsmWriter {
             text.append(" : ").append(String.join(", ", type.bases()));
         }
         text.append('\n');
+        if (!type.source().isEmpty()) {
+            text.append(".source ").append(type.source()).append('\n');
+        }
         for (final AsmType.Value value : type.values()) {
             text.append(".value ").append(value.name()).append(" = ").append(value.number()).append('\n');
         }
@@ -108,8 +111,17 @@ public final class AsmWriter {
         if (!method.hasBody()) {
             return;
         }
-        for (final Instruction instruction : method.body()) {
-            writeInstruction(text, instruction);
+        for (final AsmMethod.Handler handler : method.handlers()) {
+            text.append(".try ").append(handler.write()).append('\n');
+        }
+        int position = 0;
+        for (int i = 0; i < method.body().size(); i++) {
+            // The source line is said where it changes, so a run of instructions from one line says it once.
+            if (method.positionOf(i) != position && method.positionOf(i) > 0) {
+                position = method.positionOf(i);
+                text.append(".line ").append(position).append('\n');
+            }
+            writeInstruction(text, method.body().get(i));
         }
     }
 

@@ -164,15 +164,20 @@ final class SigmaProgram implements IMachineRuntime {
 
     @Override
     public int farewell(final int budget) {
+        if (budget <= 0) {
+            return 0;
+        }
+        // The finally blocks it is inside run first, out of the same budget, and then it is told it is going.
+        final int unwound = this.process.stopping() ? this.paced(budget) : 0;
         final Values.Obj script = this.process.script();
         // A system is told the machine is going down; a script, that it is being stopped.
         final String told = this.process.shape() == Shape.SYSTEM ? "OnShutdown" : "OnDestroy";
-        if (budget <= 0 || script == null || this.process.state() == Process.State.HALTED
+        if (budget - unwound <= 0 || script == null || this.process.state() == Process.State.HALTED
                 || !this.process.declares(script, told)) {
-            return 0;
+            return unwound;
         }
         this.process.beginFirst(script, told);
-        return this.paced(budget);
+        return unwound + this.paced(budget - unwound);
     }
 
     @Override

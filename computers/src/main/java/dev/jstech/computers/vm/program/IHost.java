@@ -8,6 +8,7 @@
 package dev.jstech.computers.vm.program;
 
 import dev.jstech.computers.vm.system.MemberId;
+import dev.jstech.core.text.Text;
 
 /**
  * Everything a running program asks of the world outside it.
@@ -90,6 +91,15 @@ public interface IHost {
      * a window. The host decides what that is worth; a host with no world around it lets it go.
      */
     default void reached(final ProgramMilestone milestone) {
+    }
+
+    /**
+     * What a program that read or wrote outside its memory, and caught nothing, dies with: the words of the system the
+     * machine runs, as a segmentation fault reads on a Unix (computers/docs/design/sigma.md). A host with no system
+     * says the plain words it is handed.
+     */
+    default Text accessViolation(final Text plain) {
+        return plain;
     }
 
     /** A host for a program that has no world around it, whose clock never moves. */

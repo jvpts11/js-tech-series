@@ -203,6 +203,17 @@
           {
             "words": "jsc.guide.sigma_listing_errors.table1_14_3"
           }
+        ],
+        [
+          {
+            "literal": "A4019"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_15_2"
+          },
+          {
+            "words": "jsc.guide.sigma_listing_errors.table1_15_3"
+          }
         ]
       ]
     },
@@ -287,7 +298,7 @@
     }
   ],
   "id": "jsc:sigma_listing_errors",
-  "order": 430,
+  "order": 439,
   "section": "jsc:errors_listing",
   "title": "jsc.guide.sigma_listing_errors.title"
 }

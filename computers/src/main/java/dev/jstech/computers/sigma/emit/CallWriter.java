@@ -9,6 +9,7 @@ package dev.jstech.computers.sigma.emit;
 
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
+import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.sem.IBinding;
 import dev.jstech.computers.sigma.sem.IMemberSymbol;
 import dev.jstech.computers.sigma.sem.ITypeSymbol;
@@ -55,6 +56,11 @@ final class CallWriter {
         final IExpr callee = expression.callee();
         final boolean throughDelegate = "Invoke".equals(method.name())
                 && method.owner().kind() == NamedType.Kind.DELEGATE;
+        if (!throughDelegate && !method.isStatic() && callee instanceof IExpr.Member member
+                && this.emitter.model.inRawMemory(member.target())) {
+            this.callOnMemory(member.target(), expression, method);
+            return;
+        }
         if (throughDelegate) {
             this.values.value(callee, null);
         } else if (!method.isStatic()) {
@@ -64,8 +70,31 @@ final class CallWriter {
                 this.body.pushThis();
             }
         }
-        this.arguments(expression.arguments(), method);
+        this.arguments(expression.arguments(), method, expression);
         this.body.emit(throughDelegate ? Opcode.CALLVIRT : Opcode.CALL, methodRef(method));
+        this.storeOutward(expression.arguments(), method);
+    }
+
+    /*
+     * A method of a struct lying in raw memory, as C# calls one through a pointer: the struct is read out, the method
+     * runs on what was read, and whatever it changed is written back where the struct lies.
+     */
+    private void callOnMemory(final IExpr target, final IExpr.Call expression,
+                              final IMemberSymbol.MethodSymbol method) {
+        final ITypeSymbol type = this.emitter.model.typeOf(target);
+        final int address = this.body.hidden();
+        final int copy = this.body.hidden();
+        this.values.address(target);
+        this.body.emit(Opcode.STLOC, new IOperand.Slot(address));
+        this.body.emit(Opcode.LDLOC, new IOperand.Slot(address));
+        this.emitter.raw.read(type, this.body, this.body::emit);
+        this.body.emit(Opcode.STLOC, new IOperand.Slot(copy));
+        this.body.emit(Opcode.LDLOC, new IOperand.Slot(copy));
+        this.arguments(expression.arguments(), method, expression);
+        this.body.emit(Opcode.CALL, methodRef(method));
+        this.body.emit(Opcode.LDLOC, new IOperand.Slot(address));
+        this.body.emit(Opcode.LDLOC, new IOperand.Slot(copy));
+        this.emitter.raw.write(type, this.body, this.body::emit);
         this.storeOutward(expression.arguments(), method);
     }
 
@@ -74,7 +103,7 @@ final class CallWriter {
         final IMemberSymbol chosen = this.emitter.model.callOf(expression);
         final IMemberSymbol.MethodSymbol constructor = chosen instanceof IMemberSymbol.MethodSymbol method
                 ? method : null;
-        this.arguments(expression.arguments(), constructor);
+        this.arguments(expression.arguments(), constructor, expression);
         final ITypeSymbol type = this.emitter.model.typeOf(expression);
         this.body.emit(Opcode.NEWOBJ, new IOperand.Constructor(type == null ? "object" : type.describe(),
                 constructor == null ? List.of() : Emitter.writtenParameters(constructor)));
@@ -91,20 +120,42 @@ final class CallWriter {
         final IMemberSymbol.MethodSymbol chosen =
                 this.emitter.model.callOf(call) instanceof IMemberSymbol.MethodSymbol picked
                         ? picked : constructorOf(target, call.arguments().size());
-        this.arguments(call.arguments(), chosen);
+        this.arguments(call.arguments(), chosen, call);
         this.body.emit(Opcode.CALL, new IOperand.Method(target.qualifiedName(), AsmMethod.CONSTRUCTOR,
                 chosen == null ? List.of() : Emitter.writtenParameters(chosen), "void"));
     }
 
-    /** The values a call takes, in order, leaving out the ones it is going to fill in itself. */
-    private void arguments(final List<IExpr> arguments, final IMemberSymbol.MethodSymbol method) {
-        for (int i = 0; i < arguments.size(); i++) {
+    /**
+     * The values a call takes, in order, leaving out the ones it is going to fill in itself. A call that hands its
+     * params array over as values written one by one has the array made from them, last.
+     */
+    private void arguments(final List<IExpr> arguments, final IMemberSymbol.MethodSymbol method, final INode at) {
+        final boolean expanded = method != null && this.emitter.model.expanded(at);
+        final int fixed = expanded ? method.parameters().size() - 1 : arguments.size();
+        for (int i = 0; i < fixed; i++) {
             final IMemberSymbol.ParameterSymbol parameter = method == null
                     || i >= method.parameters().size() ? null : method.parameters().get(i);
             if (parameter != null && parameter.outward()) {
                 continue;
             }
             this.values.copied(arguments.get(i), parameter == null ? null : parameter.type());
+        }
+        if (expanded) {
+            this.array(arguments.subList(fixed, arguments.size()), method.parameters().getLast());
+        }
+    }
+
+    /** A params array made from the values handed over: as long as there are values, each in its place in order. */
+    private void array(final List<IExpr> values, final IMemberSymbol.ParameterSymbol parameter) {
+        final ITypeSymbol element = parameter.type() instanceof ITypeSymbol.ArrayType array
+                ? array.element() : parameter.type();
+        this.body.emit(Opcode.LDC_I4, new IOperand.I4(values.size()));
+        this.body.emit(Opcode.NEWARR, new IOperand.Type(element.describe()));
+        for (int i = 0; i < values.size(); i++) {
+            this.body.emit(Opcode.DUP);
+            this.body.emit(Opcode.LDC_I4, new IOperand.I4(i));
+            this.values.copied(values.get(i), element);
+            this.body.emit(Opcode.STELEM);
         }
     }
 
@@ -118,7 +169,9 @@ final class CallWriter {
                 continue;
             }
             final IBinding binding = this.emitter.model.bindingOf(arguments.get(i));
-            if (binding instanceof IBinding.Variable variable && this.body.kept(variable)) {
+            if (binding instanceof IBinding.Variable variable && this.emitter.model.isInMemory(variable)) {
+                this.values.storeInMemory(variable);
+            } else if (binding instanceof IBinding.Variable variable && this.body.kept(variable)) {
                 final int held = this.body.hidden();
                 this.body.emit(Opcode.STLOC, new IOperand.Slot(held));
                 this.body.pushClosure();

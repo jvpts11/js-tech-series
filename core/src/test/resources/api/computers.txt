@@ -169,7 +169,8 @@ stable 7
 8 dev.jstech.computers.api.language.IProgrammingLanguage  default ILanguageProcess restore(String, CompoundTag, int, IMachineView)
 8 dev.jstech.computers.api.language.IProgrammingLanguage  default ILanguageProcess start(String, IMachineView, List<String>)
 8 dev.jstech.computers.api.language.IProgrammingLanguage  default int stateVersion()
-8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileOptions  type record(String isa, int languageVersion)
+19 dev.jstech.computers.api.language.IProgrammingLanguage.CompileOptions  type record(String isa, int languageVersion, List<String> defined)
+19 dev.jstech.computers.api.language.IProgrammingLanguage.CompileOptions  new(String, int)
 8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileOptions  static CompileOptions forIsa(String)
 8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileOptions  static final int NEWEST
 8 dev.jstech.computers.api.language.IProgrammingLanguage.CompileResult  type record(String binary, List<Complaint> complaints)

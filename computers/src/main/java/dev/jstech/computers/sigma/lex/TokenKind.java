@@ -108,6 +108,8 @@ public enum TokenKind {
     COLON(":"),
     QUESTION("?"),
     ARROW("=>"),
+    /** {@code p->F}, a field of what a pointer points at. */
+    POINTER_ARROW("->"),
 
     ASSIGN("="),
     PLUS("+"),

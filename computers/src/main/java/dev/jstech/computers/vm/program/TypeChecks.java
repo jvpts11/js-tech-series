@@ -22,6 +22,8 @@ final class TypeChecks {
     private static final TextKey NOTHING_TO_MAKE = TextKey.of("jsc.vm.type_checks.nothing_to_make",
             "there is nothing here to make a %s");
     private static final TextKey NOT_A = TextKey.of("jsc.vm.type_checks.not_a", "this is not a %s");
+    /** The bits a byte keeps, and the largest number it holds. */
+    private static final int BYTE_BITS = 0xFF;
 
     TypeChecks(final ProgramImage program) {
         this.program = program;
@@ -72,6 +74,8 @@ final class TypeChecks {
             case "double" -> value instanceof Double;
             case "bool" -> value instanceof Boolean;
             case "char" -> value instanceof Character;
+            // A byte runs as a whole number, and is one when that number fits a byte.
+            case "byte" -> value instanceof Integer number && number >= 0 && number <= BYTE_BITS;
             default -> value instanceof Values.Arr array && type.equals(array.element() + "[]")
                     || value instanceof Values.ListValue && type.startsWith("List<")
                     || value instanceof Values.MapValue && type.startsWith("Map<");
@@ -80,7 +84,7 @@ final class TypeChecks {
 
     /** The kinds of value a cast can take a number out of an object as. */
     private enum PrimitiveKind {
-        INT, LONG, FLOAT, DOUBLE, CHAR, BOOL;
+        INT, LONG, FLOAT, DOUBLE, CHAR, BOOL, BYTE;
 
         static PrimitiveKind of(final String written) {
             return switch (written) {
@@ -90,6 +94,7 @@ final class TypeChecks {
                 case "double" -> DOUBLE;
                 case "char" -> CHAR;
                 case "bool" -> BOOL;
+                case "byte" -> BYTE;
                 default -> null;
             };
         }
@@ -102,6 +107,7 @@ final class TypeChecks {
                 case DOUBLE -> Numbers.toDouble(value);
                 case CHAR -> (char) Numbers.toInt(value);
                 case BOOL -> value;
+                case BYTE -> Numbers.toInt(value) & BYTE_BITS;
             };
         }
     }

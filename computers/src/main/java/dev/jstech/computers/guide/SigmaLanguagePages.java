@@ -29,6 +29,7 @@ final class SigmaLanguagePages {
         data(guide, chapter);
         failures(guide, chapter);
         oldStyle(guide, chapter);
+        SigmaVersionThreePages.declare(guide, chapter);
     }
 
     private static void basics(final ModGuide guide, final GuideChapter chapter) {
@@ -66,12 +67,15 @@ final class SigmaLanguagePages {
                         GuideCell.code("if else while for foreach do switch case default break continue return"
                                 + " lock in out"))
                 .row(GuideCell.words("Values and tests"), GuideCell.code("true false null is as"))
-                .row(GuideCell.words("Kept for a later version"),
+                .row(GuideCell.words("Version 3's own, kept by the versions before it"),
                         GuideCell.code("try catch finally throw goto const comefrom abstainfrom reinstate"))
+                .row(GuideCell.words("Words only where version 3 reads them"),
+                        GuideCell.code("sealed params nameof operator unsafe stackalloc sizeof byte ignore remember"))
                 .paragraph("Sigma refuses some of these words, even though the language knows them. The table"
-                        + " \"What Sigma has, and what Sigma# adds\" shows which features each language has. The"
-                        + " words kept for a later version are refused in both languages until that version brings"
-                        + " them, and none of them can be a name.")
+                        + " \"What Sigma has, and what Sigma# adds\" shows which features each language has. A build"
+                        + " held to version 2 refuses the words of version 3, and none of the kept ones can be a name."
+                        + " The words of the last row are words only where the language reads them, so a program may"
+                        + " still use them as names.")
                 .paragraph("A literal is a value written out in the program, such as the number 42, the number 0.5,"
                         + " true, or a text in double quotes. Each literal has a type, and the table shows which one."
                         + " Numbers are written in plain decimal digits. A number with an exponent, such as 1e5, or"
@@ -135,6 +139,10 @@ final class SigmaLanguagePages {
                 .row(GuideCell.words("using System and the System library"), GuideCell.words("No"),
                         GuideCell.words("Yes"))
                 .row(GuideCell.words("Old names, such as printf"), GuideCell.words("Yes"), GuideCell.words("Yes"))
+                .row(GuideCell.words("Version 3: const, goto, the INTERCAL words, #if and pointers"),
+                        GuideCell.words("Yes"), GuideCell.words("Yes"))
+                .row(GuideCell.words("Version 3: exceptions, tuples, unsafe and the small forms of C#"),
+                        GuideCell.words("No"), GuideCell.words("Yes"))
                 .table("Errors in names and literals", "Error", "Message", "What to do")
                 .row(GuideCell.code("S1001"),
                         GuideCell.words("the string was never closed before the end of the line"),
@@ -1047,11 +1055,12 @@ final class SigmaLanguagePages {
     }
 
     private static void noExceptions(final ModGuide guide, final ModGuide.SectionRef section) {
-        guide.page("sigma_no_exceptions", section).titled("No exceptions: Try forms and halts")
+        guide.page("sigma_no_exceptions", section).titled("Without exceptions: Try forms and halts")
                 .paragraph("Many languages report a failed step with an exception, which another part of the program"
-                        + " can catch and handle. This language has no exceptions. It has no try, catch, throw or"
-                        + " finally, and the compiler refuses those words as the start of a statement. When you read"
-                        + " a number from text in Sigma#, use a Try form first, so the program does not stop.")
+                        + " can catch and handle. Sigma has no exceptions, and neither has Sigma# before version 3:"
+                        + " they refuse try, catch, throw and finally. This page is about writing without them. When"
+                        + " you read a number from text, use a Try form first, so the program does not stop."
+                        + " [Exceptions](jsc:sigma_exceptions) shows the ones Sigma# 3 has.")
                 .define("Exception", "A signal that a step failed, which a program can catch and handle somewhere"
                         + " else.")
                 .paragraph("Instead, a program can ask first with a Try form, or it can let the problem stop it. A Try"
@@ -1078,9 +1087,9 @@ final class SigmaLanguagePages {
                         GuideCell.words("A bool: whether the key is there, and"
                         + " its value through out"))
                 .paragraph("A halt is different. The program stops at once, writes a message to its console,"
-                        + " and does not"
-                        + " go on. Nothing catches a halt. The full list of messages is in the"
-                        + " [runtime stops page](jsc:sigma_runtime_stops).")
+                        + " and does not go on. Without exceptions nothing catches a halt; in a Sigma# 3 program that"
+                        + " uses them, most halts are thrown as an exception it may catch. The full list of messages"
+                        + " is in the [runtime stops page](jsc:sigma_runtime_stops).")
                 .table("Halts that the language itself causes", "The message begins with", "Caused by")
                 .row(GuideCell.words("divided by zero"), GuideCell.words("A division with a divisor of zero."))
                 .row(GuideCell.words("took the remainder of a division by zero"),
@@ -1093,6 +1102,9 @@ final class SigmaLanguagePages {
                         GuideCell.words("An object used again after its dispose."))
                 .row(GuideCell.words("out of memory"),
                         GuideCell.words("The program asks for more memory than it may use."))
+                .row(GuideCell.words("attempted to read or write protected memory"),
+                        GuideCell.words("A pointer is read or written outside every block of raw memory. In Sigma"
+                                + " the system says it in its own words, such as Segmentation fault."))
                 .paragraph("A fault is different again. The machine itself failed on one instruction, and only that one"
                         + " program stops. The message says that the runtime could not carry the step out.")
                 .define("Fault", "A failure of the machine itself on one instruction, which stops only that program.")
@@ -1129,8 +1141,9 @@ final class SigmaLanguagePages {
                         "The program stops and says divided by zero.",
                         "Check that the divisor is not zero before you divide.",
                         "The compiler refuses try.",
-                        "Neither language has try: check the value before the step, or use a Try form in Sigma#.")
-                .seeAlso("jsc:sigma_runtime_stops", "jsc:sigma_dispose")
+                        "Sigma, and Sigma# before version 3, have no try: check the value before the step, use a"
+                                + " Try form, or hold the Sigma# project to version 3.")
+                .seeAlso("jsc:sigma_runtime_stops", "jsc:sigma_dispose", "jsc:sigma_exceptions")
                 .register();
     }
 

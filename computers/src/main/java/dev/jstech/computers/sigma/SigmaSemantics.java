@@ -16,10 +16,14 @@ import dev.jstech.computers.sigma.sem.SemanticModel;
 import dev.jstech.computers.sigma.sem.SubsetRules;
 import dev.jstech.computers.sigma.sem.SystemDeclarations;
 import dev.jstech.computers.sigma.sem.TypeRules;
+import dev.jstech.computers.sigma.sem.VersionRules;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Reads a set of files and works out what they mean: the door into the middle of the compiler.
@@ -129,16 +133,22 @@ public final class SigmaSemantics {
      * over a tree the parser had to guess at; the level and the version say how much of the language a
      * source may use.
      */
-    record Options(boolean wholeProgram, boolean tolerant, LanguageLevel level, int version, String entry) {
+    record Options(boolean wholeProgram, boolean tolerant, LanguageLevel level, int version, String entry,
+                   Set<String> defined) {
+
+        Options {
+            defined = defined == null ? Set.of() : Set.copyOf(defined);
+        }
 
         /** Every type, member and body, but no entry point, in the whole language. */
         static Options check() {
-            return new Options(false, false, LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST, null);
+            return new Options(false, false, LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST, null,
+                    SigmaVersions.defined(SigmaVersions.NEWEST));
         }
 
         /** A whole program held to this level and version. */
         static Options program(final LanguageLevel level, final int version) {
-            return new Options(true, false, level, version, null);
+            return new Options(true, false, level, version, null, SigmaVersions.defined(version));
         }
 
         /**
@@ -146,12 +156,20 @@ public final class SigmaSemantics {
          * service a system's build makes out of the system's own sources.
          */
         static Options startingAt(final LanguageLevel level, final int version, final String entry) {
-            return new Options(true, false, level, version, entry);
+            return new Options(true, false, level, version, entry, SigmaVersions.defined(version));
         }
 
         /** What an editor asks for while a file is being typed. */
         static Options whileTyping() {
-            return new Options(false, true, LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST, null);
+            return new Options(false, true, LanguageLevel.SIGMA_SHARP, SigmaVersions.NEWEST, null,
+                    SigmaVersions.defined(SigmaVersions.NEWEST));
+        }
+
+        /** The same, with more symbols defined for the directives: the instruction set, the era, a project's. */
+        Options defining(final Collection<String> more) {
+            final Set<String> all = new LinkedHashSet<>(this.defined);
+            all.addAll(more);
+            return new Options(this.wholeProgram, this.tolerant, this.level, this.version, this.entry, all);
         }
     }
 
@@ -164,7 +182,7 @@ public final class SigmaSemantics {
         final List<CompilationUnit> units = new ArrayList<>();
         for (final SourceFile source : sources) {
             bag.setFile(source.name());
-            units.add(SigmaFrontEnd.parse(source, bag));
+            units.add(SigmaFrontEnd.parse(source, bag, options.defined()));
         }
         /*
          * Before anything is resolved, so a source that reached for something the subset does not have is told
@@ -172,10 +190,12 @@ public final class SigmaSemantics {
          * about a type that was never going to be found.
          */
         new SubsetRules(bag).check(units, level);
+        new VersionRules(bag).check(units, level, SigmaVersions.held(version));
 
         final SemanticModel model = new SemanticModel();
         final BuiltIns builtIns = new BuiltIns();
-        final TypeRules rules = new TypeRules(builtIns);
+        // Sigma takes C's void* where any pointer is wanted, as malloc's answer is taken in C.
+        final TypeRules rules = new TypeRules(builtIns, level == LanguageLevel.SIGMA);
         final Declarations declarations = new Declarations(builtIns, rules, bag, model);
         declarations.holdTo(level, version);
         /*

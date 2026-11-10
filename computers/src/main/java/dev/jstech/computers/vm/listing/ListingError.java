@@ -46,7 +46,9 @@ public enum ListingError {
     ISA_MISMATCH(TextKey.of("jsc.vm.listing.a4015", "built for %s; this machine is %s")),
     NO_BODY_TO_HOLD(TextKey.of("jsc.vm.listing.a4016", "this method has no slots line, so it has no body")),
     SLOT_OUT_OF_RANGE(TextKey.of("jsc.vm.listing.a4017", "place %s does not exist: this method has %s")),
-    DUPLICATE_LABEL(TextKey.of("jsc.vm.listing.a4018", "'%s' labels more than one line of this method"));
+    DUPLICATE_LABEL(TextKey.of("jsc.vm.listing.a4018", "'%s' labels more than one line of this method")),
+    NEEDS_NEWER_FORMAT(TextKey.of("jsc.vm.listing.a4019",
+            "'%s' came in version %s of the format, and this listing is written in version %s"));
 
     private final TextKey text;
 

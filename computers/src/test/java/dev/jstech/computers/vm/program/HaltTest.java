@@ -32,6 +32,8 @@ class HaltTest {
         written.put(Halt.Reason.REFUSED, 11);
         written.put(Halt.Reason.STACK_DEPTH, 12);
         written.put(Halt.Reason.FAULT, 13);
+        written.put(Halt.Reason.UNCAUGHT, 14);
+        written.put(Halt.Reason.ACCESS_VIOLATION, 15);
 
         for (final Halt.Reason reason : Halt.Reason.values()) {
             assertEquals(written.get(reason), reason.id(), reason::name);

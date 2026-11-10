@@ -103,9 +103,14 @@ final class TokenCursor {
         return this.tokens.get(Math.min(this.position, this.tokens.size() - 1));
     }
 
+    /** The token at that place in the file, or the end when the place is past it. */
+    Token tokenAt(final int index) {
+        return this.tokens.get(Math.min(Math.max(index, 0), this.tokens.size() - 1));
+    }
+
     /** The kind of the token at that place in the file, or the end when the place is past it. */
     TokenKind kindAt(final int index) {
-        return this.tokens.get(Math.min(Math.max(index, 0), this.tokens.size() - 1)).kind();
+        return this.tokenAt(index).kind();
     }
 
     /** The kind of the token that many places past the one being read. */

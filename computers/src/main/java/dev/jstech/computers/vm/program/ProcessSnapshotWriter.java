@@ -44,8 +44,12 @@ final class ProcessSnapshotWriter {
             queued.add(freeze(frame, numbers));
         }
         final Map<String, Map<String, Snapshot.IValue>> kept = new LinkedHashMap<>();
+        final Map<String, List<String>> staticsIgnored = new LinkedHashMap<>();
         for (final Map.Entry<String, Values.Obj> entry : process.fieldAccess().statics().entrySet()) {
             kept.put(entry.getKey(), fields(entry.getValue(), numbers));
+            if (!entry.getValue().ignoredFields().isEmpty()) {
+                staticsIgnored.put(entry.getKey(), entry.getValue().ignoredFields());
+            }
         }
         final List<Snapshot.WatchShot> watching = new ArrayList<>();
         for (final ProgramWatches.Watch watch : process.watches().all()) {
@@ -72,7 +76,7 @@ final class ProcessSnapshotWriter {
         }
         final ProgramIdentity identity = process.identity();
         return new Snapshot(Snapshot.FORMAT, process.program().checksum(),
-                new Snapshot.HeapShot(heap.budget(), held),
+                new Snapshot.HeapShot(heap.budget(), held, process.memory().next()),
                 new Snapshot.IdentityShot(process.state().serializedName(),
                         identity.message(), identity.spent(), identity.name(),
                         identity.args(), identity.machineId(), identity.exited(), identity.givenExitCode()),
@@ -85,7 +89,8 @@ final class ProcessSnapshotWriter {
                 watching,
                 new Snapshot.ListenersShot(onMessageShot, onGatewayShot, listeners.gateway()),
                 new Snapshot.ThreadsShot(running, process.scheduler().nextId()),
-                locked, kept, scriptShot);
+                locked, kept, scriptShot,
+                new Snapshot.IntercalShot(List.copyOf(process.switchedOff()), staticsIgnored));
     }
 
     private static Snapshot.IHeld freeze(final Heap heap, final Object thing, final int number,
@@ -98,7 +103,7 @@ final class ProcessSnapshotWriter {
         }
         if (thing instanceof Values.Obj object) {
             return new Snapshot.IHeld.Object(number, bytes, line, freed, object.type(),
-                    fields(object, numbers));
+                    fields(object, numbers), object.ignoredFields());
         }
         if (thing instanceof Values.Arr array) {
             return new Snapshot.IHeld.Array(number, bytes, line, freed, array.element(),
@@ -111,6 +116,10 @@ final class ProcessSnapshotWriter {
             return new Snapshot.IHeld.Keyed(number, bytes, line, freed,
                     values(new ArrayList<>(map.entries().keySet()), numbers),
                     values(new ArrayList<>(map.entries().values()), numbers));
+        }
+        if (thing instanceof RawMemory.Block block) {
+            return Snapshot.IHeld.Memory.of(number, bytes, line, freed, block.address(), block.bytes(),
+                    block.onStack());
         }
         if (!(thing instanceof Values.DelegateValue delegate)) {
             throw new SnapshotException("the heap holds a value no snapshot writes ("
@@ -141,10 +150,20 @@ final class ProcessSnapshotWriter {
     }
 
     private static Snapshot.FrameShot freeze(final Frame frame, final HeldNumbers numbers) {
+        final List<Snapshot.PendingShot> pendings = new ArrayList<>();
+        for (final Unwinder.Pending pending : frame.pendings == null ? List.<Unwinder.Pending>of() : frame.pendings) {
+            pendings.add(switch (pending) {
+                case Unwinder.Leaving leaving -> new Snapshot.PendingShot(true, leaving.target(), leaving.finallies(),
+                        leaving.next(), value(null, numbers), 0);
+                case Unwinder.Throwing throwing -> new Snapshot.PendingShot(false, throwing.at(), List.of(), 0,
+                        value(throwing.exception() == Unwinder.STOPPING ? null : throwing.exception(), numbers),
+                        throwing.running());
+            });
+        }
         return new Snapshot.FrameShot(frame.method.owner(), frame.method.name(),
                 frame.method.parameters(), frame.at, value(frame.self, numbers),
                 values(Arrays.asList(frame.slots), numbers), values(frame.stack, numbers),
-                frame.discard);
+                frame.discard, frame.ignoredSlots(), pendings, frame.blocks());
     }
 
     private static Map<String, Snapshot.IValue> fields(final Values.Obj object, final HeldNumbers numbers) {

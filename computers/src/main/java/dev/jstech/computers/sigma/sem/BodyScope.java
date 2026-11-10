@@ -8,6 +8,7 @@
 package dev.jstech.computers.sigma.sem;
 
 import dev.jstech.computers.sigma.DiagnosticBag;
+import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.sigma.ast.IDecl;
 import dev.jstech.computers.sigma.ast.IExpr;
@@ -15,6 +16,7 @@ import dev.jstech.computers.sigma.ast.INode;
 import dev.jstech.computers.sigma.ast.IStmt;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Everything checking a body has to hand, and where the checking has got to.
@@ -36,6 +38,8 @@ final class BodyScope {
     private final DiagnosticBag diagnostics;
     /** Whether a parameter the method fills in is given a value by every way out of it. */
     private final DefiniteAssignment assignment = new DefiniteAssignment(this::report);
+    /** The values of the program's consts, written into every place that reads one. */
+    private final Constants constants;
 
     private NamedType currentType;
     private ITypeSymbol returnType = ITypeSymbol.Primitive.VOID;
@@ -44,7 +48,21 @@ final class BodyScope {
     private boolean inConstructor;
     private int loopDepth;
     private int switchDepth;
+    /** Whether the body or block being checked is unsafe, where pointers may be held. */
+    private boolean unsafe;
     private int quiet;
+    /**
+     * The catches and the finally blocks the statement being checked stands in, innermost last: a catch, or the
+     * loops and choices open where a finally began, which a way out of it may not leave.
+     */
+    private List<Object> handlers = new ArrayList<>();
+
+    /** The largest whole number a byte holds. */
+    private static final int BYTE_MAX = 255;
+
+    /** A finally, with how many loops and choices were open where it began. */
+    record Finally(int loops, int choices) {
+    }
 
     BodyScope(final BuiltIns builtIns, final TypeRules rules, final Declarations declarations,
               final SemanticModel model, final DiagnosticBag diagnostics) {
@@ -53,6 +71,7 @@ final class BodyScope {
         this.declarations = declarations;
         this.model = model;
         this.diagnostics = diagnostics;
+        this.constants = new Constants(model, declarations);
     }
 
     /** How a member was reached, which is what decides whether static and instance line up. */
@@ -79,6 +98,10 @@ final class BodyScope {
 
     SemanticModel model() {
         return this.model;
+    }
+
+    Constants constants() {
+        return this.constants;
     }
 
     /** Says which file whatever comes next belongs to, for the messages and for the answers alike. */
@@ -143,6 +166,16 @@ final class BodyScope {
         this.switchDepth--;
     }
 
+    /** Whether pointers may be held here: in an unsafe method or block, or anywhere in Sigma, as in C. */
+    boolean unsafe() {
+        return this.unsafe || this.declarations.level() == LanguageLevel.SIGMA;
+    }
+
+    void unsafe(final boolean on) {
+        this.unsafe = on;
+        this.declarations.unsafeHere(on);
+    }
+
     /** Starts on a fresh body: nothing in scope, and everything about where it is set from what it is. */
     void begin(final boolean isStatic, final ITypeSymbol returns, final boolean constructor) {
         this.scope = new Scope(null);
@@ -151,6 +184,53 @@ final class BodyScope {
         this.inConstructor = constructor;
         this.loopDepth = 0;
         this.switchDepth = 0;
+        this.handlers = new ArrayList<>();
+        this.unsafe(false);
+    }
+
+    /** Steps into a catch. */
+    void enterCatch(final IStmt.Catch one) {
+        this.handlers.add(one);
+    }
+
+    /** Steps into a finally. */
+    void enterFinally() {
+        this.handlers.add(new Finally(this.loopDepth, this.switchDepth));
+    }
+
+    /** Steps out of the catch or the finally stepped into last. */
+    void leaveHandler() {
+        this.handlers.removeLast();
+    }
+
+    /** The catch the statement being checked stands in, or null when the nearest is a finally or there is none. */
+    IStmt.Catch innermostCatch() {
+        return !this.handlers.isEmpty() && this.handlers.getLast() instanceof IStmt.Catch one ? one : null;
+    }
+
+    /** The finally the statement being checked stands in, the nearest one, or null when it stands in none. */
+    Finally innermostFinally() {
+        for (int i = this.handlers.size() - 1; i >= 0; i--) {
+            if (this.handlers.get(i) instanceof Finally found) {
+                return found;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Sets aside the catches and the finally blocks around, for a lambda's body, which stands in none of them, and
+     * hands back what to put back after it.
+     */
+    List<Object> setHandlersAside() {
+        final List<Object> around = this.handlers;
+        this.handlers = new ArrayList<>();
+        return around;
+    }
+
+    /** Puts back what {@link #setHandlersAside} set aside. */
+    void putHandlersBack(final List<Object> around) {
+        this.handlers = around;
     }
 
     /*
@@ -178,6 +258,16 @@ final class BodyScope {
      * is promised one. This walks the body carrying whether it has been given yet, and says so at the
      * first way out that has not.
      */
+    /** Says which labels of the body being checked start a region that may be switched off. */
+    void regions(final Set<String> switchable) {
+        this.assignment.regions(switchable);
+    }
+
+    /** The labels of the body being checked that start a region that may be switched off. */
+    Set<String> regions() {
+        return this.assignment.regions();
+    }
+
     void checkOutParameters(final List<IDecl.Parameter> parameters, final IStmt.Block body, final INode at) {
         for (final IDecl.Parameter parameter : parameters) {
             if (!parameter.outward()) {
@@ -199,10 +289,20 @@ final class BodyScope {
     }
 
     void expect(final ITypeSymbol given, final ITypeSymbol wanted, final INode at) {
-        if (!this.rules.isAssignable(given, wanted)) {
+        if (!this.rules.isAssignable(given, wanted) && !this.fitsByte(given, wanted, at)) {
             this.report(at.line(), at.column(),
                     SigmaError.CANNOT_CONVERT, given.describe(), wanted.describe());
         }
+    }
+
+    /* C#'s one narrowing of its own: a whole number known when compiling goes into a byte when it fits there. */
+    boolean fitsByte(final ITypeSymbol given, final ITypeSymbol wanted, final INode at) {
+        if (wanted != ITypeSymbol.Primitive.BYTE || !this.rules.isIntegral(given) || !(at instanceof IExpr value)) {
+            return false;
+        }
+        final Constants.Known known = this.constants.fold(value);
+        return known != null && known.value() instanceof Number number && number.longValue() >= 0
+                && number.longValue() <= BYTE_MAX;
     }
 
     /*

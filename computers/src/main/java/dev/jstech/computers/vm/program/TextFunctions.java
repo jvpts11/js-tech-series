@@ -125,7 +125,8 @@ final class TextFunctions {
                                  final int line) {
         final HoleFormat hole = HoleFormat.read(String.valueOf(arguments[0]));
         if (hole == null) {
-            throw new Halt(Halt.Reason.REFUSED, line, NOT_A_HOLE.with(String.valueOf(arguments[0])));
+            throw new Halt(Halt.Reason.REFUSED, line, NOT_A_HOLE.with(String.valueOf(arguments[0])),
+                    Halt.Thrown.FORMAT);
         }
         return context.text(hole.apply(arguments[1]), line);
     }

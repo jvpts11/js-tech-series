@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.sigma.ast;
 
+import dev.jstech.computers.sigma.lex.Preprocessor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -23,7 +24,8 @@ import java.util.Objects;
  * @param usings   what the file brought in, in the order written
  * @param declared the declarations, in the order written, each with its namespace
  */
-public record CompilationUnit(String file, List<Using> usings, List<Declared> declared) {
+public record CompilationUnit(String file, List<Using> usings, List<Declared> declared,
+                              List<Preprocessor.Directive> directives) {
 
     /**
      * One using: a namespace whose every type may be named plainly ({@code using System.IO.*;}), or one
@@ -59,6 +61,17 @@ public record CompilationUnit(String file, List<Using> usings, List<Declared> de
         Objects.requireNonNull(file, "file");
         usings = usings == null ? List.of() : List.copyOf(usings);
         declared = declared == null ? List.of() : List.copyOf(declared);
+        directives = directives == null ? List.of() : List.copyOf(directives);
+    }
+
+    /** A file with no directives in it. */
+    public CompilationUnit(final String file, final List<Using> usings, final List<Declared> declared) {
+        this(file, usings, declared, List.of());
+    }
+
+    /** The same file, with the directives its lexer met, which version 3 of the language brought. */
+    public CompilationUnit withDirectives(final List<Preprocessor.Directive> met) {
+        return new CompilationUnit(this.file, this.usings, this.declared, met);
     }
 
     /** The declarations, in the order written. */

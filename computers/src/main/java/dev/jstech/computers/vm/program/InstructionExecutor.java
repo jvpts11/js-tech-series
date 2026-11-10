@@ -12,6 +12,7 @@ import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Opcode;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.Set;
 
 /**
  * Carrying out a program's instructions: the next one of the thread whose turn it is, and what each one does.
@@ -33,6 +34,12 @@ final class InstructionExecutor {
     private final FieldAccess fieldAccess;
     private final CallDispatch calls;
     private final ObjectMaking objects;
+    /** The regions INTERCAL's abstain has switched off, the process's own, by method and label. */
+    private final Set<String> switchedOff;
+    /** Exceptions thrown and the protected stretches they and the ways out of them leave. */
+    private final Unwinder unwinder;
+    /** The raw memory pointers read and write. */
+    private final RawMemory memory;
 
     private static final TextKey NO_NETWORK = TextKey.of("jsc.vm.instruction_executor.no_network",
             "this computer is not on a network");
@@ -41,7 +48,8 @@ final class InstructionExecutor {
 
     InstructionExecutor(final ProgramImage program, final Heap heap, final ThreadScheduler scheduler,
                         final MonitorTable locks, final FieldAccess fieldAccess, final CallDispatch calls,
-                        final ObjectMaking objects) {
+                        final ObjectMaking objects, final Set<String> switchedOff, final Unwinder unwinder,
+                        final RawMemory memory) {
         this.values = new ValueSemantics(program);
         this.types = new TypeChecks(program);
         this.heap = heap;
@@ -50,6 +58,9 @@ final class InstructionExecutor {
         this.fieldAccess = fieldAccess;
         this.calls = calls;
         this.objects = objects;
+        this.switchedOff = switchedOff;
+        this.unwinder = unwinder;
+        this.memory = memory;
     }
 
     /** Runs the next instruction of the thread's top frame, or leaves a method that has run off its end. */
@@ -75,7 +86,7 @@ final class InstructionExecutor {
             case LDSTR -> frame.push(this.heap.text(((IOperand.Text) instruction.operand()).value(), line));
             case LDTHIS -> frame.push(frame.self);
             case LDLOC -> frame.push(frame.slots[((IOperand.Slot) instruction.operand()).index()]);
-            case STLOC -> frame.slots[((IOperand.Slot) instruction.operand()).index()] = frame.pop();
+            case STLOC -> frame.store(((IOperand.Slot) instruction.operand()).index(), frame.pop());
             case POP -> frame.pop();
             case COPY -> frame.push(this.objects.copyOf(frame.pop(), line));
             case DUP -> frame.push(frame.peek());
@@ -113,8 +124,43 @@ final class InstructionExecutor {
                     instruction.opcode() == Opcode.CALLVIRT, line);
             case SYS -> throw new Halt(Halt.Reason.NO_NETWORK, line, NO_NETWORK.text());
             case RET -> this.calls.leave(frame, frame.method.gives() ? frame.pop() : null);
+            case ABSTAIN -> this.switchedOff.add(frame.method.region(line - 1));
+            case REINSTATE -> this.switchedOff.remove(frame.method.region(line - 1));
+            case BRABST -> this.jumpIf(frame, line, this.switchedOff.contains(frame.method.region(line - 1)));
+            case IGNORE_LOC, REMEMBER_LOC -> frame.ignore(((IOperand.Slot) instruction.operand()).index(),
+                    instruction.opcode() == Opcode.IGNORE_LOC);
+            case IGNORE_FLD, REMEMBER_FLD -> this.fieldAccess.ignore(frame.pop(),
+                    (IOperand.Field) instruction.operand(), instruction.opcode() == Opcode.IGNORE_FLD, line);
+            case IGNORE_SFLD, REMEMBER_SFLD -> this.fieldAccess.ignoreStatic((IOperand.Field) instruction.operand(),
+                    instruction.opcode() == Opcode.IGNORE_SFLD);
+            case THROW, RETHROW -> this.unwinder.raise(thread, frame.pop(), instruction.opcode() == Opcode.THROW, line);
+            case LEAVE -> this.unwinder.leave(frame, line - 1, frame.method.jump(line - 1));
+            case ENDFINALLY -> this.unwinder.endFinally(thread, frame);
+            case LDIND_U1, LDIND_U2, LDIND_I4, LDIND_I8, LDIND_R4, LDIND_R8 ->
+                    frame.push(this.memory.read(Numbers.toLong(frame.pop()), width(instruction.opcode()), line));
+            case STIND_I1, STIND_I2, STIND_I4, STIND_I8, STIND_R4, STIND_R8 -> this.writeThrough(frame,
+                    width(instruction.opcode()), line);
+            case LOCALLOC -> frame.push(frame.stackBlock(this.memory, Numbers.toLong(frame.pop()), line));
             default -> { }
         }
+    }
+
+    /** Writes the value on top of the stack into raw memory, at the address beneath it. */
+    private void writeThrough(final Frame frame, final RawMemory.Width width, final int line) {
+        final Object value = frame.pop();
+        this.memory.write(Numbers.toLong(frame.pop()), width, value, line);
+    }
+
+    /** How wide a read or a write through a pointer is, by its instruction. */
+    private static RawMemory.Width width(final Opcode opcode) {
+        return switch (opcode) {
+            case LDIND_U1, STIND_I1 -> RawMemory.Width.BYTE;
+            case LDIND_U2, STIND_I2 -> RawMemory.Width.CHAR;
+            case LDIND_I4, STIND_I4 -> RawMemory.Width.INT;
+            case LDIND_R4, STIND_R4 -> RawMemory.Width.FLOAT;
+            case LDIND_R8, STIND_R8 -> RawMemory.Width.DOUBLE;
+            default -> RawMemory.Width.LONG;
+        };
     }
 
     /** Branches when {@code go}; {@code line} is where the frame already stands, one past the branch. */

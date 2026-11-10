@@ -106,7 +106,9 @@ final class MemberChecker {
 
     List<IMemberSymbol> membersOf(final ITypeSymbol target, final String name, final INode at) {
         final NamedType named = this.scope.rules().named(target);
-        final List<IMemberSymbol> found = named == null ? List.of() : BodyScope.lookup(named, name);
+        // A tuple's place is read by the name it was given as well as by its ItemN.
+        final String field = target instanceof ITypeSymbol.TupleType tuple ? tuple.fieldOf(name) : name;
+        final List<IMemberSymbol> found = named == null ? List.of() : BodyScope.lookup(named, field);
         if (found.isEmpty()) {
             this.scope.report(at.line(), at.column(),
                     SigmaError.NO_SUCH_MEMBER, target.describe(), name);

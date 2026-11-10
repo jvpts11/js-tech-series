@@ -112,7 +112,7 @@ class SigmaCommandsTest {
     void sgsc_firstSaysWhichCompilerItIs() {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Beeper.sgs", BEEPER);
-        assertTrue(this.run("sgsc Beeper.sgs").startsWith("Σ# Compiler 2.0\n"));
+        assertTrue(this.run("sgsc Beeper.sgs").startsWith("Σ# Compiler 3.0\n"));
         this.computer.versions.put(SigmaCommands.COMPILER, "1.0");
         assertTrue(this.run("sgsc Beeper.sgs").startsWith("Σ# Compiler 1.0\n"));
     }
@@ -144,7 +144,7 @@ class SigmaCommandsTest {
         this.computer.add(SigmaCommands.COMPILER);
         this.computer.files.put("Beeper.sgs", BEEPER);
         assertTrue(errored("sgsc --lang 9 Beeper.sgs"));
-        assertTrue(this.run("sgsc --lang two Beeper.sgs").contains("'two' is not a version of Σ#; there are 1 to 2"));
+        assertTrue(this.run("sgsc --lang two Beeper.sgs").contains("'two' is not a version of Σ#; there are 1 to 3"));
     }
 
     /** The listing with the line naming the machine it was built for taken out. */

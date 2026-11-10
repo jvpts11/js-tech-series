@@ -26,13 +26,15 @@ import java.util.List;
 final class Overloads {
 
     /** A version that could not have been meant at all, whatever the others score. */
-    private static final int IMPOSSIBLE = -1;
+    private static final int IMPOSSIBLE = Integer.MIN_VALUE;
 
     /** An argument that is already the type wanted. */
     private static final int EXACT = 2;
 
     /** One that will go in, but not without being widened, or a lambda still waiting for its shape. */
     private static final int WIDENED = 1;
+    /** The largest whole number a byte holds. */
+    private static final int BYTE_MAX = 255;
 
     private final TypeRules rules;
 
@@ -52,7 +54,7 @@ final class Overloads {
         int best = IMPOSSIBLE;
         for (final IMemberSymbol.MethodSymbol candidate : candidates) {
             final int score = this.score(candidate, given, arguments);
-            if (score < 0) {
+            if (score == IMPOSSIBLE) {
                 continue;
             }
             if (score > best) {
@@ -67,25 +69,53 @@ final class Overloads {
     }
 
     /**
+     * Whether the version takes these arguments with its params array handed over a value at a time: it takes
+     * params, and it does not take them as they are written, which is always tried first.
+     */
+    boolean expanded(final IMemberSymbol.MethodSymbol candidate, final List<ITypeSymbol> given,
+                     final List<IExpr> arguments) {
+        return candidate.takesMany() && this.scoreAs(candidate, given, arguments, false) == IMPOSSIBLE;
+    }
+
+    /**
      * How close one version is to the arguments, or {@link #IMPOSSIBLE} when it could not have been meant.
+     *
+     * <p>A version that takes params is taken as written when the arguments fit that way, and otherwise with the array
+     * handed over a value at a time. Taken that way it counts one less than a version that fits as written with the
+     * same closeness in every argument, as C# prefers the version that needs no array made for it; the scores are
+     * doubled so that this never outweighs one argument fitting better.
+     */
+    private int score(final IMemberSymbol.MethodSymbol candidate, final List<ITypeSymbol> given,
+                      final List<IExpr> arguments) {
+        final int written = this.scoreAs(candidate, given, arguments, false);
+        if (written != IMPOSSIBLE) {
+            return written * 2;
+        }
+        final int expanded = candidate.takesMany() ? this.scoreAs(candidate, given, arguments, true) : IMPOSSIBLE;
+        return expanded == IMPOSSIBLE ? IMPOSSIBLE : expanded * 2 - 1;
+    }
+
+    /**
+     * The closeness of one form of a version: as written, or with the params array handed over a value at a time.
      *
      * <p>A type that is not known yet, which is a lambda or a method handed over without brackets, only fits a
      * parameter that takes a delegate, and counts as needing work: a version that takes it as something already
      * settled is the closer one.
      */
-    private int score(final IMemberSymbol.MethodSymbol candidate, final List<ITypeSymbol> given,
-                      final List<IExpr> arguments) {
-        if (candidate.parameters().size() != given.size()) {
+    private int scoreAs(final IMemberSymbol.MethodSymbol candidate, final List<ITypeSymbol> given,
+                        final List<IExpr> arguments, final boolean expanded) {
+        final int fixed = expanded ? candidate.parameters().size() - 1 : candidate.parameters().size();
+        if (expanded ? given.size() < fixed : given.size() != fixed) {
             return IMPOSSIBLE;
         }
         int total = 0;
         for (int i = 0; i < given.size(); i++) {
-            final IMemberSymbol.ParameterSymbol parameter = candidate.parameters().get(i);
+            final IMemberSymbol.ParameterSymbol parameter = candidate.parameters().get(Math.min(i, fixed));
             final boolean outward = arguments.get(i) instanceof IExpr.OutArgument;
             if (outward != parameter.outward()) {
                 return IMPOSSIBLE;
             }
-            final ITypeSymbol wanted = parameter.type();
+            final ITypeSymbol wanted = i < fixed ? parameter.type() : elementOf(parameter);
             final ITypeSymbol argument = given.get(i);
             if (argument == null) {
                 if (outward) {
@@ -99,12 +129,23 @@ final class Overloads {
                 total += WIDENED;
             } else if (argument.equals(wanted)) {
                 total += EXACT;
-            } else if (!outward && this.rules.isAssignable(argument, wanted)) {
+            } else if (!outward && (this.rules.isAssignable(argument, wanted) || fitsByte(arguments.get(i), wanted))) {
                 total += WIDENED;
             } else {
                 return IMPOSSIBLE;
             }
         }
         return total;
+    }
+
+    /** Whether a whole number written out goes into a byte that is wanted, as C# lets one that fits. */
+    static boolean fitsByte(final IExpr argument, final ITypeSymbol wanted) {
+        return wanted == ITypeSymbol.Primitive.BYTE && argument instanceof IExpr.Literal literal
+                && literal.value() instanceof Integer number && number >= 0 && number <= BYTE_MAX;
+    }
+
+    /** What a params parameter takes one at a time: the element of its array. */
+    static ITypeSymbol elementOf(final IMemberSymbol.ParameterSymbol parameter) {
+        return parameter.type() instanceof ITypeSymbol.ArrayType array ? array.element() : parameter.type();
     }
 }
