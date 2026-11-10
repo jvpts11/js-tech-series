@@ -1,0 +1,66 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:vacuum_casing"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:display_line_fill_chamber"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:display_line_test_stand"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    },
+    "h": {
+      "blocks": [
+        "jsc:display_line_gantry"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "bdb"
+    ],
+    [
+      "ef#",
+      "ggb"
+    ],
+    [
+      "bhb",
+      "bbb"
+    ]
+  ],
+  "name": "display_line",
+  "ports": {
+    "a": "item_output",
+    "c": "item_input",
+    "d": "energy_input",
+    "g": "fluid_input"
+  },
+  "terminal": "jsc:display_line_terminal"
+}

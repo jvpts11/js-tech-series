@@ -1,0 +1,43 @@
+{
+  "emitters": [
+    {
+      "effect": "jsc:chain/air_separation_unit_0",
+      "at": [
+        -0.375,
+        2.0,
+        2.625
+      ],
+      "way": [
+        0.0,
+        0.9762,
+        0.2169
+      ]
+    },
+    {
+      "effect": "jsc:chain/air_separation_unit_1",
+      "at": [
+        -1.8125,
+        -0.25,
+        3.125
+      ],
+      "way": [
+        0.0,
+        -0.7433,
+        0.669
+      ]
+    },
+    {
+      "effect": "jsc:chain/air_separation_unit_2",
+      "at": [
+        -0.375,
+        -0.375,
+        3.2812
+      ],
+      "way": [
+        0.0,
+        -0.8321,
+        0.5547
+      ]
+    }
+  ]
+}

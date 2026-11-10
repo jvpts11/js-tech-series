@@ -1,0 +1,10 @@
+{
+  "type": "jsc:coke_oven",
+  "inputs": [
+    {"item": "jsc:transformer", "count": 1}
+  ],
+  "outputs": [
+    {"id": "jsc:ferrite", "count": 1}
+  ],
+  "ticks": 20
+}

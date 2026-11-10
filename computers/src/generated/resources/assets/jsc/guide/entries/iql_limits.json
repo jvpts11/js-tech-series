@@ -201,7 +201,7 @@
     }
   ],
   "id": "jsc:iql_limits",
-  "order": 321,
+  "order": 329,
   "section": "jsc:iql_limits_and_errors",
   "title": "jsc.guide.iql_limits.title"
 }

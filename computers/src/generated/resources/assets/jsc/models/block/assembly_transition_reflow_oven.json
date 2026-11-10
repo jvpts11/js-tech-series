@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "jsc:block/chain/machine/assembly_transition_reflow_oven"
+  }
+}

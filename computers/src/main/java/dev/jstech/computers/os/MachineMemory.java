@@ -81,8 +81,12 @@ public final class MachineMemory {
                 ledger.add(one.name(), one.heapMb(), one.heldBytes(), RamLedger.Kind.PROCESS, one.id());
             }
         }
-        // Graphics on the processor's die borrow the system's memory for what they show.
         if (host instanceof BlockEntity be && be.getLevel() instanceof ServerLevel level) {
+            // What it runs for the devices linked to it, each a process of its own.
+            for (final RamLedger.Entry work : host.hostedWork(level.getGameTime())) {
+                ledger.add(work.name(), work.mb(), RamLedger.Kind.PROCESS);
+            }
+            // Graphics on the processor's die borrow the system's memory for what they show.
             ledger.add("graphics", VideoMemory.sharedHeldMb(level, host), RamLedger.Kind.GRAPHICS);
         }
         final List<OpenWindow> windows = host.openWindows();

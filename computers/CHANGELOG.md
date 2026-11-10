@@ -443,6 +443,27 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the part waiting in its tray once done, draws 40, 60, 300, 80 and 120 W from the Vintage to the Advanced through the
   socket on its back, and takes nothing through its sides. Each era's parts are a kind of recipe of their own, shown
   with the benches that make them.
+- The chain's machines: thirty-one multiblocks, each built of its own blocks round the Machine Terminal.
+  The Crusher, Grinder, Induction Furnace, Electrolytic Cell, Rolling Mill and Wire Drawer work ore and metals; the
+  Coke Oven, Chemical Reactor and Air Separation Unit the chemistry and the gases; the Siemens Reactor, Crystal Puller
+  and Wafer Saw the silicon; the Plasma Etcher, Ion Implanter, Deposition Chamber and Packaging Line the chips; the
+  Laminator, Board Etcher, Ceramic Kiln, Coil Winder, Optical Polisher and Display Line the boards, parts, glass and
+  screens. A Lithography Station serves the Vintage, the Legacy and the Advanced, and the ArF Lithography Station the
+  Transition and the Standard, and each era has its Electronics Assembly Line. A machine is built of its casing
+  (Machine, Refractory, Lined, Vacuum or Clean Room), its working blocks and its entries (the item, liquid and gas
+  inlets and outlets, the Power Entry and the Peripheral Port), told apart by their connector and their band, and it
+  forms as its Machine Terminal is placed, as a block beside the terminal changes, or as a player uses it. Formed, it
+  is drawn whole with its own model, showing what it works on in the colours of what goes in and comes out, its
+  beacon turning and its particles given off while it works; breaking its terminal gives back the Machine Terminal.
+- The chain's machines at work: each works a kind of recipe of its own, its steps and its draws first
+  estimates, from 0.5 kW for the Coil Winder to 10 kW for the Advanced Lithography Station, drawing J's Energy at low
+  voltage through its Power Entry and only while it works; the Coke Oven burns part of its own coal and draws nothing.
+  Things reach a machine through its inlets and leave through its outlets, so a hopper, a pipe, a bus or a Crafting
+  Interface works it. A Lithography Station from the Legacy on works only linked by peripheral cable, on its
+  Peripheral Port, to a running computer of the era before its recipe's or a later one, which runs the exposure as its
+  `litho` process and holds memory for it by the era, from 2 MB to 2,048 MB; a computer two eras newer exposes in half
+  the time. An Electronics Assembly Line works the bench recipes of its era and the older ones, at its era's bench's
+  draw. The Guide to Operations explains them in a section of its own.
 - A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
@@ -490,6 +511,7 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   its autocrafting.
 
 ### Changed
+- Computers draw energy, switched off, lets the chain's machines run free of energy too.
 - A computer, or a server in its rack, that its UPS takes over writes it in the network's log: "On its
   UPS's battery: the power went".
 - Building from the network: a player who carries a portable joined to a network builds from its storage.

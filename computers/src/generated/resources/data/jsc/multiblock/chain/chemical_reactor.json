@@ -1,0 +1,79 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:chemical_reactor_vessel"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:lined_casing"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:liquid_outlet"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:gas_outlet"
+      ]
+    },
+    "h": {
+      "blocks": [
+        "jsc:chemical_reactor_agitator"
+      ]
+    },
+    "i": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "j": {
+      "blocks": [
+        "jsc:gas_inlet"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "dce"
+    ],
+    [
+      "cb#",
+      "cff"
+    ],
+    [
+      "ghi",
+      "cjj"
+    ]
+  ],
+  "name": "chemical_reactor",
+  "ports": {
+    "a": "item_output",
+    "d": "fluid_output",
+    "e": "energy_input",
+    "f": "fluid_input",
+    "g": "gas_output",
+    "i": "item_input",
+    "j": "gas_input"
+  },
+  "terminal": "jsc:chemical_reactor_terminal"
+}

@@ -222,7 +222,7 @@
   ],
   "icon": "jsc:guide_to_operations",
   "id": "jsc:man_pages",
-  "order": 232,
+  "order": 240,
   "section": "jsc:help_at_the_prompt",
   "title": "jsc.guide.man_pages.title"
 }

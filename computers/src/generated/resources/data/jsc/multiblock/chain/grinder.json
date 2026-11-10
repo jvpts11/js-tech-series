@@ -1,0 +1,51 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:grinder_drum"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:machine_casing"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:grinder_drive"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "ab",
+      "cd"
+    ],
+    [
+      "#b",
+      "ef"
+    ]
+  ],
+  "name": "grinder",
+  "ports": {
+    "a": "item_output",
+    "c": "energy_input",
+    "f": "item_input"
+  },
+  "terminal": "jsc:grinder_terminal"
+}

@@ -144,6 +144,8 @@
     "jsc:blank_disc",
     "jsc:thermal_paste",
     "jsc:legacy_electronics_workbench",
+    "jsc:lithography_krf_laser",
+    "jsc:assembly_legacy_placement_head",
     "jsc:cd_rom",
     "jsc:cd_rw"
   ]

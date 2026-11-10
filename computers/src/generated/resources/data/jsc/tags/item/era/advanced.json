@@ -216,6 +216,10 @@
     "jsc:self_lit_panel",
     "jsc:etched_board_advanced",
     "jsc:advanced_electronics_workbench",
+    "jsc:lithography_mirror_optics",
+    "jsc:lithography_euv_source",
+    "jsc:assembly_advanced_placement_head",
+    "jsc:assembly_advanced_reflow_oven",
     "jsc:bd_rom",
     "jsc:bd_re"
   ]

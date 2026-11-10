@@ -586,6 +586,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   plastics and resins, which come as plate, sheet and dust; `Forms.CRUSHED` and `Forms.LUMP` are the forms of crushed
   ore and of a solid in pieces; and `Form.oreColoured()`, set with `Form.Builder.oreColoured()`, draws a form's things
   in the colour of their material's ore, as raw and crushed ore are. Experimental.
+- (Core) Tinted bones and reshaped work: J's Core's API is at version 50. `ModelPose.setTint(bone, argb)` draws a
+  bone of a model in a colour, which `tint(bone)` gives back and `tinted()` says the pose has; `UNTINTED` is a bone's
+  colour left as it is, and a tinted model is drawn on its own rather than with its model's others.
+  `ProcessingMachineBlockEntity.Processing` gains `withTicks` and `withEnergyPerTick`, the same work in another time or
+  at another draw. Experimental.
 - (Computers) Wi-Fi cards: J's Computers' API is at version 17. `ExpansionCardKind.WIFI` is the kind of the Wi-Fi
   cards, which the Personal, Crafting and Cluster Management Computers alone seat. Experimental.
 - (Computers) Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
@@ -2436,6 +2441,27 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the part waiting in its tray once done, draws 40, 60, 300, 80 and 120 W from the Vintage to the Advanced through the
   socket on its back, and takes nothing through its sides. Each era's parts are a kind of recipe of their own, shown
   with the benches that make them.
+- (Computers) The chain's machines: thirty-one multiblocks, each built of its own blocks round the Machine Terminal.
+  The Crusher, Grinder, Induction Furnace, Electrolytic Cell, Rolling Mill and Wire Drawer work ore and metals; the
+  Coke Oven, Chemical Reactor and Air Separation Unit the chemistry and the gases; the Siemens Reactor, Crystal Puller
+  and Wafer Saw the silicon; the Plasma Etcher, Ion Implanter, Deposition Chamber and Packaging Line the chips; the
+  Laminator, Board Etcher, Ceramic Kiln, Coil Winder, Optical Polisher and Display Line the boards, parts, glass and
+  screens. A Lithography Station serves the Vintage, the Legacy and the Advanced, and the ArF Lithography Station the
+  Transition and the Standard, and each era has its Electronics Assembly Line. A machine is built of its casing
+  (Machine, Refractory, Lined, Vacuum or Clean Room), its working blocks and its entries (the item, liquid and gas
+  inlets and outlets, the Power Entry and the Peripheral Port), told apart by their connector and their band, and it
+  forms as its Machine Terminal is placed, as a block beside the terminal changes, or as a player uses it. Formed, it
+  is drawn whole with its own model, showing what it works on in the colours of what goes in and comes out, its
+  beacon turning and its particles given off while it works; breaking its terminal gives back the Machine Terminal.
+- (Computers) The chain's machines at work: each works a kind of recipe of its own, its steps and its draws first
+  estimates, from 0.5 kW for the Coil Winder to 10 kW for the Advanced Lithography Station, drawing J's Energy at low
+  voltage through its Power Entry and only while it works; the Coke Oven burns part of its own coal and draws nothing.
+  Things reach a machine through its inlets and leave through its outlets, so a hopper, a pipe, a bus or a Crafting
+  Interface works it. A Lithography Station from the Legacy on works only linked by peripheral cable, on its
+  Peripheral Port, to a running computer of the era before its recipe's or a later one, which runs the exposure as its
+  `litho` process and holds memory for it by the era, from 2 MB to 2,048 MB; a computer two eras newer exposes in half
+  the time. An Electronics Assembly Line works the bench recipes of its era and the older ones, at its era's bench's
+  draw. The Guide to Operations explains them in a section of its own.
 - (Core) The generic ores of the electronics chain's metals are drawn as the minerals they are mined from: lead as
   galena, zinc as sphalerite, nickel as garnierite, aluminium as bauxite, tantalum as coltan, chromium as chromite,
   manganese as rhodochrosite, mercury as cinnabar, cobalt as cobaltite with its pink bloom, silver native, zirconium as
@@ -3433,6 +3459,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole blocks.
 
 ### Changed
+- (Computers) Computers draw energy, switched off, lets the chain's machines run free of energy too.
+- (Core) A processing machine that takes no energy works its recipes without paying for them, where before it waited
+  for energy it would never draw.
+- (Core) A formed multiblock fills the place of a block its model shows no face of when the block's middle lies
+  within the model's solid, so a closed machine is solid through.
 - (Computers) A computer, or a server in its rack, that its UPS takes over writes it in the network's log: "On its
   UPS's battery: the power went".
 - (Core) A notification that says where it came from says so after its mod's name, on the screen and in the history.

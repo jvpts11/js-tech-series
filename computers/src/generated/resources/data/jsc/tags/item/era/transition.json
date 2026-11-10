@@ -143,6 +143,10 @@
     "jsc:laser_diode_algainp",
     "jsc:etched_board_transition",
     "jsc:transition_electronics_workbench",
+    "jsc:lithography_fluoride_optics",
+    "jsc:lithography_arf_laser",
+    "jsc:assembly_transition_placement_head",
+    "jsc:assembly_transition_reflow_oven",
     "jsc:dvd_rom",
     "jsc:dvd_rw"
   ]

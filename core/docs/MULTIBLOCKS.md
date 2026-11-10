@@ -429,7 +429,9 @@ public static final DeclaredModel TURBINE = CONTENT.model("turbine")
   from filling the room beside it. Make the model's solids closed, their faces facing out, and they are filled.
   (Until 2026-11-03 only the sixteenths the faces passed through were taken: a shell.)
 - **The run stops when model and pattern have drifted apart**: a block of the pattern with no face of the model in
-  it, or faces more than a block outside the pattern, each named by its place from the terminal. Faces less than a
+  it, or faces more than a block outside the pattern, each named by its place from the terminal. A block with no face
+  in it whose middle lies within the model's solid, as the middle of a thick body does, is not drifted: it is solid
+  where it lies within (*added 2026-11-09*). Faces less than a
   block outside, a lip or a rotor's tip, are carried by the nearest block of the pattern, pressed onto its side.
 - **A face on the wall between two blocks** belongs to the block whose solid it closes, the one it faces away from,
   as a floor closes the block under it; or to the one it faces, when the other is not the structure's.

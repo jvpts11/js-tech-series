@@ -299,7 +299,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:recipe_keep_stock",
-  "order": 340,
+  "order": 348,
   "section": "jsc:iql_recipe_list",
   "title": "jsc.guide.recipe_keep_stock.title"
 }

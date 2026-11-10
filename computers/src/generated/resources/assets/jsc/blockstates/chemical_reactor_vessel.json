@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/chemical_reactor_vessel"
+    }
+  }
+}

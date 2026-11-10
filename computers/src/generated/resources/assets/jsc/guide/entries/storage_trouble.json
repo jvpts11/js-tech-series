@@ -204,7 +204,7 @@
   ],
   "icon": "jsc:vaultis_array_pcie3",
   "id": "jsc:storage_trouble",
-  "order": 93,
+  "order": 101,
   "section": "jsc:storage",
   "title": "jsc.guide.storage_trouble.title"
 }

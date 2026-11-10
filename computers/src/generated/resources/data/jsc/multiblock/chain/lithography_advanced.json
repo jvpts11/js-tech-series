@@ -1,0 +1,71 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:clean_room_casing"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:lithography_wafer_stage"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:lithography_euv_source"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:lithography_mirror_optics"
+      ]
+    },
+    "h": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    },
+    "i": {
+      "blocks": [
+        "jsc:peripheral_port"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "dae"
+    ],
+    [
+      "fg#",
+      "ahi"
+    ],
+    [
+      "aaa",
+      "aaa"
+    ]
+  ],
+  "name": "lithography_advanced",
+  "ports": {
+    "c": "item_input",
+    "d": "energy_input",
+    "e": "item_output",
+    "h": "fluid_input"
+  },
+  "terminal": "jsc:lithography_advanced_terminal"
+}

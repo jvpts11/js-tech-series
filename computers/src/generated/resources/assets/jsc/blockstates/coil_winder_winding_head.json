@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/coil_winder_winding_head"
+    }
+  }
+}

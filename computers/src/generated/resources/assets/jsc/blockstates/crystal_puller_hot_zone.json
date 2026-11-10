@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/crystal_puller_hot_zone"
+    }
+  }
+}

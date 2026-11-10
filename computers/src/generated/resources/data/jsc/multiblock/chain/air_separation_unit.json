@@ -1,0 +1,65 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:air_separation_unit_compressor"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:vacuum_casing"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:air_separation_unit_vaporizer"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:air_separation_unit_adsorber"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:gas_outlet"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:air_separation_unit_column"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "ccc",
+      "dcc",
+      "dcc"
+    ],
+    [
+      "cc#",
+      "cee",
+      "fcg",
+      "fgg"
+    ],
+    [
+      "ccc",
+      "ccc",
+      "fcc",
+      "fcg"
+    ]
+  ],
+  "name": "air_separation_unit",
+  "ports": {
+    "a": "energy_input",
+    "f": "gas_output"
+  },
+  "terminal": "jsc:air_separation_unit_terminal"
+}

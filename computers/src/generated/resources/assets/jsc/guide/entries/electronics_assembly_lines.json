@@ -1,0 +1,127 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.electronics_assembly_lines.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.electronics_assembly_lines.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.electronics_assembly_lines.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.electronics_assembly_lines.table1",
+      "heads": [
+        "jsc.guide.electronics_assembly_lines.table1_head1",
+        "jsc.guide.electronics_assembly_lines.table1_head2",
+        "jsc.guide.electronics_assembly_lines.table1_head3",
+        "jsc.guide.electronics_assembly_lines.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_1_3"
+          },
+          {
+            "amount": 40,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_2_3"
+          },
+          {
+            "amount": 60,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_3_2"
+          },
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_3_3"
+          },
+          {
+            "amount": 300,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_4_2"
+          },
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_4_3"
+          },
+          {
+            "amount": 80,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_5_2"
+          },
+          {
+            "words": "jsc.guide.electronics_assembly_lines.table1_5_3"
+          },
+          {
+            "amount": 120,
+            "unit": "W"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:building_chain_machines",
+        "jsc:electronics_workbench"
+      ]
+    }
+  ],
+  "icon": "jsc:assembly_vintage_placement_head",
+  "id": "jsc:electronics_assembly_lines",
+  "items": [
+    "jsc:assembly_feeder_bank",
+    "jsc:assembly_vintage_placement_head",
+    "jsc:assembly_wave_solder",
+    "jsc:assembly_legacy_placement_head",
+    "jsc:assembly_transition_placement_head",
+    "jsc:assembly_transition_reflow_oven",
+    "jsc:assembly_standard_placement_head",
+    "jsc:assembly_standard_reflow_oven",
+    "jsc:assembly_advanced_placement_head",
+    "jsc:assembly_advanced_reflow_oven"
+  ],
+  "order": 36,
+  "section": "jsc:chain_machines",
+  "title": "jsc.guide.electronics_assembly_lines.title"
+}

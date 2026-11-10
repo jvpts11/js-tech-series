@@ -192,7 +192,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:interactor_screen",
-  "order": 86,
+  "order": 94,
   "section": "jsc:mc_net_terminal",
   "title": "jsc.guide.interactor_screen.title"
 }

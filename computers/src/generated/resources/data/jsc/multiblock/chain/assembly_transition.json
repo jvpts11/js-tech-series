@@ -1,0 +1,56 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:assembly_feeder_bank"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:machine_casing"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:assembly_transition_reflow_oven"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:assembly_transition_placement_head"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "ded"
+    ],
+    [
+      "fg#",
+      "ddd"
+    ]
+  ],
+  "name": "assembly_transition",
+  "ports": {
+    "a": "item_output",
+    "c": "item_input",
+    "e": "energy_input"
+  },
+  "terminal": "jsc:assembly_transition_terminal"
+}

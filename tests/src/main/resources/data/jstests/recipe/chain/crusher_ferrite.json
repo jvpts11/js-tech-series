@@ -1,0 +1,10 @@
+{
+  "type": "jsc:crusher",
+  "inputs": [
+    {"item": "jsc:ferrite", "count": 1}
+  ],
+  "outputs": [
+    {"id": "jsc:inductor", "count": 2}
+  ],
+  "ticks": 20
+}

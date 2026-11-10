@@ -1,0 +1,17 @@
+{
+  "emitters": [
+    {
+      "effect": "jsc:chain/assembly_transition_0",
+      "at": [
+        -1.4688,
+        0.925,
+        0.5
+      ],
+      "way": [
+        0.0,
+        0.9701,
+        0.2425
+      ]
+    }
+  ]
+}

@@ -1,0 +1,151 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.board_machines.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.board_machines.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.board_machines.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.board_machines.table1",
+      "heads": [
+        "jsc.guide.board_machines.table1_head1",
+        "jsc.guide.board_machines.table1_head2",
+        "jsc.guide.board_machines.table1_head3",
+        "jsc.guide.board_machines.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.board_machines.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.board_machines.table1_1_2"
+          },
+          {
+            "amount": 10,
+            "unit": "s"
+          },
+          {
+            "amount": 1500,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.board_machines.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.board_machines.table1_2_2"
+          },
+          {
+            "amount": 10,
+            "unit": "s"
+          },
+          {
+            "amount": 1500,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.board_machines.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.board_machines.table1_3_2"
+          },
+          {
+            "amount": 20,
+            "unit": "s"
+          },
+          {
+            "amount": 3000,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.board_machines.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.board_machines.table1_4_2"
+          },
+          {
+            "amount": 4,
+            "unit": "s"
+          },
+          {
+            "amount": 500,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.board_machines.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.board_machines.table1_5_2"
+          },
+          {
+            "amount": 10,
+            "unit": "s"
+          },
+          {
+            "amount": 1000,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.board_machines.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.board_machines.table1_6_2"
+          },
+          {
+            "amount": 30,
+            "unit": "s"
+          },
+          {
+            "amount": 3000,
+            "unit": "W"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:building_chain_machines",
+        "jsc:electronics_assembly_lines"
+      ]
+    }
+  ],
+  "icon": "jsc:laminator_hot_platen",
+  "id": "jsc:board_machines",
+  "items": [
+    "jsc:laminator_hot_platen",
+    "jsc:laminator_press_crown",
+    "jsc:board_etcher_etchant_sump",
+    "jsc:board_etcher_spray_tunnel",
+    "jsc:ceramic_kiln_kiln_car",
+    "jsc:ceramic_kiln_kiln_chamber",
+    "jsc:coil_winder_winding_head",
+    "jsc:coil_winder_supply_spool",
+    "jsc:optical_polisher_polishing_lap",
+    "jsc:optical_polisher_draw_tower",
+    "jsc:display_line_gantry",
+    "jsc:display_line_test_stand",
+    "jsc:display_line_fill_chamber"
+  ],
+  "order": 35,
+  "section": "jsc:chain_machines",
+  "title": "jsc.guide.board_machines.title"
+}

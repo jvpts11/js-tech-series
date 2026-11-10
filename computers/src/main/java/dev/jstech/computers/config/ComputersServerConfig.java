@@ -89,7 +89,8 @@ public final class ComputersServerConfig {
             .comment("Whether the computers draw energy for what their parts take, through their power supplies: "
                             + "J's Energy in the low voltage class, or FE where J's Core lets the series take it. "
                             + "A computer without it does not start, and one that loses it goes dark.",
-                    "Off, every computer runs free, for a world with no energy source at all.")
+                    "Off, every computer runs free, and so do the chain's benches and machines, for a world with no"
+                            + " energy source at all.")
             .named("Computers draw energy");
 
     public static final ConfigKey<String> UPDATE_COST = ConfigKey.text(UPDATE_COST_PATH,
@@ -305,7 +306,7 @@ public final class ComputersServerConfig {
         ConfigFiles.register(FILE, modEventBus, modContainer);
     }
 
-    /** Whether the computers draw energy for what their parts take; off, they run free. */
+    /** Whether the computers draw energy for what their parts take, and the chain's benches and machines too. */
     public static boolean drawEnergy() {
         return FILE.get(DRAW_ENERGY);
     }

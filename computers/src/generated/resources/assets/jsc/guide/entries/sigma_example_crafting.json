@@ -214,7 +214,7 @@
     }
   ],
   "id": "jsc:sigma_example_crafting",
-  "order": 415,
+  "order": 423,
   "section": "jsc:examples_network",
   "title": "jsc.guide.sigma_example_crafting.title"
 }

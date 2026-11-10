@@ -1,0 +1,95 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.chemistry_machines.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.chemistry_machines.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.chemistry_machines.table1",
+      "heads": [
+        "jsc.guide.chemistry_machines.table1_head1",
+        "jsc.guide.chemistry_machines.table1_head2",
+        "jsc.guide.chemistry_machines.table1_head3",
+        "jsc.guide.chemistry_machines.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.chemistry_machines.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.chemistry_machines.table1_1_2"
+          },
+          {
+            "amount": 30,
+            "unit": "s"
+          },
+          {
+            "amount": 0,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.chemistry_machines.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.chemistry_machines.table1_2_2"
+          },
+          {
+            "amount": 10,
+            "unit": "s"
+          },
+          {
+            "amount": 2000,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.chemistry_machines.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.chemistry_machines.table1_3_2"
+          },
+          {
+            "amount": 10,
+            "unit": "s"
+          },
+          {
+            "amount": 3000,
+            "unit": "W"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:building_chain_machines",
+        "jsc:silicon_machines"
+      ]
+    }
+  ],
+  "icon": "jsc:chemical_reactor_vessel",
+  "id": "jsc:chemistry_machines",
+  "items": [
+    "jsc:coke_oven_oven_chamber",
+    "jsc:coke_oven_standpipe",
+    "jsc:coke_oven_oven_door",
+    "jsc:chemical_reactor_agitator",
+    "jsc:chemical_reactor_vessel",
+    "jsc:air_separation_unit_vaporizer",
+    "jsc:air_separation_unit_compressor",
+    "jsc:air_separation_unit_column",
+    "jsc:air_separation_unit_adsorber"
+  ],
+  "order": 31,
+  "section": "jsc:chain_machines",
+  "title": "jsc.guide.chemistry_machines.title"
+}

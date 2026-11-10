@@ -33,10 +33,14 @@ public final class ModelPose {
     private final float[] moves;
     private final float[] sizes;
     private final boolean[] hidden;
+    private final int[] tints;
     private final Map<String, Float> weights = new HashMap<>();
     private final Quaternionf scratchTurn = new Quaternionf();
     private final Quaternionf scratchEuler = new Quaternionf();
+    private boolean tinted;
 
+    /** A bone's colour as its texture paints it, untinted. */
+    public static final int UNTINTED = 0xFFFFFFFF;
     private static final float SAME = 1.0e-4F;
 
     public ModelPose(final ModelData model) {
@@ -50,6 +54,7 @@ public final class ModelPose {
         this.moves = new float[count * 3];
         this.sizes = new float[count * 3];
         this.hidden = new boolean[count];
+        this.tints = new int[count];
         for (int i = 0; i < count; i++) {
             this.index.put(model.bones().get(i).name(), i);
             this.turns[i] = new Quaternionf();
@@ -78,17 +83,21 @@ public final class ModelPose {
         return this.parents.length;
     }
 
-    /** Puts every bone back at rest, its hiding as its file has it, and every morph target at no weight. */
+    /**
+     * Puts every bone back at rest, its hiding as its file has it, untinted, and every morph target at no weight.
+     */
     public void reset() {
         for (int i = 0; i < this.parents.length; i++) {
             this.turned[i] = false;
             this.hidden[i] = this.model.bones().get(i).hidden();
+            this.tints[i] = UNTINTED;
             for (int k = 0; k < 3; k++) {
                 this.euler[i * 3 + k] = 0;
                 this.moves[i * 3 + k] = 0;
                 this.sizes[i * 3 + k] = 1;
             }
         }
+        this.tinted = false;
         this.weights.clear();
     }
 
@@ -122,6 +131,25 @@ public final class ModelPose {
     /** Hides or shows bone {@code bone} and everything that hangs from it. */
     public void setHidden(final int bone, final boolean hide) {
         this.hidden[bone] = hide;
+    }
+
+    /**
+     * Paints bone {@code bone}'s own faces in {@code argb}, their texture's colours multiplied by it: the material a
+     * machine works shown in its own colour on a part drawn neutral. The bones hanging from it keep their own.
+     */
+    public void setTint(final int bone, final int argb) {
+        this.tints[bone] = argb;
+        this.tinted |= argb != UNTINTED;
+    }
+
+    /** The colour bone {@code bone}'s own faces are painted in, {@link #UNTINTED} unless one is set. */
+    public int tint(final int bone) {
+        return this.tints[bone];
+    }
+
+    /** Whether any bone is tinted this frame. */
+    public boolean tinted() {
+        return this.tinted;
     }
 
     /** Whether bone {@code bone} itself is hidden, whatever the bones it hangs from are. */

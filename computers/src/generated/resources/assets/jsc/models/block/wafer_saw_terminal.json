@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "jsc:block/chain/machine/terminal",
+    "side": "jsc:block/chain/machine/wafer_saw_wire_web",
+    "top": "jsc:block/chain/machine/wafer_saw_wire_web"
+  }
+}

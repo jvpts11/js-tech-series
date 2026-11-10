@@ -456,6 +456,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   plastics and resins, which come as plate, sheet and dust; `Forms.CRUSHED` and `Forms.LUMP` are the forms of crushed
   ore and of a solid in pieces; and `Form.oreColoured()`, set with `Form.Builder.oreColoured()`, draws a form's things
   in the colour of their material's ore, as raw and crushed ore are. Experimental.
+- Tinted bones and reshaped work: J's Core's API is at version 50. `ModelPose.setTint(bone, argb)` draws a
+  bone of a model in a colour, which `tint(bone)` gives back and `tinted()` says the pose has; `UNTINTED` is a bone's
+  colour left as it is, and a tinted model is drawn on its own rather than with its model's others.
+  `ProcessingMachineBlockEntity.Processing` gains `withTicks` and `withEnergyPerTick`, the same work in another time or
+  at another draw. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2010,6 +2015,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   stands in the block over it is sat in from its back.
 
 ### Changed
+- A processing machine that takes no energy works its recipes without paying for them, where before it waited
+  for energy it would never draw.
+- A formed multiblock fills the place of a block its model shows no face of when the block's middle lies
+  within the model's solid, so a closed machine is solid through.
 - A notification that says where it came from says so after its mod's name, on the screen and in the history.
 - The catalogue of the electronics chain: crushed ore, drawn from a picture of broken ore in the colour of the
   material's ore, and lumps (coke, calcium carbide); polymers as plate, sheet and dust, and crystals grown as rods

@@ -1,0 +1,64 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:refractory_casing"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:liquid_outlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:induction_furnace_coil"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:induction_furnace_capacitor_bank"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "aba",
+      "cda",
+      "eaa"
+    ],
+    [
+      "aa#",
+      "ada",
+      "afa"
+    ],
+    [
+      "aaa",
+      "gaa",
+      "aaa"
+    ]
+  ],
+  "name": "induction_furnace",
+  "ports": {
+    "b": "item_output",
+    "c": "fluid_output",
+    "e": "energy_input",
+    "g": "item_input"
+  },
+  "terminal": "jsc:induction_furnace_terminal"
+}

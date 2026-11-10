@@ -97,7 +97,8 @@ public final class KitInstancing {
                         final MultiBufferSource buffers, final int light, final int overlay,
                         @Nullable final Level glowsIn) {
         if (!collecting || buffers != Minecraft.getInstance().renderBuffers().bufferSource()
-                || model.definition().translucent() || !instance.deformers().isEmpty() || KitDamage.damaged(model)
+                || model.definition().translucent() || !instance.deformers().isEmpty() || instance.pose().tinted()
+                || KitDamage.damaged(model)
                 || !KitLayers.of(model.id()).isEmpty() || GLAZED.computeIfAbsent(model, KitInstancing::glazed)) {
             return false;
         }

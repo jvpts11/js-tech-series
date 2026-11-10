@@ -1,0 +1,10 @@
+{
+  "type": "jsc:legacy_lithography",
+  "inputs": [
+    {"item": "jsc:memory_chip_legacy", "count": 1}
+  ],
+  "outputs": [
+    {"id": "jsc:controller_chip_legacy", "count": 1}
+  ],
+  "ticks": 20
+}

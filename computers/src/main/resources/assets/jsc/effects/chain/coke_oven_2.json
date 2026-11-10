@@ -1,0 +1,39 @@
+{
+  "reach": 48,
+  "emitters": [
+    {
+      "name": "chain",
+      "emission": {
+        "shape": {
+          "type": "disc",
+          "radius": 0.0375
+        },
+        "rate": 5.0,
+        "life": 1.0,
+        "speed": [
+          0.125,
+          0.25
+        ]
+      },
+      "look": {
+        "sprite": "jsc:chain_flame",
+        "size": [
+          0.1625,
+          0.0875
+        ],
+        "colour": [
+          "#FFE88CFF",
+          "#FF8024FF"
+        ],
+        "light": 15
+      },
+      "motion": {
+        "moved_by": {
+          "gravity": false,
+          "air": false,
+          "wind": false
+        }
+      }
+    }
+  ]
+}

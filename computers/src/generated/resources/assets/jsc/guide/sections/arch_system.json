@@ -2,6 +2,6 @@
   "chapter": "jsc:arch",
   "icon": "jsc:cd_rom",
   "id": "jsc:arch_system",
-  "order": 60,
+  "order": 61,
   "title": "jsc.guide.section.arch_system"
 }

@@ -1,0 +1,61 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:siemens_reactor_base_plate"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:refractory_casing"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:siemens_reactor_bell"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:gas_inlet"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "ab",
+      "cd"
+    ],
+    [
+      "e#",
+      "fb"
+    ],
+    [
+      "eb",
+      "fg"
+    ]
+  ],
+  "name": "siemens_reactor",
+  "ports": {
+    "c": "item_output",
+    "d": "energy_input",
+    "f": "gas_input",
+    "g": "item_input"
+  },
+  "terminal": "jsc:siemens_reactor_terminal"
+}

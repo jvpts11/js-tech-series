@@ -1,0 +1,58 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:electrolytic_cell_cell_stack"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:lined_casing"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:gas_outlet"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "dbe"
+    ],
+    [
+      "fb#",
+      "fbg"
+    ]
+  ],
+  "name": "electrolytic_cell",
+  "ports": {
+    "a": "item_output",
+    "d": "energy_input",
+    "e": "fluid_input",
+    "f": "gas_output",
+    "g": "item_input"
+  },
+  "terminal": "jsc:electrolytic_cell_terminal"
+}

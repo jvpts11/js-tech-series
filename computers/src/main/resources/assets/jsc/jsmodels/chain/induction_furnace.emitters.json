@@ -1,0 +1,43 @@
+{
+  "emitters": [
+    {
+      "effect": "jsc:chain/induction_furnace_0",
+      "at": [
+        -1.0312,
+        1.2188,
+        0.75
+      ],
+      "way": [
+        0.0,
+        0.9578,
+        -0.2873
+      ]
+    },
+    {
+      "effect": "jsc:chain/induction_furnace_1",
+      "at": [
+        -1.0312,
+        -0.325,
+        -0.25
+      ],
+      "way": [
+        0.0,
+        0.7809,
+        -0.6247
+      ]
+    },
+    {
+      "effect": "jsc:chain/induction_furnace_2",
+      "at": [
+        -1.0312,
+        1.25,
+        0.75
+      ],
+      "way": [
+        0.0,
+        0.7071,
+        0.7071
+      ]
+    }
+  ]
+}

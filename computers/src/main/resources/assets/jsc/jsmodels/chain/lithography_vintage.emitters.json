@@ -1,0 +1,17 @@
+{
+  "emitters": [
+    {
+      "effect": "jsc:chain/lithography_vintage_0",
+      "at": [
+        -2.25,
+        1.3375,
+        1.125
+      ],
+      "way": [
+        0.0,
+        0.9778,
+        0.2095
+      ]
+    }
+  ]
+}

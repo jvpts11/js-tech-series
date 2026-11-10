@@ -1,0 +1,17 @@
+{
+  "emitters": [
+    {
+      "effect": "jsc:chain/deposition_chamber_0",
+      "at": [
+        -0.7188,
+        0.15,
+        1.3438
+      ],
+      "way": [
+        0.0,
+        0.9864,
+        0.1644
+      ]
+    }
+  ]
+}

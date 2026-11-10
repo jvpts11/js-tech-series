@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "facing=east,formed=false": {
+      "model": "jsc:block/gas_outlet"
+    },
+    "facing=east,formed=true": {
+      "model": "jsc:block/gas_outlet_formed"
+    },
+    "facing=north,formed=false": {
+      "model": "jsc:block/gas_outlet"
+    },
+    "facing=north,formed=true": {
+      "model": "jsc:block/gas_outlet_formed"
+    },
+    "facing=south,formed=false": {
+      "model": "jsc:block/gas_outlet"
+    },
+    "facing=south,formed=true": {
+      "model": "jsc:block/gas_outlet_formed"
+    },
+    "facing=west,formed=false": {
+      "model": "jsc:block/gas_outlet"
+    },
+    "facing=west,formed=true": {
+      "model": "jsc:block/gas_outlet_formed"
+    }
+  }
+}

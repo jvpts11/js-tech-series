@@ -1,0 +1,51 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:ceramic_kiln_kiln_car"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:ceramic_kiln_kiln_chamber"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:refractory_casing"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "ab",
+      "cd"
+    ],
+    [
+      "e#",
+      "ef"
+    ]
+  ],
+  "name": "ceramic_kiln",
+  "ports": {
+    "b": "item_input",
+    "c": "item_output",
+    "d": "energy_input"
+  },
+  "terminal": "jsc:ceramic_kiln_terminal"
+}

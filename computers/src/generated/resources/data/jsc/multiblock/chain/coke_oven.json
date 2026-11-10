@@ -1,0 +1,63 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:refractory_casing"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:coke_oven_oven_chamber"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:liquid_outlet"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:coke_oven_oven_door"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:coke_oven_standpipe"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "aba",
+      "aca",
+      "daa"
+    ],
+    [
+      "#ea",
+      "acc",
+      "aaa"
+    ],
+    [
+      "aaa",
+      "afa",
+      "aga"
+    ]
+  ],
+  "name": "coke_oven",
+  "ports": {
+    "b": "item_output",
+    "d": "fluid_output",
+    "f": "item_input"
+  },
+  "terminal": "jsc:coke_oven_terminal"
+}

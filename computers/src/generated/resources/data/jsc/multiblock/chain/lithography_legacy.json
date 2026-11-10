@@ -1,0 +1,77 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:clean_room_casing"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:lithography_wafer_stage"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:lithography_krf_laser"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:lithography_glass_optics"
+      ]
+    },
+    "h": {
+      "blocks": [
+        "jsc:gas_inlet"
+      ]
+    },
+    "i": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    },
+    "j": {
+      "blocks": [
+        "jsc:peripheral_port"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "dae"
+    ],
+    [
+      "fg#",
+      "hij"
+    ],
+    [
+      "aaa",
+      "aaa"
+    ]
+  ],
+  "name": "lithography_legacy",
+  "ports": {
+    "c": "item_input",
+    "d": "energy_input",
+    "e": "item_output",
+    "h": "gas_input",
+    "i": "fluid_input"
+  },
+  "terminal": "jsc:lithography_legacy_terminal"
+}

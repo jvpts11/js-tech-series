@@ -127,7 +127,7 @@
   ],
   "icon": "jsc:guide_to_operations",
   "id": "jsc:listcmd",
-  "order": 235,
+  "order": 243,
   "section": "jsc:help_at_the_prompt",
   "title": "jsc.guide.listcmd.title"
 }

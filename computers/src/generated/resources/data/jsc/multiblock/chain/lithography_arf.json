@@ -1,0 +1,77 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:clean_room_casing"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:lithography_wafer_stage"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:lithography_arf_laser"
+      ]
+    },
+    "h": {
+      "blocks": [
+        "jsc:lithography_fluoride_optics"
+      ]
+    },
+    "i": {
+      "blocks": [
+        "jsc:gas_inlet"
+      ]
+    },
+    "j": {
+      "blocks": [
+        "jsc:peripheral_port"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "def"
+    ],
+    [
+      "gh#",
+      "iej"
+    ],
+    [
+      "aaa",
+      "aaa"
+    ]
+  ],
+  "name": "lithography_arf",
+  "ports": {
+    "c": "item_input",
+    "d": "energy_input",
+    "e": "fluid_input",
+    "f": "item_output",
+    "i": "gas_input"
+  },
+  "terminal": "jsc:lithography_arf_terminal"
+}

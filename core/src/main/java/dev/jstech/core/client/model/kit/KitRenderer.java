@@ -216,6 +216,7 @@ public final class KitRenderer {
                             final int overlay, final long tick, @Nullable final Level glowsIn) {
         final Matrix4f[] matrices = instance.world();
         final List<List<BakedGeometry.Part>> bones = model.geometry().bones();
+        final ModelPose pose = instance.pose();
         for (int i = 0; i < bones.size(); i++) {
             final List<BakedGeometry.Part> parts = bones.get(i);
             if (parts.isEmpty() || hidden[i]) {
@@ -223,13 +224,14 @@ public final class KitRenderer {
             }
             poses.pushPose();
             poses.mulPose(matrices[i]);
+            final int colour = i < pose.bones() ? pose.tint(i) : WHITE;
             for (final BakedGeometry.Part part : parts) {
                 final ResourceLocation location = location(model, part.texture(), painted);
                 final RenderType into = type == null ? own(model, location, part.seeThrough()) : type.apply(location);
                 if (into != null) {
                     emit(buffers.getBuffer(into), poses.last(), part.vertices(), part.vertices().length,
                             part.glow() ? LightTexture.FULL_BRIGHT : light, overlay,
-                            KitTextures.of(location).frames(), tick);
+                            KitTextures.of(location).frames(), tick, colour);
                 }
                 if (glowsIn != null && part.glow()) {
                     KitGlows.report(glowsIn, middle(poses.last(), part.vertices()), model.definition().glowLight(),
@@ -350,11 +352,18 @@ public final class KitRenderer {
     private static void emit(final VertexConsumer consumer, final PoseStack.Pose pose, final float[] vertices,
                              final int count, final int light, final int overlay, final TextureFrames frames,
                              final long tick) {
+        emit(consumer, pose, vertices, count, light, overlay, frames, tick, WHITE);
+    }
+
+    /* The same, every face's texture multiplied by {@code colour}: a tinted bone's. */
+    private static void emit(final VertexConsumer consumer, final PoseStack.Pose pose, final float[] vertices,
+                             final int count, final int light, final int overlay, final TextureFrames frames,
+                             final long tick, final int colour) {
         final float scale = frames.vScale();
         final float offset = frames.vOffset(tick);
         for (int at = 0; at < count; at += BakedGeometry.STRIDE) {
             consumer.addVertex(pose, vertices[at], vertices[at + 1], vertices[at + 2])
-                    .setColor(WHITE)
+                    .setColor(colour)
                     .setUv(vertices[at + 3], vertices[at + 4] * scale + offset)
                     .setOverlay(overlay)
                     .setLight(light)

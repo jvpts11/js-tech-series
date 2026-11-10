@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/board_etcher_etchant_sump"
+    }
+  }
+}

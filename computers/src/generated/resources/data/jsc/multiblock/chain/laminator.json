@@ -1,0 +1,51 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:laminator_hot_platen"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:machine_casing"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:laminator_press_crown"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "dee"
+    ],
+    [
+      "eb#",
+      "efe"
+    ]
+  ],
+  "name": "laminator",
+  "ports": {
+    "a": "item_output",
+    "c": "item_input",
+    "d": "energy_input"
+  },
+  "terminal": "jsc:laminator_terminal"
+}

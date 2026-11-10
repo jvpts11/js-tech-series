@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/plasma_etcher_etch_chamber"
+    }
+  }
+}

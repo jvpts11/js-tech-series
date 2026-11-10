@@ -46,7 +46,7 @@
     "jsc:hbw_interface",
     "jsc:advanced_hbw_interface"
   ],
-  "order": 43,
+  "order": 51,
   "section": "jsc:clusters",
   "title": "jsc.guide.hbw_interface.title"
 }

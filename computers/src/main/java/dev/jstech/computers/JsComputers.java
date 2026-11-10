@@ -17,6 +17,8 @@ import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.chain.ChainDeposits;
 import dev.jstech.computers.chain.ChainMaterials;
 import dev.jstech.computers.chain.ChainParts;
+import dev.jstech.computers.chain.machine.ChainMachineBlocks;
+import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.audio.MusicImports;
 import dev.jstech.computers.block.SmallComputerBlock;
 import dev.jstech.computers.block.part.ComputingParts;
@@ -139,6 +141,9 @@ public class JsComputers {
         ChainDeposits.declare();
         ChainParts.declare();
         ChainBenches.declare();
+        // The chain's machines: their blocks before they form, then each machine and what it is made of.
+        ChainMachineBlocks.declare(modEventBus);
+        ChainMachines.declare();
         ComputingModule.register(modEventBus);
         // The buses mounted on cables, registered with the Core's parts.
         ComputingParts.register(modEventBus);

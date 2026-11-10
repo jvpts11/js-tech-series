@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "facing=east,formed=false": {
+      "model": "jsc:block/item_inlet"
+    },
+    "facing=east,formed=true": {
+      "model": "jsc:block/item_inlet_formed"
+    },
+    "facing=north,formed=false": {
+      "model": "jsc:block/item_inlet"
+    },
+    "facing=north,formed=true": {
+      "model": "jsc:block/item_inlet_formed"
+    },
+    "facing=south,formed=false": {
+      "model": "jsc:block/item_inlet"
+    },
+    "facing=south,formed=true": {
+      "model": "jsc:block/item_inlet_formed"
+    },
+    "facing=west,formed=false": {
+      "model": "jsc:block/item_inlet"
+    },
+    "facing=west,formed=true": {
+      "model": "jsc:block/item_inlet_formed"
+    }
+  }
+}

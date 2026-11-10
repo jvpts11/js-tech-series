@@ -1,0 +1,39 @@
+{
+  "reach": 48,
+  "emitters": [
+    {
+      "name": "chain",
+      "emission": {
+        "shape": {
+          "type": "disc",
+          "radius": 0.0625
+        },
+        "rate": 2.6667,
+        "life": 3.0,
+        "speed": [
+          0.1424,
+          0.2418
+        ]
+      },
+      "look": {
+        "sprite": "jsc:chain_puff",
+        "size": [
+          0.1875,
+          0.375
+        ],
+        "colour": [
+          "#ECF2F8CC",
+          "#FAFCFF33"
+        ],
+        "frames": 16
+      },
+      "motion": {
+        "moved_by": {
+          "gravity": false,
+          "air": false,
+          "wind": false
+        }
+      }
+    }
+  ]
+}

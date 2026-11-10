@@ -416,7 +416,8 @@ standard screen does, and `ProtectionTab` is the tab itself. These hooks of the 
 - `screenData()` gives what the screen shows that only the server knows, a `MachineScreenData` of a record, its
   codec, what it is until the first word, and how the server works it out; the menu carries it while the screen is
   open and only when it changed, and the screen reads it with `menu.screenData(MyReadings.class)`.
-- `takesEnergy()` false offers no port and no FE, for a machine whose energy a setting turns off.
+- `takesEnergy()` false offers no port and no FE, for a machine whose energy a setting turns off: it runs free,
+  spending nothing on its work (*changed 2026-11-09*; it used to wait for energy it could not take).
 - `settled(level, status)` runs after every tick's work, with what it came to: what the machine does when it stops
   (lets go of what it held, say) goes there.
 

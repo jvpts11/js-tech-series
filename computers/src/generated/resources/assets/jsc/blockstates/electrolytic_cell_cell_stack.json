@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/electrolytic_cell_cell_stack"
+    }
+  }
+}

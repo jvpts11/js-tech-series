@@ -1,0 +1,66 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:clean_room_casing"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:lithography_wafer_stage"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:lithography_glass_optics"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    },
+    "h": {
+      "blocks": [
+        "jsc:lithography_mercury_lamp"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "dae"
+    ],
+    [
+      "af#",
+      "aga"
+    ],
+    [
+      "aha",
+      "aaa"
+    ]
+  ],
+  "name": "lithography_vintage",
+  "ports": {
+    "c": "item_input",
+    "d": "energy_input",
+    "e": "item_output",
+    "g": "fluid_input"
+  },
+  "terminal": "jsc:lithography_vintage_terminal"
+}

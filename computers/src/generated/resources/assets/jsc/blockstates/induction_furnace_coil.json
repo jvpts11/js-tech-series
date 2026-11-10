@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/induction_furnace_coil"
+    }
+  }
+}

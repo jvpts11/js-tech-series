@@ -3,8 +3,9 @@
 *Added 2026-11-09.*
 
 J's Computers has a chain of its own, from the ore in the ground to the parts a computer is built from, so it needs no
-other mod to be played in survival. This page covers where its ores lie and the Electronics Workbench, the bench the
-parts are assembled at. The design behind it is in [Survival](design/survival.md).
+other mod to be played in survival. This page covers where its ores lie, the Electronics Workbench, the bench the
+parts are assembled at, and the machines that make them in numbers. The design behind it is in
+[Survival](design/survival.md).
 
 ## Where the ores are
 
@@ -45,9 +46,62 @@ of their own, and JEI and EMI show each kind with the benches that make it.
   strip on the window has its lamp, what the bench draws and how much energy it holds. A server that turns the
   computers' draw off (`power.draw_energy`) turns the benches' off too.
 - **It is the player's, by hand.** Nothing reaches its trays through its sides: no hopper, pipe or Crafting Interface.
-  To make parts on their own, each era has a machine of its own.
+  To make parts on their own, each era has its Electronics Assembly Line (below).
 
 Breaking a bench drops it with everything in its trays.
+
+## The machines
+
+The chain's machines are multiblocks, each built block by block in a shape of its own. A Structure Projector shows
+the shape of any of them before you build it.
+
+| Group | Machines |
+| --- | --- |
+| Ore and metals | Crusher, Grinder, Induction Furnace, Electrolytic Cell, Rolling Mill, Wire Drawer |
+| Chemistry and gases | Coke Oven, Chemical Reactor, Air Separation Unit |
+| Silicon | Siemens Reactor, Crystal Puller, Wafer Saw |
+| The chip factory | the Lithography Stations, Plasma Etcher, Ion Implanter, Deposition Chamber, Packaging Line |
+| Boards, parts, glass and screens | Laminator, Board Etcher, Ceramic Kiln, Coil Winder, Optical Polisher, Display Line |
+| Assembly | an Electronics Assembly Line for each era |
+
+- **What a machine is built of.** Its casing, one of five by the work it stands (the Machine Casing for the mechanical
+  machines, the Refractory Casing for heat, the Lined Casing for what corrodes, the Vacuum Casing for vacuum and gases
+  and the Clean Room Casing for the Lithography Stations), its working blocks, which make it what it is, its entries
+  and the Machine Terminal. The entries are told apart by their connector and their band: green takes in, orange gives
+  out, yellow is energy, cyan is the Peripheral Port.
+- **How it forms.** Place the Machine Terminal at the terminal's place, facing the way the machine's front should. It
+  looks for the shape standing whole round it as it is placed, as a block beside it changes, and as you use it, and
+  becomes that machine's own terminal. Formed, the machine is drawn as one, its entries drawing nothing of their own,
+  and it shows what it works on in the colours of what goes in and comes out. Breaking any block takes it apart until
+  the block is back; breaking the terminal gives back the Machine Terminal.
+- **What reaches it.** Things go in through its inlets and come out through its outlets: items, liquids and gases each
+  by their own. A hopper, a pipe, the network's buses or a Crafting Interface works it as any machine.
+- **Energy.** Every machine but the Coke Oven draws J's Energy at low voltage through its Power Entry, only while it
+  works; the Coke Oven burns part of its own coal. `power.draw_energy` off lets the machines run free too.
+- **The Lithography Stations.** One for the Vintage (mercury lamp), the Legacy (KrF laser), the Transition and the
+  Standard together (the ArF Lithography Station, its argon fluoride laser with immersion) and the Advanced (EUV).
+  From the Legacy on, a station works only linked by peripheral cable, on its Peripheral Port, to a running computer
+  of the era before its recipe's or a later one. The computer runs the exposure as its `litho` process, holding 2 MB
+  for the Legacy's recipes, 32 MB for the Transition's, 256 MB for the Standard's and 2,048 MB for the Advanced's; a
+  computer two eras newer than the one asked for exposes in half the time.
+- **The Electronics Assembly Lines.** Each works the bench recipes of its era and of the older ones, in the time the
+  recipe takes and at its era's bench's draw, its ingredients through its Item Inlet in any order.
+
+What each machine draws and how long a step takes, as first estimates:
+
+| Machine | A step | Draw | Machine | A step | Draw |
+| --- | ---: | ---: | --- | ---: | ---: |
+| Crusher | 8 s | 2 kW | Crystal Puller | 120 s | 6 kW |
+| Grinder | 4 s | 1 kW | Wafer Saw | 20 s | 2 kW |
+| Induction Furnace | 8 s | 4 kW | Lithography Station | 20 s | 2, 3, 4, 6 and 10 kW by era |
+| Electrolytic Cell | 10 s | 3 kW | Plasma Etcher | 10 s | 3 kW |
+| Rolling Mill | 4 s | 1.5 kW | Ion Implanter | 10 s | 4 kW |
+| Wire Drawer | 4 s | 1 kW | Deposition Chamber | 10 s | 3 kW |
+| Coke Oven | 30 s | none | Packaging Line | 20 s | 2 kW |
+| Chemical Reactor | 10 s | 2 kW | Laminator, Board Etcher | 10 s | 1.5 kW |
+| Air Separation Unit | 10 s | 3 kW | Ceramic Kiln | 20 s | 3 kW |
+| Siemens Reactor | 60 s | 5 kW | Coil Winder | 4 s | 0.5 kW |
+| Optical Polisher | 10 s | 1 kW | Display Line | 30 s | 3 kW |
 
 ## What can go wrong
 
@@ -56,3 +110,9 @@ Breaking a bench drops it with everything in its trays.
   the bench has no energy.
 - **The bench stopped with the part half done.** The part's tray is full: take the finished parts out.
 - **A hopper puts nothing in the bench.** It takes nothing from its sides; lay the ingredients in by hand.
+- **The terminal says no machine stands round it.** A block is missing, out of its place, or another stands where the
+  shape wants its own; a Structure Projector shows which.
+- **A machine stands formed but does nothing.** No energy reaches its Power Entry, what is in its inlets makes nothing
+  it knows, or its outlets are full.
+- **A Lithography Station exposes nothing.** Its computer is off, of an older era than the recipe asks for, not linked
+  to its Peripheral Port, or short of the memory the exposure holds.

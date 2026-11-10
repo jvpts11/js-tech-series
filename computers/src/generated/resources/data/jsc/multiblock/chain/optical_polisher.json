@@ -1,0 +1,51 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:optical_polisher_polishing_lap"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:machine_casing"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:optical_polisher_draw_tower"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "ab",
+      "cd"
+    ],
+    [
+      "e#",
+      "fe"
+    ]
+  ],
+  "name": "optical_polisher",
+  "ports": {
+    "b": "item_input",
+    "c": "item_output",
+    "d": "energy_input"
+  },
+  "terminal": "jsc:optical_polisher_terminal"
+}

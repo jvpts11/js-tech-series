@@ -133,7 +133,7 @@ public final class FormedShapeProvider implements DataProvider {
             misfits.add(new Misfit(id, bare, split.outside().keySet()));
             return Optional.empty();
         }
-        final Map<Long, int[]> cells = boxes(faces, laid.origin(), split);
+        final Map<Long, int[]> cells = boxes(MeshSolid.of(faces), laid.origin(), split, List.of());
         // A hollow block with none of the model's faces is written with no boxes: it merges with no shape at all.
         for (final long cell : laid.hollow()) {
             cells.putIfAbsent(cell, new int[0]);
@@ -206,14 +206,21 @@ public final class FormedShapeProvider implements DataProvider {
             }
         }
         final float[] faces = faces(model);
-        final MeshCells.Split split = MeshCells.split(faces, FormedShapes.patternOrigin(), shaped, apart);
-        if (!split.fits()) {
+        final double[] origin = FormedShapes.patternOrigin();
+        final MeshCells.Split split = MeshCells.split(faces, origin, shaped, apart);
+        // A block with no face of the model in it is still the model's when its middle lies within the model's
+        // solid, as the middle of a thick body does: it is solid whole.
+        final MeshSolid solid = MeshSolid.of(faces);
+        final List<Long> filled = split.bare().stream().filter(cell -> solid.within(corner(origin, cell), 1)[0])
+                .toList();
+        final List<Long> bare = split.bare().stream().filter(cell -> !filled.contains(cell)).toList();
+        if (!bare.isEmpty() || !split.outside().isEmpty()) {
             throw DeclarationError.of(namespace, "the formed model " + id, "does not fit its pattern " + patternId
-                    + ": the blocks " + places(split.bare()) + " from its terminal have no face of it, and faces lie"
+                    + ": the blocks " + places(bare) + " from its terminal have no face of it, and faces lie"
                     + " more than a block outside it at " + places(split.outside().keySet()), "make the model fill"
                     + " every block of the pattern, and reach no more than a block outside it");
         }
-        final Map<Long, int[]> cells = boxes(faces, FormedShapes.patternOrigin(), split);
+        final Map<Long, int[]> cells = boxes(solid, origin, split, filled);
         return new FormedShape(FormedShapes.patternOrigin(), apart, cells, FormedShapes.aboardDeclared(id),
                 pieces(model));
     }
@@ -245,17 +252,24 @@ public final class FormedShapeProvider implements DataProvider {
 
     /*
      * Each block's boxes: the sixteenths its own faces pass through, and those within the solids the whole model's
-     * faces close, so a wall is solid through its thickness and a seat through and through.
+     * faces close, so a wall is solid through its thickness and a seat through and through; a block of no face of
+     * its own that lies within them, {@code filled}, is what of it lies within.
      */
-    private static Map<Long, int[]> boxes(final float[] faces, final double[] origin, final MeshCells.Split split) {
-        final MeshSolid solid = MeshSolid.of(faces);
+    private static Map<Long, int[]> boxes(final MeshSolid solid, final double[] origin, final MeshCells.Split split,
+                                          final List<Long> filled) {
         final Map<Long, int[]> cells = new TreeMap<>();
-        split.pieces().forEach((cell, pieces) -> {
-            final double[] corner = {origin[0] + MeshCells.x(cell), origin[1] + MeshCells.y(cell),
-                origin[2] + MeshCells.z(cell)};
-            cells.put(cell, MeshVoxels.boxes(pieces, grid -> solid.within(corner, grid)));
-        });
+        split.pieces().forEach((cell, pieces) -> cells.put(cell, MeshVoxels.boxes(pieces,
+                grid -> solid.within(corner(origin, cell), grid))));
+        for (final long cell : filled) {
+            cells.put(cell, MeshVoxels.boxes(new float[0], grid -> solid.within(corner(origin, cell), grid)));
+        }
         return cells;
+    }
+
+    /* The lowest corner of the block {@code cell} in the model's space. */
+    private static double[] corner(final double[] origin, final long cell) {
+        return new double[] {origin[0] + MeshCells.x(cell), origin[1] + MeshCells.y(cell),
+            origin[2] + MeshCells.z(cell)};
     }
 
     /* The places {@code keys} as people read them, or a dash for none. */

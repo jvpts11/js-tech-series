@@ -1,0 +1,40 @@
+{
+  "reach": 48,
+  "emitters": [
+    {
+      "name": "chain",
+      "emission": {
+        "shape": {
+          "type": "disc",
+          "radius": 0.0781
+        },
+        "rate": 8.0,
+        "life": 1.0,
+        "speed": [
+          0.1855,
+          0.6149
+        ]
+      },
+      "look": {
+        "sprite": "jsc:chain_spark",
+        "size": [
+          0.1375,
+          0.1
+        ],
+        "colour": [
+          "#FFF4AAFF",
+          "#FF761CFF"
+        ],
+        "light": 15
+      },
+      "motion": {
+        "moved_by": {
+          "gravity": true,
+          "air": false,
+          "wind": false
+        },
+        "gravity": 0.1019
+      }
+    }
+  ]
+}

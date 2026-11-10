@@ -1,0 +1,53 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:gas_inlet"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:plasma_etcher_etch_chamber"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "ab",
+      "cd"
+    ],
+    [
+      "e#",
+      "fd"
+    ]
+  ],
+  "name": "plasma_etcher",
+  "ports": {
+    "a": "item_input",
+    "b": "energy_input",
+    "c": "item_output",
+    "d": "gas_input",
+    "f": "fluid_input"
+  },
+  "terminal": "jsc:plasma_etcher_terminal"
+}

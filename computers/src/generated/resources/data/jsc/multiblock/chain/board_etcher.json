@@ -1,0 +1,57 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:board_etcher_etchant_sump"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:liquid_inlet"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:lined_casing"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:board_etcher_spray_tunnel"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "def"
+    ],
+    [
+      "gg#",
+      "fff"
+    ]
+  ],
+  "name": "board_etcher",
+  "ports": {
+    "a": "item_output",
+    "c": "item_input",
+    "d": "energy_input",
+    "e": "fluid_input"
+  },
+  "terminal": "jsc:board_etcher_terminal"
+}

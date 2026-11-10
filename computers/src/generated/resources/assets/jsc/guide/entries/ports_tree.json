@@ -251,7 +251,7 @@
     }
   ],
   "id": "jsc:ports_tree",
-  "order": 284,
+  "order": 292,
   "section": "jsc:freebsd_software",
   "title": "jsc.guide.ports_tree.title"
 }

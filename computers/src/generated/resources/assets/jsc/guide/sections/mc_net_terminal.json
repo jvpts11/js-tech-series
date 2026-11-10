@@ -2,6 +2,6 @@
   "chapter": "jsc:the_network",
   "icon": "jsc:monitor",
   "id": "jsc:mc_net_terminal",
-  "order": 19,
+  "order": 20,
   "title": "jsc.guide.section.mc_net_terminal"
 }

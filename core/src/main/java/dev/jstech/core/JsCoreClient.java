@@ -72,6 +72,7 @@ import dev.jstech.core.client.machine.MachineScreen;
 import dev.jstech.core.client.map.ClientMarkers;
 import dev.jstech.core.client.machine.MachineWrenchClient;
 import dev.jstech.core.client.material.MaterialArt;
+import dev.jstech.core.client.material.ThingColours;
 import dev.jstech.core.client.variant.VariantArt;
 import dev.jstech.core.client.recipe.RecipeChooserClient;
 import dev.jstech.core.client.recipeview.RecipeViewers;
@@ -141,6 +142,7 @@ public final class JsCoreClient {
         // What each part of the Core answers on a player's game, on the mod's bus and the game's, declared here one
         // class at a time rather than found by a scan for annotations, so what runs is what this list says.
         AlertSigns.listen(modEventBus);
+        ThingColours.listen(modEventBus);
         AudioClientSetup.listen(modEventBus);
         AudioDebugLines.listen(modEventBus);
         AudioKeys.listen(modEventBus);

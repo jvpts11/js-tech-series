@@ -1,0 +1,51 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:machine_casing"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:packaging_line_mould_press"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:packaging_line_wire_bonder"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "bdb"
+    ],
+    [
+      "ef#",
+      "bbb"
+    ]
+  ],
+  "name": "packaging_line",
+  "ports": {
+    "a": "item_output",
+    "c": "item_input",
+    "d": "energy_input"
+  },
+  "terminal": "jsc:packaging_line_terminal"
+}

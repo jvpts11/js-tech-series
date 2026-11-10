@@ -64,7 +64,7 @@
     }
   ],
   "id": "jsc:devices_commands",
-  "order": 207,
+  "order": 215,
   "section": "jsc:shell_commands",
   "title": "jsc.guide.devices_commands.title"
 }

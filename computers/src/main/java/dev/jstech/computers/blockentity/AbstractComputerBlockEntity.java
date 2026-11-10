@@ -64,6 +64,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.computers.os.boot.BootIdentity;
 import dev.jstech.computers.os.boot.BootLines;
@@ -143,6 +144,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -263,6 +265,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      * server, so without it the player's side never knows the system and a help program cannot open its book.
      */
     private final ValueField<String> clientOs = fields().value("ClientOs", Codec.STRING, "").toClient();
+    /*
+     * What it runs for the devices linked to it (a Lithography Station's exposure), by the process's name: the
+     * megabytes it holds and the tick it holds them until, unless the device asks again before.
+     */
+    private final Map<String, long[]> hosted = new HashMap<>();
     /* What its power draws, shown on its assembly screen while that is open: its parts, its supply, the line. */
     private final DerivedInt partsWattsShown = fields().derived("PartsWatts", this::partsWatts).toMenu();
     private final DerivedInt psuWattsShown = fields().derived("PsuWatts", this::psuWatts).toMenu();
@@ -1133,6 +1140,29 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     public void startService(final ResourceLocation service) {
         kernel.startService(service);
         setChanged();
+    }
+
+    /**
+     * Runs {@code process} for a device linked to it, holding {@code mb} megabytes, until the tick {@code until}
+     * unless the device asks again before.
+     */
+    public void host(final String process, final int mb, final long until) {
+        hosted.put(process, new long[] {mb, until});
+    }
+
+    /** Whether it runs {@code process} for a linked device at the tick {@code now}. */
+    public boolean hosts(final String process, final long now) {
+        final long[] held = hosted.get(process);
+        return held != null && held[1] >= now;
+    }
+
+    @Override
+    public List<RamLedger.Entry> hostedWork(final long now) {
+        hosted.values().removeIf(held -> held[1] < now);
+        final List<RamLedger.Entry> out = new ArrayList<>();
+        hosted.forEach((process, held) -> out.add(new RamLedger.Entry(process, (int) held[0],
+                RamLedger.Kind.PROCESS)));
+        return out;
     }
 
     @Override

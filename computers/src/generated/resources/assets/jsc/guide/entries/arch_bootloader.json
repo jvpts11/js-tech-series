@@ -156,7 +156,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:arch_bootloader",
-  "order": 261,
+  "order": 269,
   "section": "jsc:arch_boot",
   "title": "jsc.guide.arch_bootloader.title"
 }

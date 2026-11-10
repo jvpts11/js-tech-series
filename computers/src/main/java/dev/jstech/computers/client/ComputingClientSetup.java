@@ -11,6 +11,10 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.PortableItems;
 import dev.jstech.computers.chain.ChainBenches;
+import dev.jstech.computers.chain.machine.ChainMachine;
+import dev.jstech.computers.chain.machine.ChainMachines;
+import dev.jstech.computers.client.chain.ChainEmitters;
+import dev.jstech.computers.client.chain.ChainMachineRenderer;
 import dev.jstech.computers.client.portable.CameraShots;
 import dev.jstech.computers.client.portable.PortableApps;
 import dev.jstech.computers.client.portable.PortableItemRenderer;
@@ -89,6 +93,9 @@ public final class ComputingClientSetup {
         NeoForge.EVENT_BUS.addListener(RenderItemInFrameEvent.class, ComputingClientSetup::onRenderItemInFrame);
         // The portables' cameras take the world as it is drawn, before the hand and the HUD.
         CameraShots.listen();
+        // The chain's machines: what each gives off while it works, and letting it go.
+        ChainEmitters.listen(modBus);
+        ChainMachineRenderer.listen();
         modBus.addListener(RegisterMenuScreensEvent.class, ComputingClientSetup::registerScreens);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, ComputingClientSetup::registerRenderers);
         modBus.addListener(RegisterClientExtensionsEvent.class, ComputingClientSetup::registerItemRenderers);
@@ -248,6 +255,10 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(PortableItems.CHARGING_DOCK_BE.get(), ChargingDockRenderer::create);
         // The Electronics Workbenches: each era's, its socket and cord shown where its energy line comes in.
         event.registerBlockEntityRenderer(ChainBenches.BENCH_BE.get(), WorkbenchRenderer::create);
+        for (final ChainMachine machine : ChainMachines.all()) {
+            event.registerBlockEntityRenderer(ChainMachines.typeOf(machine),
+                    context -> ChainMachineRenderer.create(machine));
+        }
         // The small computers: each machine's case, by its age and the case it comes in.
         event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.SMALL_COMPUTER_BE.get(), ComputerRenderer::create);

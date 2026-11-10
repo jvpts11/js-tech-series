@@ -551,6 +551,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
         return MachineMemory.ledgerOf(this);
     }
 
+    /**
+     * What the machine runs for the devices linked to it at the tick {@code now}, each a process holding its memory:
+     * a Lithography Station's exposure. None unless the machine says.
+     */
+    default List<RamLedger.Entry> hostedWork(final long now) {
+        return List.of();
+    }
+
     /** Everything the session holds before the player opens a window: the system, its desktop, its services. */
     default int ramReservedMb() {
         return MachineMemory.reservedMb(this);

@@ -1,0 +1,56 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:machine_casing"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:rolling_mill_roller_table"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:rolling_mill_mill_housing"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:rolling_mill_work_roll"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "aba",
+      "cde"
+    ],
+    [
+      "#fg",
+      "aea"
+    ]
+  ],
+  "name": "rolling_mill",
+  "ports": {
+    "c": "energy_input",
+    "d": "item_output",
+    "g": "item_input"
+  },
+  "terminal": "jsc:rolling_mill_terminal"
+}

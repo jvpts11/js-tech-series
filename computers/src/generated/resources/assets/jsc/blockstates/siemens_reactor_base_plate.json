@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/siemens_reactor_base_plate"
+    }
+  }
+}

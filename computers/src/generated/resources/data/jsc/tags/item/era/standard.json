@@ -164,6 +164,8 @@
     "jsc:etched_board_standard",
     "jsc:optical_fibre",
     "jsc:standard_electronics_workbench",
+    "jsc:assembly_standard_placement_head",
+    "jsc:assembly_standard_reflow_oven",
     "jsc:usb_flash_drive"
   ]
 }

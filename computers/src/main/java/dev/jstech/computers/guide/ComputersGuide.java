@@ -75,8 +75,8 @@ public final class ComputersGuide {
                 .register();
         final GuideChapter building = guide.chapter("building_computers").titled("Building computers").order(21)
                 .tab(TAB).about("The case and every part that goes in it: what each part does, what its numbers"
-                        + " mean, how to choose parts that work together, and the benches the chain's parts are made"
-                        + " at.")
+                        + " mean, how to choose parts that work together, and the benches and the machines the chain's"
+                        + " parts are made at.")
                 .register();
         final GuideChapter kinds = guide.chapter("computer_kinds").titled("The computers").order(22).tab(TAB)
                 .about("Every kind of computer, from the Personal Computer to the Mainframe, the racks of servers"
@@ -138,6 +138,7 @@ public final class ComputersGuide {
         StartingPages.declare(guide, main);
         BuildingPages.declare(guide, building);
         ChainPages.declare(guide, building);
+        ChainMachinePages.declare(guide, building);
         ComputerKindsPages.declare(guide, kinds);
         PeripheralPages.declare(guide, peripherals);
         EverydayProgramsPages.declare(guide, programs);

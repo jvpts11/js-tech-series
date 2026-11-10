@@ -1,0 +1,17 @@
+{
+  "emitters": [
+    {
+      "effect": "jsc:chain/electrolytic_cell_0",
+      "at": [
+        0.0625,
+        0.9375,
+        0.9062
+      ],
+      "way": [
+        0.0,
+        0.9829,
+        0.1843
+      ]
+    }
+  ]
+}

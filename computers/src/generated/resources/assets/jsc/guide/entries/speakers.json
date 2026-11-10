@@ -136,7 +136,7 @@
     "jsc:speaker",
     "jsc:advanced_speaker"
   ],
-  "order": 52,
+  "order": 60,
   "section": "jsc:peripherals",
   "title": "jsc.guide.speakers.title"
 }

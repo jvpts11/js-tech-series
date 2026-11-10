@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/air_separation_unit_vaporizer"
+    }
+  }
+}

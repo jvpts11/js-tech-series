@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/lithography_wafer_stage"
+    }
+  }
+}

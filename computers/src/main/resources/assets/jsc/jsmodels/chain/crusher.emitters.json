@@ -1,0 +1,18 @@
+{
+  "emitters": [
+    {
+      "effect": "jsc:chain/crusher_0",
+      "at": [
+        -1.0,
+        1.7812,
+        1.0
+      ],
+      "way": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "tint": "ore"
+    }
+  ]
+}

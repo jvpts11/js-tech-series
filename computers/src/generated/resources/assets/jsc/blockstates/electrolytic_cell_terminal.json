@@ -1,0 +1,34 @@
+{
+  "variants": {
+    "facing=east,formed=false": {
+      "model": "jsc:block/electrolytic_cell_terminal",
+      "y": 90
+    },
+    "facing=east,formed=true": {
+      "model": "jsc:block/electrolytic_cell_terminal_formed",
+      "y": 90
+    },
+    "facing=north,formed=false": {
+      "model": "jsc:block/electrolytic_cell_terminal"
+    },
+    "facing=north,formed=true": {
+      "model": "jsc:block/electrolytic_cell_terminal_formed"
+    },
+    "facing=south,formed=false": {
+      "model": "jsc:block/electrolytic_cell_terminal",
+      "y": 180
+    },
+    "facing=south,formed=true": {
+      "model": "jsc:block/electrolytic_cell_terminal_formed",
+      "y": 180
+    },
+    "facing=west,formed=false": {
+      "model": "jsc:block/electrolytic_cell_terminal",
+      "y": 270
+    },
+    "facing=west,formed=true": {
+      "model": "jsc:block/electrolytic_cell_terminal_formed",
+      "y": 270
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/laminator_hot_platen"
+    }
+  }
+}

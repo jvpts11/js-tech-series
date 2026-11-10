@@ -1,0 +1,39 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:wire_drawer_capstan"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "a#b"
+    ],
+    [
+      "ccd"
+    ]
+  ],
+  "name": "wire_drawer",
+  "ports": {
+    "a": "item_output",
+    "b": "energy_input",
+    "d": "item_input"
+  },
+  "terminal": "jsc:wire_drawer_terminal"
+}

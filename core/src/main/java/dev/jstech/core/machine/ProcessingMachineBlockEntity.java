@@ -288,6 +288,18 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             return true;
         }
 
+        /** The same work, taking {@code newTicks} instead. */
+        public Processing withTicks(final int newTicks) {
+            return new Processing(takes, fluidTakes, outputs, fluidOutputs, newTicks, energyPerTick, matterTakes,
+                    matterOutputs, byproducts, catalysts);
+        }
+
+        /** The same work, spending {@code newEnergyPerTick} a tick instead; 0 for the machine's own. */
+        public Processing withEnergyPerTick(final int newEnergyPerTick) {
+            return new Processing(takes, fluidTakes, outputs, fluidOutputs, ticks, newEnergyPerTick, matterTakes,
+                    matterOutputs, byproducts, catalysts);
+        }
+
         /** One item taken from {@code slot} to make {@code output} in {@code ticks}, at the machine's energy. */
         public static Processing single(final int slot, final ItemStack output, final int ticks) {
             return new Processing(List.of(new Take(slot, 1)), List.of(), List.of(output), List.of(), ticks, 0);
@@ -890,9 +902,9 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             }
             this.lastWork = work;
             this.maxProgress.set((int) Math.min(Integer.MAX_VALUE, Math.ceil(effect.ticks(work.ticks()) / share)));
-            // Several recipes at once spend the energy of each, a tick.
-            final long perTick = saturated(effect.energyPerTick(work.energyPerTick() > 0 ? work.energyPerTick()
-                    : defaultEnergyPerTick), times);
+            // Several recipes at once spend the energy of each, a tick; a machine that takes no energy runs free.
+            final long perTick = !takesEnergy() ? 0L : saturated(effect.energyPerTick(work.energyPerTick() > 0
+                    ? work.energyPerTick() : defaultEnergyPerTick), times);
             // Short of energy, it spends what there is and works slower in the same proportion.
             this.payment.restore(this.paid.get());
             final long spent = perTick <= 0 ? 0L : power().spend(perTick);

@@ -1,0 +1,51 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:vacuum_casing"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:ion_implanter_end_station"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:ion_implanter_analyzer_magnet"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abb",
+      "cbd"
+    ],
+    [
+      "ef#",
+      "bbb"
+    ]
+  ],
+  "name": "ion_implanter",
+  "ports": {
+    "a": "item_input",
+    "c": "item_output",
+    "d": "energy_input"
+  },
+  "terminal": "jsc:ion_implanter_terminal"
+}

@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/orientable",
+  "textures": {
+    "front": "jsc:block/chain/machine/terminal",
+    "side": "jsc:block/chain/machine/ceramic_kiln_kiln_car",
+    "top": "jsc:block/chain/machine/ceramic_kiln_kiln_car"
+  }
+}

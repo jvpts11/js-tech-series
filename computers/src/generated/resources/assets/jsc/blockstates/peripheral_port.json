@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "facing=east,formed=false": {
+      "model": "jsc:block/peripheral_port"
+    },
+    "facing=east,formed=true": {
+      "model": "jsc:block/peripheral_port_formed"
+    },
+    "facing=north,formed=false": {
+      "model": "jsc:block/peripheral_port"
+    },
+    "facing=north,formed=true": {
+      "model": "jsc:block/peripheral_port_formed"
+    },
+    "facing=south,formed=false": {
+      "model": "jsc:block/peripheral_port"
+    },
+    "facing=south,formed=true": {
+      "model": "jsc:block/peripheral_port_formed"
+    },
+    "facing=west,formed=false": {
+      "model": "jsc:block/peripheral_port"
+    },
+    "facing=west,formed=true": {
+      "model": "jsc:block/peripheral_port_formed"
+    }
+  }
+}

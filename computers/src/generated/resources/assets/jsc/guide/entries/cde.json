@@ -91,7 +91,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:cde",
-  "order": 219,
+  "order": 227,
   "section": "jsc:cde_desktop",
   "title": "jsc.guide.cde.title"
 }
