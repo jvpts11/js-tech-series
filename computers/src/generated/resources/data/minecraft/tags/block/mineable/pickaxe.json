@@ -92,6 +92,13 @@
     "jsc:assembly_transition_reflow_oven",
     "jsc:assembly_standard_reflow_oven",
     "jsc:assembly_advanced_reflow_oven",
+    "jsc:prebuilder_case_lift",
+    "jsc:prebuilder_robot_arm",
+    "jsc:prebuilder_parts_tray",
+    "jsc:preinstaller_cradle",
+    "jsc:preinstaller_console",
+    "jsc:preinstaller_board_fixture",
+    "jsc:preinstaller_disk_dock",
     "jsc:crusher_terminal",
     "jsc:grinder_terminal",
     "jsc:induction_furnace_terminal",
@@ -122,6 +129,8 @@
     "jsc:assembly_legacy_terminal",
     "jsc:assembly_transition_terminal",
     "jsc:assembly_standard_terminal",
-    "jsc:assembly_advanced_terminal"
+    "jsc:assembly_advanced_terminal",
+    "jsc:prebuilder_terminal",
+    "jsc:preinstaller_terminal"
   ]
 }

@@ -12,6 +12,7 @@ import dev.jstech.computers.block.MainframePartBlock;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.ArrayList;
@@ -24,6 +25,7 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
@@ -33,8 +35,9 @@ import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * A machine that holds parts gives them back however it goes: broken by a player in survival, blown up, or taken by
- * whatever removes blocks without a player (another mod's quarry, a command). A Mainframe and a rack give back their
- * own cabinet too, which their loot does not. A player in creative takes the machine and nothing falls, as before.
+ * whatever removes blocks without a player (another mod's quarry, a command). A one-block computer gives itself back
+ * whole, its parts inside, as a rack server does (computers/docs/design/survival.md). A Mainframe and a rack give back
+ * their own cabinet too, which their loot does not. A player in creative takes the machine and nothing falls.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -47,20 +50,20 @@ public final class MachineRemovalGameTests {
     }
 
     @GameTest(template = ARENA)
-    public static void computer_removedWithoutAPlayer_givesItsPartsBack(final GameTestHelper helper) {
+    public static void computer_removedWithoutAPlayer_givesItselfBackWhole(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(AT);
         final List<ItemStack> held = contents(pc.getHardware());
         helper.getLevel().destroyBlock(helper.absolutePos(AT), true);
-        expectEach(helper, held, dropped(helper), "the computer's parts");
+        expectWhole(helper, held, dropped(helper));
         helper.succeed();
     }
 
     @GameTest(template = ARENA)
-    public static void computer_brokenInSurvival_givesEachPartBackOnce(final GameTestHelper helper) {
+    public static void computer_brokenInSurvival_givesItselfBackWholeOnce(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(AT);
         final List<ItemStack> held = contents(pc.getHardware());
         breakAs(helper, AT, playerIn(helper, GameType.SURVIVAL));
-        expectEach(helper, held, dropped(helper), "the computer's parts");
+        expectWhole(helper, held, dropped(helper));
         helper.succeed();
     }
 
@@ -176,6 +179,17 @@ public final class MachineRemovalGameTests {
             stacks.add(entity.getItem());
         }
         return stacks;
+    }
+
+    /* The computer falls once, alone, every part it held inside it and none loose. */
+    private static void expectWhole(final GameTestHelper helper, final List<ItemStack> held,
+                                    final List<ItemStack> dropped) {
+        helper.assertTrue(dropped.size() == 1 && dropped.getFirst().is(ComputingModule.PERSONAL_COMPUTER.get().asItem())
+                && dropped.getFirst().getCount() == 1, "the computer alone falls, once: " + dropped);
+        final List<ItemStack> inside = new ArrayList<>();
+        dropped.getFirst().getOrDefault(ComputingComponents.ASSEMBLED_HARDWARE.get(), ItemContainerContents.EMPTY)
+                .nonEmptyItems().forEach(inside::add);
+        expectEach(helper, held, inside, "the parts inside the computer");
     }
 
     /* Each item held comes back exactly as many times as it was held: none lost, none made twice. */

@@ -63,7 +63,7 @@ public final class PartTooltips {
             case GpuSpec gpu -> GraphicsCardTooltip.append(gpu, lines);
             case RamSpec ram -> MemoryTooltip.append(ram, lines);
             case DiskSpec disk -> DiskTooltip.append(disk, stack, lines);
-            case MotherboardSpec board -> MotherboardTooltip.append(board, lines);
+            case MotherboardSpec board -> MotherboardTooltip.append(board, stack, lines);
             case PsuSpec psu -> PowerSupplyTooltip.append(psu, stack, lines);
             case CoolerSpec cooler -> CoolingTooltip.append(cooler, lines);
             case CaseFanSpec fan -> CoolingTooltip.append(fan, lines);

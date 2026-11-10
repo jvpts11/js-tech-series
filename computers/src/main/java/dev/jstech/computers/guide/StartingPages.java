@@ -296,6 +296,10 @@ final class StartingPages {
                 .row(GuideCell.words("Vintage"), GuideCell.words("Text BIOS, plain text on the screen."))
                 .row(GuideCell.words("Legacy and Transition"), GuideCell.words("Blue BIOS."))
                 .row(GuideCell.words("Standard and Advanced"), GuideCell.words("UEFI."))
+                .paragraph("A board can also come with no firmware on it: its tooltip says so. A computer built on it"
+                        + " powers up and turns its fans, and nothing more: no self-test, no picture, and the monitor"
+                        + " says the motherboard has no firmware. A Preinstaller writes the firmware of the board's era"
+                        + " onto the board, or onto the computer it is in ([](jsc:computer_making_machines)).")
                 .paragraph("The boot order is the list of disks in the order the firmware tries them. You change the"
                         + " order on the Boot Order page of the Setup ([](jsc:setup_utility)).")
                 .define("Boot order", "The order the firmware tries the disks in when the computer starts. The first"

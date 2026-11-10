@@ -60,6 +60,22 @@
           {
             "words": "jsc.guide.motherboards.table1_5_2"
           }
+        ],
+        [
+          {
+            "literal": "Firmware: <kind>"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "No firmware on this board"
+          },
+          {
+            "words": "jsc.guide.motherboards.table1_7_2"
+          }
         ]
       ]
     },
@@ -189,6 +205,10 @@
         {
           "fix": "jsc.guide.motherboards.fix3",
           "problem": "jsc.guide.motherboards.problem3"
+        },
+        {
+          "fix": "jsc.guide.motherboards.fix4",
+          "problem": "jsc.guide.motherboards.problem4"
         }
       ]
     },

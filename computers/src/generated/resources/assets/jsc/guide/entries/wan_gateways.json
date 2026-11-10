@@ -412,7 +412,7 @@
     "jsc:transition_wan_gateway",
     "jsc:advanced_wan_gateway"
   ],
-  "order": 41,
+  "order": 42,
   "section": "jsc:computers",
   "title": "jsc.guide.wan_gateways.title"
 }

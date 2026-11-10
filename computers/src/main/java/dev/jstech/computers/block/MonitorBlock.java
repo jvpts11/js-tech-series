@@ -850,10 +850,15 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
     }
 
     /*
-     * Why a stopped machine shows nothing: powered off, or switched on with parts that do not make a computer, which
-     * only beeps; telling those apart keeps a player who did press the switch from thinking it did not take.
+     * Why a stopped machine shows nothing: powered off, switched on with parts that do not make a computer, which only
+     * beeps, or with a board that has no firmware, which only turns its fans; telling those apart keeps a player who
+     * did press the switch from thinking it did not take.
      */
     private static TextKey stoppedLine(final IOsHost computer) {
+        if (computer instanceof AbstractComputerBlockEntity machine && machine.poweredUp()
+                && machine.firmwareMissing()) {
+            return MonitorTexts.NO_FIRMWARE;
+        }
         return computer instanceof AbstractComputerBlockEntity machine && machine.isManualOn()
                 ? MonitorTexts.BUILD_INCOMPLETE : MonitorTexts.NO_POWER;
     }

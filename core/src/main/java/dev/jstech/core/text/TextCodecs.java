@@ -7,6 +7,9 @@
  */
 package dev.jstech.core.text;
 
+import com.mojang.datafixers.util.Either;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,6 +27,21 @@ import net.minecraft.network.codec.StreamCodec;
 public final class TextCodecs {
 
     public static final StreamCodec<ByteBuf, Text> STREAM_CODEC = StreamCodec.of(TextCodecs::write, TextCodecs::read);
+
+    /**
+     * Text in a save or a block's update, in the form it was made in: words that are data as themselves, a sentence as
+     * its key, its English and what goes into it, so a player reads it in their own language.
+     */
+    public static final Codec<Text> CODEC = Codec.recursive("text", self -> Codec.either(Codec.STRING,
+                    RecordCodecBuilder.<Text.Translated>create(instance -> instance.group(
+                            Codec.STRING.fieldOf("key").forGetter(text -> text.key().key()),
+                            Codec.STRING.fieldOf("english").forGetter(text -> text.key().english()),
+                            self.listOf().optionalFieldOf("args", List.of()).forGetter(Text.Translated::args))
+                            .apply(instance, (key, english, args) -> new Text.Translated(new TextKey(key, english),
+                                    args))))
+            .xmap(either -> either.map(Text::literal, translated -> translated),
+                    text -> text instanceof Text.Translated translated ? Either.right(translated)
+                            : Either.left(text.english())));
 
     /** The longest words of data that travel, and the longest key; a save holds text to the same lengths. */
     static final int MOST_LETTERS = 8_192;

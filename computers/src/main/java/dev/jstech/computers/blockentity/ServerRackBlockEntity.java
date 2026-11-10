@@ -37,6 +37,7 @@ import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
+import dev.jstech.computers.os.BoardFirmware;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.portable.AlertKind;
 import dev.jstech.computers.power.UpsRating;
@@ -1859,7 +1860,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     @Override
     public boolean isRunning() {
         final ComputerBuild build = soleBuild();
-        return build != null && build.isPowered() && bayPowerOn(soleComputerSlot());
+        return build != null && build.isPowered() && bayPowerOn(soleComputerSlot()) && !firmwareMissing();
+    }
+
+    /* A server whose board came out of the chain blank turns its fans and nothing more. */
+    @Override
+    public boolean firmwareMissing() {
+        return BoardFirmware.blank(ServerItem.board(soleServerStack()));
     }
 
     /** The machine of the server it hosts, as its chassis' entry names it: a server, for this mod's own. */

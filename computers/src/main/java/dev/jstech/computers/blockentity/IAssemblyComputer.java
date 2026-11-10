@@ -20,6 +20,12 @@ public interface IAssemblyComputer {
     /** Whether the menu should show a valid build. */
     boolean assemblyBuildValid();
 
+    /** Whether the menu should show the machine switched on with its fans turning, a blank board's too. */
+    boolean assemblyPoweredUp();
+
+    /** Whether the menu should show a board with no firmware on it. */
+    boolean assemblyFirmwareMissing();
+
     long assemblyCapacity();
 
     long assemblyRamBuffer();

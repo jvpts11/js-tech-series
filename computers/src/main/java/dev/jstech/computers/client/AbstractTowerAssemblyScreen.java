@@ -50,6 +50,9 @@ public abstract class AbstractTowerAssemblyScreen<M extends AbstractAssemblyComp
 
     @Override
     protected String stateWord() {
+        if (menu.buildValid() && menu.firmwareMissing()) {
+            return GameText.resolve(AssemblyTexts.NO_FIRMWARE);
+        }
         if (menu.buildValid() && menu.isRunning() && menu.thermal().throttled()) {
             return GameText.resolve(AssemblyTexts.THROTTLED);
         }
@@ -59,10 +62,16 @@ public abstract class AbstractTowerAssemblyScreen<M extends AbstractAssemblyComp
 
     @Override
     protected int stateColour() {
-        if (menu.buildValid() && menu.isRunning() && menu.thermal().throttled()) {
+        if (menu.buildValid() && (menu.firmwareMissing() || menu.isRunning() && menu.thermal().throttled())) {
             return JsTechTheme.amber();
         }
         return !menu.buildValid() ? JsTechTheme.red() : menu.isRunning() ? JsTechTheme.green() : JsTechTheme.amber();
+    }
+
+    /* A board with no firmware brings nothing up, so there is nothing to read. */
+    @Override
+    protected boolean readingsBlank() {
+        return menu.firmwareMissing();
     }
 
     @Override
@@ -107,7 +116,7 @@ public abstract class AbstractTowerAssemblyScreen<M extends AbstractAssemblyComp
 
     @Override
     protected boolean[] lampsLit() {
-        return new boolean[] {menu.isRunning(), menu.diskBusy(), menu.isOnNetwork()};
+        return new boolean[] {menu.poweredUp(), menu.diskBusy(), menu.isOnNetwork()};
     }
 
     @Override
@@ -127,7 +136,7 @@ public abstract class AbstractTowerAssemblyScreen<M extends AbstractAssemblyComp
 
     @Override
     protected int powerLamp() {
-        return menu.isRunning() ? JsTechTheme.green() : JsTechTheme.red();
+        return menu.poweredUp() ? JsTechTheme.green() : JsTechTheme.red();
     }
 
     @Override

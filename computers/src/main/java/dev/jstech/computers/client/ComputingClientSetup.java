@@ -12,9 +12,11 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.PortableItems;
 import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.chain.machine.ChainMachine;
+import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.client.chain.ChainEmitters;
 import dev.jstech.computers.client.chain.ChainMachineRenderer;
+import dev.jstech.computers.client.chain.ChainRigs;
 import dev.jstech.computers.client.portable.CameraShots;
 import dev.jstech.computers.client.portable.PortableApps;
 import dev.jstech.computers.client.portable.PortableItemRenderer;
@@ -61,6 +63,7 @@ import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.registry.ComputingMenus;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -95,6 +98,7 @@ public final class ComputingClientSetup {
         CameraShots.listen();
         // The chain's machines: what each gives off while it works, and letting it go.
         ChainEmitters.listen(modBus);
+        ChainRigs.listen(modBus);
         ChainMachineRenderer.listen();
         modBus.addListener(RegisterMenuScreensEvent.class, ComputingClientSetup::registerScreens);
         modBus.addListener(EntityRenderersEvent.RegisterRenderers.class, ComputingClientSetup::registerRenderers);
@@ -256,8 +260,7 @@ public final class ComputingClientSetup {
         // The Electronics Workbenches: each era's, its socket and cord shown where its energy line comes in.
         event.registerBlockEntityRenderer(ChainBenches.BENCH_BE.get(), WorkbenchRenderer::create);
         for (final ChainMachine machine : ChainMachines.all()) {
-            event.registerBlockEntityRenderer(ChainMachines.typeOf(machine),
-                    context -> ChainMachineRenderer.create(machine));
+            event.registerBlockEntityRenderer(ChainMachines.typeOf(machine), context -> chainRenderer(machine));
         }
         // The small computers: each machine's case, by its age and the case it comes in.
         event.registerBlockEntityRenderer(ComputingModule.PERSONAL_COMPUTER_BE.get(), ComputerRenderer::create);
@@ -299,5 +302,14 @@ public final class ComputingClientSetup {
                 : space.open(new TerminalSpaceOpening(menu), inv, title);
         return screen != null ? (AbstractContainerScreen<ComputerTerminalMenu>) screen
                 : new ComputerTerminalScreen(menu, inv, title);
+    }
+
+    /* A chain machine's renderer: the Prebuilder's and the Preinstaller's move with the work they are given. */
+    private static BlockEntityRenderer<ChainMachineBlockEntity> chainRenderer(final ChainMachine machine) {
+        return switch (machine.id()) {
+            case "prebuilder" -> PrebuilderRenderer.create(machine);
+            case "preinstaller" -> PreinstallerRenderer.create(machine);
+            default -> ChainMachineRenderer.create(machine);
+        };
     }
 }

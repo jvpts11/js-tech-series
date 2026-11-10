@@ -21,6 +21,7 @@ import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.text.TextKey;
+import java.util.function.Supplier;
 import net.minecraft.core.NonNullList;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
@@ -30,7 +31,8 @@ import net.neoforged.neoforge.items.IItemHandlerModifiable;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * An item-handler view over the hardware of the Server item held in a player's hand, used by the Server assembly GUI.
+ * An item-handler view over the hardware of a Server item: the one held in a player's hand, for the Server assembly
+ * GUI, or one a machine is building, as the Prebuilder does, by the same rules.
  */
 public final class ServerHardwareHandler implements IItemHandlerModifiable {
 
@@ -49,16 +51,19 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
     public static final int PSU = 19;
     public static final int SLOTS = 20;
 
-    private final Player player;
-    private final InteractionHand hand;
+    private final Supplier<ItemStack> server;
 
     public ServerHardwareHandler(final Player player, final InteractionHand hand) {
-        this.player = player;
-        this.hand = hand;
+        this.server = () -> player.getItemInHand(hand);
+    }
+
+    /** A view over {@code server} itself, a stack no player holds, which its writes change. */
+    public ServerHardwareHandler(final ItemStack server) {
+        this.server = () -> server;
     }
 
     private ItemStack held() {
-        return player.getItemInHand(hand);
+        return server.get();
     }
 
     private boolean writable() {

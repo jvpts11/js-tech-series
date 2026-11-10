@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "jsc:block/preinstaller_board_fixture"
+    }
+  }
+}

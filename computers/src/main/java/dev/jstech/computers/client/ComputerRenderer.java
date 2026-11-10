@@ -21,10 +21,15 @@ import dev.jstech.computers.os.media.DiscTray;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.client.model.kit.IKitDriver;
 import dev.jstech.core.client.model.kit.IKitExtras;
+import dev.jstech.core.client.model.kit.KitAnimations;
 import dev.jstech.core.client.model.kit.KitBlockEntityRenderer;
+import dev.jstech.core.client.model.kit.KitClock;
 import dev.jstech.core.client.model.kit.KitInstance;
+import dev.jstech.core.client.model.kit.KitModel;
+import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelAnimator;
 import dev.jstech.core.model.ModelData;
 import dev.jstech.core.model.ModelPose;
@@ -33,7 +38,9 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
@@ -42,6 +49,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 
 /**
  * Draws a small computer as its case: the tower of its age, or the one of three cases a later machine comes in, its
@@ -64,6 +72,8 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
 
     /** A case whose glass or mesh shows its inside carries this bone. */
     private static final String SEE_THROUGH = "see_through";
+    /* The middle of a block's floor, in blocks, where every block's model stands. */
+    private static final double BLOCK_MIDDLE = 0.5;
     private static final String SEAT_CPU = "seat_cpu";
     private static final String LEAD = "lead_";
     private static final String DISK = "disk_";
@@ -112,6 +122,33 @@ public final class ComputerRenderer implements IKitDriver<AbstractSmallComputerB
             final BlockEntityRendererProvider.Context context) {
         final ComputerRenderer drawn = new ComputerRenderer();
         return KitBlockEntityRenderer.<T>look(ComputingLooks.COMPUTER).driver(drawn).extras(drawn).build();
+    }
+
+    /**
+     * Where each part in {@code computer} sits, by its hardware slot's key ({@link PartModels.Drawer#key}), from the
+     * corner of its block as it stands facing north: what a machine that builds the computer brings each part to. None
+     * while its case's model is not loaded.
+     */
+    static Map<String, Matrix4f> seats(final AbstractSmallComputerBlockEntity computer) {
+        final Optional<KitModel> model = KitModels.look(ComputingLooks.COMPUTER.modelOf(computer),
+                ComputingLooks.COMPUTER.textureOf(computer), ComputingLooks.COMPUTER.animationFile());
+        if (model.isEmpty() || !(computer.getBlockState().getBlock() instanceof IComputerCase chassis)) {
+            return Map.of();
+        }
+        final KitInstance instance = KitAnimations.of(computer, model.get());
+        instance.animate(KitClock.frame(), 0, false, IAnimationListener.NONE);
+        final Map<String, Matrix4f> seats = new HashMap<>();
+        final PoseStack poses = new PoseStack();
+        PartModels.noteWhereParts(seats, poses);
+        // The case stands on its floor's middle, as every block's model does.
+        poses.translate(BLOCK_MIDDLE, 0, BLOCK_MIDDLE);
+        try {
+            new Drawing(computer, chassis, instance, new PartModels.Drawer(computer, false, poses,
+                    Minecraft.getInstance().renderBuffers().bufferSource(), 0, 0, 0)).parts();
+        } finally {
+            PartModels.stopNoting();
+        }
+        return seats;
     }
 
     /* Each bay's tray and caddy ride with what goes in and out; the fans are the parts', turned as they are drawn. */

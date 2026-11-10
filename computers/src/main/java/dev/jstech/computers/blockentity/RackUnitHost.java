@@ -55,6 +55,11 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public boolean firmwareMissing() {
+        return rack.asUnit(row, rack::firmwareMissing);
+    }
+
+    @Override
     public HostScope machine() {
         return rack.asUnit(row, rack::machine);
     }

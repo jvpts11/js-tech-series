@@ -1,0 +1,107 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.computer_making_machines.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computer_making_machines.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computer_making_machines.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.computer_making_machines.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.computer_making_machines.table1",
+      "heads": [
+        "jsc.guide.computer_making_machines.table1_head1",
+        "jsc.guide.computer_making_machines.table1_head2",
+        "jsc.guide.computer_making_machines.table1_head3",
+        "jsc.guide.computer_making_machines.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.computer_making_machines.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.computer_making_machines.table1_1_2"
+          },
+          {
+            "amount": 10,
+            "unit": "s"
+          },
+          {
+            "amount": 1000,
+            "unit": "W"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.computer_making_machines.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.computer_making_machines.table1_2_2"
+          },
+          {
+            "amount": 10,
+            "unit": "s"
+          },
+          {
+            "amount": 1000,
+            "unit": "W"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.computer_making_machines.fix1",
+          "problem": "jsc.guide.computer_making_machines.problem1"
+        },
+        {
+          "fix": "jsc.guide.computer_making_machines.fix2",
+          "problem": "jsc.guide.computer_making_machines.problem2"
+        },
+        {
+          "fix": "jsc.guide.computer_making_machines.fix3",
+          "problem": "jsc.guide.computer_making_machines.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:building_chain_machines",
+        "jsc:firmware",
+        "jsc:crafting_interfaces"
+      ]
+    }
+  ],
+  "icon": "jsc:prebuilder_robot_arm",
+  "id": "jsc:computer_making_machines",
+  "items": [
+    "jsc:prebuilder_case_lift",
+    "jsc:prebuilder_robot_arm",
+    "jsc:prebuilder_parts_tray",
+    "jsc:preinstaller_cradle",
+    "jsc:preinstaller_console",
+    "jsc:preinstaller_disk_dock",
+    "jsc:preinstaller_board_fixture"
+  ],
+  "order": 37,
+  "section": "jsc:chain_machines",
+  "title": "jsc.guide.computer_making_machines.title"
+}

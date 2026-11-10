@@ -270,7 +270,7 @@
     }
   ],
   "id": "jsc:partitioning_with_fdisk",
-  "order": 260,
+  "order": 261,
   "section": "jsc:disk_tools",
   "title": "jsc.guide.partitioning_with_fdisk.title"
 }

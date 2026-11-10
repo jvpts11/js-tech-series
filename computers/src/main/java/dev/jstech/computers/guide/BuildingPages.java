@@ -140,6 +140,9 @@ final class BuildingPages {
                         GuideCell.words("The build is valid, and the computer is switched off."))
                 .row(GuideCell.code("ONLINE"), GuideCell.words("Green"),
                         GuideCell.words("The build is valid, and the computer is switched on and runs."))
+                .row(GuideCell.code("NO FIRMWARE"), GuideCell.words("Amber"),
+                        GuideCell.words("The computer is switched on, but its board has no firmware: its fans turn"
+                                + " and nothing more ([](jsc:motherboards))."))
                 .paragraph("Three lamps show what the computer is doing.")
                 .table("The lamps", "Lamp", "Lit when")
                 .row(GuideCell.code("PWR"),
@@ -182,6 +185,11 @@ final class BuildingPages {
                 .paragraph("The name field in the header names the computer. It takes up to 32 characters, and it saves"
                         + " each change as you type. An empty field shows a hint that invites you to name"
                         + " the computer.")
+                .subheading("Taking a computer with you")
+                .paragraph("Break a computer and it comes back to you whole: one item with every part in its seat, and"
+                        + " its name. Its tooltip lists the parts inside it, and what it still lacks to run. Place it"
+                        + " again and it stands as it was. Only the media in its front drives, the discs and the"
+                        + " floppies, come out on their own.")
                 .subheading("To make a computer run")
                 .steps("Right-click the case to open the assembly screen.",
                         "Put the parts into their slots, starting with the motherboard.",
@@ -423,6 +431,13 @@ final class BuildingPages {
                                 + " graphics card and keeps its expansion slots for other cards. Every other board"
                                 + " says it has none: a monitor on it needs a graphics card, or a processor with"
                                 + " graphics."))
+                .row(GuideCell.code("Firmware: <kind>"),
+                        GuideCell.words("The firmware on the board, its era's: a text BIOS, a blue BIOS or a UEFI"
+                                + " ([](jsc:firmware))."))
+                .row(GuideCell.code("No firmware on this board"),
+                        GuideCell.words("A board with nothing on it yet. A computer built on it turns its fans and"
+                                + " nothing more, until a Preinstaller writes its firmware"
+                                + " ([](jsc:computer_making_machines))."))
                 .paragraph("Each computer takes only some boards. The table shows which ones, and the board's era must"
                         + " match the computer's era too.")
                 .table("The boards each computer takes", "Computer", "Era", "Boards it takes")
@@ -452,6 +467,9 @@ final class BuildingPages {
                         "The case takes only some form factors, and only boards of its own era. Check the table above.",
                         "A part sits in the window but does nothing.",
                         "The board does not offer that slot. Use a board with more slots of that kind.",
+                        "The computer switches on, its fans turn, and nothing more happens.",
+                        "Its board has no firmware: the window says NO FIRMWARE. A Preinstaller writes it"
+                                + " ([](jsc:computer_making_machines)).",
                         "A card does not go into a server.",
                         "The window shows only the expansion slots the board and the server's case wire, and a small"
                                 + " server has only one or two, of which a graphics card takes one. Build the server"

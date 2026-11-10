@@ -26,6 +26,7 @@ import dev.jstech.computers.hardware.PsuTexts;
 import dev.jstech.computers.hardware.PsuWear;
 import dev.jstech.computers.hardware.ThermalModel;
 import dev.jstech.computers.hardware.ThermalState;
+import dev.jstech.computers.os.BoardFirmware;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -196,10 +198,21 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         }
     }
 
-    /** Over a cooler's or a fan's seat, what it is and what it takes away, as the cooling face names them. */
+    /*
+     * Over a cooler's or a fan's seat, what it is and what it takes away, as the cooling face names them; over a blank
+     * board in its seat, what a board with no firmware means and where its firmware comes from.
+     */
     @Override
     protected void renderTooltip(final GuiGraphics g, final int mouseX, final int mouseY) {
         final Slot slot = hoveredSlot;
+        if (menu.getCarried().isEmpty() && slot != null && !(slot.container instanceof Inventory)
+                && BoardFirmware.blank(slot.getItem())) {
+            g.renderComponentTooltip(font, List.of(
+                    GameText.component(BoardFirmware.BLANK).withStyle(ChatFormatting.WHITE),
+                    GameText.component(BoardFirmware.FANS_ONLY).withStyle(ChatFormatting.GOLD),
+                    GameText.component(BoardFirmware.WRITTEN_BY).withStyle(ChatFormatting.GRAY)), mouseX, mouseY);
+            return;
+        }
         if (menu.getCarried().isEmpty() && slot != null && slot.hasItem() && coolingSlot(slot)) {
             final List<Component> lines = coolingPartTooltip(slot);
             if (!lines.isEmpty()) {
@@ -334,10 +347,12 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         AssemblyPainter.drawPower(g, font, x, y, power, powerWord(),
                 hover(mouseX, mouseY, power.x(), power.y(), power.w(), power.h()), powerActive(), powerLamp());
         final List<Readout> rows = shownReadouts();
+        final boolean blank = readingsBlank();
         for (int i = 0; i < rows.size() && i < geo.readouts(); i++) {
             final Readout r = rows.get(i);
-            AssemblyPainter.drawReadout(g, font, x, y, geo.readout(i), r.label(), r.value(), r.colour());
-            if (r.gauge() != null) {
+            AssemblyPainter.drawReadout(g, font, x, y, geo.readout(i), r.label(), blank ? "--" : r.value(),
+                    blank ? JsTechTheme.dim() : r.colour());
+            if (r.gauge() != null && !blank) {
                 AssemblyPainter.drawGauge(g, font, x, y, geo.readout(i), r.label(), r.gauge().fraction(),
                         r.gauge().colour(), r.gauge().marks());
             }
@@ -635,6 +650,11 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
 
     /** The power button's lamp. */
     protected abstract int powerLamp();
+
+    /** Whether every readout shows nothing to read: a board with no firmware brings nothing up. */
+    protected boolean readingsBlank() {
+        return false;
+    }
 
     /** Why {@code carried} stays out of {@code slot}, said over the slot; null when the machine names no rule. */
     @Nullable

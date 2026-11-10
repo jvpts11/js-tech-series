@@ -144,6 +144,24 @@ public class ServerItem extends Item
         return true;
     }
 
+    /** A copy of the motherboard seated in the server in {@code stack}, which carries its firmware; empty for none. */
+    public static ItemStack board(final ItemStack stack) {
+        final ItemContainerContents parts = hardware(stack);
+        return ServerHardwareHandler.MOBO < parts.getSlots()
+                ? parts.getStackInSlot(ServerHardwareHandler.MOBO).copy() : ItemStack.EMPTY;
+    }
+
+    /** Puts {@code board} in the server in {@code stack} in the place of its motherboard, its firmware written. */
+    public static void replaceBoard(final ItemStack stack, final ItemStack board) {
+        final ItemContainerContents current = hardware(stack);
+        final NonNullList<ItemStack> parts = NonNullList.withSize(ServerHardwareHandler.SLOTS, ItemStack.EMPTY);
+        for (int slot = 0; slot < ServerHardwareHandler.SLOTS && slot < current.getSlots(); slot++) {
+            parts.set(slot, current.getStackInSlot(slot).copy());
+        }
+        parts.set(ServerHardwareHandler.MOBO, board.copy());
+        stack.set(ComputingComponents.SERVER_HARDWARE.get(), ItemContainerContents.fromItems(parts));
+    }
+
     /** A copy of the power supply seated in the server in {@code stack}, which carries its wear; empty for none. */
     public static ItemStack psu(final ItemStack stack) {
         final ItemContainerContents parts = hardware(stack);

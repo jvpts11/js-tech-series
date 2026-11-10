@@ -1525,6 +1525,7 @@ public final class ComputingModule {
                 .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body",
                         "block/computer/" + machine.model() + "_particle")))
                 .geo(ComputingLooks.COMPUTER)
+                .drops(Drops.NONE)
                 .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.COMPUTER,
                         block.caseModel(), DEVICE_FIT, COMPUTER_LAMPS))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.PERSONAL_COMPUTERS, machine.era()));
@@ -1559,7 +1560,8 @@ public final class ComputingModule {
     /**
      * A small computer, whose case its block entity draws: the block shows nothing but the particles a break scatters,
      * and without noOcclusion the full cube would block its own light and cull the faces of its neighbours. Its item
-     * shows the same case, switched off.
+     * shows the same case, switched off. Broken, it gives itself back whole with its parts inside, so its block has no
+     * loot of its own.
      */
     private static <B extends Block & IComputerCase> BlockBuilder<B> computer(
             final String id, final Era era, final CaseStyle style, final Shelf shelf,
@@ -1569,6 +1571,7 @@ public final class ComputingModule {
                 .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body",
                         "block/computer/" + style.caseName(era) + "_particle")))
                 .geo(ComputingLooks.COMPUTER)
+                .drops(Drops.NONE)
                 .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.COMPUTER,
                         block.caseModel(), DEVICE_FIT, COMPUTER_LAMPS))
                 .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(shelf, era));

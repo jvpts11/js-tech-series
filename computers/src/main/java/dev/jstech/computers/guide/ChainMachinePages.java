@@ -54,6 +54,7 @@ final class ChainMachinePages {
         lithography(guide, section);
         boards(guide, section);
         assembly(guide, section);
+        computerMaking(guide, section);
     }
 
     private static void building(final ModGuide guide, final ModGuide.SectionRef section) {
@@ -263,7 +264,44 @@ final class ChainMachinePages {
                         + " assembles your parts while you do something else.")
                 .table("Each line's size, its step and its draw", "Line", "Size", "Step", "Draw");
         machineRows(page, lines);
-        page.seeAlso(BUILDING, "jsc:electronics_workbench").register();
+        page.seeAlso(BUILDING, "jsc:electronics_workbench", "jsc:computer_making_machines").register();
+    }
+
+    private static void computerMaking(final ModGuide guide, final ModGuide.SectionRef section) {
+        final List<String> machines = List.of("prebuilder", "preinstaller");
+        final ModGuide.EntryBuilder page = guide.page("computer_making_machines", section)
+                .titled("The Prebuilder and the Preinstaller")
+                .icon(ChainMachineBlocks.byId("prebuilder_robot_arm"))
+                .coversAll(working(machines))
+                .paragraph("These two machines make whole computers, ready to place and switch on, for you or for the"
+                        + " network's autocrafting: the Prebuilder puts a computer together from its parts, and the"
+                        + " Preinstaller writes what it runs.")
+                .paragraph("Give the Prebuilder one empty case and the parts that go in it, in any order: the case of"
+                        + " a one-block computer, or a rack server. It puts every part in its seat by the same rules"
+                        + " as the assembly screen ([](jsc:assembly_screen)), the board first, and gives you the"
+                        + " computer with every part inside. When a part does not fit, it builds nothing and says why,"
+                        + " on its terminal's screen and in its window.")
+                .paragraph("A motherboard can come with no firmware on it, and a computer built on one only turns its"
+                        + " fans. The Preinstaller writes the firmware of the board's era, then a system and its"
+                        + " programs onto the system disk, as an installer would ([](jsc:installing)). You lay the"
+                        + " install media among its inputs: it reads them and leaves them there, never used up.")
+                .paragraph("It takes one thing to write onto at a time: a computer with its parts, a loose"
+                        + " motherboard, a loose disk, or a rack server. A loose disk is how you give a rack server's"
+                        + " bay drives their system. A job takes the machine's step and a second more for every 100 MB"
+                        + " it writes.")
+                .table("Each machine's size, its step and its draw", "Machine", "Size", "Step", "Draw");
+        machineRows(page, machines);
+        page.ifSomethingGoesWrong("The Prebuilder builds nothing and names a part.",
+                        "That part has no seat left in the case, or the case's rules refuse it. Take it out, or give"
+                                + " a case and a board that take it.",
+                        "The Preinstaller says there is nothing to write.",
+                        "The board's firmware is written already, and no medium brings a system or a program the"
+                                + " computer lacks.",
+                        "The Preinstaller refuses a system.",
+                        "The system needs a computer of a later era, another processor, more room on the disk, or"
+                                + " every one of its install disks among the inputs.")
+                .seeAlso(BUILDING, "jsc:firmware", "jsc:crafting_interfaces")
+                .register();
     }
 
     /* A row for each of {@code machines}: its name, its size wide by tall by deep, its step and its draw. */

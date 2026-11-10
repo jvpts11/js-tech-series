@@ -177,6 +177,9 @@ event.computer(LAB_COMPUTER.get(), new ComputerDef(QUANTUM, Set.of(FormFactor.AT
   a Personal Computer's: one processor, four modules, four cards, two disks, two bays, and on a two-socket workstation
   board a second processor and four more modules. Its block entity is J's Computers' `SmallComputerBlockEntity`, one
   type every mod's small computers share.
+- **A small computer broken** (added 2026-11-10) gives itself back whole: the block itself hands over one item of it
+  with its parts in their seats and its name, and the media of its front drives come out on their own. Give its
+  block no loot table that drops it (none, or an empty one), or a player gets it twice.
 - **Memory by processor** (added 2026-11-08): a case whose memory goes by processor, as a workstation's does, says how
   many modules each processor on the board opens, the seventh number of `CaseParts`: `new CaseParts(2, 8, 4, 2, 2, 18,
   4)` counts one processor and four modules on a board of one socket, two and eight on a board of two. The six-number

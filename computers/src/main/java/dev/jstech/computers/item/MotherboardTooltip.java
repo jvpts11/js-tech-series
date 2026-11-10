@@ -10,6 +10,7 @@ package dev.jstech.computers.item;
 import dev.jstech.computers.audio.SoundHardwareTexts;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.RamGeneration;
+import dev.jstech.computers.os.BoardFirmware;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -18,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /** What a motherboard's tooltip says: its form, what its slots take, its video and audio, and its era. */
 @TextHolder
@@ -40,8 +42,15 @@ final class MotherboardTooltip {
     private MotherboardTooltip() {
     }
 
-    static void append(final MotherboardSpec spec, final List<Component> tooltip) {
+    static void append(final MotherboardSpec spec, final ItemStack board, final List<Component> tooltip) {
         tooltip.add(GameText.component(FORM_FACTOR.with(spec.formFactor().label())).withStyle(ChatFormatting.AQUA));
+        // A board out of the chain is blank until a Preinstaller writes its firmware.
+        final boolean blank = BoardFirmware.blank(board);
+        tooltip.add(GameText.component(BoardFirmware.line(board))
+                .withStyle(blank ? ChatFormatting.GOLD : ChatFormatting.GRAY));
+        if (blank) {
+            tooltip.add(GameText.component(BoardFirmware.WRITTEN_BY).withStyle(ChatFormatting.DARK_GRAY));
+        }
         // The generations in the order they came, the way the declared ones are kept.
         final List<RamGeneration> order = RamGeneration.all();
         final String ramTypes = spec.acceptedRam().stream()

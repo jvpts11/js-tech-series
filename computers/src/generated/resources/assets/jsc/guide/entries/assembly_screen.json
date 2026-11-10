@@ -325,6 +325,17 @@
           {
             "words": "jsc.guide.assembly_screen.table2_3_3"
           }
+        ],
+        [
+          {
+            "literal": "NO FIRMWARE"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.assembly_screen.table2_4_3"
+          }
         ]
       ]
     },
@@ -473,6 +484,14 @@
     {
       "type": "heading",
       "text": "jsc.guide.assembly_screen.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.assembly_screen.text16"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.assembly_screen.heading5"
     },
     {
       "type": "steps",

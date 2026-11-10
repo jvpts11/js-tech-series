@@ -467,7 +467,7 @@
     }
   ],
   "id": "jsc:supercomputers",
-  "order": 50,
+  "order": 51,
   "section": "jsc:clusters",
   "title": "jsc.guide.supercomputers.title"
 }

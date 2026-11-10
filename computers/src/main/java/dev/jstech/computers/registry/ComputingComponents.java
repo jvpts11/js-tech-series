@@ -33,6 +33,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Unit;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -208,6 +209,25 @@ public final class ComputingComponents {
      */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<PsuCondition>>
             PSU_CONDITION = saved("psu_condition", PsuConditions.CODEC, PsuConditions.STREAM_CODEC);
+
+    /*
+     * A motherboard that came out of the chain blank, with no firmware until a Preinstaller writes it
+     * (computers/docs/design/survival.md). Absent on every other board, which carries the firmware of its era.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Unit>>
+            NO_FIRMWARE = saved("no_firmware", Codec.unit(Unit.INSTANCE), StreamCodec.unit(Unit.INSTANCE));
+
+    /*
+     * The parts inside a one-block computer carried as an item: the assembled computer a Prebuilder makes, or a
+     * computer broken with its parts in it. Placed, the computer stands with them; absent on an empty case.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>>
+            ASSEMBLED_HARDWARE = saved("assembled_hardware", ItemContainerContents.CODEC,
+                    ItemContainerContents.STREAM_CODEC);
+
+    /* An assembled computer a machine made that has never been started: its first start runs its self-test. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Unit>>
+            NEVER_STARTED = saved("never_started", Codec.unit(Unit.INSTANCE), StreamCodec.unit(Unit.INSTANCE));
 
     /*
      * A portable device's id, which its state on the server is kept by (its apps, its alerts): given the first time

@@ -28,6 +28,9 @@ final class MonitorTexts {
     /* Switched on with parts that do not make a computer: it only beeps, and its assembly screen says why. */
     static final TextKey BUILD_INCOMPLETE = TextKey.of("block.jsc.monitor.build_incomplete",
             "No signal - the computer is on, but its parts do not make a computer: its assembly screen lists why");
+    /* Switched on with a board that came out of the chain blank: its fans turn and nothing more. */
+    static final TextKey NO_FIRMWARE = TextKey.of("block.jsc.monitor.no_firmware",
+            "No signal - the computer is on, but its motherboard has no firmware: a Preinstaller writes it");
     /* The monitor's own switch is off: whatever runs behind it, its face is dark and a click opens nothing. */
     static final TextKey OFF = TextKey.of("block.jsc.monitor.off", "The monitor is off");
     static final TextKey DISABLED = TextKey.of("block.jsc.monitor.disabled",

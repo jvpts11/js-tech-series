@@ -18,6 +18,7 @@ import dev.jstech.core.client.model.kit.KitRenderer;
 import dev.jstech.core.model.IAnimationListener;
 import dev.jstech.core.model.ModelAnimator;
 import dev.jstech.core.model.ModelBone;
+import dev.jstech.core.model.ModelCube;
 import dev.jstech.core.model.ModelData;
 import dev.jstech.core.model.ModelDefinition;
 import dev.jstech.core.model.ModelPose;
@@ -32,6 +33,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Matrix4f;
 
 /**
  * The parts installed in a computer, each drawn by a model of its own chosen by the item, as the small computers and
@@ -95,9 +97,64 @@ final class PartModels {
         }
     };
 
+    /* Where the drawing began while a machine asks where the parts sit, turned back: the parts are noted from it. */
+    private static final Matrix4f FROM = new Matrix4f();
+
     private static long partFilesReadAt = Long.MIN_VALUE;
+    /*
+     * While a machine asks where the parts of a computer sit (the Prebuilder, which brings each to its seat), where
+     * each was placed by its key, from where the drawing began; none otherwise.
+     */
+    private static @Nullable Map<String, Matrix4f> placed;
 
     private PartModels() {
+    }
+
+    /**
+     * Notes in {@code into}, by each part's key, where every part drawn until {@link #stopNoting()} is placed, from
+     * where {@code poses} stands now.
+     */
+    static void noteWhereParts(final Map<String, Matrix4f> into, final PoseStack poses) {
+        placed = into;
+        FROM.set(poses.last().pose()).invert();
+    }
+
+    /** Stops noting where the parts are placed. */
+    static void stopNoting() {
+        placed = null;
+    }
+
+    /** Draws the part {@code item} where {@code poses} stands, as a machine holds it: in a tray, a gripper, a nest. */
+    static void loose(final BlockEntity owner, final String key, @Nullable final ResourceLocation item,
+                      final PoseStack poses, final MultiBufferSource buffers, final int light, final int overlay,
+                      final float partialTick) {
+        final Part part = part(item);
+        if (part != null) {
+            new Drawer(owner, false, poses, buffers, light, overlay, partialTick).draw(key, part, null, null, false,
+                    null, null);
+        }
+    }
+
+    /**
+     * How far the model of the part {@code item} reaches from its origin, in pixels: its least corner and its most;
+     * none for an item with no model of its own. Read from its cubes as they stand at rest.
+     */
+    static @Nullable float[] reach(@Nullable final ResourceLocation item) {
+        final Part part = part(item);
+        if (part == null) {
+            return null;
+        }
+        final float[] out = {Float.MAX_VALUE, Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE,
+                -Float.MAX_VALUE};
+        for (final ModelBone bone : part.model().data().bones()) {
+            for (final ModelCube cube : bone.cubes()) {
+                for (int k = 0; k < 3; k++) {
+                    out[k] = Math.min(out[k], cube.from().get(k));
+                    out[k + 3] = Math.max(out[k + 3], cube.from().get(k) + cube.size().get(k));
+                }
+            }
+        }
+        return out[0] > out[3] ? null : out;
     }
 
     /** The part an item is drawn as, or null for no item or an item with no model of its own. */
@@ -365,6 +422,13 @@ final class PartModels {
                 poses.translate(0, -PSU_HALF_HEIGHT / UNITS, 0);
             }
             final KitInstance instance = KitAnimations.part(machine, key, part.model());
+            if (placed != null) {
+                // Asked where the parts sit, it notes each and draws none, its pose worked out for the parts on it.
+                placed.put(key, new Matrix4f(FROM).mul(poses.last().pose()));
+                instance.animate(KitClock.frame(), seconds, false, IAnimationListener.NONE);
+                poses.popPose();
+                return instance;
+            }
             if (part.shape().moves()) {
                 // The part's model is its own, so its fans, leads and ways are set for this frame before it is drawn.
                 FRAME.shape = part.shape();

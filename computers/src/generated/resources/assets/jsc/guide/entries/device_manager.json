@@ -198,7 +198,7 @@
     }
   ],
   "id": "jsc:device_manager",
-  "order": 183,
+  "order": 184,
   "section": "jsc:frames_machine_tools",
   "title": "jsc.guide.device_manager.title"
 }

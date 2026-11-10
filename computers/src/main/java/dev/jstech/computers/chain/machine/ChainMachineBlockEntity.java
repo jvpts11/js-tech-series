@@ -27,6 +27,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
@@ -136,6 +137,19 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
                 }
             }
         }
+    }
+
+    /** Whether {@code a} and {@code b} hold the same stacks, place for place, counts and components alike. */
+    protected static boolean sameStacks(final List<ItemStack> a, final List<ItemStack> b) {
+        if (a.size() != b.size()) {
+            return false;
+        }
+        for (int i = 0; i < a.size(); i++) {
+            if (!ItemStack.matches(a.get(i), b.get(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /* Keeps what the work takes and makes, for the players' games, only when the work changed. */

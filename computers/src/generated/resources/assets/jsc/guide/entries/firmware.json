@@ -47,13 +47,13 @@
       "text": "jsc.guide.firmware.text3"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.firmware.text4"
+    },
+    {
       "type": "define",
       "definition": "jsc.guide.firmware.definition1",
       "term": "jsc.guide.firmware.term1"
-    },
-    {
-      "type": "text",
-      "text": "jsc.guide.firmware.text4"
     },
     {
       "type": "text",
@@ -62,6 +62,10 @@
     {
       "type": "text",
       "text": "jsc.guide.firmware.text6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.firmware.text7"
     },
     {
       "type": "define",

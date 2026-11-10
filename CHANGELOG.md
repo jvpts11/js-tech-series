@@ -591,6 +591,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   colour left as it is, and a tinted model is drawn on its own rather than with its model's others.
   `ProcessingMachineBlockEntity.Processing` gains `withTicks` and `withEnergyPerTick`, the same work in another time or
   at another draw. Experimental.
+- (Core) A machine's note: J's Core's API is at version 51. `MachineBlockEntity.note()` is a line a machine says beside
+  its status, set with `note(Text)`, which the standard machine screen shows in its lamp's tooltip and its terminal's
+  face shows under the status word, as a machine says why it will not work what it was given; `TextCodecs.CODEC` keeps
+  a `Text` as data. Experimental.
 - (Computers) Wi-Fi cards: J's Computers' API is at version 17. `ExpansionCardKind.WIFI` is the kind of the Wi-Fi
   cards, which the Personal, Crafting and Cluster Management Computers alone seat. Experimental.
 - (Computers) Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
@@ -2462,6 +2466,23 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `litho` process and holds memory for it by the era, from 2 MB to 2,048 MB; a computer two eras newer exposes in half
   the time. An Electronics Assembly Line works the bench recipes of its era and the older ones, at its era's bench's
   draw. The Guide to Operations explains them in a section of its own.
+- (Computers) The Prebuilder and the Preinstaller, two chain machines that make whole computers. The Prebuilder (3 by 3
+  by 2, its Case Lift, Robot Arms and Parts Trays) takes one empty case, of a Personal, Crafting or Cluster Management
+  Computer or a rack server, and up to sixteen parts in any order, and puts every part in its seat by the same rules
+  as the assembly screen, the board first; a part that does not fit builds nothing, and it says why. Formed, it shows
+  the work: the case rises on its lift with the kit in its two trays, and its two arms, each with its turret, its links
+  and their hydraulics, its telescope and its suction cup or two fingers, take each part from its tray, carry it over
+  the case turned as it will sit and set it on its seat through the open side; the finished computer sinks into the
+  base. The Preinstaller (2 by 2 by 2, its Cradle, Console, Board Fixture and Disk Dock) writes the firmware of a
+  board's era onto a computer's board, a loose board or a rack server's, and a system and its programs onto a
+  computer's system disk or a loose disk, from the install media among its inputs, which it reads and never uses up,
+  by the installer's rules; a job takes its step and a second more for every 100 MB it writes. Formed, it shows the
+  work too: a computer comes out of its housing on the cradle and docks while its console's screen fills the firmware's
+  bar and the system's, a loose board rises in the fixture under its pin head, a loose disk rises into the dock, and
+  the disc in the console's window turns while a system is read off it.
+- (Computers) A motherboard can come with no firmware on it, and its tooltip says so: a computer built on it powers up
+  and turns its fans and nothing more, its assembly screen says NO FIRMWARE and its monitor that its board has none,
+  until a Preinstaller writes it. A board's tooltip names its firmware: a text BIOS, a blue BIOS or a UEFI.
 - (Core) The generic ores of the electronics chain's metals are drawn as the minerals they are mined from: lead as
   galena, zinc as sphalerite, nickel as garnierite, aluminium as bauxite, tantalum as coltan, chromium as chromite,
   manganese as rhodochrosite, mercury as cinnabar, cobalt as cobaltite with its pink bloom, silver native, zirconium as
@@ -3460,6 +3481,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 
 ### Changed
 - (Computers) Computers draw energy, switched off, lets the chain's machines run free of energy too.
+- (Computers) A one-block computer broken gives itself back whole, once: one item with
+  every part in its seat and its name, whose tooltip lists the parts and what it still lacks to run, and which stands
+  again as it was when placed. Only the media in its front drives come out on their own. Before, its parts spilled.
+- (Core) A machine says why it will not work what it was given beside its status, in its lamp's tooltip and on its
+  terminal's face.
 - (Core) A processing machine that takes no energy works its recipes without paying for them, where before it waited
   for energy it would never draw.
 - (Core) A formed multiblock fills the place of a block its model shows no face of when the block's middle lies

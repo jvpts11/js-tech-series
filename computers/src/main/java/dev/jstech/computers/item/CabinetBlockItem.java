@@ -8,11 +8,13 @@
 package dev.jstech.computers.item;
 
 import dev.jstech.core.content.GeoLook;
+import java.util.List;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.block.Block;
-
-import java.util.List;
 
 /**
  * The item of a machine drawn by its block entity (a rack, a Mainframe, a drive, a Pattern Encoder) which shows the
@@ -78,5 +80,13 @@ public class CabinetBlockItem extends BlockItem {
             }
         }
         return true;
+    }
+
+    /* A computer carried with its parts inside lists them, with what it still lacks before it starts. */
+    @Override
+    public void appendHoverText(final ItemStack stack, final TooltipContext context, final List<Component> tooltip,
+                                final TooltipFlag flag) {
+        super.appendHoverText(stack, context, tooltip, flag);
+        AssembledTooltip.append(stack, tooltip);
     }
 }

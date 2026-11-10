@@ -464,6 +464,23 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `litho` process and holds memory for it by the era, from 2 MB to 2,048 MB; a computer two eras newer exposes in half
   the time. An Electronics Assembly Line works the bench recipes of its era and the older ones, at its era's bench's
   draw. The Guide to Operations explains them in a section of its own.
+- The Prebuilder and the Preinstaller, two chain machines that make whole computers. The Prebuilder (3 by 3
+  by 2, its Case Lift, Robot Arms and Parts Trays) takes one empty case, of a Personal, Crafting or Cluster Management
+  Computer or a rack server, and up to sixteen parts in any order, and puts every part in its seat by the same rules
+  as the assembly screen, the board first; a part that does not fit builds nothing, and it says why. Formed, it shows
+  the work: the case rises on its lift with the kit in its two trays, and its two arms, each with its turret, its links
+  and their hydraulics, its telescope and its suction cup or two fingers, take each part from its tray, carry it over
+  the case turned as it will sit and set it on its seat through the open side; the finished computer sinks into the
+  base. The Preinstaller (2 by 2 by 2, its Cradle, Console, Board Fixture and Disk Dock) writes the firmware of a
+  board's era onto a computer's board, a loose board or a rack server's, and a system and its programs onto a
+  computer's system disk or a loose disk, from the install media among its inputs, which it reads and never uses up,
+  by the installer's rules; a job takes its step and a second more for every 100 MB it writes. Formed, it shows the
+  work too: a computer comes out of its housing on the cradle and docks while its console's screen fills the firmware's
+  bar and the system's, a loose board rises in the fixture under its pin head, a loose disk rises into the dock, and
+  the disc in the console's window turns while a system is read off it.
+- A motherboard can come with no firmware on it, and its tooltip says so: a computer built on it powers up
+  and turns its fans and nothing more, its assembly screen says NO FIRMWARE and its monitor that its board has none,
+  until a Preinstaller writes it. A board's tooltip names its firmware: a text BIOS, a blue BIOS or a UEFI.
 - A Server Router for each era from the Legacy on: each takes the data cables of its era and the earlier
   ones, wears the bank of ports of its era's backbone, and manages racks across all its sections by its era, 4 for the
   Legacy's, 8 for the Transition's, 16 for the Standard's and 32 for the Advanced's. Its window shows its era in the
@@ -512,6 +529,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ### Changed
 - Computers draw energy, switched off, lets the chain's machines run free of energy too.
+- A one-block computer broken gives itself back whole, once: one item with
+  every part in its seat and its name, whose tooltip lists the parts and what it still lacks to run, and which stands
+  again as it was when placed. Only the media in its front drives come out on their own. Before, its parts spilled.
 - A computer, or a server in its rack, that its UPS takes over writes it in the network's log: "On its
   UPS's battery: the power went".
 - Building from the network: a player who carries a portable joined to a network builds from its storage.

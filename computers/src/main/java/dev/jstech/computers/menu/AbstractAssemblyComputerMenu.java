@@ -211,6 +211,16 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
         return assembly.assemblyBuildValid();
     }
 
+    /** Whether the machine is switched on with its fans turning, a blank board's too. */
+    public boolean poweredUp() {
+        return assembly.assemblyPoweredUp();
+    }
+
+    /** Whether the machine's board came out of the chain blank: NO FIRMWARE, its readings blank. */
+    public boolean firmwareMissing() {
+        return assembly.assemblyFirmwareMissing();
+    }
+
     public long capacity() {
         return assembly.assemblyCapacity();
     }

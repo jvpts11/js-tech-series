@@ -176,7 +176,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:failover",
-  "order": 86,
+  "order": 87,
   "section": "jsc:network_operation",
   "title": "jsc.guide.failover.title"
 }

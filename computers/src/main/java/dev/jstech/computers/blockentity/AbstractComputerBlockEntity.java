@@ -703,10 +703,24 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return hardware.valid();
     }
 
+    /* Switched on with parts that make a computer and a board whose firmware brings it up. */
     public boolean isRunning() {
+        return poweredUp() && !firmwareMissing();
+    }
+
+    /**
+     * Whether it is switched on with parts that make a computer: its fans turn and its power lamp is lit, though a
+     * board with no firmware brings nothing more up (computers/docs/design/survival.md).
+     */
+    public boolean poweredUp() {
         return buildValid() && power.on();
     }
 
+    /** Whether the board in it came out of the chain blank, so switched on it turns its fans and nothing more. */
+    @Override
+    public boolean firmwareMissing() {
+        return hardware.firmwareMissing();
+    }
     public boolean isManualOn() {
         return power.on();
     }

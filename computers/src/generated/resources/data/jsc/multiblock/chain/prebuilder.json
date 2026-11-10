@@ -1,0 +1,60 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:prebuilder_case_lift"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:machine_casing"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:prebuilder_robot_arm"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:prebuilder_parts_tray"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abc",
+      "dee"
+    ],
+    [
+      "#ff",
+      "eeg"
+    ],
+    [
+      "eee",
+      "eee"
+    ]
+  ],
+  "name": "prebuilder",
+  "ports": {
+    "a": "item_output",
+    "c": "item_input",
+    "d": "energy_input"
+  },
+  "terminal": "jsc:prebuilder_terminal"
+}

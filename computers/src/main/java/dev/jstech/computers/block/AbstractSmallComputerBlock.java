@@ -19,7 +19,6 @@ import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.connect.IFaceConnector;
 import dev.jstech.core.content.IStandingParts;
 import dev.jstech.core.jstechseries.tier.Era;
-import dev.jstech.core.util.BlockDrops;
 import dev.jstech.core.util.BlockEntityTickers;
 import java.util.ArrayList;
 import java.util.List;
@@ -76,9 +75,9 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
     private final Supplier<BlockEntityType<E>> entityType;
     private final BlockEntityTicker<E> serverTicker;
     /*
-     * The computers a player is breaking right now, whose hardware fell as the player broke them, or was forgone by a
-     * player in creative: the removal that follows gives nothing back a second time. A removal with no player first
-     * finds its computer missing here and gives the hardware back then.
+     * The computers a player is breaking right now, given back whole as the player broke them, or forgone by a player
+     * in creative: the removal that follows gives nothing back a second time. A removal with no player first finds its
+     * computer missing here and gives it back then.
      */
     private final Set<BlockPos> settled = ConcurrentHashMap.newKeySet();
 
@@ -143,11 +142,11 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
     @Override
     public BlockState playerWillDestroy(final Level level, final BlockPos pos, final BlockState state,
                                         final Player player) {
-        // A player in creative takes the computer and leaves nothing; any other player gets its hardware back now.
+        // A player in creative takes the computer and leaves nothing; any other player gets it back whole now.
         final E computer = computerAt(level, pos);
         if (level instanceof ServerLevel serverLevel && computer != null && settled.add(pos.immutable())
                 && !player.getAbilities().instabuild) {
-            spillHardware(serverLevel, pos, computer);
+            giveBack(serverLevel, pos, computer);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
@@ -259,9 +258,9 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
                             final BlockState newState, final boolean movedByPiston) {
         final E computer = computerAt(level, pos);
         if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel && computer != null) {
-            // Taken without a player (an explosion, a command, another mod's machine), it gives its hardware back here.
+            // Taken without a player (an explosion, a command, another mod's machine), it is given back whole here.
             if (!settled.remove(pos)) {
-                spillHardware(serverLevel, pos, computer);
+                giveBack(serverLevel, pos, computer);
             }
             // Drops this computer's network-node registration, and the chunks its anchor card kept.
             computer.onBroken(serverLevel);
@@ -305,10 +304,13 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
         computer.showPowerPressed();
     }
 
-    /* What the case holds falls on the ground: the installed hardware, and what its front's bays and ports hold. */
-    private void spillHardware(final ServerLevel level, final BlockPos pos, final E computer) {
+    /*
+     * The computer is given back whole, its parts inside, as a rack server is (computers/docs/design/survival.md); what
+     * its front's bays and ports hold falls beside it. Its block has no loot of its own, so nothing comes twice.
+     */
+    private void giveBack(final ServerLevel level, final BlockPos pos, final E computer) {
         computer.spillFront(level, pos);
-        BlockDrops.spill(level, pos, computer.getHardware());
+        Block.popResource(level, pos, computer.asItem());
     }
 
     @Nullable

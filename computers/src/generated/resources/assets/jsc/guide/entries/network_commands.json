@@ -92,7 +92,7 @@
     }
   ],
   "id": "jsc:network_commands",
-  "order": 217,
+  "order": 218,
   "section": "jsc:shell_commands",
   "title": "jsc.guide.network_commands.title"
 }

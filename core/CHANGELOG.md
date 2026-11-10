@@ -461,6 +461,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   colour left as it is, and a tinted model is drawn on its own rather than with its model's others.
   `ProcessingMachineBlockEntity.Processing` gains `withTicks` and `withEnergyPerTick`, the same work in another time or
   at another draw. Experimental.
+- A machine's note: J's Core's API is at version 51. `MachineBlockEntity.note()` is a line a machine says beside
+  its status, set with `note(Text)`, which the standard machine screen shows in its lamp's tooltip and its terminal's
+  face shows under the status word, as a machine says why it will not work what it was given; `TextCodecs.CODEC` keeps
+  a `Text` as data. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2015,6 +2019,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   stands in the block over it is sat in from its back.
 
 ### Changed
+- A machine says why it will not work what it was given beside its status, in its lamp's tooltip and on its
+  terminal's face.
 - A processing machine that takes no energy works its recipes without paying for them, where before it waited
   for energy it would never draw.
 - A formed multiblock fills the place of a block its model shows no face of when the block's middle lies

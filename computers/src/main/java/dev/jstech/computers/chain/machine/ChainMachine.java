@@ -10,6 +10,8 @@ package dev.jstech.computers.chain.machine;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.machine.ProcessingMachineBlockEntity.Layout;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -31,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
  *                burns part of its own coal
  * @param layout  its slots and tanks
  * @param layers  its shape, layer by layer from the bottom
- * @param legend  the block each letter of its shape stands for, by the block's id in the mod
+ * @param legend  the block each letter of its shape stands for, by the block's id in the mod, in its written order
  * @param linked  whether it works only linked to a computer of the era before, by its peripheral port
  */
 public record ChainMachine(String id, String english, @Nullable Era era, int seconds, int watts, Layout layout,
@@ -42,7 +44,8 @@ public record ChainMachine(String id, String english, @Nullable Era era, int sec
         Objects.requireNonNull(english, "english");
         Objects.requireNonNull(layout, "layout");
         layers = layers.stream().map(List::copyOf).toList();
-        legend = Map.copyOf(legend);
+        // In the order it is written, so what reads it (the manual's pages among them) reads it the same every run.
+        legend = Collections.unmodifiableMap(new LinkedHashMap<>(legend));
     }
 
     /** The id of its shape, as J's Core keeps it. */

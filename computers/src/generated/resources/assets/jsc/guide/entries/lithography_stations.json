@@ -183,13 +183,13 @@
   "id": "jsc:lithography_stations",
   "items": [
     "jsc:lithography_wafer_stage",
-    "jsc:lithography_mercury_lamp",
     "jsc:lithography_glass_optics",
+    "jsc:lithography_mercury_lamp",
     "jsc:lithography_krf_laser",
-    "jsc:lithography_fluoride_optics",
     "jsc:lithography_arf_laser",
-    "jsc:lithography_mirror_optics",
-    "jsc:lithography_euv_source"
+    "jsc:lithography_fluoride_optics",
+    "jsc:lithography_euv_source",
+    "jsc:lithography_mirror_optics"
   ],
   "order": 34,
   "section": "jsc:chain_machines",

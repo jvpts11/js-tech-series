@@ -37,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Function;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -45,6 +46,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import org.jetbrains.annotations.Nullable;
@@ -213,6 +215,18 @@ public final class ChainMachines {
                             + solder + ",g=assembly_" + era.path() + "_placement_head")
                     .declare("assembly_" + era.path() + "_placement_head");
         }
+        // The two that turn parts into working computers, one of each for every era, doing work of their own.
+        machine("prebuilder").named("Prebuilder").step(10, 1_000).slots(PrebuilderBlockEntity.INPUTS, 1, 0, 0, 0, 0)
+                .shape("abc,dee", "#ff,eeg", "eee,eee")
+                .legend("a=item_outlet,b=prebuilder_case_lift,c=item_inlet,d=power_entry,e=machine_casing,"
+                        + "f=prebuilder_robot_arm,g=prebuilder_parts_tray")
+                .works(PrebuilderBlockEntity::new).declare();
+        machine("preinstaller").named("Preinstaller").step(10, 1_000)
+                .slots(PreinstallerBlockEntity.INPUTS, 1, 0, 0, 0, 0)
+                .shape("ab,cd", "#e,fg")
+                .legend("a=item_outlet,b=preinstaller_cradle,c=power_entry,d=item_inlet,e=preinstaller_console,"
+                        + "f=preinstaller_disk_dock,g=preinstaller_board_fixture")
+                .works(PreinstallerBlockEntity::new).declare();
     }
 
     private ChainMachines() {
@@ -292,6 +306,13 @@ public final class ChainMachines {
     public record Worked(ProcessingKind kind, @Nullable Era era, int joulesATick) {
     }
 
+    /* Makes the block entity of a machine's terminal. */
+    @FunctionalInterface
+    private interface IEntityMaker {
+
+        ChainMachineBlockEntity make(ChainMachine machine, BlockPos pos, BlockState state);
+    }
+
     /* A machine as declared: its record, its terminal, its terminal's type and the kinds of recipe it works. */
     private record Declared(ChainMachine machine, BlockEntry<ChainMachineTerminalBlock> terminal,
                             DeferredHolder<BlockEntityType<?>, BlockEntityType<ChainMachineBlockEntity>> type,
@@ -311,9 +332,16 @@ public final class ChainMachines {
         private Map<Character, String> legend = Map.of();
         private final Map<Era, Integer> serves = new LinkedHashMap<>();
         private boolean linked;
+        private IEntityMaker entity = ChainMachineBlockEntity::new;
 
         Builder(final String id) {
             this.id = id;
+        }
+
+        /* A machine that does work of its own rather than recipes: its terminal's block entity. */
+        Builder works(final IEntityMaker maker) {
+            this.entity = maker;
+            return this;
         }
 
         Builder named(final String name) {
@@ -368,8 +396,17 @@ public final class ChainMachines {
             return this;
         }
 
-        /* Declares it: its pattern, its model, its terminal and its type, its kind of recipe shown by {@code hero}. */
+        /* Declares a machine of recipes: its pattern, model, terminal and type, its kind of recipe shown by hero. */
         void declare(final String hero) {
+            declareWith(machine -> kinds(machine, hero));
+        }
+
+        /* Declares a machine that does work of its own, with no kind of recipe. */
+        void declare() {
+            declareWith(machine -> List.of());
+        }
+
+        private void declareWith(final Function<ChainMachine, List<Worked>> worked) {
             if (!ChainShapes.sound(layers, legend)) {
                 throw new IllegalStateException("the shape of " + id + " is not a whole box with one terminal");
             }
@@ -391,10 +428,11 @@ public final class ChainMachines {
                             new IBlockModel.ParticleOnly(machine.terminalPath() + "_formed", TEXTURES + "terminal")))
                     .drops(Drops.NONE).tag(BlockTags.MINEABLE_WITH_PICKAXE)
                     .register();
+            final IEntityMaker maker = entity;
             final DeferredHolder<BlockEntityType<?>, BlockEntityType<ChainMachineBlockEntity>> type =
-                    CONTENT.blockEntity(machine.terminalPath(), (pos, state) -> new ChainMachineBlockEntity(machine,
-                            pos, state), terminal);
-            DECLARED.put(id, new Declared(machine, terminal, type, kinds(machine, hero)));
+                    CONTENT.blockEntity(machine.terminalPath(), (pos, state) -> maker.make(machine, pos, state),
+                            terminal);
+            DECLARED.put(id, new Declared(machine, terminal, type, worked.apply(machine)));
         }
 
         /*

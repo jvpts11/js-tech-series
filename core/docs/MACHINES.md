@@ -114,6 +114,12 @@ Each tick the machine says what it is doing, a `MachineStatus`, which its screen
 | `OFF_BY_REDSTONE` | WAIT | Its redstone mode keeps it off. |
 | `SWITCHED_OFF` | WAIT | Its ON/OFF switch is off. |
 
+Beside its state a machine can say one line more, its note, as a machine that will not work what it was given says
+why ("No place in the case for a second graphics card"): set it with `note(Text)` from the server, where the machine
+works out its work, and clear it with `note(Text.EMPTY)`. `note()` gives it back on both sides; the standard screen
+shows it in its lamp's tooltip, a terminal's face under the state's word, and tools that describe the machine with
+its state.
+
 In the world a working machine shows it: a puff as it starts, smoke as it works and as it stops, and the sounds its
 mod declares (`MachineSounds`: one as it starts, a loop while it works, one as it stops; a machine that declares none
 is silent). Override `sounds()` and `animate(...)` to change them.

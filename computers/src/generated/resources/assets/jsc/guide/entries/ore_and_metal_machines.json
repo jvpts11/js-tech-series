@@ -131,16 +131,16 @@
   "icon": "jsc:crusher_roll",
   "id": "jsc:ore_and_metal_machines",
   "items": [
-    "jsc:crusher_roll",
     "jsc:crusher_drive",
+    "jsc:crusher_roll",
     "jsc:grinder_drum",
     "jsc:grinder_drive",
     "jsc:induction_furnace_coil",
     "jsc:induction_furnace_capacitor_bank",
     "jsc:electrolytic_cell_cell_stack",
     "jsc:rolling_mill_roller_table",
-    "jsc:rolling_mill_work_roll",
     "jsc:rolling_mill_mill_housing",
+    "jsc:rolling_mill_work_roll",
     "jsc:wire_drawer_capstan"
   ],
   "order": 30,

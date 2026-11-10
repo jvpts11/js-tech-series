@@ -396,7 +396,7 @@
     "jsc:advanced_printer",
     "jsc:printed_paper"
   ],
-  "order": 59,
+  "order": 60,
   "section": "jsc:peripherals",
   "title": "jsc.guide.printers.title"
 }

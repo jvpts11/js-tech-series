@@ -137,13 +137,13 @@
     "jsc:board_etcher_spray_tunnel",
     "jsc:ceramic_kiln_kiln_car",
     "jsc:ceramic_kiln_kiln_chamber",
-    "jsc:coil_winder_winding_head",
     "jsc:coil_winder_supply_spool",
+    "jsc:coil_winder_winding_head",
     "jsc:optical_polisher_polishing_lap",
     "jsc:optical_polisher_draw_tower",
-    "jsc:display_line_gantry",
+    "jsc:display_line_fill_chamber",
     "jsc:display_line_test_stand",
-    "jsc:display_line_fill_chamber"
+    "jsc:display_line_gantry"
   ],
   "order": 35,
   "section": "jsc:chain_machines",

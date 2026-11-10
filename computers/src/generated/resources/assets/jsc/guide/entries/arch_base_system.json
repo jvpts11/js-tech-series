@@ -120,7 +120,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:arch_base_system",
-  "order": 264,
+  "order": 265,
   "section": "jsc:arch_base",
   "title": "jsc.guide.arch_base_system.title"
 }

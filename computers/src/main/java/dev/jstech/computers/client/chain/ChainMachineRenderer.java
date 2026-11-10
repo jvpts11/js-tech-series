@@ -58,6 +58,14 @@ public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockE
                 .build();
     }
 
+    /**
+     * What every chain machine's model does, for a machine whose renderer does more: its loop while it works, its
+     * modes and channels, and what it gives off.
+     */
+    public static ChainMachineRenderer of(final ChainMachine machine) {
+        return new ChainMachineRenderer(machine);
+    }
+
     /** Lets go of what removed machines held, each tick of the game, and of everything as the player leaves. */
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> release(false));

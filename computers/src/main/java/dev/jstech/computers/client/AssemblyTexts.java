@@ -39,6 +39,8 @@ final class AssemblyTexts {
     static final TextKey OFFLINE = TextKey.of("jsc.assembly.offline", "OFFLINE");
     static final TextKey ONLINE = TextKey.of("jsc.assembly.online", "ONLINE");
     static final TextKey READY = TextKey.of("jsc.assembly.ready", "READY");
+    /* Its board came out of the chain blank: switched on, only its fans turn. */
+    static final TextKey NO_FIRMWARE = TextKey.of("jsc.assembly.no_firmware", "NO FIRMWARE");
     static final TextKey CONFLICT = TextKey.of("jsc.assembly.conflict", "CONFLICT");
     /* A passive failover member: powered and synced, not orchestrating. */
     static final TextKey STANDBY = TextKey.of("jsc.assembly.standby", "STANDBY");

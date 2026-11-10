@@ -177,6 +177,13 @@
     "jsc:assembly_feeder_bank",
     "jsc:assembly_wave_solder",
     "jsc:assembly_vintage_placement_head",
+    "jsc:prebuilder_case_lift",
+    "jsc:prebuilder_robot_arm",
+    "jsc:prebuilder_parts_tray",
+    "jsc:preinstaller_cradle",
+    "jsc:preinstaller_console",
+    "jsc:preinstaller_board_fixture",
+    "jsc:preinstaller_disk_dock",
     "jsc:floppy_disk"
   ]
 }

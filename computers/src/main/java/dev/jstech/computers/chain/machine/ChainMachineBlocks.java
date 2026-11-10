@@ -199,6 +199,13 @@ public final class ChainMachineBlocks {
                 .register());
         put(plain("assembly_standard_reflow_oven", HardwareEra.STANDARD).named("Standard Reflow Oven").register());
         put(plain("assembly_advanced_reflow_oven", HardwareEra.ADVANCED).named("Advanced Reflow Oven").register());
+        put(plain("prebuilder_case_lift", HardwareEra.VINTAGE).named("Case Lift").register());
+        put(plain("prebuilder_robot_arm", HardwareEra.VINTAGE).named("Robot Arm").register());
+        put(plain("prebuilder_parts_tray", HardwareEra.VINTAGE).named("Parts Tray").register());
+        put(plain("preinstaller_cradle", HardwareEra.VINTAGE).named("Cradle").register());
+        put(plain("preinstaller_console", HardwareEra.VINTAGE).named("Console").register());
+        put(plain("preinstaller_board_fixture", HardwareEra.VINTAGE).named("Board Fixture").register());
+        put(plain("preinstaller_disk_dock", HardwareEra.VINTAGE).named("Disk Dock").register());
     }
 
     private static <B extends Block> BlockEntry<B> put(final BlockEntry<B> block) {

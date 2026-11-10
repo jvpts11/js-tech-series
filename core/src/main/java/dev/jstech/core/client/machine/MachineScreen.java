@@ -209,7 +209,11 @@ public final class MachineScreen extends CoreContainerScreen<MachineMenu> {
         }
         if (MachineScreenLayout.on(fx, fy, LAMP_X - 1, LAMP_Y - 1, LAMP_WORD_X - LAMP_X + 24,
                 LAMP_PITCH * MachineChrome.lampCount())) {
-            return List.of(GameText.component(MachineBlockEntity.STATUS_LINE.with(view.machine().status().text())));
+            final Component status = GameText.component(MachineBlockEntity.STATUS_LINE.with(
+                    view.machine().status().text()));
+            // Under the status, why it waits, when the machine says.
+            return view.machine().note().isEmpty() ? List.of(status)
+                    : List.of(status, GameText.component(view.machine().note()));
         }
         return this.faces.get(this.menu.tab()).tooltip(view, fx, fy);
     }

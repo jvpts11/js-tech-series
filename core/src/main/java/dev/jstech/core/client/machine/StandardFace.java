@@ -251,7 +251,9 @@ public final class StandardFace implements IMachineFace {
                         .compact(machine.perMinute())))
                 : GameText.resolve(MachineScreenTexts.NO_COUNT);
         if (machine.status() != MachineStatus.WORKING) {
-            return List.of(count, GameText.resolve(lcdWord(machine.status())));
+            // A machine that says why it waits shows that under the word, in place of its count.
+            return machine.note().isEmpty() ? List.of(count, GameText.resolve(lcdWord(machine.status())))
+                    : List.of(GameText.resolve(lcdWord(machine.status())), GameText.resolve(machine.note()));
         }
         final int percent = machine instanceof ProcessingMachineBlockEntity processing
                 && processing.getMaxProgress() > 0

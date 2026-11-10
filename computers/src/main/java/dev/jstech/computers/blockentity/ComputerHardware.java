@@ -20,6 +20,7 @@ import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.hardware.PsuConditions;
 import dev.jstech.computers.hardware.PsuSpec;
 import dev.jstech.computers.hardware.RamSpec;
+import dev.jstech.computers.os.BoardFirmware;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.jstechseries.tier.Era;
 import net.minecraft.core.HolderLookup;
@@ -142,6 +143,11 @@ final class ComputerHardware {
     boolean valid() {
         current();
         return this.powered;
+    }
+
+    /** Whether the board in its slot came out of the chain blank: switched on, the machine turns its fans only. */
+    boolean firmwareMissing() {
+        return BoardFirmware.blank(this.handler.getStackInSlot(this.layout.motherboardSlot()));
     }
 
     /** The power supply in its slot, the stack itself, which carries the supply's wear; empty for none. */

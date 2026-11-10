@@ -390,7 +390,7 @@
     "jsc:monitor",
     "jsc:color_monitor"
   ],
-  "order": 55,
+  "order": 56,
   "section": "jsc:peripherals",
   "title": "jsc.guide.monitors.title"
 }

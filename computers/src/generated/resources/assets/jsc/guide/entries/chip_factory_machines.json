@@ -96,11 +96,11 @@
   "id": "jsc:chip_factory_machines",
   "items": [
     "jsc:plasma_etcher_etch_chamber",
-    "jsc:ion_implanter_analyzer_magnet",
     "jsc:ion_implanter_end_station",
+    "jsc:ion_implanter_analyzer_magnet",
     "jsc:deposition_chamber_sputter_chamber",
-    "jsc:packaging_line_wire_bonder",
-    "jsc:packaging_line_mould_press"
+    "jsc:packaging_line_mould_press",
+    "jsc:packaging_line_wire_bonder"
   ],
   "order": 33,
   "section": "jsc:chain_machines",

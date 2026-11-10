@@ -63,6 +63,7 @@ the shape of any of them before you build it.
 | The chip factory | the Lithography Stations, Plasma Etcher, Ion Implanter, Deposition Chamber, Packaging Line |
 | Boards, parts, glass and screens | Laminator, Board Etcher, Ceramic Kiln, Coil Winder, Optical Polisher, Display Line |
 | Assembly | an Electronics Assembly Line for each era |
+| Whole computers | the Prebuilder, the Preinstaller |
 
 - **What a machine is built of.** Its casing, one of five by the work it stands (the Machine Casing for the mechanical
   machines, the Refractory Casing for heat, the Lined Casing for what corrodes, the Vacuum Casing for vacuum and gases
@@ -86,6 +87,18 @@ the shape of any of them before you build it.
   computer two eras newer than the one asked for exposes in half the time.
 - **The Electronics Assembly Lines.** Each works the bench recipes of its era and of the older ones, in the time the
   recipe takes and at its era's bench's draw, its ingredients through its Item Inlet in any order.
+- **The Prebuilder.** It takes one empty case (of a Personal, Crafting or Cluster Management Computer, or a rack
+  server) and up to sixteen parts in any order, and puts every part in its seat by the assembly screen's rules, the
+  board first, giving the computer with every part inside; a part that does not fit builds nothing, and it says why
+  on its terminal's face and in its window. Formed, its two arms take each part from its tray and set it in the case
+  on its lift, through the open side.
+- **The Preinstaller.** It writes onto one thing at a time: a computer with its parts, a loose motherboard, a loose
+  disk (how a rack server's bay drives get their system) or a rack server. It writes the firmware of the board's era,
+  then a system and its programs from the install media among its inputs, read and never used up, by the
+  installer's rules. A job takes its step and a second more for every 100 MB it writes. A motherboard can come with
+  no firmware; a computer built on one powers up and turns its fans, and nothing more, until it is written.
+- **A computer broken.** A one-block computer gives itself back whole: one item with its parts in their seats and its
+  name, which stands again as it was. Only the media in its front drives come out on their own.
 
 What each machine draws and how long a step takes, as first estimates:
 
@@ -102,6 +115,7 @@ What each machine draws and how long a step takes, as first estimates:
 | Air Separation Unit | 10 s | 3 kW | Ceramic Kiln | 20 s | 3 kW |
 | Siemens Reactor | 60 s | 5 kW | Coil Winder | 4 s | 0.5 kW |
 | Optical Polisher | 10 s | 1 kW | Display Line | 30 s | 3 kW |
+| Prebuilder | 10 s | 1 kW | Preinstaller | 10 s, and 1 s every 100 MB | 1 kW |
 
 ## What can go wrong
 
@@ -116,3 +130,7 @@ What each machine draws and how long a step takes, as first estimates:
   it knows, or its outlets are full.
 - **A Lithography Station exposes nothing.** Its computer is off, of an older era than the recipe asks for, not linked
   to its Peripheral Port, or short of the memory the exposure holds.
+- **The Preinstaller says there is nothing to write.** The board's firmware is written, and no medium brings a system
+  or a program the computer lacks.
+- **A computer switches on and only turns its fans.** Its board has no firmware: its window says NO FIRMWARE. A
+  Preinstaller writes it.

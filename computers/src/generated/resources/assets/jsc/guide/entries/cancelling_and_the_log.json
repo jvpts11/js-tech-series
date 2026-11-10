@@ -147,7 +147,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:cancelling_and_the_log",
-  "order": 115,
+  "order": 116,
   "section": "jsc:operations",
   "title": "jsc.guide.cancelling_and_the_log.title"
 }

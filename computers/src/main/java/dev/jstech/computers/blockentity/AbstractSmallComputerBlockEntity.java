@@ -11,6 +11,7 @@ import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.hardware.BayDriveSpec;
 import dev.jstech.computers.hardware.CasePorts;
 import dev.jstech.computers.hardware.IExpansionCardSpec;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.blockentity.BoolField;
 import dev.jstech.core.cable.IPlugged;
@@ -19,13 +20,17 @@ import dev.jstech.core.model.network.ModelAnimations;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Unit;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
  * A small computer, one block: the Personal Computer, the Crafting Computer and the Cluster Management Computer. Its
@@ -37,9 +42,18 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
 
     /** The left side taken off the case, showing what the player put inside; the world and the screen both show it. */
     private final BoolField sidePanelOff = fields().flag("SidePanelOff", false).save().toClient().toMenu();
-    /** The lamps on the front, worked out on the server: the power lamp's and the disk lamp's. */
+    /*
+     * The lamps on the front, worked out on the server: the power lamp's, lit while it is switched on with its fans
+     * turning, a blank board's too, and the disk lamp's.
+     */
     private final DerivedInt lamps =
-            fields().derived("Lamps", () -> (isRunning() ? POWER_LAMP : 0) | (diskBusy() ? DISK_LAMP : 0)).toClient();
+            fields().derived("Lamps", () -> (poweredUp() ? POWER_LAMP : 0) | (diskBusy() ? DISK_LAMP : 0)).toClient();
+    /* What its assembly window shows of a board with no firmware: switched on, its fans turn and nothing more. */
+    private final DerivedInt assemblyPoweredUp = fields().derived("AssemblyPoweredUp", this::poweredUp).toMenu();
+    private final DerivedInt assemblyFirmwareMissing =
+            fields().derived("AssemblyFirmwareMissing", this::firmwareMissing).toMenu();
+    /* Made by a machine and never started since: its first start runs its self-test. */
+    private final BoolField neverStarted = fields().flag("NeverStarted", false).save();
     /** What the case's bays and front ports hold, and the trays of the drives in its bays. */
     private final CaseFront front = new CaseFront(this, fields());
     /** The plug its control cables were last drawn ending in, on the client, so a card changed redraws them. */
@@ -69,6 +83,69 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
     /** Spills what the case's bays and ports hold, as the case breaks. */
     public void spillFront(final ServerLevel level, final BlockPos pos) {
         front.spill(level, pos);
+    }
+
+    /**
+     * The whole computer as an item, as it is given back when it breaks (computers/docs/design/survival.md): its case
+     * with its parts inside, its name, and whether it was never started.
+     */
+    public ItemStack asItem() {
+        final ItemStack whole = new ItemStack(getBlockState().getBlock());
+        whole.applyComponents(collectComponents());
+        return whole;
+    }
+
+    /** Whether it was made by a machine and never started since. */
+    public boolean neverStarted() {
+        return neverStarted.get();
+    }
+
+    /* Its first start is its self-test: from then on it is no longer a machine that never started. */
+    @Override
+    protected void tickBootPhases(final ServerLevel level) {
+        super.tickBootPhases(level);
+        if (neverStarted.get() && isRunning()) {
+            neverStarted.set(false);
+        }
+    }
+
+    /* Placed from an assembled computer, it stands with the parts, the name and the mark the item carries. */
+    @Override
+    protected void applyImplicitComponents(final DataComponentInput input) {
+        super.applyImplicitComponents(input);
+        final ItemContainerContents parts = input.getOrDefault(ComputingComponents.ASSEMBLED_HARDWARE.get(),
+                ItemContainerContents.EMPTY);
+        final ItemStackHandler hardware = getHardware();
+        for (int slot = 0; slot < parts.getSlots() && slot < hardware.getSlots(); slot++) {
+            hardware.setStackInSlot(slot, parts.getStackInSlot(slot).copy());
+        }
+        final String name = input.get(ComputingComponents.COMPUTER_NAME.get());
+        if (name != null && !name.isBlank()) {
+            setCustomName(name);
+        }
+        neverStarted.set(input.get(ComputingComponents.NEVER_STARTED.get()) != null);
+    }
+
+    /* As an item, it carries its parts, its name and whether it was never started. */
+    @Override
+    protected void collectImplicitComponents(final DataComponentMap.Builder components) {
+        super.collectImplicitComponents(components);
+        final ItemStackHandler hardware = getHardware();
+        final List<ItemStack> parts = new ArrayList<>();
+        boolean any = false;
+        for (int slot = 0; slot < hardware.getSlots(); slot++) {
+            parts.add(hardware.getStackInSlot(slot).copy());
+            any |= !hardware.getStackInSlot(slot).isEmpty();
+        }
+        if (any) {
+            components.set(ComputingComponents.ASSEMBLED_HARDWARE.get(), ItemContainerContents.fromItems(parts));
+        }
+        if (!customName().isEmpty()) {
+            components.set(ComputingComponents.COMPUTER_NAME.get(), customName());
+        }
+        if (neverStarted.get()) {
+            components.set(ComputingComponents.NEVER_STARTED.get(), Unit.INSTANCE);
+        }
     }
 
     /** The power button pressed on the front: the button goes in for whoever sees the case. */
@@ -107,9 +184,19 @@ public abstract class AbstractSmallComputerBlockEntity extends AbstractComputerB
         return "";
     }
 
-    /** Whether the machine runs, as its power lamp shows it on every side. */
+    /** Whether the machine is switched on with its fans turning, as its power lamp shows it on every side. */
     public boolean visualRunning() {
         return (lamps.getAsInt() & POWER_LAMP) != 0;
+    }
+
+    /** Whether the assembly window shows the machine switched on with its fans turning; mirrored while it is open. */
+    public boolean assemblyPoweredUp() {
+        return assemblyPoweredUp.isSet();
+    }
+
+    /** Whether the assembly window shows a board with no firmware: NO FIRMWARE, its readings blank. */
+    public boolean assemblyFirmwareMissing() {
+        return assemblyFirmwareMissing.isSet();
     }
 
     /** Whether the machine worked its disk a moment ago, as its disk lamp shows it, blinking, on every side. */

@@ -210,7 +210,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:achievements_hardware",
-  "order": 147,
+  "order": 148,
   "section": "jsc:the_achievements",
   "title": "jsc.guide.achievements_hardware.title"
 }

@@ -61,6 +61,7 @@ import dev.jstech.core.team.Access;
 import dev.jstech.core.team.IOwned;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayDeque;
@@ -118,6 +119,8 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private final MachineHealth health;
     private final MachineSides sides;
     private final ValueField<MachineStatus> status;
+    /* Why it waits, when its kind of machine can say more than its status does; nothing otherwise. */
+    private final ValueField<Text> note;
     private final BoolField running;
     private final ValueField<Ownership> ownership;
     private final LongField drawn;
@@ -221,6 +224,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         sidesField[0] = fields().part("Sides", this.sides).save().toClient();
         this.status = fields().value("Status", StableCodecs.byName(MachineStatus.class), MachineStatus.WAITING)
                 .toClient();
+        this.note = fields().value("Note", TextCodecs.CODEC, Text.EMPTY).toClient();
         this.running = fields().flag("Running", false).toClient();
         this.ownership = fields().nullable("Owner", Ownership.CODEC).save().toClient();
         // Shown only on its screen, while it is open: what it drew last tick and what it made the last minute.
@@ -461,6 +465,21 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return Objects.requireNonNull(status.get());
     }
 
+    /**
+     * Why it waits, said under its status where its screen and whoever looks at it see the status, when its kind of
+     * machine can say more: the reason it refused what it was given, say. Empty when it has nothing to add.
+     */
+    public Text note() {
+        return Objects.requireNonNull(note.get());
+    }
+
+    /** Says why it waits, under its status; {@link Text#EMPTY} when it has nothing more to say. */
+    protected void note(final Text why) {
+        if (!why.equals(note.get())) {
+            note.set(why);
+        }
+    }
+
     @Override
     public Optional<MachineStatus> statusNow() {
         return Optional.of(status());
@@ -663,11 +682,14 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
         return sounds();
     }
 
-    /** Its state, once the kit has ticked it, and its health while it is damaged. */
+    /** Its state, once the kit has ticked it, why it waits when it says, and its health while it is damaged. */
     @Override
     public void describe(final List<Text> lines, final boolean details) {
         if (ticked) {
             lines.add(STATUS_LINE.with(status().text()));
+            if (!note().isEmpty()) {
+                lines.add(note());
+            }
         }
         if (structure != null) {
             structure.describe(lines, details, recipesAtOnce());

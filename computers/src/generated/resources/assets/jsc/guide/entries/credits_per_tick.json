@@ -179,7 +179,7 @@
     }
   ],
   "id": "jsc:credits_per_tick",
-  "order": 400,
+  "order": 401,
   "section": "jsc:credits_and_costs",
   "title": "jsc.guide.credits_per_tick.title"
 }

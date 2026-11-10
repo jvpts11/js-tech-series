@@ -120,7 +120,7 @@
     }
   ],
   "id": "jsc:fstab_by_hand",
-  "order": 279,
+  "order": 280,
   "section": "jsc:gentoo_system",
   "title": "jsc.guide.fstab_by_hand.title"
 }

@@ -305,6 +305,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
         return null;
     }
 
+    /**
+     * Whether the machine's board came out of the chain blank: switched on, it turns its fans and nothing more, and
+     * its monitor has no signal, until a Preinstaller writes the firmware (computers/docs/design/survival.md).
+     */
+    default boolean firmwareMissing() {
+        return false;
+    }
+
     /** How the machine starts when its logic board is one of Quince's, whose firmware it carries; none otherwise. */
     default QuinceStart quinceStart() {
         final ComputerBuild build = currentBuild();
