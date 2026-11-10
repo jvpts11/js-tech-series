@@ -215,7 +215,7 @@
     }
   ],
   "id": "jsc:set_interface",
-  "order": 327,
+  "order": 338,
   "section": "jsc:iql_settings",
   "title": "jsc.guide.set_interface.title"
 }

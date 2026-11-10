@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.payload.OpenInstallDonePayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.MachineMedia;
@@ -142,6 +143,7 @@ public final class OsInstallRunner {
         name(machine, flow);
         desktop(machine, flow);
         services(machine, flow, slot, level);
+        openBsdAnswers(machine, flow, slot);
         flow.goTo(InstallerPage.DONE);
         machine.markChanged();
         show(level, machine, pos, flow);
@@ -194,6 +196,31 @@ public final class OsInstallRunner {
                     PortsService.layEmptyTree(disk, FilesystemKind.HIERARCHICAL);
                 }
             }
+        }
+    }
+
+    /**
+     * OpenBSD's installer answers become the system's own state: sshd switched on or off, xenodm starting the desktop
+     * at boot or not, and the sets left out, which keep their room off the disk and take their commands with them.
+     */
+    private static void openBsdAnswers(final IOsHost machine, final InstallerFlow flow, final int slot) {
+        if (flow.style() != InstallerStyle.OPENBSD) {
+            return;
+        }
+        final int leftOut = flow.options() & OpenBsdInstall.SETS_LEFT_OUT;
+        if (machine.console() != null) {
+            machine.console().settings().setRemoteAllowed(flow.sshdEnabled());
+            machine.console().settings().setXenodmEnabled(flow.has(InstallerFlow.XENODM));
+            machine.console().settings().setSetsLeftOut(leftOut);
+            // A release written afresh is the release as it shipped, before any of its patches.
+            machine.console().settings().setPatchesInstalled(0);
+        }
+        final int target = slot >= 0 ? slot : machine.defaultInstallSlot();
+        final ItemStack disk = target >= 0 && target < machine.diskSlots()
+                ? machine.diskInSlot(target) : ItemStack.EMPTY;
+        final OsDef system = OsRegistry.getOs(ResourceLocation.tryParse(flow.systemId()));
+        if (!disk.isEmpty() && system != null) {
+            OsDisks.keepOff(disk, system.id(), OpenBsdInstall.savedMb(leftOut, system.footprintMb()));
         }
     }
 

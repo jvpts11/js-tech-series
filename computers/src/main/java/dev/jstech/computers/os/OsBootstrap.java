@@ -9,6 +9,7 @@ package dev.jstech.computers.os;
 
 import dev.jstech.computers.hardware.IsaTranslators;
 import dev.jstech.computers.hardware.Isas;
+import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.TextKey;
@@ -90,6 +91,8 @@ public final class OsBootstrap {
              * the whole of what they share: nothing built for one runs on the other.
              */
             new KernelDef(rl("freebsd"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX),
+            // OpenBSD's own, as FreeBSD's is: alike at a prompt, and nothing built for another runs on it.
+            new KernelDef(rl("openbsd"), SchedulerKind.PREEMPTIVE, FilesystemKind.HIERARCHICAL, ShellFamily.POSIX),
             /*
              * System V's kernel: the one here that ran several programs at once on a machine of the first age,
              * and the oldest thing in this list that a Unix prompt is met on.
@@ -172,6 +175,16 @@ public final class OsBootstrap {
             OsDef.linuxDistro(rl("gentoo"), 4_096, "Gentoo", ShellKind.BASH, PackageManagerKind.EMERGE,
                     InstallMode.SOURCE, SoftwareHouse.GENTOO_FOUNDRY).withRam(12),
             /*
+             * Linux Mint (computers/docs/design/operating-systems.md): the one distribution that comes up at its
+             * desktop, from the Standard (the era of Cinnamon) on, because its installer lays Cinnamon down with
+             * it, and its own Software Manager and Update Manager. Its medium starts a live desktop, and its
+             * installer is a window on that desktop.
+             */
+            OsDef.terminalSystem(rl("linux_mint"), rl("linux"), Platform.LINUX, STANDARD, 12_288, "Linux Mint",
+                    ShellKind.BASH, PackageManagerKind.APT, InstallMode.GUIDED, SoftwareHouse.SPEARMINT)
+                    .withRam(64).withInstaller(InstallerStyle.MINT).withSplash(BootSplash.MINT)
+                    .withPackages(rl("cinnamon"), rl("software_manager"), rl("update_manager")),
+            /*
              * FreeBSD: the solid server and the lean daily driver. It asks for a machine of the Legacy age at
              * least and runs on every one after, it takes less memory than any distribution so the same
              * machine keeps more for its programs, and it comes up at a terminal until a desktop is installed.
@@ -180,6 +193,15 @@ public final class OsBootstrap {
                     "FreeBSD", ShellKind.SH, PackageManagerKind.PKG, InstallMode.GUIDED,
                     SoftwareHouse.DAEMON_FOUNDATION)
                     .withRam(16).withInstaller(InstallerStyle.BSD_INSTALL),
+            /*
+             * OpenBSD (computers/docs/design/operating-systems.md): the proactively secure Unix, at 7.5 and no
+             * other, from the Legacy. The smallest of the Unixes that take packages, at its terminal until a
+             * desktop is installed and switched on, installed by questions and answers at the terminal.
+             */
+            OsDef.terminalSystem(rl("openbsd"), rl("openbsd"), Platform.OPENBSD, HardwareEra.LEGACY, 1_024,
+                    "OpenBSD", ShellKind.KSH, PackageManagerKind.PKG_ADD, InstallMode.GUIDED,
+                    SoftwareHouse.BLOWFISH_PROJECT)
+                    .withRam(12).withInstaller(InstallerStyle.OPENBSD),
             /*
              * UNIX System V: the one system of the first age that runs several programs at once, in ten
              * megabytes of disk and two of memory. It has no Mirror to install from, only media, which is the
@@ -248,35 +270,37 @@ public final class OsBootstrap {
      * Desktop apps that run under any desktop environment: the Frames editions and a Linux desktop alike. On
      * Frames they arrive on install media; on Linux the same programs are packages the Mirror serves.
      */
-    private static final Set<Platform> DESKTOPS =
-            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.UNIX, Platform.QUINCE);
+    private static final Set<Platform> DESKTOPS = Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD,
+            Platform.OPENBSD, Platform.UNIX, Platform.QUINCE);
     /**
      * The same without UNIX, for the few desktop programs written for machines later than any UNIX desktop
      * reaches: the automation front-end, which asks for the newest Frames, and the two later code editors.
      */
     private static final Set<Platform> LATER_DESKTOPS =
-            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.QUINCE);
+            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.OPENBSD, Platform.QUINCE);
     private static final Set<Platform> LINUX_ONLY = Set.of(Platform.LINUX);
     /**
-     * Where CDE runs: on UNIX, which has no other desktop, and on FreeBSD and the Linux distributions beside the
+     * Where CDE runs: on UNIX, which has no other desktop, and on the BSDs and the Linux distributions beside the
      * ones they already take. It was written for the Unix workstations and has been built for the others since.
      */
-    private static final Set<Platform> CDE_SYSTEMS = Set.of(Platform.UNIX, Platform.FREEBSD, Platform.LINUX);
+    private static final Set<Platform> CDE_SYSTEMS =
+            Set.of(Platform.UNIX, Platform.FREEBSD, Platform.OPENBSD, Platform.LINUX);
     /**
      * What is made for the systems met at a Unix prompt, whichever of them it is: the desktop environments and
-     * the small tools the Mirror serves. FreeBSD takes all of it from its own packages and ports.
+     * the small tools the Mirror serves. The BSDs take all of it from their own packages and ports.
      */
-    private static final Set<Platform> LINUX_AND_FREEBSD = Set.of(Platform.LINUX, Platform.FREEBSD);
+    private static final Set<Platform> LINUX_AND_BSDS = Set.of(Platform.LINUX, Platform.FREEBSD, Platform.OPENBSD);
     private static final Set<Platform> FRAMES_ONLY = Set.of(Platform.FRAMES);
     /** Where screenfetch installs: the systems at a Unix prompt that take packages, and Frames. */
-    private static final Set<Platform> SCREENFETCH_SYSTEMS = Set.of(Platform.LINUX, Platform.FREEBSD, Platform.FRAMES);
+    private static final Set<Platform> SCREENFETCH_SYSTEMS =
+            Set.of(Platform.LINUX, Platform.FREEBSD, Platform.OPENBSD, Platform.FRAMES);
     /**
-     * Where "This PC" runs: the Frames editions, and FreeBSD and a Linux distribution once one of KDE Plasma,
+     * Where "This PC" runs: the Frames editions, and the BSDs and a Linux distribution once one of KDE Plasma,
      * GNOME or Cinnamon is on it (the desktop that bundles it). Not UNIX, whose only desktop is CDE and whose
      * own answer to the question is Workstation Info.
      */
     private static final Set<Platform> THIS_PC_SYSTEMS =
-            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.QUINCE);
+            Set.of(Platform.FRAMES, Platform.LINUX, Platform.FREEBSD, Platform.OPENBSD, Platform.QUINCE);
     /** Where the disk tool that repairs runs: the Frames' Defrag, and Quince's Disk First Aid and Disk Utility. */
     private static final Set<Platform> FRAMES_AND_QUINCE = Set.of(Platform.FRAMES, Platform.QUINCE);
     /** What only Quince's own systems run: its viewer, its music, its browser, its store and its server tool. */
@@ -295,6 +319,12 @@ public final class OsBootstrap {
 
     /** The Frames' system tools, kept under the Start menu with no icon on the wallpaper: the Defrag. */
     private static final Set<ResourceLocation> FRAMES_TOOLS = Set.of(rl("defrag"));
+
+    /**
+     * Linux Mint's two programs, which Cinnamon lists in its menu and puts no icon of on the wallpaper, as the real
+     * one does; only Mint ships them, so on any other system they are not there to list.
+     */
+    private static final Set<ResourceLocation> MINT_TOOLS = Set.of(rl("software_manager"), rl("update_manager"));
 
     /** What CDE bundles: the same, and its Workstation Info, which no other desktop has. */
     private static final List<ResourceLocation> CDE_APPS = List.of(
@@ -393,7 +423,7 @@ public final class OsBootstrap {
                     rl("calculator"), DesktopNames.CINNAMON_CALCULATOR,
                     rl("system_monitor"), DesktopNames.CINNAMON_MONITOR,
                     rl("settings"), DesktopNames.CINNAMON_SETTINGS, rl("this_pc"), DesktopNames.CINNAMON_THIS_PC),
-                    SoftwareHouse.SPEARMINT),
+                    SoftwareHouse.SPEARMINT, MINT_TOOLS),
             /*
              * CDE keeps its own names for what it bundles, which are plainer than anybody else's: it called a
              * file manager the File Manager. Its settings are the Style Manager, as they were, and its help the
@@ -465,14 +495,14 @@ public final class OsBootstrap {
 
     /* What runs on every system, at a terminal as well as on a desktop. */
     private static final Set<Platform> ALL_PLATFORMS = Set.of(Platform.MC_DOS, Platform.MC_NET, Platform.FRAMES,
-            Platform.LINUX, Platform.FREEBSD, Platform.UNIX, Platform.QUINCE);
+            Platform.LINUX, Platform.FREEBSD, Platform.OPENBSD, Platform.UNIX, Platform.QUINCE);
 
     /** Every system whose prompt is a thing that can be opened, which is every one but the network's. */
     private static final Set<Platform> PROMPT_PLATFORMS = Set.of(Platform.MC_DOS, Platform.FRAMES,
-            Platform.LINUX, Platform.FREEBSD, Platform.UNIX, Platform.QUINCE);
+            Platform.LINUX, Platform.FREEBSD, Platform.OPENBSD, Platform.UNIX, Platform.QUINCE);
 
-    /** Where {@code vi} comes bundled: the two systems that have their own, and nowhere else. */
-    private static final Set<Platform> FREEBSD_AND_UNIX = Set.of(Platform.FREEBSD, Platform.UNIX);
+    /** Where {@code vi} comes bundled: the systems that have their own, the two BSDs and UNIX, and nowhere else. */
+    private static final Set<Platform> BSDS_AND_UNIX = Set.of(Platform.FREEBSD, Platform.OPENBSD, Platform.UNIX);
 
     /** Where {@code ee} comes bundled: FreeBSD alone. */
     private static final Set<Platform> FREEBSD_ONLY = Set.of(Platform.FREEBSD);
@@ -587,6 +617,23 @@ public final class OsBootstrap {
                             HostScope.MAINFRAME)
                     .named("Server Admin").described("Start and stop the services this Mainframe runs.")
                     .withHouse(SoftwareHouse.QUINCE),
+            /*
+             * Linux Mint's own two (computers/docs/design/operating-systems.md), which its installer lays down and no
+             * other distribution has: the Software Manager, Mint's store over the Mirror's catalogue, and the Update
+             * Manager. And the live medium's Install Linux Mint, which only its live desktop shows.
+             */
+            ProgramSpec.of(rl("software_manager"), "mintinstall", true, LINUX_ONLY, 0, ProgramKind.APP, 0,
+                            HostScope.ANY)
+                    .named("Software Manager").described("Find and install the programs the network's Mirror serves.")
+                    .withMinEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(64),
+            ProgramSpec.of(rl("update_manager"), "mintupdate", true, LINUX_ONLY, 0, ProgramKind.APP, 0,
+                            HostScope.ANY)
+                    .named("Update Manager")
+                    .described("Bring the programs and the desktop up to the Mirror's versions.")
+                    .withMinEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(32),
+            ProgramSpec.of(rl("live_installer"), "ubiquity", true, LINUX_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Install Linux Mint").described("Install the system on this computer's disk.")
+                    .withMinEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT),
 
             /*
              * Installables. The OS rank only gates the Frames editions (a Linux distribution ranks 0, so any
@@ -920,7 +967,7 @@ public final class OsBootstrap {
              * vi comes bundled with both systems that have their own, so it is never installed and never
              * takes a drive: FreeBSD's is nvi, UNIX System V's is the original, one engine behind both.
              */
-            ProgramSpec.of(rl("vi"), "vi", true, FREEBSD_AND_UNIX, 2, ProgramKind.APP, 0, HostScope.ANY)
+            ProgramSpec.of(rl("vi"), "vi", true, BSDS_AND_UNIX, 2, ProgramKind.APP, 0, HostScope.ANY)
                     .named("vi")
                     .described("The text editor that comes with the system: no colour, no ruler, just the file.")
                     .withMinEra(VINTAGE).withEra(VINTAGE).withHouse(SoftwareHouse.BUNDLED).withRam(2),
@@ -942,15 +989,15 @@ public final class OsBootstrap {
              * run on Legacy machines; Cinnamon is a much later desktop and needs Standard hardware. A
              * Vintage computer therefore has no graphical desktop at all and lives at the TTY.
              */
-            ProgramSpec.of(rl("kde_plasma"), "kde-plasma", false, LINUX_AND_FREEBSD, 256,
+            ProgramSpec.of(rl("kde_plasma"), "kde-plasma", false, LINUX_AND_BSDS, 256,
                             ProgramKind.DESKTOP_ENVIRONMENT, 0, HostScope.ANY)
                     .named("KDE Plasma").described("The KDE Plasma desktop environment.")
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.KDE_GUILD).withRam(80),
-            ProgramSpec.of(rl("gnome"), "gnome", false, LINUX_AND_FREEBSD, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0,
+            ProgramSpec.of(rl("gnome"), "gnome", false, LINUX_AND_BSDS, 192, ProgramKind.DESKTOP_ENVIRONMENT, 0,
                             HostScope.ANY)
                     .named("GNOME").described("The GNOME desktop environment.")
                     .withMinEra(LEGACY).withEra(LEGACY).withHouse(SoftwareHouse.GNOME_TRUST).withRam(72),
-            ProgramSpec.of(rl("cinnamon"), "cinnamon", false, LINUX_AND_FREEBSD, 160, ProgramKind.DESKTOP_ENVIRONMENT,
+            ProgramSpec.of(rl("cinnamon"), "cinnamon", false, LINUX_AND_BSDS, 160, ProgramKind.DESKTOP_ENVIRONMENT,
                             0, HostScope.ANY)
                     .named("Cinnamon").described("The Cinnamon desktop environment.")
                     .withMinEra(STANDARD).withEra(STANDARD).withHouse(SoftwareHouse.SPEARMINT).withRam(56),

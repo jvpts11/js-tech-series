@@ -610,6 +610,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `CableBlockEntity.unsettled` makes a cable for a structure, its wires laid and its faces worked out on its first tick
   in the world (`settleLinks`). `ContentData.alsoLoot` adds a mod's own loot tables to the ones its blocks have, and
   `ContentLootProvider` takes the list of tables it writes, `blocks` the declared blocks'. Experimental.
+- (Computers) OpenBSD and Linux Mint: J's Computers' API is at version 18. `OsDef` carries the packages its installer
+  lays down with the system, `withPackages`, and the name of the picture it comes up behind, `splash`. `Platform`
+  gains `OPENBSD`, `PackageManagerKind` gains `PKG_ADD`, `ShellKind` gains `KSH`, and `InstallerStyle` gains `OPENBSD`
+  and `MINT`. Experimental.
 - (Computers) Wi-Fi cards: J's Computers' API is at version 17. `ExpansionCardKind.WIFI` is the kind of the Wi-Fi
   cards, which the Personal, Crafting and Cluster Management Computers alone seat. Experimental.
 - (Computers) Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
@@ -2518,6 +2522,28 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   eight in the Advanced, each step with the gases and liquids of its era, and its tooltip names its chip, its layer
   and the machine it goes to next. The Packaging Line cuts the finished wafer into its chips, eight small or four big.
 - (Computers) The Air Separation Unit takes in the air itself and gives nitrogen, oxygen, argon and krypton.
+- (Computers) OpenBSD: the Blowfish Project's system at release 7.5, from the Legacy, secure by default. It starts
+  through `boot>`, which waits five seconds without a count, comes up in its kernel's own words and greets at `ksh`,
+  the computer's name and a hash for its prompt. Its installer asks at the terminal, question by question: the name,
+  sshd, X and xenodm, the root disk (`wd0` on IDE, `sd0` on SATA, the whole disk or the room beside what it holds)
+  and the sets, `bsd.rd`, `comp` and `man` of which may be left out, keeping their room off the disk and taking
+  `make`, `man` and `apropos` with them. `rcctl` switches its daemons: cron and sshd, pf, pflogd and syslogd that
+  always run, xenodm, which a desktop installed waits for before the computer comes up at it, and every service
+  installed, which comes switched off. Packages come with `pkg_add`, `pkg_info` and `pkg_delete`, the ports tree with
+  `cvs` and `make`, and the release's two patches with `syspatch`; `pfctl` reports on its firewall, `doas` runs a
+  command as another user, and `/etc` holds its `pf.conf`, `doas.conf`, `rc.conf.local` and `myname`. A panic stops
+  in its debugger, `ddb>`, with `show panic`, `trace` and `ps`, until `boot reboot`. Puffy is its mark, in
+  `screenfetch` and on This PC, and one picture of the sea hangs on every desktop it takes. The Daemon Handbook has a
+  chapter on it.
+- (Computers) Linux Mint: Spearmint Linux's distribution, from the Standard, the one that comes up at its desktop,
+  Cinnamon, behind its own mark and five dots, its Menu button wearing the same mark. Its medium starts a live
+  session, the whole desktop off a disk in memory, which writes nothing to the computer's disks, with Install Linux
+  Mint on it: a guided installer in five screens, the installation type, the divider beside another system, who you
+  are, the copy and the end, which puts it on ext4 with a swap as big as the memory. Its two programs of its own are
+  the Software Manager, the Mirror's programs by Mint's categories with Network and Desktops, a program put forward
+  each day and the newest arrivals, with no ratings, and the Update Manager, which installs the updates ticked, a
+  program at once and the desktop the next time it starts, its shield on the panel while there are any. The Linux
+  Desk Reference has a chapter on it.
 - (Computers) Abandoned buildings: twenty kinds lie across the Overworld, each of one era, the Vintage near the
   world's spawn and the Advanced far away: a house with an old computer in its attic, an electronic waste dump, an
   overturned delivery van, a computer shop, a LAN house, a school computer room, a public library, a radio and

@@ -67,7 +67,8 @@ class LayoutAuditTest {
             "NetworkServicesLayout", "NetworkLinksLayout", "NetworkEventLogLayout", "PrinterLayout", "DockLayout",
             "PrintedPaperLayout",
             "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
-            "EffectsPageLayout", "TransitionPanelLayout", "WorkbenchLayout");
+            "EffectsPageLayout", "TransitionPanelLayout", "WorkbenchLayout",
+            "SoftwareManagerLayout", "UpdateManagerLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -392,6 +393,11 @@ class LayoutAuditTest {
         c.add(new AuditCase("CdeStyleLayout(color)", CdeStyleLayout.colorLayout(CdeScheme.ALL.size()), true));
         c.add(new AuditCase("CdeStyleLayout(backdrop)",
                 CdeStyleLayout.backdropLayout(CdeBackdrop.values().length), true));
+        // Linux Mint's Software Manager on each of its pages, and its Update Manager with its toolbar's widest words.
+        c.add(new AuditCase("SoftwareManagerLayout(front)", SoftwareManagerLayout.front(), true));
+        c.add(new AuditCase("SoftwareManagerLayout(page)", SoftwareManagerLayout.page(), true));
+        c.add(new AuditCase("SoftwareManagerLayout(list)", SoftwareManagerLayout.list(), true));
+        c.add(new AuditCase("UpdateManagerLayout", UpdateManagerLayout.layout(new int[] {36, 72, 54, 90}), true));
         c.add(new AuditCase("WorkstationInfoLayout", WorkstationInfoLayout.layout(), true));
         c.add(new AuditCase("WorkstationDevicesLayout", WorkstationDevicesLayout.layout(), true));
         // Help in every form a desktop gives it.

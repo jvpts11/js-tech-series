@@ -23,6 +23,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The command interpreter: it owns a set of {@link ICliCommand}s, looks one up by name or alias, and runs it against an {@link ICliComputer}, collecting the styled output. Pure logic with no Minecraft types, so the whole parse-and-dispatch path is unit-tested with a fake computer.
@@ -38,6 +39,7 @@ public final class CliShell {
     /* FreeBSD's sh has no help to point to, so its not-found line points to the two ways it does have. */
     private static final TextKey NOT_FOUND_TRY_APROPOS = TextKey.of("jsc.cli.shell.not_found_try_apropos",
             "%s: not found. Try: apropos <word>, or man intro");
+    private static final TextKey KSH_NOT_FOUND = TextKey.of("jsc.cli.shell.ksh_not_found", "ksh: %s: not found");
     private static final TextKey NO_JOB_MEMORY =
             TextKey.of("jsc.cli.shell.no_job_memory", "the machine has no memory left for another job");
     private static final TextKey SYNTAX_ERROR = TextKey.of("jsc.cli.shell.syntax_error",
@@ -168,6 +170,9 @@ public final class CliShell {
         if (unresolved) {
             if (computer.platform() == Platform.FREEBSD) {
                 out.error(NOT_FOUND_TRY_APROPOS.with(word));
+            } else if (computer.platform() == Platform.OPENBSD) {
+                // OpenBSD's ksh names itself before the word it did not find, and has no help to point at.
+                out.error(KSH_NOT_FOUND.with(word));
             } else if (command == null && ByNameProgram.ownsItsWording(computer)) {
                 out.line(CliTexts.PROGRAM_NOT_FOUND.with(word));
             } else {
@@ -194,6 +199,18 @@ public final class CliShell {
         }
         final String typedLine = line.strip();
         final boolean asTyped = typedLine.regionMatches(true, 0, word, 0, word.length());
+        /*
+         * A word that runs the rest of the line as a command of its own (OpenBSD's doas) hands that line on whole,
+         * so what it runs prints, holds the terminal or opens an editor exactly as it would typed alone.
+         */
+        final String handedOn = command instanceof IRunsTheRest runner && asTyped
+                ? runner.lineToRun(typedLine.substring(word.length()).strip()) : null;
+        if (handedOn != null) {
+            final Response ran = run(handedOn, computer);
+            final List<CliLine> lines = new ArrayList<>(out.lines());
+            lines.addAll(ran.lines());
+            return new Response(lines, ran.clearScreen(), ran.handOver(), ran.started());
+        }
         final CliContext context = new CliContext(args, computer, out, this, List.of(),
                 asTyped ? typedLine.substring(word.length()).strip() : String.join(" ", args));
         try {
@@ -274,6 +291,17 @@ public final class CliShell {
      * <p>The file comes out of the arguments the shell just handed over, so nothing here has to remember
      * anything between one line and the next.
      */
+    /** A command that runs the rest of its line as another command, the way OpenBSD's doas does. */
+    public interface IRunsTheRest {
+
+        /**
+         * The line to run, from what was typed after the command's own word, or null when what was typed is the
+         * command's own work instead (its own switches, or nothing at all).
+         */
+        @Nullable
+        String lineToRun(String typedAfter);
+    }
+
     public interface IHandOver {
 
         /**

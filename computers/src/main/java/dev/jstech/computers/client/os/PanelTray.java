@@ -60,6 +60,11 @@ final class PanelTray {
     /** A program's tray picture, drawn at its own size. */
     private static final int PROGRAM_ICON = 16;
     private static final String FURNACE_CARD = "furnace_card";
+    /** The Update Manager's shield, and how big it is drawn. */
+    private static final ResourceLocation UPDATE_SHIELD =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/tray/update_shield.png");
+    private static final int SHIELD_W = 16;
+    private static final int SHIELD_H = 18;
 
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "panel/tray",
             new Colours(0xFF101318, 0xFFF2F4F8, 0xFF202430, 0xFF505868, 0xFF2A2F3A, 0xFF11151E, 0xFF5FE07A,
@@ -83,7 +88,17 @@ final class PanelTray {
      */
     int statusWidth() {
         return batteryRoom() + ICON + GAP + ICON + GAP + RAM_BAR_W
-                + (desktop.furnaceSmelting() ? GAP + PROGRAM_ICON : 0);
+                + (desktop.furnaceSmelting() ? GAP + PROGRAM_ICON : 0)
+                + (desktop.showsUpdateShield() ? GAP + SHIELD_W : 0);
+    }
+
+    /** Whether a desktop-local point is on the Update Manager's shield, which opens it. */
+    boolean onUpdateShield(final double mx, final double my, final int sw, final int panelY) {
+        if (!desktop.showsUpdateShield()) {
+            return false;
+        }
+        final int x = left(sw) + PAD + lead() + statusWidth() - SHIELD_W;
+        return mx >= x && mx < x + SHIELD_W && my >= panelY && my < panelY + DesktopScreen.TASKBAR_H;
     }
 
     /** How wide the whole notification area runs: the status group, the clock, and the padding around them. */
@@ -210,15 +225,23 @@ final class PanelTray {
         drawNetworkIcon(g, at, iconY, desktop.onNetwork(), textColor);
         speaker(g, at + ICON + GAP, iconY, textColor, desktop.soundMuted());
         drawRamBar(g, at + 2 * (ICON + GAP), panelY + (DesktopScreen.TASKBAR_H - RAM_BAR_H) / 2);
+        int next = at + 2 * (ICON + GAP) + RAM_BAR_W + GAP;
         if (desktop.furnaceSmelting()) {
             // A program's picture rather than a status mask: the card at work, in its own colours.
             final ResourceLocation furnace = SkinSprites.find("device", FURNACE_CARD, FURNACE_CARD,
                     desktop.iconSet());
             if (SkinSprites.exists(furnace)) {
-                SkinSprites.draw(g, furnace, at + 2 * (ICON + GAP) + RAM_BAR_W + GAP,
-                        panelY + (DesktopScreen.TASKBAR_H - PROGRAM_ICON) / 2, PROGRAM_ICON, PROGRAM_ICON,
-                        PROGRAM_ICON);
+                SkinSprites.draw(g, furnace, next, panelY + (DesktopScreen.TASKBAR_H - PROGRAM_ICON) / 2,
+                        PROGRAM_ICON, PROGRAM_ICON, PROGRAM_ICON);
             }
+            next += PROGRAM_ICON + GAP;
+        }
+        if (desktop.showsUpdateShield()) {
+            // Linux Mint's Update Manager, only while there are updates: its shield with the orange dot.
+            final int shieldX = next;
+            final int shieldY = panelY + (DesktopScreen.TASKBAR_H - SHIELD_H) / 2;
+            Draw.blended(() -> g.blit(UPDATE_SHIELD, shieldX, shieldY, 0.0F, 0.0F, SHIELD_W, SHIELD_H, SHIELD_W,
+                    SHIELD_H));
         }
     }
 

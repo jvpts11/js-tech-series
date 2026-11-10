@@ -143,8 +143,8 @@ public final class BootLines {
 
     /**
      * What the kernel of the machine's system logged of itself as it came up, as {@code dmesg} prints it: Linux's
-     * stamped lines naming the kernel, the processor, the memory and the disks, FreeBSD's naming the same in its own
-     * words up to mounting its root, System V's banner and memory. Nothing for a system that keeps no such log.
+     * stamped lines naming the kernel, the processor, the memory and the disks, the BSDs' naming the same in their own
+     * words up to mounting their root, System V's banner and memory. Nothing for a system that keeps no such log.
      */
     public static List<String> kernelLog(final IOsHost machine) {
         final OsDef system = machine.installedOs();
@@ -161,6 +161,7 @@ public final class BootLines {
                 yield out;
             }
             case FREEBSD -> BsdBootLines.kernel(machine, system);
+            case OPENBSD -> OpenBsdBootLines.kernel(machine, system);
             case UNIX -> SysVBootLines.kernel(machine, system);
             case FRAMES, MC_DOS, MC_NET, QUINCE -> List.of();
         };
@@ -180,6 +181,7 @@ public final class BootLines {
             case MC_NET -> net(machine, system, copyright, level);
             case LINUX -> linux(machine, system, level);
             case FREEBSD -> BsdBootLines.up(machine, system, level);
+            case OPENBSD -> OpenBsdBootLines.up(machine, system);
             case UNIX -> SysVBootLines.up(machine, system);
             case FRAMES -> frames(machine, system);
             default -> new BootSequence.Builder().title(Text.literal(system.displayName()))
@@ -232,7 +234,8 @@ public final class BootLines {
      */
     public static BootMenu menuFor(final IOsHost machine, final int countdownTicks) {
         final OsDef booting = machine.installedOs();
-        if (booting == null || BootManager.of(booting.platform()) == BootManager.NONE) {
+        // A live medium was chosen in the setup already: it boots what is on it, and nothing is asked on the way.
+        if (booting == null || machine.liveSession() || BootManager.of(booting.platform()) == BootManager.NONE) {
             return BootMenu.NONE;
         }
         final BootManager manager = BootManager.of(booting.platform());
@@ -303,6 +306,14 @@ public final class BootLines {
                 .entry(LOADER_BOOT.text(), slot, running.toString())
                 .defaultsToLast()
                 .restart(LOADER_REBOOT.text());
+        if (manager == BootManager.BOOT_PROMPT) {
+            /*
+             * OpenBSD's boot reaches no firmware: its page is headed with the memory it probed, below a megabyte and
+             * above.
+             */
+            return out.title(Text.literal("probing: pc0 com0 apm mem[639K " + Math.max(0, machine.ramTotalMb() - 1)
+                    + "M a20=on]")).build(countdownTicks);
+        }
         if (FirmwareKind.forEra(machine.installedEra() != null ? machine.installedEra() : HardwareEra.STANDARD)
                 == FirmwareKind.UEFI) {
             out.firmware(manager.firmwareLabel());
@@ -353,6 +364,7 @@ public final class BootLines {
                     .build();
             case LINUX -> linuxDown(system, restarting);
             case FREEBSD -> BsdBootLines.down(machine, restarting);
+            case OPENBSD -> OpenBsdBootLines.down(restarting);
             case UNIX -> SysVBootLines.down(machine, restarting);
             default -> BootSequence.NONE;
         };

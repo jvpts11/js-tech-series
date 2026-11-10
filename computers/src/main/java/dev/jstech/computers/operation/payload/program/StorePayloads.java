@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.program;
 
 import dev.jstech.computers.client.os.QuinceStoreApp;
+import dev.jstech.computers.client.os.SoftwareManagerApp;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -45,8 +46,12 @@ public final class StorePayloads {
                 StorePayloads::handleAsk);
         ComputerAccess.accept(registrar, Get.TYPE, Get.STREAM_CODEC, ComputerAccess.machine(Get::host),
                 StorePayloads::handleGet);
+        // The same catalogue is Quince's Store and Linux Mint's Software Manager, each taking it when it is open.
         registrar.playToClient(Listing.TYPE, Listing.STREAM_CODEC,
-                ClientPayloadHandlers.onMainThread((payload, player) -> QuinceStoreApp.accept(payload)));
+                ClientPayloadHandlers.onMainThread((payload, player) -> {
+                    QuinceStoreApp.accept(payload);
+                    SoftwareManagerApp.accept(payload);
+                }));
     }
 
     private static void handleAsk(final Ask payload, final ServerPlayer player, final ServerLevel level) {

@@ -98,7 +98,7 @@
   ],
   "icon": "jsc:motherboard_atx_standard_lga1150",
   "id": "jsc:firmware_for_install",
-  "order": 259,
+  "order": 263,
   "section": "jsc:by_hand_basics",
   "title": "jsc.guide.firmware_for_install.title"
 }

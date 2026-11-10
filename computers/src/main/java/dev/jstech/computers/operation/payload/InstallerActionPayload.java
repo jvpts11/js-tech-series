@@ -72,6 +72,15 @@ public record InstallerActionPayload(BlockPos hostPos, BlockPos monitorPos, int 
     /** Ticks or unticks the {@code sshd} service on the services page: {@code 1} for on, {@code 0} for off. */
     public static final int ACTION_SSHD = 14;
 
+    /** Gives OpenBSD's own answers, the value carrying them as the installer's option bits. */
+    public static final int ACTION_OPTIONS = 15;
+
+    /** The last page's other way out: halt, which leaves the machine switched off rather than restarting it. */
+    public static final int ACTION_HALT = 16;
+
+    /** Linux Mint's Continue Testing: back to the live desktop, the system written and waiting for a restart. */
+    public static final int ACTION_CONTINUE_TESTING = 17;
+
     public static final CustomPacketPayload.Type<InstallerActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "installer_action"));
 

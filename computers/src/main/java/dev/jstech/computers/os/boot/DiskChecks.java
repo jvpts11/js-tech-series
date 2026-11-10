@@ -13,6 +13,7 @@ import dev.jstech.computers.os.FileSystemType;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.InstallMode;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.DiskUsage;
@@ -60,10 +61,13 @@ public final class DiskChecks {
         if (system == null) {
             return DiskCheck.NONE;
         }
-        final DiskCheck.Look look = DiskCheck.Look.of(system.platform(), system.familyRank());
-        if (look == DiskCheck.Look.NONE) {
+        final DiskCheck.Look family = DiskCheck.Look.of(system.platform(), system.familyRank());
+        if (family == DiskCheck.Look.NONE) {
             return DiskCheck.NONE;
         }
+        // OpenBSD names its root disk by the bus it hangs on: wd on the IDE of the older machines, sd on SATA.
+        final DiskCheck.Look look = family == DiskCheck.Look.OPENBSD && machine.installedEra() != null
+                && !Installers.ideDisk(machine.installedEra()) ? DiskCheck.Look.OPENBSD_SD : family;
         boolean any = false;
         long items = 0L;
         long usedMb = 0L;

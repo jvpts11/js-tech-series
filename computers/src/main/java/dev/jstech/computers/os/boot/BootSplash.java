@@ -38,7 +38,13 @@ public enum BootSplash implements IStableName {
     FRAMES_10("frames_10"),
 
     /** Near black, the maker's mark in the middle, and a ring of dots turning below it. */
-    FRAMES_11("frames_11");
+    FRAMES_11("frames_11"),
+
+    /**
+     * Black, Linux Mint's mark in the middle, and five dots pulsing under it
+     * (computers/docs/design/operating-systems.md).
+     */
+    MINT("mint");
 
     private final String serializedName;
 
@@ -79,5 +85,13 @@ public enum BootSplash implements IStableName {
     @Override
     public String serializedName() {
         return this.serializedName;
+    }
+
+    /**
+     * Whether this picture stands for the whole wait, the desktop's own loading screen included: Linux Mint's, whose
+     * mark stays up until Cinnamon is there.
+     */
+    public boolean coversDesktop() {
+        return this == MINT;
     }
 }

@@ -16,6 +16,7 @@ import dev.jstech.core.text.TextKey;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
@@ -70,6 +71,10 @@ public final class ConsoleGreeting {
     private static final TextKey FREEBSD_TIP =
             TextKey.of("jsc.cli.greeting.freebsd_tip", "Tip: pkg info lists every package installed here.");
     private static final TextKey LAST_LOGIN = TextKey.of("jsc.cli.greeting.last_login", "Last login: %s on %s");
+    private static final TextKey OPENBSD_WELCOME = TextKey.of("jsc.cli.greeting.openbsd_welcome",
+            "Welcome to OpenBSD: The proactively secure Unix-like operating system.");
+    private static final TextKey OPENBSD_TIP =
+            TextKey.of("jsc.cli.greeting.openbsd_tip", "Tip: rcctl ls on lists every service switched on here.");
 
     private ConsoleGreeting() {
     }
@@ -87,6 +92,9 @@ public final class ConsoleGreeting {
         }
         if (console.platform() == Platform.QUINCE) {
             return quince();
+        }
+        if (console.platform() == Platform.OPENBSD) {
+            return openBsd(console);
         }
         return console.platform() == Platform.FREEBSD ? freeBsd(console) : linux(console);
     }
@@ -154,5 +162,35 @@ public final class ConsoleGreeting {
                 CliLine.plain(""),
                 new CliLine(FREEBSD_TIP.text(), CliStyle.DIM),
                 CliLine.plain(""));
+    }
+
+    /*
+     * OpenBSD: its name over its architecture with the machine's whole name, the login, the release and its build,
+     * and its own welcome; then the same three ways to find a command, the manual's two only where it has its pages.
+     */
+    private static List<CliLine> openBsd(final ConsoleIdentity console) {
+        final List<CliLine> lines = new ArrayList<>(List.of(
+                CliLine.plain("OpenBSD/" + KernelNames.architecture(Platform.OPENBSD, console.bits())
+                        + " (" + console.hostname() + ".my.domain) (" + KernelNames.terminal(Platform.OPENBSD) + ")"),
+                CliLine.plain(""),
+                CliLine.of(new CliSpan(LOGIN.text(), CliStyle.PLAIN), new CliSpan(" ", CliStyle.PLAIN),
+                        new CliSpan(PLAYER, CliStyle.BRIGHT)),
+                CliLine.plain("OpenBSD " + KernelNames.OPENBSD_RELEASE + " (GENERIC) #79"),
+                CliLine.plain(""),
+                new CliLine(OPENBSD_WELCOME.text(), CliStyle.BRIGHT)));
+        if (console.manual()) {
+            lines.add(CliLine.of(CliSpan.pad(2), new CliSpan(FIND_A_COMMAND_LABEL.text(), CliStyle.PLAIN),
+                    CliSpan.pad(DISCOVERY_COLUMN), new CliSpan("apropos", CliStyle.CYAN),
+                    new CliSpan(APROPOS_WORD.text(), CliStyle.PLAIN)));
+            lines.add(CliLine.of(CliSpan.pad(2), new CliSpan(LEARN_THE_SYSTEM_LABEL.text(), CliStyle.PLAIN),
+                    CliSpan.pad(DISCOVERY_COLUMN), new CliSpan(Text.literal("man afterboot"), CliStyle.CYAN)));
+        }
+        lines.add(CliLine.of(CliSpan.pad(2), new CliSpan(SEE_EVERY_COMMAND_LABEL.text(), CliStyle.PLAIN),
+                CliSpan.pad(DISCOVERY_COLUMN), new CliSpan("Tab", CliStyle.CYAN),
+                new CliSpan(TAB_TWICE.text(), CliStyle.PLAIN)));
+        lines.add(CliLine.plain(""));
+        lines.add(new CliLine(OPENBSD_TIP.text(), CliStyle.DIM));
+        lines.add(CliLine.plain(""));
+        return lines;
     }
 }

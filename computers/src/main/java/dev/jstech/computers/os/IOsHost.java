@@ -203,6 +203,30 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     }
 
     /**
+     * Whether the machine is running the live desktop a medium started (Linux Mint's), off a disk in its memory and
+     * writing nothing to any disk of its own (computers/docs/design/operating-systems.md). A host that keeps none
+     * never is.
+     */
+    default boolean liveSession() {
+        return false;
+    }
+
+    /**
+     * Asks for the live desktop of that system's medium at the machine's next start; answers whether this host keeps
+     * live sessions at all, which only the computers a player sits at do.
+     */
+    default boolean startLiveSession(final ResourceLocation systemId) {
+        return false;
+    }
+
+    /**
+     * Settles the live session at the end of the self-test: the one asked for comes up, and one that was running is
+     * gone with the restart, as a live session is.
+     */
+    default void settleLiveSession() {
+    }
+
+    /**
      * Plays one of its system's own sounds out of its monitors, when its sound hardware plays recordings. A machine
      * with no sound of its own, such as a server in a rack, plays none.
      */

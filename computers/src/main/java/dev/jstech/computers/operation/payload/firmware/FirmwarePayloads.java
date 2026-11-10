@@ -60,6 +60,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
+import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
@@ -501,6 +502,18 @@ public final class FirmwarePayloads {
                             LiveMedium.distroOf(os == null ? null : os.id());
                     final Era hostEra =
                             computer.installedEra() != null ? computer.installedEra() : HardwareEra.STANDARD;
+                    /*
+                     * A medium that starts a live desktop (Linux Mint's) restarts the machine into that desktop, off
+                     * a disk in its memory; its installer is a window there. A host that keeps no live session
+                     * installs it the guided way instead.
+                     */
+                    if (os != null && os.installerStyle().bootsLive() && OsGating.canInstall(os.minEra(), hostEra)
+                            && computer.runsSystem(os) && computer.startLiveSession(os.id())) {
+                        computer.setNeedsPost(true);
+                        computer.setChanged();
+                        MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
+                        return;
+                    }
                     if (os != null && distro != null && os.installMode() != InstallMode.GUIDED
                             && OsGating.canInstall(os.minEra(), hostEra) && computer.runsSystem(os)) {
                         /*
@@ -718,7 +731,7 @@ public final class FirmwarePayloads {
          * freshly installed (or removed) desktop package wait for a restart instead of appearing the
          * next time the monitor is opened.
          */
-        computer.setBootedDesktopId(computer.installedDesktopId());
+        computer.setBootedDesktopId(BootRunner.desktopAtBoot(computer));
         if (payload.enterSetup()) {
             MonitorBlock.openFirmware(
                     player, level, payload.monitorPos(), payload.hostPos());

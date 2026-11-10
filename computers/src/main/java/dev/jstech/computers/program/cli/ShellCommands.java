@@ -51,9 +51,9 @@ final class ShellCommands {
         private static final TextKey DETAILS =
                 TextKey.of("jsc.cli.shell.help.details", "'help <command>' for details");
 
-        // FreeBSD's sh has no help builtin; its welcome and its not-found line point to apropos and man instead.
+        // The BSDs' shells have no help builtin; their welcome and their not-found line point to apropos and man.
         @Override public CommandScope scope() {
-            return CommandScope.on(EnumSet.complementOf(EnumSet.of(Platform.FREEBSD)));
+            return CommandScope.on(EnumSet.complementOf(EnumSet.of(Platform.FREEBSD, Platform.OPENBSD)));
         }
 
         @Override public String name() {

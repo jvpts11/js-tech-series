@@ -52,5 +52,17 @@ public enum InstallerChrome {
      * and writes lying on the desktop beside it; a classic dialog on the Quince System, and an assistant listing its
      * steps down its left side on Quince OS 9 and Quince OS X.
      */
-    QUINCE_DESKTOP
+    QUINCE_DESKTOP,
+
+    /**
+     * Questions and answers at the terminal, each answer typed after its question and a default in brackets taken
+     * with Enter, the screen scrolling as a terminal does (OpenBSD's, computers/docs/design/operating-systems.md).
+     */
+    TERMINAL,
+
+    /**
+     * A window on the desktop the live medium started, its page on white, a row of dots under it for the steps
+     * and the buttons at its foot (Linux Mint's).
+     */
+    LIVE_DESKTOP
 }

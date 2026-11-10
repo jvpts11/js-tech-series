@@ -196,19 +196,28 @@ class HardcodedTextTest {
             data(COMPUTERS + "machine/SourceChains.java", 14, "build flags, as a source build prints and reads them"),
             data(COMPUTERS + "os/Branding.java", 2, PRODUCTS),
             data(COMPUTERS + "os/boot/BootLines.java", 2, KERNEL_LOG),
-            data(COMPUTERS + "os/boot/DiskCheck.java", 25, "what fsck prints as it checks a disk after a sudden"
+            data(COMPUTERS + "os/boot/DiskCheck.java", 33, "what fsck prints as it checks a disk after a sudden"
                     + " shutdown: no fsck ever printed in anything but its own words"),
             data(COMPUTERS + "os/boot/BsdBootLines.java", 2, KERNEL_LOG),
+            data(COMPUTERS + "os/boot/OpenBsdBootLines.java", 11, KERNEL_LOG),
             data(COMPUTERS + "os/boot/SysVBootLines.java", 3, KERNEL_LOG),
-            data(COMPUTERS + "os/crash/CrashPages.java", 105, "what a kernel prints as it panics, and where a"
+            data(COMPUTERS + "client/BootMenuScreen.java", 3, "what OpenBSD's boot program prints of the machine and"
+                    + " of itself: no boot program ever printed in anything but its own words"),
+            data(COMPUTERS + "os/crash/CrashPages.java", 135, "what a kernel prints as it panics, and where a"
                     + " crashed system says it failed: no kernel ever printed them in anything but its own words"),
+            data(COMPUTERS + "os/crash/Debugger.java", 5, "the kernel debugger's commands and what it answers: no"
+                    + " debugger ever answered in anything but its own words"),
+            data(COMPUTERS + "os/install/OpenBsdInstall.java", 1, PRODUCTS),
+            data(COMPUTERS + "program/cli/OpenBsdCommands.java", 13, "what OpenBSD's tools print: rc's (ok), the line"
+                    + " syspatch fetches with, and pf's rules and counters: no OpenBSD tool ever printed in anything"
+                    + " but its own words"),
             data(COMPUTERS + "os/defrag/FsckLines.java", 37, "what fsck prints as it repairs a corrupted disk: no"
                     + " fsck ever printed in anything but its own words"),
             data(COMPUTERS + "os/KernelNames.java", 7, "kernel names as a system reports them, and the files a"
                     + " system starts from"),
-            data(COMPUTERS + "os/OsBootstrap.java", 13, PRODUCTS),
+            data(COMPUTERS + "os/OsBootstrap.java", 14, PRODUCTS),
             data(COMPUTERS + "os/OsRegistry.java", 2, "the kind of entry a registration names in the log"),
-            data(COMPUTERS + "os/SoftwareHouse.java", 35, PRODUCTS),
+            data(COMPUTERS + "os/SoftwareHouse.java", 37, PRODUCTS),
             data(COMPUTERS + "os/FileSystemType.java", 1, PRODUCTS),
             data(COMPUTERS + "os/UnixTree.java", 9, FILES),
             data(COMPUTERS + "os/boot/SystemIntegrity.java", 1, FILES),
@@ -220,11 +229,11 @@ class HardcodedTextTest {
             data(COMPUTERS + "os/edit/project/ProjectTemplate.java", 6, "the source files a new project starts with"),
             data(COMPUTERS + "os/fs/InstallerLayout.java", 29, FILES),
             data(COMPUTERS + "os/fs/McDosTree.java", 7, FILES),
-            data(COMPUTERS + "os/fs/ProgramFilesProjection.java", 10, FILES),
+            data(COMPUTERS + "os/fs/ProgramFilesProjection.java", 13, FILES),
             data(COMPUTERS + "os/fs/SystemLayout.java", 2, FILES),
             data(COMPUTERS + "os/fs/TrashFolder.java", 1, FILES),
             data(COMPUTERS + "program/KnotRepository.java", 1, "a revision's message as the repository stores it"),
-            data(COMPUTERS + "program/cli/ConsoleGreeting.java", 4, PRODUCTS
+            data(COMPUTERS + "program/cli/ConsoleGreeting.java", 8, PRODUCTS
                     + ", and the pattern of the date a login line gives"),
             data(COMPUTERS + "program/cli/DeviceCommands.java", 19,
                     "the PCI classes and the words of the device tools, which read the same in every language"),
@@ -233,7 +242,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "program/cli/ICliRemote.java", 2, COMMANDS),
             data(COMPUTERS + "program/cli/MachineFacts.java", 4, COMMANDS),
             data(COMPUTERS + "program/cli/interac/InteracCommand.java", 2, COMMANDS),
-            data(COMPUTERS + "program/cli/ScreenfetchLogos.java", 16, "logos drawn in characters"),
+            data(COMPUTERS + "program/cli/ScreenfetchLogos.java", 26, "logos drawn in characters"),
             data(COMPUTERS + "sigma/LanguageLevel.java", 1, PRODUCTS),
             data("industrial/src/main/java/dev/jstech/industrial/integration/computers/MachineMonitor.java", 2,
                     PRODUCTS),

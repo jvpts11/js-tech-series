@@ -360,11 +360,30 @@ class InstallerFlowTest {
     void restored_carriesThePortsMirrorCronAndSshdAnswersThrough() {
         final InstallerFlow flow = InstallerFlow.restored(InstallerStyle.BSD_INSTALL, "jsc:freebsd", "FreeBSD",
                 2_048, 100, List.of(EMPTY_500), List.of(GNOME), "CORE", 0, 0, "desk", "", InstallerFlow.NO_DISK,
-                false, true, false, true);
+                false, true, false, true, 0);
         assertFalse(flow.portsSelected());
         assertTrue(flow.useMirror());
         assertFalse(flow.cronEnabled());
         assertTrue(flow.sshdEnabled());
+    }
+
+    @Test
+    void restored_carriesOpenBsdsOptionsThrough() {
+        final InstallerFlow flow = InstallerFlow.restored(InstallerStyle.OPENBSD, "jsc:openbsd", "OpenBSD",
+                1_024, 100, List.of(EMPTY_500), List.of(), "", 0, 0, "harbour", "", InstallerFlow.NO_DISK,
+                false, false, true, false, InstallerFlow.NO_MAN | InstallerFlow.XENODM);
+        assertTrue(flow.has(InstallerFlow.NO_MAN));
+        assertTrue(flow.has(InstallerFlow.XENODM));
+        assertFalse(flow.has(InstallerFlow.NO_COMP));
+    }
+
+    @Test
+    void setOptions_noXTakesXenodmWithIt() {
+        final InstallerFlow flow = InstallerFlow.quoted(InstallerStyle.OPENBSD, "jsc:openbsd", "OpenBSD", 1_024, 100,
+                List.of(EMPTY_500), "harbour", List.of(), "");
+        flow.setOptions(InstallerFlow.NO_X | InstallerFlow.XENODM);
+        assertTrue(flow.has(InstallerFlow.NO_X));
+        assertFalse(flow.has(InstallerFlow.XENODM), "a desktop xenodm starts needs X");
     }
 
     private static InstallerFlow bsdInstall(final List<InstallerFlow.Disk> disks) {

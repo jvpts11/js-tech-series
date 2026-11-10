@@ -2,6 +2,6 @@
   "chapter": "jsc:iql_recipes",
   "icon": "jsc:mainframe",
   "id": "jsc:iql_recipe_list",
-  "order": 90,
+  "order": 95,
   "title": "jsc.guide.section.iql_recipe_list"
 }

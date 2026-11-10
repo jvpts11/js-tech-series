@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
 class ScreenfetchLogosTest {
 
     private static final List<String> SYSTEMS = List.of("ubuntu", "debian", "fedora", "arch", "gentoo", "freebsd",
-            "frames_95", "frames_xp", "frames_11");
+            "openbsd", "linux_mint", "frames_95", "frames_xp", "frames_11");
 
     @Test
     void of_everyLogoIsReadOutOfItsColourMarkers() {
@@ -46,6 +46,24 @@ class ScreenfetchLogosTest {
         assertTrue(ubuntu.rows().get(3).contains(new CliSpan("dMMMNy", CliStyle.BRIGHT)));
         assertTrue(ubuntu.rows().get(3).contains(new CliSpan("sssso.", CliStyle.RED)));
         assertEquals(40, ubuntu.width());
+    }
+
+    @Test
+    void of_puffyIsYellowWithWhiteEyesAndCyanBubbles() {
+        final ScreenfetchLogos.Logo puffy = ScreenfetchLogos.of("openbsd");
+        assertEquals(CliStyle.YELLOW, puffy.title());
+        assertEquals(CliStyle.YELLOW, puffy.label(), "white second colour: the labels take the yellow");
+        assertEquals(23, puffy.rows().size());
+        assertTrue(puffy.rows().get(9).contains(new CliSpan("O", CliStyle.BRIGHT)), "an eye");
+        assertTrue(puffy.rows().get(1).contains(new CliSpan("                                    (_)", CliStyle.CYAN)));
+    }
+
+    @Test
+    void of_mintIsItsGreenLeafInsideAWhiteRing() {
+        final ScreenfetchLogos.Logo mint = ScreenfetchLogos.of("linux_mint");
+        assertEquals(CliStyle.GREEN, mint.title());
+        assertEquals(19, mint.rows().size());
+        assertTrue(mint.rows().get(2).contains(new CliSpan("`..-:::::::-..`", CliStyle.GREEN)));
     }
 
     @Test

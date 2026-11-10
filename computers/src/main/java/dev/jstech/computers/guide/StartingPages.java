@@ -534,6 +534,10 @@ final class StartingPages {
                         GuideCell.amount(12, "MB"))
                 .row(GuideCell.words("FreeBSD"), GuideCell.words("Legacy"), GuideCell.amount(2048, "MB"),
                         GuideCell.amount(16, "MB"))
+                .row(GuideCell.words("OpenBSD"), GuideCell.words("Legacy"), GuideCell.amount(1024, "MB"),
+                        GuideCell.amount(12, "MB"))
+                .row(GuideCell.words("Linux Mint"), GuideCell.words("Standard"), GuideCell.amount(12288, "MB"),
+                        GuideCell.amount(64, "MB"))
                 .paragraph("MC-DOS is a command prompt. UNIX System V is a shell, with no desktop of its own.")
                 .paragraph("Each Frames edition runs on its own era and every newer one. Frames 10 needs Standard"
                         + " hardware, and Frames 11 needs Advanced.")
@@ -544,9 +548,10 @@ final class StartingPages {
                         + " installer ([](jsc:installing)).")
                 .table("The help book of each system", "System", "Help book")
                 .row(GuideCell.words("MC-DOS and the Frames editions"), GuideCell.words("The Frames Resource Kit"))
-                .row(GuideCell.words("Ubuntu, Debian and Fedora"), GuideCell.words("The Linux Desk Reference"))
+                .row(GuideCell.words("Ubuntu, Debian, Fedora and Linux Mint"),
+                        GuideCell.words("The Linux Desk Reference"))
                 .row(GuideCell.words("Arch Linux and Gentoo"), GuideCell.words("Linux by Hand"))
-                .row(GuideCell.words("FreeBSD and UNIX System V"), GuideCell.words("The Daemon Handbook"))
+                .row(GuideCell.words("FreeBSD, OpenBSD and UNIX System V"), GuideCell.words("The Daemon Handbook"))
                 .row(GuideCell.words("MC-NET"), GuideCell.words("This Guide to Operations"))
                 .paragraph("Each book is in the library ([](jsc:library)). Help on a computer opens on the book of its"
                         + " system first ([](jsc:help_on_a_computer)).")

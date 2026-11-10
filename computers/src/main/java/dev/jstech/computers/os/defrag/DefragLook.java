@@ -36,6 +36,8 @@ public enum DefragLook implements IStableName {
     LINUX("linux"),
     /** fsck on FreeBSD. */
     FREEBSD("freebsd"),
+    /** fsck on OpenBSD. */
+    OPENBSD("openbsd"),
     /** fsck on UNIX System V. */
     UNIX("unix"),
     /** Disk Utility's First Aid on Quince's systems, which prints what fsck_hfs says (computers/docs/design/quince.md). */
@@ -62,6 +64,7 @@ public enum DefragLook implements IStableName {
             };
             case LINUX -> LINUX;
             case FREEBSD -> FREEBSD;
+            case OPENBSD -> OPENBSD;
             case UNIX -> UNIX;
             case QUINCE -> QUINCE;
         };
@@ -84,7 +87,7 @@ public enum DefragLook implements IStableName {
 
     /** Whether it is fsck at a Unix prompt. */
     public boolean fsck() {
-        return this == LINUX || this == FREEBSD || this == UNIX;
+        return this == LINUX || this == FREEBSD || this == OPENBSD || this == UNIX;
     }
 
     /** Whether it runs on a schedule of its own, as Frames 7, 10 and 11 do once a week. */
@@ -94,12 +97,13 @@ public enum DefragLook implements IStableName {
 
     /**
      * What the system calls its {@code index}-th disk, the system disk first: a drive letter on MC-DOS and Frames, the
-     * first partition's device on the Unix systems ({@code sdb1}, {@code ada1p1}, {@code 1s1}).
+     * first partition's device on the Unix systems ({@code sdb1}, {@code ada1p1}, {@code wd1a}, {@code 1s1}).
      */
     public String drive(final int index) {
         return switch (this) {
             case LINUX -> "sd" + (char) ('a' + index) + "1";
             case FREEBSD -> "ada" + index + "p1";
+            case OPENBSD -> "wd" + index + "a";
             case UNIX -> index + "s1";
             case QUINCE -> "disk" + index + "s2";
             default -> (char) ('C' + index) + ":";

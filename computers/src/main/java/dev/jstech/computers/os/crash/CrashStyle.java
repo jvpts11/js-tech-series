@@ -44,7 +44,13 @@ public enum CrashStyle implements IStableId {
     QUINCE_RESTART(7),
 
     /** Quince OS 9's bomb, in Platinum: the program that was running in quotes, the error's type, and Restart. */
-    QUINCE_OS_9_BOMB(8);
+    QUINCE_OS_9_BOMB(8),
+
+    /**
+     * OpenBSD's panic, which stops in the kernel debugger at {@code ddb>} and waits there, never rebooting by itself,
+     * until the player types {@code boot reboot} (computers/docs/design/operating-systems.md).
+     */
+    DDB(9);
 
     private static final StableIds<CrashStyle> IDS = StableIds.of(CrashStyle.class);
 
@@ -61,7 +67,12 @@ public enum CrashStyle implements IStableId {
 
     /** Whether this is one of the Frames family's pages, which the hardware turns red. */
     public boolean frames() {
-        return this != CONSOLE && !quince();
+        return this != CONSOLE && this != DDB && !quince();
+    }
+
+    /** Whether this page stands until the player restarts the machine: Quince's, and OpenBSD's debugger. */
+    public boolean standsUntilRestarted() {
+        return quince() || this == DDB;
     }
 
     /** Whether this is one of Quince's pages, which stand until the player restarts the machine. */

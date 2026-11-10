@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.help.HelpForm;
+import dev.jstech.computers.operation.payload.LiveInstallPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PanelStyle;
@@ -16,6 +17,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.core.text.GameText;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -92,6 +94,14 @@ public final class ProgramClient {
         register(rl("expedition"), (host, mon, os) -> new ExpeditionApp());
         register(rl("quince_store"), (host, mon, os) -> new QuinceStoreApp(host, os));
         register(rl("server_admin"), (host, mon, os) -> new ServerAdminApp(host, os));
+        // Linux Mint's own programs (computers/docs/design/operating-systems.md).
+        register(rl("software_manager"), (host, mon, os) -> new SoftwareManagerApp(host));
+        register(rl("update_manager"), (host, mon, os) -> new UpdateManagerApp(host));
+        // The live desktop's Install Linux Mint opens no window of its own: the installer comes up over the session.
+        register(rl("live_installer"), (host, mon, os) -> {
+            PacketDistributor.sendToServer(new LiveInstallPayload(mon, host));
+            return null;
+        });
         register(rl("workstation_info"), (host, mon, os) -> new WorkstationInfoApp(host));
         // Its Devices dialog, which Devices... opens and which comes back with the session.
         register(rl("workstation_info/devices"), (host, mon, os) -> new WorkstationDevicesApp(host));

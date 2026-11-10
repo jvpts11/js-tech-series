@@ -32,7 +32,13 @@ public enum ShellKind implements IStableName {
     BASH("bash", ":", "$"),
 
     /** zsh, which Arch ships. */
-    ZSH("zsh", " ", " %");
+    ZSH("zsh", " ", " %"),
+
+    /**
+     * OpenBSD's ksh. Its prompt is the machine's name and a hash and no path, which is how it greets root, and the
+     * player stays root until accounts come (computers/docs/design/operating-systems.md).
+     */
+    KSH("ksh", "", "#");
 
     private final String serializedName;
     /** What stands between the machine's name and the path. */
@@ -53,6 +59,9 @@ public enum ShellKind implements IStableName {
 
     /** The prompt this shell stands at in {@code cwd}, for the player logged in on {@code hostname}. */
     public String prompt(final String hostname, final String cwd) {
+        if (this == KSH) {
+            return hostname + this.end;
+        }
         return "player@" + hostname + this.beforePath + cwd + this.end;
     }
 }

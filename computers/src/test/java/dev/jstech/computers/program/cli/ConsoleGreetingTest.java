@@ -143,6 +143,27 @@ class ConsoleGreetingTest {
     }
 
     @Test
+    void of_greetsOpenBsdWithItsOwnWelcomeAndTip() {
+        final List<String> said = words(installed(ShellKind.KSH, "OpenBSD", Platform.OPENBSD, 32));
+        assertEquals("OpenBSD/IA-32 (desk.my.domain) (ttyC0)", said.get(0));
+        assertEquals("OpenBSD 7.5 (GENERIC) #79", said.get(3));
+        final String joined = String.join("\n", said);
+        assertTrue(joined.contains("Welcome to OpenBSD"), joined);
+        assertTrue(joined.contains("man afterboot"), joined);
+        assertTrue(joined.contains("rcctl ls on"), joined);
+    }
+
+    @Test
+    void of_leavesTheManualOutOfAnOpenBsdWithoutItsManSet() {
+        final ConsoleIdentity bare = new ConsoleIdentity(ShellKind.KSH, false, "desk", "OpenBSD", Platform.OPENBSD,
+                32, false);
+        final String joined = String.join("\n", words(bare));
+        assertFalse(joined.contains("apropos"), joined);
+        assertFalse(joined.contains("man afterboot"), joined);
+        assertTrue(joined.contains("Tab"), "the way to every command stays");
+    }
+
+    @Test
     void of_endsOnABlankLineSoThePromptStandsApart() {
         final List<String> said = words(installed(ShellKind.SH, "FreeBSD", Platform.FREEBSD, 64));
         assertEquals("", said.get(said.size() - 1));

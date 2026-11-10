@@ -59,7 +59,7 @@ public final class ManCommands {
         private static final TextKey WHAT = TextKey.of("jsc.cli.man.whatis.what", "whatis what?");
 
         @Override public CommandScope scope() {
-            return CommandScope.on(CommandScope.UNIX_SYSTEMS);
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.MANUAL);
         }
 
         @Override public String name() {
@@ -120,7 +120,7 @@ public final class ManCommands {
         private static final TextKey WHAT = TextKey.of("jsc.cli.man.apropos.what", "apropos what?");
 
         @Override public CommandScope scope() {
-            return CommandScope.on(CommandScope.UNIX_SYSTEMS);
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.MANUAL);
         }
 
         @Override public String name() {

@@ -74,7 +74,7 @@ across as many machines as the network has.
   Cluster Management Computer that installs and monitors racked machines.
 - Personal computers, crafting computers, monitors and their peripheral cables; drives for floppies, CDs,
   DVDs and USB sticks; a dock station.
-- MC-DOS, MC-NET and UNIX System V; the Frames 95, XP, 7, 10 and 11 desktops; FreeBSD and five Linux
+- MC-DOS, MC-NET and UNIX System V; the Frames 95, XP, 7, 10 and 11 desktops; FreeBSD, OpenBSD and six Linux
   distributions with the KDE, GNOME, Cinnamon and CDE desktops; a boot manager, dual boot and package managers.
 - The Network Interactor for storage and crafting requests, the Network Manager for the mainframe, the
   Crafting Manager, the Craft Planner, Storage Insights, the Automation Manager, and a few small programs.

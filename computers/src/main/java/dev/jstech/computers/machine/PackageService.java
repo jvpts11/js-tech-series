@@ -449,6 +449,6 @@ public final class PackageService {
                 false, manager);
         return refusal.map(ICliComputer.OpResult::fail).orElseGet(() -> ICliComputer.OpResult.ok(
                 PackageManagerVoices.fetch(manager, spec.commandName(), ProgramVersions.of(spec.id()),
-                        spec.minDiskMb(), this.mirror.hostname())));
+                        spec.minDiskMb(), this.mirror.hostname(), spec.kind() == ProgramKind.DESKTOP_ENVIRONMENT)));
     }
 }

@@ -35,6 +35,12 @@ public enum PackageManagerKind implements IStableName {
     PKG("pkg", "pkg", "install"),
 
     /**
+     * OpenBSD's {@code pkg_add}, which installs what it is named with no verb before it; {@code pkg_info} lists
+     * what is installed and {@code pkg_delete} takes a package off (computers/docs/design/operating-systems.md).
+     */
+    PKG_ADD("pkg_add", "pkg_add", ""),
+
+    /**
      * The Frames package manager: every edition ships with it, so a player who never touches a Linux
      * distribution still installs software from the network Mirror instead of hunting install discs.
      */

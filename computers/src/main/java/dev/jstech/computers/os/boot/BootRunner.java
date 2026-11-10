@@ -17,8 +17,10 @@ import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OpenBsdServices;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.audio.Audio;
@@ -30,6 +32,7 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
@@ -113,6 +116,19 @@ public final class BootRunner {
     }
 
     /**
+     * The desktop the machine comes up at, or nothing when it starts at the terminal: the desktop installed, but on
+     * OpenBSD only once xenodm is switched on, which is that system secure by default
+     * (computers/docs/design/operating-systems.md).
+     */
+    @Nullable
+    public static ResourceLocation desktopAtBoot(final IOsHost machine) {
+        final OsDef system = machine.installedOs();
+        final boolean xenodmOff = system != null && system.platform() == Platform.OPENBSD
+                && (machine.console() == null || !machine.console().settings().xenodmEnabled());
+        return xenodmOff ? null : machine.installedDesktopId();
+    }
+
+    /**
      * Carries a closing-down along, and when the system has finished saying goodbye switches the machine off or
      * starts its self-test, whichever the closing-down was for.
      *
@@ -182,9 +198,11 @@ public final class BootRunner {
         }
         /*
          * The self-test is the moment the machine settles what it is running, which is what makes a desktop
-         * installed a moment ago wait for a restart instead of turning up on the next look at the monitor.
+         * installed a moment ago wait for a restart instead of turning up on the next look at the monitor. A live
+         * medium asked for from the setup is what it runs now, and one that was running is gone with the restart.
          */
-        machine.setBootedDesktopId(machine.installedDesktopId());
+        machine.settleLiveSession();
+        machine.setBootedDesktopId(desktopAtBoot(machine));
         /*
          * A machine with nothing to boot ends its self-test on the era's own failure and stays there, the way
          * one does: whoever is watching reads what happened instead of being dropped into the setup.
@@ -350,6 +368,8 @@ public final class BootRunner {
             machine.setChanged();
         }
         machine.systemCameUp();
+        // OpenBSD's rc starts only the services rcctl switched on.
+        OpenBsdServices.cameUp(machine);
         machine.systemSound(level, SystemSound.STARTUP);
         final boolean balloon = greet(machine);
         if (machine.onScreen()) {

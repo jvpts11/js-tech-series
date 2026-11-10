@@ -278,7 +278,7 @@ public final class ThisPcPayloads {
     public static ThisPcPayload.AboutFacts aboutFactsOf(final IOsHost computer) {
         final OsDef os = computer.installedOs();
         final Platform platform = os == null ? Platform.FRAMES : os.platform();
-        if (platform != Platform.FREEBSD && platform != Platform.LINUX) {
+        if (!platform.bsd() && platform != Platform.LINUX) {
             return ThisPcPayload.AboutFacts.EMPTY;
         }
         final ItemStack disk = computer.systemDisk();
@@ -295,7 +295,7 @@ public final class ThisPcPayloads {
                 Text.literal(WorkstationInfoPayloads.desktopName(computer)),
                 Text.literal(Installers.hostName(computer)),
                 WorkstationFacts.processorClock(WelcomePayloads.cpuText(computer), computer.maxCpuMhz()),
-                computer.ramTotalMb(), diskMb, SettingsSnapshots.usedMb(disk), platform == Platform.FREEBSD,
+                computer.ramTotalMb(), diskMb, SettingsSnapshots.usedMb(disk), platform,
                 computer.processorBits() >= 64);
     }
 

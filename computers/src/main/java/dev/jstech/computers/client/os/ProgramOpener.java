@@ -146,7 +146,11 @@ final class ProgramOpener {
             return;
         }
         if (desktop.memory().allowOpen(launcher.key())) {
-            desktop.wm().open(launcher.key(), launcher.factory().get());
+            // A program with no window of its own (the live medium's installer, which hands the machine over) is none.
+            final IDesktopApp app = launcher.factory().get();
+            if (app != null) {
+                desktop.wm().open(launcher.key(), app);
+            }
         }
     }
 

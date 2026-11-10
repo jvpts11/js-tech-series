@@ -181,7 +181,7 @@ public final class DriveTable {
         final ResourceLocation osId = OsDisks.systemOn(stack);
         final OsDef os = osId != null ? OsRegistry.getOs(osId) : null;
         final long osReserved = os != null
-                ? os.footprintItemsOn(DiskFilesystem.eraOf(stack)) * StorageKey.MB_EQ_PER_ITEM : 0L;
+                ? OsDisks.footprintItemsOn(stack, os, DiskFilesystem.eraOf(stack)) * StorageKey.MB_EQ_PER_ITEM : 0L;
         return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);
     }
 }

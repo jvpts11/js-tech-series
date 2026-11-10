@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * Which book a system's help opens first: the one written for it. MC-DOS and the Frames editions open the Frames
  * Resource Kit; the Linux distributions installed with a guide the Linux Desk Reference, and those installed by hand
- * Linux by Hand; FreeBSD and UNIX the Daemon Handbook; and MC-NET, a network's own machine, the Guide to Operations.
+ * Linux by Hand; the BSDs and UNIX the Daemon Handbook; and MC-NET, a network's own machine, the Guide to Operations.
  * The other manuals follow in their own order, so nothing a help program showed before is gone.
  *
  * <p>Pure: a system in, a manual's id out.
@@ -34,7 +34,7 @@ public final class HelpShelf {
             case LINUX -> install == InstallMode.GUIDED ? ComputersGuide.LINUX_DESK_REFERENCE
                     : ComputersGuide.LINUX_BY_HAND;
             // Quince OS X and what came after it are a UNIX of the BSD line underneath, so Quince's chapter is there.
-            case UNIX, FREEBSD, QUINCE -> ComputersGuide.DAEMON_HANDBOOK;
+            case UNIX, FREEBSD, OPENBSD, QUINCE -> ComputersGuide.DAEMON_HANDBOOK;
             case MC_NET -> ComputersGuide.GUIDE_TO_OPERATIONS;
         };
     }

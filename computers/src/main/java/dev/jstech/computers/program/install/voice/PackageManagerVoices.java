@@ -12,6 +12,7 @@ import dev.jstech.computers.program.cli.ICliPackages;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -87,6 +88,20 @@ public final class PackageManagerVoices {
             TextKey.of("jsc.install.package_manager_voices.pkg_free", "The operation will free %s.");
     private static final TextKey PKG_DEINSTALLING =
             TextKey.of("jsc.install.package_manager_voices.pkg_deinstalling", "[%s/%s] Deinstalling %s...");
+    /*
+     * OpenBSD's pkg_add opens by checking the signed quirks package of the release, the one it has shipped with since
+     * 7.5 came out; a desktop brings xenodm's start-up script, which says how it is switched on.
+     */
+    private static final TextKey PKG_ADD_QUIRKS =
+            TextKey.of("jsc.install.package_manager_voices.pkg_add_quirks", "%s signed on %s");
+    private static final TextKey PKG_ADD_RCSCRIPTS = TextKey.of("jsc.install.package_manager_voices.pkg_add_rcscripts",
+            "The following new rcscripts were installed: %s");
+    private static final TextKey PKG_ADD_SEE_RCCTL =
+            TextKey.of("jsc.install.package_manager_voices.pkg_add_see_rcctl", "See rcctl(8) for details.");
+    private static final TextKey PKG_ADD_SHARED =
+            TextKey.of("jsc.install.package_manager_voices.pkg_add_shared", "Read shared items: ok");
+    private static final String QUIRKS = "quirks-7.14";
+    private static final String QUIRKS_SIGNED = "2026-11-02T09:12:40Z";
     private static final TextKey FETCHING =
             TextKey.of("jsc.install.package_manager_voices.fetching", "Fetching %s %s from %s [%s]");
     private static final TextKey REMOVING =
@@ -100,11 +115,13 @@ public final class PackageManagerVoices {
      *
      * @param mb         how big the package is
      * @param mirrorHost the name the Mirror's machine goes by
+     * @param desktop    whether it is a desktop, which on OpenBSD brings xenodm's start-up script with it
      */
     public static Text fetch(final PackageManagerKind manager, final String pkg, final String version,
-                             final int mb, final String mirrorHost) {
+                             final int mb, final String mirrorHost, final boolean desktop) {
         final String mirror = FetchVoice.mirrorAddress(mirrorHost);
         return switch (manager) {
+            case PKG_ADD -> ICliPackages.lines(pkgAdd(pkg, version, desktop));
             case APT -> ICliPackages.lines(List.of(
                     APT_READING.text(),
                     APT_TREE.text(),
@@ -160,6 +177,8 @@ public final class PackageManagerVoices {
                     PACMAN_CHECKING.text(),
                     PACMAN_PACKAGES.with(1, pkg + "-" + version),
                     PACMAN_REMOVING.with(pkg)));
+            case PKG_ADD -> ICliPackages.lines(List.of(Text.literal(pkg + "-" + version + ": ok"),
+                    PKG_ADD_SHARED.text()));
             case PKG -> ICliPackages.lines(List.of(
                     PKG_INTEGRITY.with(0),
                     PKG_DEINSTALL.with(1),
@@ -171,5 +190,17 @@ public final class PackageManagerVoices {
                     PKG_DEINSTALLING.with(1, 1, pkg + "-" + version)));
             default -> REMOVING.with(pkg);
         };
+    }
+
+    /* What pkg_add says: the quirks it checked, the package, and for a desktop the start-up script it brought. */
+    private static List<Text> pkgAdd(final String pkg, final String version, final boolean desktop) {
+        final List<Text> lines = new ArrayList<>();
+        lines.add(PKG_ADD_QUIRKS.with(QUIRKS, QUIRKS_SIGNED));
+        lines.add(Text.literal(pkg + "-" + version + ": ok"));
+        if (desktop) {
+            lines.add(PKG_ADD_RCSCRIPTS.with("/etc/rc.d/xenodm"));
+            lines.add(PKG_ADD_SEE_RCCTL.text());
+        }
+        return lines;
     }
 }

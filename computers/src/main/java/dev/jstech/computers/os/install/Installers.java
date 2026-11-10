@@ -22,6 +22,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
@@ -59,9 +60,11 @@ public final class Installers {
      * whatever this generation of disk stores a file in, and the system already on it is part of what is taken.
      * Counting it any other way would let a page offer a disk that the write then refuses.
      */
-    public static List<InstallerFlow.Disk> disksOf(final IOsHost machine, final boolean adaNames) {
+    public static List<InstallerFlow.Disk> disksOf(final IOsHost machine, final InstallerStyle style) {
         final List<InstallerFlow.Disk> disks = new ArrayList<>();
         int drive = 0;
+        int ide = 0;
+        int sata = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack stack = machine.diskInSlot(slot);
             if (!(HardwareRegistry.disk(stack) instanceof DiskSpec disk)) {
@@ -71,7 +74,11 @@ public final class Installers {
             final long sizeMb = disk.capacityItems() * EraStorage.mbPerItem(era);
             final long freeMb = OsDisks.systemDiskFreeWeight(stack) * EraStorage.mbPerItem(era)
                     / StorageKey.MB_EQ_PER_ITEM;
-            final String label = adaNames ? adaLabel(drive) : stack.getHoverName().getString();
+            final String label = switch (style) {
+                case BSD_INSTALL -> adaLabel(drive);
+                case OPENBSD -> ideDisk(era) ? "wd" + ide++ : "sd" + sata++;
+                default -> stack.getHoverName().getString();
+            };
             disks.add(new InstallerFlow.Disk(slot, label,
                     (int) Math.min(Integer.MAX_VALUE, sizeMb), (int) Math.min(Integer.MAX_VALUE, freeMb),
                     holderOf(stack), disk.tier().speedMultiplier()));
@@ -87,6 +94,14 @@ public final class Installers {
      */
     public static String adaLabel(final int driveIndex) {
         return "ada" + driveIndex;
+    }
+
+    /**
+     * Whether a disk of that era is on IDE, which OpenBSD names {@code wd}, rather than SATA, which it names
+     * {@code sd}: the Vintage and Legacy disks are IDE, the later ones SATA (computers/docs/design/storage-devices.md).
+     */
+    public static boolean ideDisk(final Era era) {
+        return era.isAtMost(HardwareEra.LEGACY);
     }
 
     /**
@@ -177,12 +192,17 @@ public final class Installers {
     public static InstallerFlow beginning(final IOsHost machine, final ServerLevel level, final OsDef system,
                                           final double baseRate) {
         final Era era = machine.installedEra();
-        final String mirror = system.installerStyle().offersDesktop() ? mirrorHost(machine, level) : "";
+        final String mirror = system.installerStyle().asksMirror() ? mirrorHost(machine, level) : "";
         final List<InstallerFlow.Desktop> desktops = mirror.isEmpty()
                 ? List.of() : desktopsFor(system, era, SetupTiming.eraFactor(era));
-        final boolean adaNames = system.installerStyle() == InstallerStyle.BSD_INSTALL;
-        return InstallerFlow.beginning(system.installerStyle(), system.id().toString(), system.displayName(),
-                system.footprintMb(), baseRate, disksOf(machine, adaNames), machineName(machine), desktops, mirror);
+        final InstallerFlow flow = InstallerFlow.beginning(system.installerStyle(), system.id().toString(),
+                system.displayName(), system.footprintMb(), baseRate, disksOf(machine, system.installerStyle()),
+                machineName(machine), desktops, mirror);
+        // OpenBSD asks where the sets come from, and offers the medium first, as its [cd0] does.
+        if (system.installerStyle() == InstallerStyle.OPENBSD) {
+            flow.setUseMirror(false);
+        }
+        return flow;
     }
 
     /**
@@ -196,15 +216,15 @@ public final class Installers {
                                          final int copyTicks, final int stageIndex, final int targetSlot,
                                          final String computerName, final String desktopId, final int eraseSlot,
                                          final boolean portsSelected, final boolean useMirror,
-                                         final boolean cronEnabled, final boolean sshdEnabled) {
+                                         final boolean cronEnabled, final boolean sshdEnabled, final int options) {
         final Era era = machine.installedEra();
-        final String mirror = system.installerStyle().offersDesktop() ? mirrorHost(machine, level) : "";
+        final String mirror = system.installerStyle().asksMirror() ? mirrorHost(machine, level) : "";
         final List<InstallerFlow.Desktop> desktops = mirror.isEmpty()
                 ? List.of() : desktopsFor(system, era, SetupTiming.eraFactor(era));
-        final boolean adaNames = system.installerStyle() == InstallerStyle.BSD_INSTALL;
         return InstallerFlow.restored(system.installerStyle(), system.id().toString(), system.displayName(),
-                system.footprintMb(), copyTicks, disksOf(machine, adaNames), desktops, mirror, stageIndex, targetSlot,
-                computerName, desktopId, eraseSlot, portsSelected, useMirror, cronEnabled, sshdEnabled);
+                system.footprintMb(), copyTicks, disksOf(machine, system.installerStyle()), desktops, mirror,
+                stageIndex, targetSlot, computerName, desktopId, eraseSlot, portsSelected, useMirror, cronEnabled,
+                sshdEnabled, options);
     }
 
     /**

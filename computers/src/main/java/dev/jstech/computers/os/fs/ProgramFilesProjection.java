@@ -18,6 +18,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.QuinceFamily;
 import dev.jstech.computers.os.SoftwareHouse;
+import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.program.ComputerConsoleState;
 import java.util.ArrayList;
@@ -81,6 +82,8 @@ public final class ProgramFilesProjection {
             linux(host, os, out);
         } else if (os.platform() == Platform.FREEBSD) {
             freebsd(host, out);
+        } else if (os.platform() == Platform.OPENBSD) {
+            openbsd(host, out);
         } else if (os.platform() == Platform.UNIX) {
             systemV(host, out);
         } else if (os.platform() == Platform.MC_DOS) {
@@ -166,6 +169,36 @@ public final class ProgramFilesProjection {
         out.add(dir("usr/local/share"));
         // The base system's own binaries, vi and ee among them, apart from anything a package brings in.
         for (final ProgramSpec spec : preinstalledOn(Platform.FREEBSD)) {
+            out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
+        }
+        for (final ProgramSpec spec : installed(host)) {
+            out.add(file("usr/local/bin/" + spec.commandName(), FileType.BIN));
+            out.add(dir("usr/local/share/" + spec.commandName()));
+            out.add(file(readmeUnder(FREEBSD_SHARE, spec), FileType.TXT));
+        }
+    }
+
+    /*
+     * OpenBSD keeps its base apart from what is added to it, as FreeBSD does: the kernel and its ramdisk twin at the
+     * root, the configuration rcctl, pf and doas read under /etc, the manual pages when the man set went in, and
+     * every package under /usr/local (computers/docs/design/operating-systems.md).
+     */
+    private static void openbsd(final IOsHost host, final List<InstallerLayout.Entry> out) {
+        final ComputerConsoleState console = host.console();
+        final int leftOut = console == null ? 0 : console.settings().setsLeftOut();
+        if ((leftOut & InstallerFlow.NO_BSD_RD) == 0) {
+            out.add(file("bsd.rd", FileType.SYS));
+        }
+        out.add(file("etc/myname", FileType.CFG));
+        out.add(file("etc/rc.conf.local", FileType.CFG));
+        out.add(file("etc/pf.conf", FileType.CFG));
+        out.add(file("etc/doas.conf", FileType.CFG));
+        if ((leftOut & InstallerFlow.NO_MAN) == 0) {
+            out.add(dir("usr/share/man"));
+        }
+        out.add(dir("usr/local"));
+        out.add(dir("usr/local/share"));
+        for (final ProgramSpec spec : preinstalledOn(Platform.OPENBSD)) {
             out.add(file("usr/bin/" + spec.commandName(), FileType.BIN));
         }
         for (final ProgramSpec spec : installed(host)) {
@@ -356,6 +389,10 @@ public final class ProgramFilesProjection {
                     + "sshd_enable=\"" + (sshd ? "YES" : "NO") + "\"\n"
                     + "dumpdev=\"AUTO\"\n");
         }
+        final Optional<String> openBsd = openBsdFile(host, os, path);
+        if (openBsd.isPresent()) {
+            return openBsd;
+        }
         if (path.equals("etc/inittab")) {
             // The run level the system comes up at, and the one line that keeps a login on the console.
             return Optional.of("is:2:initdefault:\nco:234:respawn:/etc/getty console console\n");
@@ -402,6 +439,31 @@ public final class ProgramFilesProjection {
     /** The desktop shell a Frames edition starts: the first edition's own, and the one every edition after it has. */
     private static String shellOf(final OsDef os) {
         return os.familyRank() == 1 ? "explorer.exe" : "frames.exe";
+    }
+
+    /*
+     * What OpenBSD's own configuration files say, which is this machine: its name, the services rcctl switched off
+     * or on, pf's rules as the system ships them, and doas's one rule.
+     */
+    private static Optional<String> openBsdFile(final IOsHost host, final OsDef os, final String path) {
+        if (os.platform() != Platform.OPENBSD) {
+            return Optional.empty();
+        }
+        final ComputerConsoleState console = host.console();
+        return switch (path) {
+            case "etc/myname" -> Optional.of(Installers.hostName(host) + ".my.domain\n");
+            case "etc/rc.conf.local" -> {
+                final boolean cron = console == null || console.settings().cronEnabled();
+                final boolean sshd = console != null && console.settings().remoteAllowed();
+                final boolean xenodm = console != null && console.settings().xenodmEnabled();
+                yield Optional.of((cron ? "" : "cron_flags=NO\n") + (sshd ? "" : "sshd_flags=NO\n")
+                        + (xenodm ? "xenodm_flags=\n" : ""));
+            }
+            case "etc/pf.conf" -> Optional.of("# See pf.conf(5) and /etc/examples/pf.conf\n\nset skip on lo\n\n"
+                    + "block return    # block stateless traffic\npass            # establish keep-state\n");
+            case "etc/doas.conf" -> Optional.of("permit persist :wheel\n");
+            default -> Optional.empty();
+        };
     }
 
     /** The path of a program's readme under a Unix-like system's share folder; the layout and the matcher share it. */

@@ -26,6 +26,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.ProgramVersions;
+import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.media.MediaDriveType;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.storage.DiskHealth;
@@ -87,12 +88,16 @@ public final class ThisPcApp implements IDesktopApp {
     private static final int NAME_MAX = 32;
     private static final long DOUBLE_CLICK_MS = 300L;
     /**
-     * FreeBSD's orb, drawn on the About-style page of KDE, GNOME and Cinnamon: the only system this page names
-     * that has a mark of its own here. A Linux distribution has none, so its hero shows its name with no
-     * picture over it.
+     * The marks drawn on the About-style page of KDE, GNOME and Cinnamon: FreeBSD's orb, OpenBSD's Puffy and Linux
+     * Mint's own (computers/docs/design/operating-systems.md). Any other distribution has none, so its hero shows its
+     * name with no picture over it.
      */
-    private static final ResourceLocation FREEBSD_ORB =
-            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/splash/freebsd_orb.png");
+    private static final Mark FREEBSD_ORB = new Mark(
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/splash/freebsd_orb.png"), 32);
+    private static final Mark OPENBSD_PUFFY = new Mark(
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/splash/openbsd_puffy.png"), 32);
+    private static final Mark MINT_MARK = new Mark(
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/splash/mint_mark.png"), 192);
 
     private OsSkin skin = OsSkin.fallback();
 
@@ -723,9 +728,11 @@ public final class ThisPcApp implements IDesktopApp {
                                 final AboutFacts about) {
         final String osFull = GameText.resolve(about.operatingSystem());
         final String house = Branding.houseOf(data.machine().osLabel()).name();
-        if (about.freeBsd()) {
-            Draw.blended(() -> g.blit(FREEBSD_ORB, x + ThisPcLayout.KdeAbout.ORB_X, y + ThisPcLayout.KdeAbout.ORB_Y,
-                    ThisPcLayout.ABOUT_ORB, ThisPcLayout.ABOUT_ORB, 0, 0, 32, 32, 32, 32));
+        final Mark mark = markOf(about);
+        if (mark != null) {
+            Draw.blended(() -> g.blit(mark.texture(), x + ThisPcLayout.KdeAbout.ORB_X, y + ThisPcLayout.KdeAbout.ORB_Y,
+                    ThisPcLayout.ABOUT_ORB, ThisPcLayout.ABOUT_ORB, 0, 0, mark.side(), mark.side(), mark.side(),
+                    mark.side()));
         }
         final float heroScale = ThisPcLayout.KdeAbout.HERO_SCALE;
         final int heroMaxW = (int) ((ThisPcLayout.KdeAbout.W - ThisPcLayout.KdeAbout.TITLE_X - 4) / heroScale);
@@ -778,10 +785,11 @@ public final class ThisPcApp implements IDesktopApp {
         // The hero shortens FreeBSD's release ("14.1-RELEASE" to "14.1"); the OS Name row below keeps it in full.
         final String heroTitle = about.freeBsd() ? osFull.replace("-RELEASE", "") : osFull;
         final String house = Branding.houseOf(data.machine().osLabel()).name();
-        if (about.freeBsd()) {
-            Draw.blended(() -> g.blit(FREEBSD_ORB, x + ThisPcLayout.GnomeAbout.orbX(),
+        final Mark mark = markOf(about);
+        if (mark != null) {
+            Draw.blended(() -> g.blit(mark.texture(), x + ThisPcLayout.GnomeAbout.orbX(),
                     y + ThisPcLayout.GnomeAbout.ORB_Y, ThisPcLayout.ABOUT_ORB_BIG, ThisPcLayout.ABOUT_ORB_BIG, 0, 0,
-                    32, 32, 32, 32));
+                    mark.side(), mark.side(), mark.side(), mark.side()));
         }
         centredString(g, font, x, y + ThisPcLayout.GnomeAbout.TITLE_Y, ThisPcLayout.GnomeAbout.W, heroTitle,
                 skin.text(), ThisPcLayout.GnomeAbout.HERO_SCALE);
@@ -826,17 +834,18 @@ public final class ThisPcApp implements IDesktopApp {
          */
         final String osName = data.machine().osLabel();
         final String house = Branding.houseOf(osName).name();
-        if (about.freeBsd()) {
-            Draw.blended(() -> g.blit(FREEBSD_ORB, x + ThisPcLayout.CinnamonAbout.orbX(),
+        final Mark mark = markOf(about);
+        if (mark != null) {
+            Draw.blended(() -> g.blit(mark.texture(), x + ThisPcLayout.CinnamonAbout.orbX(),
                     y + ThisPcLayout.CinnamonAbout.LOGO_ORB_Y, ThisPcLayout.ABOUT_ORB_BIG, ThisPcLayout.ABOUT_ORB_BIG,
-                    0, 0, 32, 32, 32, 32));
+                    0, 0, mark.side(), mark.side(), mark.side(), mark.side()));
         }
         centredString(g, font, x, y + ThisPcLayout.CinnamonAbout.LOGO_TITLE_Y, ThisPcLayout.CinnamonAbout.LOGO_W,
                 osName, skin.text(), 1.0f);
         centredString(g, font, x, y + ThisPcLayout.CinnamonAbout.LOGO_SUBTITLE_Y, ThisPcLayout.CinnamonAbout.LOGO_W,
                 house, skin.dim(), 1.0f);
 
-        final TextKey kernelKey = about.freeBsd() ? ThisPcTexts.KERNEL : ThisPcTexts.LINUX_KERNEL;
+        final TextKey kernelKey = about.bsd() ? ThisPcTexts.KERNEL : ThisPcTexts.LINUX_KERNEL;
         final String osWithArch = GameText.resolve(ThisPcTexts.OS_WITH_ARCHITECTURE.with(about.operatingSystem(),
                 about.architecture()));
         final int lx = ThisPcLayout.CinnamonAbout.LIST_X;
@@ -1302,5 +1311,28 @@ public final class ThisPcApp implements IDesktopApp {
     private static String prettyOs(final String osPath) {
         final OsDef os = OsRegistry.getOs(rl(osPath));
         return os != null ? os.displayName() : osPath;
+    }
+
+    /* The mark the About page of this system carries over its name, or null for one with none of its own. */
+    private Mark markOf(final AboutFacts about) {
+        return switch (about.platform()) {
+            case FREEBSD -> FREEBSD_ORB;
+            case OPENBSD -> OPENBSD_PUFFY;
+            default -> mintRunning() ? MINT_MARK : null;
+        };
+    }
+
+    /* Whether the system is Linux Mint, which comes up behind its own mark and names itself by it here too. */
+    private boolean mintRunning() {
+        for (final OsDef os : OsRegistry.oses()) {
+            if (os.displayName().equals(data.machine().osLabel())) {
+                return os.bootSplash() == BootSplash.MINT;
+            }
+        }
+        return false;
+    }
+
+    /** A system's mark: its texture, and the side it is drawn at in it. */
+    private record Mark(ResourceLocation texture, int side) {
     }
 }

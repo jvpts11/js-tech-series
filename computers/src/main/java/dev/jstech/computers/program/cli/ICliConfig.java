@@ -41,6 +41,15 @@ public interface ICliConfig {
         return ICliComputer.OpResult.fail(ConfigWords.NO_SETTINGS);
     }
 
+    /** How many of its system's patches {@code syspatch} has installed on this machine. */
+    default int patchesInstalled() {
+        return 0;
+    }
+
+    /** Records that many of the system's patches installed. */
+    default void setPatchesInstalled(final int count) {
+    }
+
     /** The folders this computer shares, in the order they were shared. */
     default List<ICliComputer.ShareInfo> shares() {
         return List.of();

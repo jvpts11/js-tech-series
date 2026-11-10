@@ -241,6 +241,38 @@
             "amount": 16,
             "unit": "MB"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table1_15_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table1_15_2"
+          },
+          {
+            "amount": 1024,
+            "unit": "MB"
+          },
+          {
+            "amount": 12,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.the_systems.table1_16_1"
+          },
+          {
+            "words": "jsc.guide.the_systems.table1_16_2"
+          },
+          {
+            "amount": 12288,
+            "unit": "MB"
+          },
+          {
+            "amount": 64,
+            "unit": "MB"
+          }
         ]
       ]
     },

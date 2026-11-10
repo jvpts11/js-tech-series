@@ -186,6 +186,56 @@ final class ScreenfetchLogos {
             "       .--             `--.",
             "          .---.....----."};
 
+    /*
+     * OpenBSD's Puffy, neofetch's rows, coloured as the system's own page draws him: the fish in yellow, his eyes in
+     * white and the bubbles that rise past him in cyan.
+     */
+    private static final String[] OPENBSD = {
+            "${c3}                                     _",
+            "${c3}                                    (_)",
+            "${c1}              |    .",
+            "${c1}          .   |L  /|   .          ${c3}_",
+            "${c1}      _ . |\\ _| \\--+._/| .       ${c3}(_)",
+            "${c1}     / ||\\| Y J  )   / |/| ./",
+            "${c1}    J  |)'( |        ` F`.'/        ${c3}_",
+            "${c1}  -<|  F         __     .-<        ${c3}(_)",
+            "${c1}    | /       .-'. `.  /-. L___",
+            "${c1}    J \\      <    \\  | | ${c2}O${c1}\\|.-'  ${c3}_",
+            "${c1}  _J \\  .-    \\/ ${c2}O${c1} | | \\  |F    ${c3}(_)",
+            "${c1} '-F  -<_.     \\   .-'  `-' L__",
+            "${c1}__J  _   _.     >-'  )._.   |-'",
+            "${c1} `-|.'   /_.          \\_|   F",
+            "${c1}  /.-   .                _.<",
+            "${c1} /'    /.'             .'  `\\",
+            "${c1}  /L  /'   |/      _.-'-\\",
+            "${c1} /'J       ___.---'\\|",
+            "${c1}   |\\  .--' V  | `. `",
+            "${c1}   |/`. `-.     `._)",
+            "${c1}      / .-.\\",
+            "${c1}      \\ (  `\\",
+            "${c1}       `.\\"};
+
+    private static final String[] LINUX_MINT = {
+            "${c2}             ...-:::::-...",
+            "${c2}          .-MMMMMMMMMMMMMMM-.",
+            "${c2}      .-MMMM${c1}`..-:::::::-..`${c2}MMMM-.",
+            "${c2}    .:MMMM${c1}.:MMMMMMMMMMMMMMM:.${c2}MMMM:.",
+            "${c2}   -MMM${c1}-M---MMMMMMMMMMMMMMMMMMM.${c2}MMM-",
+            "${c2} `:MMM${c1}:MM`  :MMMM:....::-...-MMMM:${c2}MMM:`",
+            "${c2} :MMM${c1}:MMM`  :MM:`  ``    ``  `:MMM:${c2}MMM:",
+            "${c2}.MMM${c1}.MMMM`  :MM.  -MM.  .MM-  `MMMM.${c2}MMM.",
+            "${c2}:MMM${c1}:MMMM`  :MM.  -MM-  .MM:  `MMMM-${c2}MMM:",
+            "${c2}:MMM${c1}:MMMM`  :MM.  -MM-  .MM:  `MMMM:${c2}MMM:",
+            "${c2}:MMM${c1}:MMMM`  :MM.  -MM-  .MM:  `MMMM-${c2}MMM:",
+            "${c2}.MMM${c1}.MMMM`  :MM:--:MM:--:MM:  `MMMM.${c2}MMM.",
+            "${c2} :MMM${c1}:MMM-  `-MMMMMMMMMMMM-`  -MMM-${c2}MMM:",
+            "${c2}  :MMM${c1}:MMM:`                `:MMM:${c2}MMM:",
+            "${c2}   .MMM${c1}.MMMM:--------------:MMMM.${c2}MMM.",
+            "${c2}     '-MMMM${c1}.-MMMMMMMMMMMMMMM-.${c2}MMMM-'",
+            "${c2}       '.-MMMM${c1}``--:::::--``${c2}MMMM-.'",
+            "${c2}            '-MMMMMMMMMMMMM-'",
+            "${c2}               ``-:::::-``"};
+
     private static final String[] DEFAULT = {
             "  .--------.  ",
             "  |  .--.  |  ",
@@ -205,6 +255,8 @@ final class ScreenfetchLogos {
             Map.entry("arch", Logo.drawn(ARCH, CliStyle.CYAN, CliStyle.CYAN, CliStyle.BRIGHT, CliStyle.RED)),
             Map.entry("gentoo", Logo.drawn(GENTOO, CliStyle.MAGENTA, CliStyle.BRIGHT)),
             Map.entry("freebsd", Logo.plain(FREEBSD, CliStyle.RED)),
+            Map.entry("openbsd", Logo.drawn(OPENBSD, CliStyle.YELLOW, CliStyle.BRIGHT, CliStyle.CYAN)),
+            Map.entry("linux_mint", Logo.drawn(LINUX_MINT, CliStyle.GREEN, CliStyle.BRIGHT)),
             Map.entry("frames_95", Logo.drawn(FRAMES_FLAG, CliStyle.RED, CliStyle.GREEN, CliStyle.BLUE,
                     CliStyle.YELLOW)),
             Map.entry("frames_xp", Logo.drawn(FRAMES_FLAG, CliStyle.RED, CliStyle.GREEN, CliStyle.BLUE,

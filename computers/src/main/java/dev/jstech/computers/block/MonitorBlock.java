@@ -679,17 +679,16 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
                 // A booted live medium: a root shell on the installer, named after the medium.
                 console = new ConsoleIdentity(null, true, live.hostname(),
                         (live.distro() == LiveInstallState.Distro.ARCH ? "Arch Linux" : "Gentoo") + " live",
-                        Platform.LINUX, host.processorBits());
+                        Platform.LINUX, host.processorBits(), true);
             } else {
-                final String hostname = posix
+                final ServerCliComputer facade = posix
                         && host instanceof IComputerTerminalHost terminalHost
                         && level instanceof ServerLevel serverLevel
-                        ? new ServerCliComputer(terminalHost, serverLevel)
-                                .hostname()
-                        : "";
-                console = new ConsoleIdentity(posix && os != null ? os.shell() : null, false, hostname,
+                        ? new ServerCliComputer(terminalHost, serverLevel) : null;
+                console = new ConsoleIdentity(posix && os != null ? os.shell() : null, false,
+                        facade == null ? "" : facade.hostname(),
                         os == null ? "" : os.displayName(), os == null ? null : os.platform(),
-                        host.processorBits());
+                        host.processorBits(), facade == null || facade.hasManual());
             }
             /*
              * Each platform gets its own console screen: the Linux TTY (installed distributions and live

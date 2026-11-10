@@ -44,6 +44,13 @@ public enum Platform implements IStableName {
     FREEBSD("freebsd", "FreeBSD"),
 
     /**
+     * OpenBSD, the proactively secure Unix (computers/docs/design/operating-systems.md): like FreeBSD, a system and
+     * a platform both, with a kernel, a base system and a ports tree of its own. What is built for FreeBSD is not
+     * built for it, though the two take the same desktops.
+     */
+    OPENBSD("openbsd", "OpenBSD"),
+
+    /**
      * UNIX System V, the oldest of the families met at a Unix prompt and the only one a machine of the first age
      * runs. It takes its programs from media and from nowhere else, so what is built for it is its own.
      */
@@ -87,7 +94,12 @@ public enum Platform implements IStableName {
      * one: its classic systems have no prompt, but their files hang from one root as the later ones' do.
      */
     public boolean unixLike() {
-        return this == LINUX || this == FREEBSD || this == UNIX || this == QUINCE;
+        return this == LINUX || this == FREEBSD || this == OPENBSD || this == UNIX || this == QUINCE;
+    }
+
+    /** Whether this is one of the BSDs, FreeBSD or OpenBSD, which format UFS and take the same desktops. */
+    public boolean bsd() {
+        return this == FREEBSD || this == OPENBSD;
     }
 
     /** Whether everything in that set is of those families, so what is made for it is made for them alone. */

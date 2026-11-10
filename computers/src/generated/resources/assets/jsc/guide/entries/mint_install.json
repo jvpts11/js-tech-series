@@ -1,0 +1,100 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mint_install.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mint_install.definition1",
+      "term": "jsc.guide.mint_install.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mint_install.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.mint_install.definition2",
+      "term": "jsc.guide.mint_install.term2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.mint_install.table1",
+      "heads": [
+        "jsc.guide.mint_install.table1_head1",
+        "jsc.guide.mint_install.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.mint_install.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.mint_install.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mint_install.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.mint_install.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mint_install.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.mint_install.table1_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mint_install.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.mint_install.table1_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.mint_install.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.mint_install.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mint_install.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mint_install.fix1",
+          "problem": "jsc.guide.mint_install.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:installing",
+        "jsc:mint_overview"
+      ]
+    }
+  ],
+  "id": "jsc:mint_install",
+  "order": 258,
+  "section": "jsc:mint_system",
+  "title": "jsc.guide.mint_install.title"
+}

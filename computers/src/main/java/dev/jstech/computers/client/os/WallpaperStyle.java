@@ -62,6 +62,9 @@ public enum WallpaperStyle {
     /** FreeBSD's own wallpaper for Cinnamon: the folded sheets in FreeBSD's crimson, with the orb. */
     FREEBSD_CINNAMON("freebsd_cinnamon", true),
 
+    /** OpenBSD's one wallpaper, for every desktop it takes: the sea as blocks, with Puffy swimming in it. */
+    OPENBSD_SEA("openbsd_sea", true),
+
     /** The Quince System's desktop: its grey of black and white pixels, checked. */
     QUINCE_CHECKER("quince_system", true),
 

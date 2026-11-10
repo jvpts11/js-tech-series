@@ -40,7 +40,7 @@ record DiskShares(long storageWeight, long fileWeight, long systemWeight) {
         final ResourceLocation systemId = OsDisks.systemOn(stack);
         final OsDef system = systemId != null ? OsRegistry.getOs(systemId) : null;
         final long reserved = system != null
-                ? system.footprintItemsOn(disk.era()) * StorageKey.MB_EQ_PER_ITEM : 0L;
+                ? OsDisks.footprintItemsOn(stack, system, disk.era()) * StorageKey.MB_EQ_PER_ITEM : 0L;
         return new DiskShares(DriveVolumes.usedWeight(stack), DiskFilesystem.filesWeight(stack), reserved);
     }
 

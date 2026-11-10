@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.cli;
 
 import dev.jstech.computers.os.HostScope;
+import dev.jstech.computers.os.OpenBsdServices;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
@@ -166,6 +167,39 @@ public interface ICliMachine {
 
     /** Whether the computer has ports for peripherals. */
     default boolean hasPorts() {
+        return false;
+    }
+
+    /** Whether the system has its manual's pages: every one but an OpenBSD installed without the man set. */
+    default boolean hasManual() {
+        return true;
+    }
+
+    /** Whether the system has its compiler and tools: every one but an OpenBSD installed without the comp set. */
+    default boolean hasCompiler() {
+        return true;
+    }
+
+    /** OpenBSD's daemons as {@code rcctl} lists them, by name; none on any other system. */
+    default List<OpenBsdServices.Daemon> daemons() {
+        return List.of();
+    }
+
+    /**
+     * Switches that daemon on or off for when the system comes up.
+     *
+     * @return false for a daemon there is none of, or one of the base system's that always runs
+     */
+    default boolean enableDaemon(final String name, final boolean on) {
+        return false;
+    }
+
+    /**
+     * Starts or stops that daemon now, until the machine starts over.
+     *
+     * @return false for a daemon there is none of, or one of the base system's that always runs
+     */
+    default boolean startDaemon(final String name, final boolean on) {
         return false;
     }
 

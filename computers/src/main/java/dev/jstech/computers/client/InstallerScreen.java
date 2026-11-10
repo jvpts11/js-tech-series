@@ -147,6 +147,7 @@ import org.lwjgl.glfw.GLFW;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.IntSupplier;
 
 /**
  * A system being installed, in its own installer's words and its own shape.
@@ -190,6 +191,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private int blink;
     /** The button the mouse is down on, which is drawn pressed until it is let go of. */
     private InstallerFrames.Held held = InstallerFrames.Held.NONE;
+    /** The installer that draws its whole page itself (OpenBSD's terminal, Mint's window), or null for the rest. */
+    @Nullable
+    private IOwnInstallerPage own;
 
     private int listTop;
     private int listLeft;
@@ -309,6 +313,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         this.flow = payload.flow();
         this.ticksDone = payload.ticksDone();
         this.erasePrompt = InstallerFlow.NO_DISK;
+        this.own = this.ownPage(was == this.flow.page());
         if (was == this.flow.page()) {
             this.selection = Math.max(0, Math.min(this.selection, Math.max(0, this.rowCount() - 1)));
             return;
@@ -343,8 +348,33 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         return false;
     }
 
+    /**
+     * The page that draws itself for an installer of that shape, the one already up kept when the shape is the same,
+     * or null for an installer drawn in a frame.
+     */
+    @Nullable
+    private IOwnInstallerPage ownPage(final boolean samePage) {
+        final InstallerChrome chrome = this.flow.chrome();
+        if (chrome != InstallerChrome.TERMINAL && chrome != InstallerChrome.LIVE_DESKTOP) {
+            return null;
+        }
+        final boolean keeps = chrome == InstallerChrome.TERMINAL ? this.own instanceof InstallerOpenBsd
+                : this.own instanceof InstallerMint;
+        if (keeps) {
+            this.own.accept(this.flow, samePage);
+            return this.own;
+        }
+        final IntSupplier memory = () -> this.state == null ? 0 : this.state.machine().ramMb();
+        return chrome == InstallerChrome.TERMINAL
+                ? new InstallerOpenBsd(this.flow, this.computerPos, this.monitorPos, this::send, memory)
+                : new InstallerMint(this.flow, this.computerPos, this.monitorPos, this::send, memory);
+    }
+
     @Override
     public boolean keyPressed(final int key, final int scan, final int modifiers) {
+        if (this.own != null && key != GLFW.GLFW_KEY_ESCAPE) {
+            return this.own.key(key) || super.keyPressed(key, scan, modifiers);
+        }
         if (this.erasePrompt != InstallerFlow.NO_DISK) {
             return this.eraseKey(key);
         }
@@ -445,6 +475,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     @Override
     public boolean charTyped(final char letter, final int modifiers) {
+        if (this.own != null) {
+            return this.own.typed(letter) || super.charTyped(letter, modifiers);
+        }
         if (this.erasePrompt != InstallerFlow.NO_DISK) {
             return true;
         }
@@ -468,6 +501,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     @Override
     public boolean mouseClicked(final double mouseX, final double mouseY, final int button) {
+        if (this.own != null) {
+            return this.own.click(mouseX, mouseY) || super.mouseClicked(mouseX, mouseY, button);
+        }
         if (this.erasePrompt != InstallerFlow.NO_DISK) {
             return true;
         }
@@ -500,6 +536,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         final int y = this.topPos;
         MonitorFrame.renderBody(g, x, y, InstallerLayout.WIDTH, InstallerLayout.HEIGHT, screenEra(), font,
                 screenPos());
+        if (this.own != null) {
+            this.own.paint(g, font, x, y, this.ticksDone, this.blink, mouseX, mouseY);
+            return;
+        }
 
         this.listRows = 0;
         final InstallerFrames.Frame frame = InstallerFrames.paint(g, font, this.flow, this.ticksDone, x, y,

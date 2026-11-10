@@ -53,7 +53,8 @@ final class ScreenfetchCommand implements ICliCommand {
 
     @Override
     public CommandScope scope() {
-        return CommandScope.on(Platform.LINUX, Platform.FREEBSD, Platform.FRAMES).fromPackage(PACKAGE.toString());
+        return CommandScope.on(Platform.LINUX, Platform.FREEBSD, Platform.OPENBSD, Platform.FRAMES)
+                .fromPackage(PACKAGE.toString());
     }
 
     @Override

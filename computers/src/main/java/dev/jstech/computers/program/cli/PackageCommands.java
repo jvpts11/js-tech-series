@@ -51,6 +51,8 @@ final class PackageCommands {
     static final class PackageManagerCommand implements ICliCommand {
 
         private final PackageManagerKind kind;
+        /* The word it is typed as: the manager's own, or one of OpenBSD's three tools, which share the one manager. */
+        private final String name;
 
         private static final TextKey SUMMARY = TextKey.of("jsc.cli.package.summary",
                 "install and remove packages from the network mirror");
@@ -65,6 +67,15 @@ final class PackageCommands {
                 "install <formula> | uninstall <formula> | search [term] | list | update | upgrade");
         private static final TextKey USAGE = TextKey.of("jsc.cli.package.usage",
                 "install <package> | remove <package> | search [term] | list | update | upgrade");
+        private static final TextKey USAGE_PKG_ADD = TextKey.of("jsc.cli.package.pkg_add.usage",
+                "<package> | -u");
+        private static final TextKey USAGE_PKG_DELETE = TextKey.of("jsc.cli.package.pkg_delete.usage",
+                "<package>");
+        private static final TextKey USAGE_PKG_INFO = TextKey.of("jsc.cli.package.pkg_info.usage",
+                "[-Q term]");
+        /* What OpenBSD's tools say of a repository they could not read. */
+        private static final TextKey PKG_ADD_NO_MIRROR = TextKey.of("jsc.cli.package.pkg_add.no_mirror",
+                "https://mirror.mainframe/pub/OpenBSD/7.5/packages/: no route to the Mirror");
         /* How the apt family opens a line about a repository it could not read, and one about a refusal. */
         private static final TextKey ERR = TextKey.of("jsc.cli.package.err", "Err: %s");
         private static final TextKey REFUSED = TextKey.of("jsc.cli.package.refused", "E: %s");
@@ -92,7 +103,13 @@ final class PackageCommands {
                 "no packages installed");
 
         PackageManagerCommand(final PackageManagerKind kind) {
+            this(kind, kind.command());
+        }
+
+        /** One of the tools a manager is typed as, which OpenBSD's is: pkg_add, pkg_delete and pkg_info. */
+        PackageManagerCommand(final PackageManagerKind kind, final String name) {
             this.kind = kind;
+            this.name = name;
         }
 
         /*
@@ -103,7 +120,7 @@ final class PackageCommands {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS).forManager(this.kind);
         }
 
-        @Override public String name() { return kind.command(); }
+        @Override public String name() { return name; }
 
         @Override public CommandGroup group() { return CommandGroup.SOFTWARE; }
 
@@ -119,6 +136,11 @@ final class PackageCommands {
                 case EMERGE -> USAGE_EMERGE.text();
                 case PKG -> USAGE_PKG.text();
                 case KEG -> USAGE_KEG.text();
+                case PKG_ADD -> switch (name) {
+                    case "pkg_delete" -> USAGE_PKG_DELETE.text();
+                    case "pkg_info" -> USAGE_PKG_INFO.text();
+                    default -> USAGE_PKG_ADD.text();
+                };
                 default -> USAGE.text();
             };
         }
@@ -171,6 +193,26 @@ final class PackageCommands {
                         default -> ctx.out().error(usageLine());
                     }
                 }
+                case PKG_ADD -> {
+                    // OpenBSD's three tools: pkg_add brings and upgrades, pkg_delete takes off, pkg_info lists.
+                    switch (name) {
+                        case "pkg_delete" -> remove(ctx, ctx.hasArgs() ? ctx.rest(0) : "");
+                        case "pkg_info" -> {
+                            if (verb.equals("-Q")) {
+                                search(ctx, arg);
+                            } else {
+                                installed(ctx);
+                            }
+                        }
+                        default -> {
+                            if (verb.equals("-u")) {
+                                upgrade(ctx);
+                            } else {
+                                install(ctx, ctx.hasArgs() ? ctx.rest(0) : "", false);
+                            }
+                        }
+                    }
+                }
                 case PKG -> {
                     // Its own words for the same things: a package is deleted, and what is installed is info.
                     switch (verb) {
@@ -206,12 +248,12 @@ final class PackageCommands {
 
         /** How this manager is typed, said when it was typed some other way. */
         private Text usageLine() {
-            return CliTexts.USAGE.with(kind.command(), usage());
+            return CliTexts.USAGE.with(name, usage());
         }
 
         private void sync(final CliContext ctx) {
             if (!ctx.computer().mirrorReachable()) {
-                ctx.out().error(problem(NO_MIRROR));
+                ctx.out().error(noMirror());
                 ctx.out().dim(NOT_ON_A_MIRROR);
                 return;
             }
@@ -229,13 +271,13 @@ final class PackageCommands {
          */
         private void upgrade(final CliContext ctx) {
             if (!ctx.computer().mirrorReachable()) {
-                ctx.out().error(problem(NO_MIRROR));
+                ctx.out().error(noMirror());
                 ctx.out().dim(NOT_ON_A_MIRROR);
                 return;
             }
             if (kind == PackageManagerKind.PKG) {
                 catalogue(ctx);
-            } else {
+            } else if (kind != PackageManagerKind.PKG_ADD) {
                 ctx.out().dim(kind == PackageManagerKind.PACMAN ? SYNCHRONIZING : READING_LISTS);
             }
             final ICliComputer.OpResult updated = ctx.computer().packageUpdate();
@@ -252,14 +294,22 @@ final class PackageCommands {
             ctx.out().line(CATALOGUE_UP_TO_DATE);
         }
 
-        /** A repository that could not be read, the way this manager opens such a line: pkg names itself. */
-        private Text problem(final TextKey what) {
-            return kind == PackageManagerKind.PKG ? CliTexts.SAID_BY.with(kind.command(), what) : ERR.with(what);
+        /**
+         * The Mirror that could not be read, the way this manager opens such a line: pkg names itself, and OpenBSD's
+         * tools name the tool and the address they asked.
+         */
+        private Text noMirror() {
+            return switch (kind) {
+                case PKG -> CliTexts.SAID_BY.with(name, NO_MIRROR);
+                case PKG_ADD -> CliTexts.SAID_BY.with(name, PKG_ADD_NO_MIRROR);
+                default -> ERR.with(NO_MIRROR);
+            };
         }
 
         /** A package the manager would not install or remove, opened in its own way too. */
         private Text refusal(final Text why) {
-            return kind == PackageManagerKind.PKG ? CliTexts.SAID_BY.with(kind.command(), why) : REFUSED.with(why);
+            return kind == PackageManagerKind.PKG || kind == PackageManagerKind.PKG_ADD
+                    ? CliTexts.SAID_BY.with(name, why) : REFUSED.with(why);
         }
 
         /**
@@ -268,18 +318,18 @@ final class PackageCommands {
          * @param ask whether the manager was told to list what it would do and ask first
          */
         private void install(final CliContext ctx, final String typed, final boolean ask) {
-            String name = "";
+            String pkg = "";
             for (final String word : typed.trim().split("\\s+")) {
                 if (!word.isEmpty() && !word.startsWith("-")) {
-                    name = word;
+                    pkg = word;
                     break;
                 }
             }
-            if (name.isEmpty()) {
+            if (pkg.isEmpty()) {
                 ctx.out().error(usageLine());
                 return;
             }
-            final ICliPackages.Installing result = ctx.computer().packageInstall(name, ask);
+            final ICliPackages.Installing result = ctx.computer().packageInstall(pkg, ask);
             if (result.tool() != null) {
                 // A manager that builds what it installs holds the terminal from here until the build is over.
                 ctx.out().start(result.tool());
@@ -290,7 +340,8 @@ final class PackageCommands {
                 if (result.ok()) {
                     ctx.out().line(CATALOGUE_UP_TO_DATE);
                 }
-            } else {
+            } else if (kind != PackageManagerKind.PKG_ADD) {
+                // pkg_add opens with the line its own voice gives, which says what it read first.
                 ctx.out().dim(RESOLVING);
             }
             if (result.ok()) {
@@ -305,8 +356,8 @@ final class PackageCommands {
                 ctx.out().error(usageLine());
                 return;
             }
-            final String name = pkg.trim().split("\\s+")[0];
-            final ICliComputer.OpResult result = ctx.computer().packageRemove(name);
+            final String first = pkg.trim().split("\\s+")[0];
+            final ICliComputer.OpResult result = ctx.computer().packageRemove(first);
             if (result.ok()) {
                 done(ctx, result.message());
             } else {
@@ -316,7 +367,7 @@ final class PackageCommands {
 
         private void search(final CliContext ctx, final String term) {
             if (!ctx.computer().mirrorReachable()) {
-                ctx.out().error(problem(NO_MIRROR));
+                ctx.out().error(noMirror());
                 return;
             }
             final String needle = term.trim().toLowerCase(Locale.ROOT);

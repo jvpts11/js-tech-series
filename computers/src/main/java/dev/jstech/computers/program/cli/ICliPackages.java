@@ -139,6 +139,16 @@ public interface ICliPackages {
     }
 
     /**
+     * OpenBSD's cvs over the ports tree: {@code checkout} lays the whole tree out under {@code /usr/ports} from the
+     * network's Mirror, and {@code update} brings a tree already there up to date, leaving the work running in front
+     * of the terminal.
+     */
+    default Installing cvsPorts(final boolean update) {
+        return Installing.said(
+                ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(Text.literal("cvs"), NO_PORTS_TREE)));
+    }
+
+    /**
      * make, in the folder the shell stands in: in a port's folder, builds the port on this machine and installs,
      * cleans or removes it as the targets ask; anywhere else, there is nothing to make.
      *

@@ -181,8 +181,9 @@ final class DesktopListings {
     private static List<String> installedApps(final IOsHost computer) {
         final List<String> apps = new ArrayList<>();
         final OsDef os = computer.installedOs();
+        // A package, or a program its system's install put on the machine (Linux Mint's own two).
         for (final ProgramSpec spec : OsRegistry.programs()) {
-            if (spec.installable() && spec.kind() == ProgramKind.APP && os != null
+            if (spec.kind() == ProgramKind.APP && os != null
                     && spec.platforms().contains(os.platform()) && installedAndAllowed(computer, spec)) {
                 apps.add(spec.id().getPath());
             }

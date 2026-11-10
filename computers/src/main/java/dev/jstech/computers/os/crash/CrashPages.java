@@ -36,6 +36,10 @@ public final class CrashPages {
     private static final int UNIX_TICKS = 100;
     /* What a Quince page stands once the player lets it go: the machine starts over at once. */
     private static final int QUINCE_TICKS = 20;
+    /* What OpenBSD's debugger stands once boot reboot is typed: it waits for nothing else, so it goes at once. */
+    private static final int OPENBSD_TICKS = 20;
+    /** What stands between two cells of a table ddb prints in columns, which a console page lines up. */
+    public static final String CELL = "\t";
     /** The moment the kernels' clocks count from, so the time a panic prints is a plausible one. */
     private static final long EPOCH_BASE = 1_728_741_600L;
     private static final String LINUX_REBOOT = "Rebooting in 10 seconds..";
@@ -119,6 +123,7 @@ public final class CrashPages {
                 default -> CrashStyle.FRAMES_11;
             };
             case LINUX, FREEBSD, UNIX -> CrashStyle.CONSOLE;
+            case OPENBSD -> CrashStyle.DDB;
             case QUINCE -> familyRank <= QuinceFamily.QUINCE_SYSTEM ? CrashStyle.QUINCE_BOMB
                     : QuinceFamily.classic(familyRank) ? CrashStyle.QUINCE_OS_9_BOMB : CrashStyle.QUINCE_RESTART;
             case MC_DOS, MC_NET -> null;
@@ -152,6 +157,7 @@ public final class CrashPages {
                     facts.asking().isEmpty() ? "" : "\"" + facts.asking() + "\"", facts.part(), List.of(),
                     QUINCE_TICKS, true);
             case QUINCE_RESTART -> new CrashPage(style, cause, "", "", facts.part(), List.of(), QUINCE_TICKS, true);
+            case DDB -> openBsd(cause, facts);
         };
     }
 
@@ -192,6 +198,7 @@ public final class CrashPages {
     public static String killLine(final Platform platform, final long uptimeTicks, final Victim victim) {
         return switch (platform) {
             case FREEBSD -> freeBsdKill(victim);
+            case OPENBSD -> openBsdKill(victim);
             case UNIX -> systemVKill(victim);
             default -> new Clock(uptimeTicks).stamp(linuxKill(victim));
         };
@@ -396,6 +403,84 @@ public final class CrashPages {
         out.add("Uptime: " + clock.freeBsdUptime());
         out.add(FREEBSD_REBOOT);
         return out;
+    }
+
+    /**
+     * OpenBSD's stop in the kernel debugger: the panic, where it stopped, the thread that panicked in ddb's ps table,
+     * the trace, and the words about what a bug report needs, ending at {@code ddb>}. The page's stop code is the
+     * panic, for {@code show panic}; its stop line is ddb's whole ps table, a row a line, for {@code ps}.
+     */
+    private static CrashPage openBsd(final CrashCause cause, final Facts facts) {
+        final List<String> out = new ArrayList<>();
+        final String panic;
+        final List<String> trace;
+        switch (cause) {
+            case HARDWARE -> {
+                out.add("cpu0: machine check: bank 4 status 0xbe00000000800400");
+                panic = "machine check: " + (facts.part().isEmpty() ? "cpu0" : facts.part());
+                trace = List.of("mca_trap(d0c4e1a0) at mca_trap+0x1b", "trap(d0c4e1a0) at trap+0x2e7");
+            }
+            case THERMAL_TRIP -> {
+                out.add("cpu0: critical temperature exceeded");
+                panic = "machine check: cpu0: thermal trip";
+                trace = List.of("mca_trap(d0c4e1a0) at mca_trap+0x1b", "trap(d0c4e1a0) at trap+0x2e7");
+            }
+            case POWER_SUPPLY -> {
+                out.add("acpibtn0: power supply failure (" + facts.part() + ")");
+                panic = "power supply failure";
+                trace = List.of("acpi_intr(d6c1a000) at acpi_intr+0x3c", "intr_handler(d0c4e1a0) at intr_handler+0x1f");
+            }
+            case UNSTABLE_POWER -> {
+                out.add("acpiac0: AC line voltage unstable");
+                panic = "unstable power";
+                trace = List.of("acpi_intr(d6c1a000) at acpi_intr+0x3c", "intr_handler(d0c4e1a0) at intr_handler+0x1f");
+            }
+            case INIT_KILLED -> {
+                out.add(facts.typed());
+                panic = "init died (signal " + facts.signal() + ", exit 0)";
+                trace = List.of("exit1(d6c19e40," + facts.signal() + ",0,0) at exit1+0x2c1",
+                        "sigexit(d6c19e40," + facts.signal() + ") at sigexit+0x6f");
+            }
+            case MEMORY -> {
+                for (final Victim victim : facts.killed()) {
+                    out.add(openBsdKill(victim));
+                }
+                panic = "malloc: out of space in kmem_map";
+                trace = List.of("malloc(1000,2,1) at malloc+0x5c1", "uvm_fault(d0c8e2a0,0,0,1) at uvm_fault+0xa4");
+            }
+            default -> throw new IllegalStateException();
+        }
+        // The tables are cells apart, as ddb lines them up in columns; the first cell marks the thread that panicked.
+        out.add("panic: " + panic);
+        out.add("Stopped at      db_enter+0x4:   popl    %ebp");
+        out.add(String.join(CELL, "", "TID", "PID", "UID", "PRFLAGS", "PFLAGS", "CPU", "COMMAND"));
+        out.add(String.join(CELL, "*", "23118", "1", "0", "0x0", "0x400", "0", facts.initName()));
+        out.add("db_enter() at db_enter+0x4");
+        out.add("panic(d0b7a2f4) at panic+0x7a");
+        out.addAll(trace);
+        out.add("end trace frame: 0xf2a41f8c, count: " + (trace.size() + 9));
+        out.add("https://www.openbsd.org/ddb.html describes the minimum info required in bug");
+        out.add("reports.  Insufficient info makes it difficult to find and fix bugs.");
+        // ddb's process table: the base system's daemons, what asked for memory when it ran out, and init.
+        final List<String> ps = new ArrayList<>();
+        ps.add(String.join(CELL, "", "PID", "TID", "PPID", "UID", "S", "FLAGS", "WAIT", "COMMAND"));
+        ps.add(String.join(CELL, "", "4211", "81642", "1", "0", "3", "0x83", "ttyin", "ksh"));
+        if (!facts.asking().isEmpty()) {
+            ps.add(String.join(CELL, "", String.valueOf(facts.askingPid()), "40417", "4211", "0", "7", "0x3", "",
+                    facts.asking()));
+        }
+        ps.add(String.join(CELL, "", "212", "30577", "1", "0", "3", "0x80", "kqread", "sshd"));
+        ps.add(String.join(CELL, "", "198", "61290", "1", "0", "3", "0x80", "nanoslp", "cron"));
+        ps.add(String.join(CELL, "", "96", "11734", "1", "0", "3", "0x90", "bpf", "pflogd"));
+        ps.add(String.join(CELL, "", "71", "52018", "1", "0", "3", "0x90", "kqread", "syslogd"));
+        ps.add(String.join(CELL, "*", "1", "23118", "0", "0", "7", "0x0", "", facts.initName()));
+        return new CrashPage(CrashStyle.DDB, cause, panic, String.join("\n", ps), facts.part(), out,
+                OPENBSD_TICKS, true);
+    }
+
+    /** The line OpenBSD logs for a process it killed for want of memory. */
+    public static String openBsdKill(final Victim victim) {
+        return "uvm_fault: pid " + victim.pid() + " (" + victim.name() + "), uid 0: killed: out of swap";
     }
 
     private static List<String> systemV(final CrashCause cause, final Facts facts) {

@@ -192,6 +192,8 @@ final class InstallerFrames {
             case METRO -> metro(g, font, flow, sx, sy, sw, sh, held);
             case FIRST_SETUP -> firstSetup(g, font, flow, sx, sy, sw, sh, held);
             case QUINCE_DESKTOP -> InstallerQuince.paint(g, font, flow, ticksDone, sx, sy, sw, sh, held);
+            // OpenBSD's terminal and Mint's live desktop draw the whole page themselves, buttons and all.
+            case TERMINAL, LIVE_DESKTOP -> Frame.none();
         };
     }
 
@@ -907,7 +909,7 @@ final class InstallerFrames {
              * bsdinstall paints its own navy ground in dialogBox(), and Quince's installers their own desktop, and
              * neither asks the plain-text ink for it.
              */
-            case BSD_INSTALL, QUINCE_SYSTEM, QUINCE_OS_9, QUINCE_OS_X -> PLAIN_INK.get();
+            case BSD_INSTALL, QUINCE_SYSTEM, QUINCE_OS_9, QUINCE_OS_X, OPENBSD, MINT -> PLAIN_INK.get();
         };
     }
 
@@ -982,6 +984,11 @@ final class InstallerFrames {
      * <p>A button that a frame does not draw is null, and the page reaches the same thing with a key.
      */
     record Frame(int x, int y, int w, int h, Paint paint, int[] next, int[] back, int[] cancel, int[] erase) {
+
+        /** No frame at all: an installer that draws its whole page itself, buttons and all. */
+        static Frame none() {
+            return new Frame(0, 0, 0, 0, new Paint(0, 0, 0, 0, 0, 0), null, null, null, null);
+        }
     }
 
     /** The ink a page is written in inside its frame. */

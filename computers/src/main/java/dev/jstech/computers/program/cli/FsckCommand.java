@@ -45,7 +45,7 @@ public final class FsckCommand implements ICliCommand {
 
     @Override
     public CommandScope scope() {
-        return CommandScope.on(Platform.LINUX, Platform.FREEBSD, Platform.UNIX);
+        return CommandScope.on(Platform.LINUX, Platform.FREEBSD, Platform.OPENBSD, Platform.UNIX);
     }
 
     @Override

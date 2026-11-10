@@ -43,6 +43,16 @@ class CrashPagesTest {
     }
 
     @Test
+    void styleFor_openBsdStopsInItsDebuggerAndWaitsThere() {
+        assertEquals(CrashStyle.DDB, CrashPages.styleFor(Platform.OPENBSD, 0));
+        assertTrue(CrashStyle.DDB.standsUntilRestarted());
+        final CrashPage page = page(CrashStyle.DDB, Platform.OPENBSD, CrashCause.MEMORY,
+                CrashPages.Moment.memory("firefox", 12, List.of()));
+        assertEquals("malloc: out of space in kmem_map", page.stopCode(), "what show panic says");
+        assertTrue(page.stopLine().contains("syslogd"), "ddb's ps lists the base system's daemons");
+    }
+
+    @Test
     void of_framesNamesTheStopCodeOfTheCause() {
         assertEquals("MEMORY_MANAGEMENT", page(CrashStyle.FRAMES_XP, Platform.FRAMES, CrashCause.MEMORY,
                 CrashPages.Moment.memory("Paint", 0, List.of())).stopCode());

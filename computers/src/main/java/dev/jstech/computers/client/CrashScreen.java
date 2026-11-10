@@ -18,7 +18,9 @@ import dev.jstech.computers.operation.payload.crash.CrashKeyPayload;
 import dev.jstech.computers.operation.payload.crash.OpenCrashPayload;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPage;
+import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.crash.CrashStyle;
+import dev.jstech.computers.os.crash.Debugger;
 import dev.jstech.computers.os.crash.QrCode;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -59,6 +61,17 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
     /** Where a Quince bomb's Restart was last drawn on the glass, {@code {x, y, w, h}}; null on every other page. */
     @Nullable
     private int[] restartButton;
+    /** What has been typed at OpenBSD's {@code ddb>} and what it answered, a line each, below the page's own lines. */
+    private final List<String> debugged = new ArrayList<>();
+    /** The line being typed at {@code ddb>}. */
+    private String typing = "";
+
+    /* Where OpenBSD's debugger puts each column of its two tables, from the glass's left: a negative stop right-aligns
+     * its cell there. Its thread table has eight cells, its process table nine. */
+    private static final int[] DDB_THREADS = {0, -30, -55, -80, -125, -165, -185, 195};
+    private static final int[] DDB_PROCESSES = {0, -20, -46, -67, -84, 90, -131, 140, 190};
+    /** The longest line ddb takes, longer than any command it knows. */
+    private static final int DDB_MOST_TYPED = 64;
 
     private static final int W = MonitorGlass.WIDTH;
     private static final int H = MonitorGlass.HEIGHT;
@@ -163,6 +176,10 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
         if (key == GLFW.GLFW_KEY_ESCAPE) {
             return super.keyPressed(key, scanCode, modifiers);
         }
+        if (this.page.style() == CrashStyle.DDB) {
+            debuggerKey(key);
+            return true;
+        }
         if (this.page.holdsOnKey() && !onFace()) {
             PacketDistributor.sendToServer(new CrashKeyPayload(this.host));
         }
@@ -171,7 +188,28 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
 
     @Override
     public boolean charTyped(final char c, final int modifiers) {
+        if (this.page.style() == CrashStyle.DDB && c >= ' ' && this.typing.length() < DDB_MOST_TYPED) {
+            this.typing += c;
+        }
         return true;
+    }
+
+    /* A key at ddb: Enter runs the line, and boot reboot starts the machine over; Backspace takes a letter back. */
+    private void debuggerKey(final int key) {
+        if (key == GLFW.GLFW_KEY_BACKSPACE && !this.typing.isEmpty()) {
+            this.typing = this.typing.substring(0, this.typing.length() - 1);
+            return;
+        }
+        if (key != GLFW.GLFW_KEY_ENTER && key != GLFW.GLFW_KEY_KP_ENTER) {
+            return;
+        }
+        final Debugger.Answer answer = Debugger.answer(this.page, this.typing);
+        this.debugged.add(Debugger.PROMPT + this.typing);
+        this.debugged.addAll(answer.printed());
+        this.typing = "";
+        if (answer.reboots() && !onFace()) {
+            PacketDistributor.sendToServer(new CrashKeyPayload(this.host));
+        }
     }
 
     @Override
@@ -222,6 +260,7 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
             case FRAMES_XP, FRAMES_7 -> framesNt(g, c);
             case FRAMES_10, FRAMES_11 -> framesModern(g, c);
             case CONSOLE -> console(g, c);
+            case DDB -> debugger(g, c);
             case QUINCE_BOMB, QUINCE_RESTART, QUINCE_OS_9_BOMB -> {
                 // Drawn by quince() above, over the desktop the system went down on.
             }
@@ -261,7 +300,7 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
             case FRAMES_XP, FRAMES_7 -> red ? c.redNt() : c.blueNt();
             case FRAMES_10 -> red ? c.redModern() : c.blue10();
             case FRAMES_11 -> red ? c.redModern() : c.blue11();
-            case CONSOLE -> c.consoleGround();
+            case CONSOLE, DDB -> c.consoleGround();
             case QUINCE_BOMB, QUINCE_RESTART, QUINCE_OS_9_BOMB -> QuincePages.ground(this.page.style());
         };
     }
@@ -409,6 +448,56 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
         for (int i = first; i < rows.size(); i++) {
             TextWall.draw(g, font, rows.get(i), CrashLayout.CONSOLE_MARGIN, y, colours.get(i));
             y += CrashLayout.ROW;
+        }
+    }
+
+    /*
+     * OpenBSD's debugger: the panic as it stopped, what was typed at ddb> since and what it answered, and the prompt
+     * with the line being typed; a row of a table is drawn in its columns. The oldest rows go first when it overflows.
+     */
+    private void debugger(final GuiGraphics g, final Colours c) {
+        final List<String> lines = new ArrayList<>(this.page.lines());
+        lines.addAll(this.debugged);
+        // The cursor blinks at the end of the line being typed, as a console's does.
+        final boolean cursor = (this.ticks / 10) % 2 == 0 || this.held;
+        lines.add(Debugger.PROMPT + this.typing + (cursor ? "_" : ""));
+        final List<String> rows = new ArrayList<>();
+        final List<Integer> colours = new ArrayList<>();
+        for (final String line : lines) {
+            final int colour = headline(line) ? c.consoleHot() : c.consoleInk();
+            final List<String> wrapped = line.contains(CrashPages.CELL) ? List.of(line)
+                    : wrapHard(line, W - 2 * CrashLayout.CONSOLE_MARGIN);
+            for (final String row : wrapped) {
+                rows.add(row);
+                colours.add(colour);
+            }
+        }
+        final int first = Math.max(0, rows.size() - CrashLayout.consoleRows());
+        int y = CrashLayout.CONSOLE_MARGIN;
+        for (int i = first; i < rows.size(); i++) {
+            final String row = rows.get(i);
+            if (row.contains(CrashPages.CELL)) {
+                columns(g, row.split(CrashPages.CELL, -1), y, colours.get(i));
+            } else {
+                TextWall.draw(g, font, row, CrashLayout.CONSOLE_MARGIN, y, colours.get(i));
+            }
+            y += CrashLayout.ROW;
+        }
+    }
+
+    /*
+     * A row of one of ddb's tables, each cell at its column's stop: the thread table's eight, the process table's
+     * nine.
+     */
+    private void columns(final GuiGraphics g, final String[] cells, final int y, final int colour) {
+        final int[] stops = cells.length >= DDB_PROCESSES.length ? DDB_PROCESSES : DDB_THREADS;
+        for (int i = 0; i < cells.length && i < stops.length; i++) {
+            if (cells[i].isEmpty()) {
+                continue;
+            }
+            final int stop = stops[i];
+            final int x = CrashLayout.CONSOLE_MARGIN + (stop < 0 ? -stop - TextWall.width(font, cells[i]) : stop);
+            TextWall.draw(g, font, cells[i], x, y, colour);
         }
     }
 

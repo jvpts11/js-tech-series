@@ -42,6 +42,8 @@ public final class FsckLines {
         return switch (look) {
             case LINUX -> List.of("fsck from util-linux 2.38.1", "e2fsck 1.47.0 (5-Feb-2023)");
             case FREEBSD -> List.of("** " + look.device(index));
+            // OpenBSD's fsck reads the raw device, which it names with an r in front.
+            case OPENBSD -> List.of("** /dev/r" + look.drive(index));
             case QUINCE -> List.of("** /dev/r" + look.drive(index), "** Checking HFS Plus volume.");
             default -> List.of("", look.device(index), "File System: " + (index == 0 ? "root" : "usr") + " Volume: 1",
                     "");
@@ -54,7 +56,7 @@ public final class FsckLines {
             case LINUX -> List.of("Pass 1: Checking inodes, blocks, and sizes", "Pass 2: Checking directory structure",
                     "Pass 3: Checking directory connectivity", "Pass 4: Checking reference counts",
                     "Pass 5: Checking group summary information");
-            case FREEBSD -> List.of("** Phase 1 - Check Blocks and Sizes", "** Phase 2 - Check Pathnames",
+            case FREEBSD, OPENBSD -> List.of("** Phase 1 - Check Blocks and Sizes", "** Phase 2 - Check Pathnames",
                     "** Phase 3 - Check Connectivity", "** Phase 4 - Check Reference Counts",
                     "** Phase 5 - Check Cyl groups");
             case QUINCE -> List.of("** Checking Extents Overflow file.", "** Checking Catalog file.",
@@ -104,7 +106,7 @@ public final class FsckLines {
                 out.add(drive + ": " + files + "/" + Math.max(files, blocks / EXT_BLOCKS_AN_INODE)
                         + " files (0.0% non-contiguous), " + usedMb * EXT_BLOCKS_A_MB + "/" + blocks + " blocks");
             }
-            case FREEBSD -> {
+            case FREEBSD, OPENBSD -> {
                 final long free = freeMb * EXT_BLOCKS_A_MB;
                 out.add((types + UFS_SYSTEM_FILES) + " files, " + usedMb * EXT_BLOCKS_A_MB + " used, " + free
                         + " free (" + free % UFS_FRAGS_A_BLOCK + " frags, " + free / UFS_FRAGS_A_BLOCK

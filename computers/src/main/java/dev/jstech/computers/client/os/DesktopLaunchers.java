@@ -124,7 +124,11 @@ final class DesktopLaunchers {
                 continue;
             }
             if (spec.preinstalled()) {
-                if (chrome != null && !chrome.bundles(spec.id())) {
+                /*
+                 * A program that ships with a system rather than with its desktop (Linux Mint's own two, the live
+                 * medium's installer) is on the machine because that system's install put it there.
+                 */
+                if (chrome != null && !chrome.bundles(spec.id()) && !installed.contains(spec.id().getPath())) {
                     continue;
                 }
                 if (!hostScopeAllows(spec.hostScope())) {

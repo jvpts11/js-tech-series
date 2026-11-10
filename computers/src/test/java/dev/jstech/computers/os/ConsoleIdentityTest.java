@@ -48,18 +48,19 @@ class ConsoleIdentityTest {
 
     @Test
     void ofWire_findsTheShellAndTheFamilyByTheirNames() {
-        final ConsoleIdentity console = ConsoleIdentity.ofWire("sh", false, "desk", "FreeBSD", "freebsd", 64);
+        final ConsoleIdentity console = ConsoleIdentity.ofWire("sh", false, "desk", "FreeBSD", "freebsd", 64, false);
         assertEquals(ShellKind.SH, console.shell());
         assertEquals("sh", console.shellName());
         assertEquals(Platform.FREEBSD, console.platform());
         assertEquals("freebsd", console.platformName());
+        assertFalse(console.manual());
     }
 
     @Test
     void ofWire_hasNoShellOrFamilyForANameNobodyDeclares() {
-        assertNull(ConsoleIdentity.ofWire("", false, "", "", "", 0).platform());
-        assertNull(ConsoleIdentity.ofWire("", false, "", "", "beos", 0).platform());
-        assertNull(ConsoleIdentity.ofWire("tcsh", false, "", "", "", 0).shell());
+        assertNull(ConsoleIdentity.ofWire("", false, "", "", "", 0, true).platform());
+        assertNull(ConsoleIdentity.ofWire("", false, "", "", "beos", 0, true).platform());
+        assertNull(ConsoleIdentity.ofWire("tcsh", false, "", "", "", 0, true).shell());
         assertEquals("", ConsoleIdentity.NONE.platformName());
         assertEquals("", ConsoleIdentity.NONE.shellName());
     }

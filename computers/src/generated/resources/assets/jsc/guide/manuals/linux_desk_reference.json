@@ -6,6 +6,7 @@
   ],
   "chapters": [
     "jsc:fedora_debian_ubuntu",
+    "jsc:linux_mint",
     "jsc:shell",
     "jsc:unix_desktops",
     "jsc:terminal_editors",

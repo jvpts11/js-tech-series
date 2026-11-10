@@ -13,13 +13,21 @@ import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
+import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.operation.payload.InstallerActionPayload;
+import dev.jstech.computers.operation.payload.LiveInstallPayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
+import dev.jstech.computers.os.LiveOverlay;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.InstallerFlow;
+import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
+import dev.jstech.core.text.Text;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
 /**
@@ -43,6 +51,9 @@ public final class InstallerPayloads {
                 ComputerAccess.screenAt(InstallerActionPayload::hostPos, InstallerActionPayload::monitorPos,
                         MonitorSessionMenu.Phase.INSTALLER),
                 InstallerPayloads::handleAction);
+        // The live desktop's Install Linux Mint, which puts the installer over the live session.
+        ComputerAccess.accept(registrar, LiveInstallPayload.TYPE, LiveInstallPayload.STREAM_CODEC,
+                ComputerAccess.machine(LiveInstallPayload::hostPos), InstallerPayloads::handleLiveInstall);
     }
 
     /**
@@ -63,6 +74,38 @@ public final class InstallerPayloads {
     public static void chooseDesktopAndResize(final IOsHost machine, final InstallerFlow flow, final int index) {
         flow.chooseDesktop(index);
         resize(machine, flow);
+    }
+
+    /**
+     * Takes OpenBSD's answers (X, xenodm and the sets) and re-quotes the copy to the sets that are left, exactly what
+     * a real {@link InstallerActionPayload#ACTION_OPTIONS} answer does. Exposed for the same reason as
+     * {@link #selectDiskAndResize}.
+     */
+    public static void answerOptionsAndResize(final IOsHost machine, final InstallerFlow flow, final int options) {
+        flow.setOptions(options);
+        resize(machine, flow);
+    }
+
+    /**
+     * Starts the system's installer over a live session, from the medium the machine started from, and puts the one
+     * who asked in front of it; one already under way is simply shown again. A machine that cannot take the system
+     * says why on its desktop, in the corner, the way it says anything else.
+     */
+    private static void handleLiveInstall(final LiveInstallPayload payload, final ServerPlayer player,
+                                          final ServerLevel level) {
+        if (!(level.getBlockEntity(payload.hostPos()) instanceof IOsHost machine) || !machine.liveSession()) {
+            return;
+        }
+        if (machine.installer() == null) {
+            final Text failure = FirmwarePayloads.beginInstall(level, machine, FirmwarePayloads.ANY_READER, -1);
+            if (failure != null) {
+                final ProgramSpec installer = OsRegistry.getProgram(LiveOverlay.INSTALLER);
+                PacketDistributor.sendToPlayer(player, new DesktopBalloonPayload(payload.hostPos(),
+                        installer == null ? Text.EMPTY : installer.name().text(), failure, ""));
+                return;
+            }
+        }
+        MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
     }
 
     private static void handleAction(final InstallerActionPayload payload, final ServerPlayer player,
@@ -105,6 +148,15 @@ public final class InstallerPayloads {
             }
             case InstallerActionPayload.ACTION_CRON -> flow.setCronEnabled(payload.value() != 0);
             case InstallerActionPayload.ACTION_SSHD -> flow.setSshdEnabled(payload.value() != 0);
+            case InstallerActionPayload.ACTION_OPTIONS -> answerOptionsAndResize(machine, flow, payload.value());
+            case InstallerActionPayload.ACTION_HALT -> {
+                halt(machine, player, flow);
+                return;
+            }
+            case InstallerActionPayload.ACTION_CONTINUE_TESTING -> {
+                continueTesting(machine, player, level, payload, flow);
+                return;
+            }
             case InstallerActionPayload.ACTION_GO_TO -> flow.goToStage(payload.value());
             case InstallerActionPayload.ACTION_QUIT -> {
                 quit(machine, player, level, payload);
@@ -160,15 +212,44 @@ public final class InstallerPayloads {
         }
         machine.setInstaller(null);
         machine.setInstalling(null);
+        // Quitting an installer that ran on a live desktop goes back to that desktop, which is still running.
+        if (machine.liveSession()) {
+            MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
+            return;
+        }
         player.closeContainer();
         MonitorBlock.openFirmware(player, level, payload.monitorPos(),
                 payload.hostPos());
     }
 
-    /** The last page's one action: restart into the system that was just written. */
-    private static void reboot(final IOsHost machine, final ServerPlayer player,
-                               final ServerLevel level, final InstallerActionPayload payload,
-                               final InstallerFlow flow) {
+    /**
+     * OpenBSD's other way out of its last page: halt, which leaves the system written and the machine switched off;
+     * the next start boots what was installed.
+     */
+    private static void halt(final IOsHost machine, final ServerPlayer player, final InstallerFlow flow) {
+        if (flow.page() != InstallerPage.DONE) {
+            return;
+        }
+        finishOn(machine, flow);
+        player.closeContainer();
+        machine.setPowered(false);
+    }
+
+    /**
+     * Linux Mint's Continue Testing: back to its live desktop, the system written and waiting on the disk for the
+     * restart that boots it.
+     */
+    private static void continueTesting(final IOsHost machine, final ServerPlayer player, final ServerLevel level,
+                                        final InstallerActionPayload payload, final InstallerFlow flow) {
+        if (flow.page() != InstallerPage.DONE || !machine.liveSession()) {
+            return;
+        }
+        finishOn(machine, flow);
+        MonitorBlock.openSession(player, level, payload.monitorPos(), payload.hostPos());
+    }
+
+    /* What ending the installer leaves: no installer, the copy done, and the disk it wrote booted first. */
+    private static void finishOn(final IOsHost machine, final InstallerFlow flow) {
         final int slot = flow.targetSlot();
         machine.setInstaller(null);
         machine.setInstalling(null);
@@ -176,6 +257,13 @@ public final class InstallerPayloads {
         if (slot >= 0) {
             machine.setBootDiskSlot(slot);
         }
+    }
+
+    /** The last page's one action: restart into the system that was just written. */
+    private static void reboot(final IOsHost machine, final ServerPlayer player,
+                               final ServerLevel level, final InstallerActionPayload payload,
+                               final InstallerFlow flow) {
+        finishOn(machine, flow);
         machine.setNeedsPost(true);
         /*
          * A restart is a restart: the machine tests itself again and then brings the system up from the

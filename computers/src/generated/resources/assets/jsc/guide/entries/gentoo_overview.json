@@ -100,7 +100,7 @@
   ],
   "icon": "jsc:usb_flash_drive",
   "id": "jsc:gentoo_overview",
-  "order": 276,
+  "order": 280,
   "section": "jsc:gentoo_install",
   "title": "jsc.guide.gentoo_overview.title"
 }

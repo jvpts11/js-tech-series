@@ -117,6 +117,13 @@ public record DesktopLook(OsSkin skin, @Nullable OsSkin periodSkin, @Nullable Os
      * usual one everywhere else. The wallpaper comes with the system, not with the desktop alone.
      */
     public WallpaperStyle wallpaperOn(final Platform platform) {
+        /*
+         * OpenBSD hangs its one sea on every desktop that hangs a picture at all
+         * (computers/docs/design/operating-systems.md).
+         */
+        if (platform == Platform.OPENBSD && this.wallpaper != WallpaperStyle.MOTIF) {
+            return WallpaperStyle.OPENBSD_SEA;
+        }
         return platform == Platform.FREEBSD && this.freeBsdWallpaper != null ? this.freeBsdWallpaper : this.wallpaper;
     }
 

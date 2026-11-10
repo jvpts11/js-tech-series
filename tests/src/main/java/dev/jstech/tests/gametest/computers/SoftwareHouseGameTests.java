@@ -47,12 +47,14 @@ public final class SoftwareHouseGameTests {
 
     @GameTest(template = ARENA)
     public static void systemsAndDesktops_nameTheirMakers(final GameTestHelper helper) {
-        final Map<String, SoftwareHouse> systems = Map.of(
-                "mc_dos", SoftwareHouse.MIDSOFT, "mc_net", SoftwareHouse.NOUVELL,
-                "frames_95", SoftwareHouse.MIDSOFT, "frames_11", SoftwareHouse.MIDSOFT,
-                "ubuntu", SoftwareHouse.AXIOMATIC, "debian", SoftwareHouse.DEBIAN_CIRCLE,
-                "fedora", SoftwareHouse.RED_CAP, "arch", SoftwareHouse.ARCH_COLLECTIVE,
-                "gentoo", SoftwareHouse.GENTOO_FOUNDRY);
+        final Map<String, SoftwareHouse> systems = Map.ofEntries(
+                Map.entry("mc_dos", SoftwareHouse.MIDSOFT), Map.entry("mc_net", SoftwareHouse.NOUVELL),
+                Map.entry("frames_95", SoftwareHouse.MIDSOFT), Map.entry("frames_11", SoftwareHouse.MIDSOFT),
+                Map.entry("ubuntu", SoftwareHouse.AXIOMATIC), Map.entry("debian", SoftwareHouse.DEBIAN_CIRCLE),
+                Map.entry("fedora", SoftwareHouse.RED_CAP), Map.entry("arch", SoftwareHouse.ARCH_COLLECTIVE),
+                Map.entry("gentoo", SoftwareHouse.GENTOO_FOUNDRY),
+                Map.entry("openbsd", SoftwareHouse.BLOWFISH_PROJECT),
+                Map.entry("linux_mint", SoftwareHouse.SPEARMINT));
         systems.forEach((id, house) -> helper.assertTrue(OsRegistry.getOs(rl(id)).house().equals(house),
                 id + " is " + house.name() + "'s; got " + OsRegistry.getOs(rl(id)).house().name()));
         final Map<String, SoftwareHouse> desktops = Map.of(

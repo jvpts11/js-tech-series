@@ -281,7 +281,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:prophet_youriql",
-  "order": 339,
+  "order": 350,
   "section": "jsc:engine_choice",
   "title": "jsc.guide.prophet_youriql.title"
 }

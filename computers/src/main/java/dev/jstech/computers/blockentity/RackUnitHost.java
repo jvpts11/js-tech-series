@@ -342,6 +342,14 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
     }
 
     @Override
+    public void startService(final ResourceLocation service) {
+        rack.asUnit(row, () -> {
+            rack.startService(service);
+            return null;
+        });
+    }
+
+    @Override
     @Nullable
     public ComputerBuild currentBuild() {
         return rack.asUnit(row, rack::currentBuild);

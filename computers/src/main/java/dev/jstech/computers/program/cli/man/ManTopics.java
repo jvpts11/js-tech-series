@@ -41,9 +41,28 @@ public final class ManTopics {
 
     /** The topic FreeBSD's welcome points a newcomer at, since the system has no interactive help of its own. */
     private static final Topic INTRO = new Topic("intro", INTRO_SUMMARY,
-            List.of(INTRO_ABOUT_1, INTRO_ABOUT_2), List.of("man", "apropos", "whatis"), Set.of(Platform.FREEBSD));
+            List.of(INTRO_ABOUT_1, INTRO_ABOUT_2), List.of("man", "apropos", "whatis"),
+            Set.of(Platform.FREEBSD, Platform.OPENBSD));
 
-    private static final List<Topic> ALL = List.of(INTRO);
+    private static final TextKey AFTERBOOT_SUMMARY = TextKey.of("jsc.cli.man.afterboot.summary",
+            "things to check after the first complete boot");
+    private static final TextKey AFTERBOOT_ABOUT_1 = TextKey.of("jsc.cli.man.afterboot.about.1", "OpenBSD comes up"
+            + " at its terminal with only what it needs switched on, which is what secure by default means: rcctl"
+            + " ls on lists what runs, rcctl enable switches a service on for every start and rcctl start starts it"
+            + " now.");
+    private static final TextKey AFTERBOOT_ABOUT_2 = TextKey.of("jsc.cli.man.afterboot.about.2", "Packages come"
+            + " from the network's Mirror with pkg_add, are listed with pkg_info and taken off with pkg_delete. A"
+            + " desktop installed comes up only once rcctl enable xenodm has switched its display manager on.");
+    private static final TextKey AFTERBOOT_ABOUT_3 = TextKey.of("jsc.cli.man.afterboot.about.3", "syspatch installs"
+            + " the system's own patches from the Mirror, which syspatch -c lists first; /etc/pf.conf holds the"
+            + " firewall's rules, which pfctl -si reports on; and doas runs a command as another user.");
+
+    /** The page OpenBSD's welcome points a newcomer at: what to do with a system fresh from its installer. */
+    private static final Topic AFTERBOOT = new Topic("afterboot", AFTERBOOT_SUMMARY,
+            List.of(AFTERBOOT_ABOUT_1, AFTERBOOT_ABOUT_2, AFTERBOOT_ABOUT_3),
+            List.of("rcctl", "pkg_add", "syspatch", "doas"), Set.of(Platform.OPENBSD));
+
+    private static final List<Topic> ALL = List.of(INTRO, AFTERBOOT);
 
     private ManTopics() {
     }

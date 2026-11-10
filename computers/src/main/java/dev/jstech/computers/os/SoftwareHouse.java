@@ -42,6 +42,9 @@ public record SoftwareHouse(String name, String legalName) {
     public static final SoftwareHouse GENTOO_FOUNDRY = new SoftwareHouse("Gentoo Foundry", "the Gentoo Foundry");
     public static final SoftwareHouse DAEMON_FOUNDATION =
             new SoftwareHouse("Daemon Foundation", "the Daemon Foundation");
+    /** OpenBSD's house, named after the cipher the real project made. */
+    public static final SoftwareHouse BLOWFISH_PROJECT =
+            new SoftwareHouse("Blowfish Project", "the Blowfish Project");
     public static final SoftwareHouse BELLWETHER_LABS = new SoftwareHouse("Bellwether Labs", "Bellwether Labs");
     public static final SoftwareHouse OPEN_DESK_CONSORTIUM =
             new SoftwareHouse("Open Desk Consortium", "the Open Desk Consortium");

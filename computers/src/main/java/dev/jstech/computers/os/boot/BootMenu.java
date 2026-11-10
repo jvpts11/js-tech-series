@@ -97,10 +97,18 @@ public record BootMenu(BootManager manager, Text title, List<Entry> entries, int
         private final BootManager manager;
         private final List<Entry> entries = new ArrayList<>();
         private int defaultIndex;
+        private Text title;
 
         /** A menu of that manager's, which is who decides how it is drawn and what it is headed with. */
         public Builder(final BootManager manager) {
             this.manager = manager;
+            this.title = manager.title();
+        }
+
+        /** Heads the menu with that rather than the manager's own words: what OpenBSD's boot probed of the machine. */
+        public Builder title(final Text heading) {
+            this.title = heading;
+            return this;
         }
 
         public Builder entry(final Text label, final int slot, final String osId) {
@@ -127,8 +135,7 @@ public record BootMenu(BootManager manager, Text title, List<Entry> entries, int
         }
 
         public BootMenu build(final int countdownTicks) {
-            return new BootMenu(this.manager, this.manager.title(), this.entries, this.defaultIndex,
-                    countdownTicks);
+            return new BootMenu(this.manager, this.title, this.entries, this.defaultIndex, countdownTicks);
         }
     }
 }

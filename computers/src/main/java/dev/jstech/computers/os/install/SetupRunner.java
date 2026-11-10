@@ -18,7 +18,9 @@ import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
 import dev.jstech.computers.operation.payload.SetupProgressPayload;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OpenBsdServices;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
@@ -248,6 +250,10 @@ public final class SetupRunner {
         }
         console.install(id);
         console.setInstalledVersion(id, ProgramVersions.of(id));
+        final ProgramSpec installed = OsRegistry.getProgram(program);
+        if (installed != null) {
+            OpenBsdServices.installed(host, installed);
+        }
         JscEvents.awardHost(host, JscEvents.PROGRAM_INSTALLED, path);
         if (fromMirror(job)) {
             JscEvents.awardHost(host, JscEvents.MIRROR_INSTALL, path);

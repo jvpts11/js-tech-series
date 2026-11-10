@@ -7,14 +7,17 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.operation.payload.NiDepositPayload;
 import dev.jstech.computers.operation.payload.NiShiftInsertPayload;
 import dev.jstech.computers.operation.payload.workshop.WorkshopActionPayload;
 import dev.jstech.computers.os.PanelStyle;
+import dev.jstech.computers.os.WindowKeys;
 import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +53,9 @@ final class DesktopInput {
 
     /** How close two clicks on one icon must come to open it, in milliseconds. */
     private static final long DOUBLE_CLICK_MS = 300L;
+    /** Linux Mint's Update Manager, which its shield on the panel opens. */
+    private static final ResourceLocation UPDATE_MANAGER =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "update_manager");
 
     DesktopInput(final DesktopScreen screen, final DesktopState desktop) {
         this.screen = screen;
@@ -390,6 +396,11 @@ final class DesktopInput {
          */
         if (desktop.transitionPanel() && !desktop.transitionPanels().onCashew(mouseX, mouseY)
                 && desktop.transitionPanels().click(mouseX, mouseY, button, tbY)) {
+            return true;
+        }
+        // Linux Mint's Update Manager shield on the panel opens the Update Manager.
+        if (button == 0 && !view.panelOnTop() && desktop.tray().onUpdateShield(mouseX, mouseY, view.width(), tbY)) {
+            desktop.opener().openOrFocus(WindowKeys.of(UPDATE_MANAGER));
             return true;
         }
         // The speaker on the panel: the left button opens the volume control, the right one its menu.

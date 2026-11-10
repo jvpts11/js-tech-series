@@ -97,7 +97,20 @@ public enum InstallerStyle implements IStableName {
     QUINCE_OS_9("quince_os_9"),
 
     /** Quince OS X's, and that of every Quince system after it: an assistant of seven steps, a dot beside each. */
-    QUINCE_OS_X("quince_os_x");
+    QUINCE_OS_X("quince_os_x"),
+
+    /**
+     * OpenBSD's: questions and answers at the terminal, in the real one's order (computers/docs/design/
+     * operating-systems.md): the machine's name, its services, the root disk, where the sets come from and which
+     * of them go, then the sets one by one with their bars, and the way out.
+     */
+    OPENBSD("openbsd"),
+
+    /**
+     * Linux Mint's: a window on the live desktop its medium started, in five screens, the installation type, the
+     * divider beside another system, who you are while the files are copied, the copy and the end.
+     */
+    MINT("mint");
 
     private static final TextKey TITLE_INSTALLER = TextKey.of("jsc.install.installer_style.title_installer",
             "%s installer");
@@ -342,6 +355,39 @@ public enum InstallerStyle implements IStableName {
     private static final TextKey STEP_QUINCE_OPTIMIZING =
             TextKey.of("jsc.install.installer_style.step_quince_optimizing", "Optimizing system performance");
 
+    /*
+     * OpenBSD's sets, by the names its installer gives them, which are file names in every language; the three a
+     * player may leave out are package-visible, so the flow can drop a set left out from the copy.
+     */
+    private static final Text SET_BSD = Text.literal("bsd");
+    static final Text SET_BSD_RD = Text.literal("bsd.rd");
+    private static final Text SET_BASE = Text.literal("base75.tgz");
+    static final Text SET_COMP = Text.literal("comp75.tgz");
+    static final Text SET_MAN = Text.literal("man75.tgz");
+    private static final TextKey STEP_RELINKING = TextKey.of("jsc.install.installer_style.step_relinking",
+            "Relinking to create unique kernel");
+    private static final TextKey TITLE_OPENBSD = TextKey.of("jsc.install.installer_style.title_openbsd",
+            "%s installation program");
+
+    private static final TextKey MINT_TITLE = TextKey.of("jsc.install.installer_style.mint_title", "Install");
+    private static final TextKey MINT_TYPE = TextKey.of("jsc.install.installer_style.mint_type",
+            "Installation type");
+    private static final TextKey MINT_ALONGSIDE = TextKey.of("jsc.install.installer_style.mint_alongside",
+            "Install %s alongside %s");
+    private static final TextKey MINT_WHO = TextKey.of("jsc.install.installer_style.mint_who", "Who are you?");
+    private static final TextKey MINT_WELCOME = TextKey.of("jsc.install.installer_style.mint_welcome",
+            "Welcome to %s");
+    private static final TextKey MINT_COMPLETE = TextKey.of("jsc.install.installer_style.mint_complete",
+            "Installation Complete");
+    private static final TextKey STEP_MINT_COPYING = TextKey.of("jsc.install.installer_style.step_mint_copying",
+            "Copying files...");
+    private static final TextKey STEP_MINT_SYSTEM = TextKey.of("jsc.install.installer_style.step_mint_system",
+            "Installing system");
+    private static final TextKey STEP_MINT_HARDWARE = TextKey.of("jsc.install.installer_style.step_mint_hardware",
+            "Configuring hardware...");
+    private static final TextKey STEP_MINT_BOOT_LOADER =
+            TextKey.of("jsc.install.installer_style.step_mint_boot_loader", "Installing the boot loader...");
+
     private final String serializedName;
 
     InstallerStyle(final String serializedName) {
@@ -519,6 +565,31 @@ public enum InstallerStyle implements IStableName {
                             STEP_QUINCE_PREPARING, STEP_QUINCE_SYSTEM_FOLDER, STEP_QUINCE_APPLICATIONS,
                             STEP_QUINCE_OPTIMIZING)),
                     new Stage(InstallerPage.DONE, InstallerChrome.QUINCE_DESKTOP, List.of()));
+            /*
+             * The real order of questions; each set is a step of its own with its own bar, and the kernel is relinked
+             * once they are all in.
+             */
+            case OPENBSD -> List.of(
+                    new Stage(InstallerPage.WELCOME, InstallerChrome.TERMINAL, List.of()),
+                    new Stage(InstallerPage.NAME, InstallerChrome.TERMINAL, List.of()),
+                    new Stage(InstallerPage.SERVICES, InstallerChrome.TERMINAL, List.of()),
+                    new Stage(InstallerPage.DISK, InstallerChrome.TERMINAL, List.of()),
+                    new Stage(InstallerPage.MIRROR, InstallerChrome.TERMINAL, List.of()),
+                    new Stage(InstallerPage.COMPONENTS, InstallerChrome.TERMINAL, List.of()),
+                    new Stage(InstallerPage.COPY, InstallerChrome.TERMINAL,
+                            steps(SET_BSD, SET_BSD_RD, SET_BASE, SET_COMP, SET_MAN, STEP_RELINKING)),
+                    new Stage(InstallerPage.DONE, InstallerChrome.TERMINAL, List.of()));
+            /*
+             * The copy starts as soon as the changes are written and runs under "Who are you?", as the real one
+             * does, so its first step belongs to that page.
+             */
+            case MINT -> List.of(
+                    new Stage(InstallerPage.DISK, InstallerChrome.LIVE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.ALONGSIDE, InstallerChrome.LIVE_DESKTOP, List.of()),
+                    new Stage(InstallerPage.NAME, InstallerChrome.LIVE_DESKTOP, steps(STEP_MINT_COPYING)),
+                    new Stage(InstallerPage.COPY, InstallerChrome.LIVE_DESKTOP,
+                            steps(STEP_MINT_SYSTEM, STEP_MINT_HARDWARE, STEP_MINT_BOOT_LOADER)),
+                    new Stage(InstallerPage.DONE, InstallerChrome.LIVE_DESKTOP, List.of()));
         };
     }
 
@@ -572,6 +643,27 @@ public enum InstallerStyle implements IStableName {
         return this == FEDORA;
     }
 
+    /**
+     * Whether this installer has anything to ask of a Mirror: a desktop to offer with the system, or the sets of
+     * the system itself to fetch from it (OpenBSD's).
+     */
+    public boolean asksMirror() {
+        for (final Stage stage : this.stages()) {
+            if (stage.page() == InstallerPage.MIRROR || stage.page() == InstallerPage.DESKTOP) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Whether its medium starts a live desktop the installer runs on as a window, rather than starting the
+     * installer itself (Linux Mint's).
+     */
+    public boolean bootsLive() {
+        return this == MINT;
+    }
+
     /** Whether this installer offers a desktop with the system when a Mirror answers. */
     public boolean offersDesktop() {
         for (final Stage stage : this.stages()) {
@@ -593,6 +685,8 @@ public enum InstallerStyle implements IStableName {
             case FRAMES_10 -> TITLE_SETUP.with("Frames");
             case QUINCE_SYSTEM -> TITLE_QUINCE_SYSTEM.text();
             case QUINCE_OS_9, QUINCE_OS_X -> TITLE_INSTALL.with(systemName);
+            case OPENBSD -> TITLE_OPENBSD.with(systemName);
+            case MINT -> MINT_TITLE.text();
             default -> TITLE_SETUP.with(systemName);
         };
     }
@@ -711,7 +805,22 @@ public enum InstallerStyle implements IStableName {
                 case COPY -> INSTALLING_SYSTEM.with(systemName);
                 default -> QUINCE_X_DONE.text();
             };
+            /* A terminal has no headings: each question says what it is about. */
+            case OPENBSD -> Text.EMPTY;
+            /* The page beside another system names that system, which the screen knows and puts in. */
+            case MINT -> switch (page) {
+                case DISK -> MINT_TYPE.text();
+                case NAME -> MINT_WHO.text();
+                case COPY -> MINT_WELCOME.with(systemName);
+                case DONE -> MINT_COMPLETE.text();
+                default -> Text.EMPTY;
+            };
         };
+    }
+
+    /** The heading of Linux Mint's page beside another system, which names both. */
+    public Text alongside(final String systemName, final String other) {
+        return MINT_ALONGSIDE.with(systemName, other);
     }
 
     /** The line of keys along the foot of the page, empty where the installer draws buttons instead. */

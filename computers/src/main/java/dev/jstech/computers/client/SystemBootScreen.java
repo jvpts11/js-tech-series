@@ -117,8 +117,8 @@ public final class SystemBootScreen extends AbstractComputerScreen<MonitorSessio
 
     /** Whether the desktop's own loading screen has taken the glass from the system's lines, for a test to ask. */
     public boolean desktopSplashUp() {
-        return !checking() && !this.endsDark && DesktopSplashArt.has(this.who.desktopId())
-                && systemThrough() >= DesktopSplashArt.FROM;
+        return !checking() && !this.endsDark && !this.splash.coversDesktop()
+                && DesktopSplashArt.has(this.who.desktopId()) && systemThrough() >= DesktopSplashArt.FROM;
     }
 
     /** Whether the glass shows the check of the disks, which comes before the system's own lines, for a test to ask. */

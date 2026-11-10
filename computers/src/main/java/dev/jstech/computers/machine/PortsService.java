@@ -13,7 +13,6 @@ import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.Platform;
-import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
@@ -42,6 +41,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -50,8 +50,9 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The ports tree on a system that keeps one, and the ports built from it.
  *
- * <p>FreeBSD's other way of installing a program. Instead of a package somebody else built, the tree of every
- * program the Mirror serves the system, fetched as one snapshot and laid out on the disk, and in each program's
+ * <p>The BSDs' other way of installing a program. Instead of a package somebody else built, the tree of every
+ * program the Mirror serves the system, fetched as one snapshot by FreeBSD's portsnap or checked out by OpenBSD's
+ * cvs, and laid out on the disk, and in each program's
  * folder the recipe {@code make install clean} builds it by, on this machine and for it. The build is timed by this
  * machine's processor with all of its cores, which is how the ports build, and what it installs asks a little less
  * of the machine than the package would have (see SourceAdvantage).
@@ -109,6 +110,11 @@ public final class PortsService {
             TextKey.of("jsc.service.ports.dont_know", "make: don't know how to make %s. Stop");
     private static final TextKey STOPPED_IN =
             TextKey.of("jsc.service.ports.stopped_in", "%s\n\nmake: stopped in %s");
+    /* What cvs says when the Mirror does not answer, and when there is no tree yet to update. */
+    private static final TextKey CVS_NO_MIRROR = TextKey.of("jsc.service.ports.cvs_no_mirror",
+            "cvs [checkout aborted]: connect to mirror://mainframe failed: No route to host");
+    private static final TextKey CVS_NOT_CHECKED_OUT = TextKey.of("jsc.service.ports.cvs_not_checked_out",
+            "cvs update: in directory /usr/ports:\ncvs [update aborted]: no repository; run cvs checkout ports first");
 
     /** How long laying out one port's folder takes, and the least the whole tree takes. */
     private static final int TICKS_PER_PORT = 2;
@@ -218,9 +224,42 @@ public final class PortsService {
             final AtomicReference<CliLine> indexed = new AtomicReference<>(PortsVoices.noSpace());
             script.then(PortsVoices.extract(refreshing, origins,
                     Math.max(LEAST_LAY_TICKS, ports.size() * TICKS_PER_PORT),
-                    () -> indexed.set(this.lay(files, ports, !refreshing)), indexed::get));
+                    () -> indexed.set(this.lay(files, ports, !refreshing, PortsVoices::indexed)), indexed::get));
         }
         return ICliPackages.Installing.running(new TtyScriptProcess(script.done()));
+    }
+
+    /**
+     * OpenBSD's way to the same tree, cvs: {@code checkout} fetches every port the Mirror serves the system and lays
+     * the tree out afresh, and {@code update} fetches only the ports that changed into a tree already there. It is the
+     * one way OpenBSD has, so there is no snapshot to fetch first and nothing for a later command to find.
+     */
+    public ICliPackages.Installing checkout(final boolean update) {
+        final DriveTable.Drive system = this.systemDrive();
+        if (system == null) {
+            return refused(CliTexts.SAID_BY.with("cvs", NO_SYSTEM_DISK));
+        }
+        if (!this.packages.mirror().reachable()) {
+            return refused(CVS_NO_MIRROR.text());
+        }
+        if (update && !DiskFilesystem.exists(system.disk(), PortsTree.INDEX)) {
+            return refused(CVS_NOT_CHECKED_OUT.text());
+        }
+        final List<ProgramSpec> ports = this.packages.offered();
+        final Map<String, String> files = PortsTree.files(ports,
+                this.level.getGameTime() / SetupTiming.TICKS_PER_SECOND);
+        final List<String> origins = new ArrayList<>();
+        for (final ProgramSpec port : ports) {
+            if (!update || changed(system.disk(), port, files)) {
+                origins.add(PortsTree.origin(port));
+            }
+        }
+        final double kb = FileService.bytesOf(String.join("", files.values())) / 1024.0;
+        final int ticks = this.fetchTicks(Math.max(1.0, kb / 1024.0))
+                + Math.max(LEAST_LAY_TICKS, origins.size() * TICKS_PER_PORT);
+        final AtomicReference<CliLine> laid = new AtomicReference<>(PortsVoices.noSpace());
+        return ICliPackages.Installing.running(new TtyScriptProcess(PortsVoices.checkout(update, origins, ticks,
+                () -> laid.set(this.lay(files, ports, !update, PortsVoices::checkedOut)), laid::get)));
     }
 
     /**
@@ -395,8 +434,10 @@ public final class PortsService {
      *
      * @param fresh whether the tree is laid out afresh, which takes away what was there first, builds and all; an
      *              update only takes away the ports that are no longer served
+     * @param said  how the tool that brought it says how many ports it wrote and the room they take
      */
-    private CliLine lay(final Map<String, String> files, final List<ProgramSpec> ports, final boolean fresh) {
+    private CliLine lay(final Map<String, String> files, final List<ProgramSpec> ports, final boolean fresh,
+                        final BiFunction<Integer, String, CliLine> said) {
         final DriveTable.Drive system = this.systemDrive();
         if (system == null) {
             return PortsVoices.noSpace();
@@ -420,7 +461,7 @@ public final class PortsService {
         system.commit().run();
         final double megabytes = taken * (double) EraStorage.mbPerItem(DiskFilesystem.eraOf(disk))
                 / StorageKey.MB_EQ_PER_ITEM;
-        return PortsVoices.indexed(ports.size(), onDisk(megabytes));
+        return said.apply(ports.size(), onDisk(megabytes));
     }
 
     /** Takes away the tree that was there before it is laid out again, or the ports no longer served. */

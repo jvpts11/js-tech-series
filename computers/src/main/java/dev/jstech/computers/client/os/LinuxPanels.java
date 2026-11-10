@@ -17,6 +17,7 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * The bars the Linux desktops put their open windows on.
@@ -49,6 +50,10 @@ final class LinuxPanels {
     /* How strongly a put-away program's line and icon are faded, as alphas over their own colour. */
     private static final int FADED_LINE_ALPHA = 0x60;
     private static final int FADED_ICON_ALPHA = 0x90;
+    /** Linux Mint's mark as its menu button wears it, and how big the picture is. */
+    private static final ResourceLocation MINT_MENU =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/splash/mint_menu.png");
+    private static final int MINT_MENU_SIZE = 16;
 
     LinuxPanels(final DesktopState desktop) {
         this.desktop = desktop;
@@ -129,9 +134,15 @@ final class LinuxPanels {
             Draw.text(g, desktop.textFont(), "K", 12, tbY + 8, c.glyph());
             Draw.text(g, desktop.textFont(), GameText.resolve(PanelTexts.APPS), 26, tbY + 8, theme.startText());
         } else {
-            g.fill(8, tbY + 5, 22, tbY + 19, theme.startButton());
-            g.fill(11, tbY + 8, 19, tbY + 16, c.glyph());
-            g.fill(13, tbY + 10, 17, tbY + 14, theme.startButton());
+            if (desktop.wearsMintMark()) {
+                // On Linux Mint the menu button wears Mint's mark, as the real one does; elsewhere Cinnamon's square.
+                Draw.blended(() -> g.blit(MINT_MENU, 7, tbY + 4, 0.0F, 0.0F, MINT_MENU_SIZE, MINT_MENU_SIZE,
+                        MINT_MENU_SIZE, MINT_MENU_SIZE));
+            } else {
+                g.fill(8, tbY + 5, 22, tbY + 19, theme.startButton());
+                g.fill(11, tbY + 8, 19, tbY + 16, c.glyph());
+                g.fill(13, tbY + 10, 17, tbY + 14, theme.startButton());
+            }
             Draw.text(g, desktop.textFont(), GameText.resolve(PanelTexts.MENU), 26, tbY + 8, theme.startText());
         }
     }

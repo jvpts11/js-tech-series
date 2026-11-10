@@ -117,8 +117,9 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
         final String hostname = buf.readUtf(LONG_NAME);
         final String osLabel = buf.readUtf(LONG_NAME);
         final String platform = buf.readUtf(SHORT_NAME);
-        final ConsoleIdentity console = ConsoleIdentity.ofWire(shell, live, hostname, osLabel, platform,
-                buf.readVarInt());
+        final int bits = buf.readVarInt();
+        final ConsoleIdentity console = ConsoleIdentity.ofWire(shell, live, hostname, osLabel, platform, bits,
+                buf.readBoolean());
         final long session = buf.readVarLong();
         return new OpenData(monitor, host, era, console, session, buf.readVarInt());
     }
@@ -140,6 +141,7 @@ public class CommandPromptMenu extends CoreMenu implements IMonitorMenu {
         buf.writeUtf(TextBounds.clip(console.osLabel(), LONG_NAME), LONG_NAME);
         buf.writeUtf(console.platformName(), SHORT_NAME);
         buf.writeVarInt(console.bits());
+        buf.writeBoolean(console.manual());
         buf.writeVarLong(session);
         buf.writeVarInt(scalePercent);
     }

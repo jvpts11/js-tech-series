@@ -339,7 +339,8 @@ public final class OsMotions {
             return CONSOLE_VGA;
         }
         return switch (platform) {
-            case MC_DOS, MC_NET, UNIX -> CONSOLE_VGA;
+            // OpenBSD's wscons draws on the VGA card's own text mode, so its cursor blinks as the card's does.
+            case MC_DOS, MC_NET, UNIX, OPENBSD -> CONSOLE_VGA;
             case LINUX -> CONSOLE_FBCON;
             case FREEBSD -> CONSOLE_SYSCONS;
             // Quince's Terminal is a window on its desktop, as a Frames prompt is.

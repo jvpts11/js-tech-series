@@ -15,9 +15,11 @@ import dev.jstech.computers.machine.PackageService;
 import dev.jstech.computers.machine.ProgramService;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
+import dev.jstech.computers.os.OpenBsdServices;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.PackageManagerKind;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.ShellFamily;
@@ -26,6 +28,7 @@ import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.CommandScope;
 import dev.jstech.computers.program.cli.SshTerminal;
@@ -199,6 +202,11 @@ public final class ServerCliComputer extends ServerCliNetwork {
     }
 
     @Override
+    public Installing cvsPorts(final boolean update) {
+        return ports().checkout(update);
+    }
+
+    @Override
     public Installing makePort(final List<String> targets) {
         return ports().make(currentLocation(), PosixPath.render(tree(), currentLocation()), targets);
     }
@@ -263,6 +271,52 @@ public final class ServerCliComputer extends ServerCliNetwork {
         }
         hostBlock.setChanged();
         return true;
+    }
+
+    @Override
+    public List<OpenBsdServices.Daemon> daemons() {
+        return hostBlock instanceof IOsHost machine ? OpenBsdServices.of(machine) : List.of();
+    }
+
+    @Override
+    public boolean enableDaemon(final String name, final boolean on) {
+        final boolean done = hostBlock instanceof IOsHost machine && OpenBsdServices.enable(machine, name, on);
+        if (done) {
+            hostBlock.setChanged();
+        }
+        return done;
+    }
+
+    @Override
+    public boolean startDaemon(final String name, final boolean on) {
+        final boolean done = hostBlock instanceof IOsHost machine && OpenBsdServices.start(machine, name, on);
+        if (done) {
+            hostBlock.setChanged();
+        }
+        return done;
+    }
+
+    @Override
+    public int patchesInstalled() {
+        return host.console() == null ? 0 : host.console().settings().patchesInstalled();
+    }
+
+    @Override
+    public void setPatchesInstalled(final int count) {
+        if (host.console() != null) {
+            host.console().settings().setPatchesInstalled(count);
+            hostBlock.setChanged();
+        }
+    }
+
+    @Override
+    public boolean hasManual() {
+        return !leftOut(InstallerFlow.NO_MAN);
+    }
+
+    @Override
+    public boolean hasCompiler() {
+        return !leftOut(InstallerFlow.NO_COMP);
     }
 
     /**
@@ -361,6 +415,15 @@ public final class ServerCliComputer extends ServerCliNetwork {
             }
         }
         return stopSigma(pid);
+    }
+
+    /* Whether that OpenBSD set was left off this machine by its installer; nothing is left off any other system. */
+    private boolean leftOut(final int set) {
+        if (host.console() == null || !(hostBlock instanceof IOsHost machine) || machine.installedOs() == null) {
+            return false;
+        }
+        return machine.installedOs().platform() == Platform.OPENBSD
+                && (host.console().settings().setsLeftOut() & set) != 0;
     }
 
     /* This machine, when it is a computer or a server running a Unix system; null otherwise. */

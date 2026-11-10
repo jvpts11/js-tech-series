@@ -30,6 +30,12 @@ public final class KernelNames {
     /** The kernel configuration these machines are built from, the way FreeBSD names its own build. */
     public static final String FREEBSD_KERNEL_CONFIG = "GENERIC";
 
+    /** The OpenBSD release these machines run, the one version of it there is. */
+    public static final String OPENBSD_RELEASE = "7.5";
+
+    /** OpenBSD's kernel configuration and the build of it these machines carry, as its boot names them. */
+    public static final String OPENBSD_KERNEL_CONFIG = "GENERIC#79";
+
     /** The System V release these machines run, and the version of it, which that system reports apart. */
     public static final String SYSTEM_V_RELEASE = "3.2";
     public static final String SYSTEM_V_VERSION = "2";
@@ -44,6 +50,7 @@ public final class KernelNames {
     public static String name(final Platform platform) {
         return switch (platform) {
             case FREEBSD -> "FreeBSD";
+            case OPENBSD -> "OpenBSD";
             case UNIX -> "UNIX";
             case QUINCE -> "Wallace";
             default -> "Linux";
@@ -54,6 +61,7 @@ public final class KernelNames {
     public static String release(final Platform platform) {
         return switch (platform) {
             case FREEBSD -> FREEBSD_RELEASE;
+            case OPENBSD -> OPENBSD_RELEASE;
             case UNIX -> SYSTEM_V_RELEASE;
             case QUINCE -> WALLACE_RELEASE;
             default -> LINUX_VERSION;
@@ -67,7 +75,11 @@ public final class KernelNames {
      */
     public static String kernelLine(final Platform platform) {
         final String release = release(platform);
-        return platform == Platform.FREEBSD ? release + " " + FREEBSD_KERNEL_CONFIG : release;
+        return switch (platform) {
+            case FREEBSD -> release + " " + FREEBSD_KERNEL_CONFIG;
+            case OPENBSD -> release + " " + OPENBSD_KERNEL_CONFIG;
+            default -> release;
+        };
     }
 
     /**
@@ -107,20 +119,21 @@ public final class KernelNames {
 
     /** What a system of that family calls the architecture of a processor that many bits wide. */
     public static String architecture(final Platform platform, final int bits) {
-        if (platform != Platform.FREEBSD && platform != Platform.UNIX) {
+        if (!platform.bsd() && platform != Platform.UNIX) {
             return bits >= 64 ? "x86_64" : "i686";
         }
         if (bits >= 64) {
             return "vel64";
         }
-        // FreeBSD never ran on anything narrower than 32 bits, so that is the narrowest it has a word for.
-        return bits >= 32 || platform == Platform.FREEBSD ? "IA-32" : "IA-16";
+        // The BSDs never ran on anything narrower than 32 bits, so that is the narrowest they have a word for.
+        return bits >= 32 || platform.bsd() ? "IA-32" : "IA-16";
     }
 
     /** What a system of that family calls the first terminal on the machine's own screen. */
     public static String terminal(final Platform platform) {
         return switch (platform) {
             case FREEBSD -> "ttyv0";
+            case OPENBSD -> "ttyC0";
             case UNIX -> "console";
             case QUINCE -> "ttys000";
             default -> "tty1";
@@ -134,6 +147,8 @@ public final class KernelNames {
     public static List<String> bootFiles(final Platform platform, final int familyRank) {
         return switch (platform) {
             case FREEBSD -> List.of("boot/loader", "boot/kernel/kernel");
+            // OpenBSD's second-stage boot and its kernel, both at the root as the real one keeps them.
+            case OPENBSD -> List.of("boot", "bsd");
             case UNIX -> List.of("unix");
             // Quince's classic systems start from the System Folder; the later ones from their EFI loader.
             case QUINCE -> QuinceFamily.classic(familyRank) ? List.of("System Folder/System", "System Folder/Seeker")
@@ -159,6 +174,8 @@ public final class KernelNames {
                     + ": " + arch;
             case FREEBSD -> "FreeBSD " + host + " " + FREEBSD_RELEASE + " FreeBSD " + kernelLine(platform)
                     + " " + arch;
+            // OpenBSD gives the system, the node, the release, the build and the machine.
+            case OPENBSD -> "OpenBSD " + host + " " + OPENBSD_RELEASE + " " + OPENBSD_KERNEL_CONFIG + " " + arch;
             // System V gives the system, the node, the release, the version and the machine, and no more.
             case UNIX -> "UNIX " + host + " " + SYSTEM_V_RELEASE + " " + SYSTEM_V_VERSION + " " + arch;
             default -> "Linux " + host + " " + LINUX_VERSION + " #1 SMP " + arch + " GNU/Linux";

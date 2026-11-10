@@ -17,8 +17,8 @@ import java.util.Locale;
 
 /**
  * The check a system makes of its disks as it comes up after a sudden shutdown, at the head of its coming-up: ScanDisk
- * on Frames 95, chkdsk from Frames XP on, fsck on Linux, FreeBSD and UNIX; MC-DOS and MC-NET check nothing, as the real
- * ones did not. How long it takes is its file system's ({@link FileSystemType.Recovery}); it erases nothing.
+ * on Frames 95, chkdsk from Frames XP on, fsck on Linux, the BSDs and UNIX; MC-DOS and MC-NET check nothing, as the
+ * real ones did not. How long it takes is its file system's ({@link FileSystemType.Recovery}); it erases nothing.
  *
  * <p>Pure: no game types. Worked out on the server from the machine's disks and carried to whoever watches.
  *
@@ -46,6 +46,8 @@ public record DiskCheck(Look look, FileSystemType type, long usedMb, long capaci
     private static final int NTFS_SYSTEM_FILES = 16;
     /* The share of the check after which a long check prints what it found. */
     private static final double SUMMARY_FROM = 0.9;
+    /* The label OpenBSD's disks carry, which its lines name a partition by beside the device. */
+    public static final String OPENBSD_DUID = "3c1d5f2a8e9b7c41";
 
     public DiskCheck {
         look = look == null ? Look.NONE : look;
@@ -75,6 +77,8 @@ public record DiskCheck(Look look, FileSystemType type, long usedMb, long capaci
         return switch (this.look) {
             case LINUX -> shown(linux(), done, 0);
             case FREEBSD -> shown(freeBsd(done), done, 5);
+            case OPENBSD -> shown(openBsd(done, "wd0a"), done, 5);
+            case OPENBSD_SD -> shown(openBsd(done, "sd0a"), done, 5);
             case UNIX -> shown(systemV(done), done, 5);
             default -> List.of();
         };
@@ -92,7 +96,7 @@ public record DiskCheck(Look look, FileSystemType type, long usedMb, long capaci
     public int files() {
         return this.kinds + switch (this.look) {
             case LINUX -> EXT_RESERVED_INODES;
-            case FREEBSD -> UFS_SYSTEM_FILES;
+            case FREEBSD, OPENBSD, OPENBSD_SD -> UFS_SYSTEM_FILES;
             case UNIX -> SYSTEM_V_SYSTEM_FILES;
             default -> NTFS_SYSTEM_FILES;
         };
@@ -124,6 +128,26 @@ public record DiskCheck(Look look, FileSystemType type, long usedMb, long capaci
                     + " blocks, 0.0% fragmentation)");
             out.add("");
             out.add("***** FILE SYSTEM MARKED CLEAN *****");
+        }
+        return out;
+    }
+
+    /*
+     * OpenBSD's fsck of its root as rc runs it: each line opened with the partition and its label, the five phases of
+     * UFS, what it found and the root marked clean.
+     */
+    private List<String> openBsd(final double done, final String root) {
+        final String opened = "/dev/" + root + " (" + OPENBSD_DUID + ".a): ";
+        final List<String> out = new ArrayList<>(List.of("Automatic boot in progress: starting file system checks.",
+                opened + "** Phase 1 - Check Blocks and Sizes", opened + "** Phase 2 - Check Pathnames",
+                opened + "** Phase 3 - Check Connectivity", opened + "** Phase 4 - Check Reference Counts",
+                opened + "** Phase 5 - Check Cyl groups"));
+        if (done >= SUMMARY_FROM) {
+            final long free = freeMb() * EXT_BLOCKS_A_MB;
+            out.add(opened + files() + " files, " + this.usedMb * EXT_BLOCKS_A_MB + " used, " + free + " free ("
+                    + free % UFS_FRAGS_A_BLOCK + " frags, " + free / UFS_FRAGS_A_BLOCK
+                    + " blocks, 0.0% fragmentation)");
+            out.add(opened + "MARKED CLEAN");
         }
         return out;
     }
@@ -172,6 +196,10 @@ public record DiskCheck(Look look, FileSystemType type, long usedMb, long capaci
         LINUX("linux"),
         /** fsck on FreeBSD's console. */
         FREEBSD("freebsd"),
+        /** fsck on OpenBSD's console, its root on an IDE disk ({@code wd0}). */
+        OPENBSD("openbsd"),
+        /** The same, its root on a SATA disk ({@code sd0}). */
+        OPENBSD_SD("openbsd_sd"),
         /** fsck on UNIX System V's console. */
         UNIX("unix");
 
@@ -195,6 +223,7 @@ public record DiskCheck(Look look, FileSystemType type, long usedMb, long capaci
                 };
                 case LINUX -> LINUX;
                 case FREEBSD -> FREEBSD;
+                case OPENBSD -> OPENBSD;
                 case UNIX -> UNIX;
                 // Quince's start shows its own picture and no check of its disk.
                 case MC_DOS, MC_NET, QUINCE -> NONE;

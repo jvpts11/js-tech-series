@@ -12,6 +12,7 @@ import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.LiveOverlay;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
@@ -29,6 +30,7 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
@@ -98,9 +100,42 @@ final class OsSession {
      */
     @Nullable
     private ResourceLocation bootOnceOs;
+    /*
+     * The disk in memory a live medium's desktop runs off (Linux Mint's), which the machine boots instead of any of
+     * its own while the session lasts; empty for none. Persisted with the session, since a world closed and opened
+     * again is the machine still running; dropped with it at a restart or a power cut, as a live session is.
+     */
+    private ItemStack liveDisk = ItemStack.EMPTY;
+    /*
+     * The system whose live desktop the next start brings up, asked for from the setup's boot from a medium; null
+     * for none. Kept across the restart it asks for, which is the point of it, and taken when the start settles it.
+     */
+    @Nullable
+    private ResourceLocation liveRequested;
 
     OsSession(final AbstractComputerBlockEntity machine) {
         this.machine = machine;
+    }
+
+    /** Whether the machine is running a live desktop off a disk in its memory. */
+    boolean liveSession() {
+        return !this.liveDisk.isEmpty();
+    }
+
+    /** Asks for the live desktop of that system at the next start. */
+    void requestLive(final ResourceLocation systemId) {
+        this.liveRequested = systemId;
+        this.machine.setChanged();
+    }
+
+    /** At the end of the self-test: the live desktop asked for comes up, and none was running any more. */
+    void settleLive() {
+        final ResourceLocation asked = this.liveRequested;
+        this.liveRequested = null;
+        final OsDef system = asked == null ? null : OsRegistry.getOs(asked);
+        final Era era = this.machine.installedEra();
+        this.liveDisk = system == null || era == null ? ItemStack.EMPTY : LiveOverlay.build(system, era);
+        this.machine.setChanged();
     }
 
     int pendingInstallSlot() {
@@ -141,7 +176,8 @@ final class OsSession {
                 this.installer = Installers.restored(this.machine, level, system, memo.getInt("Copy"),
                         memo.getInt("Stage"), memo.getInt("Slot"), memo.getString("Name"),
                         memo.getString("Desktop"), memo.getInt("Erase"), memo.getBoolean("Ports"),
-                        memo.getBoolean("UseMirror"), memo.getBoolean("Cron"), memo.getBoolean("Sshd"));
+                        memo.getBoolean("UseMirror"), memo.getBoolean("Cron"), memo.getBoolean("Sshd"),
+                        memo.getInt("Options"));
             }
         }
         return this.installer;
@@ -200,19 +236,28 @@ final class OsSession {
         // "This boot only" ends with the boot it was for.
         this.bootOnce = -1;
         this.bootOnceOs = null;
+        // A live session lives in the machine's memory, which the stop empties.
+        this.liveDisk = ItemStack.EMPTY;
     }
 
     /**
-     * The disk this machine boots from: the one chosen in the firmware's boot order when it holds a system,
-     * otherwise the first disk that has one, so a computer with two installed systems dual-boots by choice.
+     * The disk this machine boots from: the live session's in memory while one runs, else the one chosen in the
+     * firmware's boot order when it holds a system, otherwise the first disk that has one, so a computer with two
+     * installed systems dual-boots by choice.
      */
     ItemStack systemDisk() {
+        if (!this.liveDisk.isEmpty()) {
+            return this.liveDisk;
+        }
         final int from = this.bootOnce >= 0 ? this.bootOnce : this.bootDisk;
         return OsDisks.systemDisk(diskCount(), this::diskInSlot, from);
     }
 
-    /** The slot the machine boots from, or -1 when nothing in it carries a system. */
+    /** The slot the machine boots from, or -1 when nothing in it carries a system or it runs off its memory. */
     private int systemDiskSlot() {
+        if (!this.liveDisk.isEmpty()) {
+            return -1;
+        }
         final int from = this.bootOnce >= 0 ? this.bootOnce : this.bootDisk;
         return OsDisks.systemDiskSlot(diskCount(), this::diskInSlot, from);
     }
@@ -338,7 +383,7 @@ final class OsSession {
         for (final ResourceLocation osId : OsDisks.systemsOn(disk).ids()) {
             final OsDef os = OsRegistry.getOs(osId);
             if (os != null) {
-                reserved += os.footprintItemsOn(diskEra(disk));
+                reserved += OsDisks.footprintItemsOn(disk, os, diskEra(disk));
             }
         }
         return reserved;
@@ -509,9 +554,15 @@ final class OsSession {
         }
     }
 
-    void save(final CompoundTag tag) {
+    void save(final CompoundTag tag, final HolderLookup.Provider registries) {
         if (this.bootDisk >= 0) {
             tag.putInt("BootDisk", this.bootDisk);
+        }
+        if (!this.liveDisk.isEmpty()) {
+            tag.put("LiveDisk", this.liveDisk.save(registries));
+        }
+        if (this.liveRequested != null) {
+            tag.putString("LiveRequested", this.liveRequested.toString());
         }
         /*
          * The running session survives a reload, exactly like the POST flag: a machine that was left up
@@ -554,6 +605,7 @@ final class OsSession {
             pages.putBoolean("UseMirror", this.installer.useMirror());
             pages.putBoolean("Cron", this.installer.cronEnabled());
             pages.putBoolean("Sshd", this.installer.sshdEnabled());
+            pages.putInt("Options", this.installer.options());
             tag.put("Installer", pages);
         } else if (this.installerMemo != null) {
             // Saved again without ever being asked for: a machine unloaded before anybody looked at it.
@@ -561,8 +613,12 @@ final class OsSession {
         }
     }
 
-    void load(final CompoundTag tag) {
+    void load(final CompoundTag tag, final HolderLookup.Provider registries) {
         this.bootDisk = tag.contains("BootDisk") ? tag.getInt("BootDisk") : -1;
+        this.liveDisk = tag.contains("LiveDisk")
+                ? ItemStack.parse(registries, tag.getCompound("LiveDisk")).orElse(ItemStack.EMPTY) : ItemStack.EMPTY;
+        this.liveRequested = tag.contains("LiveRequested")
+                ? ResourceLocation.tryParse(tag.getString("LiveRequested")) : null;
         this.bootedDesktop = tag.contains("BootedDesktop")
                 ? ResourceLocation.tryParse(tag.getString("BootedDesktop")) : null;
         this.openWindows.clear();

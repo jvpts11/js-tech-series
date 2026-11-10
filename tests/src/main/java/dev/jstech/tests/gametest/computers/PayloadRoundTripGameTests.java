@@ -50,6 +50,7 @@ import dev.jstech.computers.operation.payload.ThisPcPayload;
 import dev.jstech.computers.operation.payload.UiEventPayload;
 import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.computers.storage.StorageKey;
@@ -122,7 +123,7 @@ public final class PayloadRoundTripGameTests {
         final ThisPcPayload.AboutFacts about = new ThisPcPayload.AboutFacts(Text.literal("FreeBSD 14.1-RELEASE"),
                 Text.literal("vel64"), Text.literal("14.1-RELEASE GENERIC"), Text.literal("KDE Plasma"),
                 Text.literal("desk"), ThisPcPayload.WITH_CLOCK.with("Integra Centro c7 4790K", "4.0 GHz"), 8192L,
-                2000L, 120L, true, true);
+                2000L, 120L, Platform.FREEBSD, true);
         final ThisPcPayload.WireMachine machine = new ThisPcPayload.WireMachine("desk",
                 ThisPcPayload.PERSONAL_COMPUTER.text(), Text.literal("Standard"), "Frames 11", 2021, "on CORE",
                 Text.literal("MF ATX Standard"), ThisPcPayload.WITH_CLOCK.with("Integra Centro c7 4790K", "4.0 GHz"),

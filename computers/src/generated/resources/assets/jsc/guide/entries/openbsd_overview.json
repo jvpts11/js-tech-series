@@ -1,0 +1,169 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.openbsd_overview.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.openbsd_overview.definition1",
+      "term": "jsc.guide.openbsd_overview.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.openbsd_overview.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.openbsd_overview.table1",
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.openbsd_overview.table1_1"
+          },
+          {
+            "words": "jsc.guide.openbsd_overview.value1_1"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.openbsd_overview.table1_2"
+          },
+          {
+            "amount": 1024,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.openbsd_overview.table1_3"
+          },
+          {
+            "amount": 12,
+            "unit": "MB"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.openbsd_overview.table1_4"
+          },
+          {
+            "words": "jsc.guide.openbsd_overview.value1_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.openbsd_overview.table1_5"
+          },
+          {
+            "words": "jsc.guide.openbsd_overview.value1_5"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.openbsd_overview.table1_6"
+          },
+          {
+            "words": "jsc.guide.openbsd_overview.value1_6"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.openbsd_overview.table1_7"
+          },
+          {
+            "words": "jsc.guide.openbsd_overview.value1_7"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.openbsd_overview.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.openbsd_overview.text3"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "text": "OpenBSD/IA-32 (<hostname>.my.domain) (ttyC0)"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "login: player"
+        },
+        {
+          "text": "OpenBSD 7.5 (GENERIC) #79"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "Welcome to OpenBSD: The proactively secure Unix-like operating system."
+        },
+        {
+          "text": "  Find a command by what it does:"
+        },
+        {
+          "text": "    apropos <word>"
+        },
+        {
+          "text": "  Learn the system:"
+        },
+        {
+          "text": "    man afterboot"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "Tip: rcctl ls on lists every service switched on here."
+        }
+      ],
+      "look": "jsc:guide/terminal/sh",
+      "title": "OpenBSD"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.openbsd_overview.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.openbsd_overview.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.openbsd_overview.fix1",
+          "problem": "jsc.guide.openbsd_overview.problem1"
+        },
+        {
+          "fix": "jsc.guide.openbsd_overview.fix2",
+          "problem": "jsc.guide.openbsd_overview.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:the_systems",
+        "jsc:openbsd_installer",
+        "jsc:openbsd_daemons"
+      ]
+    }
+  ],
+  "id": "jsc:openbsd_overview",
+  "order": 304,
+  "section": "jsc:openbsd_system",
+  "title": "jsc.guide.openbsd_overview.title"
+}

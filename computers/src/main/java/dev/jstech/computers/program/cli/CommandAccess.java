@@ -49,6 +49,12 @@ public final class CommandAccess {
         if (scope.needs(Need.NETWORK) && !computer.onNetwork()) {
             return false;
         }
+        if (scope.needs(Need.MANUAL) && !computer.hasManual()) {
+            return false;
+        }
+        if (scope.needs(Need.COMPILER) && !computer.hasCompiler()) {
+            return false;
+        }
         return !scope.needs(Need.PORTS) || computer.hasPorts();
     }
 

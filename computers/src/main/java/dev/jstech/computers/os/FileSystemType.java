@@ -53,7 +53,7 @@ public enum FileSystemType implements IStableName {
      * What the installer of a system formats with on a machine of {@code era}, as each real one did: FAT16 on MC-DOS
      * and MC-NET (FAT32 from the Legacy), FAT32 on Frames 95, NTFS on the later Frames, ext3 on a distribution of the
      * Legacy and ext4 later, btrfs on Fedora from the Standard, ext4 wherever the player formats the root by hand,
-     * UFS on UNIX and FreeBSD, and on Quince's systems HFS on the Quince System, HFS+ on Quince OS 9, HFS+ with its
+     * UFS on UNIX and the BSDs, and on Quince's systems HFS on the Quince System, HFS+ on Quince OS 9, HFS+ with its
      * journal from Quince OS X on and APFS on quinceOS.
      *
      * @param platform   the system's family
@@ -78,7 +78,7 @@ public enum FileSystemType implements IStableName {
                 }
                 yield legacy ? EXT3 : EXT4;
             }
-            case FREEBSD, UNIX -> UFS;
+            case FREEBSD, OPENBSD, UNIX -> UFS;
             case QUINCE -> switch (familyRank) {
                 case QuinceFamily.QUINCE_SYSTEM -> HFS;
                 case QuinceFamily.OS_9 -> HFS_PLUS;

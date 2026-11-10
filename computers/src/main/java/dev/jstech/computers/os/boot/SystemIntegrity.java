@@ -125,7 +125,8 @@ public final class SystemIntegrity {
             case FRAMES -> SystemLayout.SYSTEM_DIR;
             case MC_DOS -> "DOS";
             case LINUX, UNIX, FREEBSD -> "boot";
-            case MC_NET -> "";
+            // OpenBSD keeps its kernel at the root, with no folder of its own to lose.
+            case MC_NET, OPENBSD -> "";
             case QUINCE -> classicQuince(os) ? CLASSIC_SYSTEM_FOLDER : "System";
         };
     }
@@ -141,6 +142,7 @@ public final class SystemIntegrity {
             case MC_DOS -> "COMMAND.COM";
             case LINUX -> "boot/vmlinuz";
             case UNIX, FREEBSD -> "boot/kernel";
+            case OPENBSD -> "bsd";
             case MC_NET -> "netstart.sys";
             case QUINCE -> classicQuince(os) ? CLASSIC_SYSTEM_FOLDER + "/" + CLASSIC_SYSTEM_FILE
                     : "System/Library/CoreServices/" + QUINCE_LOADER;
@@ -153,6 +155,8 @@ public final class SystemIntegrity {
             case FRAMES -> FILE_MISSING.with("kickmgr");
             case MC_DOS -> NO_INTERPRETER.text();
             case LINUX, UNIX, FREEBSD -> Text.literal("kernel panic - not syncing: no init found");
+            // Its boot loader's own words for a kernel it cannot find, which are a log in every language.
+            case OPENBSD -> Text.literal("cannot open hd0a:/bsd: No such file or directory");
             case MC_NET -> FILE_MISSING.with("netstart.sys");
             case QUINCE -> FILE_MISSING.with(classicQuince(os) ? CLASSIC_SYSTEM_FILE : QUINCE_LOADER);
         };

@@ -6,6 +6,7 @@
   ],
   "chapters": [
     "jsc:freebsd",
+    "jsc:openbsd",
     "jsc:system_v",
     "jsc:quince",
     "jsc:shell",

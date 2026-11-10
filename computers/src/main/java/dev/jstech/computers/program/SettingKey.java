@@ -110,6 +110,9 @@ public enum SettingKey {
     /** FreeBSD's {@code cron_enable}: off, this machine's scheduled jobs do not run. On by default. */
     CRON("cron", (s, v) -> choose(v, Set.of("on", "true"), Set.of("off", "false"), s::setCronEnabled)),
 
+    /** OpenBSD's {@code rcctl enable xenodm}: on, the machine comes up at its desktop. Off by default. */
+    XENODM("xenodm", (s, v) -> choose(v, Set.of("on", "true"), Set.of("off", "false"), s::setXenodmEnabled)),
+
     /** Six hex digits, with or without a {@code #} in front. */
     ACCENT("accent", (s, v) -> {
         final Integer argb = parseAccent(v);

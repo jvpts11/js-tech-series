@@ -174,7 +174,7 @@ public final class SessionOpenings {
     /** The picture that machine's system comes up behind, or the plain one when it has no system. */
     public static BootSplash splashOf(final IOsHost computer) {
         final OsDef system = computer.installedOs();
-        return system == null ? BootSplash.PLAIN : BootSplash.of(system.platform(), system.familyRank());
+        return system == null ? BootSplash.PLAIN : system.bootSplash();
     }
 
     private static FirmwareKind firmwareOf(final IOsHost computer) {

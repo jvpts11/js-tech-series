@@ -12,6 +12,7 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.operation.payload.FirmwareActionPayload;
+import dev.jstech.computers.os.boot.BootManager;
 import dev.jstech.computers.os.boot.BootMenu;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
@@ -44,6 +45,10 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     private static final int BOX_ROWS = 8;
     private static final int BOX_H = 92;
 
+    /** Where OpenBSD's boot writes from the corner of the glass, and the longest line its prompt takes. */
+    private static final int PROMPT_MARGIN = 4;
+    private static final int PROMPT_MOST = 64;
+
     /** The one grey these managers drew everything in, and the ground they drew it on: {@code jsc:screen/boot_menu}. */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "screen/boot_menu",
             new Colours(0xFFBDBDBD, 0xFFBDBDBD, 0xFF000000, 0xFF000000));
@@ -63,6 +68,10 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     private int at;
     /** Whether a key has already told the machine to stop counting. */
     private boolean held;
+    /** What is typed at OpenBSD's {@code boot>}. */
+    private String typed = "";
+    /** Ticks since the screen opened, which blinks the cursor at {@code boot>}. */
+    private int blink;
 
     public BootMenuScreen(final MonitorSessionMenu session, final Inventory inventory, final Component title) {
         super(session, inventory, title);
@@ -105,6 +114,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
     @Override
     protected void containerTick() {
         super.containerTick();
+        this.blink++;
         if (!this.held && this.remaining > 0) {
             this.remaining--;
         }
@@ -137,6 +147,10 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         if (this.menu.entries().isEmpty()) {
             return true;
         }
+        if (this.menu.manager() == BootManager.BOOT_PROMPT) {
+            promptKey(keyCode);
+            return true;
+        }
         if (!this.menu.manager().listsSystems()) {
             loaderKey(keyCode);
             return true;
@@ -156,6 +170,10 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         final int x = this.leftPos;
         final int y = this.topPos;
         MonitorFrame.renderBody(g, x, y, W, H, screenEra(), font, screenPos());
+        if (this.menu.manager() == BootManager.BOOT_PROMPT) {
+            prompt(g, x, y);
+            return;
+        }
         if (!this.menu.manager().listsSystems()) {
             LoaderMenuPainter.draw(g, font, x, y, this.menu, this.remaining, this.held);
             return;
@@ -200,6 +218,64 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
         wall(g, GameText.resolve(this.held ? FirmwareScreenTexts.LOADER_HELD.text()
                         : FirmwareScreenTexts.LOADER_COUNTDOWN.with(this.menu.secondsLeft(this.remaining))),
                 x + MARGIN, hy, PALETTE.get().text());
+    }
+
+    @Override
+    public boolean charTyped(final char letter, final int modifiers) {
+        if (this.menu.manager() == BootManager.BOOT_PROMPT && letter >= ' ' && letter != 127
+                && this.typed.length() < PROMPT_MOST) {
+            this.typed += letter;
+            return true;
+        }
+        return super.charTyped(letter, modifiers);
+    }
+
+    /*
+     * OpenBSD's boot: what it found of the machine, its own name, and boot> with what is typed after it. The count it
+     * waits is never shown; any key has already stopped it by the time anything is typed.
+     */
+    private void prompt(final GuiGraphics g, final int x, final int y) {
+        final Colours c = PALETTE.get();
+        g.fill(x, y, x + W, y + H, c.ground());
+        // Its own lines, which are a log in every language; the probe is the one the machine wrote for itself.
+        final String[] lines = {"Using drive 0, partition 3.", "Loading.....", GameText.resolve(this.menu.title()),
+                "disk: fd0 hd0+ cd0", ">> OpenBSD/IA-32 BOOT 3.65",
+                "boot> " + this.typed + ((this.blink / 10) % 2 == 0 ? "_" : "")};
+        int ty = y + PROMPT_MARGIN;
+        for (final String line : lines) {
+            wall(g, line, x + PROMPT_MARGIN, ty, c.text());
+            ty += WALL_ROW;
+        }
+    }
+
+    /*
+     * A key at boot>: Enter with nothing typed or with boot starts the system, reboot starts the machine over, and
+     * anything else is cleared for another go, as the real one answers what it does not know.
+     */
+    private void promptKey(final int keyCode) {
+        if (keyCode == InputConstants.KEY_BACKSPACE && !this.typed.isEmpty()) {
+            this.typed = this.typed.substring(0, this.typed.length() - 1);
+            return;
+        }
+        if (keyCode != InputConstants.KEY_RETURN && keyCode != InputConstants.KEY_NUMPADENTER) {
+            return;
+        }
+        final String word = this.typed.strip();
+        this.typed = "";
+        if (word.isEmpty() || word.equals("boot")) {
+            this.at = this.menu.defaultIndex();
+            choose();
+            return;
+        }
+        if (word.equals("reboot")) {
+            for (int i = 0; i < this.menu.entries().size(); i++) {
+                if (this.menu.entries().get(i).isRestart()) {
+                    this.at = i;
+                    choose();
+                    return;
+                }
+            }
+        }
     }
 
     /** The single rule around the list, which is the whole of that manager's furniture. */

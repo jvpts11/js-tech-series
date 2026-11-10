@@ -37,6 +37,9 @@ public enum InstallerPage {
     /** Which disk the system goes on, with what each disk already holds. */
     DISK,
 
+    /** The divider between the system already on the disk and the one going in beside it. */
+    ALONGSIDE,
+
     /** The disk and the name together, the way the installers of the first age asked them. */
     SETTINGS,
 

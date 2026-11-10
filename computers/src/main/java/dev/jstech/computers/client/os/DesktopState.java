@@ -34,9 +34,11 @@ import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramLoading;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.os.QuincePartitions;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.computers.os.WorkspaceSet;
+import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.power.UpsReading;
 import dev.jstech.core.client.motion.MotionClock;
@@ -197,6 +199,9 @@ final class DesktopState {
     private double loadMbPerSecond = ProgramLoading.REFERENCE_MB_PER_SECOND;
     /** What the machine's system asks the player to choose from to force quit, its programs paused; empty for none. */
     private List<MemoryAskPayload.Asked> memoryAsk = List.of();
+
+    /** Linux Mint's Update Manager, by the path it is installed under, whose shield the panel carries. */
+    private static final String UPDATE_MANAGER = "update_manager";
 
     DesktopState(final DesktopSurface surface, final BlockPos host, final BlockPos monitorPos,
                  final ResourceLocation osId, final ResourceLocation desktopId, final int ramTotalMb,
@@ -830,6 +835,34 @@ final class DesktopState {
     String packageVersion(final String programId) {
         final int colon = programId.indexOf(':');
         return packageVersions.getOrDefault(colon < 0 ? programId : programId.substring(colon + 1), "");
+    }
+
+    /**
+     * How many installed packages are behind the version the Mirror serves, which Linux Mint's Update Manager shows
+     * its shield on the panel for: the same count {@code apt upgrade} would bring up.
+     */
+    int updatesWaiting() {
+        int count = 0;
+        for (final String path : installedPrograms()) {
+            if (!ProgramVersions.of(path).equals(packageVersion(path))) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    /**
+     * Whether the panel carries the Update Manager's shield: where Linux Mint's Update Manager is installed, while
+     * there are updates to install.
+     */
+    boolean showsUpdateShield() {
+        return installedPrograms().contains(UPDATE_MANAGER) && updatesWaiting() > 0;
+    }
+
+    /** Whether the system is Linux Mint, whose Cinnamon wears Mint's mark on its menu button. */
+    boolean wearsMintMark() {
+        final OsDef os = OsRegistry.getOs(osId);
+        return os != null && os.bootSplash() == BootSplash.MINT;
     }
 
     /** The name this machine shows for whoever is at it: the computer's name, or a generic label. */

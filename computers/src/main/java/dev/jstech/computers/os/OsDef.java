@@ -16,6 +16,7 @@ import dev.jstech.computers.hardware.IsaSpec;
 import dev.jstech.computers.hardware.IsaTranslator;
 import dev.jstech.computers.hardware.IsaTranslators;
 import dev.jstech.computers.hardware.Isas;
+import dev.jstech.computers.os.boot.BootSplash;
 import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.id.StableCodecs;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -66,6 +67,11 @@ import org.jetbrains.annotations.Nullable;
  *                       program is decided by the platform alone
  * @param isas           the instruction sets the system is built for and the translators it carries; a system
  *                       that names none is built for its first era's processors ({@link #builtFor()})
+ * @param packages       the packages its installer lays down with it, installed as any package is and taken off
+ *                       the same way: Linux Mint's Cinnamon and its two programs of its own. Empty for most
+ * @param splash         the name of the picture it comes up behind when it has one of its own, {@code mint} for
+ *                       Linux Mint's mark; empty for one that wears its family's. Kept by name so the system can be
+ *                       written as data and a picture added later reads in an older world
  */
 @ApiStatus.Experimental
 public record OsDef(
@@ -85,7 +91,9 @@ public record OsDef(
         int ramMb,
         InstallerStyle installerStyle,
         int familyRank,
-        SystemIsas isas
+        SystemIsas isas,
+        List<ResourceLocation> packages,
+        String splash
 ) {
 
     public static final Codec<OsDef> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -108,11 +116,12 @@ public record OsDef(
             StableCodecs.byName(InstallerStyle.class)
                     .optionalFieldOf("installer", InstallerStyle.PLAIN)
                     .forGetter(OsDef::installerStyle),
-            Tail.CODEC.forGetter(os -> new Tail(os.familyRank(), os.isas()))
+            Tail.CODEC.forGetter(os -> new Tail(os.familyRank(), os.isas(), os.packages(), os.splash()))
     ).apply(inst, (id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName, shell,
             packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, tail) -> new OsDef(id,
             capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName, shell, packageManager,
-            installMode, bundledDesktop, house, ramMb, installerStyle, tail.familyRank(), tail.isas())));
+            installMode, bundledDesktop, house, ramMb, installerStyle, tail.familyRank(), tail.isas(),
+            tail.packages(), tail.splash())));
 
     /**
      * The media-installed, guided, desktop-bundling form used by the DOS-family systems: {@code cmd} shell, no
@@ -131,7 +140,7 @@ public record OsDef(
                 displayName, ShellKind.CMD,
                 platform == Platform.FRAMES ? PackageManagerKind.PCKMGR : PackageManagerKind.NONE,
                 InstallMode.GUIDED, bundledDesktop, house, 0,
-                InstallerStyle.PLAIN, 0, SystemIsas.UNNAMED);
+                InstallerStyle.PLAIN, 0, SystemIsas.UNNAMED, List.of(), "");
     }
 
     /** A Linux distribution: TTY capability on the Linux kernel, no bundled desktop, installable from the Legacy era. */
@@ -154,7 +163,7 @@ public record OsDef(
                                        final SoftwareHouse house) {
         return new OsDef(id, OsCapability.TERMINAL_ONLY, minEra, kernelId, footprintMb, Optional.empty(), platform,
                 displayName, shell, packageManager, installMode, Optional.empty(), house, 0,
-                InstallerStyle.PLAIN, 0, SystemIsas.UNNAMED);
+                InstallerStyle.PLAIN, 0, SystemIsas.UNNAMED, List.of(), "");
     }
 
     /**
@@ -167,14 +176,14 @@ public record OsDef(
                                       final PackageManagerKind packageManager, final SoftwareHouse house) {
         return new OsDef(id, OsCapability.FULL_DESKTOP, minEra, kernelId, footprintMb, Optional.empty(), platform,
                 displayName, shell, packageManager, InstallMode.GUIDED, Optional.of(id), house, 0,
-                InstallerStyle.PLAIN, 0, SystemIsas.UNNAMED);
+                InstallerStyle.PLAIN, 0, SystemIsas.UNNAMED, List.of(), "");
     }
 
     /** The same system, holding {@code megabytes} of RAM for itself while it runs. */
     public OsDef withRam(final int megabytes) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
                 shell, packageManager, installMode, bundledDesktop, house, megabytes, installerStyle,
-                familyRank, isas);
+                familyRank, isas, packages, splash);
     }
 
     /**
@@ -188,7 +197,7 @@ public record OsDef(
         }
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
                 shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, familyRank,
-                new SystemIsas(ids, isas.translators()));
+                new SystemIsas(ids, isas.translators()), packages, splash);
     }
 
     /** The same system, carrying those translators for the programs built for another processor. */
@@ -199,7 +208,7 @@ public record OsDef(
         }
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
                 shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, familyRank,
-                new SystemIsas(isas.builtFor(), ids));
+                new SystemIsas(isas.builtFor(), ids), packages, splash);
     }
 
     /**
@@ -243,7 +252,8 @@ public record OsDef(
      */
     public OsDef withRank(final int rank) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, rank, isas);
+                shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, rank, isas,
+                packages, splash);
     }
 
     /**
@@ -254,7 +264,33 @@ public record OsDef(
      */
     public OsDef withInstaller(final InstallerStyle style) {
         return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
-                shell, packageManager, installMode, bundledDesktop, house, ramMb, style, familyRank, isas);
+                shell, packageManager, installMode, bundledDesktop, house, ramMb, style, familyRank, isas,
+                packages, splash);
+    }
+
+    /**
+     * The same system, with those packages laid down by its installer: what it ships beyond its own share of the
+     * disk, which a player can take off afterwards as any package (computers/docs/design/operating-systems.md).
+     */
+    public OsDef withPackages(final ResourceLocation... shipped) {
+        return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
+                shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, familyRank, isas,
+                List.of(shipped), splash);
+    }
+
+    /** The same system, coming up behind a picture of its own rather than the one its family wears. */
+    @ApiStatus.Internal
+    public OsDef withSplash(final BootSplash picture) {
+        return new OsDef(id, capability, minEra, kernelId, footprintMb, installMediaId, platform, displayName,
+                shell, packageManager, installMode, bundledDesktop, house, ramMb, installerStyle, familyRank, isas,
+                packages, picture.serializedName());
+    }
+
+    /** The picture this system comes up behind: its own when it has one, else its family's. */
+    @ApiStatus.Internal
+    public BootSplash bootSplash() {
+        final BootSplash own = BootSplash.byName(this.splash);
+        return own != BootSplash.PLAIN ? own : BootSplash.of(this.platform, this.familyRank);
     }
 
     public OsDef {
@@ -289,6 +325,10 @@ public record OsDef(
         if (isas == null) {
             isas = SystemIsas.UNNAMED;
         }
+        packages = packages == null ? List.of() : List.copyOf(packages);
+        if (splash == null) {
+            splash = "";
+        }
     }
 
     /**
@@ -307,13 +347,19 @@ public record OsDef(
 
     /*
      * The fields after the fifteenth, read and written beside the others: one codec group takes sixteen at most, so
-     * the family's rank and the instruction sets go in as the sixteenth, side by side in the same object.
+     * the family's rank, the instruction sets, the packages and the picture go in as the sixteenth, side by side.
      */
-    private record Tail(int familyRank, SystemIsas isas) {
+    private record Tail(int familyRank, SystemIsas isas, List<ResourceLocation> packages, String splash) {
 
         static final MapCodec<Tail> CODEC = RecordCodecBuilder.mapCodec(inst -> inst.group(
                 Codec.INT.optionalFieldOf("family_rank", 0).forGetter(Tail::familyRank),
-                SystemIsas.MAP_CODEC.forGetter(Tail::isas)
+                SystemIsas.MAP_CODEC.forGetter(Tail::isas),
+                ResourceLocation.CODEC.listOf().optionalFieldOf("packages", List.of()).forGetter(Tail::packages),
+                Codec.STRING.optionalFieldOf("splash", "").forGetter(Tail::splash)
         ).apply(inst, Tail::new));
+
+        Tail {
+            packages = List.copyOf(packages);
+        }
     }
 }

@@ -33,6 +33,8 @@ public record OpenCrashPayload(BlockPos hostPos, BlockPos monitorPos, CrashPage 
     public static final int MAX_FIELD = 96;
     /** The longest one line of a kernel's console may be: wider than any the console shows unwrapped. */
     public static final int MAX_LINE = 256;
+    /** The longest a technical line may be: OpenBSD's debugger keeps its whole process table there, a row a line. */
+    public static final int MAX_TABLE = 1_024;
 
     public static final CustomPacketPayload.Type<OpenCrashPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "open_crash"));
@@ -52,7 +54,7 @@ public record OpenCrashPayload(BlockPos hostPos, BlockPos monitorPos, CrashPage 
         buf.writeVarInt(page.style().id());
         buf.writeVarInt(page.cause().id());
         buf.writeUtf(TextBounds.clip(page.stopCode(), MAX_FIELD), MAX_FIELD);
-        buf.writeUtf(TextBounds.clip(page.stopLine(), MAX_FIELD), MAX_FIELD);
+        buf.writeUtf(TextBounds.clip(page.stopLine(), MAX_TABLE), MAX_TABLE);
         buf.writeUtf(TextBounds.clip(page.failedPart(), MAX_FIELD), MAX_FIELD);
         buf.writeVarInt(page.lines().size());
         for (final String line : page.lines()) {
@@ -71,7 +73,7 @@ public record OpenCrashPayload(BlockPos hostPos, BlockPos monitorPos, CrashPage 
         final CrashStyle style = CrashStyle.byId(buf.readVarInt());
         final CrashCause cause = CrashCause.byId(buf.readVarInt());
         final String stopCode = buf.readUtf(MAX_FIELD);
-        final String stopLine = buf.readUtf(MAX_FIELD);
+        final String stopLine = buf.readUtf(MAX_TABLE);
         final String part = buf.readUtf(MAX_FIELD);
         final int count = Math.min(buf.readVarInt(), CrashPage.MOST_LINES);
         final List<String> lines = new ArrayList<>(count);

@@ -82,7 +82,7 @@ final class DiskCheckArt {
                         : c.sevenGround());
                 g.pose().popPose();
             }
-            case LINUX, FREEBSD, UNIX -> {
+            case LINUX, FREEBSD, OPENBSD, OPENBSD_SD, UNIX -> {
                 g.pose().pushPose();
                 g.pose().translate(x, y, 0.0F);
                 console(g, font, c, check.consoleLines(ticks));

@@ -198,7 +198,7 @@ final class MachineKernel {
                 crash(machine, level, CrashCause.MEMORY, CrashPages.Moment.memory(program, 0, List.of()));
                 yield false;
             }
-            case LINUX, FREEBSD, UNIX -> oom.makeRoom(machine, level, system, program, needMb,
+            case LINUX, FREEBSD, OPENBSD, UNIX -> oom.makeRoom(machine, level, system, program, needMb,
                     phases.upFor(level.getGameTime()), () -> takePid(machine));
             // Quince's classic systems refuse what does not fit its partition; the later ones ask the player.
             case QUINCE -> !QuinceFamily.classic(system.familyRank()) && ask(machine, level, program, needMb);

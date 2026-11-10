@@ -492,11 +492,12 @@ stable 7
 1 dev.jstech.computers.os.KernelDef  type record(ResourceLocation id, SchedulerKind scheduler, FilesystemKind filesystem, ShellFamily shellFamily)
 1 dev.jstech.computers.os.KernelDef  static final Codec<KernelDef> CODEC
 1 dev.jstech.computers.os.OperatingSpaceDef  type record(ResourceLocation id, String displayName, SoftwareHouse house)
-15 dev.jstech.computers.os.OsDef  type record(ResourceLocation id, OsCapability capability, Era minEra, ResourceLocation kernelId, int footprintMb, Optional<ResourceLocation> installMediaId, Platform platform, String displayName, ShellKind shell, PackageManagerKind packageManager, InstallMode installMode, Optional<ResourceLocation> bundledDesktop, SoftwareHouse house, int ramMb, InstallerStyle installerStyle, int familyRank, SystemIsas isas)
+18 dev.jstech.computers.os.OsDef  type record(ResourceLocation id, OsCapability capability, Era minEra, ResourceLocation kernelId, int footprintMb, Optional<ResourceLocation> installMediaId, Platform platform, String displayName, ShellKind shell, PackageManagerKind packageManager, InstallMode installMode, Optional<ResourceLocation> bundledDesktop, SoftwareHouse house, int ramMb, InstallerStyle installerStyle, int familyRank, SystemIsas isas, List<ResourceLocation> packages, String splash)
 15 dev.jstech.computers.os.OsDef  List<IsaTranslator> translators()
 15 dev.jstech.computers.os.OsDef  List<String> builtFor()
 1 dev.jstech.computers.os.OsDef  OsDef withInstaller(InstallerStyle)
 15 dev.jstech.computers.os.OsDef  OsDef withIsas(IsaSpec...)
+18 dev.jstech.computers.os.OsDef  OsDef withPackages(ResourceLocation...)
 1 dev.jstech.computers.os.OsDef  OsDef withRam(int)
 1 dev.jstech.computers.os.OsDef  OsDef withRank(int)
 15 dev.jstech.computers.os.OsDef  OsDef withTranslators(IsaTranslator...)

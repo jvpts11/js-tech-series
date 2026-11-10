@@ -8,6 +8,7 @@
 package dev.jstech.computers.os;
 
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.os.boot.SystemIntegrity;
@@ -19,6 +20,8 @@ import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.program.ComputerConsoleState;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.jstechseries.tier.Era;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
@@ -251,8 +254,34 @@ public final class OsDisks {
             updated.set(ComputingComponents.FILESYSTEM.get(), fs);
         }
         writeLoader(updated, def);
+        shipPackages(updated, def);
         setDiskInSlot.accept(updated, targetSlot);
         return true;
+    }
+
+    /**
+     * Records on the disk the packages the system's install lays down with it (Linux Mint's Cinnamon and its own
+     * two programs), each at its version, onto the disk the system went on whichever disk the machine was started
+     * from; one the disk already has is left at the version it was installed at.
+     */
+    private static void shipPackages(final ItemStack disk, final OsDef def) {
+        if (def.packages().isEmpty()) {
+            return;
+        }
+        final ComputerConsoleState console = new ComputerConsoleState();
+        final CompoundTag saved = disk.get(ComputingComponents.DISK_CONSOLE.get());
+        if (saved != null) {
+            console.load(saved);
+        }
+        for (final ResourceLocation shipped : def.packages()) {
+            final String id = shipped.toString();
+            if (OsRegistry.getProgram(shipped) != null && console.install(id)) {
+                console.setInstalledVersion(id, ProgramVersions.of(id));
+            }
+        }
+        final CompoundTag written = new CompoundTag();
+        console.save(written);
+        disk.set(ComputingComponents.DISK_CONSOLE.get(), written);
     }
 
     /**
@@ -435,10 +464,24 @@ public final class OsDisks {
         for (final ResourceLocation osId : systemsOn(disk).ids()) {
             final OsDef os = OsRegistry.getOs(osId);
             if (os != null) {
-                osReserved += os.footprintItemsOn(spec.era()) * StorageKey.MB_EQ_PER_ITEM;
+                osReserved += footprintItemsOn(disk, os, spec.era()) * StorageKey.MB_EQ_PER_ITEM;
             }
         }
         return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);
+    }
+
+    /**
+     * How many items that system really takes on that disk, at the cost per item of {@code diskEra}: its footprint,
+     * less whatever its installer left off this disk.
+     */
+    public static long footprintItemsOn(final ItemStack disk, final OsDef os, final Era diskEra) {
+        final int left = Math.max(0, os.footprintMb() - systemsOn(disk).savedMbOf(os.id()));
+        return EraStorage.itemsFor(diskEra, left);
+    }
+
+    /** Writes onto that disk that {@code mb} of that system stays off it, as its installer was told to leave out. */
+    public static void keepOff(final ItemStack disk, final ResourceLocation osId, final int mb) {
+        disk.set(ComputingComponents.DISK_SYSTEMS.get(), systemsOn(disk).saving(osId, mb));
     }
 
     /** What a format actually erased. */

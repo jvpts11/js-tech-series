@@ -70,12 +70,14 @@ public final class ComputersBooks {
         TerminalEditorsPages.declare(guide, chapter(guide, "terminal_editors"));
         FindingHelpPages.declare(guide, chapter(guide, "finding_help"));
         DistributionsPages.declare(guide, chapter(guide, "fedora_debian_ubuntu"));
+        MintPages.declare(guide, chapter(guide, "linux_mint"));
         BeforeYouBeginPages.declare(guide, chapter(guide, "before_you_begin"));
         PreparingDisksPages.declare(guide, chapter(guide, "preparing_disks"));
         ArchPages.declare(guide, chapter(guide, "arch"));
         GentooPages.declare(guide, chapter(guide, "gentoo"));
         RebootRefusesPages.declare(guide, chapter(guide, "when_reboot_refuses"));
         FreeBsdPages.declare(guide, chapter(guide, "freebsd"));
+        OpenBsdPages.declare(guide, chapter(guide, "openbsd"));
         SystemVPages.declare(guide, chapter(guide, "system_v"));
         QuincePages.declare(guide, chapter(guide, "quince"));
         IqlStartPages.declare(guide, chapter(guide, "iql_getting_started"));
@@ -204,15 +206,19 @@ public final class ComputersBooks {
                 .about("What a distribution is and which to choose, how each one installs, its first boot, and the"
                         + " package tools that fetch its programs: apt and dnf.")
                 .register());
+        chapters.add(guide.chapter("linux_mint").titled("Linux Mint").ownBooksOnly()
+                .about("The distribution that comes up at its desktop: its live session, its installer, and its"
+                        + " Software Manager and Update Manager.")
+                .register());
         chapters.addAll(unix);
         guide.manual("linux_desk_reference").titled("The Linux Desk Reference")
                 .cover("$ _", "The Linux", "Desk Reference", "Fedora  -  Debian  -  Ubuntu",
                         "Lies flat beside the machine")
                 .style(ComputersGuide.LINUX_DESK_REFERENCE).priority(50)
                 .chapters(chapters.toArray(GuideChapter[]::new))
-                .about("This reference lies open beside the machine for anyone running Fedora, Debian or Ubuntu:"
-                                + " how to install them, how to work in the shell, the desktops and the editors, and"
-                                + " where to look up a command.",
+                .about("This reference lies open beside the machine for anyone running Fedora, Debian, Ubuntu or"
+                                + " Linux Mint: how to install them, how to work in the shell, the desktops and the"
+                                + " editors, and where to look up a command.",
                         "Each command has a page of its own, the same page man and help show at the prompt.",
                         "The magnifier on the top edge finds anything by name, and the blocks down the edge of the"
                                 + " right page each open a chapter.")
@@ -293,6 +299,10 @@ public final class ComputersBooks {
                 .about("Installing FreeBSD and starting it, the switches of its services, and its two ways to a"
                         + " program: a package built for you, or the ports tree that builds it on your machine.")
                 .register());
+        chapters.add(guide.chapter("openbsd").titled("OpenBSD").ownBooksOnly()
+                .about("OpenBSD, secure by default: its installer of questions and answers, the daemons rcctl"
+                        + " switches, its packages and patches, pf, doas and its debugger.")
+                .register());
         chapters.add(guide.chapter("system_v").titled("UNIX System V").ownBooksOnly()
                 .about("The UNIX of the first era: installing it, adding its packages from the medium, and working"
                         + " in it.")
@@ -306,9 +316,9 @@ public final class ComputersBooks {
                 .cover("The Daemon", "Handbook", "FreeBSD and UNIX System V", "Daemon Foundation")
                 .style(ComputersGuide.DAEMON_HANDBOOK).priority(50)
                 .chapters(chapters.toArray(GuideChapter[]::new))
-                .about("This handbook covers the two UNIX systems, FreeBSD and UNIX System V, and Quince's systems,"
-                                + " the later of which are a UNIX underneath: how each one is installed and started, how"
-                                + " programs are added, and how to work at its prompt.",
+                .about("This handbook covers the UNIX systems, FreeBSD, OpenBSD and UNIX System V, and Quince's"
+                                + " systems, the later of which are a UNIX underneath: how each one is installed and"
+                                + " started, how programs are added, and how to work at its prompt.",
                         "The ribbon keeps the pages you were reading when you closed the book.",
                         "The magnifier on the top edge finds anything by name, and the blocks down the edge of the"
                                 + " right page each open a chapter.")

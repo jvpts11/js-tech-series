@@ -41,6 +41,12 @@ final class SettingsStorage {
         s.putBoolean("RemovableAutoOpen", settings.removableAutoOpen());
         s.putBoolean("RemoteAllowed", settings.remoteAllowed());
         s.putBoolean("CronEnabled", settings.cronEnabled());
+        s.putBoolean("XenodmEnabled", settings.xenodmEnabled());
+        s.putInt("SetsLeftOut", settings.setsLeftOut());
+        s.putInt("PatchesInstalled", settings.patchesInstalled());
+        if (!settings.daemonsEnabled().isEmpty()) {
+            s.put("DaemonsEnabled", strings(settings.daemonsEnabled()));
+        }
         s.putBoolean("TaskbarCentered", settings.taskbarCentered());
         s.putBoolean("DarkMode", settings.darkMode());
         if (!settings.effectsOff().isEmpty()) {
@@ -108,6 +114,10 @@ final class SettingsStorage {
         settings.setRemovableAutoOpen(!s.contains("RemovableAutoOpen") || s.getBoolean("RemovableAutoOpen"));
         settings.setRemoteAllowed(!s.contains("RemoteAllowed") || s.getBoolean("RemoteAllowed"));
         settings.setCronEnabled(!s.contains("CronEnabled") || s.getBoolean("CronEnabled"));
+        settings.setXenodmEnabled(s.getBoolean("XenodmEnabled"));
+        settings.setSetsLeftOut(s.getInt("SetsLeftOut"));
+        settings.setPatchesInstalled(s.getInt("PatchesInstalled"));
+        settings.setDaemonsEnabled(strings(s.getList("DaemonsEnabled", Tag.TAG_STRING)));
         settings.setTaskbarCentered(!s.contains("TaskbarCentered") || s.getBoolean("TaskbarCentered"));
         settings.setDarkMode(s.getBoolean("DarkMode"));
         settings.setEffectsOff(strings(s.getList("EffectsOff", Tag.TAG_STRING)));

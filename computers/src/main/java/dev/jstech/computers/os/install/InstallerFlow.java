@@ -54,6 +54,22 @@ public final class InstallerFlow {
     /** The same for the desktops a Mirror can offer. */
     public static final int MOST_DESKTOPS = 16;
 
+    /*
+     * OpenBSD's answers that no other installer asks, one bit each (computers/docs/design/operating-systems.md): the
+     * three sets a player may leave out, whether X is expected, and whether xenodm starts the desktop at boot. None
+     * set is what the real installer offers by default: every set, X expected, xenodm off.
+     */
+    /** The {@code bsd.rd} set left out. */
+    public static final int NO_BSD_RD = 1;
+    /** The {@code comp} set left out, and the building of ports with it. */
+    public static final int NO_COMP = 2;
+    /** The {@code man} set left out, and the manual pages with it. */
+    public static final int NO_MAN = 4;
+    /** The X Window System not expected, so xenodm is not asked about. */
+    public static final int NO_X = 8;
+    /** xenodm starting the desktop at boot. */
+    public static final int XENODM = 16;
+
     /** The step a desktop from the Mirror adds to the copy, with the Mirror named when one answers. */
     private static final TextKey INSTALLING_DESKTOP =
             TextKey.of("jsc.install.installer_flow.installing_desktop", "Installing %s");
@@ -92,6 +108,8 @@ public final class InstallerFlow {
     private boolean cronEnabled = true;
     /** Whether the installed system answers other computers on the network; off until the Services page ticks it. */
     private boolean sshdEnabled;
+    /** OpenBSD's own answers, the bits above. */
+    private int options;
 
     private InstallerFlow(final InstallerStyle style, final String systemId, final String systemName,
                           final int footprintMb, final int copyTicks, final double baseRate,
@@ -177,12 +195,13 @@ public final class InstallerFlow {
                                          final int stageIndex, final int targetSlot, final String computerName,
                                          final String desktopId, final int eraseSlot) {
         return restored(style, systemId, systemName, footprintMb, copyTicks, disks, desktops, mirrorHost, stageIndex,
-                targetSlot, computerName, desktopId, eraseSlot, true, !mirrorHost.isEmpty(), true, false);
+                targetSlot, computerName, desktopId, eraseSlot, true, !mirrorHost.isEmpty(), true, false, 0);
     }
 
     /**
      * The same, also carrying the answers bsdinstall's own pages add: whether the ports component is going with
-     * the copy, whether the Mirror that answered is actually being used, and the two services page.
+     * the copy, whether the Mirror that answered is actually being used, and the two services page; and OpenBSD's
+     * own, its {@code options}.
      */
     public static InstallerFlow restored(final InstallerStyle style, final String systemId, final String systemName,
                                          final int footprintMb, final int copyTicks, final List<Disk> disks,
@@ -190,7 +209,7 @@ public final class InstallerFlow {
                                          final int stageIndex, final int targetSlot, final String computerName,
                                          final String desktopId, final int eraseSlot, final boolean portsSelected,
                                          final boolean useMirror, final boolean cronEnabled,
-                                         final boolean sshdEnabled) {
+                                         final boolean sshdEnabled, final int options) {
         /*
          * A restored installation keeps the time it was quoted rather than working one out again: the copy is
          * already under way at that speed, and a disk swapped underneath it must not make the bar jump.
@@ -202,6 +221,7 @@ public final class InstallerFlow {
         flow.cronEnabled = cronEnabled;
         flow.sshdEnabled = sshdEnabled;
         flow.portsSelected = portsSelected;
+        flow.options = options;
         flow.useMirror = useMirror && flow.mirrorAnswers();
         flow.chooseDesktop(indexOfDesktop(flow, desktopId));
         flow.goToStage(stageIndex);
@@ -303,6 +323,37 @@ public final class InstallerFlow {
 
     public void setSshdEnabled(final boolean enabled) {
         this.sshdEnabled = enabled;
+    }
+
+    /** OpenBSD's own answers, as the bits {@link #NO_BSD_RD} to {@link #XENODM}. */
+    public int options() {
+        return this.options;
+    }
+
+    /** Whether that one of OpenBSD's answers is given. */
+    public boolean has(final int option) {
+        return (this.options & option) != 0;
+    }
+
+    /**
+     * Gives OpenBSD's answers; a set left out drops its step from the copy. Leaving out the kernel or the base
+     * system is no answer the game takes, so only the bits above are kept.
+     */
+    public void setOptions(final int given) {
+        this.options = given & (NO_BSD_RD | NO_COMP | NO_MAN | NO_X | XENODM);
+        if (this.has(NO_X)) {
+            this.options &= ~XENODM;
+        }
+        this.rebuildSteps();
+    }
+
+    /**
+     * Whether the system goes in beside one already on its disk rather than over it: the page with the divider is
+     * shown only then (Linux Mint's).
+     */
+    public boolean alongside() {
+        final Disk disk = this.target();
+        return disk != null && disk.hasSystem() && disk.slot() != this.eraseSlot;
     }
 
     public int stageIndex() {
@@ -460,6 +511,8 @@ public final class InstallerFlow {
     public boolean canContinue() {
         return switch (this.page()) {
             case DISK -> !this.wants(InstallerPage.DISK);
+            // Beside another system, the room is what is free beside it.
+            case ALONGSIDE -> !this.wants(InstallerPage.DISK);
             case SETTINGS -> !this.wants(InstallerPage.DISK) && !this.wants(InstallerPage.NAME);
             case NAME -> !this.wants(InstallerPage.NAME);
             case HUB -> !this.wants(InstallerPage.DISK) && !this.wants(InstallerPage.NAME);
@@ -559,8 +612,12 @@ public final class InstallerFlow {
      * lets one of them go unseen without the list itself changing under a page turned mid-installation.
      */
     private boolean hiddenStage(final int index) {
-        return this.stages.get(index).page() == InstallerPage.DESKTOP && this.hasMirrorStage()
-                && !this.desktopStageActive();
+        final InstallerPage page = this.stages.get(index).page();
+        // The divider is only there beside another system: a disk taken whole has nothing to divide.
+        if (page == InstallerPage.ALONGSIDE) {
+            return !this.alongside();
+        }
+        return page == InstallerPage.DESKTOP && this.hasMirrorStage() && !this.desktopStageActive();
     }
 
     /** Whether this style's own pages ask where packages and ports come from, which is what makes a Mirror optional. */
@@ -747,8 +804,16 @@ public final class InstallerFlow {
         this.steps = List.copyOf(built);
     }
 
-    /** Whether that static step is left out of the copy: bsdinstall's ports, when the component was not ticked. */
+    /**
+     * Whether that static step is left out of the copy: bsdinstall's ports, when the component was not ticked, and
+     * an OpenBSD set left out.
+     */
     private boolean excluded(final Text label) {
+        if (this.style == InstallerStyle.OPENBSD) {
+            return this.has(NO_BSD_RD) && label.equals(InstallerStyle.SET_BSD_RD)
+                    || this.has(NO_COMP) && label.equals(InstallerStyle.SET_COMP)
+                    || this.has(NO_MAN) && label.equals(InstallerStyle.SET_MAN);
+        }
         return this.style == InstallerStyle.BSD_INSTALL && !this.portsSelected
                 && label.equals(InstallerStyle.STEP_BSD_PORTS.text());
     }

@@ -2051,7 +2051,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                         system, memo.getInt("Copy"), memo.getInt("Stage"), memo.getInt("Slot"),
                         memo.getString("Name"), memo.getString("Desktop"), memo.getInt("Erase"),
                         memo.getBoolean("Ports"), memo.getBoolean("UseMirror"), memo.getBoolean("Cron"),
-                        memo.getBoolean("Sshd"));
+                        memo.getBoolean("Sshd"), memo.getInt("Options"));
             }
         }
         return state.installer;
@@ -2104,6 +2104,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         pages.putBoolean("UseMirror", state.installer.useMirror());
         pages.putBoolean("Cron", state.installer.cronEnabled());
         pages.putBoolean("Sshd", state.installer.sshdEnabled());
+        pages.putInt("Options", state.installer.options());
         return pages;
     }
 
@@ -2315,6 +2316,16 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         final int slot = soleComputerSlot();
         if (slot >= 0) {
             unitState(slot).kernel.endService(service);
+            flushConsole(slot);
+            setChanged();
+        }
+    }
+
+    @Override
+    public void startService(final ResourceLocation service) {
+        final int slot = soleComputerSlot();
+        if (slot >= 0) {
+            unitState(slot).kernel.startService(service);
             flushConsole(slot);
             setChanged();
         }
@@ -2663,7 +2674,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 OsDisks.systemOn(disk);
         final OsDef os =
                 osId != null ? OsRegistry.getOs(osId) : null;
-        return os != null ? os.footprintItemsOn(diskEra(disk)) : 0L;
+        return os != null ? OsDisks.footprintItemsOn(disk, os, diskEra(disk)) : 0L;
     }
 
     /*

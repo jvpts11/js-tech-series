@@ -41,7 +41,11 @@ public record CommandScope(Set<Platform> platforms, int minOsRank, HostScope hos
         /** A data network under it. */
         NETWORK,
         /** Ports for peripherals. */
-        PORTS
+        PORTS,
+        /** The manual's pages, which OpenBSD leaves off a machine its installer was told to leave the man set off. */
+        MANUAL,
+        /** The compiler and its tools, which OpenBSD leaves off with the comp set in the same way. */
+        COMPILER
     }
 
     /** Every system there is, which is what a command of the machines themselves reaches. */
@@ -50,9 +54,9 @@ public record CommandScope(Set<Platform> platforms, int minOsRank, HostScope hos
     /** The DOS-speaking systems: MC-DOS and every Frames edition. */
     public static final Set<Platform> DOS_SYSTEMS = Set.of(Platform.MC_DOS, Platform.FRAMES);
 
-    /** The Unix-speaking systems: the distributions, UNIX, FreeBSD, and Quince's from Quince OS X on. */
+    /** The Unix-speaking systems: the distributions, UNIX, the BSDs, and Quince's from Quince OS X on. */
     public static final Set<Platform> UNIX_SYSTEMS = Set.of(Platform.LINUX, Platform.UNIX, Platform.FREEBSD,
-            Platform.QUINCE);
+            Platform.OPENBSD, Platform.QUINCE);
 
     /**
      * The network appliance, which speaks neither of the above.

@@ -20,7 +20,9 @@ memory while it runs.
 | Frames 95 | Legacy | the Frames 95 desktop | from CD, guided |
 | Frames XP | Legacy | the Frames XP desktop | from CD, guided |
 | FreeBSD | Legacy | a shell until a desktop is added | guided |
+| OpenBSD | Legacy | a shell; a desktop comes up once xenodm is switched on | guided, question by question |
 | Debian, Ubuntu, Fedora | Legacy | a shell until a desktop is added | guided |
+| Linux Mint | Standard | the Cinnamon desktop; its medium starts a live session | guided, from the live desktop |
 | Arch Linux | Legacy | a shell until a desktop is added | by hand, step by step, as Arch is |
 | Gentoo | Legacy | a shell until a desktop is added | compiled from source, as Gentoo is |
 | Frames 7 | Transition | the Frames 7 desktop | from DVD, guided |
@@ -65,14 +67,47 @@ does the same for Integra programs on Quince's chips.
   (start and stop a Mainframe's services) with the Server. From the Standard, Quince OS X and quinceOS install
   programs from the Mirror with `keg` at the Terminal or from the Quince Store, free.
 
+### OpenBSD
+
+*Added 2026-11-10.*
+
+OpenBSD, by the Blowfish Project, at release 7.5, is secure by default: it comes up at its terminal with only what it
+needs switched on. Its prompt is the computer's name and a hash, in `ksh`; The Daemon Handbook has a chapter on it.
+
+- **Installing.** Its installer asks at the terminal, question by question: the name, sshd, X and xenodm, the root
+  disk (`wd0` for an IDE disk, `sd0` for a SATA one) and the sets. `bsd` and `base` always go; `bsd.rd`, `comp` and
+  `man` may be left out, and each one left out keeps its room off the disk, `comp` taking `make` with it and `man`
+  taking `man` and `apropos`.
+- **Starting.** It starts through `boot>`, which waits five seconds without a count: any key stops the wait, and
+  Enter or `boot` starts.
+- **Its daemons.** `rcctl` switches them: `enable` and `disable` for every start, `start` and `stop` now. pf, pflogd
+  and syslogd always run; a service you install comes switched off; a desktop installed still comes up at the
+  terminal until `rcctl enable xenodm`.
+- **Software.** Packages with `pkg_add`, `pkg_info` and `pkg_delete`; the ports tree with `cvs` and `make`; the
+  release's patches with `syspatch`. `pfctl` reports on the firewall and `doas` runs a command as another user.
+- **When it panics.** It stops in its debugger at `ddb>`, with `show panic`, `trace` and `ps`, and starts over only on
+  `boot reboot`.
+
+### Linux Mint
+
+*Added 2026-11-10.*
+
+Linux Mint, by Spearmint Linux, from the Standard, is the distribution that comes up at its desktop, Cinnamon, behind
+its own mark. Its medium starts a live session that writes nothing to the disk, with Install Linux Mint on it: a
+guided installer in five screens that puts it on ext4, with a swap as big as the memory, beside another system or on
+the whole disk. Besides `apt`, it has two programs of its own: the **Software Manager**, the Mirror's programs by
+Mint's categories with Network and Desktops, and the **Update Manager**, which installs what you tick, a program at
+once and the desktop the next time it starts, its shield on the panel while there are updates.
+
 ## Desktops
 
 *Added 2026-08-26.*
 
 A **desktop** is the windows, the taskbar or panel, and the start menu. Each Frames comes with its own. On Linux,
-FreeBSD and UNIX a desktop is a package you add: **KDE Plasma**, **GNOME** and **CDE** from the Legacy, and
-**Cinnamon** from the Standard (CDE runs on UNIX, FreeBSD and Linux; the others on Linux and FreeBSD). Each desktop
-looks like its era: KDE in the Transition is the KDE of that time, not of today.
+the BSDs and UNIX a desktop is a package you add: **KDE Plasma**, **GNOME** and **CDE** from the Legacy, and
+**Cinnamon** from the Standard (CDE runs on UNIX, the BSDs and Linux; the others on Linux and the BSDs). Linux Mint
+comes with Cinnamon, and OpenBSD brings a desktop up only once xenodm is switched on. Each desktop looks like its
+era: KDE in the Transition is the KDE of that time, not of today.
 
 Every desktop has the same programs under the names its system gives them: Network, This PC, Settings, Files,
 Editor, Command Prompt, System Monitor, Calculator, Network Manager and Help ([Help on a computer](#help-on-a-computer)).
@@ -98,11 +133,11 @@ reads them is its system's own:
 | CDE | Help Viewer | The topic hierarchy above the page; Backtrack, History..., Index... and Top Level. |
 | MC-DOS, MC-NET | `help`, `help <topic>` | The whole screen in the sixteen colours: Tab picks a link and Enter follows it; Alt+C the contents, Alt+N the next topic, Alt+B back, Alt+I the index; Alt+S finds, Escape leaves. |
 | Linux (a shell) | `info`, `info <topic>` | info: every chapter, section and entry is a node; n, p and u move, Tab and Enter follow a link, m goes to a menu item, s searches, l goes back, q leaves. |
-| UNIX, FreeBSD (a shell) | `man <topic>` | A manual's entry as a page of section 7 in the pager, when no command has that name: `man graphics-cards`. |
+| UNIX, FreeBSD, OpenBSD (a shell) | `man <topic>` | A manual's entry as a page of section 7 in the pager, when no command has that name: `man graphics-cards`. |
 
 A topic is named by the last part of its id (`graphics-cards`, with hyphens or underscores) or by its title. A
 search finds every entry holding all the words typed, and every command whose name or summary holds them. Every
-system but FreeBSD still has `help` for its commands at the prompt; on Frames it prints, as it always did.
+system but the BSDs still has `help` for its commands at the prompt; on Frames it prints, as it always did.
 
 ## Installing a system
 
@@ -140,7 +175,7 @@ there; nothing is erased, and a clean shutdown leaves no mark.
 | Frames XP, Frames 7 | NTFS | chkdsk's three stages, on blue on XP and on black on 7 | 2 seconds (its journal) |
 | Frames 10, Frames 11 | NTFS | "Scanning and repairing drive" under the mark | 2 seconds |
 | Linux | ext3 on the Legacy, ext4 later, btrfs on Fedora from the Standard; ext4 when the root is formatted by hand | the journal replayed on the console; btrfs nothing | 2 seconds; none on btrfs |
-| FreeBSD, UNIX | UFS | fsck's five passes on the console | a second for every 64 items in use, 5 seconds to a minute |
+| FreeBSD, OpenBSD, UNIX | UFS | fsck's five passes on the console | a second for every 64 items in use, 5 seconds to a minute |
 | Quince's systems | HFS on the Quince System, HFS+ on Quince OS 9, HFS+ journaled from Quince OS X, APFS on quinceOS | nothing at start-up; Disk Utility's First Aid checks a disk when asked | as fsck |
 
 A disk is checked as the file system its computer's system formats with, until disks hold partitions of their own.

@@ -11,7 +11,9 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * FreeBSD's ports at the prompt: {@code portsnap}, which brings the tree of ports from the Mirror and lays it out
@@ -135,9 +137,11 @@ final class PortsCommands {
         private static final TextKey EXAMPLE_INSTALL = TextKey.of("jsc.cli.ports.make.example.install",
                 "build it, install it and clean up after it");
 
+        /* The two BSDs that keep a ports tree; an OpenBSD installed without its comp set has nothing to build with. */
         @Override
         public CommandScope scope() {
-            return CommandScope.on(Platform.FREEBSD).needing(CommandScope.Need.FILES);
+            return CommandScope.on(Platform.FREEBSD, Platform.OPENBSD)
+                    .needing(CommandScope.Need.FILES, CommandScope.Need.COMPILER);
         }
 
         @Override
@@ -183,12 +187,107 @@ final class PortsCommands {
 
         @Override
         public List<String> seeAlso() {
-            return List.of("portsnap", "pkg");
+            return List.of("portsnap", "cvs", "pkg", "pkg_add");
         }
 
         @Override
         public void run(final CliContext ctx) {
             said(ctx, ctx.computer().makePort(ctx.args()));
+        }
+    }
+
+    /**
+     * OpenBSD's cvs, as the ports tree is fetched with it: {@code checkout ports} lays the tree out from the Mirror
+     * and {@code update} brings it up to date. The repository's address and the quiet and prune switches it is
+     * typed with are taken and passed over, since the Mirror is the one repository there is.
+     */
+    @TextHolder
+    static final class Cvs implements ICliCommand {
+
+        private static final TextKey SUMMARY = TextKey.of("jsc.cli.ports.cvs.summary",
+                "check the ports tree out of the network mirror, or bring it up to date");
+        private static final TextKey ABOUT = TextKey.of("jsc.cli.ports.cvs.about",
+                "Checks the ports tree out of the network's Mirror and lays it out under /usr/ports: a folder for"
+                        + " every program the Mirror serves, filed by category. Afterwards, update fetches only the"
+                        + " ports that changed.");
+        private static final TextKey ABOUT_ROOM = TextKey.of("jsc.cli.ports.cvs.about.room",
+                "The tree is files on the disk and takes the room they take.");
+        private static final TextKey OPTION_CHECKOUT = TextKey.of("jsc.cli.ports.cvs.option.checkout",
+                "lay the whole tree out afresh, replacing any tree there");
+        private static final TextKey OPTION_UPDATE = TextKey.of("jsc.cli.ports.cvs.option.update",
+                "bring a tree already checked out up to date");
+        private static final TextKey EXAMPLE_FIRST = TextKey.of("jsc.cli.ports.cvs.example.first",
+                "the first time: check the tree out");
+        private static final TextKey EXAMPLE_AFTER = TextKey.of("jsc.cli.ports.cvs.example.after",
+                "afterwards: bring the tree up to date");
+
+        @Override
+        public CommandScope scope() {
+            return CommandScope.on(Platform.OPENBSD).needing(CommandScope.Need.FILES);
+        }
+
+        @Override
+        public String name() {
+            return "cvs";
+        }
+
+        @Override
+        public CommandGroup group() {
+            return CommandGroup.SOFTWARE;
+        }
+
+        @Override
+        public Text summary() {
+            return SUMMARY.text();
+        }
+
+        @Override
+        public Text usage() {
+            return Text.literal("[-q] [-d root] checkout [-P] ports | update [-Pd]");
+        }
+
+        @Override
+        public List<Text> description() {
+            return List.of(ABOUT.text(), ABOUT_ROOM.text());
+        }
+
+        @Override
+        public List<Option> options() {
+            return List.of(new Option("checkout", OPTION_CHECKOUT), new Option("update", OPTION_UPDATE));
+        }
+
+        @Override
+        public List<Example> examples() {
+            return List.of(new Example("cvs -q checkout -P ports", EXAMPLE_FIRST),
+                    new Example("cvs -q update -Pd", EXAMPLE_AFTER));
+        }
+
+        @Override
+        public List<String> seeAlso() {
+            return List.of("make", "pkg_add");
+        }
+
+        @Override
+        public void run(final CliContext ctx) {
+            final List<String> words = new ArrayList<>();
+            boolean root = false;
+            for (final String arg : ctx.args()) {
+                if (root) {
+                    root = false;
+                } else if (arg.equals("-d")) {
+                    root = true;
+                } else if (!arg.startsWith("-")) {
+                    words.add(arg.toLowerCase(Locale.ROOT));
+                }
+            }
+            final String verb = words.isEmpty() ? "" : words.getFirst();
+            if ((verb.equals("checkout") || verb.equals("co")) && words.contains("ports")) {
+                said(ctx, ctx.computer().cvsPorts(false));
+            } else if (verb.equals("update") || verb.equals("up")) {
+                said(ctx, ctx.computer().cvsPorts(true));
+            } else {
+                ctx.out().error(CliTexts.USAGE.with(name(), usage()));
+            }
         }
     }
 

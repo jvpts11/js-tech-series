@@ -57,21 +57,32 @@ public record DiskSystems(List<Entry> installed, int bootIndex) {
         bootIndex = installed.isEmpty() ? 0 : Math.max(0, Math.min(bootIndex, installed.size() - 1));
     }
 
-    /** One system on a disk: which it is, and what it remembers about having been met. */
-    public record Entry(ResourceLocation osId, SystemWelcome welcome) {
+    /**
+     * One system on a disk: which it is, what it remembers about having been met, and the room its installer left
+     * off the disk, as OpenBSD's leaves the sets a player took out (none for a system installed whole).
+     */
+    public record Entry(ResourceLocation osId, SystemWelcome welcome, int savedMb) {
 
         public static final Codec<Entry> CODEC = RecordCodecBuilder.create(inst -> inst.group(
                 ResourceLocation.CODEC.fieldOf("os").forGetter(Entry::osId),
-                SystemWelcome.CODEC.optionalFieldOf("welcome", SystemWelcome.UNSEEN).forGetter(Entry::welcome)
+                SystemWelcome.CODEC.optionalFieldOf("welcome", SystemWelcome.UNSEEN).forGetter(Entry::welcome),
+                Codec.INT.optionalFieldOf("saved", 0).forGetter(Entry::savedMb)
         ).apply(inst, Entry::new));
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Entry> STREAM_CODEC = StreamCodec.composite(
                 ResourceLocation.STREAM_CODEC, Entry::osId,
                 SystemWelcome.STREAM_CODEC, Entry::welcome,
+                ByteBufCodecs.VAR_INT, Entry::savedMb,
                 Entry::new);
 
         public Entry {
             welcome = welcome == null ? SystemWelcome.UNSEEN : welcome;
+            savedMb = Math.max(0, savedMb);
+        }
+
+        /** A system installed whole. */
+        public Entry(final ResourceLocation osId, final SystemWelcome welcome) {
+            this(osId, welcome, 0);
         }
     }
 
@@ -171,7 +182,24 @@ public record DiskSystems(List<Entry> installed, int bootIndex) {
             return this;
         }
         final List<Entry> marked = new ArrayList<>(this.installed);
-        marked.set(at, new Entry(osId, welcome));
+        marked.set(at, new Entry(osId, welcome, this.installed.get(at).savedMb()));
         return new DiskSystems(marked, this.bootIndex);
+    }
+
+    /** The room that system's installer left off the disk, in megabytes; none for one the disk does not carry. */
+    public int savedMbOf(@Nullable final ResourceLocation osId) {
+        final int at = this.indexOf(osId);
+        return at < 0 ? 0 : this.installed.get(at).savedMb();
+    }
+
+    /** The same disk, with that system keeping {@code mb} of itself off it; one it does not carry changes nothing. */
+    public DiskSystems saving(final ResourceLocation osId, final int mb) {
+        final int at = this.indexOf(osId);
+        if (at < 0) {
+            return this;
+        }
+        final List<Entry> trimmed = new ArrayList<>(this.installed);
+        trimmed.set(at, new Entry(osId, this.installed.get(at).welcome(), mb));
+        return new DiskSystems(trimmed, this.bootIndex);
     }
 }

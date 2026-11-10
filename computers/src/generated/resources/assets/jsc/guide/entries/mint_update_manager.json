@@ -1,0 +1,42 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.mint_update_manager.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.mint_update_manager.step1",
+        "jsc.guide.mint_update_manager.step2"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mint_update_manager.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.mint_update_manager.fix1",
+          "problem": "jsc.guide.mint_update_manager.problem1"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:mint_software_manager"
+      ]
+    }
+  ],
+  "id": "jsc:mint_update_manager",
+  "order": 260,
+  "section": "jsc:mint_programs",
+  "title": "jsc.guide.mint_update_manager.title"
+}

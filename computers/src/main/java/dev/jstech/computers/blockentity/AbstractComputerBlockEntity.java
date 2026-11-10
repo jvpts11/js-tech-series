@@ -320,8 +320,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
                 (tag, registries) -> energy.loadDebt(tag))).save();
         fields().part("Heat", IFieldPart.of((tag, registries) -> heat.save(tag),
                 (tag, registries) -> heat.load(tag))).save();
-        fields().part("Session", IFieldPart.of((tag, registries) -> session.save(tag),
-                (tag, registries) -> session.load(tag))).save();
+        fields().part("Session", IFieldPart.of(session::save, session::load)).save();
         fields().part("OutOfMemory", IFieldPart.of((tag, registries) -> kernel.save(tag),
                 (tag, registries) -> kernel.load(tag))).save();
         this.computerName = fields().value("ComputerName", Codec.STRING, "").save().toClient();
@@ -857,8 +856,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             PacketDistributor.sendToPlayer(player,
                     new OpenSystemBootPayload(
                             worldPosition, monitor, ticks, ticks, sequence, !restarting,
-                            installedOs() == null ? BootSplash.PLAIN
-                                    : BootSplash.of(installedOs().platform(), installedOs().familyRank()),
+                            installedOs() == null ? BootSplash.PLAIN : installedOs().bootSplash(),
                             /* A machine on its way down shows no desktop coming up, so it names none. */
                             new BootIdentity("", installedOs() == null ? "" : installedOs().displayName(),
                                     Installers.hostName(this), "")));
@@ -1651,6 +1649,22 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      */
     public ItemStack systemDisk() {
         return session.systemDisk();
+    }
+
+    @Override
+    public boolean liveSession() {
+        return session.liveSession();
+    }
+
+    @Override
+    public boolean startLiveSession(final ResourceLocation systemId) {
+        session.requestLive(systemId);
+        return true;
+    }
+
+    @Override
+    public void settleLiveSession() {
+        session.settleLive();
     }
 
     /** The disk slot index the firmware boots first, or {@code -1} for "the first disk with a system". */

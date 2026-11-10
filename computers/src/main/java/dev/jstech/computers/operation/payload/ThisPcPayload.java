@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.core.text.Text;
@@ -165,11 +166,24 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
      *                        guessed from the words {@code architecture} happens to contain
      */
     public record AboutFacts(Text operatingSystem, Text architecture, Text kernel, Text desktop, Text hostName,
-                             Text processor, long ramMb, long diskMb, long diskUsedMb, boolean freeBsd,
+                             Text processor, long ramMb, long diskMb, long diskUsedMb, Platform platform,
                              boolean bits64) {
 
+        /* The longest name a platform goes by on the wire. */
+        private static final int MAX_PLATFORM = 32;
+
         public static final AboutFacts EMPTY = new AboutFacts(Text.EMPTY, Text.EMPTY, Text.EMPTY, Text.EMPTY,
-                Text.EMPTY, Text.EMPTY, 0L, 0L, 0L, false, false);
+                Text.EMPTY, Text.EMPTY, 0L, 0L, 0L, Platform.LINUX, false);
+
+        /** Whether the system is FreeBSD, whose page carries its orb and names its release its own way. */
+        public boolean freeBsd() {
+            return this.platform == Platform.FREEBSD;
+        }
+
+        /** Whether the system is one of the BSDs, whose page carries its mark and names its kernel plainly. */
+        public boolean bsd() {
+            return this.platform.bsd();
+        }
 
         // Written by hand for the same reason as WireMachine's: eleven fields, past composite()'s six pairs.
         public static final StreamCodec<RegistryFriendlyByteBuf, AboutFacts> STREAM_CODEC =
@@ -183,13 +197,18 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
                     buf.writeVarLong(a.ramMb());
                     buf.writeVarLong(a.diskMb());
                     buf.writeVarLong(a.diskUsedMb());
-                    buf.writeBoolean(a.freeBsd());
+                    buf.writeUtf(a.platform().serializedName(), MAX_PLATFORM);
                     buf.writeBoolean(a.bits64());
                 }, buf -> new AboutFacts(TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf),
                         TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf),
                         TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf),
-                        buf.readVarLong(), buf.readVarLong(), buf.readVarLong(), buf.readBoolean(),
-                        buf.readBoolean()));
+                        buf.readVarLong(), buf.readVarLong(), buf.readVarLong(),
+                        platformNamed(buf.readUtf(MAX_PLATFORM)), buf.readBoolean()));
+
+        private static Platform platformNamed(final String name) {
+            final Platform found = Platform.byName(name);
+            return found == null ? Platform.LINUX : found;
+        }
     }
 
     /**

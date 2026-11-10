@@ -1,0 +1,60 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.openbsd_ddb.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.openbsd_ddb.table1",
+      "heads": [
+        "jsc.guide.openbsd_ddb.table1_head1",
+        "jsc.guide.openbsd_ddb.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "show panic"
+          },
+          {
+            "words": "jsc.guide.openbsd_ddb.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "trace"
+          },
+          {
+            "words": "jsc.guide.openbsd_ddb.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "ps"
+          },
+          {
+            "words": "jsc.guide.openbsd_ddb.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "boot reboot"
+          },
+          {
+            "words": "jsc.guide.openbsd_ddb.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:openbsd_overview"
+      ]
+    }
+  ],
+  "id": "jsc:openbsd_ddb",
+  "order": 310,
+  "section": "jsc:openbsd_tools",
+  "title": "jsc.guide.openbsd_ddb.title"
+}

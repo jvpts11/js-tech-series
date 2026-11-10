@@ -1,0 +1,17 @@
+{
+  "accent": "#FF69B03B",
+  "dim": "#FF6E6E6E",
+  "divider": "#FF555555",
+  "dotOff": "#FFC8C8C8",
+  "edge": "#FFB0B0B0",
+  "face": "#FFFBFBFB",
+  "field": "#FFFFFFFF",
+  "ink": "#FF2B2B2B",
+  "other": "#FF3A7BD5",
+  "slide": "#FF2E3A23",
+  "slideText": "#FFD8E8C8",
+  "stripe": "#FF34462A",
+  "title": "#FF2B2B2B",
+  "track": "#FFD8D8D8",
+  "window": "#FFF7F7F7"
+}

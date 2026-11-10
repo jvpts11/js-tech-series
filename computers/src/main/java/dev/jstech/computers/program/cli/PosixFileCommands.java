@@ -491,9 +491,12 @@ final class PosixFileCommands {
                 TextKey.of("jsc.cli.posix.man.try_intro", "For example, try 'man intro'.");
         private static final TextKey NO_ENTRY = TextKey.of("jsc.cli.posix.man.no_entry", "No manual entry for %s");
 
-        /** The manual is about commands, not about files, so a system with no disk still has it. */
+        /*
+         * The manual is about commands, not about files, so a system with no disk still has it; an OpenBSD installed
+         * without its man set has none.
+         */
         @Override public CommandScope scope() {
-            return CommandScope.on(CommandScope.UNIX_SYSTEMS);
+            return CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.MANUAL);
         }
 
         @Override public String name() { return "man"; }
@@ -567,8 +570,7 @@ final class PosixFileCommands {
                     return ManualEntries.commandEntry(platform, command.name());
                 }
             }
-            if (platform != Platform.UNIX && platform != Platform.FREEBSD
-                    || ManTopics.find(word, platform).isPresent()) {
+            if (platform != Platform.UNIX && !platform.bsd() || ManTopics.find(word, platform).isPresent()) {
                 return Optional.empty();
             }
             return ManualEntries.find(word);

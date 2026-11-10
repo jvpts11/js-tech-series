@@ -66,6 +66,8 @@ public final class PortsVoices {
             TextKey.of("jsc.install.ports_voices.building_index", "Building new INDEX files...");
     private static final TextKey INDEXED = TextKey.of("jsc.install.ports_voices.indexed",
             "Building new INDEX files... done. %s ports, %s on this disk.");
+    private static final TextKey CHECKED_OUT = TextKey.of("jsc.install.ports_voices.checked_out",
+            "/usr/ports: %s ports, %s on this disk.");
     private static final TextKey NO_SPACE =
             TextKey.of("jsc.install.ports_voices.no_space", "%s: No space left on device");
     private static final TextKey DONE = TextKey.of("jsc.install.ports_voices.done", "done");
@@ -155,6 +157,33 @@ public final class PortsVoices {
                 .effect(laid)
                 .redraw(10, p -> p >= 1.0 ? indexed.get() : Tint.line(BUILDING_INDEX, " "))
                 .done();
+    }
+
+    /**
+     * OpenBSD's cvs bringing the tree from the Mirror, quiet as it is run: a line for each port's file it writes,
+     * {@code U} when it is new and {@code P} when an update patched it, then how it went.
+     *
+     * @param update  whether a tree already there is being brought up to date
+     * @param origins the ports written, each as its category and its name
+     * @param ticks   how long fetching and writing them takes
+     * @param laid    what having them written means to the machine
+     * @param said    the line that says how it went, asked for once they are written
+     */
+    public static TtyScript checkout(final boolean update, final List<String> origins, final int ticks,
+                                     final Runnable laid, final Supplier<CliLine> said) {
+        final String mark = update ? "P " : "U ";
+        return TtyScript.script()
+                .flood(ticks, origins.size(),
+                        index -> new CliLine(mark + "ports/" + origins.get(index) + "/Makefile", CliStyle.DIM))
+                .effect(laid)
+                .redraw(4, p -> said.get())
+                .done();
+    }
+
+    /** How cvs leaves the tree once it is written: how many ports, and what they take on the disk. */
+    public static CliLine checkedOut(final int ports, final String onDisk) {
+        final String count = String.format(Locale.ROOT, "%,d", ports);
+        return CliLine.plain(CHECKED_OUT.with(count, onDisk));
     }
 
     /** How the index ends when the tree was written: how many ports, and what they take on the disk. */

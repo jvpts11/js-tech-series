@@ -44,7 +44,14 @@ public enum BootManager implements IStableName {
      * every start, and offers what else can be done from there. It lists only what this machine can really do,
      * which leaves the boot itself, starting over, and the firmware where the firmware is reached that way.
      */
-    LOADER("loader");
+    LOADER("loader"),
+
+    /**
+     * OpenBSD's boot, which stops at {@code boot>} and waits five seconds with no count shown: any key stops the wait,
+     * and Enter or {@code boot} starts the system (computers/docs/design/operating-systems.md). Like the loader it
+     * boots only its own system, and it lists nothing at all.
+     */
+    BOOT_PROMPT("boot_prompt");
 
     private static final StableNames<BootManager> NAMES = StableNames.of(BootManager.class);
 
@@ -71,6 +78,7 @@ public enum BootManager implements IStableName {
             case LINUX -> GRUB;
             case FRAMES -> KICKMGR;
             case FREEBSD -> LOADER;
+            case OPENBSD -> BOOT_PROMPT;
             default -> NONE;
         };
     }
@@ -91,7 +99,7 @@ public enum BootManager implements IStableName {
      * not: another system on the same machine is reached from the firmware's own boot menu, as it really is.
      */
     public boolean listsSystems() {
-        return this != LOADER;
+        return this != LOADER && this != BOOT_PROMPT;
     }
 
     /** What the manager writes across the top of its list: its own name, or the loader's greeting. */
@@ -100,7 +108,8 @@ public enum BootManager implements IStableName {
             case GRUB -> Text.literal("GNU GRUB  version 2.12");
             case KICKMGR -> Text.literal("Midsoft Boot Manager");
             case LOADER -> LOADER_WELCOME.with("FreeBSD");
-            case NONE -> Text.EMPTY;
+            // OpenBSD's boot heads its page with what it probed of the machine, which only the machine can say.
+            case BOOT_PROMPT, NONE -> Text.EMPTY;
         };
     }
 
@@ -122,7 +131,7 @@ public enum BootManager implements IStableName {
             case GRUB -> GRUB_FIRMWARE.text();
             case KICKMGR -> KICKMGR_FIRMWARE.text();
             case LOADER -> LOADER_FIRMWARE.text();
-            case NONE -> Text.EMPTY;
+            case BOOT_PROMPT, NONE -> Text.EMPTY;
         };
     }
 

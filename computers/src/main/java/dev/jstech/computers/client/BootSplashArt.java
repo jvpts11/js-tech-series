@@ -125,6 +125,16 @@ public final class BootSplashArt {
                     0xFF6B4A2C, 0xFF0A1830));
 
     /** The newest edition: the ground its firmware posts against, its greeting and the lines under it. */
+    private static final Palette<Mint> MINT = Palettes.declare(JsComputers.MODID, "boot/mint",
+            new Mint(0xFF000000, 0xFF86BE43, 0xFF3C5422));
+    private static final ResourceLocation MINT_MARK_TEXTURE =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "textures/gui/splash/mint_mark.png");
+    /* The mark's side on the glass, and the side it is drawn at; the dots, how far apart, and how long each is lit. */
+    private static final int MINT_MARK = 48;
+    private static final int MINT_MARK_TEX = 192;
+    private static final int MINT_DOTS = 5;
+    private static final int MINT_DOT_STEP = 9;
+    private static final int MINT_PULSE_TICKS = 6;
     private static final Palette<Modern> MODERN = Palettes.declare(JsComputers.MODID, "boot/frames_11",
             new Modern(0xFF10121C, 0xFFFFFFFF, 0xFFA8B2C6, 0xFFE6ECF6));
 
@@ -173,7 +183,29 @@ public final class BootSplashArt {
             case FRAMES_7 -> frames7(g, font, x, y, w, h, ticks, loop, total, who.desktopId().isEmpty(), subtitle);
             case FRAMES_10 -> frames10(g, font, x, y, w, h, ticks, loop, total, who, title, subtitle);
             case FRAMES_11 -> frames11(g, font, x, y, w, h, loop, title, subtitle);
+            case MINT -> mint(g, x, y, w, h, loop);
             default -> { }
+        }
+    }
+
+    /*
+     * Linux Mint's: its mark in the middle of the black glass and the five dots under it, one lit and moving along as
+     * the machine comes up or goes down (computers/docs/design/operating-systems.md).
+     */
+    private static void mint(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                             final double loop) {
+        final Mint c = MINT.get();
+        g.fill(x, y, x + w, y + h, c.ground());
+        final int left = x + (w - MINT_MARK) / 2;
+        final int top = y + h / 2 - MINT_MARK / 2 - 8;
+        Draw.blended(() -> g.blit(MINT_MARK_TEXTURE, left, top, MINT_MARK, MINT_MARK, 0.0F, 0.0F, MINT_MARK_TEX,
+                MINT_MARK_TEX, MINT_MARK_TEX, MINT_MARK_TEX));
+        final int lit = (int) ((long) (loop / MINT_PULSE_TICKS) % MINT_DOTS);
+        final int dotsLeft = x + w / 2 - (MINT_DOTS * MINT_DOT_STEP) / 2;
+        final int dotsTop = top + MINT_MARK + 12;
+        for (int i = 0; i < MINT_DOTS; i++) {
+            final int dx = dotsLeft + i * MINT_DOT_STEP;
+            g.fill(dx, dotsTop, dx + 3, dotsTop + 3, i == lit ? c.lit() : c.dot());
         }
     }
 
@@ -206,6 +238,7 @@ public final class BootSplashArt {
             case FRAMES_7 -> SEVEN.get().night();
             case FRAMES_10 -> TEN.get().night();
             case FRAMES_11 -> MODERN.get().ground();
+            case MINT -> MINT.get().ground();
             default -> LUNA.get().ground();
         };
     }
@@ -582,6 +615,10 @@ public final class BootSplashArt {
     }
 
     /** The newest edition's colours, as the palette above names them. */
+    /** Linux Mint's black, and its dots: the one lit in the mark's green, the rest a darker green. */
+    private record Mint(int ground, int lit, int dot) {
+    }
+
     private record Modern(int ground, int greeting, int subtitle, int goodbye) {
     }
 

@@ -38,8 +38,11 @@ final class MachineCrash {
         this.page = page;
         this.endsAt = now + page.totalTicks();
         this.endsDark = endsDark;
-        // Quince's pages stand from the first until the player restarts the machine, which the next key does.
-        this.held = page.style().quince();
+        /*
+         * Quince's pages and OpenBSD's debugger stand from the first until the player restarts the machine, which the
+         * next key does: the bomb's Restart, or boot reboot typed at ddb.
+         */
+        this.held = page.style().standsUntilRestarted();
     }
 
     /** The page standing on the glass at {@code now}, or null when there is none or its time is up. */

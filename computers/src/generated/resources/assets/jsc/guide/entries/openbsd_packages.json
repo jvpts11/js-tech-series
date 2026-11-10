@@ -1,0 +1,102 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.openbsd_packages.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.openbsd_packages.table1",
+      "heads": [
+        "jsc.guide.openbsd_packages.table1_head1",
+        "jsc.guide.openbsd_packages.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "pkg_add <package>"
+          },
+          {
+            "words": "jsc.guide.openbsd_packages.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg_add -u"
+          },
+          {
+            "words": "jsc.guide.openbsd_packages.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg_info"
+          },
+          {
+            "words": "jsc.guide.openbsd_packages.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg_info -Q <term>"
+          },
+          {
+            "words": "jsc.guide.openbsd_packages.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "pkg_delete <package>"
+          },
+          {
+            "words": "jsc.guide.openbsd_packages.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/openbsd/pkg_add"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/openbsd/pkg_info"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/openbsd/pkg_delete"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.openbsd_packages.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.openbsd_packages.text2"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.openbsd_packages.step1",
+        "jsc.guide.openbsd_packages.step2",
+        "jsc.guide.openbsd_packages.step3",
+        "jsc.guide.openbsd_packages.step4"
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/openbsd/cvs"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:openbsd_patches",
+        "jsc:openbsd_overview"
+      ]
+    }
+  ],
+  "id": "jsc:openbsd_packages",
+  "order": 307,
+  "section": "jsc:openbsd_software",
+  "title": "jsc.guide.openbsd_packages.title"
+}

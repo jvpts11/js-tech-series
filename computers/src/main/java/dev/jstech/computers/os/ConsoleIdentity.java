@@ -27,12 +27,14 @@ import org.jetbrains.annotations.Nullable;
  * @param osLabel  what the system is called, empty when there is none
  * @param platform the family the system belongs to, or null when there is no system
  * @param bits     how wide the processor's word is, which is what the family names its architecture after
+ * @param manual   whether the system has its manual's pages, which an OpenBSD installed without its man set has not,
+ *                 so its welcome does not point at them
  */
 public record ConsoleIdentity(@Nullable ShellKind shell, boolean live, String hostname, String osLabel,
-                              @Nullable Platform platform, int bits) {
+                              @Nullable Platform platform, int bits, boolean manual) {
 
     /** A console with nothing to say about itself. */
-    public static final ConsoleIdentity NONE = new ConsoleIdentity(null, false, "", "", null, 0);
+    public static final ConsoleIdentity NONE = new ConsoleIdentity(null, false, "", "", null, 0, true);
 
     /** Who a FreeBSD prompt says is logged in, before the machine's name. */
     private static final String ROOT = "root@";
@@ -46,11 +48,18 @@ public record ConsoleIdentity(@Nullable ShellKind shell, boolean live, String ho
         bits = Math.max(0, bits);
     }
 
+    /** A console of a system that has its manual's pages, which is every one but an OpenBSD without its man set. */
+    public ConsoleIdentity(@Nullable final ShellKind shell, final boolean live, final String hostname,
+                           final String osLabel, @Nullable final Platform platform, final int bits) {
+        this(shell, live, hostname, osLabel, platform, bits, true);
+    }
+
     /** The same console as it comes off the wire, where the shell and the family travel by name, none as empty. */
     public static ConsoleIdentity ofWire(final String shellName, final boolean live, final String hostname,
-                                         final String osLabel, final String platformName, final int bits) {
+                                         final String osLabel, final String platformName, final int bits,
+                                         final boolean manual) {
         return new ConsoleIdentity(SHELLS.find(shellName), live, hostname, osLabel, PLATFORMS.find(platformName),
-                bits);
+                bits, manual);
     }
 
     /**
@@ -71,12 +80,16 @@ public record ConsoleIdentity(@Nullable ShellKind shell, boolean live, String ho
 
     /**
      * The same prompt as the glass shows it. FreeBSD's has root and the machine's name in red and the rest in a
-     * prompt's ink; every other one is in the one colour a terminal gives a prompt.
+     * prompt's ink, and OpenBSD's ksh, root's too, is the machine's name and its hash in red; every other one is in
+     * the one colour a terminal gives a prompt.
      */
     public static CliLine promptLineOf(@Nullable final Platform platform, @Nullable final ShellKind shell,
                                        final String hostname, final String cwd) {
         if (platform == Platform.FREEBSD) {
             return CliLine.build().add(ROOT + hostname, CliStyle.RED).add(":" + cwd + " #", CliStyle.PROMPT).done();
+        }
+        if (platform == Platform.OPENBSD) {
+            return new CliLine(promptOf(platform, shell, hostname, cwd), CliStyle.RED);
         }
         return new CliLine(promptOf(platform, shell, hostname, cwd), CliStyle.ACCENT);
     }

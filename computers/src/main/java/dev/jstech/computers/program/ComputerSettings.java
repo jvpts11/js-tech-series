@@ -267,6 +267,78 @@ public final class ComputerSettings {
         this.cronEnabled = value;
     }
 
+    /**
+     * Whether OpenBSD's display manager starts the desktop at boot, its {@code rcctl enable xenodm}. Off by default,
+     * which is OpenBSD secure by default: a desktop installed still comes up at the terminal until this is switched
+     * on (computers/docs/design/operating-systems.md). No other system reads it.
+     */
+    private boolean xenodmEnabled;
+
+    public boolean xenodmEnabled() {
+        return xenodmEnabled;
+    }
+
+    public void setXenodmEnabled(final boolean value) {
+        this.xenodmEnabled = value;
+    }
+
+    /**
+     * The sets OpenBSD's installer left out, as its option bits: what is left out takes no room on the disk, and the
+     * man set and the comp set take their commands with them (computers/docs/design/operating-systems.md). None on
+     * every other system.
+     */
+    private int setsLeftOut;
+
+    public int setsLeftOut() {
+        return setsLeftOut;
+    }
+
+    public void setSetsLeftOut(final int bits) {
+        this.setsLeftOut = bits;
+    }
+
+    /**
+     * How many of OpenBSD's patches {@code syspatch} has installed, in the order the release published them: the
+     * patches are the system's own, the same on every machine of it, so how far along the list a machine is says
+     * which it has. None on a fresh install and on every other system.
+     */
+    private int patchesInstalled;
+
+    public int patchesInstalled() {
+        return patchesInstalled;
+    }
+
+    public void setPatchesInstalled(final int count) {
+        this.patchesInstalled = Math.max(0, count);
+    }
+
+    /**
+     * The services installed on OpenBSD that {@code rcctl enable} switched on, by program id: one installed comes
+     * switched off and starts with the system only once it is here (computers/docs/design/operating-systems.md).
+     */
+    private final Set<String> daemonsEnabled = new TreeSet<>();
+
+    public boolean daemonEnabled(final String programId) {
+        return daemonsEnabled.contains(programId);
+    }
+
+    public void setDaemonEnabled(final String programId, final boolean on) {
+        if (on) {
+            daemonsEnabled.add(programId);
+        } else {
+            daemonsEnabled.remove(programId);
+        }
+    }
+
+    public List<String> daemonsEnabled() {
+        return List.copyOf(daemonsEnabled);
+    }
+
+    public void setDaemonsEnabled(final Iterable<String> programIds) {
+        daemonsEnabled.clear();
+        programIds.forEach(daemonsEnabled::add);
+    }
+
     public String themePreset() {
         return themePreset;
     }
@@ -670,6 +742,7 @@ public final class ComputerSettings {
         lines.add(pad("shares") + (shared.isEmpty() ? "none" : String.join(", ", shared)));
         lines.add(pad(SettingKey.REMOTE) + (remoteAllowed ? REMOTE_ON.with("on").english() : "off"));
         lines.add(pad(SettingKey.CRON) + (cronEnabled ? "on" : "off"));
+        lines.add(pad(SettingKey.XENODM) + (xenodmEnabled ? "on" : "off"));
         return lines;
     }
 

@@ -42,6 +42,8 @@ public final class PosixCommands {
         out.addAll(VariableCommands.posix());
         // What repairs a corrupted disk here, the Defrag of these systems.
         out.add(new FsckCommand());
+        // OpenBSD's own tools for keeping the machine: its daemons, its patches, its firewall and doas.
+        out.addAll(OpenBsdCommands.all());
         return List.copyOf(out);
     }
 
@@ -72,10 +74,15 @@ public final class PosixCommands {
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.PACMAN),
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.EMERGE),
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.PKG),
+                // OpenBSD's, which is three tools rather than one word with verbs.
+                new PackageCommands.PackageManagerCommand(PackageManagerKind.PKG_ADD),
+                new PackageCommands.PackageManagerCommand(PackageManagerKind.PKG_ADD, "pkg_delete"),
+                new PackageCommands.PackageManagerCommand(PackageManagerKind.PKG_ADD, "pkg_info"),
                 // Quince's keg, from the Standard on, which brews only what the Mirror serves.
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.KEG),
-                // FreeBSD's other way of installing: the ports tree and the builds made from it.
+                // The BSDs' other way of installing: the ports tree and the builds made from it.
                 new PortsCommands.Portsnap(),
+                new PortsCommands.Cvs(),
                 new PortsCommands.Make());
     }
 
