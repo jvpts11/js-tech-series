@@ -245,6 +245,10 @@
       "command": "jsc:command/mc_net/sgpack"
     },
     {
+      "type": "command",
+      "command": "jsc:command/mc_net/sgdb"
+    },
+    {
       "type": "see",
       "entries": [
         "jsc:interactor_screen",

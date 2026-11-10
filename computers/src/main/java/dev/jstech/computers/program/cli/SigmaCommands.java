@@ -78,7 +78,7 @@ public final class SigmaCommands {
                         Isas.oldestFor(LanguageLevel.SIGMA_SHARP).id()),
                 new Compile(LanguageLevel.SIGMA.compiler(), SUBSET_SOURCE, SUBSET_COMPILER, LanguageLevel.SIGMA,
                         Isas.oldestFor(LanguageLevel.SIGMA).id()),
-                new Run(), new Pack());
+                new Run(), new Pack(), new SgdbCommand());
     }
 
     /** Whether that package is installed on the computer. */
@@ -117,7 +117,7 @@ public final class SigmaCommands {
                 "compile a %s program into the assembly a machine runs");
         /* The source's extension, then the assembly's. */
         private static final TextKey USAGE = TextKey.of("jsc.cli.sigma.compile.usage",
-                "<file%1$s> [more%1$s ...] [-o <out%2$s>] [--arch <isa>] [--lang <version>]");
+                "<file%1$s> [more%1$s ...] [-o <out%2$s>] [--arch <isa>] [--lang <version>] [--debug]");
         /* The compiler's own line, first of all it says: the language's name, then the package's version. */
         private static final TextKey BANNER = TextKey.of("jsc.cli.sigma.compile.banner", "%s Compiler %s");
         /* What was asked, the language's name, and the first and newest version there are. */
@@ -142,6 +142,11 @@ public final class SigmaCommands {
          */
         private static final TextKey RUN_IT_BY_NAME =
                 TextKey.of("jsc.cli.sigma.compile.run_it_by_name", "run it with: %s");
+        /* A build for the debugger: what it wrote, and how the debugger is started on it. */
+        private static final TextKey WROTE_FOR_DEBUGGER = TextKey.of("jsc.cli.sigma.compile.wrote_for_debugger",
+                "wrote %s with its lines for the debugger");
+        private static final TextKey DEBUG_IT = TextKey.of("jsc.cli.sigma.compile.debug_it",
+                "debug it with: sgdb %s");
 
         Compile(final String verb, final String extension, final String packageId, final LanguageLevel level,
                 final String baseline) {
@@ -183,9 +188,12 @@ public final class SigmaCommands {
             String out = null;
             String arch = null;
             String lang = null;
+            boolean debug = false;
             for (int i = 0; i < ctx.args().size(); i++) {
                 final String arg = ctx.args().get(i);
-                if ("-o".equals(arg)) {
+                if ("--debug".equals(arg)) {
+                    debug = true;
+                } else if ("-o".equals(arg)) {
                     i++;
                     out = i < ctx.args().size() ? ctx.args().get(i) : null;
                 } else if ("--arch".equals(arg)) {
@@ -260,9 +268,15 @@ public final class SigmaCommands {
                 sources.add(new SourceFile(leaf(path), read.message().english()));
             }
 
-            // The machine's era is a symbol its directives can ask about, as the instruction set is.
-            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, isa, this.level, version,
-                    List.of(SigmaVersions.symbolOf(ctx.computer().era().id())));
+            /*
+             * The machine's era is a symbol its directives can ask about, as the instruction set is; a build for the
+             * debugger defines DEBUG, which is also what makes the compiler write the lines the debugger reads.
+             */
+            final List<String> defined = new ArrayList<>(List.of(SigmaVersions.symbolOf(ctx.computer().era().id())));
+            if (debug) {
+                defined.add(SigmaVersions.DEBUG);
+            }
+            final SigmaCompiler.Result built = SigmaCompiler.compile(sources, isa, this.level, version, defined);
             final List<Diagnostic> diagnostics = built.diagnostics();
             final String assembly = built.ok() ? built.assembly() : null;
             for (final Diagnostic diagnostic : diagnostics) {
@@ -284,12 +298,13 @@ public final class SigmaCommands {
                 ctx.out().error(CliTexts.SAID_BY.with(this.verb, written.message()));
                 return;
             }
-            ctx.out().ok(CliTexts.SAID_BY.with(this.verb, WROTE.with(target)));
+            ctx.out().ok(CliTexts.SAID_BY.with(this.verb,
+                    debug ? WROTE_FOR_DEBUGGER.with(target) : WROTE.with(target)));
             if (this.level == LanguageLevel.SIGMA && ctx.computer().platform() == Platform.MC_DOS) {
                 ctx.computer().report(JscEvents.SIGMA_ON_DOS, "");
             }
             // Compiling is not running, and the prompt is the place to say how the second is done.
-            ctx.out().dim(runIt(ctx.computer(), target));
+            ctx.out().dim(debug ? DEBUG_IT.with(target) : runIt(ctx.computer(), target));
         }
 
         /** A version as typed after {@code --lang}, or zero when it is not a number at all. */

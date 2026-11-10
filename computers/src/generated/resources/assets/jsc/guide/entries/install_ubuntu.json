@@ -116,7 +116,7 @@
     }
   ],
   "id": "jsc:install_ubuntu",
-  "order": 250,
+  "order": 261,
   "section": "jsc:installing_linux",
   "title": "jsc.guide.install_ubuntu.title"
 }

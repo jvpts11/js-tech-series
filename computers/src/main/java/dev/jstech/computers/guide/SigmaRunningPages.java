@@ -28,6 +28,7 @@ final class SigmaRunningPages {
         limits(guide, chapter);
         saving(guide, chapter);
         talking(guide, chapter);
+        debugging(guide, chapter);
     }
 
     private static void running(final ModGuide guide, final GuideChapter chapter) {
@@ -584,6 +585,61 @@ final class SigmaRunningPages {
                         "Write the path in the form host, then share, then the rest of the path:"
                                 + " \\\\host\\share\\folder.")
                 .seeAlso("jsc:network_gateway", "jsc:shared_folders", "jsc:remote_access")
+                .register();
+    }
+
+    private static void debugging(final ModGuide guide, final GuideChapter chapter) {
+        final ModGuide.SectionRef section = guide.section("sigma_debugging_section").titled("Debugging")
+                .in(chapter).register();
+        guide.page("sigma_debugging", section).titled("Debugging a program")
+                .paragraph("A debugger runs your program and stops it where you ask: at a breakpoint, which is a line"
+                        + " of your source, or a line at a time. While it is stopped you see where it is, the calls it"
+                        + " is in, and what its variables hold. You can debug in Virtual Studio, in Virtual Studio Code"
+                        + " and at the terminal with sgdb.")
+                .paragraph("The debugger reads lines that only a build for it carries. Build with sgsc --debug at the"
+                        + " prompt, with the Debug configuration in Virtual Studio, or with Start Debugging in Virtual"
+                        + " Studio Code. Such a build also defines DEBUG, so code inside #if DEBUG is compiled in.")
+                .table("Debugging in the studios", "Key", "What it does")
+                .row(GuideCell.code("F9"), GuideCell.words("Sets or takes away a breakpoint on the caret's line. A"
+                        + " click in the margin does the same."))
+                .row(GuideCell.code("F5"), GuideCell.words("Builds for the debugger and starts debugging, or goes on"
+                        + " to the next breakpoint."))
+                .row(GuideCell.code("Ctrl+F5"), GuideCell.words("Runs the program without the debugger."))
+                .row(GuideCell.code("F10"), GuideCell.words("Step Over: goes to the next line, running a call on it"
+                        + " all the way through."))
+                .row(GuideCell.code("F11"), GuideCell.words("Step Into: goes to the next line, into a call."))
+                .row(GuideCell.code("Shift+F11"), GuideCell.words("Step Out: goes on until the call it is in returns."))
+                .row(GuideCell.code("Shift+F5"), GuideCell.words("Stop Debugging: ends the program at once."))
+                .paragraph("Virtual Studio shows the variables in Locals and Watch, the calls in Call Stack, and"
+                        + " what the program printed in Output. Its Diagnostic Tools show the credits the program has"
+                        + " spent, split between the calls it made and the steps themselves. Virtual Studio Code shows"
+                        + " the same in its Run and Debug view and its Debug Console. The status bar turns orange while"
+                        + " you debug.")
+                .table("The commands of sgdb", "Command", "What it does")
+                .row(GuideCell.code("break 11"), GuideCell.words("Stops the program at line 11 of the file it starts"
+                        + " in; a file named before the line, with a colon between, stops it in that file."))
+                .row(GuideCell.code("run"), GuideCell.words("Starts the program, or starts it again."))
+                .row(GuideCell.code("continue"), GuideCell.words("Goes on to the next breakpoint."))
+                .row(GuideCell.code("step"), GuideCell.words("Goes to the next line, into a call."))
+                .row(GuideCell.code("next"), GuideCell.words("Goes to the next line, over a call."))
+                .row(GuideCell.code("finish"), GuideCell.words("Goes on until the call returns."))
+                .row(GuideCell.code("print logs"), GuideCell.words("Shows what the variable logs holds, and its type."))
+                .row(GuideCell.code("info locals"), GuideCell.words("Shows the variables of the call it stopped in."))
+                .row(GuideCell.code("backtrace"), GuideCell.words("Shows the calls the program is in."))
+                .row(GuideCell.code("info credits"), GuideCell.words("Shows the credits the program has spent."))
+                .row(GuideCell.code("quit"), GuideCell.words("Ends the program and leaves sgdb."))
+                .paragraph("Each step spends what running spends: the debugger adds no cost, and a stopped program"
+                        + " spends nothing. A program started by a debugger belongs to it, so it ends when you stop"
+                        + " debugging or quit sgdb, and it is not saved with the world.")
+                .define("Breakpoint", "A line of the source where the debugger stops the program before it runs it.")
+                .define("Call stack", "The calls a program is in, the one it is running first.")
+                .ifSomethingGoesWrong(
+                        "The program runs past a breakpoint.",
+                        "Build it for the debugger, with sgsc --debug or the Debug configuration: a build without"
+                                + " the debugger's lines has nowhere to stop.",
+                        "sgdb says the program is not being run.",
+                        "Type run to start it first.")
+                .seeAlso("jsc:sigma_compile", "jsc:call_costs", "jsc:sigma_directives")
                 .register();
     }
 }

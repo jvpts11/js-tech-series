@@ -135,6 +135,16 @@ public final class MethodImage {
         return this.written.positionOf(index);
     }
 
+    /** The column of the statement the line at {@code index} came from, or 0 when the listing does not say. */
+    int columnOf(final int index) {
+        return this.written.columnOf(index);
+    }
+
+    /** The variables the source named, as a build for the debugger lists them; none for any other build. */
+    List<AsmMethod.Local> locals() {
+        return this.written.debug().locals();
+    }
+
     /** The type the method belongs to. */
     public String owner() {
         return this.owner;

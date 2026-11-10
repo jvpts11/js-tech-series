@@ -97,7 +97,7 @@
     }
   ],
   "id": "jsc:openbsd_daemons",
-  "order": 308,
+  "order": 319,
   "section": "jsc:openbsd_system",
   "title": "jsc.guide.openbsd_daemons.title"
 }

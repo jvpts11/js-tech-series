@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * The lines of one method, and the places it keeps its values in.
@@ -55,6 +56,8 @@ final class MethodBody {
     private final List<AsmMethod.Handler> protecting = new ArrayList<>();
     /** The line of the source each instruction came from. */
     private final List<Integer> positions = new ArrayList<>();
+    /** The column of the statement each instruction came from, which a build for the debugger writes down. */
+    private final List<Integer> columns = new ArrayList<>();
     /** The place each catch keeps the exception it took, for a throw that throws it on. */
     private final Map<IStmt.Catch, Integer> caught = new IdentityHashMap<>();
     /** Where the address of each variable living in raw memory is kept, in the order they were first reached. */
@@ -69,6 +72,8 @@ final class MethodBody {
     private int nextSlot;
     /** The line of the source the instructions being written now come from. */
     private int position;
+    /** The column of the statement they come from. */
+    private int column;
     /** The way out a return inside a protected stretch leaves for, made the first time one is written. */
     private String wayOut;
     /** Where such a return's answer waits while the finally blocks run, or -1 while none has. */
@@ -289,10 +294,23 @@ final class MethodBody {
         }
     }
 
-    /** Says the instructions written from here on come from that line of the source; 0 says nothing. */
-    void at(final int line) {
+    /** Says the instructions written from here on come from the statement at that line and column; 0 says nothing. */
+    void at(final int line, final int column) {
         if (line > 0) {
             this.position = line;
+            this.column = column;
+        }
+    }
+
+    /**
+     * Says the instructions written from here on come from a part of the statement at that line and column. The column
+     * moves only with the line, so a debugger stops at a statement where it starts, and a statement over several lines
+     * stops at each line where the part on it starts.
+     */
+    void within(final int line, final int column) {
+        if (line > 0 && line != this.position) {
+            this.position = line;
+            this.column = column;
         }
     }
 
@@ -335,6 +353,35 @@ final class MethodBody {
     /** The line of the source each instruction came from, in order. */
     List<Integer> positions() {
         return List.copyOf(this.positions);
+    }
+
+    /** The column of the statement each instruction came from, in order. */
+    List<Integer> columns() {
+        return List.copyOf(this.columns);
+    }
+
+    /**
+     * The variables the source named and where each lives while the method runs, for a build for the debugger: the
+     * parameters first, then the locals in the order they were given places, then those that never had a place of
+     * their own (kept in the object the lambdas share, or in raw memory).
+     */
+    List<AsmMethod.Local> locals() {
+        final List<AsmMethod.Local> named = new ArrayList<>();
+        final Set<IBinding.Variable> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        final List<Map.Entry<IBinding.Variable, Integer>> bySlot = new ArrayList<>(this.places.entrySet());
+        bySlot.sort(Map.Entry.comparingByValue());
+        for (final Map.Entry<IBinding.Variable, Integer> place : bySlot) {
+            this.name(place.getKey(), place.getValue(), named, seen);
+        }
+        if (this.closure != null) {
+            for (final IBinding.Variable kept : this.closure.fields().keySet()) {
+                this.name(kept, -1, named, seen);
+            }
+        }
+        for (final IBinding.Variable held : this.inMemory) {
+            this.name(held, -1, named, seen);
+        }
+        return named;
     }
 
     List<Instruction> finish() {
@@ -386,6 +433,43 @@ final class MethodBody {
         }
         this.code.add(written);
         this.positions.add(this.position);
+        this.columns.add(this.column);
+    }
+
+    /* Writes down where one named variable lives, once, unless its name is one the compiler made up. */
+    private void name(final IBinding.Variable variable, final int slot, final List<AsmMethod.Local> named,
+                      final Set<IBinding.Variable> seen) {
+        if (!isSourceName(variable.name()) || !seen.add(variable)) {
+            return;
+        }
+        final String type = variable.type().describe();
+        /*
+         * Inside a lambda, what it kept of the method around it is no parameter of its own, though it was one of that
+         * method's; only the method's own parameters are shown with a call.
+         */
+        final boolean parameter = variable.parameter() && !(this.closureIsThis && this.kept(variable));
+        if (this.addresses.containsKey(variable)) {
+            named.add(new AsmMethod.Local(parameter, AsmMethod.Where.MEMORY, this.addresses.get(variable), "",
+                    variable.name(), type));
+        } else if (this.kept(variable)) {
+            named.add(new AsmMethod.Local(parameter, AsmMethod.Where.KEPT, this.closureIsThis ? -1 : this.closureSlot,
+                    this.closure.fields().get(variable), variable.name(), type));
+        } else if (slot >= 0) {
+            named.add(new AsmMethod.Local(parameter, AsmMethod.Where.SLOT, slot, "", variable.name(), type));
+        }
+    }
+
+    /* Whether a name is one a source can hold: a letter or an underscore, then letters, digits and underscores. */
+    private static boolean isSourceName(final String name) {
+        if (name == null || name.isEmpty() || !(Character.isLetter(name.charAt(0)) || name.charAt(0) == '_')) {
+            return false;
+        }
+        for (int i = 1; i < name.length(); i++) {
+            if (!Character.isLetterOrDigit(name.charAt(i)) && name.charAt(i) != '_') {
+                return false;
+            }
+        }
+        return true;
     }
 
     /*
@@ -413,6 +497,7 @@ final class MethodBody {
         this.emitter.uses(Opcode.LOCALLOC.since());
         this.code.addAll(0, made);
         this.positions.addAll(0, Collections.nCopies(made.size(), 0));
+        this.columns.addAll(0, Collections.nCopies(made.size(), 0));
     }
 
     /** Writes an instruction already made, as {@link RawAccess} hands them over. */

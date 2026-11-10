@@ -190,7 +190,7 @@
     }
   ],
   "id": "jsc:openbsd_installer",
-  "order": 307,
+  "order": 318,
   "section": "jsc:openbsd_system",
   "title": "jsc.guide.openbsd_installer.title"
 }

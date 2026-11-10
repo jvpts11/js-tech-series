@@ -262,7 +262,7 @@
     }
   ],
   "id": "jsc:sigma_compile",
-  "order": 372,
+  "order": 383,
   "section": "jsc:sigma_start",
   "title": "jsc.guide.sigma_compile.title"
 }

@@ -9,6 +9,7 @@ package dev.jstech.computers.eventlog;
 
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.portable.AlertKind;
+import dev.jstech.computers.machine.NetworkListening;
 import dev.jstech.computers.portable.PortableAlerts;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
@@ -93,8 +94,11 @@ public final class NetworkEvents {
         if (network == null) {
             return;
         }
-        NetworkEventLog.of(level).add(network, new NetworkEvent(level.getGameTime(), level.getDayTime(), what, machine,
-                machine == null ? "" : TextBounds.clip(machineName, MOST_NAME), message));
+        final NetworkEvent event = new NetworkEvent(level.getGameTime(), level.getDayTime(), what, machine,
+                machine == null ? "" : TextBounds.clip(machineName, MOST_NAME), message);
+        NetworkEventLog.of(level).add(network, event);
+        // A program that waits on the network's log hears each entry as it is written (Network.OnEvent).
+        NetworkListening.logged(level, network, event);
     }
 
     /**

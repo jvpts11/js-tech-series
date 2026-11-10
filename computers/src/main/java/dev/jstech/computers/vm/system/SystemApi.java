@@ -74,7 +74,8 @@ public final class SystemApi {
 
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
             processMessage(), thread(), time(), random(), openFile(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
-            computer(), holdingInfo(), serverInfo(), network(), stockEvent(), subscription(), remoteComputer(),
+            computer(), holdingInfo(), serverInfo(), network(), stockEvent(), networkEvent(), subscription(),
+            remoteComputer(),
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
             button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), textArea(),
@@ -457,7 +458,23 @@ public final class SystemApi {
                 "Action<StockEvent>");
         network.onType("List<RemoteComputer>", "Computers", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
         network.onType("RemoteComputer", "Computer", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        /*
+         * Each entry written to the network's event log, as it is written: a UPS on battery, a power supply that
+         * degraded, a conflict. Listening costs nothing, as watching does; the handler runs out of the program's
+         * credits.
+         */
+        network.onType(VOID, "OnEvent", MemberKind.PROCESS, CallCost.FREE, "Action<NetworkEvent>");
         return new TypeSpec(NETWORK, "Network", network.members);
+    }
+
+    /** An entry of the network's event log: how serious it is, the machine it is about, what it says, and when. */
+    private static TypeSpec networkEvent() {
+        final Members event = new Members("NetworkEvent");
+        event.recordValue(STRING, "Level");
+        event.recordValue(STRING, "Machine");
+        event.recordValue(STRING, "Text");
+        event.recordValue(LONG, "Tick");
+        return new TypeSpec(NETWORK, "NetworkEvent", event.members);
     }
 
     private static TypeSpec stockEvent() {
@@ -552,6 +569,8 @@ public final class SystemApi {
         final Members asked = new Members("AskResult");
         asked.recordValue(BOOL, "Ok");
         asked.recordValue(STRING, "Message");
+        // The short id of the Operation an ask set going, which OnSettled waits on; empty when it set none going.
+        asked.recordValue(STRING, "Id");
         return new TypeSpec(OPERATIONS, "AskResult", asked.members);
     }
 
@@ -591,6 +610,12 @@ public final class SystemApi {
                 LONG);
         operations.onType("OperationInfo", "Get", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
         operations.onType("List<OperationInfo>", "List", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ));
+        /*
+         * Told when an Operation of the network settles, done or not: any of them, or the one an ask set going, by
+         * the Id it answered with ("tell me when this craft is done"). Listening costs nothing, as watching does.
+         */
+        operations.onType(VOID, "OnSettled", MemberKind.PROCESS, CallCost.FREE, "Action<OperationInfo>");
+        operations.onType(VOID, "OnSettled", MemberKind.PROCESS, CallCost.FREE, STRING, "Action<OperationInfo>");
         return new TypeSpec(OPERATIONS, "Operations", operations.members);
     }
 

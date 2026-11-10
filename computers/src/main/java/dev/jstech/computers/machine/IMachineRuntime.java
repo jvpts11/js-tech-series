@@ -53,6 +53,14 @@ public interface IMachineRuntime extends ILanguageProcess, IProgramRuntime {
     /** How many bytes it may hold at once. */
     long heapBytes();
 
+    /**
+     * Whether a debugger started it. Such a program belongs to its debugger: it is not written down with the world, and
+     * a world brought back has it no more, as a program a debugger was holding does not outlive the debugger.
+     */
+    default boolean debugged() {
+        return false;
+    }
+
     /** The language that runs the program, or null for one the machine runs from a listing itself. */
     @Nullable
     default IProgrammingLanguage language() {

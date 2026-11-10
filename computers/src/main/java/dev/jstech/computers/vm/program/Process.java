@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.vm.program;
 
+import dev.jstech.computers.vm.listing.Instruction;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.system.MemberId;
 import dev.jstech.computers.vm.system.SigmaCosts;
@@ -164,6 +165,8 @@ public final class Process {
     private boolean running;
     /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
     private final ProgramListeners listeners = new ProgramListeners();
+    /** The debugger attached to the program, or null for a program that is not being debugged, as almost none is. */
+    private Debugger debugger;
     private Values.Obj self;
     /** The windows this program has open on the machine's desktop, and the numbers its windows and widgets get. */
     private final ProgramWindows windows;
@@ -365,6 +368,19 @@ public final class Process {
         return this.identity.spent();
     }
 
+    /** Attaches a debugger to the program, or gives the one already attached. */
+    public Debugger debug() {
+        if (this.debugger == null) {
+            this.debugger = new Debugger(this);
+        }
+        return this.debugger;
+    }
+
+    /** The debugger attached to the program, or null when it is not being debugged. */
+    public Debugger debugger() {
+        return this.debugger;
+    }
+
     /** How many threads it has, the main one counted. */
     public int threads() {
         return this.scheduler.threads().size();
@@ -408,6 +424,48 @@ public final class Process {
     /** Who to tell when another program sends this one a line; null takes the listener away. */
     void hearMessages(final Values.DelegateValue handler) {
         this.listeners.hearMessages(handler);
+    }
+
+    /**
+     * Who to tell when an Operation of the network settles: any of them, or with {@code operation} the one with that
+     * short id, once. The machine is told the program waits on its network, so it is told what happens there.
+     */
+    void hearSettled(final String operation, final Values.DelegateValue handler) {
+        if (operation == null) {
+            this.listeners.hearSettled(handler);
+        } else {
+            this.listeners.hearSettled(operation, handler);
+        }
+        this.tellHostListening();
+    }
+
+    /** Who to tell of each entry written to the network's event log; null takes the listener away. */
+    void hearNetworkEvents(final Values.DelegateValue handler) {
+        this.listeners.hearEvents(handler);
+        this.tellHostListening();
+    }
+
+    /** Whether the program waits on its network: an Operation settling, or its event log. */
+    public boolean listensToNetwork() {
+        return this.listeners.listensToNetwork();
+    }
+
+    /** Hands the program an Operation of its network that settled; false when it was not heard. */
+    public boolean deliverSettled(final SettledOperation operation) {
+        return this.events.deliverSettled(operation);
+    }
+
+    /** Hands the program an entry written to its network's event log; false when it was not heard. */
+    public boolean deliverNetworkEvent(final String level, final String machine, final String text,
+                                       final long tick) {
+        return this.events.deliverNetworkEvent(level, machine, text, tick);
+    }
+
+    /** Tells the machine the program waits on its network, when it does, so what happens there reaches it. */
+    void tellHostListening() {
+        if (this.listeners.listensToNetwork()) {
+            this.host.listensToNetwork();
+        }
     }
 
     /** Hands the program what a ComputerCraft computer said through a Gateway; false when it was not heard. */
@@ -653,7 +711,8 @@ public final class Process {
                          final int budget) {
         final MethodImage found = this.methodTaking(target, method, arguments.size());
         // A program in the middle of its own instructions cannot be asked anything until it stops.
-        if (found == null || budget <= 0 || this.identity.halted() || this.running) {
+        if (found == null || budget <= 0 || this.identity.halted() || this.running
+                || (this.debugger != null && this.debugger.paused())) {
             return Answer.NONE;
         }
         // A thread kept out of the program's own, so its threads' turns and numbers never see it.
@@ -702,6 +761,9 @@ public final class Process {
      */
     public int step(final int budget) {
         int used = 0;
+        if (this.debugger != null && this.debugger.paused()) {
+            return 0;
+        }
         try {
             this.wake();
             while (used < budget && !this.identity.halted()) {
@@ -774,6 +836,11 @@ public final class Process {
                 if (thread.frames.isEmpty() && (thread != this.main || !this.take())) {
                     break;
                 }
+                // A program being debugged stops before the line it was told to stop at, and spends nothing stopped.
+                if (this.debugger != null && this.debugger.stops(thread)) {
+                    break;
+                }
+                final Instruction about = this.debugger == null ? null : about(thread);
                 used++;
                 try {
                     this.executor.one(thread);
@@ -791,6 +858,9 @@ public final class Process {
                  * charged to this tick rather than hidden, so a program that talks to the world all the time
                  * gets through less of itself than one that does its own arithmetic.
                  */
+                if (this.debugger != null) {
+                    this.debugger.charged(about, this.owed);
+                }
                 used += this.owed;
                 this.owed = 0;
                 if (thread.frames.isEmpty()) {
@@ -821,6 +891,12 @@ public final class Process {
     private Halt fault(final RuntimeException cause, final int line) {
         this.host.fault(this.name(), line, cause);
         return new Halt(Halt.Reason.FAULT, line, FAULT.with(cause.getClass().getSimpleName()));
+    }
+
+    /* The instruction a thread is about to carry out, which a debugger puts what it costs down to; null at the end. */
+    private static Instruction about(final ProgramThread thread) {
+        final Frame top = thread.frames.peek();
+        return top == null || top.at < 0 || top.at >= top.method.length() ? null : top.method.instruction(top.at);
     }
 
     /**

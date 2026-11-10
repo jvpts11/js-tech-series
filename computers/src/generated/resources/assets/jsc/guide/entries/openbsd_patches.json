@@ -71,7 +71,7 @@
     }
   ],
   "id": "jsc:openbsd_patches",
-  "order": 310,
+  "order": 321,
   "section": "jsc:openbsd_software",
   "title": "jsc.guide.openbsd_patches.title"
 }

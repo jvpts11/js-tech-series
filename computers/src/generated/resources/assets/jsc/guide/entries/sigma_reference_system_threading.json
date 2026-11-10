@@ -1,0 +1,23 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_reference_system_threading.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_reference_system_threading.table1",
+      "heads": [
+        "jsc.guide.sigma_reference_system_threading.table1_head1",
+        "jsc.guide.sigma_reference_system_threading.table1_head2",
+        "jsc.guide.sigma_reference_system_threading.table1_head3",
+        "jsc.guide.sigma_reference_system_threading.table1_head4"
+      ],
+      "source": "jsc:sigma_library_system_threading"
+    }
+  ],
+  "id": "jsc:sigma_reference_system_threading",
+  "order": 167,
+  "section": "jsc:sigma_reference_library",
+  "title": "jsc.guide.sigma_reference_system_threading.title"
+}

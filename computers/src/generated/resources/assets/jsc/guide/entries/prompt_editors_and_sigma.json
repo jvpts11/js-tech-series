@@ -117,6 +117,17 @@
           {
             "words": "jsc.guide.prompt_editors_and_sigma.table2_4_3"
           }
+        ],
+        [
+          {
+            "literal": "sgdb"
+          },
+          {
+            "literal": "sgsc"
+          },
+          {
+            "words": "jsc.guide.prompt_editors_and_sigma.table2_5_3"
+          }
         ]
       ]
     },
@@ -150,6 +161,10 @@
       "command": "jsc:command/mc_dos/sgpack"
     },
     {
+      "type": "command",
+      "command": "jsc:command/mc_dos/sgdb"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -176,7 +191,7 @@
     }
   ],
   "id": "jsc:prompt_editors_and_sigma",
-  "order": 212,
+  "order": 223,
   "section": "jsc:prompt_programs_and_network",
   "title": "jsc.guide.prompt_editors_and_sigma.title"
 }

@@ -56,6 +56,8 @@ public final class OperationsService {
     private final ServerLevel level;
     /** The network as the machine's shell reads it. */
     private final ICliNetwork network;
+    /** The short id of the Operation the last ask set going, which a program waits on by it; empty for none. */
+    private String lastStarted = "";
 
     /* The refusals a statement of the network's language can meet as well, so it answers them in the same words. */
     static final TextKey UNKNOWN_ITEM = TextKey.of("jsc.service.operations.unknown_item", "unknown item: %s");
@@ -155,6 +157,16 @@ public final class OperationsService {
         return this.network.onNetwork();
     }
 
+    /**
+     * The short id of the Operation the last ask on this machine set going, which a program that asked waits on with
+     * {@code Operations.OnSettled}; taken once, so an ask that sets nothing going answers with none.
+     */
+    public String takeLastStarted() {
+        final String started = this.lastStarted;
+        this.lastStarted = "";
+        return started;
+    }
+
     /** Asks the network to bring an item into the machine's own storage. */
     public ICliComputer.OpResult pull(final String item, final long amount, final String requester) {
         return this.select(item, amount, requester);
@@ -184,6 +196,7 @@ public final class OperationsService {
         if (op == null) {
             return ICliComputer.OpResult.fail(SELECT_FAILED);
         }
+        this.lastStarted = ShortId.of(op.operationId().toString());
         op.abortWhen(this.hostGone());
         return ICliComputer.OpResult.ok(SELECT_QUEUED.with(qtyLabel(quantity), key.displayName().getString()));
     }
@@ -216,6 +229,7 @@ public final class OperationsService {
             this.terminal.localStore().insert(key, taken); // no dispatcher: put it straight back, never lose it
             return ICliComputer.OpResult.fail(NO_MAINFRAME);
         }
+        this.lastStarted = ShortId.of(op.operationId().toString());
         op.setPriority(priority);
         op.onSettle(() -> {
             final long leftover = op.leftover();
@@ -255,6 +269,7 @@ public final class OperationsService {
         if (op == null) {
             return ICliComputer.OpResult.fail(NO_PATTERN.with(key.displayName().getString()));
         }
+        this.lastStarted = ShortId.of(op.operationId().toString());
         op.setPriority(priority);
         return ICliComputer.OpResult.ok(CRAFT_QUEUED.with(qtyLabel(quantity), key.displayName().getString()));
     }

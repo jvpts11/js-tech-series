@@ -1,0 +1,23 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sigma_reference_system_machine.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sigma_reference_system_machine.table1",
+      "heads": [
+        "jsc.guide.sigma_reference_system_machine.table1_head1",
+        "jsc.guide.sigma_reference_system_machine.table1_head2",
+        "jsc.guide.sigma_reference_system_machine.table1_head3",
+        "jsc.guide.sigma_reference_system_machine.table1_head4"
+      ],
+      "source": "jsc:sigma_library_system_machine"
+    }
+  ],
+  "id": "jsc:sigma_reference_system_machine",
+  "order": 168,
+  "section": "jsc:sigma_reference_library",
+  "title": "jsc.guide.sigma_reference_system_machine.title"
+}

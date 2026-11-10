@@ -187,7 +187,7 @@
   ],
   "icon": "jsc:guide_to_operations",
   "id": "jsc:help_command",
-  "order": 244,
+  "order": 255,
   "section": "jsc:help_at_the_prompt",
   "title": "jsc.guide.help_command.title"
 }

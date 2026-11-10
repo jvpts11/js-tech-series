@@ -170,18 +170,24 @@ first shipped under these names; version 2 brings `Sound` and `Speaker`, `Bus` a
 `CraftInterface` and `CraftRouter`, `Operations.Update`, the old names above with the calls
 they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`, `Random` in Σ's
 `Standard`, and the widgets of `System.UI` listed below as the second version's, `GenericComponent` and
-`ComponentAction` among them. A version only ever adds: whatever
+`ComponentAction` among them. Version 3 brings to both `const`, labels and `goto`, INTERCAL's `comefrom`,
+`abstainfrom`, `reinstate`, `ignore` and `remember`, the directives from `#if` to `#warning`, and pointers with
+raw memory, and to Σ# alone exceptions, tuples, extension methods, operators and indexers, `unsafe` and
+`stackalloc`, `sealed`, static classes, `params`, local functions, `nameof`, `Operations.OnSettled` and
+`Network.OnEvent`. A version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
 older program. The one exception came with version 2 itself, before it shipped: the words of access hold as
 C# holds them, and `try`, `catch`, `finally`, `throw`, `goto`, `const`, `comefrom`, `abstainfrom` and
-`reinstate` are kept for a later version. A
+`reinstate` were kept for version 3. A
 version 1 program that reached a member written with no word of access, or named something with one of those
-words, needs `public` on the member or another name.
+words, needs `public` on the member or another name. A listing that uses an instruction of version 3, such as
+`throw` or a read through a pointer, is written in version 4 of the listing format; one that uses none is
+written as it always was.
 
-The version a machine builds is its compiler's. The package `sgsc` 2.0 is Σ# 2 and `scc` 2.0 is Σ 2, and a
+The version a machine builds is its compiler's. The package `sgsc` 3.0 is Σ# 3 and `scc` 3.0 is Σ 3, and a
 machine whose compiler is older builds the older version until an upgrade brings it up: `pckmgr upgrade`, the
 upgrade verb of each Linux and BSD package manager, or on MC-DOS installing the compiler again from newer
-media. Both compilers say which they are before anything else (`Σ# Compiler 2.0`).
+media. Both compilers say which they are before anything else (`Σ# Compiler 3.0`).
 
 A build can be held to an older version, never a newer one: `sgsc --lang 1 file.sgs` (and the same on `scc`),
 or a `langversion: 1` line in the project file. Whatever came later is refused where it was written:
@@ -240,17 +246,45 @@ back rows costs one more per row. The editors show the price of a line as you wr
 
 ## Errors
 
-There are no exceptions. A mistake (dividing by zero, reaching into nothing, using what was disposed,
-running out of memory, asking for what is not there, calls going more than 1,024 deep) halts the
-program where it stands, and the message is what the console shows. Calls that can fail for ordinary
+Σ has no exceptions, and Σ# has none before version 3. A mistake (dividing by zero, reaching into nothing,
+using what was disposed, running out of memory, asking for what is not there, calls going more than 1,024 deep)
+halts the program where it stands, and the message is what the console shows. Calls that can fail for ordinary
 reasons answer instead of halting: `File.Write` returns false on a full disk, `Convert.TryInt` says
 whether the text was a number. A whole number divided by zero halts too, while the smallest `int`
 divided by -1 comes round to itself rather than halting.
 
-`try`, `catch`, `finally`, `throw`, `goto` and `const`, and `comefrom`, `abstainfrom` and `reinstate`
-after INTERCAL, are kept for a later version of the language, which brings them. They are reserved
-already, so none of them can be a name, and a program that writes one is told what to write until then
-(S2014).
+From version 3, Σ# has `try`, `catch`, `finally` and `throw`, and thirteen exception types from `Exception` to
+`AccessViolationException`, each with its message, the file and line it was thrown at and the calls it went
+through. In a program that uses exceptions a halt of the language is thrown as its exception, so a `catch` can
+take it; running out of memory and calling too deep still halt. An exception that nothing catches stops the
+program, which writes its message and its trace to the console. `sigma stop`, the Task Manager and `kill` run a
+program's `finally` blocks before it stops; `kill -9` and a machine that loses power run nothing. A `throw`
+costs 50 instructions, and 5 more for each call it leaves.
+
+Before version 3 those words, with `goto`, `const`, `comefrom`, `abstainfrom` and `reinstate`, were reserved, so
+none of them could be a name. A build held to an older version still refuses each of them where it is written
+(S3057 or S2014).
+
+## Debugging
+
+`sgsc --debug file.sgs` (and the same on `scc`) writes the listing with the lines a debugger reads, the line and
+column of each statement and the names of the variables, and defines `DEBUG`, so code inside `#if DEBUG` is
+compiled in. `sgdb file.asm`, which comes with `sgsc`, debugs it at the terminal with gdb's commands: `break
+[file:]line`, `run`, `continue`, `next`, `step`, `finish`, `print name`, `backtrace`, `info locals`, `info args`,
+`info breakpoints`, `info credits`, `delete`, `kill` and `quit`. A breakpoint on a line without code stops at the
+next line that has some.
+
+Virtual Studio debugs a project built in its Debug configuration, the first of its two, and Virtual Studio Code
+the file open in it. F9 or a click in the margin sets a breakpoint, F5 starts debugging or goes on to the next
+breakpoint, F10 steps over a call, F11 steps into one, Shift+F11 steps out, Shift+F5 stops and Ctrl+F5 runs
+without the debugger. The stopped program's variables, watches and calls are shown beside the code, what it
+prints goes to the Output (the Debug Console in Virtual Studio Code), and a line it asks for is typed there.
+Virtual Studio's Diagnostic Tools show the credits spent, split between the calls the program made and the steps
+themselves, and the status bar of both turns orange while you debug.
+
+A step spends what running spends: the debugger adds nothing, and a stopped program spends nothing. A program
+started by a debugger belongs to it, so it ends when debugging stops and is not saved with the world. A player
+debugs one program in the studios at a time.
 
 ## Access and shifts
 
@@ -649,3 +683,18 @@ Network.WatchAbove(string item, long threshold, Action<StockEvent>) -> Subscript
 
 Being told beats asking. A threshold watch fires on the crossing, not for as long as the number stays
 crossed, and disposing the subscription stops it. Handlers run on the program's main thread, in turn.
+
+From version 3 a program can also hear the network's Operations and its event log:
+
+```
+Operations.OnSettled(Action<OperationInfo>)
+Operations.OnSettled(string id, Action<OperationInfo>)
+Network.OnEvent(Action<NetworkEvent>)
+```
+
+`Operations.OnSettled` is told of each Operation of the network that settles, done or not, and its `Status` says
+which. With an id it waits on that one Operation and is told once; `Pull`, `Push` and `Craft` answer with the id
+in `AskResult.Id`, so a program can ask for a craft and hear when it is done. `Network.OnEvent` is told of each
+entry written to the network's event log, a `NetworkEvent` with its `Level` (info, warn or error), its
+`Machine`, its `Text` and its `Tick`; a later call takes the place of the handler before. Listening costs
+nothing, and the handlers are kept when the world is saved.

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.program.cli;
 
+import dev.jstech.computers.machine.DebugSession;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
@@ -37,6 +38,14 @@ public interface ICliProcesses {
     /** The same, with what the program is started with, as its {@code Program.Args} will read them. */
     default ICliComputer.OpResult startSigma(final String path, final int heapMb, final List<String> arguments) {
         return this.startSigma(path, heapMb);
+    }
+
+    /**
+     * Starts a compiled Σ# program from a file on this computer's disk under a debugger, which holds it from its first
+     * instruction; null on a computer with no Σ# runtime.
+     */
+    default DebugSession.Started debugSigma(final String path, final List<String> arguments) {
+        return null;
     }
 
     /** Stops one of the Σ# programs running here. */

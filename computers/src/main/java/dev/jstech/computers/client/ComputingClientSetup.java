@@ -46,6 +46,7 @@ import dev.jstech.computers.client.printer.PrintedPaperFrames;
 import dev.jstech.computers.client.printer.PrintedPaperScreen;
 import dev.jstech.computers.client.printer.PrintedPictureTextures;
 import dev.jstech.computers.monitor.IMonitorPictureSink;
+import dev.jstech.computers.operation.payload.program.IDebugStateSink;
 import dev.jstech.computers.printer.IPrintedPaperReader;
 import dev.jstech.computers.client.bus.ExternalStorageBusScreen;
 import dev.jstech.computers.client.bus.ImportBusScreen;
@@ -55,6 +56,7 @@ import dev.jstech.computers.client.bus.ReceivingBusScreen;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.SigmaImages;
+import dev.jstech.computers.client.os.StudioDebug;
 import dev.jstech.computers.item.CabinetBlockItem;
 import dev.jstech.computers.menu.CommandPromptMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
@@ -127,6 +129,7 @@ public final class ComputingClientSetup {
     public static void registerScreens(final RegisterMenuScreensEvent event) {
         // Wire the client-side firmware screen opener so blocks can open it without importing Minecraft.
         IFirmwareScreenOpener.Holder.set((pos, monitorPos, kind, name) -> FirmwareScreen.expect(kind, name));
+        IDebugStateSink.Holder.set(StudioDebug::deliver);
         IPostScreenOpener.Holder.set((pos, monitorPos, kind, name, remaining, halted, complaint, quince) ->
                 BootSequenceScreen.expect(kind, name, remaining, halted, complaint, quince));
         IInstallDoneScreenOpener.Holder.set(

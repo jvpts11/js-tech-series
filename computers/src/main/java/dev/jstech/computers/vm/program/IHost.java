@@ -102,6 +102,13 @@ public interface IHost {
         return plain;
     }
 
+    /**
+     * Told when a program here waits on its network, for an Operation to settle or for its event log: a machine then
+     * hands it what happens there. A host with no network has nothing to hand on.
+     */
+    default void listensToNetwork() {
+    }
+
     /** A host for a program that has no world around it, whose clock never moves. */
     static IHost still() {
         return new IHost() {

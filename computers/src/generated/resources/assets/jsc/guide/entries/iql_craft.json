@@ -107,7 +107,7 @@
     }
   ],
   "id": "jsc:iql_craft",
-  "order": 333,
+  "order": 344,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.iql_craft.title"
 }

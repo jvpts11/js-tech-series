@@ -71,6 +71,7 @@ final class OperationsCalls {
                     if (!services.operations().onNetwork()) {
                         throw new Halt(Halt.Reason.NO_NETWORK, line, NO_NETWORK.text());
                     }
+                    services.operations().takeLastStarted();
                     final long amount = amount(arguments, 2);
                     final IqlParseResult parsed = IqlParser.tryParse("UPDATE " + (amount > 0L ? amount + " " : "")
                             + item(arguments) + " SET " + (arguments.length < 2 ? "" : String.valueOf(arguments[1])));
@@ -90,16 +91,22 @@ final class OperationsCalls {
                     if (!ops.onNetwork()) {
                         throw new Halt(Halt.Reason.NO_NETWORK, line, NO_NETWORK.text());
                     }
+                    // What an ask answers with is the Operation it set going itself, never one asked before it.
+                    ops.takeLastStarted();
                     return function.call(ops, call, target, arguments, line);
                 }, parameters);
     }
 
     /* The answer to a call that sets an Operation going, which is what a program running one has earned. */
     private static Values.Obj started(final OperationsService ops, final ICliComputer.OpResult result) {
+        final String id = ops.takeLastStarted();
         if (result.ok()) {
             ops.creditProgram();
         }
-        return asked(result);
+        final Values.Obj made = asked(result);
+        // The Operation it set going, which Operations.OnSettled can wait on by this.
+        made.set("Id", result.ok() ? id : "");
+        return made;
     }
 
     /** What came of asking: whether the network took it, and why not when it did not. */
@@ -108,6 +115,7 @@ final class OperationsCalls {
         made.set("Ok", result.ok());
         // A program reads in the machine's language, and keeps only strings on its heap.
         made.set("Message", result.message().english());
+        made.set("Id", "");
         return made;
     }
 

@@ -90,6 +90,92 @@ class ProgramEventsTest {
     }
 
     @Test
+    void deliverSettled_queuesTheOneWaitingOnItOnceAndTheOneWaitingOnAllEachTime() {
+        final Process process = process();
+        final Values.Obj self = process.create(PROGRAM.entryPoint());
+        final ProgramEvents events = process.events();
+        final Values.DelegateValue hear = events.handlerFor(self, "Hear");
+        process.listeners().hearSettled("A1B2", hear);
+        process.listeners().hearSettled(hear);
+        final int before = process.waiting();
+
+        assertTrue(events.deliverSettled(settled("a1b2")));
+        assertEquals(before + 2, process.waiting(), "the one waiting on it, and the one waiting on all");
+        assertTrue(events.deliverSettled(settled("a1b2")));
+        assertEquals(before + 3, process.waiting(), "the one waiting on it was told once");
+    }
+
+    @Test
+    void deliverNetworkEvent_queuesACallOnlyForAProgramThatGaveAHandler() {
+        final Process process = process();
+        final Values.Obj self = process.create(PROGRAM.entryPoint());
+        final ProgramEvents events = process.events();
+        final int before = process.waiting();
+
+        assertTrue(events.deliverNetworkEvent("warn", "UPS-1", "on battery", 40L));
+        assertEquals(before, process.waiting());
+        assertFalse(process.listensToNetwork());
+
+        process.listeners().hearEvents(events.handlerFor(self, "Hear"));
+        assertTrue(process.listensToNetwork());
+        assertTrue(events.deliverNetworkEvent("warn", "UPS-1", "on battery", 40L));
+        assertEquals(before + 1, process.waiting());
+    }
+
+    @Test
+    void networkHandlers_hearWhatHappenedAndTellTheMachineTheyWait() {
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Watcher.sgs",
+                "using System.*; using System.Network.*; using System.Operations.*; namespace Tests;\n"
+                        + "class Watcher : IScript {\n"
+                        + "    public void OnInit() {\n"
+                        + "        Network.OnEvent(e => Console.PrintLine(e.Level + \" \" + e.Machine + \" \""
+                        + " + e.Text + \" \" + e.Tick));\n"
+                        + "        Operations.OnSettled(o => Console.PrintLine(o.Id + \" \" + o.Status + \" \""
+                        + " + o.Moved));\n"
+                        + "    }\n"
+                        + "    public void OnTick() { }\n"
+                        + "    public void OnDestroy() { }\n"
+                        + "}\n")));
+        assertTrue(built.ok(), () -> String.join("\n", built.lines()));
+        final ProgramImage program = ProgramImage.of(new AsmReader(built.assembly()).read());
+        final int[] told = new int[1];
+        final Process process = new Process(program, 64L * 1024, new IHost() {
+            @Override
+            public long tick() {
+                return 0;
+            }
+
+            @Override
+            public long dayTime() {
+                return 0;
+            }
+
+            @Override
+            public long day() {
+                return 0;
+            }
+
+            @Override
+            public void listensToNetwork() {
+                told[0]++;
+            }
+        });
+        final Values.Obj script = process.create(program.entryPoint());
+        process.begin(script, "OnInit");
+        process.step(100_000);
+        assertTrue(told[0] > 0, "the machine is told the program waits on its network");
+
+        process.deliverNetworkEvent("warn", "UPS-1", "on battery", 40L);
+        process.deliverSettled(settled("a1b2"));
+        process.step(100_000);
+        assertEquals(List.of("warn UPS-1 on battery 40", "a1b2 done 64"), process.console());
+    }
+
+    private static SettledOperation settled(final String id) {
+        return new SettledOperation(id, "craft", "minecraft:oak_planks", 64, 64, "done", "medium");
+    }
+
+    @Test
     void deliverUiEvent_refusesAWindowTheProgramDoesNotHave() {
         assertFalse(process().events().deliverUiEvent(99L, 1L, "click", List.of()));
     }

@@ -141,7 +141,8 @@ public final class SigmaCompiler {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }
         final AsmProgram program = new Emitter(analysis.model(), analysis.rules(), analysis.builtIns(),
-                analysis.declarations(), bag, analysis.lowered()).emit();
+                analysis.declarations(), bag, analysis.lowered())
+                .forDebugger(options.defined().contains(SigmaVersions.DEBUG)).emit();
         if (bag.hasErrors()) {
             return new Result(null, bag.sorted(), bag.wasCapped());
         }

@@ -107,6 +107,36 @@ class SigmaCommandsTest {
             class Beeper { static void Main() { Sound.Beep(880, 200); } }
             """;
 
+    private static final String DEBUGGED = """
+            using System.IO.*;
+            namespace Plant;
+            class Plant {
+                static void Main() {
+                    long logs = 41;
+            #if DEBUG
+                    Console.PrintLine("only when debugging");
+            #endif
+                    Console.PrintLine("" + logs);
+                }
+            }
+            """;
+
+    /** --debug writes the lines the debugger reads, defines DEBUG for the directives, and says how to debug it. */
+    @Test
+    void sgsc_debugWritesTheDebuggersLinesAndDefinesDebug() {
+        this.computer.add(SigmaCommands.COMPILER);
+        this.computer.files.put("Plant.sgs", DEBUGGED);
+        final String said = this.run("sgsc --debug Plant.sgs");
+        assertTrue(said.contains("wrote Plant.asm with its lines for the debugger"), said);
+        assertTrue(said.contains("debug it with: sgdb Plant.asm"), said);
+        final String listing = this.computer.files.get("Plant.asm");
+        assertTrue(listing.contains(".local slot 0 logs long"), listing);
+        assertTrue(listing.contains("only when debugging"), listing);
+        assertTrue(this.run("sgsc Plant.sgs").contains("run it with"));
+        assertFalse(this.computer.files.get("Plant.asm").contains("only when debugging"));
+        assertFalse(this.computer.files.get("Plant.asm").contains(".local"));
+    }
+
     /** The compiler says which it is before anything else, by the version of the package installed. */
     @Test
     void sgsc_firstSaysWhichCompilerItIs() {

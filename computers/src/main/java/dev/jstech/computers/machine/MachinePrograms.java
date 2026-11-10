@@ -19,6 +19,7 @@ import dev.jstech.computers.vm.program.ProgramEntry;
 import dev.jstech.computers.vm.program.ProgramImage;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.program.ProgramTable;
+import dev.jstech.computers.vm.program.SettledOperation;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.computers.api.language.ExecutionBalance;
 import dev.jstech.computers.api.language.ILanguageProcess;
@@ -436,6 +437,31 @@ public final class MachinePrograms {
         return heard;
     }
 
+    /** Whether any program here waits on the network: an Operation settling, or its event log. */
+    public boolean listensToNetwork() {
+        for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
+            if (one.process().listensToNetwork()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Tells every program here that waits on it that an Operation of the network settled. */
+    public void deliverSettled(final SettledOperation operation) {
+        // Hearing it only queues a call, so the table cannot change under this walk.
+        for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
+            one.process().deliverSettled(operation);
+        }
+    }
+
+    /** Tells every program here that waits on it that an entry was written to the network's event log. */
+    public void deliverNetworkEvent(final String level, final String machine, final String text, final long tick) {
+        for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
+            one.process().deliverNetworkEvent(level, machine, text, tick);
+        }
+    }
+
     /** The windows a program has open on the machine's desktop; empty for one that has none. */
     public List<Values.Obj> windowsOf(final int id) {
         final ProgramEntry<IMachineRuntime> one = this.byId(id);
@@ -632,6 +658,10 @@ public final class MachinePrograms {
         final ListTag written = new ListTag();
         final Map<String, String> listings = new LinkedHashMap<>();
         for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
+            // A program a debugger holds is the debugger's, and is gone with it when the world is put away.
+            if (one.process().debugged()) {
+                continue;
+            }
             final CompoundTag each = new CompoundTag();
             each.putInt(ID, one.id());
             each.putString(NAME, one.file());

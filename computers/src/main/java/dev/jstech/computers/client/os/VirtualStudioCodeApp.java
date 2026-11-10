@@ -79,6 +79,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     private static final int PANEL_PROBLEMS = 0;
     private static final int PANEL_TERMINAL = 1;
+    private static final int PANEL_DEBUG = 2;
 
     /** What the rail can show down the side. */
     private enum Side { EXPLORER, SEARCH, RUN, EXTENSIONS }
@@ -103,6 +104,9 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private final TabStrip panelTabs;
     private final ListView<IProgrammingLanguage.Complaint> problems;
     private final ShellView terminal;
+    /** The debugger: what it holds and asks the machine, and how this window shows it. */
+    private final StudioDebug debug;
+    private final VsCodeDebug debugging;
 
     /** Where the pointer was last seen over the window, which is where a turn of the wheel happens. */
     private double pointerX;
@@ -149,8 +153,12 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     private record Link(int x, int y, int width, int height, Runnable action) {
     }
 
-    /** A line waiting for the terminal, and whether it is a run that must not follow a line that failed. */
-    private record Queued(String line, boolean skipAfterFailure) {
+    /**
+     * A line waiting for the terminal, and whether it is a run that must not follow a line that failed; or, with no
+     * line, something the studio does itself once the lines before it have run, such as starting the debugger on what
+     * they built.
+     */
+    private record Queued(String line, boolean skipAfterFailure, Runnable then) {
     }
 
     /** One row of the side panel: the folder's name at the top, or an entry of its tree. */
@@ -185,7 +193,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         this.askClose.add(new Button(GameText.resolve(StudioTexts.CANCEL), this.askClose::close));
         this.tabs.setOnSelect(this.workspace::setCurrent);
         this.panelTabs = this.root.add(new TabStrip(List.of(GameText.resolve(VsCodeTexts.PROBLEMS_TAB),
-                GameText.resolve(StudioTexts.TERMINAL_TAB))).fitToLabels(12).setUnderline(true));
+                GameText.resolve(StudioTexts.TERMINAL_TAB), GameText.resolve(DebugTexts.DEBUG_CONSOLE)))
+                .fitToLabels(12).setUnderline(true));
         this.panelTabs.setSelected(PANEL_TERMINAL);
         this.problems = this.root.add(new ListView<>(this::complaints, ROW_H, this::drawProblemRow))
                 .setOnClick(this::onProblemPicked);
@@ -194,6 +203,9 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
          * here shows in the Command Prompt window too, because a computer has one console.
          */
         this.terminal = this.root.add(new ShellView(host, false, "")).setOnIdle(this::runNext);
+        this.debug = new StudioDebug(host);
+        this.debugging = new VsCodeDebug(this.root, this.debug, this.workspace, () -> this.skin, this::pathOfSource,
+                this::startDebugging);
         this.root.add(this.menuBar);
         this.menuBar.add(GameText.resolve(StudioTexts.FILE_MENU), this::fileMenu)
                 .add(GameText.resolve(StudioTexts.EDIT_MENU), this::editMenu)
@@ -549,8 +561,23 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     }
 
     private List<ContextMenu.Item> runMenu() {
+        final boolean live = this.debug.active();
+        final boolean paused = this.debug.paused();
         return List.of(
-                item(VsCodeTexts.RUN_FILE, hasDoc(), this::runFile),
+                live ? item(DebugTexts.CONTINUE, paused, this.debug::resume)
+                        : item(DebugTexts.START_DEBUGGING, hasDoc(), this::startDebugging),
+                item(VsCodeTexts.RUN_FILE, hasDoc() && !live, this::runFile),
+                item(DebugTexts.STOP, live, this.debug::stop),
+                item(DebugTexts.RESTART, live, this.debug::restart),
+                ContextMenu.Item.separator(),
+                item(DebugTexts.STEP_OVER, paused, this.debug::stepOver),
+                item(DebugTexts.STEP_INTO, paused, this.debug::stepInto),
+                item(DebugTexts.STEP_OUT, paused, this.debug::stepOut),
+                ContextMenu.Item.separator(),
+                item(DebugTexts.TOGGLE_BREAKPOINT, hasDoc(), this.debugging::toggleAtCaret),
+                item(DebugTexts.DELETE_BREAKPOINTS, !this.debug.allBreakpoints().isEmpty(), this.debug::deleteAll),
+                item(DebugTexts.ADD_WATCH, true, () -> ask(DebugTexts.ADD_WATCH, "", this.debug::addWatch)),
+                ContextMenu.Item.separator(),
                 item(VsCodeTexts.BUILD_FILE, hasDoc(), this::buildFile),
                 item(VsCodeTexts.BUILD_FOLDER, this.folderOpen && !this.workspace.files().isEmpty(), this::buildFolder),
                 item(StudioTexts.STOP, true, () -> this.terminal.run("sigma stop")));
@@ -578,7 +605,9 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         final Text view = StudioTexts.VIEW_MENU.text();
         final Text help = StudioTexts.HELP_MENU.text();
         return List.of(
-                command(sigma, VsCodeTexts.RUN_FILE, "F5", this::runFile),
+                command(sigma, DebugTexts.START_DEBUGGING, "F5", this::startDebugging),
+                command(sigma, VsCodeTexts.RUN_FILE, "Ctrl+F5", this::runFile),
+                command(sigma, DebugTexts.TOGGLE_BREAKPOINT, "F9", this.debugging::toggleAtCaret),
                 command(sigma, VsCodeTexts.BUILD_FILE, "Ctrl+Shift+B", this::buildFile),
                 command(sigma, VsCodeTexts.BUILD_FOLDER, "", this::buildFolder),
                 command(sigma, StudioTexts.STOP, "", () -> this.terminal.run("sigma stop")),
@@ -768,6 +797,58 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         enqueue("sigma run " + outputFor(doc.path()), true);
     }
 
+    /**
+     * Start Debugging: builds the open file for the debugger, which defines DEBUG and writes the lines the debugger
+     * reads, and when it built starts it under the debugger, with the Run and Debug view on show.
+     */
+    public void startDebugging() {
+        final CodeWorkspace.Doc doc = this.workspace.current();
+        if (doc == null) {
+            return;
+        }
+        final LanguageLevel level = LanguageLevel.ofSource(doc.path());
+        if (level == null) {
+            this.workspace.say(GameText.resolve(VsCodeTexts.NOT_A_PROGRAM.with(doc.name())));
+            return;
+        }
+        if (doc.dirty()) {
+            this.workspace.save();
+        }
+        final String listing = outputFor(doc.path());
+        final String name = shortName(listing).replaceAll("\\.[^.]+$", "");
+        focusTerminal();
+        this.typingInTerminal = false;
+        enqueue(level.compiler() + " --debug " + doc.path() + " -o " + listing, false);
+        enqueue(() -> {
+            this.side = Side.RUN;
+            this.panelTabs.setSelected(PANEL_DEBUG);
+            this.debug.start(listing, name);
+        });
+    }
+
+    /** The debugger, for what a test asks of it. */
+    public StudioDebug debugger() {
+        return this.debug;
+    }
+
+    /*
+     * Where on the disk the source a listing names is: an open file first, then a file of the folder. A build at the
+     * prompt names a source by its file name, which ends its path on the disk.
+     */
+    private String pathOfSource(final String file) {
+        for (final CodeWorkspace.Doc doc : this.workspace.docs()) {
+            if (StudioDebug.sameFile(doc.path(), file)) {
+                return doc.path();
+            }
+        }
+        for (final DiskFilesPayload.WireFile each : this.workspace.files()) {
+            if (StudioDebug.sameFile(each.path(), file)) {
+                return each.path();
+            }
+        }
+        return null;
+    }
+
     private void buildFolder() {
         final List<DiskFilesPayload.WireFile> files = this.workspace.files();
         if (files.isEmpty()) {
@@ -803,7 +884,15 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
      * one before, since the console runs one command at a time and the run needs the build to be done.
      */
     private void enqueue(final String line, final boolean skipAfterFailure) {
-        this.queue.add(new Queued(line, skipAfterFailure));
+        this.queue.add(new Queued(line, skipAfterFailure, null));
+        if (!this.terminal.busy() && this.queue.size() == 1) {
+            runNext();
+        }
+    }
+
+    /** Does something once the lines queued before it have run, and only when the last of them did not fail. */
+    private void enqueue(final Runnable then) {
+        this.queue.add(new Queued("", true, then));
         if (!this.terminal.busy() && this.queue.size() == 1) {
             runNext();
         }
@@ -815,7 +904,10 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         while (next != null && next.skipAfterFailure() && this.terminal.failedLastRun()) {
             next = this.queue.poll();
         }
-        if (next != null) {
+        if (next != null && next.then() != null) {
+            next.then().run();
+            runNext();
+        } else if (next != null) {
             this.terminal.run(next.line());
         }
     }
@@ -920,6 +1012,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     @Override
     public void onClosed() {
+        // A program being debugged ends with the studio that was debugging it.
+        this.debug.close();
         this.workspace.release();
         this.terminal.release();
         this.dialog.release();
@@ -940,7 +1034,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         final int bodyTotal = height - MenuBar.HEIGHT - STATUS_H;
 
         drawRail(g, x, top, bodyTotal);
-        final boolean sideShown = this.folderOpen || this.side == Side.EXTENSIONS;
+        this.debugging.follow();
+        final boolean sideShown = this.folderOpen || this.side == Side.EXTENSIONS || this.side == Side.RUN;
         // The dividers hold their places between frames, within what the window can afford.
         this.sideW = Math.max(50, Math.min(width - RAIL_W - 100, this.sideW));
         final int sideW = sideShown ? this.sideW : 0;
@@ -954,8 +1049,9 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             }
         }
         // A list that is not on show is hidden outright: one with no room still has rows to draw.
-        this.explorer.setVisible(sideShown && this.side != Side.EXTENSIONS);
+        this.explorer.setVisible(sideShown && this.side != Side.EXTENSIONS && this.side != Side.RUN);
         this.extensions.setVisible(sideShown && this.side == Side.EXTENSIONS);
+        this.debugging.layoutView(sideShown && this.side == Side.RUN, x + RAIL_W, top, sideW, bodyTotal);
         this.explorer.setBounds(x + RAIL_W, top, sideW, bodyTotal);
         this.extensions.setBounds(x + RAIL_W, top + CAPTION_H, sideW, bodyTotal - CAPTION_H);
         this.dividerX = sideShown ? x + RAIL_W + sideW : -1000;
@@ -971,6 +1067,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         this.problems.setVisible(!welcome);
         this.terminal.setVisible(!welcome);
         if (welcome) {
+            this.debugging.hideEditorParts();
             drawWelcome(g, font, codeX, top, codeW, bodyTotal);
         } else {
             this.skin.panel(g, codeX, top, codeW, TAB_H);
@@ -985,6 +1082,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
                 doc.area().setBounds(codeX, bodyY, codeW, codeH);
             }
             layoutPanel(codeX, bodyY + codeH, codeW, panelShown ? this.panelH : 0);
+            this.debugging.layoutSteps(codeX + codeW, bodyY);
             this.dividerY = panelShown ? bodyY + codeH : -1000;
             if (doc == null) {
                 drawEmpty(g, font, codeX, bodyY, codeW, codeH);
@@ -994,7 +1092,11 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         if (doc != null) {
             doc.area().render(g, ctx);
         }
-        drawStatus(g, font, x, y + height - STATUS_H, width, doc);
+        if (this.debugging.shows()) {
+            this.debugging.drawStatus(g, font, x, y + height - STATUS_H, width, STATUS_H, statusPieces(doc));
+        } else {
+            drawStatus(g, font, x, y + height - STATUS_H, width, doc);
+        }
         // Whatever floats belongs over everything the window drew, the menus last of all.
         this.completions.render(g, ctx);
         this.palette.render(g, ctx, x, top, width);
@@ -1013,14 +1115,33 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     private void layoutPanel(final int x, final int y, final int width, final int height) {
         final boolean shown = height > 0;
-        final boolean terminalShown = this.panelTabs.selected() == PANEL_TERMINAL;
+        final int tab = this.panelTabs.selected();
         this.panelTabs.setVisible(shown);
-        this.terminal.setVisible(shown && terminalShown);
-        this.problems.setVisible(shown && !terminalShown);
+        this.terminal.setVisible(shown && tab == PANEL_TERMINAL);
+        this.problems.setVisible(shown && tab == PANEL_PROBLEMS);
         this.panelTabs.setBounds(x, y, width, TAB_H);
         final int inner = Math.max(0, height - TAB_H);
         this.terminal.setBounds(x, y + TAB_H, width, inner);
         this.problems.setBounds(x, y + TAB_H, width, inner);
+        this.debugging.layoutConsole(shown && tab == PANEL_DEBUG, x, y + TAB_H, width, inner);
+    }
+
+    /*
+     * What the status bar keeps on its right while debugging, from the right edge in: the language, the tab size and
+     * the caret's place.
+     */
+    private List<String> statusPieces(final CodeWorkspace.Doc doc) {
+        final List<String> pieces = new ArrayList<>();
+        final IProgrammingLanguage language = this.workspace.language();
+        if (language != null) {
+            pieces.add(language.displayName());
+        }
+        if (doc != null) {
+            pieces.add(GameText.resolve(VsCodeTexts.SPACES.with(this.tabSize)));
+            pieces.add(GameText.resolve(EditorTexts.LINE_AND_COLUMN.with(
+                    doc.area().document().cursorLine() + 1, doc.area().document().cursorCol() + 1)));
+        }
+        return pieces;
     }
 
     /** The rail: Explorer, Search, Run and Extensions, the one showing lit. */
@@ -1205,7 +1326,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             switch (slot) {
                 case 0 -> this.side = Side.EXPLORER;
                 case 1 -> this.workspace.say(GameText.resolve(VsCodeTexts.NO_SEARCH));
-                case 2 -> runFile();
+                case 2 -> this.side = Side.RUN;
                 case 3 -> this.side = Side.EXTENSIONS;
                 default -> { }
             }
@@ -1362,8 +1483,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             focusTerminal();
             return true;
         }
-        if (key == GLFW.GLFW_KEY_F5) {
-            runFile();
+        if (this.debug.keyPressed(key, modifiers, this::startDebugging, this::runFile, this.debugging::toggleAtCaret)) {
             return true;
         }
         if (this.typingInTerminal) {

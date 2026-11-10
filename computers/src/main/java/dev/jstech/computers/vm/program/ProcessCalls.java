@@ -51,6 +51,7 @@ final class ProcessCalls {
     private static final List<String> SCANNED = List.of("int", "long", "double", STRING, "char");
     /** What a watch on the network calls when it goes off. */
     private static final String STOCK_HANDLER = "Action<StockEvent>";
+    private static final String SETTLED_HANDLER = "Action<OperationInfo>";
     /** What a kernel's declaration holds at most: its name, its four policies, its slice and its drivers. */
     private static final int KERNEL_FIELDS = 7;
     private static final TextKey NO_WIDGET = TextKey.of("jsc.vm.process_calls.no_widget", "there is no %s here to %s");
@@ -345,6 +346,20 @@ final class ProcessCalls {
                 watch(process, Process.Watching.BELOW, arguments, line), STRING, "long", STOCK_HANDLER);
         bind(bindings, "Network", "WatchAbove", null, (process, target, arguments, line) ->
                 watch(process, Process.Watching.ABOVE, arguments, line), STRING, "long", STOCK_HANDLER);
+        bind(bindings, "Network", "OnEvent", null, (process, target, arguments, line) -> {
+            process.hearNetworkEvents(arguments[0] instanceof Values.DelegateValue handler ? handler : null);
+            return null;
+        }, "Action<NetworkEvent>");
+        // Any Operation of the network settling, or the one with the short id an ask answered with, told once.
+        bind(bindings, "Operations", "OnSettled", null, (process, target, arguments, line) -> {
+            process.hearSettled(null, arguments[0] instanceof Values.DelegateValue handler ? handler : null);
+            return null;
+        }, SETTLED_HANDLER);
+        bind(bindings, "Operations", "OnSettled", null, (process, target, arguments, line) -> {
+            process.hearSettled(String.valueOf(arguments[0]),
+                    arguments[1] instanceof Values.DelegateValue handler ? handler : null);
+            return null;
+        }, STRING, SETTLED_HANDLER);
     }
 
     /** Sets a watch on an item, the handler being the last thing the call is handed. */

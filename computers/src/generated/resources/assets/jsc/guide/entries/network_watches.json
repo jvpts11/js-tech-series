@@ -119,6 +119,14 @@
           {
             "words": "jsc.guide.network_watches.table1_13_2"
           }
+        ],
+        [
+          {
+            "literal": "Network.OnEvent(handler)"
+          },
+          {
+            "words": "jsc.guide.network_watches.table1_14_2"
+          }
         ]
       ]
     },
@@ -182,6 +190,17 @@
           {
             "words": "jsc.guide.network_watches.table2_4_3"
           }
+        ],
+        [
+          {
+            "literal": "NetworkEvent"
+          },
+          {
+            "literal": "NetworkEvent.Level, NetworkEvent.Machine, NetworkEvent.Text, NetworkEvent.Tick"
+          },
+          {
+            "words": "jsc.guide.network_watches.table2_5_3"
+          }
         ]
       ]
     },
@@ -200,6 +219,14 @@
     {
       "type": "text",
       "text": "jsc.guide.network_watches.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.network_watches.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_watches.text7"
     },
     {
       "type": "define",
@@ -251,7 +278,7 @@
     }
   ],
   "id": "jsc:network_watches",
-  "order": 409,
+  "order": 420,
   "section": "jsc:library_network",
   "title": "jsc.guide.network_watches.title"
 }

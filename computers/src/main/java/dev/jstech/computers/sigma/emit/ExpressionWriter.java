@@ -79,7 +79,7 @@ final class ExpressionWriter {
             return;
         }
         // Where an exception thrown by what follows says it was thrown.
-        this.body.at(expression.line());
+        this.body.within(expression.line(), expression.column());
         /*
          * What a richer shape was reduced to is what gets written. The tree still holds what the player
          * wrote, because a message has to point at that; only this stage follows the simpler one.

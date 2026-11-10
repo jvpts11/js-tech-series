@@ -79,6 +79,22 @@
           {
             "words": "jsc.guide.operations_library.table1_8_2"
           }
+        ],
+        [
+          {
+            "literal": "Operations.OnSettled(handler)"
+          },
+          {
+            "words": "jsc.guide.operations_library.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Operations.OnSettled(id, handler)"
+          },
+          {
+            "words": "jsc.guide.operations_library.table1_10_2"
+          }
         ]
       ]
     },
@@ -119,6 +135,17 @@
           },
           {
             "words": "jsc.guide.operations_library.table2_2_3"
+          }
+        ],
+        [
+          {
+            "literal": "AskResult"
+          },
+          {
+            "literal": "AskResult.Id"
+          },
+          {
+            "words": "jsc.guide.operations_library.table2_3_3"
           }
         ]
       ]
@@ -257,6 +284,14 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.operations_library.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.operations_library.text5"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -294,7 +329,7 @@
     }
   ],
   "id": "jsc:operations_library",
-  "order": 413,
+  "order": 424,
   "section": "jsc:library_network",
   "title": "jsc.guide.operations_library.title"
 }

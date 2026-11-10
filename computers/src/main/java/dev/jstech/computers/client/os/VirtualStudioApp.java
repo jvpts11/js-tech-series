@@ -166,6 +166,9 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     private final ListView<ProblemReport.Row> errors;
     private final ListView<VirtualStudioBuild.OutputLine> outputList;
     private final Button start;
+    /** The debugger: what it holds and asks the machine, and how this window shows it. */
+    private final StudioDebug debug;
+    private final VirtualStudioDebug debugging;
     private final CodeCompletions completions = new CodeCompletions().withCosts(true);
     private final CommandPalette palette = new CommandPalette();
     /** The system's file window, for everything the studio opens or saves by choosing on the disk. */
@@ -239,8 +242,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.terminal.setOnIdle(this::typeNext);
         this.tabs.setCloseable(this::closeTab);
         buildPrompts();
-        this.start = this.root.add(new Button(GameText.resolve(StudioTexts.START), this::startProgram)
+        this.start = this.root.add(new Button(GameText.resolve(StudioTexts.START), this::startDebugging)
                 .setPrimary(true));
+        this.debug = new StudioDebug(host);
+        this.debugging = new VirtualStudioDebug(this.root, this.debug, this.workspace, () -> this.skin,
+                this::pathOfSource);
+        this.build.withDebugger(() -> !this.debugging.release(), this.debug::start);
         this.root.add(this.menuBar);
         buildMenuBar();
 
@@ -407,9 +414,22 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         this.build.buildSolution();
     }
 
-    /** Start: builds the startup project and, when it built, runs it at the terminal. */
+    /** Start Without Debugging: builds the startup project and, when it built, runs it at the terminal. */
     public void startProgram() {
         this.build.startProgram();
+    }
+
+    /**
+     * Start Debugging: builds the startup project in the configuration chosen and, when it built, starts it under the
+     * debugger, stopping at the breakpoints set in the editor.
+     */
+    public void startDebugging() {
+        this.build.startDebugging();
+    }
+
+    /** The debugger, for what a test asks of it. */
+    public StudioDebug debugger() {
+        return this.debug;
     }
 
     /**
@@ -520,6 +540,27 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             }
         }
         return out;
+    }
+
+    /*
+     * Where on the disk the source a listing names is: an open file first, then a source of a project of the
+     * solution. A build names each source by its project and its path in it, which ends the path on the disk.
+     */
+    private String pathOfSource(final String file) {
+        for (final CodeWorkspace.Doc doc : this.workspace.docs()) {
+            if (StudioDebug.sameFile(doc.path(), file)) {
+                return doc.path();
+            }
+        }
+        for (final ProjectFile project : this.loader.projects().values()) {
+            for (final String source : project.sources()) {
+                final String path = VirtualStudioLoader.join(this.loader.projectDir(project.name()), source);
+                if (StudioDebug.sameFile(path, file)) {
+                    return path;
+                }
+            }
+        }
+        return null;
     }
 
     private String languageName(final String id) {
@@ -1151,9 +1192,25 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
     }
 
     private List<ContextMenu.Item> debugMenu() {
+        final boolean solution = this.page == Page.SOLUTION;
+        final boolean live = this.debug.active();
+        final boolean paused = this.debug.paused();
         return List.of(
-                item(StudioTexts.START, this.page == Page.SOLUTION, this::startProgram),
-                item(StudioTexts.STOP, this.terminal.busy(), this.terminal::interrupt));
+                live ? item(DebugTexts.CONTINUE, paused, this.debug::resume)
+                        : item(DebugTexts.START_DEBUGGING, solution, this::startDebugging),
+                item(DebugTexts.START_WITHOUT, solution && !live, this::startProgram),
+                item(DebugTexts.PAUSE, live && !paused, this.debug::pause),
+                item(DebugTexts.STOP, live, this.debug::stop),
+                item(DebugTexts.RESTART, live, this.debug::restart),
+                item(StudioTexts.STOP, this.terminal.busy(), this.terminal::interrupt),
+                ContextMenu.Item.separator(),
+                item(DebugTexts.STEP_INTO, paused, this.debug::stepInto),
+                item(DebugTexts.STEP_OVER, paused, this.debug::stepOver),
+                item(DebugTexts.STEP_OUT, paused, this.debug::stepOut),
+                ContextMenu.Item.separator(),
+                item(DebugTexts.TOGGLE_BREAKPOINT, this.workspace.current() != null, this.debugging::toggleAtCaret),
+                item(DebugTexts.DELETE_BREAKPOINTS, !this.debug.allBreakpoints().isEmpty(), this.debug::deleteAll),
+                item(DebugTexts.ADD_WATCH, solution, () -> ask(DebugTexts.ADD_WATCH, "", this.debug::addWatch)));
     }
 
     private List<ContextMenu.Item> toolsMenu() {
@@ -1592,6 +1649,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
 
     @Override
     public void onClosed() {
+        // A program being debugged ends with the studio that was debugging it.
+        this.debug.close();
         this.workspace.release();
         this.dialog.release();
         this.terminal.release();
@@ -1634,14 +1693,17 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                         this.terminal)) {
             part.setVisible(!start);
         }
+        this.debugging.setVisible(!start);
+        final boolean debugging = !start && this.debugging.shows();
         if (start) {
             drawStartWindow(g, font, x, top, width, height - MenuBar.HEIGHT - STATUS_H);
         } else {
+            this.debugging.follow();
             this.skin.panel(g, x, top, width, TOOLBAR_H);
+            // While a program is being debugged, Continue stands where Start was.
+            this.start.setVisible(!debugging);
             this.start.setBounds(x + 3, top + 2, 34, TOOLBAR_H - 4);
-            final String config = GameText.resolve(VirtualStudioTexts.RELEASE);
-            this.skin.field(g, x + 42, top + 2, 40, TOOLBAR_H - 4, false);
-            Draw.text(g, font, font.plainSubstrByWidth(config, 36), x + 45, top + 3, this.skin.text());
+            this.debugging.layoutToolbar(x + 3, top + 2, TOOLBAR_H - 4);
             final int bodyY = top + TOOLBAR_H;
             final int bodyH = height - MenuBar.HEIGHT - TOOLBAR_H - STATUS_H;
             final int codeX = x;
@@ -1649,9 +1711,15 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             this.sideW = Math.max(60, Math.min(width - 120, this.sideW));
             final int codeW = width - this.sideW;
             final int sideX = x + codeW;
-            this.skin.panel(g, sideX, bodyY, this.sideW, bodyH);
-            Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(VirtualStudioTexts.SOLUTION_EXPLORER),
-                    this.sideW - 6), sideX + 3, bodyY + 1, this.skin.dim());
+            // The Diagnostic Tools stand where the Solution Explorer was, as long as a program is being debugged.
+            this.explorer.setVisible(!debugging);
+            if (debugging) {
+                this.debugging.drawDiagnostics(g, font, sideX, bodyY, this.sideW, bodyH);
+            } else {
+                this.skin.panel(g, sideX, bodyY, this.sideW, bodyH);
+                Draw.text(g, font, font.plainSubstrByWidth(GameText.resolve(VirtualStudioTexts.SOLUTION_EXPLORER),
+                        this.sideW - 6), sideX + 3, bodyY + 1, this.skin.dim());
+            }
             this.explorer.setBounds(sideX, bodyY + CAPTION_H, this.sideW, bodyH - CAPTION_H);
             this.skin.panel(g, codeX, bodyY, codeW, TAB_H);
             this.tabs.setBounds(codeX, bodyY, codeW, TAB_H);
@@ -1664,8 +1732,12 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             if (doc != null) {
                 doc.area().setBounds(codeX, paneY, codeW, codeH);
             }
-            layoutDock(codeX, paneY + codeH, codeW, dockShown ? this.dockH : 0);
-            if (dockShown && this.dockTabs.selected() == DOCK_ERRORS) {
+            // While debugging, the dock holds the debugger's panes in place of the build's.
+            layoutDock(codeX, paneY + codeH, codeW, dockShown && !debugging ? this.dockH : 0);
+            this.debugging.layoutDock(codeX, paneY + codeH, codeW, dockShown && debugging ? this.dockH : 0);
+            if (dockShown && debugging) {
+                this.debugging.drawDockHeadings(g, font, codeX, paneY + codeH, codeW);
+            } else if (dockShown && this.dockTabs.selected() == DOCK_ERRORS) {
                 drawErrorHeader(g, font, codeX, paneY + codeH + TAB_H, codeW);
             }
             if (doc == null) {
@@ -1680,7 +1752,14 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
         if (doc != null && this.page == Page.SOLUTION) {
             doc.area().render(g, ctx);
         }
-        drawStatus(g, font, x, y + height - STATUS_H, width, doc);
+        if (debugging) {
+            final String where = doc == null ? "" : GameText.resolve(EditorTexts.LINE_AND_COLUMN.with(
+                    doc.area().document().cursorLine() + 1, doc.area().document().cursorCol() + 1));
+            this.debugging.drawStatus(g, font, x, y + height - STATUS_H, width, STATUS_H, where,
+                    this.loader.solution() == null ? this.debug.name() : this.loader.solution().name());
+        } else {
+            drawStatus(g, font, x, y + height - STATUS_H, width, doc);
+        }
         this.completions.render(g, ctx);
         this.palette.render(g, ctx, x, top, width);
         for (final Popup popup : popups()) {
@@ -2050,8 +2129,8 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
             goToLine();
             return true;
         }
-        if (key == GLFW.GLFW_KEY_F5) {
-            startProgram();
+        if (this.page == Page.SOLUTION
+                && this.debugging.keyPressed(key, modifiers, this::startDebugging, this::startProgram)) {
             return true;
         }
         if (ctrl && key == GLFW.GLFW_KEY_W) {

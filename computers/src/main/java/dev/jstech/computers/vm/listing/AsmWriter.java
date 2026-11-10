@@ -111,15 +111,28 @@ public final class AsmWriter {
         if (!method.hasBody()) {
             return;
         }
+        for (final AsmMethod.Local local : method.debug().locals()) {
+            text.append(".local ").append(local.write()).append('\n');
+        }
         for (final AsmMethod.Handler handler : method.handlers()) {
             text.append(".try ").append(handler.write()).append('\n');
         }
         int position = 0;
+        int column = 0;
         for (int i = 0; i < method.body().size(); i++) {
-            // The source line is said where it changes, so a run of instructions from one line says it once.
-            if (method.positionOf(i) != position && method.positionOf(i) > 0) {
+            /*
+             * The source line is said where it changes, so a run of instructions from one line says it once; a build
+             * for the debugger says the column of each statement as well, so two statements on a line say it twice.
+             */
+            final boolean moved = method.positionOf(i) != position || method.columnOf(i) != column;
+            if (moved && method.positionOf(i) > 0) {
                 position = method.positionOf(i);
-                text.append(".line ").append(position).append('\n');
+                column = method.columnOf(i);
+                text.append(".line ").append(position);
+                if (column > 0) {
+                    text.append(' ').append(column);
+                }
+                text.append('\n');
             }
             writeInstruction(text, method.body().get(i));
         }

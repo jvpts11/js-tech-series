@@ -12,6 +12,7 @@ import dev.jstech.computers.hardware.IsaFit;
 import dev.jstech.computers.vm.listing.Shape;
 import dev.jstech.computers.vm.program.InputSent;
 import dev.jstech.computers.vm.program.Process;
+import dev.jstech.computers.vm.program.SettledOperation;
 import dev.jstech.computers.vm.program.SnapshotException;
 import dev.jstech.computers.vm.program.Values;
 import dev.jstech.core.text.Text;
@@ -110,6 +111,11 @@ final class SigmaProgram implements IMachineRuntime {
     @Override
     public long heapBytes() {
         return this.process.heap().budget();
+    }
+
+    @Override
+    public boolean debugged() {
+        return this.process.debugger() != null;
     }
 
     /*
@@ -218,6 +224,22 @@ final class SigmaProgram implements IMachineRuntime {
     @Override
     public boolean deliverGatewayMessage(final int from, final String text, final long tick) {
         return this.process.deliverGatewayMessage(from, text, tick);
+    }
+
+    @Override
+    public boolean listensToNetwork() {
+        return this.process.listensToNetwork();
+    }
+
+    @Override
+    public boolean deliverSettled(final SettledOperation operation) {
+        return this.process.deliverSettled(operation);
+    }
+
+    @Override
+    public boolean deliverNetworkEvent(final String level, final String machine, final String text,
+                                       final long tick) {
+        return this.process.deliverNetworkEvent(level, machine, text, tick);
     }
 
     @Override

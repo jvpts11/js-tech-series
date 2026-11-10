@@ -44,6 +44,13 @@ public sealed interface IrStmt {
     record Source(IStmt written) implements IrStmt {
     }
 
+    /**
+     * A statement that held others, with the line and the column it was written at: what its own instructions came
+     * from, which a debugger stops at and an exception names, since the shape it was reduced to no longer says.
+     */
+    record At(int line, int column, IrStmt reduced) implements IrStmt {
+    }
+
     record If(IExpr condition, IrStmt then, IrStmt otherwise) implements IrStmt {
     }
 

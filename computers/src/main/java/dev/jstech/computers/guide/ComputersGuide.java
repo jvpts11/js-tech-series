@@ -63,6 +63,7 @@ public final class ComputersGuide {
         // The tables the pages read from the things themselves: the cables, the servers and the storage cards.
         CableFacts.declare();
         RackFacts.declare();
+        SigmaReferenceFacts.declare();
         // A listing in one of the machines' languages is coloured as the game's editors colour it.
         LanguageHighlighting.declare();
         final ModGuide guide = ComputingContent.CONTENT.guide();
@@ -119,10 +120,14 @@ public final class ComputersGuide {
         final GuideChapter library = guide.chapter("achievements_and_library").titled("Achievements and the library")
                 .order(32).tab(TAB).about("The achievements you can earn, and the other books of the library.")
                 .register();
+        final GuideChapter reference = guide.chapter("sigma_reference").titled("The Sigma reference").order(33)
+                .tab(TAB).about("Every type and call of the library your programs reach, with what each costs, and the"
+                        + " way into the Book of Sigma.")
+                .register();
         guide.manual("guide_to_operations").titled("Guide to Operations").cover("J's Computers")
                 .edition("First Edition (September 2026)").style(OPERATIONS_STYLE)
                 .chapters(main, building, kinds, peripherals, programs, network, storage, moving, operations, crafting,
-                        automation, otherMods, library)
+                        automation, otherMods, library, reference)
                 .priority(50)
                 .icon("jsc:gui/guide/cover_mark")
                 .about("This binder is the operator's guide to J's Computers: what a computer is here, how to build"
@@ -151,6 +156,7 @@ public final class ComputersGuide {
         AutomationPages.declare(guide, automation);
         OtherModsPages.declare(guide, otherMods);
         LibraryPages.declare(guide, library);
+        SigmaReferencePages.declare(guide, reference);
         ComputersBooks.declare(guide);
         // Sigma and Sigma# colour themselves as languages the game compiles; the network's queries are coloured here.
         GuideHighlighters.register(IQL, lines -> GuideCode.runs(lines, IqlColouring.spans(lines).stream()

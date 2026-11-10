@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.payload.MachineSoundPayload;
 import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
 import dev.jstech.computers.os.edit.project.ProjectFile;
 import dev.jstech.computers.api.language.IProgrammingLanguage;
+import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.ArrayDeque;
@@ -27,6 +28,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -63,6 +66,11 @@ final class VirtualStudioBuild {
     private final List<OutputLine> output = new ArrayList<>();
     private String building = "";
     private boolean runAfterBuild;
+    /** Whether the build that ends starts the startup project under the debugger, as Start Debugging asks. */
+    private boolean debugAfterBuild;
+    /** Whether a build is the Debug one, made for the debugger, and what starts a listing under the debugger. */
+    private BooleanSupplier forDebugger = () -> false;
+    private BiConsumer<String, String> debugListing = (path, name) -> { };
 
     /**
      * Makes the build of one studio window.
@@ -82,6 +90,16 @@ final class VirtualStudioBuild {
         this.showOutput = showOutput;
         this.showErrors = showErrors;
         this.terminal = terminal;
+    }
+
+    /**
+     * Says how the build works with the debugger: whether the configuration chosen is the Debug one, whose builds
+     * define DEBUG and carry the lines the debugger reads, and what starts a built listing under the debugger, given
+     * its path on the disk and the project's name.
+     */
+    void withDebugger(final BooleanSupplier debugBuild, final BiConsumer<String, String> start) {
+        this.forDebugger = debugBuild;
+        this.debugListing = start;
     }
 
     /** The lines of the Output pane. */
@@ -164,6 +182,25 @@ final class VirtualStudioBuild {
         buildProject(startup);
     }
 
+    /** Start Debugging: builds the startup project and, when it built, starts it under the debugger. */
+    void startDebugging() {
+        if (this.loader.solution() == null) {
+            buildOpenFile();
+            final CodeWorkspace.Doc doc = this.workspace.current();
+            if (doc != null && this.buildErrors.isEmpty()) {
+                this.debugListing.accept(doc.path().replaceAll("\\.[^.]+$", "") + ".asm", doc.name());
+            }
+            return;
+        }
+        final String startup = this.loader.startupName();
+        if (startup.isEmpty()) {
+            print(VirtualStudioTexts.NO_STARTUP.text());
+            return;
+        }
+        this.debugAfterBuild = true;
+        buildProject(startup);
+    }
+
     /** Clean: the listings every project built are deleted, and the tree stops showing them. */
     void cleanSolution() {
         this.output.clear();
@@ -206,7 +243,8 @@ final class VirtualStudioBuild {
         }
         final IProgrammingLanguage.CompileResult result = language.compile(
                 List.of(new IProgrammingLanguage.SourceText(doc.name(), doc.area().text())),
-                InstalledCompilers.options(language, "", this.loader.projectVersionOf(doc.path())));
+                InstalledCompilers.options(language, "", this.loader.projectVersionOf(doc.path()),
+                        this.withDebug(List.of())));
         finishBuild(doc.name(), doc.path().replaceAll("\\.[^.]+$", "") + ".asm", result,
                 Map.of(doc.path(), doc.name()));
     }
@@ -217,6 +255,9 @@ final class VirtualStudioBuild {
             if (this.runAfterBuild) {
                 this.runAfterBuild = false;
                 runStartup();
+            } else if (this.debugAfterBuild) {
+                this.debugAfterBuild = false;
+                debugStartup();
             }
             return;
         }
@@ -296,7 +337,7 @@ final class VirtualStudioBuild {
         }
         final IProgrammingLanguage.CompileResult result = language.compile(sources,
                 InstalledCompilers.options(language, project.platform(), project.languageVersion(),
-                        project.defines()));
+                        this.withDebug(project.defines())));
         finishBuild(project.name(), join(this.loader.projectDir(project.name()), project.entry()), result, names);
         buildNext();
     }
@@ -323,6 +364,7 @@ final class VirtualStudioBuild {
                 this.workspace.say(GameText.resolve(VirtualStudioTexts.BUILD_FAILED));
                 this.buildQueue.clear();
                 this.runAfterBuild = false;
+                this.debugAfterBuild = false;
                 return;
             }
             final int lines = result.binary().split("\n", -1).length;
@@ -353,6 +395,7 @@ final class VirtualStudioBuild {
         this.showErrors.run();
         this.buildQueue.clear();
         this.runAfterBuild = false;
+        this.debugAfterBuild = false;
     }
 
     private void runStartup() {
@@ -360,6 +403,23 @@ final class VirtualStudioBuild {
         if (project != null && project.buildsAListing() && this.buildErrors.isEmpty()) {
             runListing(join(this.loader.projectDir(project.name()), project.entry()));
         }
+    }
+
+    private void debugStartup() {
+        final ProjectFile project = this.loader.projects().get(this.loader.startupName());
+        if (project != null && project.buildsAListing() && this.buildErrors.isEmpty()) {
+            this.debugListing.accept(join(this.loader.projectDir(project.name()), project.entry()), project.name());
+        }
+    }
+
+    /* The symbols a build defines, with DEBUG when it is the Debug one, made for the debugger. */
+    private List<String> withDebug(final List<String> defines) {
+        if (!this.forDebugger.getAsBoolean() || defines.contains(SigmaVersions.DEBUG)) {
+            return defines;
+        }
+        final List<String> more = new ArrayList<>(defines);
+        more.add(SigmaVersions.DEBUG);
+        return more;
     }
 
     /**

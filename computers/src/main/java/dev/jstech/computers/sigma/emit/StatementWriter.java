@@ -78,6 +78,10 @@ final class StatementWriter {
         switch (statement) {
             case IrStmt.Block inner -> this.block(inner);
             case IrStmt.Source written -> this.written(written.written());
+            case IrStmt.At placed -> {
+                this.body.at(placed.line(), placed.column());
+                this.statement(placed.reduced());
+            }
             case IrStmt.If branch -> this.branch(branch);
             case IrStmt.While loop -> this.whileLoop(loop);
             case IrStmt.DoWhile loop -> this.doLoop(loop);
@@ -179,7 +183,7 @@ final class StatementWriter {
 
     /** A statement with nothing inside it left to reduce, written as it stands. */
     private void written(final IStmt statement) {
-        this.body.at(statement.line());
+        this.body.at(statement.line(), statement.column());
         switch (statement) {
             case IStmt.LocalDecl local -> this.local(local);
             case IStmt.ExprStmt expression -> this.discard(expression.expression());

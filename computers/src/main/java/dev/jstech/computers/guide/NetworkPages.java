@@ -939,6 +939,7 @@ final class NetworkPages {
                 .command(CommandGuidePages.id(Platform.MC_NET, "sgsc"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "sigma"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "sgpack"))
+                .command(CommandGuidePages.id(Platform.MC_NET, "sgdb"))
                 .seeAlso("jsc:interactor_screen", "jsc:remote_control")
                 .register();
     }

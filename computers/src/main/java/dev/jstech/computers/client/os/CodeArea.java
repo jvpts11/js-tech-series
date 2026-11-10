@@ -19,6 +19,8 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.function.IntConsumer;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
@@ -48,11 +50,12 @@ public final class CodeArea extends UiComponent {
     private static final int MARK_W = 5;
     /**
      * The editor's own colours, {@code jsc:editor/code_area}: the blue laid over selected text, a scroll bar's
-     * track and thumb (all translucent, so the code under them still reads), and the marks of an error and of a
-     * warning in the gutter.
+     * track and thumb (all translucent, so the code under them still reads), the marks of an error and of a
+     * warning in the gutter, and the debugger's: a breakpoint's dot, the line the program stopped at, and its arrow.
      */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "editor/code_area",
-            new Colours(0x663A72B0, 0x30808080, 0xA0909090, 0xFFC0392B, 0xFFD08A1E));
+            new Colours(0x663A72B0, 0x30808080, 0xA0909090, 0xFFC0392B, 0xFFD08A1E, 0xFFE51400, 0x70FFE45C,
+                    0xFFF2B705));
     private static final float MIN_SCALE = 0.75f;
     private static final float MAX_SCALE = 2.0f;
     /** How thick the two scroll bars are, in screen pixels. */
@@ -126,6 +129,12 @@ public final class CodeArea extends UiComponent {
     private int tabSize = 4;
     /** Whether the rows are numbered in the gutter, as every editor does but the oldest. */
     private boolean numbered = true;
+    /** The rows a debugger's breakpoint stands on, counted from one. */
+    private Set<Integer> breakpoints = Set.of();
+    /** The row a debugged program is stopped at, counted from one, or 0 while it is stopped at none here. */
+    private int stoppedAt;
+    /** What a click in the gutter does to the row it is beside, counted from one, or null for nothing. */
+    private IntConsumer onMarginClick;
 
     /** The document being edited, so an owner can read it or put a file in it. */
     public TextDocument document() {
@@ -183,6 +192,24 @@ public final class CodeArea extends UiComponent {
     /** Numbers the rows in the gutter, or leaves only the room for marks there. */
     public CodeArea setNumbered(final boolean value) {
         this.numbered = value;
+        return this;
+    }
+
+    /** The rows a debugger's breakpoint stands on, counted from one, each shown as a dot in the gutter. */
+    public CodeArea setBreakpoints(final Set<Integer> lines) {
+        this.breakpoints = lines == null ? Set.of() : Set.copyOf(lines);
+        return this;
+    }
+
+    /** The row a debugged program is stopped at, counted from one, or 0: marked by an arrow and a band. */
+    public CodeArea setStoppedAt(final int line) {
+        this.stoppedAt = Math.max(0, line);
+        return this;
+    }
+
+    /** What a click in the gutter does to the row beside it, counted from one: a debugger sets a breakpoint there. */
+    public CodeArea setOnMarginClick(final IntConsumer action) {
+        this.onMarginClick = action;
         return this;
     }
 
@@ -342,6 +369,10 @@ public final class CodeArea extends UiComponent {
             if (i == this.doc.cursorLine() && focused && !selected) {
                 g.fill(gutter, ry, innerRight, ry + LINE_H, ink.currentLine());
             }
+            // The line a debugged program stopped at is banded across, over the caret's own line.
+            if (i + 1 == this.stoppedAt) {
+                g.fill(gutter, ry, innerRight, ry + LINE_H, PALETTE.get().stopped());
+            }
             if (selected && i >= from.line() && i <= to.line()) {
                 final int startCol = i == from.line() ? Math.min(from.col(), line.length()) : 0;
                 final int endCol = i == to.line() ? Math.min(to.col(), line.length()) : line.length();
@@ -370,6 +401,7 @@ public final class CodeArea extends UiComponent {
         ry = 1;
         for (int i = this.scroll; i < this.doc.lineCount() && i - this.scroll < visible; i++) {
             drawMark(g, i, ry);
+            drawDebugMarks(g, i + 1, ry);
             if (this.numbered) {
                 final String number = String.valueOf(i + 1);
                 Draw.text(g, font, number, gutter - GUTTER_PAD - font.width(number), ry + 1,
@@ -474,6 +506,26 @@ public final class CodeArea extends UiComponent {
             final String piece = line.substring(from, to);
             Draw.text(g, font, piece, rx, textY, ink.of(run.ink()));
             rx += font.width(piece);
+        }
+    }
+
+    /*
+     * The debugger's marks beside a row: a breakpoint's dot, drawn a pixel at a time as a round dot, and over it the
+     * arrow of the line the program is stopped at, pointing at the code.
+     */
+    private void drawDebugMarks(final GuiGraphics g, final int line, final int rowY) {
+        final int top = rowY + 2;
+        if (this.breakpoints.contains(line)) {
+            final int dot = PALETTE.get().breakpoint();
+            g.fill(1, top + 1, 1 + MARK_W, top + MARK_W - 1, dot);
+            g.fill(2, top, MARK_W, top + MARK_W, dot);
+        }
+        if (line == this.stoppedAt) {
+            final int arrow = PALETTE.get().arrow();
+            g.fill(1, top + 1, 3, top + MARK_W - 1, arrow);
+            g.fill(3, top, 4, top + MARK_W, arrow);
+            g.fill(4, top + 1, 5, top + MARK_W - 1, arrow);
+            g.fill(5, top + 2, 6, top + 3, arrow);
         }
     }
 
@@ -586,6 +638,12 @@ public final class CodeArea extends UiComponent {
             return true;
         }
         final int line = Math.max(0, Math.min(this.doc.lineCount() - 1, lineAt(my)));
+        // A click in the gutter of a studio that debugs sets or takes away the breakpoint beside it.
+        if (button == 0 && this.onMarginClick != null
+                && mx < x() + Math.round(gutterWidth(this.lastFont) * this.scale)) {
+            this.onMarginClick.accept(line + 1);
+            return true;
+        }
         final int col = columnAt(this.doc.line(line), mx);
         // Shift and a click stretch the selection to the click; a plain click starts one for a sweep.
         this.doc.setCursor(line, col, Screen.hasShiftDown());
@@ -819,6 +877,7 @@ public final class CodeArea extends UiComponent {
     }
 
     /** The editor's colours, as the palette above names them. */
-    private record Colours(int selection, int track, int thumb, int error, int warning) {
+    private record Colours(int selection, int track, int thumb, int error, int warning, int breakpoint, int stopped,
+                           int arrow) {
     }
 }

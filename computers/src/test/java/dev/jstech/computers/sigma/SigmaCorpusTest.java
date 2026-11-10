@@ -42,10 +42,10 @@ class SigmaCorpusTest {
     /** The programs of the corpus, kept under {@code sigma/corpus} as source and as the listing each compiles to. */
     private static final List<String> PROGRAMS = List.of("Library", "Programs", "Machine", "Network", "Gateway",
             "Ui", "Steps", "Values", "Sound", "OldNames", "Buses", "Redstone", "Crafting", "Widgets", "Systems",
-            "Exceptions", "Pointers");
+            "Exceptions", "Pointers", "Listeners");
     /** The programs built on what came after the first version, which that version refuses for it. */
     private static final Set<String> LATER = Set.of("Sound", "OldNames", "Buses", "Redstone", "Crafting",
-            "Widgets", "Exceptions", "Pointers");
+            "Widgets", "Exceptions", "Pointers", "Listeners");
     /**
      * What the first version refuses a later program with: what came later as needing it, and the words it kept back
      * for a later version, try and throw among them, as kept.

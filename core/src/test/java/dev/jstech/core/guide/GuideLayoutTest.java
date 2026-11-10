@@ -266,6 +266,15 @@ class GuideLayoutTest {
     }
 
     @Test
+    void pieces_breaksATypeAfterTheAngleBracketOfItsArguments() {
+        final String word = "Action<NetworkEvent>)";
+        final List<String> pieces = GuideLayout.pieces(word, 6 * 12, TextSize.CODE, new FixedText(Map.of()));
+
+        assertEquals(List.of("Action<", "Network", "Event>)"), pieces);
+        assertTrue(GuideLayout.breaksBefore(word, "Action<".length()), "a type breaks after its angle bracket");
+    }
+
+    @Test
     void lay_numbersDrawingsBySectionInHundreds() {
         final GuideBook book = drawings();
 

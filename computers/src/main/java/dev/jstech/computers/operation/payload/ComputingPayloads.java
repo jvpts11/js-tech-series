@@ -55,6 +55,7 @@ import dev.jstech.computers.operation.payload.operations.OperationsPayloads;
 import dev.jstech.computers.operation.payload.portable.PortablePayloads;
 import dev.jstech.computers.operation.payload.printer.PrintPayloads;
 import dev.jstech.computers.operation.payload.program.ConsolePayloads;
+import dev.jstech.computers.operation.payload.program.DebugPayloads;
 import dev.jstech.computers.operation.payload.program.DesktopShellPayloads;
 import dev.jstech.computers.operation.payload.program.ProgramPayloads;
 import dev.jstech.computers.operation.payload.terminal.TerminalLocalPayloads;
@@ -82,6 +83,7 @@ public final class ComputingPayloads {
         final PayloadRegistrar registrar = event.registrar("1");
         ProgramPayloads.register(registrar);
         ConsolePayloads.register(registrar);
+        DebugPayloads.register(registrar);
         DesktopShellPayloads.register(registrar);
         FilePayloads.register(registrar);
         FileEditPayloads.register(registrar);

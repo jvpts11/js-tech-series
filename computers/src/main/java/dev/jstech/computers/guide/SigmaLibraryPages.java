@@ -659,6 +659,9 @@ final class SigmaLibraryPages {
                 .row(GuideCell.code("Network.Computer(host)"), GuideCell.words("The computer with that host name, or "
                         + "null"
                         + " when there is none."))
+                .row(GuideCell.code("Network.OnEvent(handler)"), GuideCell.words("Calls the handler with a"
+                        + " NetworkEvent each time an entry is written to the network's event log. Added in"
+                        + " version 3."))
                 .paragraph("Every member of Network is available in Sigma#"
                         + " only. Total counts every server that holds the item.")
                 .subheading("What the records hold")
@@ -673,6 +676,10 @@ final class SigmaLibraryPages {
                         GuideCell.words("The item, its new total, and its total before the change."))
                 .row(GuideCell.code("Subscription"), GuideCell.code("Subscription.Id, Subscription.Item"),
                         GuideCell.words("The number of the watch, and the item it watches."))
+                .row(GuideCell.code("NetworkEvent"), GuideCell.code("NetworkEvent.Level, NetworkEvent.Machine, "
+                        + "NetworkEvent.Text, NetworkEvent.Tick"),
+                        GuideCell.words("How serious the entry is (info, warn or error), the machine it is about,"
+                                + " what it says, and the tick it was written on."))
                 .subheading("Watches")
                 .paragraph("A watch is kept by your program, not by the machine. Once each tick the machine is asked "
                         + "for"
@@ -684,6 +691,12 @@ final class SigmaLibraryPages {
                         + " WatchAbove works the other way round.")
                 .paragraph("The library has no call that stops a watch. Watches are kept when the world is saved and"
                         + " loaded again.")
+                .subheading("The network's events")
+                .paragraph("Network.OnEvent tells your program of each entry written to the network's event log, as"
+                        + " it is written: a UPS gone on battery, a power supply that degraded, a conflict between"
+                        + " Mainframes. One handler hears every entry, so a later call to it takes the place of the"
+                        + " one before. Listening costs nothing, the handler runs on your program's credits, and it is"
+                        + " kept when the world is saved, as a watch is.")
                 .define("Network total","The sum of an item over every server on the network.")
                 .define("Threshold", "The number a watch is set at. Below and above fire on crossing it, not while the"
                         + " total stays there.")
@@ -874,6 +887,10 @@ final class SigmaLibraryPages {
                         + " or nothing when it is no longer in flight."))
                 .row(GuideCell.code("Operations.List()"), GuideCell.words("Every Operation in flight, as a list of"
                         + " OperationInfo."))
+                .row(GuideCell.code("Operations.OnSettled(handler)"), GuideCell.words("Calls the handler with the"
+                        + " OperationInfo of each Operation of the network that settles. Added in version 3."))
+                .row(GuideCell.code("Operations.OnSettled(id, handler)"), GuideCell.words("Calls the handler once,"
+                        + " when the Operation with that id settles. Added in version 3."))
                 .paragraph("Pull, Push, Craft, Cancel, Reprioritise and Update give an AskResult. Get and List give"
                         + " OperationInfo. Cancel accepts the start of an id, provided that start is at least as long "
                         + "as the"
@@ -888,6 +905,10 @@ final class SigmaLibraryPages {
                         + "OperationInfo.Priority"),
                         GuideCell.words("Id: the id to use. Type and Status: lower-case text. Item: the item. Moved and"
                                 + " Requested: how much has moved, and how much was asked for."))
+                .row(GuideCell.code("AskResult"), GuideCell.code("AskResult.Id"),
+                        GuideCell.words("The short id of the Operation the request set going, which"
+                                + " Operations.OnSettled can wait on; empty when it set none going. Added in"
+                                + " version 3."))
                 .table("Priorities of an Operation", "Level", "Ways to write it")
                 .row(GuideCell.words("Low"), GuideCell.code("low"))
                 .row(GuideCell.words("Medium low"), GuideCell.code("medium_low"))
@@ -913,6 +934,12 @@ final class SigmaLibraryPages {
                         GuideCell.words("No Operation with that id is running."))
                 .row(GuideCell.words("no such priority: <name>"), GuideCell.words("The priority name is not one of the"
                         + " levels above."))
+                .subheading("Being told when an Operation settles")
+                .paragraph("Operations.OnSettled tells your program when an Operation of the network settles, done or"
+                        + " not: its Status says done, partial, failed or discarded. With an id it waits on that one"
+                        + " Operation and is told once; Pull, Push and Craft answer with the id in AskResult.Id, so a"
+                        + " program can ask for a craft and be told when it is done. Listening costs nothing, and the"
+                        + " handlers are kept when the world is saved.")
                 .ifSomethingGoesWrong(
                         "The program stops and says this computer is not on a network.",
                         "Check Network.Online first.",

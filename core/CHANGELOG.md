@@ -2191,6 +2191,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   over, and the era advancements wait for the era by its id.
 
 ### Fixed
+- Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
+  `Action<OperationInfo>` does, where it was cut between two letters.
 - A HUD element in a bottom corner too wide for the room beside the hotbar, on a small window, stands over the
   hotbar and its bars: a space suit's controls covered the hotbar's first slot on a window of 854 by 480.
 - A seat of a moving structure is sat in only with nothing of the structure between the player's eyes and it:

@@ -129,7 +129,7 @@ class SigmaCompletionsTest {
     @Test
     void types_listsTheLanguagesOwnTypes() {
         final List<String> found = labels(SigmaCompletions.types(this.builtIns, null, "Net"));
-        assertEquals(List.of("Network", "NetworkException"), found);
+        assertEquals(List.of("Network", "NetworkEvent", "NetworkException"), found);
     }
 
     @Test
@@ -317,7 +317,7 @@ class SigmaCompletionsTest {
     void names_stillOffersTheTypesWhenThereIsNoScope() {
         final List<String> found =
                 labels(SigmaCompletions.names(this.builtIns, null, SigmaCompletions.Scope.NONE, "Net"));
-        assertEquals(List.of("Network", "NetworkException"), found);
+        assertEquals(List.of("Network", "NetworkEvent", "NetworkException"), found);
     }
 
     @Test

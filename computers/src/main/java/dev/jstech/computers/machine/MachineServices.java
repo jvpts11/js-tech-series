@@ -180,6 +180,12 @@ public final class MachineServices implements IHost {
         return CrashWords.of(this.machine.installedOs(), plain);
     }
 
+    /** A program here waits on the network: the machine is put among those told what happens on theirs. */
+    @Override
+    public void listensToNetwork() {
+        NetworkListening.wants(this.block);
+    }
+
     /** Whether this server's settings let a program use components that reach outside the game. */
     @Override
     public boolean outsideComponents() {

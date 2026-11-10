@@ -62,6 +62,8 @@ public final class Emitter {
     private int lambdaCount;
     /** The version of the format the instructions written so far need, which the listing is written in. */
     private int format = AsmProgram.BASE_VERSION;
+    /** Whether this is a build for the debugger, which writes down every line, column and named variable. */
+    private boolean debugging;
 
     public Emitter(final SemanticModel model, final TypeRules rules, final BuiltIns builtIns,
                    final Declarations declarations, final DiagnosticBag diagnostics, final Lowerer lowered) {
@@ -73,6 +75,18 @@ public final class Emitter {
         this.lowered = lowered;
         this.raw = new RawAccess(declarations.layout(), rules);
         this.closures = new Closures();
+    }
+
+    /**
+     * Makes this a build for the debugger, or not: one that says the line and the column of every statement and where
+     * each named variable lives, in the newest version of the format, which is what a debugger stops at and shows.
+     */
+    public Emitter forDebugger(final boolean on) {
+        this.debugging = on;
+        if (on) {
+            this.uses(AsmProgram.VERSION);
+        }
+        return this;
     }
 
     /** Writes the whole program out. */
@@ -111,21 +125,29 @@ public final class Emitter {
         return program;
     }
 
-    /* A type that says which file it was written in, for the exceptions of a program that uses them. */
+    /*
+     * A type that says which file it was written in, for the exceptions of a program that uses them and for the
+     * debugger.
+     */
     private AsmType placed(final AsmType written, final NamedType from) {
-        if (this.model.usesExceptions()) {
+        if (this.model.usesExceptions() || this.debugging) {
             written.setSource(this.declarations.fileOf(from));
         }
         return written;
     }
 
-    /* A method written down with the stretches it protects and, in a program that uses exceptions, its source lines. */
+    /*
+     * A method written down with the stretches it protects and, in a program that uses exceptions or a build for the
+     * debugger, its source lines; the debugger's build adds the columns and the named variables.
+     */
     AsmMethod finished(final AsmMethod method, final MethodBody body) {
         final List<AsmMethod.Handler> handlers = body.handlers();
-        if (handlers.isEmpty() && !this.model.usesExceptions()) {
+        final boolean placed = this.model.usesExceptions() || this.debugging;
+        if (handlers.isEmpty() && !placed) {
             return method;
         }
-        return method.protecting(handlers, this.model.usesExceptions() ? body.positions() : List.of());
+        final AsmMethod written = method.protecting(handlers, placed ? body.positions() : List.of());
+        return this.debugging ? written.debugged(new AsmMethod.Debug(body.columns(), body.locals())) : written;
     }
 
     /*

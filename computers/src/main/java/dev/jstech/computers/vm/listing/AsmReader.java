@@ -181,17 +181,18 @@ public final class AsmReader {
             case "event" -> this.readEvent(rest, line);
             case "value" -> this.readValue(rest, line);
             case "method" -> this.readMethodHead(rest, line);
-            case "source", "try", "line" -> this.readExceptionDirective(program, word, rest, line);
+            case "source", "try", "line", "local" -> this.readNewerDirective(program, word, rest, line);
             default -> this.report(line, ListingError.UNKNOWN_DIRECTIVE, "." + word);
         }
     }
 
     /*
-     * The directives exceptions brought, which came with them in the newest version of the format: the file a type was
-     * written in, a protected stretch of the method being read, and the line of the source what follows came from.
+     * The directives the newest version of the format brought: the file a type was written in, a protected stretch of
+     * the method being read, the line (and, for the debugger, the column) of the source what follows came from, and a
+     * variable the source named, which only a build for the debugger writes.
      */
-    private void readExceptionDirective(final AsmProgram program, final String word, final String rest,
-                                        final int line) {
+    private void readNewerDirective(final AsmProgram program, final String word, final String rest,
+                                    final int line) {
         if (program.version() < AsmProgram.VERSION) {
             this.report(line, ListingError.NEEDS_NEWER_FORMAT, "." + word, AsmProgram.VERSION, program.version());
             return;
@@ -207,7 +208,13 @@ public final class AsmReader {
             return;
         }
         if ("line".equals(word)) {
-            this.method.at(this.number(rest, line, 0));
+            // "12", or "12 9" in a build for the debugger, which says the column of the statement too.
+            final String[] parts = rest.split("\\s+");
+            this.method.at(this.number(parts[0], line, 0), parts.length > 1 ? this.number(parts[1], line, 0) : 0);
+            return;
+        }
+        if ("local".equals(word)) {
+            this.readLocal(rest, line);
             return;
         }
         // "L1 L2 catch Type L3 L4" or "L1 L2 finally L3 L4".
@@ -219,6 +226,37 @@ public final class AsmReader {
         }
         this.method.addHandler(cleanup ? new AsmMethod.Handler(parts[0], parts[1], null, parts[3], parts[4])
                 : new AsmMethod.Handler(parts[0], parts[1], parts[3], parts[4], parts[5]), line);
+    }
+
+    /*
+     * "slot 3 logs long", "kept 2 Field total int" (or "kept this ..." inside a lambda) or "memory 4 cell Cell", each
+     * with "param " before it for a parameter: where a variable the source named lives, as a build for the debugger
+     * writes it. The type comes last, as it may hold spaces.
+     */
+    private void readLocal(final String written, final int line) {
+        final boolean parameter = written.startsWith("param ");
+        final String rest = parameter ? written.substring("param ".length()).trim() : written;
+        final AsmMethod.Where where = switch (rest.split("\\s+", 2)[0]) {
+            case "slot" -> AsmMethod.Where.SLOT;
+            case "kept" -> AsmMethod.Where.KEPT;
+            case "memory" -> AsmMethod.Where.MEMORY;
+            default -> null;
+        };
+        final boolean kept = where == AsmMethod.Where.KEPT;
+        final int words = kept ? 5 : 4;
+        final String[] parts = rest.split("\\s+", words);
+        if (where == null || parts.length < words) {
+            this.report(line, ListingError.MALFORMED_OPERAND, rest, ".local");
+            return;
+        }
+        final boolean own = kept && "this".equals(parts[1]);
+        final int slot = own ? -1 : this.number(parts[1], line, 0);
+        if (!own && (slot < 0 || slot >= this.method.placeCount())) {
+            this.report(line, ListingError.SLOT_OUT_OF_RANGE, slot, this.method.placeCount());
+            return;
+        }
+        this.method.addLocal(new AsmMethod.Local(parameter, where, slot, kept ? parts[2] : "", parts[words - 2],
+                parts[words - 1]));
     }
 
     private AsmType readTypeHead(final AsmType.Kind kind, final String rest) {

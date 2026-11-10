@@ -56,6 +56,17 @@
           {
             "words": "jsc.guide.sigma_at_the_prompt.table1_4_3"
           }
+        ],
+        [
+          {
+            "literal": "sgdb"
+          },
+          {
+            "literal": "sgsc"
+          },
+          {
+            "words": "jsc.guide.sigma_at_the_prompt.table1_5_3"
+          }
         ]
       ]
     },
@@ -89,6 +100,10 @@
       "command": "jsc:command/linux/sgpack"
     },
     {
+      "type": "command",
+      "command": "jsc:command/linux/sgdb"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -115,7 +130,7 @@
     }
   ],
   "id": "jsc:sigma_at_the_prompt",
-  "order": 225,
+  "order": 236,
   "section": "jsc:shell_software",
   "title": "jsc.guide.sigma_at_the_prompt.title"
 }

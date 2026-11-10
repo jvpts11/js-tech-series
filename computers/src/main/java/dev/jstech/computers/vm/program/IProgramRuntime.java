@@ -35,6 +35,22 @@ public interface IProgramRuntime {
         return false;
     }
 
+    /** Whether the program waits on its network: an Operation settling, or the network's event log. */
+    default boolean listensToNetwork() {
+        return false;
+    }
+
+    /** Hands the program an Operation of its network that settled; false when it did not hear it. */
+    default boolean deliverSettled(final SettledOperation operation) {
+        return false;
+    }
+
+    /** Hands the program an entry written to its network's event log; false when it did not hear it. */
+    default boolean deliverNetworkEvent(final String level, final String machine, final String text,
+                                        final long tick) {
+        return false;
+    }
+
     /** Tells the program what a player did to one of its widgets; false when no part of it heard. */
     default boolean deliverUiEvent(final long window, final long widget, final String kind,
                                    final List<Object> values) {

@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * Writing a whole process down: what it has allocated, what each thread was doing, and where each of its calls had
@@ -66,6 +67,10 @@ final class ProcessSnapshotWriter {
         final Snapshot.IValue onMessageShot = value(listeners.onMessage(), numbers);
         final List<Snapshot.IValue> windowShots = values(windows.held(), numbers);
         final Snapshot.IValue onGatewayShot = value(listeners.onGatewayMessage(), numbers);
+        final Snapshot.IValue onSettledShot = value(listeners.onSettled(), numbers);
+        final Map<String, Snapshot.IValue> settledForShots = new TreeMap<>();
+        listeners.settledFor().forEach((operation, handler) -> settledForShots.put(operation, value(handler, numbers)));
+        final Snapshot.IValue onEventShot = value(listeners.onEvent(), numbers);
         /*
          * The objects are written last: writing anything else down can number a freed thing it still
          * reaches, and so can writing an object, so the numbers are walked while they grow.
@@ -87,7 +92,8 @@ final class ProcessSnapshotWriter {
                 new Snapshot.WindowsShot(windowShots, windows.nextWindow(), windows.nextWidget(),
                         windows.endWithWindows()),
                 watching,
-                new Snapshot.ListenersShot(onMessageShot, onGatewayShot, listeners.gateway()),
+                new Snapshot.ListenersShot(onMessageShot, onGatewayShot, listeners.gateway(), onSettledShot,
+                        settledForShots, onEventShot),
                 new Snapshot.ThreadsShot(running, process.scheduler().nextId()),
                 locked, kept, scriptShot,
                 new Snapshot.IntercalShot(List.copyOf(process.switchedOff()), staticsIgnored));

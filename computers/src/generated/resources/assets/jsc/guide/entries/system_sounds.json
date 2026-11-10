@@ -178,7 +178,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:system_sounds",
-  "order": 182,
+  "order": 193,
   "section": "jsc:desktop_settings",
   "title": "jsc.guide.system_sounds.title"
 }

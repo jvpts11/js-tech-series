@@ -225,6 +225,13 @@ public final class Lowerer {
             this.locksAt.put(statement, this.locksOpen);
             this.triesAt.put(statement, this.triesOpen);
         }
+        final IrStmt reduced = this.reduced(statement);
+        // A statement read as it stands says where it was written itself; a block is only the statements in it.
+        return statement == null || reduced instanceof IrStmt.Source || reduced instanceof IrStmt.Block ? reduced
+                : new IrStmt.At(statement.line(), statement.column(), reduced);
+    }
+
+    private IrStmt reduced(final IStmt statement) {
         return switch (statement) {
             case null -> new IrStmt.Block(List.of());
             case IStmt.Labeled labeled -> this.labeled(labeled, null);

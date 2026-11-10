@@ -172,7 +172,7 @@
     }
   ],
   "id": "jsc:task_manager",
-  "order": 189,
+  "order": 200,
   "section": "jsc:frames_machine_tools",
   "title": "jsc.guide.task_manager.title"
 }

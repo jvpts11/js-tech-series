@@ -127,13 +127,26 @@ public record Snapshot(int format, String listing, HeapShot heap, IdentityShot i
         }
     }
 
-    /** Who the program tells when something is said to it, and the Gateway it chose to reach through. */
-    public record ListenersShot(IValue onMessage, IValue onGatewayMessage, String gateway) {
+    /**
+     * Who the program tells when something is said to it, and the Gateway it chose to reach through; and who it tells
+     * of what happens on its network: any Operation that settles, the ones waiting on one Operation by its short id,
+     * and the network's event log.
+     */
+    public record ListenersShot(IValue onMessage, IValue onGatewayMessage, String gateway, IValue onSettled,
+                                Map<String, IValue> settledFor, IValue onEvent) {
 
         public ListenersShot {
             onMessage = onMessage == null ? new IValue.Nothing() : onMessage;
             onGatewayMessage = onGatewayMessage == null ? new IValue.Nothing() : onGatewayMessage;
             gateway = gateway == null ? "" : gateway;
+            onSettled = onSettled == null ? new IValue.Nothing() : onSettled;
+            settledFor = settledFor == null ? Map.of() : Map.copyOf(settledFor);
+            onEvent = onEvent == null ? new IValue.Nothing() : onEvent;
+        }
+
+        /** A program that waits on nothing of its network, as every one written before it could did. */
+        public ListenersShot(final IValue onMessage, final IValue onGatewayMessage, final String gateway) {
+            this(onMessage, onGatewayMessage, gateway, null, Map.of(), null);
         }
     }
 

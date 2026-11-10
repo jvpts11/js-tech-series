@@ -635,6 +635,8 @@ final class ShellPages {
                                 + " with sigma build, stops one with sigma stop, and lists what runs with sigma ps."))
                 .row(GuideCell.code("sgpack"), GuideCell.code("sigma"),
                         GuideCell.words("Starts a package, builds it, and puts it on the Mirror or takes it back."))
+                .row(GuideCell.code("sgdb"), GuideCell.code("sgsc"),
+                        GuideCell.words("Debugs a listing built with sgsc --debug, a line at a time."))
                 .paragraph("You install a package by its name, with your system's package manager"
                         + " ([](jsc:software_commands)). The packages come from the Mirror, so your computer must be"
                         + " on a network whose Mainframe runs it.")
@@ -646,6 +648,7 @@ final class ShellPages {
                 .command(CommandGuidePages.id(Platform.LINUX, "sgsc"))
                 .command(CommandGuidePages.id(Platform.LINUX, "sigma"))
                 .command(CommandGuidePages.id(Platform.LINUX, "sgpack"))
+                .command(CommandGuidePages.id(Platform.LINUX, "sgdb"))
                 .ifSomethingGoesWrong(
                         "The prompt says it does not know sgsc, scc, sigma or sgpack.",
                         "Install the package that brings the command, as the table shows, then type it again.",

@@ -2589,6 +2589,24 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   build held to version 2 refuses all of it where it is written, a program written for version 2 compiles to the very
   listing it always did, and a listing that uses an instruction of version 3 is written in version 4 of the format.
   The Book of Sigma has a section on version 3, and its pages of errors and stops have every new code.
+- (Computers) The debugger: `sgsc --debug` and Virtual Studio's Debug configuration build a program with the lines a
+  debugger reads, and define `DEBUG` for `#if`. Virtual Studio and Virtual Studio Code debug it with breakpoints set
+  in the margin or with F9, Continue, Step Over, Step Into and Step Out on F5, F10, F11 and Shift+F11, the variables,
+  watches and calls of the stopped program, and what it prints in the Output and the Debug Console, where it also
+  reads its input. Virtual Studio's Diagnostic Tools show the credits it has spent, split between its calls and the
+  steps, and the status bar of both turns orange while it is debugged. `sgdb`, which comes with `sgsc`, does the same
+  at the terminal with gdb's commands, from `break`, `run`, `next`, `step` and `finish` to `print`, `backtrace`,
+  `info locals` and `info credits`. Each step spends what running spends, a breakpoint on a line without code stops at
+  the next line that has some, and a program started by a debugger belongs to it: it ends when debugging stops and is
+  not saved with the world.
+- (Computers) Programs that hear the network: `Operations.OnSettled` calls a handler with each Operation of the network
+  that settles, done or not, or once with the one whose id it is given, and `Pull`, `Push` and `Craft` answer with
+  that id in `AskResult.Id`, so a program can ask for a craft and hear when it is done. `Network.OnEvent` calls a
+  handler with each entry written to the network's event log, a `NetworkEvent` with its level, its machine, its text
+  and its tick. Both come with version 3 of Sigma#, cost nothing to listen and are kept when the world is saved.
+- (Computers) The Sigma reference, the last chapter of the Guide to Operations: a page for each namespace of the
+  library with every call, what it gives, what it costs and the version it came in, written from the library itself.
+  `info sigma` and the Help of a desktop open it, and the Book of Sigma has a page on debugging.
 - (Computers) Updates on every desktop: Settings > Programs marks each program the Mirror has a newer version of,
   with "update available" and the two versions under its name and an Update button that installs it as the package
   manager's upgrade does, and says at the top how many updates there are; the Unix desktops light the row. Each
@@ -3619,6 +3637,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole blocks.
 
 ### Changed
+- (Computers) Virtual Studio's Start button starts debugging, and Ctrl+F5 runs without it; its configuration is a
+  choice between Debug and Release, Debug first. In Virtual Studio Code F5 starts debugging, Ctrl+F5 runs the file, and
+  the Run icon of the side bar opens Run and Debug.
 - (Computers) `kill -9` stops a program without its `OnDestroy`, as SIGKILL runs nothing; `kill` and `sigma stop`
   still let it say goodbye.
 - (Computers) The chain's machines, as the benches, make a recipe only from exactly what it takes: while an inlet
@@ -3874,6 +3895,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
+  `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
   works through its computer.
 - (Computers) The Network Interactor's Operations tab gives each Operation its own state, where it read the states in

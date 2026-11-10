@@ -17,7 +17,8 @@
     "jsc:crafting_for_you",
     "jsc:automation",
     "jsc:other_mods",
-    "jsc:achievements_and_library"
+    "jsc:achievements_and_library",
+    "jsc:sigma_reference"
   ],
   "cover": [
     "jsc.guide.manual.guide_to_operations.cover1"

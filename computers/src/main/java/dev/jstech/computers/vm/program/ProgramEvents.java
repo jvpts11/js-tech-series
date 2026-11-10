@@ -36,6 +36,10 @@ final class ProgramEvents {
     static final long EVENT_BYTES = Heap.HEADER + 3L * Heap.REFERENCE;
     /** What an input event handed to a system holds before its text: a header and its six fields. */
     static final long INPUT_BYTES = Heap.HEADER + 6L * Heap.REFERENCE;
+    /** What an Operation that settled holds before its text: a header and its seven fields. */
+    static final long OPERATION_BYTES = Heap.HEADER + 7L * Heap.REFERENCE;
+    /** What an entry of the network's event log holds before its text: a header and its four fields. */
+    static final long NETWORK_EVENT_BYTES = Heap.HEADER + 4L * Heap.REFERENCE;
 
     private final Process process;
     private final Heap heap;
@@ -113,6 +117,37 @@ final class ProgramEvents {
         final String said = text == null ? "" : text;
         return this.offer(this.listeners.onMessage(), EVENT_BYTES + Heap.sizeOfText(said),
                 () -> List.of(this.messageOf(from, said, tick)));
+    }
+
+    /**
+     * Tells the program an Operation of its network settled: the handler that waited on that one, which is told once
+     * and forgotten, then the one that hears every Operation. False when the program is over or has no room for the
+     * calls, as for a message.
+     */
+    boolean deliverSettled(final SettledOperation operation) {
+        if (this.identity.over()) {
+            return false;
+        }
+        final long bytes = OPERATION_BYTES + Heap.sizeOfText(operation.id()) + Heap.sizeOfText(operation.type())
+                + Heap.sizeOfText(operation.item()) + Heap.sizeOfText(operation.status())
+                + Heap.sizeOfText(operation.priority());
+        final Values.DelegateValue one = this.listeners.takeSettled(operation.id());
+        final boolean toOne = this.offer(one, bytes, () -> List.of(this.operationOf(operation)));
+        return this.offer(this.listeners.onSettled(), bytes, () -> List.of(this.operationOf(operation))) && toOne;
+    }
+
+    /**
+     * Tells the program an entry was written to its network's event log: how serious it is, the machine it is about
+     * and what it says, and the tick. False when the program is over or has no room for the call.
+     */
+    boolean deliverNetworkEvent(final String level, final String machine, final String text, final long tick) {
+        if (this.identity.over()) {
+            return false;
+        }
+        final long bytes = NETWORK_EVENT_BYTES + Heap.sizeOfText(level) + Heap.sizeOfText(machine)
+                + Heap.sizeOfText(text);
+        return this.offer(this.listeners.onEvent(), bytes,
+                () -> List.of(this.networkEventOf(level, machine, text, tick)));
     }
 
     /**
@@ -260,6 +295,29 @@ final class ProgramEvents {
         made.set("Y", sent.y());
         made.set("Button", sent.button());
         this.heap.allocate(made, INPUT_BYTES, 0);
+        return made;
+    }
+
+    private Values.Obj operationOf(final SettledOperation operation) {
+        final Values.Obj made = new Values.Obj("OperationInfo");
+        made.set("Id", this.heap.text(operation.id(), 0));
+        made.set("Type", this.heap.text(operation.type(), 0));
+        made.set("Item", this.heap.text(operation.item(), 0));
+        made.set("Moved", operation.moved());
+        made.set("Requested", operation.requested());
+        made.set("Status", this.heap.text(operation.status(), 0));
+        made.set("Priority", this.heap.text(operation.priority(), 0));
+        this.heap.allocate(made, OPERATION_BYTES, 0);
+        return made;
+    }
+
+    private Values.Obj networkEventOf(final String level, final String machine, final String text, final long tick) {
+        final Values.Obj made = new Values.Obj("NetworkEvent");
+        made.set("Level", this.heap.text(level, 0));
+        made.set("Machine", this.heap.text(machine, 0));
+        made.set("Text", this.heap.text(text, 0));
+        made.set("Tick", tick);
+        this.heap.allocate(made, NETWORK_EVENT_BYTES, 0);
         return made;
     }
 

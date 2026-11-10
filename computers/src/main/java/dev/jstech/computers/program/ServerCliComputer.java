@@ -10,6 +10,7 @@ package dev.jstech.computers.program;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.JsComputersApi;
+import dev.jstech.computers.machine.DebugSession;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.PackageService;
 import dev.jstech.computers.machine.PlayerBuilds;
@@ -385,6 +386,12 @@ public final class ServerCliComputer extends ServerCliNetwork {
             }
         }
         return started;
+    }
+
+    @Override
+    public DebugSession.Started debugSigma(final String path, final List<String> arguments) {
+        final ProgramService running = sigma();
+        return running == null ? null : running.debug(path, arguments);
     }
 
     @Override

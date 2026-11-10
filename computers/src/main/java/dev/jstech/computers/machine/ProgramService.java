@@ -186,6 +186,14 @@ public final class ProgramService {
         return ICliComputer.OpResult.ok(launch.said());
     }
 
+    /**
+     * Starts the program at {@code path} under a debugger, which holds it from its first instruction until it lets it
+     * go: the sgdb at the prompt, or the debugger of a studio.
+     */
+    public DebugSession.Started debug(final String path, final List<String> arguments) {
+        return DebugSession.start(this, this.machine.programs(), path, arguments, this.level.getGameTime());
+    }
+
     /** Stops the program under that number, in the words the prompt answers with. */
     public ICliComputer.OpResult stop(final int id) {
         return this.stop(id, true);

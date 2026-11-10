@@ -167,7 +167,7 @@ public final class GuideLayout {
     /** How far below a legend line's top its small words start, level with the middle of its balloon. */
     private static final int KEY_TEXT_DROP = 3;
     /** What a path or a piece of code may be broken after when it is too wide for its line. */
-    private static final String BREAKS_AFTER = "/\\.(,=:_-@|";
+    private static final String BREAKS_AFTER = "/\\.(<,=:_-@|";
     private static final int PARAGRAPH_GAP = 4;
     private static final int BLOCK_GAP = 6;
     private static final int CAPTION_GAP = 3;
@@ -338,8 +338,9 @@ public final class GuideLayout {
 
     /**
      * A word too wide for the room in pieces that fit: broken where code and paths break, after a slash, a dot, a
-     * bracket, a comma, an equals sign, a colon, an underscore, a hyphen, an at sign or a bar, or between a small
-     * letter and a capital; cut between two letters only where it has none of those.
+     * bracket, the angle bracket that opens a type's arguments, a comma, an equals sign, a colon, an underscore, a
+     * hyphen, an at sign or a bar, or between a small letter and a capital; cut between two letters only where it has
+     * none of those.
      */
     static List<String> pieces(final String word, final int room, final TextSize size, final IGuideText text) {
         final List<String> pieces = new ArrayList<>();

@@ -1,0 +1,23 @@
+using System.*;
+using System.IO.*;
+using System.Network.*;
+using System.Operations.*;
+namespace Corpus;
+class ListenersCorpus {
+    static void Main() {
+        Operations.OnSettled(Settled);
+        AskResult crafted = Operations.Craft("minecraft:iron_block", 2);
+        if (crafted.Ok && crafted.Id != "") {
+            Operations.OnSettled(crafted.Id, Settled);
+        }
+        Network.OnEvent(Logged);
+    }
+
+    static void Settled(OperationInfo operation) {
+        Console.PrintLine(operation.Id + operation.Status + operation.Moved);
+    }
+
+    static void Logged(NetworkEvent entry) {
+        Console.PrintLine(entry.Level + entry.Machine + entry.Text + entry.Tick);
+    }
+}
