@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.computers;
 
 import com.mojang.serialization.Codec;
+import dev.jstech.computers.abandoned.AbandonedBuilding;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.audio.AudioSettings;
 import dev.jstech.core.config.ConfigFile;
@@ -262,18 +263,25 @@ public final class ConfigFileGameTests {
     public static void seriesFiles_keepTheirNamesAndTheirSettings(final GameTestHelper helper) {
         same(helper, "jstech-balance.toml", CoreConfigKeys.FILE.fileName(), "the balance file");
         same(helper, "jscomputers-server.toml", ComputersServerConfig.FILE.fileName(), "the computers' file");
-        same(helper, List.of("balance.hdd_latency_ticks", "balance.ssd_latency_ticks", "balance.nvme_latency_ticks",
-                        "balance.subframe_efficiency_factor", "balance.program_machine_micros",
-                        "balance.program_server_micros", "power.draw_energy", "update.cost",
-                        "hardware.psu_failures", "hardware.psu_life_multiplier", "temperature.ambient_base",
-                        "temperature.biome_factor", "temperature.nether_extra", "temperature.restart_below_c",
-                        "item_loss.power_loss", "item_loss.network_split", "item_loss.network_conflict",
-                        "item_loss.corruption",
-                        "boot.show_boot_menu", "install_by_hand.gentoo_every_step",
-                        "install_by_hand.arch_every_step", "prompt.list_commands", "soundfoundry.catalog",
-                        "soundfoundry.ethernet_kilobytes_per_second", "programs.outside_components",
-                        "wireless.lost_device_hours"),
-                ComputersServerConfig.FILE.keys().stream().map(ConfigKey::dottedPath).toList(),
+        final List<String> computers = new ArrayList<>(List.of("balance.hdd_latency_ticks",
+                "balance.ssd_latency_ticks", "balance.nvme_latency_ticks", "balance.subframe_efficiency_factor",
+                "balance.program_machine_micros", "balance.program_server_micros", "power.draw_energy", "update.cost",
+                "hardware.psu_failures", "hardware.psu_life_multiplier", "temperature.ambient_base",
+                "temperature.biome_factor", "temperature.nether_extra", "temperature.restart_below_c",
+                "item_loss.power_loss", "item_loss.network_split", "item_loss.network_conflict",
+                "item_loss.corruption", "boot.show_boot_menu", "install_by_hand.gentoo_every_step",
+                "install_by_hand.arch_every_step", "prompt.list_commands", "soundfoundry.catalog",
+                "soundfoundry.ethernet_kilobytes_per_second", "programs.outside_components",
+                "wireless.lost_device_hours", "survival.own_chain", "survival.working_ruin_chance",
+                "survival.era_distances"));
+        // Each abandoned building's table of three, named by the building.
+        for (final AbandonedBuilding building : AbandonedBuilding.values()) {
+            for (final String key : List.of("enabled", "spacing", "eras")) {
+                computers.add("structures." + building.serializedName() + "." + key);
+            }
+        }
+        computers.addAll(List.of("villagers.programmer", "villagers.it_technician", "villagers.computer_shop"));
+        same(helper, computers, ComputersServerConfig.FILE.keys().stream().map(ConfigKey::dottedPath).toList(),
                 "the computers' settings");
         same(helper, "jstech-audio.json", AudioSettings.FILE.fileName(), "the player's sound file");
         same(helper, ConfigSide.CLIENT, AudioSettings.FILE.side(), "whose the sound file is");

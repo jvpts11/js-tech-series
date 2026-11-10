@@ -1,0 +1,1 @@
+{"parent":"minecraft:block/block","render_type":"minecraft:cutout","textures":{"t0":"minecraft:block/red_wool","particle":"minecraft:block/red_wool"},"elements":[{"from":[0.0,8.0,0.0],"to":[16.0,16.0,16.0],"faces":{"east":{"texture":"#t0"},"west":{"texture":"#t0"},"up":{"texture":"#t0"},"down":{"texture":"#t0"},"south":{"texture":"#t0"},"north":{"texture":"#t0"}}}]}

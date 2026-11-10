@@ -7,8 +7,10 @@
  */
 package dev.jstech.computers.config;
 
+import dev.jstech.computers.abandoned.AbandonedSettings;
 import dev.jstech.computers.api.language.ExecutionBalance;
 import dev.jstech.computers.hardware.ThermalModel;
+import dev.jstech.computers.villager.VillagerSettings;
 import dev.jstech.computers.workshop.UpdateCost;
 import dev.jstech.core.config.ConfigFile;
 import dev.jstech.core.config.ConfigFiles;
@@ -243,8 +245,9 @@ public final class ComputersServerConfig {
                     "The veins of a world are laid as it was made: a change shows in chunks made afterwards.")
             .named("Own chain");
 
-    public static final ConfigFile FILE = ConfigFile.builder("jscomputers-server", ConfigSide.SERVER,
-                    ConfigFormats.TOML)
+    public static final ConfigFile FILE = VillagerSettings.addTo(AbandonedSettings.addTo(ConfigFile.builder(
+            "jscomputers-server",
+                    ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("How the computers of J's Computers behave, and what they lend the Operations engine, whose own "
                     + "settings live in the series' file beside this one.")
             .sectionNamed(BALANCE, "Disks and programs")
@@ -260,7 +263,8 @@ public final class ComputersServerConfig {
             .sectionNamed("programs", "Programs")
             .sectionNamed("wireless", "Wireless")
             .sectionNamed("survival", "Survival")
-            .sectionComment("survival", "How a player in survival comes by the computers: the mod's own chain.")
+            .sectionComment("survival", "How a player in survival comes by the computers: the mod's own chain, and the "
+                    + "abandoned buildings where the first ones are found.")
             .sectionComment("wireless", "The portable devices: how long a lost one keeps what was on it.")
             .sectionComment("power", "What the computers run on: the energy their power supplies draw.")
             .sectionComment("update", "What the personal-use cards charge for changing an item: smelting, "
@@ -306,7 +310,7 @@ public final class ComputersServerConfig {
             .key(ETHERNET_KILOBYTES_PER_SECOND)
             .key(OUTSIDE_COMPONENTS)
             .key(LOST_DEVICE_HOURS)
-            .key(OWN_CHAIN)
+            .key(OWN_CHAIN)))
             .build();
 
     private ComputersServerConfig() {

@@ -131,7 +131,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:gnome",
-  "order": 225,
+  "order": 227,
   "section": "jsc:desktop_environments",
   "title": "jsc.guide.gnome.title"
 }

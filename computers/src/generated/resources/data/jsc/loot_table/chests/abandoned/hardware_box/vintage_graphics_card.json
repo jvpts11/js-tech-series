@@ -1,0 +1,40 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_3d_blaster"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_prism_4"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_prism_tnt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_rave_pro"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vga_256"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_voodoo_gfx"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_wonder_vga"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/hardware_box/vintage_graphics_card"
+}

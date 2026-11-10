@@ -163,6 +163,7 @@ public final class CableBlock extends Block implements EntityBlock {
                         final RandomSource random) {
         if (level.getBlockEntity(pos) instanceof CableBlockEntity cable) {
             PartStates.show(level, pos, cable.parts());
+            cable.settleLinks();
         }
     }
 

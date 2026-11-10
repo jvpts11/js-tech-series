@@ -1,0 +1,24 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "A": {
+      "item": "jscore:solder_wire"
+    },
+    "B": {
+      "item": "minecraft:iron_ingot"
+    },
+    "P": {
+      "tag": "minecraft:planks"
+    }
+  },
+  "pattern": [
+    "AB",
+    "PP",
+    "PP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:repair_bench"
+  }
+}

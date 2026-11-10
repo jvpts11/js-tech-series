@@ -1,0 +1,24 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/datacenter",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/datacenter/legacy_working",
+          "jsc:abandoned/datacenter/legacy_ruin",
+          "jsc:abandoned/datacenter/transition_working",
+          "jsc:abandoned/datacenter/transition_ruin",
+          "jsc:abandoned/datacenter/standard_working",
+          "jsc:abandoned/datacenter/standard_ruin",
+          "jsc:abandoned/datacenter/advanced_working",
+          "jsc:abandoned/datacenter/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

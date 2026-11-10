@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "clear_of": 2,
+    "salt": 1181852199,
+    "separation": 12,
+    "spacing": 48
+  },
+  "structures": [
+    {
+      "structure": "jsc:abandoned/radio_tv",
+      "weight": 1
+    }
+  ]
+}

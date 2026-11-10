@@ -97,7 +97,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:archiver",
-  "order": 69,
+  "order": 71,
   "section": "jsc:desktop_apps",
   "title": "jsc.guide.archiver.title"
 }

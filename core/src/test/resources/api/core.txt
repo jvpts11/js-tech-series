@@ -467,6 +467,7 @@ stable 4
 12 dev.jstech.core.bigblock.AbstractBigBlock  protected void onRemove(BlockState, Level, BlockPos, BlockState, boolean)
 12 dev.jstech.core.bigblock.AbstractBigBlock  void brokenBy(ServerLevel, BlockPos, Player)
 12 dev.jstech.core.bigblock.AbstractBigBlock  void dissolve(ServerLevel, BlockPos, Direction)
+54 dev.jstech.core.bigblock.AbstractBigBlock  void raise(LevelAccessor, BlockPos, BlockState, BoundingBox)
 12 dev.jstech.core.bigblock.AbstractBigBlock  void setPlacedBy(Level, BlockPos, BlockState, LivingEntity, ItemStack)
 12 dev.jstech.core.bigblock.BigBlockFootprint  type final class implements IBigBlockGeometry
 12 dev.jstech.core.bigblock.BigBlockFootprint  List<BlockPos> allPositions(BlockPos, Direction)
@@ -778,6 +779,7 @@ stable 4
 10 dev.jstech.core.cable.CableBlockEntity  int pieces()
 10 dev.jstech.core.cable.CableBlockEntity  int plugs(Lane)
 10 dev.jstech.core.cable.CableBlockEntity  new(BlockPos, BlockState)
+54 dev.jstech.core.cable.CableBlockEntity  static CableBlockEntity unsettled(BlockPos, List<CableType>)
 10 dev.jstech.core.cable.CableBlockEntity  static void serverTick(Level, BlockPos, BlockState, CableBlockEntity)
 10 dev.jstech.core.cable.CableBlockEntity  void describe(List<Text>, boolean, Player)
 10 dev.jstech.core.cable.CableBlockEntity  void dropAllBuffers(ServerLevel)
@@ -786,6 +788,7 @@ stable 4
 10 dev.jstech.core.cable.CableBlockEntity  void onLoad()
 10 dev.jstech.core.cable.CableBlockEntity  void partChanged()
 10 dev.jstech.core.cable.CableBlockEntity  void partLooksChanged()
+54 dev.jstech.core.cable.CableBlockEntity  void settleLinks()
 10 dev.jstech.core.cable.CableBlockEntity  void showFlow(Lane, WireFlow)
 10 dev.jstech.core.cable.CableBlockEntity.Aim  type record(Direction part, Wire wire, VoxelShape outline, int micro)
 10 dev.jstech.core.cable.CableBlockEntity.Aim  boolean isNothing()
@@ -3337,6 +3340,7 @@ stable 4
 10 dev.jstech.core.datagen.ContentCueProvider  new(PackOutput, ModContent)
 10 dev.jstech.core.datagen.ContentData  type final class
 10 dev.jstech.core.datagen.ContentData  CompletableFuture<HolderLookup.Provider> lookup()
+54 dev.jstech.core.datagen.ContentData  ContentData alsoLoot(Function<HolderLookup.Provider, LootTableSubProvider>, LootContextParamSet)
 10 dev.jstech.core.datagen.ContentData  ContentData alsoNaming(Consumer<BiConsumer<String, String>>)
 10 dev.jstech.core.datagen.ContentData  ContentData client(DataProvider)
 10 dev.jstech.core.datagen.ContentData  ContentData server(DataProvider)
@@ -3354,7 +3358,9 @@ stable 4
 10 dev.jstech.core.datagen.ContentLanguageProvider  type final class extends LanguageProvider
 10 dev.jstech.core.datagen.ContentLanguageProvider  new(PackOutput, ModContent)
 10 dev.jstech.core.datagen.ContentLootProvider  type final class extends LootTableProvider
+54 dev.jstech.core.datagen.ContentLootProvider  new(PackOutput, CompletableFuture<HolderLookup.Provider>, List<SubProviderEntry>)
 10 dev.jstech.core.datagen.ContentLootProvider  new(PackOutput, CompletableFuture<HolderLookup.Provider>, ModContent)
+54 dev.jstech.core.datagen.ContentLootProvider  static SubProviderEntry blocks(ModContent)
 10 dev.jstech.core.datagen.ContentPartModelProvider  type final class extends BlockModelProvider
 10 dev.jstech.core.datagen.ContentPartModelProvider  String getName()
 10 dev.jstech.core.datagen.ContentPartModelProvider  new(PackOutput, ModContent, ExistingFileHelper)

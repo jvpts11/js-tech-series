@@ -1,0 +1,18 @@
+{
+  "type": "jscore:placed",
+  "biomes": "#minecraft:is_overworld",
+  "fit": {
+    "dry": true,
+    "footprint": 11,
+    "max_y": 180,
+    "min_y": 55,
+    "slope": 4
+  },
+  "foundation": {
+    "Name": "minecraft:dirt"
+  },
+  "spawn_overrides": {},
+  "start_pool": "jsc:abandoned/midsoft_office",
+  "step": "surface_structures",
+  "terrain_adaptation": "beard_thin"
+}

@@ -175,7 +175,7 @@
     }
   ],
   "id": "jsc:craft_planner",
-  "order": 127,
+  "order": 129,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.craft_planner.title"
 }

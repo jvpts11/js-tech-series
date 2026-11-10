@@ -602,6 +602,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A mod's switch for its veins: J's Core's API is at version 53. `Deposits.layWhile(id, when)` lays a kind of
   vein only while `when` holds, read as a world's veins are worked out, and `Deposits.laid(id)` says whether it is laid
   now. Experimental.
+- (Core) Structures that pick their template and set down whole machines: J's Core's API is at version 54. A
+  structure's piece `jscore:chosen` holds a set of templates of one size and picks one as it is placed, by an
+  `ITemplateChooser` registered in `TemplateChoosers` (`Structures.chosen` declares it, `StructureSpec.chooser` keeps
+  it), with the chooser's own processors; it raises the parts of the big blocks the template holds,
+  `AbstractBigBlock.raise`, and `ChosenElement.placeTemplate` places a template the same way from anywhere else.
+  `CableBlockEntity.unsettled` makes a cable for a structure, its wires laid and its faces worked out on its first tick
+  in the world (`settleLinks`). `ContentData.alsoLoot` adds a mod's own loot tables to the ones its blocks have, and
+  `ContentLootProvider` takes the list of tables it writes, `blocks` the declared blocks'. Experimental.
 - (Computers) Wi-Fi cards: J's Computers' API is at version 17. `ExpansionCardKind.WIFI` is the kind of the Wi-Fi
   cards, which the Personal, Crafting and Cluster Management Computers alone seat. Experimental.
 - (Computers) Quince's systems: J's Computers' API is at version 16. `OsDef.desktopSystem` makes a system that comes
@@ -2510,6 +2518,28 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   eight in the Advanced, each step with the gases and liquids of its era, and its tooltip names its chip, its layer
   and the machine it goes to next. The Packaging Line cuts the finished wafer into its chips, eight small or four big.
 - (Computers) The Air Separation Unit takes in the air itself and gives nitrogen, oxygen, argon and krypton.
+- (Computers) Abandoned buildings: twenty kinds lie across the Overworld, each of one era, the Vintage near the
+  world's spawn and the Advanced far away: a house with an old computer in its attic, an electronic waste dump, an
+  overturned delivery van, a computer shop, a LAN house, a school computer room, a public library, a radio and
+  television station, a telephone exchange, a university lab, a bank with a Mainframe in its vault, a Midsoft office,
+  a software house office, a startup building, a game studio, a hacker's den in a basement, an electronics factory
+  with six of the chain's machines, a crypto mining farm, a datacenter and a supercomputing centre. About one in five
+  still works, its machines whole, their systems installed and set to come up as soon as they have energy; the rest
+  are ruins, their computers open with half their parts in their seats. Their chests draw 4 to 8 things from their
+  building's and era's table, the main one always with a way to a graphical system, and their frames show boxed
+  programs.
+- (Computers) The hardware box: a carton found in the abandoned buildings, printed with its era's machine, a
+  computer's parts or a graphics card; it opens once and stays open.
+- (Computers) The Programmer and the IT Technician: two villagers who trade in computers, at the Programmer's Desk and
+  the Repair Bench, made at the Crafting Table. A villager's level is the era of what it sells; the Programmer sells
+  systems and programs and buys paper, books and blank media, the IT Technician sells parts (boards with their
+  firmware), network cables in eights and monitors, and buys copper, tin and the parts of older eras. Every kind of
+  village may have a computer shop with both job sites and a Vintage demo computer running MC-DOS, and the recipe
+  viewer shows on each installer who sells it and where it is found.
+- (Computers) A server sets the abandoned buildings in `jscomputers-server.toml`: the share that still work
+  (`survival.working_ruin_chance`), the distances where each era begins (`survival.era_distances`) and, for each
+  building, whether it is laid, how far apart and of which eras (`structures.<building>`); and whether the villagers
+  take their job sites and the villages have the shop (`villagers`).
 - (Computers) A server can switch the mod's own chain off with `survival.own_chain` in `jscomputers-server.toml`: off,
   the recipes of the chain's machines do not load and the chain's veins are not laid in the chunks made afterwards, so
   the parts are made by J's Industrial's chain where it is installed, or found and bought only.
@@ -3764,6 +3794,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
+  works through its computer.
 - (Computers) The Network Interactor's Operations tab gives each Operation its own state, where it read the states in
   another order and showed a finished Operation as waiting and a running one as failed.
 - (Space) A small starship's faces no longer fight as the eye moves: only its windows' glass is drawn see-through,

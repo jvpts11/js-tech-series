@@ -67,6 +67,8 @@ public final class JsTests {
         Arenas.declare(MODID, "shipyard", 26, 20, 30);
         // The same dock turned a quarter, its length across.
         Arenas.declare(MODID, "shipyard_turned", 30, 20, 26);
+        // Room for the largest of the abandoned buildings, the datacenter, and the radio station's mast.
+        Arenas.declare(MODID, "abandoned", 40, 28, 32);
         // A ship landing pad with a block round it, and a runway's stretch from its beacon, as high as its headroom.
         Arenas.declare(MODID, "ship_pad", 31, 13, 31);
         Arenas.declare(MODID, "runway", 15, 9, 70);

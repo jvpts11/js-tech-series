@@ -8,6 +8,7 @@
 package dev.jstech.core.datagen;
 
 import com.mojang.datafixers.util.Pair;
+import dev.jstech.core.worldgen.structure.ChosenElement;
 import dev.jstech.core.worldgen.structure.FixedPlacement;
 import dev.jstech.core.worldgen.structure.PlacedStructure;
 import dev.jstech.core.worldgen.structure.SpreadPlacement;
@@ -25,6 +26,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.worldgen.BootstrapContext;
 import net.minecraft.data.worldgen.Pools;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.levelgen.structure.Structure;
 import net.minecraft.world.level.levelgen.structure.StructureSet;
@@ -57,10 +59,13 @@ final class StructureEntries {
     static void pools(final BootstrapContext<StructureTemplatePool> context, final String modid) {
         final HolderGetter<StructureTemplatePool> pools = context.lookup(Registries.TEMPLATE_POOL);
         final HolderGetter<StructureProcessorList> processors = context.lookup(Registries.PROCESSOR_LIST);
-        Structures.structuresOf(modid).forEach(structure -> context.register(
-                ResourceKey.create(Registries.TEMPLATE_POOL, structure.id()),
-                pool(pools, processors.getOrThrow(ResourceKey.create(Registries.PROCESSOR_LIST, structure.id())),
-                        structure.elements())));
+        Structures.structuresOf(modid).forEach(structure -> {
+            final Holder<StructureProcessorList> worn = processors.getOrThrow(ResourceKey.create(
+                    Registries.PROCESSOR_LIST, structure.id()));
+            context.register(ResourceKey.create(Registries.TEMPLATE_POOL, structure.id()), structure.chooser()
+                    .map(chooser -> chosen(pools, worn, chooser, structure.elements()))
+                    .orElseGet(() -> pool(pools, worn, structure.elements())));
+        });
         Structures.poolsOf(modid).forEach(pool -> context.register(ResourceKey.create(Registries.TEMPLATE_POOL,
                 pool.id()), pool(pools, processors.getOrThrow(ResourceKey.create(Registries.PROCESSOR_LIST,
                 pool.id())), pool.elements())));
@@ -103,6 +108,17 @@ final class StructureEntries {
                     element.weight()));
         }
         return new StructureTemplatePool(pools.getOrThrow(Pools.EMPTY), picks, StructureTemplatePool.Projection.RIGID);
+    }
+
+    /* A pool of one element, the template {@code chooser} picks among {@code elements} as it is placed. */
+    private static StructureTemplatePool chosen(final HolderGetter<StructureTemplatePool> pools,
+                                                final Holder<StructureProcessorList> processors,
+                                                final ResourceLocation chooser,
+                                                final List<Structures.Element> elements) {
+        final ChosenElement element = new ChosenElement(chooser, elements.stream().map(Structures.Element::template)
+                .toList(), processors, StructureTemplatePool.Projection.RIGID);
+        return new StructureTemplatePool(pools.getOrThrow(Pools.EMPTY),
+                List.of(Pair.<StructurePoolElement, Integer>of(element, 1)));
     }
 
     /* The processors of {@code worn}: none but the wear, if any. */

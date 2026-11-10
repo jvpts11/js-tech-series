@@ -92,6 +92,8 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     private final WireFlow[] flows = new WireFlow[Lane.COUNT];
     private final PartField flowsField = fields().part(FLOWS, new FlowsPart()).toClient();
     private boolean inGrids;
+    /* Read without its faces (a cable a structure set down): it works them out on its first tick. */
+    private boolean linksUnknown;
     private @Nullable BundleShape shape;
     private @Nullable VoxelShape voxels;
     /* The shape without the small blocks, which have no collision, worked out with the shape. */
@@ -109,6 +111,21 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
     public CableBlockEntity(final BlockPos pos, final BlockState state) {
         super(CoreCables.BLOCK_ENTITY.get(), pos, state);
         fields().whenNeighbourChanges((level, face) -> refreshLinks(false));
+    }
+
+    /**
+     * A cable holding a wire of each of {@code types}, in no world yet: what a structure sets down. Parts may be added
+     * to it before it is saved into the structure; once placed, it works out the faces its wires cross on its first
+     * tick.
+     */
+    public static CableBlockEntity unsettled(final BlockPos pos, final List<CableType> types) {
+        CoreCables.checkLanes();
+        final CableBlockEntity cable = new CableBlockEntity(pos, CoreCables.BLOCK.get().defaultBlockState());
+        for (final CableType type : types) {
+            cable.bundle.add(Wire.of(type));
+        }
+        cable.linksUnknown = true;
+        return cable;
     }
 
     /** Runs the parts' ticks, on the server. */
@@ -503,10 +520,22 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
             for (final Wire wire : this.bundle.wires()) {
                 enter(server, wire);
             }
-            // A cable read from an older save, whose state does not show its parts, is set right on its first tick.
-            if (!PartStates.showing(server, this.worldPosition, this.parts)) {
+            // A cable read from an older save, whose state does not show its parts, is set right on its first tick, and
+            // so is one a structure set down, which has its wires but not yet the faces they cross.
+            if (this.linksUnknown || !PartStates.showing(server, this.worldPosition, this.parts)) {
                 server.scheduleTick(this.worldPosition, getBlockState().getBlock(), 1);
             }
+        }
+    }
+
+    /**
+     * Works out the faces its wires cross when it was read without them, on the server: a cable a structure set down,
+     * saved with its wires and parts only, joins its neighbours on its first tick.
+     */
+    public void settleLinks() {
+        if (this.linksUnknown) {
+            this.linksUnknown = false;
+            refreshLinks(true);
         }
     }
 
@@ -852,7 +881,10 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
 
         @Override
         public void save(final CompoundTag tag, final HolderLookup.Provider registries) {
-            tag.putIntArray(LINKS, CableBlockEntity.this.links.clone());
+            // Faces not worked out yet stay so through a save: a structure's cable saved before its first tick.
+            if (!CableBlockEntity.this.linksUnknown) {
+                tag.putIntArray(LINKS, CableBlockEntity.this.links.clone());
+            }
             final ListTag networks = new ListTag();
             if (CableBlockEntity.this.level instanceof ServerLevel server) {
                 for (final Wire wire : CableBlockEntity.this.bundle.wires()) {
@@ -876,6 +908,13 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
         @Override
         public void load(final CompoundTag tag, final HolderLookup.Provider registries) {
             readLinks(tag);
+            CableBlockEntity.this.linksUnknown = !tag.contains(LINKS);
+            // Read into a world it already stands in (a structure placed where the world is loaded), it heard of the
+            // world before it read its wires: the faces are worked out on its first tick all the same.
+            if (CableBlockEntity.this.linksUnknown && CableBlockEntity.this.level instanceof ServerLevel server) {
+                server.scheduleTick(CableBlockEntity.this.worldPosition,
+                        CableBlockEntity.this.getBlockState().getBlock(), 1);
+            }
             CableBlockEntity.this.savedNetworks.clear();
             for (final Tag element : tag.getList(NETWORKS, Tag.TAG_COMPOUND)) {
                 final CompoundTag entry = (CompoundTag) element;

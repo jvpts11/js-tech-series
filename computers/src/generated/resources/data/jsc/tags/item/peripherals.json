@@ -1,6 +1,8 @@
 {
   "values": [
     "jsc:printed_paper",
+    "jsc:programmers_desk",
+    "jsc:repair_bench",
     "jsc:vintage_peripheral_cable",
     "jsc:vintage_hub",
     "jsc:mono_i_monitor",

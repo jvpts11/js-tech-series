@@ -11,16 +11,30 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.PatternStudioApp;
 import dev.jstech.computers.menu.DesktopMenu;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.media.InstallerStacks;
+import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.computers.registry.ComputingComponents;
+import dev.jstech.computers.villager.SoftwareSources;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
+import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.registration.IGuiHandlerRegistration;
+import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.registration.IRecipeTransferRegistration;
+import mezz.jei.api.registration.ISubtypeRegistration;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +69,12 @@ public final class JscJeiPlugin implements IModPlugin {
         runtime = null;
     }
 
+    private static void info(final IRecipeRegistration registration, final ItemStack stack, final List<Text> lines) {
+        if (!lines.isEmpty()) {
+            registration.addItemStackInfo(stack, lines.stream().map(GameText::component).toArray(Component[]::new));
+        }
+    }
+
     /**
      * What the viewer makes of {@code screen}: whether its ingredient list shows, the gui rectangle it reads and
      * the areas it keeps clear. The client tests log it to show the list sitting beside the monitor.
@@ -72,6 +92,42 @@ public final class JscJeiPlugin implements IModPlugin {
                 .toList();
         return "listDisplayed=" + runtime.getIngredientListOverlay().isListDisplayed()
                 + " gui=" + props + " exclusions=" + exclusions;
+    }
+
+    /*
+     * The installers are one item each of media; a system's or a program's on it is what tells one from another, so
+     * the viewer lists each and shows where each is sold and found.
+     */
+    @Override
+    public void registerItemSubtypes(final ISubtypeRegistration registration) {
+        for (final MediaFormat format : MediaFormat.values()) {
+            registration.registerSubtypeInterpreter(InstallerStacks.blank(format), new ISubtypeInterpreter<>() {
+                @Override
+                public @Nullable Object getSubtypeData(final ItemStack stack, final UidContext context) {
+                    return stack.get(ComputingComponents.MEDIA_PAYLOAD.get());
+                }
+
+                @Override
+                public String getLegacyStringSubtypeInfo(final ItemStack stack, final UidContext context) {
+                    final Object payload = getSubtypeData(stack, context);
+                    return payload == null ? "" : payload.toString();
+                }
+            });
+        }
+    }
+
+    /* Where each system and program is sold and found, on its installer: the Programmer, the abandoned buildings. */
+    @Override
+    public void registerRecipes(final IRecipeRegistration registration) {
+        for (final ProgramSpec program : OsRegistry.programs()) {
+            final ItemStack installer = InstallerStacks.forProgram(program.id());
+            if (!installer.isEmpty()) {
+                info(registration, installer, SoftwareSources.of(program));
+            }
+        }
+        for (final OsDef system : OsRegistry.oses()) {
+            info(registration, InstallerStacks.forSystem(system), SoftwareSources.of(system));
+        }
     }
 
     @Override

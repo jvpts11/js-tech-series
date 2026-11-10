@@ -1,0 +1,24 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/hacker_den",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/hacker_den/legacy_working",
+          "jsc:abandoned/hacker_den/legacy_ruin",
+          "jsc:abandoned/hacker_den/transition_working",
+          "jsc:abandoned/hacker_den/transition_ruin",
+          "jsc:abandoned/hacker_den/standard_working",
+          "jsc:abandoned/hacker_den/standard_ruin",
+          "jsc:abandoned/hacker_den/advanced_working",
+          "jsc:abandoned/hacker_den/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

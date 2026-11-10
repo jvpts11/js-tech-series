@@ -128,13 +128,15 @@ public final class Structures {
      * @param worn        how its templates wear, the age they show; empty for none
      * @param age         how worn it is, 0 for new, 1 as the rules say
      * @param streets     whether its low pieces hold the taller ones within them, as a village's streets do
+     * @param chooser     the chooser that picks its start among its templates as it is placed; none for a pick by
+     *                    weight
      */
     public record StructureSpec(ResourceLocation id, List<Element> elements, TagKey<Biome> biomes,
                                 GenerationStep.Decoration step, TerrainAdjustment terrain, int spacing,
                                 int separation, int salt, float frequency, int minDistance, int clearOf,
                                 List<ChunkPos> fixedAt, int size, int reach, StructureFit fit,
                                 @Nullable Supplier<? extends Block> foundation, Optional<Growth> growth,
-                                List<Worn> worn, double age, boolean streets) {
+                                List<Worn> worn, double age, boolean streets, Optional<ResourceLocation> chooser) {
 
         public StructureSpec {
             elements = List.copyOf(elements);
@@ -210,6 +212,7 @@ public final class Structures {
         private boolean streets;
         private GenerationStep.Decoration step = GenerationStep.Decoration.SURFACE_STRUCTURES;
         private TerrainAdjustment terrain = TerrainAdjustment.BEARD_THIN;
+        private @Nullable ResourceLocation chooser;
 
         private StructureBuilder(final ResourceLocation id) {
             this.id = Objects.requireNonNull(id, "id");
@@ -331,6 +334,16 @@ public final class Structures {
         }
 
         /**
+         * Its start is one of {@code templates}, all of one size, picked as it is placed by the chooser registered
+         * as {@code chooser} ({@link TemplateChoosers}): a {@link ChosenElement}.
+         */
+        public StructureBuilder chosen(final ResourceLocation chooser, final List<ResourceLocation> templates) {
+            this.chooser = Objects.requireNonNull(chooser, "chooser");
+            templates.forEach(template -> element(template, 1));
+            return this;
+        }
+
+        /**
          * Declares the structure.
          *
          * @throws IllegalStateException when it names no template or no biomes, or its separation is not less than
@@ -344,7 +357,8 @@ public final class Structures {
                 throw new IllegalStateException("the structure " + id + " keeps its separation under its spacing");
             }
             final StructureSpec spec = new StructureSpec(id, elements, biomes, step, terrain, spacing, separation, salt,
-                    frequency, minDistance, clearOf, fixedAt, size, reach, fit, foundation, growth, worn, age, streets);
+                    frequency, minDistance, clearOf, fixedAt, size, reach, fit, foundation, growth, worn, age, streets,
+                    Optional.ofNullable(chooser));
             STRUCTURES.add(spec);
             return spec;
         }

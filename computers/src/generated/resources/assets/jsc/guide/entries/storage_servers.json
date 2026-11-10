@@ -186,7 +186,7 @@
   ],
   "icon": "jsc:storage_server",
   "id": "jsc:storage_servers",
-  "order": 97,
+  "order": 99,
   "section": "jsc:storage",
   "title": "jsc.guide.storage_servers.title"
 }

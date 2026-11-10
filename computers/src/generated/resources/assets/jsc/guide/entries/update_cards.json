@@ -228,7 +228,7 @@
     }
   ],
   "id": "jsc:update_cards",
-  "order": 319,
+  "order": 321,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.update_cards.title"
 }

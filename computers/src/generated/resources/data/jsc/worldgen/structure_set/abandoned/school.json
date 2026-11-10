@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "clear_of": 2,
+    "salt": 184819477,
+    "separation": 12,
+    "spacing": 48
+  },
+  "structures": [
+    {
+      "structure": "jsc:abandoned/school",
+      "weight": 1
+    }
+  ]
+}

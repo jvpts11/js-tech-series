@@ -16,6 +16,7 @@ import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.core.datagen.ContentData;
 import dev.jstech.core.datagen.advancement.ConditionalAdvancementProvider;
 import java.util.function.BiConsumer;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
@@ -41,6 +42,7 @@ public final class JscDataGenerators {
         data.server(new JscAdvancementProvider(data.output(), data.lookup(), data.existingFiles()));
         data.server(new ConditionalAdvancementProvider(data.output(), data.lookup(), JscAdvancementTabs::all));
         data.server(new ComputersRecipes(data.output(), data.lookup()));
+        data.alsoLoot(AbandonedLootTables::new, LootContextParamSets.CHEST);
         data.check();
     }
 

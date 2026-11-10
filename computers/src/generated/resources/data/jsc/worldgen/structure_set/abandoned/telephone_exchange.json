@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "clear_of": 2,
+    "salt": 900989727,
+    "separation": 12,
+    "spacing": 48
+  },
+  "structures": [
+    {
+      "structure": "jsc:abandoned/telephone_exchange",
+      "weight": 1
+    }
+  ]
+}

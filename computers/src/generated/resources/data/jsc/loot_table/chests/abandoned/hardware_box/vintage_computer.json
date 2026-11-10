@@ -1,0 +1,44 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:motherboard_babyat_vintage"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:cpu_integra_486dx2"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_simm_16"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_simm_16"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:psu_200"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:disk_vaultis_trench_100m"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:stock_cooler_vintage"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 4.0,
+        "min": 2.0
+      }
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/hardware_box/vintage_computer"
+}

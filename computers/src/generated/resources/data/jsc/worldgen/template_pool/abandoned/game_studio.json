@@ -1,0 +1,24 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/game_studio",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/game_studio/legacy_working",
+          "jsc:abandoned/game_studio/legacy_ruin",
+          "jsc:abandoned/game_studio/transition_working",
+          "jsc:abandoned/game_studio/transition_ruin",
+          "jsc:abandoned/game_studio/standard_working",
+          "jsc:abandoned/game_studio/standard_ruin",
+          "jsc:abandoned/game_studio/advanced_working",
+          "jsc:abandoned/game_studio/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

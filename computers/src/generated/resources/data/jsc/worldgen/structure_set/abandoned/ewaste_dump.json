@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "clear_of": 2,
+    "salt": 1125175657,
+    "separation": 8,
+    "spacing": 32
+  },
+  "structures": [
+    {
+      "structure": "jsc:abandoned/ewaste_dump",
+      "weight": 1
+    }
+  ]
+}

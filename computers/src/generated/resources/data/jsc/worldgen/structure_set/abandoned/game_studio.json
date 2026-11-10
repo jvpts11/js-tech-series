@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "clear_of": 2,
+    "salt": 1973395982,
+    "separation": 18,
+    "spacing": 72
+  },
+  "structures": [
+    {
+      "structure": "jsc:abandoned/game_studio",
+      "weight": 1
+    }
+  ]
+}

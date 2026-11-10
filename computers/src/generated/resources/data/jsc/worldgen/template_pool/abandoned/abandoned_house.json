@@ -1,0 +1,20 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/abandoned_house",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/abandoned_house/vintage_working",
+          "jsc:abandoned/abandoned_house/vintage_ruin",
+          "jsc:abandoned/abandoned_house/legacy_working",
+          "jsc:abandoned/abandoned_house/legacy_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

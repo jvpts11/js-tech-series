@@ -1,0 +1,22 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/school",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/school/vintage_working",
+          "jsc:abandoned/school/vintage_ruin",
+          "jsc:abandoned/school/legacy_working",
+          "jsc:abandoned/school/legacy_ruin",
+          "jsc:abandoned/school/transition_working",
+          "jsc:abandoned/school/transition_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

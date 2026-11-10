@@ -1,0 +1,20 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/mining_farm",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/mining_farm/standard_working",
+          "jsc:abandoned/mining_farm/standard_ruin",
+          "jsc:abandoned/mining_farm/advanced_working",
+          "jsc:abandoned/mining_farm/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

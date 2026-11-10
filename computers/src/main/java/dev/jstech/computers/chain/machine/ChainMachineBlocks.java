@@ -11,11 +11,13 @@ import static dev.jstech.computers.registry.ComputingContent.CONTENT;
 import static dev.jstech.computers.registry.ComputingContent.shelf;
 
 import dev.jstech.computers.registry.ComputingContent.Shelf;
+import dev.jstech.core.connect.FacePorts;
 import dev.jstech.core.content.BlockBuilder;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
+import dev.jstech.core.jstechseries.peripheral.PeripheralLine;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.multiblock.MultiblockPorts;
@@ -76,8 +78,9 @@ public final class ChainMachineBlocks {
             .register());
     public static final BlockEntry<ChainFormedBlock> POWER_ENTRY = put(entry("power_entry").named("Power Entry")
             .register());
-    public static final BlockEntry<ChainFormedBlock> PERIPHERAL_PORT = put(entry("peripheral_port")
-            .named("Peripheral Port").register());
+    /* The port a station's computer is linked to by peripheral cable: a cable of any era plugs into it. */
+    public static final BlockEntry<ChainFormedBlock> PERIPHERAL_PORT = put(entry("peripheral_port",
+            FacePorts.everyFace(PeripheralLine.of(HardwareEra.SERIES.getLast()))).named("Peripheral Port").register());
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ChainEntryBlockEntity>> ENTRY_BE =
             CONTENT.blockEntity("chain_entry", ChainEntryBlockEntity::new, ITEM_INLET, ITEM_OUTLET, LIQUID_INLET,
                     LIQUID_OUTLET, GAS_INLET, GAS_OUTLET, POWER_ENTRY, PERIPHERAL_PORT);
@@ -223,10 +226,18 @@ public final class ChainMachineBlocks {
 
     /* An entry: its picture whole while its machine is apart, nothing while it stands formed. */
     private static BlockBuilder<ChainFormedBlock> entry(final String id) {
+        return entry(id, Device.of(() -> ENTRY_BE.get()));
+    }
+
+    /* An entry that takes {@code ports} on its faces. */
+    private static BlockBuilder<ChainFormedBlock> entry(final String id, final FacePorts ports) {
+        return entry(id, Device.of(() -> ENTRY_BE.get()).ports(ports));
+    }
+
+    private static BlockBuilder<ChainFormedBlock> entry(final String id, final Device<ChainEntryBlockEntity> device) {
         final IBlockModel whole = new IBlockModel.CubeAll(id, TEXTURES + id);
         final IBlockModel formed = new IBlockModel.ParticleOnly(id + "_formed", TEXTURES + id);
-        return CONTENT.block(id, properties -> new ChainFormedBlock(properties,
-                        Device.of(() -> ENTRY_BE.get())))
+        return CONTENT.block(id, properties -> new ChainFormedBlock(properties, device))
                 .properties(properties -> properties.mapColor(MapColor.METAL).strength(3.0F).sound(SoundType.METAL))
                 .look(IBlockLook.byState(state -> state.getValue(ChainFormedBlock.FORMED) ? formed : whole))
                 .tag(BlockTags.MINEABLE_WITH_PICKAXE).item().tab(shelf(Shelf.CHAIN, HardwareEra.VINTAGE));

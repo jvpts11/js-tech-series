@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "jsc:block/job_site/programmers_desk",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jsc:block/job_site/programmers_desk"
+    },
+    "facing=south": {
+      "model": "jsc:block/job_site/programmers_desk",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jsc:block/job_site/programmers_desk",
+      "y": 270
+    }
+  }
+}

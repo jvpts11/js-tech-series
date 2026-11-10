@@ -1,0 +1,26 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/university_lab",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/university_lab/vintage_working",
+          "jsc:abandoned/university_lab/vintage_ruin",
+          "jsc:abandoned/university_lab/legacy_working",
+          "jsc:abandoned/university_lab/legacy_ruin",
+          "jsc:abandoned/university_lab/transition_working",
+          "jsc:abandoned/university_lab/transition_ruin",
+          "jsc:abandoned/university_lab/standard_working",
+          "jsc:abandoned/university_lab/standard_ruin",
+          "jsc:abandoned/university_lab/advanced_working",
+          "jsc:abandoned/university_lab/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

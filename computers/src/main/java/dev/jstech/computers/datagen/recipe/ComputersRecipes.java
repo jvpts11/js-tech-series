@@ -41,5 +41,6 @@ public final class ComputersRecipes extends RecipeProvider {
         NetworkRecipes.write(output);
         PowerRecipes.write(output);
         WirelessRecipes.write(output);
+        VillagerRecipes.write(output);
     }
 }

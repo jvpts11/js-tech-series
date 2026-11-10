@@ -9,6 +9,7 @@ package dev.jstech.computers;
 
 import static dev.jstech.computers.registry.ComputingContent.shelf;
 
+import dev.jstech.computers.abandoned.AbandonedBuildings;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
@@ -109,6 +110,7 @@ import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaReaderBlock;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.rack.RackChassis;
+import dev.jstech.computers.villager.ComputerVillagers;
 import dev.jstech.computers.workshop.WorkshopCard;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.ComputingIngredients;
@@ -1317,6 +1319,8 @@ public final class ComputingModule {
         ComputingIngredients.register(modEventBus);
         ComputingMenus.register(modEventBus);
         JscTriggers.register(modEventBus);
+        AbandonedBuildings.register(modEventBus);
+        ComputerVillagers.register(modEventBus);
     }
 
     /** A registered disk with its tier and size. */

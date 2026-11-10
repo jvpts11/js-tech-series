@@ -229,7 +229,7 @@
   ],
   "icon": "jsc:crafting_table_card",
   "id": "jsc:workshop",
-  "order": 129,
+  "order": 131,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.workshop.title"
 }

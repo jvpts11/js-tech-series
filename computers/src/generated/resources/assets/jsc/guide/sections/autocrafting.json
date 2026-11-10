@@ -2,6 +2,6 @@
   "chapter": "jsc:crafting_for_you",
   "icon": "jsc:crafting_card_pcie3",
   "id": "jsc:autocrafting",
-  "order": 27,
+  "order": 28,
   "title": "jsc.guide.section.autocrafting"
 }

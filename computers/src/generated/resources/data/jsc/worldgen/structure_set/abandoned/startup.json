@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "clear_of": 2,
+    "salt": 1816619080,
+    "separation": 18,
+    "spacing": 72
+  },
+  "structures": [
+    {
+      "structure": "jsc:abandoned/startup",
+      "weight": 1
+    }
+  ]
+}

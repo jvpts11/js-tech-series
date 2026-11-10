@@ -1,0 +1,44 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:motherboard_atx_standard_1155"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:cpu_integra_centro_c7_2600k"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr3_8192"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr3_8192"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:psu_650g"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:disk_ssd_500g"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:stock_cooler_standard"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 4.0,
+        "min": 2.0
+      }
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/hardware_box/standard_computer"
+}

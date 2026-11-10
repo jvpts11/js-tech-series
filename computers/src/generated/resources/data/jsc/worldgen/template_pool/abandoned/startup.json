@@ -1,0 +1,22 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/startup",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/startup/transition_working",
+          "jsc:abandoned/startup/transition_ruin",
+          "jsc:abandoned/startup/standard_working",
+          "jsc:abandoned/startup/standard_ruin",
+          "jsc:abandoned/startup/advanced_working",
+          "jsc:abandoned/startup/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

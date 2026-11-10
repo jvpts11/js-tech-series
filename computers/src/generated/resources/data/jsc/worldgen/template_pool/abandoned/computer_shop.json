@@ -1,0 +1,26 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/computer_shop",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/computer_shop/vintage_working",
+          "jsc:abandoned/computer_shop/vintage_ruin",
+          "jsc:abandoned/computer_shop/legacy_working",
+          "jsc:abandoned/computer_shop/legacy_ruin",
+          "jsc:abandoned/computer_shop/transition_working",
+          "jsc:abandoned/computer_shop/transition_ruin",
+          "jsc:abandoned/computer_shop/standard_working",
+          "jsc:abandoned/computer_shop/standard_ruin",
+          "jsc:abandoned/computer_shop/advanced_working",
+          "jsc:abandoned/computer_shop/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

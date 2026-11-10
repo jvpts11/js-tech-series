@@ -1,0 +1,80 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_hd_3850"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_hd_4670"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_hd_4870"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_hd_5770"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_hd_5870"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_hd_6850"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_x1300"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_x1950_xtx"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_7300_gs"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_7600_gt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_7800_gtx"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_8600_gt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_8800_gt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_9600_gt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gt_240"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_280"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_480"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/hardware_box/transition_graphics_card"
+}

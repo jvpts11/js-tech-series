@@ -1,0 +1,26 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/delivery_van",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/delivery_van/vintage_working",
+          "jsc:abandoned/delivery_van/vintage_ruin",
+          "jsc:abandoned/delivery_van/legacy_working",
+          "jsc:abandoned/delivery_van/legacy_ruin",
+          "jsc:abandoned/delivery_van/transition_working",
+          "jsc:abandoned/delivery_van/transition_ruin",
+          "jsc:abandoned/delivery_van/standard_working",
+          "jsc:abandoned/delivery_van/standard_ruin",
+          "jsc:abandoned/delivery_van/advanced_working",
+          "jsc:abandoned/delivery_van/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "clear_of": 2,
+    "salt": 1290077712,
+    "separation": 18,
+    "spacing": 72
+  },
+  "structures": [
+    {
+      "structure": "jsc:abandoned/mining_farm",
+      "weight": 1
+    }
+  ]
+}

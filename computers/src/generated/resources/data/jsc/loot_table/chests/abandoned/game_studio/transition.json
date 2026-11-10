@@ -1,0 +1,76 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:motherboard_atx_transition_775",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:cpu_integra_centro_2_duo_e6600",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr2_2048",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr2_2048",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:psu_500b",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:disk_hdd_500g",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:stock_cooler_transition",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:dvd_rom",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 8.0,
+                "min": 2.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "jsc:transition_peripheral_cable"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_hd_5870",
+          "weight": 2
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 8.0,
+        "min": 4.0
+      }
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/game_studio/transition"
+}

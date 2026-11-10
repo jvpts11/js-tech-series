@@ -105,7 +105,7 @@
     }
   ],
   "id": "jsc:sigma_reading_an_error",
-  "order": 406,
+  "order": 408,
   "section": "jsc:errors_reading",
   "title": "jsc.guide.sigma_reading_an_error.title"
 }

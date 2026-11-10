@@ -1,0 +1,20 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/lan_house",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/lan_house/legacy_working",
+          "jsc:abandoned/lan_house/legacy_ruin",
+          "jsc:abandoned/lan_house/transition_working",
+          "jsc:abandoned/lan_house/transition_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

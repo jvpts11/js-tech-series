@@ -139,6 +139,7 @@ public final class ComputersGuide {
         BuildingPages.declare(guide, building);
         ChainPages.declare(guide, building);
         ChainMachinePages.declare(guide, building);
+        SurvivalPages.declare(guide, building);
         ComputerKindsPages.declare(guide, kinds);
         PeripheralPages.declare(guide, peripherals);
         EverydayProgramsPages.declare(guide, programs);

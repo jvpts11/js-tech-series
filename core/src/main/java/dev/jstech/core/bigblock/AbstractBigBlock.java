@@ -14,10 +14,12 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -75,6 +77,25 @@ public abstract class AbstractBigBlock extends HorizontalDirectionalBlock implem
             level.setBlock(part, partStateFor(pos, facing, part, state), Block.UPDATE_ALL);
             if (server && level.getBlockEntity(part) instanceof BigBlockPartBlockEntity partBe) {
                 partBe.setOrigin(pos);
+            }
+        }
+    }
+
+    /**
+     * Raises the parts of the big block whose origin is at {@code origin}, stood as {@code originState}, that lie
+     * within {@code within}, each bound to the origin: how a structure that holds big blocks raises them as it is
+     * placed, a chunk at a time, while the world is still being generated. The origin itself is the structure's own.
+     */
+    public void raise(final LevelAccessor level, final BlockPos origin, final BlockState originState,
+                      final BoundingBox within) {
+        final Direction facing = originState.getValue(FACING);
+        for (final BlockPos part : geometry().partPositions(origin, facing)) {
+            if (!within.isInside(part)) {
+                continue;
+            }
+            level.setBlock(part, partStateFor(origin, facing, part, originState), Block.UPDATE_CLIENTS);
+            if (level.getBlockEntity(part) instanceof BigBlockPartBlockEntity partBe) {
+                partBe.setOrigin(origin);
             }
         }
     }

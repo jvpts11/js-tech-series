@@ -1,0 +1,19 @@
+{
+  "variants": {
+    "facing=east": {
+      "model": "jsc:block/job_site/repair_bench",
+      "y": 90
+    },
+    "facing=north": {
+      "model": "jsc:block/job_site/repair_bench"
+    },
+    "facing=south": {
+      "model": "jsc:block/job_site/repair_bench",
+      "y": 180
+    },
+    "facing=west": {
+      "model": "jsc:block/job_site/repair_bench",
+      "y": 270
+    }
+  }
+}

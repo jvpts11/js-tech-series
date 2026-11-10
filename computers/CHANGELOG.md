@@ -501,6 +501,28 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   eight in the Advanced, each step with the gases and liquids of its era, and its tooltip names its chip, its layer
   and the machine it goes to next. The Packaging Line cuts the finished wafer into its chips, eight small or four big.
 - The Air Separation Unit takes in the air itself and gives nitrogen, oxygen, argon and krypton.
+- Abandoned buildings: twenty kinds lie across the Overworld, each of one era, the Vintage near the
+  world's spawn and the Advanced far away: a house with an old computer in its attic, an electronic waste dump, an
+  overturned delivery van, a computer shop, a LAN house, a school computer room, a public library, a radio and
+  television station, a telephone exchange, a university lab, a bank with a Mainframe in its vault, a Midsoft office,
+  a software house office, a startup building, a game studio, a hacker's den in a basement, an electronics factory
+  with six of the chain's machines, a crypto mining farm, a datacenter and a supercomputing centre. About one in five
+  still works, its machines whole, their systems installed and set to come up as soon as they have energy; the rest
+  are ruins, their computers open with half their parts in their seats. Their chests draw 4 to 8 things from their
+  building's and era's table, the main one always with a way to a graphical system, and their frames show boxed
+  programs.
+- The hardware box: a carton found in the abandoned buildings, printed with its era's machine, a
+  computer's parts or a graphics card; it opens once and stays open.
+- The Programmer and the IT Technician: two villagers who trade in computers, at the Programmer's Desk and
+  the Repair Bench, made at the Crafting Table. A villager's level is the era of what it sells; the Programmer sells
+  systems and programs and buys paper, books and blank media, the IT Technician sells parts (boards with their
+  firmware), network cables in eights and monitors, and buys copper, tin and the parts of older eras. Every kind of
+  village may have a computer shop with both job sites and a Vintage demo computer running MC-DOS, and the recipe
+  viewer shows on each installer who sells it and where it is found.
+- A server sets the abandoned buildings in `jscomputers-server.toml`: the share that still work
+  (`survival.working_ruin_chance`), the distances where each era begins (`survival.era_distances`) and, for each
+  building, whether it is laid, how far apart and of which eras (`structures.<building>`); and whether the villagers
+  take their job sites and the villages have the shop (`villagers`).
 - A server can switch the mod's own chain off with `survival.own_chain` in `jscomputers-server.toml`: off,
   the recipes of the chain's machines do not load and the chain's veins are not laid in the chunks made afterwards, so
   the parts are made by J's Industrial's chain where it is installed, or found and bought only.
@@ -625,6 +647,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
 
 ### Fixed
+- A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
+  works through its computer.
 - The Network Interactor's Operations tab gives each Operation its own state, where it read the states in
   another order and showed a finished Operation as waiting and a running one as failed.
 - The Exa and the Singularity draw what the Advanced draws: the supercomputer rack, the server rack, the

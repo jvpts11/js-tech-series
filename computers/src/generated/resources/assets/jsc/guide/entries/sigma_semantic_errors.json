@@ -805,7 +805,7 @@
     }
   ],
   "id": "jsc:sigma_semantic_errors",
-  "order": 409,
+  "order": 411,
   "section": "jsc:errors_compile",
   "title": "jsc.guide.sigma_semantic_errors.title"
 }

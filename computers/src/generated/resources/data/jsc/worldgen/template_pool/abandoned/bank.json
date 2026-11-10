@@ -1,0 +1,26 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/bank",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/bank/vintage_working",
+          "jsc:abandoned/bank/vintage_ruin",
+          "jsc:abandoned/bank/legacy_working",
+          "jsc:abandoned/bank/legacy_ruin",
+          "jsc:abandoned/bank/transition_working",
+          "jsc:abandoned/bank/transition_ruin",
+          "jsc:abandoned/bank/standard_working",
+          "jsc:abandoned/bank/standard_ruin",
+          "jsc:abandoned/bank/advanced_working",
+          "jsc:abandoned/bank/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

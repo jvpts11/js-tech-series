@@ -1,0 +1,20 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/supercomputing_centre",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/supercomputing_centre/standard_working",
+          "jsc:abandoned/supercomputing_centre/standard_ruin",
+          "jsc:abandoned/supercomputing_centre/advanced_working",
+          "jsc:abandoned/supercomputing_centre/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

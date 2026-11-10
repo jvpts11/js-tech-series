@@ -1,0 +1,44 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:motherboard_atx_transition_775"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:cpu_integra_centro_2_duo_e6600"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr2_2048"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr2_2048"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:psu_500b"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:disk_hdd_500g"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:stock_cooler_transition"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 4.0,
+        "min": 2.0
+      }
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/hardware_box/transition_computer"
+}

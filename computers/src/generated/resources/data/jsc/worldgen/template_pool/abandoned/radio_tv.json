@@ -1,0 +1,20 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/radio_tv",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/radio_tv/vintage_working",
+          "jsc:abandoned/radio_tv/vintage_ruin",
+          "jsc:abandoned/radio_tv/legacy_working",
+          "jsc:abandoned/radio_tv/legacy_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

@@ -10,6 +10,7 @@ part by part, the systems and programs they run, and the network that stores, mo
 | [Getting started](GETTING_STARTED.md) | Your first computer, then your first network, step by step. |
 | [Hardware](HARDWARE.md) | The eras, every computer, every part and what the numbers on their tooltips mean. |
 | [The chain](CHAIN.md) | Where the chain's ores lie in each era, and the Electronics Workbench the parts are assembled at. |
+| [Found in the world](FOUND_IN_THE_WORLD.md) | The abandoned buildings and their loot, the hardware box, and the Programmer and the IT Technician. |
 | [Systems and programs](SYSTEMS.md) | Every operating system and desktop, installing, two systems on one computer, the programs, the Mirror. |
 | [The network](NETWORK.md) | The Mainframe, storage, Operations, IQL, the network's engines, and the settings. |
 | [Autocrafting](AUTOCRAFTING.md) | Crafting Computers, patterns, machine lines and crafts of many steps. |

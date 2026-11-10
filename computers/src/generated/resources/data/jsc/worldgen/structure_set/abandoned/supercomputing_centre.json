@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "clear_of": 2,
+    "salt": 378836940,
+    "separation": 40,
+    "spacing": 160
+  },
+  "structures": [
+    {
+      "structure": "jsc:abandoned/supercomputing_centre",
+      "weight": 1
+    }
+  ]
+}

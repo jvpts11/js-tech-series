@@ -1,0 +1,26 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/telephone_exchange",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/telephone_exchange/vintage_working",
+          "jsc:abandoned/telephone_exchange/vintage_ruin",
+          "jsc:abandoned/telephone_exchange/legacy_working",
+          "jsc:abandoned/telephone_exchange/legacy_ruin",
+          "jsc:abandoned/telephone_exchange/transition_working",
+          "jsc:abandoned/telephone_exchange/transition_ruin",
+          "jsc:abandoned/telephone_exchange/standard_working",
+          "jsc:abandoned/telephone_exchange/standard_ruin",
+          "jsc:abandoned/telephone_exchange/advanced_working",
+          "jsc:abandoned/telephone_exchange/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

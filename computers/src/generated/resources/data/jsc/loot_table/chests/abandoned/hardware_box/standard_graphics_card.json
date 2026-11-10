@@ -1,0 +1,76 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_hd_7750"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_hd_7850"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_hd_7970"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_r9_290x"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_r9_fury_x"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_rx_480"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_tessera_k40"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gt_730"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_1060"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_1080"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_550_ti"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_660"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_750_ti"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_780_ti"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_970"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_980_ti"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/hardware_box/standard_graphics_card"
+}

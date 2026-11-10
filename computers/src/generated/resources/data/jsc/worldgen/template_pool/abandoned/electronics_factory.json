@@ -1,0 +1,26 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/electronics_factory",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/electronics_factory/vintage_working",
+          "jsc:abandoned/electronics_factory/vintage_ruin",
+          "jsc:abandoned/electronics_factory/legacy_working",
+          "jsc:abandoned/electronics_factory/legacy_ruin",
+          "jsc:abandoned/electronics_factory/transition_working",
+          "jsc:abandoned/electronics_factory/transition_ruin",
+          "jsc:abandoned/electronics_factory/standard_working",
+          "jsc:abandoned/electronics_factory/standard_ruin",
+          "jsc:abandoned/electronics_factory/advanced_working",
+          "jsc:abandoned/electronics_factory/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

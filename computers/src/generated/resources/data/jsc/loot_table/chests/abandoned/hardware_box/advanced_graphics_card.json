@@ -1,0 +1,92 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_rx_550"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_rx_5700_xt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_rx_580"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_rx_6600"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_rx_6900_xt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_rx_7900_xtx"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_rx_9070_xt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_rx_vega_64"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_tessera_a100"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_tessera_h100"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_tessera_v100"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_1080_ti"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_gtx_1650"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_rtx_2060"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_rtx_3060"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_rtx_3080"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_rtx_4060"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_rtx_4090"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_rtx_5060"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_rtx_5090"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/hardware_box/advanced_graphics_card"
+}

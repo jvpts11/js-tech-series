@@ -187,7 +187,7 @@
     }
   ],
   "id": "jsc:sigma_example_buses",
-  "order": 423,
+  "order": 425,
   "section": "jsc:examples_network",
   "title": "jsc.guide.sigma_example_buses.title"
 }

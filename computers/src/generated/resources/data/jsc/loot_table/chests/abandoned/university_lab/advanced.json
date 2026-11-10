@@ -1,0 +1,87 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:motherboard_atx_advanced_1700",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:cpu_integra_centro_c9_12900k",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr5_16384",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr5_16384",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:psu_850g",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:disk_nvme_1t",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:stock_cooler_advanced",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:bd_rom",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 8.0,
+                "min": 2.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "jsc:advanced_peripheral_cable"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 2.0,
+                "min": 1.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "minecraft:book",
+          "weight": 2
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 8.0,
+        "min": 4.0
+      }
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/university_lab/advanced"
+}

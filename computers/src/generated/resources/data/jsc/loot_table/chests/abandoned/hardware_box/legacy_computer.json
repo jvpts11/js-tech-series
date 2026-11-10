@@ -1,0 +1,44 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:motherboard_atx_legacy_478"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:cpu_integra_pentix_4_520"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr_512"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr_512"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:psu_350"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:disk_vaultis_link_ide_40g"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:stock_cooler_legacy"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 4.0,
+        "min": 2.0
+      }
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/hardware_box/legacy_computer"
+}

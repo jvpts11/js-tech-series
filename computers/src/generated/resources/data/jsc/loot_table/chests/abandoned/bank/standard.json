@@ -1,0 +1,513 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:motherboard_atx_standard_1155",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:cpu_integra_centro_c7_2600k",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr3_8192",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr3_8192",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:psu_650g",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:disk_ssd_500g",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:stock_cooler_standard",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:dvd_rom",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 8.0,
+                "min": 2.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "jsc:peripheral_cable"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 5.0,
+        "min": 3.0
+      }
+    },
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:cluster_manager"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:craft_planner"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:exceed"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:integrity_monitor"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:usb_flash_drive"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:isms"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:knot"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:knothub"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:usb_flash_drive"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:messenger"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:messenger_service"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:usb_flash_drive"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:mirror"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:usb_flash_drive"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:nextgre_studio"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:predictive_cache"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:usb_flash_drive"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:prophet_console"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:remote_control"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:soundfoundry_server"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:usb_flash_drive"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:storage_insights"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:virtual_studio"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:virtual_studio_code"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:dvd_rom"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 3.0,
+        "min": 1.0
+      }
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/bank/standard"
+}

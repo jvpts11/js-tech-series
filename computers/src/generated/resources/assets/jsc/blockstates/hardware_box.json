@@ -1,0 +1,304 @@
+{
+  "variants": {
+    "era=0,facing=east,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/vintage_computer",
+      "y": 90
+    },
+    "era=0,facing=east,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/vintage_computer_open",
+      "y": 90
+    },
+    "era=0,facing=east,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/vintage_graphics_card",
+      "y": 90
+    },
+    "era=0,facing=east,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/vintage_graphics_card_open",
+      "y": 90
+    },
+    "era=0,facing=north,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/vintage_computer"
+    },
+    "era=0,facing=north,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/vintage_computer_open"
+    },
+    "era=0,facing=north,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/vintage_graphics_card"
+    },
+    "era=0,facing=north,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/vintage_graphics_card_open"
+    },
+    "era=0,facing=south,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/vintage_computer",
+      "y": 180
+    },
+    "era=0,facing=south,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/vintage_computer_open",
+      "y": 180
+    },
+    "era=0,facing=south,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/vintage_graphics_card",
+      "y": 180
+    },
+    "era=0,facing=south,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/vintage_graphics_card_open",
+      "y": 180
+    },
+    "era=0,facing=west,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/vintage_computer",
+      "y": 270
+    },
+    "era=0,facing=west,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/vintage_computer_open",
+      "y": 270
+    },
+    "era=0,facing=west,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/vintage_graphics_card",
+      "y": 270
+    },
+    "era=0,facing=west,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/vintage_graphics_card_open",
+      "y": 270
+    },
+    "era=1,facing=east,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/legacy_computer",
+      "y": 90
+    },
+    "era=1,facing=east,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/legacy_computer_open",
+      "y": 90
+    },
+    "era=1,facing=east,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/legacy_graphics_card",
+      "y": 90
+    },
+    "era=1,facing=east,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/legacy_graphics_card_open",
+      "y": 90
+    },
+    "era=1,facing=north,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/legacy_computer"
+    },
+    "era=1,facing=north,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/legacy_computer_open"
+    },
+    "era=1,facing=north,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/legacy_graphics_card"
+    },
+    "era=1,facing=north,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/legacy_graphics_card_open"
+    },
+    "era=1,facing=south,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/legacy_computer",
+      "y": 180
+    },
+    "era=1,facing=south,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/legacy_computer_open",
+      "y": 180
+    },
+    "era=1,facing=south,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/legacy_graphics_card",
+      "y": 180
+    },
+    "era=1,facing=south,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/legacy_graphics_card_open",
+      "y": 180
+    },
+    "era=1,facing=west,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/legacy_computer",
+      "y": 270
+    },
+    "era=1,facing=west,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/legacy_computer_open",
+      "y": 270
+    },
+    "era=1,facing=west,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/legacy_graphics_card",
+      "y": 270
+    },
+    "era=1,facing=west,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/legacy_graphics_card_open",
+      "y": 270
+    },
+    "era=2,facing=east,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/transition_computer",
+      "y": 90
+    },
+    "era=2,facing=east,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/transition_computer_open",
+      "y": 90
+    },
+    "era=2,facing=east,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/transition_graphics_card",
+      "y": 90
+    },
+    "era=2,facing=east,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/transition_graphics_card_open",
+      "y": 90
+    },
+    "era=2,facing=north,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/transition_computer"
+    },
+    "era=2,facing=north,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/transition_computer_open"
+    },
+    "era=2,facing=north,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/transition_graphics_card"
+    },
+    "era=2,facing=north,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/transition_graphics_card_open"
+    },
+    "era=2,facing=south,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/transition_computer",
+      "y": 180
+    },
+    "era=2,facing=south,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/transition_computer_open",
+      "y": 180
+    },
+    "era=2,facing=south,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/transition_graphics_card",
+      "y": 180
+    },
+    "era=2,facing=south,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/transition_graphics_card_open",
+      "y": 180
+    },
+    "era=2,facing=west,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/transition_computer",
+      "y": 270
+    },
+    "era=2,facing=west,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/transition_computer_open",
+      "y": 270
+    },
+    "era=2,facing=west,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/transition_graphics_card",
+      "y": 270
+    },
+    "era=2,facing=west,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/transition_graphics_card_open",
+      "y": 270
+    },
+    "era=3,facing=east,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/standard_computer",
+      "y": 90
+    },
+    "era=3,facing=east,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/standard_computer_open",
+      "y": 90
+    },
+    "era=3,facing=east,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/standard_graphics_card",
+      "y": 90
+    },
+    "era=3,facing=east,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/standard_graphics_card_open",
+      "y": 90
+    },
+    "era=3,facing=north,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/standard_computer"
+    },
+    "era=3,facing=north,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/standard_computer_open"
+    },
+    "era=3,facing=north,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/standard_graphics_card"
+    },
+    "era=3,facing=north,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/standard_graphics_card_open"
+    },
+    "era=3,facing=south,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/standard_computer",
+      "y": 180
+    },
+    "era=3,facing=south,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/standard_computer_open",
+      "y": 180
+    },
+    "era=3,facing=south,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/standard_graphics_card",
+      "y": 180
+    },
+    "era=3,facing=south,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/standard_graphics_card_open",
+      "y": 180
+    },
+    "era=3,facing=west,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/standard_computer",
+      "y": 270
+    },
+    "era=3,facing=west,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/standard_computer_open",
+      "y": 270
+    },
+    "era=3,facing=west,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/standard_graphics_card",
+      "y": 270
+    },
+    "era=3,facing=west,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/standard_graphics_card_open",
+      "y": 270
+    },
+    "era=4,facing=east,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/advanced_computer",
+      "y": 90
+    },
+    "era=4,facing=east,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/advanced_computer_open",
+      "y": 90
+    },
+    "era=4,facing=east,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/advanced_graphics_card",
+      "y": 90
+    },
+    "era=4,facing=east,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/advanced_graphics_card_open",
+      "y": 90
+    },
+    "era=4,facing=north,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/advanced_computer"
+    },
+    "era=4,facing=north,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/advanced_computer_open"
+    },
+    "era=4,facing=north,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/advanced_graphics_card"
+    },
+    "era=4,facing=north,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/advanced_graphics_card_open"
+    },
+    "era=4,facing=south,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/advanced_computer",
+      "y": 180
+    },
+    "era=4,facing=south,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/advanced_computer_open",
+      "y": 180
+    },
+    "era=4,facing=south,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/advanced_graphics_card",
+      "y": 180
+    },
+    "era=4,facing=south,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/advanced_graphics_card_open",
+      "y": 180
+    },
+    "era=4,facing=west,kind=computer,open=false": {
+      "model": "jsc:block/hardware_box/advanced_computer",
+      "y": 270
+    },
+    "era=4,facing=west,kind=computer,open=true": {
+      "model": "jsc:block/hardware_box/advanced_computer_open",
+      "y": 270
+    },
+    "era=4,facing=west,kind=graphics_card,open=false": {
+      "model": "jsc:block/hardware_box/advanced_graphics_card",
+      "y": 270
+    },
+    "era=4,facing=west,kind=graphics_card,open=true": {
+      "model": "jsc:block/hardware_box/advanced_graphics_card_open",
+      "y": 270
+    }
+  }
+}

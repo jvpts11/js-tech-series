@@ -10,13 +10,18 @@ package dev.jstech.core.datagen;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.worldgen.WorldGen;
 import dev.jstech.core.worldgen.biome.WorldBiomes;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.data.DataProvider;
 import net.minecraft.data.PackOutput;
+import net.minecraft.data.loot.LootTableProvider;
+import net.minecraft.data.loot.LootTableSubProvider;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSet;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 
@@ -41,6 +46,8 @@ public final class ContentData {
     private final GatherDataEvent event;
     private final String modid;
     private final ContentLanguageProvider language;
+    /* Every table the mod's loot provider writes: its blocks', and any the mod adds. */
+    private final List<LootTableProvider.SubProviderEntry> loot = new ArrayList<>();
 
     private ContentData(final GatherDataEvent event, final String modid, final ContentLanguageProvider language) {
         this.event = event;
@@ -72,7 +79,8 @@ public final class ContentData {
         if (FormedShapeProvider.declares(content)) {
             data.client(new FormedShapeProvider(output, content, data.existingFiles()));
         }
-        data.server(new ContentLootProvider(output, data.lookup(), content));
+        data.loot.add(ContentLootProvider.blocks(content));
+        data.server(new ContentLootProvider(output, data.lookup(), data.loot));
         data.server(new ContentBlockTagsProvider(output, data.lookup(), content, data.existingFiles()));
         if (ContentItemTagsProvider.hasTags(content)) {
             data.server(new ContentItemTagsProvider(output, data.lookup(), content, data.existingFiles()));
@@ -100,6 +108,16 @@ public final class ContentData {
     /** Adds names the mod keeps in registries of its own to its English, handed over as key and English. */
     public ContentData alsoNaming(final Consumer<BiConsumer<String, String>> names) {
         language.alsoNaming(names);
+        return this;
+    }
+
+    /**
+     * Adds loot tables of the mod's own to the ones its blocks have, written by the same provider (the game takes one
+     * loot provider a mod): {@code tables} made for the context {@code params}, such as a structure's chests.
+     */
+    public ContentData alsoLoot(final Function<HolderLookup.Provider, LootTableSubProvider> tables,
+                                final LootContextParamSet params) {
+        loot.add(new LootTableProvider.SubProviderEntry(tables, params));
         return this;
     }
 

@@ -1,0 +1,26 @@
+{
+  "elements": [
+    {
+      "element": {
+        "chooser": "jsc:abandoned",
+        "element_type": "jscore:chosen",
+        "processors": "jsc:abandoned/midsoft_office",
+        "projection": "rigid",
+        "templates": [
+          "jsc:abandoned/midsoft_office/vintage_working",
+          "jsc:abandoned/midsoft_office/vintage_ruin",
+          "jsc:abandoned/midsoft_office/legacy_working",
+          "jsc:abandoned/midsoft_office/legacy_ruin",
+          "jsc:abandoned/midsoft_office/transition_working",
+          "jsc:abandoned/midsoft_office/transition_ruin",
+          "jsc:abandoned/midsoft_office/standard_working",
+          "jsc:abandoned/midsoft_office/standard_ruin",
+          "jsc:abandoned/midsoft_office/advanced_working",
+          "jsc:abandoned/midsoft_office/advanced_ruin"
+        ]
+      },
+      "weight": 1
+    }
+  ],
+  "fallback": "minecraft:empty"
+}

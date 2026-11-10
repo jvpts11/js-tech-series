@@ -11,6 +11,7 @@ import dev.jstech.core.JsCore;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.structure.StructureType;
 import net.minecraft.world.level.levelgen.structure.pieces.StructurePieceType;
+import net.minecraft.world.level.levelgen.structure.pools.StructurePoolElementType;
 import net.minecraft.world.level.levelgen.structure.placement.StructurePlacementType;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureProcessorType;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryType;
@@ -21,7 +22,8 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 /**
  * The kinds the Core gives every mod's structures: the structure type {@code jscore:placed}, the placements
  * {@code jscore:spread} and {@code jscore:fixed}, the piece of a settlement's plan, the processor
- * {@code jscore:weathering}, and the loot entry {@code jscore:optional_item}.
+ * {@code jscore:weathering}, the loot entry {@code jscore:optional_item}, and the pool element
+ * {@code jscore:chosen}.
  */
 public final class CoreStructures {
 
@@ -35,6 +37,8 @@ public final class CoreStructures {
             Registries.STRUCTURE_PROCESSOR, JsCore.MODID);
     private static final DeferredRegister<LootPoolEntryType> LOOT = DeferredRegister.create(
             Registries.LOOT_POOL_ENTRY_TYPE, JsCore.MODID);
+    private static final DeferredRegister<StructurePoolElementType<?>> ELEMENTS = DeferredRegister.create(
+            Registries.STRUCTURE_POOL_ELEMENT, JsCore.MODID);
 
     /** {@code jscore:placed}: see {@link PlacedStructure}. */
     public static final DeferredHolder<StructureType<?>, StructureType<PlacedStructure>> PLACED = TYPES.register(
@@ -54,6 +58,9 @@ public final class CoreStructures {
     /** {@code jscore:optional_item}: see {@link OptionalItemEntry}. */
     public static final DeferredHolder<LootPoolEntryType, LootPoolEntryType> OPTIONAL_ITEM = LOOT.register(
             "optional_item", () -> new LootPoolEntryType(OptionalItemEntry.CODEC));
+    /** {@code jscore:chosen}: see {@link ChosenElement}. */
+    public static final DeferredHolder<StructurePoolElementType<?>, StructurePoolElementType<ChosenElement>> CHOSEN =
+            ELEMENTS.register("chosen", () -> () -> ChosenElement.CODEC);
 
     private CoreStructures() {
     }
@@ -65,6 +72,7 @@ public final class CoreStructures {
         PIECES.register(modEventBus);
         PROCESSORS.register(modEventBus);
         LOOT.register(modEventBus);
+        ELEMENTS.register(modEventBus);
         Settlements.listen();
     }
 }

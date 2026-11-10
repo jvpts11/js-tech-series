@@ -1,0 +1,1 @@
+{"parent":"minecraft:block/block","render_type":"minecraft:cutout","textures":{"t0":"jsc:block/abandoned_prop/p304","particle":"jsc:block/abandoned_prop/p304"},"elements":[{"from":[0.0,10.0,14.0],"to":[16.0,14.0,16.0],"faces":{"up":{"texture":"#t0","uv":[1.0,1.0,2.0,2.0]},"down":{"texture":"#t0","uv":[4.0,1.0,5.0,2.0]},"north":{"texture":"#t0","uv":[7.0,1.0,8.0,2.0]}}}]}

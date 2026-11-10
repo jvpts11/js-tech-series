@@ -174,7 +174,7 @@
     }
   ],
   "id": "jsc:rc_services",
-  "order": 291,
+  "order": 293,
   "section": "jsc:freebsd_system",
   "title": "jsc.guide.rc_services.title"
 }

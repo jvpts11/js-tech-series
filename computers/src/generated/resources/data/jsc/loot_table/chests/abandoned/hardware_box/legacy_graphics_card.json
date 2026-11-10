@@ -1,0 +1,76 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_prism_tnt2_m64"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_7000"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_8500"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_9200_se"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_9600_xt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_9800_pro"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_9800_xt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_x300"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_radiance_x800_xt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_256"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_2_mx_400"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_4_ti_4200"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_6200"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_6600_gt"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_6800_ultra"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:gpu_vertex_fx_5200"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/hardware_box/legacy_graphics_card"
+}

@@ -10,6 +10,7 @@ package dev.jstech.core.datagen;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.ModContent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -35,9 +36,21 @@ public final class ContentLootProvider extends LootTableProvider {
 
     public ContentLootProvider(final PackOutput output, final CompletableFuture<HolderLookup.Provider> registries,
                                final ModContent content) {
-        super(output, Set.of(),
-                List.of(new SubProviderEntry(lookup -> new BlockLoot(lookup, content), LootContextParamSets.BLOCK)),
-                registries);
+        this(output, registries, new ArrayList<>(List.of(blocks(content))));
+    }
+
+    /**
+     * Writes the tables of {@code tables}, the declared blocks' among them ({@link #blocks}): a list the mod may still
+     * add to until the data run writes, such as the tables of its structures' chests.
+     */
+    public ContentLootProvider(final PackOutput output, final CompletableFuture<HolderLookup.Provider> registries,
+                               final List<SubProviderEntry> tables) {
+        super(output, Set.of(), tables, registries);
+    }
+
+    /** The tables of the blocks {@code content} declared. */
+    public static SubProviderEntry blocks(final ModContent content) {
+        return new SubProviderEntry(lookup -> new BlockLoot(lookup, content), LootContextParamSets.BLOCK);
     }
 
     private static final class BlockLoot extends BlockLootSubProvider {

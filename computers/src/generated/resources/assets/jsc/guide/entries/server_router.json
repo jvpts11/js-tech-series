@@ -49,7 +49,7 @@
     "jsc:server_router",
     "jsc:advanced_server_router"
   ],
-  "order": 54,
+  "order": 56,
   "section": "jsc:clusters",
   "title": "jsc.guide.server_router.title"
 }

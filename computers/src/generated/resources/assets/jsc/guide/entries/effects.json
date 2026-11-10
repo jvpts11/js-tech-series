@@ -251,7 +251,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:effects",
-  "order": 177,
+  "order": 179,
   "section": "jsc:desktop_settings",
   "title": "jsc.guide.effects.title"
 }

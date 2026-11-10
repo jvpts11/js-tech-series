@@ -472,6 +472,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A mod's switch for its veins: J's Core's API is at version 53. `Deposits.layWhile(id, when)` lays a kind of
   vein only while `when` holds, read as a world's veins are worked out, and `Deposits.laid(id)` says whether it is laid
   now. Experimental.
+- Structures that pick their template and set down whole machines: J's Core's API is at version 54. A
+  structure's piece `jscore:chosen` holds a set of templates of one size and picks one as it is placed, by an
+  `ITemplateChooser` registered in `TemplateChoosers` (`Structures.chosen` declares it, `StructureSpec.chooser` keeps
+  it), with the chooser's own processors; it raises the parts of the big blocks the template holds,
+  `AbstractBigBlock.raise`, and `ChosenElement.placeTemplate` places a template the same way from anywhere else.
+  `CableBlockEntity.unsettled` makes a cable for a structure, its wires laid and its faces worked out on its first tick
+  in the world (`settleLinks`). `ContentData.alsoLoot` adds a mod's own loot tables to the ones its blocks have, and
+  `ContentLootProvider` takes the list of tables it writes, `blocks` the declared blocks'. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

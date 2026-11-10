@@ -1,0 +1,273 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:motherboard_babyat_vintage",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:cpu_integra_486dx2",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_simm_16",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_simm_16",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:psu_200",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:disk_vaultis_trench_100m",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:stock_cooler_vintage",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:floppy_disk",
+          "weight": 2
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "add": false,
+              "count": {
+                "type": "minecraft:uniform",
+                "max": 8.0,
+                "min": 2.0
+              },
+              "function": "minecraft:set_count"
+            }
+          ],
+          "name": "jsc:vintage_peripheral_cable"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 5.0,
+        "min": 3.0
+      }
+    },
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:borderlink"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:floppy_disk"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:emacs"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:floppy_disk"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:interactor"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:floppy_disk"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:minesweeper"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:floppy_disk"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:scc"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:floppy_disk"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:snake"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:floppy_disk"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:solitaire"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:floppy_disk"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:vim"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:floppy_disk"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 3.0,
+        "min": 1.0
+      }
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/radio_tv/vintage"
+}

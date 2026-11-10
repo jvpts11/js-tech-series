@@ -1,0 +1,44 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:motherboard_atx_advanced_1700"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:cpu_integra_centro_c9_12900k"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr5_16384"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:ram_ddr5_16384"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:psu_850g"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:disk_nvme_1t"
+        },
+        {
+          "type": "minecraft:item",
+          "name": "jsc:stock_cooler_advanced"
+        }
+      ],
+      "rolls": {
+        "type": "minecraft:uniform",
+        "max": 4.0,
+        "min": 2.0
+      }
+    }
+  ],
+  "random_sequence": "jsc:chests/abandoned/hardware_box/advanced_computer"
+}

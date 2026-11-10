@@ -1,0 +1,15 @@
+{
+  "placement": {
+    "type": "jscore:spread",
+    "clear_of": 2,
+    "salt": 475972093,
+    "separation": 18,
+    "spacing": 72
+  },
+  "structures": [
+    {
+      "structure": "jsc:abandoned/hacker_den",
+      "weight": 1
+    }
+  ]
+}
