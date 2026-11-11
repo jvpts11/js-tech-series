@@ -3500,60 +3500,8 @@
       "model": "jsc:block/abandoned_prop/p886",
       "y": 90
     },
-    "facing=east,part=887": {
-      "model": "jsc:block/abandoned_prop/p887",
-      "y": 90
-    },
-    "facing=east,part=888": {
-      "model": "jsc:block/abandoned_prop/p888",
-      "y": 90
-    },
-    "facing=east,part=889": {
-      "model": "jsc:block/abandoned_prop/p889",
-      "y": 90
-    },
     "facing=east,part=89": {
       "model": "jsc:block/abandoned_prop/p89",
-      "y": 90
-    },
-    "facing=east,part=890": {
-      "model": "jsc:block/abandoned_prop/p890",
-      "y": 90
-    },
-    "facing=east,part=891": {
-      "model": "jsc:block/abandoned_prop/p891",
-      "y": 90
-    },
-    "facing=east,part=892": {
-      "model": "jsc:block/abandoned_prop/p892",
-      "y": 90
-    },
-    "facing=east,part=893": {
-      "model": "jsc:block/abandoned_prop/p893",
-      "y": 90
-    },
-    "facing=east,part=894": {
-      "model": "jsc:block/abandoned_prop/p894",
-      "y": 90
-    },
-    "facing=east,part=895": {
-      "model": "jsc:block/abandoned_prop/p895",
-      "y": 90
-    },
-    "facing=east,part=896": {
-      "model": "jsc:block/abandoned_prop/p896",
-      "y": 90
-    },
-    "facing=east,part=897": {
-      "model": "jsc:block/abandoned_prop/p897",
-      "y": 90
-    },
-    "facing=east,part=898": {
-      "model": "jsc:block/abandoned_prop/p898",
-      "y": 90
-    },
-    "facing=east,part=899": {
-      "model": "jsc:block/abandoned_prop/p899",
       "y": 90
     },
     "facing=east,part=9": {
@@ -3564,148 +3512,16 @@
       "model": "jsc:block/abandoned_prop/p90",
       "y": 90
     },
-    "facing=east,part=900": {
-      "model": "jsc:block/abandoned_prop/p900",
-      "y": 90
-    },
-    "facing=east,part=901": {
-      "model": "jsc:block/abandoned_prop/p901",
-      "y": 90
-    },
-    "facing=east,part=902": {
-      "model": "jsc:block/abandoned_prop/p902",
-      "y": 90
-    },
-    "facing=east,part=903": {
-      "model": "jsc:block/abandoned_prop/p903",
-      "y": 90
-    },
-    "facing=east,part=904": {
-      "model": "jsc:block/abandoned_prop/p904",
-      "y": 90
-    },
-    "facing=east,part=905": {
-      "model": "jsc:block/abandoned_prop/p905",
-      "y": 90
-    },
-    "facing=east,part=906": {
-      "model": "jsc:block/abandoned_prop/p906",
-      "y": 90
-    },
-    "facing=east,part=907": {
-      "model": "jsc:block/abandoned_prop/p907",
-      "y": 90
-    },
-    "facing=east,part=908": {
-      "model": "jsc:block/abandoned_prop/p908",
-      "y": 90
-    },
-    "facing=east,part=909": {
-      "model": "jsc:block/abandoned_prop/p909",
-      "y": 90
-    },
     "facing=east,part=91": {
       "model": "jsc:block/abandoned_prop/p91",
-      "y": 90
-    },
-    "facing=east,part=910": {
-      "model": "jsc:block/abandoned_prop/p910",
-      "y": 90
-    },
-    "facing=east,part=911": {
-      "model": "jsc:block/abandoned_prop/p911",
-      "y": 90
-    },
-    "facing=east,part=912": {
-      "model": "jsc:block/abandoned_prop/p912",
-      "y": 90
-    },
-    "facing=east,part=913": {
-      "model": "jsc:block/abandoned_prop/p913",
-      "y": 90
-    },
-    "facing=east,part=914": {
-      "model": "jsc:block/abandoned_prop/p914",
-      "y": 90
-    },
-    "facing=east,part=915": {
-      "model": "jsc:block/abandoned_prop/p915",
-      "y": 90
-    },
-    "facing=east,part=916": {
-      "model": "jsc:block/abandoned_prop/p916",
-      "y": 90
-    },
-    "facing=east,part=917": {
-      "model": "jsc:block/abandoned_prop/p917",
-      "y": 90
-    },
-    "facing=east,part=918": {
-      "model": "jsc:block/abandoned_prop/p918",
-      "y": 90
-    },
-    "facing=east,part=919": {
-      "model": "jsc:block/abandoned_prop/p919",
       "y": 90
     },
     "facing=east,part=92": {
       "model": "jsc:block/abandoned_prop/p92",
       "y": 90
     },
-    "facing=east,part=920": {
-      "model": "jsc:block/abandoned_prop/p920",
-      "y": 90
-    },
-    "facing=east,part=921": {
-      "model": "jsc:block/abandoned_prop/p921",
-      "y": 90
-    },
-    "facing=east,part=922": {
-      "model": "jsc:block/abandoned_prop/p922",
-      "y": 90
-    },
-    "facing=east,part=923": {
-      "model": "jsc:block/abandoned_prop/p923",
-      "y": 90
-    },
-    "facing=east,part=924": {
-      "model": "jsc:block/abandoned_prop/p924",
-      "y": 90
-    },
-    "facing=east,part=925": {
-      "model": "jsc:block/abandoned_prop/p925",
-      "y": 90
-    },
-    "facing=east,part=926": {
-      "model": "jsc:block/abandoned_prop/p926",
-      "y": 90
-    },
-    "facing=east,part=927": {
-      "model": "jsc:block/abandoned_prop/p927",
-      "y": 90
-    },
-    "facing=east,part=928": {
-      "model": "jsc:block/abandoned_prop/p928",
-      "y": 90
-    },
-    "facing=east,part=929": {
-      "model": "jsc:block/abandoned_prop/p929",
-      "y": 90
-    },
     "facing=east,part=93": {
       "model": "jsc:block/abandoned_prop/p93",
-      "y": 90
-    },
-    "facing=east,part=930": {
-      "model": "jsc:block/abandoned_prop/p930",
-      "y": 90
-    },
-    "facing=east,part=931": {
-      "model": "jsc:block/abandoned_prop/p931",
-      "y": 90
-    },
-    "facing=east,part=932": {
-      "model": "jsc:block/abandoned_prop/p932",
       "y": 90
     },
     "facing=east,part=94": {
@@ -6357,47 +6173,8 @@
     "facing=north,part=886": {
       "model": "jsc:block/abandoned_prop/p886"
     },
-    "facing=north,part=887": {
-      "model": "jsc:block/abandoned_prop/p887"
-    },
-    "facing=north,part=888": {
-      "model": "jsc:block/abandoned_prop/p888"
-    },
-    "facing=north,part=889": {
-      "model": "jsc:block/abandoned_prop/p889"
-    },
     "facing=north,part=89": {
       "model": "jsc:block/abandoned_prop/p89"
-    },
-    "facing=north,part=890": {
-      "model": "jsc:block/abandoned_prop/p890"
-    },
-    "facing=north,part=891": {
-      "model": "jsc:block/abandoned_prop/p891"
-    },
-    "facing=north,part=892": {
-      "model": "jsc:block/abandoned_prop/p892"
-    },
-    "facing=north,part=893": {
-      "model": "jsc:block/abandoned_prop/p893"
-    },
-    "facing=north,part=894": {
-      "model": "jsc:block/abandoned_prop/p894"
-    },
-    "facing=north,part=895": {
-      "model": "jsc:block/abandoned_prop/p895"
-    },
-    "facing=north,part=896": {
-      "model": "jsc:block/abandoned_prop/p896"
-    },
-    "facing=north,part=897": {
-      "model": "jsc:block/abandoned_prop/p897"
-    },
-    "facing=north,part=898": {
-      "model": "jsc:block/abandoned_prop/p898"
-    },
-    "facing=north,part=899": {
-      "model": "jsc:block/abandoned_prop/p899"
     },
     "facing=north,part=9": {
       "model": "jsc:block/abandoned_prop/p9"
@@ -6405,113 +6182,14 @@
     "facing=north,part=90": {
       "model": "jsc:block/abandoned_prop/p90"
     },
-    "facing=north,part=900": {
-      "model": "jsc:block/abandoned_prop/p900"
-    },
-    "facing=north,part=901": {
-      "model": "jsc:block/abandoned_prop/p901"
-    },
-    "facing=north,part=902": {
-      "model": "jsc:block/abandoned_prop/p902"
-    },
-    "facing=north,part=903": {
-      "model": "jsc:block/abandoned_prop/p903"
-    },
-    "facing=north,part=904": {
-      "model": "jsc:block/abandoned_prop/p904"
-    },
-    "facing=north,part=905": {
-      "model": "jsc:block/abandoned_prop/p905"
-    },
-    "facing=north,part=906": {
-      "model": "jsc:block/abandoned_prop/p906"
-    },
-    "facing=north,part=907": {
-      "model": "jsc:block/abandoned_prop/p907"
-    },
-    "facing=north,part=908": {
-      "model": "jsc:block/abandoned_prop/p908"
-    },
-    "facing=north,part=909": {
-      "model": "jsc:block/abandoned_prop/p909"
-    },
     "facing=north,part=91": {
       "model": "jsc:block/abandoned_prop/p91"
-    },
-    "facing=north,part=910": {
-      "model": "jsc:block/abandoned_prop/p910"
-    },
-    "facing=north,part=911": {
-      "model": "jsc:block/abandoned_prop/p911"
-    },
-    "facing=north,part=912": {
-      "model": "jsc:block/abandoned_prop/p912"
-    },
-    "facing=north,part=913": {
-      "model": "jsc:block/abandoned_prop/p913"
-    },
-    "facing=north,part=914": {
-      "model": "jsc:block/abandoned_prop/p914"
-    },
-    "facing=north,part=915": {
-      "model": "jsc:block/abandoned_prop/p915"
-    },
-    "facing=north,part=916": {
-      "model": "jsc:block/abandoned_prop/p916"
-    },
-    "facing=north,part=917": {
-      "model": "jsc:block/abandoned_prop/p917"
-    },
-    "facing=north,part=918": {
-      "model": "jsc:block/abandoned_prop/p918"
-    },
-    "facing=north,part=919": {
-      "model": "jsc:block/abandoned_prop/p919"
     },
     "facing=north,part=92": {
       "model": "jsc:block/abandoned_prop/p92"
     },
-    "facing=north,part=920": {
-      "model": "jsc:block/abandoned_prop/p920"
-    },
-    "facing=north,part=921": {
-      "model": "jsc:block/abandoned_prop/p921"
-    },
-    "facing=north,part=922": {
-      "model": "jsc:block/abandoned_prop/p922"
-    },
-    "facing=north,part=923": {
-      "model": "jsc:block/abandoned_prop/p923"
-    },
-    "facing=north,part=924": {
-      "model": "jsc:block/abandoned_prop/p924"
-    },
-    "facing=north,part=925": {
-      "model": "jsc:block/abandoned_prop/p925"
-    },
-    "facing=north,part=926": {
-      "model": "jsc:block/abandoned_prop/p926"
-    },
-    "facing=north,part=927": {
-      "model": "jsc:block/abandoned_prop/p927"
-    },
-    "facing=north,part=928": {
-      "model": "jsc:block/abandoned_prop/p928"
-    },
-    "facing=north,part=929": {
-      "model": "jsc:block/abandoned_prop/p929"
-    },
     "facing=north,part=93": {
       "model": "jsc:block/abandoned_prop/p93"
-    },
-    "facing=north,part=930": {
-      "model": "jsc:block/abandoned_prop/p930"
-    },
-    "facing=north,part=931": {
-      "model": "jsc:block/abandoned_prop/p931"
-    },
-    "facing=north,part=932": {
-      "model": "jsc:block/abandoned_prop/p932"
     },
     "facing=north,part=94": {
       "model": "jsc:block/abandoned_prop/p94"
@@ -10031,60 +9709,8 @@
       "model": "jsc:block/abandoned_prop/p886",
       "y": 180
     },
-    "facing=south,part=887": {
-      "model": "jsc:block/abandoned_prop/p887",
-      "y": 180
-    },
-    "facing=south,part=888": {
-      "model": "jsc:block/abandoned_prop/p888",
-      "y": 180
-    },
-    "facing=south,part=889": {
-      "model": "jsc:block/abandoned_prop/p889",
-      "y": 180
-    },
     "facing=south,part=89": {
       "model": "jsc:block/abandoned_prop/p89",
-      "y": 180
-    },
-    "facing=south,part=890": {
-      "model": "jsc:block/abandoned_prop/p890",
-      "y": 180
-    },
-    "facing=south,part=891": {
-      "model": "jsc:block/abandoned_prop/p891",
-      "y": 180
-    },
-    "facing=south,part=892": {
-      "model": "jsc:block/abandoned_prop/p892",
-      "y": 180
-    },
-    "facing=south,part=893": {
-      "model": "jsc:block/abandoned_prop/p893",
-      "y": 180
-    },
-    "facing=south,part=894": {
-      "model": "jsc:block/abandoned_prop/p894",
-      "y": 180
-    },
-    "facing=south,part=895": {
-      "model": "jsc:block/abandoned_prop/p895",
-      "y": 180
-    },
-    "facing=south,part=896": {
-      "model": "jsc:block/abandoned_prop/p896",
-      "y": 180
-    },
-    "facing=south,part=897": {
-      "model": "jsc:block/abandoned_prop/p897",
-      "y": 180
-    },
-    "facing=south,part=898": {
-      "model": "jsc:block/abandoned_prop/p898",
-      "y": 180
-    },
-    "facing=south,part=899": {
-      "model": "jsc:block/abandoned_prop/p899",
       "y": 180
     },
     "facing=south,part=9": {
@@ -10095,148 +9721,16 @@
       "model": "jsc:block/abandoned_prop/p90",
       "y": 180
     },
-    "facing=south,part=900": {
-      "model": "jsc:block/abandoned_prop/p900",
-      "y": 180
-    },
-    "facing=south,part=901": {
-      "model": "jsc:block/abandoned_prop/p901",
-      "y": 180
-    },
-    "facing=south,part=902": {
-      "model": "jsc:block/abandoned_prop/p902",
-      "y": 180
-    },
-    "facing=south,part=903": {
-      "model": "jsc:block/abandoned_prop/p903",
-      "y": 180
-    },
-    "facing=south,part=904": {
-      "model": "jsc:block/abandoned_prop/p904",
-      "y": 180
-    },
-    "facing=south,part=905": {
-      "model": "jsc:block/abandoned_prop/p905",
-      "y": 180
-    },
-    "facing=south,part=906": {
-      "model": "jsc:block/abandoned_prop/p906",
-      "y": 180
-    },
-    "facing=south,part=907": {
-      "model": "jsc:block/abandoned_prop/p907",
-      "y": 180
-    },
-    "facing=south,part=908": {
-      "model": "jsc:block/abandoned_prop/p908",
-      "y": 180
-    },
-    "facing=south,part=909": {
-      "model": "jsc:block/abandoned_prop/p909",
-      "y": 180
-    },
     "facing=south,part=91": {
       "model": "jsc:block/abandoned_prop/p91",
-      "y": 180
-    },
-    "facing=south,part=910": {
-      "model": "jsc:block/abandoned_prop/p910",
-      "y": 180
-    },
-    "facing=south,part=911": {
-      "model": "jsc:block/abandoned_prop/p911",
-      "y": 180
-    },
-    "facing=south,part=912": {
-      "model": "jsc:block/abandoned_prop/p912",
-      "y": 180
-    },
-    "facing=south,part=913": {
-      "model": "jsc:block/abandoned_prop/p913",
-      "y": 180
-    },
-    "facing=south,part=914": {
-      "model": "jsc:block/abandoned_prop/p914",
-      "y": 180
-    },
-    "facing=south,part=915": {
-      "model": "jsc:block/abandoned_prop/p915",
-      "y": 180
-    },
-    "facing=south,part=916": {
-      "model": "jsc:block/abandoned_prop/p916",
-      "y": 180
-    },
-    "facing=south,part=917": {
-      "model": "jsc:block/abandoned_prop/p917",
-      "y": 180
-    },
-    "facing=south,part=918": {
-      "model": "jsc:block/abandoned_prop/p918",
-      "y": 180
-    },
-    "facing=south,part=919": {
-      "model": "jsc:block/abandoned_prop/p919",
       "y": 180
     },
     "facing=south,part=92": {
       "model": "jsc:block/abandoned_prop/p92",
       "y": 180
     },
-    "facing=south,part=920": {
-      "model": "jsc:block/abandoned_prop/p920",
-      "y": 180
-    },
-    "facing=south,part=921": {
-      "model": "jsc:block/abandoned_prop/p921",
-      "y": 180
-    },
-    "facing=south,part=922": {
-      "model": "jsc:block/abandoned_prop/p922",
-      "y": 180
-    },
-    "facing=south,part=923": {
-      "model": "jsc:block/abandoned_prop/p923",
-      "y": 180
-    },
-    "facing=south,part=924": {
-      "model": "jsc:block/abandoned_prop/p924",
-      "y": 180
-    },
-    "facing=south,part=925": {
-      "model": "jsc:block/abandoned_prop/p925",
-      "y": 180
-    },
-    "facing=south,part=926": {
-      "model": "jsc:block/abandoned_prop/p926",
-      "y": 180
-    },
-    "facing=south,part=927": {
-      "model": "jsc:block/abandoned_prop/p927",
-      "y": 180
-    },
-    "facing=south,part=928": {
-      "model": "jsc:block/abandoned_prop/p928",
-      "y": 180
-    },
-    "facing=south,part=929": {
-      "model": "jsc:block/abandoned_prop/p929",
-      "y": 180
-    },
     "facing=south,part=93": {
       "model": "jsc:block/abandoned_prop/p93",
-      "y": 180
-    },
-    "facing=south,part=930": {
-      "model": "jsc:block/abandoned_prop/p930",
-      "y": 180
-    },
-    "facing=south,part=931": {
-      "model": "jsc:block/abandoned_prop/p931",
-      "y": 180
-    },
-    "facing=south,part=932": {
-      "model": "jsc:block/abandoned_prop/p932",
       "y": 180
     },
     "facing=south,part=94": {
@@ -13763,60 +13257,8 @@
       "model": "jsc:block/abandoned_prop/p886",
       "y": 270
     },
-    "facing=west,part=887": {
-      "model": "jsc:block/abandoned_prop/p887",
-      "y": 270
-    },
-    "facing=west,part=888": {
-      "model": "jsc:block/abandoned_prop/p888",
-      "y": 270
-    },
-    "facing=west,part=889": {
-      "model": "jsc:block/abandoned_prop/p889",
-      "y": 270
-    },
     "facing=west,part=89": {
       "model": "jsc:block/abandoned_prop/p89",
-      "y": 270
-    },
-    "facing=west,part=890": {
-      "model": "jsc:block/abandoned_prop/p890",
-      "y": 270
-    },
-    "facing=west,part=891": {
-      "model": "jsc:block/abandoned_prop/p891",
-      "y": 270
-    },
-    "facing=west,part=892": {
-      "model": "jsc:block/abandoned_prop/p892",
-      "y": 270
-    },
-    "facing=west,part=893": {
-      "model": "jsc:block/abandoned_prop/p893",
-      "y": 270
-    },
-    "facing=west,part=894": {
-      "model": "jsc:block/abandoned_prop/p894",
-      "y": 270
-    },
-    "facing=west,part=895": {
-      "model": "jsc:block/abandoned_prop/p895",
-      "y": 270
-    },
-    "facing=west,part=896": {
-      "model": "jsc:block/abandoned_prop/p896",
-      "y": 270
-    },
-    "facing=west,part=897": {
-      "model": "jsc:block/abandoned_prop/p897",
-      "y": 270
-    },
-    "facing=west,part=898": {
-      "model": "jsc:block/abandoned_prop/p898",
-      "y": 270
-    },
-    "facing=west,part=899": {
-      "model": "jsc:block/abandoned_prop/p899",
       "y": 270
     },
     "facing=west,part=9": {
@@ -13827,148 +13269,16 @@
       "model": "jsc:block/abandoned_prop/p90",
       "y": 270
     },
-    "facing=west,part=900": {
-      "model": "jsc:block/abandoned_prop/p900",
-      "y": 270
-    },
-    "facing=west,part=901": {
-      "model": "jsc:block/abandoned_prop/p901",
-      "y": 270
-    },
-    "facing=west,part=902": {
-      "model": "jsc:block/abandoned_prop/p902",
-      "y": 270
-    },
-    "facing=west,part=903": {
-      "model": "jsc:block/abandoned_prop/p903",
-      "y": 270
-    },
-    "facing=west,part=904": {
-      "model": "jsc:block/abandoned_prop/p904",
-      "y": 270
-    },
-    "facing=west,part=905": {
-      "model": "jsc:block/abandoned_prop/p905",
-      "y": 270
-    },
-    "facing=west,part=906": {
-      "model": "jsc:block/abandoned_prop/p906",
-      "y": 270
-    },
-    "facing=west,part=907": {
-      "model": "jsc:block/abandoned_prop/p907",
-      "y": 270
-    },
-    "facing=west,part=908": {
-      "model": "jsc:block/abandoned_prop/p908",
-      "y": 270
-    },
-    "facing=west,part=909": {
-      "model": "jsc:block/abandoned_prop/p909",
-      "y": 270
-    },
     "facing=west,part=91": {
       "model": "jsc:block/abandoned_prop/p91",
-      "y": 270
-    },
-    "facing=west,part=910": {
-      "model": "jsc:block/abandoned_prop/p910",
-      "y": 270
-    },
-    "facing=west,part=911": {
-      "model": "jsc:block/abandoned_prop/p911",
-      "y": 270
-    },
-    "facing=west,part=912": {
-      "model": "jsc:block/abandoned_prop/p912",
-      "y": 270
-    },
-    "facing=west,part=913": {
-      "model": "jsc:block/abandoned_prop/p913",
-      "y": 270
-    },
-    "facing=west,part=914": {
-      "model": "jsc:block/abandoned_prop/p914",
-      "y": 270
-    },
-    "facing=west,part=915": {
-      "model": "jsc:block/abandoned_prop/p915",
-      "y": 270
-    },
-    "facing=west,part=916": {
-      "model": "jsc:block/abandoned_prop/p916",
-      "y": 270
-    },
-    "facing=west,part=917": {
-      "model": "jsc:block/abandoned_prop/p917",
-      "y": 270
-    },
-    "facing=west,part=918": {
-      "model": "jsc:block/abandoned_prop/p918",
-      "y": 270
-    },
-    "facing=west,part=919": {
-      "model": "jsc:block/abandoned_prop/p919",
       "y": 270
     },
     "facing=west,part=92": {
       "model": "jsc:block/abandoned_prop/p92",
       "y": 270
     },
-    "facing=west,part=920": {
-      "model": "jsc:block/abandoned_prop/p920",
-      "y": 270
-    },
-    "facing=west,part=921": {
-      "model": "jsc:block/abandoned_prop/p921",
-      "y": 270
-    },
-    "facing=west,part=922": {
-      "model": "jsc:block/abandoned_prop/p922",
-      "y": 270
-    },
-    "facing=west,part=923": {
-      "model": "jsc:block/abandoned_prop/p923",
-      "y": 270
-    },
-    "facing=west,part=924": {
-      "model": "jsc:block/abandoned_prop/p924",
-      "y": 270
-    },
-    "facing=west,part=925": {
-      "model": "jsc:block/abandoned_prop/p925",
-      "y": 270
-    },
-    "facing=west,part=926": {
-      "model": "jsc:block/abandoned_prop/p926",
-      "y": 270
-    },
-    "facing=west,part=927": {
-      "model": "jsc:block/abandoned_prop/p927",
-      "y": 270
-    },
-    "facing=west,part=928": {
-      "model": "jsc:block/abandoned_prop/p928",
-      "y": 270
-    },
-    "facing=west,part=929": {
-      "model": "jsc:block/abandoned_prop/p929",
-      "y": 270
-    },
     "facing=west,part=93": {
       "model": "jsc:block/abandoned_prop/p93",
-      "y": 270
-    },
-    "facing=west,part=930": {
-      "model": "jsc:block/abandoned_prop/p930",
-      "y": 270
-    },
-    "facing=west,part=931": {
-      "model": "jsc:block/abandoned_prop/p931",
-      "y": 270
-    },
-    "facing=west,part=932": {
-      "model": "jsc:block/abandoned_prop/p932",
       "y": 270
     },
     "facing=west,part=94": {

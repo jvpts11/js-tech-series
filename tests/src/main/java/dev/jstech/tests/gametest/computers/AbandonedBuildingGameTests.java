@@ -23,6 +23,7 @@ import dev.jstech.computers.abandoned.HardwareBoxBlockEntity;
 import dev.jstech.computers.abandoned.HardwareBoxKind;
 import dev.jstech.computers.blockentity.AbstractCabinetComputerBlockEntity;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
+import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.config.ComputersServerConfig;
@@ -65,8 +66,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * The abandoned buildings (computers/docs/design/survival.md, "Abandoned buildings"): every building is a structure
  * with a template for each era it may be of, working and in ruin; the chooser picks the era by the distance from the
  * world's spawn and working as often as the server says; placed, a working building's machines are whole and set to
- * come up (computers, racks, Mainframes, the factory's machines formed and the Lithography Station linked to its
- * computer), its battery bank charged; its chests and hardware boxes draw from their tables, the main chest from the
+ * come up (computers, racks, Mainframes, the mining farm's rigs with their risers and cards, the factory's machines
+ * formed and the Lithography Station linked to its computer), its battery bank charged; its chests and hardware boxes draw from their tables, the main chest from the
  * one that holds a graphical system; its fittings stand as the decor block and its frames hold boxed programs.
  */
 @GameTestHolder(JsTests.MODID)
@@ -238,6 +239,29 @@ public final class AbandonedBuildingGameTests {
             final ItemStack server = rack.getServers().getStackInSlot(1);
             helper.assertTrue(server.getItem() instanceof ServerItem
                     && ServerItem.hardware(server).nonEmptyItems().iterator().hasNext(), "a whole server between");
+        }
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void miningFarm_rigsStandWholeOnTheirShelves(final GameTestHelper helper) {
+        place(helper, AbandonedBuilding.MINING_FARM, HardwareEra.STANDARD, true);
+        final List<MiningComputerBlockEntity> rigs = found(helper, MiningComputerBlockEntity.class);
+        helper.assertTrue(!rigs.isEmpty(), "the mining farm has its Mining Computers");
+        helper.assertTrue(!found(helper, BigBlockPartBlockEntity.class).isEmpty(), "their second blocks raised");
+        for (final MiningComputerBlockEntity rig : rigs) {
+            helper.assertValueEqual(rig.getHardware().getStackInSlot(MiningComputerBlockEntity.MOTHERBOARD_SLOT)
+                    .getItem(), AbandonedLoadouts.rigParts(HardwareEra.STANDARD).getFirst().getItem(),
+                    "its era's mining board");
+            int risers = 0;
+            for (int i = 0; i < rig.riserCount(); i++) {
+                risers += rig.hasRiser(i) ? 1 : 0;
+            }
+            helper.assertValueEqual(risers, 6, "a riser in each of its six slots");
+            helper.assertValueEqual(rig.seatedCards(), 6, "and a card standing on each");
+            helper.assertValueEqual(rig.installedOsId(), AbandonedLoadouts.system(HardwareEra.STANDARD),
+                    "its era's system installed");
+            helper.assertTrue(rig.isAutoStart(), "set to come up as soon as it has energy");
         }
         helper.succeed();
     }

@@ -118,6 +118,25 @@ public final class AbandonedLoadouts {
         return new ItemStack(item(path));
     }
 
+    /**
+     * The parts of {@code era}'s Mining Computer: its mining board first, then the processor, the memory and the
+     * supply a player picks for it from the era's catalogue.
+     */
+    public static List<ItemStack> rigParts(final Era era) {
+        return onBoard(item("motherboard_mng_" + HardwareEra.withParts(era).path()), era);
+    }
+
+    /** {@code era}'s mining riser, one in each of a rig's x1 slots. */
+    public static ItemStack riser(final Era era) {
+        return new ItemStack(item("mining_riser_" + HardwareEra.withParts(era).path()));
+    }
+
+    /** The graphics card {@code era}'s abandoned rigs mine with, as the mining farm draws them. */
+    public static ItemStack rigCard(final Era era) {
+        return new ItemStack(item(HardwareEra.withParts(era) == HardwareEra.ADVANCED ? "gpu_vertex_rtx_3060"
+                : "gpu_radiance_rx_480"));
+    }
+
     /** {@code era}'s rack supply unit, which stands at a rack's foot. */
     public static ItemStack rackUps(final Era era) {
         return new ItemStack(item(loadout(era).prefix() + "rack_ups"));

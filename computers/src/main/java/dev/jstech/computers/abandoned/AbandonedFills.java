@@ -9,12 +9,15 @@ package dev.jstech.computers.abandoned;
 
 import dev.jstech.computers.block.AbstractSmallComputerBlock;
 import dev.jstech.computers.block.MainframeBlock;
+import dev.jstech.computers.block.MiningComputerBlock;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.AbstractCabinetComputerBlockEntity;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
+import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.chain.machine.ComputerKit;
+import dev.jstech.computers.hardware.RigGeometry;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.core.cable.CableType;
@@ -40,11 +43,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * What the machines of an abandoned building hold as it is placed (computers/docs/design/survival.md, "Abandoned
  * buildings"), each made as a player makes it, in a machine that stands nowhere yet and is then saved into the place:
- * a computer and a Mainframe their era's parts, a rack its supply at its foot, its switch at its top and servers
- * between, a battery bank its charge, a cable its wires and the part on it. In a working building the machines are
- * whole, their systems installed, set to come up as soon as they have energy; in a ruin every part is there only with
- * an even chance, the board first and what sits on it only with it, and a third of a rack's rows empty, its drives
- * gone.
+ * a computer and a Mainframe their era's parts, a Mining Computer its parts, risers and cards, a rack its supply at its
+ * foot, its switch at its top and servers between, a battery bank its charge, a cable its wires and the part on it.
+ * In a working building the machines are whole, their systems installed, set to come up as soon as they have energy;
+ * in a ruin every part is there only with an even chance, the board first and what sits on it only with it, a third of
+ * a rack's rows empty, its drives gone, and a third of a rig's cards gone.
  */
 final class AbandonedFills {
 
@@ -54,6 +57,12 @@ final class AbandonedFills {
     private static final int NODE_ROWS = 2;
     /* The share of a ruined rack's rows that stand empty. */
     private static final float EMPTY_ROW = 1.0F / 3.0F;
+    /* Where a rig's processor, memory and supply come among its parts, after its board. */
+    private static final int RIG_CPU = 1;
+    private static final int RIG_RAM = 2;
+    private static final int RIG_PSU = 3;
+    /* The share of a ruined rig's cards that are gone, as the mining farm draws them. */
+    private static final float GONE_CARD = 1.0F / 3.0F;
     private static final String PHI_STANDARD = "phi_5100";
     private static final String PHI_ADVANCED = "phi_9000";
 
@@ -146,6 +155,45 @@ final class AbandonedFills {
             }
         }
         return rack.saveWithFullMetadata(level.registryAccess());
+    }
+
+    /*
+     * A Mining Computer of the era, as the mining farm draws it: its mining board, processor, memory, supply and disk,
+     * a riser in every x1 slot and a graphics card standing on each; a ruin has lost a third of its cards. In a working
+     * building it runs its era's system, set to come up as soon as it has energy.
+     */
+    static @Nullable CompoundTag rig(final LevelReader level, final StructureTemplate.StructureBlockInfo placed,
+                                     final CompoundTag mark, final Era era, final boolean working,
+                                     final RandomSource random) {
+        if (!(placed.state().getBlock() instanceof MiningComputerBlock block)
+                || !(block.newBlockEntity(placed.pos(), placed.state()) instanceof MiningComputerBlockEntity rig)) {
+            return null;
+        }
+        final Era own = eraOf(mark, era);
+        final boolean broken = mark.getBoolean("broken") || !working;
+        final List<ItemStack> parts = AbandonedLoadouts.rigParts(own);
+        final ItemStackHandler hardware = rig.getHardware();
+        hardware.setStackInSlot(MiningComputerBlockEntity.MOTHERBOARD_SLOT, parts.get(BOARD));
+        hardware.setStackInSlot(MiningComputerBlockEntity.CPU_SLOT, parts.get(RIG_CPU));
+        for (int i = 0; i < MiningComputerBlockEntity.RAM_SLOTS; i++) {
+            hardware.setStackInSlot(MiningComputerBlockEntity.RAM_SLOTS_START + i, parts.get(RIG_RAM).copy());
+        }
+        hardware.setStackInSlot(MiningComputerBlockEntity.PSU_SLOT, parts.get(RIG_PSU));
+        hardware.setStackInSlot(MiningComputerBlockEntity.DISK_SLOT, AbandonedLoadouts.disk(own));
+        for (int i = 0; i < RigGeometry.of(own).risers(); i++) {
+            rig.risers().setStackInSlot(i, AbandonedLoadouts.riser(own));
+            if (!broken || random.nextFloat() >= GONE_CARD) {
+                hardware.setStackInSlot(MiningComputerBlockEntity.CARD_SLOTS_START + i, AbandonedLoadouts.rigCard(own));
+            }
+        }
+        if (working) {
+            rig.installOs(AbandonedLoadouts.system(own));
+        }
+        final CompoundTag tag = rig.saveWithFullMetadata(level.registryAccess());
+        if (working) {
+            switchedOn(tag);
+        }
+        return tag;
     }
 
     /* A battery bank charged as the building left it: full in a working one. */

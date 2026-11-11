@@ -3735,7 +3735,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   processor, memory, one supply, one disk and up to 4, 6 or 8 graphics cards on risers. The risers go in at its
   assembly window; the cards are seated on them in the world, the rig switched off, and come out sneaking with an empty
   hand. It runs a system and the miner, reached by ssh, and mines at start when told to. The MF Mining Boards, the
-  Mining Risers and the PCIe x1 Slot come with it.
+  Mining Risers and the PCIe x1 Slot come with it, and the crypto mining farm's rigs are Mining Computers now, whole
+  in a working farm and missing a third of their cards in a ruin.
 - (Computers) The ASICs, Blockwright's Forge S1 of the Standard (1,000,000 H/s at 1,400 W) and Forge A2 of the
   Advanced (10,000,000 H/s at 3,200 W): blocks made only to mine, their fans turning, their window setting the payout
   address and the pool.

@@ -94,6 +94,7 @@ public final class AbandonedMachines extends StructureProcessor {
             case "computer" -> AbandonedFills.computer(level, placed, mark, era, working, random);
             case "rack" -> AbandonedFills.rack(level, placed, mark, era, working, random);
             case "mainframe" -> AbandonedFills.mainframe(level, placed, era, working, random);
+            case "rig" -> AbandonedFills.rig(level, placed, mark, era, working, random);
             case "battery" -> AbandonedFills.battery(level, placed);
             default -> unmarked(data);
         };
