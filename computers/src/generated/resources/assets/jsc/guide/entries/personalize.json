@@ -237,7 +237,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:personalize",
-  "order": 202,
+  "order": 203,
   "section": "jsc:desktop_settings",
   "title": "jsc.guide.personalize.title"
 }

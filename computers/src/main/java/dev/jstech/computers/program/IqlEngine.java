@@ -235,6 +235,10 @@ public final class IqlEngine {
         if (parsed.isPower()) {
             return IqlPowerSetter.apply(mainframe, parsed.power());
         }
+        // Create's Rotation Speed Controllers the network's computers read are set through the control cable.
+        if (parsed.isKinetics()) {
+            return IqlKineticsSetter.apply(mainframe, parsed.kinetics());
+        }
         // Another mod's kind of Operation goes to a machine of the network, through the network's door.
         if (parsed.isRun()) {
             final MemberRuns.Outcome given = mainframe.networkOperations().run(parsed.run());

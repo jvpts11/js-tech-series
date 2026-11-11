@@ -150,6 +150,10 @@ public final class IqlError extends IllegalArgumentException {
     static final TextKey POWER_NEEDS_ON = TextKey.of("jsc.iql.error.power_needs_on",
             "UPDATE power sets one column, on: SET on = yes, or SET on = no");
 
+    // An UPDATE of the speed a Rotation Speed Controller aims at.
+    static final TextKey KINETICS_NEEDS_SPEED = TextKey.of("jsc.iql.error.kinetics_needs_speed",
+            "UPDATE create_kinetics sets one column, target_speed: SET target_speed = and a speed in RPM");
+
     // A duration.
     static final TextKey EMPTY_DURATION = TextKey.of("jsc.iql.error.empty_duration", "empty duration");
     static final TextKey NOT_A_DURATION = TextKey.of("jsc.iql.error.not_a_duration", "not a duration: %s");

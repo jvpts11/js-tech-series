@@ -103,6 +103,14 @@ public final class IqlParser {
                 return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
             }
         }
+        // The speed a Create Rotation Speed Controller aims at: UPDATE create_kinetics SET target_speed = 64 WHERE ...
+        if (IqlKineticsStatement.isKineticsUpdate(input)) {
+            try {
+                return IqlParseResult.okKinetics(IqlKineticsStatement.parse(input));
+            } catch (final IllegalArgumentException e) {
+                return IqlParseResult.error(reason(e), IqlParseResult.NO_POSITION);
+            }
+        }
         /*
          * Layer 2 first: CREATE/DROP/EXEC of a saved object. tryParse returns null (and we fall through)
          * for an ordinary action; it throws only when the text *is* a malformed definition.

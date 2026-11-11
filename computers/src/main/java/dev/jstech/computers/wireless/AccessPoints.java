@@ -18,6 +18,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -52,8 +53,10 @@ public final class AccessPoints {
     public static AccessPointBlockEntity nearest(final ServerLevel level, final BlockPos pos) {
         AccessPointBlockEntity best = null;
         double bestDistance = Double.MAX_VALUE;
+        // Measured where each stands in the world, a ship's access point where its ship flies now.
+        final Vec3 device = AccessPointBlockEntity.inWorld(level, pos);
         for (final AccessPointBlockEntity point : loaded(level)) {
-            final double distance = point.getBlockPos().distSqr(pos);
+            final double distance = AccessPointBlockEntity.inWorld(level, point.getBlockPos()).distanceToSqr(device);
             if (point.serving() != null && point.reaches(pos) && distance < bestDistance) {
                 best = point;
                 bestDistance = distance;

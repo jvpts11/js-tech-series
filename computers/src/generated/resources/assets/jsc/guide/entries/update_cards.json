@@ -166,6 +166,22 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.update_cards.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.update_cards.text8"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "UPDATE create_kinetics SET target_speed = 64"
+      ],
+      "name": "kinetics.iql"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -214,6 +230,10 @@
         {
           "fix": "jsc.guide.update_cards.fix11",
           "problem": "jsc.guide.update_cards.problem11"
+        },
+        {
+          "fix": "jsc.guide.update_cards.fix12",
+          "problem": "jsc.guide.update_cards.problem12"
         }
       ]
     },
@@ -228,7 +248,7 @@
     }
   ],
   "id": "jsc:update_cards",
-  "order": 356,
+  "order": 357,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.update_cards.title"
 }

@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.industrial;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.integration.create.KineticTable;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.iql.IqlTable;
@@ -54,8 +55,10 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -87,6 +90,10 @@ public final class ControllerOperationsGameTests {
     private static final int NO_STATION = 9;
     private static final double CHLORINE_MOLES = 0.2;
     private static final double NEAR = 16.0;
+    private static final ResourceLocation CREATIVE_MOTOR = ResourceLocation.fromNamespaceAndPath("create",
+            "creative_motor");
+    private static final ResourceLocation SPEED_CONTROLLER = ResourceLocation.fromNamespaceAndPath("create",
+            "rotation_speed_controller");
 
     private ControllerOperationsGameTests() {
     }
@@ -140,6 +147,59 @@ public final class ControllerOperationsGameTests {
                         "the first is switched off"))
                 .thenWaitUntil(() -> helper.assertTrue(values(helper, BESIDE.get(1)).redstoneMode()
                         .filter(mode -> mode == RedstoneMode.LOW).isPresent(), "the second works without a signal"))
+                .thenSucceed();
+    }
+
+    /**
+     * With Create (computers/docs/design/implementation.md, "Create"), the controller reads the kinetic blocks on its
+     * cable into the {@code create_kinetics} table, a creative motor's speed and capacity and a Rotation Speed
+     * Controller's target, and an UPDATE of the table sets the Rotation Speed Controller; a motor is no controller to
+     * set. Run with {@code -PwithCreate}; without Create there is no such table.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void controller_readsCreatesKineticBlocksAndSetsASpeedController(final GameTestHelper helper) {
+        if (!"present".equals(System.getProperty("jsc.gametests.create"))) {
+            helper.assertFalse(KineticTable.declared(), "without Create there is no create_kinetics table");
+            helper.succeed();
+            return;
+        }
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final EraNetwork network = EraNetwork.lay(world, EraKit.VINTAGE);
+        final IndustrialControllerBlockEntity controller = controller(world, EraKit.VINTAGE,
+                IndustrialControllers.VINTAGE_INDUSTRIAL_CONTROLLER_COMPUTER.get(), FieldbusCards.RS485.get());
+        for (final BlockPos at : RUN_OF_CABLE) {
+            TestCables.lay(helper, at, IndustrialControlCable.CABLE);
+        }
+        helper.setBlock(BESIDE.get(0), BuiltInRegistries.BLOCK.get(CREATIVE_MOTOR));
+        helper.setBlock(BESIDE.get(1), BuiltInRegistries.BLOCK.get(SPEED_CONTROLLER));
+        helper.startSequence()
+                .thenWaitUntil(() -> joined(helper, network.mainframe()))
+                .thenWaitUntil(() -> helper.assertTrue(controller.machines().size() == 2,
+                        "its card reads the motor and the speed controller: " + controller.machines()))
+                .thenExecute(() -> {
+                    final IqlTable kinetics = run(helper, network.mainframe(), "QUERY create_kinetics").table();
+                    helper.assertTrue(column(kinetics, "block").equals(Set.of("Creative Motor",
+                            "Rotation Speed Controller")), "a row for each: " + column(kinetics, "block"));
+                    final int motor = rowOf(kinetics, "Creative Motor");
+                    // The sign is the way it turns, which the way the motor faces sets.
+                    helper.assertTrue(Math.abs(Double.parseDouble(kinetics.cell(motor, "speed (RPM)").english())) == 16,
+                            "the motor turns at its 16 RPM: " + kinetics.cell(motor, "speed (RPM)").english());
+                    helper.assertTrue(Double.parseDouble(kinetics.cell(motor, "capacity (su)").english()) > 0,
+                            "with the capacity it gives its network");
+                    final IqlEngine.Outcome set = run(helper, network.mainframe(), "UPDATE create_kinetics SET "
+                            + "target_speed = 64 WHERE block = 'Rotation Speed Controller'");
+                    helper.assertTrue(set.ok(), "the network sets the speed controller: " + set.message());
+                    helper.assertTrue(values(helper, BESIDE.get(1)).read(KineticTable.TARGET_SPEED).orElse(0) == 64,
+                            "which aims at 64 RPM now");
+                    final IqlTable after = run(helper, network.mainframe(), "QUERY create_kinetics").table();
+                    helper.assertTrue(after.cell(rowOf(after, "Rotation Speed Controller"), "target_speed (RPM)")
+                            .english().equals("64"), "as the table says");
+                    final IqlEngine.Outcome both = run(helper, network.mainframe(),
+                            "UPDATE create_kinetics SET target_speed = -32");
+                    helper.assertFalse(both.ok(), "a motor kept as well is no controller to set: " + both.message());
+                    helper.assertTrue(values(helper, BESIDE.get(1)).read(KineticTable.TARGET_SPEED).orElse(0) == -32,
+                            "while the speed controller kept is set all the same");
+                })
                 .thenSucceed();
     }
 
@@ -309,6 +369,12 @@ public final class ControllerOperationsGameTests {
     private static Set<String> column(final IqlTable table, final String column) {
         return IntStream.range(0, table.rows().size()).mapToObj(row -> table.cell(row, column).english())
                 .collect(Collectors.toSet());
+    }
+
+    /* The row of the table whose block is {@code block}, or -1 when it has none. */
+    private static int rowOf(final IqlTable table, final String block) {
+        return IntStream.range(0, table.rows().size()).filter(row -> table.cell(row, "block").english()
+                .equals(block)).findFirst().orElse(-1);
     }
 
     private static IMachineParameters values(final GameTestHelper helper, final BlockPos at) {

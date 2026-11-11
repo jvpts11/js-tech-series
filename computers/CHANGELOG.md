@@ -778,6 +778,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   window shows the item at work, the queue and the output. The Crypto Wallet's Print tab chooses the printer and the
   copies from the server's price list, and its Auto print prints one item by itself whenever the balance passes what
   the wallet keeps by its price.
+- Create, from 6.0.11 on the 6.0 line: a contraption carries a small computer and sets it down switched
+  off, shut down cleanly with its system, parts, files and node; a computer copying files or installing a system is a
+  block Create may not move, as are the Mainframe, the Server Rack, the Mining Computer and the WAN Gateway. A
+  computer aboard a ship of Create Aeronautics keeps running in flight, and Wi-Fi reaches from where the ship flies
+  now, so a ship talks to the ground. With J's Industrial too, the industrial control cable reads Create's turning
+  blocks into the `create_kinetics` table (speed, stress, capacity, overstressed, and a Rotation Speed Controller's
+  target speed), and `UPDATE create_kinetics SET target_speed = ...` sets the Rotation Speed Controllers its WHERE
+  keeps. On another version of Create this work stays off, with a warning in the log.
 
 ### Changed
 - Removable media in real bytes: a floppy disk holds 1.44 MB, a CD 700 MB, a DVD 4.7 GB, a Blu-ray 25 GB

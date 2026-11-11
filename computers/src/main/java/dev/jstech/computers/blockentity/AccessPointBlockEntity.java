@@ -19,6 +19,7 @@ import dev.jstech.core.energy.EnergyStore;
 import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.core.jstechseries.energy.JsEnergy;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.moving.ForeignMovers;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
@@ -29,6 +30,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,10 +124,20 @@ public class AccessPointBlockEntity extends SyncedBlockEntity {
         return Boolean.TRUE.equals(linked.get());
     }
 
-    /** Whether a device at {@code pos} is within its reach, as the crow flies. */
+    /**
+     * Whether a device at {@code pos} is within its reach, as the crow flies, where each stands in the world: an
+     * access point aboard a ship of Create Aeronautics reaches one on the ground from where the ship flies now
+     * (computers/docs/design/implementation.md, "Create").
+     */
     public boolean reaches(final BlockPos pos) {
         final int reach = standard().reachBlocks();
-        return worldPosition.distSqr(pos) <= (double) reach * reach;
+        return level == null ? worldPosition.distSqr(pos) <= (double) reach * reach
+                : inWorld(level, worldPosition).distanceToSqr(inWorld(level, pos)) <= (double) reach * reach;
+    }
+
+    /** Where {@code pos} is in the world: a place aboard a moving ship, where the ship is now; any other, itself. */
+    public static Vec3 inWorld(final Level level, final BlockPos pos) {
+        return ForeignMovers.inWorld(level, Vec3.atCenterOf(pos));
     }
 
     /**

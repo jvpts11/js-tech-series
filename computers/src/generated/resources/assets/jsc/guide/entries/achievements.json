@@ -97,7 +97,7 @@
   ],
   "icon": "jsc:personal_computer",
   "id": "jsc:achievements",
-  "order": 162,
+  "order": 163,
   "section": "jsc:the_achievements",
   "title": "jsc.guide.achievements.title"
 }

@@ -391,12 +391,18 @@ final class IqlLanguagePages {
                 .row(GuideCell.code("could not start the UPDATE"), GuideCell.words("The network did not start the"
                         + " change."))
                 .subheading("The power of a rack's bays")
-                .paragraph("One table takes an UPDATE of its own: power, the bays of the racks with a PDU. SET on = no"
+                .paragraph("The power table takes an UPDATE of its own: the bays of the racks with a PDU. SET on = no"
                         + " switches off every bay its WHERE keeps, and SET on = yes switches them on, as their PWR"
                         + " switches would; it needs no card. A job running it turns servers on and off by rule. A"
                         + " server the rack has no energy for, or whose supply failed, does not start, and the reply"
                         + " counts it.")
                 .listingIn("iql", "power.iql", "UPDATE power SET on = no WHERE server = 'VAULT-01'")
+                .subheading("The speed of Create's machines")
+                .paragraph("With Create installed, the create_kinetics table takes an UPDATE too ([](jsc:create)). SET"
+                        + " target_speed = 64 aims every Rotation Speed Controller its WHERE keeps at 64 RPM, and a"
+                        + " minus sign turns it the other way. A block it keeps that is no Rotation Speed Controller,"
+                        + " such as a motor, is left as it is, and the reply counts it.")
+                .listingIn("iql", "kinetics.iql", "UPDATE create_kinetics SET target_speed = 64")
                 .ifSomethingGoesWrong("this computer has no <card name>",
                         "Put that card into this Personal Computer, then run the statement again.",
                         "only a Personal Computer's own cards change items for the network",
@@ -418,7 +424,9 @@ final class IqlLanguagePages {
                         "unknown action: <word> (expected SMELT, ENCHANT, REPAIR, COMBINE or NAME)",
                         "Type one of the five action words.",
                         "no bay of a rack with a PDU on this network is so",
-                        "Mount a PDU in the rack, and check the WHERE with QUERY power first.")
+                        "Mount a PDU in the rack, and check the WHERE with QUERY power first.",
+                        "no block of Create's this network's computers read is so",
+                        "Check the WHERE with QUERY create_kinetics first.")
                 .seeAlso("jsc:workshop", "jsc:clauses_priority_if_with", "jsc:personal_computers",
                         "jsc:rack_equipment")
                 .register();

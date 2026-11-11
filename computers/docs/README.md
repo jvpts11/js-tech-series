@@ -17,6 +17,7 @@ part by part, the systems and programs they run, and the network that stores, mo
 | [Cables](CABLES.md) | Every cable with its speed and range, routers and repeaters, buses, the crafting network, peripheral cables. |
 | [Σ#](SIGMA.md) | The computers' programming language: what a program can be, what it can reach, and what it costs. |
 | [ComputerCraft](COMPUTERCRAFT.md) | Working together with CC: Tweaked's computers through the Network Gateway. |
+| [Create](CREATE.md) | Computers on Create's contraptions and Aeronautics' ships, and Create's machines read and set. |
 | [Music on a server](SOUNDFOUNDRY.md) | For server owners: where the music lives, the catalogue, and its settings. |
 
 The same, and more, is in the game: the **Guide to Operations**, the mod's own manual (tab J's Computers, among the

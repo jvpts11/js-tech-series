@@ -21,6 +21,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -30,7 +31,8 @@ import org.jetbrains.annotations.Nullable;
  * The state tables other mods declare, as the network's language reads them: {@code QUERY mymod:reactors WHERE
  * temperature > 90}, a row for each of their machines on the network, so a reactor is asked about as storage is and no
  * mod depends on another to be read. A table is named by its id, or by its id's path when one table alone has that
- * path; each has the columns its mod declares and {@link #AT}, where the machine stands.
+ * path; each has the columns its mod declares and {@link #AT}, where the machine stands. A table whose rows no
+ * machine of the network writes itself (a Create block read through a computer's cable) takes them from its source.
  */
 @TextHolder
 public final class IqlStateTables {
@@ -42,7 +44,23 @@ public final class IqlStateTables {
     static final TextKey YES = TextKey.of("jsc.iql.table.yes", "yes");
     static final TextKey NO = TextKey.of("jsc.iql.table.no", "no");
 
+    /* The tables whose rows come from a source rather than from the network's members, by their id. */
+    private static final Map<ResourceLocation, IRowSource> SOURCES = new ConcurrentHashMap<>();
+
     private IqlStateTables() {
+    }
+
+    /** Where the rows of a table come from that no member of the network writes itself. */
+    @FunctionalInterface
+    public interface IRowSource {
+
+        /** The rows of the table on {@code network} as they are now; on the server. */
+        List<StateRow> rows(ServerLevel level, NetworkUuid network);
+    }
+
+    /** Takes the rows of {@code table} from {@code source} from now on, while the game loads. */
+    public static void rowsFrom(final StateTable table, final IRowSource source) {
+        SOURCES.put(table.id(), source);
     }
 
     /**
@@ -108,20 +126,34 @@ public final class IqlStateTables {
     public static List<Map<String, Text>> rows(final ServerLevel level, final NetworkUuid network,
                                                final StateTable table) {
         final List<Map<String, Text>> rows = new ArrayList<>();
-        for (final StateRow state : NetworkTables.rows(level, network, table)) {
-            final Map<String, Text> row = new LinkedHashMap<>();
-            for (final StateColumn column : table.columns()) {
-                row.put(column.name(), cellOf(state.value(column.name())));
-            }
-            row.put(AT, Text.literal(BlockPos.of(state.pos()).toShortString()));
-            rows.add(row);
+        final IRowSource source = SOURCES.get(table.id());
+        for (final StateRow state : source != null ? source.rows(level, network)
+                : NetworkTables.rows(level, network, table)) {
+            rows.add(cellsOf(state));
         }
         return rows;
     }
 
+    /** A row of a state table as a WHERE reads it and the grid shows it, keyed by column, {@link #AT} last. */
+    public static Map<String, Text> cellsOf(final StateRow state) {
+        final Map<String, Text> row = new LinkedHashMap<>();
+        for (final StateColumn column : state.table().columns()) {
+            row.put(column.name(), cellOf(state.value(column.name())));
+        }
+        row.put(AT, Text.literal(BlockPos.of(state.pos()).toShortString()));
+        return row;
+    }
+
     /** The tables {@code network}'s machines have rows in, in the order their mods declared them. */
     public static List<StateTable> tablesOf(final ServerLevel level, final NetworkUuid network) {
-        return NetworkTables.tablesOf(level, network);
+        final List<StateTable> tables = new ArrayList<>(NetworkTables.tablesOf(level, network));
+        for (final StateTable table : StateTables.all()) {
+            if (SOURCES.containsKey(table.id()) && !tables.contains(table)
+                    && !SOURCES.get(table.id()).rows(level, network).isEmpty()) {
+                tables.add(table);
+            }
+        }
+        return tables;
     }
 
     /*

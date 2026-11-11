@@ -186,7 +186,7 @@
     }
   ],
   "id": "jsc:dnf",
-  "order": 278,
+  "order": 279,
   "section": "jsc:linux_packages",
   "title": "jsc.guide.dnf.title"
 }

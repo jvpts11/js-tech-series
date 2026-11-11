@@ -208,7 +208,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:recipe_report",
-  "order": 390,
+  "order": 391,
   "section": "jsc:iql_recipe_list",
   "title": "jsc.guide.recipe_report.title"
 }

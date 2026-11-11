@@ -134,6 +134,11 @@ public abstract class AbstractSmallComputerBlock<E extends AbstractSmallComputer
         return front;
     }
 
+    /** The kind of block entity the computer keeps. */
+    public BlockEntityType<E> blockEntityType() {
+        return entityType.get();
+    }
+
     @Override
     public BlockState getStateForPlacement(final BlockPlaceContext context) {
         return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());

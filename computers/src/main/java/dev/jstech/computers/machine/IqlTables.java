@@ -31,7 +31,6 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
-import dev.jstech.core.jstechseries.network.NetworkTables;
 import dev.jstech.core.jstechseries.network.ServerNode;
 import dev.jstech.core.jstechseries.network.StateTable;
 import dev.jstech.core.text.GameText;
@@ -228,7 +227,7 @@ public final class IqlTables {
             case "power" -> powerBays(level, network).size();
             default -> {
                 final StateTable state = IqlStateTables.find(table);
-                yield state == null ? 0 : NetworkTables.rows(level, network, state).size();
+                yield state == null ? 0 : IqlStateTables.rows(level, network, state).size();
             }
         };
     }

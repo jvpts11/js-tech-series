@@ -70,3 +70,12 @@ type = "optional"
 versionRange = "*"
 ordering = "AFTER"
 side = "BOTH"
+
+# Any version loads: outside the versions J's Computers is tested against, its work with Create stays off and the log
+# says so, rather than the game refusing to start.
+[[dependencies.${mod_id}]]
+modId = "create"
+type = "optional"
+versionRange = "*"
+ordering = "AFTER"
+side = "BOTH"

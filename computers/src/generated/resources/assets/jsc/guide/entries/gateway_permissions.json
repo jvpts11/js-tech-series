@@ -255,7 +255,7 @@
     }
   ],
   "id": "jsc:gateway_permissions",
-  "order": 159,
+  "order": 160,
   "section": "jsc:gateway",
   "title": "jsc.guide.gateway_permissions.title"
 }

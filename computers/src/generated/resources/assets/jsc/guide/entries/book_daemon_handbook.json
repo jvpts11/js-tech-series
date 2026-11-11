@@ -39,7 +39,7 @@
   "items": [
     "jsc:daemon_handbook"
   ],
-  "order": 171,
+  "order": 172,
   "section": "jsc:the_library",
   "title": "jsc.guide.book_daemon_handbook.title"
 }

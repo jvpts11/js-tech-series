@@ -50,7 +50,8 @@ From the Legacy on, a small computer can join the network with no cable of its o
 network device: it takes the access cable of its era or an older one and the energy cable, both through one face, and
 gives the network it is cabled to to every computer with a card round it. Each computer joins the nearest access point
 that reaches it; several in one place do not conflict, and one takes any number of computers. A computer with a cable
-keeps its cable for its link.
+keeps its cable for its link. Aboard a ship of Create Aeronautics, the reach is measured from where the ship flies
+now, so a ship talks to the ground by Wi-Fi (added 2026-11-11, [Create](CREATE.md)).
 
 | Access point | Standard | Reach | Speed | Draw | Where it goes |
 | --- | --- | ---: | ---: | ---: | --- |
@@ -269,6 +270,10 @@ QUERY disks
   no). `UPDATE power SET on = no WHERE server = 'VAULT-01'` switches the bays the WHERE keeps off, `SET on = yes` on,
   as their PWR switches would; from a job it turns servers on and off by rule. The reply counts the bays switched,
   and those that did not start for want of energy or with a failed supply ([Hardware](HARDWARE.md#upses)).
+- **Create's kinetic networks** (added 2026-11-11): with Create and J's Industrial installed, `QUERY create_kinetics`
+  lists the Create blocks the network's computers read through the industrial control cable, with their speed, stress,
+  capacity and whether they are overstressed, and `UPDATE create_kinetics SET target_speed = 64` aims the Rotation
+  Speed Controllers its WHERE keeps at that speed ([Create](CREATE.md)).
 - **Upkeep**: `ANALYZE`, `VACUUM`, `REINDEX`.
 - **Changing items**: `UPDATE ... SET SMELT`, `ENCHANT`, `REPAIR`, `COMBINE ... WITH ...`, `NAME '...'`. The work
   is the asking Personal Computer's workshop cards', at their price (added 2026-11-08): by default energy, which

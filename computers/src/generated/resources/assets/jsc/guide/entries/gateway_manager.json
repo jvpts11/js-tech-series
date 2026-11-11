@@ -166,7 +166,7 @@
     }
   ],
   "id": "jsc:gateway_manager",
-  "order": 158,
+  "order": 159,
   "section": "jsc:gateway",
   "title": "jsc.guide.gateway_manager.title"
 }

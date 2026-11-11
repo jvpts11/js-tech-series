@@ -17,7 +17,7 @@ import dev.jstech.core.guide.ModGuide;
 
 /**
  * The pages of the other mods that add features to J's Computers: ComputerCraft through the Network Gateway, the
- * recipe viewers JEI and EMI, Mekanism and Jade. Each feature exists only while its mod is installed.
+ * recipe viewers JEI and EMI, Mekanism, Jade and Create. Each feature exists only while its mod is installed.
  */
 final class OtherModsPages {
 
@@ -37,6 +37,7 @@ final class OtherModsPages {
         jeiAndEmi(guide, section);
         mekanism(guide, section);
         jade(guide, section);
+        create(guide, section);
     }
 
     private static void gatewayPages(final ModGuide guide, final GuideChapter chapter) {
@@ -52,8 +53,8 @@ final class OtherModsPages {
 
     private static void otherModsIntro(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("other_mods_intro", section).titled("Other mods")
-                .paragraph("Some of the mods you play with can add to J's Computers. Five of them each add a"
-                        + " feature when they are installed: ComputerCraft, JEI, EMI, Mekanism and Jade.")
+                .paragraph("Some of the mods you play with can add to J's Computers. Six of them each add a"
+                        + " feature when they are installed: ComputerCraft, JEI, EMI, Mekanism, Jade and Create.")
                 .paragraph("Each of them is optional. Without one of these mods, its feature is missing,"
                         + " and the rest of J's Computers works as before.")
                 .paragraph("ComputerCraft computers run programs written in Lua. The Network Gateway is the bridge"
@@ -163,6 +164,55 @@ final class OtherModsPages {
                         "Jade shows only a name on a Computers block.",
                         "That is expected for now. Read the block's own page in this guide, which explains its"
                                 + " window and its parts.")
+                .register();
+    }
+
+    private static void create(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("create", section).titled("Create")
+                .paragraph("Create is a mod of machines that turn, and of contraptions: blocks that a bearing, a"
+                        + " piston, a pulley or a train carries off and sets down again. Create is optional.")
+                .subheading("Computers on contraptions")
+                .paragraph("A contraption can carry a Personal Computer, a Crafting Computer or another small"
+                        + " computer. The computer comes down switched off where the contraption sets it, with its"
+                        + " system, its parts and its files. Switch it on again when you want it.")
+                .paragraph("A computer that copies files or installs a system is not carried until it is done. If"
+                        + " the contraption starts from it, or moves into it, Create says the block cannot be moved"
+                        + " and the contraption does not assemble. If it is only glued on beside, it stays where it"
+                        + " is.")
+                .paragraph("The big machines never ride a contraption. The Mainframe, the Server Rack, the Mining"
+                        + " Computer and the WAN Gateway stay where they stand.")
+                .subheading("Computers on ships")
+                .paragraph("Create Aeronautics builds ships that fly with their blocks. A computer aboard keeps"
+                        + " running in flight. A ship talks to the ground by Wi-Fi: a computer aboard with a Wi-Fi card"
+                        + " joins an access point on the ground within its reach, and an access point aboard reaches"
+                        + " computers on the ground ([](jsc:wireless)). A data cable never crosses between them.")
+                .subheading("Create's machines on the network")
+                .paragraph("With J's Industrial installed as well, its industrial control cable reads Create's turning"
+                        + " blocks, such as a motor, a shaft or a Rotation Speed Controller. The network lists them in"
+                        + " the create_kinetics table: each block with its speed, the stress on its kinetic network,"
+                        + " the capacity of that network, and whether it is overstressed.")
+                .table("Create's machines in IQL", "Statement", "What it does")
+                .row(GuideCell.code("QUERY create_kinetics"),
+                        GuideCell.words("Lists every Create block the network's computers read."))
+                .row(GuideCell.code("UPDATE create_kinetics SET target_speed = 64"),
+                        GuideCell.words("Aims every Rotation Speed Controller it keeps at 64 RPM."))
+                .paragraph("Clutches and gearshifts are worked by redstone. Use a Redstone Interface for them"
+                        + " ([](jsc:redstone_interfaces)).")
+                .define("Contraption", "A group of blocks that Create moves together and sets down again.")
+                .define("RPM", "Turns a minute: how fast a Create block turns.")
+                .define("Stress unit (su)", "Create's measure of how much a kinetic network carries and how much it"
+                        + " can carry.")
+                .ifSomethingGoesWrong(
+                        "A bearing does not assemble, and Create says a computer cannot be moved.",
+                        "The computer is copying files or installing a system. Wait until it is done, then start"
+                                + " the bearing again.",
+                        "The create_kinetics table is empty.",
+                        "A computer of the network must read the blocks. Link one with a fieldbus card to them"
+                                + " through the industrial control cable.",
+                        "The network says \"the create_kinetics table is only there with Create\".",
+                        "Create is not installed, or its version is not one J's Computers works with. The log"
+                                + " says which.")
+                .seeAlso("jsc:wireless", "jsc:redstone_interfaces", "jsc:update_cards")
                 .register();
     }
 

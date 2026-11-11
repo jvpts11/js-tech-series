@@ -34,6 +34,7 @@ import dev.jstech.computers.eventlog.NetworkProgress;
 import dev.jstech.computers.eventlog.NetworkWorldEvents;
 import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.computers.hardware.HardwareKinds;
+import dev.jstech.computers.integration.create.CreateComputers;
 import dev.jstech.computers.integration.jei.payload.JeiPayloads;
 import dev.jstech.computers.item.PartTooltips;
 import dev.jstech.computers.machine.DiscCopies;
@@ -181,6 +182,8 @@ public class JsComputers {
         UpdatePayloads.listen(modEventBus);
         WorkshopPayloads.listen(modEventBus);
         JeiPayloads.listen(modEventBus);
+        // Create, behind its guard: computers on its contraptions and its kinetic networks read and set.
+        CreateComputers.bootstrap(modEventBus);
         JscDataGenerators.listen(modEventBus);
         MachineOperators.listen();
         PendingAwards.listen();

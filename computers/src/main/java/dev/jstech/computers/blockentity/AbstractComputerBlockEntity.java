@@ -49,11 +49,13 @@ import dev.jstech.computers.hardware.PsuTexts;
 import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
+import dev.jstech.computers.integration.create.CreateTexts;
 import dev.jstech.computers.item.BayDriveItem;
-import dev.jstech.computers.menu.MonitorSessionMenu;
+import dev.jstech.computers.machine.FileCopyJobs;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
+import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.MachineReadingsPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
@@ -783,6 +785,27 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         }
         if (!wasSwitchedOn) {
             testedInvalidBuild();
+        }
+    }
+
+    /**
+     * Whether a moving contraption must leave the machine where it is now (computers/docs/design/implementation.md,
+     * "Create"): it is doing what it cannot lose, a copy under way or a system being installed, which its own screens
+     * show while it goes on.
+     */
+    public boolean heldInPlace(final ServerLevel level) {
+        return FileCopyJobs.runningOn(level, worldPosition) > 0 || installing() != null;
+    }
+
+    /**
+     * A moving contraption set the machine down where it stands now: it rode out of the world with the contraption's
+     * blocks, so it comes down shut down cleanly, as switching it off leaves it, keeping everything, and stays off
+     * until someone turns it on.
+     */
+    public void setDownByContraption(final ServerLevel level) {
+        if (power.on()) {
+            setPowered(false);
+            logEvent(level, EventLevel.INFO, CreateTexts.CARRIED_OFF.text());
         }
     }
 

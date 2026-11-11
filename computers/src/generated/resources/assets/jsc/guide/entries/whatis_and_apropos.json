@@ -110,7 +110,7 @@
   ],
   "icon": "jsc:guide_to_operations",
   "id": "jsc:whatis_and_apropos",
-  "order": 268,
+  "order": 269,
   "section": "jsc:help_at_the_prompt",
   "title": "jsc.guide.whatis_and_apropos.title"
 }

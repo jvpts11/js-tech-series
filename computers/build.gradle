@@ -79,6 +79,11 @@ dependencies {
     // API jar; nothing loads a ComputerCraft class unless the mod is present (soft dependency, guarded at
     // runtime). The 1.21.1 line publishes its NeoForge build under the "forge" artifact name.
     compileOnly "cc.tweaked:cc-tweaked-${minecraft_version}-forge-api:${cc_tweaked_version}"
+    // Create: computers on its contraptions and its kinetic networks read and set through the industrial control
+    // cable compile against its own classes; nothing loads one unless Create is present, of a tested version.
+    compileOnly("com.simibubi.create:create-${minecraft_version}:${create_version}") { transitive = false }
+    // Ponder: a kinetic block entity of Create's is one of its virtual block entities.
+    compileOnly("net.createmod.ponder:ponder-neoforge:${ponder_version}") { transitive = false }
 
     // The JSON library the game brings, at its version, for the unit tests that read the docs' examples as JSON.
     testImplementation 'com.google.code.gson:gson:2.10.1'
