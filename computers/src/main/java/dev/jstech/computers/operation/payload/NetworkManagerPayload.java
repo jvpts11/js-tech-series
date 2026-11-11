@@ -27,6 +27,9 @@ public record NetworkManagerPayload(BlockPos hostPos, String networkId, List<Net
 
     public static final int MAX_NODES = 128;
     public static final int MAX_STAT_TYPES = 16;
+    /* The capacity graph's samples, with room to spare. */
+    public static final int MAX_GRAPH = 256;
+    private static final int WEEK_HOURS = 168;
 
     /**
      * Network-wide hardware totals the Hardware tab shows: the orchestration capacity in items/tick, the
@@ -63,35 +66,51 @@ public record NetworkManagerPayload(BlockPos hostPos, String networkId, List<Net
     }
 
     /**
-     * One Operation type's last hour: how many settled, the share that fell short (whole percent), the mean
-     * ticks waited before running and the mean ticks run, and what the type moved.
+     * One Operation type over a period: how many settled, how many of those fell short, the mean ticks waited before
+     * running and the mean ticks run, and what the type moved.
      */
-    public record TypeStat(byte type, int count, int shortfallPercent, int averageWait, int averageRun, long moved) {
+    public record TypeStat(byte type, int count, int failed, int averageWait, int averageRun, long moved) {
         public static final StreamCodec<RegistryFriendlyByteBuf, TypeStat> STREAM_CODEC =
                 StreamCodec.composite(
                         ByteBufCodecs.BYTE, TypeStat::type,
                         ByteBufCodecs.VAR_INT, TypeStat::count,
-                        ByteBufCodecs.VAR_INT, TypeStat::shortfallPercent,
+                        ByteBufCodecs.VAR_INT, TypeStat::failed,
                         ByteBufCodecs.VAR_INT, TypeStat::averageWait,
                         ByteBufCodecs.VAR_INT, TypeStat::averageRun,
                         ByteBufCodecs.VAR_LONG, TypeStat::moved,
                         TypeStat::new);
     }
 
-    /** The Stats tab: the per-type rows, the day's peak of Operations in flight, and the hour's moved total. */
-    public record Statistics(List<TypeStat> types, int peakConcurrent, long movedLastHour) {
-        public static final Statistics EMPTY = new Statistics(List.of(), 0, 0L);
+    /**
+     * The Stats tab: each type over the last game hour, day and 7 days; the most Operations in flight at once this game
+     * day and the tick it was reached; and the share of the orchestration capacity used in each sample of the last 2
+     * game hours, oldest first, in percent.
+     */
+    public record Statistics(List<TypeStat> hour, List<TypeStat> day, List<TypeStat> week, int peakToday,
+                             long peakAt, byte[] graph) {
+        public static final Statistics EMPTY = new Statistics(List.of(), List.of(), List.of(), 0, 0L, new byte[0]);
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Statistics> STREAM_CODEC =
                 StreamCodec.composite(
-                        TypeStat.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_STAT_TYPES)), Statistics::types,
-                        ByteBufCodecs.VAR_INT, Statistics::peakConcurrent,
-                        ByteBufCodecs.VAR_LONG, Statistics::movedLastHour,
+                        TypeStat.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_STAT_TYPES)), Statistics::hour,
+                        TypeStat.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_STAT_TYPES)), Statistics::day,
+                        TypeStat.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_STAT_TYPES)), Statistics::week,
+                        ByteBufCodecs.VAR_INT, Statistics::peakToday,
+                        ByteBufCodecs.VAR_LONG, Statistics::peakAt,
+                        ByteBufCodecs.byteArray(MAX_GRAPH), Statistics::graph,
                         Statistics::new);
 
         /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
         public Statistics {
-            types = List.copyOf(types);
+            hour = List.copyOf(hour);
+            day = List.copyOf(day);
+            week = List.copyOf(week);
+            graph = graph.clone();
+        }
+
+        /** The rows of the period of {@code hours}: 1, 24 or 168. */
+        public List<TypeStat> of(final int hours) {
+            return hours >= WEEK_HOURS ? week : hours > 1 ? day : hour;
         }
     }
 

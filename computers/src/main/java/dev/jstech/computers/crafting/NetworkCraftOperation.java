@@ -1201,6 +1201,11 @@ public final class NetworkCraftOperation implements IPersistentOperation {
     }
 
     @Override
+    public String askedBy() {
+        return requesterLabel;
+    }
+
+    @Override
     public OperationRecord toRecord() {
         /*
          * Keep the sub-operations (each plan step) in the settled record too, so the operations log shows what a

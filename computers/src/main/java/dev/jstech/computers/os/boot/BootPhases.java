@@ -164,6 +164,16 @@ public final class BootPhases {
         return this.upSince == 0L ? 0L : Math.max(0L, now - this.upSince);
     }
 
+    /** The tick the system came up on, zero while it is not up: what a save keeps of it. */
+    public long upSince() {
+        return this.upSince;
+    }
+
+    /** Takes back the tick the system came up on, as a save kept it, so a machine loaded running keeps counting. */
+    public void restoreUpSince(final long tick) {
+        this.upSince = Math.max(0L, tick);
+    }
+
     /** How long this closing-down takes in all, so a screen joining it knows how far along it is. */
     public int downTotal() {
         return this.goingDown ? this.downTicksTotal : 0;

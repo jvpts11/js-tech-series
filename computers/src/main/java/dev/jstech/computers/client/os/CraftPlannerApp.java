@@ -15,6 +15,7 @@ import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.operation.payload.CraftPlannerPayload;
 import dev.jstech.computers.operation.payload.NiCraftPayload;
 import dev.jstech.computers.operation.payload.RequestCraftPlannerPayload;
+import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
@@ -26,6 +27,8 @@ import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.time.GameCalendar;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -45,14 +48,25 @@ import static dev.jstech.computers.client.os.CraftPlannerTexts.HAVE;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.INGREDIENTS;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.LOADING;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.MACHINE_RUNS;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.MANY_SHORT;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.MISSING;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.NEED_HAVE;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.NOT_CRAFTABLE;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.NO_MATCH;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.ONE_SHORT;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.PARTIAL;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.PICK_AN_ITEM;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.PLANNING;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PRINTED_AT;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PRINTED_FROM;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PRINT_HAVE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PRINT_MISSING;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PRINT_NEED;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PRINT_STAGE;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PRINT_TARGET;
+import static dev.jstech.computers.client.os.CraftPlannerTexts.PRINT_TITLE;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.RAW;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.SEARCH_ITEM;
-import static dev.jstech.computers.client.os.CraftPlannerTexts.SHORT;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.STAGES;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.STEPS;
 import static dev.jstech.computers.client.os.CraftPlannerTexts.SUMMARY;
@@ -71,12 +85,14 @@ import static dev.jstech.computers.client.os.CraftPlannerTexts.WHEEL_TO_SCROLL;
 public final class CraftPlannerApp implements IDesktopApp {
 
     private static final int REFRESH_FRAMES = 60;
+    /* The program's id, which names it as the desktop does on what it prints. */
+    private static final String PROGRAM = "jsc:craft_planner";
     /**
      * The planner's own colours, {@code jsc:app/craft_planner}: what can be made, what is missing, what wants the
      * eye, and the pill behind a plan that can run and one that cannot.
      */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/craft_planner",
-            new Colours(0xFF2EA043, 0xFFD1495B, 0xFFE0A020, 0x2E2EA043, 0x33E0A020));
+            new Colours(0xFF2EA043, 0xFFD1495B, 0xFFE0A020, 0x2E2EA043, 0x33E0A020, 0x40D1495B));
     private static final int CATALOG_ROW_H = 15;
     private static final int STAGE_ROW_H = 10;
     private static final int INGREDIENT_ROW_H = 11;
@@ -121,6 +137,8 @@ public final class CraftPlannerApp implements IDesktopApp {
     private final Label treeHint;
     private final ListView<CraftPlannerPayload.TreeNode> treeList;
     private final Button craft;
+    private final Button print;
+    private final PrintDialog printDialog;
 
     public CraftPlannerApp(final BlockPos host, final BlockPos monitorPos) {
         this.host = host;
@@ -141,11 +159,8 @@ public final class CraftPlannerApp implements IDesktopApp {
         qtyPlus = root.add(new Button("+", () -> setQty(qty + step())));
         planningLabel = root.add(new Label(GameText.resolve(PLANNING), Label.Tone.DIM));
         notCraftableLabel = root.add(new Label(GameText.resolve(NOT_CRAFTABLE)).setColor(PALETTE.get().missing()));
-        pillLabel = root.add(new Label(() -> GameText.resolve(plan != null && plan.feasible() ? CRAFTABLE : PARTIAL))
-                .setColor(() -> plan != null && plan.feasible() ? PALETTE.get().good() : PALETTE.get().amber()));
-        summaryLabel = root.add(new Label(() -> plan == null ? ""
-                : GameText.resolve(SUMMARY.with(JsTechTheme.fmt(plan.maxFeasible()), plan.stages().size())),
-                Label.Tone.DIM));
+        pillLabel = root.add(new Label(this::pillText).setColor(this::pillInk));
+        summaryLabel = root.add(new Label(this::summaryText, Label.Tone.DIM));
         viewToggle = root.add(new Button(() -> GameText.resolve(treeMode ? STEPS : TREE), () -> treeMode = !treeMode));
         stagesHeader = root.add(new Label(GameText.resolve(STAGES), Label.Tone.DIM));
         stageList = root.add(new ListView<CraftPlannerPayload.Stage>(() -> plan == null ? List.of() : plan.stages(), STAGE_ROW_H,
@@ -158,6 +173,8 @@ public final class CraftPlannerApp implements IDesktopApp {
         treeList = root.add(new ListView<CraftPlannerPayload.TreeNode>(() -> plan == null ? List.of() : plan.tree(), TREE_ROW_H,
                 this::renderTreeRow));
         craft = root.add(new Button(() -> GameText.resolve(CRAFT.with(qty)), this::craft));
+        print = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::print));
+        printDialog = new PrintDialog(host, this);
 
         root.focus(search);
         active = this;
@@ -278,7 +295,8 @@ public final class CraftPlannerApp implements IDesktopApp {
                 final int pillW = font.width(pillLabel.text()) + 8;
                 g.fill(pillLabel.x() - 4, pillLabel.y() - 2, pillLabel.x() - 4 + pillW, pillLabel.y() + 9,
                         plan != null && plan.feasible() ? PALETTE.get().feasiblePill()
-                                : PALETTE.get().infeasiblePill());
+                                : shortRows().isEmpty() ? PALETTE.get().infeasiblePill()
+                                : PALETTE.get().missingPill());
                 g.fill(px + leftW, pillLabel.y() + 12, px + leftW + width - 12 - leftW, pillLabel.y() + 13, skin.edge());
             }
         }
@@ -306,9 +324,11 @@ public final class CraftPlannerApp implements IDesktopApp {
         planningLabel.setVisible(picked && plan == null);
         final boolean craftable = planned && plan.craftable();
         notCraftableLabel.setVisible(planned && !plan.craftable());
-        for (final var c : List.of(pillLabel, summaryLabel, viewToggle, craft)) {
+        for (final var c : List.of(pillLabel, summaryLabel, viewToggle, craft, print)) {
             c.setVisible(craftable);
         }
+        // Nothing to craft with while an ingredient is short: the button greys until the network has it all.
+        craft.setEnabled(craftable && shortRows().isEmpty());
         final boolean steps = craftable && !treeMode;
         final boolean tree = craftable && treeMode;
         for (final var c : List.of(stagesHeader, stageList, ingredientsHeader, ingredientList)) {
@@ -344,6 +364,8 @@ public final class CraftPlannerApp implements IDesktopApp {
         final int cw = font.width(cap) + 14;
         craft.setBounds(rx + rw - cw, y + h - 13, cw, 13);
         craft.setPrimary(true);
+        final int printW = font.width(print.label()) + 14;
+        print.setBounds(rx + rw - cw - 4 - printW, y + h - 13, printW, 13);
         if (tree) {
             treeHeader.setBounds(rx + 2, row, rw / 2, 8);
             treeHint.setBounds(rx + rw / 2, row, rw / 2, 8);
@@ -387,10 +409,11 @@ public final class CraftPlannerApp implements IDesktopApp {
                                      final int x, final int y, final int w, final int h, final boolean hovered, final boolean selectedRow) {
         final Font font = ctx.font();
         final boolean ok = r.have() >= r.need();
-        itemIcon(g, r.item(), x + 1, y - 1, 11);
-        Draw.text(g, font, Texts.clip(font, r.item().getHoverName().getString(), w - 76), x + 15, y, ctx.skin().text());
         final String s = GameText.resolve(ok ? HAVE.with(JsTechTheme.fmt(r.have()))
-                : SHORT.with(JsTechTheme.fmt(r.need() - r.have())));
+                : NEED_HAVE.with(JsTechTheme.fmt(r.need()), JsTechTheme.fmt(r.have())));
+        itemIcon(g, r.item(), x + 1, y - 1, 11);
+        Draw.text(g, font, Texts.clip(font, r.item().getHoverName().getString(), w - 21 - font.width(s)), x + 15, y,
+                ctx.skin().text());
         Draw.text(g, font, s, x + w - font.width(s), y, ok ? PALETTE.get().good() : PALETTE.get().missing());
     }
 
@@ -433,9 +456,115 @@ public final class CraftPlannerApp implements IDesktopApp {
     }
 
     private void craft() {
-        if (!selected.isEmpty()) {
+        if (!selected.isEmpty() && shortRows().isEmpty()) {
             PacketDistributor.sendToServer(new NiCraftPayload(host, monitorPos, selected, qty));
         }
+    }
+
+    /* The ingredients the network has less of than the plan needs, in the plan's order. */
+    private List<CraftPlanPayload.Row> shortRows() {
+        final List<CraftPlanPayload.Row> out = new ArrayList<>();
+        if (plan != null) {
+            for (final CraftPlanPayload.Row row : plan.ingredients()) {
+                if (row.have() < row.need()) {
+                    out.add(row);
+                }
+            }
+        }
+        return out;
+    }
+
+    /* The pill: the plan can run, it misses ingredients and how many, or it falls short for another reason. */
+    private String pillText() {
+        if (plan != null && plan.feasible()) {
+            return GameText.resolve(CRAFTABLE);
+        }
+        final int missing = shortRows().size();
+        return GameText.resolve(missing > 0 ? MISSING.with(missing) : PARTIAL.text());
+    }
+
+    private int pillInk() {
+        return plan != null && plan.feasible() ? PALETTE.get().good()
+                : shortRows().isEmpty() ? PALETTE.get().amber() : PALETTE.get().missing();
+    }
+
+    /* Beside the pill: what is short, by name, or how much the network can make and in how many stages. */
+    private String summaryText() {
+        if (plan == null) {
+            return "";
+        }
+        final List<CraftPlanPayload.Row> missing = shortRows();
+        if (missing.isEmpty()) {
+            return GameText.resolve(SUMMARY.with(JsTechTheme.fmt(plan.maxFeasible()), plan.stages().size()));
+        }
+        final String first = missing.getFirst().item().getHoverName().getString();
+        return GameText.resolve(missing.size() == 1 ? ONE_SHORT.with(first)
+                : MANY_SHORT.with(first, missing.size() - 1));
+    }
+
+    /*
+     * The plan on paper, the shopping list: the target, the stages, the ingredients with what the network holds, and
+     * what it still lacks, each missing line on a grey band, then where and when it was printed.
+     */
+    private void print() {
+        if (plan == null || selected.isEmpty()) {
+            return;
+        }
+        final List<String> lines = new ArrayList<>();
+        lines.add(GameText.resolve(PRINT_TARGET.with(JsTechTheme.fmt(qty), selected.getHoverName().getString())));
+        lines.add("");
+        lines.add(GameText.resolve(STAGES));
+        final List<List<String>> stages = new ArrayList<>();
+        for (int i = 0; i < plan.stages().size(); i++) {
+            final CraftPlannerPayload.Stage stage = plan.stages().get(i);
+            stages.add(List.of(GameText.resolve(PRINT_STAGE.with(i + 1, GameText.resolve(stage.name()))),
+                    GameText.resolve((stage.machine() ? MACHINE_RUNS : BENCH_RUNS).with(stage.runs()))));
+        }
+        lines.addAll(tableLines(stages, List.of()));
+        lines.add("");
+        final List<List<String>> ingredients = new ArrayList<>();
+        final List<Integer> shaded = new ArrayList<>();
+        ingredients.add(List.of(GameText.resolve(INGREDIENTS), GameText.resolve(PRINT_NEED),
+                GameText.resolve(PRINT_HAVE)));
+        for (final CraftPlanPayload.Row row : plan.ingredients()) {
+            if (row.have() < row.need()) {
+                shaded.add(ingredients.size());
+            }
+            ingredients.add(List.of(row.item().getHoverName().getString(), JsTechTheme.fmt(row.need()),
+                    JsTechTheme.fmt(row.have())));
+        }
+        lines.addAll(tableLines(ingredients, shaded));
+        final List<CraftPlanPayload.Row> missing = shortRows();
+        if (!missing.isEmpty()) {
+            lines.add("");
+            final List<List<String>> lacking = new ArrayList<>();
+            final List<Integer> every = new ArrayList<>();
+            lacking.add(List.of(GameText.resolve(PRINT_MISSING), ""));
+            every.add(0);
+            for (final CraftPlanPayload.Row row : missing) {
+                every.add(lacking.size());
+                lacking.add(List.of(row.item().getHoverName().getString(), JsTechTheme.fmt(row.need() - row.have())));
+            }
+            lines.addAll(tableLines(lacking, every));
+        }
+        lines.add("");
+        final String program = ActiveDesktop.windowName(PROGRAM);
+        lines.add(GameText.resolve(PRINTED_FROM.with(program, ActiveDesktop.machineName())));
+        final Minecraft mc = Minecraft.getInstance();
+        final long dayTime = mc.level == null ? 0L : mc.level.getDayTime();
+        lines.add(GameText.resolve(PRINTED_AT.with(GameCalendar.day(dayTime), String.format(Locale.ROOT, "%02d:%02d",
+                GameCalendar.hourOf(dayTime), GameCalendar.minuteOf(dayTime)))));
+        printDialog.show(PrintDialog.Document.text(GameText.resolve(PRINT_TITLE), program, String.join("\n", lines)));
+    }
+
+    /* A table's lines, those of the rows at {@code shaded} on a grey band. */
+    private static List<String> tableLines(final List<List<String>> rows, final List<Integer> shaded) {
+        final String[] lines = PrintLayout.table(rows, false).split("\n");
+        final List<String> out = new ArrayList<>();
+        for (int i = 0; i < lines.length; i++) {
+            out.add(shaded.contains(i) ? PrintLayout.shaded(lines[i]) : lines[i]);
+        }
+        return out;
     }
 
     private List<CraftCatalogPayload.Entry> filtered() {
@@ -512,7 +641,7 @@ public final class CraftPlannerApp implements IDesktopApp {
         return root.keyPressed(key, scanCode, modifiers);
     }
 
-    /** The planner's colours, as the palette above names them. */
-    private record Colours(int good, int missing, int amber, int feasiblePill, int infeasiblePill) {
+    /** The planner's colours, as the palette above names them; the last, the pill of a plan missing ingredients. */
+    private record Colours(int good, int missing, int amber, int feasiblePill, int infeasiblePill, int missingPill) {
     }
 }

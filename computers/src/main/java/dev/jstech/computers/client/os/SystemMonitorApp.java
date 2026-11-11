@@ -9,14 +9,17 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.ThermalModel;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.VramLedger;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
+import dev.jstech.computers.operation.payload.MachineReadingsPayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.DiskUse;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.RamUse;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Dropdown;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
@@ -54,6 +57,10 @@ public final class SystemMonitorApp implements IDesktopApp {
     private static final int MEM_ROW_H = 10;
     /** Memory holders shown before the list scrolls, so the disks below keep their room. */
     private static final int MEM_ROWS_SHOWN = 4;
+    /* The power and temperature sections: each graph's height, the period menu's width, and the room both take. */
+    private static final int GRAPH_H = 14;
+    private static final int PERIOD_MENU_W = 72;
+    private static final int POWER_ROOM = 2 * (12 + 10 + GRAPH_H) + 6;
 
     private final BlockPos host;
     private OsSkin skin = OsSkin.fallback();
@@ -78,9 +85,22 @@ public final class SystemMonitorApp implements IDesktopApp {
     private final Label storageHeader;
     private final Label programsLabel;
     private final ListView<DiskUse> diskList;
+    /* Power and temperature over the period its menu picks, each a line of figures over a small graph. */
+    private final MachineReadingsView readings;
+    private final Label powerHeader;
+    private final Dropdown periodMenu;
+    private final Label drawLabel;
+    private final Label drawValue;
+    private final Label temperatureHeader;
+    private final Label cpuLabel;
+    private final Label temperatureValue;
+    /* Where the two graphs were laid out this frame: x, y, width, height; a zero width hides one. */
+    private final int[] drawGraph = new int[4];
+    private final int[] temperatureGraph = new int[4];
 
     public SystemMonitorApp(final BlockPos host) {
         this.host = host;
+        this.readings = new MachineReadingsView(host);
         loadingLabel = root.add(new Label(GameText.resolve(SystemMonitorTexts.READING), Label.Tone.DIM));
         nameLabel = root.add(new Label(() -> data == null || data.computerName().isEmpty()
                 ? GameText.resolve(SystemMonitorTexts.COMPUTER) : data.computerName()));
@@ -110,6 +130,15 @@ public final class SystemMonitorApp implements IDesktopApp {
                 : GameText.resolve(SystemMonitorTexts.PROGRAMS_INSTALLED.with(data.installed().size())), Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
         diskList = root.add(new ListView<DiskUse>(() -> data == null ? List.of() : data.disks(), DISK_ROW_H, this::renderDiskRow));
+        powerHeader = root.add(new Label(GameText.resolve(TaskManagerTexts.POWER_SECTION), Label.Tone.DIM));
+        periodMenu = root.add(new Dropdown(List.of(word(NetworkEventLogTexts.LAST_HOUR),
+                word(NetworkEventLogTexts.LAST_DAY), word(NetworkEventLogTexts.LAST_WEEK)), readings::period,
+                readings::choose, shown -> shown));
+        drawLabel = root.add(new Label(GameText.resolve(TaskManagerTexts.DRAW)));
+        drawValue = root.add(new Label(this::drawText).setAlign(Label.Align.RIGHT));
+        temperatureHeader = root.add(new Label(GameText.resolve(TaskManagerTexts.TEMPERATURE_SECTION), Label.Tone.DIM));
+        cpuLabel = root.add(new Label(GameText.resolve(TaskManagerTexts.CPU)));
+        temperatureValue = root.add(new Label(this::temperatureText).setAlign(Label.Align.RIGHT));
         active = this;
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
     }
@@ -150,7 +179,7 @@ public final class SystemMonitorApp implements IDesktopApp {
 
     @Override
     public int defaultHeight() {
-        return 236;
+        return 320;
     }
 
     @Override
@@ -225,8 +254,95 @@ public final class SystemMonitorApp implements IDesktopApp {
         storageHeader.setBounds(px, row, pw / 2, 8);
         programsLabel.setBounds(px + pw / 2, row, pw / 2, 8);
         row += 12;
-        diskList.setBounds(px, row, pw, Math.max(DISK_ROW_H, y + height - row));
+        // The disks take their rows, and power and temperature the rest under them.
+        final int disks = data == null ? 1 : Math.max(1, data.disks().size());
+        final int diskH = Math.max(DISK_ROW_H, Math.min(DISK_ROW_H * disks, y + height - row - POWER_ROOM));
+        diskList.setBounds(px, row, pw, diskH);
+        row += diskH + 4;
+        layoutPower(px, row, pw, ready);
         root.render(g, ctx);
+        if (ready) {
+            renderGraph(g, drawGraph, readings.latest() == null ? new int[0] : readings.latest().draw(),
+                    readings.latest() == null ? 1 : readings.latest().rating());
+            renderGraph(g, temperatureGraph, readings.latest() == null ? new int[0]
+                    : readings.latest().temperature(), (int) ThermalModel.TRIP_AT);
+        }
+    }
+
+    /* The power and temperature sections from {@code row} down: each a header, a line of figures and a graph. */
+    private void layoutPower(final int px, final int top, final int pw, final boolean ready) {
+        readings.tick();
+        final MachineReadingsPayload now = readings.latest();
+        final boolean hot = ready && now != null && now.hasTemperature();
+        for (final var c : List.of(powerHeader, periodMenu, drawLabel, drawValue)) {
+            c.setVisible(ready);
+        }
+        for (final var c : List.of(temperatureHeader, cpuLabel, temperatureValue)) {
+            c.setVisible(hot);
+        }
+        int row = top;
+        powerHeader.setBounds(px, row, pw / 2, 8);
+        periodMenu.setBounds(px + pw - PERIOD_MENU_W, row - 2, PERIOD_MENU_W, 11);
+        row += 12;
+        drawLabel.setBounds(px, row, pw / 3, 8);
+        drawValue.setBounds(px + pw / 3, row, pw - pw / 3, 8);
+        row += 10;
+        setGraph(drawGraph, ready, px, row, pw);
+        row += GRAPH_H + 6;
+        temperatureHeader.setBounds(px, row, pw / 2, 8);
+        row += 12;
+        cpuLabel.setBounds(px, row, pw / 3, 8);
+        temperatureValue.setBounds(px + pw / 3, row, pw - pw / 3, 8);
+        row += 10;
+        setGraph(temperatureGraph, hot, px, row, pw);
+    }
+
+    private static void setGraph(final int[] rect, final boolean shown, final int x, final int y, final int w) {
+        rect[0] = x;
+        rect[1] = y;
+        rect[2] = shown ? w : 0;
+        rect[3] = GRAPH_H;
+    }
+
+    /* A small graph in the window's own colours: the line of the period's means over the field's ground. */
+    private void renderGraph(final GuiGraphics g, final int[] rect, final int[] series, final int max) {
+        if (rect[2] <= 0) {
+            return;
+        }
+        final int x = rect[0];
+        final int y = rect[1];
+        final int w = rect[2];
+        final int h = rect[3];
+        g.fill(x, y, x + w, y + h, skin.fieldBg());
+        Draw.outline(g, x, y, w, h, skin.edge());
+        final int[] values = MachineReadingsView.filled(series);
+        if (values.length < 2) {
+            return;
+        }
+        final int span = Math.max(1, max);
+        for (int px = 1; px < w - 1; px++) {
+            final int value = values[Math.min(values.length - 1, (px - 1) * values.length / (w - 2))];
+            final int py = y + h - 2 - Math.max(0, Math.min(h - 3, value * (h - 3) / span));
+            g.fill(x + px, py, x + px + 1, py + 1, skin.accent());
+        }
+    }
+
+    /* What the parts draw of the supply's rating, and what the line gives a tick: "395 W of 650 W · 22 FE/t". */
+    private String drawText() {
+        final MachineReadingsPayload now = readings.latest();
+        return now == null ? "" : GameText.resolve(TaskManagerTexts.DRAW_OF.with(now.drawNow(), now.rating(),
+                Math.round(now.lineNow() / 20.0)));
+    }
+
+    /* The processor's temperature against where it starts to slow: "68 °C of 90 °C". */
+    private String temperatureText() {
+        final MachineReadingsPayload now = readings.latest();
+        return now == null ? "" : GameText.resolve(TaskManagerTexts.CELSIUS_OF.with(now.celsius(),
+                (int) ThermalModel.THROTTLE_AT));
+    }
+
+    private static Supplier<String> word(final TextKey key) {
+        return () -> GameText.resolve(key);
     }
 
     private void renderMemoryRow(final GuiGraphics g, final UiContext ctx, final RamUse use, final int index, final int x,

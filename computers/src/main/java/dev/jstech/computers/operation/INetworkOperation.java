@@ -82,5 +82,10 @@ public interface INetworkOperation {
 
     OperationRecord toRecord();
 
+    /** Who asked for it, the name the asker gave (a terminal's machine, a job), or empty where none did. */
+    default String askedBy() {
+        return "";
+    }
+
     OperationRecord liveRecord();
 }

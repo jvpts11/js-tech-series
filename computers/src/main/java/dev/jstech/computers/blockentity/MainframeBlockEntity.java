@@ -42,6 +42,8 @@ import dev.jstech.computers.operation.MemberOperation;
 import dev.jstech.computers.operation.NetworkIndex;
 import dev.jstech.computers.operation.NetworkInsertOperation;
 import dev.jstech.computers.operation.NetworkSelectOperation;
+import dev.jstech.computers.operation.NetworkStatistics;
+import dev.jstech.computers.operation.NetworkStatisticsNbt;
 import dev.jstech.computers.operation.NetworkUpdateOperation;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.os.HostScope;
@@ -67,7 +69,6 @@ import dev.jstech.core.jstechseries.operation.OperationDispatch;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.jstechseries.operation.OperationRequest;
 import dev.jstech.core.jstechseries.operation.IOperationTask;
-import dev.jstech.core.jstechseries.operation.OperationStatistics;
 import dev.jstech.core.jstechseries.operation.SelfTestOperationTask;
 import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -528,8 +529,10 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
                 requested, moved, status, List.copyOf(moves)));
     }
 
-    public void recordOperation(
-            final OperationRecord record) {
+    public void recordOperation(final OperationRecord settled) {
+        // Written down with the tick and the time of day, for the log's period filter and its clock.
+        final OperationRecord record = level == null ? settled
+                : settled.withSettled(level.getGameTime(), level.getDayTime());
         operationLog.addFirst(record);
         while (operationLog.size() > OPERATION_LOG_MAX) {
             operationLog.removeLast();
@@ -1101,8 +1104,8 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
         return true;
     }
 
-    /** The rolling statistics of this Mainframe's Operations. */
-    public OperationStatistics statistics() {
+    /** The rolling statistics of this Mainframe's Operations, over the last game hour, day and 7 days. */
+    public NetworkStatistics statistics() {
         return scheduler.statistics();
     }
 
@@ -1534,6 +1537,7 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
             nativeNetworkUuid = NetworkUuid.fromString(tag.getString("NetworkUuid"));
         }
         scheduler.completedTotal(tag.getLong("CompletedTotal"));
+        NetworkStatisticsNbt.load(scheduler.statistics(), tag.getCompound("NetworkStatistics"));
         operationLog.clear();
         final ListTag ops = tag.getList("OperationLog", Tag.TAG_COMPOUND);
         for (int i = 0; i < ops.size() && i < OPERATION_LOG_MAX; i++) {
@@ -1558,6 +1562,7 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
          * the live dispatcher itself is transient, so the snapshot reloads as the new base.
          */
         tag.putLong("CompletedTotal", completedOps());
+        tag.put("NetworkStatistics", NetworkStatisticsNbt.save(scheduler.statistics()));
         if (!operationLog.isEmpty()) {
             final ListTag ops = new ListTag();
             for (final OperationRecord rec : operationLog) {

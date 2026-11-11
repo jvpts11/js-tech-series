@@ -37,7 +37,21 @@ final class CraftPlannerTexts {
     static final TextKey MACHINE_RUNS = TextKey.of("jsc.craft_planner.machine_runs", "machine x%s");
     static final TextKey BENCH_RUNS = TextKey.of("jsc.craft_planner.bench_runs", "bench x%s");
     static final TextKey HAVE = TextKey.of("jsc.craft_planner.have", "have %s");
-    static final TextKey SHORT = TextKey.of("jsc.craft_planner.short", "short %s");
+    /* An ingredient the network lacks: what the plan needs of it and what the network holds. */
+    static final TextKey NEED_HAVE = TextKey.of("jsc.craft_planner.need_have", "need %s, have %s");
+    /* The pill of a plan the network lacks ingredients for, and how many of them it lacks. */
+    static final TextKey MISSING = TextKey.of("jsc.craft_planner.missing", "Missing %s");
+    static final TextKey ONE_SHORT = TextKey.of("jsc.craft_planner.one_short", "%s short");
+    static final TextKey MANY_SHORT = TextKey.of("jsc.craft_planner.many_short", "%s and %s more short");
+    /* The plan on paper: its title, the target, a stage by its number, the columns and what it still lacks. */
+    static final TextKey PRINT_TITLE = TextKey.of("jsc.craft_planner.print.title", "Craft plan");
+    static final TextKey PRINT_TARGET = TextKey.of("jsc.craft_planner.print.target", "%s x %s");
+    static final TextKey PRINT_STAGE = TextKey.of("jsc.craft_planner.print.stage", "%s. %s");
+    static final TextKey PRINT_NEED = TextKey.of("jsc.craft_planner.print.need", "NEED");
+    static final TextKey PRINT_HAVE = TextKey.of("jsc.craft_planner.print.have", "HAVE");
+    static final TextKey PRINT_MISSING = TextKey.of("jsc.craft_planner.print.missing", "MISSING");
+    static final TextKey PRINTED_FROM = TextKey.of("jsc.craft_planner.print.from", "Printed from the %s, %s");
+    static final TextKey PRINTED_AT = TextKey.of("jsc.craft_planner.print.at", "Day %s, %s");
     /* How many of a thing the tree needs at that point: "12x Iron Ingot". */
     static final TextKey TREE_NODE = TextKey.of("jsc.craft_planner.tree_node", "%sx %s");
     static final TextKey RAW = TextKey.of("jsc.craft_planner.raw", "raw");

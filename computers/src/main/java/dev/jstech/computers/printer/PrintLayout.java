@@ -29,6 +29,11 @@ public final class PrintLayout {
     public static final int LANDSCAPE_LINES = 20;
     /** The widest a table's column grows before its cells are cut. */
     public static final int MAX_COLUMN = 24;
+    /**
+     * Put before a line, it prints that line on a grey band, as a shopping list marks what is still missing; every line
+     * the text wraps it into keeps the band.
+     */
+    public static final char SHADED = '▒';
     /** The spaces between two columns of a table. */
     private static final String GUTTER = "  ";
     /** How many spaces a tab stands for. */
@@ -54,7 +59,10 @@ public final class PrintLayout {
                 cut = true;
                 break;
             }
-            all.addAll(wrap(line.replace("\t", " ".repeat(TAB)), columns));
+            final boolean shaded = isShaded(line);
+            for (final String piece : wrap(plainLine(line).replace("\t", " ".repeat(TAB)), columns)) {
+                all.add(shaded ? SHADED + piece : piece);
+            }
         }
         // A cut text has more behind it, so what ends the kept part is not the end of the document.
         while (!cut && all.size() > 1 && all.getLast().isBlank()) {
@@ -73,6 +81,31 @@ public final class PrintLayout {
     /** How many sheets one copy of {@code text} takes. */
     public static int sheets(final String title, final String text, final boolean landscape) {
         return pages(title, text, landscape).size();
+    }
+
+    /** {@code line} to be printed on a grey band. */
+    public static String shaded(final String line) {
+        return SHADED + line;
+    }
+
+    /** Whether {@code line} is printed on a grey band. */
+    public static boolean isShaded(final String line) {
+        return !line.isEmpty() && line.charAt(0) == SHADED;
+    }
+
+    /** {@code line} without the mark of a grey band, as its words read. */
+    public static String plainLine(final String line) {
+        return isShaded(line) ? line.substring(1) : line;
+    }
+
+    /** {@code text} without the marks of its grey bands, as its words read: what a scan of the sheet keeps. */
+    public static String plain(final String text) {
+        final String[] lines = text.split("\n", -1);
+        final StringBuilder out = new StringBuilder(text.length());
+        for (int i = 0; i < lines.length; i++) {
+            out.append(i == 0 ? "" : "\n").append(plainLine(lines[i]));
+        }
+        return out.toString();
     }
 
     /**

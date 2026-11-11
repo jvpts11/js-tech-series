@@ -12,12 +12,12 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.operation.NetworkSelectOperation;
+import dev.jstech.computers.operation.NetworkStatistics;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
-import dev.jstech.core.jstechseries.operation.OperationStatistics;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.StorageNetworkFixture;
 import dev.jstech.tests.testkit.computers.TestCli;
@@ -48,9 +48,9 @@ public final class OperationStatisticsGameTests {
     private static final String ARENA = "empty";
     private static final int SETTLE = 4;
 
-    private static OperationStatistics.TypeSummary summaryOf(final List<OperationStatistics.TypeSummary> summaries,
-                                                             final int type) {
-        for (final OperationStatistics.TypeSummary summary : summaries) {
+    private static NetworkStatistics.Summary summaryOf(final List<NetworkStatistics.Summary> summaries,
+                                                       final int type) {
+        for (final NetworkStatistics.Summary summary : summaries) {
             if (summary.type() == type) {
                 return summary;
             }
@@ -94,17 +94,29 @@ public final class OperationStatisticsGameTests {
                                     && older.ranTicks() >= 10, "the first pull ran through the HDD seek without waiting; got " + older);
                     helper.assertTrue(newer.id().equals(ops[1].operationId()) && newer.waitedTicks() >= 10
                                     && newer.ranTicks() >= 1, "the second pull waited for the queue then ran; got " + newer);
+                    helper.assertTrue(older.by().equals("first") && newer.by().equals("second"),
+                            "the log names who asked for each; got " + older.by() + ", " + newer.by());
+                    helper.assertTrue(older.settledAt() > 0L && older.settledAt() <= helper.getLevel().getGameTime(),
+                            "the log keeps the tick each settled on; got " + older.settledAt());
                     final long now = helper.getLevel().getGameTime();
-                    final OperationStatistics.TypeSummary select =
-                            summaryOf(mainframe.statistics().summaries(now), OperationRecord.TYPE_SELECT);
-                    helper.assertTrue(select != null && select.count() == 2 && select.shortfalls() == 0,
+                    final NetworkStatistics.Summary select = summaryOf(mainframe.statistics().summaries(now,
+                            NetworkStatistics.HOUR), OperationRecord.TYPE_SELECT);
+                    helper.assertTrue(select != null && select.count() == 2 && select.failed() == 0,
                             "the hour counts two complete SELECTs; got " + select);
                     helper.assertTrue(select.averageRun() >= 5 && select.averageWait() >= 5,
                             "the averages reflect the wait and the run; got " + select);
                     helper.assertTrue(select.moved() == 60L, "the hour moved 60; got " + select.moved());
-                    helper.assertTrue(mainframe.statistics().peakConcurrentLastDay(now) >= 2,
-                            "two Operations were in flight at once; peak "
-                                    + mainframe.statistics().peakConcurrentLastDay(now));
+                    final NetworkStatistics.Summary day = summaryOf(mainframe.statistics().summaries(now,
+                            NetworkStatistics.DAY), OperationRecord.TYPE_SELECT);
+                    helper.assertTrue(day != null && day.count() == 2, "the day counts them too; got " + day);
+                    helper.assertTrue(mainframe.statistics().peakToday(now) >= 2,
+                            "two Operations were in flight at once; peak " + mainframe.statistics().peakToday(now));
+                    final int[] graph = mainframe.statistics().graph(now);
+                    int used = 0;
+                    for (final int sample : graph) {
+                        used = Math.max(used, sample);
+                    }
+                    helper.assertTrue(used > 0, "the graph shows the capacity the pulls used");
                 })
                 .thenSucceed();
     }

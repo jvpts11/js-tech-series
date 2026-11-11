@@ -29,6 +29,8 @@ import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.CaseCooling;
 import dev.jstech.computers.hardware.CaseFanSpec;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.MachineReadings;
+import dev.jstech.computers.hardware.MachineReadingsNbt;
 import dev.jstech.computers.hardware.ComputerDef;
 import dev.jstech.computers.hardware.CoolerSpec;
 import dev.jstech.computers.hardware.CoolingFit;
@@ -53,6 +55,7 @@ import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.monitor.VideoMemory;
+import dev.jstech.computers.operation.payload.MachineReadingsPayload;
 import dev.jstech.computers.operation.payload.OpenSystemBootPayload;
 import dev.jstech.computers.operation.payload.crash.MemoryAskPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
@@ -174,6 +177,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     private final ComputerHardware hardware;
     /** Whether it is on, whether it comes up by itself, and whether the next look at it shows the self-test. */
     private final ComputerPower power = new ComputerPower(this::setChanged, this::endSession, this::switched);
+    /* What it drew, took from the line and read hot over the last hour, day and week, for its system monitors. */
+    private final MachineReadings readings = new MachineReadings();
+    /* Ticks since its last reading, one a second. */
+    private int sinceReading;
     /*
      * What it draws from the grid through its power supply, and the store the grid fills. The store changes every
      * tick, so it only marks the block for saving: a full setChanged would write the console back to its disk and
@@ -318,6 +325,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         })).save();
         fields().part("Power", IFieldPart.of((tag, registries) -> power.save(tag),
                 (tag, registries) -> power.load(tag))).save();
+        fields().part("Readings", IFieldPart.of((tag, registries) -> MachineReadingsNbt.save(readings, tag),
+                (tag, registries) -> MachineReadingsNbt.load(readings, tag))).save();
         fields().part("Energy", energy.store()).save();
         fields().part("EnergyOwed", IFieldPart.of((tag, registries) -> energy.saveDebt(tag),
                 (tag, registries) -> energy.loadDebt(tag))).save();
@@ -710,6 +719,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     /* Switched on with parts that make a computer and a board whose firmware brings it up. */
     public boolean isRunning() {
         return poweredUp() && !firmwareMissing();
+    }
+
+    @Override
+    public long upTicks(final long now) {
+        return isRunning() ? power.upFor(now) : 0L;
     }
 
     /**
@@ -1986,6 +2000,20 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return energy.debt();
     }
 
+    /** Its readings over the last {@code hours} (1, 24 or 168) and now, as its system monitors draw them. */
+    public MachineReadingsPayload readingsOver(final int hours) {
+        final long now = level == null ? 0L : level.getGameTime();
+        final ComputerBuild build = currentBuild();
+        final boolean running = isRunning() && build != null;
+        return new MachineReadingsPayload(worldPosition, hours,
+                readings.series(now, MachineReadings.DRAW, hours), readings.series(now, MachineReadings.LINE, hours),
+                readings.series(now, MachineReadings.TEMPERATURE, hours),
+                running ? (int) Math.round(build.powerDraw()) : 0, build == null ? 0 : build.psu().wattage(),
+                running ? (int) Math.round(ComputerEnergy.lineWatts(build.powerDraw(), build.psu())) : 0,
+                (int) Math.round(heat.reading().celsius()), (int) Math.round(heat.ambient()), computer.cooled(),
+                readings.joulesToday(now));
+    }
+
     /** What its power draws as its open assembly screen was last told: its parts, its supply, the line, in watts. */
     public PowerShown powerShown() {
         return new PowerShown(partsWattsShown.getAsInt(), psuWattsShown.getAsInt(), lineWattsShown.getAsInt(),
@@ -2009,6 +2037,14 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         energy.payDebt(watts);
         wearPsu(level, build);
         tickHeat(level, build);
+        // A reading a second for the system monitors' graphs: what the parts draw, what the line gives, how hot.
+        if (++sinceReading >= MachineReadings.SAMPLE_TICKS) {
+            sinceReading = 0;
+            final boolean running = isRunning() && build != null;
+            readings.read(level.getGameTime(), running ? (int) Math.round(build.powerDraw()) : 0,
+                    running ? (int) Math.round(watts) : 0,
+                    computer.cooled() ? (int) Math.round(heat.reading().celsius()) : MachineReadings.NONE);
+        }
     }
 
     /*

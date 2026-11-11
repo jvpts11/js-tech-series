@@ -726,20 +726,27 @@ final class AutocraftingPages {
                 .row(GuideCell.words("INGREDIENTS"), GuideCell.words("The raw ingredients, each with the amount needed"
                         + " and what the network has."))
                 .row(GuideCell.words("have 12"), GuideCell.words("The network holds 12 of that ingredient."))
-                .row(GuideCell.words("short 3, in red"), GuideCell.words("The network is 3 short of that ingredient."))
+                .row(GuideCell.words("need 16, have 15, in red"), GuideCell.words("The network holds 15 of the 16 the"
+                        + " plan needs of that ingredient."))
                 .row(GuideCell.words("raw"), GuideCell.words("The ingredient is a raw material, with no recipe of its"
                         + " own."))
                 .row(GuideCell.words("machine x3, bench x2"), GuideCell.words("How many times a step runs on a machine,"
                         + " and how many times it runs on a bench."))
                 .row(GuideCell.words("Craft, then the item's name"),
                         GuideCell.words("The button that starts the craft."))
+                .row(GuideCell.words("Missing 1, in red"), GuideCell.words("The network lacks 1 of the ingredients,"
+                        + " named beside it. Craft stays grey until the network holds them all."))
+                .row(GuideCell.words("Print"), GuideCell.words("Prints the plan on the computer's printer."))
                 .paragraph("The planner works from what the network holds now, so \"max\" is the most the network can"
                         + " make at this moment. It looks only so deep: a recipe nested more than 16 levels down is not"
                         + " planned. A recipe that depends on itself is cut, so the plan does not loop.")
+                .paragraph("Print sends the plan to the computer's printer as a shopping list: the target, the stages,"
+                        + " each ingredient with what you need and what the network holds, and what is missing, each"
+                        + " missing line on a grey band, with the machine and the time it was printed.")
                 .ifSomethingGoesWrong("The screen says \"No pattern on the network makes this.\"",
                         "Add a pattern for the item, as a bench, machine or multi-stage pattern"
                                 + " ([](jsc:patterns)).",
-                        "An ingredient is shown as short, in red.",
+                        "An ingredient shows what the plan needs and what the network has, in red.",
                         "Stock more of that ingredient, and plan the craft again.")
                 .seeAlso("jsc:asking_for_a_craft", "jsc:patterns", "jsc:when_a_craft_goes_wrong",
                         "jsc:crafting_manager")

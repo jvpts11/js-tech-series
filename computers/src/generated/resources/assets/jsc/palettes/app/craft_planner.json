@@ -3,5 +3,6 @@
   "feasiblePill": "#2E2EA043",
   "good": "#FF2EA043",
   "infeasiblePill": "#33E0A020",
-  "missing": "#FFD1495B"
+  "missing": "#FFD1495B",
+  "missingPill": "#40D1495B"
 }

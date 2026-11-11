@@ -291,10 +291,10 @@ final class FramesProgramsPages {
                 .row(GuideCell.words("Frames 95"), GuideCell.words("A Close Program box, with two warnings"),
                         GuideCell.words("None: the box has no pages"))
                 .row(GuideCell.words("Frames XP and Frames 7"), GuideCell.words("A window with a menu bar and a status"
-                        + " bar"), GuideCell.words("Applications, Processes, Performance and Networking"))
+                        + " bar"), GuideCell.words("Applications, Processes, Performance, Networking and Power"))
                 .row(GuideCell.words("Frames 10 and Frames 11"), GuideCell.words("A window with graphs"),
-                        GuideCell.words("Processes, Performance, Services, Storage, Network, and the graphics"
-                                + " processor (GPU)"))
+                        GuideCell.words("Processes, Performance, Services, Storage, Network, the graphics"
+                                + " processor (GPU) and Power"))
                 .subheading("Ending a program or a process")
                 .steps("Click a row that is a window or a process.",
                         "Press End Task. In the process list the button reads End Process.")
@@ -318,6 +318,11 @@ final class FramesProgramsPages {
                 .paragraph("The Task Manager does not show the Operations of a network. You watch those in the Network"
                         + " Manager ([](jsc:network_manager)). The eight states an Operation can be in are on their"
                         + " own page ([](jsc:operation_states)).")
+                .paragraph("The Power page shows what the machine's parts draw against its power supply's rating, what"
+                        + " it takes from the line in watts and in FE a tick, and its processor's temperature, each"
+                        + " with its history over the last hour, the last day or the last 7 days of the game, and the"
+                        + " energy it took from the line today. On Frames XP and Frames 7, click the status bar to move"
+                        + " to the next period; on Frames 10 and Frames 11, pick it with the buttons on the page.")
                 .ifSomethingGoesWrong("End Task is unavailable.",
                         "Click a row that is a window or a process before you press it.",
                         "The Close Program box says \"Ending a program may lose unsaved work.\"",
@@ -343,6 +348,10 @@ final class FramesProgramsPages {
                 .paragraph("Storage draws a bar for each disk, and marks the system disk with the word (system)."
                         + " It also counts"
                         + " the programs installed on the machine.")
+                .paragraph("Power shows what the parts draw against the power supply's rating and what the line gives"
+                        + " in FE a tick, and Temperature the processor's heat against the 90 degrees Celsius where it"
+                        + " starts to slow, each over a small graph. You pick the graphs' period in the menu beside"
+                        + " Power: the last hour, the last day or the last 7 days of the game.")
                 .define("Load", "How busy a part of the machine is, in percent.")
                 .define("Held", "Memory that programs have taken for themselves. Free memory is what is left.")
                 .ifSomethingGoesWrong("A bar shows a figure a moment late.",

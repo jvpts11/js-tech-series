@@ -189,6 +189,11 @@ public final class NetworkInsertOperation extends AbstractTransferOperation {
     }
 
     @Override
+    public String askedBy() {
+        return sourceLabel;
+    }
+
+    @Override
     public OperationRecord toRecord() {
         return buildRecord(status(), false);
     }

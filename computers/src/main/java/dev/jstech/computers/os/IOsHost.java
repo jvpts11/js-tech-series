@@ -51,6 +51,11 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     /** Whether the machine is powered on with a valid build. */
     boolean isRunning();
 
+    /** How long the machine's system has been up at {@code now}, in ticks; zero for one that is not up. */
+    default long upTicks(final long now) {
+        return 0L;
+    }
+
     /**
      * The kind of machine this computer is, as its entry names it: what decides which programs made for one machine
      * install and show a launcher on it. A host with no entry of its own is no machine in particular.

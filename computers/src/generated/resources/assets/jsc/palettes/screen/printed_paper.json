@@ -6,5 +6,6 @@
   "ink": "#FF23262C",
   "pager": "#FFDDDDDD",
   "pagerDim": "#FF6F6F6F",
-  "paper": "#FFFBFBF8"
+  "paper": "#FFFBFBF8",
+  "shade": "#FFD8D8D4"
 }

@@ -478,6 +478,11 @@ public final class NetworkProcessingOperation implements IPersistentOperation {
     }
 
     @Override
+    public String askedBy() {
+        return requesterLabel;
+    }
+
+    @Override
     public OperationRecord toRecord() {
         return buildRecord(status);
     }

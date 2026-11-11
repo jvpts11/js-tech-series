@@ -25,6 +25,10 @@
       "text": "jsc.guide.system_monitor.text5"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.system_monitor.text6"
+    },
+    {
       "type": "define",
       "definition": "jsc.guide.system_monitor.definition1",
       "term": "jsc.guide.system_monitor.term1"

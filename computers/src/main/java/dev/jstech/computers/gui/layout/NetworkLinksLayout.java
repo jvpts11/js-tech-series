@@ -10,9 +10,10 @@ package dev.jstech.computers.gui.layout;
 import dev.jstech.core.gui.layout.GuiLayout;
 
 /**
- * Where the Network Manager shows how its nodes are linked: the Devices tab's four columns (the node, its type, its
- * link, its status) over the list, the line under the list that says why a node lost its link, and the size of the
- * Map's legend. Every x here is measured from the list's left edge, every y from the top of the column names.
+ * Where the Network Manager shows how its nodes are linked: the Devices tab's five columns (the node, its type, its
+ * link, its status, its uptime) over the list, the line under the list that says why a node lost its link, and the
+ * size of the Map's legend. Every x here is measured from the list's left edge, every y from the top of the column
+ * names.
  *
  * <p>Below {@link #TYPE_FROM} the TYPE column gives its room to the names, since the square of colour before each name
  * already tells the kind. Pure, and the tab and its test read the same numbers.
@@ -24,17 +25,20 @@ public final class NetworkLinksLayout {
     public static final int LINE_H = 10;
     /** Where a name starts, right of the square of its kind's colour. */
     public static final int NAME_X = 10;
-    /** The type: room for MAINFRAME and the like; a longer one is cut. */
-    public static final int TYPE_W = 66;
+    /** The type: room for MAINFRAME and SMARTPHONE; a longer one is cut. */
+    public static final int TYPE_W = 58;
     /** The link: the square of a fibre port, then the cable and its speed, or that its link is down. */
-    public static final int LINK_W = 112;
-    public static final int STATUS_W = 46;
-    public static final int GAP = 6;
+    public static final int LINK_W = 109;
+    /** The status: room for offline and no link. */
+    public static final int STATUS_W = 42;
+    /** The uptime: days and hours of the game, {@code 12d 04h}, or two dashes for a machine that is not up. */
+    public static final int UPTIME_W = 40;
+    public static final int GAP = 5;
     /** The square that marks a node with a fibre port, and the room it takes before the link's words. */
     public static final int CARD_SQUARE = 4;
     public static final int CARD_ROOM = CARD_SQUARE + 3;
-    /** The narrowest list that keeps the TYPE column. */
-    public static final int TYPE_FROM = 330;
+    /** The narrowest list that keeps the TYPE column: the window's default width, with 61 px left for the names. */
+    public static final int TYPE_FROM = 340;
     /** The line under the list, two lines of words in a frame. */
     public static final int FOOTER_LINES = 2;
     public static final int FOOTER_H = FOOTER_LINES * LINE_H + 6;
@@ -51,8 +55,12 @@ public final class NetworkLinksLayout {
         return w >= TYPE_FROM;
     }
 
+    public static int uptimeX(final int w) {
+        return w - UPTIME_W;
+    }
+
     public static int statusX(final int w) {
-        return w - STATUS_W;
+        return uptimeX(w) - GAP - STATUS_W;
     }
 
     public static int linkX(final int w) {
@@ -100,6 +108,7 @@ public final class NetworkLinksLayout {
         }
         layout.text("linkHeading", linkX(w), 2, 4, 1.0f);
         layout.text("statusHeading", statusX(w), 2, 6, 1.0f);
+        layout.text("uptimeHeading", uptimeX(w), 2, 6, 1.0f);
         final int rows = Math.max(1, listH(h, footer) / ROW_H);
         row(layout, w, 0);
         if (rows > 1) {
@@ -120,5 +129,6 @@ public final class NetworkLinksLayout {
         }
         layout.box("linkCell" + index, linkX(w), y, LINK_W, ROW_H - 1);
         layout.box("statusCell" + index, statusX(w), y, STATUS_W, ROW_H - 1);
+        layout.box("uptimeCell" + index, uptimeX(w), y, UPTIME_W, ROW_H - 1);
     }
 }

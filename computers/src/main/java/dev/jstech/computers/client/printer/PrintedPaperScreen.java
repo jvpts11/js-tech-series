@@ -173,8 +173,14 @@ public final class PrintedPaperScreen extends Screen {
     private void drawText(final GuiGraphics g, final PrintedPaperLayout.Sheet sheet, final SheetColours colours) {
         final String[] lines = pageLines.get(page);
         for (int i = 0; i < lines.length; i++) {
-            Draw.textScaled(g, font, lines[i], sheet.textX(), sheet.textY() + i * PrintedPaperLayout.LINE_H,
-                    colours.ink(), PrintedPaperLayout.TEXT_SCALE);
+            final int y = sheet.textY() + i * PrintedPaperLayout.LINE_H;
+            // A marked line lies on a grey band across the print, the way a list marks what is still missing.
+            if (PrintLayout.isShaded(lines[i])) {
+                g.fill(sheet.textX(), y - 1, sheet.width() - sheet.textX(), y + PrintedPaperLayout.LINE_H - 1,
+                        colours.shade());
+            }
+            Draw.textScaled(g, font, PrintLayout.plainLine(lines[i]), sheet.textX(), y, colours.ink(),
+                    PrintedPaperLayout.TEXT_SCALE);
         }
     }
 
@@ -217,7 +223,7 @@ public final class PrintedPaperScreen extends Screen {
         int widest = 0;
         for (final String page : document.pages()) {
             for (final String line : page.split("\n", -1)) {
-                widest = Math.max(widest, line.length());
+                widest = Math.max(widest, PrintLayout.plainLine(line).length());
             }
         }
         return widest;

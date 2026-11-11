@@ -100,6 +100,43 @@ final class TaskManagerTexts {
     static final TextKey KIND_SCRIPT = TextKey.of("jsc.task_manager.kind_script", "script");
     static final TextKey KIND_GRAPHICS = TextKey.of("jsc.task_manager.kind_graphics", "graphics");
     static final TextKey SHARED_GRAPHICS = TextKey.of("jsc.task_manager.shared_graphics", "Graphics (shared memory)");
+    // Power and temperature: XP's Power tab, Frames 11's Power page, and the System Monitor's two sections.
+    static final TextKey POWER = TextKey.of("jsc.task_manager.power", "Power");
+    static final TextKey POWER_HISTORY = TextKey.of("jsc.task_manager.power_history", "Power History");
+    static final TextKey FROM_LINE = TextKey.of("jsc.task_manager.from_line", "From the Line");
+    static final TextKey LINE_HISTORY = TextKey.of("jsc.task_manager.line_history", "Line History");
+    static final TextKey TEMPERATURE = TextKey.of("jsc.task_manager.temperature", "Temperature");
+    static final TextKey TEMPERATURE_HISTORY = TextKey.of("jsc.task_manager.temperature_history",
+            "Temperature History");
+    static final TextKey WATTS = TextKey.of("jsc.task_manager.watts", "%s W");
+    static final TextKey FE_PER_TICK = TextKey.of("jsc.task_manager.fe_per_tick", "%s FE/t");
+    static final TextKey CELSIUS = TextKey.of("jsc.task_manager.celsius", "%s °C");
+    static final TextKey KWH = TextKey.of("jsc.task_manager.kwh", "%s kWh");
+    static final TextKey DRAW = TextKey.of("jsc.task_manager.draw", "Draw");
+    static final TextKey RATING = TextKey.of("jsc.task_manager.rating", "Rating");
+    static final TextKey EFFICIENCY = TextKey.of("jsc.task_manager.efficiency", "Efficiency");
+    static final TextKey FROM_THE_LINE = TextKey.of("jsc.task_manager.from_the_line", "From the line");
+    static final TextKey RATE = TextKey.of("jsc.task_manager.rate", "Rate");
+    static final TextKey TODAY = TextKey.of("jsc.task_manager.today", "Today");
+    static final TextKey AROUND = TextKey.of("jsc.task_manager.around", "Around");
+    static final TextKey STATUS_POWER = TextKey.of("jsc.task_manager.status_power", "Power: %s W");
+    static final TextKey STATUS_CPU_TEMPERATURE = TextKey.of("jsc.task_manager.status_cpu_temperature", "CPU: %s °C");
+    static final TextKey STATUS_HISTORY = TextKey.of("jsc.task_manager.status_history", "History: %s");
+    static final TextKey PERIOD_HOUR = TextKey.of("jsc.task_manager.period_hour", "last hour");
+    static final TextKey PERIOD_DAY = TextKey.of("jsc.task_manager.period_day", "last day");
+    static final TextKey PERIOD_WEEK = TextKey.of("jsc.task_manager.period_week", "last 7 days");
+    static final TextKey CPU_TEMPERATURE = TextKey.of("jsc.task_manager.cpu_temperature", "CPU temperature");
+    static final TextKey LOAD_ON_SUPPLY = TextKey.of("jsc.task_manager.load_on_supply", "Load on the supply");
+    static final TextKey ENERGY_TODAY = TextKey.of("jsc.task_manager.energy_today", "Energy today");
+    static final TextKey WATTS_AND_RATE = TextKey.of("jsc.task_manager.watts_and_rate", "%s W · %s FE/t");
+    static final TextKey NO_TEMPERATURE = TextKey.of("jsc.task_manager.no_temperature",
+            "No temperature of its own: it is cooled from outside.");
+    static final TextKey READING_POWER = TextKey.of("jsc.task_manager.reading_power", "Reading the power...");
+    // The System Monitor's sections.
+    static final TextKey POWER_SECTION = TextKey.of("jsc.task_manager.power_section", "POWER");
+    static final TextKey TEMPERATURE_SECTION = TextKey.of("jsc.task_manager.temperature_section", "TEMPERATURE");
+    static final TextKey DRAW_OF = TextKey.of("jsc.task_manager.draw_of", "%s W of %s W · %s FE/t");
+    static final TextKey CELSIUS_OF = TextKey.of("jsc.task_manager.celsius_of", "%s °C of %s °C");
     // The graphics card: its page and its part of the performance page.
     static final TextKey GPU = TextKey.of("jsc.task_manager.gpu", "GPU");
     static final TextKey NO_GPU = TextKey.of("jsc.task_manager.no_gpu", "This computer has no graphics.");

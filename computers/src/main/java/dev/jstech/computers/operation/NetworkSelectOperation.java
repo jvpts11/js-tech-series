@@ -284,6 +284,11 @@ public final class NetworkSelectOperation extends AbstractTransferOperation {
     }
 
     @Override
+    public String askedBy() {
+        return destinationLabel;
+    }
+
+    @Override
     public OperationRecord toRecord() {
         return buildRecord(status(), false);
     }

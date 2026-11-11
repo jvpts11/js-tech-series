@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.client.monitor.MonitorPainter;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.MachineReadingsView;
 import dev.jstech.computers.client.os.SettingsApp;
 import dev.jstech.computers.client.os.SystemMonitorApp;
 import dev.jstech.computers.client.os.QuinceAboutApp;
@@ -27,6 +28,8 @@ import dev.jstech.computers.operation.payload.EndProcessPayload;
 import dev.jstech.computers.operation.payload.FaceListingPayload;
 import dev.jstech.computers.operation.payload.RequestDesktopFilesPayload;
 import dev.jstech.computers.operation.payload.RequestFaceListingPayload;
+import dev.jstech.computers.operation.payload.MachineReadingsPayload;
+import dev.jstech.computers.operation.payload.RequestMachineReadingsPayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SetDesktopPrefsPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
@@ -91,6 +94,11 @@ public final class DesktopPayloads {
                 ComputerAccess.machine(EndProcessPayload::hostPos), DesktopPayloads::handleEndProcess);
         registrar.playToClient(SettingsSnapshotPayload.TYPE, SettingsSnapshotPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(DesktopPayloads::handleSettingsSnapshot));
+        // A machine's power and temperature over a period, for its system monitors' graphs.
+        ComputerAccess.accept(registrar, RequestMachineReadingsPayload.TYPE, RequestMachineReadingsPayload.STREAM_CODEC,
+                ComputerAccess.machine(RequestMachineReadingsPayload::hostPos), DesktopPayloads::handleRequestReadings);
+        registrar.playToClient(MachineReadingsPayload.TYPE, MachineReadingsPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) -> MachineReadingsView.accept(payload)));
         ComputerAccess.accept(registrar, SetIconPositionPayload.TYPE, SetIconPositionPayload.STREAM_CODEC,
                 ComputerAccess.machine(SetIconPositionPayload::hostPos), DesktopPayloads::handleSetIconPosition);
         // A notice the machine raises from the corner of its own desktop, which takes nothing over.
@@ -150,6 +158,13 @@ public final class DesktopPayloads {
                                               final ServerLevel level) {
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             PacketDistributor.sendToPlayer(player, SettingsSnapshots.of(computer, payload.hostPos()));
+        }
+    }
+
+    private static void handleRequestReadings(final RequestMachineReadingsPayload payload, final ServerPlayer player,
+                                              final ServerLevel level) {
+        if (level.getBlockEntity(payload.hostPos()) instanceof AbstractComputerBlockEntity computer) {
+            PacketDistributor.sendToPlayer(player, computer.readingsOver(payload.hours()));
         }
     }
 

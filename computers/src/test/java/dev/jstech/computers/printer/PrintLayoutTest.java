@@ -77,6 +77,25 @@ class PrintLayoutTest {
     }
 
     @Test
+    void pages_keepAShadedLinesBandOnEveryLineItWrapsInto() {
+        final String line = PrintLayout.shaded("x".repeat(PrintLayout.PORTRAIT_COLUMNS + 4));
+
+        final String[] lines = PrintLayout.pages("", line, false).getFirst().split("\n");
+
+        assertEquals(2, lines.length);
+        assertTrue(PrintLayout.isShaded(lines[0]) && PrintLayout.isShaded(lines[1]));
+        assertEquals(PrintLayout.PORTRAIT_COLUMNS, PrintLayout.plainLine(lines[0]).length());
+    }
+
+    @Test
+    void plain_dropsTheBandsMarksAndKeepsEveryLine() {
+        final String text = "\n" + PrintLayout.shaded("Oak Log  1") + "\nend";
+
+        assertEquals("\nOak Log  1\nend", PrintLayout.plain(text));
+        assertTrue(!PrintLayout.isShaded("") && !PrintLayout.isShaded("plain"));
+    }
+
+    @Test
     void sheets_countThePages() {
         assertEquals(2, PrintLayout.sheets("", "a\n".repeat(PrintLayout.PORTRAIT_LINES + 1), false));
     }

@@ -233,6 +233,11 @@ public final class PendingCraftOperation implements INetworkOperation {
     }
 
     @Override
+    public String askedBy() {
+        return label;
+    }
+
+    @Override
     public OperationRecord toRecord() {
         final byte status = cancelled || abandoned ? OperationRecord.STATUS_DISCARDED
                 : failed ? OperationRecord.STATUS_FAILED

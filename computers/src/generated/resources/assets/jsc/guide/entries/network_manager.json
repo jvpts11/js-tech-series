@@ -99,6 +99,18 @@
       "text": "jsc.guide.network_manager.text7"
     },
     {
+      "type": "heading",
+      "text": "jsc.guide.network_manager.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_manager.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_manager.text9"
+    },
+    {
       "type": "define",
       "definition": "jsc.guide.network_manager.definition1",
       "term": "jsc.guide.network_manager.term1"

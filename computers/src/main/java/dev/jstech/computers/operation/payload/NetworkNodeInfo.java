@@ -18,12 +18,22 @@ import net.minecraft.network.codec.StreamCodec;
  * and the online flag, it carries the enrichment the Network Manager's Devices list and Map tooltip show:
  * the computer's custom name (empty when unnamed), its processor clock, graphics memory, free and total
  * storage, the public-share permille of its system disk ({@code -1} when not applicable, e.g. a server or
- * subframe with no directly readable disk), its installed OS label, and how it is linked to the network.
+ * subframe with no directly readable disk), its installed OS label, how it is linked to the network, and how long its
+ * system has been up, in ticks (zero for one that is not up, or a node with no system of its own).
  */
 @TextHolder
 public record NetworkNodeInfo(int kind, String id, String name, String detail, boolean online,
                               int cpuMhz, int vramMb, long storageFreeMb, long storageTotalMb,
-                              int publicPermille, String osLabel, NodeLink link) {
+                              int publicPermille, String osLabel, NodeLink link, long upTicks) {
+
+    /** A node whose uptime is not known: one with no system of its own. */
+    public NetworkNodeInfo(final int kind, final String id, final String name, final String detail,
+                           final boolean online, final int cpuMhz, final int vramMb, final long storageFreeMb,
+                           final long storageTotalMb, final int publicPermille, final String osLabel,
+                           final NodeLink link) {
+        this(kind, id, name, detail, online, cpuMhz, vramMb, storageFreeMb, storageTotalMb, publicPermille, osLabel,
+                link, 0L);
+    }
 
     // What kind of machine a node is, as the Network Manager tags it.
     private static final TextKey MAINFRAME = TextKey.of("jsc.network_node.mainframe", "MAINFRAME");
@@ -77,6 +87,7 @@ public record NetworkNodeInfo(int kind, String id, String name, String detail, b
         buf.writeVarInt(info.publicPermille);
         buf.writeUtf(info.osLabel);
         NodeLink.STREAM_CODEC.encode(buf, info.link);
+        buf.writeVarLong(info.upTicks);
     }
 
     private static NetworkNodeInfo decode(final RegistryFriendlyByteBuf buf) {
@@ -92,14 +103,21 @@ public record NetworkNodeInfo(int kind, String id, String name, String detail, b
         final int publicPermille = buf.readVarInt();
         final String osLabel = buf.readUtf();
         final NodeLink link = NodeLink.STREAM_CODEC.decode(buf);
+        final long upTicks = buf.readVarLong();
         return new NetworkNodeInfo(kind, id, name, detail, online, cpuMhz, vramMb,
-                storageFreeMb, storageTotalMb, publicPermille, osLabel, link);
+                storageFreeMb, storageTotalMb, publicPermille, osLabel, link, upTicks);
     }
 
     /** The same node with its link told. */
     public NetworkNodeInfo withLink(final NodeLink told) {
         return new NetworkNodeInfo(kind, id, name, detail, online, cpuMhz, vramMb, storageFreeMb, storageTotalMb,
-                publicPermille, osLabel, told);
+                publicPermille, osLabel, told, upTicks);
+    }
+
+    /** The same node with how long its system has been up. */
+    public NetworkNodeInfo withUpTicks(final long ticks) {
+        return new NetworkNodeInfo(kind, id, name, detail, online, cpuMhz, vramMb, storageFreeMb, storageTotalMb,
+                publicPermille, osLabel, link, ticks);
     }
 
     /** What kind of machine the node is, as a short tag in the player's language. */

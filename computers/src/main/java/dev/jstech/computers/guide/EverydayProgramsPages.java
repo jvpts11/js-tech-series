@@ -251,20 +251,24 @@ final class EverydayProgramsPages {
                 .row(GuideCell.words("Storage"),
                         GuideCell.words("How many programs are installed, and each disk, with the system's disk"
                                 + " marked (system)."))
+                .row(GuideCell.words("Power and Temperature"),
+                        GuideCell.words("What the parts draw and the line gives, and the processor's heat, each"
+                                + " over a small graph of the period its menu picks."))
                 .subheading("The Task Manager")
                 .paragraph("Right-click the panel and open the Task Manager from its menu. It is not on the"
                         + " Start menu or the desktop. Each desktop has its own manager, so what you see depends"
                         + " on your system.")
                 .table("The Task Manager by desktop", "Desktop", "Its manager")
                 .row(GuideCell.words("Frames 95"), GuideCell.words("A Close Program box."))
-                .row(GuideCell.words("Frames XP"), GuideCell.words("Four tabs, with a menu and a status bar."))
+                .row(GuideCell.words("Frames XP"), GuideCell.words("Five tabs, with a menu and a status bar."))
                 .row(GuideCell.words("Frames 11"), GuideCell.words("A rail at the side and a wide table."))
                 .row(GuideCell.words("Linux desktops"), GuideCell.words("Each desktop's own system monitor."))
-                .paragraph("On Frames XP the tabs are Applications, Processes, Performance and Networking. The"
+                .paragraph("On Frames XP the tabs are Applications, Processes, Performance, Networking and Power. The"
                         + " Performance tab shows the use of the processor and the memory, as numbers and as a"
                         + " history, and the graphics card when there is one. The Networking tab shows whether"
                         + " the machine is Connected or Not connected, and the link activity over the last"
-                        + " minute.")
+                        + " minute. The Power tab shows the draw, the line and the temperature with their histories"
+                        + " ([](jsc:task_manager)).")
                 .table("Buttons of the Task Manager", "Button", "What it does")
                 .row(GuideCell.code("End Task"),
                         GuideCell.words("Ends the selected window or program."))

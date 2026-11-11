@@ -139,6 +139,10 @@
       "text": "jsc.guide.task_manager.text6"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.task_manager.text7"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },

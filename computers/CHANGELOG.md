@@ -737,6 +737,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - USB sticks by model: the Vaultis Pocket 8G and 16G (USB 2.0) and 32G (USB 3.0) of the Standard, made at
   the Standard bench, and the 64G (USB-C) of the Advanced, made at the Advanced bench. The USB Flash Drive of before is
   the 32G, and every stick has a flat icon of its own.
+- Power in the system monitors: the Task Manager's Power tab on Frames XP and 7 and its Power page on
+  Frames 10 and 11, and the System Monitor's Power and Temperature, show what a machine's parts draw against its
+  supply, what the line gives in watts and FE a tick, its processor's temperature and its surroundings', each with its
+  history over the last game hour, day or 7 days, and the energy it took from the line today. A machine takes a
+  reading a second and keeps a week of them.
+- The Network Manager's longer statistics: the Stats tab covers the last game hour, day or 7 days, with
+  the day's peak and the time it came, and a graph of the orchestration capacity used over the last 2 game hours; the
+  Log's Operations view gives each Operation's time, id and who asked for it, and filters them by kind (CRAFT makes it
+  the history of the crafts), by who asked and by period; Devices gives each machine's uptime in game days and hours.
+- The Craft Planner's Print puts the plan on the computer's printer as a shopping list, the missing
+  ingredients on grey bands; its pill says how many ingredients are missing and which, and Craft stays grey until the
+  network holds them all.
 
 ### Changed
 - Removable media in real bytes: a floppy disk holds 1.44 MB, a CD 700 MB, a DVD 4.7 GB, a Blu-ray 25 GB
@@ -744,6 +756,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   says what it holds to the byte and what is still free. Files, patterns and stored items fill a medium; an installer
   always fits, as the system takes its room on the disk it goes to. A copy needs a blank holding at least the source's
   bytes.
+- Statistics in game time: the `stats` command and Σ#'s `Mainframe.PeakToday` count the last game hour
+  and the game day, as the event log does, where they counted real hours; a machine's uptime is kept across a reload.
 - Disks of their era: the Dock Station's trays take only disks of its era, the Standard, or of an older
   one. A disk newer than a computer, a server or the Dock, held over its slot, names itself, says it is too new and
   the era it needs; a refusal over a slot breaks into short lines.

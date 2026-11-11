@@ -22,7 +22,7 @@ public final class PrintedPaperColours {
     /** The paper, its bands and holes, the print, and the pager under the sheet. */
     private static final Palette<SheetColours> COLOURS = Palettes.declare(JsComputers.MODID, "screen/printed_paper",
             new SheetColours(0xFFFBFBF8, 0xFFF4F4F0, 0xFFD7EBD7, 0xFFCFCFC8, 0xFF23262C, 0xFF6A707A, 0xFFDDDDDD,
-                    0xFF6F6F6F));
+                    0xFF6F6F6F, 0xFFD8D8D4));
 
     private PrintedPaperColours() {
     }
@@ -43,7 +43,9 @@ public final class PrintedPaperColours {
      * @param faint    the caption under a picture's name
      * @param pager    the page count and an arrow that turns
      * @param pagerDim an arrow at the end of the document
+     * @param shade    the grey band under a marked line, what a shopping list still misses
      */
-    public record SheetColours(int paper, int fanfold, int bar, int hole, int ink, int faint, int pager, int pagerDim) {
+    public record SheetColours(int paper, int fanfold, int bar, int hole, int ink, int faint, int pager, int pagerDim,
+                               int shade) {
     }
 }

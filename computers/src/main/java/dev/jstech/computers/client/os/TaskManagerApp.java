@@ -9,7 +9,9 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.ThermalModel;
 import dev.jstech.computers.operation.payload.EndProcessPayload;
+import dev.jstech.computers.operation.payload.MachineReadingsPayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload.DiskUse;
@@ -66,6 +68,13 @@ public final class TaskManagerApp implements IDesktopApp {
     private static final int STATUS_H = 11;
     /** A box of three facts under the performance page's graphs. */
     private static final int FACTS_H = 3 * 9 + 4;
+    /* Where each form keeps its Power page: XP's fifth tab, Frames 11's seventh page on the rail. */
+    private static final int LUNA_POWER = 4;
+    private static final int MODERN_POWER = 6;
+    /* Watts are joules a second, and a tick a twentieth of one: what makes the line's watts FE a tick. */
+    private static final double TICKS_A_SECOND = 20.0;
+    /* The temperature a machine trips at, the top of its temperature's graphs. */
+    private static final double TRIP_C = ThermalModel.TRIP_AT;
 
     private final BlockPos host;
     private final Form form;
@@ -92,12 +101,17 @@ public final class TaskManagerApp implements IDesktopApp {
     private final int[] gpuHistory = new int[HISTORY];
     private int samples;
     private long lastSampleAt;
+    /* The machine's power and temperature over the period the Power page shows. */
+    private final MachineReadingsView readings;
+    /* Where Frames 11's period buttons were drawn, for the clicks on them: x, y, width of each, and their height. */
+    private final int[][] periodButtons = new int[3][4];
 
     private static TaskManagerApp active;
 
     public TaskManagerApp(final BlockPos host, final ResourceLocation desktopId) {
         this.host = host;
         this.form = formOf(desktopId);
+        this.readings = new MachineReadingsView(host);
         active = this;
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
     }
@@ -402,9 +416,10 @@ public final class TaskManagerApp implements IDesktopApp {
     private String[] pages() {
         final TextKey[] keys = switch (form) {
             case LUNA -> new TextKey[] {TaskManagerTexts.APPLICATIONS, TaskManagerTexts.PROCESSES,
-                TaskManagerTexts.PERFORMANCE, TaskManagerTexts.NETWORKING};
+                TaskManagerTexts.PERFORMANCE, TaskManagerTexts.NETWORKING, TaskManagerTexts.POWER};
             case MODERN -> new TextKey[] {TaskManagerTexts.PROCESSES, TaskManagerTexts.PERFORMANCE,
-                TaskManagerTexts.SERVICES, TaskManagerTexts.STORAGE, TaskManagerTexts.NETWORK, TaskManagerTexts.GPU};
+                TaskManagerTexts.SERVICES, TaskManagerTexts.STORAGE, TaskManagerTexts.NETWORK, TaskManagerTexts.GPU,
+                TaskManagerTexts.POWER};
             case PLASMA -> new TextKey[] {TaskManagerTexts.OVERVIEW, TaskManagerTexts.APPLICATIONS,
                 TaskManagerTexts.PROCESSES, TaskManagerTexts.HISTORY};
             case GNOME -> new TextKey[] {TaskManagerTexts.PROCESSES, TaskManagerTexts.RESOURCES,
@@ -516,17 +531,185 @@ public final class TaskManagerApp implements IDesktopApp {
                 button(g, font, px + pw - 60, py + listH + 3, 60, 13, TaskManagerTexts.END_PROCESS, canEnd());
             }
             case 2 -> renderPerformance(g, font, px, py, pw, ph);
-            default -> renderNetworking(g, font, px, py, pw, ph);
+            case 3 -> renderNetworking(g, font, px, py, pw, ph);
+            default -> renderLunaPower(g, font, px, py, pw, ph);
         }
         final int sy = y + height - STATUS_H;
         g.fill(x, sy, x + width, sy + 1, skin.edge());
         final int third = width / 3;
+        if (page == LUNA_POWER) {
+            // The Power tab's own status: the draw, the processor's heat, and the period its histories cover.
+            final MachineReadingsPayload now = readings.latest();
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.STATUS_POWER.with(now == null ? 0 : now.drawNow())),
+                    x + 4, sy + 2, skin.text());
+            if (now != null && now.hasTemperature()) {
+                Texts.small(g, font, GameText.resolve(TaskManagerTexts.STATUS_CPU_TEMPERATURE.with(now.celsius())),
+                        x + third + 4, sy + 2, skin.text());
+            }
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.STATUS_HISTORY.with(readings.periodWords())),
+                    x + 2 * third + 4, sy + 2, skin.text());
+            return;
+        }
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.PROCESS_COUNT.with(processes().size())), x + 4, sy + 2,
                 skin.text());
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.CPU_USAGE_IS.with(load.percent())), x + third + 4,
                 sy + 2, skin.text());
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.COMMIT.with(usedMb(), totalMb())),
                 x + 2 * third + 4, sy + 2, skin.text());
+    }
+
+    /*
+     * XP's Power tab: the draw, what the line gives and the temperature, each a meter beside its history over the
+     * period the status bar names, and three boxes of figures under them (the draw against the supply, the line and
+     * the day's energy, the processor's heat and its surroundings').
+     */
+    private void renderLunaPower(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                                 final int h) {
+        readings.tick();
+        final MachineReadingsPayload now = readings.latest();
+        if (now == null) {
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.READING_POWER), x + 2, y + 2, skin.dim());
+            return;
+        }
+        final int rows = now.hasTemperature() ? 3 : 2;
+        final int meterW = 68;
+        final int pitch = (h - FACTS_H - 4) / rows;
+        final int graphH = pitch - 8;
+        final int gx = x + meterW + 8;
+        final int gw = w - meterW - 10;
+        final int rating = Math.max(1, now.rating());
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.POWER), x + 2, y, skin.dim());
+        gauge(g, font, x + 2, y + 8, meterW, graphH - 2, GameText.resolve(TaskManagerTexts.WATTS.with(now.drawNow())),
+                (double) now.drawNow() / rating);
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.POWER_HISTORY), gx, y, skin.dim());
+        seriesGraph(g, gx, y + 8, gw, graphH - 2, now.draw(), rating);
+        final int ly = y + pitch;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.FROM_LINE), x + 2, ly, skin.dim());
+        gauge(g, font, x + 2, ly + 8, meterW, graphH - 2,
+                GameText.resolve(TaskManagerTexts.FE_PER_TICK.with(Math.round(now.lineNow() / TICKS_A_SECOND))),
+                (double) now.lineNow() / rating);
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.LINE_HISTORY), gx, ly, skin.dim());
+        seriesGraph(g, gx, ly + 8, gw, graphH - 2, now.line(), rating);
+        if (now.hasTemperature()) {
+            final int ty = y + 2 * pitch;
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.TEMPERATURE), x + 2, ty, skin.dim());
+            gauge(g, font, x + 2, ty + 8, meterW, graphH - 2,
+                    GameText.resolve(TaskManagerTexts.CELSIUS.with(now.celsius())), now.celsius() / TRIP_C);
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.TEMPERATURE_HISTORY), gx, ty, skin.dim());
+            seriesGraph(g, gx, ty + 8, gw, graphH - 2, now.temperature(), (int) TRIP_C);
+        }
+        final int fy = y + rows * pitch;
+        final int box = w / 3;
+        facts(g, font, x + 2, fy, box - 4, new String[][] {
+            {GameText.resolve(TaskManagerTexts.DRAW), GameText.resolve(TaskManagerTexts.WATTS.with(now.drawNow()))},
+            {GameText.resolve(TaskManagerTexts.RATING), GameText.resolve(TaskManagerTexts.WATTS.with(now.rating()))},
+            {GameText.resolve(TaskManagerTexts.EFFICIENCY), GameText.resolve(TaskManagerTexts.PERCENT
+                    .with(now.lineNow() <= 0 ? 0 : Math.round(100.0 * now.drawNow() / now.lineNow())))}});
+        facts(g, font, x + box + 2, fy, box - 4, new String[][] {
+            {GameText.resolve(TaskManagerTexts.FROM_THE_LINE),
+                GameText.resolve(TaskManagerTexts.WATTS.with(now.lineNow()))},
+            {GameText.resolve(TaskManagerTexts.RATE),
+                GameText.resolve(TaskManagerTexts.FE_PER_TICK.with(Math.round(now.lineNow() / TICKS_A_SECOND)))},
+            {GameText.resolve(TaskManagerTexts.TODAY), MachineReadingsView.kwh(now.joulesToday())}});
+        if (now.hasTemperature()) {
+            facts(g, font, x + 2 * box + 2, fy, box - 4, new String[][] {
+                {GameText.resolve(TaskManagerTexts.CPU), GameText.resolve(TaskManagerTexts.CELSIUS
+                        .with(now.celsius()))},
+                {GameText.resolve(TaskManagerTexts.AROUND), GameText.resolve(TaskManagerTexts.CELSIUS
+                        .with(now.ambient()))}});
+        }
+    }
+
+    /*
+     * Frames 11's Power page: the supply by name and the period's buttons, the draw and the processor's temperature as
+     * the GPU page draws its graphs, and the figures under them.
+     */
+    private void renderModernPower(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                                   final int h) {
+        readings.tick();
+        Draw.text(g, font, GameText.resolve(TaskManagerTexts.POWER), x, y, skin.text(), skin.windowBg());
+        int bx = x;
+        final String[] periods = words(NetworkEventLogTexts.LAST_HOUR, NetworkEventLogTexts.LAST_DAY,
+                NetworkEventLogTexts.LAST_WEEK);
+        for (int i = 0; i < periods.length; i++) {
+            final int bw = Texts.smallWidth(font, periods[i]) + 8;
+            periodButtons[i] = new int[] {bx, y + 11, bw, 10};
+            if (i == readings.period()) {
+                g.fill(bx, y + 11, bx + bw, y + 21, skin.accent());
+            } else {
+                Draw.outline(g, bx, y + 11, bw, 10, skin.edge());
+            }
+            Texts.small(g, font, periods[i], bx + 4, y + 13, i == readings.period() ? skin.windowBg() : skin.text());
+            bx += bw + 2;
+        }
+        final MachineReadingsPayload now = readings.latest();
+        if (now == null) {
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.READING_POWER), x, y + 26, skin.dim());
+            return;
+        }
+        final int graphH = 22;
+        int row = y + 25;
+        final String rating = GameText.resolve(TaskManagerTexts.WATTS.with(now.rating()));
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.DRAW), x, row, skin.dim());
+        Texts.small(g, font, rating, x + w - Texts.smallWidth(font, rating), row, skin.dim());
+        seriesGraph(g, x, row + 8, w, graphH, now.draw(), Math.max(1, now.rating()));
+        row += graphH + 10;
+        if (now.hasTemperature()) {
+            final String trip = GameText.resolve(TaskManagerTexts.CELSIUS.with((int) TRIP_C));
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.CPU_TEMPERATURE), x, row, skin.dim());
+            Texts.small(g, font, trip, x + w - Texts.smallWidth(font, trip), row, skin.dim());
+            seriesGraph(g, x, row + 8, w, graphH, now.temperature(), (int) TRIP_C);
+            row += graphH + 11;
+        } else {
+            Texts.small(g, font, Texts.clip(font, GameText.resolve(TaskManagerTexts.NO_TEMPERATURE), w), x, row,
+                    skin.dim());
+            row += 11;
+        }
+        final String line = GameText.resolve(TaskManagerTexts.WATTS_AND_RATE.with(now.lineNow(),
+                Math.round(now.lineNow() / TICKS_A_SECOND)));
+        final String[][] figures = now.hasTemperature() ? new String[][] {
+            {GameText.resolve(TaskManagerTexts.DRAW), GameText.resolve(TaskManagerTexts.WATTS.with(now.drawNow()))},
+            {GameText.resolve(TaskManagerTexts.FROM_THE_LINE), line},
+            {GameText.resolve(TaskManagerTexts.LOAD_ON_SUPPLY), loadOnSupply(now)},
+            {GameText.resolve(TaskManagerTexts.CPU_TEMPERATURE), GameText.resolve(TaskManagerTexts.CELSIUS
+                    .with(now.celsius()))},
+            {GameText.resolve(TaskManagerTexts.ENERGY_TODAY), MachineReadingsView.kwh(now.joulesToday())}}
+            : new String[][] {
+                {GameText.resolve(TaskManagerTexts.DRAW), GameText.resolve(TaskManagerTexts.WATTS
+                        .with(now.drawNow()))},
+                {GameText.resolve(TaskManagerTexts.FROM_THE_LINE), line},
+                {GameText.resolve(TaskManagerTexts.LOAD_ON_SUPPLY), loadOnSupply(now)},
+                {GameText.resolve(TaskManagerTexts.ENERGY_TODAY), MachineReadingsView.kwh(now.joulesToday())}};
+        facts(g, font, x, row, w, figures);
+    }
+
+    private static String loadOnSupply(final MachineReadingsPayload now) {
+        return GameText.resolve(TaskManagerTexts.PERCENT.with(now.rating() <= 0 ? 0
+                : Math.round(100.0 * now.drawNow() / now.rating())));
+    }
+
+    /* A series of the readings, oldest at the left, on the managers' green grid; an empty sample keeps the line. */
+    private void seriesGraph(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                             final int[] series, final int max) {
+        g.fill(x, y, x + w, y + h, PALETTE.get().meterFace());
+        Draw.outline(g, x, y, w, h, skin.edge());
+        grid(g, x, y, w, h);
+        final int[] values = MachineReadingsView.filled(series);
+        if (values.length < 2) {
+            return;
+        }
+        final int span = Math.max(1, max);
+        int prevX = x;
+        int prevY = y + h - 1;
+        for (int i = 0; i < values.length; i++) {
+            final int px = x + (int) ((long) i * (w - 1) / (values.length - 1));
+            final int py = y + h - 1 - (int) ((long) Math.max(0, Math.min(span, values[i])) * (h - 2) / span);
+            if (i > 0) {
+                line(g, prevX, prevY, px, py);
+            }
+            prevX = px;
+            prevY = py;
+        }
     }
 
     /**
@@ -656,6 +839,7 @@ public final class TaskManagerApp implements IDesktopApp {
             case 3 -> renderDisks(g, font, px, y + 4, pw, height - 8);
             case 4 -> renderNetworking(g, font, px, y + 4, pw, height - 8);
             case 5 -> renderGpu(g, font, px, y + 4, pw, height - 8);
+            case MODERN_POWER -> renderModernPower(g, font, px, y + 4, pw, height - 8);
             default -> {
                 button(g, font, x + width - 48, y + 3, 44, 12, TaskManagerTexts.END_TASK_LOWER, canEnd());
                 columns(g, font, px, y + 18, pw, listColumns(TaskManagerTexts.NAME),
@@ -1045,6 +1229,20 @@ public final class TaskManagerApp implements IDesktopApp {
                 }
             }
             default -> {
+            }
+        }
+        // The Power page's period: XP's status bar moves it on, Frames 11's buttons pick it.
+        if (form == Form.LUNA && page == LUNA_POWER && mouseY >= y + h - STATUS_H) {
+            readings.next();
+            return;
+        }
+        if (form == Form.MODERN && page == MODERN_POWER) {
+            for (int i = 0; i < periodButtons.length; i++) {
+                final int[] b = periodButtons[i];
+                if (mouseX >= b[0] && mouseX < b[0] + b[2] && mouseY >= b[1] && mouseY < b[1] + b[3]) {
+                    readings.choose(i);
+                    return;
+                }
             }
         }
         // Then the buttons, then the rows: whichever the click actually landed on.

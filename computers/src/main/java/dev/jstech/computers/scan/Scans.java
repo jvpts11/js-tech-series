@@ -13,6 +13,7 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.PixImage;
 import dev.jstech.computers.os.fs.ScanFile;
 import dev.jstech.computers.os.fs.ScanSeal;
+import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.printer.PrintedDocument;
 import dev.jstech.computers.registry.ComputingComponents;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -175,7 +176,8 @@ public final class Scans {
             final String name = document.pictureName().isEmpty() ? document.title() : document.pictureName();
             return new Scan(FileType.PIX, name, document.picture(), 1);
         }
-        return new Scan(FileType.TXT, document.title(), String.join(PAGE_BREAK, document.pages()),
+        // The words of the sheet, not the marks that lay a line on a grey band.
+        return new Scan(FileType.TXT, document.title(), PrintLayout.plain(String.join(PAGE_BREAK, document.pages())),
                 document.sheets());
     }
 

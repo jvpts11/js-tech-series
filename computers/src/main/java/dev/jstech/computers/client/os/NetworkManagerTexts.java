@@ -34,6 +34,11 @@ final class NetworkManagerTexts {
     static final TextKey NODE_COLUMN = TextKey.of("jsc.network_manager.node_column", "NODE");
     static final TextKey TYPE_COLUMN = TextKey.of("jsc.network_manager.type_column", "TYPE");
     static final TextKey STATUS_COLUMN = TextKey.of("jsc.network_manager.status_column", "STATUS");
+    static final TextKey UPTIME_COLUMN = TextKey.of("jsc.network_manager.uptime_column", "UPTIME");
+    /* How long a machine has been up, in days and hours of the game: "2d 04h". */
+    static final TextKey UPTIME = TextKey.of("jsc.network_manager.uptime", "%sd %sh");
+    /* The same, for an uptime too long for its column: the days alone, "124d". */
+    static final TextKey UPTIME_DAYS = TextKey.of("jsc.network_manager.uptime_days", "%sd");
     static final TextKey UNNAMED = TextKey.of("jsc.network_manager.unnamed", "unnamed");
     static final TextKey ONLINE = TextKey.of("jsc.network_manager.online", "online");
     static final TextKey OFFLINE = TextKey.of("jsc.network_manager.offline", "offline");
@@ -82,14 +87,34 @@ final class NetworkManagerTexts {
 
     // Log and stats.
     static final TextKey NO_LOG = TextKey.of("jsc.network_manager.no_log", "No Operations logged yet.");
+    // The Operations view's filters, its columns and the count under it.
+    static final TextKey ALL_TYPES = TextKey.of("jsc.network_manager.log.all_types", "All types");
+    static final TextKey LOG_ID = TextKey.of("jsc.network_manager.log.id", "ID");
+    static final TextKey LOG_WHAT = TextKey.of("jsc.network_manager.log.what", "WHAT");
+    static final TextKey LOG_BY = TextKey.of("jsc.network_manager.log.by", "BY");
+    static final TextKey LOG_MANY = TextKey.of("jsc.network_manager.log.many", "%s Operations %s");
+    static final TextKey LOG_ONE = TextKey.of("jsc.network_manager.log.one", "1 Operation %s");
+    static final TextKey IN_LAST_HOUR = TextKey.of("jsc.network_manager.log.in_last_hour", "in the last hour");
+    static final TextKey IN_LAST_DAY = TextKey.of("jsc.network_manager.log.in_last_day", "in the last day");
+    static final TextKey IN_LAST_WEEK = TextKey.of("jsc.network_manager.log.in_last_week", "in the last 7 days");
+    static final TextKey IN_LOG = TextKey.of("jsc.network_manager.log.in_log", "kept in the log");
+    static final TextKey NONE_IN_PERIOD =
+            TextKey.of("jsc.network_manager.log.none", "No Operations match these filters.");
     static final TextKey NO_STATS =
-            TextKey.of("jsc.network_manager.no_stats", "No Operations settled in the last hour.");
-    static final TextKey OPS_PER_HOUR = TextKey.of("jsc.network_manager.ops_per_hour", "OPS/H");
-    static final TextKey WAIT = TextKey.of("jsc.network_manager.wait", "WAIT");
-    static final TextKey RUN = TextKey.of("jsc.network_manager.run", "RUN");
-    static final TextKey FAIL = TextKey.of("jsc.network_manager.fail", "FAIL");
-    static final TextKey LAST_HOUR = TextKey.of("jsc.network_manager.last_hour",
-            "Last hour: %s items moved   -   peak %s in flight today");
+            TextKey.of("jsc.network_manager.no_stats", "No Operations settled in this period.");
+    static final TextKey OPS_PER_HOUR = TextKey.of("jsc.network_manager.ops_per_hour", "PER HOUR");
+    static final TextKey WAIT = TextKey.of("jsc.network_manager.wait", "AVG WAIT");
+    static final TextKey RUN = TextKey.of("jsc.network_manager.run", "AVG RUN");
+    static final TextKey FAIL = TextKey.of("jsc.network_manager.fail", "FAILED");
+    // The day's peak, its time of day, and the graph of the capacity used under it.
+    static final TextKey PEAK_TODAY = TextKey.of("jsc.network_manager.peak_today",
+            "Peak today: %s Operations at once, at %s");
+    static final TextKey NO_PEAK = TextKey.of("jsc.network_manager.no_peak", "Peak today: nothing has run yet");
+    static final TextKey CAPACITY_GRAPH = TextKey.of("jsc.network_manager.capacity_graph",
+            "ORCHESTRATION CAPACITY USED, THE LAST 2 HOURS");
+    static final TextKey GRAPH_FROM = TextKey.of("jsc.network_manager.graph_from", "-2 h");
+    static final TextKey GRAPH_NOW = TextKey.of("jsc.network_manager.graph_now", "now");
+    static final TextKey STAT_SECONDS = TextKey.of("jsc.network_manager.stat_seconds", "%s s");
     static final TextKey SECONDS = TextKey.of("jsc.network_manager.seconds", "%ss");
     static final TextKey TICKS = TextKey.of("jsc.network_manager.ticks", "%st");
 

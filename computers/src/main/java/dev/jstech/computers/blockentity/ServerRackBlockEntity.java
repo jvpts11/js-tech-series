@@ -1074,6 +1074,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
 
     // Per-bay power, stored inverted (bit set = switched OFF) so a fresh rack powers every bay on.
     private int bayPowerOff;
+    /* The tick each bay's server has been up since, zero for one that is not: its uptime in the Network Manager. */
+    private final long[] bayUpSince = new long[CAPACITY_U];
     /*
      * What the cabinet draws from the grid for the machines in its powered bays, each through its own supply. Its
      * store changes every tick, so it only marks the block for saving and wakes no neighbour.
@@ -1475,6 +1477,11 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return energy.fe();
     }
 
+    /** How long the server in bay {@code slot} has been up, in ticks; zero for one that is not. */
+    public long upTicks(final int slot, final long now) {
+        return slot < 0 || slot >= CAPACITY_U || bayUpSince[slot] == 0L ? 0L : Math.max(0L, now - bayUpSince[slot]);
+    }
+
     /** What the machines in the powered bays take from the line now, in watts, each through its own supply. */
     public double drawnWatts() {
         double drawn = 0.0;
@@ -1513,6 +1520,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         int anchorReach = -1;
         for (int i = 0; i < CAPACITY_U; i++) {
             final ItemStack stack = servers.getStackInSlot(i);
+            final boolean up = stack.getItem() instanceof ServerItem && bayPowerOn(i);
+            final long since = !up ? 0L : bayUpSince[i] != 0L ? bayUpSince[i] : level.getGameTime();
+            if (since != bayUpSince[i]) {
+                bayUpSince[i] = since;
+                setChanged();
+            }
             if (!(stack.getItem() instanceof ServerItem)) {
                 continue;
             }
@@ -3068,6 +3081,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         resizeAfterLoad(frontSlots, CAPACITY_U * RackLayout.SLOTS_PER_U);
         linkedPeripherals.load(tag);
         bayPowerOff = tag.getInt("BayPowerOff");
+        final long[] upSince = tag.getLongArray("BayUpSince");
+        Arrays.fill(bayUpSince, 0L);
+        System.arraycopy(upSince, 0, bayUpSince, 0, Math.min(upSince.length, CAPACITY_U));
         servicePanelOff = tag.getBoolean("ServicePanelOff");
         // The machine the monitor was switched to; activeChannel() still falls back if that row is empty now.
         activeChannel = tag.getInt("ActiveChannel");
@@ -3104,6 +3120,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         tag.put("FrontSlots", frontSlots.serializeNBT(registries));
         linkedPeripherals.save(tag);
         tag.putInt("BayPowerOff", bayPowerOff);
+        tag.putLongArray("BayUpSince", bayUpSince);
         tag.putBoolean("ServicePanelOff", servicePanelOff);
         tag.putInt("ActiveChannel", activeChannel);
         arrays.save(tag);

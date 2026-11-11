@@ -25,6 +25,7 @@ import dev.jstech.computers.menu.AbstractBusMenu;
 import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.CraftingInterfaceMenu;
 import dev.jstech.computers.menu.ServerRouterMenu;
+import dev.jstech.computers.operation.NetworkStatistics;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.BusEditPayload;
 import dev.jstech.computers.operation.payload.BusStatePayload;
@@ -246,19 +247,35 @@ public final class NetworkPayloads {
                 collectStatistics(level, mf));
     }
 
-    /** The last hour's Operation statistics of a Mainframe, by type, for the Stats tab. */
+    /**
+     * A Mainframe's Operation statistics for the Stats tab: each type over the last game hour, day and 7 days, the
+     * day's peak and when, and the capacity used over the last 2 game hours.
+     */
     static NetworkManagerPayload.Statistics collectStatistics(final ServerLevel level, final MainframeBlockEntity mf) {
         final long now = level.getGameTime();
+        final NetworkStatistics statistics = mf.statistics();
+        final int[] graph = statistics.graph(now);
+        final byte[] samples = new byte[graph.length];
+        for (int i = 0; i < graph.length; i++) {
+            samples[i] = (byte) graph[i];
+        }
+        return new NetworkManagerPayload.Statistics(typeStats(statistics, now, NetworkStatistics.HOUR),
+                typeStats(statistics, now, NetworkStatistics.DAY), typeStats(statistics, now, NetworkStatistics.WEEK),
+                statistics.peakToday(now), statistics.peakTodayAt(now), samples);
+    }
+
+    /* Each type over the last {@code hours}, as many as the payload carries. */
+    private static List<NetworkManagerPayload.TypeStat> typeStats(final NetworkStatistics statistics, final long now,
+                                                                  final int hours) {
         final List<NetworkManagerPayload.TypeStat> types = new ArrayList<>();
-        for (final var summary : mf.statistics().summaries(now)) {
+        for (final NetworkStatistics.Summary summary : statistics.summaries(now, hours)) {
             if (types.size() >= NetworkManagerPayload.MAX_STAT_TYPES) {
                 break;
             }
-            types.add(new NetworkManagerPayload.TypeStat((byte) summary.type(), summary.count(),
-                    summary.shortfallPercent(), summary.averageWait(), summary.averageRun(), summary.moved()));
+            types.add(new NetworkManagerPayload.TypeStat((byte) summary.type(), summary.count(), summary.failed(),
+                    summary.averageWait(), summary.averageRun(), summary.moved()));
         }
-        return new NetworkManagerPayload.Statistics(types, mf.statistics().peakConcurrentLastDay(now),
-                mf.statistics().movedLastHour(now));
+        return types;
     }
 
     private static void handleNetworkManager(final NetworkManagerPayload payload, final Player player) {
@@ -446,9 +463,10 @@ public final class NetworkPayloads {
          * Total capacity is only summed for the Mainframe; a generic computer reports its free space, which is
          * the "available storage" the tooltip shows, with total left as 0 (unknown).
          */
+        final long now = c instanceof BlockEntity at && at.getLevel() != null ? at.getLevel().getGameTime() : 0L;
         return new NetworkNodeInfo(kind, ShortId.of(uuid), c.customName(), detail, c.isRunning(),
                 c.maxCpuMhz(), c.totalVramMb(), c.systemDiskFreeMb(), 0L,
-                share, osLabelOf(c.installedOsId()), link);
+                share, osLabelOf(c.installedOsId()), link, c.upTicks(now));
     }
 
     /** Resolves the computer at {@code posLong}; falls back to a bare row if it is not loaded as a computer. */
@@ -473,9 +491,12 @@ public final class NetworkPayloads {
         final long free = store == null ? 0L : store.free();
         final NodeLink link = location.map(loc -> linkOf(level, links, BlockPos.of(loc.rackPos())))
                 .orElse(NodeLink.NONE);
+        final long up = location.map(loc -> Loaded.blockEntity(level, BlockPos.of(loc.rackPos()))
+                instanceof ServerRackBlockEntity rack ? rack.upTicks(loc.slot(), level.getGameTime()) : 0L)
+                .orElse(0L);
         return new NetworkNodeInfo(NetworkNodeInfo.KIND_SERVER, ShortId.of(server.nodeUuid().asString()),
                 serverLabel(level, server.nodeUuid()), String.format(Locale.ROOT, "%,d items", total), true,
-                0, 0, free, total, NetworkNodeInfo.SHARE_UNKNOWN, "", link);
+                0, 0, free, total, NetworkNodeInfo.SHARE_UNKNOWN, "", link, up);
     }
 
     /**

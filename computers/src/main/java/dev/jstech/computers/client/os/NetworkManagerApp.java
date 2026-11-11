@@ -19,6 +19,7 @@ import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.gui.layout.NetworkEventLogLayout;
 import dev.jstech.computers.gui.layout.NetworkLinksLayout;
 import dev.jstech.computers.gui.layout.NetworkServicesLayout;
+import dev.jstech.computers.operation.NetworkStatistics;
 import dev.jstech.computers.operation.payload.CancelOperationPayload;
 import dev.jstech.computers.operation.payload.NetworkEventsPayload;
 import dev.jstech.computers.operation.payload.NetworkManagerPayload;
@@ -26,6 +27,7 @@ import dev.jstech.computers.operation.payload.NetworkNodeInfo;
 import dev.jstech.computers.operation.payload.NetworkServicesPayload;
 import dev.jstech.computers.operation.payload.NodeLink;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.operation.payload.RequestNetworkEventsPayload;
 import dev.jstech.computers.operation.payload.RequestNetworkManagerPayload;
 import dev.jstech.computers.operation.payload.RequestNiOperationsPayload;
 import dev.jstech.computers.operation.payload.SetOperationPriorityPayload;
@@ -36,6 +38,7 @@ import dev.jstech.computers.wireless.WirelessStandard;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.ColumnHeader;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Dropdown;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
@@ -52,8 +55,10 @@ import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.time.GameCalendar;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -75,7 +80,8 @@ import java.util.function.Supplier;
  * The Network Manager desktop app, exclusive to the Mainframe (the node that holds the network index).
  * It is a windowed task manager for the whole data network, with seven tabs: Devices (every node),
  * Processes (live Operations), Hardware (the network's compute and storage totals), Map (the topology),
- * Log (the recent Operations feed), Stats (the last hour by type) and Services (the engine that plans the
+ * Log (the recent Operations feed), Stats (the last game hour, day or 7 days by type, the day's peak and the
+ * capacity used over 2 game hours) and Services (the engine that plans the
  * network's work and the other software the Mainframe runs for it). Nodes carry the computer's name and specs;
  * a Map node shows a full tooltip on hover, and a logged Operation opens a detail dialog with its sub-operations.
  *
@@ -99,12 +105,25 @@ public final class NetworkManagerApp implements IDesktopApp {
     private static final int TAB_SERVICES = 6;
     private static final int STAT_ROW_H = 12;
     private static final int STATS_REFRESH_FRAMES = 100;
+    /* The Stats tab's period buttons at their widest, and the least height its graph keeps. */
+    private static final int STATS_PERIOD_W = 180;
+    private static final int STATS_GRAPH_MIN_H = 24;
 
     private static final int OPS_REFRESH_FRAMES = 40;
     private static final int DEV_ROW_H = 12;
     private static final int LOG_ROW_H = 12;
-    /** The row under the log its Print button stands in, and the button's width. */
-    private static final int PRINT_ROW_H = 14;
+    /* The Operations view's columns: the id and what it was after the time, the status and who asked at the right. */
+    private static final int LOG_ID_X = 34;
+    private static final int LOG_WHAT_X = 72;
+    private static final int LOG_STATUS_W = 74;
+    private static final int LOG_BY_W = 62;
+    private static final int LOG_ID_CHARS = 4;
+    /* The kinds the type filter offers, in the order the prompt lists them. */
+    private static final byte[] LOG_TYPES = {OperationRecord.TYPE_SELECT, OperationRecord.TYPE_INSERT,
+        OperationRecord.TYPE_UPDATE, OperationRecord.TYPE_DELETE, OperationRecord.TYPE_MOVE,
+        OperationRecord.TYPE_CRAFT, OperationRecord.TYPE_RUN, OperationRecord.TYPE_ANALYZE,
+        OperationRecord.TYPE_REINDEX, OperationRecord.TYPE_VACUUM, OperationRecord.TYPE_DROP};
+    /** The width of the Print button under the log. */
     private static final int PRINT_W = 40;
     /** The manager's own id, whose name on the desktop its printouts say they came from. */
     private static final String PROGRAM = "jsc:network_manager";
@@ -117,7 +136,7 @@ public final class NetworkManagerApp implements IDesktopApp {
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/network_manager",
             new Colours(0xFF3A6AE0, 0xFF12A26F, 0xFF7B52C9, 0xFF1C9C9C, 0xFFD98A3A, 0xFFC94FB0, 0xFFA9B23C,
                     0xFF2EA043, 0xFFE0A020, 0xFFD1495B, 0xFF9FB4E6, 0xB0000000, 0xF00E0E12, 0xFFFFFFFF,
-                    0xFFB7BCCB, 0x33E0A020));
+                    0xFFB7BCCB, 0x33E0A020, 0x664A90E2));
 
     private static final double MAP_ZOOM_MIN = 0.4;
     private static final double MAP_ZOOM_MAX = 2.5;
@@ -146,6 +165,12 @@ public final class NetworkManagerApp implements IDesktopApp {
     private NetworkManagerPayload data;
     private List<OperationRecord> activeOps = List.of();
     private List<OperationRecord> logNewestFirst = List.of();
+    /* The Operations view's filters: the type (0 for every type), who asked (empty for anyone), the period. */
+    private int logType;
+    private String logBy = "";
+    private int logPeriod = RequestNetworkEventsPayload.PERIOD_DAY;
+    /* Who asked for the Operations in the log, as the machine filter offers them. */
+    private List<String> logAskers = List.of();
     /** Whether the Log tab shows the network's events rather than its Operations. */
     private boolean showingEvents;
     private int tab;
@@ -207,10 +232,26 @@ public final class NetworkManagerApp implements IDesktopApp {
     private final NetworkEventLogView events;
     private final Label noLogLabel;
     private final ListView<OperationRecord> logList;
+    private final Dropdown logTypeFilter;
+    private Dropdown logByFilter;
+    private final Dropdown logPeriodFilter;
+    private final ColumnHeader logColumns;
+    private final Label logCount;
     private final Button logPrint;
     private final PrintDialog printDialog;
     private final ScrollBar logBar;
-    private final Label statsHeader;
+    private final TabStrip statsPeriod;
+    private final Label peakLabel;
+    private final Label graphHeading;
+    private final Label graphFrom;
+    private final Label graphNow;
+    /* The hours the Stats tab looks back: one, a day's or a week's. */
+    private int statsHours = NetworkStatistics.HOUR;
+    /* Where the capacity graph was laid out, for drawing it over the components. */
+    private int graphX;
+    private int graphY;
+    private int graphW;
+    private int graphH;
     private final Label noStatsLabel;
     private final ColumnHeader statsColumns;
     private final ListView<NetworkManagerPayload.TypeStat> statsList;
@@ -243,9 +284,11 @@ public final class NetworkManagerApp implements IDesktopApp {
         netLabel = root.add(new Label(this::networkText, Label.Tone.DIM));
 
         devColumns = root.add(new ColumnHeader(words(NetworkManagerTexts.NODE_COLUMN, NetworkManagerTexts.TYPE_COLUMN,
-                NetworkLinkTexts.LINK_COLUMN, NetworkManagerTexts.STATUS_COLUMN)).setSortable(false));
+                NetworkLinkTexts.LINK_COLUMN, NetworkManagerTexts.STATUS_COLUMN, NetworkManagerTexts.UPTIME_COLUMN))
+                .setSortable(false));
         devColumnsNarrow = root.add(new ColumnHeader(words(NetworkManagerTexts.NODE_COLUMN,
-                NetworkLinkTexts.LINK_COLUMN, NetworkManagerTexts.STATUS_COLUMN)).setSortable(false));
+                NetworkLinkTexts.LINK_COLUMN, NetworkManagerTexts.STATUS_COLUMN, NetworkManagerTexts.UPTIME_COLUMN))
+                .setSortable(false));
         devList = root.add(new ListView<NetworkNodeInfo>(this::nodes, DEV_ROW_H, this::renderDeviceRow));
 
         processes = root.add(new ProcessList().setOnPick(this::processPicked));
@@ -290,10 +333,25 @@ public final class NetworkManagerApp implements IDesktopApp {
         map = root.add(new MapCanvas());
 
         noLogLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.NO_LOG), Label.Tone.DIM));
-        logList = root.add(new ListView<OperationRecord>(() -> logNewestFirst, LOG_ROW_H, this::renderLogRow)
+        logList = root.add(new ListView<OperationRecord>(this::logRows, LOG_ROW_H, this::renderLogRow)
                 .setOnClick(this::logClicked));
-        logBar = root.add(new ScrollBar(() -> Math.max(0, logNewestFirst.size() - logList.visibleRows()), logList::scroll,
+        logBar = root.add(new ScrollBar(() -> Math.max(0, logRows().size() - logList.visibleRows()), logList::scroll,
                 v -> logList.setScroll(v)));
+        // The Operations view's filters, as the events' have them: which kind, who asked, and how far back.
+        final List<Supplier<String>> types = new ArrayList<>();
+        types.add(() -> GameText.resolve(NetworkManagerTexts.ALL_TYPES));
+        for (final byte type : LOG_TYPES) {
+            types.add(() -> OperationPalette.labelFor(type));
+        }
+        logTypeFilter = root.add(new Dropdown(types, () -> logType, this::chooseLogType, shown -> shown));
+        logByFilter = root.add(askerDropdown());
+        logPeriodFilter = root.add(new Dropdown(List.of(word(NetworkEventLogTexts.LAST_HOUR),
+                word(NetworkEventLogTexts.LAST_DAY), word(NetworkEventLogTexts.LAST_WEEK),
+                word(NetworkEventLogTexts.ALL_KEPT)), () -> logPeriod, this::chooseLogPeriod, shown -> shown));
+        logColumns = root.add(new ColumnHeader(words(NetworkEventLogTexts.TIME, NetworkManagerTexts.LOG_ID,
+                NetworkManagerTexts.LOG_WHAT, NetworkManagerTexts.STATUS_COLUMN, NetworkManagerTexts.LOG_BY))
+                .setSortable(false));
+        logCount = root.add(new Label(this::logCountText, Label.Tone.DIM));
         printDialog = new PrintDialog(host, this);
         logPrint = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::printLog));
         logSwitch = root.add(new TabStrip(words(NetworkEventLogTexts.OPERATIONS, NetworkEventLogTexts.EVENTS))
@@ -301,7 +359,14 @@ public final class NetworkManagerApp implements IDesktopApp {
         events = new NetworkEventLogView(host, this, printDialog, () -> ActiveDesktop.windowName(PROGRAM));
         root.add(events.component());
 
-        statsHeader = root.add(new Label(this::statsHeaderText, Label.Tone.DIM));
+        // The periods, named as the event log names them.
+        statsPeriod = root.add(new TabStrip(words(NetworkEventLogTexts.LAST_HOUR, NetworkEventLogTexts.LAST_DAY,
+                NetworkEventLogTexts.LAST_WEEK)).fitToLabels(10).setOnSelect(this::selectStatsPeriod));
+        peakLabel = root.add(new Label(this::peakText, Label.Tone.DIM));
+        graphHeading = root.add(new Label(GameText.resolve(NetworkManagerTexts.CAPACITY_GRAPH), Label.Tone.DIM));
+        graphFrom = root.add(new Label(GameText.resolve(NetworkManagerTexts.GRAPH_FROM), Label.Tone.DIM));
+        graphNow = root.add(new Label(GameText.resolve(NetworkManagerTexts.GRAPH_NOW), Label.Tone.DIM)
+                .setAlign(Label.Align.RIGHT));
         noStatsLabel = root.add(new Label(GameText.resolve(NetworkManagerTexts.NO_STATS), Label.Tone.DIM));
         statsColumns = root.add(new ColumnHeader(words(NetworkManagerTexts.TYPE_COLUMN,
                 NetworkManagerTexts.OPS_PER_HOUR, NetworkManagerTexts.WAIT, NetworkManagerTexts.RUN,
@@ -410,9 +475,9 @@ public final class NetworkManagerApp implements IDesktopApp {
         return detailCancel.center();
     }
 
-    /** The Operations the Log tab lists now, newest first; for tests. */
+    /** The Operations the Log tab lists now through its filters, newest first; for tests. */
     public List<OperationRecord> logShown() {
-        return logNewestFirst;
+        return logRows();
     }
 
     /** The nodes as the window has them, with their links; for tests. */
@@ -522,6 +587,24 @@ public final class NetworkManagerApp implements IDesktopApp {
             final List<OperationRecord> reversed = new ArrayList<>(ops);
             Collections.reverse(reversed);
             active.logNewestFirst = reversed;
+            active.refreshAskers();
+        }
+    }
+
+    /* The machine filter offers whoever asked for an Operation in the log; rebuilt only when that changes. */
+    private void refreshAskers() {
+        final List<String> askers = new ArrayList<>();
+        for (final OperationRecord op : logNewestFirst) {
+            final String asker = askerOf(op);
+            if (!asker.isEmpty() && !askers.contains(asker)) {
+                askers.add(asker);
+            }
+        }
+        Collections.sort(askers);
+        if (!askers.equals(logAskers)) {
+            logAskers = List.copyOf(askers);
+            root.remove(logByFilter);
+            logByFilter = root.add(askerDropdown());
         }
     }
 
@@ -582,13 +665,39 @@ public final class NetworkManagerApp implements IDesktopApp {
     }
 
     private List<NetworkManagerPayload.TypeStat> statRows() {
-        return statistics().types();
+        return statistics().of(statsHours);
     }
 
-    private String statsHeaderText() {
+    private void selectStatsPeriod(final int index) {
+        statsHours = index == 0 ? NetworkStatistics.HOUR : index == 1 ? NetworkStatistics.DAY : NetworkStatistics.WEEK;
+        statsList.setScroll(0);
+    }
+
+    /* The day's peak and the time of day it was reached, as the desktop's clock tells it. */
+    private String peakText() {
         final NetworkManagerPayload.Statistics stats = statistics();
-        return GameText.resolve(NetworkManagerTexts.LAST_HOUR.with(JsTechTheme.fmt(stats.movedLastHour()),
-                stats.peakConcurrent()));
+        if (stats.peakToday() <= 0) {
+            return GameText.resolve(NetworkManagerTexts.NO_PEAK);
+        }
+        final Minecraft mc = Minecraft.getInstance();
+        final long dayTime = mc.level == null ? 0L
+                : mc.level.getDayTime() - (mc.level.getGameTime() - stats.peakAt());
+        return GameText.resolve(NetworkManagerTexts.PEAK_TODAY.with(stats.peakToday(),
+                String.format(Locale.ROOT, "%02d:%02d", GameCalendar.hourOf(dayTime), GameCalendar.minuteOf(dayTime))));
+    }
+
+    /* Ticks as seconds, with a tenth below ten: "0.2 s", "24 s". */
+    private static String secondsLabel(final long ticks) {
+        final double seconds = ticks / 20.0;
+        return GameText.resolve(NetworkManagerTexts.STAT_SECONDS.with(seconds >= 10.0
+                ? Long.toString(Math.round(seconds)) : String.format(Locale.ROOT, "%.1f", seconds)));
+    }
+
+    /* How many an hour, with a tenth below ten: "412", "0.5". */
+    private String perHourLabel(final int count) {
+        final double perHour = (double) count / statsHours;
+        return perHour >= 10.0 || perHour == Math.rint(perHour) ? JsTechTheme.fmt(Math.round(perHour))
+                : String.format(Locale.ROOT, "%.1f", perHour);
     }
 
     /** Ticks as a short duration: whole seconds past a minute's worth, else ticks. */
@@ -613,6 +722,99 @@ public final class NetworkManagerApp implements IDesktopApp {
             out.add(GameText.resolve(key));
         }
         return out;
+    }
+
+    private static Supplier<String> word(final TextKey key) {
+        return () -> GameText.resolve(key);
+    }
+
+    /*
+     * How long a machine has been up, in days and hours of the game: "2d 04h", the days alone when that is too wide
+     * for its column; two dashes for one that is not up.
+     */
+    private static String uptimeLabel(final Font font, final long ticks) {
+        if (ticks <= 0L) {
+            return "--";
+        }
+        final long hours = ticks / GameCalendar.HOUR_TICKS;
+        final String full = GameText.resolve(NetworkManagerTexts.UPTIME.with(hours / 24L,
+                String.format(Locale.ROOT, "%02d", hours % 24L)));
+        return font.width(full) <= NetworkLinksLayout.UPTIME_W ? full
+                : GameText.resolve(NetworkManagerTexts.UPTIME_DAYS.with(hours / 24L));
+    }
+
+    /* The Operations the log shows through its filters, newest first; one written before the log kept the time only
+     * under All kept. */
+    private List<OperationRecord> logRows() {
+        final Minecraft mc = Minecraft.getInstance();
+        final long now = mc.level == null ? 0L : mc.level.getGameTime();
+        final long reach = RequestNetworkEventsPayload.ticksOf((byte) logPeriod);
+        final List<OperationRecord> out = new ArrayList<>();
+        for (final OperationRecord op : logNewestFirst) {
+            final boolean typeFits = logType == 0 || op.type() == LOG_TYPES[logType - 1];
+            final boolean askerFits = logBy.isEmpty() || logBy.equals(askerOf(op));
+            final boolean timeFits = logPeriod == RequestNetworkEventsPayload.PERIOD_ALL
+                    || op.settledAt() != 0L && now - op.settledAt() <= reach;
+            if (typeFits && askerFits && timeFits) {
+                out.add(op);
+            }
+        }
+        return out;
+    }
+
+    /* Who asked for an Operation: the name its asker gave, or the machine another mod's Operation ran on. */
+    private static String askerOf(final OperationRecord op) {
+        return op.by().isEmpty() ? op.machine() : op.by();
+    }
+
+    private void chooseLogType(final int index) {
+        logType = index;
+        logList.setScroll(0);
+    }
+
+    private void chooseLogPeriod(final int index) {
+        logPeriod = index;
+        logList.setScroll(0);
+    }
+
+    private Dropdown askerDropdown() {
+        final List<Supplier<String>> options = new ArrayList<>();
+        options.add(word(NetworkEventLogTexts.ALL_MACHINES));
+        for (final String asker : logAskers) {
+            options.add(() -> asker);
+        }
+        return new Dropdown(options, () -> logBy.isEmpty() ? 0 : logAskers.indexOf(logBy) + 1, index -> {
+            logBy = index <= 0 || index > logAskers.size() ? "" : logAskers.get(index - 1);
+            logList.setScroll(0);
+        }, shown -> shown);
+    }
+
+    /* How many the filters show, and over which period. */
+    private String logCountText() {
+        final int count = logRows().size();
+        final Text period = (logPeriod == RequestNetworkEventsPayload.PERIOD_HOUR ? NetworkManagerTexts.IN_LAST_HOUR
+                : logPeriod == RequestNetworkEventsPayload.PERIOD_DAY ? NetworkManagerTexts.IN_LAST_DAY
+                : logPeriod == RequestNetworkEventsPayload.PERIOD_WEEK ? NetworkManagerTexts.IN_LAST_WEEK
+                : NetworkManagerTexts.IN_LOG).text();
+        return GameText.resolve(count == 1 ? NetworkManagerTexts.LOG_ONE.with(period)
+                : NetworkManagerTexts.LOG_MANY.with(JsTechTheme.fmt(count), period));
+    }
+
+    /* When an Operation was written down: the time today, the day before that, nothing for one not stamped. */
+    private static String logTimeOf(final OperationRecord op) {
+        if (op.settledAt() == 0L) {
+            return "--";
+        }
+        final Minecraft mc = Minecraft.getInstance();
+        final long today = mc.level == null ? -1L : GameCalendar.day(mc.level.getDayTime());
+        final long day = GameCalendar.day(op.settledDayTime());
+        return day == today ? String.format(Locale.ROOT, "%02d:%02d", GameCalendar.hourOf(op.settledDayTime()),
+                GameCalendar.minuteOf(op.settledDayTime())) : GameText.resolve(NetworkEventLogTexts.DAY.with(day));
+    }
+
+    /* An Operation's short id, as the log names it: "#4f3a"; none for an instant one. */
+    private static String logIdOf(final OperationRecord op) {
+        return op.hasId() ? "#" + op.id().toString().substring(0, LOG_ID_CHARS) : "--";
     }
 
     /* The first node that lost its link, which the line under the Devices list tells of, or none. */
@@ -744,11 +946,14 @@ public final class NetworkManagerApp implements IDesktopApp {
         services.layout(x + 6, y + 34, width - NetworkServicesLayout.WINDOW_PAD, height - 38,
                 data != null && tab == TAB_SERVICES, skin, font);
         root.render(g, ctx);
+        if (graphW > 0) {
+            renderCapacityGraph(g);
+        }
         if (devList.visible()) {
             // Column separators, so each column reads as its own lane.
             final ColumnHeader columns = devColumns.visible() ? devColumns : devColumnsNarrow;
             final int bottom = devList.y() + Math.min(nodes().size(), devList.visibleRows()) * DEV_ROW_H;
-            for (int i = 1; i < (columns == devColumns ? 4 : 3); i++) {
+            for (int i = 1; i < (columns == devColumns ? 5 : 4); i++) {
                 final int sx = columns.columnX(i) - 4;
                 g.fill(sx, columns.y(), sx + 1, bottom, skin.edge());
             }
@@ -826,10 +1031,11 @@ public final class NetworkManagerApp implements IDesktopApp {
         if (devices) {
             devColumns.setBounds(px, top - 1, pw, 12);
             devColumns.setColumnX(px + NetworkLinksLayout.NAME_X, px + NetworkLinksLayout.typeX(pw),
-                    px + NetworkLinksLayout.linkX(pw), px + NetworkLinksLayout.statusX(pw));
+                    px + NetworkLinksLayout.linkX(pw), px + NetworkLinksLayout.statusX(pw),
+                    px + NetworkLinksLayout.uptimeX(pw));
             devColumnsNarrow.setBounds(px, top - 1, pw, 12);
             devColumnsNarrow.setColumnX(px + NetworkLinksLayout.NAME_X, px + NetworkLinksLayout.linkX(pw),
-                    px + NetworkLinksLayout.statusX(pw));
+                    px + NetworkLinksLayout.statusX(pw), px + NetworkLinksLayout.uptimeX(pw));
             devList.setBounds(px, top + 11, pw,
                     Math.max(DEV_ROW_H, NetworkLinksLayout.listH(h + 1, lostShown != null)));
             footerX = px;
@@ -861,35 +1067,84 @@ public final class NetworkManagerApp implements IDesktopApp {
         logSwitch.setBounds(px, top, NetworkEventLogLayout.SWITCH_W, NetworkEventLogLayout.SWITCH_H);
         events.layout(px, top, pw, h, logTab && showingEvents);
         final boolean log = logTab && !showingEvents;
-        noLogLabel.setVisible(log && logNewestFirst.isEmpty());
-        logList.setVisible(log && !logNewestFirst.isEmpty());
-        logBar.setVisible(logList.visible() && logNewestFirst.size() > logList.visibleRows());
+        final List<OperationRecord> shownOps = log ? logRows() : List.of();
+        for (final UiComponent part : List.of(logTypeFilter, logByFilter, logPeriodFilter, logColumns, logCount)) {
+            part.setVisible(log);
+        }
+        noLogLabel.setVisible(log && shownOps.isEmpty());
+        noLogLabel.setText(GameText.resolve(logNewestFirst.isEmpty() ? NetworkManagerTexts.NO_LOG
+                : NetworkManagerTexts.NONE_IN_PERIOD));
+        logList.setVisible(log && !shownOps.isEmpty());
+        logBar.setVisible(logList.visible() && shownOps.size() > logList.visibleRows());
         // The log prints from a button under it, as a list a program keeps has its Print beside it.
-        logPrint.setVisible(log && !logNewestFirst.isEmpty());
+        logPrint.setVisible(log && !shownOps.isEmpty());
         if (log) {
-            final int opsTop = top + NetworkEventLogLayout.FILTER_Y;
-            final int opsH = h - NetworkEventLogLayout.FILTER_Y;
-            final int listH = Math.max(LOG_ROW_H, opsH - PRINT_ROW_H);
-            noLogLabel.setBounds(px + 2, opsTop + 2, pw, 8);
-            logList.setBounds(px, opsTop, pw - BAR_W, listH);
-            logBar.setBounds(px + pw - BAR_W, opsTop, BAR_W, logList.visibleRows() * LOG_ROW_H);
-            logPrint.setBounds(px + pw - PRINT_W, opsTop + opsH - PRINT_ROW_H + 2, PRINT_W, 11);
+            final int filterY = top + NetworkEventLogLayout.FILTER_Y;
+            logTypeFilter.setBounds(px, filterY, NetworkEventLogLayout.LEVEL_FILTER_W, NetworkEventLogLayout.FILTER_H);
+            logByFilter.setBounds(px + NetworkEventLogLayout.machineFilterX(), filterY,
+                    NetworkEventLogLayout.MACHINE_FILTER_W, NetworkEventLogLayout.FILTER_H);
+            logPeriodFilter.setBounds(px + NetworkEventLogLayout.periodFilterX(), filterY,
+                    NetworkEventLogLayout.PERIOD_FILTER_W, NetworkEventLogLayout.FILTER_H);
+            logColumns.setBounds(px, top + NetworkEventLogLayout.HEADER_Y, pw - BAR_W, NetworkEventLogLayout.HEADER_H);
+            logColumns.setColumnX(px + 2, px + LOG_ID_X, px + LOG_WHAT_X, px + logStatusX(pw), px + logByX(pw));
+            final int listY = top + NetworkEventLogLayout.LIST_Y;
+            noLogLabel.setBounds(px + 2, listY + 2, pw, 8);
+            logList.setBounds(px, listY, pw - BAR_W, NetworkEventLogLayout.listH(h));
+            logBar.setBounds(px + pw - BAR_W, listY, BAR_W, logList.visibleRows() * LOG_ROW_H);
+            final int footY = top + NetworkEventLogLayout.footY(h);
+            logCount.setBounds(px + 2, footY + 2, pw - PRINT_W - 8, 8);
+            logPrint.setBounds(px + pw - PRINT_W, footY, PRINT_W, 11);
         }
 
         final boolean stats = ready && tab == TAB_STATS;
-        statsHeader.setVisible(stats);
+        for (final UiComponent part : List.of(statsPeriod, peakLabel, graphHeading, graphFrom, graphNow)) {
+            part.setVisible(stats);
+        }
         noStatsLabel.setVisible(stats && statRows().isEmpty());
         statsColumns.setVisible(stats && !statRows().isEmpty());
         statsList.setVisible(stats && !statRows().isEmpty());
+        graphW = stats ? pw : 0;
         if (stats) {
-            statsHeader.setBounds(px + 2, top, pw, 8);
-            noStatsLabel.setBounds(px + 2, top + 14, pw, 8);
-            statsColumns.setBounds(px, top + 11, pw, 12);
+            statsPeriod.setSelected(statsHours == NetworkStatistics.HOUR ? 0 : statsHours == NetworkStatistics.DAY
+                    ? 1 : 2);
+            statsPeriod.setBounds(px, top, Math.min(pw, STATS_PERIOD_W), 12);
+            noStatsLabel.setBounds(px + 2, top + 18, pw, 8);
+            statsColumns.setBounds(px, top + 15, pw, 12);
             // Five lanes: the type takes the left third, the four figures share the rest, right-aligned.
             final int lane = (pw - pw / 3) / 4;
             final int figuresX = px + pw / 3;
             statsColumns.setColumnX(px + 4, figuresX, figuresX + lane, figuresX + 2 * lane, figuresX + 3 * lane);
-            statsList.setBounds(px, top + 23, pw, Math.max(STAT_ROW_H, h - 23));
+            // Under the table, from the bottom up: the graph's ends, the graph, its heading and the day's peak.
+            final int axisY = top + h - 8;
+            graphH = Math.max(STATS_GRAPH_MIN_H, h / 3);
+            graphY = axisY - 2 - graphH;
+            graphX = px;
+            graphFrom.setBounds(px, axisY, pw / 2, 8);
+            graphNow.setBounds(px + pw / 2, axisY, pw / 2, 8);
+            graphHeading.setBounds(px + 2, graphY - 10, pw - 2, 8);
+            peakLabel.setBounds(px + 2, graphY - 22, pw - 2, 8);
+            statsList.setBounds(px, top + 27, pw, Math.max(STAT_ROW_H, graphY - 25 - (top + 27)));
+        }
+    }
+
+    /* The capacity used over the last 2 game hours, oldest at the left, as a filled line over the graph's ground. */
+    private void renderCapacityGraph(final GuiGraphics g) {
+        g.fill(graphX, graphY, graphX + graphW, graphY + graphH, skin.fieldBg());
+        Draw.outline(g, graphX, graphY, graphW, graphH, skin.edge());
+        final byte[] samples = statistics().graph();
+        if (samples.length < 2) {
+            return;
+        }
+        final int inner = graphH - 2;
+        int lastY = -1;
+        for (int px = 1; px < graphW - 1; px++) {
+            final int sample = samples[Math.min(samples.length - 1, (px - 1) * samples.length / (graphW - 2))];
+            final int top = graphY + 1 + inner - Math.max(0, Math.min(inner, sample * inner / 100));
+            g.fill(graphX + px, top, graphX + px + 1, graphY + graphH - 1, colours().graphFill());
+            final int from = lastY < 0 ? top : Math.min(lastY, top);
+            final int to = lastY < 0 ? top : Math.max(lastY, top);
+            g.fill(graphX + px, from, graphX + px + 1, to + 1, skin.accent());
+            lastY = top;
         }
     }
 
@@ -902,14 +1157,14 @@ public final class NetworkManagerApp implements IDesktopApp {
         Draw.text(g, font, OperationPalette.labelFor(type), statsColumns.columnX(0), y + 2,
                 OperationPalette.colorFor(type));
         final String[] figures = {
-                String.valueOf(stat.count()),
-                ticksLabel(stat.averageWait()),
-                ticksLabel(stat.averageRun()),
-                stat.shortfallPercent() + "%"};
+                perHourLabel(stat.count()),
+                secondsLabel(stat.averageWait()),
+                secondsLabel(stat.averageRun()),
+                JsTechTheme.fmt(stat.failed())};
         for (int i = 0; i < figures.length; i++) {
             // Each figure sits right-aligned in its lane, so the columns read as a table.
             final int laneRight = i == figures.length - 1 ? x + w - 4 : statsColumns.columnX(i + 2) - 6;
-            final int color = i == 3 && stat.shortfallPercent() > 0 ? colours().warn() : ctx.skin().text();
+            final int color = i == 3 && stat.failed() > 0 ? colours().bad() : ctx.skin().text();
             Draw.text(g, font, figures[i], laneRight - font.width(figures[i]), y + 2, color);
         }
     }
@@ -949,7 +1204,11 @@ public final class NetworkManagerApp implements IDesktopApp {
                 NetworkLinkDrawing.wordsColour(link));
         final String status = GameText.resolve(!link.up() ? NetworkLinkTexts.NO_LINK
                 : n.online() ? NetworkManagerTexts.ONLINE : NetworkManagerTexts.OFFLINE);
-        Draw.text(g, font, status, x + w - font.width(status), y + 2,
+        // The uptime in days and hours of the game, or two dashes for a machine that is not up.
+        Draw.text(g, font, uptimeLabel(font, link.up() ? n.upTicks() : 0L), x + NetworkLinksLayout.uptimeX(w), y + 2,
+                ctx.skin().text());
+        Draw.text(g, font, Texts.clip(font, status, NetworkLinksLayout.STATUS_W), x + NetworkLinksLayout.statusX(w),
+                y + 2,
                 !link.up() ? colours().warn() : n.online() ? colours().good() : ctx.skin().dim());
     }
 
@@ -958,30 +1217,48 @@ public final class NetworkManagerApp implements IDesktopApp {
                               final boolean selected) {
         final Font font = ctx.font();
         ctx.skin().listRow(g, x, y, w, h, hovered, false);
+        // The time, the id, what it was (its kind in its colour, then its subject), its status and who asked.
+        final int statusX = x + logStatusX(w + BAR_W);
+        final int byX = x + logByX(w + BAR_W);
+        Draw.text(g, font, logTimeOf(op), x + 2, y + 2, ctx.skin().dim());
+        Draw.text(g, font, logIdOf(op), x + LOG_ID_X, y + 2, ctx.skin().dim());
         final String type = OperationPalette.labelFor(op.type());
-        Draw.text(g, font, type, x + 4, y + 2, OperationPalette.colorFor(op.type()));
-        final int nameX = x + 4 + font.width(type) + 4;
-        final String st = statusLabel(op.status());
-        Draw.text(g, font, Texts.clip(font, op.name().getString(), w - (nameX - x) - font.width(st) - 8), nameX, y + 2,
+        Draw.text(g, font, type, x + LOG_WHAT_X, y + 2, OperationPalette.colorFor(op.type()));
+        final int nameX = x + LOG_WHAT_X + font.width(type) + 4;
+        Draw.text(g, font, Texts.clip(font, op.name().getString(), statusX - nameX - 4), nameX, y + 2,
                 ctx.skin().text());
-        Draw.text(g, font, st, x + w - font.width(st), y + 2, statusColor(op.status()));
+        Draw.text(g, font, Texts.clip(font, statusLabel(op.status()), byX - statusX - 4), statusX, y + 2,
+                statusColor(op.status()));
+        Draw.text(g, font, Texts.clip(font, askerOf(op), x + w - byX), byX, y + 2, ctx.skin().text());
     }
 
-    /* The log, newest first as it is shown, one Operation a line, to the machine's printer. */
+    /* Where the status column starts in a tab {@code w} wide: before who asked, at the right. */
+    private static int logStatusX(final int w) {
+        return logByX(w) - LOG_STATUS_W;
+    }
+
+    /* Where who asked starts in a tab {@code w} wide. */
+    private static int logByX(final int w) {
+        return w - BAR_W - LOG_BY_W;
+    }
+
+    /* The log as it is shown, through its filters, one Operation a line, to the machine's printer. */
     private void printLog() {
         final List<List<String>> table = new ArrayList<>();
-        for (final OperationRecord op : logNewestFirst) {
-            table.add(List.of(OperationPalette.labelFor(op.type()), op.name().getString(), statusLabel(op.status())));
+        for (final OperationRecord op : logRows()) {
+            table.add(List.of(logTimeOf(op), logIdOf(op), OperationPalette.labelFor(op.type()), op.name().getString(),
+                    statusLabel(op.status()), askerOf(op)));
         }
         printDialog.show(PrintDialog.Document.text(GameText.resolve(NetworkManagerTexts.LOG_TITLE),
                 ActiveDesktop.windowName(PROGRAM), PrintLayout.table(table, false)));
     }
 
     private void logClicked(final int index, final int button, final double mx, final double my) {
-        if (button != 0 || index < 0 || index >= logNewestFirst.size()) {
+        final List<OperationRecord> shown = logRows();
+        if (button != 0 || index < 0 || index >= shown.size()) {
             return;
         }
-        openDetail(logNewestFirst.get(index));
+        openDetail(shown.get(index));
     }
 
     private void processPicked(final OperationRecord operation, final int button) {
@@ -1596,6 +1873,6 @@ public final class NetworkManagerApp implements IDesktopApp {
      */
     private record Colours(int mainframe, int server, int subframe, int personalComputer, int crafting,
                            int supercomputer, int clusterManagement, int good, int warn, int bad, int link,
-                           int detailDim, int card, int cardTitle, int cardText, int lostRow) {
+                           int detailDim, int card, int cardTitle, int cardText, int lostRow, int graphFill) {
     }
 }

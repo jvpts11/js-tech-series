@@ -368,6 +368,11 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
     }
 
     @Override
+    public String askedBy() {
+        return requesterLabel;
+    }
+
+    @Override
     public OperationRecord toRecord() {
         return buildRecord(status);
     }

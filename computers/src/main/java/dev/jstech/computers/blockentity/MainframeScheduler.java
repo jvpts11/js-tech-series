@@ -15,12 +15,12 @@ import dev.jstech.computers.crafting.NetworkMultiStageOperation;
 import dev.jstech.computers.crafting.NetworkProcessingOperation;
 import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.operation.MemberOperation;
+import dev.jstech.computers.operation.NetworkStatistics;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.event.IOperationLifecycleEvent;
 import dev.jstech.core.jstechseries.operation.OperationBalance;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
-import dev.jstech.core.jstechseries.operation.OperationStatistics;
 import dev.jstech.core.jstechseries.operation.exec.QueueArbiter;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -105,7 +105,7 @@ final class MainframeScheduler {
     private final Map<INetworkOperation, UUID> askedBy = new IdentityHashMap<>();
 
     /** The last hour of settled Operations by type, and the day's peak concurrency; RAM only. */
-    private final OperationStatistics statistics = new OperationStatistics();
+    private final NetworkStatistics statistics = new NetworkStatistics();
 
     /** Gives the processing jobs their Crafting Interfaces and credits what their machines give back. */
     private final CraftingDispatch crafting = new CraftingDispatch();
@@ -164,8 +164,8 @@ final class MainframeScheduler {
         deferredWork.add(work);
     }
 
-    /** The rolling statistics of this Mainframe's Operations. */
-    OperationStatistics statistics() {
+    /** The rolling statistics of this Mainframe's Operations, over the last game hour, day and 7 days. */
+    NetworkStatistics statistics() {
         return statistics;
     }
 
@@ -342,7 +342,6 @@ final class MainframeScheduler {
         }
         // Progress lives in the Operations themselves and is saved with the block entity.
         mainframe.markDirtyOnly();
-        statistics.observeConcurrency(mainframe.gameTime(), inFlight.size());
         /*
          * A queue processes at most the RAM buffer per tick: a buffer smaller than the CPU leaves the CPU idle
          * waiting on RAM, so the effective rate is the lesser of the two. Subframes pool their share of
@@ -403,6 +402,15 @@ final class MainframeScheduler {
         for (int i = 0; i < grantedInOrder.size(); i++) {
             queueOf.put(grantedInOrder.get(i), i < speeds.length ? speeds[i] : effectiveCapacity);
         }
+        // The capacity given out this tick, of all the queues had, is what the Stats tab's graph draws.
+        long given = 0L;
+        long total = 0L;
+        for (int i = 0; i < slots; i++) {
+            final long speed = i < speeds.length ? speeds[i] : effectiveCapacity;
+            total += speed;
+            given += i < grantedInOrder.size() ? speed : 0L;
+        }
+        statistics.observe(mainframe.gameTime(), inFlight.size(), given, total);
         for (final INetworkOperation operation : snapshot) {
             if (operation.isDone()) {
                 continue;
@@ -452,7 +460,8 @@ final class MainframeScheduler {
              */
             final boolean nested = operation instanceof NetworkProcessingOperation proc && proc.isNested();
             if (!nested && !operation.silent()) {
-                final OperationRecord record = operation.toRecord().withTiming(waited, ran);
+                final OperationRecord record = operation.toRecord().withTiming(waited, ran)
+                        .withBy(operation.askedBy());
                 mainframe.recordOperation(record);
                 statistics.record(mainframe.gameTime(), record.type(), !record.completed(), waited, ran,
                         record.moved());

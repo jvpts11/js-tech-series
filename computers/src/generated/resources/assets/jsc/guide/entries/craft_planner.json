@@ -140,12 +140,32 @@
           {
             "words": "jsc.guide.craft_planner.table1_14_2"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.craft_planner.table1_15_1"
+          },
+          {
+            "words": "jsc.guide.craft_planner.table1_15_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.craft_planner.table1_16_1"
+          },
+          {
+            "words": "jsc.guide.craft_planner.table1_16_2"
+          }
         ]
       ]
     },
     {
       "type": "text",
       "text": "jsc.guide.craft_planner.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.craft_planner.text4"
     },
     {
       "type": "heading",

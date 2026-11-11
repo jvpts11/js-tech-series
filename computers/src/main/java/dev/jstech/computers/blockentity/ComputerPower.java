@@ -258,10 +258,12 @@ final class ComputerPower {
     void save(final CompoundTag tag) {
         tag.putBoolean("ManualOn", this.manualOn);
         tag.putBoolean("AutoStart", this.autoStart);
+        tag.putLong("UpSince", this.phases.upSince());
     }
 
     void load(final CompoundTag tag) {
         this.manualOn = tag.getBoolean("ManualOn");
         this.autoStart = tag.getBoolean("AutoStart");
+        this.phases.restoreUpSince(this.manualOn ? tag.getLong("UpSince") : 0L);
     }
 }

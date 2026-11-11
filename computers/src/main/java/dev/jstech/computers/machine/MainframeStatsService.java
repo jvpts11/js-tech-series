@@ -8,6 +8,7 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.operation.NetworkStatistics;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -50,7 +51,7 @@ public final class MainframeStatsService {
     /** The most Operations the network has had running at once today. */
     public int peakToday() {
         final MainframeBlockEntity mainframe = this.mainframe();
-        return mainframe == null ? 0 : mainframe.statistics().peakConcurrentLastDay(this.level.getGameTime());
+        return mainframe == null ? 0 : mainframe.statistics().peakToday(this.level.getGameTime());
     }
 
     /**
@@ -73,9 +74,10 @@ public final class MainframeStatsService {
             return List.of();
         }
         final List<ICliComputer.OperationStat> rows = new ArrayList<>();
-        for (final var summary : mainframe.statistics().summaries(this.level.getGameTime())) {
+        for (final NetworkStatistics.Summary summary : mainframe.statistics().summaries(this.level.getGameTime(),
+                NetworkStatistics.HOUR)) {
             rows.add(new ICliComputer.OperationStat(OperationRecord.typeName((byte) summary.type()),
-                    summary.count(), summary.averageWait(), summary.averageRun(), summary.shortfallPercent(),
+                    summary.count(), summary.averageWait(), summary.averageRun(), summary.failedPercent(),
                     summary.moved()));
         }
         return rows;

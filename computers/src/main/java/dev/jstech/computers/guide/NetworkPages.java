@@ -570,8 +570,8 @@ final class NetworkPages {
                 .paragraph("Its seven tabs show the network from seven sides. Each one is a way of asking the network"
                         + " what it holds, what it is doing, and how well it is doing it.")
                 .table("The seven tabs", "Tab", "What it shows")
-                .row(GuideCell.words("Devices"), GuideCell.words("Every node the network knows, with its type and"
-                        + " whether it is online or offline."))
+                .row(GuideCell.words("Devices"), GuideCell.words("Every node the network knows, with its type,"
+                        + " whether it is online or offline, and how long it has been up."))
                 .row(GuideCell.words("Processes"), GuideCell.words("The Operations in flight, one line each. A click"
                         + " opens one, with its buttons Close and Cancel."))
                 .row(GuideCell.words("Hardware"), GuideCell.words("The orchestration capacity, the parallel queues,"
@@ -579,9 +579,11 @@ final class NetworkPages {
                 .row(GuideCell.words("Map"), GuideCell.words("The nodes and their lines, drawn as a map. Drag a node"
                         + " to move it."))
                 .row(GuideCell.words("Log"), GuideCell.words("Two views along its top. Operations: the Operations"
-                        + " logged so far. Events: what happened to every machine on the network, newest first."))
-                .row(GuideCell.words("Stats"), GuideCell.words("How many Operations settled in the last hour, and"
-                        + " how long they waited and ran."))
+                        + " logged, filtered by kind, by who asked and by period. Events: what happened to every"
+                        + " machine on the network, newest first."))
+                .row(GuideCell.words("Stats"), GuideCell.words("How many Operations of each kind settled in the last"
+                        + " hour, day or 7 days, how long they waited and ran, the day's peak, and the capacity"
+                        + " used."))
                 .row(GuideCell.words("Services"), GuideCell.words("The engines and services of the Mainframe, and the"
                         + " steps to replace an engine ([](jsc:mainframe_services))."))
                 .paragraph("On the Map, drag a node with the mouse to move it, drag with the middle button to pan, and"
@@ -601,6 +603,16 @@ final class NetworkPages {
                         + " event a line.")
                 .paragraph("The network keeps its last seven days, and at most 2,000 events. Older ones make way for"
                         + " new ones.")
+                .subheading("The Operations and the statistics")
+                .paragraph("The Log tab's Operations view lists the Operations the Mainframe logged, with the time"
+                        + " each settled, its id, what it was, its status and who asked for it. Three lists over it"
+                        + " filter what it shows: the kind (with CRAFT, it is the history of your crafts), who asked,"
+                        + " and how far back. Print sends what it shows to the computer's printer.")
+                .paragraph("The Stats tab covers the period you pick: the last hour, the last day or the last 7 days"
+                        + " of the game. Each kind of Operation has its count per hour, how long it waited and ran on"
+                        + " average, and how many failed. Under the table are the most Operations that ran at once"
+                        + " today, with the time of day, and a graph of the orchestration capacity used over the last"
+                        + " 2 hours. The Devices tab gives each machine's uptime in days and hours of the game.")
                 .define("Node", "Any block the network knows: a Mainframe, a server, a Subframe or a computer.")
                 .define("Service", "A program installed on a server, or on the Mainframe, that gives the machine its"
                         + " job. You choose the services of each machine.")
