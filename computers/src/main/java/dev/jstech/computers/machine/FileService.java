@@ -722,7 +722,7 @@ public final class FileService {
             if (HardwareRegistry.disk(stack) instanceof DiskSpec disk) {
                 capacity = DriveVolumes.usableCapacity(stack, disk.capacityItems()) * StorageKey.MB_EQ_PER_ITEM;
             } else if (stack.getItem() instanceof FormattedMediaItem mediaItem) {
-                capacity = mediaItem.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
+                capacity = mediaItem.capacityWeight();
             } else {
                 capacity = 0L;
             }

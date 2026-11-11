@@ -204,12 +204,12 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         final ItemStack carried = menu.getCarried();
         if (slot != null && !carried.isEmpty() && !slot.mayPlace(carried)) {
             final RackLayout.SlotRole role = index >= 0 ? menu.frontSlotRole(index) : null;
-            final Component why = role == RackLayout.SlotRole.BLOCKED_NO_UNIT
-                    ? GameText.component(ServerRackTexts.BLOCKED_NO_UNIT)
-                    : role == RackLayout.SlotRole.BLOCKED_BUDGET ? GameText.component(ServerRackTexts.BLOCKED_BUDGET)
-                    : menu.refusal(slot, carried);
-            if (why != null) {
-                g.renderComponentTooltip(font, List.of(why), mouseX, mouseY);
+            final List<Component> why = role == RackLayout.SlotRole.BLOCKED_NO_UNIT
+                    ? List.of(GameText.component(ServerRackTexts.BLOCKED_NO_UNIT))
+                    : role == RackLayout.SlotRole.BLOCKED_BUDGET
+                    ? List.of(GameText.component(ServerRackTexts.BLOCKED_BUDGET)) : menu.refusal(slot, carried);
+            if (!why.isEmpty()) {
+                RefusalTooltip.render(g, font, why, mouseX, mouseY);
             }
             return;
         }

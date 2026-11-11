@@ -56,13 +56,14 @@ public final class PlayerBuilds {
             "no Mirror answers on this network");
     private static final TextKey SHELF_FULL = TextKey.of("jsc.machine.player_builds.shelf_full",
             "the Mirror's shelf is full");
-    /* A megabyte is a quarter of an item a medium holds, as everything is four megabytes to the item. */
-    private static final int MB_PER_ITEM = 4;
 
     private PlayerBuilds() {
     }
 
-    /** Keeps the system and writes its installer onto the first blank medium that can be written and holds it. */
+    /**
+     * Keeps the system and writes its installer onto the first blank medium that can be written. An installer always
+     * fits on its medium: what the system takes counts on the disk it is installed to, not on the medium.
+     */
     public static ICliSystems.Kept keepSystem(final IOsHost machine, final ServerLevel level, final SystemFacts facts,
                                               final String folder, final Map<String, String> files) {
         if (!facts.kernel().own() && OsRegistry.getKernel(
@@ -74,8 +75,7 @@ public final class PlayerBuilds {
         final int size = system.footprintMb();
         for (final IMediaDrive drive : MachineMedia.of(machine, level).drives()) {
             final ItemStack medium = drive.medium();
-            if (blank(medium) && medium.getItem() instanceof FormattedMediaItem item && item.writable()
-                    && (long) item.format().capacityItems() * MB_PER_ITEM >= size) {
+            if (blank(medium) && medium.getItem() instanceof FormattedMediaItem item && item.writable()) {
                 MediaItem.setKind(medium, MediaKind.OS_INSTALL);
                 MediaItem.setPayload(medium, system.id());
                 MediaItem.setPart(medium, 1);

@@ -24,6 +24,7 @@ import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -71,6 +72,14 @@ public class DockStationScreen extends AbstractComputerScreen<DockStationMenu> {
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         super.render(g, mouseX, mouseY, partialTick);
+        // A disk newer than the dock held over a tray says why it stays out, as an assembly screen's slots do.
+        final ItemStack carried = menu.getCarried();
+        final List<Component> why = carried.isEmpty() || hoveredSlot == null ? List.of()
+                : menu.refusal(hoveredSlot, carried);
+        if (!why.isEmpty()) {
+            RefusalTooltip.render(g, font, why, mouseX, mouseY);
+            return;
+        }
         if (hover(mouseX, mouseY, DockLayout.LAMP_X, DockLayout.LAMP_Y, DockLayout.LAMP_SIZE, DockLayout.LAMP_SIZE)) {
             g.renderTooltip(font, GameText.component(linked() ? LINKED : OFFLINE), mouseX, mouseY);
         }
@@ -182,7 +191,7 @@ public class DockStationScreen extends AbstractComputerScreen<DockStationMenu> {
                 final String prefix = kind == MediaKind.OS_INSTALL ? "os.jsc." : "program.jsc.";
                 return GameText.resolve(INSTALLS.with(Component.translatable(prefix + payload.getPath()).getString()));
             }
-            final long capacity = medium.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
+            final long capacity = medium.capacityWeight();
             final long percent = capacity <= 0 ? 0L : (capacity - free) * 100L / capacity;
             return GameText.resolve(FULL_PERCENT.with(percent));
         }

@@ -176,9 +176,9 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         // A part held over a slot that keeps it out says which rule does, rather than the slot refusing in silence.
         final ItemStack carried = menu.getCarried();
         if (!carried.isEmpty() && hoveredSlot != null && !hoveredSlot.mayPlace(carried)) {
-            final Component why = refusal(hoveredSlot, carried);
-            if (why != null) {
-                g.renderComponentTooltip(font, List.of(why), mouseX, mouseY);
+            final List<Component> why = refusal(hoveredSlot, carried);
+            if (!why.isEmpty()) {
+                RefusalTooltip.render(g, font, why, mouseX, mouseY);
             }
             return;
         }
@@ -656,10 +656,9 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         return false;
     }
 
-    /** Why {@code carried} stays out of {@code slot}, said over the slot; null when the machine names no rule. */
-    @Nullable
-    protected Component refusal(final Slot slot, final ItemStack carried) {
-        return null;
+    /** Why {@code carried} stays out of {@code slot}, said over the slot; nothing when the machine names no rule. */
+    protected List<Component> refusal(final Slot slot, final ItemStack carried) {
+        return List.of();
     }
 
     /** What the power button says when the mouse rests on it. */

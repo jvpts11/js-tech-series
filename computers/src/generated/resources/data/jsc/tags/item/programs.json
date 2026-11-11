@@ -12,8 +12,11 @@
     "jsc:cd_rw",
     "jsc:dvd_rom",
     "jsc:dvd_rw",
+    "jsc:usb_flash_drive_8g",
+    "jsc:usb_flash_drive_16g",
     "jsc:usb_flash_drive",
     "jsc:bd_rom",
-    "jsc:bd_re"
+    "jsc:bd_re",
+    "jsc:usb_flash_drive_64g"
   ]
 }

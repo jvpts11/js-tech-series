@@ -177,7 +177,7 @@ public final class DiscCopies {
         }
         final Place to = find(places(level, host), job.target);
         if (to == null || !blank(to.medium()) || format(to.medium()) == null
-                || capacity(format(to.medium())) < capacity(job.format)) {
+                || capacityOf(to.medium()) < capacityOf(job.image)) {
             return NOT_BLANK.with(Character.toString(job.targetLetter), job.format.text());
         }
         job.phase = Phase.WRITING;
@@ -218,7 +218,8 @@ public final class DiscCopies {
         if (onto == null || !blank(to.medium())) {
             return NOT_BLANK.with(Character.toString(to.letter()), format.text());
         }
-        return capacity(onto) < capacity(format) ? TOO_SMALL.with(Character.toString(to.letter())) : null;
+        return capacityOf(to.medium()) < capacityOf(from.medium()) ? TOO_SMALL.with(Character.toString(to.letter()))
+                : null;
     }
 
     /** Whether {@code medium} is a writable one with nothing on it: no files, no installer, no stored items. */
@@ -405,8 +406,9 @@ public final class DiscCopies {
         return medium.getItem() instanceof FormattedMediaItem item ? item.format() : null;
     }
 
-    private static int capacity(final MediaFormat format) {
-        return format.capacityItems();
+    /** The bytes {@code medium} holds, 0 for no medium: a copy needs a blank at least as big as the disc it copies. */
+    public static long capacityOf(final ItemStack medium) {
+        return medium.getItem() instanceof FormattedMediaItem item ? item.capacityBytes() : 0L;
     }
 
     @Nullable

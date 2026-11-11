@@ -229,9 +229,19 @@ final class PeripheralRecipes {
                 dust(Element.SILVER), 1, dust(Element.INDIUM), 1);
         made(output, HardwareEra.ADVANCED, item("bd_re"), blank, 1, of(Element.SILVER, Forms.FOIL), 1,
                 dust(Element.GERMANIUM), 1);
+        // The sticks, twice the memory chips for twice the room, and the 64G of the next era in an aluminium case.
+        made(output, HardwareEra.STANDARD, item("usb_flash_drive_8g"), memory(HardwareEra.STANDARD), 1,
+                controller(HardwareEra.STANDARD), 1, board(HardwareEra.STANDARD), 1, polycarbonate(), 1, copperFoil(),
+                1);
+        made(output, HardwareEra.STANDARD, item("usb_flash_drive_16g"), memory(HardwareEra.STANDARD), 2,
+                controller(HardwareEra.STANDARD), 1, board(HardwareEra.STANDARD), 1, polycarbonate(), 1, copperFoil(),
+                1);
         made(output, HardwareEra.STANDARD, item("usb_flash_drive"), memory(HardwareEra.STANDARD), 4,
                 controller(HardwareEra.STANDARD), 1, board(HardwareEra.STANDARD), 1, polycarbonate(), 1, copperFoil(),
                 2);
+        made(output, HardwareEra.ADVANCED, item("usb_flash_drive_64g"), memory(HardwareEra.ADVANCED), 1,
+                controller(HardwareEra.ADVANCED), 1, board(HardwareEra.ADVANCED), 1, of(Element.ALUMINIUM, Forms.PLATE),
+                1, copperFoil(), 2);
         made(output, HardwareEra.VINTAGE, item("tape_reel"), pvc(), 2, dust(Element.IRON), 1);
         made(output, HardwareEra.VINTAGE, item("blank_vinyl_record"), pvc(), 2, Items.PAPER, 1);
         made(output, HardwareEra.LEGACY, item("dlt_tape"), pvc(), 2, dust(Element.IRON), 1, polycarbonate(), 1);

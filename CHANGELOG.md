@@ -610,6 +610,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `CableBlockEntity.unsettled` makes a cable for a structure, its wires laid and its faces worked out on its first tick
   in the world (`settleLinks`). `ContentData.alsoLoot` adds a mod's own loot tables to the ones its blocks have, and
   `ContentLootProvider` takes the list of tables it writes, `blocks` the declared blocks'. Experimental.
+- (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of
+  the format holds in real bytes, a USB stick's being its model's, in place of `capacityItems()`. Experimental.
 - (Computers) Symbols for the directives: J's Computers' API is at version 19. `IProgrammingLanguage.CompileOptions`
   carries `defined`, the symbols a build defines for `#if` beside the instruction set and the version; the form
   without them defines none. Experimental.
@@ -3700,8 +3702,19 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The Extended CD Drive, a duplicator tower two blocks tall with one reading tray and seven writing trays,
   working on its own through its screen: the Legacy's for CDs, the Transition's for DVDs and CDs, the Advanced's for
   Blu-ray discs, DVDs and CDs.
+- (Computers) USB sticks by model: the Vaultis Pocket 8G and 16G (USB 2.0) and 32G (USB 3.0) of the Standard, made at
+  the Standard bench, and the 64G (USB-C) of the Advanced, made at the Advanced bench. The USB Flash Drive of before is
+  the 32G, and every stick has a flat icon of its own.
 
 ### Changed
+- (Computers) Removable media in real bytes: a floppy disk holds 1.44 MB, a CD 700 MB, a DVD 4.7 GB, a Blu-ray 25 GB
+  and a USB stick 8 to 64 GB by model, and a file takes on a medium exactly the bytes it weighs. A medium's tooltip
+  says what it holds to the byte and what is still free. Files, patterns and stored items fill a medium; an installer
+  always fits, as the system takes its room on the disk it goes to. A copy needs a blank holding at least the source's
+  bytes.
+- (Computers) Disks of their era: the Dock Station's trays take only disks of its era, the Standard, or of an older
+  one. A disk newer than a computer, a server or the Dock, held over its slot, names itself, says it is too new and
+  the era it needs; a refusal over a slot breaks into short lines.
 - (Computers) The DVD Drive is a Transition drive, as the Transition's own programs come on DVD.
 - (Computers) Virtual Studio's Start button starts debugging, and Ctrl+F5 runs without it; its configuration is a
   choice between Debug and Release, Debug first. In Virtual Studio Code F5 starts debugging, Ctrl+F5 runs the file, and

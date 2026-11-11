@@ -35,20 +35,16 @@ public final class FsPaths {
     }
 
     /**
-     * Converts a byte count into mB-equivalents on a disk of {@code era}, rounding up: one mB-eq is
-     * {@link EraStorage#bytesPerMbEq} bytes there, so the same file weighs more on older hardware.
-     * Zero bytes map to zero mB-eq.
+     * Converts a byte count into mB-equivalents on a disk of {@code era}, rounding up and exactly
+     * ({@link EraStorage#weightOfBytes}): a thousandth of an item's bytes there, so the same file weighs more on
+     * older hardware, and a file as big as an item weighs an item. Zero bytes map to zero mB-eq.
      *
      * @param bytes the raw byte count (must be &ge; 0)
      * @param era   the era of the disk the file sits on
-     * @return the ceiling of {@code bytes / era.bytesPerMbEq()}
+     * @return what the bytes weigh, in thousandths of an item
      */
     public static long sizeMbEq(final long bytes, final Era era) {
-        if (bytes <= 0) {
-            return 0L;
-        }
-        final long block = EraStorage.bytesPerMbEq(era);
-        return (bytes + block - 1L) / block;
+        return EraStorage.weightOfBytes(era, bytes);
     }
 
     /**

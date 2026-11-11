@@ -12,6 +12,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.menu.DockStationMenu;
 import dev.jstech.core.content.Device;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import net.minecraft.core.BlockPos;
@@ -44,6 +45,8 @@ public class DockStationBlock extends MediaReaderBlock {
 
     private static final TextKey TRAY_TAKEN = TextKey.of("jsc.dock_station.tray_taken",
             "That tray already holds a disk - sneak-click or use the window to take it out.");
+    private static final TextKey TOO_NEW = TextKey.of("jsc.dock_station.too_new",
+            "Too new for this Dock Station: a %s dock takes disks of its era or older.");
 
     public DockStationBlock(final Properties properties) {
         super(MediaDriveType.DOCK_STATION, properties, DEVICE);
@@ -81,7 +84,9 @@ public class DockStationBlock extends MediaReaderBlock {
             if (left.isEmpty()) {
                 heldStack.shrink(1);
             } else {
-                player.displayClientMessage(GameText.component(TRAY_TAKEN), true);
+                final Text why = DockStationBlockEntity.ofItsEra(heldStack) ? TRAY_TAKEN.text()
+                        : TOO_NEW.with(MediaDriveType.DOCK_STATION.era().text());
+                player.displayClientMessage(GameText.component(why), true);
             }
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide());

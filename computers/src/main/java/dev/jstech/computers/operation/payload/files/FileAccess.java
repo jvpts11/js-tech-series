@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers.operation.payload.files;
 
-import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
@@ -115,24 +114,12 @@ public final class FileAccess {
      * own disks count it.
      */
     static long mediaFreeWeight(final ItemStack media) {
-        if (DriveVolumes.isDisk(media)) {
-            return DriveTable.freeWeightOf(media);
-        }
-        final long cap = media.getItem()
-                instanceof FormattedMediaItem fm
-                ? fm.format().capacityItems() : 64L;
-        final long capWeight = cap * StorageKey.MB_EQ_PER_ITEM;
-        final long fsUsed = DiskFilesystem.filesWeight(media);
         /*
-         * A DATA medium can also hold a stored item/fluid snapshot (MEDIA_DATA); both consume the medium's
-         * capacity, so deduct both, mirroring IOsHost.systemDiskFreeWeight (stored items +
-         * FILESYSTEM). Ignoring MEDIA_DATA let the player write files past the medium's real capacity.
+         * A DATA medium can also hold a stored item/fluid snapshot (MEDIA_DATA); both consume the medium's capacity,
+         * and FormattedMediaItem.freeWeight deducts both. Ignoring MEDIA_DATA let the player write files past the
+         * medium's real capacity.
          */
-        final long dataUsed = media.getOrDefault(
-                        ComputingComponents.MEDIA_DATA.get(),
-                        ServerStorageContents.EMPTY)
-                .usedWeight();
-        return Math.max(0L, capWeight - fsUsed - dataUsed);
+        return DriveVolumes.isDisk(media) ? DriveTable.freeWeightOf(media) : FormattedMediaItem.freeWeight(media);
     }
 
     /** Resolves the filesystem kind of the computer's installed OS, or NONE when absent. */

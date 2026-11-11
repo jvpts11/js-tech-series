@@ -167,10 +167,9 @@ public abstract class AbstractCabinetMenu<B extends AbstractCabinetComputerBlock
         return blockEntity.getBlockPos();
     }
 
-    /** Why {@code stack} stays out of {@code slot}, when it is one of the cabinet's part slots; null otherwise. */
-    @Nullable
-    public Component refusal(final Slot slot, final ItemStack stack) {
-        return PartSlots.refusal(slot, blockEntity.getHardware(), stack, blockEntity::refusal);
+    /** Why {@code stack} stays out of {@code slot}, when it is one of the cabinet's part slots; nothing otherwise. */
+    public List<Component> refusal(final Slot slot, final ItemStack stack) {
+        return PartSlots.refusal(slot, blockEntity.getHardware(), stack, blockEntity::refusal, false);
     }
 
     public int boardCpuSlots() {

@@ -326,7 +326,7 @@ final class PeripheralPages {
                         GuideCell.words("Blu-ray Drive"))
                 .row(GuideCell.words("BD-RE"), GuideCell.words("Blu-ray"), GuideCell.words("Yes"),
                         GuideCell.words("Blu-ray Drive"))
-                .row(GuideCell.words("USB Flash Drive"), GuideCell.words("USB"), GuideCell.words("Yes"),
+                .row(GuideCell.words("USB stick"), GuideCell.words("USB"), GuideCell.words("Yes"),
                         GuideCell.words("Dock Station, USB port of a case"))
                 .paragraph("Writable means that the computer can write to the medium as well as read it.")
                 .define("Tray", "The sliding part that a disc sits on. The eject button beside the drive moves it out"
@@ -339,6 +339,28 @@ final class PeripheralPages {
                 .paragraph("A computer sees a drive with its tray out as empty. The tray also stays shut while the"
                         + " computer reads the disc, that is, while it installs from the disc. To take a disc out,"
                         + " sneak-click the drive while its tray is open.")
+                .subheading("What a medium holds")
+                .paragraph("Each medium holds what its box says, in bytes. A file takes its own bytes on any medium,"
+                        + " so you fit as many files and patterns on a medium as its bytes allow, and its tooltip says"
+                        + " how much of it is free. An installer always fits on its medium: the system takes its room"
+                        + " on the disk you install it to, not on the medium.")
+                .table("What each medium holds", "Medium", "Holds", "Era")
+                .row(GuideCell.words("Floppy Disk"), GuideCell.words("1.44 MB (1,474,560 bytes)"),
+                        GuideCell.words("Vintage"))
+                .row(GuideCell.words("CD-ROM and CD-RW"), GuideCell.words("700 MB (737,280,000 bytes)"),
+                        GuideCell.words("Legacy"))
+                .row(GuideCell.words("DVD-ROM and DVD-RW"), GuideCell.words("4.7 GB (4,700,372,992 bytes)"),
+                        GuideCell.words("Transition"))
+                .row(GuideCell.words("BD-ROM and BD-RE"), GuideCell.words("25 GB (25,025,314,816 bytes)"),
+                        GuideCell.words("Advanced"))
+                .row(GuideCell.words("Vaultis Pocket 8G"), GuideCell.words("8 GB (8,000,000,000 bytes)"),
+                        GuideCell.words("Standard, USB 2.0"))
+                .row(GuideCell.words("Vaultis Pocket 16G"), GuideCell.words("16 GB (16,000,000,000 bytes)"),
+                        GuideCell.words("Standard, USB 2.0"))
+                .row(GuideCell.words("Vaultis Pocket 32G"), GuideCell.words("32 GB (32,000,000,000 bytes)"),
+                        GuideCell.words("Standard, USB 3.0"))
+                .row(GuideCell.words("Vaultis Pocket 64G"), GuideCell.words("64 GB (64,000,000,000 bytes)"),
+                        GuideCell.words("Advanced, USB-C"))
                 .ifSomethingGoesWrong("This CD drive cannot read that disc.",
                         "Each medium goes in a drive of its own kind: a CD goes in a CD Drive, and a DVD in a DVD"
                                 + " Drive or a Blu-ray Drive.",
@@ -497,8 +519,8 @@ final class PeripheralPages {
                 .row(GuideCell.words("Bay"), GuideCell.words("A Non-Volatile Memory Express (NVMe) disk"),
                         GuideCell.words("M.2 TRAY"))
                 .row(GuideCell.words("Port"), GuideCell.words("A USB flash drive"), GuideCell.words("USB"))
-                .paragraph("A bay takes one disk, and only a disk of its own size. The Dock refuses anything"
-                        + " that is not a disk or a flash drive.")
+                .paragraph("A bay takes one disk, and only a disk of its own size and of the Dock's era, the Standard,"
+                        + " or an older one. The Dock refuses anything that is not a disk or a flash drive.")
                 .subheading("Putting things in and out")
                 .steps("Click the Dock with a disk in your hand to put it in its bay.",
                         "Click the Dock with a USB flash drive in your hand to plug it into the port.",
@@ -529,7 +551,9 @@ final class PeripheralPages {
                         "Join the Dock to a computer with a peripheral cable ([](jsc:peripheral_cables)).",
                         "Nothing happens when you click the Dock.",
                         "Only disks and USB flash drives go in the Dock. Anything else is refused, and the Dock says"
-                                + " nothing.")
+                                + " nothing.",
+                        "Too new for this Dock Station: a Standard dock takes disks of its era or older.",
+                        "The disk is of the Advanced. Read it in an Advanced computer instead.")
                 .seeAlso("jsc:drives", "jsc:disks", "jsc:installing")
                 .register();
     }

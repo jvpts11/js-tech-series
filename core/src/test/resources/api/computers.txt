@@ -542,7 +542,7 @@ stable 7
 8 dev.jstech.computers.os.media.MediaFormat  Text text()
 8 dev.jstech.computers.os.media.MediaFormat  USB
 8 dev.jstech.computers.os.media.MediaFormat  boolean onTray()
-8 dev.jstech.computers.os.media.MediaFormat  int capacityItems()
+20 dev.jstech.computers.os.media.MediaFormat  long capacityBytes()
 8 dev.jstech.computers.rack.RackChassis  type record(ComputerDef computer, int heightU, RackType rackType, Look look)
 8 dev.jstech.computers.rack.RackChassis  Era era()
 8 dev.jstech.computers.rack.RackChassis  boolean isSupercomputerNode()

@@ -343,9 +343,9 @@ public final class EraBuildClientTests {
                 .thenScreenshot(SETTLE, shot(kit, "refusal"))
                 .thenAssert(0, () -> {
                     final PersonalComputerScreen screen = ctx.screen(PersonalComputerScreen.class);
-                    final Component why = screen.getMenu().refusal(slotAt(screen, seat(ctx,
+                    final List<Component> why = screen.getMenu().refusal(slotAt(screen, seat(ctx,
                             PersonalComputerScreen.class, SeatKind.CPU, 0)), ctx.player().containerMenu.getCarried());
-                    return why != null && why.getString().equals(PartRefusals.CPU.english());
+                    return why.size() == 1 && why.getFirst().getString().equals(PartRefusals.CPU.english());
                 }, "a processor of another socket over the processor slot says the rule that keeps it out")
                 // Put back where it came from, and the hand that held it emptied for what comes after.
                 .then(2, () -> ctx.clickGui(hotbarX(EMPTY_HAND), hotbarY(ctx, PersonalComputerScreen.class)))

@@ -12,6 +12,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.PartFitting;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.os.IOsHost;
@@ -30,7 +31,8 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
 /**
- * The Dock Station: a reader on the desk that takes a disk of any era besides the flash drive in its port. Its three
+ * The Dock Station: a reader on the desk that takes a disk of its era or an older one besides the flash drive in its
+ * port. Its three
  * trays take the disks by size, a hard disk in the 3.5" bay (the IDE disks of old and the Keep), a SATA disk in the
  * 2.5" bay (the Link and the Swift), an NVMe in the M.2 tray (the Bolt); the stick goes in the USB port, which is the
  * reader's own slot, so a system installs from it as it did. The computer it is linked to sees each docked disk as an
@@ -41,9 +43,9 @@ import net.neoforged.neoforge.items.ItemStackHandler;
  */
 public class DockStationBlockEntity extends MediaReaderBlockEntity {
 
-    /* A tray takes one disk, of the size it is cut for. */
+    /* A tray takes one disk, of the size it is cut for and of the dock's era or an older one. */
     private final FieldItemHandler bays = fields().items("Bays", BAYS).save().toClient().dropsWhenBroken()
-            .slotLimit(1).accepts((bay, stack) -> bayOf(stack) == bay).onChange(this::bayMoved)
+            .slotLimit(1).accepts((bay, stack) -> bayOf(stack) == bay && ofItsEra(stack)).onChange(this::bayMoved)
             .onLoad(this::settleBays);
     /** The letter of each tray's disk and the stick on the linked computer, a space for none, kept a second old. */
     private final ValueField<String> letters = fields().value("Letters", Codec.STRING, "    ").toClient();
@@ -83,6 +85,15 @@ public class DockStationBlockEntity extends MediaReaderBlockEntity {
             return -1;
         }
         return bayOf(disk.tier());
+    }
+
+    /**
+     * Whether {@code stack} is a disk of the dock's era, the Standard, or of an older one: a tray takes no disk newer
+     * than the dock itself, as a machine takes none newer than itself (computers/docs/design/eras.md).
+     */
+    public static boolean ofItsEra(final ItemStack stack) {
+        return HardwareRegistry.disk(stack) instanceof DiskSpec disk
+                && PartFitting.diskFits(disk, MediaDriveType.DOCK_STATION.era());
     }
 
     /** The tray a size of disk goes in. */

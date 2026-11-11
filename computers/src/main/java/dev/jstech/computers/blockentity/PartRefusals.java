@@ -7,8 +7,17 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * Why a part stays out of a machine's slot, said to the player holding it over the slot: a slot that only refuses
@@ -71,7 +80,44 @@ public final class PartRefusals {
             "The case has no fan seat here");
     public static final TextKey UNDER_RADIATOR = TextKey.of("jsc.part_refusal.under_radiator",
             "A water cooler's radiator sits in this seat");
+    /* A disk newer than the machine: the disk's name, then that it is too new, then the era it asks for. */
+    public static final TextKey TOO_NEW_FOR_COMPUTER = TextKey.of("jsc.part_refusal.too_new_for_computer",
+            "Too new for this computer:");
+    public static final TextKey DISK_NEEDS_COMPUTER = TextKey.of("jsc.part_refusal.disk_needs_computer",
+            "a %s disk needs a %s computer or a newer one");
+    public static final TextKey TOO_NEW_FOR_SERVER = TextKey.of("jsc.part_refusal.too_new_for_server",
+            "Too new for this server:");
+    public static final TextKey DISK_NEEDS_SERVER = TextKey.of("jsc.part_refusal.disk_needs_server",
+            "a %s disk needs a %s server or a newer one");
+    public static final TextKey TOO_NEW_FOR_DOCK = TextKey.of("jsc.part_refusal.too_new_for_dock",
+            "Too new for this Dock Station:");
+    public static final TextKey DOCK_TAKES = TextKey.of("jsc.part_refusal.dock_takes",
+            "a %s dock takes disks of its era or older");
 
     private PartRefusals() {
+    }
+
+    /**
+     * What is said over a slot that keeps {@code stack} out for {@code why}: a disk newer than the machine names
+     * itself, says it is too new and the era it asks for, of a computer or of a {@code server}; any other refusal is
+     * its one sentence.
+     */
+    public static List<Component> lines(final TextKey why, final ItemStack stack, final boolean server) {
+        if (why == DISK_TOO_NEW && HardwareRegistry.disk(stack) instanceof DiskSpec disk) {
+            return tooNew(stack, server ? TOO_NEW_FOR_SERVER : TOO_NEW_FOR_COMPUTER,
+                    (server ? DISK_NEEDS_SERVER : DISK_NEEDS_COMPUTER).with(disk.era().text(), disk.era().text()));
+        }
+        return List.of(GameText.component(why));
+    }
+
+    /** What a Dock Station of {@code dockEra} says of {@code disk}, a disk newer than itself held over a tray. */
+    public static List<Component> dockTooNew(final ItemStack disk, final Era dockEra) {
+        return tooNew(disk, TOO_NEW_FOR_DOCK, DOCK_TAKES.with(dockEra.text()));
+    }
+
+    private static List<Component> tooNew(final ItemStack disk, final TextKey title, final Text reason) {
+        return List.of(disk.getHoverName().copy().withStyle(ChatFormatting.WHITE),
+                GameText.component(title).withStyle(ChatFormatting.RED),
+                GameText.component(reason).withStyle(ChatFormatting.GRAY));
     }
 }

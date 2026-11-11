@@ -103,7 +103,7 @@ public abstract class AbstractCabinetScreen<M extends AbstractCabinetMenu<?>> ex
     }
 
     @Override
-    protected Component refusal(final Slot slot, final ItemStack carried) {
+    protected List<Component> refusal(final Slot slot, final ItemStack carried) {
         return menu.refusal(slot, carried);
     }
 

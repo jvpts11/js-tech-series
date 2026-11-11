@@ -127,7 +127,10 @@
     "jsc:dvd_rw",
     "jsc:bd_rom",
     "jsc:bd_re",
-    "jsc:usb_flash_drive"
+    "jsc:usb_flash_drive_8g",
+    "jsc:usb_flash_drive_16g",
+    "jsc:usb_flash_drive",
+    "jsc:usb_flash_drive_64g"
   ],
   "order": 12,
   "section": "jsc:systems_and_eras",

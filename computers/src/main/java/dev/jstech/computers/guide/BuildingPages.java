@@ -734,7 +734,9 @@ final class BuildingPages {
                         + " is a Vaultis Link"
                         + " SATA-SSD of 64G.")
                 .paragraph("A disk fits a computer of its own era or of a later one. A disk newer than the computer"
-                        + " is refused, in a disk slot, in the hot-swap bay and in a rack's drive bay.")
+                        + " is refused, in a disk slot, in the hot-swap bay and in a rack's drive bay, and the slot"
+                        + " says which era the disk needs when you hold it over the slot. The Dock Station"
+                        + " ([](jsc:dock_station)) takes a disk of the Standard or of an older era.")
                 .paragraph("The board's disk slots count the disks you put in them. A disk in the hot-swap bay"
                         + " takes none"
                         + " of those slots. Each disk also draws power, as the table shows.")

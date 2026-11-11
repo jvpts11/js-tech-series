@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.media;
 
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.os.Branding;
 import dev.jstech.computers.os.MinSpecTooltip;
@@ -17,9 +18,12 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.SoftwareHouse;
+import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.FilesystemTooltip;
 import dev.jstech.computers.storage.ServerStorageContents;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -41,18 +45,25 @@ import org.jetbrains.annotations.Nullable;
  * in components and is orthogonal to the format.
  *
  * <p>{@code writable} distinguishes read-only pressed media (CD-ROM, DVD-ROM) from rewritable media
- * (floppy, CD-RW, DVD-RW, USB) for the future data-write flow.
+ * (floppy, CD-RW, DVD-RW, USB). A medium holds real bytes, its format's or, for a USB stick, its model's, and only a
+ * writable one is bounded by them: an installer always fits, since what a system takes counts on the disk it goes to.
  */
 @TextHolder
 public class FormattedMediaItem extends MediaItem {
 
     private final MediaFormat format;
     private final boolean writable;
+    /* The stick's model, or null for a disc or a floppy disk, which hold what their format does. */
+    @Nullable
+    private final UsbStick stick;
 
-    private static final TextKey READ_WRITE = TextKey.of("jsc.media.formatted_media_item.read_write",
-            "%s · read/write");
     private static final TextKey READ_ONLY = TextKey.of("jsc.media.formatted_media_item.read_only", "%s · read-only");
-    private static final TextKey CAPACITY = TextKey.of("jsc.media.formatted_media_item.capacity", "%s item capacity");
+    /* What the box says, then the exact bytes: "1.44 MB (1,474,560 bytes)". */
+    private static final TextKey CAPACITY = TextKey.of("jsc.media.formatted_media_item.capacity", "%s (%s bytes)");
+    /* A stick's plug and the era it was sold in: "USB 2.0, Standard era". */
+    private static final TextKey STICK = TextKey.of("jsc.media.formatted_media_item.stick", "%s, %s era");
+    private static final TextKey FREE = TextKey.of("jsc.media.formatted_media_item.free", "Free: %s");
+    private static final TextKey FREE_ALL = TextKey.of("jsc.media.formatted_media_item.free_all", "Free: all of it");
     private static final TextKey BOOTABLE = TextKey.of("jsc.media.formatted_media_item.bootable",
             "Bootable installer");
     private static final TextKey BOOTABLE_ERA = TextKey.of("jsc.media.formatted_media_item.bootable_era",
@@ -76,9 +87,16 @@ public class FormattedMediaItem extends MediaItem {
             "Insert in a linked %s");
 
     public FormattedMediaItem(final Properties properties, final MediaFormat format, final boolean writable) {
+        this(properties, format, writable, null);
+    }
+
+    /** A medium of {@code format}; {@code stick} is the model of a USB stick, null for any other medium. */
+    public FormattedMediaItem(final Properties properties, final MediaFormat format, final boolean writable,
+                              @Nullable final UsbStick stick) {
         super(properties);
         this.format = format;
         this.writable = writable;
+        this.stick = stick;
     }
 
     /** The fixed physical format of this medium. */
@@ -91,13 +109,55 @@ public class FormattedMediaItem extends MediaItem {
         return writable;
     }
 
+    /** The bytes this medium holds: its format's, or its model's for a USB stick. */
+    public long capacityBytes() {
+        return stick != null ? stick.capacityBytes() : format.capacityBytes();
+    }
+
+    /** The era this medium was sold in: its format's, or its model's for a USB stick. */
+    public Era era() {
+        return stick != null ? stick.era() : format.era();
+    }
+
+    /**
+     * What the files on this medium may weigh together, in thousandths of an item: its bytes on the terms of its
+     * format's era, the era a file's weight on it is worked out in.
+     */
+    public long capacityWeight() {
+        return EraStorage.weightHeldBy(format.era(), capacityBytes());
+    }
+
+    /**
+     * The weight still free on {@code medium}, in thousandths of an item: what it holds less its files and the items
+     * stored on it; a medium of no format of its own holds 64 items, as a medium always did.
+     */
+    public static long freeWeight(final ItemStack medium) {
+        final long capacity = medium.getItem() instanceof FormattedMediaItem item ? item.capacityWeight()
+                : 64L * StorageKey.MB_EQ_PER_ITEM;
+        final long files = DiskFilesystem.filesWeight(medium);
+        final long stored = medium.getOrDefault(ComputingComponents.MEDIA_DATA.get(), ServerStorageContents.EMPTY)
+                .usedWeight();
+        return Math.max(0L, capacity - files - stored);
+    }
+
     @Override
     public void appendHoverText(final ItemStack stack, final TooltipContext context,
                                 final List<Component> tooltip, final TooltipFlag flag) {
-        tooltip.add(GameText.component((writable ? READ_WRITE : READ_ONLY).with(format.text()))
-                .withStyle(ChatFormatting.GRAY));
-        tooltip.add(GameText.component(CAPACITY.with(format.capacityItems()))
-                .withStyle(ChatFormatting.DARK_GRAY));
+        if (!writable) {
+            tooltip.add(GameText.component(READ_ONLY.with(format.text())).withStyle(ChatFormatting.GRAY));
+        }
+        tooltip.add(GameText.component(CAPACITY.with(MediaSizes.soldAs(format, stick),
+                MediaSizes.grouped(capacityBytes()))).withStyle(ChatFormatting.AQUA));
+        if (stick != null) {
+            tooltip.add(GameText.component(STICK.with(stick.plug(), MinSpecTooltip.eraLabel(stick.era())))
+                    .withStyle(ChatFormatting.GRAY));
+        }
+        if (writable) {
+            final long free = freeWeight(stack);
+            tooltip.add(GameText.component(free >= capacityWeight() ? FREE_ALL.text()
+                    : FREE.with(MediaSizes.label(EraStorage.bytesOfWeight(format.era(), free))))
+                    .withStyle(ChatFormatting.GRAY));
+        }
 
         /*
          * Files written on the medium (e.g. .craft recipes from the Pattern Encoder) take priority: a

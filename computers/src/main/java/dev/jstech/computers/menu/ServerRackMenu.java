@@ -11,6 +11,7 @@ import dev.jstech.computers.backup.TapeDrive;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.ServerRackBlock;
+import dev.jstech.computers.blockentity.PartRefusals;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -36,7 +37,6 @@ import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.menu.SlotGroup;
-import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -188,17 +188,16 @@ public class ServerRackMenu extends CoreMenu {
     }
 
     /**
-     * Why {@code stack} stays out of {@code slot}, when it is one of the rack's rows or front bays; null otherwise,
-     * and for a blocked bay, which the screen says in its own words.
+     * Why {@code stack} stays out of {@code slot}, when it is one of the rack's rows or front bays; nothing otherwise,
+     * and for a blocked bay, which the screen says in its own words. A bay judges a disk by the servers' era.
      */
-    @Nullable
-    public Component refusal(final Slot slot, final ItemStack stack) {
+    public List<Component> refusal(final Slot slot, final ItemStack stack) {
         if (stack.isEmpty() || slot.mayPlace(stack) || !(slot instanceof SlotItemHandler part)) {
-            return null;
+            return List.of();
         }
         final TextKey why = part.getItemHandler() == rack.getServers() ? rack.rowRefusal(part.getSlotIndex(), stack)
                 : part.getItemHandler() == rack.getFrontSlots() ? rack.bayRefusal(part.getSlotIndex(), stack) : null;
-        return why == null ? null : GameText.component(why);
+        return why == null ? List.of() : PartRefusals.lines(why, stack, true);
     }
 
     /**

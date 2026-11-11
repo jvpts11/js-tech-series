@@ -319,6 +319,7 @@
     "jsc:storage_m2",
     "jsc:socket_quince_q",
     "jsc:bd_rom",
-    "jsc:bd_re"
+    "jsc:bd_re",
+    "jsc:usb_flash_drive_64g"
   ]
 }

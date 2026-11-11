@@ -104,9 +104,9 @@ public class ExtendedCdDriveBlockEntity extends SyncedBlockEntity {
         }
         int trays = 0;
         for (int tray = 0; tray < TRAYS; tray++) {
-            final MediaFormat onto = formatOf(write.getStackInSlot(tray));
-            if (onto != null && DiscCopies.blank(write.getStackInSlot(tray))
-                    && onto.capacityItems() >= format.capacityItems()) {
+            final ItemStack blank = write.getStackInSlot(tray);
+            if (formatOf(blank) != null && DiscCopies.blank(blank)
+                    && DiscCopies.capacityOf(blank) >= DiscCopies.capacityOf(source)) {
                 trays |= 1 << tray;
             }
         }

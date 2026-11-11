@@ -176,9 +176,9 @@ public final class AssemblyScreensClientTests {
                 .thenScreenshot(SETTLE, "refusal-over-the-processor-slot")
                 .thenAssert(0, () -> {
                     final PersonalComputerScreen screen = ctx.screen(PersonalComputerScreen.class);
-                    final Component why = screen.getMenu().refusal(screen.getMenu().slots.get(CPU_MENU_SLOT),
+                    final List<Component> why = screen.getMenu().refusal(screen.getMenu().slots.get(CPU_MENU_SLOT),
                             ctx.player().containerMenu.getCarried());
-                    return why != null && why.getString().equals(PartRefusals.CPU.english());
+                    return why.size() == 1 && why.getFirst().getString().equals(PartRefusals.CPU.english());
                 }, "the processor slot says the processor needs a board of its socket and era")
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);

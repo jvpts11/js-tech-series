@@ -27,6 +27,9 @@ public final class EraStorage {
     private static final EraTable<Long> MB_PER_ITEM = EraTable.of(1L)
             .from(HardwareEra.LEGACY, 16L)
             .from(HardwareEra.TRANSITION, 256L);
+    private static final long BYTES_PER_MB = 1024L * 1024L;
+    /* An item weighs 1,000 units on a disk, as a bucket of fluid weighs 1,000 millibuckets. */
+    private static final long WEIGHT_PER_ITEM = 1000L;
 
     private EraStorage() {
     }
@@ -52,12 +55,43 @@ public final class EraStorage {
         return Sizes.ceilDiv(mb, mbPerItem(era));
     }
 
+    /** The bytes one item takes on a disk of {@code era}. */
+    public static long bytesPerItem(final Era era) {
+        return mbPerItem(era) * BYTES_PER_MB;
+    }
+
     /**
-     * The bytes one thousandth of an item weighs on {@code era}'s disks, where an item weighs 1,000 of those units,
-     * the same unit a millibucket of fluid weighs one of. A file of N bytes costs {@code ceil(N / bytesPerMbEq())} of
-     * them.
+     * What {@code bytes} weigh on {@code era}'s disks, in thousandths of an item (the unit a millibucket of fluid
+     * weighs one of), rounded up, and exactly: a file as big as an item weighs an item, 1,000 of them.
+     *
+     * <p>Worked out in whole items and what is left over, so no size a long holds runs past the end on the way.
      */
-    public static long bytesPerMbEq(final Era era) {
-        return mbPerItem(era) * 1024L * 1024L / 1000L;
+    public static long weightOfBytes(final Era era, final long bytes) {
+        if (bytes <= 0L) {
+            return 0L;
+        }
+        final long perItem = bytesPerItem(era);
+        return bytes / perItem * WEIGHT_PER_ITEM + Sizes.ceilDiv(bytes % perItem * WEIGHT_PER_ITEM, perItem);
+    }
+
+    /** The bytes {@code weight} thousandths of an item come to on {@code era}'s disks, rounded down. */
+    public static long bytesOfWeight(final Era era, final long weight) {
+        if (weight <= 0L) {
+            return 0L;
+        }
+        final long perItem = bytesPerItem(era);
+        return weight / WEIGHT_PER_ITEM * perItem + weight % WEIGHT_PER_ITEM * perItem / WEIGHT_PER_ITEM;
+    }
+
+    /**
+     * The weight a medium of {@code capacityBytes} holds on the terms of {@code era}, the era of its format, rounded
+     * down: what files of those bytes together may weigh on it.
+     */
+    public static long weightHeldBy(final Era era, final long capacityBytes) {
+        if (capacityBytes <= 0L) {
+            return 0L;
+        }
+        final long perItem = bytesPerItem(era);
+        return capacityBytes / perItem * WEIGHT_PER_ITEM + capacityBytes % perItem * WEIGHT_PER_ITEM / perItem;
     }
 }

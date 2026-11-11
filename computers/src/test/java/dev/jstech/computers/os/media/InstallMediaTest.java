@@ -68,10 +68,25 @@ public final class InstallMediaTest {
     }
 
     @Test
-    public void bluRay_isTheAdvancedDiscFourTimesAStick() {
+    public void bluRay_isTheAdvancedDiscOfTwentyFiveGigabytes() {
         assertEquals(HardwareEra.ADVANCED, MediaFormat.BLU_RAY.era());
-        assertEquals(1_048_576, MediaFormat.BLU_RAY.capacityItems());
-        assertEquals(4 * MediaFormat.USB.capacityItems(), MediaFormat.BLU_RAY.capacityItems());
+        assertEquals(25_025_314_816L, MediaFormat.BLU_RAY.capacityBytes());
         assertEquals("Blu-ray", MediaFormat.BLU_RAY.text().english());
+    }
+
+    @Test
+    public void capacityBytes_isWhatEachMediumWasSoldWith() {
+        assertEquals(1_474_560L, MediaFormat.FLOPPY.capacityBytes());
+        assertEquals(737_280_000L, MediaFormat.CD.capacityBytes());
+        assertEquals(4_700_372_992L, MediaFormat.DVD.capacityBytes());
+        assertEquals(32_000_000_000L, MediaFormat.USB.capacityBytes());
+    }
+
+    @Test
+    public void capacityBytes_growsFromTheFloppyDiskThroughEachDisc() {
+        final MediaFormat[] line = {MediaFormat.FLOPPY, MediaFormat.CD, MediaFormat.DVD, MediaFormat.BLU_RAY};
+        for (int i = 1; i < line.length; i++) {
+            assertEquals(true, line[i].capacityBytes() > line[i - 1].capacityBytes(), line[i].name());
+        }
     }
 }

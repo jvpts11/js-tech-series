@@ -85,10 +85,9 @@ public class ServerAssemblyMenu extends CoreMenu {
         return HardwareRegistry.board(hw.getStackInSlot(ServerHardwareHandler.MOBO));
     }
 
-    /** Why {@code stack} stays out of {@code slot}, when it is one of the server's part slots; null otherwise. */
-    @Nullable
-    public Component refusal(final Slot slot, final ItemStack stack) {
-        return PartSlots.refusal(slot, hw, stack, hw::refusal);
+    /** Why {@code stack} stays out of {@code slot}, when it is one of the server's part slots; nothing otherwise. */
+    public List<Component> refusal(final Slot slot, final ItemStack stack) {
+        return PartSlots.refusal(slot, hw, stack, hw::refusal, true);
     }
 
     /** The chassis of the server in the hand, which its screen is titled by. */

@@ -37,7 +37,6 @@ import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.IMediaDrive;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.registry.HardwareRegistry;
-import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
@@ -466,13 +465,8 @@ public final class CraftManagerPayloads {
                 : Optional.empty();
     }
 
-    /** Computes the remaining free weight on a removable medium (filesystem component only). */
+    /** Computes the remaining free weight on a removable medium: what it holds less its files and stored items. */
     private static long mediaFreeWeightFor(final ItemStack media) {
-        if (!(media.getItem() instanceof FormattedMediaItem fmt)) {
-            return 0L;
-        }
-        final long capWeight = (long) fmt.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
-        final long fsUsed = DiskFilesystem.filesWeight(media);
-        return Math.max(0L, capWeight - fsUsed);
+        return media.getItem() instanceof FormattedMediaItem ? FormattedMediaItem.freeWeight(media) : 0L;
     }
 }

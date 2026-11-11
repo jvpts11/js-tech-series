@@ -210,6 +210,8 @@
     "jsc:socket_lga_1155",
     "jsc:socket_g34",
     "jsc:socket_lga_2011",
+    "jsc:usb_flash_drive_8g",
+    "jsc:usb_flash_drive_16g",
     "jsc:usb_flash_drive"
   ]
 }

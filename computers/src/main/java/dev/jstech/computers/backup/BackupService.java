@@ -217,7 +217,7 @@ public final class BackupService {
         final FilesystemKind kind = FileAccess.filesystemKindOf(server.host());
         final BackupContents.Captured captured = BackupContents.capture(level, network, job.parts(), era);
         final UUID id = UUID.randomUUID();
-        final String content = new BackupFile(id, captured.weight() * EraStorage.bytesPerMbEq(era)).write();
+        final String content = new BackupFile(id, EraStorage.bytesOfWeight(era, captured.weight())).write();
         if (kind == FilesystemKind.NONE || !DiskFilesystem.mkdirs(drive, FOLDER, kind)) {
             return new Outcome(BackupJob.RunState.NO_TARGET, BackupTexts.NO_TARGET.with(job.name()));
         }

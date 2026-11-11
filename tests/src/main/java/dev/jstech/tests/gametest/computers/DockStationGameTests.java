@@ -84,6 +84,20 @@ public final class DockStationGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void trays_takeNoDiskNewerThanTheDock(final GameTestHelper helper) {
+        helper.setBlock(DOCK, ComputingModule.DOCK_STATION.get());
+        final DockStationBlockEntity dock = (DockStationBlockEntity) helper.getBlockEntity(DOCK);
+        final ItemStack advanced = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_4));
+        helper.assertTrue(!dock.insertDisk(advanced).isEmpty() && dock.disk(DockStationBlockEntity.BAY_NVME).isEmpty(),
+                "an Advanced NVMe stays out of the Standard dock's M.2 tray");
+        helper.assertTrue(dock.insertDisk(new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_2)))
+                        .isEmpty(), "a Standard NVMe goes in");
+        helper.assertTrue(DockStationBlockEntity.ofItsEra(new ItemStack(ComputingModule.disk(StorageTier.HDD,
+                DiskSize.GB_500))), "and so does a disk of an older era");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void dockedDisks_areDrivesAfterTheStick(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = computer(helper);

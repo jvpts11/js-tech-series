@@ -7,9 +7,11 @@
  */
 package dev.jstech.computers.menu;
 
+import dev.jstech.computers.blockentity.PartRefusals;
 import dev.jstech.computers.gui.layout.DockLayout;
 import dev.jstech.computers.os.media.DockStationBlock;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
+import dev.jstech.computers.os.media.MediaDriveType;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.core.gui.layout.GuiLayout;
 import dev.jstech.core.menu.CoreMenu;
@@ -17,8 +19,10 @@ import dev.jstech.core.menu.MenuOpening;
 import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.menu.PlayerSlots;
 import dev.jstech.core.menu.SlotGroup;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.Containers;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -78,6 +82,18 @@ public class DockStationMenu extends CoreMenu {
     /** What a tray or the port holds, as the menu sees it. */
     public ItemStack held(final int row) {
         return slots.get(row).getItem();
+    }
+
+    /**
+     * Why {@code stack} stays out of {@code slot}: said for a disk newer than the dock held over one of its trays, the
+     * one rule a tray has that its size does not show; nothing otherwise.
+     */
+    public List<Component> refusal(final Slot slot, final ItemStack stack) {
+        if (slot instanceof SlotItemHandler tray && tray.getItemHandler() == dock.bays() && !slot.mayPlace(stack)
+                && DockStationBlockEntity.bayOf(stack) >= 0 && !DockStationBlockEntity.ofItsEra(stack)) {
+            return PartRefusals.dockTooNew(stack, MediaDriveType.DOCK_STATION.era());
+        }
+        return List.of();
     }
 
     private void give(final Player player, final ItemStack stack) {

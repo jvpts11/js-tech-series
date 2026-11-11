@@ -63,8 +63,8 @@ public record StoredFile(String path, FileType type, String content, long modifi
     }
 
     /**
-     * Returns the disk-space cost in mB-equivalents on a disk of {@code era}, rounded up to the nearest
-     * block ({@link EraStorage#bytesPerMbEq} bytes there).
+     * Returns the disk-space cost in mB-equivalents on a disk of {@code era}, rounded up
+     * ({@link EraStorage#weightOfBytes}).
      */
     public long weight(final Era era) {
         return FsPaths.sizeMbEq(byteSize(), era);

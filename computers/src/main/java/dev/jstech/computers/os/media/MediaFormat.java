@@ -22,42 +22,43 @@ import org.jetbrains.annotations.ApiStatus;
  * floppy can hold an OS installer, a CD can hold a data snapshot, and so on.
  *
  * <p>This enum is free of Minecraft / NeoForge imports so it stays usable from pure-JUnit tests.
- * Capacities are in item-equivalents (1 item = 4 MB) and are tunable balance numbers, not final.
+ * Capacities are real bytes, as each medium was sold: a file costs on a medium what its bytes weigh on the disks of
+ * the format's era ({@code EraStorage}).
  */
 @TextHolder
 @ApiStatus.Experimental
 public enum MediaFormat {
 
-    /** 3.5" floppy disk, the smallest, earliest medium. Read/write. */
-    FLOPPY(1_024, TextKey.of("jsc.media.format.floppy", "Floppy")),
+    /** 3.5" floppy disk, the smallest, earliest medium: 1.44 MB, that is 1,440 KB of 1,024 bytes. Read/write. */
+    FLOPPY(1_474_560L, TextKey.of("jsc.media.format.floppy", "Floppy")),
 
-    /** CD, the Legacy-era optical medium. 700 MB class. */
-    CD(8_192, TextKey.of("jsc.media.format.cd", "CD")),
+    /** CD, the Legacy-era optical medium: 700 MB, 360,000 sectors of 2,048 bytes. */
+    CD(737_280_000L, TextKey.of("jsc.media.format.cd", "CD")),
 
-    /** DVD, the Transition-era optical medium. 4.7 GB class. */
-    DVD(65_536, TextKey.of("jsc.media.format.dvd", "DVD")),
+    /** DVD, the Transition-era optical medium: 4.7 GB, 2,295,104 sectors of 2,048 bytes. */
+    DVD(4_700_372_992L, TextKey.of("jsc.media.format.dvd", "DVD")),
 
-    /** USB flash drive, a removable medium four times a DVD. */
-    USB(262_144, TextKey.of("jsc.media.format.usb", "USB")),
+    /** USB flash drive: a stick holds what its model says on the box, and this is the 32 GB one's. */
+    USB(32_000_000_000L, TextKey.of("jsc.media.format.usb", "USB")),
 
-    /** Blu-ray, the Advanced-era optical medium, four times a USB stick, as each medium is four times the last. */
-    BLU_RAY(1_048_576, TextKey.of("jsc.media.format.blu_ray", "Blu-ray"));
+    /** Blu-ray, the Advanced-era optical medium: 25 GB, 12,219,392 sectors of 2,048 bytes. */
+    BLU_RAY(25_025_314_816L, TextKey.of("jsc.media.format.blu_ray", "Blu-ray"));
 
-    private final int capacityItems;
+    private final long capacityBytes;
     /** The format's name as a player reads it. */
     private final TextKey name;
 
-    MediaFormat(final int capacityItems, final TextKey name) {
-        this.capacityItems = capacityItems;
+    MediaFormat(final long capacityBytes, final TextKey name) {
+        this.capacityBytes = capacityBytes;
         this.name = name;
     }
 
     /**
-     * Returns this format's capacity in item-equivalents (1 item = 4 MB). Bounds how large a data
-     * snapshot, OS image, or program a medium of this format can carry.
+     * The bytes a medium of this format holds, a USB stick's being its model's: what the files and patterns written
+     * on it may come to. An installer always fits, since what a system takes counts on the disk it goes to.
      */
-    public int capacityItems() {
-        return capacityItems;
+    public long capacityBytes() {
+        return capacityBytes;
     }
 
     /** The format's name: "DVD", "Blu-ray". */

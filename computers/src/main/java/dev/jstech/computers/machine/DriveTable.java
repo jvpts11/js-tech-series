@@ -166,16 +166,15 @@ public final class DriveTable {
 
     /** Free space in mB-equivalents on a disk or medium: its capacity less the items, files and system it holds. */
     public static long freeWeightOf(final ItemStack stack) {
-        final long capacityItems;
+        final long capacity;
         if (HardwareRegistry.disk(stack) instanceof DiskSpec disk) {
             // Bad sectors take their share of the room, and a dead disk has none.
-            capacityItems = DriveVolumes.usableCapacity(stack, disk.capacityItems());
+            capacity = DriveVolumes.usableCapacity(stack, disk.capacityItems()) * StorageKey.MB_EQ_PER_ITEM;
         } else if (stack.getItem() instanceof FormattedMediaItem mediaItem) {
-            capacityItems = mediaItem.format().capacityItems();
+            capacity = mediaItem.capacityWeight();
         } else {
             return 0L;
         }
-        final long capacity = capacityItems * StorageKey.MB_EQ_PER_ITEM;
         final long storageUsed = DriveVolumes.usedWeight(stack);
         final long fsUsed = DiskFilesystem.filesWeight(stack);
         final ResourceLocation osId = OsDisks.systemOn(stack);

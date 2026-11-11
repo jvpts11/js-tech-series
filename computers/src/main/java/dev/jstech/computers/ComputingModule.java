@@ -111,6 +111,7 @@ import dev.jstech.computers.os.media.MediaDriveType;
 import dev.jstech.computers.os.media.MediaFormat;
 import dev.jstech.computers.os.media.MediaReaderBlock;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
+import dev.jstech.computers.os.media.UsbStick;
 import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.computers.villager.ComputerVillagers;
 import dev.jstech.computers.workshop.WorkshopCard;
@@ -838,10 +839,18 @@ public final class ComputingModule {
             medium("bd_rom", MediaFormat.BLU_RAY, false).named("BD-ROM").register();
     public static final ItemEntry<FormattedMediaItem> BD_RE =
             medium("bd_re", MediaFormat.BLU_RAY, true).named("BD-RE").register();
-    // The flash drive is a model made by hand in three dimensions, not a flat sprite.
+    /*
+     * The USB sticks, one item per model: the Vaultis Pocket 8G, 16G and 32G of the Standard and the 64G of the
+     * Advanced. The 32G keeps the id of the one stick there used to be.
+     */
+    public static final ItemEntry<FormattedMediaItem> USB_FLASH_DRIVE_8G =
+            stick("usb_flash_drive_8g", UsbStick.POCKET_8G).named("Vaultis Pocket 8G").register();
+    public static final ItemEntry<FormattedMediaItem> USB_FLASH_DRIVE_16G =
+            stick("usb_flash_drive_16g", UsbStick.POCKET_16G).named("Vaultis Pocket 16G").register();
     public static final ItemEntry<FormattedMediaItem> USB_FLASH_DRIVE =
-            medium("usb_flash_drive", MediaFormat.USB, true).look(IItemLook.HANDMADE).named("USB Flash Drive")
-                    .register();
+            stick("usb_flash_drive", UsbStick.POCKET_32G).named("Vaultis Pocket 32G").register();
+    public static final ItemEntry<FormattedMediaItem> USB_FLASH_DRIVE_64G =
+            stick("usb_flash_drive_64g", UsbStick.POCKET_64G).named("Vaultis Pocket 64G").register();
 
     /*
      * The Server Racks, one per era, and the Supercomputer Racks of the Standard and the Advanced, which seat only
@@ -1766,6 +1775,12 @@ public final class ComputingModule {
                                                           final boolean writable) {
         return CONTENT.item(id, properties -> new FormattedMediaItem(properties, format, writable))
                 .tab(shelf(Shelf.PROGRAMS, format.era()));
+    }
+
+    /* A blank USB stick of {@code model}, shown before the installers of the era it was sold in. */
+    private static ItemBuilder<FormattedMediaItem> stick(final String id, final UsbStick model) {
+        return CONTENT.item(id, properties -> new FormattedMediaItem(properties, MediaFormat.USB, true, model))
+                .tab(shelf(Shelf.PROGRAMS, model.era()));
     }
 
     /*

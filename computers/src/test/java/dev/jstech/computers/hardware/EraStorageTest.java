@@ -47,8 +47,41 @@ class EraStorageTest {
     }
 
     @Test
-    void bytesPerMbEq_isAThousandthOfAnItemInBytes() {
-        assertEquals(1024L * 1024L / 1000L, EraStorage.bytesPerMbEq(HardwareEra.VINTAGE));
-        assertEquals(256L * 1024L * 1024L / 1000L, EraStorage.bytesPerMbEq(HardwareEra.STANDARD));
+    void weightOfBytes_ofAnItemsBytesIsExactlyAnItem() {
+        for (final Era era : HardwareEra.SERIES) {
+            assertEquals(1000L, EraStorage.weightOfBytes(era, EraStorage.bytesPerItem(era)), era.id());
+            assertEquals(2000L, EraStorage.weightOfBytes(era, 2L * EraStorage.bytesPerItem(era)), era.id());
+        }
+    }
+
+    @Test
+    void weightOfBytes_roundsUpAndWeighsNothingForNothing() {
+        assertEquals(0L, EraStorage.weightOfBytes(HardwareEra.VINTAGE, 0L));
+        assertEquals(1L, EraStorage.weightOfBytes(HardwareEra.VINTAGE, 1L));
+        assertEquals(1001L, EraStorage.weightOfBytes(HardwareEra.VINTAGE, 1024L * 1024L + 1L));
+    }
+
+    @Test
+    void weightOfBytes_neverRunsPastTheEndForTheLargestSize() {
+        for (final Era era : HardwareEra.SERIES) {
+            assertTrue(EraStorage.weightOfBytes(era, Long.MAX_VALUE) > 0L, era.id());
+        }
+    }
+
+    @Test
+    void bytesOfWeight_comesBackToTheSameWeight() {
+        for (final Era era : HardwareEra.SERIES) {
+            for (final long weight : new long[] {1L, 999L, 1000L, 1001L, 123_456L}) {
+                assertEquals(weight, EraStorage.weightOfBytes(era, EraStorage.bytesOfWeight(era, weight)),
+                        era.id() + " " + weight);
+            }
+        }
+    }
+
+    @Test
+    void weightHeldBy_aFloppyIsAnItemAndAFractionOnVintageTerms() {
+        assertEquals(1406L, EraStorage.weightHeldBy(HardwareEra.VINTAGE, 1_474_560L));
+        assertEquals(1000L, EraStorage.weightHeldBy(HardwareEra.LEGACY, 16L * 1024L * 1024L));
+        assertEquals(0L, EraStorage.weightHeldBy(HardwareEra.STANDARD, 0L));
     }
 }

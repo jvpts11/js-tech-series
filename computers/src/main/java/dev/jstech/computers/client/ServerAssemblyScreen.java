@@ -150,7 +150,7 @@ public class ServerAssemblyScreen extends AbstractMachineAssemblyScreen<ServerAs
     }
 
     @Override
-    protected Component refusal(final Slot slot, final ItemStack carried) {
+    protected List<Component> refusal(final Slot slot, final ItemStack carried) {
         return menu.refusal(slot, carried);
     }
 

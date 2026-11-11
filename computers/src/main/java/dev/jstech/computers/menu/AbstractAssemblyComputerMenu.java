@@ -149,10 +149,9 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
         return hardwareSlots;
     }
 
-    /** Why {@code stack} stays out of {@code slot}, when it is one of the machine's part slots; null otherwise. */
-    @Nullable
-    public Component refusal(final Slot slot, final ItemStack stack) {
-        return PartSlots.refusal(slot, computer.getHardware(), stack, computer::refusal);
+    /** Why {@code stack} stays out of {@code slot}, when it is one of the machine's part slots; nothing otherwise. */
+    public List<Component> refusal(final Slot slot, final ItemStack stack) {
+        return PartSlots.refusal(slot, computer.getHardware(), stack, computer::refusal, false);
     }
 
     /** Where the block entity this menu assembles stands. */

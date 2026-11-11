@@ -25,7 +25,6 @@ import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.ITrayBlock;
 import dev.jstech.computers.os.media.MediaBay;
 import dev.jstech.computers.os.media.MediaFormat;
-import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.FieldItemHandler;
 import dev.jstech.core.blockentity.IFieldPart;
@@ -445,12 +444,7 @@ public class PatternEncoderBlockEntity extends SyncedBlockEntity implements IPer
 
     /** What the medium has left for files, in the filesystem's weight units. */
     private static long mediaFreeWeight(final ItemStack mediaStack) {
-        if (!(mediaStack.getItem() instanceof FormattedMediaItem item)) {
-            return 0L;
-        }
-        final long capacity = (long) item.format().capacityItems() * StorageKey.MB_EQ_PER_ITEM;
-        final long used = DiskFilesystem.filesWeight(mediaStack);
-        return Math.max(0L, capacity - used);
+        return mediaStack.getItem() instanceof FormattedMediaItem ? FormattedMediaItem.freeWeight(mediaStack) : 0L;
     }
 
     /** The format in the bay, or null with the bay empty. */
