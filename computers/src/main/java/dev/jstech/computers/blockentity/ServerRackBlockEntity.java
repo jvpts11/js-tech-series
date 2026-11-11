@@ -3301,6 +3301,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         return Text.EMPTY;
     }
 
+    /** The power supply of the server the rack addresses, which carries its wear; empty for none. */
+    @Override
+    public ItemStack psuStack() {
+        return ServerItem.psu(soleServerStack());
+    }
+
     /** Sets what the rack's UPS battery holds, for a test to start an outage from. */
     public void setUpsCharge(final long joules) {
         ups.setCharge(joules);

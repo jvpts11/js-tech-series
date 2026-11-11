@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.ExpansionCardKind;
+import dev.jstech.computers.machine.MachineStateService;
 import dev.jstech.computers.operation.payload.NetworkNodeInfo;
 import dev.jstech.computers.operation.payload.NodeLink;
 import dev.jstech.computers.operation.payload.network.NetworkPayloads;
@@ -86,6 +87,27 @@ public final class WirelessGameTests {
                     helper.assertValueEqual(pc.ownLinkItemsPerTick(helper.getLevel()), 4, "items a tick");
                     helper.assertTrue(!pc.networkCables(helper.getLevel()).isEmpty(),
                             "it is as far along the network as its access point's cable");
+                })
+                .thenSucceed();
+    }
+
+    /** A program reads the link its computer joined: the access point by its name, its card and the link's speed. */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void sigma_readsTheLinkTheComputerJoined(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = network(helper);
+        final AccessPointBlockEntity point = deskAccessPoint(helper, ComputingModule.LEGACY_ACCESS_POINT.get());
+        final PersonalComputerBlockEntity pc = withCard(helper, PC, ComputingModule.WIFI_CARD_STANDARD.get());
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(mainframe.networkUuid() != null
+                        && mainframe.networkUuid().equals(pc.networkUuid()), "the computer joins by Wi-Fi"))
+                .thenExecute(() -> {
+                    final MachineStateService.Wifi wifi = pc.services().state().wifi();
+                    // Six blocks of a Legacy access point's 24: a quarter of its reach gone.
+                    helper.assertValueEqual(wifi, new MachineStateService.Wifi(true,
+                            AccessPointBlockEntity.hostname(point.nodeUuid()), WirelessStandard.STANDARD.cardName(),
+                            WirelessStandard.LEGACY.itemsPerTick(), 75), "what a program reads of its Wi-Fi");
+                    helper.assertValueEqual(point.signalPercent(helper.absolutePos(ACCESS_POINT)), 100,
+                            "the signal beside the access point");
                 })
                 .thenSucceed();
     }

@@ -1,0 +1,99 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.wireless_library.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.wireless_library.table1",
+      "heads": [
+        "jsc.guide.wireless_library.table1_head1",
+        "jsc.guide.wireless_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Wireless.Joined"
+          },
+          {
+            "words": "jsc.guide.wireless_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Wireless.AccessPoint"
+          },
+          {
+            "words": "jsc.guide.wireless_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Wireless.Standard"
+          },
+          {
+            "words": "jsc.guide.wireless_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Wireless.Speed"
+          },
+          {
+            "words": "jsc.guide.wireless_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Wireless.Signal"
+          },
+          {
+            "words": "jsc.guide.wireless_library.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wireless_library.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.wireless_library.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.wireless_library.definition1",
+      "term": "jsc.guide.wireless_library.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.wireless_library.fix1",
+          "problem": "jsc.guide.wireless_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.wireless_library.fix2",
+          "problem": "jsc.guide.wireless_library.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:wireless",
+        "jsc:computer_info"
+      ]
+    }
+  ],
+  "id": "jsc:wireless_library",
+  "order": 454,
+  "section": "jsc:library_readings",
+  "title": "jsc.guide.wireless_library.title"
+}

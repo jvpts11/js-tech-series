@@ -37,6 +37,7 @@ import net.minecraft.world.level.block.RedStoneWireBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -114,6 +115,39 @@ public class RedstoneInterfaceBlockEntity extends SyncedBlockEntity
             }
         }
         return null;
+    }
+
+    /** Every enabled interface linked to {@code owner}, in the order it lists them. */
+    public static List<RedstoneInterfaceBlockEntity> allLinkedTo(final ServerLevel level,
+                                                                 final IPeripheralOwner owner) {
+        final List<RedstoneInterfaceBlockEntity> all = new ArrayList<>();
+        for (final long endpoint : owner.enabledEndpoints()) {
+            final BlockPos at = BlockPos.of(endpoint);
+            if (level.isLoaded(at) && level.getBlockEntity(at) instanceof RedstoneInterfaceBlockEntity sensor) {
+                all.add(sensor);
+            }
+        }
+        return all;
+    }
+
+    /** The place in front of its lens, which it reads or emits into. */
+    public BlockPos front() {
+        return worldPosition.relative(getBlockState().getValue(RedstoneInterfaceBlock.FACING));
+    }
+
+    /**
+     * What the sensor or machine in front of its lens reads, as it says on the face toward the lens through the Core's
+     * signals: how a computer reads every sensor through its peripheral links (computers/docs/design/sigma.md). None
+     * for anything in front that says nothing.
+     */
+    public List<Reading> sensed(final ServerLevel level) {
+        final Direction facing = getBlockState().getValue(RedstoneInterfaceBlock.FACING);
+        final BlockPos front = worldPosition.relative(facing);
+        if (!level.isLoaded(front)) {
+            return List.of();
+        }
+        final ISignalOutput output = level.getCapability(Signals.OUTPUT, front, facing.getOpposite());
+        return output == null ? List.of() : output.readings();
     }
 
     @Override

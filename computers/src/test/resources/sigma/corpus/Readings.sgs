@@ -1,0 +1,52 @@
+using System.*;
+using System.IO.*;
+using System.Collections.*;
+using System.Machine.*;
+namespace Corpus;
+class ReadingsCorpus {
+    static void Main() {
+        Console.PrintLine("" + Power.DrawWatts);
+        SupplyInfo supply = Power.Supply;
+        if (supply != null) {
+            Console.PrintLine(supply.Name + supply.RatingWatts + supply.Units + supply.UnitsFailed);
+            Console.PrintLine(supply.Degraded ? "degraded" : (supply.Failed ? "failed" : "good"));
+        }
+        UpsInfo ups = Power.Ups;
+        if (ups != null) {
+            Console.PrintLine(ups.Name + ups.ChargePercent + ups.MinutesLeft + (ups.OnBattery || ups.Bypass));
+        }
+        if (Thermal.Known && !Thermal.Throttled) {
+            Console.PrintLine("" + Thermal.Celsius + Thermal.AmbientCelsius + Thermal.HeatWatts + Thermal.BudgetWatts
+                    + Thermal.ClockPercent + Thermal.LastTripCelsius);
+        }
+        if (Wireless.Joined) {
+            Console.PrintLine(Wireless.AccessPoint + Wireless.Standard + Wireless.Speed + Wireless.Signal);
+        }
+        DiskHealth c = DiskHealth.Of("C");
+        if (c != null) {
+            Console.PrintLine(c.Drive);
+        }
+        foreach (DiskHealth disk in DiskHealth.All()) {
+            Console.PrintLine(disk.Drive + disk.DamagePercent + disk.BadSectorsPercent + disk.CorruptedItems
+                    + disk.LastDefragTick + (disk.Dead ? "dead" : ""));
+        }
+        Settings.Set("runs", Settings.Get("runs", "0"));
+        Settings.Remove("old");
+        foreach (string name in Settings.Names()) {
+            Console.PrintLine(name + Settings.Path);
+        }
+        foreach (SensorReading reading in Sensors.Read("Boiler")) {
+            Console.PrintLine(reading.Name + reading.Value + reading.Least + reading.Most + reading.Unit);
+        }
+        foreach (string sensor in Sensors.Names()) {
+            Console.PrintLine(sensor);
+        }
+        RadioInfo radio = Signals.Radio("Gate");
+        if (radio != null && Signals.Send("Gate", 9)) {
+            Console.PrintLine(radio.Role + radio.Band + radio.Frequency + radio.Value + radio.Clash);
+        }
+        foreach (HeardSignal heard in Signals.Heard()) {
+            Console.PrintLine(heard.Band + heard.Frequency + heard.Bars + heard.Value + heard.Clash + heard.Relayed);
+        }
+    }
+}

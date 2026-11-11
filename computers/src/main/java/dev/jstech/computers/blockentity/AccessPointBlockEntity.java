@@ -58,6 +58,8 @@ public class AccessPointBlockEntity extends SyncedBlockEntity {
     private static final long TAKES_A_TICK = 1_000L;
     private static final int TICKS_A_SECOND = 20;
     private static final String HOST_PREFIX = "AP-";
+    /** A signal at full strength, in percent. */
+    private static final long WHOLE_SIGNAL = 100L;
 
     public AccessPointBlockEntity(final BlockPos pos, final BlockState state) {
         super(ComputingModule.ACCESS_POINT_BE.get(), pos, state);
@@ -133,6 +135,18 @@ public class AccessPointBlockEntity extends SyncedBlockEntity {
         final int reach = standard().reachBlocks();
         return level == null ? worldPosition.distSqr(pos) <= (double) reach * reach
                 : inWorld(level, worldPosition).distanceToSqr(inWorld(level, pos)) <= (double) reach * reach;
+    }
+
+    /**
+     * How strong its signal is at {@code pos}, in whole percent: all of it beside it, falling evenly to none at the
+     * edge of its reach, measured as {@link #reaches} measures. It only tells: the link's speed is its standard's
+     * anywhere in reach (computers/docs/design/wireless.md).
+     */
+    public int signalPercent(final BlockPos pos) {
+        final double reach = standard().reachBlocks();
+        final double distance = level == null ? Math.sqrt(worldPosition.distSqr(pos))
+                : inWorld(level, worldPosition).distanceTo(inWorld(level, pos));
+        return (int) Math.max(0L, Math.min(WHOLE_SIGNAL, Math.round(WHOLE_SIGNAL * (1.0 - distance / reach))));
     }
 
     /** Where {@code pos} is in the world: a place aboard a moving ship, where the ship is now; any other, itself. */

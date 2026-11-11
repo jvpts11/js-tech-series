@@ -231,6 +231,9 @@ class HardcodedTextTest {
             data(COMPUTERS + "os/SoftwareHouse.java", 39, PRODUCTS),
             data(COMPUTERS + "os/FileSystemType.java", 1, PRODUCTS),
             data(COMPUTERS + "os/UnixTree.java", 9, FILES),
+            data(COMPUTERS + "machine/ProgramSettingsService.java", 1, FILES),
+            data(COMPUTERS + "machine/SettingsFormat.java", 1, "the header of a property list, as Quince OS X"
+                    + " writes one whatever the language"),
             data(COMPUTERS + "teracoin/Printer3DModel.java", 1, PRODUCTS),
             data(COMPUTERS + "teracoin/WalletFiles.java", 1, FILES),
             data(COMPUTERS + "os/boot/SystemIntegrity.java", 1, FILES),

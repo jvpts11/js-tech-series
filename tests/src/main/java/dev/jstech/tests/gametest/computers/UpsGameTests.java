@@ -15,6 +15,7 @@ import dev.jstech.computers.blockentity.UpsBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.RackUnitItem;
+import dev.jstech.computers.machine.MachineStateService;
 import dev.jstech.computers.os.boot.DiskChecks;
 import dev.jstech.computers.power.UpsRating;
 import dev.jstech.computers.power.UpsReading;
@@ -122,6 +123,11 @@ public final class UpsGameTests {
                             "on the battery, as the UPS and the computer say; got " + ups.reading() + " and "
                                     + pc.upsReading());
                     helper.assertTrue(ups.charge() < full.get(), "and the battery runs down");
+                    final MachineStateService.Ups read = pc.services().state().ups();
+                    helper.assertTrue(read != null && read.onBattery() && !read.bypass()
+                                    && read.chargePercent() == pc.upsReading().percent()
+                                    && read.name().equals(pc.upsName().english()),
+                            "and a program on it reads the same; got " + read);
                 })
                 .thenSucceed();
     }

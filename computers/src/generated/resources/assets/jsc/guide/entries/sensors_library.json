@@ -1,0 +1,93 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.sensors_library.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sensors_library.table1",
+      "heads": [
+        "jsc.guide.sensors_library.table1_head1",
+        "jsc.guide.sensors_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Sensors.Read(name)"
+          },
+          {
+            "words": "jsc.guide.sensors_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Sensors.Names()"
+          },
+          {
+            "words": "jsc.guide.sensors_library.table1_2_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.sensors_library.table2",
+      "heads": [
+        "jsc.guide.sensors_library.table2_head1",
+        "jsc.guide.sensors_library.table2_head2",
+        "jsc.guide.sensors_library.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "SensorReading"
+          },
+          {
+            "literal": "SensorReading.Name, SensorReading.Value, SensorReading.Least, SensorReading.Most, SensorReading.Unit"
+          },
+          {
+            "words": "jsc.guide.sensors_library.table2_1_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.sensors_library.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.sensors_library.definition1",
+      "term": "jsc.guide.sensors_library.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.sensors_library.fix1",
+          "problem": "jsc.guide.sensors_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.sensors_library.fix2",
+          "problem": "jsc.guide.sensors_library.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:redstone_interfaces",
+        "jsc:redstone_library"
+      ]
+    }
+  ],
+  "id": "jsc:sensors_library",
+  "order": 457,
+  "section": "jsc:library_readings",
+  "title": "jsc.guide.sensors_library.title"
+}

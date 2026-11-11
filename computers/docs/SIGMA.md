@@ -173,8 +173,9 @@ they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`,
 `ComponentAction` among them. Version 3 brings to both `const`, labels and `goto`, INTERCAL's `comefrom`,
 `abstainfrom`, `reinstate`, `ignore` and `remember`, the directives from `#if` to `#warning`, and pointers with
 raw memory, and to Σ# alone exceptions, tuples, extension methods, operators and indexers, `unsafe` and
-`stackalloc`, `sealed`, static classes, `params`, local functions, `nameof`, `Operations.OnSettled` and
-`Network.OnEvent`. A version only ever adds: whatever
+`stackalloc`, `sealed`, static classes, `params`, local functions, `nameof`, `Operations.OnSettled`,
+`Network.OnEvent`, and the machine's own readings in `System.Machine` (`Power`, `Thermal`, `Wireless`,
+`DiskHealth`, `Settings`, `Sensors` and `Signals`). A version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
 older program. The one exception came with version 2 itself, before it shipped: the words of access hold as
 C# holds them, and `try`, `catch`, `finally`, `throw`, `goto`, `const`, `comefrom`, `abstainfrom` and
@@ -304,7 +305,7 @@ for an `int` and six for a `long`. `1 << 32` is 1 and `1 << 33` is 2.
 | `System.IO` | `Console` (print, read a line), `File` (the machine's disks and the network's shares) |
 | `System.Collections` | `List<T>`, `Map<K, V>` |
 | `System.Utils` | `Math`, `Convert`, `Random`, `Time` |
-| `System.Machine` | `Computer`: what the machine is made of and what it runs; `Redstone` (one of its Redstone Interfaces) |
+| `System.Machine` | `Computer`: what the machine is made of and what it runs; `Redstone` (one of its Redstone Interfaces); its own readings: `Power`, `Thermal`, `Wireless`, `DiskHealth`, `Settings`, `Sensors`, `Signals` |
 | `System.Network` | `Network`, `Mainframe`, `Operations`' rows, `RemoteComputer`, `Iql`, `Bus` and `BusItem` |
 | `System.Operations` | `Operations`: pull, push, craft, update, cancel, ask after an operation |
 | `System.Execution` | `Program`, `Process`, `ProcessMessage` |
@@ -518,6 +519,45 @@ also shows the setting written as these calls, and what a program set is marked 
 back and is marked on it with the program's name. A strength outside 0 to 15, or an interface no longer linked
 to the machine, halts the program. At the prompt or in a file of statements, `SET REDSTONE 'Gate' IN` and
 `SET REDSTONE 'Gate' OUT 15` do the same.
+
+## The machine's own readings: `System.Machine`
+
+From version 3, a Σ# program reads what its machine knows of itself, each read a picture taken when it is asked
+for, at the prices of the rest of the library: a glance for a value, a gathering for a list, a read and a write for
+the settings' file.
+
+```
+Power.DrawWatts -> int                 what the machine takes from the line now; 0 while it is off
+Power.Supply -> SupplyInfo             { Name, RatingWatts, Units, UnitsFailed, Degraded, Failed }, or null
+Power.Ups -> UpsInfo                   { Name, OnBattery, Bypass, ChargePercent, MinutesLeft }, or null
+Thermal.Known / Celsius / AmbientCelsius / HeatWatts / BudgetWatts / ClockPercent / Throttled / LastTripCelsius
+Wireless.Joined / AccessPoint / Standard / Speed / Signal
+DiskHealth.Of("C") -> DiskHealth       { Drive, Dead, DamagePercent, BadSectorsPercent, CorruptedItems,
+                                         LastDefragTick }, or null for a drive with no disk
+DiskHealth.All() -> List<DiskHealth>
+Settings.Get(name, fallback) / Set(name, value) / Remove(name) / Names() / Path
+Sensors.Read("Boiler") -> List<SensorReading>   { Name, Value, Least, Most, Unit }
+Sensors.Names() -> List<string>
+Signals.Radio("Gate") -> RadioInfo     { Role, Band, Frequency, Value, Clash }, or null
+Signals.Send("Gate", 9) -> bool
+Signals.Heard() -> List<HeardSignal>   { Band, Frequency, Bars, Value, Clash, Relayed }
+```
+
+A server in a rack reads its own supply and the rack's UPS and heat. `Wireless.Signal` runs from 100 beside the
+access point to 0 at the edge of its reach and only tells where the machine stands: the link carries at its
+standard's speed anywhere in reach. `LastDefragTick` is the world's tick, as `Time.Tick` reads it, or -1.
+
+`Settings` keeps a program's settings under the name of the class it was started from, in the file its system
+keeps them in: Frames in its registry (`C:\Frames\System32\config\SOFTWARE`, under
+`HKEY_LOCAL_MACHINE\SOFTWARE\<program>`, written as `regedit` exports it), MC-DOS in an INI file at the top of `C:`,
+Linux, the BSDs and UNIX in `~/.config/<program>/settings`, or `/etc/<program>.conf` for a program that stays up as
+a service, Quince OS X in `~/Library/Preferences/<program>.plist`. A setting's name is a plain word and its value a
+line; anything else halts the program.
+
+A J's Core sensor or radio joins the machine through a Redstone Interface linked to it, standing in front of the
+interface's lens, and is found by the interface's name. `Signals.Send` sets that interface to emit the value, which
+the transmitter in front sends on its frequency; it answers false when the interface faces no transmitter or is not
+live. `Signals.Heard` lists every frequency heard where the machine stands, as a signal probe there would.
 
 ## Windows of its own: `System.UI`
 

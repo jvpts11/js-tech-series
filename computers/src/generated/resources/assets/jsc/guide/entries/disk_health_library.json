@@ -1,0 +1,128 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.disk_health_library.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.disk_health_library.table1",
+      "heads": [
+        "jsc.guide.disk_health_library.table1_head1",
+        "jsc.guide.disk_health_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "DiskHealth.Of(drive)"
+          },
+          {
+            "words": "jsc.guide.disk_health_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "DiskHealth.All()"
+          },
+          {
+            "words": "jsc.guide.disk_health_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "DiskHealth.Drive"
+          },
+          {
+            "words": "jsc.guide.disk_health_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "DiskHealth.Dead"
+          },
+          {
+            "words": "jsc.guide.disk_health_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "DiskHealth.DamagePercent"
+          },
+          {
+            "words": "jsc.guide.disk_health_library.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "DiskHealth.BadSectorsPercent"
+          },
+          {
+            "words": "jsc.guide.disk_health_library.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "DiskHealth.CorruptedItems"
+          },
+          {
+            "words": "jsc.guide.disk_health_library.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "DiskHealth.LastDefragTick"
+          },
+          {
+            "words": "jsc.guide.disk_health_library.table1_8_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "foreach (DiskHealth disk in DiskHealth.All()) {",
+        "    if (disk.CorruptedItems > 0) {",
+        "        Console.PrintLine(disk.Drive + \": run the Defrag\");",
+        "    }",
+        "}"
+      ],
+      "name": "Health.sgs"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.disk_health_library.definition1",
+      "term": "jsc.guide.disk_health_library.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.disk_health_library.fix1",
+          "problem": "jsc.guide.disk_health_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.disk_health_library.fix2",
+          "problem": "jsc.guide.disk_health_library.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:corruption_and_the_defrag",
+        "jsc:disks",
+        "jsc:computer_info"
+      ]
+    }
+  ],
+  "id": "jsc:disk_health_library",
+  "order": 455,
+  "section": "jsc:library_readings",
+  "title": "jsc.guide.disk_health_library.title"
+}

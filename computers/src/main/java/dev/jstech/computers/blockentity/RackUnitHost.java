@@ -552,6 +552,11 @@ public record RackUnitHost(ServerRackBlockEntity rack, int row) implements IOsHo
         return rack.upsName();
     }
 
+    @Override
+    public ItemStack psuStack() {
+        return rack.asUnit(row, rack::psuStack);
+    }
+
     /** The cabinet's heat, which every machine in it shares: a server has no cooling of its own. */
     @Override
     public double heatClock() {

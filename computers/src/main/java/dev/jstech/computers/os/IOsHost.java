@@ -308,6 +308,11 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
         return Text.EMPTY;
     }
 
+    /** The power supply that feeds this machine, the stack that carries its wear; empty for none. On the server. */
+    default ItemStack psuStack() {
+        return ItemStack.EMPTY;
+    }
+
     /**
      * The share of its clock the machine's heat leaves it, from a quarter to all of it: what its programs' credits run
      * at (computers/docs/design/temperature.md). All of it for a machine with no temperature.

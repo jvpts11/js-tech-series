@@ -32,9 +32,11 @@ final class RedstoneCalls {
     /** What a setting is marked with when the program has no name to give. */
     private static final String UNNAMED = "Sigma";
 
-    private static final TextKey GONE = TextKey.of("jsc.service.redstone.gone",
+    /** Why a call on an interface not linked to the machine stops the program; the sensors' calls say it too. */
+    static final TextKey GONE = TextKey.of("jsc.service.redstone.gone",
             "no Redstone Interface named '%s' is linked to this machine");
-    private static final TextKey NOT_A_STRENGTH = TextKey.of("jsc.service.redstone.not_a_strength",
+    /** Why a strength redstone does not have stops the program; a radio's value is one too. */
+    static final TextKey NOT_A_STRENGTH = TextKey.of("jsc.service.redstone.not_a_strength",
             "%s is not a redstone strength, which runs from 0 to 15");
 
     private RedstoneCalls() {
@@ -82,7 +84,7 @@ final class RedstoneCalls {
     }
 
     /* What a setting is marked with: the class the program was started from. */
-    private static String by(final IWorldCall call) {
+    static String by(final IWorldCall call) {
         final String caller = call.caller();
         return caller == null || caller.isEmpty() ? UNNAMED : caller;
     }

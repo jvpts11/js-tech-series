@@ -13,7 +13,11 @@ import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.KernelDef;
+import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.disk.DiskPartitions;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
@@ -792,6 +796,18 @@ public final class FileService {
             return ICliComputer.OpResult.fail(NO_SUCH_FOLDER.with(path));
         }
         return ICliComputer.OpResult.ok(r.letter() + ":\\" + r.path().replace('/', '\\'));
+    }
+
+    /** {@code path} written as {@code host}'s system writes paths: C:\Users\... or /home/player/... */
+    public static String shown(final IOsHost host, final String path) {
+        final OsDef os = host.installedOs();
+        final KernelDef kernel = os == null ? null : OsRegistry.getKernel(os.kernelId());
+        final boolean unix = kernel != null && kernel.shellFamily() == ShellFamily.POSIX;
+        final String forward = path.replace('\\', '/');
+        if (unix) {
+            return forward.regionMatches(true, 0, "C:/", 0, 3) ? forward.substring(2) : forward;
+        }
+        return forward.replace('/', '\\');
     }
 
     /** Whether there is a file to read at that path. */

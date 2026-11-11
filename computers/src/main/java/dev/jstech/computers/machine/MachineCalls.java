@@ -82,6 +82,8 @@ final class MachineCalls {
         final Map<MemberId, Binding<?>> bindings = new HashMap<>();
         FileCalls.bind(bindings);
         ComputerCalls.bind(bindings);
+        MachineStateCalls.bind(bindings);
+        SettingsCalls.bind(bindings);
         NetworkCalls.bind(bindings);
         MainframeCalls.bind(bindings);
         OperationsCalls.bind(bindings);
@@ -92,6 +94,7 @@ final class MachineCalls {
         SoundCalls.bind(bindings);
         BusCalls.bind(bindings);
         RedstoneCalls.bind(bindings);
+        SignalCalls.bind(bindings);
         CraftingCalls.bind(bindings);
         SystemCalls.bind(bindings);
         return Map.copyOf(bindings);

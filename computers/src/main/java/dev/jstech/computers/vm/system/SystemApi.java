@@ -74,8 +74,9 @@ public final class SystemApi {
 
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
             processMessage(), thread(), time(), random(), openFile(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
-            computer(), holdingInfo(), serverInfo(), network(), stockEvent(), networkEvent(), subscription(),
-            remoteComputer(),
+            computer(), supplyInfo(), upsInfo(), power(), thermal(), wireless(), diskHealth(), settings(),
+            sensorReading(), sensors(), radioInfo(), heardSignal(), signals(), holdingInfo(), serverInfo(), network(),
+            stockEvent(), networkEvent(), subscription(), remoteComputer(),
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
             button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), textArea(),
@@ -412,6 +413,150 @@ public final class SystemApi {
         computer.onType(STRINGS, "Programs", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
         computer.onType("List<ProcessInfo>", "Processes", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
         return new TypeSpec(MACHINE, "Computer", computer.members);
+    }
+
+    /*
+     * How the machine is fed, how hot it runs and how it reaches its network by air, each a glance at what it already
+     * knows of itself (computers/docs/design/power.md, temperature.md, wireless.md).
+     */
+
+    private static TypeSpec supplyInfo() {
+        final Members supply = new Members("SupplyInfo");
+        supply.recordValue(STRING, "Name");
+        supply.recordValue(INT, "RatingWatts");
+        supply.recordValue(INT, "Units");
+        supply.recordValue(INT, "UnitsFailed");
+        supply.recordValue(BOOL, "Degraded");
+        supply.recordValue(BOOL, "Failed");
+        return new TypeSpec(MACHINE, "SupplyInfo", supply.members);
+    }
+
+    private static TypeSpec upsInfo() {
+        final Members ups = new Members("UpsInfo");
+        ups.recordValue(STRING, "Name");
+        ups.recordValue(BOOL, "OnBattery");
+        ups.recordValue(BOOL, "Bypass");
+        ups.recordValue(INT, "ChargePercent");
+        ups.recordValue(LONG, "MinutesLeft");
+        return new TypeSpec(MACHINE, "UpsInfo", ups.members);
+    }
+
+    /** What the machine takes from the line now, the supply that feeds it, and the UPS that carries it, or null. */
+    private static TypeSpec power() {
+        final Members power = new Members("Power");
+        power.valueOnType(INT, "DrawWatts", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        power.valueOnType("SupplyInfo", "Supply", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        power.valueOnType("UpsInfo", "Ups", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        return new TypeSpec(MACHINE, "Power", power.members);
+    }
+
+    /** The machine's heat: how hot it is, what its parts make and its cooling takes, and the clock it is left. */
+    private static TypeSpec thermal() {
+        final Members thermal = new Members("Thermal");
+        thermal.valueOnType(BOOL, "Known", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        for (final String reading : List.of("Celsius", "AmbientCelsius", "HeatWatts", "BudgetWatts", "ClockPercent",
+                "LastTripCelsius")) {
+            thermal.valueOnType(INT, reading, MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        }
+        thermal.valueOnType(BOOL, "Throttled", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        return new TypeSpec(MACHINE, "Thermal", thermal.members);
+    }
+
+    /** How the machine is on its network by Wi-Fi: its card, the access point it joined and how fast it carries. */
+    private static TypeSpec wireless() {
+        final Members wireless = new Members("Wireless");
+        wireless.valueOnType(BOOL, "Joined", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        wireless.valueOnType(STRING, "AccessPoint", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        wireless.valueOnType(STRING, "Standard", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        wireless.valueOnType(INT, "Speed", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        wireless.valueOnType(INT, "Signal", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        return new TypeSpec(MACHINE, "Wireless", wireless.members);
+    }
+
+    /**
+     * The health of the machine's drives, each as its Defrag reads it: one by its letter, or null when no disk is
+     * there, and every one, which the machine walks its drives to gather.
+     */
+    private static TypeSpec diskHealth() {
+        final Members disk = new Members("DiskHealth");
+        disk.onType("DiskHealth", "Of", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        disk.onType("List<DiskHealth>", "All", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        disk.recordValue(STRING, "Drive");
+        disk.recordValue(BOOL, "Dead");
+        disk.recordValue(INT, "DamagePercent");
+        disk.recordValue(INT, "BadSectorsPercent");
+        disk.recordValue(LONG, "CorruptedItems");
+        disk.recordValue(LONG, "LastDefragTick");
+        return new TypeSpec(MACHINE, "DiskHealth", disk.members);
+    }
+
+    /**
+     * The program's own settings, kept under its name in the file its system keeps them in: Frames' registry, an INI
+     * file, ~/.config or /etc, the Library's Preferences. Reading one reads that file; changing one writes it.
+     */
+    private static TypeSpec settings() {
+        final Members settings = new Members("Settings");
+        settings.onType(STRING, "Get", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING, STRING);
+        settings.onType(BOOL, "Set", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
+        settings.onType(BOOL, "Remove", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
+        settings.onType(STRINGS, "Names", MemberKind.WORLD, CallCost.of(SigmaCosts.READ));
+        settings.valueOnType(STRING, "Path", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        return new TypeSpec(MACHINE, "Settings", settings.members);
+    }
+
+    /**
+     * J's Core's sensors joined to the machine: each stands in front of the lens of a Redstone Interface linked to it,
+     * and is read by that interface's name; null for a name no interface answers to, none for one facing no sensor.
+     */
+    private static TypeSpec sensors() {
+        final Members sensors = new Members("Sensors");
+        sensors.onType("List<SensorReading>", "Read", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        sensors.onType(STRINGS, "Names", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        return new TypeSpec(MACHINE, "Sensors", sensors.members);
+    }
+
+    private static TypeSpec sensorReading() {
+        final Members reading = new Members("SensorReading");
+        reading.recordValue(STRING, "Name");
+        reading.recordValue(DOUBLE, "Value");
+        reading.recordValue(DOUBLE, "Least");
+        reading.recordValue(DOUBLE, "Most");
+        reading.recordValue(STRING, "Unit");
+        return new TypeSpec(MACHINE, "SensorReading", reading.members);
+    }
+
+    /**
+     * J's Core's signals by frequency: a radio in front of the lens of a linked Redstone Interface, read by that
+     * interface's name, a transmitter sent through by setting the interface to emit, and every frequency heard where
+     * the machine stands.
+     */
+    private static TypeSpec signals() {
+        final Members signals = new Members("Signals");
+        signals.onType("RadioInfo", "Radio", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        signals.onType(BOOL, "Send", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING, INT);
+        signals.onType("List<HeardSignal>", "Heard", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        return new TypeSpec(MACHINE, "Signals", signals.members);
+    }
+
+    private static TypeSpec radioInfo() {
+        final Members radio = new Members("RadioInfo");
+        radio.recordValue(STRING, "Role");
+        radio.recordValue(STRING, "Band");
+        radio.recordValue(INT, "Frequency");
+        radio.recordValue(INT, "Value");
+        radio.recordValue(BOOL, "Clash");
+        return new TypeSpec(MACHINE, "RadioInfo", radio.members);
+    }
+
+    private static TypeSpec heardSignal() {
+        final Members heard = new Members("HeardSignal");
+        heard.recordValue(STRING, "Band");
+        heard.recordValue(INT, "Frequency");
+        heard.recordValue(INT, "Bars");
+        heard.recordValue(INT, "Value");
+        heard.recordValue(BOOL, "Clash");
+        heard.recordValue(BOOL, "Relayed");
+        return new TypeSpec(MACHINE, "HeardSignal", heard.members);
     }
 
     private static TypeSpec holdingInfo() {

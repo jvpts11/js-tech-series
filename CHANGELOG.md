@@ -3801,6 +3801,15 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Networks & Operations gains an access point, a portable's request, a photo sent, a vein found, a Messenger message
   and a network boot; and Sigma a breakpoint. The hidden ones show only once earned, and the guide's achievement
   pages list every one.
+- (Computers) Sigma# 3 reads the machine it runs on, in `System.Machine`: `Power` (the draw from the line, the
+  supply and how worn it is, the UPS and its charge), `Thermal` (the temperature, the heat made and the thermal
+  budget, the clock left, throttling, the last thermal trip), `Wireless` (the access point joined, the card's
+  standard, the link's speed and the signal where the machine stands), `DiskHealth` (each drive's death, damage, bad
+  sectors, corrupted items and last Defrag), `Settings` (a program's own settings, kept the way its system keeps them:
+  Frames' registry, an INI file on MC-DOS, `~/.config` or `/etc` on a Unix, the Library's Preferences on Quince OS X),
+  `Sensors` (what a J's Core sensor in front of a linked Redstone Interface reads) and `Signals` (a J's Core radio in
+  front of an interface, sending through a transmitter, and every frequency heard where the machine stands). A server
+  in a rack reads its own supply and the rack's UPS and heat. The Book of Sigma gains a section on them.
 
 ### Changed
 - (Computers) `mkfs` on Linux is `mkfs.ext4`, beside a `mkfs` for each other file system, and formats a partition,

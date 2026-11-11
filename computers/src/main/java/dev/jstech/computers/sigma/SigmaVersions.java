@@ -55,7 +55,12 @@ public final class SigmaVersions {
             Map.entry("FileNotFoundException", 3), Map.entry("NetworkException", 3),
             Map.entry("AccessViolationException", 3),
             // The network's event log came to programs with Network.OnEvent.
-            Map.entry("NetworkEvent", 3));
+            Map.entry("NetworkEvent", 3),
+            // The machine's own readings: its power, its heat, its Wi-Fi.
+            Map.entry("Power", 3), Map.entry("SupplyInfo", 3), Map.entry("UpsInfo", 3), Map.entry("Thermal", 3),
+            Map.entry("Wireless", 3), Map.entry("DiskHealth", 3), Map.entry("Settings", 3), Map.entry("Sensors", 3),
+            Map.entry("SensorReading", 3), Map.entry("Signals", 3), Map.entry("RadioInfo", 3),
+            Map.entry("HeardSignal", 3));
     /**
      * The members that came after the first version on a type that was already there, each written as its owner,
      * its name and the types it takes, with the version it came in.

@@ -2181,6 +2181,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     /** The power supply in its slot, the stack that carries its wear; empty for none. */
+    @Override
     public ItemStack psuStack() {
         return hardware.psu();
     }

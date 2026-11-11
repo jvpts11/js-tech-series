@@ -68,9 +68,9 @@ public final class WalletPayloads {
             wallets.add(new WalletStatePayload.Wallet(wallet.path(), wallet.file(), wallet.address(),
                     chain.balance(wallet.address())));
         }
-        final String newFolder = WalletFiles.shown(host, WalletFiles.folder(host));
+        final String newFolder = FileService.shown(host, WalletFiles.folder(host));
         final WalletStatePayload.Current current = shown.map(wallet -> new WalletStatePayload.Current(wallet.path(),
-                        wallet.file(), WalletFiles.shown(host, WalletFiles.folderOf(wallet.path())), wallet.address(),
+                        wallet.file(), FileService.shown(host, WalletFiles.folderOf(wallet.path())), wallet.address(),
                         chain.balance(wallet.address()), chain.pendingIn(wallet.address()), newFolder,
                         WalletFiles.copyDrive(files), note))
                 .orElse(new WalletStatePayload.Current("", "", "", "", 0L, 0L, newFolder, WalletFiles.copyDrive(files),

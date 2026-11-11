@@ -1,0 +1,163 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.settings_library.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.settings_library.table1",
+      "heads": [
+        "jsc.guide.settings_library.table1_head1",
+        "jsc.guide.settings_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Settings.Get(name, fallback)"
+          },
+          {
+            "words": "jsc.guide.settings_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Settings.Set(name, value)"
+          },
+          {
+            "words": "jsc.guide.settings_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Settings.Remove(name)"
+          },
+          {
+            "words": "jsc.guide.settings_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Settings.Names()"
+          },
+          {
+            "words": "jsc.guide.settings_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Settings.Path"
+          },
+          {
+            "words": "jsc.guide.settings_library.table1_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.settings_library.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.settings_library.table2",
+      "heads": [
+        "jsc.guide.settings_library.table2_head1",
+        "jsc.guide.settings_library.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.settings_library.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.settings_library.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.settings_library.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.settings_library.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.settings_library.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.settings_library.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.settings_library.table2_4_1"
+          },
+          {
+            "words": "jsc.guide.settings_library.table2_4_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.settings_library.table2_5_1"
+          },
+          {
+            "words": "jsc.guide.settings_library.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.settings_library.text3"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "int runs = Convert.ToInt(Settings.Get(\"runs\", \"0\")) + 1;",
+        "Settings.Set(\"runs\", \"\" + runs);",
+        "Console.PrintLine(\"Run \" + runs + \", kept in \" + Settings.Path);"
+      ],
+      "name": "Settings.sgs"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.settings_library.definition1",
+      "term": "jsc.guide.settings_library.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.settings_library.fix1",
+          "problem": "jsc.guide.settings_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.settings_library.fix2",
+          "problem": "jsc.guide.settings_library.problem2"
+        },
+        {
+          "fix": "jsc.guide.settings_library.fix3",
+          "problem": "jsc.guide.settings_library.problem3"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:file_tree",
+        "jsc:computer_info"
+      ]
+    }
+  ],
+  "id": "jsc:settings_library",
+  "order": 456,
+  "section": "jsc:library_readings",
+  "title": "jsc.guide.settings_library.title"
+}

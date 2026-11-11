@@ -61,6 +61,10 @@ public final class MachineServices implements IHost {
 
     @Nullable
     private ComputerInfoService computer;
+    @Nullable
+    private MachineStateService state;
+    @Nullable
+    private ProgramSettingsService settings;
 
     @Nullable
     private NetworkReadService network;
@@ -251,6 +255,28 @@ public final class MachineServices implements IHost {
     }
 
     /**
+     * The machine's own readings, its power, its heat and its Wi-Fi, as what runs on it reads them.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public MachineStateService state() {
+        this.follow();
+        return this.state;
+    }
+
+    /**
+     * Its programs' own settings, kept the way its system keeps them.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public ProgramSettingsService settings() {
+        this.follow();
+        return this.settings;
+    }
+
+    /**
      * The data network the machine is on, as what runs on it reads it.
      *
      * @return null when the machine has no shell
@@ -429,6 +455,8 @@ public final class MachineServices implements IHost {
             this.remotes = new RemoteComputerService(terminal, server);
             this.files = new FileService(this.block, server, this.remotes.paths(), this.shell::currentLocation);
             this.computer = new ComputerInfoService(this.block, this.machine, this.shell);
+            this.state = new MachineStateService(this.machine, terminal, this.block, server);
+            this.settings = new ProgramSettingsService(this.machine, this.files);
             // Operations first: the network hands their rows back when a query asks for them.
             this.operations = new OperationsService(terminal, server, this.shell);
             this.network = new NetworkReadService(terminal, server, this.shell, this.operations);
@@ -459,6 +487,8 @@ public final class MachineServices implements IHost {
             this.shell = null;
             this.files = null;
             this.computer = null;
+            this.state = null;
+            this.settings = null;
             this.network = null;
             this.mainframe = null;
             this.operations = null;
