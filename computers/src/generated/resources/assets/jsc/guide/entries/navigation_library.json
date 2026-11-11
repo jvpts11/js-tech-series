@@ -1,0 +1,199 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.navigation_library.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.navigation_library.table1",
+      "heads": [
+        "jsc.guide.navigation_library.table1_head1",
+        "jsc.guide.navigation_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Navigation.Aboard"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.Piloted"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.X, Navigation.Z"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.Altitude"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.Pressure"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.Speed"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table1_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.Climb"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table1_7_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.Pitch, Navigation.Roll"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table1_8_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.Heading"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table1_9_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.AboveGround, Navigation.ClearAhead"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table1_10_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.navigation_library.table2",
+      "heads": [
+        "jsc.guide.navigation_library.table2_head1",
+        "jsc.guide.navigation_library.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Navigation.GoTo(x, y, z, speed)"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.HoldAltitude(y, speed)"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.FollowRoute(points, speed, loop)"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.Dock(x, y, z, speed)"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Navigation.Release()"
+          },
+          {
+            "words": "jsc.guide.navigation_library.table2_5_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.navigation_library.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.navigation_library.text3"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "if (Navigation.Aboard && !Navigation.Piloted) {",
+        "    Navigation.HoldAltitude(120, 4);",
+        "}"
+      ],
+      "name": "Patrol.sgs"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.navigation_library.definition1",
+      "term": "jsc.guide.navigation_library.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.navigation_library.fix1",
+          "problem": "jsc.guide.navigation_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.navigation_library.fix2",
+          "problem": "jsc.guide.navigation_library.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:sensors_library",
+        "jsc:signals_library"
+      ]
+    }
+  ],
+  "id": "jsc:navigation_library",
+  "order": 468,
+  "section": "jsc:library_reach",
+  "title": "jsc.guide.navigation_library.title"
+}

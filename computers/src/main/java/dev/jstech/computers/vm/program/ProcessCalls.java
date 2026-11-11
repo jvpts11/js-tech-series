@@ -359,6 +359,16 @@ final class ProcessCalls {
                 watch(process, Process.Watching.BELOW, arguments, line), STRING, "long", STOCK_HANDLER);
         bind(bindings, "Network", "WatchAbove", null, (process, target, arguments, line) ->
                 watch(process, Process.Watching.ABOVE, arguments, line), STRING, "long", STOCK_HANDLER);
+        // A channel is heard by the program, which tells its machine so; what is sent on it reaches the machine.
+        bind(bindings, "Channel", "Listen", null, (process, target, arguments, line) -> {
+            process.hearChannel(ChannelNames.checked(String.valueOf(arguments[0]), line),
+                    arguments[1] instanceof Values.DelegateValue handler ? handler : null);
+            return null;
+        }, STRING, "Action<ChannelMessage>");
+        bind(bindings, "Channel", "Close", null, (process, target, arguments, line) -> {
+            process.hearChannel(ChannelNames.checked(String.valueOf(arguments[0]), line), null);
+            return null;
+        }, STRING);
         // A file is watched as an item of the network is, by the tick it last changed in, read by the machine.
         bind(bindings, "File", "Watch", null, (process, target, arguments, line) ->
                 process.watch(Process.WATCHED_FILE + arguments[0], Process.Watching.CHANGE, 0L,

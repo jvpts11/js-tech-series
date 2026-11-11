@@ -84,6 +84,9 @@ final class MachineCalls {
         ComputerCalls.bind(bindings);
         MachineStateCalls.bind(bindings);
         SettingsCalls.bind(bindings);
+        NetworkMessagingCalls.bind(bindings);
+        NavigationCalls.bind(bindings);
+        TeracoinCalls.bind(bindings);
         NetworkCalls.bind(bindings);
         MainframeCalls.bind(bindings);
         OperationsCalls.bind(bindings);

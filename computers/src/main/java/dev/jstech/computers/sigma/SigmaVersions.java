@@ -65,7 +65,11 @@ public final class SigmaVersions {
             Map.entry("Calendar", 3), Map.entry("Stopwatch", 3), Map.entry("Path", 3), Map.entry("Directory", 3),
             Map.entry("FileEvent", 3), Map.entry("StringBuilder", 3), Map.entry("Regex", 3), Map.entry("Json", 3),
             Map.entry("JsonValue", 3), Map.entry("Csv", 3), Map.entry("Hash", 3), Map.entry("Base64", 3),
-            Map.entry("Queue", 3), Map.entry("Stack", 3), Map.entry("Set", 3));
+            Map.entry("Queue", 3), Map.entry("Stack", 3), Map.entry("Set", 3), Map.entry("EventLog", 3),
+            Map.entry("Channel", 3), Map.entry("ChannelMessage", 3),
+            // Flying J's Core's moving structures, and Teracoin.
+            Map.entry("Navigation", 3), Map.entry("Wallet", 3), Map.entry("Chain", 3), Map.entry("Miner", 3),
+            Map.entry("Pool", 3));
     /**
      * The members that came after the first version on a type that was already there, each written as its owner,
      * its name and the types it takes, with the version it came in.

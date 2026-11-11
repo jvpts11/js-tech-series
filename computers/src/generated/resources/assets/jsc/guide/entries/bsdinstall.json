@@ -216,7 +216,7 @@
     }
   ],
   "id": "jsc:bsdinstall",
-  "order": 331,
+  "order": 333,
   "section": "jsc:freebsd_system",
   "title": "jsc.guide.bsdinstall.title"
 }

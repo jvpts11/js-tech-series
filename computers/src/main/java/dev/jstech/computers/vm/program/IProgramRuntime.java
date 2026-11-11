@@ -51,6 +51,11 @@ public interface IProgramRuntime {
         return false;
     }
 
+    /** Hands the program a value sent on a channel; false when it did not hear it. */
+    default boolean deliverChannel(final String channel, final String from, final String value, final long tick) {
+        return false;
+    }
+
     /** Tells the program what a player did to one of its widgets; false when no part of it heard. */
     default boolean deliverUiEvent(final long window, final long widget, final String kind,
                                    final List<Object> values) {

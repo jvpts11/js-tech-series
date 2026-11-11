@@ -136,7 +136,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:frames_windows",
-  "order": 209,
+  "order": 211,
   "section": "jsc:desktop_working",
   "title": "jsc.guide.frames_windows.title"
 }

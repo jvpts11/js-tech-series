@@ -40,6 +40,8 @@ final class ProgramEvents {
     static final long OPERATION_BYTES = Heap.HEADER + 7L * Heap.REFERENCE;
     /** What an entry of the network's event log holds before its text: a header and its four fields. */
     static final long NETWORK_EVENT_BYTES = Heap.HEADER + 4L * Heap.REFERENCE;
+    /** What a message on a channel weighs, what it holds aside: the header and its four values. */
+    static final long CHANNEL_MESSAGE_BYTES = Heap.HEADER + 4L * Heap.REFERENCE;
 
     private final Process process;
     private final Heap heap;
@@ -148,6 +150,21 @@ final class ProgramEvents {
                 + Heap.sizeOfText(text);
         return this.offer(this.listeners.onEvent(), bytes,
                 () -> List.of(this.networkEventOf(level, machine, text, tick)));
+    }
+
+    /**
+     * Tells the program something was sent on a channel it hears: the channel, the machine that sent it, the value
+     * sent, as it travelled, and the tick it arrived in. False when the program is over, does not hear that channel,
+     * or has no room for the call.
+     */
+    boolean deliverChannel(final String channel, final String from, final String value, final long tick) {
+        final Values.DelegateValue handler = this.listeners.channel(channel);
+        if (this.identity.over() || handler == null) {
+            return false;
+        }
+        final long bytes = CHANNEL_MESSAGE_BYTES + Heap.sizeOfText(channel) + Heap.sizeOfText(from)
+                + Heap.sizeOfText(value);
+        return this.offer(handler, bytes, () -> List.of(this.channelMessageOf(channel, from, value, tick)));
     }
 
     /**
@@ -333,6 +350,21 @@ final class ProgramEvents {
         made.set("Text", this.heap.text(text, 0));
         made.set("Tick", tick);
         this.heap.allocate(made, NETWORK_EVENT_BYTES, 0);
+        return made;
+    }
+
+    /*
+     * A message on a channel as the program holds it: the value is made anew from the run of letters it travelled as,
+     * so the receiver holds its own copy, as a generic component's data is copied.
+     */
+    private Values.Obj channelMessageOf(final String channel, final String from, final String value,
+                                       final long tick) {
+        final Values.Obj made = new Values.Obj("ChannelMessage");
+        made.set("Channel", this.heap.text(channel, 0));
+        made.set("From", this.heap.text(from, 0));
+        made.set("Value", this.heap.adopt(ComponentValues.toSigma(ComponentValues.decode(value)), 0));
+        made.set("Tick", tick);
+        this.heap.allocate(made, CHANNEL_MESSAGE_BYTES, 0);
         return made;
     }
 

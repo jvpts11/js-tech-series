@@ -32,6 +32,8 @@ final class ProgramListeners {
     private final Map<String, Values.DelegateValue> settledFor = new LinkedHashMap<>();
     /** Who to tell of each entry written to the network's event log, or null for nobody. */
     private Values.DelegateValue onEvent;
+    /** Who to tell of what is sent on each channel the program hears, by the channel's name. */
+    private final Map<String, Values.DelegateValue> channels = new LinkedHashMap<>();
 
     /** Who to tell when another program sends a line; null takes the listener away. */
     void hearMessages(final Values.DelegateValue handler) {
@@ -103,9 +105,29 @@ final class ProgramListeners {
         return this.onEvent;
     }
 
-    /** Whether anything here waits on what happens on the network: an Operation settling, or the event log. */
+    /** Who to tell of what is sent on the channel {@code name}; null stops hearing it. */
+    void hearChannel(final String name, final Values.DelegateValue handler) {
+        if (handler == null) {
+            this.channels.remove(name);
+        } else {
+            this.channels.put(name, handler);
+        }
+    }
+
+    /** Who hears the channel {@code name}, or null for nobody. */
+    Values.DelegateValue channel(final String name) {
+        return this.channels.get(name);
+    }
+
+    /** Who hears each channel, by its name, as the save writes them down. */
+    Map<String, Values.DelegateValue> channels() {
+        return Map.copyOf(this.channels);
+    }
+
+    /** Whether anything here waits on what happens on the network: an Operation, the event log or a channel. */
     boolean listensToNetwork() {
-        return this.onSettled != null || !this.settledFor.isEmpty() || this.onEvent != null;
+        return this.onSettled != null || !this.settledFor.isEmpty() || this.onEvent != null
+                || !this.channels.isEmpty();
     }
 
     /** Puts back who was listening and the Gateway chosen when the program was saved; nulls mean nobody. */
@@ -118,10 +140,12 @@ final class ProgramListeners {
 
     /** Puts back who was waiting on the network when the program was saved; nulls mean nobody. */
     void restoreNetwork(final Values.DelegateValue settled, final Map<String, Values.DelegateValue> settledOne,
-                        final Values.DelegateValue event) {
+                        final Values.DelegateValue event, final Map<String, Values.DelegateValue> heard) {
         this.hearSettled(settled);
         this.settledFor.clear();
         settledOne.forEach(this::hearSettled);
         this.hearEvents(event);
+        this.channels.clear();
+        this.channels.putAll(heard);
     }
 }

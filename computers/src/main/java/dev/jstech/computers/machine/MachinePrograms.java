@@ -463,6 +463,13 @@ public final class MachinePrograms {
         }
     }
 
+    /** Hands every program of the machine that hears {@code channel} the value sent on it. */
+    public void deliverChannel(final String channel, final String from, final String value, final long tick) {
+        for (final ProgramEntry<IMachineRuntime> one : this.table.running()) {
+            one.process().deliverChannel(channel, from, value, tick);
+        }
+    }
+
     /** The windows a program has open on the machine's desktop; empty for one that has none. */
     public List<Values.Obj> windowsOf(final int id) {
         final ProgramEntry<IMachineRuntime> one = this.byId(id);

@@ -195,7 +195,7 @@
   ],
   "icon": "jsc:guide_to_operations",
   "id": "jsc:info_keys",
-  "order": 281,
+  "order": 283,
   "section": "jsc:help_at_the_prompt",
   "title": "jsc.guide.info_keys.title"
 }

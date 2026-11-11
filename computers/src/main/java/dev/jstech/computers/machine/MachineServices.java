@@ -65,6 +65,12 @@ public final class MachineServices implements IHost {
     private MachineStateService state;
     @Nullable
     private ProgramSettingsService settings;
+    @Nullable
+    private NetworkMessagingService messaging;
+    @Nullable
+    private NavigationService navigation;
+    @Nullable
+    private TeracoinService teracoin;
 
     @Nullable
     private NetworkReadService network;
@@ -277,6 +283,39 @@ public final class MachineServices implements IHost {
     }
 
     /**
+     * What its programs say on the network: the event log, and the channels.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public NetworkMessagingService messaging() {
+        this.follow();
+        return this.messaging;
+    }
+
+    /**
+     * The moving structure the machine stands on, as its programs fly it.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public NavigationService navigation() {
+        this.follow();
+        return this.navigation;
+    }
+
+    /**
+     * Teracoin: the chain, the wallets in the machine's files, its miner and its network's pools.
+     *
+     * @return null when the machine has no shell
+     */
+    @Nullable
+    public TeracoinService teracoin() {
+        this.follow();
+        return this.teracoin;
+    }
+
+    /**
      * The data network the machine is on, as what runs on it reads it.
      *
      * @return null when the machine has no shell
@@ -457,6 +496,9 @@ public final class MachineServices implements IHost {
             this.computer = new ComputerInfoService(this.block, this.machine, this.shell);
             this.state = new MachineStateService(this.machine, terminal, this.block, server);
             this.settings = new ProgramSettingsService(this.machine, this.files);
+            this.messaging = new NetworkMessagingService(this.machine, this.block, server);
+            this.navigation = new NavigationService(this.block, server);
+            this.teracoin = new TeracoinService(this.machine, server, this.files);
             // Operations first: the network hands their rows back when a query asks for them.
             this.operations = new OperationsService(terminal, server, this.shell);
             this.network = new NetworkReadService(terminal, server, this.shell, this.operations);
@@ -489,6 +531,9 @@ public final class MachineServices implements IHost {
             this.computer = null;
             this.state = null;
             this.settings = null;
+            this.messaging = null;
+            this.navigation = null;
+            this.teracoin = null;
             this.network = null;
             this.mainframe = null;
             this.operations = null;

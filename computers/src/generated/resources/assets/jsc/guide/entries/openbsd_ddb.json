@@ -54,7 +54,7 @@
     }
   ],
   "id": "jsc:openbsd_ddb",
-  "order": 346,
+  "order": 348,
   "section": "jsc:openbsd_tools",
   "title": "jsc.guide.openbsd_ddb.title"
 }

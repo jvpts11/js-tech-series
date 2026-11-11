@@ -104,7 +104,7 @@
     }
   ],
   "id": "jsc:openbsd_packages",
-  "order": 343,
+  "order": 345,
   "section": "jsc:openbsd_software",
   "title": "jsc.guide.openbsd_packages.title"
 }

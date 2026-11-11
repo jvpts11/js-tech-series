@@ -177,7 +177,8 @@ raw memory, and to Σ# alone exceptions, tuples, extension methods, operators an
 `Network.OnEvent`, the machine's own readings in `System.Machine` (`Power`, `Thermal`, `Wireless`,
 `DiskHealth`, `Settings`, `Sensors` and `Signals`), `System.Text`, `Path`, `Directory` and the file calls
 `File.Size`, `File.Changed` and `File.Watch`, `Queue<T>`, `Stack<T>` and `Set<T>`, `List.Find` and `List.Sort` with
-a function, and `Calendar` and `Stopwatch`. A version only ever adds: whatever
+a function, `Calendar` and `Stopwatch`, `EventLog` and `Channel`, and `System.Navigation` and `System.Teracoin`. A
+version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
 older program. The one exception came with version 2 itself, before it shipped: the words of access hold as
 C# holds them, and `try`, `catch`, `finally`, `throw`, `goto`, `const`, `comefrom`, `abstainfrom` and
@@ -309,7 +310,9 @@ for an `int` and six for a `long`. `1 << 32` is 1 and `1 << 33` is 2.
 | `System.Collections` | `List<T>`, `Map<K, V>`, `Queue<T>`, `Stack<T>`, `Set<T>` |
 | `System.Utils` | `Math`, `Convert`, `Random`, `Time`, `Calendar`, `Stopwatch` |
 | `System.Machine` | `Computer`: what the machine is made of and what it runs; `Redstone` (one of its Redstone Interfaces); its own readings: `Power`, `Thermal`, `Wireless`, `DiskHealth`, `Settings`, `Sensors`, `Signals` |
-| `System.Network` | `Network`, `Mainframe`, `Operations`' rows, `RemoteComputer`, `Iql`, `Bus` and `BusItem` |
+| `System.Network` | `Network`, `Mainframe`, `Operations`' rows, `RemoteComputer`, `Iql`, `Bus` and `BusItem`, `EventLog`, `Channel` |
+| `System.Navigation` | `Navigation`: the moving structure the computer stands on, its readings and its autopilot |
+| `System.Teracoin` | `Wallet`, `Chain`, `Miner`, `Pool` |
 | `System.Operations` | `Operations`: pull, push, craft, update, cancel, ask after an operation |
 | `System.Execution` | `Program`, `Process`, `ProcessMessage` |
 | `System.Threading` | `Thread`, and the `lock` statement |
@@ -591,6 +594,33 @@ the program as a loop around the function, the way a `foreach` is, and cost what
 by insertion. `File.Size`, `File.Changed` and `File.Watch` read the machine's own drives, and a watch costs nothing
 to set: the machine looks each tick, as it does for `Network.Watch`. Taking from an empty queue or stack throws an
 `InvalidOperationException`.
+
+## Messages, flying and Teracoin
+
+From version 3, a Σ# program reaches past its machine in three more ways.
+
+```
+EventLog.Write(level, text)            info, warn or error; one line of up to 256 characters; heard by Network.OnEvent
+Channel.Listen(name, handler)          a ChannelMessage { Channel, From, Value, Tick } for each value sent on it
+Channel.Send(name, value)              a copy of the value, up to 32 KB, to the other machines hearing that channel
+Channel.Close(name)
+Navigation.Aboard, .Piloted            readings: X, Z, Altitude, Pressure, Speed, Climb, Pitch, Roll, Heading,
+                                       AboveGround, ClearAhead, as a flight sensor where the computer stands reads
+Navigation.GoTo(x, y, z, speed)        also HoldAltitude(y, speed), FollowRoute(points, speed, loop),
+                                       Dock(x, y, z, speed), Release(); each answers whether there is a structure
+Wallet.Balance(address)                Wallet.Address(path), Wallet.Send(path, to, amount, label)
+Chain.Height, .Difficulty, .Reward     Pool.Names(), Pool.Of(name) { Name, Host, FeePermille, Hashrate, Members, Found }
+Miner.Status, .Hashrate, .Pool, ...    SetAddress, UsePool, MineAlone, Start, Stop, as the miner command sets them
+```
+
+`EventLog` and `Channel` need the machine on a network and throw a `NetworkException` off one. A value sent on a
+channel reaches the programs hearing it on the other machines of the network, and of each network federated with it
+that lets it send there; it takes a tick to cross its network, one more from a computer on Wi-Fi, and one for each
+border crossed. The channels a program hears are kept when the world is saved. `Navigation` flies J's Core's moving
+structure the computer stands on through its autopilot, at a speed from 0.01 to 100000 metres a second; on the
+ground its readings are those of the place, still, and each command answers false. Teracoin amounts are whole
+hundred-millionths of a TRC, as the chain keeps them; a wallet is the file that holds it, so a program spends from
+one by naming its file, and a send the wallet cannot cover answers false.
 
 ## Windows of its own: `System.UI`
 

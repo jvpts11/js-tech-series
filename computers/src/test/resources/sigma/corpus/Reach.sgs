@@ -1,0 +1,51 @@
+using System.*;
+using System.IO.*;
+using System.Collections.*;
+using System.Network.*;
+using System.Navigation.*;
+using System.Teracoin.*;
+namespace Corpus;
+class ReachCorpus {
+    static void Main() {
+        Channel.Listen("door", Heard);
+        Channel.Send("door", "open");
+        Channel.Close("door");
+        EventLog.Write("info", "The corpus ran");
+        if (Navigation.Aboard && !Navigation.Piloted) {
+            Console.PrintLine("" + Navigation.X + Navigation.Z + Navigation.Altitude + Navigation.Pressure
+                    + Navigation.Speed + Navigation.Climb + Navigation.Pitch + Navigation.Roll + Navigation.Heading
+                    + Navigation.AboveGround + Navigation.ClearAhead);
+            List<double> route = new List<double>();
+            route.Add(0);
+            route.Add(90);
+            route.Add(0);
+            Navigation.FollowRoute(route, 4, false);
+            Navigation.GoTo(10, 90, 10, 4);
+            Navigation.HoldAltitude(100, 2);
+            Navigation.Dock(20, 64, 20, 1);
+            Navigation.Release();
+        }
+        string address = Wallet.Address("Wallets/main.wallet");
+        if (address != "" && Wallet.Balance(address) > 100000000) {
+            Wallet.Send("Wallets/main.wallet", address, 100000000, "Back to myself");
+        }
+        Console.PrintLine("" + Chain.Height + Chain.Difficulty + Chain.Reward);
+        if (Miner.Installed) {
+            Console.PrintLine(Miner.Status + Miner.Hashrate + Miner.Pool + Miner.Address + Miner.Background);
+            Miner.SetAddress(address);
+            Miner.UsePool("");
+            Miner.MineAlone();
+            if (Miner.Start()) {
+                Miner.Stop();
+            }
+        }
+        foreach (string name in Pool.Names()) {
+            Pool pool = Pool.Of(name);
+            Console.PrintLine(pool.Name + pool.Host + pool.FeePermille + pool.Hashrate + pool.Members + pool.Found);
+        }
+    }
+
+    static void Heard(ChannelMessage message) {
+        Console.PrintLine(message.Channel + message.From + message.Value + message.Tick);
+    }
+}

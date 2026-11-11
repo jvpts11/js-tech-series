@@ -115,6 +115,7 @@ public final class SnapshotTag {
     private static final String OPERATION = "operation";
     private static final String HANDLER = "handler";
     private static final String ON_EVENT = "onEvent";
+    private static final String CHANNELS = "channels";
     private static final String NEXT_WINDOW = "nextWindow";
     private static final String NEXT_WIDGET = "nextWidget";
     private static final String END_WITH_WINDOWS = "endWithWindows";
@@ -177,15 +178,9 @@ public final class SnapshotTag {
         tag.put(ON_GATEWAY_MESSAGE, write(shot.listeners().onGatewayMessage()));
         tag.putString(GATEWAY, shot.listeners().gateway());
         tag.put(ON_SETTLED, write(shot.listeners().onSettled()));
-        final ListTag settledFor = new ListTag();
-        shot.listeners().settledFor().forEach((operation, handler) -> {
-            final CompoundTag one = new CompoundTag();
-            one.putString(OPERATION, operation);
-            one.put(HANDLER, write(handler));
-            settledFor.add(one);
-        });
-        tag.put(SETTLED_FOR, settledFor);
+        tag.put(SETTLED_FOR, writeHandlers(shot.listeners().settledFor()));
         tag.put(ON_EVENT, write(shot.listeners().onEvent()));
+        tag.put(CHANNELS, writeHandlers(shot.listeners().channels()));
         tag.putLong(NEXT_WINDOW, shot.windows().nextWindow());
         tag.putLong(NEXT_WIDGET, shot.windows().nextWidget());
         tag.putBoolean(END_WITH_WINDOWS, shot.windows().endWithWindows());
@@ -299,8 +294,9 @@ public final class SnapshotTag {
                 new Snapshot.ListenersShot(readValue(tag.getCompound(ON_MESSAGE)),
                         readValue(tag.getCompound(ON_GATEWAY_MESSAGE)), tag.getString(GATEWAY),
                         tag.contains(ON_SETTLED) ? readValue(tag.getCompound(ON_SETTLED)) : null,
-                        readSettledFor(tag.getList(SETTLED_FOR, Tag.TAG_COMPOUND)),
-                        tag.contains(ON_EVENT) ? readValue(tag.getCompound(ON_EVENT)) : null),
+                        readHandlers(tag.getList(SETTLED_FOR, Tag.TAG_COMPOUND)),
+                        tag.contains(ON_EVENT) ? readValue(tag.getCompound(ON_EVENT)) : null,
+                        readHandlers(tag.getList(CHANNELS, Tag.TAG_COMPOUND))),
                 new Snapshot.ThreadsShot(threads, tag.getInt(NEXT_THREAD)),
                 monitors, statics, readValue(tag.getCompound(SCRIPT)),
                 new Snapshot.IntercalShot(readNames(tag.getList(SWITCHED_OFF, Tag.TAG_STRING)), staticsIgnored));
@@ -574,8 +570,23 @@ public final class SnapshotTag {
         return names;
     }
 
-    /* Who waits on one Operation each, by its short id, as the save wrote them. */
-    private static Map<String, Snapshot.IValue> readSettledFor(final ListTag written) {
+    /*
+     * Handlers each kept under a name: the Operation each waits on, by its short id, or the channel each hears. The
+     * name is written under the key the first of them was, so a save of either reads back the same.
+     */
+    private static ListTag writeHandlers(final Map<String, Snapshot.IValue> handlers) {
+        final ListTag written = new ListTag();
+        handlers.forEach((name, handler) -> {
+            final CompoundTag one = new CompoundTag();
+            one.putString(OPERATION, name);
+            one.put(HANDLER, write(handler));
+            written.add(one);
+        });
+        return written;
+    }
+
+    /* Handlers each kept under a name, as {@link #writeHandlers} wrote them. */
+    private static Map<String, Snapshot.IValue> readHandlers(final ListTag written) {
         final Map<String, Snapshot.IValue> waiting = new LinkedHashMap<>();
         for (int i = 0; i < written.size(); i++) {
             final CompoundTag one = written.getCompound(i);

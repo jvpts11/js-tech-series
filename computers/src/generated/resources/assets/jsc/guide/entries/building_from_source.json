@@ -210,7 +210,7 @@
     }
   ],
   "id": "jsc:building_from_source",
-  "order": 325,
+  "order": 327,
   "section": "jsc:gentoo_system",
   "title": "jsc.guide.building_from_source.title"
 }

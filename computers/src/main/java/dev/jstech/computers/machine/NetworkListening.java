@@ -13,6 +13,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.vm.program.SettledOperation;
 import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
@@ -27,10 +28,12 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import org.jetbrains.annotations.Nullable;
 
 /**
- * The machines whose programs wait on their network: for an Operation to settle ({@code Operations.OnSettled}), or for
- * an entry of the network's event log ({@code Network.OnEvent}).
+ * The machines whose programs wait on their network: for an Operation to settle ({@code Operations.OnSettled}), for
+ * an entry of the network's event log ({@code Network.OnEvent}), or for a value sent on a channel they hear
+ * ({@code Channel.Listen}), which arrives some ticks after it was sent, a tick for every hop on its way.
  *
  * <p>A machine is put here when a program of it starts waiting, or comes back from a save waiting, and is let go when
  * no program of it waits any more. What happens on a network goes to the machines here that are on that network now:
@@ -43,16 +46,22 @@ public final class NetworkListening {
     private static final Set<Place> LISTENING = new LinkedHashSet<>();
     /** Machines that began to wait before they stood in a world, as one being read from a save does. */
     private static final Set<BlockEntity> WAITING = new LinkedHashSet<>();
+    /** Values sent on channels on their way, each until the server's tick it arrives in. */
+    private static final List<Post> POSTS = new ArrayList<>();
 
     private NetworkListening() {
     }
 
     /** Hands the game's bus what this answers, once, from the mod's constructor. */
     public static void listen() {
-        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, event -> placeWaiting());
+        NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, event -> {
+            placeWaiting();
+            arrive(event.getServer());
+        });
         NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> {
             LISTENING.clear();
             WAITING.clear();
+            POSTS.clear();
         });
     }
 
@@ -88,11 +97,45 @@ public final class NetworkListening {
                 event.time()));
     }
 
-    /*
-     * Hands what happened to the programs of every waiting machine on the network now, letting go of the machines that
-     * are gone or whose programs no longer wait. A machine whose chunk is not loaded runs nothing, and is kept.
+    /**
+     * Sends a value on {@code channel} from the machine at {@code from}: it reaches the programs hearing that channel
+     * on {@code network} after {@code ticks} of the server, every machine but the one that sent it. A value on its way
+     * when the server stops is lost, as a message on a line that goes down is.
+     *
+     * @param value the value as it travels, a run of letters
      */
+    public static void send(final ServerLevel level, final BlockPos from, final NetworkUuid network,
+                            final String channel, final String sender, final String value, final int ticks) {
+        POSTS.add(new Post(new Place(level.dimension(), from.immutable()), network, channel, sender, value,
+                level.getServer().getTickCount() + Math.max(1, ticks)));
+    }
+
+    /* Hands each value sent on a channel that arrives this tick to the programs hearing it. */
+    private static void arrive(final MinecraftServer server) {
+        if (POSTS.isEmpty()) {
+            return;
+        }
+        final int now = server.getTickCount();
+        final List<Post> due = new ArrayList<>();
+        POSTS.removeIf(post -> post.due() <= now && due.add(post));
+        for (final Post post : due) {
+            final long tick = server.overworld().getGameTime();
+            each(server, post.network(), post.from(), programs -> programs.deliverChannel(post.channel(),
+                    post.sender(), post.value(), tick));
+        }
+    }
+
     private static void each(final MinecraftServer server, final NetworkUuid network,
+                             final Consumer<MachinePrograms> deliver) {
+        each(server, network, null, deliver);
+    }
+
+    /*
+     * Hands what happened to the programs of every waiting machine on the network now but the one at {@code skip},
+     * letting go of the machines that are gone or whose programs no longer wait. A machine whose chunk is not loaded
+     * runs nothing, and is kept.
+     */
+    private static void each(final MinecraftServer server, final NetworkUuid network, @Nullable final Place skip,
                              final Consumer<MachinePrograms> deliver) {
         if (server == null) {
             return;
@@ -112,7 +155,7 @@ public final class NetworkListening {
                 LISTENING.remove(place);
                 continue;
             }
-            if (network.equals(host.networkUuid())) {
+            if (network.equals(host.networkUuid()) && !place.equals(skip)) {
                 deliver.accept(programs);
             }
         }
@@ -135,5 +178,9 @@ public final class NetworkListening {
 
     /** Where a machine stands. */
     private record Place(ResourceKey<Level> dimension, BlockPos pos) {
+    }
+
+    /** A value sent on a channel to the machines of a network, and the server's tick it arrives in. */
+    private record Post(Place from, NetworkUuid network, String channel, String sender, String value, int due) {
     }
 }

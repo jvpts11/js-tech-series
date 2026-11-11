@@ -220,7 +220,7 @@
     }
   ],
   "id": "jsc:sigma_example_gateway",
-  "order": 503,
+  "order": 508,
   "section": "jsc:examples_devices",
   "title": "jsc.guide.sigma_example_gateway.title"
 }

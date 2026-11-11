@@ -75,7 +75,7 @@
     }
   ],
   "id": "jsc:mounts_and_chroot",
-  "order": 319,
+  "order": 321,
   "section": "jsc:gentoo_base",
   "title": "jsc.guide.mounts_and_chroot.title"
 }

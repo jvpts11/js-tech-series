@@ -71,6 +71,8 @@ final class ProcessSnapshotWriter {
         final Map<String, Snapshot.IValue> settledForShots = new TreeMap<>();
         listeners.settledFor().forEach((operation, handler) -> settledForShots.put(operation, value(handler, numbers)));
         final Snapshot.IValue onEventShot = value(listeners.onEvent(), numbers);
+        final Map<String, Snapshot.IValue> channelShots = new TreeMap<>();
+        listeners.channels().forEach((channel, handler) -> channelShots.put(channel, value(handler, numbers)));
         /*
          * The objects are written last: writing anything else down can number a freed thing it still
          * reaches, and so can writing an object, so the numbers are walked while they grow.
@@ -93,7 +95,7 @@ final class ProcessSnapshotWriter {
                         windows.endWithWindows()),
                 watching,
                 new Snapshot.ListenersShot(onMessageShot, onGatewayShot, listeners.gateway(), onSettledShot,
-                        settledForShots, onEventShot),
+                        settledForShots, onEventShot, channelShots),
                 new Snapshot.ThreadsShot(running, process.scheduler().nextId()),
                 locked, kept, scriptShot,
                 new Snapshot.IntercalShot(List.copyOf(process.switchedOff()), staticsIgnored));

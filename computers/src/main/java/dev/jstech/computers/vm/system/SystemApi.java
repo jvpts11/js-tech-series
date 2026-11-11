@@ -32,6 +32,10 @@ public final class SystemApi {
     private static final String THREADING = "System.Threading";
     private static final String MACHINE = "System.Machine";
     private static final String NETWORK = "System.Network";
+    /** The namespace of the third version's flying of J's Core's moving structures. */
+    public static final String NAVIGATION = "System.Navigation";
+    /** The namespace of the third version's Teracoin: the wallets, the chain, the miner and the pools. */
+    public static final String TERACOIN = "System.Teracoin";
     /** The namespace an operating system or a desktop a player writes is made with. */
     public static final String OS = "System.OS";
     /** The eras a system names, by the words a program writes them with. */
@@ -86,7 +90,8 @@ public final class SystemApi {
             diskInfo(), osInfo(), processInfo(), computer(), supplyInfo(), upsInfo(), power(), thermal(), wireless(),
             diskHealth(), settings(), sensorReading(), sensors(), radioInfo(), heardSignal(), signals(), holdingInfo(),
             serverInfo(), network(),
-            stockEvent(), networkEvent(), subscription(), remoteComputer(),
+            stockEvent(), networkEvent(), eventLog(), channel(), channelMessage(), navigation(), wallet(), chain(),
+            miner(), pool(), subscription(), remoteComputer(),
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
             button(), textBox(), checkBox(), progressBar(), listBox(), canvas(), messageBox(), textArea(),
@@ -772,6 +777,122 @@ public final class SystemApi {
         event.recordValue(STRING, "Text");
         event.recordValue(LONG, "Tick");
         return new TypeSpec(NETWORK, "NetworkEvent", event.members);
+    }
+
+    /** A program's own entry in the network's event log, which every program listening to the log hears. */
+    private static TypeSpec eventLog() {
+        final Members log = new Members("EventLog");
+        log.onType(VOID, "Write", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
+        return new TypeSpec(NETWORK, "EventLog", log.members);
+    }
+
+    /**
+     * Named ports between the programs of different computers: a program hears a channel for nothing, and sending on
+     * one asks the network to carry a copy of the value, a tick for every hop, which is work for the whole base.
+     */
+    private static TypeSpec channel() {
+        final Members channel = new Members("Channel");
+        channel.onType(VOID, "Listen", MemberKind.PROCESS, CallCost.FREE, STRING, "Action<ChannelMessage>");
+        channel.onType(VOID, "Close", MemberKind.PROCESS, CallCost.FREE, STRING);
+        channel.onType(VOID, "Send", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING, OBJECT);
+        return new TypeSpec(NETWORK, "Channel", channel.members);
+    }
+
+    private static TypeSpec channelMessage() {
+        final Members message = new Members("ChannelMessage");
+        message.recordValue(STRING, "Channel");
+        message.recordValue(STRING, "From");
+        message.recordValue(OBJECT, "Value");
+        message.recordValue(LONG, "Tick");
+        return new TypeSpec(NETWORK, "ChannelMessage", message.members);
+    }
+
+    /**
+     * The moving structure the machine stands on, flown by J's Core's autopilot: the readings a flight sensor gives
+     * where the machine stands, each a glance, and the autopilot told to go to a place, hold a height, follow a route
+     * of points written three numbers each, dock to another structure's clamp, or let go. Each command is written to
+     * the autopilot, and costs what a write does.
+     */
+    private static TypeSpec navigation() {
+        final Members navigation = new Members("Navigation");
+        final CallCost glance = CallCost.of(SigmaCosts.GLANCE);
+        navigation.valueOnType(BOOL, "Aboard", MemberKind.WORLD, glance);
+        navigation.valueOnType(BOOL, "Piloted", MemberKind.WORLD, glance);
+        for (final String reading : List.of("X", "Z", "Altitude", "Pressure", "Speed", "Climb", "Pitch", "Roll",
+                "Heading", "AboveGround", "ClearAhead")) {
+            navigation.valueOnType(DOUBLE, reading, MemberKind.WORLD, glance);
+        }
+        final CallCost command = CallCost.of(SigmaCosts.WRITE);
+        navigation.onType(BOOL, "GoTo", MemberKind.WORLD, command, DOUBLE, DOUBLE, DOUBLE, DOUBLE);
+        navigation.onType(BOOL, "HoldAltitude", MemberKind.WORLD, command, DOUBLE, DOUBLE);
+        navigation.onType(BOOL, "FollowRoute", MemberKind.WORLD, command, "List<double>", DOUBLE, BOOL);
+        navigation.onType(BOOL, "Dock", MemberKind.WORLD, command, DOUBLE, DOUBLE, DOUBLE, DOUBLE);
+        navigation.onType(BOOL, "Release", MemberKind.WORLD, command);
+        return new TypeSpec(NAVIGATION, "Navigation", navigation.members);
+    }
+
+    /*
+     * Teracoin (computers/docs/design/teracoin.md): the chain every wallet is on, the wallets in the machine's files,
+     * the machine's own miner and its network's pools. Amounts are whole hundred-millionths of a TRC, as the chain
+     * keeps them.
+     */
+
+    /** A wallet, by the file that holds it: any address's balance, the address a file holds, and a send. */
+    private static TypeSpec wallet() {
+        final Members wallet = new Members("Wallet");
+        wallet.onType(LONG, "Balance", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        wallet.onType(STRING, "Address", MemberKind.WORLD, CallCost.of(SigmaCosts.READ), STRING);
+        wallet.onType(BOOL, "Send", MemberKind.WORLD, CallCost.of(SigmaCosts.SUBMIT), STRING, STRING, LONG, STRING);
+        return new TypeSpec(TERACOIN, "Wallet", wallet.members);
+    }
+
+    /** The chain: how many blocks it has, how hard the next one is to find, and what finding it pays. */
+    private static TypeSpec chain() {
+        final Members chain = new Members("Chain");
+        chain.valueOnType(INT, "Height", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK));
+        chain.valueOnType(LONG, "Difficulty", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK));
+        chain.valueOnType(LONG, "Reward", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK));
+        return new TypeSpec(TERACOIN, "Chain", chain.members);
+    }
+
+    /**
+     * The machine's own miner, read and set as its miner command does: what it is doing, how fast it hashes, the pool
+     * it mines for and the address it pays; started in the background and stopped, pointed at a pool, or set to mine
+     * alone. What a program sets is kept with the machine.
+     */
+    private static TypeSpec miner() {
+        final Members miner = new Members("Miner");
+        final CallCost glance = CallCost.of(SigmaCosts.GLANCE);
+        miner.valueOnType(BOOL, "Installed", MemberKind.WORLD, glance);
+        miner.valueOnType(STRING, "Status", MemberKind.WORLD, glance);
+        miner.valueOnType(LONG, "Hashrate", MemberKind.WORLD, glance);
+        miner.valueOnType(STRING, "Pool", MemberKind.WORLD, glance);
+        miner.valueOnType(STRING, "Address", MemberKind.WORLD, glance);
+        miner.valueOnType(BOOL, "Background", MemberKind.WORLD, glance);
+        final CallCost set = CallCost.of(SigmaCosts.WRITE);
+        miner.onType(VOID, "SetAddress", MemberKind.WORLD, set, STRING);
+        miner.onType(VOID, "UsePool", MemberKind.WORLD, set, STRING);
+        miner.onType(VOID, "MineAlone", MemberKind.WORLD, set);
+        miner.onType(BOOL, "Start", MemberKind.WORLD, set);
+        miner.onType(VOID, "Stop", MemberKind.WORLD, set);
+        return new TypeSpec(TERACOIN, "Miner", miner.members);
+    }
+
+    /**
+     * A Mining Pool of the machine's network, by its name or its server's, the network's first for an empty name: a
+     * picture taken when it was asked for, or null when there is no such pool.
+     */
+    private static TypeSpec pool() {
+        final Members pool = new Members("Pool");
+        pool.onType(STRINGS, "Names", MemberKind.WORLD, CallCost.of(SigmaCosts.GATHER));
+        pool.onType("Pool", "Of", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        pool.recordValue(STRING, "Name");
+        pool.recordValue(STRING, "Host");
+        pool.recordValue(INT, "FeePermille");
+        pool.recordValue(LONG, "Hashrate");
+        pool.recordValue(INT, "Members");
+        pool.recordValue(INT, "Found");
+        return new TypeSpec(TERACOIN, "Pool", pool.members);
     }
 
     private static TypeSpec stockEvent() {

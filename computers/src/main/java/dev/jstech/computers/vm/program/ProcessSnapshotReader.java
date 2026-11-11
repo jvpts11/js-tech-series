@@ -157,10 +157,17 @@ final class ProcessSnapshotReader {
                 settledFor.put(operation, handler);
             }
         });
+        final Map<String, Values.DelegateValue> channels = new LinkedHashMap<>();
+        listeners.channels().forEach((channel, written) -> {
+            if (value(written, byNumber) instanceof Values.DelegateValue handler) {
+                channels.put(channel, handler);
+            }
+        });
         process.listeners().restoreNetwork(
                 value(listeners.onSettled(), byNumber) instanceof Values.DelegateValue settled ? settled : null,
                 settledFor,
-                value(listeners.onEvent(), byNumber) instanceof Values.DelegateValue event ? event : null);
+                value(listeners.onEvent(), byNumber) instanceof Values.DelegateValue event ? event : null,
+                channels);
         // A program brought back waiting on its network tells its machine so, as it did when it began to wait.
         process.tellHostListening();
         return process;

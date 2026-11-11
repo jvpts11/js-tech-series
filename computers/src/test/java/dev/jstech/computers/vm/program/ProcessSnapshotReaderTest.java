@@ -33,11 +33,17 @@ class ProcessSnapshotReaderTest {
             + "    }\n"
             + "    void Inner() { while (true) { } }\n"
             + "    public void OnDestroy() { }\n}\n";
+    /** A script that hears a channel from its start and does nothing more. */
+    private static final String HEARER = "using System.*; using System.IO.*; using System.Network.*; "
+            + "namespace Tests; class Door : IScript {\n"
+            + "    public void OnInit() { Channel.Listen(\"door\", m => Console.PrintLine(\"heard \" + m.Value)); }\n"
+            + "    public void OnTick() { }\n"
+            + "    public void OnDestroy() { }\n}\n";
 
-    private static final ProgramImage PROGRAM = load();
+    private static final ProgramImage PROGRAM = load("Monitor.sgs", SOURCE);
 
-    private static ProgramImage load() {
-        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Monitor.sgs", SOURCE)));
+    private static ProgramImage load(final String name, final String source) {
+        final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile(name, source)));
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         final AsmReader reader = new AsmReader(built.assembly());
         final AsmProgram listing = reader.read();
@@ -148,5 +154,20 @@ class ProcessSnapshotReaderTest {
 
         assertRefused(withMainThread(shot, new Snapshot.ThreadShot(main.id(), main.frames(), "napping", main.until(),
                 main.on(), main.token(), main.timedOut(), main.onHost())));
+    }
+
+    @Test
+    void read_bringsBackTheChannelsAProgramHears() {
+        final ProgramImage program = load("Door.sgs", HEARER);
+        final Process process = new Process(program, 64L * 1024, IHost.still());
+        process.begin(process.create(program.entryPoint()), "OnInit");
+        process.step(1000);
+
+        final Process restored = ProcessSnapshotReader.read(program, ProcessSnapshotWriter.write(process),
+                IHost.still());
+
+        assertTrue(restored.listensToNetwork());
+        assertTrue(restored.deliverChannel("door", "Gate", ComponentValues.encode("open"), 5));
+        assertFalse(restored.deliverChannel("window", "Gate", ComponentValues.encode("open"), 5));
     }
 }

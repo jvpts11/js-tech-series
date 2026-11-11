@@ -847,6 +847,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   indexers, `Csv`, `Hash` SHA-256 and CRC-32, `Base64`), `Path` and `Directory`, a file's size and the tick it last
   changed, `File.Watch` to be told when a file changes, `Queue`, `Stack` and `Set`, `List.Find` and `List.Sort` with
   a function, and `Calendar` and `Stopwatch`. The Book of Sigma gains a section on them.
+- Sigma# 3 reaches past its machine: `EventLog.Write` puts an entry in the network's event log, which
+  `Network.OnEvent` hears; `Channel` sends copies of values up to 32 KB between programs on different computers, over
+  the network, the federation and Wi-Fi, a tick for each hop, and the channels a program hears are kept when the
+  world is saved. `System.Navigation` flies the J's Core moving structure a computer stands on (go to a place, hold a
+  height, follow a route, dock to another structure's clamp) and reads its altitude, speed, tilt and heading.
+  `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
+  command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 
 ### Changed
 - `mkfs` on Linux is `mkfs.ext4`, beside a `mkfs` for each other file system, and formats a partition,

@@ -316,8 +316,8 @@ public final class BuiltIns {
 
     /** Every namespace the language has, System first, for a list that offers them. */
     public List<String> namespaces() {
-        return List.of(SYSTEM, COLLECTIONS, IO, SystemApi.TEXT, UTILS, MACHINE, NETWORK, OPERATIONS, EXECUTION, UI,
-                SOUND, SystemApi.OS, SUBSET_LIBRARY);
+        return List.of(SYSTEM, COLLECTIONS, IO, SystemApi.TEXT, UTILS, MACHINE, NETWORK, SystemApi.NAVIGATION,
+                SystemApi.TERACOIN, OPERATIONS, EXECUTION, UI, SOUND, SystemApi.OS, SUBSET_LIBRARY);
     }
 
     private static String key(final String name, final int arity) {

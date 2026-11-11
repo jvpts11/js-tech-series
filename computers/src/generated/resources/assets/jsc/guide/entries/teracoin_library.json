@@ -1,0 +1,223 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.teracoin_library.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.teracoin_library.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.teracoin_library.table1",
+      "heads": [
+        "jsc.guide.teracoin_library.table1_head1",
+        "jsc.guide.teracoin_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Wallet.Balance(address)"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Wallet.Address(path)"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Wallet.Send(path, to, amount, label)"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Chain.Height"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table1_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Chain.Difficulty"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table1_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Chain.Reward"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table1_6_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.teracoin_library.table2",
+      "heads": [
+        "jsc.guide.teracoin_library.table2_head1",
+        "jsc.guide.teracoin_library.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Miner.Installed"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table2_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Miner.Status"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table2_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Miner.Hashrate"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table2_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Miner.Pool, Miner.Address"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table2_4_2"
+          }
+        ],
+        [
+          {
+            "literal": "Miner.Background"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table2_5_2"
+          }
+        ],
+        [
+          {
+            "literal": "Miner.SetAddress(address), Miner.UsePool(name), Miner.MineAlone()"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table2_6_2"
+          }
+        ],
+        [
+          {
+            "literal": "Miner.Start(), Miner.Stop()"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table2_7_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.teracoin_library.table3",
+      "heads": [
+        "jsc.guide.teracoin_library.table3_head1",
+        "jsc.guide.teracoin_library.table3_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "Pool.Names()"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table3_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Pool.Of(name)"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table3_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Pool.Name, Pool.Host, Pool.FeePermille, Pool.Hashrate, Pool.Members, Pool.Found"
+          },
+          {
+            "words": "jsc.guide.teracoin_library.table3_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.teracoin_library.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.teracoin_library.text4"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "string wallet = \"Wallets/main.wallet\";",
+        "if (Wallet.Balance(Wallet.Address(wallet)) > 500000000) {",
+        "    Wallet.Send(wallet, \"trc1qexampleexampleexampleexample\", 100000000, \"Rent\");",
+        "}"
+      ],
+      "name": "Rent.sgs"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.teracoin_library.definition1",
+      "term": "jsc.guide.teracoin_library.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.teracoin_library.fix1",
+          "problem": "jsc.guide.teracoin_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.teracoin_library.fix2",
+          "problem": "jsc.guide.teracoin_library.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:teracoin",
+        "jsc:mining",
+        "jsc:mining_pools"
+      ]
+    }
+  ],
+  "id": "jsc:teracoin_library",
+  "order": 469,
+  "section": "jsc:library_reach",
+  "title": "jsc.guide.teracoin_library.title"
+}

@@ -82,6 +82,15 @@ public final class ComponentValues {
     record Copied(Object value, long bytes) {
     }
 
+    /**
+     * The value as it travels to another machine, a run of letters, once it is sure the value may travel as a
+     * component's data may: a halt saying why it cannot. The receiver makes its own copy of it.
+     */
+    public static String travelling(final Object value, final int line) {
+        new Walk(line).check(value, 0);
+        return encode(value);
+    }
+
     /** The value a component holds as the run of letters it travels as. */
     public static String encode(final Object value) {
         final StringBuilder out = new StringBuilder();

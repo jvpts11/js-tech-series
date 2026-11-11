@@ -450,7 +450,18 @@ public final class Process {
         this.tellHostListening();
     }
 
-    /** Whether the program waits on its network: an Operation settling, or its event log. */
+    /** Who to tell of what is sent on the channel {@code name}; null stops hearing it. */
+    void hearChannel(final String name, final Values.DelegateValue handler) {
+        this.listeners.hearChannel(name, handler);
+        this.tellHostListening();
+    }
+
+    /** Hands the program a value sent on a channel it hears; false when it did not hear it. */
+    public boolean deliverChannel(final String channel, final String from, final String value, final long tick) {
+        return this.events.deliverChannel(channel, from, value, tick);
+    }
+
+    /** Whether the program waits on its network: an Operation settling, its event log or a channel. */
     public boolean listensToNetwork() {
         return this.listeners.listensToNetwork();
     }

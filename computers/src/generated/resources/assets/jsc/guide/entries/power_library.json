@@ -123,7 +123,7 @@
     }
   ],
   "id": "jsc:power_library",
-  "order": 453,
+  "order": 455,
   "section": "jsc:library_readings",
   "title": "jsc.guide.power_library.title"
 }

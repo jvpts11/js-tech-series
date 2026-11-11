@@ -1,0 +1,119 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.messaging_library.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.messaging_library.table1",
+      "heads": [
+        "jsc.guide.messaging_library.table1_head1",
+        "jsc.guide.messaging_library.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "EventLog.Write(level, text)"
+          },
+          {
+            "words": "jsc.guide.messaging_library.table1_1_2"
+          }
+        ],
+        [
+          {
+            "literal": "Channel.Listen(name, handler)"
+          },
+          {
+            "words": "jsc.guide.messaging_library.table1_2_2"
+          }
+        ],
+        [
+          {
+            "literal": "Channel.Close(name)"
+          },
+          {
+            "words": "jsc.guide.messaging_library.table1_3_2"
+          }
+        ],
+        [
+          {
+            "literal": "Channel.Send(name, value)"
+          },
+          {
+            "words": "jsc.guide.messaging_library.table1_4_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.messaging_library.table2",
+      "heads": [
+        "jsc.guide.messaging_library.table2_head1",
+        "jsc.guide.messaging_library.table2_head2",
+        "jsc.guide.messaging_library.table2_head3"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "ChannelMessage"
+          },
+          {
+            "literal": "ChannelMessage.Channel, ChannelMessage.From, ChannelMessage.Value, ChannelMessage.Tick"
+          },
+          {
+            "words": "jsc.guide.messaging_library.table2_1_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.messaging_library.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.messaging_library.text3"
+    },
+    {
+      "type": "listing",
+      "language": "sgs",
+      "lines": [
+        "Channel.Listen(\"door\", message =>",
+        "        Console.PrintLine(message.From + \" says \" + message.Value));",
+        "Channel.Send(\"door\", \"open\");",
+        "EventLog.Write(\"warn\", \"The north door is open\");"
+      ],
+      "name": "Door.sgs"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.messaging_library.fix1",
+          "problem": "jsc.guide.messaging_library.problem1"
+        },
+        {
+          "fix": "jsc.guide.messaging_library.fix2",
+          "problem": "jsc.guide.messaging_library.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:network_watches",
+        "jsc:wan_gateways"
+      ]
+    }
+  ],
+  "id": "jsc:messaging_library",
+  "order": 467,
+  "section": "jsc:library_reach",
+  "title": "jsc.guide.messaging_library.title"
+}

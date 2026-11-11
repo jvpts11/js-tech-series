@@ -260,6 +260,11 @@ final class SigmaProgram implements IMachineRuntime {
     }
 
     @Override
+    public boolean deliverChannel(final String channel, final String from, final String value, final long tick) {
+        return this.process.deliverChannel(channel, from, value, tick);
+    }
+
+    @Override
     public void programEnded(final int program) {
         this.process.programEnded(program);
     }
