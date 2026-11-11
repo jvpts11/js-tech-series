@@ -107,7 +107,8 @@ public final class ProgramImage {
     }
 
     /** The values of the language's own core a listing may read, which the system does not declare. */
-    static final Set<String> CORE_VALUES = Set.of("string.Length", "List.Count", "Map.Count");
+    static final Set<String> CORE_VALUES = Set.of("string.Length", "List.Count", "Map.Count", "Queue.Count",
+            "Stack.Count", "Set.Count");
 
     private final Map<String, TypeImage> types = new LinkedHashMap<>();
     /** Every method shape a type of the program declares, numbered in the order they were first met. */

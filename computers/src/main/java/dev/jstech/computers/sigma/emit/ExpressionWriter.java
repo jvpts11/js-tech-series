@@ -610,6 +610,13 @@ final class ExpressionWriter {
             this.body.emit(Opcode.LDELEM);
             return;
         }
+        if (this.emitter.rules.isJsonValue(target)) {
+            // A member by its name, an element by its number: the value's own Get and At.
+            final boolean byName = this.emitter.model.typeOf(node.index()) == this.emitter.builtIns.stringType();
+            this.body.emit(Opcode.CALL, new IOperand.Method(target.describe(), byName ? "Get" : "At",
+                    List.of(byName ? "string" : "int"), target.describe()));
+            return;
+        }
         final NamedType named = this.emitter.rules.named(target);
         final List<ITypeSymbol> held = this.emitter.rules.arguments(target);
         final boolean isMap = named == this.emitter.builtIns.mapType();

@@ -28,6 +28,21 @@ final class MachineStateCalls {
         thermal(bindings);
         wireless(bindings);
         disks(bindings);
+        calendar(bindings);
+    }
+
+    /* The world's calendar where the machine stands, each reading a glance at the moment its clock shows. */
+    private static void calendar(final Map<MemberId, MachineCalls.Binding<?>> bindings) {
+        state(bindings, "Calendar", "Hour", (state, call, target, arguments, line) -> state.now().hour());
+        state(bindings, "Calendar", "Minute", (state, call, target, arguments, line) -> state.now().minute());
+        state(bindings, "Calendar", "DayOfWeek", (state, call, target, arguments, line) -> state.now().dayOfWeek());
+        state(bindings, "Calendar", "DayOfSeason",
+                (state, call, target, arguments, line) -> state.now().dayOfSeason());
+        state(bindings, "Calendar", "Day", (state, call, target, arguments, line) -> state.now().day());
+        state(bindings, "Calendar", "Week", (state, call, target, arguments, line) -> state.now().week());
+        state(bindings, "Calendar", "Year", (state, call, target, arguments, line) -> state.now().year());
+        state(bindings, "Calendar", "Season",
+                (state, call, target, arguments, line) -> state.now().season().serializedName());
     }
 
     private static void power(final Map<MemberId, MachineCalls.Binding<?>> bindings) {

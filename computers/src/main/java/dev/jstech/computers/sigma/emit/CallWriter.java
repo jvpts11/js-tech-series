@@ -35,11 +35,14 @@ final class CallWriter {
     private final Emitter emitter;
     private final MethodBody body;
     private final ExpressionWriter values;
+    /** A list searched or sorted with a function, which is written out rather than called. */
+    private final ListLambdas lambdas;
 
     CallWriter(final Emitter emitter, final MethodBody body, final ExpressionWriter values) {
         this.emitter = emitter;
         this.body = body;
         this.values = values;
+        this.lambdas = new ListLambdas(emitter, body, values);
     }
 
     /** How a method is named where it is called: what it belongs to, its name, what it takes and gives. */
@@ -59,6 +62,10 @@ final class CallWriter {
         if (!throughDelegate && !method.isStatic() && callee instanceof IExpr.Member member
                 && this.emitter.model.inRawMemory(member.target())) {
             this.callOnMemory(member.target(), expression, method);
+            return;
+        }
+        if (!throughDelegate && callee instanceof IExpr.Member member && this.lambdas.writes(method)) {
+            this.lambdas.write(member.target(), expression.arguments().getFirst(), method);
             return;
         }
         if (throughDelegate) {

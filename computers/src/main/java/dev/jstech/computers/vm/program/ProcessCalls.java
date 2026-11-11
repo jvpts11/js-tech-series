@@ -85,6 +85,8 @@ final class ProcessCalls {
         console(bindings);
         openFile(bindings);
         random(bindings);
+        stopwatch(bindings);
+        PatternCalls.bind(bindings);
         thread(bindings);
         program(bindings);
         network(bindings);
@@ -286,6 +288,17 @@ final class ProcessCalls {
     }
 
     /*
+     * A stopwatch is where the program's clock and its spending stood when it was started or restarted; what it reads
+     * is how far each has gone since (ProcessValues).
+     */
+    private static void stopwatch(final Map<MemberId, Binding> bindings) {
+        bind(bindings, Stopwatches.TYPE, "Start", null,
+                (process, target, arguments, line) -> Stopwatches.start(process, line));
+        bind(bindings, Stopwatches.TYPE, "Restart", null, (process, target, arguments, line) ->
+                Stopwatches.restart(process, (Values.Obj) target));
+    }
+
+    /*
      * More than one thing at once inside one program. Waiting for a thread to end takes nothing off the stack until it
      * is over or the time given has run out, the same as waiting for a line.
      */
@@ -346,6 +359,11 @@ final class ProcessCalls {
                 watch(process, Process.Watching.BELOW, arguments, line), STRING, "long", STOCK_HANDLER);
         bind(bindings, "Network", "WatchAbove", null, (process, target, arguments, line) ->
                 watch(process, Process.Watching.ABOVE, arguments, line), STRING, "long", STOCK_HANDLER);
+        // A file is watched as an item of the network is, by the tick it last changed in, read by the machine.
+        bind(bindings, "File", "Watch", null, (process, target, arguments, line) ->
+                process.watch(Process.WATCHED_FILE + arguments[0], Process.Watching.CHANGE, 0L,
+                        arguments[1] instanceof Values.DelegateValue handler ? handler : null, line),
+                STRING, "Action<FileEvent>");
         bind(bindings, "Network", "OnEvent", null, (process, target, arguments, line) -> {
             process.hearNetworkEvents(arguments[0] instanceof Values.DelegateValue handler ? handler : null);
             return null;
@@ -488,7 +506,8 @@ final class ProcessCalls {
         process.openWindow(window, line);
     }
 
-    private static void bind(final Map<MemberId, Binding> bindings, final String owner, final String name,
+    /** Binds a call the system declares as the process's, once sure it does; the other kits of calls bind here. */
+    static void bind(final Map<MemberId, Binding> bindings, final String owner, final String name,
                              final IProcessWait wait, final IProcessFunction function, final String... parameters) {
         final MemberId id = new MemberId(owner, name, List.of(parameters));
         final IMemberSpec declared = SystemApi.member(owner, name, id.parameters());

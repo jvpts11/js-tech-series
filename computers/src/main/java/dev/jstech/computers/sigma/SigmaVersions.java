@@ -60,7 +60,12 @@ public final class SigmaVersions {
             Map.entry("Power", 3), Map.entry("SupplyInfo", 3), Map.entry("UpsInfo", 3), Map.entry("Thermal", 3),
             Map.entry("Wireless", 3), Map.entry("DiskHealth", 3), Map.entry("Settings", 3), Map.entry("Sensors", 3),
             Map.entry("SensorReading", 3), Map.entry("Signals", 3), Map.entry("RadioInfo", 3),
-            Map.entry("HeardSignal", 3));
+            Map.entry("HeardSignal", 3),
+            // The library of the third version.
+            Map.entry("Calendar", 3), Map.entry("Stopwatch", 3), Map.entry("Path", 3), Map.entry("Directory", 3),
+            Map.entry("FileEvent", 3), Map.entry("StringBuilder", 3), Map.entry("Regex", 3), Map.entry("Json", 3),
+            Map.entry("JsonValue", 3), Map.entry("Csv", 3), Map.entry("Hash", 3), Map.entry("Base64", 3),
+            Map.entry("Queue", 3), Map.entry("Stack", 3), Map.entry("Set", 3));
     /**
      * The members that came after the first version on a type that was already there, each written as its owner,
      * its name and the types it takes, with the version it came in.
@@ -81,7 +86,12 @@ public final class SigmaVersions {
             // The two more sources of events.
             Map.entry("Operations.OnSettled(Action<OperationInfo>)", 3),
             Map.entry("Operations.OnSettled(string, Action<OperationInfo>)", 3),
-            Map.entry("Network.OnEvent(Action<NetworkEvent>)", 3));
+            Map.entry("Network.OnEvent(Action<NetworkEvent>)", 3),
+            // A file's size and the tick it last changed, and being told when it changes.
+            Map.entry("File.Size(string)", 3), Map.entry("File.Changed(string)", 3),
+            Map.entry("File.Watch(string, Action<FileEvent>)", 3),
+            // A list searched and sorted with a function of the program's own.
+            Map.entry("List.Find(Func<T, bool>)", 3), Map.entry("List.Sort(Func<T, T, int>)", 3));
     /**
      * The types the smaller language's library took in later than the full one had them, with the version each
      * came in there: the full language always had Random, and the smaller one gained it with the old rand.

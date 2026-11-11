@@ -28,6 +28,8 @@ public final class TypeRules {
     /** Whether a void pointer goes where any other pointer is wanted with no cast, as C has it; C# asks for one. */
     private final boolean voidPointerFitsAll;
 
+    /** The library's value of JSON, read with an indexer. */
+    private static final String JSON_VALUE = "JsonValue";
     /**
      * The widening chain, in order. A type converts to any type further along it and to none before, except that a
      * character and a byte never become each other without a cast, as in C#.
@@ -267,6 +269,12 @@ public final class TypeRules {
         return null;
     }
 
+    /** Whether {@code type} is the library's value of JSON, read with an indexer and never written with one. */
+    public boolean isJsonValue(final ITypeSymbol type) {
+        final NamedType named = type instanceof NamedType plain ? plain : null;
+        return named != null && named == this.builtIns.type(JSON_VALUE, 0);
+    }
+
     /** What indexing gives, or null when the value cannot be indexed by that key. */
     public ITypeSymbol indexResult(final ITypeSymbol target, final ITypeSymbol index) {
         if (this.isError(target) || this.isError(index)) {
@@ -279,6 +287,11 @@ public final class TypeRules {
         final ITypeSymbol.PointerType pointer = this.readablePointer(target);
         if (pointer != null) {
             return this.isIntegral(index) ? pointer.pointee() : null;
+        }
+        // A value of JSON is read by a member's name or an element's number, which give a value of JSON again.
+        if (this.isJsonValue(target)) {
+            return this.isAssignable(index, ITypeSymbol.Primitive.INT)
+                    || this.isAssignable(index, this.builtIns.stringType()) ? target : null;
         }
         if (target instanceof ITypeSymbol.GenericType generic) {
             if (generic.definition() == this.builtIns.listType()) {

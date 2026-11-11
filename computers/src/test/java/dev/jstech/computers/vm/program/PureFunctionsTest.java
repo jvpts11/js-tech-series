@@ -26,7 +26,10 @@ import org.junit.jupiter.api.Test;
 class PureFunctionsTest {
 
     /** The types of the language whose methods need nothing but their arguments. */
-    private static final Set<String> PURE_TYPES = Set.of("string", "char", "List", "Map", "Math", "Convert", "Time");
+    private static final Set<String> PURE_TYPES = Set.of("string", "char", "List", "Map", "Math", "Convert", "Time",
+            "Queue", "Stack", "Set", "StringBuilder", "Csv", "Hash", "Base64", "Path", "Json", "JsonValue");
+    /** The calls the compiler writes out as a loop of its own around a function of the program, never calling them. */
+    private static final Set<String> WRITTEN_OUT = Set.of("List.Find(Func<T, bool>)", "List.Sort(Func<T, T, int>)");
 
     /**
      * The calls the compiler writes itself, for an operator or for a printf hole that asks for more than its value,
@@ -39,6 +42,9 @@ class PureFunctionsTest {
     void registry_answersEveryMethodThePureTypesDeclare() {
         final List<String> wrong = new ArrayList<>();
         for (final IMemberSymbol.MethodSymbol method : declared()) {
+            if (WRITTEN_OUT.contains(describe(method))) {
+                continue;
+            }
             final List<String> written = written(method);
             final IntrinsicSpec entry = PureFunctions.REGISTRY.find(method.owner().qualifiedName(), method.name(),
                     written);

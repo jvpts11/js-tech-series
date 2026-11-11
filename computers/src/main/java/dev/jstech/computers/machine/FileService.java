@@ -174,6 +174,18 @@ public final class FileService {
         return null;
     }
 
+    /*
+     * The file at that path as one of this machine's own drives stores it: none on a share of another machine, and
+     * none for a file generated from what a disc or the system holds, which has no stored copy to measure.
+     */
+    private Optional<StoredFile> stored(final String path) {
+        if (NetPath.parse(path) != null) {
+            return Optional.empty();
+        }
+        final Resolved r = this.resolve(path);
+        return unready(r) != null ? Optional.empty() : DiskFilesystem.stored(r.drive().disk(), r.path());
+    }
+
     /** What the share a network path lands on answers when it cannot be written to, or null when it can. */
     @Nullable
     private static ICliComputer.FsResult unwritable(final NetPath net, final NetworkPathResolver.Reached reached) {
@@ -274,6 +286,16 @@ public final class FileService {
             return ICliComputer.FsResult.fail(NOT_FOUND.with(path));
         }
         return ICliComputer.FsResult.content(content.get());
+    }
+
+    /** The size of the file at that path in bytes, or -1 when this machine's own drives hold none there. */
+    public long sizeOf(final String path) {
+        return this.stored(path).map(StoredFile::byteSize).orElse(-1L);
+    }
+
+    /** The world's tick the file at that path last changed in, or -1 when this machine's own drives hold none there. */
+    public long changedAt(final String path) {
+        return this.stored(path).map(StoredFile::modified).orElse(-1L);
     }
 
     /** Puts that text in the file at that path in place of what it held. */

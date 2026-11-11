@@ -30,6 +30,8 @@ final class FileCalls {
 
     static void bind(final Map<MemberId, MachineCalls.Binding<?>> bindings) {
         file(bindings, "Exists", (files, call, target, arguments, line) -> files.exists(path(arguments)), STRING);
+        file(bindings, "Size", (files, call, target, arguments, line) -> files.sizeOf(path(arguments)), STRING);
+        file(bindings, "Changed", (files, call, target, arguments, line) -> files.changedAt(path(arguments)), STRING);
         file(bindings, "Read", (files, call, target, arguments, line) -> {
             final ICliComputer.FsResult read = files.read(path(arguments));
             // A program reads in the machine's language: the file's own words, or why there were none.
@@ -71,6 +73,35 @@ final class FileCalls {
                 STRING, STRING);
         file(bindings, "Open", FileCalls::open, STRING, STRING);
         MachineCalls.bind(bindings, MachineServices::files, OpenFile.TYPE, "Close", FileCalls::close);
+        directory(bindings);
+    }
+
+    /* The machine's folders, read from the same listing File.List gives, where a folder's name ends with a slash. */
+    private static void directory(final Map<MemberId, MachineCalls.Binding<?>> bindings) {
+        folder(bindings, "Exists", (files, call, target, arguments, line) -> files.folderExists(path(arguments)));
+        folder(bindings, "Make", (files, call, target, arguments, line) -> files.makeFolder(path(arguments)));
+        folder(bindings, "Delete", (files, call, target, arguments, line) -> files.removeDir(path(arguments)).ok());
+        folder(bindings, "Files", (files, call, target, arguments, line) -> named(call, files, arguments, false));
+        folder(bindings, "Folders", (files, call, target, arguments, line) -> named(call, files, arguments, true));
+    }
+
+    /* The names in a folder: its folders' without their slash, or its files'. */
+    private static Values.ListValue named(final IWorldCall call, final FileService files, final Object[] arguments,
+                                          final boolean folders) {
+        final Values.ListValue names = new Values.ListValue();
+        for (final String name : files.list(path(arguments))) {
+            final boolean folder = name.endsWith("/");
+            if (folder == folders) {
+                names.items().add(folder ? name.substring(0, name.length() - 1) : name);
+            }
+        }
+        call.rows(names.items().size());
+        return names;
+    }
+
+    private static void folder(final Map<MemberId, MachineCalls.Binding<?>> bindings, final String name,
+                               final MachineCalls.IServiceFunction<FileService> function) {
+        MachineCalls.bind(bindings, MachineServices::files, "Directory", name, function, STRING);
     }
 
     /**

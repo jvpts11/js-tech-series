@@ -13,6 +13,7 @@ import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.hardware.CpuSpec;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
+import dev.jstech.computers.machine.FileService;
 import dev.jstech.computers.machine.NetworkReadService;
 import dev.jstech.computers.machine.PlayerSystemBoot;
 import dev.jstech.computers.machine.ServerTickDeadline;
@@ -22,6 +23,7 @@ import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.SshTerminal;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.vm.program.IProgramParent;
+import dev.jstech.computers.vm.program.Process;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
@@ -76,12 +78,17 @@ final class ProgramHost {
     }
 
     /**
-     * How much of that the network holds, for the programs watching it.
+     * How much of that the network holds, for the programs watching it; for a watched file, the tick it last changed.
      *
      * <p>Off a network, everything reads as none: a watch on a machine with no cable simply never goes
      * off, which is the truthful answer and not an error.
      */
     long networkStock(final String item) {
+        if (item.startsWith(Process.WATCHED_FILE)) {
+            // A watched file reads as the tick it last changed in, -1 while it is not there.
+            final FileService files = this.services.files();
+            return files == null ? -1L : files.changedAt(item.substring(Process.WATCHED_FILE.length()));
+        }
         final NetworkReadService network = this.services.network();
         return network == null ? 0L : network.stock(item);
     }

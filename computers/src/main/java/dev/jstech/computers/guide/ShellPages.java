@@ -450,8 +450,8 @@ final class ShellPages {
     private static void diskCommands(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("disk_commands", section).titled("Disks, swap and snapshots")
                 .paragraph("These commands read the disks and their partitions, give a partition a file system, show"
-                        + " the swap, and keep snapshots. Each system has its own: what a partition and a file system"
-                        + " are is on [](jsc:partitions).")
+                        + " the swap, and keep snapshots. Each system has its own, which you type at its prompt: what"
+                        + " a partition and a file system are is on [](jsc:partitions).")
                 .subheading("Linux")
                 .paragraph("fdisk -l prints each disk's partition table, and lsblk lists the disks with their"
                         + " partitions in a tree; lsblk -f adds each one's file system. Each mkfs formats one"

@@ -92,6 +92,25 @@ final class ProcessValues {
                 target instanceof Values.ListValue list ? list.size() : nothing("Count", line));
         core(bindings, "Map", "Count", (process, target, line) ->
                 target instanceof Values.MapValue map ? map.entries().size() : nothing("Count", line));
+        // The third version's queue and stack are lists underneath, and its set a map.
+        for (final String type : List.of("Queue", "Stack")) {
+            core(bindings, type, "Count", (process, target, line) ->
+                    target instanceof Values.ListValue list ? list.size() : nothing("Count", line));
+        }
+        core(bindings, "Set", "Count", (process, target, line) ->
+                target instanceof Values.MapValue map ? map.entries().size() : nothing("Count", line));
+        // How far the program's clock and its spending have gone since a stopwatch was started.
+        onObject(bindings, Stopwatches.TYPE, "Ticks", (process, target, line) ->
+                Stopwatches.ticks(process, (Values.Obj) target));
+        onObject(bindings, Stopwatches.TYPE, "Credits", (process, target, line) ->
+                Stopwatches.credits(process, (Values.Obj) target));
+        // How long a text built a piece at a time is, and what a value of JSON is and holds.
+        onObject(bindings, TextToolFunctions.BUILDER, "Length", (process, target, line) ->
+                TextToolFunctions.length((Values.Obj) target));
+        onObject(bindings, JsonFunctions.TYPE, "Kind", (process, target, line) ->
+                ((Values.Obj) target).get(JsonFunctions.KIND));
+        onObject(bindings, JsonFunctions.TYPE, "Count", (process, target, line) ->
+                JsonFunctions.count((Values.Obj) target));
         // Where a file the program opened is up to, and whether that is its end.
         onObject(bindings, OpenFile.TYPE, "Position", (process, target, line) ->
                 OpenFile.position((Values.Obj) target, line));

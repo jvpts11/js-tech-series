@@ -113,7 +113,7 @@
     }
   ],
   "id": "jsc:sigma_publish_mirror",
-  "order": 484,
+  "order": 490,
   "section": "jsc:sharing_packages",
   "title": "jsc.guide.sigma_publish_mirror.title"
 }

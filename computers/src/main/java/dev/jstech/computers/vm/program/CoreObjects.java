@@ -10,22 +10,23 @@ package dev.jstech.computers.vm.program;
 import java.util.Map;
 
 /**
- * The objects the language's core brings for a program to make: a list and a map.
- *
- * <p>A program reaches them through the {@code new} it loaded with, and the runtime asked to make one by name reaches
- * them here too, so each is made in one place.
+ * What makes the objects of the language's core that a program makes with {@code new}: its collections, a queue and a
+ * stack being lists and a set a map whose keys are its members, told apart by the type the program wrote and never by
+ * what they hold; and a text built a piece at a time.
  */
 final class CoreObjects {
 
-    private static final Map<String, IObjectMaker> MAKERS = Map.of(
-            "List", (process, arguments, line) -> {
-                final Values.ListValue made = new Values.ListValue();
-                return process.heap().allocate(made, made.bytes(), line);
-            },
-            "Map", (process, arguments, line) -> {
-                final Values.MapValue made = new Values.MapValue();
-                return process.heap().allocate(made, made.bytes(), line);
-            });
+    private static final IObjectMaker LIST = (process, arguments, line) -> {
+        final Values.ListValue made = new Values.ListValue();
+        return process.heap().allocate(made, made.bytes(), line);
+    };
+    private static final IObjectMaker MAP = (process, arguments, line) -> {
+        final Values.MapValue made = new Values.MapValue();
+        return process.heap().allocate(made, made.bytes(), line);
+    };
+    private static final Map<String, IObjectMaker> MAKERS = Map.of("List", LIST, "Queue", LIST, "Stack", LIST,
+            "Map", MAP, "Set", MAP, TextToolFunctions.BUILDER,
+            (process, arguments, line) -> TextToolFunctions.newBuilder(process.heap(), line));
 
     private CoreObjects() {
     }

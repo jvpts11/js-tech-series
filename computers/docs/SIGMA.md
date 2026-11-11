@@ -174,8 +174,10 @@ they gained, the rest of `printf`'s holes, `int Main` and `Main(string[] args)`,
 `abstainfrom`, `reinstate`, `ignore` and `remember`, the directives from `#if` to `#warning`, and pointers with
 raw memory, and to Σ# alone exceptions, tuples, extension methods, operators and indexers, `unsafe` and
 `stackalloc`, `sealed`, static classes, `params`, local functions, `nameof`, `Operations.OnSettled`,
-`Network.OnEvent`, and the machine's own readings in `System.Machine` (`Power`, `Thermal`, `Wireless`,
-`DiskHealth`, `Settings`, `Sensors` and `Signals`). A version only ever adds: whatever
+`Network.OnEvent`, the machine's own readings in `System.Machine` (`Power`, `Thermal`, `Wireless`,
+`DiskHealth`, `Settings`, `Sensors` and `Signals`), `System.Text`, `Path`, `Directory` and the file calls
+`File.Size`, `File.Changed` and `File.Watch`, `Queue<T>`, `Stack<T>` and `Set<T>`, `List.Find` and `List.Sort` with
+a function, and `Calendar` and `Stopwatch`. A version only ever adds: whatever
 version 1 takes, version 2 takes too and compiles to the same listing, so a newer compiler never breaks an
 older program. The one exception came with version 2 itself, before it shipped: the words of access hold as
 C# holds them, and `try`, `catch`, `finally`, `throw`, `goto`, `const`, `comefrom`, `abstainfrom` and
@@ -302,9 +304,10 @@ for an `int` and six for a `long`. `1 << 32` is 1 and `1 << 33` is 2.
 | Namespace | What is in it |
 |---|---|
 | `System` | `IScript`, the delegates `Action`, `Action<T>` and `Func<T, R>` |
-| `System.IO` | `Console` (print, read a line), `File` (the machine's disks and the network's shares) |
-| `System.Collections` | `List<T>`, `Map<K, V>` |
-| `System.Utils` | `Math`, `Convert`, `Random`, `Time` |
+| `System.IO` | `Console` (print, read a line), `File` (the machine's disks and the network's shares), `Path`, `Directory` |
+| `System.Text` | `StringBuilder`, `Regex`, `Json` and `JsonValue`, `Csv`, `Hash`, `Base64` |
+| `System.Collections` | `List<T>`, `Map<K, V>`, `Queue<T>`, `Stack<T>`, `Set<T>` |
+| `System.Utils` | `Math`, `Convert`, `Random`, `Time`, `Calendar`, `Stopwatch` |
 | `System.Machine` | `Computer`: what the machine is made of and what it runs; `Redstone` (one of its Redstone Interfaces); its own readings: `Power`, `Thermal`, `Wireless`, `DiskHealth`, `Settings`, `Sensors`, `Signals` |
 | `System.Network` | `Network`, `Mainframe`, `Operations`' rows, `RemoteComputer`, `Iql`, `Bus` and `BusItem` |
 | `System.Operations` | `Operations`: pull, push, craft, update, cancel, ask after an operation |
@@ -558,6 +561,36 @@ A J's Core sensor or radio joins the machine through a Redstone Interface linked
 interface's lens, and is found by the interface's name. `Signals.Send` sets that interface to emit the value, which
 the transmitter in front sends on its frequency; it answers false when the interface faces no transmitter or is not
 live. `Signals.Heard` lists every frequency heard where the machine stands, as a signal probe there would.
+
+## Tools for text, files and data
+
+From version 3, Σ# has these tools besides, each the program's own work at the price of its instructions unless
+said otherwise.
+
+```
+new StringBuilder()                    .Append(t) .AppendLine(t) .Clear() hand it back; .ToString(), .Length
+Regex.IsMatch(text, pattern)           also Match (the first match and its groups), Matches, Replace ($1), Split
+Json.Parse(text) -> JsonValue          doc["items"][0]["name"].AsString(); Get, At, Has, Keys, AsNumber, AsBool,
+                                       Kind, Count; read only, a text that is no JSON throws a FormatException
+Csv.Parse(text) / Csv.Write(rows)      rows of fields, quoted where a field needs it
+Hash.Sha256(text), Hash.Crc32(text)    Base64.Encode(text), Base64.Decode(text)
+Path.Combine(folder, name)             Path.FileName, Path.Extension, Path.Folder: by the separators written
+Directory.Exists / Make / Delete / Files / Folders
+File.Size(path) / File.Changed(path)   bytes, and the world's tick it last changed in; -1 when not there
+File.Watch(path, handler)              a Subscription; the handler gets a FileEvent { Path, Changed, Previous }
+Queue<T>  Enqueue, Dequeue, Peek       Stack<T>  Push, Pop, Peek       Set<T>  Add, Remove, Contains, Items
+list.Find(x => test)                   the first element the test takes, or the type's empty value
+list.Sort((a, b) => a - b)             by a comparison, keeping equal elements in order
+Calendar.Hour / Minute / Day / Week / DayOfWeek / Season / DayOfSeason / Year
+Stopwatch.Start() -> Stopwatch         .Ticks, .Credits since it started; .Restart()
+```
+
+A pattern is priced by the characters it reads, a credit for every 4096, and one that would read its text more than
+256 times over, as a pattern that backtracks without end does, halts the program. `Find` and `Sort` are written into
+the program as a loop around the function, the way a `foreach` is, and cost what those calls cost; a sort compares
+by insertion. `File.Size`, `File.Changed` and `File.Watch` read the machine's own drives, and a watch costs nothing
+to set: the machine looks each tick, as it does for `Network.Watch`. Taking from an empty queue or stack throws an
+`InvalidOperationException`.
 
 ## Windows of its own: `System.UI`
 

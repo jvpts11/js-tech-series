@@ -384,12 +384,12 @@ final class CommandPromptPages {
                         + " Management does the same in a window.")
                 .define("Disk Management", "The window of Frames XP to 11 that makes, formats, resizes and deletes"
                         + " the volumes of each disk.")
-                .paragraph("FDISK opens a menu. Option 1 makes a partition of the size you type, option 2 sets the"
-                        + " active one, the partition the machine starts, option 3 deletes one and option 4 shows"
+                .paragraph("FDISK opens a menu. Its option 1 makes a partition of the size you type, option 2 sets"
+                        + " the active one, the partition the machine starts, option 3 deletes one and option 4 shows"
                         + " them. An empty choice leaves it.")
                 .command(CommandGuidePages.id(Platform.MC_DOS, "fdisk"))
-                .paragraph("diskpart takes its commands at its own prompt, DISKPART>: list disk, then select disk 1,"
-                        + " then create partition primary, format fs=ntfs quick, and exit to leave.")
+                .paragraph("diskpart takes its commands at its own prompt, DISKPART>: \"list disk\", then \"select disk"
+                        + " 1\", then \"create partition primary\", \"format fs=ntfs quick\", and \"exit\" to leave.")
                 .session("jsc:guide/terminal/dos", "Frames")
                 .typed("DISKPART> ", "select disk 1")
                 .answer("Disk 1 is now the selected disk.")

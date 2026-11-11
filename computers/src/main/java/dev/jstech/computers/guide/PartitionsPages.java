@@ -125,8 +125,9 @@ final class PartitionsPages {
                         "Right-click the free space, and make a new volume in it.")
                 .subheading("At the prompt")
                 .paragraph("FDISK on MC-DOS and fdisk on UNIX open a menu: make a partition, set the active one,"
-                        + " delete one, or show them. diskpart on Frames takes commands at its own prompt: list disk,"
-                        + " select disk 1, then create partition primary, format fs=ntfs quick, and exit. On Linux,"
+                        + " delete one, or show them. diskpart on Frames takes commands at its own prompt:"
+                        + " \"list disk\", \"select disk 1\", then \"create partition primary\","
+                        + " \"format fs=ntfs quick\", and \"exit\". On Linux,"
                         + " mkfs.ext4 /dev/sdb1 formats one partition, and refuses the one the system runs from.")
                 .session("jsc:guide/terminal/bash", "Ubuntu")
                 .typed("player@pc:~$ ", "mkfs.ext4 /dev/sda1")
@@ -152,7 +153,7 @@ final class PartitionsPages {
     private static void twoSystems(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("two_systems_on_a_disk", section).titled("Two systems on one disk")
                 .icon(HardwareItems.DISK_TRENCH_20M)
-                .paragraph("Each installer asks where the system goes, the way its real one did, and can put it"
+                .paragraph("Each installer asks you where the system goes, the way its real one did, and can put it"
                         + " beside another system on the same disk.")
                 .table("Where each installer puts its system", "Installer", "What it asks")
                 .row(GuideCell.words("MC-DOS, UNIX System V, Frames 95"),
@@ -281,7 +282,7 @@ final class PartitionsPages {
                 .paragraph("When the programs want more memory than the machine has, the system lends them disk"
                         + " space instead: the swap on Linux, the BSDs and UNIX, and the page file on Frames. A"
                         + " machine promises its memory and its swap together, so more programs fit.")
-                .paragraph("The part of a program that sits in the swap runs slower, by the disk it is on.")
+                .paragraph("The part of a program that sits in the swap runs slower, by the disk you put the swap on.")
                 .table("How fast the part in the swap runs", "Disk", "Speed")
                 .row(GuideCell.words("Hard disk"), GuideCell.words("A quarter of its speed"))
                 .row(GuideCell.words("SSD"), GuideCell.words("60% of its speed"))

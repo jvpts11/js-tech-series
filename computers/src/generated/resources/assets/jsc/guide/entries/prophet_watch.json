@@ -309,7 +309,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:prophet_watch",
-  "order": 386,
+  "order": 387,
   "section": "jsc:engine_choice",
   "title": "jsc.guide.prophet_watch.title"
 }

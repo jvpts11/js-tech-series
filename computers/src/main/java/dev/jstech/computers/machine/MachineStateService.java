@@ -22,6 +22,7 @@ import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.computers.wireless.WirelessLink;
+import dev.jstech.core.time.WorldCalendar;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.List;
@@ -105,6 +106,11 @@ public final class MachineStateService {
         }
         return new Ups(this.machine.upsName().english(), reading.onBattery(),
                 reading.mode() == UpsReading.Mode.BYPASS, reading.percent(), reading.minutesLeft());
+    }
+
+    /** The moment the world's clock shows where the machine stands, by its calendar. */
+    public WorldCalendar.Moment now() {
+        return WorldCalendar.now(this.level);
     }
 
     /** How the machine's heat stands; unknown for a machine with no temperature of its own. */

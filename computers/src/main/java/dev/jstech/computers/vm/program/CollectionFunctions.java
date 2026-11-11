@@ -13,9 +13,10 @@ import dev.jstech.computers.vm.system.IntrinsicRegistry;
 import dev.jstech.computers.vm.system.IntrinsicTypes;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 
 /**
- * What the language does with its two collections, a list and a map.
+ * What the language does with its collections: a list and a map, and the third version's queue, stack and set.
  *
  * <p>Every call is made on the collection itself, and whatever it did, the collection weighs afterwards what it then
  * holds, so a list that grows is paid for as it grows.
@@ -30,6 +31,13 @@ final class CollectionFunctions {
     private static final String WHOLE = "int";
     private static final TextKey NO_LIST = TextKey.of("jsc.vm.collection_functions.no_list", "there is no list here");
     private static final TextKey NO_MAP = TextKey.of("jsc.vm.collection_functions.no_map", "there is no map here");
+    private static final TextKey EMPTY_QUEUE = TextKey.of("jsc.vm.collection_functions.empty_queue",
+            "the queue is empty");
+    private static final TextKey EMPTY_STACK = TextKey.of("jsc.vm.collection_functions.empty_stack",
+            "the stack is empty");
+    private static final String QUEUE = "Queue";
+    private static final String STACK = "Stack";
+    private static final String SET = "Set";
 
     private CollectionFunctions() {
     }
@@ -94,6 +102,71 @@ final class CollectionFunctions {
                 listOf(context, held.entries().keySet(), line)));
         registry.onObject(MAP, "Values", "List<V>", onMap((context, held, arguments, line) ->
                 listOf(context, held.entries().values(), line)));
+        queuesAndStacks(registry);
+        sets(registry);
+    }
+
+    /*
+     * The third version's queue and stack, each a list underneath: a queue gives back its first element, a stack its
+     * last. Taking from an empty one halts, as C#'s do.
+     */
+    private static void queuesAndStacks(final IntrinsicRegistry.Builder registry) {
+        registry.onObject(QUEUE, "Enqueue", NOTHING, onList((context, held, arguments, line) -> {
+            held.items().add(arguments[0]);
+            return null;
+        }), "T");
+        registry.onObject(QUEUE, "Dequeue", "T", onList((context, held, arguments, line) ->
+                held.items().remove(first(held, EMPTY_QUEUE, line))));
+        registry.onObject(QUEUE, "Peek", "T", onList((context, held, arguments, line) ->
+                held.items().get(first(held, EMPTY_QUEUE, line))));
+        registry.onObject(STACK, "Push", NOTHING, onList((context, held, arguments, line) -> {
+            held.items().add(arguments[0]);
+            return null;
+        }), "T");
+        registry.onObject(STACK, "Pop", "T", onList((context, held, arguments, line) ->
+                held.items().remove(last(held, line))));
+        registry.onObject(STACK, "Peek", "T", onList((context, held, arguments, line) ->
+                held.items().get(last(held, line))));
+        for (final String type : List.of(QUEUE, STACK)) {
+            registry.onObject(type, "Clear", NOTHING, onList((context, held, arguments, line) -> {
+                held.items().clear();
+                return null;
+            }));
+            registry.onObject(type, "Contains", FLAG, onList((context, held, arguments, line) ->
+                    held.items().contains(arguments[0])), "T");
+        }
+    }
+
+    /* The third version's set, a map whose keys are its members. */
+    private static void sets(final IntrinsicRegistry.Builder registry) {
+        registry.onObject(SET, "Add", FLAG, onMap((context, held, arguments, line) ->
+                held.entries().putIfAbsent(arguments[0], Boolean.TRUE) == null), "T");
+        registry.onObject(SET, "Remove", FLAG, onMap((context, held, arguments, line) ->
+                held.entries().remove(arguments[0]) != null), "T");
+        registry.onObject(SET, "Contains", FLAG, onMap((context, held, arguments, line) ->
+                held.entries().containsKey(arguments[0])), "T");
+        registry.onObject(SET, "Clear", NOTHING, onMap((context, held, arguments, line) -> {
+            held.entries().clear();
+            return null;
+        }));
+        registry.onObject(SET, "Items", "List<T>", onMap((context, held, arguments, line) ->
+                listOf(context, held.entries().keySet(), line)));
+    }
+
+    /* Where the front of a queue is, or a halt when there is nothing in it. */
+    private static int first(final Values.ListValue held, final TextKey empty, final int line) {
+        if (held.items().isEmpty()) {
+            throw new Halt(Halt.Reason.REFUSED, line, empty.text());
+        }
+        return 0;
+    }
+
+    /* Where the top of a stack is, or a halt when there is nothing on it. */
+    private static int last(final Values.ListValue held, final int line) {
+        if (held.items().isEmpty()) {
+            throw new Halt(Halt.Reason.REFUSED, line, EMPTY_STACK.text());
+        }
+        return held.items().size() - 1;
     }
 
     /** A call on a list: made on anything that is not one, it halts. */

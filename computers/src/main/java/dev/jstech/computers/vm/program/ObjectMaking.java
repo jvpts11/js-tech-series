@@ -81,8 +81,8 @@ final class ObjectMaking {
     }
 
     /**
-     * One of the things the runtime brings, made by the name of its type: a window or a widget, and anything else one
-     * of the core's collections, a list unless a map.
+     * One of the things the runtime brings, made by the name of its type: a window or a widget, one of the core's
+     * objects, and anything else a list.
      */
     private Object brought(final String type, final List<Object> arguments, final int line) {
         final String bare = type.contains("<") ? type.substring(0, type.indexOf('<')) : type;
@@ -90,7 +90,8 @@ final class ObjectMaking {
         if (widget != null) {
             return widget.make(this.process, arguments, line);
         }
-        return CoreObjects.find("Map".equals(bare) ? "Map" : "List").make(this.process, arguments, line);
+        final IObjectMaker core = CoreObjects.find(bare);
+        return (core != null ? core : CoreObjects.find("List")).make(this.process, arguments, line);
     }
 
     /** Makes an array of the element type, as long as the number on top of the stack says, and puts it on. */

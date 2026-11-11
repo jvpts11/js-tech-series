@@ -49,6 +49,11 @@ public final class BuiltIns {
     private final NamedType actionType;
     private final NamedType actionOfType;
     private final NamedType funcType;
+    /** A function of two values, which a sort compares two elements with. */
+    private final NamedType funcOfTwoType;
+    private final NamedType queueType;
+    private final NamedType stackType;
+    private final NamedType setType;
     private final NamedType scriptType;
     private final NamedType scriptBase;
     private final NamedType systemType;
@@ -62,6 +67,10 @@ public final class BuiltIns {
         this.actionType = this.declare("Action", NamedType.Kind.DELEGATE);
         this.actionOfType = this.declare("Action", NamedType.Kind.DELEGATE, "T");
         this.funcType = this.declare("Func", NamedType.Kind.DELEGATE, "T", "R");
+        this.funcOfTwoType = this.declare("Func", NamedType.Kind.DELEGATE, "T1", "T2", "R");
+        this.queueType = this.declare("Queue", NamedType.Kind.CLASS, "T");
+        this.stackType = this.declare("Stack", NamedType.Kind.CLASS, "T");
+        this.setType = this.declare("Set", NamedType.Kind.CLASS, "T");
         this.scriptType = this.declare("IScript", NamedType.Kind.INTERFACE);
         this.scriptBase = this.declare("Script", NamedType.Kind.CLASS);
         this.systemType = this.declare("ISystem", NamedType.Kind.INTERFACE);
@@ -71,6 +80,8 @@ public final class BuiltIns {
         this.fillCharacter(this.declare("char", NamedType.Kind.CLASS));
         this.fillList();
         this.fillMap();
+        this.fillQueueAndStack();
+        this.fillSet();
         this.fillDelegates();
         this.fillScript();
         this.fillDeclared();
@@ -305,8 +316,8 @@ public final class BuiltIns {
 
     /** Every namespace the language has, System first, for a list that offers them. */
     public List<String> namespaces() {
-        return List.of(SYSTEM, COLLECTIONS, IO, UTILS, MACHINE, NETWORK, OPERATIONS, EXECUTION, UI, SOUND,
-                SystemApi.OS, SUBSET_LIBRARY);
+        return List.of(SYSTEM, COLLECTIONS, IO, SystemApi.TEXT, UTILS, MACHINE, NETWORK, OPERATIONS, EXECUTION, UI,
+                SOUND, SystemApi.OS, SUBSET_LIBRARY);
     }
 
     private static String key(final String name, final int arity) {
@@ -338,7 +349,8 @@ public final class BuiltIns {
                 Map.entry("IScript", SYSTEM), Map.entry("Script", SUBSET_LIBRARY),
                 Map.entry("ISystem", SystemApi.OS), Map.entry("IDesktop", SystemApi.OS),
                 Map.entry("Action", SYSTEM), Map.entry("Func", SYSTEM),
-                Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS)));
+                Map.entry("List", COLLECTIONS), Map.entry("Map", COLLECTIONS), Map.entry("Queue", COLLECTIONS),
+                Map.entry("Stack", COLLECTIONS), Map.entry("Set", COLLECTIONS)));
         // The exceptions live under System itself, as C#'s do.
         EXCEPTIONS.keySet().forEach(name -> made.put(name, SYSTEM));
         return Collections.unmodifiableMap(made);
@@ -419,6 +431,43 @@ public final class BuiltIns {
         this.method(this.listType, "Get", item, PUBLIC, integer);
         this.method(this.listType, "Set", nothing, PUBLIC, integer, item);
         this.method(this.listType, "Sort", nothing, PUBLIC);
+        /*
+         * The third version's, each taking a function the compiler writes the walk around (ListLambdas): the first
+         * element a test says yes to, or the type's empty value; and a sort by a comparison of two elements, below zero
+         * when the first comes first.
+         */
+        this.method(this.listType, "Find", item, PUBLIC,
+                new ITypeSymbol.GenericType(this.funcType, List.of(item, flag)));
+        this.method(this.listType, "Sort", nothing, PUBLIC,
+                new ITypeSymbol.GenericType(this.funcOfTwoType, List.of(item, item, integer)));
+    }
+
+    /** A queue takes from the front what it was given first; a stack takes from the top what it was given last. */
+    private void fillQueueAndStack() {
+        final ITypeSymbol item = new ITypeSymbol.TypeParameter("T", 0);
+        final ITypeSymbol nothing = ITypeSymbol.Primitive.VOID;
+        for (final NamedType type : List.of(this.queueType, this.stackType)) {
+            this.property(type, "Count", ITypeSymbol.Primitive.INT, PUBLIC);
+            this.method(type, "Peek", item, PUBLIC);
+            this.method(type, "Clear", nothing, PUBLIC);
+            this.method(type, "Contains", ITypeSymbol.Primitive.BOOL, PUBLIC, item);
+        }
+        this.method(this.queueType, "Enqueue", nothing, PUBLIC, item);
+        this.method(this.queueType, "Dequeue", item, PUBLIC);
+        this.method(this.stackType, "Push", nothing, PUBLIC, item);
+        this.method(this.stackType, "Pop", item, PUBLIC);
+    }
+
+    /** A set holds each value once: adding one it holds changes nothing, and says so. */
+    private void fillSet() {
+        final ITypeSymbol item = new ITypeSymbol.TypeParameter("T", 0);
+        final ITypeSymbol flag = ITypeSymbol.Primitive.BOOL;
+        this.property(this.setType, "Count", ITypeSymbol.Primitive.INT, PUBLIC);
+        this.method(this.setType, "Add", flag, PUBLIC, item);
+        this.method(this.setType, "Remove", flag, PUBLIC, item);
+        this.method(this.setType, "Contains", flag, PUBLIC, item);
+        this.method(this.setType, "Clear", ITypeSymbol.Primitive.VOID, PUBLIC);
+        this.method(this.setType, "Items", new ITypeSymbol.GenericType(this.listType, List.of(item)), PUBLIC);
     }
 
     private void fillMap() {
@@ -451,6 +500,10 @@ public final class BuiltIns {
         this.funcType.setInvoke(new IMemberSymbol.MethodSymbol(this.funcType, "Invoke",
                 new ITypeSymbol.TypeParameter("R", 1),
                 List.of(IMemberSymbol.ParameterSymbol.of("value", new ITypeSymbol.TypeParameter("T", 0))), PUBLIC));
+        this.funcOfTwoType.setInvoke(new IMemberSymbol.MethodSymbol(this.funcOfTwoType, "Invoke",
+                new ITypeSymbol.TypeParameter("R", 2),
+                List.of(IMemberSymbol.ParameterSymbol.of("first", new ITypeSymbol.TypeParameter("T1", 0)),
+                        IMemberSymbol.ParameterSymbol.of("second", new ITypeSymbol.TypeParameter("T2", 1))), PUBLIC));
     }
 
     /**

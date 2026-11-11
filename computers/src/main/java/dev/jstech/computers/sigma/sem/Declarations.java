@@ -123,7 +123,8 @@ public final class Declarations {
             return;
         }
         final List<String> takes = new ArrayList<>(method.parameters().size());
-        for (final IMemberSymbol.ParameterSymbol parameter : method.parameters()) {
+        // A method of a generic type is named as its type declares it, Func<T, bool>, not as one use fills it in.
+        for (final IMemberSymbol.ParameterSymbol parameter : declaredForm(owner, method).parameters()) {
             takes.add((parameter.outward() ? "out " : "") + parameter.type().describe());
         }
         final int since = SigmaVersions.sinceMember(this.level, owner.name(), method.name(), String.join(", ", takes));
@@ -1069,6 +1070,24 @@ public final class Declarations {
             }
         }
         return false;
+    }
+
+    /*
+     * A method of a generic type as the type declares it, by its name and how many values it takes: the use a program
+     * made of it has its type's parameters filled in. A type with no parameters declares the method as it is used.
+     */
+    private static IMemberSymbol.MethodSymbol declaredForm(final NamedType owner,
+                                                           final IMemberSymbol.MethodSymbol method) {
+        if (owner.typeParameters().isEmpty()) {
+            return method;
+        }
+        for (final IMemberSymbol member : owner.members()) {
+            if (member instanceof IMemberSymbol.MethodSymbol declared && declared.name().equals(method.name())
+                    && declared.parameters().size() == method.parameters().size()) {
+                return declared;
+            }
+        }
+        return method;
     }
 
     /** Whether something may stand in this method's place: it said so, or it is already standing in one. */

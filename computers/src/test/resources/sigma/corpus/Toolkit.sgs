@@ -1,0 +1,63 @@
+using System.*;
+using System.IO.*;
+using System.Collections.*;
+using System.Text.*;
+using System.Utils.*;
+namespace Corpus;
+class ToolkitCorpus {
+    static void Main() {
+        Stopwatch watch = Stopwatch.Start();
+        Console.PrintLine("" + Calendar.Hour + Calendar.Minute + Calendar.DayOfWeek + Calendar.DayOfSeason
+                + Calendar.Day + Calendar.Week + Calendar.Year + Calendar.Season);
+        string log = Path.Combine("C:\\logs", "stock.log");
+        Console.PrintLine(Path.FileName(log) + Path.Extension(log) + Path.Folder(log));
+        if (!Directory.Exists("C:\\logs")) {
+            Directory.Make("C:\\logs");
+        }
+        foreach (string name in Directory.Files("C:\\logs")) {
+            Console.PrintLine(name + File.Size(Path.Combine("C:\\logs", name)) + File.Changed(name));
+        }
+        foreach (string folder in Directory.Folders("C:\\")) {
+            Console.PrintLine(folder);
+        }
+        Directory.Delete("C:\\old");
+        Subscription told = File.Watch(log, changed => Console.PrintLine(changed.Path + changed.Changed
+                + changed.Previous));
+        StringBuilder text = new StringBuilder();
+        text.Append("iron").AppendLine(" ingot").Clear();
+        Console.PrintLine(text.ToString() + text.Length);
+        if (Regex.IsMatch("x64", "x(\\d+)")) {
+            List<string> groups = Regex.Match("x64", "x(\\d+)");
+            List<string> all = Regex.Matches("a1 b2", "\\d");
+            List<string> parts = Regex.Split("a,b", ",");
+            Console.PrintLine(groups[1] + all.Count + parts.Count + Regex.Replace("x64", "\\d", "#"));
+        }
+        JsonValue doc = Json.Parse("{\"items\": [1, \"two\", true]}");
+        JsonValue items = doc.Get("items");
+        Console.PrintLine(doc.Kind + doc.Count + doc.Has("items") + doc.Keys().Count + items.At(0).AsNumber()
+                + items[1].AsString() + items[2].AsBool() + doc["items"][0].AsString());
+        List<List<string>> rows = Csv.Parse("a,b\n1,2");
+        Console.PrintLine(Csv.Write(rows) + Hash.Sha256("abc") + Hash.Crc32("abc")
+                + Base64.Decode(Base64.Encode("iron")));
+        Queue<int> queue = new Queue<int>();
+        queue.Enqueue(1);
+        Stack<int> stack = new Stack<int>();
+        stack.Push(2);
+        Set<string> seen = new Set<string>();
+        seen.Add("a");
+        if (queue.Contains(1) && stack.Contains(2) && seen.Contains("a") && seen.Remove("b") == false) {
+            Console.PrintLine("" + queue.Peek() + queue.Dequeue() + queue.Count + stack.Peek() + stack.Pop()
+                    + stack.Count + seen.Count + seen.Items().Count);
+        }
+        queue.Clear();
+        stack.Clear();
+        seen.Clear();
+        List<int> numbers = new List<int>();
+        numbers.Add(3);
+        numbers.Add(1);
+        numbers.Sort((a, b) => a - b);
+        Console.PrintLine("" + numbers.Find(n => n > 1) + watch.Ticks + watch.Credits);
+        watch.Restart();
+        Console.PrintLine(told.Item);
+    }
+}

@@ -235,7 +235,8 @@ class ProgramImageTest {
     void coreValues_areTheValuesTheLanguagesOwnCoreDeclares() {
         final BuiltIns builtIns = new BuiltIns();
         final Set<String> declared = new HashSet<>();
-        for (final String core : List.of("object", "string", "List", "Map", "Action", "Func", "IScript")) {
+        for (final String core : List.of("object", "string", "List", "Map", "Queue", "Stack", "Set", "Action", "Func",
+                "IScript")) {
             for (final IMemberSymbol member : builtIns.type(core, 0).members()) {
                 if (member instanceof IMemberSymbol.PropertySymbol property) {
                     declared.add(core + "." + property.name());

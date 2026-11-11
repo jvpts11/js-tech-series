@@ -382,6 +382,11 @@ final class ExpressionChecker {
                     target.describe(), key.describe());
             return ITypeSymbol.Special.ERROR;
         }
+        // What was read from a JSON text is only read: a program builds its own text to write one.
+        if (writing != null && this.scope.rules().isJsonValue(target)) {
+            this.scope.report(index.line(), index.column(), SigmaError.CANNOT_ASSIGN_READONLY, "this[]");
+            return ITypeSymbol.Special.ERROR;
+        }
         return result;
     }
 

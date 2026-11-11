@@ -201,13 +201,18 @@ public final class DiskFilesystem {
      * @return the file's content, or empty if not readable
      */
     public static Optional<String> read(final ItemStack disk, final String path) {
+        return stored(disk, path).map(StoredFile::content);
+    }
+
+    /**
+     * The file at {@code path} as the disk stores it, with its size and the tick it last changed; none for a path
+     * that holds no file of its own, or a virtual {@code .dat} projection.
+     */
+    public static Optional<StoredFile> stored(final ItemStack disk, final String path) {
         final FilesystemContents fs = disk.getOrDefault(
                 ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
         final StoredFile file = fs.files().get(path);
-        if (file == null || file.type().virtualProjection()) {
-            return Optional.empty();
-        }
-        return Optional.of(file.content());
+        return file == null || file.type().virtualProjection() ? Optional.empty() : Optional.of(file);
     }
 
     // write

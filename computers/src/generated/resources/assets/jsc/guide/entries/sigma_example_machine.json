@@ -200,7 +200,7 @@
     }
   ],
   "id": "jsc:sigma_example_machine",
-  "order": 494,
+  "order": 500,
   "section": "jsc:examples_devices",
   "title": "jsc.guide.sigma_example_machine.title"
 }

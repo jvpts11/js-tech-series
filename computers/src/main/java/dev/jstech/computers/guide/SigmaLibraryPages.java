@@ -27,6 +27,7 @@ final class SigmaLibraryPages {
         libraryNetwork(guide, chapter);
         libraryMachine(guide, chapter);
         SigmaMachinePages.declare(guide, chapter);
+        SigmaToolkitPages.declare(guide, chapter);
         libraryWindows(guide, chapter);
         librarySystems(guide, chapter);
     }

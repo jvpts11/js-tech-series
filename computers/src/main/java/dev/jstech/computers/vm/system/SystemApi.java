@@ -25,6 +25,8 @@ import java.util.Set;
 public final class SystemApi {
 
     private static final String IO = "System.IO";
+    /** The namespace of the third version's work on text: building it, matching it, and reading what it holds. */
+    public static final String TEXT = "System.Text";
     private static final String UTILS = "System.Utils";
     private static final String EXECUTION = "System.Execution";
     private static final String THREADING = "System.Threading";
@@ -58,6 +60,12 @@ public final class SystemApi {
     private static final String WIDGET = "Widget";
     /** A file a program opened, named as C names it. */
     private static final String OPEN_FILE = "FILE";
+    private static final String STRING_BUILDER = "StringBuilder";
+    private static final String JSON_VALUE = "JsonValue";
+    /** The rows of a table of text, each a list of its fields. */
+    private static final String TABLE_OF_TEXT = "List<List<string>>";
+    /** What a pattern costs: nothing beyond its call but the characters of the text it reads, a block at a time. */
+    private static final CallCost PATTERN = CallCost.perBlock(0, SigmaCosts.READ_PER_BLOCK);
 
     /* What Scan can read into, which has to match what the reader of a typed or stored line can produce. */
     private static final List<String> SCAN_KINDS = List.of(INT, LONG, DOUBLE, STRING, "char");
@@ -73,9 +81,11 @@ public final class SystemApi {
     private static final Set<String> KNOWN = new HashSet<>();
 
     private static final List<TypeSpec> TYPES = List.of(math(), convert(), console(), program(), process(),
-            processMessage(), thread(), time(), random(), openFile(), file(), cpuInfo(), diskInfo(), osInfo(), processInfo(),
-            computer(), supplyInfo(), upsInfo(), power(), thermal(), wireless(), diskHealth(), settings(),
-            sensorReading(), sensors(), radioInfo(), heardSignal(), signals(), holdingInfo(), serverInfo(), network(),
+            processMessage(), thread(), time(), calendar(), stopwatch(), random(), openFile(), file(), fileEvent(),
+            path(), directory(), stringBuilder(), regex(), json(), jsonValue(), csv(), hash(), base64(), cpuInfo(),
+            diskInfo(), osInfo(), processInfo(), computer(), supplyInfo(), upsInfo(), power(), thermal(), wireless(),
+            diskHealth(), settings(), sensorReading(), sensors(), radioInfo(), heardSignal(), signals(), holdingInfo(),
+            serverInfo(), network(),
             stockEvent(), networkEvent(), subscription(), remoteComputer(),
             iqlResult(), iql(), workStat(), mainframe(), askResult(), operationInfo(), operations(), ccComputer(),
             ccPeripheral(), gatewayMessage(), gateway(), widget(), window(), box("Row"), box("Column"), label(),
@@ -299,6 +309,35 @@ public final class SystemApi {
         return new TypeSpec(UTILS, "Time", time.members);
     }
 
+    /**
+     * The world's calendar, as J's Core reads it where the machine stands: the hour and minute the clock shows, the
+     * day, the week and the day of the week, the season and its day, and the year, each counted from nought.
+     */
+    private static TypeSpec calendar() {
+        final Members calendar = new Members("Calendar");
+        for (final String reading : List.of("Hour", "Minute", "DayOfWeek", "DayOfSeason")) {
+            calendar.valueOnType(INT, reading, MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        }
+        for (final String reading : List.of("Day", "Week", "Year")) {
+            calendar.valueOnType(LONG, reading, MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        }
+        calendar.valueOnType(STRING, "Season", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE));
+        return new TypeSpec(UTILS, "Calendar", calendar.members);
+    }
+
+    /**
+     * A stretch of the program's own running, timed from Start: the ticks gone by and the credits the program spent
+     * since, which it reads of itself for nothing.
+     */
+    private static TypeSpec stopwatch() {
+        final Members watch = new Members("Stopwatch");
+        watch.onType("Stopwatch", "Start", MemberKind.PROCESS, CallCost.FREE);
+        watch.valueOnObject(LONG, "Ticks", MemberKind.PROCESS, CallCost.FREE);
+        watch.valueOnObject(LONG, "Credits", MemberKind.PROCESS, CallCost.FREE);
+        watch.onObject("Stopwatch", "Restart", MemberKind.PROCESS, CallCost.FREE);
+        return new TypeSpec(UTILS, "Stopwatch", watch.members);
+    }
+
     /** Chance, drawn from the program's own sequence, which a program may start again from a number of its choosing. */
     private static TypeSpec random() {
         final Members random = new Members("Random");
@@ -334,7 +373,120 @@ public final class SystemApi {
          */
         file.onType(OPEN_FILE, "Open", MemberKind.WORLD, read, STRING, STRING);
         file.onType(BOOL, "Move", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING, STRING);
+        /*
+         * The third version's: a file's size and the tick it last changed, each a glance at what the disk keeps of
+         * it, and being told when it changes, which costs nothing to ask, as a watch on the network does not.
+         */
+        file.onType(LONG, "Size", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        file.onType(LONG, "Changed", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE), STRING);
+        file.onType("Subscription", "Watch", MemberKind.PROCESS, CallCost.FREE, STRING, "Action<FileEvent>");
         return new TypeSpec(IO, "File", file.members);
+    }
+
+    /**
+     * Paths written as the system writes them, taken apart and put together: the language's own, with nothing of the
+     * machine, so a path is split the same on any system by the separators it was written with.
+     */
+    private static TypeSpec path() {
+        final Members path = new Members("Path");
+        path.pure(STRING, "Combine", STRING, STRING);
+        path.pure(STRING, "FileName", STRING);
+        path.pure(STRING, "Extension", STRING);
+        path.pure(STRING, "Folder", STRING);
+        return new TypeSpec(IO, "Path", path.members);
+    }
+
+    /** The machine's folders: whether one is there, making and removing one, and what one holds. */
+    private static TypeSpec directory() {
+        final Members directory = new Members("Directory");
+        directory.onType(BOOL, "Exists", MemberKind.WORLD, CallCost.of(SigmaCosts.GLANCE_NETWORK), STRING);
+        directory.onType(BOOL, "Make", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
+        directory.onType(BOOL, "Delete", MemberKind.WORLD, CallCost.of(SigmaCosts.WRITE), STRING);
+        directory.onType(STRINGS, "Files", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ), STRING);
+        directory.onType(STRINGS, "Folders", MemberKind.WORLD, CallCost.perRow(SigmaCosts.READ), STRING);
+        return new TypeSpec(IO, "Directory", directory.members);
+    }
+
+    /*
+     * System.Text (computers/docs/design/sigma.md): building a text a piece at a time, matching it with a pattern,
+     * and reading the tables, trees and codes texts carry. All of it is the program's own work, which costs what its
+     * instructions cost, except a pattern, which is priced by how much of the text it reads.
+     */
+
+    private static TypeSpec stringBuilder() {
+        final Members builder = new Members(STRING_BUILDER);
+        builder.made();
+        builder.pureOnObject(STRING_BUILDER, "Append", STRING);
+        builder.pureOnObject(STRING_BUILDER, "AppendLine", STRING);
+        builder.pureOnObject(STRING_BUILDER, "Clear");
+        builder.pureOnObject(STRING, "ToString");
+        builder.valueOnObject(INT, "Length", MemberKind.PROCESS, CallCost.FREE);
+        return new TypeSpec(TEXT, STRING_BUILDER, builder.members);
+    }
+
+    /** A pattern over a text, priced by the characters it reads, which a pattern can read many times over. */
+    private static TypeSpec regex() {
+        final Members regex = new Members("Regex");
+        regex.onType(BOOL, "IsMatch", MemberKind.PROCESS, PATTERN, STRING, STRING);
+        regex.onType(STRINGS, "Match", MemberKind.PROCESS, PATTERN, STRING, STRING);
+        regex.onType(STRINGS, "Matches", MemberKind.PROCESS, PATTERN, STRING, STRING);
+        regex.onType(STRING, "Replace", MemberKind.PROCESS, PATTERN, STRING, STRING, STRING);
+        regex.onType(STRINGS, "Split", MemberKind.PROCESS, PATTERN, STRING, STRING);
+        return new TypeSpec(TEXT, "Regex", regex.members);
+    }
+
+    /** JSON read into a tree of values, each read with its indexer: {@code doc["items"][0]["name"]}. */
+    private static TypeSpec json() {
+        final Members json = new Members("Json");
+        json.pure(JSON_VALUE, "Parse", STRING);
+        return new TypeSpec(TEXT, "Json", json.members);
+    }
+
+    private static TypeSpec jsonValue() {
+        final Members value = new Members(JSON_VALUE);
+        value.pureOnObject(JSON_VALUE, "Get", STRING);
+        value.pureOnObject(JSON_VALUE, "At", INT);
+        value.pureOnObject(BOOL, "Has", STRING);
+        value.pureOnObject(STRINGS, "Keys");
+        value.pureOnObject(STRING, "AsString");
+        value.pureOnObject(DOUBLE, "AsNumber");
+        value.pureOnObject(BOOL, "AsBool");
+        value.valueOnObject(STRING, "Kind", MemberKind.PROCESS, CallCost.FREE);
+        value.valueOnObject(INT, "Count", MemberKind.PROCESS, CallCost.FREE);
+        return new TypeSpec(TEXT, JSON_VALUE, value.members);
+    }
+
+    /** CSV read into rows of fields, and rows written back out, quoted where a field needs it. */
+    private static TypeSpec csv() {
+        final Members csv = new Members("Csv");
+        csv.pure(TABLE_OF_TEXT, "Parse", STRING);
+        csv.pure(STRING, "Write", TABLE_OF_TEXT);
+        return new TypeSpec(TEXT, "Csv", csv.members);
+    }
+
+    /** A text's fingerprint: SHA-256 written in hexadecimal, and CRC-32 as a number. */
+    private static TypeSpec hash() {
+        final Members hash = new Members("Hash");
+        hash.pure(STRING, "Sha256", STRING);
+        hash.pure(LONG, "Crc32", STRING);
+        return new TypeSpec(TEXT, "Hash", hash.members);
+    }
+
+    /** A text written in Base64 and read back, by its bytes in UTF-8. */
+    private static TypeSpec base64() {
+        final Members base64 = new Members("Base64");
+        base64.pure(STRING, "Encode", STRING);
+        base64.pure(STRING, "Decode", STRING);
+        return new TypeSpec(TEXT, "Base64", base64.members);
+    }
+
+    /** A watched file that changed: its path, and the tick it changed in now and before, -1 for a file not there. */
+    private static TypeSpec fileEvent() {
+        final Members event = new Members("FileEvent");
+        event.recordValue(STRING, "Path");
+        event.recordValue(LONG, "Changed");
+        event.recordValue(LONG, "Previous");
+        return new TypeSpec(IO, "FileEvent", event.members);
     }
 
     /**
@@ -1525,6 +1677,11 @@ public final class SystemApi {
         void onObject(final String returns, final String name, final MemberKind kind, final CallCost cost,
                       final String... parameters) {
             this.members.add(new MethodSpec(this.id(name, parameters), returns, false, kind, cost));
+        }
+
+        /** A method called on an object of the type that the language answers with nothing but what it holds. */
+        void pureOnObject(final String returns, final String name, final String... parameters) {
+            this.onObject(returns, name, MemberKind.PURE, CallCost.FREE, parameters);
         }
 
         /** A value read from the type. */

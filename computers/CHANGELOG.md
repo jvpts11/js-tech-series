@@ -842,6 +842,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `Sensors` (what a J's Core sensor in front of a linked Redstone Interface reads) and `Signals` (a J's Core radio in
   front of an interface, sending through a transmitter, and every frequency heard where the machine stands). A server
   in a rack reads its own supply and the rack's UPS and heat. The Book of Sigma gains a section on them.
+- Sigma# 3 gains tools for text, files and data: `System.Text` (`StringBuilder`, `Regex` priced by the
+  text it reads and stopped when a pattern would read it hundreds of times over, `Json` read into a tree with
+  indexers, `Csv`, `Hash` SHA-256 and CRC-32, `Base64`), `Path` and `Directory`, a file's size and the tick it last
+  changed, `File.Watch` to be told when a file changes, `Queue`, `Stack` and `Set`, `List.Find` and `List.Sort` with
+  a function, and `Calendar` and `Stopwatch`. The Book of Sigma gains a section on them.
 
 ### Changed
 - `mkfs` on Linux is `mkfs.ext4`, beside a `mkfs` for each other file system, and formats a partition,

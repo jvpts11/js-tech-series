@@ -250,8 +250,10 @@ final class ProgramEvents {
     }
 
     private void fired(final ProgramWatches.Watch watch, final long before, final long now, final boolean first) {
-        if (!this.offer(watch.handler(), EVENT_BYTES,
-                () -> List.of(this.stockEvent(watch.item(), before, now, first)))) {
+        final String item = watch.item();
+        if (!this.offer(watch.handler(), EVENT_BYTES, () -> List.of(item.startsWith(Process.WATCHED_FILE)
+                ? this.fileEvent(item.substring(Process.WATCHED_FILE.length()), before, now, first)
+                : this.stockEvent(item, before, now, first)))) {
             this.callbacks.drop();
         } else {
             this.process.reached(ProgramMilestone.WATCH_FIRED);
@@ -262,6 +264,19 @@ final class ProgramEvents {
         final Values.Obj made = new Values.Obj("StockEvent");
         made.set("Item", item);
         made.set("Total", now);
+        made.set("Previous", first ? now : before);
+        this.heap.allocate(made, EVENT_BYTES, 0);
+        return made;
+    }
+
+    /*
+     * A watched file changing, as its handler is handed it: the path, and the tick it changed in now and before, -1
+     * for a file that is not there.
+     */
+    private Values.Obj fileEvent(final String path, final long before, final long now, final boolean first) {
+        final Values.Obj made = new Values.Obj("FileEvent");
+        made.set("Path", this.heap.text(path, 0));
+        made.set("Changed", now);
         made.set("Previous", first ? now : before);
         this.heap.allocate(made, EVENT_BYTES, 0);
         return made;

@@ -29,6 +29,8 @@ public final class PureFunctions {
         CollectionFunctions.register(registry);
         NumberFunctions.register(registry);
         DelegateFunctions.register(registry);
+        TextToolFunctions.register(registry);
+        JsonFunctions.register(registry);
         return registry.build();
     }
 }

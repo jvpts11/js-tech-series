@@ -484,8 +484,8 @@ final class LibraryPages {
     private static void achievementsFab(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("achievements_fab", section).titled("Fab achievements").icon(ComputingModule.PERSONAL_COMPUTER)
                 .paragraph("The Fab tab follows the chain from the ore to the chip, and on to a whole computer. A"
-                        + " machine of the chain credits its operator, the last player who placed or used its"
-                        + " terminal.")
+                        + " machine of the chain credits its operator: you, when you are the last player who placed it"
+                        + " or used its terminal.")
                 .table("The Fab achievements", "Achievement", "What it asks", "How it is earned")
                 .row(GuideCell.words("Some Assembly Required (root)"),
                         GuideCell.words("Make a Vintage Electronics Workbench."),
@@ -569,8 +569,8 @@ final class LibraryPages {
                 .row(GuideCell.words("The Halvening (secret)"),
                         GuideCell.words("Be there when the reward halves."),
                         GuideCell.words("You are on the server when a block's reward is half the one before."))
-                .paragraph("HODL starts over when the wallet sends anything, a 3D printer's payment among it, or drops"
-                        + " below 1,000 TRC. The game looks at the wallets once a minute.")
+                .paragraph("HODL starts over when your wallet sends anything, a 3D printer's payment among it, or drops"
+                        + " below 1000 TRC. The game looks at the wallets once a minute.")
                 .seeAlso("jsc:teracoin", "jsc:mining", "jsc:mining_pools", "jsc:printers_3d")
                 .register();
     }

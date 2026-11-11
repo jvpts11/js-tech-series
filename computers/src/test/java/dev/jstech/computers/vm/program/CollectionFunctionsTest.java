@@ -111,4 +111,50 @@ class CollectionFunctionsTest {
             assertTrue(before.compareTo(after) <= 0, before + " then " + after);
         }
     }
+
+    @Test
+    void queue_givesBackWhatCameFirstAndHaltsWhenEmpty() {
+        final Values.ListValue queue = listOf();
+        on("Queue", queue, "Enqueue", List.of("T"), 1);
+        on("Queue", queue, "Enqueue", List.of("T"), 2);
+        assertEquals(1, on("Queue", queue, "Peek", List.of()));
+        assertEquals(true, on("Queue", queue, "Contains", List.of("T"), 2));
+        assertEquals(1, on("Queue", queue, "Dequeue", List.of()));
+        assertEquals(2, on("Queue", queue, "Dequeue", List.of()));
+        final Halt halt = assertThrows(Halt.class, () -> on("Queue", queue, "Dequeue", List.of()));
+        assertEquals(Halt.Reason.REFUSED, halt.reason(), halt.getMessage());
+    }
+
+    @Test
+    void stack_givesBackWhatCameLastAndHaltsWhenEmpty() {
+        final Values.ListValue stack = listOf();
+        on("Stack", stack, "Push", List.of("T"), 1);
+        on("Stack", stack, "Push", List.of("T"), 2);
+        assertEquals(2, on("Stack", stack, "Peek", List.of()));
+        assertEquals(2, on("Stack", stack, "Pop", List.of()));
+        assertEquals(1, on("Stack", stack, "Pop", List.of()));
+        final Halt halt = assertThrows(Halt.class, () -> on("Stack", stack, "Peek", List.of()));
+        assertEquals(Halt.Reason.REFUSED, halt.reason(), halt.getMessage());
+    }
+
+    @Test
+    void set_holdsEachValueOnceAndSaysWhetherAnAddOrARemoveChangedIt() {
+        final Values.MapValue set = new Values.MapValue();
+        assertEquals(true, on("Set", set, "Add", List.of("T"), "iron"));
+        assertEquals(false, on("Set", set, "Add", List.of("T"), "iron"));
+        assertEquals(true, on("Set", set, "Add", List.of("T"), "gold"));
+        assertEquals(true, on("Set", set, "Contains", List.of("T"), "gold"));
+        assertEquals(List.of("iron", "gold"), ((Values.ListValue) on("Set", set, "Items", List.of())).items());
+        assertEquals(true, on("Set", set, "Remove", List.of("T"), "iron"));
+        assertEquals(false, on("Set", set, "Remove", List.of("T"), "iron"));
+        on("Set", set, "Clear", List.of());
+        assertTrue(set.entries().isEmpty());
+    }
+
+    /** Calls a method of a queue, a stack or a set the way a program does. */
+    private static Object on(final String type, final Object held, final String name, final List<String> parameters,
+                             final Object... arguments) {
+        return PureFunctions.REGISTRY.find(type, name, parameters).function()
+                .call(new Heap(64L * 1024), held, arguments, LINE);
+    }
 }

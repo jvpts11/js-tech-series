@@ -339,7 +339,7 @@
     }
   ],
   "id": "jsc:query_and_select",
-  "order": 363,
+  "order": 364,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.query_and_select.title"
 }

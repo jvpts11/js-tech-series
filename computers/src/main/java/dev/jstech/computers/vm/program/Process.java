@@ -67,6 +67,11 @@ public final class Process {
 
     /** The most instructions one thread runs before another of the same process has its turn. */
     public static final int SLICE = 64;
+    /**
+     * What a watch on a file watches stands under: these words, then the file's path. No item of the network has a
+     * name with a space in it, so the two kinds of watch never meet.
+     */
+    public static final String WATCHED_FILE = "@file ";
 
     /** What starting a thread costs beyond the call itself: a stack of its own is not a small thing. */
     private static final int START_COST = SigmaCosts.THREAD_START;
@@ -1262,7 +1267,7 @@ public final class Process {
         }
         final Values.Obj token = new Values.Obj("Subscription");
         token.set("Id", this.watches.nextId());
-        token.set("Item", item);
+        token.set("Item", item.startsWith(WATCHED_FILE) ? item.substring(WATCHED_FILE.length()) : item);
         this.heap.allocate(token, Heap.HEADER + 2L * Heap.REFERENCE, line);
         this.watches.add(item, kind, threshold, handler, token);
         return token;
