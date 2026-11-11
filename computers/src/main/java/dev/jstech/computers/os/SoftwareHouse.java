@@ -75,6 +75,8 @@ public record SoftwareHouse(String name, String legalName) {
     public static final SoftwareHouse PROPHET = new SoftwareHouse("Prophet", "Prophet Corporation");
     /** Easy Disc Creator's house, which copies discs onto blanks. */
     public static final SoftwareHouse ROXA = new SoftwareHouse("Roxa", "Roxa Inc.");
+    /** Teracoin's house, whose mark is a block being cut true: the wallet, the miner, the pool and the ASICs. */
+    public static final SoftwareHouse BLOCKWRIGHT = new SoftwareHouse("Blockwright", "Blockwright Inc.");
 
     /** Not a house: the program is credited to the system or desktop that ships it. */
     public static final SoftwareHouse BUNDLED = new SoftwareHouse("", "");

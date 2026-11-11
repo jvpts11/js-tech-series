@@ -1,0 +1,39 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 3,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 16,
+      "item": "jsc:hashing_chip_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_advanced"
+    },
+    {
+      "count": 4,
+      "item": "jsc:case_fan_advanced"
+    },
+    {
+      "count": 11,
+      "item": "jsc:transformer"
+    },
+    {
+      "count": 4,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:asic_forge_a2"
+    }
+  ]
+}

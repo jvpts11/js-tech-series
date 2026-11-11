@@ -107,4 +107,9 @@ public record UnixTree(List<String> home, String mounts, List<String> desktop, L
     public String scansPath() {
         return homePath() + "/Documents/Scans";
     }
+
+    /** The folder the Crypto Wallet keeps its wallets in, made the first time one is made. */
+    public String walletsPath() {
+        return homePath() + "/Documents/Wallets";
+    }
 }

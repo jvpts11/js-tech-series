@@ -8,6 +8,7 @@
 package dev.jstech.computers.client.assembly;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.math.Axis;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.gui.layout.AssemblyGeometry;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.Box;
@@ -60,6 +61,7 @@ public final class AssemblyPainter {
     private static final Palette<Radiator> RADIATOR = Palettes.declare(JsComputers.MODID, "screen/assembly_radiator",
             new Radiator(0xFF2A2C31, 0xFF5F6164, 0xFF111214, 0xFF4A4D55, 0xFFD6D9DD, 0xFFA1A3A6, 0xFF9AA0A8,
                     0xFFF3F3F3, 0xFF111214));
+    private static final float QUARTER_TURN = 90f;
     private static final int RADIATOR_SEATS = 2;
     private static final int RADIATOR_RING = 6;
     private static final int RADIATOR_RING_DOTS = 20;
@@ -117,6 +119,27 @@ public final class AssemblyPainter {
         }
         blit(g, picture, left + seat.x() + AssemblyGeometry.CARD_DX, top + seat.y() + AssemblyGeometry.CARD_DY,
                 AssemblyGeometry.CARD_W, AssemblyGeometry.CARD_H);
+    }
+
+    /**
+     * A card standing on a rig's riser, its picture turned upright and scaled to {@code height}, its middle at
+     * {@code middle} and its foot on {@code foot}, when the card has a picture; nothing otherwise.
+     */
+    public static void drawStandingCard(final GuiGraphics g, final double middle, final double foot,
+                                        final double height, final ResourceLocation card) {
+        final ResourceLocation picture = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+                "textures/gui/assembly/card/" + card.getPath() + ".png");
+        if (!JsComputers.MODID.equals(card.getNamespace()) || !hasPicture(picture)) {
+            return;
+        }
+        final float scale = (float) (height / AssemblyGeometry.CARD_W);
+        g.pose().pushPose();
+        g.pose().translate(middle - AssemblyGeometry.CARD_H * scale / 2.0, foot, 0);
+        g.pose().scale(scale, scale, 1f);
+        // A quarter turn back: the card's length, which lies along a tower's slot, stands up from the rail.
+        g.pose().mulPose(Axis.ZP.rotationDegrees(-QUARTER_TURN));
+        blit(g, picture, 0, 0, AssemblyGeometry.CARD_W, AssemblyGeometry.CARD_H);
+        g.pose().popPose();
     }
 
     /** The bracket a card shows on the back panel, by what the card is: its connectors in the era's case metal. */
@@ -437,7 +460,8 @@ public final class AssemblyPainter {
             case BOARD -> 0;
             case CPU -> 1;
             case RAM -> 2;
-            case CARD -> 3;
+            // A riser is a small card of its own, drawn in a card's shape.
+            case CARD, RISER -> 3;
             case PSU -> 4;
             case DISK -> 5;
             case BAY -> 6;

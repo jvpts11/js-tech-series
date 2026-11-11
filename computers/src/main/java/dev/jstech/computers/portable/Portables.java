@@ -234,6 +234,8 @@ public final class Portables {
                     payload.named(), "");
             case MAP -> PortableMaps.map(player, level, device);
             case PROSPECT -> PortableMaps.prospect(player, level, device);
+            case WALLET, WALLET_CREATE, WALLET_SEND -> PortableWallet.act(player, level, devices, state, joined != null,
+                    payload);
         }
         tell(player, device, state, mirror);
     }
@@ -297,6 +299,7 @@ public final class Portables {
             case MESSENGER, SAY, LEAVE -> MobileApp.MESSENGER;
             case MAP -> MobileApp.MAPS;
             case PROSPECT -> MobileApp.PROSPECTING;
+            case WALLET, WALLET_CREATE, WALLET_SEND -> MobileApp.CRYPTO_WALLET;
         };
     }
 

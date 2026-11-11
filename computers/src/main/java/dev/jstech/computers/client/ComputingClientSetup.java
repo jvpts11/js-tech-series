@@ -202,6 +202,9 @@ public final class ComputingClientSetup {
         event.register(ComputingMenus.DESKTOP_MENU.get(), DesktopScreen::new);
         event.register(ComputingMenus.MAINFRAME_MENU.get(), MainframeScreen::new);
         event.register(ComputingMenus.WAN_GATEWAY_MENU.get(), WanGatewayScreen::new);
+        event.register(ComputingMenus.MINING_COMPUTER_MENU.get(), MiningComputerScreen::new);
+        event.register(ComputingMenus.ASIC_MENU.get(), AsicScreen::new);
+        event.register(ComputingMenus.PRINTER_3D_MENU.get(), Printer3DScreen::new);
         event.register(ComputingMenus.PERSONAL_COMPUTER_MENU.get(), PersonalComputerScreen::new);
         event.register(ComputingMenus.CRAFTING_COMPUTER_MENU.get(), CraftingComputerScreen::new);
         event.register(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), ClusterManagementComputerScreen::new);
@@ -251,6 +254,12 @@ public final class ComputingClientSetup {
         event.registerBlockEntityRenderer(ComputingModule.MAINFRAME_BE.get(), CabinetRenderer::mainframe);
         // And the WAN Gateway Computer, a block wider, with its line modules.
         event.registerBlockEntityRenderer(ComputingModule.WAN_GATEWAY_BE.get(), WanGatewayRenderer::create);
+        // The Mining Computers: each era's open frame, the parts in it, the cards standing on its risers.
+        event.registerBlockEntityRenderer(ComputingModule.MINING_COMPUTER_BE.get(), RigRenderer::create);
+        // Blockwright's ASICs: each model's chassis, its fans turning while it mines.
+        event.registerBlockEntityRenderer(ComputingModule.ASIC_BE.get(), AsicRenderer::create);
+        // The 3D printers: each model's frame, its parts moving as it prints, and the item rising on its bed.
+        event.registerBlockEntityRenderer(ComputingModule.PRINTER_3D_BE.get(), Printer3DRenderer::create);
         // The Pattern Encoder: one burner body per era, with its bay and lamps.
         event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.PRINTER_BE.get(), PrinterRenderer::create);

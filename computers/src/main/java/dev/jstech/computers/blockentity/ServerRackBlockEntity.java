@@ -98,6 +98,9 @@ import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StorageVolume;
 import dev.jstech.computers.storage.StoreSink;
+import dev.jstech.computers.teracoin.MinerRunner;
+import dev.jstech.computers.teracoin.MiningPool;
+import dev.jstech.computers.teracoin.TeracoinNbt;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.Audio;
 import dev.jstech.core.blockentity.DerivedInt;
@@ -216,6 +219,15 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     public static final int UNIT_TAPE_LIBRARY_VINTAGE = 55;
     /** The most a Tape Library's drive keeps queued for the Backup Service, the one at the drive among them. */
     public static final int MOST_TAPE_WORK = 8;
+    /* Where a server's Mining Pool rides on its item. */
+    private static final String MINING_POOL_TAG = "MiningPool";
+    /** What a Mining Pool's card reads: its miners (0 for no pool), hashrate, fee, blocks and last block's age. */
+    public static final int POOL_MINERS = 0;
+    public static final int POOL_HASHRATE = 1;
+    public static final int POOL_FEE = 2;
+    public static final int POOL_BLOCKS = 3;
+    public static final int POOL_LAST_MINUTES = 4;
+    private static final int POOL_FIGURES = 5;
     /* The 1U server's face of each era, and the supercomputer node's, which only the Standard and the Advanced make. */
     private static final EraTable<Integer> SERVER_FACES = EraTable.ofFive(UNIT_SERVER_VINTAGE, UNIT_SERVER_LEGACY,
             UNIT_SERVER_TRANSITION, UNIT_SERVER_STANDARD, UNIT_SERVER_ADVANCED);
@@ -419,6 +431,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /* The drive of each Tape Library, by the row it is topped at: what it winds and what it does there. */
     private final TapeDrive[] tapeDrives = new TapeDrive[CAPACITY_U];
     private final DerivedInt[] tapeDriveShown = new DerivedInt[CAPACITY_U];
+    /* What the card of a server running the Mining Pool reads, by figure and by the row it is topped at. */
+    private final DerivedInt[][] poolShown = new DerivedInt[POOL_FIGURES][CAPACITY_U];
     /*
      * What the Backup Service queued at each Tape Library's drive, by the row it is topped at, the first at the drive;
      * kept only while the world runs, as the service writes down a job cut short. The count spares the tick a look.
@@ -533,6 +547,8 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         final MessengerLog messenger = new MessengerLog();
         final KnotRepository knot = new KnotRepository("main");
         final BackupJobs backups = new BackupJobs();
+        /* The Mining Pool this machine runs: its settings, its round's work and the blocks it found. */
+        final MiningPool miningPool = new MiningPool();
         /* The computers streaming from this machine's Soundfoundry Server; held only while they listen. */
         final SoundfoundryListeners listeners = new SoundfoundryListeners();
         /** Which of that desktop's workspaces is up, which goes wherever the windows it sorts go. */
@@ -581,6 +597,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             }
             if (Programs.BACKUP_SERVICE.equals(program)) {
                 backups.clear();
+                return true;
+            }
+            if (Programs.MINING_POOL.equals(program)) {
+                miningPool.clear();
                 return true;
             }
             return false;
@@ -640,6 +660,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 ServiceStateNbt.loadMessenger(saved, state.messenger);
                 ServiceStateNbt.loadKnot(saved, state.knot);
                 state.backups.load(saved);
+                if (saved.contains(MINING_POOL_TAG)) {
+                    TeracoinNbt.load(state.miningPool, saved.getCompound(MINING_POOL_TAG));
+                }
                 state.kernel.load(saved);
                 if (saved.contains("Studio") && getLevel() != null) {
                     state.studio.load(saved.getCompound("Studio"), getLevel().registryAccess());
@@ -722,6 +745,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     @Nullable
     public MessengerLog messengerAt(final int slot) {
         return consoleOf(slot) == null ? null : unitState(slot).messenger;
+    }
+
+    /** The Mining Pool the machine at {@code slot} runs, or null when that row holds no machine. */
+    @Nullable
+    public MiningPool miningPoolAt(final int slot) {
+        return consoleOf(slot) == null ? null : unitState(slot).miningPool;
     }
 
     /** The backup jobs the machine at {@code slot} keeps, or null when that row holds no machine. */
@@ -817,6 +846,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         ServiceStateNbt.saveMessenger(tag, state.messenger);
         ServiceStateNbt.saveKnot(tag, state.knot);
         state.backups.save(tag);
+        if (hasService(slot, Programs.MINING_POOL)) {
+            tag.put(MINING_POOL_TAG, TeracoinNbt.save(state.miningPool));
+        }
         state.kernel.save(tag);
         state.host.save(tag);
         if (getLevel() != null) {
@@ -1179,7 +1211,37 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             tapeDriveShown[slot] = fields().derived("TapeDrive" + row, () -> tapeDrives[row].state().id())
                     .toMenu();
             tapeQueues.add(new ArrayDeque<>());
+            for (int figure = 0; figure < POOL_FIGURES; figure++) {
+                final int which = figure;
+                poolShown[figure][slot] = fields().derived("Pool" + which + "_" + row, () -> poolFigure(row, which))
+                        .toMenu();
+            }
         }
+    }
+
+    /**
+     * What the card of the server topped at {@code row} reads of its Mining Pool: one of the {@code POOL_} figures, 0
+     * for every one when it runs no pool. The miners and the last block's minutes count from 1, so 0 says none.
+     */
+    public int poolShown(final int row, final int figure) {
+        return row >= 0 && row < CAPACITY_U && figure >= 0 && figure < POOL_FIGURES
+                ? poolShown[figure][row].getAsInt() : 0;
+    }
+
+    private int poolFigure(final int row, final int figure) {
+        final MiningPool pool = miningPoolAt(row);
+        if (pool == null || level == null || !serviceUp(row, Programs.MINING_POOL) || !unitRunning(row)) {
+            return 0;
+        }
+        final long now = level.getGameTime();
+        return switch (figure) {
+            case POOL_MINERS -> pool.members(now).size() + 1;
+            case POOL_HASHRATE -> (int) Math.min(Integer.MAX_VALUE, pool.hashrate(now));
+            case POOL_FEE -> pool.feePermille();
+            case POOL_BLOCKS -> pool.foundCount();
+            default -> pool.found().isEmpty() ? 0
+                    : (int) Math.min(Integer.MAX_VALUE - 1, (now - pool.found().get(0).tick()) / 1_200L) + 1;
+        };
     }
 
     /** The work at the drive of the Tape Library topped at {@code row}, or null when it has none. */
@@ -1559,6 +1621,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             });
             SetupRunner.tick(unit, level, worldPosition);
             DefragRunner.tick(unit, level);
+            MinerRunner.tick(unit, level, worldPosition, false);
             OsInstallRunner.tick(unit, level, worldPosition);
             // And whatever was left running in front of its terminal goes on running, watched or not.
             terminals.tick(level, i);

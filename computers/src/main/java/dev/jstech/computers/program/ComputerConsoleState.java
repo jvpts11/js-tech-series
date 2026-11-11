@@ -15,6 +15,9 @@ import dev.jstech.computers.os.install.SetupJob;
 import dev.jstech.computers.program.install.LiveInstallState;
 import dev.jstech.computers.program.job.JobStorage;
 import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.computers.teracoin.AutoPrints;
+import dev.jstech.computers.teracoin.MinerSettings;
+import dev.jstech.computers.teracoin.TeracoinNbt;
 import dev.jstech.core.id.StableNames;
 import dev.jstech.core.text.LongText;
 import dev.jstech.core.text.TextTags;
@@ -91,6 +94,10 @@ public final class ComputerConsoleState {
     private SetupJob setup;
     /* The machine's Defrag: the pass under way, the last one's end and the weekly schedule. Saved. */
     private final MachineDefrag defrag = new MachineDefrag();
+    /* The machine's Teracoin miner: the address it pays, its pool and whether it runs in the background. Saved. */
+    private final MinerSettings miner = new MinerSettings();
+    /* Its wallets that print by themselves on a 3D printer, each one item, a printer and what it keeps. Saved. */
+    private final AutoPrints autoPrints = new AutoPrints();
     /*
      * A live installation medium booted on this computer (the manual Arch / Gentoo install), until it reboots
      * into the installed system. Persisted so a half-done install survives a reload.
@@ -149,6 +156,16 @@ public final class ComputerConsoleState {
     /** The work this machine does with nobody at it. */
     public MachineJobs jobs() {
         return this.jobs;
+    }
+
+    /** The machine's Teracoin miner. */
+    public MinerSettings miner() {
+        return this.miner;
+    }
+
+    /** Its wallets' Auto prints. */
+    public AutoPrints autoPrints() {
+        return this.autoPrints;
     }
 
     /** Where this machine's shells stand. */
@@ -414,6 +431,8 @@ public final class ComputerConsoleState {
         }
         programs.save(tag);
         defrag.save(tag);
+        TeracoinNbt.save(miner, tag);
+        TeracoinNbt.save(autoPrints, tag);
         if (liveInstall != null) {
             LongText.put(tag, "LiveInstall", liveInstall.serialize());
         }
@@ -450,6 +469,8 @@ public final class ComputerConsoleState {
         }
         programs.load(tag);
         defrag.load(tag);
+        TeracoinNbt.load(miner, tag);
+        TeracoinNbt.load(autoPrints, tag);
         setup = null;
         if (tag.contains("Setup")) {
             final CompoundTag job = tag.getCompound("Setup");

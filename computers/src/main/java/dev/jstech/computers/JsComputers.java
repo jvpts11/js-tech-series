@@ -37,6 +37,8 @@ import dev.jstech.computers.hardware.HardwareKinds;
 import dev.jstech.computers.integration.jei.payload.JeiPayloads;
 import dev.jstech.computers.item.PartTooltips;
 import dev.jstech.computers.machine.DiscCopies;
+import dev.jstech.computers.teracoin.TeracoinCommand;
+import dev.jstech.computers.teracoin.TeracoinMining;
 import dev.jstech.computers.machine.FileCopyJobs;
 import dev.jstech.computers.machine.NetworkListening;
 import dev.jstech.computers.machine.MachineListing;
@@ -187,6 +189,8 @@ public class JsComputers {
         SoundfoundryCommand.listen();
         FileCopyJobs.listen();
         DiscCopies.listen();
+        TeracoinMining.listen();
+        TeracoinCommand.listen();
         DebugPayloads.listen();
         NetworkListening.listen();
         CraftingPayloads.listen();

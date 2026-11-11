@@ -91,6 +91,15 @@ final class ServerRackTexts {
     static final TextKey CARD_TEMP = TextKey.of("jsc.rack.card_temp", "TEMP");
     static final TextKey CARD_MACHINES = TextKey.of("jsc.rack.card_machines", "MACHINES");
     static final TextKey ADDS_WATTS = TextKey.of("jsc.rack.adds_watts", "+%s W");
+    /* The card of a server running the Mining Pool. */
+    static final TextKey CARD_SERVICE = TextKey.of("jsc.rack.card_service", "SERVICE");
+    static final TextKey CARD_MINERS = TextKey.of("jsc.rack.card_miners", "MINERS");
+    static final TextKey CARD_HASHRATE = TextKey.of("jsc.rack.card_hashrate", "HASHRATE");
+    static final TextKey CARD_FEE = TextKey.of("jsc.rack.card_fee", "FEE");
+    static final TextKey CARD_BLOCKS = TextKey.of("jsc.rack.card_blocks", "BLOCKS");
+    static final TextKey CARD_LAST = TextKey.of("jsc.rack.card_last", "LAST");
+    static final TextKey MINING_POOL = TextKey.of("jsc.rack.mining_pool", "Mining Pool");
+    static final TextKey MINUTES_AGO = TextKey.of("jsc.rack.minutes_ago", "%s min ago");
     static final TextKey DEGREES = TextKey.of("jsc.rack.degrees", "%s °C");
     static final TextKey DEGREES_AT = TextKey.of("jsc.rack.degrees_at", "%s °C %s%%");
     static final TextKey MACHINES_AT = TextKey.of("jsc.rack.machines_at", "at %s%%");

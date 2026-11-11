@@ -21,7 +21,10 @@ import dev.jstech.computers.menu.DosTerminalMenu;
 import dev.jstech.computers.menu.ExportBusMenu;
 import dev.jstech.computers.menu.ImportBusMenu;
 import dev.jstech.computers.menu.LinuxTtyMenu;
+import dev.jstech.computers.menu.AsicMenu;
 import dev.jstech.computers.menu.MainframeMenu;
+import dev.jstech.computers.menu.MiningComputerMenu;
+import dev.jstech.computers.menu.Printer3DMenu;
 import dev.jstech.computers.menu.MonitorSessionMenu;
 import dev.jstech.computers.menu.NetTerminalMenu;
 import dev.jstech.computers.menu.NetworkGatewayMenu;
@@ -110,6 +113,15 @@ public final class ComputingMenus {
 
     public static final DeferredHolder<MenuType<?>, MenuType<WanGatewayMenu>> WAN_GATEWAY_MENU =
             menu("wan_gateway", WanGatewayMenu::fromNetwork);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<MiningComputerMenu>> MINING_COMPUTER_MENU =
+            menu("mining_computer", MiningComputerMenu::fromNetwork);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<AsicMenu>> ASIC_MENU =
+            menu("asic", AsicMenu::fromNetwork);
+
+    public static final DeferredHolder<MenuType<?>, MenuType<Printer3DMenu>> PRINTER_3D_MENU =
+            menu("printer_3d", Printer3DMenu::fromNetwork);
 
     public static final DeferredHolder<MenuType<?>, MenuType<PersonalComputerMenu>> PERSONAL_COMPUTER_MENU =
             menu("personal_computer", PersonalComputerMenu::fromNetwork);

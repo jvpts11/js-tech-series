@@ -41,6 +41,9 @@ public final class SystemLayout {
     /** The directory a scanner's files are kept in on a Frames system, made the first time one is scanned. */
     public static final String SCANS_DIR = "Users/Public/Documents/Scans";
 
+    /** Where the Crypto Wallet keeps its wallets on a Windows-style system, made the first time one is made. */
+    public static final String WALLETS_DIR = "Users/Public/Documents/Wallets";
+
     /** The folder the system itself lives in, named after the system line rather than after somebody else's. */
     public static final String SYSTEM_DIR = "Frames";
 
@@ -108,6 +111,17 @@ public final class SystemLayout {
             return SCANS_DIR;
         }
         return (os == null ? UnixTree.HOME_AND_MEDIA : UnixTree.of(os.platform(), os.familyRank())).scansPath();
+    }
+
+    /**
+     * The Crypto Wallet's folder for an OS: under that system's own home on a POSIX kernel, the Windows-style one
+     * otherwise.
+     */
+    public static String walletsDirFor(final OsDef os, final KernelDef kernel) {
+        if (kernel == null || kernel.shellFamily() != ShellFamily.POSIX) {
+            return WALLETS_DIR;
+        }
+        return (os == null ? UnixTree.HOME_AND_MEDIA : UnixTree.of(os.platform(), os.familyRank())).walletsPath();
     }
 
     /**

@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
 import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.eventlog.NetworkWorldEvents;
@@ -109,6 +110,7 @@ public final class IqlTables {
     private static final TextKey CRAFTING_COMPUTER = TextKey.of("jsc.iql.table.crafting_computer",
             "Crafting Computer");
     private static final TextKey WAN_GATEWAY = TextKey.of("jsc.iql.table.wan_gateway", "WAN Gateway Computer");
+    private static final TextKey MINING_COMPUTER = TextKey.of("jsc.iql.table.mining_computer", "Mining Computer");
     private static final TextKey RUNNING = TextKey.of("jsc.iql.table.running", "running");
     private static final TextKey OFF = TextKey.of("jsc.iql.table.off", "off");
     private static final TextKey BENCH = TextKey.of("jsc.iql.table.bench", "bench");
@@ -494,7 +496,7 @@ public final class IqlTables {
             // A WAN Gateway Computer is on its network as a Personal Computer is, and named as what it is.
             if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof AbstractComputerBlockEntity computer) {
                 rows.add(computer(computer, computer instanceof WanGatewayBlockEntity ? WAN_GATEWAY
-                        : PERSONAL_COMPUTER));
+                        : computer instanceof MiningComputerBlockEntity ? MINING_COMPUTER : PERSONAL_COMPUTER));
             }
         }
         for (final NetworkSystem.CraftingComputerNode cc : system.craftingComputersOf(network)) {

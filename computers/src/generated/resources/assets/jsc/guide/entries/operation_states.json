@@ -206,7 +206,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:operation_states",
-  "order": 124,
+  "order": 128,
   "section": "jsc:operations",
   "title": "jsc.guide.operation_states.title"
 }

@@ -1,0 +1,39 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 3,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 12,
+      "item": "jsc:hashing_chip_standard"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_standard"
+    },
+    {
+      "count": 2,
+      "item": "jsc:case_fan_standard"
+    },
+    {
+      "count": 5,
+      "item": "jsc:transformer"
+    },
+    {
+      "count": 4,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:asic_forge_s1"
+    }
+  ]
+}

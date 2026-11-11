@@ -247,7 +247,7 @@
     }
   ],
   "id": "jsc:ports_build",
-  "order": 320,
+  "order": 324,
   "section": "jsc:freebsd_software",
   "title": "jsc.guide.ports_build.title"
 }

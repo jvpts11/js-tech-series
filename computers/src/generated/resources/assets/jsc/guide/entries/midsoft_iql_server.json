@@ -140,7 +140,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:midsoft_iql_server",
-  "order": 367,
+  "order": 371,
   "section": "jsc:engine_choice",
   "title": "jsc.guide.midsoft_iql_server.title"
 }

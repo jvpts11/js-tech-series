@@ -129,7 +129,7 @@
     }
   ],
   "id": "jsc:text_tools",
-  "order": 235,
+  "order": 239,
   "section": "jsc:shell_commands",
   "title": "jsc.guide.text_tools.title"
 }

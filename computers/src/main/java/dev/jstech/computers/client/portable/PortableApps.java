@@ -13,6 +13,7 @@ import dev.jstech.computers.operation.payload.portable.PortableGalleryPayload;
 import dev.jstech.computers.operation.payload.portable.PortableMapPayload;
 import dev.jstech.computers.operation.payload.portable.PortableNetworkPayload;
 import dev.jstech.computers.operation.payload.portable.PortableProspectPayload;
+import dev.jstech.computers.operation.payload.portable.PortableWalletPayload;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -29,6 +30,7 @@ public final class PortableApps {
     private static final Map<UUID, PortableGalleryPayload> GALLERY = new HashMap<>();
     private static final Map<UUID, PortableMapPayload> MAP = new HashMap<>();
     private static final Map<UUID, PortableProspectPayload> PROSPECT = new HashMap<>();
+    private static final Map<UUID, PortableWalletPayload> WALLET = new HashMap<>();
     @Nullable
     private static MessengerStatePayload messenger;
     @Nullable
@@ -56,6 +58,11 @@ public final class PortableApps {
     /** What a device's prospecting found came. */
     public static void take(final PortableProspectPayload view) {
         PROSPECT.put(view.device(), view);
+    }
+
+    /** A device's Crypto Wallet came. */
+    public static void take(final PortableWalletPayload view) {
+        WALLET.put(view.device(), view);
     }
 
     /** The Messenger came, for whichever window or app of it is open. */
@@ -89,6 +96,11 @@ public final class PortableApps {
     }
 
     @Nullable
+    public static PortableWalletPayload wallet(final UUID device) {
+        return WALLET.get(device);
+    }
+
+    @Nullable
     public static MessengerStatePayload messenger() {
         return messenger;
     }
@@ -109,6 +121,7 @@ public final class PortableApps {
         GALLERY.clear();
         MAP.clear();
         PROSPECT.clear();
+        WALLET.clear();
         messenger = null;
         plan = null;
         GalleryTextures.clear();

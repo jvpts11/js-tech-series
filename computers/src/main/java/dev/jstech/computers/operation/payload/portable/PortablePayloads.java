@@ -35,6 +35,8 @@ public final class PortablePayloads {
                 ClientPayloadHandlers.onMainThread((payload, player) -> PortableApps.take(payload)));
         registrar.playToClient(PortableProspectPayload.TYPE, PortableProspectPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread((payload, player) -> PortableApps.take(payload)));
+        registrar.playToClient(PortableWalletPayload.TYPE, PortableWalletPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread((payload, player) -> PortableApps.take(payload)));
         // Only from a device in one of the sender's hands: nobody works a device they are not holding.
         final IPayloadGate<PortableActionPayload> holding = (player, payload) ->
                 !Portables.held(player, payload.device()).isEmpty();

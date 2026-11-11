@@ -470,6 +470,31 @@ speakers and the Dock Station:
   its own, through its screen, what Easy Disc Creator copies.
 - **The DVD Drive** is a Transition drive.
 
+## Teracoin's hardware
+
+*Added 2026-11-11.*
+
+What mines Teracoin and what spends it ([Systems](SYSTEMS.md#teracoin)). A processor mines at its capacity and a
+graphics card at ten times its power: about 1,000 hashes a second for a Transition processor, and 3,000, 26,000 and
+58,000 for a Transition, Standard and Advanced graphics card.
+
+- **The Mining Computer**, a mining rig of each era from the Transition: an open frame with its MF Mining Board (the
+  common desktop socket and memory of its era, one disk and a row of PCIe x1 slots), a processor, memory, one power
+  supply and one disk, and up to 4 (Transition, one block), 6 (Standard) or 8 (Advanced, both two blocks wide)
+  graphics cards on Mining Risers. The risers go in at its assembly window; the cards are seated in the world, the rig
+  switched off: aim at a free riser with a card in hand and use it, and sneak with an empty hand to take one out. A
+  riser carries cards of its era or older, and on a riser a card mines at its full power, whatever the slot. It runs a
+  system and the miner with no monitor, reached by ssh, and mines whenever it is on with Mine at start. A Transition
+  rig of four cards mines about 13,600 H/s, a Standard one of six about 157,000 and an Advanced one of eight about
+  467,000.
+- **The ASICs**, Blockwright's blocks made only to mine: the Forge S1 (Standard, 1,000,000 H/s at 1,400 W) and the
+  Forge A2 (Advanced, 10,000,000 H/s at 3,200 W). They have no system: the window sets the payout address and the
+  pool. They take energy on any face and join the data network they touch.
+- **The 3D printers**, peripherals that turn TRC into items: the Prosa i3 MK3 (Standard, an open frame, 30 s an item)
+  and the Rattan Lab X1 (Advanced, closed, its bed a belt, 15 s). Each prints the real item a row at a time and puts
+  it into its output of three stacks by itself; a full output makes it wait. Each item is paid as it starts from the
+  wallet that sent the job, and a wallet short of the price makes it wait. It draws no energy and uses no filament.
+
 ## What can go wrong
 
 - **A system will not install, or the setup lists a disk's system as "for ... processors".** The system is built for

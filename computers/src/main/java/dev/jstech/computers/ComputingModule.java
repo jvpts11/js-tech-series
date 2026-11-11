@@ -15,6 +15,7 @@ import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
 import dev.jstech.computers.backup.TapeFormat;
 import dev.jstech.computers.block.AccessPointBlock;
+import dev.jstech.computers.block.AsicBlock;
 import dev.jstech.computers.block.CableRunTexts;
 import dev.jstech.computers.block.CaseStyle;
 import dev.jstech.computers.block.ClusterManagementComputerBlock;
@@ -24,6 +25,8 @@ import dev.jstech.computers.block.HubBlock;
 import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.MainframePartBlock;
+import dev.jstech.computers.block.MiningComputerBlock;
+import dev.jstech.computers.block.MiningComputerPartBlock;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.MonitorKind;
 import dev.jstech.computers.block.NetworkGatewayBlock;
@@ -31,6 +34,7 @@ import dev.jstech.computers.block.PatternEncoderBlock;
 import dev.jstech.computers.block.PersonalComputerBlock;
 import dev.jstech.computers.block.QuinceComputerBlock;
 import dev.jstech.computers.block.QuinceMainframeBlock;
+import dev.jstech.computers.block.Printer3DBlock;
 import dev.jstech.computers.block.PrinterBlock;
 import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.RedstoneInterfaceBlock;
@@ -48,16 +52,20 @@ import dev.jstech.computers.block.WanGatewayPartBlock;
 import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.AccessPointBlockEntity;
+import dev.jstech.computers.blockentity.AsicBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.HbwInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.HubBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MainframePartBlockEntity;
+import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
+import dev.jstech.computers.blockentity.MiningComputerPartBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.NetworkGatewayBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.blockentity.Printer3DBlockEntity;
 import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.RepeaterBlockEntity;
@@ -97,6 +105,7 @@ import dev.jstech.computers.hardware.WifiCardSpec;
 import dev.jstech.computers.hardware.WorkshopCardSpec;
 import dev.jstech.computers.item.CabinetBlockItem;
 import dev.jstech.computers.item.MainframeBlockItem;
+import dev.jstech.computers.item.MiningComputerBlockItem;
 import dev.jstech.computers.item.PrintedPaperItem;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerCaseItem;
@@ -121,6 +130,8 @@ import dev.jstech.computers.registry.ComputingContent;
 import dev.jstech.computers.registry.ComputingContent.Shelf;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.registry.OwnComputers;
+import dev.jstech.computers.teracoin.AsicModel;
+import dev.jstech.computers.teracoin.Printer3DModel;
 import dev.jstech.computers.wireless.AccessPointMount;
 import dev.jstech.core.cable.CableEntry;
 import dev.jstech.core.cable.CableType;
@@ -186,6 +197,10 @@ public final class ComputingModule {
             IBlockLook.fixed(new IBlockModel.ParticleOnly("rack", "block/rack_particle"));
     private static final IBlockLook ENCODER_BODY =
             IBlockLook.fixed(new IBlockModel.ParticleOnly("pattern_encoder_body", "block/pattern_encoder_particle"));
+    private static final IBlockLook RIG_BODY =
+            IBlockLook.fixed(new IBlockModel.ParticleOnly("mining_computer", "block/mining_computer_particle"));
+    private static final IBlockLook ASIC_BODY =
+            IBlockLook.fixed(new IBlockModel.ParticleOnly("asic", "block/asic_particle"));
 
     /**
      * How a rack cabinet sits in an item slot: 3 blocks tall is its longest side, and its model spans
@@ -424,6 +439,39 @@ public final class ComputingModule {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<WanGatewayPartBlockEntity>>
             WAN_GATEWAY_PART_BE = CONTENT.blockEntity("wan_gateway_part", WanGatewayPartBlockEntity::new,
                     WAN_GATEWAY_PART);
+
+    /*
+     * Mining Computers, the rigs that mine Teracoin, from the Transition on: an open frame, the Transition's in one
+     * block, the Standard's and the Advanced's two blocks wide, drawn as one model by the origin, which hands its item
+     * over itself when broken; the second block is taken down without drops.
+     */
+    public static final BlockEntry<MiningComputerBlock> MINING_COMPUTER_TRANSITION =
+            miningComputer("mining_computer_transition", HardwareEra.TRANSITION)
+                    .named("Mining Computer (Transition)").register();
+    public static final BlockEntry<MiningComputerBlock> MINING_COMPUTER_STANDARD =
+            miningComputer("mining_computer_standard", HardwareEra.STANDARD)
+                    .named("Mining Computer (Standard)").register();
+    public static final BlockEntry<MiningComputerBlock> MINING_COMPUTER_ADVANCED =
+            miningComputer("mining_computer_advanced", HardwareEra.ADVANCED)
+                    .named("Mining Computer (Advanced)").register();
+    public static final BlockEntry<MiningComputerPartBlock> MINING_COMPUTER_PART =
+            CONTENT.block("mining_computer_part", MiningComputerPartBlock::new)
+                    .properties(ComputingModule::rigProperties).named("Mining Computer").look(RIG_BODY)
+                    .tag(BlockTags.MINEABLE_WITH_PICKAXE).register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MiningComputerBlockEntity>>
+            MINING_COMPUTER_BE = CONTENT.blockEntity("mining_computer", MiningComputerBlockEntity::new,
+                    MINING_COMPUTER_TRANSITION, MINING_COMPUTER_STANDARD, MINING_COMPUTER_ADVANCED);
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MiningComputerPartBlockEntity>>
+            MINING_COMPUTER_PART_BE = CONTENT.blockEntity("mining_computer_part",
+                    MiningComputerPartBlockEntity::new, MINING_COMPUTER_PART);
+
+    /* Blockwright's ASICs, a block each, made only to mine: the Standard's Forge S1 and the Advanced's Forge A2. */
+    public static final BlockEntry<AsicBlock> ASIC_FORGE_S1 = asic(AsicModel.FORGE_S1)
+            .named("Blockwright Forge S1").register();
+    public static final BlockEntry<AsicBlock> ASIC_FORGE_A2 = asic(AsicModel.FORGE_A2)
+            .named("Blockwright Forge A2").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<AsicBlockEntity>> ASIC_BE =
+            CONTENT.blockEntity("asic", AsicBlockEntity::new, ASIC_FORGE_S1, ASIC_FORGE_A2);
 
     /*
      * Monitors, era by era: the Vintage terminal tubes (paper-white, green, amber, and the sixteen-colour CGA), the
@@ -676,6 +724,13 @@ public final class ComputingModule {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<PrinterBlockEntity>> PRINTER_BE =
             CONTENT.blockEntity("printer", PrinterBlockEntity::new, VINTAGE_PRINTER, LEGACY_PRINTER,
                     TRANSITION_PRINTER, PRINTER, ADVANCED_PRINTER);
+    /* The 3D printers, named for their models as every printer of the mod is: they print items paid in TRC. */
+    public static final BlockEntry<Printer3DBlock> PROSA_I3_MK3 = printer3d(Printer3DModel.PROSA_I3_MK3)
+            .named("Prosa i3 MK3").register();
+    public static final BlockEntry<Printer3DBlock> RATTAN_LAB_X1 = printer3d(Printer3DModel.RATTAN_LAB_X1)
+            .named("Rattan Lab X1").register();
+    public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<Printer3DBlockEntity>> PRINTER_3D_BE =
+            CONTENT.blockEntity("printer_3d", Printer3DBlockEntity::new, PROSA_I3_MK3, RATTAN_LAB_X1);
     /** The sheet a printer turns out, carrying what it printed. */
     public static final ItemEntry<PrintedPaperItem> PRINTED_PAPER =
             CONTENT.item("printed_paper", PrintedPaperItem::new).named("Printed Paper")
@@ -1524,6 +1579,33 @@ public final class ComputingModule {
                 .tab(shelf(Shelf.MAINFRAMES, era));
     }
 
+    private static BlockBuilder<MiningComputerBlock> miningComputer(final String id, final Era era) {
+        OwnComputers.computer(id, MiningComputerBlockEntity.computer(era));
+        return CONTENT.block(id, properties -> new MiningComputerBlock(properties, era))
+                .properties(ComputingModule::rigProperties).look(RIG_BODY)
+                .geo(ComputingLooks.MINING_COMPUTER)
+                .item((block, properties) -> new MiningComputerBlockItem(block, properties, era))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).drops(Drops.NONE).tag(BlockTags.MINEABLE_WITH_PICKAXE)
+                .tab(shelf(Shelf.MINING, era));
+    }
+
+    /* An ASIC of {@code model}, its model's own block, drawn by its block entity; it drops itself. */
+    private static BlockBuilder<AsicBlock> asic(final AsicModel model) {
+        final String id = "asic_" + model.id();
+        return CONTENT.block(id, properties -> new AsicBlock(properties, model))
+                .properties(ComputingModule::rigProperties).look(ASIC_BODY)
+                .geo(ComputingLooks.ASIC)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.ASIC,
+                        ComputingLooks.asic(model), DEVICE_FIT, List.of("lamp_running")))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tag(BlockTags.MINEABLE_WITH_PICKAXE)
+                .tab(shelf(Shelf.MINING, model.era()));
+    }
+
+    /* An open frame of metal (the Transition's of oak and steel), light enough to carry off. */
+    private static BlockBehaviour.Properties rigProperties(final BlockBehaviour.Properties properties) {
+        return properties.mapColor(MapColor.METAL).strength(2.0F).sound(SoundType.METAL).noOcclusion();
+    }
+
     private static BlockBuilder<WanGatewayBlock> wanGateway(final String id, final Era era) {
         OwnComputers.computer(id, WanGatewayBlockEntity.computer(era));
         return CONTENT.block(id, properties -> new WanGatewayBlock(properties, era))
@@ -1641,6 +1723,19 @@ public final class ComputingModule {
      * without noOcclusion the full cube would block its own light and cull the faces of its neighbours. Its item
      * shows the printer at rest, its lamps dark and no page coming out.
      */
+    /* A 3D printer of {@code model}, drawn by its block entity, its item the printer as it comes, at rest. */
+    private static BlockBuilder<Printer3DBlock> printer3d(final Printer3DModel model) {
+        final String id = model.id();
+        return CONTENT.block(id, properties -> new Printer3DBlock(properties, model))
+                .properties(properties -> properties.mapColor(MapColor.COLOR_BLACK).strength(1.5F)
+                        .sound(SoundType.METAL).noOcclusion())
+                .look(IBlockLook.fixed(new IBlockModel.ParticleOnly(id + "_body", "block/" + id + "_particle")))
+                .geo(ComputingLooks.PRINTER_3D)
+                .item((block, properties) -> new CabinetBlockItem(block, properties, ComputingLooks.PRINTER_3D,
+                        ComputingLooks.printer3d(model), DEVICE_FIT, List.of("item_", "lamp_")))
+                .itemLook(IItemLook.DRAWN_BY_ENTITY).tab(shelf(Shelf.PERIPHERALS, model.era()));
+    }
+
     private static BlockBuilder<PrinterBlock> printer(final String id, final MapColor color, final Era era) {
         return CONTENT.block(id, properties -> new PrinterBlock(properties, era))
                 .properties(properties -> properties.mapColor(color).strength(1.5F).sound(SoundType.METAL)

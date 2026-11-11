@@ -11,6 +11,7 @@ import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ClusterManagementComputerBlockEntity;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
@@ -89,6 +90,7 @@ public final class RemoteComputerService {
             TextKey.of("jsc.service.remote.type.cluster", "Cluster Management Computer");
     private static final TextKey TYPE_WAN_GATEWAY =
             TextKey.of("jsc.service.remote.type.wan_gateway", "WAN Gateway Computer");
+    private static final TextKey TYPE_MINING = TextKey.of("jsc.service.remote.type.mining", "Mining Computer");
 
     public RemoteComputerService(final IComputerTerminalHost terminal, final ServerLevel level) {
         this.terminal = terminal;
@@ -114,8 +116,10 @@ public final class RemoteComputerService {
         if (mainframe != null) {
             candidates.add(mainframe);
         }
+        // The personal computers, and the mining rigs, which have no screen and are reached from here or a panel.
         for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
-            if (Loaded.blockEntity(this.level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity be) {
+            final BlockEntity be = Loaded.blockEntity(this.level, BlockPos.of(pc.pos()));
+            if (be instanceof PersonalComputerBlockEntity || be instanceof MiningComputerBlockEntity) {
                 candidates.add(be);
             }
         }
@@ -288,6 +292,9 @@ public final class RemoteComputerService {
         }
         if (machine instanceof WanGatewayBlockEntity) {
             return TYPE_WAN_GATEWAY.text();
+        }
+        if (machine instanceof MiningComputerBlockEntity) {
+            return TYPE_MINING.text();
         }
         return TYPE_COMPUTER.text();
     }

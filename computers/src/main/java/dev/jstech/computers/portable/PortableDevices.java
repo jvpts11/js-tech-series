@@ -71,6 +71,12 @@ public final class PortableDevices extends SavedData {
         return state != null && changed(state.install(app));
     }
 
+    /** Keeps the wallet {@code address}, spent with {@code key}, on the device {@code id}; false when it has one. */
+    public boolean keepWallet(final UUID id, final String address, final String key) {
+        final PortableState state = devices.get(id);
+        return state != null && changed(state.keepWallet(address, key));
+    }
+
     /** Gives the device {@code id} an alert; false when it has no state yet. */
     public boolean deliver(final UUID id, final PortableAlert alert) {
         final PortableState state = devices.get(id);

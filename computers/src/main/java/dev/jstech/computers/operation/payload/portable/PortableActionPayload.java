@@ -128,7 +128,13 @@ public record PortableActionPayload(UUID device, Action action, String named, St
         /** Asks what the maps show round the device. */
         MAP("map"),
         /** Asks what the prospecting finds round the device. */
-        PROSPECT("prospect");
+        PROSPECT("prospect"),
+        /** Asks for the device's wallet: its balance and its history. */
+        WALLET("wallet"),
+        /** Makes the device's wallet, when it has none. */
+        WALLET_CREATE("wallet_create"),
+        /** Sends {@code amount} from the device's wallet to the address named. */
+        WALLET_SEND("wallet_send");
 
         private final String serializedName;
 

@@ -1,0 +1,43 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:aluminium_plate"
+    },
+    {
+      "count": 4,
+      "item": "jscore:steel_rod"
+    },
+    {
+      "count": 5,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_standard"
+    },
+    {
+      "count": 1,
+      "item": "jsc:copper_coil"
+    },
+    {
+      "count": 1,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:lcd_screen"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:prosa_i3_mk3"
+    }
+  ]
+}

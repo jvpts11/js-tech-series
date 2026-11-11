@@ -1,0 +1,27 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 8,
+      "item": "jscore:steel_rod"
+    },
+    {
+      "count": 2,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_transition"
+    },
+    {
+      "count": 2,
+      "item": "jscore:copper_wire"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:mining_computer_transition"
+    }
+  ]
+}

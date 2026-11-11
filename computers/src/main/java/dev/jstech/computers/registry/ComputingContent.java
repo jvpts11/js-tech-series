@@ -80,6 +80,8 @@ public final class ComputingContent {
         MAINFRAMES("mainframes"),
         /** The WAN Gateway Computers, at either end of a long-distance line. */
         WAN_GATEWAYS("wan_gateways"),
+        /** What mines Teracoin: the Mining Computers and the ASICs. */
+        MINING("mining"),
         /** Server racks and supercomputer racks, the server cases, the servers and the nodes. */
         SERVER_RACK("racks_and_servers"),
         /** What a rack carries in its bays besides servers: the rack units. */

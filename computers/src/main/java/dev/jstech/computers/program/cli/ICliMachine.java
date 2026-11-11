@@ -15,6 +15,7 @@ import dev.jstech.computers.os.UnixTree;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.program.job.JobWhen;
 import dev.jstech.computers.program.job.MachineJobs;
+import dev.jstech.computers.teracoin.MinerConsole;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -44,6 +45,12 @@ public interface ICliMachine {
      */
     default String defrag(final String request) {
         return "";
+    }
+
+    /** The machine's Teracoin miner, or null where the machine cannot mine. */
+    @Nullable
+    default MinerConsole miner() {
+        return null;
     }
 
     /** A human label for the computer kind, e.g. {@code "Personal Computer"} or {@code "Mainframe"}. */

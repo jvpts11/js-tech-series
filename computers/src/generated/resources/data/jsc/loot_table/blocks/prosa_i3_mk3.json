@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:prosa_i3_mk3"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "jsc:blocks/prosa_i3_mk3"
+}

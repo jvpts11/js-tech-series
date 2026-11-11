@@ -647,6 +647,12 @@ final class CommandPromptPages {
                         + " prints \"Deleted job\" and its number. A job number that does not exist gets \"The job ID"
                         + " does not exist.\" With no jobs, at says \"There are no entries in the list.\"")
                 .command(CommandGuidePages.id(Platform.MC_DOS, "at"))
+                .subheading("Mining in the background")
+                .paragraph("The Blockwright miner mines Teracoin at the prompt or behind it ([](jsc:mining)). MINER"
+                        + " --ADDRESS and your wallet's address tells it whom to pay; MINER watches it mine until you"
+                        + " press Q, MINER START mines in the background whenever the computer is on, and MINER STOP"
+                        + " ends that.")
+                .command(CommandGuidePages.id(Platform.MC_DOS, "miner"))
                 .ifSomethingGoesWrong("tasklist says No tasks are running.",
                         "No program is running on the computer right now. Start a program, then run tasklist again.",
                         "taskkill says /PID takes the number of a task.",

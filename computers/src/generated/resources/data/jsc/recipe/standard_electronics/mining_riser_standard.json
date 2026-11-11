@@ -1,0 +1,31 @@
+{
+  "type": "jsc:standard_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:etched_board_standard"
+    },
+    {
+      "count": 1,
+      "item": "jsc:expansion_slot_pcie"
+    },
+    {
+      "count": 3,
+      "item": "jscore:copper_wire"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:gold_nugget"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:mining_riser_standard"
+    }
+  ]
+}

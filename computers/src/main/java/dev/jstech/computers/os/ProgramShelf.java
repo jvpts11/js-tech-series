@@ -40,6 +40,7 @@ public enum ProgramShelf {
             Map.entry("soundfoundry", SOUND_AND_VIDEO),
             Map.entry("storage_insights", SYSTEM_TOOLS), Map.entry("automation_manager", SYSTEM_TOOLS),
             Map.entry("craft_planner", NETWORK),
+            Map.entry("crypto_wallet", INTERNET), Map.entry("mining_panel", NETWORK), Map.entry("miner", NETWORK),
             Map.entry("minesweeper", GAMES), Map.entry("solitaire", GAMES), Map.entry("snake", GAMES));
 
     ProgramShelf(final String portage) {

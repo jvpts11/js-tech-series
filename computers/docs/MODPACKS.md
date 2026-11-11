@@ -53,6 +53,7 @@ One tag per kind of thing, holding it in every era:
 | `#jsc:cluster_management_computers` | The Cluster Management Computers. |
 | `#jsc:mainframes` | The Mainframes, Quince's too, which run a network. |
 | `#jsc:wan_gateways` | The WAN Gateway Computers, at either end of a long-distance line. |
+| `#jsc:mining` | What mines Teracoin: the Mining Computers and the ASICs. |
 | `#jsc:racks_and_servers` | Server racks and supercomputer racks, the server cases, the servers (Quince's qServe too) and the nodes. |
 | `#jsc:rack_bays` | What a rack carries in its bays besides servers: the rack units. |
 | `#jsc:peripherals` | The devices at a desk: monitors, drives, encoders, printers, speakers, hubs, peripheral cables. |

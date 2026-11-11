@@ -132,6 +132,18 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.tasks_and_jobs.heading4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.tasks_and_jobs.text10"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/miner"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -167,7 +179,7 @@
     }
   ],
   "id": "jsc:tasks_and_jobs",
-  "order": 225,
+  "order": 229,
   "section": "jsc:prompt_system",
   "title": "jsc.guide.tasks_and_jobs.title"
 }

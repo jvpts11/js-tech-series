@@ -126,7 +126,9 @@ final class HardwareRecipes {
                 add(items, slot(gens.get(i)).item().get(), count);
             }
             final int older = board.olderBus() == null ? 0 : OLDER_SLOTS;
-            add(items, expansion(board.pcieGeneration()), board.pcieSlots() - older);
+            // A mining board's slots are x1, each a riser's cable to a card standing on the frame.
+            add(items, board.formFactor() == FormFactor.MNG ? part("expansion_slot_pcie_x1")
+                    : expansion(board.pcieGeneration()), board.pcieSlots() - older);
             if (board.olderBus() != null) {
                 add(items, expansion(board.olderBus()), older);
             }

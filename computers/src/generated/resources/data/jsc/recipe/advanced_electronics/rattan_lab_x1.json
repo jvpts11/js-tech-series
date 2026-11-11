@@ -1,0 +1,43 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 2,
+      "item": "minecraft:glass_pane"
+    },
+    {
+      "count": 4,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 1,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_advanced"
+    },
+    {
+      "count": 1,
+      "item": "jsc:copper_coil"
+    },
+    {
+      "count": 1,
+      "item": "jscore:led"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:rattan_lab_x1"
+    }
+  ]
+}

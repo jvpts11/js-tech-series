@@ -110,6 +110,8 @@ public final class BuiltinCommands {
                 // MC-DOS's menu shell, the desktop a machine of its age had none of.
                 new DosShellCommand(),
                 new NetworkCommands.Ssh(),
+                // Blockwright's Teracoin miner, once its package is installed.
+                new MinerCommand(),
                 new ShellCommands.Exit(),
                 new SoftwareCommands.Pckmgr("pckmgr", Set.of(Platform.FRAMES)),
                 new SoftwareCommands.ProgramsList(),

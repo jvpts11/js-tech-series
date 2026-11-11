@@ -156,7 +156,7 @@
     }
   ],
   "id": "jsc:gateway_command",
-  "order": 156,
+  "order": 160,
   "section": "jsc:gateway",
   "title": "jsc.guide.gateway_command.title"
 }

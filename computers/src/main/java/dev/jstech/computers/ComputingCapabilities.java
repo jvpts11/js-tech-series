@@ -68,6 +68,7 @@ public final class ComputingCapabilities {
         offerEnergy(event, ComputingModule.CLUSTER_MANAGEMENT_COMPUTER_BE.get());
         offerEnergy(event, ComputingModule.MAINFRAME_BE.get());
         offerEnergy(event, ComputingModule.WAN_GATEWAY_BE.get());
+        offerEnergy(event, ComputingModule.MINING_COMPUTER_BE.get());
         offerHeat(event, ComputingModule.PERSONAL_COMPUTER_BE.get());
         offerHeat(event, ComputingModule.SMALL_COMPUTER_BE.get());
         offerHeat(event, ComputingModule.CRAFTING_COMPUTER_BE.get());
@@ -76,10 +77,15 @@ public final class ComputingCapabilities {
         offerHeat(event, ComputingModule.WAN_GATEWAY_BE.get());
         offerThroughParts(event, ComputingModule.MAINFRAME_PART_BE.get());
         offerThroughParts(event, ComputingModule.WAN_GATEWAY_PART_BE.get());
+        offerThroughParts(event, ComputingModule.MINING_COMPUTER_PART_BE.get());
         // A UPS takes the line only at its inlet, on its back and sides; the computers against it it feeds itself.
         event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.UPS_BE.get(), UpsBlockEntity::energyPort);
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ComputingModule.UPS_BE.get(),
                 UpsBlockEntity::feEnergy);
+        // An ASIC takes its energy on every face.
+        event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.ASIC_BE.get(), (asic, side) -> asic.energyPort());
+        event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ComputingModule.ASIC_BE.get(),
+                (asic, side) -> asic.feEnergy());
         // An access point takes its energy on the face its cables come in by, and no other.
         event.registerBlockEntity(EnergyPorts.PORT, ComputingModule.ACCESS_POINT_BE.get(),
                 AccessPointBlockEntity::energyPort);

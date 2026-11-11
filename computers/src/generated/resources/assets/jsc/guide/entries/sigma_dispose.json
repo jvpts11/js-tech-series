@@ -70,7 +70,7 @@
     }
   ],
   "id": "jsc:sigma_dispose",
-  "order": 408,
+  "order": 412,
   "section": "jsc:sigma_failures",
   "title": "jsc.guide.sigma_dispose.title"
 }

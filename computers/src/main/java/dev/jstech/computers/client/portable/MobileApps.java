@@ -25,11 +25,12 @@ public final class MobileApps {
     private static final GalleryAppView GALLERY = new GalleryAppView();
     private static final MapsAppView MAPS = new MapsAppView();
     private static final ProspectingAppView PROSPECTING = new ProspectingAppView();
+    private static final WalletAppView WALLET = new WalletAppView();
 
     private MobileApps() {
     }
 
-    /** The view of {@code app}, or null for one whose inside comes later: the Crypto Wallet, with the Teracoin. */
+    /** The view of {@code app}; every app has one. */
     @Nullable
     public static IMobileAppView of(final MobileApp app) {
         return switch (app) {
@@ -40,7 +41,7 @@ public final class MobileApps {
             case GALLERY -> GALLERY;
             case MAPS -> MAPS;
             case PROSPECTING -> PROSPECTING;
-            case CRYPTO_WALLET -> null;
+            case CRYPTO_WALLET -> WALLET;
         };
     }
 

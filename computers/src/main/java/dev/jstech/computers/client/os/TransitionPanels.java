@@ -607,7 +607,7 @@ final class TransitionPanels {
             out.put(id, TransitionTexts.GRAPHICS);
         }
         for (final String id : List.of("network_manager", "messenger", "remote_control", "gateway_manager",
-                "borderlink", "knothub", "mirror")) {
+                "borderlink", "knothub", "mirror", "crypto_wallet", "mining_panel")) {
             out.put(id, TransitionTexts.INTERNET);
         }
         for (final String id : List.of("virtual_studio", "virtual_studio_code", "sigma", "sigma_program", "emacs",

@@ -59,6 +59,10 @@ public record HostScope(String id, TextKey name, @Nullable TextKey refusal) {
             TextKey.of("jsc.service.gates.crafting_only", "%s only installs on a Crafting Computer");
     private static final TextKey WAN_GATEWAY_ONLY =
             TextKey.of("jsc.service.gates.wan_gateway_only", "%s only installs on a WAN Gateway Computer");
+    private static final TextKey A_MINING_COMPUTER =
+            TextKey.of("jsc.install.setup_gate.on_a_mining_computer", "a Mining Computer");
+    private static final TextKey MINING_ONLY =
+            TextKey.of("jsc.service.gates.mining_only", "%s only installs on a Mining Computer");
     private static final DeclaredKinds<HostScope> KINDS = new DeclaredKinds<>("machine", HostScope::id);
 
     /** No host restriction: the program may exist on any computer that meets its platform and specs. */
@@ -77,6 +81,8 @@ public record HostScope(String id, TextKey name, @Nullable TextKey refusal) {
     /** Only on a WAN Gateway Computer, the machine at either end of a long-distance line. */
     public static final HostScope WAN_GATEWAY_COMPUTER =
             own("wan_gateway_computer", A_WAN_GATEWAY, WAN_GATEWAY_ONLY);
+    /** Only on a Mining Computer, the open-frame rig whose cards stand on risers. */
+    public static final HostScope MINING_COMPUTER = own("mining_computer", A_MINING_COMPUTER, MINING_ONLY);
 
     public HostScope {
         Objects.requireNonNull(id, "id");

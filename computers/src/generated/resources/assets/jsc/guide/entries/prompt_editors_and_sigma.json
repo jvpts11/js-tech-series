@@ -191,7 +191,7 @@
     }
   ],
   "id": "jsc:prompt_editors_and_sigma",
-  "order": 230,
+  "order": 234,
   "section": "jsc:prompt_programs_and_network",
   "title": "jsc.guide.prompt_editors_and_sigma.title"
 }

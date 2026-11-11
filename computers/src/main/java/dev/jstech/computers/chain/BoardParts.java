@@ -53,6 +53,7 @@ public final class BoardParts {
             socket(HardwareEra.LEGACY, "socket_940", 940, Mechanism.ZIF).named("Socket 940"),
             memorySlot(HardwareEra.TRANSITION, "ddr3", 240).named("DDR3 DIMM Slot"),
             power(HardwareEra.TRANSITION, "atx24", 24).named("ATX 24-pin Connector"),
+            expansionSlot(HardwareEra.TRANSITION, "pcie_x1", 36).named("PCIe x1 Slot"),
             socket(HardwareEra.TRANSITION, "lga_771", 771, Mechanism.LGA).named("LGA 771"),
             socket(HardwareEra.TRANSITION, "am2", 940, Mechanism.ZIF).named("AM2"),
             socket(HardwareEra.TRANSITION, "am3", 941, Mechanism.ZIF).named("AM3"),

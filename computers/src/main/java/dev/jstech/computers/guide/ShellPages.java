@@ -405,6 +405,12 @@ final class ShellPages {
                 .row(GuideCell.code("M, T, W, Th, F, Sa, Su"), GuideCell.words("The days, separated by commas. Leave"
                         + " them out to run every day."))
                 .command(CommandGuidePages.id(Platform.LINUX, "crontab"))
+                .subheading("Mining in the background")
+                .paragraph("The Blockwright miner mines Teracoin at the prompt or behind it ([](jsc:mining)). miner"
+                        + " --address and your wallet's address tells it whom to pay; miner watches it mine until you"
+                        + " press Q, miner start mines in the background whenever the machine is on, and miner stop"
+                        + " ends that.")
+                .command(CommandGuidePages.id(Platform.LINUX, "miner"))
                 .ifSomethingGoesWrong("The kill command says kill: not a process id.",
                         "Give the number of the process from the ps list, not its name.",
                         "The kill command says there is no such job.",

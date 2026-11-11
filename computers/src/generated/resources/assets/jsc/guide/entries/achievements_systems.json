@@ -349,7 +349,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:achievements_systems",
-  "order": 160,
+  "order": 164,
   "section": "jsc:the_achievements",
   "title": "jsc.guide.achievements_systems.title"
 }

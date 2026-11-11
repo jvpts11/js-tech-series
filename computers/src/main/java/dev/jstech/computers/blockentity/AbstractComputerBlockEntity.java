@@ -87,6 +87,8 @@ import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.defrag.DefragRunner;
+import dev.jstech.computers.teracoin.MinerRunner;
+import dev.jstech.computers.teracoin.WalletPrinting;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaKind;
@@ -477,6 +479,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     /** Whether this computer seats the personal-use cards, which only a Personal Computer has a program for. */
     protected boolean takesWorkshopCards() {
         return computer.machine() == HostScope.PERSONAL_COMPUTER;
+    }
+
+    /** Whether its graphics cards sit on risers, where mining ignores the slot's cut: a Mining Computer's do. */
+    public boolean cardsOnRisers() {
+        return false;
     }
 
     public boolean isValidForSlot(final int slot, final ItemStack stack) {
@@ -2232,6 +2239,8 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         Acting.asOperatorOf(this, sigmaTick);
         SetupRunner.tick(this, level, worldPosition);
         DefragRunner.tick(this, level);
+        MinerRunner.tick(this, level, worldPosition, cardsOnRisers());
+        WalletPrinting.tickAuto(this, level, worldPosition);
         keepAnchored(level);
         attachment.tick(level);
         // A computer whose cards read machines keeps its links on the industrial control cable, once a second.

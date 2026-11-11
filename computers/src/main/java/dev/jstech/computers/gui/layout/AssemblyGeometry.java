@@ -32,7 +32,8 @@ import java.util.Set;
  * the row's seats show only while a two-socket board is in. The Mainframe and the rack server carry four sockets, eight
  * banks and six cards, which
  * no tower board does: their cards stand in two I/O cages of three risers. The server has no front, its drives being the
- * rack's, but a wall of fans.
+ * rack's, but a wall of fans. The Mining Computer has no case at all: its risers lie along the rail of its open frame,
+ * and its cards are seated on them in the world, never here.
  *
  * <p>Pure: the screens draw from it and the menus seat their slots from it, so the two cannot disagree, and the tests
  * check it without the game.
@@ -49,12 +50,19 @@ public final class AssemblyGeometry {
         MAINFRAME,
 
         /** A rack server's chassis. */
-        SERVER
+        SERVER,
+
+        /**
+         * The Mining Computer's open frame (computers/docs/design/teracoin.md): its risers on the rail, the cards
+         * standing on those the player seated in the world, and under them the mining board with the supply and the
+         * disk at its ends.
+         */
+        RIG
     }
 
     /** What a seat takes. */
     public enum SeatKind {
-        BOARD, CPU, RAM, CARD, PSU, BAY, DISK, COOLER, FAN
+        BOARD, CPU, RAM, CARD, PSU, BAY, DISK, COOLER, FAN, RISER
     }
 
     /**
@@ -103,6 +111,8 @@ public final class AssemblyGeometry {
     private final int caseRight;
     private final int caseBottom;
     private final int inventoryY;
+    /* The rig's risers, none on any other case. */
+    private final int risers;
     private final List<Seat> seats;
 
     /** Between two seats, a slot and the gap after it. */
@@ -179,6 +189,25 @@ public final class AssemblyGeometry {
     /** The tabs of the case's two faces under the lamps: their height and the gap between them. */
     private static final int TAB_H = 13;
     private static final int TAB_GAP = 2;
+    /*
+     * The rig's open frame: where its case ends (the frame's right and bottom), the rail the risers sit on, the row of
+     * the board's seats with the supply and the disk at its ends, and the gap down to the inventory.
+     */
+    private static final int RIG_TRAY_RIGHT = 157;
+    private static final int RIG_CASE_BOTTOM = 156;
+    private static final int RIG_RAIL = 72;
+    private static final int RIG_ROW = 116;
+    private static final int RIG_CPU_X = 62;
+    private static final int RIG_DIMM_X = 88;
+    private static final int RIG_DISK_X = 160;
+    private static final int RIG_PSU_X = 12;
+    private static final int RIG_RAM = 2;
+    private static final int RIG_INVENTORY_GAP = 8;
+    /* The hint under the rig's readouts: its top, its lines and their pitch. */
+    private static final int RIG_HINT_TOP = 112;
+    private static final int RIG_HINT_LINES = 4;
+    private static final int RIG_HINT_PITCH = 8;
+    private static final int RIG_HINT_CHARS = 16;
 
     /**
      * @param kind        which case
@@ -191,26 +220,33 @@ public final class AssemblyGeometry {
      */
     public AssemblyGeometry(final Kind kind, final int bays, final boolean supplyAtTop, final boolean secondRow,
                             final CaseCooling cooling, final int readouts) {
-        this(kind, bays, supplyAtTop, secondRow, cooling, readouts, kind == Kind.MAINFRAME);
+        this(kind, bays, supplyAtTop, secondRow, cooling, readouts, kind == Kind.MAINFRAME, 0);
     }
 
-    /* As the public one, with or without the operations strip under the case, which only a Mainframe's cabinet has. */
+    /*
+     * As the public one, with or without the operations strip under the case, which only a Mainframe's cabinet has, and
+     * with the risers of a rig.
+     */
     private AssemblyGeometry(final Kind kind, final int bays, final boolean supplyAtTop, final boolean secondRow,
-                             final CaseCooling cooling, final int readouts, final boolean operations) {
+                             final CaseCooling cooling, final int readouts, final boolean operations,
+                             final int risers) {
         this.kind = kind;
         this.bays = kind == Kind.TOWER ? bays : 0;
         this.supplyAtTop = kind == Kind.TOWER && supplyAtTop;
         this.secondRow = kind == Kind.TOWER && secondRow;
-        this.cooling = kind == Kind.SERVER ? CaseCooling.NONE : cooling;
+        // A server is cooled by its rack and a rig stands open in the air: neither has a cooling face.
+        this.cooling = kind == Kind.SERVER || kind == Kind.RIG ? CaseCooling.NONE : cooling;
         this.readouts = readouts;
         this.operations = kind == Kind.MAINFRAME && operations;
+        this.risers = kind == Kind.RIG ? risers : 0;
         // A server has no switches of its own: it is switched on and off in its rack.
         this.switches = kind == Kind.SERVER ? 0 : 2;
         final boolean tower = kind == Kind.TOWER;
-        this.width = tower ? TOWER_W : BIG_W;
-        this.trayRight = tower ? TOWER_TRAY_RIGHT : BIG_TRAY_RIGHT;
-        this.dimmX = tower ? TOWER_DIMM_X : BIG_DIMM_X;
-        this.rightX = tower ? TOWER_RIGHT_X : BIG_RIGHT_X;
+        final boolean narrow = tower || kind == Kind.RIG;
+        this.width = narrow ? TOWER_W : BIG_W;
+        this.trayRight = kind == Kind.RIG ? RIG_TRAY_RIGHT : tower ? TOWER_TRAY_RIGHT : BIG_TRAY_RIGHT;
+        this.dimmX = kind == Kind.RIG ? RIG_DIMM_X : tower ? TOWER_DIMM_X : BIG_DIMM_X;
+        this.rightX = narrow ? TOWER_RIGHT_X : BIG_RIGHT_X;
         this.frontX = trayRight + 2;
         this.caseRight = frontX + 21;
         final List<Seat> board = seatMap();
@@ -221,11 +257,12 @@ public final class AssemblyGeometry {
         if (kind == Kind.SERVER) {
             bottom = Math.max(bottom, TOP + (SERVER_FANS - 1) * PITCH + 18);
         }
-        this.caseBottom = bottom + 8;
+        this.caseBottom = kind == Kind.RIG ? RIG_CASE_BOTTOM : bottom + 8;
         board.addAll(coolingSeats(board));
         this.seats = Collections.unmodifiableList(board);
         final int rightBottom = POWER_Y + POWER_H + 4 + readouts * READOUT_PITCH;
-        this.inventoryY = Math.max(caseBottom + (operations ? OPERATIONS_H + 2 : 0) + 6, rightBottom + 6);
+        this.inventoryY = kind == Kind.RIG ? caseBottom + RIG_INVENTORY_GAP
+                : Math.max(caseBottom + (operations ? OPERATIONS_H + 2 : 0) + 6, rightBottom + 6);
         this.height = inventoryY + 84;
     }
 
@@ -250,12 +287,45 @@ public final class AssemblyGeometry {
      * operations strip, since a gateway runs no Operations of its own.
      */
     public static AssemblyGeometry wanGateway(final int readouts) {
-        return new AssemblyGeometry(Kind.MAINFRAME, 0, false, false, CaseCooling.MAINFRAME, readouts, false);
+        return new AssemblyGeometry(Kind.MAINFRAME, 0, false, false, CaseCooling.MAINFRAME, readouts, false, 0);
     }
 
     /** A rack server's geometry: its rack cools it, so it has no cooling face. */
     public static AssemblyGeometry server(final int readouts) {
         return new AssemblyGeometry(Kind.SERVER, 0, false, false, CaseCooling.NONE, readouts);
+    }
+
+    /**
+     * A Mining Computer's geometry: its open frame with {@code risers} risers on the rail (four, six or eight, as its
+     * era's), no cooling face, since it stands open in the air, and two switches, auto start and mine at start.
+     */
+    public static AssemblyGeometry rig(final int risers, final int readouts) {
+        return new AssemblyGeometry(Kind.RIG, 0, false, false, CaseCooling.NONE, readouts, false, risers);
+    }
+
+    /** The rig's risers: none on any other case. */
+    public int risers() {
+        return risers;
+    }
+
+    /** The top of the rig's rail, the risers' seats just under it and the cards standing on it. */
+    public int rail() {
+        return RIG_RAIL;
+    }
+
+    /** The top of the row of the rig's board, the supply and the disk; their captions stand over it. */
+    public int rigRow() {
+        return RIG_ROW;
+    }
+
+    /** Where line {@code line} of the hint under the rig's readouts goes, from 0: its left is the readouts'. */
+    public int hintY(final int line) {
+        return RIG_HINT_TOP + line * RIG_HINT_PITCH;
+    }
+
+    /** How many lines the hint under the rig's readouts has room for. */
+    public int hintLines() {
+        return RIG_HINT_LINES;
     }
 
     /** Whether the case has a cooling face, and the tabs to turn to it. */
@@ -374,9 +444,9 @@ public final class AssemblyGeometry {
         return dimmX;
     }
 
-    /** Whether the case has a front with drives: every machine but the rack server. */
+    /** Whether the case has a front with drives: every machine but the rack server and the open rig. */
     public boolean hasFront() {
-        return kind != Kind.SERVER;
+        return kind != Kind.SERVER && kind != Kind.RIG;
     }
 
     /** Where the board's bus is printed: between the first two slots of a tower, over the cages otherwise. */
@@ -473,11 +543,16 @@ public final class AssemblyGeometry {
                 case CARD -> cardKey + "_" + seat.index();
                 case BAY -> "bay_" + seat.index();
                 case DISK -> "disk_" + seat.index();
+                case RISER -> "riser_" + seat.index();
                 case COOLER, FAN -> throw new IllegalStateException("a cooling seat on the board's face");
             };
             l.slot(key, seat.x(), seat.y());
         }
         panels(l);
+        if (kind == Kind.RIG) {
+            rigCaptions(l);
+            return l;
+        }
         l.text("rearCaption", REAR_X, RAIL_Y, 4, 0.75f);
         l.text("cpuCaption", CPU_X, RAIL_Y, 3, 0.75f);
         l.text("dimmCaption", dimmX, RAIL_Y, 4, 0.75f);
@@ -485,6 +560,32 @@ public final class AssemblyGeometry {
             l.text("frontCaption", frontX - 2, RAIL_Y, 5, 0.75f);
         }
         return l;
+    }
+
+    /** Where the rig's captions go: the risers' over the frame, and each part's over its seat in the board's row. */
+    public int[] rigCaption(final SeatKind of) {
+        return switch (of) {
+            case RISER -> new int[] {CASE_LEFT + 6, RAIL_Y};
+            case PSU -> new int[] {RIG_PSU_X, RIG_ROW - 8};
+            case CPU -> new int[] {RIG_CPU_X, RIG_ROW - 8};
+            case RAM -> new int[] {RIG_DIMM_X, RIG_ROW - 8};
+            case DISK -> new int[] {RIG_DISK_X, RIG_ROW - 8};
+            default -> throw new IllegalArgumentException("the rig has no caption for " + of);
+        };
+    }
+
+    /* The rig's captions and the lines of its hint, as text the tests check stays inside the screen. */
+    private void rigCaptions(final GuiLayout l) {
+        final SeatKind[] captioned = {SeatKind.RISER, SeatKind.PSU, SeatKind.CPU, SeatKind.RAM, SeatKind.DISK};
+        final String[] names = {"risersCaption", "psuCaption", "cpuCaption", "dimmCaption", "diskCaption"};
+        final int[] chars = {6, 3, 3, 4, 4};
+        for (int i = 0; i < captioned.length; i++) {
+            final int[] at = rigCaption(captioned[i]);
+            l.text(names[i], at[0], at[1], chars[i], 0.75f);
+        }
+        for (int line = 0; line < RIG_HINT_LINES; line++) {
+            l.text("hint_" + line, rightX, hintY(line), RIG_HINT_CHARS, 0.75f);
+        }
     }
 
     /**
@@ -569,7 +670,30 @@ public final class AssemblyGeometry {
         return out;
     }
 
+    /*
+     * The rig's seats: the risers along the rail, centred in the frame, then the mining board's row under them, the
+     * supply at its left end and the disk at its right, the board, the processor and the two memory slots between.
+     */
+    private List<Seat> rigSeats() {
+        final List<Seat> out = new ArrayList<>();
+        out.add(new Seat(SeatKind.BOARD, 0, BOARD_X + 4, RIG_ROW));
+        out.add(new Seat(SeatKind.CPU, 0, RIG_CPU_X, RIG_ROW));
+        for (int i = 0; i < RIG_RAM; i++) {
+            out.add(new Seat(SeatKind.RAM, i, RIG_DIMM_X + i * PITCH, RIG_ROW));
+        }
+        out.add(new Seat(SeatKind.PSU, 0, RIG_PSU_X, RIG_ROW));
+        out.add(new Seat(SeatKind.DISK, 0, RIG_DISK_X, RIG_ROW));
+        final int first = CASE_LEFT + 6 + (caseRight - CASE_LEFT - 8 - risers * PITCH) / 2;
+        for (int i = 0; i < risers; i++) {
+            out.add(new Seat(SeatKind.RISER, i, first + i * PITCH, RIG_RAIL + 3));
+        }
+        return out;
+    }
+
     private List<Seat> seatMap() {
+        if (kind == Kind.RIG) {
+            return rigSeats();
+        }
         final List<Seat> out = new ArrayList<>();
         out.add(new Seat(SeatKind.BOARD, 0, BOARD_X, TOP));
         if (kind == Kind.TOWER) {

@@ -22,6 +22,7 @@ import net.neoforged.bus.api.IEventBus;
 
 import static dev.jstech.core.jstechseries.tier.HardwareEra.LEGACY;
 import static dev.jstech.core.jstechseries.tier.HardwareEra.STANDARD;
+import static dev.jstech.core.jstechseries.tier.HardwareEra.TRANSITION;
 import static dev.jstech.core.jstechseries.tier.HardwareEra.VINTAGE;
 import dev.jstech.computers.api.ComputersRegisterEvent;
 import dev.jstech.computers.api.JsComputersApi;
@@ -823,6 +824,26 @@ public final class OsBootstrap {
             ProgramSpec.of(rl("messenger"), "messenger", false, DESKTOPS, 48, ProgramKind.APP, 2, HostScope.ANY)
                     .named("Midsoft Messenger").described("Talk to whoever else is on this network.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.MIDSOFT).withRam(32),
+            // Teracoin's software, by Blockwright: the wallet, the panel of the pools, the miner and the pool.
+            ProgramSpec.of(rl("crypto_wallet"), "wallet", false, DESKTOPS, 32, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Crypto Wallet")
+                    .described("Makes Teracoin wallets, sends from them, shows what they hold and prints with them.")
+                    .withMinEra(TRANSITION).withEra(TRANSITION).withHouse(SoftwareHouse.BLOCKWRIGHT).withRam(64),
+            ProgramSpec.of(rl("mining_panel"), "miningpanel", false, DESKTOPS, 48, ProgramKind.APP, 2,
+                            HostScope.ANY)
+                    .named("Mining Panel")
+                    .described("Watches this network's Mining Pools: their hashrate, their blocks and their miners.")
+                    .withMinEra(TRANSITION).withEra(TRANSITION).withHouse(SoftwareHouse.BLOCKWRIGHT).withRam(48),
+            ProgramSpec.of(rl("miner"), "miner", false, ALL_PLATFORMS, 16, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Blockwright miner")
+                    .described("Spends this computer's processors and graphics cards on Teracoin, at the prompt.")
+                    .withMinEra(TRANSITION).withEra(TRANSITION).withHouse(SoftwareHouse.BLOCKWRIGHT).withRam(8),
+            ProgramSpec.of(rl("mining_pool"), "miningpool", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 2,
+                            HostScope.SERVER)
+                    .named("Mining Pool")
+                    .described("Mines with this network's miners together and shares each block it finds by the"
+                            + " work each gave.")
+                    .withMinEra(TRANSITION).withEra(TRANSITION).withHouse(SoftwareHouse.BLOCKWRIGHT).withRam(32),
             // KnotHub keeps the source a network is still arguing over; Knot is what a computer reads it with.
             ProgramSpec.of(rl("knothub"), "knothub", false, ALL_PLATFORMS, 64, ProgramKind.SERVICE, 2, HostScope.SERVER)
                     .named("KnotHub")

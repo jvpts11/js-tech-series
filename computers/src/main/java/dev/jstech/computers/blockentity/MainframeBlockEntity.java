@@ -50,6 +50,7 @@ import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.computers.os.defrag.DefragRunner;
+import dev.jstech.computers.teracoin.MinerRunner;
 import dev.jstech.computers.os.install.SetupRunner;
 import dev.jstech.computers.machine.NetworkListening;
 import dev.jstech.computers.portable.PortableAlerts;
@@ -275,6 +276,7 @@ public class MainframeBlockEntity extends AbstractCabinetComputerBlockEntity {
         // Whatever the machine is setting up copies on while it is up, network or no network.
         SetupRunner.tick(this, level, worldPosition);
         DefragRunner.tick(this, level);
+        MinerRunner.tick(this, level, worldPosition, false);
         networking.update(level);
         if (networking.conflicted()) {
             // A contested network collapses: discard every in-flight Operation (its progress is

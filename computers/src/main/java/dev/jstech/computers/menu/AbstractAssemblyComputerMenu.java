@@ -62,6 +62,14 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
     public static final int BUTTON_FACE_BOARD = 3;
     public static final int BUTTON_FACE_COOLING = 4;
 
+    /** The slots a machine has besides the parts every computer has, as a rig has its risers. */
+    @FunctionalInterface
+    protected interface IMachineSlots {
+
+        /** Adds them to {@code into}, each where {@code layout} seats it, shown while {@code onBoard} says so. */
+        void add(List<Slot> into, GuiLayout layout, BooleanSupplier onBoard);
+    }
+
     /**
      * Builds the menu over {@code be}, its slots where {@code geometry} has their seats. {@code pcieKey} is the layout
      * key prefix of the machine's expansion slots ("gpu" or "pcie"), which the hardware layout's PCIe range fills.
@@ -69,6 +77,17 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
     protected <B extends AbstractSmallComputerBlockEntity & IAssemblyComputer> AbstractAssemblyComputerMenu(
             final MenuType<?> type, final int containerId, final Inventory inventory, final B be,
             final AssemblyGeometry geometry, final String pcieKey) {
+        this(type, containerId, inventory, be, geometry, pcieKey, (into, layout, onBoard) -> { });
+    }
+
+    /**
+     * As the other, with the slots the machine has besides every computer's, {@code machineSlots}: seated after the
+     * parts' and before the coolers', so they take part in the shift-click both ways. A machine whose layout seats none
+     * of its cards (a rig, whose cards go in in the world) gets no card slot.
+     */
+    protected <B extends AbstractSmallComputerBlockEntity & IAssemblyComputer> AbstractAssemblyComputerMenu(
+            final MenuType<?> type, final int containerId, final Inventory inventory, final B be,
+            final AssemblyGeometry geometry, final String pcieKey, final IMachineSlots machineSlots) {
         super(type, containerId, inventory, MenuValidity.blockEntity(be));
         this.computer = be;
         this.assembly = be;
@@ -102,6 +121,7 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
         for (int i = 0; i < be.caseBays(); i++) {
             hardwareSlots.add(faced(hw, map.bayStart() + i, layout.slotAt("bay_" + i), board));
         }
+        machineSlots.add(hardwareSlots, layout, board);
         addCoolingSlots(hardwareSlots, hw, geometry, be);
         final SlotGroup hardware = slots(hardwareSlots.toArray(Slot[]::new));
         this.hardwareSlots = hardwareSlots.size();
@@ -265,7 +285,7 @@ public abstract class AbstractAssemblyComputerMenu extends CoreMenu {
     private static void addBoardSlots(final List<Slot> into, final IItemHandler hw, final GuiLayout layout,
                                       final String keyPrefix, final int start, final int count,
                                       final IntSupplier boardLimit, final BooleanSupplier onFace) {
-        for (int i = 0; i < count; i++) {
+        for (int i = 0; i < count && layout.hasSlot(keyPrefix + i); i++) {
             final GuiLayout.SlotPosition at = layout.slotAt(keyPrefix + i);
             into.add(new BoardSlot(hw, start + i, at.x(), at.y(), i, boardLimit, onFace));
         }

@@ -277,6 +277,11 @@ public class ServerRackMenu extends CoreMenu {
         return rack.tapeDriveShown(topRow);
     }
 
+    /** One figure of the Mining Pool the server topped at {@code topRow} runs, as the rack last told the screen. */
+    public int poolFigure(final int topRow, final int figure) {
+        return rack.poolShown(topRow, figure);
+    }
+
     /** The tapes in the slots of the Tape Library topped at {@code topRow}, in slot order, empty for a free slot. */
     public List<ItemStack> tapesIn(final int topRow) {
         final List<RackLayout.Unit> mounted = mountedUnits();

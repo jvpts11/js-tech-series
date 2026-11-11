@@ -50,6 +50,9 @@ public final class PortableState {
     private int version;
     private int nextPicture = 1;
     private long seenAt;
+    /* The Crypto Wallet's one wallet: the address and the key that spends from it, kept on the device itself. */
+    private String walletAddress = "";
+    private String walletKey = "";
 
     /** The alerts a device keeps; an older one goes when a new one comes past them. */
     public static final int MOST_ALERTS = 20;
@@ -65,6 +68,16 @@ public final class PortableState {
 
     public PortableModel model() {
         return model;
+    }
+
+    /** The address of the device's wallet, or empty before its Crypto Wallet made one. */
+    public String walletAddress() {
+        return walletAddress;
+    }
+
+    /** The key that spends from the device's wallet, or empty. */
+    public String walletKey() {
+        return walletKey;
     }
 
     /** The apps on it, in the order a home screen shows them. */
@@ -191,7 +204,20 @@ public final class PortableState {
         }
         state.nextPicture = Math.max(1, tag.getInt("NextPicture"));
         state.seenAt = tag.getLong("SeenAt");
+        state.walletAddress = tag.getString("WalletAddress");
+        state.walletKey = tag.getString("WalletKey");
         return state;
+    }
+
+    /** Keeps the wallet {@code address}, spent with {@code key}, as the device's own; false when it has one. */
+    boolean keepWallet(final String address, final String key) {
+        if (!walletAddress.isEmpty()) {
+            return false;
+        }
+        walletAddress = address;
+        walletKey = key;
+        version++;
+        return true;
     }
 
     /** Puts {@code app} on it; false when it already has it or cannot have it. */
@@ -385,6 +411,10 @@ public final class PortableState {
         tag.put("Pictures", gallery);
         tag.putInt("NextPicture", nextPicture);
         tag.putLong("SeenAt", seenAt);
+        if (!walletAddress.isEmpty()) {
+            tag.putString("WalletAddress", walletAddress);
+            tag.putString("WalletKey", walletKey);
+        }
         return tag;
     }
 

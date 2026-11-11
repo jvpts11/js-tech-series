@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  * family's kit, and what it asks the server for while it is open, so what it shows stays fresh.
  */
 public sealed interface IMobileAppView permits NetworkAppView, AlertsAppView, MessengerAppView, CameraAppView,
-        GalleryAppView, MapsAppView, ProspectingAppView {
+        GalleryAppView, MapsAppView, ProspectingAppView, WalletAppView {
 
     /** Draws the app on {@code page}. */
     void paint(AppPage page);

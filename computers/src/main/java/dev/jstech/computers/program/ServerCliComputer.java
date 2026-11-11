@@ -30,6 +30,7 @@ import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.SystemProcesses;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.defrag.DefragRunner;
+import dev.jstech.computers.teracoin.MinerConsole;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.install.InstallerFlow;
@@ -110,6 +111,12 @@ public final class ServerCliComputer extends ServerCliNetwork {
     @Override
     public String defrag(final String request) {
         return host instanceof IOsHost machine ? DefragRunner.reply(machine, level, request) : "";
+    }
+
+    @Override
+    @Nullable
+    public MinerConsole miner() {
+        return host instanceof IOsHost machine && machine.console() != null ? new MinerConsole(machine, level) : null;
     }
 
     @Override

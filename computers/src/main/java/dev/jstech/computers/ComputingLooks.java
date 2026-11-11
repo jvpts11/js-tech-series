@@ -12,10 +12,13 @@ import dev.jstech.computers.block.IComputerCase;
 import dev.jstech.computers.block.MainframeBlock;
 import dev.jstech.computers.block.SupercomputerRackBlock;
 import dev.jstech.computers.blockentity.AccessPointBlockEntity;
+import dev.jstech.computers.blockentity.AsicBlockEntity;
 import dev.jstech.computers.blockentity.ChargingDockBlockEntity;
 import dev.jstech.computers.blockentity.WorkbenchBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
+import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
+import dev.jstech.computers.blockentity.Printer3DBlockEntity;
 import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
 import dev.jstech.computers.blockentity.ExtendedCdDriveBlockEntity;
@@ -27,6 +30,8 @@ import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.portable.PortableModel;
+import dev.jstech.computers.teracoin.AsicModel;
+import dev.jstech.computers.teracoin.Printer3DModel;
 import dev.jstech.computers.wireless.AccessPointMount;
 import dev.jstech.computers.wireless.WirelessStandard;
 import dev.jstech.core.content.GeoLook;
@@ -52,6 +57,15 @@ public final class ComputingLooks {
     /** The WAN Gateway Computer's cabinets, by era, beside the Mainframe's; they share the roof fans' animation. */
     public static final GeoLook<WanGatewayBlockEntity> WAN_GATEWAY = GeoLook.of(JsComputers.MODID, "mainframe",
             "wan_gateway", gateway -> wanGateway(gateway.cabinetEra()));
+    /** The Mining Computer's open frames, by era: the Transition's, the Standard's and the Advanced's. */
+    public static final GeoLook<MiningComputerBlockEntity> MINING_COMPUTER = GeoLook.of(JsComputers.MODID,
+            "mining_computer", "mining_computer", rig -> miningComputer(rig.rigEra()));
+    /** The 3D printers, by model: the Prosa i3 MK3 and the Rattan Lab X1. */
+    public static final GeoLook<Printer3DBlockEntity> PRINTER_3D = GeoLook.of(JsComputers.MODID, "printer_3d",
+            "printer_3d", printer -> printer3d(printer.model()));
+    /** Blockwright's ASICs, by model: the Forge S1 and the Forge A2. */
+    public static final GeoLook<AsicBlockEntity> ASIC = GeoLook.of(JsComputers.MODID, "asic", "asic",
+            asic -> asic(asic.model()));
     /** The racks: the Supercomputer Rack's own, the Server Rack's by era; they share the roof fans. */
     public static final GeoLook<ServerRackBlockEntity> RACK = GeoLook.of(JsComputers.MODID, "rack", "rack",
             ComputingLooks::rack);
@@ -195,6 +209,9 @@ public final class ComputingLooks {
             "transition_mainframe", "mainframe", "advanced_mainframe");
     private static final EraTable<String> WAN_GATEWAYS = EraTable.ofFive("vintage_wan_gateway",
             "legacy_wan_gateway", "transition_wan_gateway", "wan_gateway", "advanced_wan_gateway");
+    private static final EraTable<String> MINING_COMPUTERS = EraTable.of("mining_computer_transition")
+            .from(HardwareEra.STANDARD, "mining_computer_standard")
+            .from(HardwareEra.ADVANCED, "mining_computer_advanced");
     private static final EraTable<String> PATTERN_ENCODERS = EraTable.ofFive("vintage_pattern_encoder",
             "legacy_pattern_encoder", "transition_pattern_encoder", "pattern_encoder", "advanced_pattern_encoder");
     private static final EraTable<String> PRINTERS = EraTable.ofFive("vintage_printer", "legacy_printer",
@@ -283,6 +300,21 @@ public final class ComputingLooks {
     /** The model of a WAN Gateway Computer's cabinet of {@code era}. */
     public static String wanGateway(final Era era) {
         return WAN_GATEWAYS.get(era);
+    }
+
+    /** The model of a 3D printer of {@code model}: {@code prosa_i3_mk3}. */
+    public static String printer3d(final Printer3DModel model) {
+        return model.id();
+    }
+
+    /** The model of an ASIC of {@code model}: {@code asic_forge_s1}. */
+    public static String asic(final AsicModel model) {
+        return "asic_" + model.id();
+    }
+
+    /** The model of a Mining Computer of {@code era}: the frame of its era, from the Transition on. */
+    public static String miningComputer(final Era era) {
+        return MINING_COMPUTERS.get(era);
     }
 
     /** The model of a Pattern Encoder body of {@code era}. */

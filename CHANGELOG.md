@@ -610,6 +610,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `CableBlockEntity.unsettled` makes a cable for a structure, its wires laid and its faces worked out on its first tick
   in the world (`settleLinks`). `ContentData.alsoLoot` adds a mod's own loot tables to the ones its blocks have, and
   `ContentLootProvider` takes the list of tables it writes, `blocks` the declared blocks'. Experimental.
+- (Computers) The Mining Computer: J's Computers' API is at version 21. `HostScope.MINING_COMPUTER` is the Mining
+  Computer's own scope, for a program or a command that runs only on a mining rig. Experimental.
 - (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of
   the format holds in real bytes, a USB stick's being its model's, in place of `capacityItems()`. Experimental.
 - (Computers) Symbols for the directives: J's Computers' API is at version 19. `IProgrammingLanguage.CompileOptions`
@@ -3717,6 +3719,32 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The Craft Planner's Print puts the plan on the computer's printer as a shopping list, the missing
   ingredients on grey bands; its pill says how many ingredients are missing and which, and Craft stays grey until the
   network holds them all.
+- (Computers) Teracoin, the world's cryptocurrency: one chain of blocks for the whole server, saved with the world, a
+  block about every 10 minutes, its difficulty following the miners every 10 blocks over a floor that grows with the
+  world's days, 50 TRC a block halving every 2,100 blocks, and one block in twenty bringing a rare item into the network
+  storage of the machine that found it. Its numbers are in the `[teracoin]` section of `jscomputers-server.toml`, and
+  an operator restarts the halving with `/jstech crypto halving reset`.
+- (Computers) Blockwright, the house of the Teracoin software, and its four programs from the Transition on: the
+  Crypto Wallet, whose wallets are files on the computer's disk (Overview, Send, Receive with the address as a square
+  of blocks, Transactions, Print and Wallets), the Blockwright miner at every prompt (`miner`, in the foreground or in
+  the background, alone or for a pool), the Mining Pool, a service on a rack server that shares each block's reward by
+  the work its miners gave less its owner's fee, with its card on the rack's window, and the Mining Panel, which shows
+  a network's pools, their miners and blocks, and their settings at the pool's own server. A portable carries a wallet
+  of its own in its Wallet app.
+- (Computers) The Mining Computer, a mining rig of each era from the Transition: an open frame with its mining board,
+  processor, memory, one supply, one disk and up to 4, 6 or 8 graphics cards on risers. The risers go in at its
+  assembly window; the cards are seated on them in the world, the rig switched off, and come out sneaking with an empty
+  hand. It runs a system and the miner, reached by ssh, and mines at start when told to. The MF Mining Boards, the
+  Mining Risers and the PCIe x1 Slot come with it.
+- (Computers) The ASICs, Blockwright's Forge S1 of the Standard (1,000,000 H/s at 1,400 W) and Forge A2 of the
+  Advanced (10,000,000 H/s at 3,200 W): blocks made only to mine, their fans turning, their window setting the payout
+  address and the pool.
+- (Computers) The 3D printers, the Prosa i3 MK3 of the Standard and the Rattan Lab X1 of the Advanced, which turn TRC
+  into items: each prints the real item a row at a time, the Prosa sliding it into its tray and the Rattan's belt
+  carrying it into its floor, paid item by item from the wallet that sent the job, the TRC paid leaving the world. Their
+  window shows the item at work, the queue and the output. The Crypto Wallet's Print tab chooses the printer and the
+  copies from the server's price list, and its Auto print prints one item by itself whenever the balance passes what
+  the wallet keeps by its price.
 
 ### Changed
 - (Computers) Removable media in real bytes: a floppy disk holds 1.44 MB, a CD 700 MB, a DVD 4.7 GB, a Blu-ray 25 GB

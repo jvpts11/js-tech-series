@@ -10,6 +10,7 @@ package dev.jstech.computers.config;
 import dev.jstech.computers.abandoned.AbandonedSettings;
 import dev.jstech.computers.api.language.ExecutionBalance;
 import dev.jstech.computers.hardware.ThermalModel;
+import dev.jstech.computers.teracoin.TeracoinSettings;
 import dev.jstech.computers.villager.VillagerSettings;
 import dev.jstech.computers.workshop.UpdateCost;
 import dev.jstech.core.config.ConfigFile;
@@ -251,7 +252,8 @@ public final class ComputersServerConfig {
                     "The veins of a world are laid as it was made: a change shows in chunks made afterwards.")
             .named("Own chain");
 
-    public static final ConfigFile FILE = VillagerSettings.addTo(AbandonedSettings.addTo(ConfigFile.builder(
+    public static final ConfigFile FILE = TeracoinSettings.addTo(VillagerSettings.addTo(AbandonedSettings.addTo(
+            ConfigFile.builder(
             "jscomputers-server",
                     ConfigSide.SERVER, ConfigFormats.TOML)
             .comment("How the computers of J's Computers behave, and what they lend the Operations engine, whose own "
@@ -319,7 +321,7 @@ public final class ComputersServerConfig {
             .key(ETHERNET_KILOBYTES_PER_SECOND)
             .key(OUTSIDE_COMPONENTS)
             .key(LOST_DEVICE_HOURS)
-            .key(OWN_CHAIN)))
+            .key(OWN_CHAIN))))
             .build();
 
     private ComputersServerConfig() {

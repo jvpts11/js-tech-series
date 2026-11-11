@@ -9,6 +9,8 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.teracoin.MinerConsole;
+import dev.jstech.computers.teracoin.TeracoinHashrate;
 import dev.jstech.computers.client.assembly.AssemblyPainter;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
@@ -551,6 +553,9 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 default -> List.of();
             };
         }
+        if (menu.poolFigure(top, ServerRackBlockEntity.POOL_MINERS) > 0) {
+            return poolLines(top);
+        }
         final UnitState state = stateOf(top);
         final int disk = menu.bootDisk(top);
         final OsDef system = menu.system(top);
@@ -566,6 +571,24 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 raidLine(top),
                 // A hot cabinet's temperature is what its machines most need said: it takes the KVM's line.
                 menu.temperature() >= ThermalModel.FULL_UP_TO ? tempLine() : kvmLine(top));
+    }
+
+    /* A server running the Mining Pool: the service, its miners, its hashrate, its fee, its blocks and the last one. */
+    private List<CardLine> poolLines(final int top) {
+        final int last = menu.poolFigure(top, ServerRackBlockEntity.POOL_LAST_MINUTES);
+        return List.of(
+                new CardLine(ServerRackTexts.CARD_SERVICE, GameText.resolve(ServerRackTexts.MINING_POOL),
+                        JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_MINERS, String.valueOf(menu.poolFigure(top,
+                        ServerRackBlockEntity.POOL_MINERS) - 1), JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_HASHRATE, TeracoinHashrate.format(menu.poolFigure(top,
+                        ServerRackBlockEntity.POOL_HASHRATE)), JsTechTheme.green()),
+                new CardLine(ServerRackTexts.CARD_FEE, MinerConsole.percent(menu.poolFigure(top,
+                        ServerRackBlockEntity.POOL_FEE)), JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_BLOCKS, String.valueOf(menu.poolFigure(top,
+                        ServerRackBlockEntity.POOL_BLOCKS)), JsTechTheme.text()),
+                new CardLine(ServerRackTexts.CARD_LAST, last == 0 ? "--"
+                        : GameText.resolve(ServerRackTexts.MINUTES_AGO.with(last - 1)), JsTechTheme.amber()));
     }
 
     /*

@@ -272,6 +272,7 @@
     "jsc:wafer_in_process_transition",
     "jsc:memory_slot_ddr3",
     "jsc:power_atx24",
+    "jsc:expansion_slot_pcie_x1",
     "jsc:socket_lga_771",
     "jsc:socket_am2",
     "jsc:socket_am3",

@@ -149,6 +149,7 @@ public final class ComputersGuide {
         PeripheralPages.declare(guide, peripherals);
         EverydayProgramsPages.declare(guide, programs);
         NetworkPages.declare(guide, network);
+        TeracoinPages.declare(guide, network);
         StoragePages.declare(guide, storage);
         MovingItemsPages.declare(guide, moving);
         OperationsPages.declare(guide, operations);

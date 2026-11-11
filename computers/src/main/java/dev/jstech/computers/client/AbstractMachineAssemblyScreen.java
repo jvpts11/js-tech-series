@@ -339,6 +339,7 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
                 }
             }
             drawCaptions(g, geo, x, y, era, boardIn);
+            drawOnCase(g, x, y);
         } else {
             drawCoolingFace(g, geo, x, y, era);
         }
@@ -633,6 +634,13 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         return null;
     }
 
+    /**
+     * What a machine draws over its case once the seats and captions are, on the board's face: the cards a rig carries
+     * standing on its risers. Nothing by default.
+     */
+    protected void drawOnCase(final GuiGraphics g, final int x, final int y) {
+    }
+
     /** The power button's word. */
     protected String powerWord() {
         return GameText.resolve(AssemblyTexts.POWER);
@@ -880,6 +888,16 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
     private void drawCaptions(final GuiGraphics g, final AssemblyGeometry geo, final int x, final int y,
                               final Era era, final boolean boardIn) {
         final int dim = JsTechTheme.dim();
+        if (geo.kind() == AssemblyGeometry.Kind.RIG) {
+            final SeatKind[] kinds = {SeatKind.RISER, SeatKind.PSU, SeatKind.CPU, SeatKind.RAM, SeatKind.DISK};
+            final TextKey[] words = {AssemblyTexts.RISERS, AssemblyTexts.PSU, AssemblyTexts.CPU, AssemblyTexts.DIMM,
+                    AssemblyTexts.DISK};
+            for (int i = 0; i < kinds.length; i++) {
+                final int[] at = geo.rigCaption(kinds[i]);
+                JsTechTheme.textS(g, font, GameText.resolve(words[i]), x + at[0], y + at[1], dim);
+            }
+            return;
+        }
         final int rail = y + AssemblyGeometry.RAIL_Y;
         JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.REAR), x + AssemblyGeometry.REAR_X, rail, dim);
         JsTechTheme.textS(g, font, GameText.resolve(AssemblyTexts.CPU), x + AssemblyGeometry.CPU_X, rail, dim);

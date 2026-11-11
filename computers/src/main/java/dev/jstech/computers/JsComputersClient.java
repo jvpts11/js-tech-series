@@ -11,6 +11,7 @@ import dev.jstech.computers.client.CaseFrontOutline;
 import dev.jstech.computers.client.ComputingClientSetup;
 import dev.jstech.computers.client.EjectButtonOutline;
 import dev.jstech.computers.client.MachineKeyboard;
+import dev.jstech.computers.client.RigAim;
 import dev.jstech.computers.client.StandingPartOutline;
 import dev.jstech.computers.client.guide.ComputersGuideClient;
 import dev.jstech.computers.client.monitor.MonitorButtonOutline;
@@ -61,6 +62,7 @@ public class JsComputersClient {
         ComputersGuideClient.listen(modEventBus);
         MachineKeyboard.listen();
         StandingPartOutline.listen();
+        RigAim.listen();
         CaseFrontOutline.listen();
         EjectButtonOutline.listen();
         MonitorButtonOutline.listen();

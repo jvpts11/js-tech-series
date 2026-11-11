@@ -11,6 +11,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.aluminiumPlate;
 import static dev.jstech.computers.datagen.recipe.BenchItems.aluminiumSheet;
 import static dev.jstech.computers.datagen.recipe.BenchItems.board;
 import static dev.jstech.computers.datagen.recipe.BenchItems.caseFan;
+import static dev.jstech.computers.datagen.recipe.BenchItems.chip;
 import static dev.jstech.computers.datagen.recipe.BenchItems.controller;
 import static dev.jstech.computers.datagen.recipe.BenchItems.copperWire;
 import static dev.jstech.computers.datagen.recipe.BenchItems.coreItem;
@@ -27,6 +28,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.steelPlate;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelRod;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelSheet;
 
+import dev.jstech.computers.chain.ChainChips;
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.computers.registry.EmptyComputerIngredient;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -42,7 +44,7 @@ import net.minecraft.world.item.crafting.Ingredient;
  * the Crafting Computer and the Cluster Management Computer as the empty Personal Computer of the same case with its
  * era's card in it for good; Quince's logic boards and desk machines by the design's own tables; and the server room:
  * the chassis and the servers, the supercomputer's nodes and racks, the rack units, the machines placed whole and the
- * HBW Interface.
+ * HBW Interface; and Teracoin's hardware: the mining risers, the Mining Computers, the ASICs and the 3D printers.
  */
 final class ComputerRecipes {
 
@@ -64,6 +66,7 @@ final class ComputerRecipes {
         quinceBoards(output);
         quinceMachines(output);
         serverRoom(output);
+        teracoin(output);
     }
 
     /*
@@ -181,6 +184,44 @@ final class ComputerRecipes {
      * connectors of the drives it takes from the rack's bays; a server, its chassis with two of its era's case fans
      * for every U and its rails, two steel rods. The rest each at its era's bench.
      */
+    /*
+     * Teracoin's hardware (computers/docs/design/teracoin.md): a mining riser its small board with a PCIe x16 slot, the
+     * USB cable to the x1 adapter (copper wire, more of it each era, and a PVC jacket) and the adapter's gold edge; a
+     * Mining Computer an open frame of steel rods and plates with its panel and its wires. An ASIC is built as the real
+     * one: three hashboards of Blockwright's hashing chips of its era, the control board's controller, its fans and its
+     * supply inside (a transformer for every 300 W it draws), in an aluminium case. A 3D printer is the real one's
+     * parts: the Prosa an aluminium frame, smooth rods, five stepper motors, its heater (a copper coil), the spring
+     * steel sheet and its screen; the Rattan a closed steel box with its glass door, four steppers, the belt that is
+     * its bed (PVC), its heater and its light.
+     */
+    private static void teracoin(final RecipeOutput output) {
+        final List<Era> mining = List.of(HardwareEra.TRANSITION, HardwareEra.STANDARD, HardwareEra.ADVANCED);
+        final int[] rods = {8, 12, 16};
+        final int[] plates = {2, 4, 4};
+        for (int i = 0; i < mining.size(); i++) {
+            final Era era = mining.get(i);
+            made(output, era, item("mining_riser_" + era.path()), board(era), 1, part("expansion_slot_pcie"), 1,
+                    copperWire(), 2 + i, pvc(), 1, Items.GOLD_NUGGET, 1);
+            made(output, era, item("mining_computer_" + era.path()), steelRod(), rods[i], steelPlate(), plates[i],
+                    board(era), 1, copperWire(), 2);
+        }
+        final Item motor = ChainParts.ELECTRIC_MOTOR.get();
+        final Item coil = ChainParts.COPPER_COIL.get();
+        final Item transformer = ChainParts.TRANSFORMER.get();
+        final Era standard = HardwareEra.STANDARD;
+        final Era advanced = HardwareEra.ADVANCED;
+        made(output, standard, item("asic_forge_s1"), aluminiumPlate(), 2, board(standard), 3,
+                chip(ChainChips.HASHING, standard, ""), 12, controller(standard), 1, caseFan(standard), 2, transformer,
+                5, copperWire(), 4);
+        made(output, advanced, item("asic_forge_a2"), aluminiumPlate(), 2, board(advanced), 3,
+                chip(ChainChips.HASHING, advanced, ""), 16, controller(advanced), 1, caseFan(advanced), 4, transformer,
+                11, copperWire(), 4);
+        made(output, standard, item("prosa_i3_mk3"), aluminiumPlate(), 2, steelRod(), 4, motor, 5, board(standard), 1,
+                controller(standard), 1, coil, 1, steelPlate(), 1, ChainParts.LCD_SCREEN.get(), 1);
+        made(output, advanced, item("rattan_lab_x1"), steelPlate(), 4, Items.GLASS_PANE, 2, motor, 4, pvc(), 1,
+                board(advanced), 1, controller(advanced), 1, coil, 1, ChainParts.LED.get(), 1);
+    }
+
     private static void serverRoom(final RecipeOutput output) {
         final Item rod = steelRod();
         final Item wire = copperWire();

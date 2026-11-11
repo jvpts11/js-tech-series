@@ -32,6 +32,7 @@ import dev.jstech.computers.hardware.RamSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.item.BayDriveItem;
+import dev.jstech.computers.item.MiningRiserItem;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.core.content.ItemBuilder;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -1614,6 +1615,30 @@ public final class HardwareItems {
                     .named("MF MTX-A Motherboard (4x LGA 4189)").register();
 
     /*
+     * The Mining Computer's boards (computers/docs/design/teracoin.md): the common desktop socket and memory of each
+     * era, two memory slots, one disk, and a row of x1 slots, one for each riser the rig carries.
+     */
+    public static final DeferredItem<Item> MOTHERBOARD_MNG_TRANSITION =
+            board("motherboard_mng_transition", new MotherboardSpec(FormFactor.MNG, HardwareEra.TRANSITION,
+                    CpuSocketId.LGA_775, 1, Set.of(RamGeneration.DDR2), 2, PcieGeneration.PCIE_2_0, 4, 1))
+                    .named("MF Mining Board (Transition)").register();
+    public static final DeferredItem<Item> MOTHERBOARD_MNG_STANDARD =
+            board("motherboard_mng_standard", new MotherboardSpec(FormFactor.MNG, HardwareEra.STANDARD,
+                    CpuSocketId.LGA_1150, 1, Set.of(RamGeneration.DDR3), 2, PcieGeneration.PCIE_3_0, 6, 1))
+                    .named("MF Mining Board (Standard)").register();
+    public static final DeferredItem<Item> MOTHERBOARD_MNG_ADVANCED =
+            board("motherboard_mng_advanced", new MotherboardSpec(FormFactor.MNG, HardwareEra.ADVANCED,
+                    CpuSocketId.LGA_1151, 1, Set.of(RamGeneration.DDR4), 2, PcieGeneration.PCIE_4_0, 8, 1))
+                    .named("MF Mining Board (Advanced)").register();
+    /* The risers that carry a graphics card to a mining board's x1 slot, one for each era's board. */
+    public static final DeferredItem<MiningRiserItem> MINING_RISER_TRANSITION =
+            riser("mining_riser_transition", HardwareEra.TRANSITION).named("Mining Riser (Transition)").register();
+    public static final DeferredItem<MiningRiserItem> MINING_RISER_STANDARD =
+            riser("mining_riser_standard", HardwareEra.STANDARD).named("Mining Riser (Standard)").register();
+    public static final DeferredItem<MiningRiserItem> MINING_RISER_ADVANCED =
+            riser("mining_riser_advanced", HardwareEra.ADVANCED).named("Mining Riser (Advanced)").register();
+
+    /*
      * The sound cards: one for each bus the boards of their era have. The ones of an era sound the same and differ
      * in the slot they take and how they look. The Vintage ones are really lo-fi, eight bits in one channel at 22
      * kHz, making their notes by FM; the Legacy ones play recordings at CD quality from a bank of instruments. The
@@ -1672,6 +1697,10 @@ public final class HardwareItems {
 
     private static ItemBuilder<Item> soundCard(final String id, final SoundCardSpec spec) {
         return card(id, spec, spec.era());
+    }
+
+    private static ItemBuilder<MiningRiserItem> riser(final String id, final Era era) {
+        return onShelf(id, era, properties -> new MiningRiserItem(properties, era));
     }
 
     private static ItemBuilder<BayDriveItem> bayDrive(final String id, final BayDriveSpec spec) {

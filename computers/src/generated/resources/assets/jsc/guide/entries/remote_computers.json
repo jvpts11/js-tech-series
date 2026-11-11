@@ -190,7 +190,7 @@
     }
   ],
   "id": "jsc:remote_computers",
-  "order": 430,
+  "order": 434,
   "section": "jsc:library_network",
   "title": "jsc.guide.remote_computers.title"
 }

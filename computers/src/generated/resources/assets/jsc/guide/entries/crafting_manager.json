@@ -203,7 +203,7 @@
     }
   ],
   "id": "jsc:crafting_manager",
-  "order": 137,
+  "order": 141,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.crafting_manager.title"
 }

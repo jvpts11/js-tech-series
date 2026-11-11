@@ -92,7 +92,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:arch_grub_config",
-  "order": 297,
+  "order": 301,
   "section": "jsc:arch_boot",
   "title": "jsc.guide.arch_grub_config.title"
 }

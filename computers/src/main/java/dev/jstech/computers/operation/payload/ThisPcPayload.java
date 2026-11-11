@@ -48,6 +48,7 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
     public static final TextKey SERVER = TextKey.of("jsc.this_pc.server", "Server");
     public static final TextKey WAN_GATEWAY_COMPUTER =
             TextKey.of("jsc.this_pc.wan_gateway_computer", "WAN Gateway Computer");
+    public static final TextKey MINING_COMPUTER = TextKey.of("jsc.this_pc.mining_computer", "Mining Computer");
     public static final TextKey PERSONAL_COMPUTER = TextKey.of("jsc.this_pc.personal_computer", "Personal Computer");
 
     // What is linked to it.

@@ -27,9 +27,12 @@ public final class ComputersPermissions {
             "Read Soundfoundry's music catalogue again (/soundfoundry catalog reload)");
     public static final TextKey CONFIGURE_GATEWAYS_TEXT = TextKey.of("jsc.permission.configure_gateways",
             "Act on a Network Gateway from a computer: what it lets ComputerCraft do, its name, its buffer");
+    public static final TextKey RESET_HALVING_TEXT = TextKey.of("jsc.permission.reset_halving",
+            "Put Teracoin's block reward back to its first value (/jstech crypto halving reset)");
 
     private static @Nullable PermissionNode<Boolean> reloadCatalog;
     private static @Nullable PermissionNode<Boolean> configureGateways;
+    private static @Nullable PermissionNode<Boolean> resetHalving;
 
     private ComputersPermissions() {
     }
@@ -42,6 +45,9 @@ public final class ComputersPermissions {
         // Every player, unless a server says otherwise.
         configureGateways = CorePermissions.declare(JsComputers.MODID, "gateway.configure", 0,
                 CONFIGURE_GATEWAYS_TEXT);
+        // The server's economy is the operators' to restart.
+        resetHalving = CorePermissions.declare(JsComputers.MODID, "teracoin.halving.reset",
+                CorePermissions.OPERATORS, RESET_HALVING_TEXT);
     }
 
     /** Reading Soundfoundry's music catalogue again. */
@@ -52,5 +58,10 @@ public final class ComputersPermissions {
     /** Changing a Network Gateway, from the Gateway Manager or the gateway command. */
     public static PermissionNode<Boolean> configureGateways() {
         return Objects.requireNonNull(configureGateways, "the permissions of J's Computers are not declared yet");
+    }
+
+    /** Putting Teracoin's block reward back to its first value. */
+    public static PermissionNode<Boolean> resetHalving() {
+        return Objects.requireNonNull(resetHalving, "the permissions of J's Computers are not declared yet");
     }
 }

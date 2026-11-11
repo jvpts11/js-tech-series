@@ -487,6 +487,7 @@ stable 7
 8 dev.jstech.computers.os.HostScope  static final HostScope CLUSTER_MANAGEMENT_COMPUTER
 8 dev.jstech.computers.os.HostScope  static final HostScope CRAFTING_COMPUTER
 8 dev.jstech.computers.os.HostScope  static final HostScope MAINFRAME
+21 dev.jstech.computers.os.HostScope  static final HostScope MINING_COMPUTER
 8 dev.jstech.computers.os.HostScope  static final HostScope PERSONAL_COMPUTER
 8 dev.jstech.computers.os.HostScope  static final HostScope SERVER
 13 dev.jstech.computers.os.HostScope  static final HostScope WAN_GATEWAY_COMPUTER

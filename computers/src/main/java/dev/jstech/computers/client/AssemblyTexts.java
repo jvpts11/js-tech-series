@@ -32,6 +32,18 @@ final class AssemblyTexts {
     static final TextKey TITLE_MAINFRAME = TextKey.of("jsc.assembly.title_mainframe", "MAINFRAME");
     static final TextKey TITLE_WAN_GATEWAY = TextKey.of("jsc.assembly.title_wan_gateway", "WAN GATEWAY");
     static final TextKey TITLE_SERVER = TextKey.of("jsc.assembly.title_server", "SERVER");
+    static final TextKey TITLE_RIG = TextKey.of("jsc.assembly.title_rig", "RIG");
+    static final TextKey NAME_THIS_RIG = TextKey.of("jsc.assembly.name_this_rig", "Name this rig");
+    // The Mining Computer's frame and what its front panel shows.
+    static final TextKey RISERS = TextKey.of("jsc.assembly.risers", "RISERS");
+    static final TextKey PSU = TextKey.of("jsc.assembly.psu", "PSU");
+    static final TextKey MINING = TextKey.of("jsc.assembly.mining", "MINING");
+    static final TextKey HASHRATE = TextKey.of("jsc.assembly.hashrate", "HASHRATE");
+    static final TextKey CARDS = TextKey.of("jsc.assembly.cards", "CARDS");
+    static final TextKey CARDS_ON_RISERS = TextKey.of("jsc.assembly.cards_on_risers", "%s on %s risers");
+    static final TextKey MINE_AT_START = TextKey.of("jsc.assembly.mine_at_start", "MINE AT START");
+    static final TextKey SEAT_IN_WORLD = TextKey.of("jsc.assembly.seat_in_world",
+            "Seat the cards on the risers in the world, the rig off.");
     static final TextKey TITLE_SUPERCOMPUTER_NODE = TextKey.of("jsc.assembly.title_supercomputer_node",
             "SUPERCOMPUTER NODE");
 

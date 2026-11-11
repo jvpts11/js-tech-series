@@ -38,11 +38,22 @@ public final class MobileAppState {
     private Field typing = Field.NONE;
     private boolean menuOpen;
     private long askedAt = Long.MIN_VALUE;
+    private int walletPage;
+    private String walletTo = "";
+    private String walletAmount = "";
 
     /** The tabs of the network app. */
     public static final int STOCK = 0;
     public static final int DEVICE = 1;
     public static final int CRAFT = 2;
+    /** The Crypto Wallet's pages: its balance and history, sending, and its address. */
+    public static final int WALLET_MAIN = 0;
+    public static final int WALLET_SEND = 1;
+    public static final int WALLET_RECEIVE = 2;
+    /* The longest an amount typed runs: twelve digits, a point and eight places. */
+    private static final int MOST_AMOUNT = 21;
+    /* The letters of an address. */
+    private static final int ADDRESS_LETTERS = 35;
     /** How many a request or a craft starts at. */
     public static final long DEFAULT_AMOUNT = 16L;
     /** The level a new watch starts at. */
@@ -181,6 +192,34 @@ public final class MobileAppState {
         draft = "";
     }
 
+    /** The Crypto Wallet's page shown. */
+    public int walletPage() {
+        return walletPage;
+    }
+
+    /** Shows the Crypto Wallet's page {@code page}, nothing being typed. */
+    public void walletPage(final int page) {
+        walletPage = page;
+        typing = Field.NONE;
+    }
+
+    /** The address typed to send to. */
+    public String walletTo() {
+        return walletTo;
+    }
+
+    /** The amount typed to send, in TRC. */
+    public String walletAmount() {
+        return walletAmount;
+    }
+
+    /** A send went: the form empties and the wallet's first page comes back. */
+    public void walletSent() {
+        walletTo = "";
+        walletAmount = "";
+        walletPage(WALLET_MAIN);
+    }
+
     /** Chooses the gallery's picture numbered {@code number}; -1 for none. */
     public void picture(final int number) {
         picture = number;
@@ -206,6 +245,11 @@ public final class MobileAppState {
         switch (typing) {
             case SEARCH -> search = clip(search + letter);
             case MESSAGE -> draft = clip(draft + letter);
+            case WALLET_TO -> walletTo = walletTo.length() < ADDRESS_LETTERS && Character.isLetterOrDigit(letter)
+                    ? walletTo + Character.toLowerCase(letter) : walletTo;
+            case WALLET_AMOUNT -> walletAmount = walletAmount.length() < MOST_AMOUNT
+                    && (Character.isDigit(letter) || letter == '.' && walletAmount.indexOf('.') < 0)
+                    ? walletAmount + letter : walletAmount;
             case NONE -> {
                 return false;
             }
@@ -218,6 +262,9 @@ public final class MobileAppState {
         switch (typing) {
             case SEARCH -> search = search.isEmpty() ? search : search.substring(0, search.length() - 1);
             case MESSAGE -> draft = draft.isEmpty() ? draft : draft.substring(0, draft.length() - 1);
+            case WALLET_TO -> walletTo = walletTo.isEmpty() ? walletTo : walletTo.substring(0, walletTo.length() - 1);
+            case WALLET_AMOUNT -> walletAmount = walletAmount.isEmpty() ? walletAmount
+                    : walletAmount.substring(0, walletAmount.length() - 1);
             case NONE -> {
                 return false;
             }
@@ -250,6 +297,10 @@ public final class MobileAppState {
             room("");
             return true;
         }
+        if (walletPage != WALLET_MAIN) {
+            walletPage(WALLET_MAIN);
+            return true;
+        }
         return false;
     }
 
@@ -277,6 +328,8 @@ public final class MobileAppState {
     public enum Field {
         NONE,
         SEARCH,
-        MESSAGE
+        MESSAGE,
+        WALLET_TO,
+        WALLET_AMOUNT
     }
 }

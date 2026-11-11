@@ -69,7 +69,8 @@ class LayoutAuditTest {
             "WorkshopLayout", "UpdateWindowLayout", "NextgreStudioLayout", "ProphetConsoleLayout",
             "EffectsPageLayout", "TransitionPanelLayout", "WorkbenchLayout",
             "SoftwareManagerLayout", "UpdateManagerLayout", "NetBootLayout", "PlayerPagesLayout",
-            "PlayerPanelLayout", "SettingsProgramsLayout");
+            "PlayerPanelLayout", "SettingsProgramsLayout", "MiningComputerLayout", "AsicLayout",
+            "Printer3DLayout");
 
     /**
      * One layout worth auditing, with the budget it is measured against.
@@ -172,6 +173,14 @@ class LayoutAuditTest {
         c.add(new AuditCase("WanGatewayLayout", WanGatewayLayout.layout(), true));
         c.add(new AuditCase("WanGatewayLayout.cooling", WanGatewayLayout.coolingLayout(), true));
         c.add(new AuditCase("ServerAssemblyLayout", ServerAssemblyLayout.layout(), true));
+        // The Mining Computer of each era: four, six and eight risers on its rail.
+        for (final Era era : List.of(HardwareEra.TRANSITION, HardwareEra.STANDARD, HardwareEra.ADVANCED)) {
+            c.add(new AuditCase("MiningComputerLayout(" + era + ")", MiningComputerLayout.layout(era), true));
+        }
+        // An ASIC's window at the most hashboards a model has.
+        c.add(new AuditCase("AsicLayout", AsicLayout.layout(AsicLayout.MOST_BOARDS), true));
+        // A 3D printer's window: the job, the queue at its longest, the output and the inventory.
+        c.add(new AuditCase("Printer3DLayout", Printer3DLayout.layout(), true));
         // The KVM channel bar grows a row per channel; audit an empty bar and the most a switch reports.
         c.add(new AuditCase("KvmChannelLayout(0)", KvmChannelLayout.layout(0), true));
         c.add(new AuditCase("KvmChannelLayout(most)", KvmChannelLayout.layout(KvmChannelLayout.MOST_CHANNELS), true));

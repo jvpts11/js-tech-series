@@ -2,6 +2,6 @@
   "chapter": "jsc:arch",
   "icon": "jsc:cd_rom",
   "id": "jsc:arch_boot",
-  "order": 67,
+  "order": 68,
   "title": "jsc.guide.section.arch_boot"
 }

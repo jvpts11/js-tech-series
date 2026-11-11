@@ -127,6 +127,22 @@ public final class Programs {
     public static final ResourceLocation KNOT_HUB =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "knothub");
 
+    /** The Crypto Wallet: Blockwright's program that makes Teracoin wallets, sends from them and prints with them. */
+    public static final ResourceLocation CRYPTO_WALLET =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "crypto_wallet");
+
+    /** The Mining Panel: Blockwright's program that watches the network's Mining Pools and their miners. */
+    public static final ResourceLocation MINING_PANEL =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mining_panel");
+
+    /** The miner: Blockwright's program that spends a computer's hashrate on Teracoin, at the prompt. */
+    public static final ResourceLocation MINER =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "miner");
+
+    /** The Mining Pool: Blockwright's service that mines with its miners together, on a server in a rack. */
+    public static final ResourceLocation MINING_POOL =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mining_pool");
+
     /** Predictive Cache: a server service that keeps its bay's most-wanted items staged, so reads come back sooner. */
     public static final ResourceLocation PREDICTIVE_CACHE =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "predictive_cache");

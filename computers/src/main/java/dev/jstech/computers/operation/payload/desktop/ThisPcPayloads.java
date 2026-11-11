@@ -14,6 +14,7 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
 import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.ThisPcApp;
@@ -208,6 +209,8 @@ public final class ThisPcPayloads {
             kind = ThisPcPayload.SERVER;
         } else if (computer instanceof WanGatewayBlockEntity) {
             kind = ThisPcPayload.WAN_GATEWAY_COMPUTER;
+        } else if (computer instanceof MiningComputerBlockEntity) {
+            kind = ThisPcPayload.MINING_COMPUTER;
         } else {
             kind = ThisPcPayload.PERSONAL_COMPUTER;
         }

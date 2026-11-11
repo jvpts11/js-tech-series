@@ -1,0 +1,9 @@
+{
+  "values": [
+    "jsc:mining_computer_transition",
+    "jsc:mining_computer_standard",
+    "jsc:asic_forge_s1",
+    "jsc:mining_computer_advanced",
+    "jsc:asic_forge_a2"
+  ]
+}

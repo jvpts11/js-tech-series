@@ -239,6 +239,8 @@ need the network to run a particular engine ([The network](NETWORK.md#engines)),
 | Prophet Reactive Console | Standard | Declares the state the network keeps with Prophet YourIQL. |
 | Remote Control | Standard | Takes over another machine of the network and uses it on this screen. |
 | Backup Console | Legacy | Sets the network's backups, watches them run and restores them (added 2026-11-11). |
+| Crypto Wallet | Transition | Blockwright's Teracoin wallet: makes wallets, sends and receives TRC, and prints items on the 3D printers (added 2026-11-11, [Teracoin](#teracoin)). |
+| Mining Panel | Transition | Watches the network's Mining Pools: their hashrate, miners and blocks, and their owner's settings (added 2026-11-11). |
 | Easy Disc Creator | Legacy | Roxa's disc copier for the Frames systems, from Frames 95 on: copies a floppy, a CD, a DVD, a Blu-ray disc, a USB stick or, through a Vinyl RW Drive, a vinyl onto a blank of the same format or a larger one, at the medium's write speed; with one drive it reads the source, then asks for the blank. Install discs copy like any other; the disks of the network's storage and the .dat files never do (added 2026-11-11). |
 
 And editors (Vim, Emacs, Virtual Studio, Virtual Studio Code, Knot), the Σ# and Σ compilers ([Σ#](SIGMA.md)),
@@ -276,6 +278,36 @@ restores the backups.
 Items come back only as far as they stopped existing: the network keeps a book of losses (a dead disk, a Defrag that
 gave up, a RAID 0 that lost a drive, a DROP), and a restore gives back, item by item, the lesser of what the backup
 holds and what the book lost since, each loss once. What was taken out, exported or crafted never comes back.
+
+### Teracoin
+
+*Added 2026-11-11.*
+
+**Teracoin** (TRC) is the world's cryptocurrency: one chain of blocks for the whole server, saved with the world. A
+block comes about every 10 minutes (the difficulty adjusts every 10 blocks, over a floor that grows with the world's
+days), pays 50 TRC, halving every 2,100 blocks, and one block in twenty also brings a rare item into the network
+storage of the machine that found it. A TRC divides into eight decimal places.
+
+Blockwright's four programs come from the Transition:
+
+- The **Crypto Wallet** keeps each wallet as a file, `Users/Public/Documents/Wallets` on Frames and MC-DOS and
+  `Documents/Wallets` in the home folder elsewhere; the file holds the key of one address, so whoever has a copy spends
+  the same balance, and losing every copy loses the TRC. Its tabs: Overview, Send (no fee; a send waits for the next
+  block, or 10 minutes when none comes), Receive (the address, also as a square of blocks), Transactions, Print and
+  Wallets. A portable keeps one wallet of its own in its Wallet app.
+- The **Blockwright miner** (`miner`) mines at every prompt: `miner --address <address>` sets whom it pays, `miner`
+  mines in front of the terminal until Q, `miner start` and `miner stop` mine in the background, `miner status` tells
+  how it goes, and `--pool <name>` or `--alone` choose a pool or none. A processor mines at its capacity and a
+  graphics card at ten times its power ([Hardware](HARDWARE.md#teracoins-hardware)).
+- The **Mining Pool** is a service on a rack server: it mines with the miners that choose it and shares each block's
+  reward by the work each gave since its last block (hashrate times time), less its owner's fee, 0 to 5% (1% at
+  first). Its owner may take only the miners they accept. The rack's window shows its card.
+- The **Mining Panel** shows the network's pools: Pool, Miners, Blocks and, at the pool's own server, Settings.
+
+The **Print** tab of the wallet sends items to the 3D printers linked to the computer, at the prices of the server's
+list (`teracoin.printer.prices`), each item paid from the wallet as it starts; the TRC paid leave the world. **Auto
+print** prints one item by itself whenever the balance passes what the wallet keeps by its price, while the computer
+holding the wallet's file is on.
 
 ## The Mirror
 

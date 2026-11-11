@@ -346,6 +346,11 @@ waiting one climbs in priority, how long a saved one nobody resumed is kept. J's
 | `soundfoundry.hbw_kilobytes_per_second` | 2048 | The same over HBW. |
 | `soundfoundry.hpc_kilobytes_per_second` | 8192 | The same over the high compute cable. |
 | `update.cost` | `energy` | What the workshop cards' work costs, an UPDATE's and the Workshop's: `energy`, `xp`, `both` or `none`. |
+| `teracoin.target_minutes` | 10 | A Teracoin block's target time ([Systems](SYSTEMS.md#teracoin)). |
+| `teracoin.reward`, `halving`, `halving_blocks` | 50, on, 2100 | What a block pays, in TRC, and whether and how often it halves. |
+| `teracoin.floor_days` | 100 | The difficulty's floor grows by its start every this many world days. |
+| `teracoin.rare_item_chance`, `rare_items` | 0.05, five items | The share of blocks that bring a rare item, and which. |
+| `teracoin.printer.prices` | twelve items | What the 3D printers print and its price in TRC, one `item=price` a line. |
 
 Each player's own (`jscomputers-client.toml`): `client.desktop_cursors` (each system's own pointer) and
 `client.outside_components`. Desktops act at once, without animation, for a player who turns on `motion.reduce` in

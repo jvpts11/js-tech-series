@@ -282,6 +282,9 @@ public final class ConfigFileGameTests {
             }
         }
         computers.addAll(List.of("villagers.programmer", "villagers.it_technician", "villagers.computer_shop"));
+        computers.addAll(List.of("teracoin.target_minutes", "teracoin.reward", "teracoin.halving",
+                "teracoin.halving_blocks", "teracoin.floor_days", "teracoin.rare_item_chance", "teracoin.rare_items",
+                "teracoin.printer.prices"));
         same(helper, computers, ComputersServerConfig.FILE.keys().stream().map(ConfigKey::dottedPath).toList(),
                 "the computers' settings");
         same(helper, "jstech-audio.json", AudioSettings.FILE.fileName(), "the player's sound file");
