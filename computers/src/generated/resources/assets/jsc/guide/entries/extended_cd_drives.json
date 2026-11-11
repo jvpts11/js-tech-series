@@ -97,7 +97,7 @@
     "jsc:transition_extended_cd_drive",
     "jsc:advanced_extended_cd_drive"
   ],
-  "order": 64,
+  "order": 70,
   "section": "jsc:peripherals",
   "title": "jsc.guide.extended_cd_drives.title"
 }

@@ -412,7 +412,7 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
     private void bootOnce(final FirmwareBootMenus.Choice chosen) {
         send(chosen.slot() >= 0
                 ? new FirmwareActionPayload(computerPos, monitorPos, FirmwareActionPayload.ACTION_BOOT_ONCE,
-                        chosen.slot(), -1, chosen.entry().osId())
+                        chosen.slot(), chosen.entry().partition(), chosen.entry().osId())
                 : FirmwareActionPayload.onMedium(computerPos, monitorPos, FirmwareActionPayload.ACTION_BOOT_MEDIA,
                         chosen.entry(), -1));
     }

@@ -20,6 +20,7 @@ import dev.jstech.computers.monitor.VideoMemory;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.operation.payload.machine.MachineLabels;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.MachineSwap;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.RamLedger;
@@ -33,7 +34,9 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
@@ -74,10 +77,17 @@ final class SettingsSnapshots {
         }
         // The memory ledger: what the system, its desktop, its services and its windows hold right now.
         final RamLedger ledger = computer.ramLedger();
+        // And how much of each is in swap, and how fast that leaves it running (computers/docs/design/hardware.md).
+        final Map<RamLedger.Entry, RamLedger.Swapped> inSwap = new HashMap<>();
+        for (final RamLedger.Swapped swapped : ledger.swapped()) {
+            inSwap.put(swapped.entry(), swapped);
+        }
         final List<SettingsSnapshotPayload.RamUse> ramUses = new ArrayList<>();
         for (final RamLedger.Entry entry : ledger.entries()) {
-            ramUses.add(new SettingsSnapshotPayload.RamUse(
-                    entry.name(), entry.mb(), entry.heldBytes(), entry.kind().serializedName(), entry.id()));
+            final RamLedger.Swapped swapped = inSwap.get(entry);
+            ramUses.add(new SettingsSnapshotPayload.RamUse(entry.name(), entry.mb(), entry.heldBytes(),
+                    entry.kind().serializedName(), entry.id(), swapped == null ? 0 : swapped.inSwapMb(),
+                    swapped == null ? 100 : swapped.speedPercent()));
         }
         final List<SettingsSnapshotPayload.ShareRow> shares = new ArrayList<>();
         for (final ComputerSettings.Share share : st.shares()) {
@@ -91,7 +101,18 @@ final class SettingsSnapshots {
                 computer.ramTotalMb(), computer.totalVramMb(),
                 osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed(),
                 soundOf(computer, st), gpuOf(computer),
-                MachineEffects.of(computer, st), MachineEffects.indexOf(computer));
+                MachineEffects.of(computer, st), MachineEffects.indexOf(computer), swapOf(computer, ledger));
+    }
+
+    /* The swap behind the machine's memory: how big, how full, and where, by the system's own name for it. */
+    private static SettingsSnapshotPayload.Swap swapOf(final IOsHost computer, final RamLedger ledger) {
+        final MachineSwap.Swap swap = MachineSwap.of(computer);
+        if (swap.sizeMb() <= 0 || computer.installedOs() == null) {
+            return SettingsSnapshotPayload.Swap.NONE;
+        }
+        final String where = swap.pageFile() != null ? swap.pageFile()
+                : MachineSwap.deviceName(computer.installedOs().platform(), swap.areas().getFirst());
+        return new SettingsSnapshotPayload.Swap(swap.sizeMb(), ledger.swapUsedMb(), where, swap.speedPercent());
     }
 
     /**

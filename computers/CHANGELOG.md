@@ -786,8 +786,45 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   blocks into the `create_kinetics` table (speed, stress, capacity, overstressed, and a Rotation Speed Controller's
   target speed), and `UPDATE create_kinetics SET target_speed = ...` sets the Rotation Speed Controllers its WHERE
   keeps. On another version of Create this work stays off, with a warning in the log.
+- Partitions and file systems: a disk holds a partition table, the Master Boot Record from the Vintage to
+  the Transition (four partitions, the first 2 TB) or the GUID Partition Table from the Standard, and each partition
+  its own file system: FAT12, FAT16, FAT32, NTFS, exFAT, ext2, ext3, ext4, XFS, btrfs, UFS or ZFS, each from its era,
+  read by its systems and resized by its rules (an ext4 partition in use only grows). Every partition holding a file
+  system is a volume of its own, with its drive letter, its name on Linux and its place in the network's storage.
+- The disk tools: Disk Management on Frames XP to 11 (it cannot resize on XP), the KDE Partition Manager
+  with its pending operations, GNOME's Disks, diskpart, MC-DOS's FDISK, UNIX's fdisk, Linux's `fdisk -l`, `lsblk`
+  and one `mkfs` for each file system, FreeBSD's `gpart show`, and OpenBSD's `fdisk` and `disklabel -h`. None deletes
+  or formats the partition the system runs from or a swap it swaps to, a disk changes between MBR and GPT only when
+  empty, and a new table erases the disk.
+- The installers' partition step, as each real one: Frames XP's text-mode list and its format choice,
+  the table of Frames 7 to 11 with New, Delete, Format and Extend, Install alongside on Ubuntu and Linux Mint with its
+  divider, Debian's and Fedora's partitions under each disk, and FreeBSD's Auto (ZFS), with a mirror on a second disk,
+  and Auto (UFS); MC-DOS, UNIX System V and Frames 95 take their disk. Under UEFI an installer makes the 512 MB EFI
+  partition first, and on Linux, the BSDs and UNIX a swap partition as big as the memory.
+- Two systems on one disk: GRUB lists every other system and the Frames Boot Manager, the Midsoft Boot
+  Manager each Frames with its partition, and the F12 boot menu every system on every partition; on the Vintage the
+  disk starts its active partition, set with FDISK or UNIX's fdisk.
+- Snapshots on btrfs and ZFS: `btrfs subvolume snapshot`, `list`, `set-default` (the next start mounts
+  the snapshot) and `delete`, `btrfs filesystem du -s`, and `zfs snapshot`, `list -t snapshot`, `rollback` (at once,
+  past later snapshots only with `-r`) and `destroy`. A snapshot keeps the items and the files, weighs what changed
+  since it was taken, and is saved with the world.
+- ZFS mirrors: a pool on two disks repairs a damaged part from the other as it is read, the items when
+  the network takes them and the system's files when the machine starts, and all of it with `zpool scrub`;
+  `zpool status` shows the pool, its disks, the repairs and the last scrub, and a pool missing its second disk is
+  degraded and repairs nothing.
+- Swap and the page file: a computer promises its memory and its swap together, and the part of a program
+  in the swap runs at a quarter of its speed on a hard disk, 60% on an SSD and 90% on NVMe. Frames' page file is one
+  and a half times the memory on 95 and XP and the same from 7, weighing on the system's disk; the other systems swap
+  to a partition. The Task Manager shows it (PF Usage and Commit on XP, the Memory page on 10 and 11), the System
+  Monitor has a swap line, and Linux has `free`, `swapon --show` and `top`, FreeBSD `swapinfo` and
+  `sysctl vm.swap_total`.
+- The guide's Disks and partitions section (partitions and file systems, the disk tools, two systems on
+  one disk, snapshots, ZFS mirrors, swap), and the books' pages on FDISK and diskpart and on the disks, the swap and
+  the snapshots at the Unix prompts.
 
 ### Changed
+- `mkfs` on Linux is `mkfs.ext4`, beside a `mkfs` for each other file system, and formats a partition,
+  `mkfs.ext4 /dev/sdb1`, refusing the one the system runs from.
 - Removable media in real bytes: a floppy disk holds 1.44 MB, a CD 700 MB, a DVD 4.7 GB, a Blu-ray 25 GB
   and a USB stick 8 to 64 GB by model, and a file takes on a medium exactly the bytes it weighs. A medium's tooltip
   says what it holds to the byte and what is still free. Files, patterns and stored items fill a medium; an installer

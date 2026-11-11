@@ -40,6 +40,12 @@ public enum InstallerPage {
     /** The divider between the system already on the disk and the one going in beside it. */
     ALONGSIDE,
 
+    /** How the partition the system goes on is formatted, or left as it is (Frames XP's text phase). */
+    FORMAT,
+
+    /** A ZFS pool's own answers: one disk or a mirror of two, and the swap (bsdinstall's ZFS Configuration). */
+    POOL,
+
     /** The disk and the name together, the way the installers of the first age asked them. */
     SETTINGS,
 

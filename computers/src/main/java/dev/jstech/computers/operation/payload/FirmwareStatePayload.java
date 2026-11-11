@@ -188,14 +188,23 @@ public record FirmwareStatePayload(
      * @param installMode the id of the OS's install mode for a medium (guided / live manual / source), else -1
      * @param bay         for a medium, which of the reader's volumes it is on, as {@link MediaVolume#bay()} counts
      *                    them; {@link MediaVolume#MEDIUM} for a disk
+     * @param partition   for a disk, the partition the system is on, so a disk carrying several has a line for each;
+     *                    0 for the disk as it is, and for anything else
      */
     public record Entry(int kind, long ref, String osId, Text label, Text device, String size, Text note,
-                        boolean bootable, int installMode, int bay) {
+                        boolean bootable, int installMode, int bay, int partition) {
 
         /** An entry for a disk, or for the medium of a reader on a cable. */
         public Entry(final int kind, final long ref, final String osId, final Text label, final Text device,
                      final String size, final Text note, final boolean bootable, final int installMode) {
-            this(kind, ref, osId, label, device, size, note, bootable, installMode, MediaVolume.MEDIUM);
+            this(kind, ref, osId, label, device, size, note, bootable, installMode, MediaVolume.MEDIUM, 0);
+        }
+
+        /** An entry for the medium on one of a reader's volumes. */
+        public Entry(final int kind, final long ref, final String osId, final Text label, final Text device,
+                     final String size, final Text note, final boolean bootable, final int installMode,
+                     final int bay) {
+            this(kind, ref, osId, label, device, size, note, bootable, installMode, bay, 0);
         }
     }
 
@@ -337,12 +346,14 @@ public record FirmwareStatePayload(
         buf.writeBoolean(e.bootable());
         buf.writeVarInt(e.installMode());
         buf.writeInt(e.bay());
+        buf.writeVarInt(e.partition());
     }
 
     private static Entry readEntry(final RegistryFriendlyByteBuf buf) {
         return new Entry(buf.readVarInt(), buf.readVarLong(), buf.readUtf(64),
                 TextCodecs.STREAM_CODEC.decode(buf), TextCodecs.STREAM_CODEC.decode(buf), buf.readUtf(16),
-                TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readVarInt(), buf.readInt());
+                TextCodecs.STREAM_CODEC.decode(buf), buf.readBoolean(), buf.readVarInt(), buf.readInt(),
+                buf.readVarInt());
     }
 
     private static void writeMachine(final RegistryFriendlyByteBuf buf, final Machine m) {

@@ -8,6 +8,8 @@
 package dev.jstech.computers.os;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import org.junit.jupiter.api.Test;
@@ -78,5 +80,65 @@ class FileSystemTypeTest {
             assertEquals(type, FileSystemType.byName(type.serializedName()));
         }
         assertEquals(FileSystemType.FAT16, FileSystemType.byName("reiserfs"));
+    }
+
+    @Test
+    void readBy_followsWhoReadsWhatInEachEra() {
+        assertTrue(FileSystemType.FAT32.readBy(Platform.LINUX, HardwareEra.LEGACY));
+        assertTrue(FileSystemType.FAT16.readBy(Platform.QUINCE, HardwareEra.VINTAGE));
+        assertTrue(FileSystemType.NTFS.readBy(Platform.FRAMES, HardwareEra.LEGACY));
+        assertFalse(FileSystemType.NTFS.readBy(Platform.LINUX, HardwareEra.LEGACY));
+        assertTrue(FileSystemType.NTFS.readBy(Platform.LINUX, HardwareEra.TRANSITION));
+        assertFalse(FileSystemType.EXFAT.readBy(Platform.LINUX, HardwareEra.STANDARD));
+        assertTrue(FileSystemType.EXFAT.readBy(Platform.LINUX, HardwareEra.ADVANCED));
+        assertFalse(FileSystemType.EXT4.readBy(Platform.FRAMES, HardwareEra.ADVANCED));
+        assertTrue(FileSystemType.UFS.readBy(Platform.OPENBSD, HardwareEra.STANDARD));
+        assertTrue(FileSystemType.ZFS.readBy(Platform.FREEBSD, HardwareEra.STANDARD));
+        assertFalse(FileSystemType.ZFS.readBy(Platform.LINUX, HardwareEra.STANDARD));
+        assertFalse(FileSystemType.APFS.readBy(Platform.FRAMES, HardwareEra.ADVANCED));
+        assertFalse(FileSystemType.SWAP.readBy(Platform.LINUX, HardwareEra.STANDARD));
+    }
+
+    @Test
+    void resizes_followsTheRealLimits() {
+        assertTrue(FileSystemType.NTFS.resizes(false, true));
+        assertTrue(FileSystemType.BTRFS.resizes(true, true));
+        assertTrue(FileSystemType.EXT4.resizes(true, true));
+        assertFalse(FileSystemType.EXT4.resizes(false, true));
+        assertTrue(FileSystemType.EXT4.resizes(false, false));
+        assertTrue(FileSystemType.XFS.resizes(true, true));
+        assertFalse(FileSystemType.ZFS.resizes(false, false));
+        assertFalse(FileSystemType.FAT32.resizes(true, true));
+        assertTrue(FileSystemType.UFS.resizes(false, false));
+    }
+
+    @Test
+    void formattableIn_comesWithItsEra() {
+        assertFalse(FileSystemType.NTFS.formattableIn(HardwareEra.VINTAGE));
+        assertTrue(FileSystemType.NTFS.formattableIn(HardwareEra.LEGACY));
+        assertFalse(FileSystemType.BTRFS.formattableIn(HardwareEra.TRANSITION));
+        assertTrue(FileSystemType.ZFS.formattableIn(HardwareEra.TRANSITION));
+        assertTrue(FileSystemType.FAT12.formattableIn(HardwareEra.VINTAGE));
+        assertFalse(FileSystemType.FAT12.formattableIn(null));
+    }
+
+    @Test
+    void features_snapshotsMirrorsAndLimits() {
+        assertTrue(FileSystemType.BTRFS.snapshots() && FileSystemType.ZFS.snapshots()
+                && FileSystemType.APFS.snapshots());
+        assertFalse(FileSystemType.EXT4.snapshots());
+        assertTrue(FileSystemType.ZFS.mirrors());
+        assertFalse(FileSystemType.BTRFS.mirrors());
+        assertEquals(2_048L, FileSystemType.FAT16.mostPartitionMb());
+        assertEquals(Long.MAX_VALUE, FileSystemType.NTFS.mostPartitionMb());
+        assertTrue(FileSystemType.FAT32.mostFileBytes() < 4L * 1024L * 1024L * 1024L);
+        assertFalse(FileSystemType.SWAP.holdsData());
+        assertEquals(0, FileSystemType.SWAP.recovery().ticksFor(1_000L));
+    }
+
+    @Test
+    void plainFor_isFatWhichEverySystemReads() {
+        assertEquals(FileSystemType.FAT16, FileSystemType.plainFor(HardwareEra.VINTAGE));
+        assertEquals(FileSystemType.FAT32, FileSystemType.plainFor(HardwareEra.STANDARD));
     }
 }

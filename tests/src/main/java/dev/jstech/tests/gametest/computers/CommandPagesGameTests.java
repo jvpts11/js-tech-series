@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import dev.jstech.computers.operation.payload.ConsoleInitPayload;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -39,8 +40,10 @@ import dev.jstech.core.text.TextFormat;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestGuide;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.locale.Language;
@@ -97,6 +100,54 @@ public final class CommandPagesGameTests {
         helper.assertTrue(pages > 100, "every system runs its commands: " + pages + " found");
         helper.assertTrue(wrong.isEmpty(), wrong.size() + " pages are wrong: "
                 + String.join("; ", wrong.subList(0, Math.min(NAMED, wrong.size()))));
+        helper.succeed();
+    }
+
+    /*
+     * A name may belong to a command on several systems, fdisk on Linux, OpenBSD and UNIX, but on any one system to
+     * one command only: the shell runs the one this machine has, and a system with two would list the name twice.
+     */
+    @GameTest(template = ARENA)
+    public static void names_belongToOneCommandOnEachSystem(final GameTestHelper helper) {
+        final List<String> clashes = new ArrayList<>();
+        for (final OsDef os : OsRegistry.oses()) {
+            final KernelDef kernel = OsRegistry.getKernel(os.kernelId());
+            if (kernel == null) {
+                continue;
+            }
+            final Set<String> seen = new HashSet<>();
+            for (final ICliCommand command : CliCommands.commandsFor(kernel.shellFamily())) {
+                if (CommandGuidePages.runsOn(command.scope(), os) && !seen.add(command.name())) {
+                    clashes.add(command.name() + " on " + os.displayName());
+                }
+            }
+        }
+        helper.assertTrue(clashes.isEmpty(), "two commands of one name on one system: "
+                + String.join("; ", clashes.subList(0, Math.min(NAMED, clashes.size()))));
+        helper.succeed();
+    }
+
+    /* The terminal's completion carries a bounded list, which must hold every command a system has. */
+    @GameTest(template = ARENA)
+    public static void completion_holdsEveryCommandOfEachSystem(final GameTestHelper helper) {
+        final List<String> over = new ArrayList<>();
+        for (final OsDef os : OsRegistry.oses()) {
+            final KernelDef kernel = OsRegistry.getKernel(os.kernelId());
+            if (kernel == null) {
+                continue;
+            }
+            int count = 0;
+            for (final ICliCommand command : CliCommands.commandsFor(kernel.shellFamily())) {
+                if (CommandGuidePages.runsOn(command.scope(), os)) {
+                    count++;
+                }
+            }
+            if (count > ConsoleInitPayload.MAX_COMMANDS) {
+                over.add(os.displayName() + " has " + count);
+            }
+        }
+        helper.assertTrue(over.isEmpty(), "more commands than completion carries ("
+                + ConsoleInitPayload.MAX_COMMANDS + "): " + String.join("; ", over));
         helper.succeed();
     }
 

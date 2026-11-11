@@ -13,6 +13,11 @@ import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.boot.SystemWelcome;
+import dev.jstech.computers.os.disk.DiskPartitions;
+import dev.jstech.computers.os.disk.DiskSnapshots;
+import dev.jstech.computers.os.disk.PartitionEntry;
+import dev.jstech.computers.os.disk.PartitionScheme;
+import dev.jstech.computers.os.disk.PartitionTable;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
@@ -353,8 +358,10 @@ public final class OsDisks {
         if (!DriveVolumes.isDisk(disk)) {
             return FormatResult.NOTHING;
         }
-        final boolean hadSystem = hasSystem(disk);
+        final boolean hadSystem = hasSystem(disk) || anyPartitionHasSystem(disk);
         final ItemStack updated = disk.copy();
+        // Every partition goes with the whole disk, what each held and the table with them.
+        DiskPartitions.unpartition(updated);
         /*
          * Every system on it, and with them every greeting each of them remembered: installing again on this
          * disk is a first meeting again, which is what a format means.
@@ -479,17 +486,18 @@ public final class OsDisks {
     }
 
     /**
-     * Free weight in mB-equivalents available on a system disk for user files: the disk capacity
-     * minus the stored items, the existing files, and the installed OS footprint.
+     * Free weight in mB-equivalents available on a system volume for user files: its capacity (its partition's, or the
+     * whole disk's) minus the stored items, the existing files, and the installed OS footprint.
      */
     public static long systemDiskFreeWeight(final ItemStack disk) {
         final DiskSpec spec = HardwareRegistry.disk(disk);
         if (spec == null) {
             return 0L;
         }
-        final long capacity = spec.capacityItems() * StorageKey.MB_EQ_PER_ITEM;
+        final long capacity = DiskPartitions.capacityItems(disk) * StorageKey.MB_EQ_PER_ITEM;
         final long storageUsed = DriveVolumes.usedWeight(disk);
-        final long fsUsed = DiskFilesystem.filesWeight(disk);
+        // The files a snapshot keeps that were since changed or deleted weigh as files do.
+        final long fsUsed = DiskFilesystem.filesWeight(disk) + DiskSnapshots.filesWeight(disk);
         /*
          * Every system on the disk takes its own room. A disk carrying two used to be charged for one of them,
          * so it read as having space it did not have and a third install could be accepted onto nothing.
@@ -498,7 +506,9 @@ public final class OsDisks {
         for (final ResourceLocation osId : systemsOn(disk).ids()) {
             final OsDef os = OsRegistry.getOs(osId);
             if (os != null) {
-                osReserved += footprintItemsOn(disk, os, spec.era()) * StorageKey.MB_EQ_PER_ITEM;
+                // Its page file weighs on the disk as files do (computers/docs/design/hardware.md).
+                osReserved += (footprintItemsOn(disk, os, spec.era()) + pageItemsOn(disk, osId, spec.era()))
+                        * StorageKey.MB_EQ_PER_ITEM;
             }
         }
         return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);
@@ -513,9 +523,68 @@ public final class OsDisks {
         return EraStorage.itemsFor(diskEra, left);
     }
 
+    /** How many items the page file that system keeps on that disk takes, at the cost per item of {@code diskEra}. */
+    public static long pageItemsOn(final ItemStack disk, final ResourceLocation osId, final Era diskEra) {
+        final int pageMb = systemsOn(disk).pageMbOf(osId);
+        return pageMb <= 0 ? 0L : EraStorage.itemsFor(diskEra, pageMb);
+    }
+
+    /** Writes onto that disk the page file of {@code mb} that system keeps on it, as Frames sizes it coming up. */
+    public static void keepPageFile(final ItemStack disk, final ResourceLocation osId, final int mb) {
+        disk.set(ComputingComponents.DISK_SYSTEMS.get(), systemsOn(disk).paging(osId, mb));
+    }
+
     /** Writes onto that disk that {@code mb} of that system stays off it, as its installer was told to leave out. */
     public static void keepOff(final ItemStack disk, final ResourceLocation osId, final int mb) {
         disk.set(ComputingComponents.DISK_SYSTEMS.get(), systemsOn(disk).saving(osId, mb));
+    }
+
+    /**
+     * Opens the partition a disk starts by itself (computers/docs/design/storage-devices.md): on a Master Boot Record
+     * the active one when it carries a system, which is how MC-DOS and UNIX System V share a disk with no boot manager;
+     * otherwise the one it has open when that carries a system, and the first that does when it does not.
+     *
+     * @return whether another partition was opened
+     */
+    public static boolean openForBoot(final ItemStack disk) {
+        if (!DiskPartitions.written(disk)) {
+            return false;
+        }
+        final PartitionTable table = DiskPartitions.table(disk);
+        if (table.layout().scheme() == PartitionScheme.MBR) {
+            final PartitionEntry active = table.layout().active();
+            if (active != null && hasSystem(DiskPartitions.view(disk, active.number()))) {
+                return opened(disk, table, active.number());
+            }
+        }
+        if (table.open() != 0 && hasSystem(disk)) {
+            return false;
+        }
+        for (final DiskPartitions.Volume volume : DiskPartitions.volumes(disk)) {
+            if (hasSystem(volume.stack())) {
+                return opened(disk, table, volume.partition().number());
+            }
+        }
+        return false;
+    }
+
+    /* Opens partition {@code number} when it is not the open one already; whether it opened it. */
+    private static boolean opened(final ItemStack disk, final PartitionTable table, final int number) {
+        if (table.open() == number) {
+            return false;
+        }
+        DiskPartitions.open(disk, number);
+        return true;
+    }
+
+    /* Whether a partition of that disk other than its open one carries a system. */
+    private static boolean anyPartitionHasSystem(final ItemStack disk) {
+        for (final DiskPartitions.Volume volume : DiskPartitions.volumes(disk)) {
+            if (volume.stack() != disk && hasSystem(volume.stack())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** What a format actually erased. */

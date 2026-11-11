@@ -140,7 +140,7 @@
     }
   ],
   "id": "jsc:format_a_drive",
-  "order": 226,
+  "order": 232,
   "section": "jsc:prompt_files",
   "title": "jsc.guide.format_a_drive.title"
 }

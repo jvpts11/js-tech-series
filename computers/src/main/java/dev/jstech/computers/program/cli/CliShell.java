@@ -31,8 +31,9 @@ import org.jetbrains.annotations.Nullable;
 @TextHolder
 public final class CliShell {
 
-    private final Map<String, ICliCommand> byName = new LinkedHashMap<>();
-    private final Map<String, ICliCommand> lookup = new LinkedHashMap<>();
+    private final List<ICliCommand> all = new ArrayList<>();
+    /* Every command a word names, in registration order: one per system that has a command of that name. */
+    private final Map<String, List<ICliCommand>> lookup = new LinkedHashMap<>();
     private final int width;
 
     private static final TextKey TRY_HELP = TextKey.of("jsc.cli.shell.try_help", "type 'help' to list commands");
@@ -54,22 +55,46 @@ public final class CliShell {
     public CliShell(final List<ICliCommand> commands, final int width) {
         this.width = width;
         for (final ICliCommand command : commands) {
-            final String name = command.name().toLowerCase(Locale.ROOT);
-            byName.put(name, command);
-            lookup.put(name, command);
+            all.add(command);
+            named(command.name()).add(command);
             for (final String alias : command.aliases()) {
-                lookup.put(alias.toLowerCase(Locale.ROOT), command);
+                named(alias).add(command);
             }
         }
     }
 
-    /** The commands this shell knows, in registration order, for {@code help} and tab completion. */
+    /**
+     * The commands this shell knows, in registration order, for {@code help} and tab completion. A name can come
+     * more than once, each of its commands on other systems, so whoever lists them keeps the ones the machine has.
+     */
     public List<ICliCommand> commands() {
-        return List.copyOf(byName.values());
+        return List.copyOf(all);
     }
 
+    /** The command a word names on some system, the last one registered under it, or null when none is. */
+    @Nullable
     public ICliCommand find(final String name) {
-        return name == null ? null : lookup.get(name.toLowerCase(Locale.ROOT));
+        final List<ICliCommand> found = name == null ? null : lookup.get(name.toLowerCase(Locale.ROOT));
+        return found == null ? null : found.getLast();
+    }
+
+    /**
+     * The command a word names on this computer. fdisk is Linux's on a distribution, OpenBSD's on OpenBSD and
+     * UNIX's on UNIX, each its own command; when this system has none of them, the last one registered is given,
+     * so the caller still tells a command this machine lacks from a word that is no command at all.
+     */
+    @Nullable
+    public ICliCommand find(final String name, final ICliComputer computer) {
+        final List<ICliCommand> found = name == null ? null : lookup.get(name.toLowerCase(Locale.ROOT));
+        if (found == null) {
+            return null;
+        }
+        for (int i = found.size() - 1; i >= 0; i--) {
+            if (found.get(i).available(computer)) {
+                return found.get(i);
+            }
+        }
+        return found.getLast();
     }
 
     /**
@@ -141,7 +166,7 @@ public final class CliShell {
             }
             return new Response(out.lines(), false);
         }
-        final ICliCommand command = find(word);
+        final ICliCommand command = find(word, computer);
         final List<String> args = new ArrayList<>(tokens.subList(1, tokens.size()));
         final boolean unresolved = command == null || !command.available(computer);
         /*
@@ -273,6 +298,10 @@ public final class CliShell {
             out.ok("[" + job.id() + "] " + job.line());
         }
         return new Response(out.lines(), false);
+    }
+
+    private List<ICliCommand> named(final String word) {
+        return lookup.computeIfAbsent(word.toLowerCase(Locale.ROOT), key -> new ArrayList<>());
     }
 
     /**

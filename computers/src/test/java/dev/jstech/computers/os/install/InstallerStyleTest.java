@@ -184,7 +184,8 @@ class InstallerStyleTest {
         assertEquals("ENTER=Continue  F3=Exit", InstallerStyle.MC_DOS.hint(InstallerPage.WELCOME).english());
         assertEquals("ENTER=Restart", InstallerStyle.MC_DOS.hint(InstallerPage.DONE).english());
         assertEquals("ENTER=Continue  F3=Exit", InstallerStyle.FRAMES_95.hint(InstallerPage.WELCOME).english());
-        assertTrue(InstallerStyle.FRAMES_XP.hint(InstallerPage.DISK).english().contains("E=Erase disk"));
+        assertTrue(InstallerStyle.FRAMES_XP.hint(InstallerPage.DISK).english().contains("D=Delete Partition"));
+        assertEquals("ENTER=Continue  ESC=Cancel", InstallerStyle.FRAMES_XP.hint(InstallerPage.FORMAT).english());
         assertTrue(InstallerStyle.FEDORA.hint(InstallerPage.HUB).english().contains("'b' to begin installation"));
         assertEquals("", InstallerStyle.FRAMES_11.hint(InstallerPage.DISK).english());
     }

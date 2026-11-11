@@ -107,7 +107,12 @@ public final class OsInstallRunner {
      */
     private static boolean carry(final IOsHost machine, final ServerLevel level,
                                  final BlockPos pos, final OsInstallJob job, final InstallerFlow flow) {
-        if (job.ticksTotal() - job.ticksLeft() < flow.ticksUnlocked()) {
+        final int done = job.ticksTotal() - job.ticksLeft();
+        if (done < flow.ticksUnlocked()) {
+            // The table is written as the copy starts: a disk taken whole is erased then, and not a moment sooner.
+            if (done == 0) {
+                Installers.prepareDisk(machine, flow);
+            }
             job.tick();
             machine.markUnsaved();
         }

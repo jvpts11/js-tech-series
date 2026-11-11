@@ -131,7 +131,7 @@ final class MachineFacts {
 
     /** Where a command lives, which for a machine like this is which package put it there. */
     static void whereIs(final CliContext ctx, final String name, final ShellFamily family) {
-        final ICliCommand found = ctx.shell().find(name);
+        final ICliCommand found = ctx.shell().find(name, ctx.computer());
         if (found == null || !found.available(ctx.computer())) {
             ctx.out().error(switch (family) {
                 case DOS -> NOT_FOUND_DOS.with(name);

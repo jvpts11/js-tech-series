@@ -2,6 +2,6 @@
   "chapter": "jsc:keeping_items",
   "icon": "jsc:storage_server",
   "id": "jsc:storage",
-  "order": 23,
+  "order": 24,
   "title": "jsc.guide.section.storage"
 }

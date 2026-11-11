@@ -58,31 +58,40 @@ public record DiskSystems(List<Entry> installed, int bootIndex) {
     }
 
     /**
-     * One system on a disk: which it is, what it remembers about having been met, and the room its installer left
-     * off the disk, as OpenBSD's leaves the sets a player took out (none for a system installed whole).
+     * One system on a disk: which it is, what it remembers about having been met, the room its installer left off the
+     * disk, as OpenBSD's leaves the sets a player took out (none for a system installed whole), and the page file it
+     * keeps on it, which Frames sizes itself as it comes up (none for a system that keeps its swap elsewhere).
      */
-    public record Entry(ResourceLocation osId, SystemWelcome welcome, int savedMb) {
+    public record Entry(ResourceLocation osId, SystemWelcome welcome, int savedMb, int pageMb) {
 
         public static final Codec<Entry> CODEC = RecordCodecBuilder.create(inst -> inst.group(
                 ResourceLocation.CODEC.fieldOf("os").forGetter(Entry::osId),
                 SystemWelcome.CODEC.optionalFieldOf("welcome", SystemWelcome.UNSEEN).forGetter(Entry::welcome),
-                Codec.INT.optionalFieldOf("saved", 0).forGetter(Entry::savedMb)
+                Codec.INT.optionalFieldOf("saved", 0).forGetter(Entry::savedMb),
+                Codec.INT.optionalFieldOf("page", 0).forGetter(Entry::pageMb)
         ).apply(inst, Entry::new));
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Entry> STREAM_CODEC = StreamCodec.composite(
                 ResourceLocation.STREAM_CODEC, Entry::osId,
                 SystemWelcome.STREAM_CODEC, Entry::welcome,
                 ByteBufCodecs.VAR_INT, Entry::savedMb,
+                ByteBufCodecs.VAR_INT, Entry::pageMb,
                 Entry::new);
 
         public Entry {
             welcome = welcome == null ? SystemWelcome.UNSEEN : welcome;
             savedMb = Math.max(0, savedMb);
+            pageMb = Math.max(0, pageMb);
         }
 
         /** A system installed whole. */
         public Entry(final ResourceLocation osId, final SystemWelcome welcome) {
-            this(osId, welcome, 0);
+            this(osId, welcome, 0, 0);
+        }
+
+        /** A system that keeps {@code savedMb} of itself off the disk, with no page file yet. */
+        public Entry(final ResourceLocation osId, final SystemWelcome welcome, final int savedMb) {
+            this(osId, welcome, savedMb, 0);
         }
     }
 
@@ -182,7 +191,7 @@ public record DiskSystems(List<Entry> installed, int bootIndex) {
             return this;
         }
         final List<Entry> marked = new ArrayList<>(this.installed);
-        marked.set(at, new Entry(osId, welcome, this.installed.get(at).savedMb()));
+        marked.set(at, new Entry(osId, welcome, this.installed.get(at).savedMb(), this.installed.get(at).pageMb()));
         return new DiskSystems(marked, this.bootIndex);
     }
 
@@ -199,7 +208,25 @@ public record DiskSystems(List<Entry> installed, int bootIndex) {
             return this;
         }
         final List<Entry> trimmed = new ArrayList<>(this.installed);
-        trimmed.set(at, new Entry(osId, this.installed.get(at).welcome(), mb));
+        trimmed.set(at, new Entry(osId, this.installed.get(at).welcome(), mb, this.installed.get(at).pageMb()));
         return new DiskSystems(trimmed, this.bootIndex);
+    }
+
+    /** The page file that system keeps on the disk, in megabytes; none for one the disk does not carry. */
+    public int pageMbOf(@Nullable final ResourceLocation osId) {
+        final int at = this.indexOf(osId);
+        return at < 0 ? 0 : this.installed.get(at).pageMb();
+    }
+
+    /** The same disk, with that system keeping a page file of {@code mb}; one it does not carry changes nothing. */
+    public DiskSystems paging(final ResourceLocation osId, final int mb) {
+        final int at = this.indexOf(osId);
+        if (at < 0) {
+            return this;
+        }
+        final Entry was = this.installed.get(at);
+        final List<Entry> next = new ArrayList<>(this.installed);
+        next.set(at, new Entry(osId, was.welcome(), was.savedMb(), mb));
+        return new DiskSystems(next, this.bootIndex);
     }
 }

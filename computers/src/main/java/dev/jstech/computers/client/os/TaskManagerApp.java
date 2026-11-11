@@ -70,7 +70,14 @@ public final class TaskManagerApp implements IDesktopApp {
     private static final int FACTS_H = 3 * 9 + 4;
     /* Where each form keeps its Power page: XP's fifth tab, Frames 11's seventh page on the rail. */
     private static final int LUNA_POWER = 4;
-    private static final int MODERN_POWER = 6;
+    /* The pages of the rail of Frames 10 and 11, in its order. */
+    private static final int MODERN_PERFORMANCE = 1;
+    private static final int MODERN_MEMORY = 2;
+    private static final int MODERN_SERVICES = 3;
+    private static final int MODERN_STORAGE = 4;
+    private static final int MODERN_NETWORK = 5;
+    private static final int MODERN_GPU = 6;
+    private static final int MODERN_POWER = 7;
     /* Watts are joules a second, and a tick a twentieth of one: what makes the line's watts FE a tick. */
     private static final double TICKS_A_SECOND = 20.0;
     /* The temperature a machine trips at, the top of its temperature's graphs. */
@@ -96,6 +103,8 @@ public final class TaskManagerApp implements IDesktopApp {
     private final Load load = new Load();
     private final int[] cpuHistory = new int[HISTORY];
     private final int[] memHistory = new int[HISTORY];
+    /* What was promised, the memory and the page file together, a sample a second. */
+    private final int[] commitHistory = new int[HISTORY];
     /* The video memory held, in megabytes, and how busy the card was, a sample a second. */
     private final int[] vramHistory = new int[HISTORY];
     private final int[] gpuHistory = new int[HISTORY];
@@ -249,7 +258,7 @@ public final class TaskManagerApp implements IDesktopApp {
         if (form == Form.LUNA) {
             return page == 0 ? tasks() : processes();
         }
-        if (form == Form.MODERN && page == 2) {
+        if (form == Form.MODERN && page == MODERN_SERVICES) {
             return services();
         }
         if (form == Form.PLASMA && page == 1) {
@@ -301,6 +310,16 @@ public final class TaskManagerApp implements IDesktopApp {
 
     private int usedMb() {
         return data == null ? 0 : data.ramUsedMb();
+    }
+
+    /* The swap behind the memory, the page file on a Frames; none before the first snapshot. */
+    private SettingsSnapshotPayload.Swap swap() {
+        return data == null ? SettingsSnapshotPayload.Swap.NONE : data.swap();
+    }
+
+    /* What the machine may promise, the commit limit: its memory and its page file together. */
+    private int limitMb() {
+        return totalMb() + swap().sizeMb();
     }
 
     /**
@@ -360,6 +379,7 @@ public final class TaskManagerApp implements IDesktopApp {
         cpuHistory[at] = load.percent();
         // The graph follows what is held, so a program filling memory draws a rising line.
         memHistory[at] = heldMb();
+        commitHistory[at] = usedMb();
         vramHistory[at] = (int) (gpu().usedKb() / VramLedger.KB_PER_MB);
         gpuHistory[at] = gpu().load();
         samples++;
@@ -418,8 +438,8 @@ public final class TaskManagerApp implements IDesktopApp {
             case LUNA -> new TextKey[] {TaskManagerTexts.APPLICATIONS, TaskManagerTexts.PROCESSES,
                 TaskManagerTexts.PERFORMANCE, TaskManagerTexts.NETWORKING, TaskManagerTexts.POWER};
             case MODERN -> new TextKey[] {TaskManagerTexts.PROCESSES, TaskManagerTexts.PERFORMANCE,
-                TaskManagerTexts.SERVICES, TaskManagerTexts.STORAGE, TaskManagerTexts.NETWORK, TaskManagerTexts.GPU,
-                TaskManagerTexts.POWER};
+                TaskManagerTexts.MEMORY, TaskManagerTexts.SERVICES, TaskManagerTexts.STORAGE, TaskManagerTexts.NETWORK,
+                TaskManagerTexts.GPU, TaskManagerTexts.POWER};
             case PLASMA -> new TextKey[] {TaskManagerTexts.OVERVIEW, TaskManagerTexts.APPLICATIONS,
                 TaskManagerTexts.PROCESSES, TaskManagerTexts.HISTORY};
             case GNOME -> new TextKey[] {TaskManagerTexts.PROCESSES, TaskManagerTexts.RESOURCES,
@@ -554,7 +574,7 @@ public final class TaskManagerApp implements IDesktopApp {
                 skin.text());
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.CPU_USAGE_IS.with(load.percent())), x + third + 4,
                 sy + 2, skin.text());
-        Texts.small(g, font, GameText.resolve(TaskManagerTexts.COMMIT.with(usedMb(), totalMb())),
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.COMMIT.with(usedMb(), limitMb())),
                 x + 2 * third + 4, sy + 2, skin.text());
     }
 
@@ -731,11 +751,20 @@ public final class TaskManagerApp implements IDesktopApp {
         Texts.small(g, font, GameText.resolve(TaskManagerTexts.CPU_HISTORY), gx, y, skin.dim());
         history(g, gx, y + 8, gw, graphH - 2, cpuHistory, 100);
         final int my = y + pitch;
-        Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_USAGE), x + 2, my, skin.dim());
-        gauge(g, font, x + 2, my + 8, meterW, graphH - 2, GameText.resolve(TaskManagerTexts.MEGABYTES.with(heldMb())),
-                (double) heldMb() / totalMb());
-        Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_HISTORY), gx, my, skin.dim());
-        history(g, gx, my + 8, gw, graphH - 2, memHistory, totalMb());
+        if (form == Form.LUNA) {
+            // XP shows what is promised against the memory and the page file together, the commit charge.
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.PF_USAGE), x + 2, my, skin.dim());
+            gauge(g, font, x + 2, my + 8, meterW, graphH - 2,
+                    GameText.resolve(TaskManagerTexts.MEGABYTES.with(usedMb())), (double) usedMb() / limitMb());
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.PAGE_FILE_HISTORY), gx, my, skin.dim());
+            history(g, gx, my + 8, gw, graphH - 2, commitHistory, limitMb());
+        } else {
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_USAGE), x + 2, my, skin.dim());
+            gauge(g, font, x + 2, my + 8, meterW, graphH - 2,
+                    GameText.resolve(TaskManagerTexts.MEGABYTES.with(heldMb())), (double) heldMb() / totalMb());
+            Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_HISTORY), gx, my, skin.dim());
+            history(g, gx, my + 8, gw, graphH - 2, memHistory, totalMb());
+        }
         if (gpu.present()) {
             final int vy = y + 2 * pitch;
             Texts.small(g, font, GameText.resolve(TaskManagerTexts.VIDEO_MEMORY), x + 2, vy, skin.dim());
@@ -750,10 +779,15 @@ public final class TaskManagerApp implements IDesktopApp {
             {GameText.resolve(TaskManagerTexts.PROCESSES), String.valueOf(processes().size())},
             {GameText.resolve(TaskManagerTexts.PROGRAMS), String.valueOf(tasks().size())},
             {GameText.resolve(TaskManagerTexts.SERVICES), String.valueOf(services().size())}});
-        facts(g, font, x + box + 2, fy, box - 4, new String[][] {
+        facts(g, font, x + box + 2, fy, box - 4, form == Form.LUNA ? new String[][] {
             {GameText.resolve(TaskManagerTexts.IN_USE), RamLedger.heldLabel(heldBytes())},
-            {GameText.resolve(TaskManagerTexts.FREE_MB), JsTechTheme.fmt(Math.max(0, totalMb() - usedMb()))},
-            {GameText.resolve(TaskManagerTexts.PROCESSOR), clock()}});
+            {GameText.resolve(TaskManagerTexts.PAGE_FILE),
+                GameText.resolve(TaskManagerTexts.MEGABYTES.with(swap().usedMb()))},
+            {GameText.resolve(TaskManagerTexts.LIMIT), GameText.resolve(TaskManagerTexts.MEGABYTES.with(limitMb()))}}
+            : new String[][] {
+                {GameText.resolve(TaskManagerTexts.IN_USE), RamLedger.heldLabel(heldBytes())},
+                {GameText.resolve(TaskManagerTexts.FREE_MB), JsTechTheme.fmt(Math.max(0, totalMb() - usedMb()))},
+                {GameText.resolve(TaskManagerTexts.PROCESSOR), clock()}});
         if (gpu.present()) {
             facts(g, font, x + 2 * box + 2, fy, box - 4, new String[][] {
                 {GameText.resolve(TaskManagerTexts.VIDEO_TOTAL), VramLedger.label(gpu.totalKb())},
@@ -761,6 +795,61 @@ public final class TaskManagerApp implements IDesktopApp {
                 {GameText.resolve(TaskManagerTexts.VIDEO_FREE),
                     VramLedger.label(Math.max(0L, gpu.totalKb() - gpu.usedKb()))}});
         }
+    }
+
+    /**
+     * The Memory page of Frames 10 and 11 (computers/docs/design/hardware.md): how much is held and what is promised,
+     * the memory and the page file together, its figures, and the programs with part of themselves in the page file,
+     * each with how much and the speed that leaves it.
+     */
+    private void renderMemory(final GuiGraphics g, final Font font, final int x, final int y, final int w,
+                              final int h) {
+        Draw.text(g, font, GameText.resolve(TaskManagerTexts.MEMORY), x, y, skin.text(), skin.windowBg());
+        final String size = GameText.resolve(TaskManagerTexts.GIGABYTES.with(gb(totalMb())));
+        Texts.small(g, font, size, x + w - Texts.smallWidth(font, size), y + 1, skin.dim());
+        final int graphH = 20;
+        int row = y + 11;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.MEMORY_USAGE_LOWER), x, row, skin.dim());
+        history(g, x, row + 8, w, graphH, memHistory, totalMb());
+        row += graphH + 10;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.COMMITTED_GRAPH), x, row, skin.dim());
+        history(g, x, row + 8, w, graphH, commitHistory, limitMb());
+        row += graphH + 11;
+        final SettingsSnapshotPayload.Swap swap = swap();
+        facts(g, font, x, row, w, new String[][] {
+            {GameText.resolve(TaskManagerTexts.IN_USE),
+                GameText.resolve(TaskManagerTexts.GIGABYTES.with(gb(heldMb())))},
+            {GameText.resolve(TaskManagerTexts.AVAILABLE),
+                GameText.resolve(TaskManagerTexts.GIGABYTES.with(gb(Math.max(0, totalMb() - usedMb()))))},
+            {GameText.resolve(TaskManagerTexts.COMMITTED),
+                GameText.resolve(TaskManagerTexts.OF_GB.with(gb(usedMb()), gb(limitMb())))},
+            {GameText.resolve(TaskManagerTexts.PAGE_FILE), swap.sizeMb() <= 0
+                ? GameText.resolve(TaskManagerTexts.NO_PAGE_FILE)
+                : GameText.resolve(TaskManagerTexts.PAGE_FILE_USED.with(
+                        GameText.resolve(TaskManagerTexts.GIGABYTES.with(gb(swap.sizeMb()))),
+                        GameText.resolve(TaskManagerTexts.GIGABYTES.with(gb(swap.usedMb())))))}});
+        row += 4 * 9 + 6;
+        Texts.small(g, font, GameText.resolve(TaskManagerTexts.IN_THE_PAGE_FILE), x, row, skin.dim());
+        row += 9;
+        for (final RamUse use : data.ramUses()) {
+            if (use.inSwapMb() <= 0) {
+                continue;
+            }
+            if (row + 8 > y + h) {
+                break;
+            }
+            final String runs = GameText.resolve(TaskManagerTexts.RUNS_AT.with(use.speedPercent()));
+            final String held = GameText.resolve(TaskManagerTexts.MEGABYTES.with(use.inSwapMb()));
+            Texts.small(g, font, Texts.clip(font, use.label(), w / 2 - 4), x + 2, row, skin.text());
+            Texts.small(g, font, held, x + w / 2, row, skin.text());
+            Texts.small(g, font, runs, x + w - Texts.smallWidth(font, runs), row, skin.accent());
+            row += 9;
+        }
+    }
+
+    /* Megabytes as gigabytes with one decimal, as the Memory page writes them. */
+    private static String gb(final int mb) {
+        return String.format(Locale.ROOT, "%.1f", mb / 1024.0);
     }
 
     /**
@@ -835,10 +924,11 @@ public final class TaskManagerApp implements IDesktopApp {
         final int px = x + railW + 4;
         final int pw = width - railW - 8;
         switch (page) {
-            case 1 -> renderPerformance(g, font, px, y + 4, pw, height - 8);
-            case 3 -> renderDisks(g, font, px, y + 4, pw, height - 8);
-            case 4 -> renderNetworking(g, font, px, y + 4, pw, height - 8);
-            case 5 -> renderGpu(g, font, px, y + 4, pw, height - 8);
+            case MODERN_PERFORMANCE -> renderPerformance(g, font, px, y + 4, pw, height - 8);
+            case MODERN_MEMORY -> renderMemory(g, font, px, y + 4, pw, height - 8);
+            case MODERN_STORAGE -> renderDisks(g, font, px, y + 4, pw, height - 8);
+            case MODERN_NETWORK -> renderNetworking(g, font, px, y + 4, pw, height - 8);
+            case MODERN_GPU -> renderGpu(g, font, px, y + 4, pw, height - 8);
             case MODERN_POWER -> renderModernPower(g, font, px, y + 4, pw, height - 8);
             default -> {
                 button(g, font, x + width - 48, y + 3, 44, 12, TaskManagerTexts.END_TASK_LOWER, canEnd());
@@ -1307,7 +1397,7 @@ public final class TaskManagerApp implements IDesktopApp {
             case CLOSE_BOX -> new int[] {x + 8, y + 8, w - 16, h - 12 - 13 - 24};
             case LUNA -> page > 1 ? null
                     : new int[] {x + 7, y + MENU_H + 24, w - 14, y + h - STATUS_H - (y + MENU_H + 24) - 21};
-            case MODERN -> page == 0 || page == 2
+            case MODERN -> page == 0 || page == MODERN_SERVICES
                     ? new int[] {x + 78, y + 27, w - 86, h - 31} : null;
             case PLASMA -> page == 3 ? null
                     : new int[] {x + 66, y + (page == 0 ? 51 : 25), w - 74, h - (page == 0 ? 55 : 29)};

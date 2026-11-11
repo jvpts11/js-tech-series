@@ -48,7 +48,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:easy_disc_creator",
-  "order": 78,
+  "order": 84,
   "section": "jsc:desktop_apps",
   "title": "jsc.guide.easy_disc_creator.title"
 }

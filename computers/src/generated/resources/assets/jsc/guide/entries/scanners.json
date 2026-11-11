@@ -199,7 +199,7 @@
     "jsc:scanner",
     "jsc:advanced_scanner"
   ],
-  "order": 68,
+  "order": 74,
   "section": "jsc:peripherals",
   "title": "jsc.guide.scanners.title"
 }

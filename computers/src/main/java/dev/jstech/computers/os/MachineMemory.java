@@ -37,7 +37,9 @@ public final class MachineMemory {
 
     /** That machine's ledger. A machine that is off or has no system holds nothing. */
     public static RamLedger ledgerOf(final IOsHost host) {
-        final RamLedger ledger = new RamLedger(host.ramTotalMb());
+        // Behind the memory, the swap its system keeps (computers/docs/design/hardware.md).
+        final MachineSwap.Swap swap = MachineSwap.of(host);
+        final RamLedger ledger = new RamLedger(host.ramTotalMb(), swap.sizeMb(), swap.speedPercent());
         final OsDef os = host.installedOs();
         if (os == null || !host.isRunning()) {
             return ledger;

@@ -7,9 +7,15 @@
  */
 package dev.jstech.computers.os.install;
 
+import dev.jstech.computers.os.FileSystemType;
+import dev.jstech.computers.os.disk.DiskLayout;
+import dev.jstech.computers.os.disk.PartitionEntry;
+import dev.jstech.computers.os.disk.PartitionRole;
+import dev.jstech.computers.os.disk.PartitionScheme;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,7 +94,8 @@ public final class InstallerFlow {
      */
     private final double baseRate;
     private int copyTicks;
-    private final List<Disk> disks;
+    /* Read again after the disk step changes a table, so the page lists what the disk really holds. */
+    private List<Disk> disks;
     private final List<Desktop> desktops;
     private final String mirrorHost;
     private final List<InstallerStyle.Stage> stages;
@@ -110,6 +117,10 @@ public final class InstallerFlow {
     private boolean sshdEnabled;
     /** OpenBSD's own answers, the bits above. */
     private int options;
+    /** Where on its disk the player put the system, what they left to the installer at its default. */
+    private Placement placement = Placement.NONE;
+    /** What the installer knows of the machine: its file system, its swap, the table it writes. */
+    private InstallPlan.Facts facts = InstallPlan.Facts.PLAIN;
 
     private InstallerFlow(final InstallerStyle style, final String systemId, final String systemName,
                           final int footprintMb, final int copyTicks, final double baseRate,
@@ -347,6 +358,98 @@ public final class InstallerFlow {
         this.rebuildSteps();
     }
 
+    /** Where on its disk the player put the system, with what they left to the installer at its default. */
+    public Placement placement() {
+        return this.placement;
+    }
+
+    /** What the installer knows of the machine beyond its pages. */
+    public InstallPlan.Facts facts() {
+        return this.facts;
+    }
+
+    /** Tells the installer what it knows of the machine: the file system it formats with, its swap and its table. */
+    public void setFacts(final InstallPlan.Facts known) {
+        this.facts = known == null ? InstallPlan.Facts.PLAIN : known;
+    }
+
+    /**
+     * Chooses the first disk with room for the system when the one chosen has none, as an installer opening suggests
+     * one: asked again once the installer knows the machine, since what fits depends on it.
+     */
+    public void suggestDisk() {
+        if (this.started() || this.roomOn(this.target())) {
+            return;
+        }
+        for (final Disk disk : this.disks) {
+            if (this.roomOn(disk)) {
+                this.select(disk.slot());
+                return;
+            }
+        }
+    }
+
+    /** Where the system goes as things stand, and what is made for it. */
+    public InstallPlan.Plan plan() {
+        return InstallPlan.of(this);
+    }
+
+    /** Puts the system on the partition or in the free space starting at {@code mb} of the chosen disk. */
+    public void place(final long mb) {
+        if (!this.started()) {
+            this.placement = this.placement.at(mb);
+        }
+    }
+
+    /** Formats the system's partition with that file system, {@link Placement#KEEP} or empty for the installer's. */
+    public void formatAs(final String fileSystem) {
+        if (!this.started()) {
+            this.placement = this.placement.formattedAs(fileSystem);
+        }
+    }
+
+    /** Puts the system beside the one on its disk, whose partition is left at {@code mb}. */
+    public void shrinkTo(final long mb) {
+        if (!this.started()) {
+            this.placement = this.placement.shrinking(mb);
+        }
+    }
+
+    /** Makes the disk in {@code slot} the second of a ZFS mirror, or none with {@link #NO_DISK}. */
+    public void mirrorOn(final int slot) {
+        if (!this.started()) {
+            this.placement = this.placement.mirroredOn(slot == this.targetSlot ? NO_DISK : slot);
+        }
+    }
+
+    /** Puts back where the player had put the system, as a reload or a monitor opened on the machine does. */
+    public void restorePlacement(final Placement restored) {
+        this.placement = restored == null ? Placement.NONE : restored;
+    }
+
+    /**
+     * The disks as they now are, read again after the disk step changed one: the choices stay where they were, and a
+     * partition or free space chosen that is gone is let go.
+     */
+    public void refreshDisks(final List<Disk> now) {
+        this.disks = List.copyOf(now);
+        final Disk target = this.target();
+        if (target != null && this.placement.startMb() != Placement.ANYWHERE
+                && target.spotAt(this.placement.startMb()) == null) {
+            this.placement = this.placement.onAnotherDisk();
+        }
+    }
+
+    /**
+     * The partition of the system beside the new one that the installer shrinks, or null when the disk has none it
+     * can shrink.
+     */
+    @Nullable
+    public DiskSpot besideSpot() {
+        final Disk target = this.target();
+        return target == null ? null : InstallPlan.besideOf(this, target);
+    }
+
     /**
      * Whether the system goes in beside one already on its disk rather than over it: the page with the divider is
      * shown only then (Linux Mint's).
@@ -512,7 +615,7 @@ public final class InstallerFlow {
         return switch (this.page()) {
             case DISK -> !this.wants(InstallerPage.DISK);
             // Beside another system, the room is what is free beside it.
-            case ALONGSIDE -> !this.wants(InstallerPage.DISK);
+            case ALONGSIDE, FORMAT, POOL -> !this.wants(InstallerPage.DISK);
             case SETTINGS -> !this.wants(InstallerPage.DISK) && !this.wants(InstallerPage.NAME);
             case NAME -> !this.wants(InstallerPage.NAME);
             case HUB -> !this.wants(InstallerPage.DISK) && !this.wants(InstallerPage.NAME);
@@ -545,9 +648,12 @@ public final class InstallerFlow {
         }
     }
 
-    /** Whether that disk has room for the system, counting one that is about to be erased as empty. */
+    /**
+     * Whether the system can go on that disk: where the player put it on the chosen one, and wherever the installer
+     * would put it on another, counting one that is about to be erased as empty.
+     */
     public boolean roomOn(final Disk disk) {
-        return disk != null && this.freeOn(disk) >= this.footprintMb;
+        return disk != null && InstallPlan.on(this, disk).ok();
     }
 
     /** What that disk has free, counting one that is about to be erased as the whole of it. */
@@ -616,6 +722,10 @@ public final class InstallerFlow {
         // The divider is only there beside another system: a disk taken whole has nothing to divide.
         if (page == InstallerPage.ALONGSIDE) {
             return !this.alongside();
+        }
+        // The ZFS page is only there when the system is going on ZFS.
+        if (page == InstallerPage.POOL) {
+            return InstallPlan.formatWith(this) != FileSystemType.ZFS;
         }
         return page == InstallerPage.DESKTOP && this.hasMirrorStage() && !this.desktopStageActive();
     }
@@ -688,6 +798,10 @@ public final class InstallerFlow {
             // An erase was agreed to for the disk chosen then; choosing another before the copy starts takes it back.
             if (slot != this.eraseSlot && !this.started()) {
                 this.eraseSlot = NO_DISK;
+            }
+            // Where it went on the disk chosen before means nothing on this one.
+            if (slot != this.targetSlot && !this.started()) {
+                this.placement = this.placement.onAnotherDisk();
             }
             this.targetSlot = slot;
             this.timeTheCopy(disk);
@@ -824,21 +938,64 @@ public final class InstallerFlow {
      * @param slot   where it sits in the machine
      * @param label  the drive as it is written on it
      * @param sizeMb how big the whole disk is
-     * @param freeMb what is free on it as it stands
+     * @param freeMb what is free on it as it stands, in its partitions and outside them
      * @param holds  the system already on it, empty when it holds none
      * @param speed  its tier, where a mechanical disk is 1, which is what makes one disk a quicker install
      *               than another and so makes this page a choice about something
+     * @param scheme how its table is written
+     * @param spots  its partitions and the free space between them, in the order they lie
      */
-    public record Disk(int slot, String label, int sizeMb, int freeMb, String holds, int speed) {
+    public record Disk(int slot, String label, int sizeMb, int freeMb, String holds, int speed,
+                       PartitionScheme scheme, List<DiskSpot> spots) {
 
         public Disk {
             holds = holds == null ? "" : holds;
             speed = Math.max(1, speed);
+            spots = List.copyOf(spots);
+        }
+
+        /** A disk nothing has partitioned: one FAT partition over it all, holding what it holds. */
+        public Disk(final int slot, final String label, final int sizeMb, final int freeMb, final String holds,
+                    final int speed) {
+            this(slot, label, sizeMb, freeMb, holds, speed, PartitionScheme.MBR, List.of(new DiskSpot(1, 0L, sizeMb,
+                    freeMb, FileSystemType.FAT32.serializedName(), holds, "", PartitionRole.DATA, true)));
         }
 
         /** Whether the disk carries a system, which is what makes choosing it a thing to confirm. */
         public boolean hasSystem() {
             return !this.holds.isEmpty();
+        }
+
+        /** Whether nothing on it would be lost to an erase: no system and nothing held in any partition. */
+        public boolean holdsNothing() {
+            for (final DiskSpot spot : this.spots) {
+                if (spot.hasSystem() || spot.usedMb() > 0L) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /** The partition or free space starting at {@code mb}, or null when nothing starts there. */
+        @Nullable
+        public DiskSpot spotAt(final long mb) {
+            for (final DiskSpot spot : this.spots) {
+                if (spot.startMb() == mb) {
+                    return spot;
+                }
+            }
+            return null;
+        }
+
+        /** Its table as the tools see it. */
+        public DiskLayout layout() {
+            final List<PartitionEntry> partitions = new ArrayList<>();
+            for (final DiskSpot spot : this.spots) {
+                if (!spot.isFree()) {
+                    partitions.add(spot.entry());
+                }
+            }
+            return new DiskLayout(this.scheme, this.sizeMb, partitions);
         }
     }
 

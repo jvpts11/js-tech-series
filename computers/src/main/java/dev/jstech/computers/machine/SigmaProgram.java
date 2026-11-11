@@ -34,9 +34,13 @@ final class SigmaProgram implements IMachineRuntime {
     private static final Logger LOGGER = LogUtils.getLogger();
 
     private final Process process;
-    /* How far it gets on what it is dealt when it runs through a translator; null when it runs as it is. */
+    /* The share of its own speed a translator leaves it, in hundredths; 100 when it runs as it is. */
+    private final int translatedPercent;
+    /* The share of that the part of it in swap leaves it, in hundredths; 100 when none of it is. */
+    private int swapPercent = IsaFit.FULL_SPEED;
+    /* How far it gets on what it is dealt when it runs slower than itself; null when it runs at its own speed. */
     @Nullable
-    private final TranslatedPace pace;
+    private TranslatedPace pace;
 
     SigmaProgram(final Process process) {
         this(process, IsaFit.FULL_SPEED);
@@ -45,7 +49,8 @@ final class SigmaProgram implements IMachineRuntime {
     /** A program running at {@code speedPercent} hundredths of its own speed, through a translator below 100. */
     SigmaProgram(final Process process, final int speedPercent) {
         this.process = process;
-        this.pace = speedPercent >= IsaFit.FULL_SPEED ? null : new TranslatedPace(speedPercent);
+        this.translatedPercent = Math.max(1, Math.min(IsaFit.FULL_SPEED, speedPercent));
+        this.pace = this.translatedPercent >= IsaFit.FULL_SPEED ? null : new TranslatedPace(this.translatedPercent);
     }
 
     /** The program underneath, for the parts of this mod that know it is Σ#. */
@@ -56,6 +61,18 @@ final class SigmaProgram implements IMachineRuntime {
     @Override
     public int step(final int budget) {
         return this.paced(budget);
+    }
+
+    /* Its pace follows the part of it in swap, on top of what a translator leaves it. */
+    @Override
+    public void slowedTo(final int percent) {
+        final int bounded = Math.max(1, Math.min(IsaFit.FULL_SPEED, percent));
+        if (bounded == this.swapPercent) {
+            return;
+        }
+        this.swapPercent = bounded;
+        final int effective = Math.max(1, this.translatedPercent * bounded / IsaFit.FULL_SPEED);
+        this.pace = effective >= IsaFit.FULL_SPEED ? null : new TranslatedPace(effective);
     }
 
     @Override

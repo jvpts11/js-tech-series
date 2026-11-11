@@ -1,0 +1,253 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.partitions.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitions.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.partitions.definition1",
+      "term": "jsc.guide.partitions.term1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.partitions.table1",
+      "heads": [
+        "jsc.guide.partitions.table1_head1",
+        "jsc.guide.partitions.table1_head2",
+        "jsc.guide.partitions.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.partitions.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.partitions.table1_1_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table1_1_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.partitions.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.partitions.table1_2_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table1_2_3"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitions.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.partitions.definition2",
+      "term": "jsc.guide.partitions.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.partitions.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitions.text4"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.partitions.table2",
+      "heads": [
+        "jsc.guide.partitions.table2_head1",
+        "jsc.guide.partitions.table2_head2",
+        "jsc.guide.partitions.table2_head3",
+        "jsc.guide.partitions.table2_head4"
+      ],
+      "rows": [
+        [
+          {
+            "literal": "FAT12, FAT16"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_1_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_1_3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_1_4"
+          }
+        ],
+        [
+          {
+            "literal": "FAT32"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_2_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_2_3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_2_4"
+          }
+        ],
+        [
+          {
+            "literal": "NTFS"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_3_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_3_3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_3_4"
+          }
+        ],
+        [
+          {
+            "literal": "exFAT"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_4_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_4_3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_4_4"
+          }
+        ],
+        [
+          {
+            "literal": "ext2, ext3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_5_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_5_3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_5_4"
+          }
+        ],
+        [
+          {
+            "literal": "ext4"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_6_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_6_3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_6_4"
+          }
+        ],
+        [
+          {
+            "literal": "XFS"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_7_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_7_3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_7_4"
+          }
+        ],
+        [
+          {
+            "literal": "btrfs"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_8_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_8_3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_8_4"
+          }
+        ],
+        [
+          {
+            "literal": "UFS"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_9_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_9_3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_9_4"
+          }
+        ],
+        [
+          {
+            "literal": "ZFS"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_10_2"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_10_3"
+          },
+          {
+            "words": "jsc.guide.partitions.table2_10_4"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.partitions.text5"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.partitions.fix1",
+          "problem": "jsc.guide.partitions.problem1"
+        },
+        {
+          "fix": "jsc.guide.partitions.fix2",
+          "problem": "jsc.guide.partitions.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:disks",
+        "jsc:disk_tools_of_each_system",
+        "jsc:local_storage"
+      ]
+    }
+  ],
+  "icon": "jsc:disk_vaultis_trench_20m",
+  "id": "jsc:partitions",
+  "order": 29,
+  "section": "jsc:disks_and_partitions",
+  "title": "jsc.guide.partitions.title"
+}

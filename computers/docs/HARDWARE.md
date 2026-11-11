@@ -211,6 +211,14 @@ Hover a part to read its tooltip. What each line means:
 - Its generation (SDRAM, DDR3...): a board takes only some generations, and says which.
 - Memory also holds the programs a computer runs: each program and each system needs some.
 
+*Added 2026-11-11.* When the programs want more than the memory, the system lends them disk space: a swap partition
+on Linux, the BSDs and UNIX, which their installers make as big as the memory, and the page file on Frames, one and a
+half times the memory on Frames 95 and XP and the same as the memory from Frames 7 (computers/docs/design/hardware.md).
+A computer promises its memory and its swap together. The part of a program in the swap runs at a quarter of its
+speed on a hard disk, 60% on an SSD and 90% on NVMe. The Task Manager shows it (PF Usage and Commit on Frames XP, the
+Memory page on Frames 10 and 11), the System Monitor has a swap line, and Linux has `free`, `swapon --show` and
+`top`, FreeBSD `swapinfo` and `sysctl vm.swap_total`.
+
 ### Graphics cards (GPU)
 
 76 of them, from the VGA-256 to the Envya Vertex RTX 5090.
@@ -374,6 +382,42 @@ switches on until the cabinet has cooled below 60 °C.
   sixteen times; before a transfer starts a hard disk waits 10 ticks, an SSD 3, NVMe 1 (server settings can
   change these).
 - Once a system is installed, the tooltip says which, its desktop, and how many programs.
+
+#### Partitions and file systems
+
+*Added 2026-11-11.*
+
+A disk holds a partition table (computers/docs/design/storage-devices.md): the Master Boot Record from the Vintage to
+the Transition, four partitions at most in the first 2 TB, one of them active; the GUID Partition Table from the
+Standard, as many as the disk has room for. A disk nobody has divided reads as one partition over all of it. Every
+partition holding a file system is a volume of its own: a drive letter on Frames, `/dev/sdb1` on Linux, a volume of
+the network's storage. Under UEFI, every installer first makes a 512 MB FAT32 EFI partition, which is never a volume.
+
+| File system | From | Read by | Resizing |
+| --- | --- | --- | --- |
+| FAT12, FAT16 | Vintage | every system | unmounted only |
+| FAT32 | Legacy | every system | unmounted only |
+| NTFS | Legacy | Frames; Linux from the Transition | grows and shrinks in use |
+| exFAT | Transition | Frames; Linux from the Advanced | unmounted only |
+| ext2, ext3 | Legacy | Linux | grows in use, shrinks unmounted |
+| ext4 | Transition | Linux | grows in use, shrinks unmounted |
+| XFS | Transition | Linux | only grows |
+| btrfs | Standard | Linux | grows and shrinks in use |
+| UFS | Vintage | UNIX, FreeBSD, OpenBSD | unmounted only |
+| ZFS | Transition | FreeBSD | only grows |
+
+A FAT16 partition holds 2 GB at most, and a file on FAT 4 GB at most. A machine makes only the file systems of its era
+or older, and a system reads only the ones it knows.
+
+**Snapshots** (btrfs and ZFS) keep a partition as it is, items and files, at once and weighing nothing; as the
+partition changes, a snapshot weighs what changed since, and that takes room on the disk. Rolling back returns the
+partition there, the cure for a corruption: btrfs at the next start after `btrfs subvolume set-default`, ZFS at once
+with `zfs rollback`, which lets later snapshots go only with `-r`. Snapshots are saved with the world.
+
+**ZFS mirrors**: FreeBSD's installer can hold its pool on two disks. When corruption damages part of the pool, ZFS
+repairs it from the other disk as that part is read, items when the network takes them and the system's files when
+the machine starts, and all of it with `zpool scrub`; `zpool status` counts the repairs. Without its second disk the
+pool is degraded, and repairs nothing.
 
 ### Corruption and the Defrag
 

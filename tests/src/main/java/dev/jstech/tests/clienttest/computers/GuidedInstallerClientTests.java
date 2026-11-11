@@ -130,6 +130,10 @@ public final class GuidedInstallerClientTests {
     public static void framesXp_setupCarriesItsLockupOnTheSidePanel(final ClientTestContext ctx) {
         atTheInstaller(ctx, FRAMES_XP, ComputingModule.CD_DRIVE.get(), ComputingModule.CD_ROM.get())
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> "FORMAT".equals(installer(ctx).pageName()), SCREEN_WAIT,
+                        "ENTER on the partition chosen asks how it is formatted")
+                .thenScreenshot(2, "xp-setup-format")
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> "NAME".equals(installer(ctx).pageName()), COPY_WAIT,
                         "the text-mode copy to hand over to the graphical setup, which asks the name")
                 .thenScreenshot(2, "xp-setup-name")

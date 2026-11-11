@@ -41,7 +41,7 @@ public final class OomKiller {
 
     /** The plan for {@code needMb} more in {@code ledger}; zero asks only that what is held already fits. */
     public static Plan plan(final RamLedger ledger, final int needMb) {
-        long over = (long) ledger.usedMb() + Math.max(0, needMb) - ledger.totalMb();
+        long over = (long) ledger.usedMb() + Math.max(0, needMb) - ledger.promisableMb();
         final List<RamLedger.Entry> left = new ArrayList<>();
         for (final RamLedger.Entry entry : ledger.entries()) {
             if (killable(entry.kind())) {

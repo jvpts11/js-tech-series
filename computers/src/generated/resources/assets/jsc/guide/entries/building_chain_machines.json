@@ -80,7 +80,7 @@
     "jsc:power_entry",
     "jsc:peripheral_port"
   ],
-  "order": 31,
+  "order": 37,
   "section": "jsc:chain_machines",
   "title": "jsc.guide.building_chain_machines.title"
 }

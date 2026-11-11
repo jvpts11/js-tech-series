@@ -25,10 +25,11 @@ import net.minecraft.resources.ResourceLocation;
  *
  * @param action what the player did, one of the constants here
  * @param value  the disk, the desktop or the page the action is about, where it is about one
- * @param text   the name typed, where the action is about one
+ * @param text   the name typed or the file system chosen, where the action is about one
+ * @param amount the partition, the place on the disk or the size the action is about, where it is about one
  */
 public record InstallerActionPayload(BlockPos hostPos, BlockPos monitorPos, int action, int value,
-                                     String text) implements CustomPacketPayload {
+                                     String text, long amount) implements CustomPacketPayload {
 
     /** On to the next page, once the one it is on has what it needs. */
     public static final int ACTION_NEXT = 1;
@@ -81,6 +82,30 @@ public record InstallerActionPayload(BlockPos hostPos, BlockPos monitorPos, int 
     /** Linux Mint's Continue Testing: back to the live desktop, the system written and waiting for a restart. */
     public static final int ACTION_CONTINUE_TESTING = 17;
 
+    /** The partition or free space the system goes on: the value is the disk, the amount where it starts. */
+    public static final int ACTION_PLACE = 18;
+
+    /** The file system the system's partition is formatted with, as the text; {@code keep} leaves it as it is. */
+    public static final int ACTION_FORMAT_AS = 19;
+
+    /** Beside the system on the chosen disk, whose partition is left at the amount, in megabytes. */
+    public static final int ACTION_SHRINK = 20;
+
+    /** The disk in the value's slot as the second of a ZFS mirror, or none for {@link InstallerFlow#NO_DISK}. */
+    public static final int ACTION_MIRROR_DISK = 21;
+
+    /** Deletes the partition numbered by the amount on the value's disk, already confirmed on the screen. */
+    public static final int ACTION_DELETE_PARTITION = 22;
+
+    /** Makes a partition of the free space starting at the amount on the value's disk. */
+    public static final int ACTION_NEW_PARTITION = 23;
+
+    /** Formats the partition numbered by the amount on the value's disk, already confirmed on the screen. */
+    public static final int ACTION_FORMAT_PARTITION = 24;
+
+    /** Grows the partition numbered by the amount on the value's disk into the free space right after it. */
+    public static final int ACTION_EXTEND_PARTITION = 25;
+
     public static final CustomPacketPayload.Type<InstallerActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "installer_action"));
 
@@ -91,17 +116,31 @@ public record InstallerActionPayload(BlockPos hostPos, BlockPos monitorPos, int 
                     ByteBufCodecs.VAR_INT, InstallerActionPayload::action,
                     ByteBufCodecs.VAR_INT, InstallerActionPayload::value,
                     ByteBufCodecs.stringUtf8(InstallerFlow.MOST_NAME_LETTERS), InstallerActionPayload::text,
+                    ByteBufCodecs.VAR_LONG, InstallerActionPayload::amount,
                     InstallerActionPayload::new);
 
     /** An action about nothing in particular: a page turned, or the installer left. */
     public static InstallerActionPayload of(final BlockPos hostPos, final BlockPos monitorPos, final int action) {
-        return new InstallerActionPayload(hostPos, monitorPos, action, 0, "");
+        return new InstallerActionPayload(hostPos, monitorPos, action, 0, "", 0L);
     }
 
     /** An action about a disk, a desktop or a page. */
     public static InstallerActionPayload of(final BlockPos hostPos, final BlockPos monitorPos, final int action,
                                             final int value) {
-        return new InstallerActionPayload(hostPos, monitorPos, action, value, "");
+        return new InstallerActionPayload(hostPos, monitorPos, action, value, "", 0L);
+    }
+
+    /** An action about a partition, a place or a size on a disk. */
+    public static InstallerActionPayload of(final BlockPos hostPos, final BlockPos monitorPos, final int action,
+                                            final int value, final long amount) {
+        return new InstallerActionPayload(hostPos, monitorPos, action, value, "", amount);
+    }
+
+    /** The file system the system's partition is formatted with, or {@code keep}. */
+    public static InstallerActionPayload formattedAs(final BlockPos hostPos, final BlockPos monitorPos,
+                                                     final String fileSystem) {
+        return new InstallerActionPayload(hostPos, monitorPos, ACTION_FORMAT_AS, 0,
+                TextBounds.clip(fileSystem, InstallerFlow.MOST_NAME_LETTERS), 0L);
     }
 
     /** The name typed for the computer, trimmed to what a name may be before it is ever sent. */
@@ -109,7 +148,7 @@ public record InstallerActionPayload(BlockPos hostPos, BlockPos monitorPos, int 
                                                final String name) {
         final String trimmed = name == null ? "" : name.strip();
         return new InstallerActionPayload(hostPos, monitorPos, ACTION_NAME, 0,
-                TextBounds.clip(trimmed, InstallerFlow.MOST_NAME_LETTERS));
+                TextBounds.clip(trimmed, InstallerFlow.MOST_NAME_LETTERS), 0L);
     }
 
     @Override

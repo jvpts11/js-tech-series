@@ -45,6 +45,7 @@ final class ShellPages {
         systemCommands(guide, section);
         processesAndJobs(guide, section);
         devicesCommands(guide, section);
+        diskCommands(guide, section);
         printing(guide, section);
         networkCommands(guide, section);
     }
@@ -443,6 +444,56 @@ final class ShellPages {
                         "The shell says lspci is not found on FreeBSD.",
                         "Use pciconf on FreeBSD. The lspci command is a Linux command.")
                 .seeAlso("jsc:system_commands", "jsc:file_commands")
+                .register();
+    }
+
+    private static void diskCommands(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("disk_commands", section).titled("Disks, swap and snapshots")
+                .paragraph("These commands read the disks and their partitions, give a partition a file system, show"
+                        + " the swap, and keep snapshots. Each system has its own: what a partition and a file system"
+                        + " are is on [](jsc:partitions).")
+                .subheading("Linux")
+                .paragraph("fdisk -l prints each disk's partition table, and lsblk lists the disks with their"
+                        + " partitions in a tree; lsblk -f adds each one's file system. Each mkfs formats one"
+                        + " partition with the file system in its name, and refuses the one the system runs from."
+                        + " To change the partitions themselves, use the desktop's KDE Partition Manager or Disks.")
+                .command(CommandGuidePages.id(Platform.LINUX, "fdisk"))
+                .command(CommandGuidePages.id(Platform.LINUX, "lsblk"))
+                .command(CommandGuidePages.id(Platform.LINUX, "mkfs.ext3"))
+                .command(CommandGuidePages.id(Platform.LINUX, "mkfs.ext2"))
+                .command(CommandGuidePages.id(Platform.LINUX, "mkfs.xfs"))
+                .command(CommandGuidePages.id(Platform.LINUX, "mkfs.btrfs"))
+                .command(CommandGuidePages.id(Platform.LINUX, "mkfs.vfat"))
+                .command(CommandGuidePages.id(Platform.LINUX, "mkfs.exfat"))
+                .command(CommandGuidePages.id(Platform.LINUX, "mkfs.ntfs"))
+                .paragraph("free -h shows the memory and the swap, swapon --show the swap partitions, and top what"
+                        + " is running with what of it is in the swap ([](jsc:swap)). btrfs takes and keeps a btrfs"
+                        + " partition's snapshots ([](jsc:snapshots)).")
+                .command(CommandGuidePages.id(Platform.LINUX, "free"))
+                .command(CommandGuidePages.id(Platform.LINUX, "swapon"))
+                .command(CommandGuidePages.id(Platform.LINUX, "top"))
+                .command(CommandGuidePages.id(Platform.LINUX, "btrfs"))
+                .subheading("FreeBSD")
+                .paragraph("gpart show prints the partition tables. zfs takes, lists and rolls back the snapshots of"
+                        + " a ZFS pool, and zpool scrubs a pool and shows what its mirror repaired"
+                        + " ([](jsc:zfs_mirrors)). swapinfo and sysctl vm.swap_total show the swap.")
+                .command(CommandGuidePages.id(Platform.FREEBSD, "gpart"))
+                .command(CommandGuidePages.id(Platform.FREEBSD, "zfs"))
+                .command(CommandGuidePages.id(Platform.FREEBSD, "zpool"))
+                .command(CommandGuidePages.id(Platform.FREEBSD, "swapinfo"))
+                .command(CommandGuidePages.id(Platform.FREEBSD, "sysctl"))
+                .subheading("OpenBSD and UNIX")
+                .paragraph("On OpenBSD, fdisk prints the Master Boot Record and disklabel -h the system's own"
+                        + " partitions inside it. On UNIX System V, fdisk opens a menu that makes and deletes"
+                        + " partitions and sets the active one, the one the machine starts.")
+                .command(CommandGuidePages.id(Platform.OPENBSD, "fdisk"))
+                .command(CommandGuidePages.id(Platform.OPENBSD, "disklabel"))
+                .command(CommandGuidePages.id(Platform.UNIX, "fdisk"))
+                .ifSomethingGoesWrong("mkfs says the partition is mounted.",
+                        "It is the one the system runs from. Format another, or work from a live medium.",
+                        "zfs says the dataset does not exist.",
+                        "Name the pool as zpool status shows it: zroot for the system's own.")
+                .seeAlso("jsc:partitions", "jsc:disk_tools_of_each_system", "jsc:file_commands")
                 .register();
     }
 

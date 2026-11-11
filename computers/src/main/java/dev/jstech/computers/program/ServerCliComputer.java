@@ -11,6 +11,7 @@ import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.ProgramTravels;
 import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.machine.DebugSession;
+import dev.jstech.computers.machine.DiskTools;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.PackageService;
 import dev.jstech.computers.machine.PlayerBuilds;
@@ -111,6 +112,11 @@ public final class ServerCliComputer extends ServerCliNetwork {
     @Override
     public String defrag(final String request) {
         return host instanceof IOsHost machine ? DefragRunner.reply(machine, level, request) : "";
+    }
+
+    @Override
+    public String disks(final String request) {
+        return host instanceof IOsHost machine ? DiskTools.reply(machine, level, request) : "";
     }
 
     @Override

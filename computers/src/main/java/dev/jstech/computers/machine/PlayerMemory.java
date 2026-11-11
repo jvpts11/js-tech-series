@@ -102,7 +102,7 @@ public final class PlayerMemory {
 
     private static boolean fits(final IOsHost machine, final int needMb) {
         final RamLedger ledger = machine.ramLedger();
-        return (long) ledger.usedMb() + Math.max(0, needMb) <= ledger.totalMb();
+        return (long) ledger.usedMb() + Math.max(0, needMb) <= ledger.promisableMb();
     }
 
     private static void goDown(final IOsHost machine, final String asking, final int needMb) {

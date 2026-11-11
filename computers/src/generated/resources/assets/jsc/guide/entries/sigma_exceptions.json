@@ -176,7 +176,7 @@
     }
   ],
   "id": "jsc:sigma_exceptions",
-  "order": 422,
+  "order": 430,
   "section": "jsc:sigma_version_three_section",
   "title": "jsc.guide.sigma_exceptions.title"
 }

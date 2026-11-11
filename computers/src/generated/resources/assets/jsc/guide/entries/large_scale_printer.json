@@ -82,7 +82,7 @@
     "jsc:large_scale_printer_print_unit",
     "jsc:large_scale_printer_inking_unit"
   ],
-  "order": 40,
+  "order": 46,
   "section": "jsc:chain_machines",
   "title": "jsc.guide.large_scale_printer.title"
 }

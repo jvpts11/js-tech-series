@@ -353,6 +353,9 @@ public final class FullJourneyClientTests {
                 .thenAwaitScreen(BootSequenceScreen.class, BOOT_WAIT)
                 .thenAwaitScreen(InstallerScreen.class, BOOT_WAIT)
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .thenWaitUntil(() -> "FORMAT".equals(ctx.screen(InstallerScreen.class).pageName()), SCREEN_WAIT,
+                        "Setup to ask how the partition chosen is formatted")
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> "NAME".equals(ctx.screen(InstallerScreen.class).pageName()),
                         osInstallWait(FRAMES_XP, dev.jstech.computers.os.media.MediaFormat.CD),
                         "Setup to ask what the computer is called")

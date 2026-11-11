@@ -262,6 +262,49 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     }
 
     /**
+     * The swap behind a machine's memory (computers/docs/design/hardware.md).
+     *
+     * @param sizeMb   how big it is
+     * @param usedMb   how much is in it, what was promised past the memory
+     * @param areas    its swap partitions by the system's own names, on a system that keeps it on them
+     * @param pageFile the page file's name on a Frames, or empty
+     * @param programs how much of each program is in it, and how fast that leaves it running
+     */
+    record SwapUse(int sizeMb, int usedMb, List<SwapArea> areas, String pageFile, List<SwapProgram> programs) {
+
+        /** No swap at all. */
+        public static final SwapUse NONE = new SwapUse(0, 0, List.of(), "", List.of());
+
+        public SwapUse {
+            areas = List.copyOf(areas);
+            programs = List.copyOf(programs);
+        }
+    }
+
+    /**
+     * One swap partition.
+     *
+     * @param device its name as the system writes it ({@code /dev/sda5}, {@code /dev/ada0p3})
+     * @param sizeMb its size
+     * @param usedMb how much of it is in use
+     */
+    record SwapArea(String device, int sizeMb, int usedMb) {
+    }
+
+    /**
+     * One thing running, with what it holds and how much of it is in swap.
+     *
+     * @param pid          its number
+     * @param name         its name
+     * @param mb           what it was given
+     * @param heldBytes    what it holds this moment
+     * @param inSwapMb     how much of it is in swap
+     * @param speedPercent the share of its speed it runs at for it
+     */
+    record SwapProgram(int pid, String name, int mb, long heldBytes, int inSwapMb, int speedPercent) {
+    }
+
+    /**
      * One thing a name a player typed could stand for: what the machine calls it, what a person calls it, and
      * how much of it the network is holding.
      *

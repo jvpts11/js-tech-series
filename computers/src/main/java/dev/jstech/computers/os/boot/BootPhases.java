@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os.boot;
 
+import org.jetbrains.annotations.Nullable;
+
 /**
  * Where a machine is on its way up: owing a self-test, in the middle of one, stopped at a boot manager, or
  * bringing its system up.
@@ -44,6 +46,9 @@ public final class BootPhases {
      */
     private boolean atMenu;
     private long menuEndsAt;
+    /* Whose menu it is, GRUB's or the Frames manager's, since GRUB's Frames entry hands over to the other. */
+    @Nullable
+    private BootManager menuOf;
 
     /*
      * The machine closing its programs on its way to starting over or to switching off. Neither is a power cut:
@@ -238,9 +243,21 @@ public final class BootPhases {
 
     /** Stops the machine at its boot menu, with that long before it goes on by itself. */
     public void beginMenu(final long now, final int ticks) {
+        beginMenu(now, ticks, null);
+    }
+
+    /** The same, at the menu of {@code manager}, which decides whether a choice hands over to another's. */
+    public void beginMenu(final long now, final int ticks, @Nullable final BootManager manager) {
         this.halted = false;
         this.atMenu = true;
         this.menuEndsAt = ticks > 0 ? now + ticks : 0L;
+        this.menuOf = manager;
+    }
+
+    /** Whose boot menu the machine stands at, or null when it is not known. */
+    @Nullable
+    public BootManager menuOf() {
+        return this.menuOf;
     }
 
     /** The ticks left on the menu's clock, or zero once a key has stopped it. */

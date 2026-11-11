@@ -143,6 +143,9 @@ class InstallerFlowTest {
         final InstallerFlow flow = framesXp(List.of(EMPTY_500));
         assertEquals(0, flow.ticksUnlocked());
         flow.next();
+        assertEquals(InstallerPage.FORMAT, flow.page());
+        assertEquals(0, flow.ticksUnlocked());
+        flow.next();
         assertEquals(25, flow.ticksUnlocked());
         flow.advance(25);
         assertEquals(InstallerPage.NAME, flow.page());
@@ -163,6 +166,7 @@ class InstallerFlowTest {
     @Test
     void advance_aPageThatAsks_waitsForTheAnswer() {
         final InstallerFlow flow = framesXp(List.of(EMPTY_500));
+        flow.next();
         flow.next();
         flow.advance(25);
         assertEquals(InstallerPage.NAME, flow.page());
@@ -188,6 +192,9 @@ class InstallerFlowTest {
         final InstallerFlow flow = framesXp(List.of(EMPTY_500));
         assertTrue(flow.quittable());
         flow.next();
+        // How the partition is formatted is still a question: nothing is written yet.
+        assertTrue(flow.quittable());
+        flow.next();
         assertFalse(flow.quittable());
         assertTrue(flow.started());
     }
@@ -195,6 +202,7 @@ class InstallerFlowTest {
     @Test
     void back_afterTheCopyHasStarted_goesNowhere() {
         final InstallerFlow flow = framesXp(List.of(EMPTY_500));
+        flow.next();
         flow.next();
         final int was = flow.stageIndex();
         flow.back();

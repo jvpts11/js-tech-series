@@ -86,7 +86,7 @@
     "jsc:wafer_saw_wire_web",
     "jsc:wafer_saw_wire_spool"
   ],
-  "order": 34,
+  "order": 40,
   "section": "jsc:chain_machines",
   "title": "jsc.guide.silicon_machines.title"
 }

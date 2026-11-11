@@ -624,7 +624,7 @@ final class BuildingPages {
                         "Use a module of a generation the board lists.",
                         "The build says there is no RAM.",
                         "Put in a module of a kind the board takes.")
-                .seeAlso("jsc:processors", "jsc:motherboards", "jsc:mainframes")
+                .seeAlso("jsc:processors", "jsc:motherboards", "jsc:mainframes", "jsc:swap")
                 .register();
     }
 
@@ -745,7 +745,7 @@ final class BuildingPages {
                         "The build says there are too many disks.",
                         "Move disks to the Hot-Swap Drive Bay, or use a board with more disk slots"
                                 + " ([the build refusals](jsc:build_refusals)).")
-                .seeAlso("jsc:case_front", "jsc:items_as_data", "jsc:the_systems")
+                .seeAlso("jsc:case_front", "jsc:items_as_data", "jsc:the_systems", "jsc:partitions")
                 .register();
     }
 

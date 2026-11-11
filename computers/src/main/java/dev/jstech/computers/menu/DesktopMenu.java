@@ -224,7 +224,7 @@ public class DesktopMenu extends CoreMenu implements IMonitorMenu {
         return desktopId;
     }
 
-    /** The host computer's RAM in megabytes. */
+    /** What the host computer may promise in megabytes: its RAM and the swap behind it. */
     public int ramTotalMb() {
         return ramTotalMb;
     }

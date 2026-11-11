@@ -93,10 +93,24 @@ public final class RamLedger {
     }
 
     private final int totalMb;
+    private final int swapMb;
+    private final int swapSpeedPercent;
     private final List<Entry> entries = new ArrayList<>();
 
+    /** A machine's memory with no swap behind it. */
     public RamLedger(final int totalMb) {
+        this(totalMb, 0, 100);
+    }
+
+    /**
+     * A machine's memory with {@code swapMb} of swap behind it (computers/docs/design/hardware.md): what it may promise
+     * is the two together, and what is in swap runs at {@code swapSpeedPercent} of its share, by the disk the swap is
+     * on.
+     */
+    public RamLedger(final int totalMb, final int swapMb, final int swapSpeedPercent) {
         this.totalMb = Math.max(0, totalMb);
+        this.swapMb = Math.max(0, swapMb);
+        this.swapSpeedPercent = Math.max(0, Math.min(100, swapSpeedPercent));
     }
 
     /** Records {@code mb} held by {@code name}; nothing is recorded for a zero or negative size. */
@@ -164,9 +178,63 @@ public final class RamLedger {
         return Math.max(0, totalMb - usedMb());
     }
 
-    /** Whether {@code mb} more would still fit. */
+    /** The swap behind the memory, in megabytes; none on a system that keeps none. */
+    public int swapMb() {
+        return swapMb;
+    }
+
+    /** What the machine may promise: its memory and its swap together, the commit limit. */
+    public int promisableMb() {
+        return totalMb + swapMb;
+    }
+
+    /** What is in swap: what is promised past the memory, as much of it as the swap holds. */
+    public int swapUsedMb() {
+        return Math.max(0, Math.min(swapMb, usedMb() - totalMb));
+    }
+
+    /** Whether {@code mb} more would still fit, in the memory and the swap together. */
     public boolean fits(final int mb) {
-        return mb <= totalMb - usedMb();
+        return mb <= promisableMb() - usedMb();
+    }
+
+    /**
+     * How much of each entry is in swap, and how fast it runs for it (computers/docs/design/hardware.md). What is
+     * promised past the memory goes to swap from the programs, services and windows, never the system, its desktop or
+     * the graphics: first the part each was given and is not holding, as a real kernel pages out what is not touched,
+     * the newest first; then, when that is not enough, what they hold, the newest first. Only entries with part of
+     * themselves in swap are listed.
+     */
+    public List<Swapped> swapped() {
+        int left = swapUsedMb();
+        final List<Swapped> out = new ArrayList<>();
+        if (left <= 0) {
+            return out;
+        }
+        final int[] inSwap = new int[entries.size()];
+        for (int i = entries.size() - 1; i >= 0 && left > 0; i--) {
+            final Entry entry = entries.get(i);
+            if (swappable(entry)) {
+                final int idle = Math.max(0, entry.mb - (int) Math.min(entry.mb, entry.heldBytes / BYTES_PER_MB));
+                inSwap[i] = Math.min(left, idle);
+                left -= inSwap[i];
+            }
+        }
+        for (int i = entries.size() - 1; i >= 0 && left > 0; i--) {
+            final Entry entry = entries.get(i);
+            if (swappable(entry)) {
+                final int more = Math.min(left, entry.mb - inSwap[i]);
+                inSwap[i] += more;
+                left -= more;
+            }
+        }
+        for (int i = 0; i < entries.size(); i++) {
+            if (inSwap[i] > 0) {
+                final Entry entry = entries.get(i);
+                out.add(new Swapped(entry, inSwap[i], 100 - inSwap[i] * (100 - swapSpeedPercent) / entry.mb));
+            }
+        }
+        return out;
     }
 
     public List<Entry> entries() {
@@ -205,5 +273,20 @@ public final class RamLedger {
             kept.add(item);
         }
         return kept;
+    }
+
+    /* Whether part of an entry may go to swap: a program, a service or a window; the system's own never does. */
+    private static boolean swappable(final Entry entry) {
+        return entry.kind == Kind.PROCESS || entry.kind == Kind.SERVICE || entry.kind == Kind.WINDOW;
+    }
+
+    /**
+     * An entry with part of itself in swap.
+     *
+     * @param entry        the entry
+     * @param inSwapMb     how much of it is in swap
+     * @param speedPercent the share of the processor it runs at, for the part in swap running slower
+     */
+    public record Swapped(Entry entry, int inSwapMb, int speedPercent) {
     }
 }

@@ -2243,6 +2243,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                         memo.getString("Name"), memo.getString("Desktop"), memo.getInt("Erase"),
                         memo.getBoolean("Ports"), memo.getBoolean("UseMirror"), memo.getBoolean("Cron"),
                         memo.getBoolean("Sshd"), memo.getInt("Options"));
+                Installers.restorePlacement(memo, state.installer);
             }
         }
         return state.installer;
@@ -2296,6 +2297,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         pages.putBoolean("Cron", state.installer.cronEnabled());
         pages.putBoolean("Sshd", state.installer.sshdEnabled());
         pages.putInt("Options", state.installer.options());
+        Installers.savePlacement(pages, state.installer);
         return pages;
     }
 

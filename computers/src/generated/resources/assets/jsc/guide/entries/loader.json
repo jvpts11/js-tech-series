@@ -254,7 +254,7 @@
     }
   ],
   "id": "jsc:loader",
-  "order": 321,
+  "order": 329,
   "section": "jsc:freebsd_system",
   "title": "jsc.guide.loader.title"
 }

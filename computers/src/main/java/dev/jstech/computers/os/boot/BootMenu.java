@@ -69,15 +69,21 @@ public record BootMenu(BootManager manager, Text title, List<Entry> entries, int
      * <p>A disk carries several systems, so an entry has to say which of them it is: two entries can sit on the
      * same disk and booting one of them is not booting the other.
      *
-     * @param label what the menu calls it
-     * @param slot  the disk it sits on, or {@link #FIRMWARE} for the way into the setup
-     * @param osId  the system on that disk, empty for the way into the setup
+     * @param label     what the menu calls it
+     * @param slot      the disk it sits on, or {@link #FIRMWARE} for the way into the setup
+     * @param osId      the system on that disk, empty for the way into the setup
+     * @param partition the partition of that disk the system is on, or 0 for the one the disk has open
      */
-    public record Entry(Text label, int slot, String osId) {
+    public record Entry(Text label, int slot, String osId, int partition) {
 
         public Entry {
             label = label == null ? Text.EMPTY : label;
             osId = osId == null ? "" : osId;
+        }
+
+        /** An entry for what the disk has open, or one that boots nothing. */
+        public Entry(final Text label, final int slot, final String osId) {
+            this(label, slot, osId, 0);
         }
 
         /** Whether this entry opens the firmware rather than booting anything. */
@@ -113,6 +119,12 @@ public record BootMenu(BootManager manager, Text title, List<Entry> entries, int
 
         public Builder entry(final Text label, final int slot, final String osId) {
             this.entries.add(new Entry(label, slot, osId));
+            return this;
+        }
+
+        /** A system on partition {@code partition} of the disk in {@code slot}. */
+        public Builder entry(final Text label, final int slot, final String osId, final int partition) {
+            this.entries.add(new Entry(label, slot, osId, partition));
             return this;
         }
 

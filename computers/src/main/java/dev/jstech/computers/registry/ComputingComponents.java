@@ -16,6 +16,9 @@ import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.hardware.PsuCondition;
 import dev.jstech.computers.hardware.PsuConditions;
 import dev.jstech.computers.os.DiskSystems;
+import dev.jstech.computers.os.disk.PartitionTable;
+import dev.jstech.computers.os.disk.PartitionView;
+import dev.jstech.computers.os.disk.ZfsMember;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.media.MediaKind;
 import dev.jstech.computers.portable.PortableLink;
@@ -184,6 +187,22 @@ public final class ComputingComponents {
      */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Boolean>>
             DISK_UNCLEAN = saved("disk_unclean", Codec.BOOL, ByteBufCodecs.BOOL);
+
+    /*
+     * The partition table written on a disk (computers/docs/design/storage-devices.md): the partitions, what each but
+     * the open one holds, and which is open. Absent on a disk nothing has partitioned, which reads as one partition
+     * over all of it.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PartitionTable>>
+            PARTITION_TABLE = saved("partition_table", PartitionTable.CODEC, PartitionTable.STREAM_CODEC);
+
+    /* The mark of a partition's view: which partition of its disk it is, its size and its file system. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<PartitionView>>
+            PARTITION_VIEW = saved("partition_view", PartitionView.CODEC, PartitionView.STREAM_CODEC);
+
+    /* A partition's place in a ZFS mirror: its pool, and whether the pool is read from it or repaired by it. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ZfsMember>>
+            ZFS_MEMBER = saved("zfs_member", ZfsMember.CODEC, ZfsMember.STREAM_CODEC);
 
     /*
      * A user-chosen label for a disk or media volume, shown in This PC and the explorer drive tree and

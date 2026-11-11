@@ -10,6 +10,7 @@ package dev.jstech.computers.machine;
 import com.mojang.logging.LogUtils;
 import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.IsaFit;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.sigma.SigmaVersions;
@@ -566,6 +567,16 @@ public final class MachinePrograms {
             }
             this.table.remove(one.id());
             this.focus.forget(one.id());
+        }
+    }
+
+    /**
+     * Paces each program by the part of it in swap (computers/docs/design/hardware.md): {@code percents} gives the
+     * share of its speed each runs at by its number, and one not named runs at its own.
+     */
+    public void slowBySwap(final Map<Integer, Integer> percents) {
+        for (final ProgramEntry<IMachineRuntime> entry : this.table.all()) {
+            entry.process().slowedTo(percents.getOrDefault(entry.id(), IsaFit.FULL_SPEED));
         }
     }
 

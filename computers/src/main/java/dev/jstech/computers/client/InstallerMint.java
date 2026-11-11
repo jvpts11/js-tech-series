@@ -14,12 +14,12 @@ import dev.jstech.computers.client.os.WallpaperStyle;
 import dev.jstech.computers.gui.layout.InstallerLayout;
 import dev.jstech.computers.operation.payload.InstallerActionPayload;
 import dev.jstech.computers.os.FileSystemType;
-import dev.jstech.computers.os.OsDef;
-import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.disk.PartitionEntry;
+import dev.jstech.computers.os.install.DiskSpot;
+import dev.jstech.computers.os.install.InstallPlan;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.core.client.gui.component.Draw;
-import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -86,6 +86,8 @@ final class InstallerMint implements IOwnInstallerPage {
     private static final int TITLE_H = 16;
     private static final int PAD = 7;
     private static final int ROW = 7;
+    /* A gigabyte, which is what the divider moves by. */
+    private static final long MB_PER_GB = 1_024L;
     private static final int BUTTON_H = 11;
     private static final int DOTS = 7;
     private static final int CARET_TICKS = 10;
@@ -118,7 +120,7 @@ final class InstallerMint implements IOwnInstallerPage {
     private static final TextKey RESIZED = TextKey.of("jsc.installer.mint.resized",
             "The following partitions are going to be resized:");
     private static final TextKey RESIZE = TextKey.of("jsc.installer.mint.resize",
-            "partition #1 of %s from %s to %s");
+            "partition #%s of %s from %s to %s");
     private static final TextKey FORMATTED = TextKey.of("jsc.installer.mint.formatted",
             "The following partitions are going to be formatted:");
     private static final TextKey AS = TextKey.of("jsc.installer.mint.as", "partition #%s of %s as %s");
@@ -204,6 +206,11 @@ final class InstallerMint implements IOwnInstallerPage {
     public boolean key(final int key) {
         if (key == GLFW.GLFW_KEY_BACKSPACE && this.flow.page() == InstallerPage.NAME && !this.typing.isEmpty()) {
             this.typing = this.typing.substring(0, this.typing.length() - 1);
+            return true;
+        }
+        if (this.flow.page() == InstallerPage.ALONGSIDE && !this.confirming
+                && (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT)) {
+            this.moveDivider(key == GLFW.GLFW_KEY_RIGHT ? 1 : -1);
             return true;
         }
         if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
@@ -304,23 +311,30 @@ final class InstallerMint implements IOwnInstallerPage {
         Draw.textScaled(g, font, GameText.resolve(this.flow.style().alongside(this.flow.systemName(), other)),
                 x + PAD, y + 4, c.ink(), 1.0F);
         int ty = this.paragraph(g, font, GameText.resolve(DIVIDER.text()), x + PAD, y + 18, w - 2 * PAD, c.ink()) + 2;
-        if (disk != null) {
+        final InstallPlan.Plan plan = this.flow.plan();
+        final DiskSpot beside = this.flow.besideSpot();
+        final PartitionEntry shrunk = plan.layout() == null ? null : plan.layout().find(plan.shrunk());
+        final PartitionEntry system = plan.system();
+        if (disk != null && beside != null && shrunk != null && system != null && system.fs() != null) {
             final String device = this.deviceOf(disk);
             TextWall.draw(g, font, disk.label() + " (" + device + ")", x + PAD, ty, c.dim());
             ty += ROW + 2;
+            // The bar is the other system's partition as it was: the divider is where it now ends.
             final int barW = w - 2 * PAD;
-            final int usedMb = Math.max(0, disk.sizeMb() - disk.freeMb());
-            final int split = disk.sizeMb() <= 0 ? barW / 2 : Math.max(20, Math.min(barW - 20,
-                    (int) ((long) barW * usedMb / disk.sizeMb())));
+            final int split = Math.max(20, Math.min(barW - 20,
+                    (int) ((long) barW * shrunk.sizeMb() / Math.max(1L, beside.sizeMb()))));
             g.fill(x + PAD, ty, x + PAD + split - 1, ty + 20, c.other());
             g.fill(x + PAD + split + 1, ty, x + PAD + barW, ty + 20, c.accent());
             g.fill(x + PAD + split - 1, ty - 2, x + PAD + split + 1, ty + 22, c.divider());
             TextWall.draw(g, font, other, x + PAD + 4, ty + 3, c.field());
-            TextWall.draw(g, font, device + "1 (" + fileSystemOf(other) + ")  " + gigabytes(usedMb), x + PAD + 4,
-                    ty + 11, c.field());
+            TextWall.draw(g, font, device + beside.number() + " (" + nameOf(beside.fileSystem()) + ")  "
+                    + gigabytes(shrunk.sizeMb()), x + PAD + 4, ty + 11, c.field());
             TextWall.draw(g, font, this.flow.systemName(), x + PAD + split + 5, ty + 3, c.field());
-            TextWall.draw(g, font, device + "3 (ext4)  " + gigabytes(disk.freeMb()), x + PAD + split + 5, ty + 11,
-                    c.field());
+            TextWall.draw(g, font, device + system.number() + " (" + nameOf(system.fs()) + ")  "
+                    + gigabytes(system.sizeMb()), x + PAD + split + 5, ty + 11, c.field());
+            // A click on either side moves the divider a gigabyte towards it, as LEFT and RIGHT do.
+            this.hits.add(new Hit(x + PAD, ty, split, 20, false, () -> this.moveDivider(-1)));
+            this.hits.add(new Hit(x + PAD + split, ty, barW - split, 20, false, () -> this.moveDivider(1)));
             ty += 27;
         }
         this.paragraph(g, font, GameText.resolve(SWAP.with(gigabytes(this.memoryMb.getAsInt()),
@@ -393,15 +407,24 @@ final class InstallerMint implements IOwnInstallerPage {
         final String device = this.deviceOf(disk);
         ty = this.listed(g, font, c, dx + 6, ty, GameText.resolve(TABLES.text()),
                 List.of(disk == null ? device : disk.label() + " (" + device + ")"));
-        if (this.alongside && disk != null) {
+        // What the installer is about to write, read off its plan: the partition shrunk and the ones made.
+        final InstallPlan.Plan plan = this.alongside || disk == null ? this.flow.plan()
+                : InstallPlan.erasing(this.flow, disk);
+        final DiskSpot beside = this.flow.besideSpot();
+        final PartitionEntry shrunk = plan.layout() == null ? null : plan.layout().find(plan.shrunk());
+        if (this.alongside && beside != null && shrunk != null) {
             ty = this.listed(g, font, c, dx + 6, ty, GameText.resolve(RESIZED.text()),
-                    List.of(GameText.resolve(RESIZE.with(device, gigabytes(disk.sizeMb()),
-                            gigabytes(disk.sizeMb() - disk.freeMb())))));
+                    List.of(GameText.resolve(RESIZE.with(beside.number(), device, gigabytes(beside.sizeMb()),
+                            gigabytes(shrunk.sizeMb())))));
         }
-        final int first = this.alongside ? 2 : 1;
-        this.listed(g, font, c, dx + 6, ty, GameText.resolve(FORMATTED.text()),
-                List.of(GameText.resolve(AS.with(first, device, "swap")),
-                        GameText.resolve(AS.with(first + 1, device, "ext4"))));
+        final List<String> formatted = new ArrayList<>();
+        for (final int number : plan.made()) {
+            final PartitionEntry made = plan.layout() == null ? null : plan.layout().find(number);
+            if (made != null) {
+                formatted.add(GameText.resolve(AS.with(number, device, nameOf(made.fs()))));
+            }
+        }
+        this.listed(g, font, c, dx + 6, ty, GameText.resolve(FORMATTED.text()), formatted);
         this.buttons(g, font, c, dx + dw - 6, dy + dh - BUTTON_H - 5,
                 new Button(GO_BACK, false, () -> this.confirming = false),
                 new Button(CONTINUE, true, this::write));
@@ -575,6 +598,29 @@ final class InstallerMint implements IOwnInstallerPage {
         this.send.accept(InstallerActionPayload.of(this.host, this.monitor, action, value));
     }
 
+    /*
+     * Moves the divider a gigabyte: the other system's partition is left that much bigger or smaller, never below
+     * what it holds nor past what it was.
+     */
+    private void moveDivider(final int gigabytes) {
+        final InstallerFlow.Disk disk = this.flow.target();
+        final DiskSpot beside = this.flow.besideSpot();
+        final InstallPlan.Plan plan = this.flow.plan();
+        final PartitionEntry shrunk = plan.layout() == null ? null : plan.layout().find(plan.shrunk());
+        if (disk == null || beside == null) {
+            return;
+        }
+        final long now = shrunk != null ? shrunk.sizeMb() : InstallPlan.shrinkFor(this.flow, disk);
+        final long to = Math.max(beside.usedMb(), Math.min(beside.sizeMb(), now + gigabytes * MB_PER_GB));
+        this.send.accept(InstallerActionPayload.of(this.host, this.monitor, InstallerActionPayload.ACTION_SHRINK,
+                disk.slot(), to));
+    }
+
+    /* A file system as a disk tool names it, in lower case. */
+    private static String nameOf(@Nullable final FileSystemType fs) {
+        return fs == null ? "" : fs.displayName().toLowerCase(Locale.ROOT);
+    }
+
     /* The disk the choice on the type page is about: the one beside another system, or the one to take whole. */
     @Nullable
     private InstallerFlow.Disk choiceDisk() {
@@ -608,19 +654,8 @@ final class InstallerMint implements IOwnInstallerPage {
         return "sd" + (char) ('a' + index);
     }
 
-    /* The file system the system already on the disk was installed with, as a disk tool names it. */
-    private static String fileSystemOf(final String systemName) {
-        for (final OsDef system : OsRegistry.oses()) {
-            if (system.displayName().equals(systemName)) {
-                return FileSystemType.installedBy(system.platform(), system.familyRank(), false,
-                        system.id().getPath(), HardwareEra.STANDARD).displayName().toLowerCase(Locale.ROOT);
-            }
-        }
-        return "ntfs";
-    }
-
-    private static String gigabytes(final int mb) {
-        return String.format(Locale.ROOT, "%.1f GB", mb / 1024.0);
+    private static String gigabytes(final long mb) {
+        return String.format(Locale.ROOT, "%.1f GB", mb / (double) MB_PER_GB);
     }
 
     /** Something drawn that a click lands on, and what it does; the primary one is what Enter presses. */

@@ -91,7 +91,7 @@
   ],
   "icon": "jsc:server",
   "id": "jsc:mining_pools",
-  "order": 110,
+  "order": 116,
   "section": "jsc:cryptocurrency",
   "title": "jsc.guide.mining_pools.title"
 }

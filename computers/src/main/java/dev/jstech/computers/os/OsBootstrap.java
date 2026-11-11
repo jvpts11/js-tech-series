@@ -324,13 +324,14 @@ public final class OsBootstrap {
     private static final List<ResourceLocation> FRAMES_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("device_manager"), rl("help_viewer"),
-            rl("defrag"), rl("media_player"));
+            rl("defrag"), rl("disk_management"), rl("media_player"));
 
     /**
      * The Frames' system tools and their Media Player, kept under the Start menu with no icon on the wallpaper, as the
      * real ones are.
      */
-    private static final Set<ResourceLocation> FRAMES_TOOLS = Set.of(rl("defrag"), rl("media_player"));
+    private static final Set<ResourceLocation> FRAMES_TOOLS = Set.of(rl("defrag"), rl("disk_management"),
+            rl("media_player"));
 
     /** The Media Player, which every desktop lists in its menu and puts no icon of on the wallpaper. */
     private static final Set<ResourceLocation> MEDIA_IN_MENU = Set.of(rl("media_player"));
@@ -433,7 +434,8 @@ public final class OsBootstrap {
                     rl("command_prompt"), DesktopNames.KDE_TERMINAL, rl("calculator"), DesktopNames.KDE_CALCULATOR,
                     rl("system_monitor"), DesktopNames.KDE_MONITOR, rl("settings"), DesktopNames.KDE_SETTINGS,
                     rl("this_pc"), DesktopNames.KDE_THIS_PC, rl("help_viewer"), DesktopNames.KDE_HELP,
-                    rl("media_player"), DesktopNames.KDE_MEDIA_PLAYER), SoftwareHouse.KDE_GUILD, MEDIA_IN_MENU),
+                    rl("media_player"), DesktopNames.KDE_MEDIA_PLAYER, rl("disks"), DesktopNames.KDE_DISKS),
+                    SoftwareHouse.KDE_GUILD, MEDIA_IN_MENU),
             new DesktopEnvironmentDef(rl("gnome"), "GNOME", PanelStyle.GNOME, BUILTIN_APPS, Map.of(
                     rl("files"), DesktopNames.GNOME_FILES, rl("editor"), DesktopNames.GNOME_EDITOR,
                     rl("command_prompt"), DesktopNames.GNOME_TERMINAL, rl("calculator"), DesktopNames.GNOME_CALCULATOR,
@@ -557,8 +559,18 @@ public final class OsBootstrap {
              */
             ProgramSpec.of(rl("this_pc"), "thispc", true, THIS_PC_SYSTEMS, 0, ProgramKind.APP, 0, HostScope.ANY)
                     .named("This PC").described("The machine itself: its hardware, its disks and what fills them."),
+            /*
+             * The Linux desktops' disk tool (computers/docs/design/storage-devices.md): GNOME's Disks, which Cinnamon
+             * ships too, and the KDE Partition Manager on KDE Plasma; each lists the disks' partitions and makes,
+             * formats, resizes and deletes them.
+             */
             ProgramSpec.of(rl("disks"), "disks", true, LINUX_ONLY, 0, ProgramKind.APP, 0, HostScope.ANY)
-                    .named("Disks").described("The volumes attached to this machine, and what occupies each one."),
+                    .named("Disks").described("The disks and their partitions: make, format, resize and delete"
+                            + " them, or give a disk a new table."),
+            // Frames' Disk Management, from XP on, which Computer Management opens: the volumes and the disks' map.
+            ProgramSpec.of(rl("disk_management"), "diskmgmt", true, FRAMES_ONLY, 0, ProgramKind.APP, 2, HostScope.ANY)
+                    .named("Disk Management").described("The disks and their volumes: format, shrink, extend,"
+                            + " delete or make one, and turn an empty disk from MBR to GPT or back."),
             /*
              * CDE's own answer to "what is this machine": who is at it, the system and the hardware. Only CDE
              * bundles it, on every system CDE stands on; the command is named the way CDE named its tools.

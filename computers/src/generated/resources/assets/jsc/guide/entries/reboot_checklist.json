@@ -238,7 +238,7 @@
     }
   ],
   "id": "jsc:reboot_checklist",
-  "order": 315,
+  "order": 323,
   "section": "jsc:before_the_reboot",
   "title": "jsc.guide.reboot_checklist.title"
 }

@@ -102,7 +102,7 @@
     "jsc:packaging_line_mould_press",
     "jsc:packaging_line_wire_bonder"
   ],
-  "order": 35,
+  "order": 41,
   "section": "jsc:chain_machines",
   "title": "jsc.guide.chip_factory_machines.title"
 }

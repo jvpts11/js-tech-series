@@ -92,4 +92,11 @@ public interface IMachineRuntime extends ILanguageProcess, IProgramRuntime {
     default boolean endedUnannounced() {
         return false;
     }
+
+    /**
+     * The program has part of itself in swap, and runs at {@code percent} hundredths of its share for it
+     * (computers/docs/design/hardware.md); 100 when none of it is. A runtime that is not paced ignores it.
+     */
+    default void slowedTo(final int percent) {
+    }
 }

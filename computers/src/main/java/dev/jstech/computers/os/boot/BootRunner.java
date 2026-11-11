@@ -18,6 +18,7 @@ import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.DesktopBalloonPayload;
 import dev.jstech.computers.operation.payload.ScreenSessions;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.MachineSwap;
 import dev.jstech.computers.os.OpenBsdServices;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.OsDef;
@@ -101,6 +102,24 @@ public final class BootRunner {
         }
         machine.restart();
         ScreenSessions.bootWatchers(level, pos);
+    }
+
+    /**
+     * A system was chosen at the boot menu: the machine boots it, unless the choice hands over to another manager's
+     * menu, as GRUB's Frames Boot Manager does to the Midsoft Boot Manager when the disk carries more than one Frames
+     * (computers/docs/design/storage-devices.md), which is then what the machine stands at.
+     */
+    public static void chosen(final IOsHost machine, final BootPhases phases, final ServerLevel level,
+                              final BlockPos pos) {
+        final BootManager was = phases.menuOf();
+        phases.endMenu();
+        final BootMenu next = BootLines.menuFor(machine, MENU_TICKS);
+        if (was == BootManager.GRUB && next.manager() == BootManager.KICKMGR && !next.isEmpty()) {
+            phases.beginMenu(level.getGameTime(), MENU_TICKS, next.manager());
+            showMenu(machine, level, pos);
+            return;
+        }
+        phases.beginBoot();
     }
 
     /** How long this machine's system takes to come up: its size, over the disk it sits on and the era. */
@@ -208,6 +227,8 @@ public final class BootRunner {
          * medium asked for from the setup is what it runs now, and one that was running is gone with the restart.
          */
         machine.settleLiveSession();
+        // Each disk opens the partition it starts, before anything asks what system the machine runs.
+        machine.openBootPartitions();
         machine.setBootedDesktopId(desktopAtBoot(machine));
         /*
          * A machine with nothing to boot ends its self-test on the era's own failure and stays there, the way
@@ -313,7 +334,7 @@ public final class BootRunner {
                                         final BlockPos pos, final long now) {
         final BootMenu list = BootLines.menuFor(machine, MENU_TICKS);
         if (!list.isEmpty() && ComputersServerConfig.showBootMenu()) {
-            phases.beginMenu(now, MENU_TICKS);
+            phases.beginMenu(now, MENU_TICKS, list.manager());
             showMenu(machine, level, pos);
         } else {
             phases.beginBoot();
@@ -376,7 +397,10 @@ public final class BootRunner {
         }
         phases.endBoot();
         phases.systemUp(now);
-        if (DiskChecks.cameUp(machine)) {
+        final boolean checked = DiskChecks.cameUp(machine);
+        // A Frames sizes its page file as it comes up, by the memory the machine has now.
+        final boolean paged = MachineSwap.sizePageFile(machine);
+        if (checked || paged) {
             machine.setChanged();
         }
         machine.systemCameUp();

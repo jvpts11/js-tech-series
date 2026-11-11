@@ -1,0 +1,214 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.disk_tools_of_each_system.text1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.disk_tools_of_each_system.table1",
+      "heads": [
+        "jsc.guide.disk_tools_of_each_system.table1_head1",
+        "jsc.guide.disk_tools_of_each_system.table1_head2",
+        "jsc.guide.disk_tools_of_each_system.table1_head3"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_1_2"
+          },
+          {
+            "literal": "FDISK"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_2_2"
+          },
+          {
+            "literal": "diskpart"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_3_2"
+          },
+          {
+            "literal": "fdisk -l, lsblk, mkfs"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_4_1"
+          },
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_4_2"
+          },
+          {
+            "literal": "fdisk -l, lsblk, mkfs"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_5_2"
+          },
+          {
+            "literal": "fdisk"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_6_2"
+          },
+          {
+            "literal": "gpart show"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.disk_tools_of_each_system.table1_7_2"
+          },
+          {
+            "literal": "fdisk, disklabel -h"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disk_tools_of_each_system.text2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.disk_tools_of_each_system.heading1"
+    },
+    {
+      "type": "checklist",
+      "lines": [
+        {
+          "item": "jsc.guide.disk_tools_of_each_system.check1"
+        },
+        {
+          "item": "jsc.guide.disk_tools_of_each_system.check2"
+        },
+        {
+          "item": "jsc.guide.disk_tools_of_each_system.check3"
+        },
+        {
+          "item": "jsc.guide.disk_tools_of_each_system.check4"
+        }
+      ]
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.disk_tools_of_each_system.step1",
+        "jsc.guide.disk_tools_of_each_system.step2",
+        "jsc.guide.disk_tools_of_each_system.step3",
+        "jsc.guide.disk_tools_of_each_system.step4"
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.disk_tools_of_each_system.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.disk_tools_of_each_system.text3"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "player@pc:~$ ",
+          "text": "mkfs.ext4 /dev/sda1",
+          "typed": true
+        },
+        {
+          "text": "/dev/sda1 is mounted; will not make a filesystem here!"
+        }
+      ],
+      "look": "jsc:guide/terminal/bash",
+      "title": "Ubuntu"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.disk_tools_of_each_system.fix1",
+          "problem": "jsc.guide.disk_tools_of_each_system.problem1"
+        },
+        {
+          "fix": "jsc.guide.disk_tools_of_each_system.fix2",
+          "problem": "jsc.guide.disk_tools_of_each_system.problem2"
+        }
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/frames/diskpart"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/fdisk"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/fdisk"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/lsblk"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/mkfs.ext4"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/unix/fdisk"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/gpart"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/openbsd/disklabel"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:partitions",
+        "jsc:two_systems_on_a_disk"
+      ]
+    }
+  ],
+  "icon": "jsc:disk_vaultis_trench_20m",
+  "id": "jsc:disk_tools_of_each_system",
+  "order": 30,
+  "section": "jsc:disks_and_partitions",
+  "title": "jsc.guide.disk_tools_of_each_system.title"
+}

@@ -1,0 +1,173 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.swap.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.swap.text2"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.swap.table1",
+      "heads": [
+        "jsc.guide.swap.table1_head1",
+        "jsc.guide.swap.table1_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.swap.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.swap.table1_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.swap.table1_2_1"
+          },
+          {
+            "words": "jsc.guide.swap.table1_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.swap.table1_3_1"
+          },
+          {
+            "words": "jsc.guide.swap.table1_3_2"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.swap.text3"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.swap.definition1",
+      "term": "jsc.guide.swap.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.swap.definition2",
+      "term": "jsc.guide.swap.term2"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.swap.heading1"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.swap.table2",
+      "heads": [
+        "jsc.guide.swap.table2_head1",
+        "jsc.guide.swap.table2_head2"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.swap.table2_1_1"
+          },
+          {
+            "words": "jsc.guide.swap.table2_1_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.swap.table2_2_1"
+          },
+          {
+            "words": "jsc.guide.swap.table2_2_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.swap.table2_3_1"
+          },
+          {
+            "words": "jsc.guide.swap.table2_3_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.swap.table2_4_1"
+          },
+          {
+            "literal": "free -h, swapon --show, top"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.swap.table2_5_1"
+          },
+          {
+            "literal": "swapinfo, sysctl vm.swap_total"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "player@pc:~$ ",
+          "text": "swapon --show",
+          "typed": true
+        },
+        {
+          "text": "NAME      TYPE      SIZE USED PRIO"
+        },
+        {
+          "text": "/dev/sda2 partition    4G   0B   -2"
+        }
+      ],
+      "look": "jsc:guide/terminal/bash",
+      "title": "Ubuntu"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.swap.fix1",
+          "problem": "jsc.guide.swap.problem1"
+        },
+        {
+          "fix": "jsc.guide.swap.fix2",
+          "problem": "jsc.guide.swap.problem2"
+        }
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/free"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/swapon"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/swapinfo"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:memory",
+        "jsc:system_monitor_and_task_manager"
+      ]
+    }
+  ],
+  "icon": "jsc:disk_vaultis_trench_20m",
+  "id": "jsc:swap",
+  "order": 34,
+  "section": "jsc:disks_and_partitions",
+  "title": "jsc.guide.swap.title"
+}

@@ -168,6 +168,14 @@ system but the BSDs still has `help` for its commands at the prompt; on Frames i
 
 The installer puts the system on the first disk that has none, unless you choose another.
 
+*Added 2026-11-11.* Each installer asks where the system goes as its real one did
+(computers/docs/design/storage-devices.md): Frames XP lists the partitions and the free space in text mode and then
+asks how to format; Frames 7 to 11 show a table with New, Delete, Format and Extend; Ubuntu and Linux Mint offer to
+install alongside another system, shrinking its partition with a divider; Debian and Fedora show each disk's
+partitions; FreeBSD offers Auto (ZFS), with a mirror on a second disk, and Auto (UFS). MC-DOS, UNIX System V and
+Frames 95 take their disk and format it. Under UEFI the installer makes the EFI partition first, and on Linux, the BSDs
+and UNIX a swap partition as big as the memory ([Hardware](HARDWARE.md#memory-ram)).
+
 ### Starting through the network
 
 *Added 2026-11-10.*
@@ -181,9 +189,29 @@ Mirror on the network, the firmware says so and goes back.
 
 ### Two systems on one computer
 
-Install a second system on another disk. The computer then stops at a boot manager each time it starts (the
-Midsoft Boot Manager on Frames, GRUB on Linux, FreeBSD's own loader) so you choose which to start. The firmware's
-boot order says which disk starts first.
+Install a second system on another disk, or on another partition of the same one. The computer then stops at a boot
+manager each time it starts (the Midsoft Boot Manager on Frames, listing each Frames with its partition; GRUB on
+Linux, listing every other system and the Frames Boot Manager of the EFI partition; FreeBSD's own loader) so you
+choose which to start. The firmware's boot order says which disk starts first, and its boot menu (F12) has a line for
+every system on every partition. On the Vintage the disk starts its active partition: set it with option 2 of
+FDISK on MC-DOS, or of `fdisk` on UNIX.
+
+### The disk tools
+
+*Added 2026-11-11.*
+
+| System | In a window | At the prompt |
+| --- | --- | --- |
+| MC-DOS | | `FDISK` |
+| Frames XP to 11 | Disk Management (no resizing on XP) | `diskpart` |
+| Linux | the KDE Partition Manager on KDE, Disks elsewhere | `fdisk -l`, `lsblk`, `mkfs.ext4` and the other `mkfs.*`, `btrfs` |
+| UNIX System V | | `fdisk` |
+| FreeBSD | | `gpart show`, `zfs`, `zpool` |
+| OpenBSD | | `fdisk`, `disklabel -h` |
+
+Every tool refuses to delete or format the partition the running system runs from, or a swap it swaps to; a
+partition resizes by its file system's rules and never below what it holds; a disk changes between MBR and GPT only
+when it is empty, and a new table erases the disk ([Hardware](HARDWARE.md#partitions-and-file-systems)).
 
 ### After a sudden shutdown
 
@@ -204,7 +232,7 @@ there; nothing is erased, and a clean shutdown leaves no mark.
 | FreeBSD, OpenBSD, UNIX | UFS | fsck's five passes on the console | a second for every 64 items in use, 5 seconds to a minute |
 | Quince's systems | HFS on the Quince System, HFS+ on Quince OS 9, HFS+ journaled from Quince OS X, APFS on quinceOS | nothing at start-up; Disk Utility's First Aid checks a disk when asked | as fsck |
 
-A disk is checked as the file system its computer's system formats with, until disks hold partitions of their own.
+Each partition the system has in use is checked as its own file system, and the check takes as long as all of them.
 
 ## Programs
 

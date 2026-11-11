@@ -19,6 +19,10 @@ import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.WorkspaceSet;
 import dev.jstech.computers.os.boot.SystemWelcome;
+import dev.jstech.computers.os.disk.DiskPartitions;
+import dev.jstech.computers.os.disk.DiskSnapshots;
+import dev.jstech.computers.os.disk.PartitionEntry;
+import dev.jstech.computers.os.disk.ZfsMirrors;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -100,6 +104,8 @@ final class OsSession {
      */
     @Nullable
     private ResourceLocation bootOnceOs;
+    /* And which partition of that disk the system is on, 0 for whatever the disk has open. */
+    private int bootOncePartition;
     /*
      * The disk in memory a live medium's desktop runs off (Linux Mint's), which the machine boots instead of any of
      * its own while the session lasts; empty for none. Persisted with the session, since a world closed and opened
@@ -190,6 +196,7 @@ final class OsSession {
                         memo.getString("Desktop"), memo.getInt("Erase"), memo.getBoolean("Ports"),
                         memo.getBoolean("UseMirror"), memo.getBoolean("Cron"), memo.getBoolean("Sshd"),
                         memo.getInt("Options"));
+                Installers.restorePlacement(memo, this.installer);
             }
         }
         return this.installer;
@@ -248,6 +255,7 @@ final class OsSession {
         // "This boot only" ends with the boot it was for.
         this.bootOnce = -1;
         this.bootOnceOs = null;
+        this.bootOncePartition = 0;
         // A live session lives in the machine's memory, which the stop empties.
         this.liveDisk = ItemStack.EMPTY;
         this.liveOverNetwork = false;
@@ -299,8 +307,59 @@ final class OsSession {
 
     /** Boots that system on that disk for this boot only, leaving what the disk boots by default alone. */
     void setBootOnce(final int slot, @Nullable final ResourceLocation osId) {
+        setBootOnce(slot, 0, osId);
+    }
+
+    /**
+     * Boots that system on partition {@code partition} of that disk for this boot only (0 for whatever the disk has
+     * open): the disk opens that partition now, so the system on it is what the machine runs, and the next start
+     * opens the one the disk starts by itself again.
+     */
+    void setBootOnce(final int slot, final int partition, @Nullable final ResourceLocation osId) {
         this.bootOnce = slot;
         this.bootOnceOs = osId;
+        this.bootOncePartition = partition;
+        if (partition > 0 && slot >= 0 && slot < diskCount()) {
+            DiskPartitions.open(diskInSlot(slot), partition);
+            this.machine.setChanged();
+        }
+    }
+
+    /**
+     * Each disk opens the partition it starts as the self-test ends (computers/docs/design/storage-devices.md): on a
+     * Master Boot Record the active one, which is how a disk with no boot manager chooses between two systems; else the
+     * one it has open when that carries a system, and the first that does otherwise. A disk chosen for this boot only
+     * keeps the partition chosen.
+     *
+     * <p>Then each partition starts as its file system does: btrfs mounts the snapshot set as its default, and a ZFS
+     * mirror repairs the system files it reads from its other disk.
+     */
+    void openBootPartitions() {
+        final List<ItemStack> disks = new ArrayList<>();
+        for (int slot = 0; slot < diskCount(); slot++) {
+            final ItemStack disk = diskInSlot(slot);
+            if (!DriveVolumes.isDisk(disk)) {
+                continue;
+            }
+            disks.add(disk);
+            if (!(slot == this.bootOnce && this.bootOncePartition > 0) && OsDisks.openForBoot(disk)) {
+                this.machine.setChanged();
+            }
+        }
+        for (final ItemStack disk : disks) {
+            for (final PartitionEntry partition : DiskPartitions.layout(disk).partitions()) {
+                if (!partition.holdsData()) {
+                    continue;
+                }
+                final ItemStack volume = DiskPartitions.view(disk, partition.number());
+                final boolean rolledBack = DiskSnapshots.atStart(volume);
+                final boolean repaired = ZfsMirrors.healFiles(volume, disks) > 0L;
+                if (rolledBack || repaired) {
+                    DiskPartitions.commit(disk, volume);
+                    this.machine.setChanged();
+                }
+            }
+        }
     }
 
     /** The disk slot the firmware boots first, or -1 for "the first disk with a system". */
@@ -625,6 +684,7 @@ final class OsSession {
             pages.putBoolean("Cron", this.installer.cronEnabled());
             pages.putBoolean("Sshd", this.installer.sshdEnabled());
             pages.putInt("Options", this.installer.options());
+            Installers.savePlacement(pages, this.installer);
             tag.put("Installer", pages);
         } else if (this.installerMemo != null) {
             // Saved again without ever being asked for: a machine unloaded before anybody looked at it.

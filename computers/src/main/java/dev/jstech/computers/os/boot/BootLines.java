@@ -13,6 +13,9 @@ import dev.jstech.computers.os.FirmwareKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelNames;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.disk.DiskPartitions;
+import dev.jstech.computers.os.disk.PartitionEntry;
+import dev.jstech.computers.os.disk.PartitionRole;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.core.jstechseries.tier.Era;
 import net.minecraft.resources.ResourceLocation;
@@ -244,28 +247,52 @@ public final class BootLines {
         }
         final BootMenu.Builder out = new BootMenu.Builder(manager);
         final ResourceLocation runningId = machine.installedOsId();
+        final ItemStack runningDisk = machine.systemDisk();
         int drive = 0;
         for (int slot = 0; slot < machine.diskSlots(); slot++) {
             final ItemStack disk = machine.diskInSlot(slot);
             if (!DriveVolumes.isDisk(disk)) {
                 continue;
             }
-            final String device = "/dev/sd" + (char) ('a' + drive++) + "1";
+            final int diskNumber = drive++;
+            final String device = "/dev/sd" + (char) ('a' + diskNumber);
+            final PartitionEntry efi = efiOf(disk);
+            boolean framesManagerListed = false;
             /*
-             * Every system on every disk, not one per disk. A disk carries several now, and a manager that
-             * listed only the one each disk boots would hide the rest, which is the one thing a boot manager
-             * exists not to do.
+             * Every system on every partition of every disk (computers/docs/design/storage-devices.md), not one per
+             * disk: a manager that listed only the one each disk boots would hide the rest, which is the one thing a
+             * boot manager exists not to do. The Frames manager lists the Frames alone, as the real one lists its own.
              */
-            for (final ResourceLocation id : OsDisks.systemsOn(disk).ids()) {
-                final OsDef system = OsRegistry.getOs(id);
-                // One built for another processor is nothing this machine can start, so there is nothing to choose.
-                if (system == null || !machine.runsSystem(system)) {
-                    continue;
-                }
-                if (id.equals(runningId)) {
-                    out.entry(Text.literal(system.displayName()), slot, id.toString()).defaultsToLast();
-                } else {
-                    out.entry(manager.label(system.displayName(), device, slot), slot, id.toString());
+            for (final DiskPartitions.Volume volume : DiskPartitions.volumes(disk)) {
+                final int partition = volume.partition().number();
+                for (final ResourceLocation id : OsDisks.systemsOn(volume.stack()).ids()) {
+                    final OsDef system = OsRegistry.getOs(id);
+                    // One built for another processor is nothing this machine can start, so there is nothing to choose.
+                    if (system == null || !machine.runsSystem(system)
+                            || manager == BootManager.KICKMGR && system.platform() != Platform.FRAMES) {
+                        continue;
+                    }
+                    final boolean running = id.equals(runningId) && volume.stack() == runningDisk;
+                    if (manager == BootManager.KICKMGR) {
+                        out.entry(manager.label(system.displayName(), device + partition, diskNumber, partition),
+                                slot, id.toString(), partition);
+                    } else if (running) {
+                        out.entry(Text.literal(system.displayName()), slot, id.toString(), partition);
+                    } else if (system.platform() == Platform.FRAMES && efi != null) {
+                        // Under UEFI GRUB reaches every Frames through their own manager, listed once.
+                        if (!framesManagerListed) {
+                            framesManagerListed = true;
+                            out.entry(BootManager.framesBootManager(device + efi.number()), slot, id.toString(),
+                                    partition);
+                        }
+                        continue;
+                    } else {
+                        out.entry(manager.label(system.displayName(), device + partition, diskNumber, partition),
+                                slot, id.toString(), partition);
+                    }
+                    if (running) {
+                        out.defaultsToLast();
+                    }
                 }
             }
         }
@@ -290,6 +317,17 @@ public final class BootLines {
             out.firmware(manager.firmwareLabel());
         }
         return out.build(countdownTicks);
+    }
+
+    /* The disk's EFI system partition, where the boot entries of a UEFI machine live, or null on a BIOS disk. */
+    @Nullable
+    private static PartitionEntry efiOf(final ItemStack disk) {
+        for (final PartitionEntry partition : DiskPartitions.layout(disk).partitions()) {
+            if (partition.role() == PartitionRole.EFI) {
+                return partition;
+            }
+        }
+        return null;
     }
 
     /**

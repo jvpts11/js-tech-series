@@ -41,7 +41,7 @@
     }
   ],
   "id": "jsc:openbsd_pf_doas",
-  "order": 334,
+  "order": 342,
   "section": "jsc:openbsd_tools",
   "title": "jsc.guide.openbsd_pf_doas.title"
 }

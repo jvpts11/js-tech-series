@@ -77,6 +77,8 @@ public final class BuiltinCommands {
         out.addAll(ManCommands.dos());
         // The same small tools, under the names and switches this family writes them with.
         out.addAll(MachineToolCommands.dos());
+        // Frames' diskpart and MC-DOS's FDISK, which change the disks' partitions.
+        out.addAll(DiskToolCommands.dos());
         // And its own way of leaving a machine with work: START and AT.
         out.addAll(JobCommands.dos());
         // PRINT, which prints in the background from a resident part, as this family's own.

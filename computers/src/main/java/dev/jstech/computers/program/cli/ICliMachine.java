@@ -47,6 +47,14 @@ public interface ICliMachine {
         return "";
     }
 
+    /**
+     * The machine's disks after doing what {@code request} asks of them ({@code disks:delete/0/2}), as the lines its
+     * disk tools read (computers/docs/design/storage-devices.md); empty where the machine has none.
+     */
+    default String disks(final String request) {
+        return "";
+    }
+
     /** The machine's Teracoin miner, or null where the machine cannot mine. */
     @Nullable
     default MinerConsole miner() {
@@ -223,6 +231,11 @@ public interface ICliMachine {
     /** What this machine's memory is spent on: what it has, what it promised, and what is really in it. */
     default ICliComputer.MemoryUse memory() {
         return new ICliComputer.MemoryUse(0, 0, 0L);
+    }
+
+    /** The swap behind this machine's memory; none for a machine with none. */
+    default ICliComputer.SwapUse swap() {
+        return ICliComputer.SwapUse.NONE;
     }
 
     /**

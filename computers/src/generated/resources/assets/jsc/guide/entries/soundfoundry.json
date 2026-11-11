@@ -141,7 +141,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:soundfoundry",
-  "order": 84,
+  "order": 90,
   "section": "jsc:social_and_media",
   "title": "jsc.guide.soundfoundry.title"
 }

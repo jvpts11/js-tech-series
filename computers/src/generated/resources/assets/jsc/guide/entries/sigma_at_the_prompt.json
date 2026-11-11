@@ -130,7 +130,7 @@
     }
   ],
   "id": "jsc:sigma_at_the_prompt",
-  "order": 248,
+  "order": 256,
   "section": "jsc:shell_software",
   "title": "jsc.guide.sigma_at_the_prompt.title"
 }

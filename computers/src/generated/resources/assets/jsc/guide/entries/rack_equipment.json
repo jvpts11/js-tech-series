@@ -249,7 +249,7 @@
     "jsc:fibre_optic_interface",
     "jsc:advanced_fibre_optic_interface"
   ],
-  "order": 52,
+  "order": 58,
   "section": "jsc:racks",
   "title": "jsc.guide.rack_equipment.title"
 }

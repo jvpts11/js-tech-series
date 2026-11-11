@@ -15,7 +15,9 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.os.FileSystemType;
 import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsGating;
 import dev.jstech.computers.os.PackageManagerKind;
 import dev.jstech.computers.os.Platform;
@@ -23,6 +25,9 @@ import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.boot.BootController;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.boot.BootSequence;
+import dev.jstech.computers.os.disk.DiskLayout;
+import dev.jstech.computers.os.disk.DiskPartitions;
+import dev.jstech.computers.os.disk.PartitionEntry;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
@@ -236,10 +241,10 @@ public final class UnixGameTests {
     }
 
     /**
-     * The disk this installer offers already carries MC-DOS: by default the disk is kept
-     * and the two systems share it, and the inline choice can erase it instead, or be taken back before anything
-     * is written. The name the page asks for becomes the machine's, and the installer waits on its last page for
-     * the reboot once the copy ends.
+     * The disk this installer offers already carries MC-DOS on a partition over half of it: by default the disk is
+     * kept and UNIX goes in the free half beside it, and the inline choice can erase it instead, or be taken back
+     * before anything is written. The name the page asks for becomes the machine's, and the installer waits on its
+     * last page for the reboot once the copy ends, MC-DOS still on its own partition.
      */
     @GameTest(template = ARENA)
     public static void sysvInstaller_keepsOrErasesTheDiskItAlreadySharesAndKeepsTheNameGiven(
@@ -249,6 +254,10 @@ public final class UnixGameTests {
             return;
         }
         helper.assertTrue(computer.installOs(MC_DOS), "MC-DOS is on the machine's one disk already");
+        // MC-DOS's partition takes half the disk, as its FDISK could have left it, and the other half is free.
+        final ItemStack dosDisk = computer.systemDisk();
+        final DiskLayout whole = DiskPartitions.layout(dosDisk);
+        DiskPartitions.relayout(dosDisk, whole.resize(1, whole.reachMb() / 2, false, 0L).layout());
         computer.setPowered(true); // installOs above does not power the machine on by itself
         final BlockPos readerPos = WHERE.east();
         helper.setBlock(readerPos, ComputingModule.FLOPPY_DRIVE.get());
@@ -271,7 +280,7 @@ public final class UnixGameTests {
                     helper.assertTrue(disk != null && disk.hasSystem() && "MC-DOS".equals(disk.holds()),
                             "the disk already carries MC-DOS: " + disk);
                     helper.assertTrue(flow.eraseSlot() == InstallerFlow.NO_DISK,
-                            "by default the disk is kept, the two systems sharing it");
+                            "by default the disk is kept, UNIX going in its free half");
                     flow.askErase(disk.slot());
                     flow.confirmErase();
                     helper.assertTrue(flow.eraseSlot() == disk.slot(), "choosing 1 erases it on the spot");
@@ -292,6 +301,17 @@ public final class UnixGameTests {
                     final InstallerFlow after = computer.installer();
                     helper.assertTrue(after != null && after.page() == InstallerPage.DONE,
                             "and the installer waits on its last page for the reboot");
+                    final ItemStack written = computer.diskInSlot(0);
+                    PartitionEntry unix = null;
+                    for (final PartitionEntry partition : DiskPartitions.layout(written).partitions()) {
+                        if (OsDisks.systemsOn(DiskPartitions.view(written, partition.number())).has(UNIX)) {
+                            unix = partition;
+                        }
+                    }
+                    helper.assertTrue(unix != null && unix.number() != 1 && unix.fs() == FileSystemType.UFS,
+                            "UNIX went on a UFS partition of its own: " + unix);
+                    helper.assertTrue(OsDisks.systemsOn(DiskPartitions.view(written, 1)).has(MC_DOS),
+                            "and MC-DOS is still on its own partition");
                 })
                 .thenSucceed();
     }

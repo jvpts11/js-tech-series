@@ -160,6 +160,23 @@ final class TaskManagerTexts {
     static final TextKey VIDEO_MONITORS = TextKey.of("jsc.task_manager.video_monitors", "Monitors");
     static final TextKey VIDEO_FREE = TextKey.of("jsc.task_manager.video_free", "Video free");
     static final TextKey VIDEO_OF = TextKey.of("jsc.task_manager.video_of", "%s of %s");
+    /* The page file (computers/docs/design/hardware.md): XP's PF Usage and its limit, the Memory page of 10 and 11. */
+    static final TextKey PF_USAGE = TextKey.of("jsc.task_manager.pf_usage", "PF Usage");
+    static final TextKey PAGE_FILE_HISTORY = TextKey.of("jsc.task_manager.page_file_history",
+            "Page File Usage History");
+    static final TextKey PAGE_FILE = TextKey.of("jsc.task_manager.page_file", "Page file");
+    static final TextKey LIMIT = TextKey.of("jsc.task_manager.limit", "Limit");
+    static final TextKey MEMORY_USAGE_LOWER = TextKey.of("jsc.task_manager.memory_usage_lower", "Memory usage");
+    static final TextKey COMMITTED_GRAPH = TextKey.of("jsc.task_manager.committed_graph",
+            "Committed (memory and page file)");
+    static final TextKey AVAILABLE = TextKey.of("jsc.task_manager.available", "Available");
+    static final TextKey COMMITTED = TextKey.of("jsc.task_manager.committed", "Committed");
+    static final TextKey PAGE_FILE_USED = TextKey.of("jsc.task_manager.page_file_used", "%s, %s used");
+    static final TextKey NO_PAGE_FILE = TextKey.of("jsc.task_manager.no_page_file", "none");
+    static final TextKey IN_THE_PAGE_FILE = TextKey.of("jsc.task_manager.in_the_page_file", "In the page file");
+    static final TextKey RUNS_AT = TextKey.of("jsc.task_manager.runs_at", "runs at %s%%");
+    static final TextKey OF_GB = TextKey.of("jsc.task_manager.of_gb", "%s/%s GB");
+    static final TextKey GIGABYTES = TextKey.of("jsc.task_manager.gigabytes", "%s GB");
 
     private TaskManagerTexts() {
     }

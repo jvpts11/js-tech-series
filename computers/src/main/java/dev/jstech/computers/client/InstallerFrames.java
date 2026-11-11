@@ -211,6 +211,20 @@ final class InstallerFrames {
         return TermFace.forGlass(InstallerLayout.WIDTH - WALL_MARGINS, TermBuffer.MONITOR_COLUMNS, 0);
     }
 
+    /**
+     * The colours of a list drawn in a box on a text installer's ground, as Frames XP drew its partitions: the panel's
+     * ink, the row chosen in the ground's colour with the bright ink on it.
+     */
+    static Paint boxedList(final InstallerStyle style) {
+        final Ink ink = inkOf(style);
+        return new Paint(ink.panelText(), ink.panelText(), ink.dim(), ink.accent(), ink.back(), ink.bright());
+    }
+
+    /** The box such a list is drawn in. */
+    static int listBox(final InstallerStyle style) {
+        return inkOf(style).panel();
+    }
+
     /** A label cut to the room it has, so a long step name never runs out of its panel. */
     static String clip(final Font font, final String text, final int room) {
         if (font.width(text) <= room) {
@@ -245,8 +259,13 @@ final class InstallerFrames {
         final float scale = wall.scale();
         TermText.draw(face, g, font, GameText.resolve(flow.style().title(flow.systemName())), sx + 8, sy + 8, scale,
                 ink.bright());
-        TermText.draw(face, g, font, GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), sx + 8,
-                sy + 20, scale, ink.text());
+        // A heading longer than the screen goes on in a second line, as Frames XP's list of partitions does.
+        final List<String> heading = wrapTerm(face, scale,
+                GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), sw - 16);
+        for (int line = 0; line < Math.min(2, heading.size()); line++) {
+            TermText.draw(face, g, font, heading.get(line), sx + 8, sy + 20 + line * TextWall.ROW, scale,
+                    ink.text());
+        }
         final String hint = GameText.resolve(flow.style().hint(flow.page()));
         if (!hint.isEmpty()) {
             g.fill(sx, sy + sh - TITLE_BAR, sx + sw, sy + sh, ink.bar());
@@ -498,7 +517,8 @@ final class InstallerFrames {
                         : InstallerScreenTexts.FRAME_NEXT), canGo, held == Held.NEXT);
         final int[] back = working ? null : pale(g, font, cx + cw - 10 - 118, by, 56,
                 GameText.resolve(InstallerScreenTexts.FRAME_BACK_PLAIN), held == Held.BACK);
-        final int[] erase = flow.page() == InstallerPage.DISK
+        // A disk step that lists partitions deletes and formats them one by one rather than erasing a disk.
+        final int[] erase = flow.page() == InstallerPage.DISK && !flow.style().listsPartitions()
                 ? pale(g, font, cx + 10, by, 66, GameText.resolve(InstallerScreenTexts.FRAME_ERASE_DISK),
                         held == Held.ERASE)
                 : null;
@@ -707,6 +727,27 @@ final class InstallerFrames {
     }
 
     /** A sentence broken into the lines that fit {@code room}, at word boundaries. */
+    /** A line in the terminal font broken at its words into lines of {@code room} pixels at most. */
+    static List<String> wrapTerm(final TermFace face, final float scale, final String text, final int room) {
+        final List<String> out = new ArrayList<>();
+        final StringBuilder line = new StringBuilder();
+        for (final String word : text.split(" ")) {
+            final String tried = line.isEmpty() ? word : line + " " + word;
+            if (TermText.width(face, tried, scale) > room && !line.isEmpty()) {
+                out.add(line.toString());
+                line.setLength(0);
+                line.append(word);
+            } else {
+                line.setLength(0);
+                line.append(tried);
+            }
+        }
+        if (!line.isEmpty()) {
+            out.add(line.toString());
+        }
+        return out;
+    }
+
     private static List<String> wrap(final Font font, final String text, final int room) {
         final List<String> out = new ArrayList<>();
         final StringBuilder line = new StringBuilder();

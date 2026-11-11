@@ -1,0 +1,140 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.snapshots.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.snapshots.text2"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.snapshots.definition1",
+      "term": "jsc.guide.snapshots.term1"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.snapshots.heading1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.snapshots.text3"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "[player@fedora ~]$ ",
+          "text": "btrfs subvolume snapshot / /.snapshots/day4",
+          "typed": true
+        },
+        {
+          "text": "Create a snapshot of '/' in '/.snapshots/day4'"
+        },
+        {
+          "prompt": "[player@fedora ~]$ ",
+          "text": "btrfs subvolume list /",
+          "typed": true
+        },
+        {
+          "text": "ID 256 gen 1842 top level 5 path root"
+        },
+        {
+          "text": "ID 257 gen 1842 top level 5 path home"
+        },
+        {
+          "text": "ID 258 gen 1842 top level 5 path .snapshots/day4"
+        },
+        {
+          "prompt": "[player@fedora ~]$ ",
+          "text": "btrfs subvolume set-default 258 /",
+          "typed": true
+        }
+      ],
+      "look": "jsc:guide/terminal/bash",
+      "title": "Fedora"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.snapshots.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jsc.guide.snapshots.heading2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.snapshots.text5"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "root@freebsd:~ # ",
+          "text": "zfs snapshot zroot/usr/home@day4",
+          "typed": true
+        },
+        {
+          "prompt": "root@freebsd:~ # ",
+          "text": "zfs list -t snapshot",
+          "typed": true
+        },
+        {
+          "text": "NAME                    USED  AVAIL  REFER  MOUNTPOINT"
+        },
+        {
+          "text": "zroot/usr/home@day4       0B      -  41.2G  -"
+        },
+        {
+          "prompt": "root@freebsd:~ # ",
+          "text": "zfs rollback zroot/usr/home@day4",
+          "typed": true
+        }
+      ],
+      "look": "jsc:guide/terminal/sh",
+      "title": "FreeBSD"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.snapshots.text6"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.snapshots.fix1",
+          "problem": "jsc.guide.snapshots.problem1"
+        },
+        {
+          "fix": "jsc.guide.snapshots.fix2",
+          "problem": "jsc.guide.snapshots.problem2"
+        }
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/btrfs"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/zfs"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:zfs_mirrors",
+        "jsc:corruption_and_the_defrag"
+      ]
+    }
+  ],
+  "icon": "jsc:disk_vaultis_trench_20m",
+  "id": "jsc:snapshots",
+  "order": 32,
+  "section": "jsc:disks_and_partitions",
+  "title": "jsc.guide.snapshots.title"
+}

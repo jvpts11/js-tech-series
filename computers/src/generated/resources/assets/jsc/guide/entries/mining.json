@@ -165,7 +165,7 @@
     "jsc:asic_forge_s1",
     "jsc:asic_forge_a2"
   ],
-  "order": 109,
+  "order": 115,
   "section": "jsc:cryptocurrency",
   "title": "jsc.guide.mining.title"
 }

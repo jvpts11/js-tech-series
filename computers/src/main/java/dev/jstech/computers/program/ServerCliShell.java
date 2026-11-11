@@ -38,12 +38,14 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.os.MachineSwap;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.ShellFamily;
 import dev.jstech.computers.os.UnixTree;
 import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.os.devices.DeviceMaps;
+import dev.jstech.computers.os.disk.DiskPartitions;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.cli.IKeptConversations;
 import dev.jstech.computers.registry.HardwareRegistry;
@@ -62,8 +64,10 @@ import dev.jstech.core.util.ShortId;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -83,6 +87,9 @@ abstract class ServerCliShell implements ICliComputer {
     private static final TextKey WORLD_TIME = TextKey.of("jsc.cli.machine.world_time", "Day %s, %s");
     /* A system with no desktop says what it has instead, which is its own terminal. */
     private static final TextKey NO_DESKTOP = TextKey.of("jsc.cli.machine.no_desktop", "none (%s)");
+    /* The numbers given to what runs with no number of its own, past the programs' first ones. */
+    private static final int FIRST_UNNUMBERED_PID = 1_000;
+    private static final int UNNUMBERED_PIDS = 3_000;
 
     protected final IComputerTerminalHost host;
     protected final BlockEntity hostBlock;
@@ -328,8 +335,8 @@ abstract class ServerCliShell implements ICliComputer {
         final ResourceLocation desktopId = computer.installedDesktopId();
         final DesktopEnvironmentDef chrome = desktopId == null ? null : OsRegistry.getDesktop(desktopId);
         final ItemStack systemDisk = computer.systemDisk();
-        final long totalMb = HardwareRegistry.disk(systemDisk) instanceof DiskSpec disk
-                ? disk.capacityItems() * StorageKey.MB_EQ_PER_ITEM : 0L;
+        final long totalMb = HardwareRegistry.disk(systemDisk) instanceof DiskSpec
+                ? DiskPartitions.capacityItems(systemDisk) * StorageKey.MB_EQ_PER_ITEM : 0L;
         final long freeMb = computer.systemDiskFreeMb();
         final ComputerConsoleState console = host.console();
         return new SystemInfo(
@@ -380,6 +387,37 @@ abstract class ServerCliShell implements ICliComputer {
         }
         final RamLedger ledger = computer.ramLedger();
         return new MemoryUse(ledger.totalMb(), ledger.usedMb(), ledger.heldBytes());
+    }
+
+    @Override
+    public SwapUse swap() {
+        if (!(hostBlock instanceof IOsHost computer) || computer.installedOs() == null) {
+            return SwapUse.NONE;
+        }
+        final MachineSwap.Swap swap = MachineSwap.of(computer);
+        final RamLedger ledger = computer.ramLedger();
+        final int used = ledger.swapUsedMb();
+        // Each swap partition carries its share of what is in swap, by its size, as a kernel spreads it over them.
+        final List<SwapArea> areas = new ArrayList<>();
+        for (final MachineSwap.Area area : swap.areas()) {
+            areas.add(new SwapArea(MachineSwap.deviceName(computer.installedOs().platform(), area), area.sizeMb(),
+                    swap.sizeMb() == 0 ? 0 : (int) ((long) used * area.sizeMb() / swap.sizeMb())));
+        }
+        final List<SwapProgram> programs = new ArrayList<>();
+        final Map<RamLedger.Entry, RamLedger.Swapped> inSwap = new HashMap<>();
+        for (final RamLedger.Swapped swapped : ledger.swapped()) {
+            inSwap.put(swapped.entry(), swapped);
+        }
+        for (final RamLedger.Entry entry : ledger.entries()) {
+            if (entry.kind() == RamLedger.Kind.SYSTEM || entry.kind() == RamLedger.Kind.GRAPHICS) {
+                continue;
+            }
+            final RamLedger.Swapped swapped = inSwap.get(entry);
+            programs.add(new SwapProgram(entry.id() > 0 ? entry.id() : stablePid(entry), entry.name(), entry.mb(),
+                    entry.heldBytes(), swapped == null ? 0 : swapped.inSwapMb(),
+                    swapped == null ? 100 : swapped.speedPercent()));
+        }
+        return new SwapUse(swap.sizeMb(), used, areas, swap.pageFile() == null ? "" : swap.pageFile(), programs);
     }
 
     @Override
@@ -478,5 +516,14 @@ abstract class ServerCliShell implements ICliComputer {
         // A server in a rack runs programs as a computer does, each server its own; the rack answers for this one.
         return hostBlock instanceof ServerRackBlockEntity rack && rack.programs() != null
                 ? new ProgramService(rack, host, level, files(), remotes()) : null;
+    }
+
+    /*
+     * A number for something running that has none of its own (a window, a service), the same every time it is asked,
+     * so a listing of what runs reads the same twice.
+     */
+    private static int stablePid(final RamLedger.Entry entry) {
+        return FIRST_UNNUMBERED_PID + Math.floorMod((entry.kind().serializedName() + entry.key() + entry.name())
+                .hashCode(), UNNUMBERED_PIDS);
     }
 }

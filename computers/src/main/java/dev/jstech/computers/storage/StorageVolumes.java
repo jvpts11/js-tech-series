@@ -26,8 +26,12 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -55,6 +59,8 @@ public final class StorageVolumes extends SavedData {
     private final Map<UUID, StorageVolume> volumes = new HashMap<>();
     /** Each volume's contents as last encoded, dropped the moment the volume is written. */
     private final Map<UUID, Tag> encoded = new HashMap<>();
+    /** Each snapshot as encoded, by its id: a snapshot never changes, so it is encoded once for every save after. */
+    private final Map<UUID, CompoundTag> encodedSnapshots = new HashMap<>();
     /** The version a newer mod saved the file in, until its copy is kept; 0 when none did. */
     private int newer;
 
@@ -129,6 +135,7 @@ public final class StorageVolumes extends SavedData {
     public CompoundTag save(final CompoundTag tag, final HolderLookup.Provider registries) {
         final RegistryOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
         final ListTag list = new ListTag();
+        final Set<UUID> snapshotsSaved = new HashSet<>();
         for (final Map.Entry<UUID, StorageVolume> entry : volumes.entrySet()) {
             if (entry.getValue().blank()) {
                 continue; // a blank volume is recreated blank on demand; no need to write it
@@ -137,6 +144,7 @@ public final class StorageVolumes extends SavedData {
             final CompoundTag one = new CompoundTag();
             one.putUUID("Id", id);
             saveCorruption(entry.getValue(), one, ops);
+            saveSnapshots(entry.getValue(), one, ops, snapshotsSaved);
             Tag items = encoded.get(id);
             if (items == null) {
                 final DataResult<Tag> fresh = ServerStorageContents.CODEC.encodeStart(ops, entry.getValue().snapshot());
@@ -150,6 +158,8 @@ public final class StorageVolumes extends SavedData {
             }
             list.add(one);
         }
+        // A snapshot let go, or on a volume dropped, needs its encoding no more.
+        encodedSnapshots.keySet().retainAll(snapshotsSaved);
         tag.put("Volumes", list);
         return LAYOUT.stamp(tag);
     }
@@ -184,6 +194,7 @@ public final class StorageVolumes extends SavedData {
                 }
             }
             loadCorruption(volume, one, ops, id);
+            store.loadSnapshots(volume, one, ops);
             store.volumes.put(id, volume);
         }
         if (found < LAYOUT.version()) {
@@ -230,5 +241,71 @@ public final class StorageVolumes extends SavedData {
                         "the system files a disk had corrupted (" + id + ")").orElse(FilesystemContents.EMPTY)
                 : FilesystemContents.EMPTY;
         volume.restore(corrupted, files, one.getInt("BadSectors"), one.getBoolean("Dead"));
+    }
+
+    /*
+     * The snapshots of a volume, written beside its contents only when it has any, each from its one encoding, and the
+     * one btrfs is to start from. {@code saved} gathers the ids of every snapshot written.
+     */
+    private void saveSnapshots(final StorageVolume volume, final CompoundTag one, final RegistryOps<Tag> ops,
+                               final Set<UUID> saved) {
+        if (volume.snapshots().isEmpty()) {
+            return;
+        }
+        final ListTag list = new ListTag();
+        for (final VolumeSnapshot snapshot : volume.snapshots()) {
+            CompoundTag kept = encodedSnapshots.get(snapshot.id());
+            if (kept == null) {
+                kept = encodeSnapshot(snapshot, ops);
+                encodedSnapshots.put(snapshot.id(), kept);
+            }
+            saved.add(snapshot.id());
+            list.add(kept);
+        }
+        one.put("Snapshots", list);
+        if (volume.startsFrom() != null) {
+            one.putUUID("StartsFrom", volume.startsFrom());
+        }
+    }
+
+    private static CompoundTag encodeSnapshot(final VolumeSnapshot snapshot, final RegistryOps<Tag> ops) {
+        final CompoundTag kept = new CompoundTag();
+        kept.putUUID("Id", snapshot.id());
+        kept.putInt("Number", snapshot.number());
+        kept.putString("Name", snapshot.name());
+        kept.putLong("Taken", snapshot.takenAt());
+        SavedValue.written(ServerStorageContents.CODEC.encodeStart(ops, new ServerStorageContents(snapshot.items())),
+                LOGGER, "what a snapshot kept").ifPresent(tag -> kept.put("Items", tag));
+        if (!snapshot.files().files().isEmpty()) {
+            SavedValue.written(FilesystemContents.CODEC.encodeStart(ops, snapshot.files()), LOGGER,
+                    "the files a snapshot kept").ifPresent(tag -> kept.put("Files", tag));
+        }
+        return kept;
+    }
+
+    private void loadSnapshots(final StorageVolume volume, final CompoundTag one, final RegistryOps<Tag> ops) {
+        if (!one.contains("Snapshots")) {
+            return;
+        }
+        final List<VolumeSnapshot> snapshots = new ArrayList<>();
+        for (final Tag element : one.getList("Snapshots", Tag.TAG_COMPOUND)) {
+            final CompoundTag kept = (CompoundTag) element;
+            if (!kept.hasUUID("Id")) {
+                continue;
+            }
+            final UUID id = kept.getUUID("Id");
+            final Map<StorageKey, Long> items = kept.contains("Items")
+                    ? SavedValue.read(ServerStorageContents.CODEC.parse(ops, kept.get("Items")), LOGGER,
+                            "what a snapshot kept (" + id + ")").map(ServerStorageContents::items).orElse(Map.of())
+                    : Map.of();
+            final FilesystemContents files = kept.contains("Files")
+                    ? SavedValue.read(FilesystemContents.CODEC.parse(ops, kept.get("Files")), LOGGER,
+                            "the files a snapshot kept (" + id + ")").orElse(FilesystemContents.EMPTY)
+                    : FilesystemContents.EMPTY;
+            snapshots.add(new VolumeSnapshot(id, kept.getInt("Number"), kept.getString("Name"), kept.getLong("Taken"),
+                    items, files));
+            encodedSnapshots.put(id, kept);
+        }
+        volume.restoreSnapshots(snapshots, one.hasUUID("StartsFrom") ? one.getUUID("StartsFrom") : null);
     }
 }

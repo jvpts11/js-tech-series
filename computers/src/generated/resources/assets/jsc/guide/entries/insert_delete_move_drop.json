@@ -297,7 +297,7 @@
     }
   ],
   "id": "jsc:insert_delete_move_drop",
-  "order": 355,
+  "order": 363,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.insert_delete_move_drop.title"
 }

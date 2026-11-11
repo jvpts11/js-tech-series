@@ -1066,6 +1066,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         session.setBootOnce(slot, osId);
     }
 
+    /** Boots that system on that partition of that disk for this boot only; 0 for whatever the disk has open. */
+    public void setBootOnce(final int slot, final int partition, @Nullable final ResourceLocation osId) {
+        session.setBootOnce(slot, partition, osId);
+    }
+
     /**
      * Carries this machine up: the self-test, the wait at a boot manager, and the system coming up.
      *
@@ -1107,9 +1112,13 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         power.holdMenu();
     }
 
-    /** Leaves the menu and brings the chosen system up. */
+    /** Leaves the menu and brings the chosen system up, or stands at the menu the choice hands over to. */
     @Override
     public void leaveBootMenu() {
+        if (level instanceof ServerLevel server) {
+            BootRunner.chosen(this, power.phases(), server, worldPosition);
+            return;
+        }
         power.endMenu();
         power.beginBoot();
     }
@@ -1724,6 +1733,11 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     @Override
     public void settleLiveSession() {
         session.settleLive();
+    }
+
+    @Override
+    public void openBootPartitions() {
+        session.openBootPartitions();
     }
 
     /** The disk slot index the firmware boots first, or {@code -1} for "the first disk with a system". */

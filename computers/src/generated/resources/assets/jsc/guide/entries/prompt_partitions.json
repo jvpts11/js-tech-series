@@ -1,0 +1,80 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_partitions.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.prompt_partitions.definition1",
+      "term": "jsc.guide.prompt_partitions.term1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_partitions.text2"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/fdisk"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_partitions.text3"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "DISKPART> ",
+          "text": "select disk 1",
+          "typed": true
+        },
+        {
+          "text": "Disk 1 is now the selected disk."
+        },
+        {
+          "prompt": "DISKPART> ",
+          "text": "create partition primary",
+          "typed": true
+        },
+        {
+          "text": "DiskPart succeeded in creating the specified partition."
+        }
+      ],
+      "look": "jsc:guide/terminal/dos",
+      "title": "Frames"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/frames/diskpart"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.prompt_partitions.fix1",
+          "problem": "jsc.guide.prompt_partitions.problem1"
+        },
+        {
+          "fix": "jsc.guide.prompt_partitions.fix2",
+          "problem": "jsc.guide.prompt_partitions.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:format_a_drive",
+        "jsc:disk_tools_of_each_system"
+      ]
+    }
+  ],
+  "id": "jsc:prompt_partitions",
+  "order": 233,
+  "section": "jsc:prompt_files",
+  "title": "jsc.guide.prompt_partitions.title"
+}

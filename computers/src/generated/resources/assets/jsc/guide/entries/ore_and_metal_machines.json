@@ -143,7 +143,7 @@
     "jsc:rolling_mill_work_roll",
     "jsc:wire_drawer_capstan"
   ],
-  "order": 32,
+  "order": 38,
   "section": "jsc:chain_machines",
   "title": "jsc.guide.ore_and_metal_machines.title"
 }

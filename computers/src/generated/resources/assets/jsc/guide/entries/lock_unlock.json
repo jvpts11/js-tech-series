@@ -101,7 +101,7 @@
     }
   ],
   "id": "jsc:lock_unlock",
-  "order": 358,
+  "order": 366,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.lock_unlock.title"
 }

@@ -39,10 +39,13 @@ public final class ManCommands {
 
     /** The Unix family's, which is where these names come from. */
     public static List<ICliCommand> posix() {
-        return List.of(new Whatis(), new Apropos(), new Info(), new ListCommands());
+        return List.of(new Whatis(), new Apropos(), new Info());
     }
 
-    /** The one the DOS family has, under the name it uses. */
+    /**
+     * listcmd, every family's: it comes with the DOS list, and the verbs the families share hand it on to the Unix
+     * shells and the network appliance, so it is registered here once.
+     */
     public static List<ICliCommand> dos() {
         return List.of(new ListCommands());
     }
@@ -91,7 +94,7 @@ public final class ManCommands {
                 ctx.out().error(WHAT);
                 return;
             }
-            final ICliCommand found = ctx.shell().find(ctx.arg(0));
+            final ICliCommand found = ctx.shell().find(ctx.arg(0), ctx.computer());
             if (found != null && found.available(ctx.computer())) {
                 ctx.out().line(ManPage.whatis(found));
                 return;

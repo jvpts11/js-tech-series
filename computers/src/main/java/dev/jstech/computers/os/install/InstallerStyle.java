@@ -146,7 +146,9 @@ public enum InstallerStyle implements IStableName {
     private static final TextKey SETUP_FINISHED = TextKey.of("jsc.install.installer_style.setup_finished",
             "Setup is finished.");
     private static final TextKey FRAMES_XP_DISK = TextKey.of("jsc.install.installer_style.frames_xp_disk",
-            "The following list shows the disks on this computer.");
+            "The following list shows the existing partitions and unpartitioned space on this computer.");
+    private static final TextKey FRAMES_XP_FORMAT = TextKey.of("jsc.install.installer_style.frames_xp_format",
+            "Setup will install %s on partition");
     private static final TextKey FRAMES_XP_COPY = TextKey.of("jsc.install.installer_style.frames_xp_copy",
             "Please wait while Setup copies files to the disk.");
     private static final TextKey FRAMES_11_DISK = TextKey.of("jsc.install.installer_style.frames_11_disk",
@@ -199,6 +201,7 @@ public enum InstallerStyle implements IStableName {
     private static final TextKey BSD_COMPONENTS =
             TextKey.of("jsc.install.installer_style.bsd_components", "Distribution Select");
     private static final TextKey BSD_DISK = TextKey.of("jsc.install.installer_style.bsd_disk", "Partitioning");
+    private static final TextKey BSD_POOL = TextKey.of("jsc.install.installer_style.bsd_pool", "ZFS Configuration");
     private static final TextKey BSD_MIRROR = TextKey.of("jsc.install.installer_style.bsd_mirror",
             "Mirror Selection");
     private static final TextKey BSD_COPY = TextKey.of("jsc.install.installer_style.bsd_copy", "Archive Extraction");
@@ -242,7 +245,9 @@ public enum InstallerStyle implements IStableName {
     private static final TextKey HINT_RESTART = TextKey.of("jsc.install.installer_style.hint_restart",
             "ENTER=Restart");
     private static final TextKey HINT_XP_DISK = TextKey.of("jsc.install.installer_style.hint_xp_disk",
-            "ENTER=Install  E=Erase disk  F3=Quit");
+            "ENTER=Install  D=Delete Partition  F3=Quit");
+    private static final TextKey HINT_XP_FORMAT = TextKey.of("jsc.install.installer_style.hint_xp_format",
+            "ENTER=Continue  ESC=Cancel");
     private static final TextKey HINT_UBUNTU_REBOOT = TextKey.of("jsc.install.installer_style.hint_ubuntu_reboot",
             "[ Reboot Now ]");
     private static final TextKey HINT_UBUNTU_DONE_BACK =
@@ -439,6 +444,7 @@ public enum InstallerStyle implements IStableName {
              */
             case FRAMES_XP -> List.of(
                     new Stage(InstallerPage.DISK, InstallerChrome.FULL_TEXT, List.of()),
+                    new Stage(InstallerPage.FORMAT, InstallerChrome.FULL_TEXT, List.of()),
                     new Stage(InstallerPage.COPY, InstallerChrome.FULL_TEXT, steps(STEP_COPYING_FILES)),
                     new Stage(InstallerPage.NAME, InstallerChrome.SIDE_PANEL, steps(STEP_COLLECTING)),
                     // The family's name is its brand, which no language translates.
@@ -517,6 +523,7 @@ public enum InstallerStyle implements IStableName {
                     new Stage(InstallerPage.NAME, InstallerChrome.DIALOG_BOX, List.of()),
                     new Stage(InstallerPage.COMPONENTS, InstallerChrome.DIALOG_BOX, List.of()),
                     new Stage(InstallerPage.DISK, InstallerChrome.DIALOG_BOX, List.of()),
+                    new Stage(InstallerPage.POOL, InstallerChrome.DIALOG_BOX, List.of()),
                     new Stage(InstallerPage.MIRROR, InstallerChrome.DIALOG_BOX, List.of()),
                     new Stage(InstallerPage.COPY, InstallerChrome.DIALOG_BOX,
                             steps(STEP_BSD_BASE, STEP_BSD_KERNEL, STEP_BSD_PORTS)),
@@ -664,6 +671,22 @@ public enum InstallerStyle implements IStableName {
         return this == MINT;
     }
 
+    /**
+     * Whether, left to itself on a disk another system fills, it shrinks that system's partition and goes in the room
+     * freed, as Ubuntu and Linux Mint install alongside another system.
+     */
+    public boolean shrinksBeside() {
+        return this == UBUNTU || this == MINT;
+    }
+
+    /**
+     * Whether its disk step lists every partition and free space to choose from rather than whole disks: Frames XP's
+     * text phase and the table of Frames 7 to 11.
+     */
+    public boolean listsPartitions() {
+        return this == FRAMES_XP || this == FRAMES_7 || this == FRAMES_10 || this == FRAMES_11;
+    }
+
     /** Whether this installer offers a desktop with the system when a Mirror answers. */
     public boolean offersDesktop() {
         for (final Stage stage : this.stages()) {
@@ -723,6 +746,7 @@ public enum InstallerStyle implements IStableName {
             };
             case FRAMES_XP -> switch (page) {
                 case DISK -> FRAMES_XP_DISK.text();
+                case FORMAT -> FRAMES_XP_FORMAT.with(systemName);
                 case NAME -> COMPUTER_NAME.text();
                 case COPY -> FRAMES_XP_COPY.text();
                 default -> SETUP_FINISHED.text();
@@ -774,6 +798,7 @@ public enum InstallerStyle implements IStableName {
                 case NAME -> BSD_NAME.text();
                 case COMPONENTS -> BSD_COMPONENTS.text();
                 case DISK -> BSD_DISK.text();
+                case POOL -> BSD_POOL.text();
                 case MIRROR -> BSD_MIRROR.text();
                 case COPY -> BSD_COPY.text();
                 case SERVICES -> BSD_SERVICES.text();
@@ -834,6 +859,7 @@ public enum InstallerStyle implements IStableName {
             case FRAMES_95 -> page == InstallerPage.WELCOME ? HINT_CONTINUE_EXIT.text() : Text.EMPTY;
             case FRAMES_XP -> switch (page) {
                 case DISK -> HINT_XP_DISK.text();
+                case FORMAT -> HINT_XP_FORMAT.text();
                 case DONE -> HINT_RESTART.text();
                 default -> Text.EMPTY;
             };

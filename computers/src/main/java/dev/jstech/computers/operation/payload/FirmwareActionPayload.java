@@ -23,7 +23,8 @@ import net.minecraft.resources.ResourceLocation;
  * @param ref        the entry reference: a disk slot index (boot / boot order) or a media reader's packed
  *                   position (install / boot media), the computer's own for a drive on its front; {@code -1} = any
  *                   installer medium the machine has
- * @param target     the disk slot to install onto, or {@code -1} for the firmware's default target
+ * @param target     the disk slot to install onto, or {@code -1} for the firmware's default target; for a boot once,
+ *                   the partition of the disk the system is on, 0 or {@code -1} for whatever the disk has open
  * @param osId       the system this action is about, for the actions that are about one; empty otherwise
  * @param bay        for an action on a medium, which of the reader's volumes it is on, as {@link MediaVolume#bay()}
  *                   counts them; {@link MediaVolume#MEDIUM} otherwise

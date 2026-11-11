@@ -91,4 +91,68 @@ class RamLedgerTest {
 
         assertEquals(windows, RamLedger.withinBudget(windows, w -> 16, 32));
     }
+
+    @Test
+    void fits_promisesTheMemoryAndTheSwapTogether() {
+        final RamLedger ledger = new RamLedger(1_024, 512, 60).add("OS", 900, RamLedger.Kind.SYSTEM);
+
+        assertEquals(1_536, ledger.promisableMb());
+        assertTrue(ledger.fits(600));
+        assertFalse(ledger.fits(700));
+        assertEquals(0, ledger.swapUsedMb());
+        assertTrue(ledger.swapped().isEmpty());
+    }
+
+    @Test
+    void swapped_takesWhatIsGivenButNotHeldFirstTheNewestFirst() {
+        final RamLedger ledger = new RamLedger(4_096, 4_096, 60)
+                .add("OS", 2_048, RamLedger.Kind.SYSTEM)
+                .add("Old", 1_024, 512L * RamLedger.BYTES_PER_MB, RamLedger.Kind.PROCESS, 1)
+                .add("New", 2_048, 1_536L * RamLedger.BYTES_PER_MB, RamLedger.Kind.PROCESS, 2);
+
+        assertEquals(1_024, ledger.swapUsedMb());
+        final List<RamLedger.Swapped> swapped = ledger.swapped();
+        assertEquals(2, swapped.size());
+        assertEquals("Old", swapped.get(0).entry().name());
+        assertEquals(512, swapped.get(0).inSwapMb());
+        assertEquals("New", swapped.get(1).entry().name());
+        assertEquals(512, swapped.get(1).inSwapMb());
+    }
+
+    @Test
+    void swapped_runsAtItsShareForThePartInSwap() {
+        // A quarter of a program in swap on an SSD: three quarters at full speed and one at six tenths, 90 per cent.
+        final RamLedger ledger = new RamLedger(3_072, 4_096, 60)
+                .add("OS", 3_072, RamLedger.Kind.SYSTEM)
+                .add("Soundfoundry", 4_096, 4_096L * RamLedger.BYTES_PER_MB, RamLedger.Kind.WINDOW, 0);
+
+        assertEquals(4_096, ledger.swapUsedMb());
+        // All of it went to swap, there being no memory left, so it runs at the swap's six tenths.
+        assertEquals(60, ledger.swapped().getFirst().speedPercent());
+        final RamLedger quarter = new RamLedger(6_144, 4_096, 60)
+                .add("OS", 3_072, RamLedger.Kind.SYSTEM)
+                .add("Soundfoundry", 4_096, 4_096L * RamLedger.BYTES_PER_MB, RamLedger.Kind.WINDOW, 0);
+        assertEquals(1_024, quarter.swapUsedMb());
+        assertEquals(90, quarter.swapped().getFirst().speedPercent());
+    }
+
+    @Test
+    void swapped_neverTakesTheSystemOrItsDesktop() {
+        final RamLedger ledger = new RamLedger(1_024, 1_024, 25)
+                .add("OS", 1_024, RamLedger.Kind.SYSTEM)
+                .add("Desktop", 512, RamLedger.Kind.DESKTOP);
+
+        assertEquals(512, ledger.swapUsedMb());
+        assertTrue(ledger.swapped().isEmpty());
+    }
+
+    @Test
+    void swapUsedMb_isNeverMoreThanTheSwap() {
+        final RamLedger ledger = new RamLedger(1_024, 256, 25)
+                .add("OS", 1_024, RamLedger.Kind.SYSTEM)
+                .add("Big", 1_024, 0L, RamLedger.Kind.PROCESS, 1);
+
+        assertEquals(256, ledger.swapUsedMb());
+        assertEquals(256, ledger.swapped().getFirst().inSwapMb());
+    }
 }

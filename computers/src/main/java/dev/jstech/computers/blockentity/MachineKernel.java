@@ -23,7 +23,9 @@ import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.computers.os.crash.CrashStyle;
 import dev.jstech.computers.os.crash.OomKiller;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -305,11 +307,17 @@ final class MachineKernel {
             this.up = machine.installedOs();
         }
         final RamLedger ledger = machine.ramLedger();
-        if (this.asking && ledger.usedMb() + this.askedMb <= ledger.totalMb()) {
+        // What has part of itself in swap runs slower for it, by the disk the swap is on.
+        final MachinePrograms programs = machine.programs();
+        if (programs != null) {
+            programs.slowBySwap(swapPaces(ledger));
+        }
+        if (this.asking && ledger.usedMb() + this.askedMb <= ledger.promisableMb()) {
             // The player made room: the question closes and the programs go on.
             closeQuestion(machine, level);
         }
-        if (this.up == null || ledger.usedMb() <= ledger.totalMb()) {
+        // Out of memory only when the memory and the swap are both spent (computers/docs/design/hardware.md).
+        if (this.up == null || ledger.usedMb() <= ledger.promisableMb()) {
             return;
         }
         // What tipped it over is whatever came last, so the newest entry stands for the program that asked.
@@ -395,5 +403,16 @@ final class MachineKernel {
     private int takePid(final IOsHost machine) {
         final MachinePrograms programs = machine.programs();
         return programs != null ? programs.takePid() : this.nextPid++;
+    }
+
+    /* The share of its speed each program with part of itself in swap runs at, by its number. */
+    private static Map<Integer, Integer> swapPaces(final RamLedger ledger) {
+        final Map<Integer, Integer> paces = new HashMap<>();
+        for (final RamLedger.Swapped swapped : ledger.swapped()) {
+            if (swapped.entry().kind() == RamLedger.Kind.PROCESS) {
+                paces.put(swapped.entry().id(), swapped.speedPercent());
+            }
+        }
+        return paces;
     }
 }

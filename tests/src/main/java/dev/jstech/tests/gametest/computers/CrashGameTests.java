@@ -13,6 +13,7 @@ import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.ProgramLauncher;
+import dev.jstech.computers.os.MachineSwap;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPage;
@@ -113,8 +114,11 @@ public final class CrashGameTests {
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(up(pc), "the machine comes up"))
                 .thenExecute(() -> {
-                    // Frames 95 holds 32 of its 128 MB and six Calculators of 16 the rest: the program finds none.
-                    pc.setOpenWindows(calculators(6));
+                    /*
+                     * Frames 95 holds 32 of its 128 MB and six Calculators of 16 the rest, and more Calculators fill
+                     * the page file it promises besides: the program finds no room in either.
+                     */
+                    pc.setOpenWindows(calculators(6 + MachineSwap.of(pc).sizeMb() / 16));
                     final ProgramLauncher.Launch launch = ProgramLauncher.launch(pc, "C:\\progs\\counter.sgs",
                             asked -> ICliComputer.FsResult.ok(COUNTER), List.of(), IProgramParent.NONE,
                             ProgramPriority.MEDIUM, 16);

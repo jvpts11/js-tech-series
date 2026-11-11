@@ -23,6 +23,7 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
+import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
 import dev.jstech.computers.os.install.OsInstallRunner;
 import dev.jstech.core.text.Text;
@@ -123,11 +124,10 @@ public final class InstallerPayloads {
             return;
         }
         /*
-         * Whether the work had begun before this answer is the whole test for the one destructive act: a disk
-         * agreed to be erased is erased when the copying starts and not a moment sooner, so a player who
-         * changes their mind on the pages before it still walks away with everything they had.
+         * Nothing here erases a disk agreed to be erased: the copy does that as it starts and not a moment sooner
+         * (OsInstallRunner), so a player who changes their mind on the pages before it walks away with everything.
+         * Only the disk step's own changes to a table, each confirmed on the screen, are written at once.
          */
-        final boolean wasStarted = flow.started();
         switch (payload.action()) {
             case InstallerActionPayload.ACTION_NEXT -> flow.next();
             case InstallerActionPayload.ACTION_BACK -> flow.back();
@@ -162,6 +162,22 @@ public final class InstallerPayloads {
                 continueTesting(machine, player, level, payload, flow);
                 return;
             }
+            case InstallerActionPayload.ACTION_PLACE -> {
+                flow.select(payload.value());
+                flow.place(payload.amount());
+                resize(machine, flow);
+            }
+            case InstallerActionPayload.ACTION_FORMAT_AS -> flow.formatAs(payload.text());
+            case InstallerActionPayload.ACTION_SHRINK -> flow.shrinkTo(payload.amount());
+            case InstallerActionPayload.ACTION_MIRROR_DISK -> flow.mirrorOn(payload.value());
+            case InstallerActionPayload.ACTION_DELETE_PARTITION ->
+                    Installers.deletePartition(machine, flow, payload.value(), (int) payload.amount());
+            case InstallerActionPayload.ACTION_NEW_PARTITION ->
+                    Installers.newPartition(machine, flow, payload.value(), payload.amount());
+            case InstallerActionPayload.ACTION_FORMAT_PARTITION ->
+                    Installers.formatPartition(machine, flow, payload.value(), (int) payload.amount());
+            case InstallerActionPayload.ACTION_EXTEND_PARTITION ->
+                    Installers.extendPartition(machine, flow, payload.value(), (int) payload.amount());
             case InstallerActionPayload.ACTION_GO_TO -> flow.goToStage(payload.value());
             case InstallerActionPayload.ACTION_QUIT -> {
                 quit(machine, player, level, payload);
@@ -174,9 +190,6 @@ public final class InstallerPayloads {
             default -> {
                 return;
             }
-        }
-        if (!wasStarted && flow.started() && flow.eraseSlot() != InstallerFlow.NO_DISK) {
-            machine.formatDisk(flow.eraseSlot());
         }
         machine.markChanged();
         OsInstallRunner.show(level, machine, payload.hostPos(), flow);

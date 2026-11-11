@@ -39,7 +39,11 @@ final class MachineToolCommands {
     }
 
     static List<ICliCommand> posix() {
-        return List.of(new Ps(), new Kill(), new Dmesg(), new Which(), new Du(), new Date());
+        final List<ICliCommand> out = new ArrayList<>(List.of(new Ps(), new Kill(), new Dmesg(), new Which(),
+                new Du(), new Date()));
+        // The memory and its swap: free, swapon and top on Linux, swapinfo and sysctl on FreeBSD.
+        out.addAll(SwapCommands.all());
+        return List.copyOf(out);
     }
 
     static List<ICliCommand> dos() {

@@ -58,7 +58,8 @@ class LayoutAuditTest {
             "RedstoneInterfaceLayout", "DeviceManagerLayout", "InfoCenterLayout", "PowerStripLayout",
             "VolumePopupLayout", "SoundfoundryLayout", "SoundfoundryShareLayout", "SoundfoundryStandardLayout",
             "PersonalComputerLayout", "MainframeLayout", "WanGatewayLayout", "ServerAssemblyLayout", "KvmChannelLayout",
-            "SystemBootLayout", "CrashLayout", "DiskCheckLayout", "DefragLayout", "SectionDiagnosticsLayout",
+            "SystemBootLayout", "CrashLayout", "DiskCheckLayout", "DefragLayout", "DiskToolLayout",
+            "SectionDiagnosticsLayout",
             "BorderLinkLayout",
             "CommandPromptLayout",
             "OsInstallLayout",
@@ -195,6 +196,10 @@ class LayoutAuditTest {
             if (look.window()) {
                 c.add(new AuditCase("DefragLayout(" + look.serializedName() + ")", DefragLayout.layout(look), true));
             }
+        }
+        // The desktops' disk tools: Disk Management, the KDE Partition Manager and GNOME Disks.
+        for (final DiskToolLayout.Tool tool : DiskToolLayout.Tool.values()) {
+            c.add(new AuditCase("DiskToolLayout(" + tool.name() + ")", DiskToolLayout.layout(tool), true));
         }
         // Nouvell BorderLink's window on the Frames desktops, with Frames 7's status bar and without.
         c.add(new AuditCase("BorderLinkLayout", BorderLinkLayout.layout(false), true));

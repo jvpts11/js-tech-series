@@ -60,7 +60,7 @@
     "jsc:vinyl_rw_drive",
     "jsc:advanced_vinyl_rw_drive"
   ],
-  "order": 65,
+  "order": 71,
   "section": "jsc:peripherals",
   "title": "jsc.guide.vinyl_rw_drives.title"
 }

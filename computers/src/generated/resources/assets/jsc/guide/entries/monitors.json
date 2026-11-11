@@ -437,7 +437,7 @@
     "jsc:touch_monitor",
     "jsc:advanced_touch_monitor"
   ],
-  "order": 61,
+  "order": 67,
   "section": "jsc:peripherals",
   "title": "jsc.guide.monitors.title"
 }

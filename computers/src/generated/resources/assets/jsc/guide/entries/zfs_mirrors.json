@@ -1,0 +1,116 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.zfs_mirrors.text1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.zfs_mirrors.definition1",
+      "term": "jsc.guide.zfs_mirrors.term1"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.zfs_mirrors.definition2",
+      "term": "jsc.guide.zfs_mirrors.term2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.zfs_mirrors.text2"
+    },
+    {
+      "type": "session",
+      "lines": [
+        {
+          "prompt": "root@freebsd:~ # ",
+          "text": "zpool scrub zroot",
+          "typed": true
+        },
+        {
+          "prompt": "root@freebsd:~ # ",
+          "text": "zpool status zroot",
+          "typed": true
+        },
+        {
+          "text": "  pool: zroot"
+        },
+        {
+          "text": " state: ONLINE"
+        },
+        {
+          "text": "  scan: scrub repaired 8M in 00:00:00 with 0 errors on Day 4 10:12"
+        },
+        {
+          "text": "config:"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "        NAME        STATE     READ WRITE CKSUM"
+        },
+        {
+          "text": "        zroot       ONLINE       0     0     0"
+        },
+        {
+          "text": "          mirror-0  ONLINE       0     0     0"
+        },
+        {
+          "text": "            ada0p4  ONLINE       0     0     2  (repaired)"
+        },
+        {
+          "text": "            ada1p4  ONLINE       0     0     0"
+        },
+        {
+          "text": ""
+        },
+        {
+          "text": "errors: No known data errors"
+        }
+      ],
+      "look": "jsc:guide/terminal/sh",
+      "title": "FreeBSD"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.zfs_mirrors.text3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.zfs_mirrors.text4"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.zfs_mirrors.fix1",
+          "problem": "jsc.guide.zfs_mirrors.problem1"
+        },
+        {
+          "fix": "jsc.guide.zfs_mirrors.fix2",
+          "problem": "jsc.guide.zfs_mirrors.problem2"
+        }
+      ]
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/freebsd/zpool"
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:snapshots",
+        "jsc:corruption_and_the_defrag"
+      ]
+    }
+  ],
+  "icon": "jsc:disk_vaultis_trench_20m",
+  "id": "jsc:zfs_mirrors",
+  "order": 33,
+  "section": "jsc:disks_and_partitions",
+  "title": "jsc.guide.zfs_mirrors.title"
+}

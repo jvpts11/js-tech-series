@@ -11,6 +11,7 @@ import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.CodeFileReplies;
 import dev.jstech.computers.client.os.FilesApps;
 import dev.jstech.computers.gui.help.HelpViews;
+import dev.jstech.computers.machine.DiskTools;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.files.FileAccess.DatIndex;
@@ -25,6 +26,7 @@ import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.defrag.DefragState;
+import dev.jstech.computers.os.disk.DiskCommand;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
@@ -314,8 +316,11 @@ public final class FilePayloads {
             final Optional<String> listed = msd.isPresent() ? msd
                     : menuShellListing(level, computer, player, payload.path());
             // The Defrag's state, after whatever the request asks of it, for its screen, its windows and fsck.
-            final Optional<String> drawn = listed.isPresent() ? listed : DefragState.names(payload.path())
+            final Optional<String> defrag = listed.isPresent() ? listed : DefragState.names(payload.path())
                     ? Optional.of(DefragRunner.reply(computer, level, payload.path())) : Optional.empty();
+            // The disks, after whatever change a disk tool asks of them, for Disk Management and its kin.
+            final Optional<String> drawn = defrag.isPresent() ? defrag : DiskCommand.names(payload.path())
+                    ? Optional.of(DiskTools.reply(computer, level, payload.path())) : Optional.empty();
             // A help viewer draws from the player's manuals; what it was opened on is all it needs, and no disk has it.
             final Optional<String> help = drawn.isPresent() ? drawn
                     : HelpViews.names(payload.path()) ? Optional.of("") : Optional.empty();

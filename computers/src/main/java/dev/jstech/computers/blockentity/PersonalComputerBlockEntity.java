@@ -477,19 +477,18 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
         return true;
     }
 
-    /* Every disk the PC keeps items on has its slider: its own disk slots', then its hot-swap bays'. */
+    /*
+     * Every volume the PC keeps items on has its slider: its own disk slots', then its hot-swap bays', a partitioned
+     * disk giving one for each partition that holds data.
+     */
     @Override
     public int diskPrivacyDiskCount() {
-        return storeDisks().size();
+        return localStore().diskCount();
     }
 
     @Override
     public int diskPrivacyPermille(final int diskIndex) {
-        final List<ItemStack> disks = storeDisks();
-        if (diskIndex < 0 || diskIndex >= disks.size()) {
-            return 0;
-        }
-        return DriveVolumes.publicPermille(disks.get(diskIndex));
+        return localStore().diskPublicPermille(diskIndex);
     }
 
     @Override
@@ -506,16 +505,9 @@ public class PersonalComputerBlockEntity extends AbstractSmallComputerBlockEntit
      * Writes a clamped public-share permille onto the disk in {@code diskIndex} and marks storage changed so the network re-reads this PC's public view. A no-op for an out-of-range index or an empty slot.
      */
     public void setDiskPrivacy(final int diskIndex, final int permille) {
-        final List<ItemStack> disks = storeDisks();
-        if (diskIndex < 0 || diskIndex >= disks.size()) {
-            return;
+        if (localStore().setPublicPermille(diskIndex, permille)) {
+            bumpStorageModCount();
         }
-        final ItemStack disk = disks.get(diskIndex);
-        if (!DriveVolumes.isDisk(disk)) {
-            return;
-        }
-        DriveVolumes.setPublicPermille(disk, permille);
-        bumpStorageModCount();
     }
 
     /* Values the assembly menu shows: worked out on the server, received by the client while the menu is open. */

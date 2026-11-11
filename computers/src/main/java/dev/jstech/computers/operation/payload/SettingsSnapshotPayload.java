@@ -69,8 +69,41 @@ public record SettingsSnapshotPayload(
         Sound sound,
         Gpu gpu,
         DesktopEffects effects,
-        ExperienceIndex experience
+        ExperienceIndex experience,
+        Swap swap
 ) implements CustomPacketPayload {
+
+    /** A snapshot of a machine with no swap behind its memory. */
+    public SettingsSnapshotPayload(final BlockPos hostPos, final String wallpaper, final String computerName,
+                                   final int accent, final boolean clock12h, final int guiScale, final int brightness,
+                                   final String saveDrive, final boolean removableAutoOpen, final String themePreset,
+                                   final boolean taskbarCentered, final boolean darkMode, final int netshare,
+                                   final Text cpuLabel, final int cpuMhz, final Text cpuArch, final int ramMb,
+                                   final int vramMb, final String osLabel, final String platform,
+                                   final List<String> installed, final List<DiskUse> disks, final int ramUsedMb,
+                                   final List<RamUse> ramUses, final List<ShareRow> shares,
+                                   final boolean remoteAllowed, final Sound sound, final Gpu gpu,
+                                   final DesktopEffects effects, final ExperienceIndex experience) {
+        this(hostPos, wallpaper, computerName, accent, clock12h, guiScale, brightness, saveDrive, removableAutoOpen,
+                themePreset, taskbarCentered, darkMode, netshare, cpuLabel, cpuMhz, cpuArch, ramMb, vramMb, osLabel,
+                platform, installed, disks, ramUsedMb, ramUses, shares, remoteAllowed, sound, gpu, effects, experience,
+                Swap.NONE);
+    }
+
+    /**
+     * The swap behind the machine's memory (computers/docs/design/hardware.md), for the Task Manager and the System
+     * Monitor.
+     *
+     * @param sizeMb       how big it is
+     * @param usedMb       how much is in it
+     * @param where        where it is: the page file's name on a Frames, the first swap partition elsewhere
+     * @param speedPercent the share of its speed what is in it runs at
+     */
+    public record Swap(int sizeMb, int usedMb, String where, int speedPercent) {
+
+        /** No swap at all. */
+        public static final Swap NONE = new Swap(0, 0, "", 100);
+    }
 
     /**
      * The machine's graphics, for the Task Manager and the System Monitor: the card (or the graphics on the processor's
@@ -139,7 +172,13 @@ public record SettingsSnapshotPayload(
      * <p>A window is ended by its name, but two scripts can be started from the same file and only the
      * number tells them apart, so the number travels for those and is 0 for everything else.
      */
-    public record RamUse(String label, int mb, long heldBytes, String kind, int id) {}
+    public record RamUse(String label, int mb, long heldBytes, String kind, int id, int inSwapMb, int speedPercent) {
+
+        /** Something with none of itself in swap. */
+        public RamUse(final String label, final int mb, final long heldBytes, final String kind, final int id) {
+            this(label, mb, heldBytes, kind, id, 0, 100);
+        }
+    }
 
     /** How many processors a machine has seated, as its specifications say it. */
     public static final TextKey ONE_CPU = TextKey.of("jsc.settings_snapshot.one_cpu", "%s CPU");
@@ -221,6 +260,8 @@ public record SettingsSnapshotPayload(
             buf.writeVarLong(r.heldBytes());
             buf.writeUtf(TextBounds.clip(r.kind(), 16), 16);
             buf.writeVarInt(r.id());
+            buf.writeVarInt(r.inSwapMb());
+            buf.writeVarInt(r.speedPercent());
         }
         buf.writeVarInt(Math.min(p.shares.size(), MAX));
         for (int i = 0; i < p.shares.size() && i < MAX; i++) {
@@ -250,6 +291,10 @@ public record SettingsSnapshotPayload(
         buf.writeVarInt(index.graphics());
         buf.writeVarInt(index.gaming());
         buf.writeVarInt(index.disk());
+        buf.writeVarInt(p.swap.sizeMb());
+        buf.writeVarInt(p.swap.usedMb());
+        buf.writeUtf(TextBounds.clip(p.swap.where(), LABEL_MAX), LABEL_MAX);
+        buf.writeVarInt(p.swap.speedPercent());
     }
 
     private static SettingsSnapshotPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -289,7 +334,7 @@ public record SettingsSnapshotPayload(
         final List<RamUse> ramUses = new ArrayList<>(ramUseCount);
         for (int i = 0; i < ramUseCount; i++) {
             ramUses.add(new RamUse(buf.readUtf(48), buf.readVarInt(), buf.readVarLong(), buf.readUtf(16),
-                    buf.readVarInt()));
+                    buf.readVarInt(), buf.readVarInt(), buf.readVarInt()));
         }
         final int shareCount = Math.min(buf.readVarInt(), MAX);
         final List<ShareRow> shares = new ArrayList<>(shareCount);
@@ -312,7 +357,8 @@ public record SettingsSnapshotPayload(
                 cpuArch, ramMb, vramMb, osLabel, platform, installed, disks, ramUsedMb, ramUses, shares,
                 remoteAllowed, new Sound(volume, muted, output, hardware, plays, speakers), readGpu(buf),
                 DesktopEffects.STREAM_CODEC.decode(buf), new ExperienceIndex(buf.readVarInt(), buf.readVarInt(),
-                        buf.readVarInt(), buf.readVarInt(), buf.readVarInt()));
+                        buf.readVarInt(), buf.readVarInt(), buf.readVarInt()),
+                new Swap(buf.readVarInt(), buf.readVarInt(), buf.readUtf(LABEL_MAX), buf.readVarInt()));
     }
 
     private static void writeGpu(final RegistryFriendlyByteBuf buf, final Gpu gpu) {

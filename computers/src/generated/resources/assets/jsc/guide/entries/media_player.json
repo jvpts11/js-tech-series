@@ -136,7 +136,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:media_player",
-  "order": 86,
+  "order": 92,
   "section": "jsc:social_and_media",
   "title": "jsc.guide.media_player.title"
 }

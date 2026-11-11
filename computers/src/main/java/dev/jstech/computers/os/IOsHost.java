@@ -248,6 +248,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     }
 
     /**
+     * Opens on each disk the partition it starts, at the end of the self-test (computers/docs/design/
+     * storage-devices.md): the active one on a Master Boot Record, and otherwise the one with a system. Nothing on a
+     * machine whose disks have no partitions to choose between.
+     */
+    default void openBootPartitions() {
+    }
+
+    /**
      * Plays one of its system's own sounds out of its monitors, when its sound hardware plays recordings. A machine
      * with no sound of its own, such as a server in a rack, plays none.
      */

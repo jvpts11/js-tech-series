@@ -36,6 +36,14 @@ final class SystemMonitorTexts {
     static final TextKey PROGRAMS_INSTALLED =
             TextKey.of("jsc.system_monitor.programs_installed", "%s programs installed");
     static final TextKey SYSTEM_DISK = TextKey.of("jsc.system_monitor.system_disk", "%s (system)");
+    /* The swap behind the memory (computers/docs/design/hardware.md). */
+    static final TextKey SWAP_ON = TextKey.of("jsc.system_monitor.swap_on", "Swap (%s)");
+    static final TextKey SWAP = TextKey.of("jsc.system_monitor.swap", "Swap");
+    static final TextKey NO_SWAP = TextKey.of("jsc.system_monitor.no_swap", "none");
+    static final TextKey SWAP_HELD_OF = TextKey.of("jsc.system_monitor.swap_held_of", "%s MB of %s MB");
+    static final TextKey FREE_IN_SWAP = TextKey.of("jsc.system_monitor.free_in_swap", "%s MB free, %s MB in swap");
+    static final TextKey IN_SWAP = TextKey.of("jsc.system_monitor.in_swap", "%s MB in swap, runs at %s%%");
+    static final TextKey SWAP_PARTITION = TextKey.of("jsc.system_monitor.swap_partition", "swap on %s");
 
     private SystemMonitorTexts() {
     }

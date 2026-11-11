@@ -233,7 +233,8 @@
       "entries": [
         "jsc:case_front",
         "jsc:items_as_data",
-        "jsc:the_systems"
+        "jsc:the_systems",
+        "jsc:partitions"
       ]
     }
   ],

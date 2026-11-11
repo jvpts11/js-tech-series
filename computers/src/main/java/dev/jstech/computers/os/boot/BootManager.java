@@ -62,9 +62,12 @@ public enum BootManager implements IStableName {
     private static final TextKey LOADER_FIRMWARE =
             TextKey.of("jsc.boot.boot_manager.loader_firmware", "Firmware settings");
     private static final TextKey LOADER_WELCOME = TextKey.of("jsc.boot.boot_manager.loader_welcome", "Welcome to %s");
-    private static final TextKey GRUB_OTHER =
-            TextKey.of("jsc.boot.boot_manager.grub_other", "%s Boot Manager (on %s)");
-    private static final TextKey KICKMGR_OTHER = TextKey.of("jsc.boot.boot_manager.kickmgr_other", "%s (Disk %s)");
+    private static final TextKey GRUB_OTHER = TextKey.of("jsc.boot.boot_manager.grub_other", "%s (on %s)");
+    /* Under UEFI GRUB finds the Frames by the boot manager they share on the EFI partition, as the real one does. */
+    private static final TextKey GRUB_FRAMES =
+            TextKey.of("jsc.boot.boot_manager.grub_frames", "Frames Boot Manager (on %s)");
+    private static final TextKey KICKMGR_OTHER =
+            TextKey.of("jsc.boot.boot_manager.kickmgr_other", "%s (Disk %s, partition %s)");
 
     private final String serializedName;
 
@@ -139,14 +142,23 @@ public enum BootManager implements IStableName {
      * How it names a system that is not the one running.
      *
      * <p>The two families differ in what they think is worth saying. GRUB names the device, because on a real
-     * machine that is how you tell two installations apart. The Frames manager names the edition and the disk
-     * it is on, because that is what its own list said.
+     * machine that is how you tell two installations apart. The Frames manager names the edition, the disk and the
+     * partition it is on, and does so for the running one too.
+     *
+     * @param device    the partition as GRUB names it ({@code /dev/sda5})
+     * @param disk      the disk's number, from 0
+     * @param partition the partition's number, from 1
      */
-    public Text label(final String systemName, final String device, final int slot) {
+    public Text label(final String systemName, final String device, final int disk, final int partition) {
         return switch (this) {
             case GRUB -> GRUB_OTHER.with(systemName, device);
-            case KICKMGR -> KICKMGR_OTHER.with(systemName, slot);
+            case KICKMGR -> KICKMGR_OTHER.with(systemName, disk, partition);
             default -> Text.literal(systemName);
         };
+    }
+
+    /** How GRUB names the Frames under UEFI: by the boot manager they share, on the EFI partition at {@code device}. */
+    public static Text framesBootManager(final String device) {
+        return GRUB_FRAMES.with(device);
     }
 }

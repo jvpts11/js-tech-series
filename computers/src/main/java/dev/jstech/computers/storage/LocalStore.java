@@ -9,6 +9,8 @@ package dev.jstech.computers.storage;
 
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.EraStorage;
+import dev.jstech.computers.os.disk.DiskPartitions;
+import dev.jstech.computers.os.disk.ZfsMirrors;
 import dev.jstech.computers.registry.HardwareRegistry;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -21,13 +23,18 @@ import java.util.Map;
 
 /**
  * A computer's local storage as a capacity-bounded, component-preserving type → quantity store that lives
- * on its installed disks: each disk's items are its {@link StorageVolume}, so a computer's local storage is
- * literally the union of its disks. A write touches one volume in place and refreshes that disk's usage
- * summary, whatever the disk holds.
+ * on its installed disks: each volume's items are its {@link StorageVolume}, so a computer's local storage is
+ * literally the union of its volumes, a disk nothing has partitioned being one and a partitioned disk one for each
+ * partition that holds data (computers/docs/design/storage-devices.md). A write touches one volume in place and
+ * refreshes that volume's usage summary, whatever it holds.
  */
 public final class LocalStore implements IWeightedStore {
 
+    private final List<DiskPartitions.Volume> volumes;
+    /* What each volume holds, in order: the stacks every reading below walks. */
     private final List<ItemStack> disks;
+    /* The machine's disks themselves, the second member of a ZFS mirror among them though it is no volume. */
+    private final List<ItemStack> drives;
     private final Runnable onChanged;
     private final boolean balanced;
     private final int roomPercent;
@@ -54,7 +61,9 @@ public final class LocalStore implements IWeightedStore {
      */
     public LocalStore(final List<ItemStack> disks, final Runnable onChanged, final boolean balanced,
                       final int roomPercent) {
-        this.disks = disks;
+        this.volumes = DiskPartitions.storeVolumes(disks);
+        this.disks = this.volumes.stream().map(DiskPartitions.Volume::stack).toList();
+        this.drives = List.copyOf(disks);
         this.onChanged = onChanged;
         this.balanced = balanced;
         this.roomPercent = roomPercent;
@@ -79,10 +88,12 @@ public final class LocalStore implements IWeightedStore {
         return ordered;
     }
 
-    /* The room a drive has, in items: less what bad sectors took of it, and nothing of a dead one. */
+    /*
+     * The room a volume has, in items: its partition's, or a whole disk's, less what bad sectors took of it, and
+     * nothing of a dead one.
+     */
     private static long diskCapacity(final ItemStack disk) {
-        final DiskSpec spec = HardwareRegistry.disk(disk);
-        return spec != null ? DriveVolumes.usableCapacity(disk, spec.capacityItems()) : 0L;
+        return DriveVolumes.usableCapacity(disk, DiskPartitions.capacityItems(disk));
     }
 
     /* The items a drive holds here: its room, packed tighter when a service compresses what it keeps. */
@@ -183,7 +194,10 @@ public final class LocalStore implements IWeightedStore {
         return disks.size();
     }
 
-    /** Read-only access to the installed disk stacks, in slot order. */
+    /**
+     * Read-only access to what the volumes hold, in slot order: a disk nothing has partitioned (or an empty slot) is
+     * one, and a partitioned disk one for each partition that holds data.
+     */
     public List<ItemStack> disks() {
         return Collections.unmodifiableList(disks);
     }
@@ -191,6 +205,19 @@ public final class LocalStore implements IWeightedStore {
     /** The public-share permille of one disk (the private default when out of range or not a disk). */
     public int diskPublicPermille(final int index) {
         return index >= 0 && index < disks.size() ? DriveVolumes.publicPermille(disks.get(index)) : 0;
+    }
+
+    /**
+     * Sets one volume's public share, written back with its disk; false for an index past them or an empty slot, where
+     * nothing is set.
+     */
+    public boolean setPublicPermille(final int index, final int permille) {
+        if (index < 0 || index >= disks.size() || !DriveVolumes.isDisk(disks.get(index))) {
+            return false;
+        }
+        DriveVolumes.setPublicPermille(disks.get(index), permille);
+        volumes.get(index).commit();
+        return true;
     }
 
     /** The used data weight stored on one disk. */
@@ -272,6 +299,7 @@ public final class LocalStore implements IWeightedStore {
                 break;
             }
             final StorageVolume volume = DriveVolumes.peek(disk);
+            healOnRead(disk, volume, key);
             if (volume.isEmpty()) {
                 continue;
             }
@@ -283,7 +311,7 @@ public final class LocalStore implements IWeightedStore {
             }
             final long got = volume.take(key, Math.min(amount - taken, publicHave));
             if (got > 0L) {
-                DriveVolumes.refreshUsage(disk, volume);
+                refreshed(disk, volume);
                 taken += got;
             }
         }
@@ -326,7 +354,7 @@ public final class LocalStore implements IWeightedStore {
             }
             final long put = Math.min(remaining, roomNative);
             volume.add(key, put);
-            DriveVolumes.refreshUsage(disk, volume);
+            refreshed(disk, volume);
             remaining -= put;
         }
         final long stored = amount - remaining;
@@ -346,9 +374,10 @@ public final class LocalStore implements IWeightedStore {
                 break;
             }
             final StorageVolume volume = DriveVolumes.peek(disk);
+            healOnRead(disk, volume, key);
             final long got = volume.take(key, amount - taken);
             if (got > 0L) {
-                DriveVolumes.refreshUsage(disk, volume);
+                refreshed(disk, volume);
                 taken += got;
             }
         }
@@ -356,6 +385,27 @@ public final class LocalStore implements IWeightedStore {
             onChanged.run();
         }
         return taken;
+    }
+
+    /*
+     * Reading a key corruption damaged on a ZFS mirror repairs it from the other disk first, as ZFS does when it reads
+     * a damaged part (computers/docs/design/storage-devices.md); on anything else the damage stays for the Defrag.
+     */
+    private void healOnRead(final ItemStack disk, final StorageVolume volume, final StorageKey key) {
+        if (volume.corrupted().containsKey(key) && ZfsMirrors.heal(disk, drives, key) > 0L) {
+            refreshed(disk, volume);
+        }
+    }
+
+    /* Refreshes a volume's usage summary and writes it back with its disk, since a partition's view is a copy. */
+    private void refreshed(final ItemStack disk, final StorageVolume volume) {
+        DriveVolumes.refreshUsage(disk, volume);
+        for (final DiskPartitions.Volume each : volumes) {
+            if (each.stack() == disk) {
+                each.commit();
+                return;
+            }
+        }
     }
 
     private record DiskRoom(ItemStack disk, long free) {

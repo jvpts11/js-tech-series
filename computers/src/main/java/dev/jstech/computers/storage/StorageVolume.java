@@ -11,10 +11,14 @@ import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.StoredFile;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.function.DoubleSupplier;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The stored items of one drive, kept in the level's volume store rather than on the item: a mutable
@@ -25,6 +29,9 @@ import java.util.function.DoubleSupplier;
  * <p>A volume also keeps what corruption did to it (computers/docs/design/storage.md): the items corrupted, out of
  * the contents and waiting for the Defrag, which still take their room; the system files corrupted, out of the disk's
  * file system and waiting the same way; the share of the disk lost to bad sectors; and whether the disk died.
+ *
+ * <p>And the snapshots btrfs and ZFS took of it (computers/docs/design/storage-devices.md), each the items and files it
+ * held then: a snapshot shares what the volume still holds, so it takes room only for what changed since.
  */
 public final class StorageVolume {
 
@@ -49,6 +56,18 @@ public final class StorageVolume {
     private FilesystemContents corruptedFiles = FilesystemContents.EMPTY;
     private int badSectors;
     private boolean dead;
+    /* The snapshots taken of it (computers/docs/design/storage-devices.md), oldest first. */
+    private final List<VolumeSnapshot> snapshots = new ArrayList<>();
+    /*
+     * The most any snapshot keeps of each key, and the weight of what they keep that the contents no longer hold.
+     * Snapshots share what they keep, so a key two of them hold weighs once, and a write moves that weight by its own
+     * key alone instead of walking every snapshot.
+     */
+    private final Map<StorageKey, Long> keptMost = new HashMap<>();
+    private long keptWeight;
+    /* The snapshot btrfs starts from next, once one is set as its default; null when none is. */
+    @Nullable
+    private UUID startsFrom;
 
     StorageVolume(final UUID id, final Runnable dirty, final boolean readOnly) {
         this.id = id;
@@ -96,10 +115,11 @@ public final class StorageVolume {
 
     /**
      * The data weight of everything stored, in the same units a disk's capacity is measured in. Corrupted items count:
-     * they are still on the disk, taking their room, until a Defrag gives them back or loses them.
+     * they are still on the disk, taking their room, until a Defrag gives them back or loses them. So does what the
+     * snapshots keep that the contents no longer hold.
      */
     public long usedWeight() {
-        return usedWeight + corruptedWeight;
+        return usedWeight + corruptedWeight + keptWeight;
     }
 
     private void tally(final StorageKey key, final long delta) {
@@ -123,6 +143,7 @@ public final class StorageVolume {
         }
         final long now = items.merge(key, amount, Long::sum);
         tally(key, amount);
+        reweigh(key, now - amount, now);
         dirty.run();
         return now;
     }
@@ -143,6 +164,7 @@ public final class StorageVolume {
             items.put(key, have - taken);
         }
         tally(key, -taken);
+        reweigh(key, have, have - taken);
         dirty.run();
         return taken;
     }
@@ -154,6 +176,7 @@ public final class StorageVolume {
         }
         items.clear();
         resetTallies();
+        reweighAll();
         dirty.run();
     }
 
@@ -178,6 +201,7 @@ public final class StorageVolume {
                 tally(entry.getKey(), count);
             }
         }
+        reweighAll();
         dirty.run();
     }
 
@@ -188,7 +212,82 @@ public final class StorageVolume {
 
     /** Whether the volume holds nothing at all and nothing ever happened to it: it need not be kept. */
     public boolean blank() {
-        return items.isEmpty() && corrupted.isEmpty() && corruptedFiles.files().isEmpty() && badSectors == 0 && !dead;
+        return items.isEmpty() && corrupted.isEmpty() && corruptedFiles.files().isEmpty() && badSectors == 0 && !dead
+                && snapshots.isEmpty();
+    }
+
+    /** The snapshots taken of the volume, oldest first. */
+    public List<VolumeSnapshot> snapshots() {
+        return Collections.unmodifiableList(snapshots);
+    }
+
+    /** What the snapshots keep that the contents no longer hold, which takes room on the disk as the contents do. */
+    public long keptWeight() {
+        return keptWeight;
+    }
+
+    /** What only {@code snapshot} keeps: what neither the contents nor another snapshot hold of it. */
+    public long heldOnlyBy(final VolumeSnapshot snapshot) {
+        long weight = 0L;
+        for (final Map.Entry<StorageKey, Long> kept : snapshot.items().entrySet()) {
+            long elsewhere = count(kept.getKey());
+            for (final VolumeSnapshot other : snapshots) {
+                if (!other.id().equals(snapshot.id())) {
+                    elsewhere = Math.max(elsewhere, other.items().getOrDefault(kept.getKey(), 0L));
+                }
+            }
+            weight += kept.getKey().weight(Math.max(0L, kept.getValue() - elsewhere));
+        }
+        return weight;
+    }
+
+    /** Keeps a snapshot, which weighs nothing until the contents move away from it. */
+    public void keep(final VolumeSnapshot snapshot) {
+        if (readOnly || dead) {
+            return;
+        }
+        snapshots.add(snapshot);
+        reweighAll();
+        dirty.run();
+    }
+
+    /** Lets a snapshot go, and with it the weight only it kept. */
+    public void forget(final UUID snapshot) {
+        if (!readOnly && snapshots.removeIf(kept -> kept.id().equals(snapshot))) {
+            if (snapshot.equals(startsFrom)) {
+                startsFrom = null;
+            }
+            reweighAll();
+            dirty.run();
+        }
+    }
+
+    /**
+     * Makes the contents what {@code snapshot} kept: its items come back, and what corruption had put aside goes, since
+     * the partition is again as it was before any of it. The snapshot stays, as it does on btrfs and ZFS.
+     */
+    public void rollBack(final VolumeSnapshot snapshot) {
+        if (readOnly || dead) {
+            return;
+        }
+        corrupted.clear();
+        corruptedWeight = 0L;
+        corruptedFiles = FilesystemContents.EMPTY;
+        replaceAll(snapshot.items());
+    }
+
+    /** The snapshot btrfs starts from next, set as its default, or null for none. */
+    @Nullable
+    public UUID startsFrom() {
+        return startsFrom;
+    }
+
+    /** Sets the snapshot btrfs starts from next, or none. */
+    public void startFrom(@Nullable final UUID snapshot) {
+        if (!readOnly && !Objects.equals(startsFrom, snapshot)) {
+            startsFrom = snapshot;
+            dirty.run();
+        }
     }
 
     /** The items corrupted, out of the contents and waiting for the Defrag, read-only and live. */
@@ -208,7 +307,7 @@ public final class StorageVolume {
 
     /** How much of what the disk stores is corrupted, in permille. */
     public int damage() {
-        return Corruption.damage(corruptedWeight, usedWeight());
+        return Corruption.damage(corruptedWeight, usedWeight + corruptedWeight);
     }
 
     /** How much of the disk's capacity is lost to bad sectors, in permille. */
@@ -266,8 +365,9 @@ public final class StorageVolume {
     public long recover(final StorageKey key, final long amount) {
         final long back = settleCorrupted(key, amount);
         if (back > 0L) {
-            items.merge(key, back, Long::sum);
+            final long now = items.merge(key, back, Long::sum);
             tally(key, back);
+            reweigh(key, now - back, now);
             dirty.run();
         }
         return back;
@@ -315,6 +415,14 @@ public final class StorageVolume {
         dead = died;
     }
 
+    /** Puts back the snapshots that were saved, and the one btrfs was to start from. */
+    void restoreSnapshots(final List<VolumeSnapshot> saved, @Nullable final UUID starts) {
+        snapshots.clear();
+        snapshots.addAll(saved);
+        startsFrom = starts;
+        reweighAll();
+    }
+
     /* Takes up to {@code amount} of a key off the corrupted ones; returns how many came off. */
     private long settleCorrupted(final StorageKey key, final long amount) {
         final long have = corrupted.getOrDefault(key, 0L);
@@ -340,6 +448,29 @@ public final class StorageVolume {
             items.put(key, have - amount);
         }
         tally(key, -amount);
+        reweigh(key, have, Math.max(0L, have - amount));
+    }
+
+    /* Moves the kept weight by one key's change in the contents, from {@code before} of it to {@code after}. */
+    private void reweigh(final StorageKey key, final long before, final long after) {
+        final Long most = keptMost.get(key);
+        if (most != null) {
+            keptWeight += key.weight(Math.max(0L, most - after)) - key.weight(Math.max(0L, most - before));
+        }
+    }
+
+    /* Works the kept weight out afresh, after the snapshots or the whole contents changed. */
+    private void reweighAll() {
+        keptMost.clear();
+        for (final VolumeSnapshot snapshot : snapshots) {
+            for (final Map.Entry<StorageKey, Long> kept : snapshot.items().entrySet()) {
+                keptMost.merge(kept.getKey(), kept.getValue(), Math::max);
+            }
+        }
+        keptWeight = 0L;
+        for (final Map.Entry<StorageKey, Long> kept : keptMost.entrySet()) {
+            keptWeight += kept.getKey().weight(Math.max(0L, kept.getValue() - count(kept.getKey())));
+        }
     }
 
     /*
@@ -356,6 +487,10 @@ public final class StorageVolume {
             corruptedFiles = FilesystemContents.EMPTY;
             badSectors = Corruption.WHOLE;
             dead = true;
+            // A dead disk holds nothing, its snapshots included.
+            snapshots.clear();
+            startsFrom = null;
+            reweighAll();
             return;
         }
         badSectors = Math.max(badSectors, Corruption.badSectors(damage));

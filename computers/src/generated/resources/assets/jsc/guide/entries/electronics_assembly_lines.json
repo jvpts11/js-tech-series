@@ -122,7 +122,7 @@
     "jsc:assembly_advanced_reflow_oven",
     "jsc:assembly_advanced_placement_head"
   ],
-  "order": 38,
+  "order": 44,
   "section": "jsc:chain_machines",
   "title": "jsc.guide.electronics_assembly_lines.title"
 }

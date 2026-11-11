@@ -125,7 +125,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:teracoin",
-  "order": 108,
+  "order": 114,
   "section": "jsc:cryptocurrency",
   "title": "jsc.guide.teracoin.title"
 }

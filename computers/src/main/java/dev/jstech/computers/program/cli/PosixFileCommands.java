@@ -533,7 +533,7 @@ final class PosixFileCommands {
                 ctx.computer().report(JscEvents.MAN_PAGE, ctx.arg(0));
                 return;
             }
-            final ICliCommand command = ctx.shell().find(ctx.arg(0));
+            final ICliCommand command = ctx.shell().find(ctx.arg(0), ctx.computer());
             if (command != null && command.available(ctx.computer())) {
                 ctx.out().accent(command.name().toUpperCase(Locale.ROOT) + "(1)");
                 for (final CliLine line : ManPage.lines(command, true)) {
@@ -636,58 +636,6 @@ final class PosixFileCommands {
                 return String.format(Locale.ROOT, "%.1fG", mbEq / 1_000.0);
             }
             return mbEq + "M";
-        }
-    }
-
-    @TextHolder
-    static final class Mkfs implements ICliCommand {
-
-        private static final TextKey SUMMARY =
-                TextKey.of("jsc.cli.posix.mkfs.summary", "build a filesystem on a device (erases it)");
-        private static final TextKey USAGE = TextKey.of("jsc.cli.posix.mkfs.usage", "/dev/<device>");
-        private static final TextKey USAGE_ERROR = TextKey.of("jsc.cli.posix.mkfs.usage_error",
-                "usage: mkfs.ext4 /dev/<device>   (see df for the devices)");
-        private static final TextKey CREATING =
-                TextKey.of("jsc.cli.posix.mkfs.creating", "Creating filesystem on /dev/%s ... done");
-        private static final TextKey NO_SUCH_DEVICE =
-                TextKey.of("jsc.cli.posix.mkfs.no_such_device", "cannot open /dev/%s: No such device");
-
-        @Override public CommandScope scope() {
-            return POSIX_FILES;
-        }
-
-        @Override public String name() { return "mkfs.ext4"; }
-
-        @Override public List<String> aliases() { return List.of("mkfs"); }
-
-        @Override public CommandGroup group() { return CommandGroup.FILES; }
-
-        @Override public Text summary() { return SUMMARY.text(); }
-
-        @Override public Text usage() { return USAGE.text(); }
-
-        @Override public void run(final CliContext ctx) {
-            if (!ctx.hasArgs()) {
-                ctx.out().error(USAGE_ERROR);
-                return;
-            }
-            final String raw = ctx.arg(0);
-            final String device = raw.startsWith("/dev/") ? raw.substring(5) : raw;
-            // Resolve the device name back to its drive: "sda" also matches the "sda1" system partition.
-            for (final ICliComputer.MountInfo mount : ctx.computer().mounts()) {
-                if (mount.device().equals(device) || mount.device().startsWith(device)) {
-                    final ICliComputer.OpResult result = ctx.computer().formatDrive(mount.drive());
-                    if (result.ok()) {
-                        // The tool's own banner, a name and a version, which read the same in every language.
-                        ctx.out().dim(Text.literal("mke2fs 1.47 (JSC)"));
-                        ctx.out().ok(CREATING.with(device));
-                    } else {
-                        ctx.out().error(CliTexts.SAID_BY.with(name(), result.message()));
-                    }
-                    return;
-                }
-            }
-            ctx.out().error(CliTexts.SAID_BY.with(name(), NO_SUCH_DEVICE.with(device)));
         }
     }
 

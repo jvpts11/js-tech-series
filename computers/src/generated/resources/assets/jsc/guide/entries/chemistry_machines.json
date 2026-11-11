@@ -89,7 +89,7 @@
     "jsc:air_separation_unit_adsorber",
     "jsc:air_separation_unit_column"
   ],
-  "order": 33,
+  "order": 39,
   "section": "jsc:chain_machines",
   "title": "jsc.guide.chemistry_machines.title"
 }

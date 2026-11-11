@@ -117,6 +117,10 @@
       "text": "jsc.guide.system_monitor_and_task_manager.text4"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.system_monitor_and_task_manager.text5"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.system_monitor_and_task_manager.table3",
       "heads": [
@@ -152,7 +156,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.system_monitor_and_task_manager.text5"
+      "text": "jsc.guide.system_monitor_and_task_manager.text6"
     },
     {
       "type": "steps",
@@ -184,13 +188,14 @@
       "type": "see",
       "entries": [
         "jsc:programs",
-        "jsc:help_on_a_computer"
+        "jsc:help_on_a_computer",
+        "jsc:swap"
       ]
     }
   ],
   "icon": "jsc:monitor",
   "id": "jsc:system_monitor_and_task_manager",
-  "order": 75,
+  "order": 81,
   "section": "jsc:desktop_apps",
   "title": "jsc.guide.system_monitor_and_task_manager.title"
 }

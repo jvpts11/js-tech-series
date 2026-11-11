@@ -145,7 +145,7 @@
     "jsc:display_line_test_stand",
     "jsc:display_line_gantry"
   ],
-  "order": 37,
+  "order": 43,
   "section": "jsc:chain_machines",
   "title": "jsc.guide.board_machines.title"
 }

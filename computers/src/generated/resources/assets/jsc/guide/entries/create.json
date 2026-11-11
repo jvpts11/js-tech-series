@@ -112,7 +112,7 @@
     }
   ],
   "id": "jsc:create",
-  "order": 156,
+  "order": 162,
   "section": "jsc:mod_integrations",
   "title": "jsc.guide.create.title"
 }

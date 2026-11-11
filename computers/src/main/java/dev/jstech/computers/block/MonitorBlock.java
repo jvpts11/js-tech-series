@@ -666,10 +666,11 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
             final ResourceLocation osId = c.installedOsId();
             final Component title = level.getBlockState(owner).getBlock().getName();
             /*
-             * The machine's RAM and what its system, desktop and services already hold: the desktop weighs
-             * the windows it opens against the rest.
+             * What the machine may promise, its RAM and the swap behind it (computers/docs/design/hardware.md), and
+             * what its system, desktop and services already hold: the desktop weighs the windows it opens against
+             * the rest, and a Frames warns once nine tenths of it is promised.
              */
-            final int ramTotalMb = c.ramTotalMb();
+            final int ramTotalMb = c.ramLedger().promisableMb();
             final int ramReservedMb = c.ramReservedMb();
             /*
              * The desktop environment: the OS's bundled one (Frames) or the Linux package installed.

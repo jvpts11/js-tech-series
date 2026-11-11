@@ -56,7 +56,6 @@ import static dev.jstech.computers.client.InstallerScreenTexts.DISK_ANSWER;
 import static dev.jstech.computers.client.InstallerScreenTexts.DISK_NARROW;
 import static dev.jstech.computers.client.InstallerScreenTexts.DISK_WIDE;
 import static dev.jstech.computers.client.InstallerScreenTexts.DONE;
-import static dev.jstech.computers.client.InstallerScreenTexts.ERASED_FIRST;
 import static dev.jstech.computers.client.InstallerScreenTexts.ERASE_ASK;
 import static dev.jstech.computers.client.InstallerScreenTexts.ERASE_ASK_NAMED;
 import static dev.jstech.computers.client.InstallerScreenTexts.ERASE_KEYS;
@@ -127,10 +126,15 @@ import dev.jstech.computers.operation.payload.FirmwareStatePayload;
 import dev.jstech.computers.operation.payload.InstallerActionPayload;
 import dev.jstech.computers.operation.payload.OpenInstallerPayload;
 import dev.jstech.computers.operation.payload.RequestFirmwareStatePayload;
+import dev.jstech.computers.os.FileSystemType;
+import dev.jstech.computers.os.install.DiskChoices;
+import dev.jstech.computers.os.install.DiskSpot;
+import dev.jstech.computers.os.install.InstallPlan;
 import dev.jstech.computers.os.install.InstallerChrome;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.computers.os.install.Placement;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
@@ -163,7 +167,7 @@ import java.util.function.IntSupplier;
  * <p>What the page looks like belongs to {@link InstallerFrames}; what it says belongs here.
  */
 @PaletteHolder
-public final class InstallerScreen extends AbstractComputerScreen<MonitorSessionMenu> {
+public final class InstallerScreen extends AbstractComputerScreen<MonitorSessionMenu> implements IInstallerPen {
 
     /** The colours the pages draw inside their frame, {@code jsc:installer/page}. */
     private static final Palette<PageColours> PAGE = Palettes.declare(JsComputers.MODID, "installer/page",
@@ -172,6 +176,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     /** How long the caret in a name field spends showing, and then hidden, in ticks. */
     private static final int CARET_TICKS = 10;
+
+    /** A gigabyte, which is what LEFT and RIGHT move Ubuntu's size beside another system by. */
+    private static final long MB_PER_GB = 1_024L;
 
     private final BlockPos computerPos;
     private final BlockPos monitorPos;
@@ -185,6 +192,12 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private int selection;
     /** The disk an erase has been offered for, kept here because the offer is the screen's and not the machine's. */
     private int erasePrompt = InstallerFlow.NO_DISK;
+    /** A partition the disk step has offered to delete or format, waiting for a yes, or null. */
+    @Nullable
+    private PartitionAsk partitionAsk;
+    /** What the disk step's own pages drew last, so a click finds the row or the link under it; null on the rest. */
+    @Nullable
+    private InstallerDiskPages.Drawn drawn;
     /** The name being typed, which only reaches the machine when the page is left. */
     private String typed = "";
     /** Ticks since this screen opened, which is what turns the caret on and off. */
@@ -313,6 +326,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         this.flow = payload.flow();
         this.ticksDone = payload.ticksDone();
         this.erasePrompt = InstallerFlow.NO_DISK;
+        this.partitionAsk = null;
         this.own = this.ownPage(was == this.flow.page());
         if (was == this.flow.page()) {
             this.selection = Math.max(0, Math.min(this.selection, Math.max(0, this.rowCount() - 1)));
@@ -320,9 +334,12 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         }
         this.typed = this.flow.computerName();
         this.selection = switch (this.flow.page()) {
-            case DISK -> this.flow.style() == InstallerStyle.BSD_INSTALL
-                    ? this.indexOfBsdChoice(this.flow.targetSlot())
+            case DISK -> this.flow.style().listsPartitions()
+                    ? DiskChoices.indexOfChosen(this.flow, DiskChoices.picks(this.flow))
+                    : this.flow.style() == InstallerStyle.UBUNTU ? this.indexOfUbuntuChoice()
+                    : this.flow.style() == InstallerStyle.BSD_INSTALL ? this.indexOfBsdChoice(this.flow.targetSlot())
                     : Math.max(0, this.indexOfSlot(this.flow.targetSlot()));
+            case FORMAT -> this.indexOfFormat();
             case SETTINGS -> Math.max(0, this.indexOfSlot(this.flow.targetSlot()));
             case DESKTOP -> this.flow.desktopIndex() + 1;
             case MIRROR -> this.flow.mirrorAnswers() && !this.flow.useMirror() ? 1 : 0;
@@ -378,8 +395,20 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         if (this.erasePrompt != InstallerFlow.NO_DISK) {
             return this.eraseKey(key);
         }
+        if (this.partitionAsk != null) {
+            return this.partitionKey(key);
+        }
+        if (this.diskStepKey(key)) {
+            return true;
+        }
         switch (key) {
             case GLFW.GLFW_KEY_ESCAPE -> {
+                // Frames XP's format page goes back to its list of partitions on ESC, as it says it does.
+                if (this.flow.page() == InstallerPage.FORMAT) {
+                    this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                            InstallerActionPayload.ACTION_BACK));
+                    return true;
+                }
                 // Leaving the monitor is not leaving the installation: the machine keeps both.
                 this.onClose();
                 return true;
@@ -414,7 +443,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                  * bsdinstall's own disk page has no separate E for this: the erase choice is baked into which
                  * of its two rows is picked, confirmed through the OK button rather than a key beside it.
                  */
-                if (!this.naming() && this.flow.style() != InstallerStyle.BSD_INSTALL && this.offerErase()) {
+                if (!this.naming() && this.flow.style() != InstallerStyle.BSD_INSTALL
+                        && !this.flow.style().listsPartitions() && this.offerErase()) {
                     return true;
                 }
             }
@@ -478,7 +508,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         if (this.own != null) {
             return this.own.typed(letter) || super.charTyped(letter, modifiers);
         }
-        if (this.erasePrompt != InstallerFlow.NO_DISK) {
+        if (this.erasePrompt != InstallerFlow.NO_DISK || this.partitionAsk != null) {
             return true;
         }
         if (this.naming() && letter >= ' ' && letter != 127
@@ -504,7 +534,10 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         if (this.own != null) {
             return this.own.click(mouseX, mouseY) || super.mouseClicked(mouseX, mouseY, button);
         }
-        if (this.erasePrompt != InstallerFlow.NO_DISK) {
+        if (this.erasePrompt != InstallerFlow.NO_DISK || this.partitionAsk != null) {
+            return true;
+        }
+        if (this.drawn != null && this.diskStepClick(mouseX, mouseY)) {
             return true;
         }
         /*
@@ -542,6 +575,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         }
 
         this.listRows = 0;
+        this.drawn = null;
         final InstallerFrames.Frame frame = InstallerFrames.paint(g, font, this.flow, this.ticksDone, x, y,
                 InstallerLayout.WIDTH, InstallerLayout.HEIGHT, this.held, this.bsdChosenNeedsErase());
         this.nextButton = frame.next();
@@ -562,6 +596,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
         switch (this.flow.page()) {
             case DISK, SETTINGS -> this.drawDisks(g, frame);
+            case FORMAT -> this.drawn = InstallerDiskPages.xpFormat(g, this, frame, this.flow, this.selection);
+            case POOL -> this.drawn = InstallerDiskPages.pool(g, this, frame, this.flow, this.selection);
             case NAME -> this.drawName(g, frame);
             case DESKTOP -> this.drawDesktops(g, frame);
             case HUB -> this.drawHub(g, frame);
@@ -574,6 +610,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         }
         if (this.erasePrompt != InstallerFlow.NO_DISK) {
             this.drawEraseAsk(g, x, y, frame);
+        }
+        if (this.partitionAsk != null) {
+            this.drawPartitionAsk(g, x, y);
         }
     }
 
@@ -600,8 +639,12 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     /** How many rows the page under the cursor has, so the arrows and the mouse agree about them. */
     private int rowCount() {
         return switch (this.flow.page()) {
-            case DISK -> this.flow.style() == InstallerStyle.BSD_INSTALL
-                    ? this.bsdDiskChoices().size() : this.flow.disks().size();
+            case DISK -> this.flow.style().listsPartitions() ? DiskChoices.picks(this.flow).size()
+                    : this.flow.style() == InstallerStyle.UBUNTU ? DiskChoices.ubuntuOptions(this.flow).size()
+                    : this.flow.style() == InstallerStyle.BSD_INSTALL ? this.bsdDiskChoices().size()
+                    : this.flow.disks().size();
+            case FORMAT -> DiskChoices.xpFormats(this.flow).size();
+            case POOL -> InstallerDiskPages.Pool.CHOICES;
             case SETTINGS -> this.flow.disks().size();
             case DESKTOP -> this.flow.desktops().size() + 1;
             case HUB -> this.hubPages().size();
@@ -625,10 +668,31 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     private void chose() {
         switch (this.flow.page()) {
             case DISK, SETTINGS -> {
+                if (this.flow.page() == InstallerPage.DISK && this.flow.style().listsPartitions()) {
+                    this.placeOnPick();
+                    return;
+                }
+                // Ubuntu's ways are taken when chosen with ENTER, not as the cursor passes them.
+                if (this.flow.page() == InstallerPage.DISK && this.flow.style() == InstallerStyle.UBUNTU) {
+                    return;
+                }
+                final BsdDiskChoice bsd = this.flow.page() == InstallerPage.DISK
+                        && this.flow.style() == InstallerStyle.BSD_INSTALL ? this.chosenBsdChoice() : null;
+                if (bsd != null) {
+                    this.send(InstallerActionPayload.formattedAs(this.computerPos, this.monitorPos,
+                            bsd.zfs() ? FileSystemType.ZFS.serializedName() : ""));
+                }
                 final InstallerFlow.Disk disk = this.chosenDisk();
                 if (disk != null) {
                     this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
                             InstallerActionPayload.ACTION_SELECT_DISK, disk.slot()));
+                }
+            }
+            case FORMAT -> {
+                final List<DiskChoices.Format> formats = DiskChoices.xpFormats(this.flow);
+                if (this.selection >= 0 && this.selection < formats.size()) {
+                    this.send(InstallerActionPayload.formattedAs(this.computerPos, this.monitorPos,
+                            formats.get(this.selection).fileSystem()));
                 }
             }
             case DESKTOP -> this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
@@ -668,8 +732,78 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             this.offerErase();
             return;
         }
+        if (this.flow.page() == InstallerPage.DISK && this.flow.style() == InstallerStyle.UBUNTU
+                && this.takeUbuntuChoice()) {
+            return;
+        }
+        if (this.flow.page() == InstallerPage.POOL) {
+            // The pool's disks are chosen in place; Install erases them, after the last chance to say no.
+            if (this.selection == InstallerDiskPages.Pool.TYPE) {
+                this.togglePool();
+            } else {
+                this.offerErase();
+            }
+            return;
+        }
         this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
                 InstallerActionPayload.ACTION_NEXT));
+    }
+
+    /*
+     * Ubuntu's ways are radio buttons: ENTER on one not yet chosen chooses it (an entire disk after the question
+     * every erase asks), and ENTER on the one chosen is Done. Answers whether it chose something.
+     */
+    private boolean takeUbuntuChoice() {
+        final List<DiskChoices.Option> options = DiskChoices.ubuntuOptions(this.flow);
+        if (this.selection < 0 || this.selection >= options.size()) {
+            return false;
+        }
+        final DiskChoices.Option option = options.get(this.selection);
+        final InstallerFlow.Disk disk = option.disk();
+        final InstallerFlow.Disk target = this.flow.target();
+        final boolean onTarget = disk != null && target != null && disk.slot() == target.slot();
+        if (option.kind() == DiskChoices.ubuntuChosen(this.flow)
+                && (option.kind() == DiskChoices.Option.Kind.CUSTOM || onTarget)) {
+            return false;
+        }
+        if (disk == null) {
+            return true;
+        }
+        switch (option.kind()) {
+            case ALONGSIDE -> {
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_CANCEL_ERASE));
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_SELECT_DISK, disk.slot()));
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_SHRINK, disk.slot(), InstallPlan.shrinkFor(this.flow, disk)));
+            }
+            case ENTIRE -> this.erasePrompt = disk.slot();
+            case CUSTOM -> {
+                final DiskSpot free = DiskChoices.largestFree(disk);
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_CANCEL_ERASE));
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_PLACE, disk.slot(),
+                        free == null ? Placement.ANYWHERE : free.startMb()));
+            }
+        }
+        return true;
+    }
+
+    /** bsdinstall's T: one disk, or a mirror over the next disk big enough for the system. */
+    private void togglePool() {
+        int other = InstallerFlow.NO_DISK;
+        if (this.flow.diskAt(this.flow.placement().mirrorSlot()) == null) {
+            for (final InstallerFlow.Disk disk : this.flow.disks()) {
+                if (disk.slot() != this.flow.targetSlot() && disk.sizeMb() >= this.flow.footprintMb()) {
+                    other = disk.slot();
+                    break;
+                }
+            }
+        }
+        this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                InstallerActionPayload.ACTION_MIRROR_DISK, other));
     }
 
     /**
@@ -694,6 +828,11 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
 
     /** Puts the erase question up, if the page is one where a disk can be erased at all. */
     private boolean offerErase() {
+        // bsdinstall's last chance before a pool's disks are erased.
+        if (this.flow.page() == InstallerPage.POOL && this.flow.target() != null) {
+            this.erasePrompt = this.flow.targetSlot();
+            return true;
+        }
         if (this.flow.page() == InstallerPage.DISK && this.chosenDisk() != null) {
             this.erasePrompt = this.chosenDisk().slot();
             return true;
@@ -705,8 +844,117 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         if (key == GLFW.GLFW_KEY_Y || key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) {
             this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
                     InstallerActionPayload.ACTION_ERASE, this.erasePrompt));
+            // Yes to the last chance is Install itself.
+            if (this.flow.page() == InstallerPage.POOL) {
+                this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos,
+                        InstallerActionPayload.ACTION_NEXT));
+            }
         }
         this.erasePrompt = InstallerFlow.NO_DISK;
+        return true;
+    }
+
+    /*
+     * The disk step's own keys, on the pages that have them: Frames XP's D, the New, Delete, Format and Extend of
+     * Frames 7 to 11 (N, D, F, X), Ubuntu's LEFT and RIGHT on the size beside another system, and bsdinstall's T.
+     * Answers whether the key was one of them.
+     */
+    private boolean diskStepKey(final int key) {
+        if (this.flow.page() == InstallerPage.POOL && key == GLFW.GLFW_KEY_T) {
+            this.togglePool();
+            return true;
+        }
+        if (this.flow.page() != InstallerPage.DISK) {
+            return false;
+        }
+        if (this.flow.style() == InstallerStyle.UBUNTU && (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT)) {
+            this.resizeBeside(key == GLFW.GLFW_KEY_RIGHT ? 1 : -1);
+            return true;
+        }
+        if (!this.flow.style().listsPartitions()) {
+            return false;
+        }
+        final boolean xp = this.flow.style() == InstallerStyle.FRAMES_XP;
+        return switch (key) {
+            case GLFW.GLFW_KEY_D -> this.useLink(InstallerDiskPages.Link.DELETE);
+            case GLFW.GLFW_KEY_N -> !xp && this.useLink(InstallerDiskPages.Link.NEW);
+            case GLFW.GLFW_KEY_F -> !xp && this.useLink(InstallerDiskPages.Link.FORMAT);
+            case GLFW.GLFW_KEY_X -> !xp && this.useLink(InstallerDiskPages.Link.EXTEND);
+            default -> false;
+        };
+    }
+
+    /*
+     * Does what a link of the disk step says for the row chosen: New and Extend at once, Delete and Format after the
+     * question. Answers whether it did anything.
+     */
+    private boolean useLink(final int link) {
+        final List<DiskChoices.Pick> picks = DiskChoices.picks(this.flow);
+        if (this.selection < 0 || this.selection >= picks.size()) {
+            return false;
+        }
+        final DiskChoices.Pick pick = picks.get(this.selection);
+        if (!InstallerDiskPages.linkWorks(link, pick)) {
+            return false;
+        }
+        final int slot = pick.disk().slot();
+        switch (link) {
+            case InstallerDiskPages.Link.NEW -> this.send(InstallerActionPayload.of(this.computerPos,
+                    this.monitorPos, InstallerActionPayload.ACTION_NEW_PARTITION, slot, pick.spot().startMb()));
+            case InstallerDiskPages.Link.EXTEND -> this.send(InstallerActionPayload.of(this.computerPos,
+                    this.monitorPos, InstallerActionPayload.ACTION_EXTEND_PARTITION, slot, pick.spot().number()));
+            case InstallerDiskPages.Link.DELETE -> this.partitionAsk = new PartitionAsk(
+                    InstallerActionPayload.ACTION_DELETE_PARTITION, pick.diskIndex(), slot, pick.spot().number());
+            default -> this.partitionAsk = new PartitionAsk(InstallerActionPayload.ACTION_FORMAT_PARTITION,
+                    pick.diskIndex(), slot, pick.spot().number());
+        }
+        return true;
+    }
+
+    private boolean partitionKey(final int key) {
+        final PartitionAsk ask = this.partitionAsk;
+        if (ask != null && (key == GLFW.GLFW_KEY_Y || key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER)) {
+            this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos, ask.action(), ask.slot(),
+                    ask.number()));
+        }
+        this.partitionAsk = null;
+        return true;
+    }
+
+    /* Moves the size Ubuntu leaves the system beside it by a gigabyte. */
+    private void resizeBeside(final int gigabytes) {
+        final InstallerFlow.Disk target = this.flow.target();
+        final DiskSpot other = this.flow.besideSpot();
+        if (target == null || other == null
+                || DiskChoices.ubuntuChosen(this.flow) != DiskChoices.Option.Kind.ALONGSIDE) {
+            return;
+        }
+        final long now = this.flow.placement().shrinkToMb() > 0L ? this.flow.placement().shrinkToMb()
+                : InstallPlan.shrinkFor(this.flow, target);
+        final long to = Math.max(other.usedMb(), Math.min(other.sizeMb(), now + gigabytes * MB_PER_GB));
+        this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos, InstallerActionPayload.ACTION_SHRINK,
+                target.slot(), to));
+    }
+
+    /* A click on the disk step's own pages: a row chooses, a link of the table does what it says. */
+    private boolean diskStepClick(final double mouseX, final double mouseY) {
+        final InstallerDiskPages.Drawn page = this.drawn;
+        if (page == null) {
+            return false;
+        }
+        final int link = page.linkAt(mouseX, mouseY);
+        if (link >= 0) {
+            return this.useLink(link);
+        }
+        if (mouseY < page.top() || mouseX < this.leftPos || mouseX >= this.leftPos + InstallerLayout.WIDTH) {
+            return false;
+        }
+        final int choice = page.choiceAt((int) ((mouseY - page.top()) / Math.max(1, this.row())));
+        if (choice < 0) {
+            return false;
+        }
+        this.selection = choice;
+        this.chose();
         return true;
     }
 
@@ -749,14 +997,18 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 takeOver = disk;
             }
         }
-        final List<BsdDiskChoice> choices = new ArrayList<>(2);
+        final List<BsdDiskChoice> choices = new ArrayList<>(3);
+        // Auto (ZFS) from the Transition on: its own page chooses the disks, and erases them when it installs.
+        if (takeOver != null && this.flow.facts().carriers().contains(FileSystemType.ZFS)) {
+            choices.add(new BsdDiskChoice(auto != null ? auto : takeOver, false, true));
+        }
         if (auto != null) {
-            choices.add(new BsdDiskChoice(auto, false));
+            choices.add(new BsdDiskChoice(auto, false, false));
         } else if (takeOver != null) {
-            choices.add(new BsdDiskChoice(takeOver, true));
+            choices.add(new BsdDiskChoice(takeOver, true, false));
         }
         if (beside != null) {
-            choices.add(new BsdDiskChoice(beside, false));
+            choices.add(new BsdDiskChoice(beside, false, false));
         }
         return choices;
     }
@@ -768,17 +1020,71 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
      */
     private int indexOfBsdChoice(final int slot) {
         final List<BsdDiskChoice> choices = this.bsdDiskChoices();
+        final boolean zfs = FileSystemType.ZFS.serializedName().equals(this.flow.placement().fileSystem());
         int found = -1;
         for (int i = 0; i < choices.size(); i++) {
-            if (choices.get(i).disk().slot() == slot && (found < 0 || !choices.get(i).erasesIt())) {
+            final BsdDiskChoice choice = choices.get(i);
+            if (choice.zfs() != zfs) {
+                continue;
+            }
+            if (choice.disk().slot() == slot && (found < 0 || !choice.erasesIt())) {
                 found = i;
             }
         }
         return Math.max(0, found);
     }
 
-    /** One of bsdinstall's own disk rows: which disk, and whether choosing it erases what is already on it. */
-    private record BsdDiskChoice(InstallerFlow.Disk disk, boolean erasesIt) {
+    /** Where the cursor starts on Ubuntu's ways: on the one the installer is set on. */
+    private int indexOfUbuntuChoice() {
+        final List<DiskChoices.Option> options = DiskChoices.ubuntuOptions(this.flow);
+        final DiskChoices.Option.Kind chosen = DiskChoices.ubuntuChosen(this.flow);
+        for (int i = 0; i < options.size(); i++) {
+            final DiskChoices.Option option = options.get(i);
+            if (option.kind() == chosen && (chosen == DiskChoices.Option.Kind.CUSTOM || option.disk() != null
+                    && option.disk().slot() == this.flow.targetSlot())) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    /** Where the cursor starts on Frames XP's format page: on the file system chosen, else the first. */
+    private int indexOfFormat() {
+        final List<DiskChoices.Format> formats = DiskChoices.xpFormats(this.flow);
+        for (int i = 0; i < formats.size(); i++) {
+            if (formats.get(i).fileSystem().equals(this.flow.placement().fileSystem())) {
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    /** Puts the system on the partition or free space under the cursor. */
+    private void placeOnPick() {
+        final List<DiskChoices.Pick> picks = DiskChoices.picks(this.flow);
+        if (this.selection >= 0 && this.selection < picks.size()) {
+            final DiskChoices.Pick pick = picks.get(this.selection);
+            this.send(InstallerActionPayload.of(this.computerPos, this.monitorPos, InstallerActionPayload.ACTION_PLACE,
+                    pick.disk().slot(), pick.spot().startMb()));
+        }
+    }
+
+    /**
+     * One of bsdinstall's own disk rows: which disk, whether choosing it erases what is already on it, and whether it
+     * is Auto (ZFS), whose own page erases the disks it is given.
+     */
+    private record BsdDiskChoice(InstallerFlow.Disk disk, boolean erasesIt, boolean zfs) {
+    }
+
+    /**
+     * A partition the disk step has offered to delete or format, waiting for a yes.
+     *
+     * @param action    what yes does, one of the installer's actions
+     * @param diskIndex the disk's place among the machine's disks, as the question names it
+     * @param slot      the disk's slot
+     * @param number    the partition's number
+     */
+    private record PartitionAsk(int action, int diskIndex, int slot, int number) {
     }
 
     /** Whether the disk under the cursor already carries a system, which is what offers a choice about it. */
@@ -934,7 +1240,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
      * Writes one line of a page in whichever way that page is written: a text-mode page in the terminal font, one
      * character to a cell, the others in the game's font.
      */
-    private void say(final GuiGraphics g, final String text, final int x, final int y, final int colour) {
+    @Override
+    public void say(final GuiGraphics g, final String text, final int x, final int y, final int colour) {
         if (this.textMode()) {
             final TermFace.Fitted wall = InstallerFrames.wall();
             TermText.draw(wall.face(), g, font, text, x, y, wall.scale(), colour);
@@ -944,13 +1251,15 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     }
 
     /** The same, ending at {@code rightEdge}. */
-    private void sayRight(final GuiGraphics g, final String text, final int rightEdge, final int y,
-                          final int colour) {
+    @Override
+    public void sayRight(final GuiGraphics g, final String text, final int rightEdge, final int y,
+                         final int colour) {
         this.say(g, text, rightEdge - this.width(text), y, colour);
     }
 
     /** How wide that line comes out in the size this page is written at. */
-    private int width(final String text) {
+    @Override
+    public int width(final String text) {
         if (!this.textMode()) {
             return font.width(text);
         }
@@ -959,12 +1268,14 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
     }
 
     /** How far apart this page's rows sit, which the mouse also has to know to find the one under it. */
-    private int row() {
+    @Override
+    public int row() {
         return this.textMode() ? WALL_ROW + InstallerLayout.TEXT_ROW_EXTRA : InstallerLayout.ROW;
     }
 
     /** A label cut to the room it has, measured in the size this page is written at. */
-    private String fit(final String text, final int room) {
+    @Override
+    public String fit(final String text, final int room) {
         if (!this.textMode()) {
             return InstallerFrames.clip(font, text, room);
         }
@@ -1078,6 +1389,18 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             this.drawBsdDisks(g, f);
             return;
         }
+        if (this.flow.page() == InstallerPage.DISK && this.flow.style() == InstallerStyle.FRAMES_XP) {
+            this.drawn = InstallerDiskPages.xpDisks(g, this, f, this.flow, this.selection);
+            return;
+        }
+        if (this.flow.page() == InstallerPage.DISK && this.flow.style().listsPartitions()) {
+            this.drawn = InstallerDiskPages.table(g, this, f, this.flow, this.selection, PAGE.get().columnRule());
+            return;
+        }
+        if (this.flow.page() == InstallerPage.DISK && this.flow.style() == InstallerStyle.UBUNTU) {
+            this.drawn = InstallerDiskPages.ubuntu(g, this, f, this.flow, this.selection);
+            return;
+        }
         final InstallerFrames.Paint p = f.paint();
         final boolean table = this.flow.chrome() == InstallerChrome.CARD
                 || InstallerFrames.brandsWelcome(this.flow.chrome());
@@ -1096,7 +1419,14 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                     ty + InstallerLayout.TABLE_HEADER_RULE_DY + 1, PAGE.get().columnRule());
             ty += InstallerLayout.TABLE_HEADER_GAP;
         }
-        this.listAt(f.x(), ty, f.w(), this.flow.disks().size());
+        // Debian's partitioner and Fedora's destination list each disk's partitions under it.
+        final boolean partitionsUnder = this.flow.page() == InstallerPage.DISK
+                && (this.flow.style() == InstallerStyle.DEBIAN || this.flow.style() == InstallerStyle.FEDORA);
+        final List<Integer> rowMap = new ArrayList<>();
+        final int listTopY = ty;
+        if (!partitionsUnder) {
+            this.listAt(f.x(), ty, f.w(), this.flow.disks().size());
+        }
         for (int i = 0; i < this.flow.disks().size(); i++) {
             final InstallerFlow.Disk disk = this.flow.disks().get(i);
             final boolean here = i == this.selection;
@@ -1131,11 +1461,23 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
                 this.sayRight(g, state, f.x() + f.w(), ty, faint);
             }
             ty += step;
+            rowMap.add(i);
+            if (partitionsUnder) {
+                ty = InstallerDiskPages.partitionsUnder(g, this, f, disk, ty, rowMap);
+            }
+        }
+        if (partitionsUnder) {
+            this.drawn = new InstallerDiskPages.Drawn(listTopY, rowMap, List.of());
         }
         ty += step;
         final boolean sysV = this.flow.style() == InstallerStyle.SYSTEM_V;
         if (!sysV) {
             this.say(g, of(NEEDS.with(this.flow.systemName(), size(this.flow.footprintMb()))), f.x(), ty, p.dim());
+        }
+        if (partitionsUnder) {
+            InstallerDiskPages.paragraph(g, this, InstallerDiskPages.planSays(this.flow), f.x(), ty + step, f.w(),
+                    this.flow.plan().ok() ? p.dim() : p.accent());
+            return;
         }
         final InstallerFlow.Disk disk = this.chosenDisk();
         int nameY = ty + step * 2;
@@ -1162,8 +1504,9 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             nameY = ty + step * 2;
         } else if (disk != null && !this.flow.roomOn(disk)) {
             this.say(g, of(NO_ROOM_HERE), f.x(), ty + step, p.accent());
-        } else if (disk != null && disk.hasSystem()) {
-            this.say(g, of(ERASED_FIRST.with(disk.holds())), f.x(), ty + step, p.accent());
+        } else if (disk != null) {
+            // What the installer does with the disk chosen: erased, beside its other partitions, on one of them.
+            this.say(g, this.fit(InstallerDiskPages.planSays(this.flow), f.w()), f.x(), ty + step, p.dim());
         }
         if (this.flow.page() == InstallerPage.SETTINGS) {
             final String label = of(COMPUTER_NAME) + "  ";
@@ -1191,7 +1534,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             if (here) {
                 g.fill(f.x(), ty - 1, f.x() + f.w(), ty + step - 1, p.select());
             }
-            final String label = choice.erasesIt()
+            final String label = choice.zfs() ? of(InstallerScreenTexts.BSD_DISK_AUTO_ZFS) : choice.erasesIt()
                     ? disk.hasSystem()
                             ? of(BSD_DISK_AUTO_ERASE.with(disk.label(), size(disk.sizeMb()), disk.holds()))
                             : of(BSD_DISK_AUTO_ERASE_FILES.with(disk.label(), size(disk.sizeMb())))
@@ -1738,16 +2081,32 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         this.say(g, of(RESTART_TO_START.with(this.flow.systemName())), f.x(), ty + step * 3, p.accent());
     }
 
-    private void drawEraseAsk(final GuiGraphics g, final int x, final int y, final InstallerFrames.Frame f) {
-        final InstallerFlow.Disk disk = this.flow.diskAt(this.erasePrompt);
-        if (disk == null) {
-            this.erasePrompt = InstallerFlow.NO_DISK;
+    /** The question before a partition is deleted or formatted, in the same dialog an erase asks in. */
+    private void drawPartitionAsk(final GuiGraphics g, final int x, final int y) {
+        final PartitionAsk ask = this.partitionAsk;
+        if (ask == null) {
             return;
         }
-        final int bw = InstallerLayout.ERASE_DIALOG_W;
-        final int bh = InstallerLayout.ERASE_DIALOG_H;
+        final boolean deleting = ask.action() == InstallerActionPayload.ACTION_DELETE_PARTITION;
         final int bx = x + InstallerLayout.eraseDialogX();
         final int by = y + InstallerLayout.eraseDialogY();
+        this.dialog(g, x, y, bx, by);
+        final PageColours c = PAGE.get();
+        Draw.text(g, font, of((deleting ? InstallerScreenTexts.DELETE_ASK : InstallerScreenTexts.FORMAT_ASK)
+                .with(ask.number(), ask.diskIndex())), bx + InstallerLayout.ERASE_TEXT_X,
+                by + InstallerLayout.ERASE_LINE1_DY, c.dialogInk());
+        Draw.text(g, font, of(InstallerScreenTexts.EVERY_FILE_ON_IT), bx + InstallerLayout.ERASE_TEXT_X,
+                by + InstallerLayout.ERASE_LINE2_DY, c.dialogInk());
+        Draw.text(g, font, of(CANNOT_UNDO), bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE4_DY,
+                c.dialogDim());
+        Draw.text(g, font, of(deleting ? InstallerScreenTexts.DELETE_KEYS : InstallerScreenTexts.FORMAT_KEYS),
+                bx + InstallerLayout.ERASE_TEXT_X, by + InstallerLayout.ERASE_LINE5_DY, c.alarm());
+    }
+
+    /* The veil over the page and the paper of a question, with its alarm along the top and its edge. */
+    private void dialog(final GuiGraphics g, final int x, final int y, final int bx, final int by) {
+        final int bw = InstallerLayout.ERASE_DIALOG_W;
+        final int bh = InstallerLayout.ERASE_DIALOG_H;
         final PageColours c = PAGE.get();
         g.fill(x, y, x + InstallerLayout.WIDTH, y + InstallerLayout.HEIGHT, c.veil());
         g.fill(bx, by, bx + bw, by + bh, c.dialog());
@@ -1755,8 +2114,25 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
         g.fill(bx, by + bh - 1, bx + bw, by + bh, c.dialogEdge());
         g.fill(bx, by, bx + 1, by + bh, c.dialogEdge());
         g.fill(bx + bw - 1, by, bx + bw, by + bh, c.dialogEdge());
+    }
+
+    private void drawEraseAsk(final GuiGraphics g, final int x, final int y, final InstallerFrames.Frame f) {
+        final InstallerFlow.Disk disk = this.flow.diskAt(this.erasePrompt);
+        if (disk == null) {
+            this.erasePrompt = InstallerFlow.NO_DISK;
+            return;
+        }
+        final int bw = InstallerLayout.ERASE_DIALOG_W;
+        final int bx = x + InstallerLayout.eraseDialogX();
+        final int by = y + InstallerLayout.eraseDialogY();
+        this.dialog(g, x, y, bx, by);
+        final PageColours c = PAGE.get();
+        // bsdinstall's last chance names every disk a ZFS mirror is about to take.
+        final InstallerFlow.Disk mirror = this.flow.page() == InstallerPage.POOL
+                ? this.flow.diskAt(this.flow.placement().mirrorSlot()) : null;
+        final String named = mirror == null ? disk.label() : disk.label() + " " + mirror.label();
         final String ask = this.flow.style() == InstallerStyle.BSD_INSTALL
-                ? of(ERASE_ASK_NAMED.with(disk.label())) : of(ERASE_ASK.with(disk.slot()));
+                ? of(ERASE_ASK_NAMED.with(named)) : of(ERASE_ASK.with(disk.slot()));
         Draw.text(g, font, ask, bx + InstallerLayout.ERASE_TEXT_X,
                 by + InstallerLayout.ERASE_LINE1_DY, c.dialogInk());
         Draw.text(g, font, of(disk.hasSystem() ? AND_EVERY_FILE.with(disk.holds()) : EVERY_FILE.text()),

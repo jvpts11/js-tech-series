@@ -9,11 +9,14 @@ package dev.jstech.computers.machine;
 
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.os.FileSystemType;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.disk.DiskPartitions;
+import dev.jstech.computers.os.disk.DiskSnapshots;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FsPaths;
 import dev.jstech.computers.os.fs.InstallerLayout;
@@ -26,6 +29,7 @@ import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
@@ -72,29 +76,42 @@ public final class DriveTable {
         this.drives = drives;
     }
 
-    /** The drives that block has as they are now; none when it is not a computer. */
+    /**
+     * The drives that block has as they are now; none when it is not a computer. Every partition is a volume of its own
+     * (computers/docs/design/storage-devices.md): the system's is C:, then come the other partitions of its disk and of
+     * the other disks, each in a file system the running system reads; one it cannot read gets no letter, as a Linux
+     * partition gets none from Frames.
+     */
     public static DriveTable of(final BlockEntity block, final ServerLevel level) {
         if (!(block instanceof IOsHost computer)) {
             return NONE;
         }
         final List<Drive> table = new ArrayList<>();
         final ItemStack system = computer.systemDisk();
+        final OsDef os = computer.installedOs();
         char letter = 'C';
         if (!system.isEmpty()) {
-            final OsDef os = computer.installedOs();
             final KernelDef kernel = os != null ? OsRegistry.kernelOf(os) : null;
             final FilesystemKind kind = kernel != null ? kernel.filesystem() : FilesystemKind.NONE;
             table.add(new Drive('C', system, kind, computer::setChanged));
             letter = 'D';
         }
-        // Data disks: every disk slot holding a real disk other than the boot disk.
+        // Then every other volume the running system reads: the system disk's other partitions, then the other disks'.
         for (int i = 0; i < computer.diskSlots() && letter <= 'Z'; i++) {
             final ItemStack disk = computer.diskInSlot(i);
-            if (disk.isEmpty() || disk == system || !DriveVolumes.isDisk(disk)) {
+            if (disk.isEmpty() || !DriveVolumes.isDisk(disk)) {
                 continue;
             }
-            table.add(new Drive(letter, disk, FilesystemKind.HIERARCHICAL, computer::setChanged));
-            letter++;
+            for (final DiskPartitions.Volume volume : DiskPartitions.volumes(disk)) {
+                if (letter > 'Z' || volume.stack() == system || !reads(os, computer.installedEra(), volume)) {
+                    continue;
+                }
+                table.add(new Drive(letter, volume.stack(), FilesystemKind.HIERARCHICAL, () -> {
+                    volume.commit();
+                    computer.setChanged();
+                }));
+                letter++;
+            }
         }
         // Then the removable drives, in the order the machine keeps them, so a letter stays with its drive.
         for (final IMediaDrive drive : MachineMedia.of(computer, level).drives()) {
@@ -164,23 +181,35 @@ public final class DriveTable {
         return ICliComputer.FsResult.fail(NOT_READY.with(String.valueOf(Character.toUpperCase(drive))));
     }
 
-    /** Free space in mB-equivalents on a disk or medium: its capacity less the items, files and system it holds. */
+    /**
+     * Free space in mB-equivalents on a volume or medium: its capacity (a partition's, or a whole disk's) less the
+     * items, files and system it holds.
+     */
     public static long freeWeightOf(final ItemStack stack) {
         final long capacity;
-        if (HardwareRegistry.disk(stack) instanceof DiskSpec disk) {
+        if (HardwareRegistry.disk(stack) instanceof DiskSpec) {
             // Bad sectors take their share of the room, and a dead disk has none.
-            capacity = DriveVolumes.usableCapacity(stack, disk.capacityItems()) * StorageKey.MB_EQ_PER_ITEM;
+            capacity = DriveVolumes.usableCapacity(stack, DiskPartitions.capacityItems(stack))
+                    * StorageKey.MB_EQ_PER_ITEM;
         } else if (stack.getItem() instanceof FormattedMediaItem mediaItem) {
             capacity = mediaItem.capacityWeight();
         } else {
             return 0L;
         }
         final long storageUsed = DriveVolumes.usedWeight(stack);
-        final long fsUsed = DiskFilesystem.filesWeight(stack);
+        final long fsUsed = DiskFilesystem.filesWeight(stack) + DiskSnapshots.filesWeight(stack);
         final ResourceLocation osId = OsDisks.systemOn(stack);
         final OsDef os = osId != null ? OsRegistry.getOs(osId) : null;
         final long osReserved = os != null
-                ? OsDisks.footprintItemsOn(stack, os, DiskFilesystem.eraOf(stack)) * StorageKey.MB_EQ_PER_ITEM : 0L;
+                ? (OsDisks.footprintItemsOn(stack, os, DiskFilesystem.eraOf(stack))
+                + OsDisks.pageItemsOn(stack, osId, DiskFilesystem.eraOf(stack))) * StorageKey.MB_EQ_PER_ITEM : 0L;
         return Math.max(0L, capacity - storageUsed - fsUsed - osReserved);
+    }
+
+    /* Whether the running system reads that volume's file system; a machine with no system letters them all. */
+    private static boolean reads(@Nullable final OsDef os, @Nullable final Era era,
+                                 final DiskPartitions.Volume volume) {
+        final FileSystemType fs = volume.partition() == null ? null : volume.partition().fs();
+        return os == null || fs != null && fs.readBy(os.platform(), era);
     }
 }

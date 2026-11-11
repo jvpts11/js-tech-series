@@ -14,6 +14,7 @@ import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDisks;
+import dev.jstech.computers.os.disk.DiskPartitions;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FsPaths;
@@ -719,8 +720,9 @@ public final class FileService {
             final ItemStack stack = drive.disk();
             final boolean ready = !stack.isEmpty();
             final long capacity;
-            if (HardwareRegistry.disk(stack) instanceof DiskSpec disk) {
-                capacity = DriveVolumes.usableCapacity(stack, disk.capacityItems()) * StorageKey.MB_EQ_PER_ITEM;
+            if (HardwareRegistry.disk(stack) instanceof DiskSpec) {
+                capacity = DriveVolumes.usableCapacity(stack, DiskPartitions.capacityItems(stack))
+                        * StorageKey.MB_EQ_PER_ITEM;
             } else if (stack.getItem() instanceof FormattedMediaItem mediaItem) {
                 capacity = mediaItem.capacityWeight();
             } else {

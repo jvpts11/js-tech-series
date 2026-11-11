@@ -101,7 +101,7 @@ public final class ShRunner {
          * so it is refused before anything on the line runs.
          */
         for (final ShLine.Stage stage : line.stages()) {
-            final ICliCommand command = shell.find(stage.word());
+            final ICliCommand command = shell.find(stage.word(), computer);
             if (command instanceof CliShell.IHandOver giving && command.available(computer)
                     && giving.fileOf(computer, stage.args()) != null) {
                 out.error(CliTexts.SAID_BY.with(stage.word(), WHOLE_TERMINAL));
@@ -121,7 +121,7 @@ public final class ShRunner {
         ICliCommand last = null;
         for (int i = 0; i < line.stages().size(); i++) {
             final ShLine.Stage stage = line.stages().get(i);
-            final ICliCommand command = shell.find(stage.word());
+            final ICliCommand command = shell.find(stage.word(), computer);
             last = command;
             if (command == null || !command.available(computer)) {
                 out.error(CliTexts.NOT_FOUND.with(stage.word()));

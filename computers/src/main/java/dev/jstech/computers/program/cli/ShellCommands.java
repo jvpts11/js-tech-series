@@ -97,7 +97,7 @@ final class ShellCommands {
                 return;
             }
             if (ctx.hasArgs()) {
-                final ICliCommand command = ctx.shell().find(ctx.arg(0));
+                final ICliCommand command = ctx.shell().find(ctx.arg(0), ctx.computer());
                 if (command == null || !command.available(ctx.computer())) {
                     ctx.out().error(NO_SUCH.with(ctx.arg(0)));
                     return;

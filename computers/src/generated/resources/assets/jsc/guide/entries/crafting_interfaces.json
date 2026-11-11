@@ -208,7 +208,7 @@
     "jsc:crafting_input_router",
     "jsc:receiving_bus"
   ],
-  "order": 139,
+  "order": 145,
   "section": "jsc:autocrafting",
   "title": "jsc.guide.crafting_interfaces.title"
 }

@@ -142,6 +142,7 @@ public final class ComputersGuide {
         // The pages, chapter by chapter, in the order the guide prints them.
         StartingPages.declare(guide, main);
         BuildingPages.declare(guide, building);
+        PartitionsPages.declare(guide, building);
         ChainPages.declare(guide, building);
         ChainMachinePages.declare(guide, building);
         SurvivalPages.declare(guide, building);

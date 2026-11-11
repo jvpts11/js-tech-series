@@ -61,6 +61,7 @@ public record OpenBootMenuPayload(BlockPos hostPos, BlockPos monitorPos, BootMen
             TextCodecs.STREAM_CODEC.encode(buf, cut(entry.label()));
             buf.writeVarInt(entry.slot());
             buf.writeUtf(TextBounds.clip(entry.osId(), MAX_LABEL), MAX_LABEL);
+            buf.writeVarInt(entry.partition());
         }
     }
 
@@ -76,7 +77,7 @@ public record OpenBootMenuPayload(BlockPos hostPos, BlockPos monitorPos, BootMen
         final List<BootMenu.Entry> entries = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             entries.add(new BootMenu.Entry(TextCodecs.STREAM_CODEC.decode(buf), buf.readVarInt(),
-                    buf.readUtf(MAX_LABEL)));
+                    buf.readUtf(MAX_LABEL), buf.readVarInt()));
         }
         return new OpenBootMenuPayload(host, monitor, new BootMenu(manager, title, entries, chosen, countdown),
                 remaining);

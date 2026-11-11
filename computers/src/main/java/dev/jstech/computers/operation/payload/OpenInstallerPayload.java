@@ -7,8 +7,14 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.computers.os.FileSystemType;
+import dev.jstech.computers.os.disk.PartitionRole;
+import dev.jstech.computers.os.disk.PartitionScheme;
+import dev.jstech.computers.os.install.DiskSpot;
+import dev.jstech.computers.os.install.InstallPlan;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerStyle;
+import dev.jstech.computers.os.install.Placement;
 import dev.jstech.core.id.StableNames;
 import dev.jstech.core.text.TextBounds;
 import net.minecraft.core.BlockPos;
@@ -36,13 +42,20 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
                                    List<InstallerFlow.Desktop> desktops, String mirrorHost, int stageIndex,
                                    int targetSlot, String computerName, String desktopId, int eraseSlot,
                                    int ticksDone, boolean portsSelected, boolean useMirror, boolean cronEnabled,
-                                   boolean sshdEnabled, int options) implements CustomPacketPayload {
+                                   boolean sshdEnabled, int options, Placement placement,
+                                   InstallPlan.Facts facts) implements CustomPacketPayload {
 
     /** The longest a drive's name or the system on it may be, which is wider than any the game ships. */
     public static final int MAX_LABEL = 64;
 
     /** The longest an id may be, which is wider than any namespace and path together. */
     public static final int MAX_ID = 128;
+
+    /** More partitions and free spaces on one disk than an installer lists, so a list on the wire has an end. */
+    public static final int MOST_SPOTS = 64;
+
+    /* A file system's or a scheme's serialized name is a short word. */
+    private static final int MAX_NAME = 16;
 
     public static final CustomPacketPayload.Type<OpenInstallerPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "open_installer"));
@@ -57,7 +70,7 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
                 flow.footprintMb(), flow.copyTicks(), flow.disks(), flow.desktops(), flow.mirrorHost(),
                 flow.stageIndex(), flow.targetSlot(), flow.computerName(), flow.desktopId(), flow.eraseSlot(),
                 ticksDone, flow.portsSelected(), flow.useMirror(), flow.cronEnabled(), flow.sshdEnabled(),
-                flow.options());
+                flow.options(), flow.placement(), flow.facts());
     }
 
     /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
@@ -73,10 +86,13 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
 
     /** The installer this describes, built back on the side that receives it. */
     public InstallerFlow flow() {
-        return InstallerFlow.restored(this.style, this.systemId, this.systemName, this.footprintMb, this.copyTicks,
-                this.disks, this.desktops, this.mirrorHost, this.stageIndex, this.targetSlot, this.computerName,
-                this.desktopId, this.eraseSlot, this.portsSelected, this.useMirror, this.cronEnabled,
-                this.sshdEnabled, this.options);
+        final InstallerFlow flow = InstallerFlow.restored(this.style, this.systemId, this.systemName,
+                this.footprintMb, this.copyTicks, this.disks, this.desktops, this.mirrorHost, this.stageIndex,
+                this.targetSlot, this.computerName, this.desktopId, this.eraseSlot, this.portsSelected,
+                this.useMirror, this.cronEnabled, this.sshdEnabled, this.options);
+        flow.restorePlacement(this.placement);
+        flow.setFacts(this.facts);
+        return flow;
     }
 
     private static void encode(final RegistryFriendlyByteBuf buf, final OpenInstallerPayload p) {
@@ -96,6 +112,12 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
             buf.writeVarInt(disk.freeMb());
             buf.writeUtf(TextBounds.clip(disk.holds(), MAX_LABEL), MAX_LABEL);
             buf.writeVarInt(disk.speed());
+            buf.writeUtf(disk.scheme().serializedName(), MAX_NAME);
+            final int spots = Math.min(disk.spots().size(), MOST_SPOTS);
+            buf.writeVarInt(spots);
+            for (int s = 0; s < spots; s++) {
+                writeSpot(buf, disk.spots().get(s));
+            }
         }
         buf.writeVarInt(Math.min(p.desktops().size(), InstallerFlow.MOST_DESKTOPS));
         for (int i = 0; i < Math.min(p.desktops().size(), InstallerFlow.MOST_DESKTOPS); i++) {
@@ -118,6 +140,36 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         buf.writeBoolean(p.cronEnabled());
         buf.writeBoolean(p.sshdEnabled());
         buf.writeVarInt(p.options());
+        buf.writeVarLong(p.placement().startMb() + 1L);
+        buf.writeUtf(TextBounds.clip(p.placement().fileSystem(), MAX_NAME), MAX_NAME);
+        buf.writeVarLong(p.placement().shrinkToMb());
+        buf.writeVarInt(p.placement().mirrorSlot() + 1);
+        buf.writeUtf(p.facts().fileSystem().serializedName(), MAX_NAME);
+        final int carriers = Math.min(p.facts().carriers().size(), FileSystemType.values().length);
+        buf.writeVarInt(carriers);
+        for (int i = 0; i < carriers; i++) {
+            buf.writeUtf(p.facts().carriers().get(i).serializedName(), MAX_NAME);
+        }
+        buf.writeVarInt(p.facts().swapMb());
+        buf.writeUtf(p.facts().scheme().serializedName(), MAX_NAME);
+    }
+
+    private static void writeSpot(final RegistryFriendlyByteBuf buf, final DiskSpot spot) {
+        buf.writeVarInt(spot.number());
+        buf.writeVarLong(spot.startMb());
+        buf.writeVarLong(spot.sizeMb());
+        buf.writeVarLong(spot.freeMb());
+        buf.writeUtf(TextBounds.clip(spot.fs(), MAX_NAME), MAX_NAME);
+        buf.writeUtf(TextBounds.clip(spot.holds(), MAX_LABEL), MAX_LABEL);
+        buf.writeUtf(TextBounds.clip(spot.label(), MAX_LABEL), MAX_LABEL);
+        buf.writeUtf(spot.role().serializedName(), MAX_NAME);
+        buf.writeBoolean(spot.active());
+    }
+
+    private static DiskSpot readSpot(final RegistryFriendlyByteBuf buf) {
+        return new DiskSpot(buf.readVarInt(), buf.readVarLong(), buf.readVarLong(), buf.readVarLong(),
+                buf.readUtf(MAX_NAME), buf.readUtf(MAX_LABEL), buf.readUtf(MAX_LABEL),
+                PartitionRole.byName(buf.readUtf(MAX_NAME)), buf.readBoolean());
     }
 
     private static OpenInstallerPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -131,8 +183,19 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         final int diskCount = Math.min(buf.readVarInt(), InstallerFlow.MOST_DISKS);
         final List<InstallerFlow.Disk> disks = new ArrayList<>(diskCount);
         for (int i = 0; i < diskCount; i++) {
-            disks.add(new InstallerFlow.Disk(buf.readVarInt(), buf.readUtf(MAX_LABEL), buf.readVarInt(),
-                    buf.readVarInt(), buf.readUtf(MAX_LABEL), buf.readVarInt()));
+            final int slot = buf.readVarInt();
+            final String label = buf.readUtf(MAX_LABEL);
+            final int sizeMb = buf.readVarInt();
+            final int freeMb = buf.readVarInt();
+            final String holds = buf.readUtf(MAX_LABEL);
+            final int speed = buf.readVarInt();
+            final PartitionScheme scheme = PartitionScheme.byName(buf.readUtf(MAX_NAME));
+            final int spotCount = Math.min(buf.readVarInt(), MOST_SPOTS);
+            final List<DiskSpot> spots = new ArrayList<>(spotCount);
+            for (int s = 0; s < spotCount; s++) {
+                spots.add(readSpot(buf));
+            }
+            disks.add(new InstallerFlow.Disk(slot, label, sizeMb, freeMb, holds, speed, scheme, spots));
         }
         final int desktopCount = Math.min(buf.readVarInt(), InstallerFlow.MOST_DESKTOPS);
         final List<InstallerFlow.Desktop> desktops = new ArrayList<>(desktopCount);
@@ -152,9 +215,19 @@ public record OpenInstallerPayload(BlockPos hostPos, BlockPos monitorPos, Instal
         final boolean cronEnabled = buf.readBoolean();
         final boolean sshdEnabled = buf.readBoolean();
         final int options = buf.readVarInt();
+        final Placement placement = new Placement(buf.readVarLong() - 1L, buf.readUtf(MAX_NAME), buf.readVarLong(),
+                buf.readVarInt() - 1);
+        final FileSystemType fileSystem = FileSystemType.byName(buf.readUtf(MAX_NAME));
+        final int carrierCount = Math.min(buf.readVarInt(), FileSystemType.values().length);
+        final List<FileSystemType> carriers = new ArrayList<>(carrierCount);
+        for (int i = 0; i < carrierCount; i++) {
+            carriers.add(FileSystemType.byName(buf.readUtf(MAX_NAME)));
+        }
+        final InstallPlan.Facts facts = new InstallPlan.Facts(fileSystem, carriers, buf.readVarInt(),
+                PartitionScheme.byName(buf.readUtf(MAX_NAME)));
         return new OpenInstallerPayload(host, monitor, style == null ? InstallerStyle.PLAIN : style, systemId,
                 systemName, footprintMb, copyTicks, disks, desktops, mirrorHost, stageIndex, targetSlot,
                 computerName, desktopId, eraseSlot, ticksDone, portsSelected, useMirror, cronEnabled, sshdEnabled,
-                options);
+                options, placement, facts);
     }
 }

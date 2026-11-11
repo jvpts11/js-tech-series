@@ -80,7 +80,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:mirror",
-  "order": 99,
+  "order": 105,
   "section": "jsc:network_operation",
   "title": "jsc.guide.mirror.title"
 }

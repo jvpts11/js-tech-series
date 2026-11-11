@@ -482,7 +482,7 @@
     }
   ],
   "id": "jsc:mirror_and_packages",
-  "order": 280,
+  "order": 288,
   "section": "jsc:linux_packages",
   "title": "jsc.guide.mirror_and_packages.title"
 }

@@ -378,6 +378,30 @@ final class CommandPromptPages {
                         "Check the drive letter and the warning before you add /y.")
                 .seeAlso("jsc:disks", "jsc:drives")
                 .register();
+        guide.page("prompt_partitions", section).titled("Partitions: FDISK and diskpart")
+                .paragraph("A disk can hold several partitions, each a drive of its own ([](jsc:partitions)). MC-DOS"
+                        + " divides a disk with FDISK, and Frames with diskpart; on Frames XP and later, Disk"
+                        + " Management does the same in a window.")
+                .define("Disk Management", "The window of Frames XP to 11 that makes, formats, resizes and deletes"
+                        + " the volumes of each disk.")
+                .paragraph("FDISK opens a menu. Option 1 makes a partition of the size you type, option 2 sets the"
+                        + " active one, the partition the machine starts, option 3 deletes one and option 4 shows"
+                        + " them. An empty choice leaves it.")
+                .command(CommandGuidePages.id(Platform.MC_DOS, "fdisk"))
+                .paragraph("diskpart takes its commands at its own prompt, DISKPART>: list disk, then select disk 1,"
+                        + " then create partition primary, format fs=ntfs quick, and exit to leave.")
+                .session("jsc:guide/terminal/dos", "Frames")
+                .typed("DISKPART> ", "select disk 1")
+                .answer("Disk 1 is now the selected disk.")
+                .typed("DISKPART> ", "create partition primary")
+                .answer("DiskPart succeeded in creating the specified partition.")
+                .command(CommandGuidePages.id(Platform.FRAMES, "diskpart"))
+                .ifSomethingGoesWrong("diskpart says there is no disk selected.",
+                        "Type select disk and the number list disk shows, first.",
+                        "The partition the system runs from is refused.",
+                        "Neither tool deletes or formats it. Change another disk.")
+                .seeAlso("jsc:format_a_drive", "jsc:disk_tools_of_each_system")
+                .register();
     }
 
     private static void dosTextTools(final ModGuide guide, final ModGuide.SectionRef section) {

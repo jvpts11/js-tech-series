@@ -10,7 +10,9 @@ package dev.jstech.computers.os.fs;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.os.FileSystemType;
 import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.disk.DiskPartitions;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
@@ -257,7 +259,7 @@ public final class DiskFilesystem {
         if (type.virtualProjection() || installerLocked(disk) || !holdsItsKind(type, content)) {
             return WriteResult.READ_ONLY;
         }
-        if (content.length() > StoredFile.MOST_CHARS) {
+        if (content.length() > StoredFile.MOST_CHARS || overItsFileSystem(disk, StoredFile.bytesOf(type, content))) {
             return WriteResult.TOO_LARGE;
         }
         final long cost = FsPaths.sizeMbEq(StoredFile.bytesOf(type, content), eraOf(disk));
@@ -308,6 +310,9 @@ public final class DiskFilesystem {
         }
         final long held = had == null ? 0L : had.byteSize();
         final long added = addition.getBytes(StandardCharsets.UTF_8).length;
+        if (overItsFileSystem(disk, held + added)) {
+            return WriteResult.TOO_LARGE;
+        }
         final long grows = FsPaths.sizeMbEq(held + added, eraOf(disk)) - FsPaths.sizeMbEq(held, eraOf(disk));
         if (grows > freeWeight) {
             return WriteResult.DISK_FULL;
@@ -650,6 +655,15 @@ public final class DiskFilesystem {
     private static boolean overfull(final FilesystemContents fs) {
         return fs.files().size() > FilesystemContents.MOST_FILES
                 || fs.directories().size() > FilesystemContents.MOST_DIRS;
+    }
+
+    /*
+     * Whether a file of {@code bytes} is more than the volume's file system keeps in one file: no file on FAT is over
+     * 4 GB (computers/docs/design/storage-devices.md), so a system's image does not fit on one.
+     */
+    private static boolean overItsFileSystem(final ItemStack volume, final long bytes) {
+        final FileSystemType fs = DiskPartitions.fileSystemOf(volume);
+        return fs != null && bytes > fs.mostFileBytes();
     }
 
     /**

@@ -53,10 +53,110 @@ final class InstallerScreenTexts {
     static final TextKey NEEDS = TextKey.of("jsc.installer.screen.needs", "%s needs %s.");
     static final TextKey NO_ROOM_HERE = TextKey.of("jsc.installer.screen.no_room_here",
             "No room here. Erase this disk, or choose another.");
-    static final TextKey ERASED_FIRST = TextKey.of("jsc.installer.screen.erased_first",
-            "%s on this disk is erased first.");
     static final TextKey COMPUTER_NAME = TextKey.of("jsc.installer.screen.computer_name", "Computer name:");
     static final TextKey NO_SYSTEM = TextKey.of("jsc.installer.screen.no_system", "no system");
+
+    // The partitions and the free space, as Frames XP's text phase lists them.
+    static final TextKey XP_INTRO_KEYS = TextKey.of("jsc.installer.screen.xp_intro_keys",
+            "Use the UP and DOWN keys to select an item in the list.");
+    static final TextKey XP_INTRO_SET_UP = TextKey.of("jsc.installer.screen.xp_intro_set_up",
+            "- To set up %s on the selected item, press ENTER.");
+    static final TextKey XP_INTRO_DELETE = TextKey.of("jsc.installer.screen.xp_intro_delete",
+            "- To delete the selected partition, press D.");
+    static final TextKey XP_DISK_LINE = TextKey.of("jsc.installer.screen.xp_disk_line",
+            "%s MB Disk %s at Id 0 on bus 0 on atapi [%s]");
+    static final TextKey XP_PARTITION = TextKey.of("jsc.installer.screen.xp_partition", "Partition%s [%s]");
+    static final TextKey XP_PARTITION_FREE = TextKey.of("jsc.installer.screen.xp_partition_free", "(%s MB free)");
+    static final TextKey XP_UNPARTITIONED = TextKey.of("jsc.installer.screen.xp_unpartitioned",
+            "Unpartitioned space");
+    static final TextKey XP_UNKNOWN = TextKey.of("jsc.installer.screen.xp_unknown", "Unknown");
+    static final TextKey XP_LEAVES_OTHERS = TextKey.of("jsc.installer.screen.xp_leaves_others",
+            "Installing %s on %s leaves the other partitions as they are, with their files and their items.");
+    static final TextKey XP_THE_UNPARTITIONED = TextKey.of("jsc.installer.screen.xp_the_unpartitioned",
+            "the unpartitioned space");
+    static final TextKey XP_ON_DISK = TextKey.of("jsc.installer.screen.xp_on_disk",
+            "on %s MB Disk %s at Id 0 on bus 0 on atapi [%s].");
+    static final TextKey XP_FORMAT_HELP = TextKey.of("jsc.installer.screen.xp_format_help",
+            "Use the UP and DOWN keys to select the file system you want, and then press ENTER. To choose a "
+                    + "different partition for %s, press ESC.");
+    static final TextKey XP_FORMAT_NTFS = TextKey.of("jsc.installer.screen.xp_format_ntfs",
+            "Format the partition using the NTFS file system");
+    static final TextKey XP_FORMAT_FAT = TextKey.of("jsc.installer.screen.xp_format_fat",
+            "Format the partition using the FAT file system");
+    static final TextKey XP_QUICK = TextKey.of("jsc.installer.screen.xp_quick", "%s (Quick)");
+    static final TextKey XP_FORMAT_KEEP = TextKey.of("jsc.installer.screen.xp_format_keep",
+            "Leave the current file system intact (no changes)");
+    static final TextKey XP_ONLY_FORMATTED = TextKey.of("jsc.installer.screen.xp_only_formatted",
+            "Only %s is formatted.");
+    static final TextKey XP_FAT32_NOTE = TextKey.of("jsc.installer.screen.xp_fat32_note",
+            "FAT here is FAT32: no file over 4 GB on it.");
+
+    // The partitions and the free space, as the table of Frames 7 to 11 lists them.
+    static final TextKey TABLE_PARTITION = TextKey.of("jsc.installer.screen.table_partition",
+            "Disk %s, Partition %s");
+    static final TextKey TABLE_PARTITION_NAMED = TextKey.of("jsc.installer.screen.table_partition_named",
+            "Disk %s, Partition %s (%s)");
+    static final TextKey TABLE_FREE = TextKey.of("jsc.installer.screen.table_free", "Disk %s, Unallocated space");
+    static final TextKey HOLDS_BOOT_ENTRIES = TextKey.of("jsc.installer.screen.holds_boot_entries",
+            "The boot entries");
+    static final TextKey HOLDS_FILES = TextKey.of("jsc.installer.screen.holds_files", "Files");
+    static final TextKey HOLDS_SWAP = TextKey.of("jsc.installer.screen.holds_swap", "Swap");
+    static final TextKey LINK_NEW = TextKey.of("jsc.installer.screen.link_new", "New");
+    static final TextKey LINK_DELETE = TextKey.of("jsc.installer.screen.link_delete", "Delete");
+    static final TextKey LINK_FORMAT = TextKey.of("jsc.installer.screen.link_format", "Format");
+    static final TextKey LINK_EXTEND = TextKey.of("jsc.installer.screen.link_extend", "Extend");
+    static final TextKey NEXT_IN_FREE = TextKey.of("jsc.installer.screen.next_in_free",
+            "%s needs %s. Next makes an %s partition of this free space and installs there; every other partition "
+                    + "stays.");
+    static final TextKey NEXT_ON_PARTITION = TextKey.of("jsc.installer.screen.next_on_partition",
+            "%s needs %s. Next installs on this partition beside its files; every other partition stays.");
+    static final TextKey NEXT_FORMATTED = TextKey.of("jsc.installer.screen.next_formatted",
+            "%s needs %s. Next formats this partition as %s and installs there; every other partition stays.");
+
+    // The question before a partition is deleted or formatted.
+    static final TextKey DELETE_ASK = TextKey.of("jsc.installer.screen.delete_ask", "Delete Partition %s of Disk %s?");
+    static final TextKey FORMAT_ASK = TextKey.of("jsc.installer.screen.format_ask", "Format Partition %s of Disk %s?");
+    static final TextKey EVERY_FILE_ON_IT = TextKey.of("jsc.installer.screen.every_file_on_it",
+            "Every file and item on it is lost.");
+    static final TextKey DELETE_KEYS = TextKey.of("jsc.installer.screen.delete_keys",
+            "Y = delete       N = cancel");
+    static final TextKey FORMAT_KEYS = TextKey.of("jsc.installer.screen.format_keys",
+            "Y = format       N = cancel");
+
+    // Ubuntu's guided storage.
+    static final TextKey UBUNTU_CHOOSE = TextKey.of("jsc.installer.screen.ubuntu_choose", "Choose how to install %s.");
+    static final TextKey UBUNTU_ALONGSIDE = TextKey.of("jsc.installer.screen.ubuntu_alongside",
+            "Install alongside %s");
+    static final TextKey UBUNTU_SHRINKS = TextKey.of("jsc.installer.screen.ubuntu_shrinks",
+            "Shrinks %s (%s) and uses the room it frees:");
+    static final TextKey UBUNTU_OTHER = TextKey.of("jsc.installer.screen.ubuntu_other", "of %s (holds %s)");
+    static final TextKey UBUNTU_NEW = TextKey.of("jsc.installer.screen.ubuntu_new", "%s: %s %s for /, swap %s");
+    static final TextKey UBUNTU_NEW_NO_SWAP = TextKey.of("jsc.installer.screen.ubuntu_new_no_swap",
+            "%s: %s %s for /");
+    static final TextKey UBUNTU_ENTIRE = TextKey.of("jsc.installer.screen.ubuntu_entire",
+            "Use an entire disk: %s, erasing %s");
+    static final TextKey UBUNTU_ENTIRE_EMPTY = TextKey.of("jsc.installer.screen.ubuntu_entire_empty",
+            "Use an entire disk: %s");
+    static final TextKey UBUNTU_CUSTOM = TextKey.of("jsc.installer.screen.ubuntu_custom", "Custom storage layout");
+    static final TextKey GRUB_LISTS = TextKey.of("jsc.installer.screen.grub_lists",
+            "GRUB lists %s and %s at power-on.");
+    static final TextKey MBR_PARTITIONS = TextKey.of("jsc.installer.screen.mbr_partitions",
+            "The disk is MBR: this makes %s of its four partitions.");
+    static final TextKey SIZE_KEYS = TextKey.of("jsc.installer.screen.size_keys",
+            "LEFT and RIGHT change the size.");
+
+    // What an installer that lists whole disks does with the one chosen.
+    static final TextKey PLAN_WHOLE = TextKey.of("jsc.installer.screen.plan_whole",
+            "Disk %s is erased: %s %s for the system.");
+    static final TextKey PLAN_FREE = TextKey.of("jsc.installer.screen.plan_free",
+            "The system goes in the free space of Disk %s: %s %s.");
+    static final TextKey PLAN_PARTITION = TextKey.of("jsc.installer.screen.plan_partition",
+            "The system goes on partition %s of Disk %s, %s %s.");
+    static final TextKey PLAN_BESIDE = TextKey.of("jsc.installer.screen.plan_beside",
+            "%s is shrunk to %s and the system goes in the room it frees: %s %s.");
+    static final TextKey PLAN_SWAP = TextKey.of("jsc.installer.screen.plan_swap", "Swap: %s.");
+    static final TextKey PART_LINE = TextKey.of("jsc.installer.screen.part_line", "#%s  %s  %s  %s");
+    static final TextKey FREE_LINE = TextKey.of("jsc.installer.screen.free_line", "FREE SPACE  %s");
 
     // The name.
     static final TextKey NAME_HELP_FIRST =
@@ -234,7 +334,28 @@ final class InstallerScreenTexts {
             "Auto (UFS)    use the whole of %s (%s, its files erased)");
     static final TextKey BSD_DISK_BESIDE = TextKey.of("jsc.installer.screen.bsd_disk_beside",
             "Beside        share %s with %s (%s free)");
+    static final TextKey BSD_DISK_AUTO_ZFS = TextKey.of("jsc.installer.screen.bsd_disk_auto_zfs",
+            "Auto (ZFS)    Guided Root-on-ZFS");
     static final TextKey BSD_DISK_TABLE_ROW = TextKey.of("jsc.installer.screen.bsd_disk_table_row", "%s   %s   %s");
+    static final TextKey POOL_CONFIGURE = TextKey.of("jsc.installer.screen.pool_configure", "Configure Options:");
+    static final TextKey POOL_INSTALL = TextKey.of("jsc.installer.screen.pool_install", "Install");
+    static final TextKey POOL_PROCEED = TextKey.of("jsc.installer.screen.pool_proceed", "Proceed with Installation");
+    static final TextKey POOL_TYPE = TextKey.of("jsc.installer.screen.pool_type", "Pool Type/Disks:");
+    static final TextKey POOL_STRIPE = TextKey.of("jsc.installer.screen.pool_stripe", "stripe: 1 disk");
+    static final TextKey POOL_MIRROR = TextKey.of("jsc.installer.screen.pool_mirror", "mirror: 2 disks");
+    static final TextKey POOL_RESCAN = TextKey.of("jsc.installer.screen.pool_rescan", "Rescan Devices");
+    static final TextKey POOL_DISK_INFO = TextKey.of("jsc.installer.screen.pool_disk_info", "Disk Info");
+    static final TextKey POOL_NAME = TextKey.of("jsc.installer.screen.pool_name", "Pool Name");
+    static final TextKey POOL_FORCE_4K = TextKey.of("jsc.installer.screen.pool_force_4k", "Force 4K Sectors?");
+    static final TextKey POOL_ENCRYPT = TextKey.of("jsc.installer.screen.pool_encrypt", "Encrypt Disks?");
+    static final TextKey POOL_SCHEME = TextKey.of("jsc.installer.screen.pool_scheme", "Partition Scheme");
+    static final TextKey POOL_GPT = TextKey.of("jsc.installer.screen.pool_gpt", "GPT (UEFI)");
+    static final TextKey POOL_MBR = TextKey.of("jsc.installer.screen.pool_mbr", "MBR (BIOS)");
+    static final TextKey POOL_SWAP = TextKey.of("jsc.installer.screen.pool_swap", "Swap Size");
+    static final TextKey POOL_MIRROR_SWAP = TextKey.of("jsc.installer.screen.pool_mirror_swap", "Mirror Swap?");
+    static final TextKey POOL_ENCRYPT_SWAP = TextKey.of("jsc.installer.screen.pool_encrypt_swap", "Encrypt Swap?");
+    static final TextKey POOL_YES = TextKey.of("jsc.installer.screen.pool_yes", "YES");
+    static final TextKey POOL_NO = TextKey.of("jsc.installer.screen.pool_no", "NO");
     static final TextKey BSD_DISK_EMPTY = TextKey.of("jsc.installer.screen.bsd_disk_empty", "empty");
     static final TextKey BSD_EXTRACT_DONE = TextKey.of("jsc.installer.screen.bsd_extract_done", "[   Done    ]");
     static final TextKey BSD_EXTRACT_IN_PROGRESS =

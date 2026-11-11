@@ -328,7 +328,7 @@ public final class BootMenuScreen extends AbstractComputerScreen<MonitorSessionM
          * only one that offers this action.
          */
         send(new FirmwareActionPayload(this.computerPos, this.monitorPos,
-                FirmwareActionPayload.ACTION_BOOT_ONCE, entry.slot(), -1, entry.osId()));
+                FirmwareActionPayload.ACTION_BOOT_ONCE, entry.slot(), entry.partition(), entry.osId()));
     }
 
     /** The manager's ink, the frame around its list, the ground behind it, and the ink on a highlighted row. */

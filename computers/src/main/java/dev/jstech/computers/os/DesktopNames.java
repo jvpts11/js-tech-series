@@ -38,6 +38,7 @@ final class DesktopNames {
     static final TextKey KDE_MONITOR = TextKey.of("jsc.desktop.kde_plasma.system_monitor", "System Monitor");
     static final TextKey KDE_SETTINGS = TextKey.of("jsc.desktop.kde_plasma.settings", "System Settings");
     static final TextKey KDE_THIS_PC = TextKey.of("jsc.desktop.kde_plasma.this_pc", "Info Center");
+    static final TextKey KDE_DISKS = TextKey.of("jsc.desktop.kde_plasma.disks", "KDE Partition Manager");
 
     static final TextKey GNOME_FILES = TextKey.of("jsc.desktop.gnome.files", "Files");
     static final TextKey GNOME_EDITOR = TextKey.of("jsc.desktop.gnome.editor", "Text Editor");

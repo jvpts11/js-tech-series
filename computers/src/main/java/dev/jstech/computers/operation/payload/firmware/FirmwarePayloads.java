@@ -67,6 +67,7 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.QuinceStart;
 import dev.jstech.computers.os.boot.BootRunner;
 import dev.jstech.computers.os.defrag.DefragRunner;
+import dev.jstech.computers.os.disk.DiskPartitions;
 import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.Installers;
 import dev.jstech.computers.os.install.OsInstallJob;
@@ -220,17 +221,31 @@ public final class FirmwarePayloads {
             if (spec == null) {
                 continue;
             }
-            final ResourceLocation osId =
-                    OsDisks.systemOn(disk);
-            final OsDef os = osId == null ? null : OsRegistry.getOs(osId);
-            // A system built for another processor is shown for what it is, and offered as nothing to start.
-            final boolean starts = os != null && computer.runsSystem(os);
-            entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i,
-                    os == null ? "" : os.id().toString(),
-                    os == null ? NO_SYSTEM.text() : Text.literal(os.displayName()),
-                    GameText.of(disk.getHoverName()),
-                    DiskSpec.sizeLabel(spec.capacityMb()),
-                    os == null || starts ? Text.EMPTY : FOR_PROCESSORS.with(processorsOf(os)), starts, -1));
+            /*
+             * A line for the system on each partition that carries one, so the one-time boot menu offers every system
+             * of a disk (computers/docs/design/storage-devices.md), and one line for a disk that carries none.
+             */
+            boolean listed = false;
+            for (final DiskPartitions.Volume volume : DiskPartitions.volumes(disk)) {
+                final ResourceLocation osId = OsDisks.systemOn(volume.stack());
+                final OsDef os = osId == null ? null : OsRegistry.getOs(osId);
+                if (os == null) {
+                    continue;
+                }
+                listed = true;
+                // A system built for another processor is shown for what it is, and offered as nothing to start.
+                final boolean starts = computer.runsSystem(os);
+                entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i, os.id().toString(),
+                        Text.literal(os.displayName()), GameText.of(disk.getHoverName()),
+                        DiskSpec.sizeLabel(spec.capacityMb()),
+                        starts ? Text.EMPTY : FOR_PROCESSORS.with(processorsOf(os)), starts, -1, MediaVolume.MEDIUM,
+                        volume.stack() == disk ? 0 : volume.partition().number()));
+            }
+            if (!listed) {
+                entries.add(new FirmwareStatePayload.Entry(FirmwareStatePayload.KIND_DISK, i, "", NO_SYSTEM.text(),
+                        GameText.of(disk.getHoverName()), DiskSpec.sizeLabel(spec.capacityMb()), Text.EMPTY, false,
+                        -1));
+            }
         }
         /*
          * The drives a machine can start a system from: its readers and the drives and ports on its own front, a
@@ -447,12 +462,13 @@ public final class FirmwarePayloads {
                      * list and hope it comes out in the order the player was looking at. Two menus send this
                      * and they list different things; a position meant a different thing in each of them.
                      */
-                    machine.setBootOnce((int) payload.ref(),
-                            ResourceLocation.tryParse(payload.osId()));
                     // Picking one of the systems that share a disk, rather than one disk over another.
-                    if (OsDisks.systemsOn(machine.diskInSlot((int) payload.ref())).ids().size() >= 2) {
+                    if (systemsOnDisk(machine.diskInSlot((int) payload.ref())) >= 2) {
                         JscEvents.award(player, JscEvents.DUAL_BOOT);
                     }
+                    // The target is the partition the system is on, which the disk opens for this boot.
+                    machine.setBootOnce((int) payload.ref(), Math.max(0, payload.target()),
+                            ResourceLocation.tryParse(payload.osId()));
                     /*
                      * Chosen at the boot manager, the system still has to come up: the machine leaves the menu and
                      * starts loading, and puts the player in front of that. Chosen anywhere else there is nothing
@@ -791,5 +807,14 @@ public final class FirmwarePayloads {
             names.add(Isas.byId(id).map(IsaSpec::name).orElse(id));
         }
         return String.join(" / ", names);
+    }
+
+    /* How many systems a disk carries, on every partition of it. */
+    private static int systemsOnDisk(final ItemStack disk) {
+        int count = 0;
+        for (final DiskPartitions.Volume volume : DiskPartitions.volumes(disk)) {
+            count += OsDisks.systemsOn(volume.stack()).ids().size();
+        }
+        return count;
     }
 }

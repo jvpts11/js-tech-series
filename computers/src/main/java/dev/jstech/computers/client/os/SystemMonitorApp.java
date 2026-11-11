@@ -35,6 +35,7 @@ import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.function.Supplier;
@@ -76,9 +77,9 @@ public final class SystemMonitorApp implements IDesktopApp {
     private final Label loadingLabel;
     private final Label nameLabel;
     private final Label osLabel;
-    private final Label[] specGroups = new Label[4];
-    private final Label[] specLabels = new Label[4];
-    private final Label[] specValues = new Label[4];
+    private final Label[] specGroups = new Label[5];
+    private final Label[] specLabels = new Label[5];
+    private final Label[] specValues = new Label[5];
     private final Label memoryHeader;
     private final Label memoryFree;
     private final ListView<RamUse> memList;
@@ -114,22 +115,26 @@ public final class SystemMonitorApp implements IDesktopApp {
         spec(2, SystemMonitorTexts.MEMORY, () -> GameText.resolve(SystemMonitorTexts.RAM), () -> data == null ? "-"
                 : GameText.resolve(SystemMonitorTexts.HELD_OF.with(RamLedger.heldLabel(heldBytes()),
                         JsTechTheme.fmt(data.ramMb()))));
+        // Under the memory, the swap behind it and how much is in it (computers/docs/design/hardware.md).
+        spec(3, null, () -> data == null || data.swap().sizeMb() <= 0 ? GameText.resolve(SystemMonitorTexts.SWAP)
+                        : GameText.resolve(SystemMonitorTexts.SWAP_ON.with(shortName(data.swap().where()))),
+                () -> data == null || data.swap().sizeMb() <= 0 ? GameText.resolve(SystemMonitorTexts.NO_SWAP)
+                        : GameText.resolve(SystemMonitorTexts.SWAP_HELD_OF.with(JsTechTheme.fmt(data.swap().usedMb()),
+                                JsTechTheme.fmt(data.swap().sizeMb()))));
         // The card by its name, and its video memory held of what it has with how busy it is; a bar under them.
-        spec(3, SystemMonitorTexts.GRAPHICS, () -> data == null || !data.gpu().present()
+        spec(4, SystemMonitorTexts.GRAPHICS, () -> data == null || !data.gpu().present()
                         ? GameText.resolve(SystemMonitorTexts.NO_GPU) : GameText.resolve(data.gpu().card()),
                 () -> data == null || !data.gpu().present() ? "-"
                         : GameText.resolve(SystemMonitorTexts.VIDEO_HELD.with(VramLedger.label(data.gpu().usedKb()),
                                 VramLedger.label(data.gpu().totalKb()), data.gpu().load())));
         memoryHeader = root.add(new Label(GameText.resolve(SystemMonitorTexts.MEMORY_HEADER), Label.Tone.DIM));
-        memoryFree = root.add(new Label(() -> data == null ? "" : GameText.resolve(SystemMonitorTexts.FREE.with(
-                JsTechTheme.fmt(Math.max(0, data.ramMb() - data.ramUsedMb())))), Label.Tone.DIM)
-                .setAlign(Label.Align.RIGHT));
+        memoryFree = root.add(new Label(this::memoryFreeText, Label.Tone.DIM).setAlign(Label.Align.RIGHT));
         memList = root.add(new ListView<RamUse>(() -> data == null ? List.of() : data.ramUses(), MEM_ROW_H, this::renderMemoryRow));
         storageHeader = root.add(new Label(GameText.resolve(SystemMonitorTexts.STORAGE_HEADER), Label.Tone.DIM));
         programsLabel = root.add(new Label(() -> data == null ? ""
                 : GameText.resolve(SystemMonitorTexts.PROGRAMS_INSTALLED.with(data.installed().size())), Label.Tone.DIM)
                 .setAlign(Label.Align.RIGHT));
-        diskList = root.add(new ListView<DiskUse>(() -> data == null ? List.of() : data.disks(), DISK_ROW_H, this::renderDiskRow));
+        diskList = root.add(new ListView<DiskUse>(this::storageRows, DISK_ROW_H, this::renderDiskRow));
         powerHeader = root.add(new Label(GameText.resolve(TaskManagerTexts.POWER_SECTION), Label.Tone.DIM));
         periodMenu = root.add(new Dropdown(List.of(word(NetworkEventLogTexts.LAST_HOUR),
                 word(NetworkEventLogTexts.LAST_DAY), word(NetworkEventLogTexts.LAST_WEEK)), readings::period,
@@ -150,6 +155,36 @@ public final class SystemMonitorApp implements IDesktopApp {
             sum += use.heldBytes();
         }
         return sum;
+    }
+
+    /* What the memory section says of itself: what is free, and what is in swap once something is. */
+    private String memoryFreeText() {
+        if (data == null) {
+            return "";
+        }
+        final String free = JsTechTheme.fmt(Math.max(0, data.ramMb() - data.ramUsedMb()));
+        return data.swap().usedMb() > 0
+                ? GameText.resolve(SystemMonitorTexts.FREE_IN_SWAP.with(free, JsTechTheme.fmt(data.swap().usedMb())))
+                : GameText.resolve(SystemMonitorTexts.FREE.with(free));
+    }
+
+    /* The storage rows: each disk, then the swap partition with how full it is, on a system that keeps one. */
+    private List<DiskUse> storageRows() {
+        if (data == null) {
+            return List.of();
+        }
+        if (data.swap().sizeMb() <= 0) {
+            return data.disks();
+        }
+        final List<DiskUse> rows = new ArrayList<>(data.disks());
+        rows.add(new DiskUse(SystemMonitorTexts.SWAP_PARTITION.with(shortName(data.swap().where())),
+                data.swap().sizeMb(), data.swap().usedMb(), false));
+        return rows;
+    }
+
+    /* A device by its short name, sda5 for /dev/sda5. */
+    private static String shortName(final String where) {
+        return where.startsWith("/dev/") ? where.substring("/dev/".length()) : where;
     }
 
     /* A line of specifications: its group, or none for a line that continues the one above, then its two values. */
@@ -355,8 +390,15 @@ public final class SystemMonitorApp implements IDesktopApp {
         final RamLedger.Kind kind = RamLedger.Kind.find(use.kind());
         final String label = kind == RamLedger.Kind.WINDOW ? ActiveDesktop.windowName(use.label())
                 : kind == RamLedger.Kind.GRAPHICS ? GameText.resolve(SystemMonitorTexts.SHARED_GRAPHICS) : use.label();
-        final String name = font.plainSubstrByWidth(label, w - amountW - 6);
+        // A program with part of itself in swap says how much, and how fast that leaves it running.
+        final String swapped = use.inSwapMb() <= 0 ? "" : GameText.resolve(SystemMonitorTexts.IN_SWAP.with(
+                use.inSwapMb(), use.speedPercent()));
+        final int swappedW = font.width(swapped);
+        final String name = font.plainSubstrByWidth(label, w - amountW - swappedW - 12);
         Draw.text(g, font, name, x, y + 1, ctx.skin().text());
+        if (!swapped.isEmpty()) {
+            Draw.text(g, font, swapped, x + w - amountW - swappedW - 8, y + 1, ctx.skin().accent());
+        }
         Draw.text(g, font, amount, x + w - amountW, y + 1, ctx.skin().dim());
     }
 

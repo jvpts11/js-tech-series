@@ -244,7 +244,8 @@ final class EverydayProgramsPages {
                 .table("Parts of the System Monitor", "Part", "What it shows")
                 .row(GuideCell.words("Processor"), GuideCell.words("The load on the processor."))
                 .row(GuideCell.words("Memory"),
-                        GuideCell.words("The megabytes held and the total, then the megabytes that are free."))
+                        GuideCell.words("The megabytes held and the total, then the megabytes that are free, and"
+                                + " the swap with what of it is used."))
                 .row(GuideCell.words("Graphics"),
                         GuideCell.words("The video memory in use and the load on the card. Without a card it"
                                 + " says no GPU."))
@@ -269,6 +270,10 @@ final class EverydayProgramsPages {
                         + " the machine is Connected or Not connected, and the link activity over the last"
                         + " minute. The Power tab shows the draw, the line and the temperature with their histories"
                         + " ([](jsc:task_manager)).")
+                .paragraph("The Performance tab of Frames XP also shows PF Usage, what the programs keep in the page"
+                        + " file, and the status bar the Commit: what is promised, against the memory and the page"
+                        + " file together. On Frames 10 and 11 the Memory page shows the same, and each program"
+                        + " with part of it in the page file, and how fast that part runs ([](jsc:swap)).")
                 .table("Buttons of the Task Manager", "Button", "What it does")
                 .row(GuideCell.code("End Task"),
                         GuideCell.words("Ends the selected window or program."))
@@ -286,7 +291,7 @@ final class EverydayProgramsPages {
                         "The row you want to close is the system, a desktop or a service.",
                         "The machine itself cannot be ended from here. Close the program that owns that row"
                                 + " instead.")
-                .seeAlso("jsc:programs", "jsc:help_on_a_computer")
+                .seeAlso("jsc:programs", "jsc:help_on_a_computer", "jsc:swap")
                 .register();
         guide.page("calculator_paint_exceed", section).titled("Calculator, Paint and Exceed")
                 .icon(ComputingModule.MONITOR)

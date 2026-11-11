@@ -172,7 +172,7 @@
     }
   ],
   "id": "jsc:network_verbs",
-  "order": 233,
+  "order": 240,
   "section": "jsc:prompt_programs_and_network",
   "title": "jsc.guide.network_verbs.title"
 }

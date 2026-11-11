@@ -118,6 +118,8 @@ public final class ProgramClient {
         register(rl("device_manager"), (host, mon, os) -> new DeviceManagerApp(host, os));
         // The Frames' Defrag, in the form of the edition it opens on.
         register(rl("defrag"), (host, mon, os) -> new DefragApp(host, os));
+        // Frames' Disk Management, XP's or that of 7 to 11.
+        register(rl("disk_management"), (host, mon, os) -> new DiskManagementApp(host, os));
         // Installable programs.
         register(rl("isms"), (host, mon, os) -> new IsmsApp(host, mon));
         // Its Profiler, which Tools opens in a window of its own and which comes back with the session.
@@ -156,8 +158,9 @@ public final class ProgramClient {
         register(rl("virtual_studio"), (host, mon, os) -> new VirtualStudioApp(host));
         register(rl("virtual_studio_code"), (host, mon, os) -> new VirtualStudioCodeApp(host));
         register(rl("exposure"), (host, mon, os) -> new ExposureApp(host));
-        // Linux's disk utility: the same volumes This PC lists, under the name that platform uses.
-        register(rl("disks"), (host, mon, os) -> new ThisPcApp(host, nameOf(rl("disks"))));
+        // Linux's disk tool: the KDE Partition Manager on KDE Plasma, GNOME's Disks everywhere else.
+        register(rl("disks"), (host, mon, os) -> os.getPath().startsWith("kde_plasma")
+                ? new PartitionManagerApp(host) : new GnomeDisksApp(host));
     }
 
     private static ResourceLocation rl(final String path) {

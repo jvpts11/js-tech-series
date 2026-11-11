@@ -42,6 +42,10 @@ public final class PosixCommands {
         out.addAll(VariableCommands.posix());
         // What repairs a corrupted disk here, the Defrag of these systems.
         out.add(new FsckCommand());
+        // Each system's own tools for its disks' partitions: fdisk, lsblk, mkfs, gpart and disklabel.
+        out.addAll(DiskToolCommands.posix());
+        // And the snapshots and mirrors of the copy-on-write ones: btrfs on Linux, zfs and zpool on FreeBSD.
+        out.addAll(SnapshotCommands.posix());
         // OpenBSD's own tools for keeping the machine: its daemons, its patches, its firewall and doas.
         out.addAll(OpenBsdCommands.all());
         return List.copyOf(out);
@@ -66,7 +70,6 @@ public final class PosixCommands {
                 new PosixSystemCommands.Uname(),
                 new PosixSystemCommands.Hostname(),
                 new PosixFileCommands.Df(),
-                new PosixFileCommands.Mkfs(),
                 new ScreenfetchCommand(),
                 // One package manager per distribution family; each is only available on the OS that ships it.
                 new PackageCommands.PackageManagerCommand(PackageManagerKind.APT),
