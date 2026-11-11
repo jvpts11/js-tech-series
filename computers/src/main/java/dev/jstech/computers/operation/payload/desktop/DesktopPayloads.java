@@ -8,6 +8,7 @@
 package dev.jstech.computers.operation.payload.desktop;
 
 import dev.jstech.computers.advancement.JscEvents;
+import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.client.monitor.MonitorPainter;
 import dev.jstech.computers.client.os.ActiveDesktop;
@@ -31,6 +32,7 @@ import dev.jstech.computers.operation.payload.SetDesktopPrefsPayload;
 import dev.jstech.computers.operation.payload.SetIconPositionPayload;
 import dev.jstech.computers.operation.payload.SetSettingPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
+import dev.jstech.computers.operation.payload.TouchMonitorPayload;
 import dev.jstech.computers.monitor.IScreen;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.program.ServerCliComputer;
@@ -75,6 +77,10 @@ public final class DesktopPayloads {
                 DesktopPayloads::handleRequestFaceListing);
         registrar.playToClient(FaceListingPayload.TYPE, FaceListingPayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(DesktopPayloads::handleFaceListing));
+        // A touch on a touch monitor's glass, from a player near enough to reach it, sits them down at it there.
+        ComputerAccess.accept(registrar, TouchMonitorPayload.TYPE, TouchMonitorPayload.STREAM_CODEC,
+                ComputerAccess.inSightOf(TouchMonitorPayload::monitor, TouchMonitorPayload.REACH),
+                (payload, player, level) -> MonitorBlock.touched(player, level, payload.monitor()));
         ComputerAccess.accept(registrar, SetDesktopPrefsPayload.TYPE, SetDesktopPrefsPayload.STREAM_CODEC,
                 ComputerAccess.machine(SetDesktopPrefsPayload::hostPos), DesktopPayloads::handleSetDesktopPrefs);
         ComputerAccess.accept(registrar, RequestSettingsPayload.TYPE, RequestSettingsPayload.STREAM_CODEC,

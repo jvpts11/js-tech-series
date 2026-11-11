@@ -10,7 +10,9 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.SaveFilePayload;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.PixImage;
+import dev.jstech.computers.os.fs.ScanFile;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Panel;
@@ -253,16 +255,18 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
             this.status = PaintTexts.NO_SUCH_PICTURE.text();
             return;
         }
-        final PixImage loaded = PixImage.decode(content);
+        // A scanned map holds its picture under the map it names; it opens as a new picture, saved as one of Paint's.
+        final boolean map = FileType.ofPath(target) == FileType.MAP;
+        final PixImage loaded = PixImage.decode(map ? ScanFile.pictureOf(content) : content);
         if (loaded == null) {
             this.status = PaintTexts.NOT_A_PICTURE.with(target.substring(target.lastIndexOf('/') + 1));
             return;
         }
         pushUndo();
         this.image = loaded;
-        this.path = target;
+        this.path = map ? "" : target;
         this.dirty = false;
-        this.status = EditorTexts.OPENED.with(name());
+        this.status = EditorTexts.OPENED.with(target.substring(target.lastIndexOf('/') + 1));
     }
 
     private void chooseSave() {

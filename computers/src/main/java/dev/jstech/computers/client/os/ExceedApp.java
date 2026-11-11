@@ -571,6 +571,11 @@ public final class ExceedApp implements IDesktopApp, CodeFileReplies.IReader {
     }
 
     @Override
+    public boolean takesTyping() {
+        return IDesktopApp.typingIn(root);
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         return root.charTyped(c);
     }

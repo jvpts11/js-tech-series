@@ -71,6 +71,37 @@ final class SoundfoundryStandardTexts {
     static final TextKey DOWNLOAD = TextKey.of("jsc.soundfoundry.standard.download", "Download");
     static final TextKey DELETE_PLAYLIST = TextKey.of("jsc.soundfoundry.standard.delete_playlist", "Delete playlist");
     static final TextKey IMPORTING = TextKey.of("jsc.soundfoundry.standard.importing", "Importing %s of %s: %s%%");
+    /* The Vinyl page. */
+    static final TextKey VINYL = TextKey.of("jsc.soundfoundry.standard.vinyl", "Vinyl");
+    static final TextKey VINYL_NO_DRIVE = TextKey.of("jsc.soundfoundry.standard.vinyl_no_drive",
+            "No Vinyl RW Drive on this computer's cable");
+    static final TextKey VINYL_BLANK = TextKey.of("jsc.soundfoundry.standard.vinyl_blank",
+            "Vinyl RW Drive: a blank vinyl");
+    static final TextKey VINYL_DISC = TextKey.of("jsc.soundfoundry.standard.vinyl_disc", "Vinyl RW Drive: %s");
+    static final TextKey VINYL_EMPTY = TextKey.of("jsc.soundfoundry.standard.vinyl_empty", "Vinyl RW Drive: empty");
+    static final TextKey VINYL_ONLY_DISC = TextKey.of("jsc.soundfoundry.standard.vinyl_only_disc",
+            "Only a song that came from a disc goes onto a vinyl.");
+    static final TextKey VINYL_COL_TITLE = TextKey.of("jsc.soundfoundry.standard.vinyl_col_title", "TITLE");
+    static final TextKey VINYL_COL_ARTIST = TextKey.of("jsc.soundfoundry.standard.vinyl_col_artist", "ARTIST");
+    static final TextKey VINYL_COL_FROM = TextKey.of("jsc.soundfoundry.standard.vinyl_col_from", "FROM");
+    static final TextKey VINYL_COL_TIME = TextKey.of("jsc.soundfoundry.standard.vinyl_col_time", "TIME");
+    static final TextKey VINYL_FROM_DISC = TextKey.of("jsc.soundfoundry.standard.vinyl_from_disc",
+            "Music disc, Day %s");
+    static final TextKey VINYL_FROM_COMPUTER = TextKey.of("jsc.soundfoundry.standard.vinyl_from_computer",
+            "Your computer: no disc");
+    static final TextKey VINYL_NONE = TextKey.of("jsc.soundfoundry.standard.vinyl_none",
+            "No recordings in Music/Vinyl yet: put a music disc on the drive and record it.");
+    static final TextKey VINYL_CUT = TextKey.of("jsc.soundfoundry.standard.vinyl_cut", "Cut onto the vinyl");
+    static final TextKey VINYL_RECORD = TextKey.of("jsc.soundfoundry.standard.vinyl_record", "Record the disc");
+    static final TextKey VINYL_STOP = TextKey.of("jsc.soundfoundry.standard.vinyl_stop", "Stop");
+    static final TextKey VINYL_EJECT = TextKey.of("jsc.soundfoundry.standard.vinyl_eject", "Eject");
+    static final TextKey VINYL_RECORDING = TextKey.of("jsc.soundfoundry.standard.vinyl_recording",
+            "Recording %s in the song's own time: %s of %s");
+    static final TextKey VINYL_CUTTING = TextKey.of("jsc.soundfoundry.standard.vinyl_cutting",
+            "Cutting %s in the song's own time: %s of %s");
+    static final TextKey VINYL_GIVES_BACK = TextKey.of("jsc.soundfoundry.standard.vinyl_gives_back",
+            "When it ends, the drive gives back the disc itself.");
+    static final TextKey VINYL_KEPT = TextKey.of("jsc.soundfoundry.standard.vinyl_kept", "Kept in %s");
 
     private SoundfoundryStandardTexts() {
     }

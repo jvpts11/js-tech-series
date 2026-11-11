@@ -73,6 +73,8 @@ public record SoftwareHouse(String name, String legalName) {
     public static final SoftwareHouse QUINCE = new SoftwareHouse("Quince", "Quince Inc.");
     /** Prophet YourIQL's house, which sees what a network will need before it needs it. */
     public static final SoftwareHouse PROPHET = new SoftwareHouse("Prophet", "Prophet Corporation");
+    /** Easy Disc Creator's house, which copies discs onto blanks. */
+    public static final SoftwareHouse ROXA = new SoftwareHouse("Roxa", "Roxa Inc.");
 
     /** Not a house: the program is credited to the system or desktop that ships it. */
     public static final SoftwareHouse BUNDLED = new SoftwareHouse("", "");

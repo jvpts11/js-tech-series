@@ -145,6 +145,7 @@ public final class ProgramClient {
         register(rl("messenger"), (host, mon, os) -> new MessengerApp(host, mon));
         register(rl("knot"), (host, mon, os) -> new KnotApp(host, mon));
         register(rl("backup_console"), (host, mon, os) -> new BackupConsoleApp(host, mon));
+        register(rl("easy_disc_creator"), (host, mon, os) -> new EasyDiscCreatorApp(host));
         register(rl("media_player"), (host, mon, os) -> new MediaPlayerApp(host, mon, os));
         register(rl("storage_insights"), (host, mon, os) -> new StorageInsightsApp(host, mon));
         register(rl("craft_planner"), (host, mon, os) -> new CraftPlannerApp(host, mon));

@@ -12,6 +12,13 @@ import dev.jstech.computers.client.printer.PrintedPictureTextures;
 import dev.jstech.computers.operation.payload.printer.PrintPayload;
 import dev.jstech.computers.operation.payload.printer.PrintersPayload;
 import dev.jstech.computers.operation.payload.printer.RequestPrintersPayload;
+import dev.jstech.computers.os.fs.BookFile;
+import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.FsPaths;
+import dev.jstech.computers.os.fs.ScanFile;
+import dev.jstech.computers.printer.BookJob;
+import dev.jstech.computers.printer.LargeScalePrinterBlockEntity;
+import dev.jstech.computers.printer.LargeScalePrinters;
 import dev.jstech.computers.printer.PrintLayout;
 import dev.jstech.computers.printer.PrintedDocument;
 import dev.jstech.computers.printer.PrinterModel;
@@ -24,11 +31,13 @@ import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.component.WaitBar;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
@@ -64,6 +73,10 @@ public final class PrintDialog implements IDesktopApp {
     private final Button portrait;
     private final Button landscape;
     private final Label note;
+    /* What a Large Scale Printer prints in place of the pages and their orientation: the book and its facts. */
+    private final Label bookLabel;
+    private final Label bookLine;
+    private final Label bookFacts;
     private final Button previous;
     private final Button next;
     private final Button print;
@@ -80,6 +93,8 @@ public final class PrintDialog implements IDesktopApp {
     /* The document laid out as pages, kept because it only changes with the document or the orientation. */
     private List<String> pages = paginate();
     private int previewPage;
+    /* Whether the printer chosen was a Large Scale Printer the last time the window was drawn. */
+    private boolean bookMode;
     /* Where the preview was last laid out, which the frame draws into. */
     private int previewX;
     private int previewY;
@@ -104,6 +119,10 @@ public final class PrintDialog implements IDesktopApp {
     /** How tall a printed line is in the preview, and the paper round it. */
     private static final int PREVIEW_LINE = 4;
     private static final int PREVIEW_MARGIN = 6;
+    /* The most copies of a book, and of anything else. */
+    private static final int MOST_PAGE_COPIES = 99;
+    /* The book's icon beside its line, and the room it takes. */
+    private static final int ICON_ROOM = FileIcons.SIZE + 2;
 
     public PrintDialog(final BlockPos host, final IDesktopApp owner) {
         this.host = host;
@@ -129,6 +148,9 @@ public final class PrintDialog implements IDesktopApp {
         this.portrait = root.add(new Button(GameText.resolve(PrintTexts.PORTRAIT), () -> lie(false)));
         this.landscape = root.add(new Button(GameText.resolve(PrintTexts.LANDSCAPE), () -> lie(true)));
         this.note = root.add(new Label(this::noteLine, Label.Tone.DIM));
+        this.bookLabel = root.add(new Label(GameText.resolve(PrintTexts.BOOK), Label.Tone.DIM));
+        this.bookLine = root.add(new Label(this::bookTitleLine));
+        this.bookFacts = root.add(new Label(this::bookFactsLine, Label.Tone.DIM));
         this.previous = root.add(new Button("<", () -> turnPreview(-1)));
         this.next = root.add(new Button(">", () -> turnPreview(1)));
         this.print = root.add(new Button(GameText.resolve(PrintTexts.PRINT), this::confirm).setPrimary(true));
@@ -190,6 +212,9 @@ public final class PrintDialog implements IDesktopApp {
 
     /** How many sheets the print will take from the tray, its copies counted. */
     public int sheets() {
+        if (books()) {
+            return (int) copies.amount() * LargeScalePrinterBlockEntity.SHEETS_A_BOOK;
+        }
         if (document.isPicture()) {
             return (int) copies.amount();
         }
@@ -264,8 +289,13 @@ public final class PrintDialog implements IDesktopApp {
         g.fill(x, y, x + width, y + height, skin.windowBg());
         portrait.setPrimary(!lying);
         landscape.setPrimary(lying);
-        print.setEnabled(!printers.isEmpty());
+        // A Large Scale Printer prints only books, so with anything else Print stays dark and the note says why.
+        print.setEnabled(!printers.isEmpty() && (!books() || isBook()));
         root.render(g, new UiContext(skin, font, mouseX, mouseY, partialTick));
+        if (books() && isBook()) {
+            FileIcons.draw(g, bookLine.x() - ICON_ROOM, bookLine.y(), FileType.ofPath(document.title())
+                    == FileType.ENCH ? FileIcons.Kind.ENCH : FileIcons.Kind.BOOK, skin.iconSet());
+        }
         if (modern()) {
             drawPreview(g, font);
         }
@@ -297,6 +327,11 @@ public final class PrintDialog implements IDesktopApp {
     }
 
     @Override
+    public boolean takesTyping() {
+        return IDesktopApp.typingIn(root);
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         return root.charTyped(c);
     }
@@ -320,6 +355,23 @@ public final class PrintDialog implements IDesktopApp {
         }
         previous.setVisible(modern());
         next.setVisible(modern());
+        // A book has no pages to choose and no way for them to lie: the book takes their place.
+        final boolean book = books();
+        if (book != bookMode) {
+            bookMode = book;
+            copies.setRange(1, book ? BookJob.MOST_COPIES : MOST_PAGE_COPIES);
+        }
+        for (final UiComponent pageThing : List.of(rangeLabel, all, range, from, to, orientationLabel, portrait,
+                landscape)) {
+            pageThing.setVisible(!book);
+        }
+        bookLabel.setVisible(book);
+        bookLine.setVisible(book);
+        bookFacts.setVisible(book);
+        bookLabel.setBounds(rangeLabel.x(), rangeLabel.y(), rangeLabel.width(), 9);
+        bookLine.setBounds(rangeLabel.x() + ICON_ROOM, rangeLabel.y() + 11, modern() ? CONTROLS_W - ICON_ROOM
+                : copiesLabel.x() - rangeLabel.x() - ICON_ROOM - 4, 9);
+        bookFacts.setBounds(bookLine.x(), bookLine.y() + 10, bookLine.width(), 9);
     }
 
     /* The classic dialog: the printers over their facts, the page range and the copies with the way it lies. */
@@ -410,7 +462,9 @@ public final class PrintDialog implements IDesktopApp {
             g.fill(x, y, x + w, y + h, skin.listHover());
         }
         final PrinterModel model = PrinterModel.find(row.model());
-        final String color = model == null ? "" : "  (" + GameText.resolve(model.colorWord()) + ")";
+        final String kind = LargeScalePrinters.MODEL.equals(row.model()) ? GameText.resolve(LargeScalePrinters.BOOKS)
+                : model == null ? "" : GameText.resolve(model.colorWord());
+        final String color = kind.isEmpty() ? "" : "  (" + kind + ")";
         Texts.small(g, ctx.font(), GameText.resolve(name(row)) + color, x + 3, y + 3, skin.text());
     }
 
@@ -522,12 +576,17 @@ public final class PrintDialog implements IDesktopApp {
 
     private String locationLine() {
         final PrintersPayload.Row row = current();
-        return row == null ? "" : GameText.resolve(PrintTexts.LOCATION.with(row.port(), machine));
+        if (row == null) {
+            return "";
+        }
+        final String port = books() ? GameText.resolve(LargeScalePrinters.PORT) : row.port();
+        return GameText.resolve(PrintTexts.LOCATION.with(port, machine));
     }
 
     private String paperLine() {
         final PrintersPayload.Row row = current();
-        return row == null ? "" : GameText.resolve(PrintTexts.PAPER.with(row.paper()));
+        return row == null ? "" : GameText.resolve((books() ? PrintTexts.PAPER_FEEDER : PrintTexts.PAPER)
+                .with(String.format(Locale.ROOT, "%,d", row.paper())));
     }
 
     private String noteLine() {
@@ -535,12 +594,59 @@ public final class PrintDialog implements IDesktopApp {
         if (row == null) {
             return "";
         }
+        if (books()) {
+            return GameText.resolve(!isBook() ? LargeScalePrinters.NOT_A_BOOK.text()
+                    : PrintTexts.USES_BOOKS.with(sheets(), LargeScalePrinterBlockEntity.SHEETS_A_BOOK,
+                            String.format(Locale.ROOT, "%,d", Math.max(0, row.paper() - sheets()))));
+        }
         final int sheets = sheets();
         return GameText.resolve(sheets == 1 ? PrintTexts.USES_ONE.with(row.paper())
                 : PrintTexts.USES.with(sheets, row.paper()));
     }
 
+    /* Whether the printer chosen is a Large Scale Printer, which prints books. */
+    private boolean books() {
+        final PrintersPayload.Row row = current();
+        return row != null && LargeScalePrinters.MODEL.equals(row.model());
+    }
+
+    /* Whether what is being printed is a book a Large Scale Printer prints: a .book or a .ench file. */
+    private boolean isBook() {
+        final FileType type = FileType.ofPath(document.title());
+        return !document.isPicture() && (type == FileType.BOOK || type == FileType.ENCH);
+    }
+
+    /* The book's line: a signed book's title and author, an unsigned one's or an enchanted one's name. */
+    private String bookTitleLine() {
+        if (!isBook()) {
+            return "";
+        }
+        final String stem = FsPaths.fileName(document.title()).replaceFirst("\\.[^.]*$", "");
+        if (FileType.ofPath(document.title()) == FileType.ENCH) {
+            final String first = ScanFile.body(document.text()).lines().findFirst().orElse("");
+            return first.isBlank() ? stem : first;
+        }
+        final BookFile book = BookFile.read(document.text());
+        return book.signed() ? GameText.resolve(PrintTexts.BOOK_BY.with(book.title(), book.author())) : stem;
+    }
+
+    /* The book's facts: its pages and whether it was signed, or that it is an enchanted book. */
+    private String bookFactsLine() {
+        if (!isBook()) {
+            return "";
+        }
+        if (FileType.ofPath(document.title()) == FileType.ENCH) {
+            return GameText.resolve(PrintTexts.ENCHANTED_BOOK);
+        }
+        final BookFile book = BookFile.read(document.text());
+        return GameText.resolve((book.signed() ? PrintTexts.PAGES_SIGNED : PrintTexts.PAGES_UNSIGNED)
+                .with(book.pages().size()));
+    }
+
     private static Text name(final PrintersPayload.Row row) {
+        if (LargeScalePrinters.MODEL.equals(row.model())) {
+            return LargeScalePrinters.NAME.text();
+        }
         final PrinterModel model = PrinterModel.find(row.model());
         return model == null ? Text.literal(row.model()) : model.displayName().text();
     }

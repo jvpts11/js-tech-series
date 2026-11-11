@@ -1,0 +1,88 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.large_scale_printer.text1"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.large_scale_printer.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.large_scale_printer.text3"
+    },
+    {
+      "type": "table",
+      "caption": "jsc.guide.large_scale_printer.table1",
+      "heads": [
+        "jsc.guide.large_scale_printer.table1_head1",
+        "jsc.guide.large_scale_printer.table1_head2",
+        "jsc.guide.large_scale_printer.table1_head3",
+        "jsc.guide.large_scale_printer.table1_head4"
+      ],
+      "rows": [
+        [
+          {
+            "words": "jsc.guide.large_scale_printer.table1_1_1"
+          },
+          {
+            "words": "jsc.guide.large_scale_printer.table1_1_2"
+          },
+          {
+            "amount": 2,
+            "unit": "s"
+          },
+          {
+            "amount": 2000,
+            "unit": "W"
+          }
+        ]
+      ]
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.large_scale_printer.fix1",
+          "problem": "jsc.guide.large_scale_printer.problem1"
+        },
+        {
+          "fix": "jsc.guide.large_scale_printer.fix2",
+          "problem": "jsc.guide.large_scale_printer.problem2"
+        },
+        {
+          "fix": "jsc.guide.large_scale_printer.fix3",
+          "problem": "jsc.guide.large_scale_printer.problem3"
+        },
+        {
+          "fix": "jsc.guide.large_scale_printer.fix4",
+          "problem": "jsc.guide.large_scale_printer.problem4"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:building_chain_machines",
+        "jsc:printers",
+        "jsc:scanners"
+      ]
+    }
+  ],
+  "icon": "jsc:large_scale_printer_print_unit",
+  "id": "jsc:large_scale_printer",
+  "items": [
+    "jsc:large_scale_printer_paper_feeder",
+    "jsc:large_scale_printer_perfect_binder",
+    "jsc:large_scale_printer_print_unit",
+    "jsc:large_scale_printer_inking_unit"
+  ],
+  "order": 40,
+  "section": "jsc:chain_machines",
+  "title": "jsc.guide.large_scale_printer.title"
+}

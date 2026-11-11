@@ -182,7 +182,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:system_monitor_and_task_manager",
-  "order": 71,
+  "order": 75,
   "section": "jsc:desktop_apps",
   "title": "jsc.guide.system_monitor_and_task_manager.title"
 }

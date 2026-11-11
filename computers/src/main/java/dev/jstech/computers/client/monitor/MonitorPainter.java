@@ -87,6 +87,10 @@ public final class MonitorPainter {
                              final BlockPos monitor, final float partialTick) {
         final Inks inks = INKS.get();
         g.fill(0, 0, width, height, inks.ground());
+        // A touch monitor whose screen the player's game holds shows that screen, live under the finger.
+        if (TouchScreens.paint(g, monitor, partialTick)) {
+            return;
+        }
         if (!(picture instanceof IMonitorPicture.Session)) {
             SessionFaces.forget(monitor);
         }

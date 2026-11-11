@@ -1,0 +1,5 @@
+{
+  "textures": {
+    "particle": "jsc:block/scanner/transition_scanner_particle"
+  }
+}

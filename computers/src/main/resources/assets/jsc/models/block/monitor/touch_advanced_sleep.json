@@ -1,0 +1,6 @@
+{
+  "parent": "jsc:block/monitor/touch_advanced",
+  "textures": {
+    "button": "jsc:block/monitor/advanced_button_sleep"
+  }
+}

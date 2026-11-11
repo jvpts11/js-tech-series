@@ -1,0 +1,54 @@
+{
+  "blocks": [
+    {
+      "type": "text",
+      "text": "jsc.guide.easy_disc_creator.text1"
+    },
+    {
+      "type": "steps",
+      "steps": [
+        "jsc.guide.easy_disc_creator.step1",
+        "jsc.guide.easy_disc_creator.step2",
+        "jsc.guide.easy_disc_creator.step3"
+      ]
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.easy_disc_creator.text2"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.easy_disc_creator.text3"
+    },
+    {
+      "type": "heading",
+      "text": "jscore.guide.if_something_goes_wrong"
+    },
+    {
+      "type": "problems",
+      "problems": [
+        {
+          "fix": "jsc.guide.easy_disc_creator.fix1",
+          "problem": "jsc.guide.easy_disc_creator.problem1"
+        },
+        {
+          "fix": "jsc.guide.easy_disc_creator.fix2",
+          "problem": "jsc.guide.easy_disc_creator.problem2"
+        }
+      ]
+    },
+    {
+      "type": "see",
+      "entries": [
+        "jsc:drives",
+        "jsc:extended_cd_drives",
+        "jsc:vinyl_rw_drives"
+      ]
+    }
+  ],
+  "icon": "jsc:cd_rom",
+  "id": "jsc:easy_disc_creator",
+  "order": 78,
+  "section": "jsc:desktop_apps",
+  "title": "jsc.guide.easy_disc_creator.title"
+}

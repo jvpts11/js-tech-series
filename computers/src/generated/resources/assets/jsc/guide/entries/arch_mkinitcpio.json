@@ -74,7 +74,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:arch_mkinitcpio",
-  "order": 290,
+  "order": 295,
   "section": "jsc:arch_system",
   "title": "jsc.guide.arch_mkinitcpio.title"
 }

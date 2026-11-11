@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "C": {
+      "item": "jsc:copper_coil"
+    },
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "P": {
+      "item": "jscore:steel_plate"
+    },
+    "R": {
+      "item": "jscore:steel_rod"
+    }
+  },
+  "pattern": [
+    "PCP",
+    "RMR",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:large_scale_printer_perfect_binder"
+  }
+}

@@ -95,6 +95,12 @@ public final class ComputersServerConfig {
                             + " energy source at all.")
             .named("Computers draw energy");
 
+    public static final ConfigKey<Boolean> PRINT_ENCHANTED_BOOKS = ConfigKey.flag("printing.enchanted_books", true)
+            .comment("Whether the Large Scale Printer prints enchanted books from the .ench files scanners make, each "
+                            + "with every enchantment at the level it was scanned with.",
+                    "Off, it refuses them and says why, for a world where every enchantment is earned.")
+            .named("Print enchanted books");
+
     public static final ConfigKey<String> UPDATE_COST = ConfigKey.text(UPDATE_COST_PATH,
                     UpdateCost.ENERGY.serializedName())
             .allowing(UpdateCost.ENERGY.serializedName(), UpdateCost.XP.serializedName(),
@@ -262,11 +268,13 @@ public final class ComputersServerConfig {
             .sectionNamed("soundfoundry", "Soundfoundry")
             .sectionNamed("programs", "Programs")
             .sectionNamed("wireless", "Wireless")
+            .sectionNamed("printing", "Printing")
             .sectionNamed("survival", "Survival")
             .sectionComment("survival", "How a player in survival comes by the computers: the mod's own chain, and the "
                     + "abandoned buildings where the first ones are found.")
             .sectionComment("wireless", "The portable devices: how long a lost one keeps what was on it.")
             .sectionComment("power", "What the computers run on: the energy their power supplies draw.")
+            .sectionComment("printing", "What the printers may print.")
             .sectionComment("update", "What the personal-use cards charge for changing an item: smelting, "
                     + "enchanting, repairing, combining and naming.")
             .sectionComment("hardware", "How the parts age: the power supplies' wear and their failure.")
@@ -291,6 +299,7 @@ public final class ComputersServerConfig {
             .key(PROGRAM_MACHINE_MICROS, ExecutionBalance::setMachineMicros)
             .key(PROGRAM_SERVER_MICROS, ExecutionBalance::setServerMicros)
             .key(DRAW_ENERGY)
+            .key(PRINT_ENCHANTED_BOOKS)
             .key(UPDATE_COST)
             .key(PSU_FAILURES)
             .key(PSU_LIFE_MULTIPLIER)
@@ -324,6 +333,11 @@ public final class ComputersServerConfig {
     /** Whether the computers draw energy for what their parts take, and the chain's benches and machines too. */
     public static boolean drawEnergy() {
         return FILE.get(DRAW_ENERGY);
+    }
+
+    /** Whether the Large Scale Printer prints enchanted books; off, it refuses them saying why. */
+    public static boolean printEnchantedBooks() {
+        return FILE.get(PRINT_ENCHANTED_BOOKS);
     }
 
     /** Whether the mod's own chain is laid, as a world's data reads it while it loads and once it runs. */

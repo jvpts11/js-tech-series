@@ -125,7 +125,7 @@
     }
   ],
   "id": "jsc:install_fedora",
-  "order": 265,
+  "order": 270,
   "section": "jsc:installing_linux",
   "title": "jsc.guide.install_fedora.title"
 }

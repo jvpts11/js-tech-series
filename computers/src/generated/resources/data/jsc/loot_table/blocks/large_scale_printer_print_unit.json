@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:block",
+  "pools": [
+    {
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
+      "entries": [
+        {
+          "type": "minecraft:item",
+          "name": "jsc:large_scale_printer_print_unit"
+        }
+      ],
+      "rolls": 1.0
+    }
+  ],
+  "random_sequence": "jsc:blocks/large_scale_printer_print_unit"
+}

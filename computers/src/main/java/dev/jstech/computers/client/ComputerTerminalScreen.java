@@ -1821,14 +1821,24 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         return super.mouseScrolled(mx, my, dx, dy);
     }
 
+    /** The search box shows on the grid tabs alone, and steps aside for a question. */
     @Override
-    public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
+    protected void beforeFrame() {
         syncSearchBoxVisibility();
-        /*
-         * The base render() binds the era skin, draws the screen, and renders the slot tooltip; the popups and
-         * custom hover tooltips below draw afterward using the palette fields refreshed during renderBg/Labels.
-         */
-        super.render(g, mouseX, mouseY, partialTick);
+    }
+
+    /** The Interactor is typed at through its search box, so a touch opens the typing line only on that. */
+    @Override
+    public boolean takesTyping() {
+        return searchBox != null && searchBox.isFocused();
+    }
+
+    /*
+     * Over the finished screen, after the base has bound the era skin, drawn the screen and its slot tooltip: the popups
+     * and the custom hover tooltips, with the palette fields refreshed during renderBg and renderLabels.
+     */
+    @Override
+    protected void renderOver(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         if (drop.isOpen()) {
             drop.render(g, mouseX, mouseY);
         } else if (craft.isOpen()) {

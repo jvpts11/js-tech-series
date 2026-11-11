@@ -250,6 +250,11 @@ public final class SoundfoundryShareApp implements IDesktopApp {
     }
 
     @Override
+    public boolean takesTyping() {
+        return typing;
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         if (!typing) {
             return false;

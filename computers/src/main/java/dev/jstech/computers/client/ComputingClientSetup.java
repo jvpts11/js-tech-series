@@ -9,6 +9,7 @@ package dev.jstech.computers.client;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.MediaDevices;
 import dev.jstech.computers.PortableItems;
 import dev.jstech.computers.chain.ChainBenches;
 import dev.jstech.computers.chain.machine.ChainMachine;
@@ -206,6 +207,9 @@ public final class ComputingClientSetup {
         event.register(ComputingMenus.CLUSTER_MANAGEMENT_COMPUTER_MENU.get(), ClusterManagementComputerScreen::new);
         event.register(ComputingMenus.PATTERN_ENCODER_MENU.get(), PatternEncoderScreen::new);
         event.register(ComputingMenus.PRINTER_MENU.get(), PrinterScreen::new);
+        event.register(ComputingMenus.SCANNER_MENU.get(), ScannerScreen::new);
+        event.register(ComputingMenus.LARGE_SCALE_PRINTER_MENU.get(), LargeScalePrinterScreen::new);
+        event.register(ComputingMenus.EXTENDED_CD_DRIVE_MENU.get(), ExtendedCdDriveScreen::new);
         event.register(ComputingMenus.WORKBENCH_MENU.get(), WorkbenchScreen::new);
         event.register(ComputingMenus.DOCK_STATION_MENU.get(), DockStationScreen::new);
         event.register(ComputingMenus.NETWORK_GATEWAY_MENU.get(), NetworkGatewayScreen::new);
@@ -250,6 +254,9 @@ public final class ComputingClientSetup {
         // The Pattern Encoder: one burner body per era, with its bay and lamps.
         event.registerBlockEntityRenderer(ComputingModule.PATTERN_ENCODER_BE.get(), PatternEncoderRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.PRINTER_BE.get(), PrinterRenderer::create);
+        event.registerBlockEntityRenderer(MediaDevices.SCANNER_BE.get(), ScannerRenderer::create);
+        event.registerBlockEntityRenderer(MediaDevices.VINYL_DRIVE_BE.get(), VinylDriveRenderer::create);
+        event.registerBlockEntityRenderer(MediaDevices.EXTENDED_CD_DRIVE_BE.get(), ExtendedCdDriveRenderer::create);
         event.registerBlockEntityRenderer(ComputingModule.DOCK_STATION_BE.get(), DockStationRenderer::create);
         // The floppy, CD and DVD drives the same way.
         event.registerBlockEntityRenderer(ComputingModule.MEDIA_READER_BE.get(), MediaDriveRenderer::create);

@@ -209,6 +209,11 @@ public final class ChainMachineBlocks {
         put(plain("preinstaller_console", HardwareEra.VINTAGE).named("Console").register());
         put(plain("preinstaller_board_fixture", HardwareEra.VINTAGE).named("Board Fixture").register());
         put(plain("preinstaller_disk_dock", HardwareEra.VINTAGE).named("Disk Dock").register());
+        // The Large Scale Printer's, from the Legacy (computers/docs/design/peripherals.md).
+        put(plain("large_scale_printer_paper_feeder", HardwareEra.LEGACY).named("Paper Feeder").register());
+        put(plain("large_scale_printer_print_unit", HardwareEra.LEGACY).named("Print Unit").register());
+        put(plain("large_scale_printer_inking_unit", HardwareEra.LEGACY).named("Inking Unit").register());
+        put(plain("large_scale_printer_perfect_binder", HardwareEra.LEGACY).named("Perfect Binder").register());
     }
 
     private static <B extends Block> BlockEntry<B> put(final BlockEntry<B> block) {

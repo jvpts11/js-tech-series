@@ -317,6 +317,11 @@ public final class IsmsProfilerApp implements IDesktopApp, CodeFileReplies.IRead
     }
 
     @Override
+    public boolean takesTyping() {
+        return findOpen;
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         return findOpen && findPanel.charTyped(c);
     }

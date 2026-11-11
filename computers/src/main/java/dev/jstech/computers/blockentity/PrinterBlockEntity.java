@@ -36,11 +36,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.saveddata.maps.MapId;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,9 +58,9 @@ import org.jetbrains.annotations.Nullable;
  */
 public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheralEndpoint, IAudible {
 
-    /* The tray takes plain paper only, a sheet a page. */
+    /* The tray takes plain paper, a sheet a page, or empty maps, a map for each copy of a scanned map. */
     private final FieldItemHandler paper = fields().items("Paper", 1).save().toClient().dropsWhenBroken()
-            .accepts((index, stack) -> stack.is(Items.PAPER));
+            .accepts((index, stack) -> stack.is(Items.PAPER) || stack.is(Items.MAP));
     /* The output only gives: the printer puts its sheets there, a player takes them. */
     private final FieldItemHandler output = fields().items("Output", OUTPUT_SLOTS).save().toClient()
             .dropsWhenBroken().slotLimit(1).accepts((index, stack) -> false);
@@ -109,16 +111,17 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
      */
     @Nullable
     public PrintJob submit(final PrintedDocument document, final int copies, final String user, final long time) {
-        if (queue.get().size() >= QUEUE_MAX) {
-            return null;
-        }
-        final PrintJob job = new PrintJob(nextId.get(), document.printedBy(model()), Math.max(1, Math.min(99, copies)),
-                user, time);
-        nextId.set(nextId.get() + 1);
-        final List<PrintJob> now = new ArrayList<>(queue.get());
-        now.add(job);
-        setQueue(now);
-        return job;
+        return submit(document, copies, user, time, PrintJob.NO_MAP);
+    }
+
+    /**
+     * Puts a copy of the map numbered {@code map} in the queue, each copy onto an empty map from the tray, as a
+     * cartography table copies one; the job, or null when the queue is full. {@code document} names it in the queue.
+     */
+    @Nullable
+    public PrintJob submitMap(final PrintedDocument document, final int map, final int copies, final String user,
+                              final long time) {
+        return submit(document, copies, user, time, Math.max(0, map));
     }
 
     /** The jobs waiting, the one printing first. */
@@ -278,10 +281,26 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
         return "animation.printer.print_" + HardwareEra.withParts(model.era()).path();
     }
 
+    /* A job in the queue; the map it copies, or {@link PrintJob#NO_MAP} for a document on paper. */
+    @Nullable
+    private PrintJob submit(final PrintedDocument document, final int copies, final String user, final long time,
+                            final int map) {
+        if (queue.get().size() >= QUEUE_MAX) {
+            return null;
+        }
+        final PrintJob job = new PrintJob(nextId.get(), document.printedBy(model()), Math.max(1, Math.min(99, copies)),
+                user, time, map);
+        nextId.set(nextId.get() + 1);
+        final List<PrintJob> now = new ArrayList<>(queue.get());
+        now.add(job);
+        setQueue(now);
+        return job;
+    }
+
     /*
-     * A page at a time: with a job, paper in the tray and, before a copy starts, a free place in the output, the
-     * printer counts the page's ticks, takes a sheet when the page is out, and hands each copy over when its last page
-     * is.
+     * A page at a time: with a job, paper in the tray (an empty map, for a map's copy) and, before a copy starts, a
+     * free place in the output, the printer counts the page's ticks, takes a sheet when the page is out, and hands each
+     * copy over when its last page is.
      */
     private void tickPrint() {
         final List<PrintJob> now = queue.get();
@@ -292,8 +311,9 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
         }
         final PrintJob job = now.getFirst();
         final int sheets = job.document().sheets();
-        if (paper.getStackInSlot(0).isEmpty()) {
-            stall(Wait.NO_PAPER);
+        final ItemStack tray = paper.getStackInSlot(0);
+        if (job.copiesMap() ? !tray.is(Items.MAP) : !tray.is(Items.PAPER)) {
+            stall(job.copiesMap() ? Wait.NO_MAP : Wait.NO_PAPER);
             return;
         }
         if (sheetsDone.get() % sheets == 0 && pageTicks.get() == 0 && freeOutput() < 0) {
@@ -327,10 +347,16 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
         waiting.set(why);
     }
 
-    /* One copy of the job, as the sheet that carries it, into the first free place in the output. */
+    /* One copy of the job, as the sheet or the map that carries it, into the first free place in the output. */
     private void deliver(final PrintJob job) {
         final int slot = freeOutput();
         if (slot < 0) {
+            return;
+        }
+        if (job.copiesMap()) {
+            final ItemStack map = new ItemStack(Items.FILLED_MAP);
+            map.set(DataComponents.MAP_ID, new MapId(job.map()));
+            output.setStackInSlot(slot, map);
             return;
         }
         final ItemStack sheet = new ItemStack(ComputingModule.PRINTED_PAPER.get());
@@ -363,7 +389,8 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
         NONE(0),
         PAUSED(1),
         NO_PAPER(2),
-        OUTPUT_FULL(3);
+        OUTPUT_FULL(3),
+        NO_MAP(4);
 
         private final int id;
 
@@ -389,16 +416,25 @@ public class PrinterBlockEntity extends SyncedBlockEntity implements IPeripheral
      * @param copies    how many copies
      * @param user      who sent it
      * @param submitted the world's time when it was sent
+     * @param map       the map it copies onto empty maps, or {@link #NO_MAP} for a document on paper
      */
-    public record PrintJob(int id, PrintedDocument document, int copies, String user, long submitted) {
+    public record PrintJob(int id, PrintedDocument document, int copies, String user, long submitted, int map) {
 
+        /** What a job on paper copies: no map. */
+        public static final int NO_MAP = -1;
         public static final Codec<PrintJob> CODEC = RecordCodecBuilder.create(i -> i.group(
                 Codec.INT.fieldOf("id").forGetter(PrintJob::id),
                 PrintedDocuments.CODEC.fieldOf("document").forGetter(PrintJob::document),
                 Codec.INT.optionalFieldOf("copies", 1).forGetter(PrintJob::copies),
                 Codec.STRING.optionalFieldOf("user", "").forGetter(PrintJob::user),
-                Codec.LONG.optionalFieldOf("submitted", 0L).forGetter(PrintJob::submitted)
+                Codec.LONG.optionalFieldOf("submitted", 0L).forGetter(PrintJob::submitted),
+                Codec.INT.optionalFieldOf("map", NO_MAP).forGetter(PrintJob::map)
         ).apply(i, PrintJob::new));
+
+        /** Whether it copies a map rather than printing on paper. */
+        public boolean copiesMap() {
+            return map != NO_MAP;
+        }
     }
 
     /**

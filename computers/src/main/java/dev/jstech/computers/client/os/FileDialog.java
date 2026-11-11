@@ -1087,6 +1087,12 @@ public final class FileDialog implements IDesktopApp, CodeFileReplies.IReader {
         return true;
     }
 
+    /** A file dialog is there to be given a name. */
+    @Override
+    public boolean takesTyping() {
+        return true;
+    }
+
     @Override
     public boolean charTyped(final char c) {
         this.root.charTyped(c);

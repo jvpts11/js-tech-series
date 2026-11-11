@@ -161,6 +161,9 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
             tooltip.add(GameText.component(MonitorTexts.JOINS.with(PanelShape.MAX_WIDTH, PanelShape.MAX_HEIGHT))
                     .withStyle(ChatFormatting.GRAY));
         }
+        if (kind.touch()) {
+            tooltip.add(GameText.component(MonitorTexts.TOUCH).withStyle(ChatFormatting.GRAY));
+        }
         SoundHardwareTexts.appendMonitor(tooltip);
         HardwareTooltip.appendEra(tooltip, era());
     }
@@ -223,6 +226,20 @@ public class MonitorBlock extends DeviceBlock implements IFaceConnector, IEraCha
             return InteractionResult.sidedSuccess(level.isClientSide());
         }
         return openScreen(level, monitor.getBlockPos(), player, monitor);
+    }
+
+    /**
+     * A touch on the glass of the touch monitor at {@code pos} by a player whose game holds no screen of it yet, on the
+     * server: the screen it is part of answers as a click on its glass would, opening what its machine shows, and the
+     * player's game keeps that screen on the glass rather than over the game.
+     */
+    public static void touched(final ServerPlayer player, final ServerLevel level, final BlockPos pos) {
+        if (!(level.getBlockState(pos).getBlock() instanceof MonitorBlock block) || !block.kind().touch()
+                || !(level.getBlockEntity(pos) instanceof MonitorBlockEntity clicked)) {
+            return;
+        }
+        final MonitorBlockEntity monitor = clicked.screen();
+        block.openScreen(level, monitor.getBlockPos(), player, monitor);
     }
 
     /**

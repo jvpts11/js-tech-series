@@ -217,7 +217,7 @@ class HardcodedTextTest {
                     + " system starts from"),
             data(COMPUTERS + "os/OsBootstrap.java", 14, PRODUCTS),
             data(COMPUTERS + "os/OsRegistry.java", 2, "the kind of entry a registration names in the log"),
-            data(COMPUTERS + "os/SoftwareHouse.java", 37, PRODUCTS),
+            data(COMPUTERS + "os/SoftwareHouse.java", 38, PRODUCTS),
             data(COMPUTERS + "os/FileSystemType.java", 1, PRODUCTS),
             data(COMPUTERS + "os/UnixTree.java", 9, FILES),
             data(COMPUTERS + "os/boot/SystemIntegrity.java", 1, FILES),

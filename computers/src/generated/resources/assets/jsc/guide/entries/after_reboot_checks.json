@@ -151,7 +151,7 @@
     }
   ],
   "id": "jsc:after_reboot_checks",
-  "order": 308,
+  "order": 313,
   "section": "jsc:after_the_reboot",
   "title": "jsc.guide.after_reboot_checks.title"
 }

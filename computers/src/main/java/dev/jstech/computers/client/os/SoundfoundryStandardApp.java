@@ -59,6 +59,7 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
     private final ContextMenu menu = new ContextMenu(MENU_W, MENU_ROW_H);
     private final TextEditState query = new TextEditState(SongSearch.MAX_QUERY);
     private OsSkin skin = OsSkin.fallback();
+    private final SoundfoundryVinylPage vinyl;
     private int page = SoundfoundryPagePayload.HOME;
     private String arg = "";
     private int scroll;
@@ -96,10 +97,13 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
     private static final long DOUBLE_CLICK = 300L;
     private static final long NOTICE_FOR = 4000L;
     private static final int PAD = SoundfoundryStandardLayout.PAD;
+    /* The Vinyl page, the Vinyl RW Drive's: drawn from the drive's own state, never asked of the server as a page. */
+    private static final int VINYL_PAGE = 100;
     private static final String STATE = "S";
 
     public SoundfoundryStandardApp(final BlockPos host) {
         this.host = host;
+        this.vinyl = new SoundfoundryVinylPage(host);
         look();
         browse();
     }
@@ -334,6 +338,11 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
     }
 
     @Override
+    public boolean takesTyping() {
+        return typing;
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         if (!typing) {
             return false;
@@ -459,11 +468,17 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
                 y + SoundfoundryStandardLayout.PLAYLISTS_Y, c.inkDim(), c.side());
         SoundfoundryStandardSkin.right(g, font, "+", x + 138, y + SoundfoundryStandardLayout.PLAYLISTS_Y,
                 c.inkDim(), c.side());
+        // The Vinyl RW Drive's page heads the playlists, its record's swatch dark with a white label.
+        final int vy = y + SoundfoundryStandardLayout.LIST_Y;
+        SoundfoundryStandardSkin.fill(g, x + SoundfoundryStandardLayout.SWATCH_X, vy - 1, 10, 10, c.inkOff());
+        SoundfoundryStandardSkin.fill(g, x + SoundfoundryStandardLayout.SWATCH_X + 3, vy + 2, 4, 4, c.ink());
+        SoundfoundryStandardSkin.text(g, font, words(SoundfoundryStandardTexts.VINYL),
+                x + SoundfoundryStandardLayout.LIST_TEXT_X, vy, page == VINYL_PAGE ? c.orange() : c.ink(), c.side());
         final List<String> playlists = playlistsOf(sidebar);
-        final int shownLists = Math.min(playlists.size(), SoundfoundryStandardLayout.playlistsShown(height));
+        final int shownLists = Math.min(playlists.size(), SoundfoundryStandardLayout.playlistsShown(height) - 1);
         for (int i = 0; i < shownLists; i++) {
             final String name = playlists.get(i);
-            final int py = y + SoundfoundryStandardLayout.LIST_Y + i * SoundfoundryStandardLayout.LIST_STEP;
+            final int py = y + SoundfoundryStandardLayout.LIST_Y + (i + 1) * SoundfoundryStandardLayout.LIST_STEP;
             final boolean liked = name.equals(SoundfoundryPlaylists.LIKED);
             SoundfoundryStandardSkin.fill(g, x + SoundfoundryStandardLayout.SWATCH_X, py - 1, 10, 10,
                     liked ? c.orange() : c.swatch());
@@ -500,6 +515,7 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
             case SoundfoundryPagePayload.PLAYLIST -> renderPlaylist(g, font, px, py, pw, ph, known, state, c);
             case SoundfoundryPagePayload.SEARCH -> renderSearch(g, font, px, py, pw, ph, known, state, c);
             case SoundfoundryPagePayload.LIBRARY -> renderLibrary(g, font, px, py, pw, ph, known, sidebar, state, c);
+            case VINYL_PAGE -> vinyl.render(g, font, px, py, pw, c);
             case SoundfoundryPagePayload.CATALOG -> renderCatalog(g, font, px, py, pw, ph, known, c);
             default -> renderHome(g, font, px, py, pw, ph, known, state, c);
         }
@@ -961,9 +977,13 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
             send(SoundfoundryActionPayload.PLAYLIST_NEW, 0, 0L, List.of(newPlaylistName(sidebar)), List.of());
             return;
         }
+        if (SoundfoundryStandardLayout.playlist(0).contains(lx, ly)) {
+            open(VINYL_PAGE, "");
+            return;
+        }
         final List<String> playlists = playlistsOf(sidebar);
-        for (int i = 0; i < Math.min(playlists.size(), SoundfoundryStandardLayout.playlistsShown(height)); i++) {
-            if (SoundfoundryStandardLayout.playlist(i).contains(lx, ly)) {
+        for (int i = 0; i < Math.min(playlists.size(), SoundfoundryStandardLayout.playlistsShown(height) - 1); i++) {
+            if (SoundfoundryStandardLayout.playlist(i + 1).contains(lx, ly)) {
                 final String name = playlists.get(i);
                 if (button == GLFW.GLFW_MOUSE_BUTTON_RIGHT && !name.equals(SoundfoundryPlaylists.LIKED)) {
                     openMenu(List.of(item(SoundfoundryStandardTexts.DELETE_PLAYLIST, () -> {
@@ -1022,6 +1042,7 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
                 }
             }
             case SoundfoundryPagePayload.LIBRARY -> clickedLibrary(lx, ly, area, known, button);
+            case VINYL_PAGE -> vinyl.clicked(lx - area.x(), ly - area.y(), area.w());
             case SoundfoundryPagePayload.CATALOG -> {
                 if (known == null) {
                     return;
@@ -1276,7 +1297,9 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
 
     private void browse() {
         nextBrowseAt = Util.getMillis() + BROWSE_EVERY;
-        PacketDistributor.sendToServer(new SoundfoundryBrowsePayload(host, page, arg));
+        // The Vinyl page asks the drive for itself; the server is asked for the page shown before it, for the sidebar.
+        PacketDistributor.sendToServer(new SoundfoundryBrowsePayload(host, page == VINYL_PAGE
+                ? SoundfoundryPagePayload.HOME : page, page == VINYL_PAGE ? "" : arg));
     }
 
     private void send(final int action, final int index) {

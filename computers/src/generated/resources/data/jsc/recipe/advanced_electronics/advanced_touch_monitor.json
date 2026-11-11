@@ -1,0 +1,27 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 1,
+      "item": "jsc:color_monitor"
+    },
+    {
+      "count": 1,
+      "item": "jscore:indium_tin_oxide_foil"
+    },
+    {
+      "count": 1,
+      "item": "minecraft:glass_pane"
+    },
+    {
+      "count": 1,
+      "item": "jsc:controller_chip_advanced"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_touch_monitor"
+    }
+  ]
+}

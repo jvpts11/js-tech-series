@@ -117,12 +117,12 @@ public class PrinterBlock extends DeviceBlock implements IFaceConnector, IEraCha
         return Shapes.block();
     }
 
-    /* Paper in hand goes into the tray, as much as it takes; anything else opens the window. */
+    /* Paper or empty maps in hand go into the tray, as much as it takes; anything else opens the window. */
     @Override
     protected ItemInteractionResult useItemOn(final ItemStack heldStack, final BlockState state, final Level level,
                                               final BlockPos pos, final Player player, final InteractionHand hand,
                                               final BlockHitResult hit) {
-        if (!heldStack.is(Items.PAPER)) {
+        if (!heldStack.is(Items.PAPER) && !heldStack.is(Items.MAP)) {
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (level.isClientSide()) {

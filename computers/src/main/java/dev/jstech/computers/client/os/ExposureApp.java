@@ -835,6 +835,12 @@ public final class ExposureApp implements IDesktopApp {
         }
     }
 
+    /** A question it asks takes typing, and so does a document open in its editor. */
+    @Override
+    public boolean takesTyping() {
+        return this.ask.isOpen() || !this.askClose.isOpen() && this.workspace.current() != null;
+    }
+
     @Override
     public boolean charTyped(final char c) {
         if (this.ask.isOpen()) {

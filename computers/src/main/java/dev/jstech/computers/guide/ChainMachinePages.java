@@ -55,6 +55,7 @@ final class ChainMachinePages {
         boards(guide, section);
         assembly(guide, section);
         computerMaking(guide, section);
+        largeScalePrinter(guide, section);
     }
 
     private static void building(final ModGuide guide, final ModGuide.SectionRef section) {
@@ -301,6 +302,44 @@ final class ChainMachinePages {
                         "The system needs a computer of a later era, another processor, more room on the disk, or"
                                 + " every one of its install disks among the inputs.")
                 .seeAlso(BUILDING, "jsc:firmware", "jsc:crafting_interfaces")
+                .register();
+    }
+
+    private static void largeScalePrinter(final ModGuide guide, final ModGuide.SectionRef section) {
+        final List<String> machines = List.of("large_scale_printer");
+        final ModGuide.EntryBuilder page = guide.page("large_scale_printer", section)
+                .titled("The Large Scale Printer")
+                .icon(ChainMachineBlocks.byId("large_scale_printer_print_unit"))
+                .coversAll(working(machines))
+                .paragraph("The Large Scale Printer prints books in numbers, the one machine that prints them. It is a"
+                        + " machine of the Legacy, 4 blocks wide, 3 tall and 3 deep, of the Machine Casing and four"
+                        + " working blocks: the Paper Feeder, the Print Unit, the Inking Unit and the Perfect Binder."
+                        + " It draws its energy through the Power Entry at its back.")
+                .paragraph("You put paper into its feeder by hand, through its Item Inlet from a bus, or from a hopper."
+                        + " A book takes 3 paper and nothing else, and 2 seconds. A peripheral cable from a computer to"
+                        + " its Peripheral Port makes it a printer of that computer: it shows in the Print dialog of"
+                        + " the computer's system, where a .book or a .ench file goes to it, and the help prints its"
+                        + " own books on it.")
+                .paragraph("A written book comes out as a copy of the one scanned, and a book and quill as a book and"
+                        + " quill. An enchanted book comes out with every enchantment at the level it was scanned"
+                        + " with. A switch in its window sends what it prints into the network of the computer at"
+                        + " its cable, or into a chest beside its Item Outlet; with neither, the books wait in the"
+                        + " machine. It keeps 16 jobs, each of up to 64 copies, and its window pauses the printing and"
+                        + " cancels the job that is printing.")
+                .table("Each machine's size, its step and its draw", "Machine", "Size", "Step", "Draw");
+        machineRows(page, machines);
+        page.ifSomethingGoesWrong("No Large Scale Printer is linked to this computer.",
+                        "Run a peripheral cable from the computer to the machine's Peripheral Port, and form the"
+                                + " machine.",
+                        "This server does not let enchanted books be printed.",
+                        "The server's printing.enchanted_books setting is off: enchanted books are not printed.",
+                        "The file is not an enchanted book a scanner of this world read.",
+                        "A .ench file prints only as it was scanned in this world; one that was changed, or comes"
+                                + " from another world, does not.",
+                        "Its feeder needs 3 sheets of paper for a book.",
+                        "Put paper in the feeder. A job that prints nothing for long also waits for energy, or for"
+                                + " room for its books: the network or the chest beside its outlet.")
+                .seeAlso(BUILDING, "jsc:printers", "jsc:scanners")
                 .register();
     }
 

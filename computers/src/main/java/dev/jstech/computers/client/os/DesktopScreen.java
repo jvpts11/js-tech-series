@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.jstech.computers.client.MachineKeyboard;
+import dev.jstech.computers.client.monitor.ITouchGlass;
 import dev.jstech.computers.client.monitor.MonitorTubes;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.config.ComputersClientConfig;
@@ -43,11 +44,13 @@ import org.lwjgl.glfw.GLFW;
  * inventory, and which desktop is up, the one the rest of the client reaches through {@link ActiveDesktop}.
  */
 public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
-        implements MachineKeyboard.ITakesKeysFirst, DesktopInspection, DesktopSurface, IKeepsViewersClear {
+        implements MachineKeyboard.ITakesKeysFirst, DesktopInspection, DesktopSurface, IKeepsViewersClear, ITouchGlass {
 
     private final DesktopState state;
     /** Where the pointer and the keyboard go, layer by layer. */
     private final DesktopInput input;
+    /** Whether the player's game holds this desktop on a touch monitor's glass rather than open over the game. */
+    private boolean touched;
     /*
      * Ctrl+B is the game's narrator switch, and the game flips it before any screen sees the key unless the screen's
      * focused control is a text box taking input. Every key on the desktop is the desktop's (C-b in Emacs above all),
@@ -313,10 +316,44 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return false;
     }
 
-    /** The desktop draws the player's pointer over the glass unless the player switched that off. */
+    /**
+     * The desktop draws the player's pointer over the glass unless the player switched that off; on a touch monitor's
+     * glass there is no pointer, only the finger.
+     */
     @Override
     public boolean ownPointer() {
-        return ComputersClientConfig.desktopCursors();
+        return !touched && ComputersClientConfig.desktopCursors();
+    }
+
+    @Override
+    public boolean touched() {
+        return touched;
+    }
+
+    @Override
+    public void holdOnGlass() {
+        touched = true;
+    }
+
+    /**
+     * Draws the desktop held on a touch monitor's glass, the finger where the pointer would be: the desktop alone,
+     * without the game's dimming, the game's pointer or what the rest of the game draws over an open screen.
+     */
+    @Override
+    public void paintTouched(final GuiGraphics g, final int fingerX, final int fingerY, final float partialTick) {
+        DesktopRequests.drain(state);
+        final DesktopViewport view = state.view();
+        final boolean onGlass = view.onGlass(fingerX, fingerY);
+        final double lx = view.localX(fingerX);
+        final double ly = view.localY(fingerY);
+        state.paint(g, onGlass ? (int) Math.floor(lx) : OFF_GLASS, onGlass ? (int) Math.floor(ly) : OFF_GLASS, lx, ly,
+                partialTick);
+        hoveredSlot = state.hoveredSlot();
+    }
+
+    @Override
+    public boolean takesTyping() {
+        return state.takesTyping();
     }
 
     /** Whether the game's own pointer is hidden over the glass right now, which a test reads. */

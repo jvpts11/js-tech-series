@@ -1057,6 +1057,12 @@ public final class ClusterManagerApp implements IDesktopApp {
     }
 
     @Override
+    public boolean takesTyping() {
+        final Popup popup = openPopup();
+        return popup != null && IDesktopApp.typingIn(popup);
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         final Popup popup = openPopup();
         return popup != null && popup.charTyped(c);

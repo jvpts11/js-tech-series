@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "jsc:block/chain/machine/large_scale_printer_perfect_binder"
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "key": {
+    "a": {
+      "blocks": [
+        "jsc:item_outlet"
+      ]
+    },
+    "b": {
+      "blocks": [
+        "jsc:machine_casing"
+      ]
+    },
+    "c": {
+      "blocks": [
+        "jsc:large_scale_printer_paper_feeder"
+      ]
+    },
+    "d": {
+      "blocks": [
+        "jsc:item_inlet"
+      ]
+    },
+    "e": {
+      "blocks": [
+        "jsc:power_entry"
+      ]
+    },
+    "f": {
+      "blocks": [
+        "jsc:large_scale_printer_perfect_binder"
+      ]
+    },
+    "g": {
+      "blocks": [
+        "jsc:large_scale_printer_print_unit"
+      ]
+    },
+    "h": {
+      "blocks": [
+        "jsc:peripheral_port"
+      ]
+    },
+    "i": {
+      "blocks": [
+        "jsc:large_scale_printer_inking_unit"
+      ]
+    }
+  },
+  "layers": [
+    [
+      "abbc",
+      "bbbd",
+      "ebbb"
+    ],
+    [
+      "fgg#",
+      "bbbb",
+      "bbbh"
+    ],
+    [
+      "bbib",
+      "bbbb",
+      "bbbb"
+    ]
+  ],
+  "name": "large_scale_printer",
+  "ports": {
+    "a": "item_output",
+    "d": "item_input",
+    "e": "energy_input"
+  },
+  "terminal": "jsc:large_scale_printer_terminal"
+}

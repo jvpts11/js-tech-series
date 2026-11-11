@@ -203,7 +203,7 @@
   ],
   "icon": "jsc:guide_to_operations",
   "id": "jsc:library",
-  "order": 158,
+  "order": 163,
   "section": "jsc:the_library",
   "title": "jsc.guide.library.title"
 }

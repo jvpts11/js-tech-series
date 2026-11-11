@@ -2531,6 +2531,11 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     // keyboard
 
     @Override
+    public boolean takesTyping() {
+        return IDesktopApp.typingIn(properties.isOpen() ? properties : root);
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         if (properties.isOpen()) {
             return properties.charTyped(c);

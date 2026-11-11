@@ -294,6 +294,11 @@ public final class NextgreStudioApp implements IDesktopApp {
     }
 
     @Override
+    public boolean takesTyping() {
+        return tabs.selected() == TAB_EXPLAIN;
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         return tabs.selected() == TAB_EXPLAIN && editor.charTyped(c);
     }

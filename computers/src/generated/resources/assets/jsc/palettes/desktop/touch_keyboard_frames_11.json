@@ -1,0 +1,12 @@
+{
+  "bar": "#FF202020",
+  "dim": "#FFA0A0A0",
+  "edge": "#FF3A3A3A",
+  "ground": "#FF202020",
+  "ink": "#FFFFFFFF",
+  "key": "#FF3A3A3A",
+  "lit": "#FF5B84F0",
+  "ring": "#C8FFFFFF",
+  "ringOuter": "#6EFFFFFF",
+  "wideKey": "#FF2C2C2C"
+}

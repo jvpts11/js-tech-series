@@ -228,6 +228,27 @@ public final class PixImage {
     }
 
     /**
+     * The opaque colour of the palette nearest an RGB colour, as its index: how a picture from elsewhere, such as a
+     * scanned map, is brought into the palette. Nearness is the plain distance between the three channels.
+     */
+    public static int nearest(final int rgb) {
+        int best = 1;
+        int bestDistance = Integer.MAX_VALUE;
+        for (int index = 1; index < COLOURS; index++) {
+            final int colour = PALETTE[index];
+            final int dr = (colour >> 16 & 0xFF) - (rgb >> 16 & 0xFF);
+            final int dg = (colour >> 8 & 0xFF) - (rgb >> 8 & 0xFF);
+            final int db = (colour & 0xFF) - (rgb & 0xFF);
+            final int distance = dr * dr + dg * dg + db * db;
+            if (distance < bestDistance) {
+                best = index;
+                bestDistance = distance;
+            }
+        }
+        return best;
+    }
+
+    /**
      * Writes the picture as text, which is what goes on a disk.
      *
      * <p>The pixels are compressed and written as base64 rather than as a list of runs in plain numbers.

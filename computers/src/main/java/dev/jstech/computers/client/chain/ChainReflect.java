@@ -9,6 +9,7 @@ package dev.jstech.computers.client.chain;
 
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.core.client.material.ThingColours;
+import dev.jstech.core.machine.MachineStatus;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -48,6 +49,8 @@ public final class ChainReflect {
             case "ceramic_kiln" -> any(out, "ferrite") ? "ferrites" : "packages";
             case "optical_polisher" -> any(out, "disc") ? "disc" : "lens";
             case "display_line" -> any(out, "tube") ? "crt" : "lcd";
+            // The Large Scale Printer stands still and empty between books, sheets, book blocks and beacon off.
+            case "large_scale_printer" -> machine.status() == MachineStatus.WORKING ? "working" : "rest";
             default -> "";
         };
     }

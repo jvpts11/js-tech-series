@@ -1246,6 +1246,11 @@ public final class ThisPcApp implements IDesktopApp {
     }
 
     @Override
+    public boolean takesTyping() {
+        return about == AboutKind.NONE && IDesktopApp.typingIn(root);
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         return about == AboutKind.NONE && root.charTyped(c);
     }

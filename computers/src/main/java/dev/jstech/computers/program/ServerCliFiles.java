@@ -13,7 +13,7 @@ import dev.jstech.computers.os.ConsoleIdentity;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.ShellFamily;
-import dev.jstech.computers.printer.PrintedDocument;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.printer.Printers;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliStyle;
@@ -155,10 +155,16 @@ abstract class ServerCliFiles extends ServerCliShell {
                 : Printers.named(level, computer, printer);
         final String name = path.substring(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1);
         final String program = shellFamily() == ShellFamily.POSIX ? POSIX_PRINT : DOS_PRINT;
-        final PrintedDocument document = Printers.text(name, Printers.machineName(computer), program,
-                read.message().english(), false, 0, 0);
-        final Printers.Result result = Printers.print(level, target, document, copies,
-                typist == null ? "root" : typist.getGameProfile().getName());
+        final String user = typist == null ? "root" : typist.getGameProfile().getName();
+        final Printers.Result result;
+        // A scanned map prints as the map itself, onto an empty map in the tray; anything else prints as its text.
+        if (FileType.ofPath(name) == FileType.MAP) {
+            result = Printers.printMap(level, target, name, Printers.machineName(computer), program,
+                    read.message().english(), copies, user);
+        } else {
+            result = Printers.print(level, target, Printers.text(name, Printers.machineName(computer), program,
+                    read.message().english(), false, 0, 0), copies, user);
+        }
         if (!result.ok() || result.printer() == null || result.job() == null) {
             return new PrintAnswer(false, "", "", result.message());
         }

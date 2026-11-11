@@ -1385,6 +1385,15 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         }
     }
 
+    /** A question it has up, its command palette, its terminal, or a document open in its editor. */
+    @Override
+    public boolean takesTyping() {
+        if (this.ask.isOpen() || this.palette.isOpen() || this.typingInTerminal) {
+            return true;
+        }
+        return !this.settings.isOpen() && !this.askClose.isOpen() && this.workspace.current() != null;
+    }
+
     @Override
     public boolean charTyped(final char c) {
         if (this.ask.isOpen()) {

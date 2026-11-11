@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
+import dev.jstech.computers.client.monitor.ITouchGlass;
 import dev.jstech.computers.client.monitor.MonitorTubes;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.menu.IMonitorMenu;
@@ -29,6 +31,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +43,7 @@ import org.jetbrains.annotations.Nullable;
  * J's Core's container screen.
  */
 public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> extends CoreContainerScreen<T>
-        implements IKeepsViewersClear {
+        implements IKeepsViewersClear, ITouchGlass {
 
     /** The skin this screen paints with for the current render pass; STANDARD until {@link #init} resolves it. */
     protected EraTheme theme = EraThemes.STANDARD;
@@ -125,6 +128,46 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
     /** Moves this screen on by one tick as a monitor's face, as it would move on with the screen open. */
     public final void tickFace() {
         containerTick();
+    }
+
+    /**
+     * Draws this screen held on a touch monitor's glass, with the finger as the mouse: what it draws when it is open,
+     * its slots included, without the game's dimming behind it or anything the rest of the game draws over a screen.
+     */
+    @Override
+    public final void paintTouched(final GuiGraphics g, final int fingerX, final int fingerY, final float partialTick) {
+        beforeFrame();
+        JsTechTheme.bind(theme);
+        try {
+            renderBg(g, partialTick, fingerX, fingerY);
+            for (final Renderable widget : renderables) {
+                widget.render(g, fingerX, fingerY, partialTick);
+            }
+            RenderSystem.disableDepthTest();
+            g.pose().pushPose();
+            g.pose().translate(leftPos, topPos, 0);
+            hoveredSlot = null;
+            for (final Slot slot : menu.slots) {
+                if (slot.isActive()) {
+                    renderSlot(g, slot);
+                    if (isHovering(slot.x, slot.y, 16, 16, fingerX, fingerY)) {
+                        hoveredSlot = slot;
+                    }
+                }
+            }
+            renderLabels(g, fingerX, fingerY);
+            g.pose().popPose();
+            RenderSystem.enableDepthTest();
+        } finally {
+            JsTechTheme.unbind();
+        }
+        renderOver(g, fingerX, fingerY, partialTick);
+    }
+
+    /** A machine's screen is typed at: its prompt, its setup, its menus all take the keyboard. */
+    @Override
+    public boolean takesTyping() {
+        return true;
     }
 
     /** Never sees itself out while it draws a face: nobody is at it to leave. */
@@ -240,6 +283,7 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
 
     @Override
     public void render(final GuiGraphics graphics, final int mouseX, final int mouseY, final float partialTick) {
+        beforeFrame();
         /*
          * Bind this screen's era skin for the render pass (background, widgets, labels) and always restore the
          * default afterwards, so any unthemed draw stays on the frozen STANDARD look. A subclass that overrides
@@ -261,5 +305,17 @@ public abstract class AbstractComputerScreen<T extends AbstractContainerMenu> ex
             TubeFilter.filterScreen(graphics, leftPos, topPos, imageWidth, imageHeight,
                     MonitorTubes.tubeAt(at.monitorPos()));
         }
+        renderOver(graphics, mouseX, mouseY, partialTick);
+    }
+
+    /** Readies what this screen shows for a frame, before any of it is drawn; nothing by default. */
+    protected void beforeFrame() {
+    }
+
+    /**
+     * Draws what goes over the finished screen (a question it has up, a tooltip of its own), whether it is open or held
+     * on a touch monitor's glass; nothing by default.
+     */
+    protected void renderOver(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
     }
 }

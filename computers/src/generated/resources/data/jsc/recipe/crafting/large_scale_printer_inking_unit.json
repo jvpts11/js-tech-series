@@ -1,0 +1,27 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "building",
+  "key": {
+    "M": {
+      "item": "jscore:electric_motor"
+    },
+    "P": {
+      "item": "jscore:steel_plate"
+    },
+    "R": {
+      "item": "jscore:steel_rod"
+    },
+    "V": {
+      "item": "jscore:pvc_sheet"
+    }
+  },
+  "pattern": [
+    "VVV",
+    "RMR",
+    "PPP"
+  ],
+  "result": {
+    "count": 1,
+    "id": "jsc:large_scale_printer_inking_unit"
+  }
+}

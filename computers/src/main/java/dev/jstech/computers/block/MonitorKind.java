@@ -36,6 +36,11 @@ public enum MonitorKind implements StringRepresentable {
     STANDARD("standard", HardwareEra.STANDARD, Tube.COLOUR, true, new int[] {3, 3, 61, 42},
             new int[] {53, 52, 58, 57}),
     COLOR("advanced", HardwareEra.ADVANCED, Tube.COLOUR, true, new int[] {1, 1, 63, 42},
+            new int[] {29, 57, 35, 62}),
+    /* The touch versions of the two flat panels: the same glass, flush to the bezel, and the touch mark on the chin. */
+    TOUCH_STANDARD("touch_standard", HardwareEra.STANDARD, Tube.COLOUR, true, new int[] {3, 3, 61, 42},
+            new int[] {53, 52, 58, 57}),
+    TOUCH_ADVANCED("touch_advanced", HardwareEra.ADVANCED, Tube.COLOUR, true, new int[] {1, 1, 63, 42},
             new int[] {29, 57, 35, 62});
 
     private final String id;
@@ -57,6 +62,14 @@ public enum MonitorKind implements StringRepresentable {
         this.flat = flat;
         this.glass = glass;
         this.button = button;
+    }
+
+    /**
+     * Whether its glass is a touch screen, which a player uses by touching it in the world rather than by sitting
+     * down at it (computers/docs/design/peripherals.md).
+     */
+    public boolean touch() {
+        return this == TOUCH_STANDARD || this == TOUCH_ADVANCED;
     }
 
     /** The name its model and textures go by. */

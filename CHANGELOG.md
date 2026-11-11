@@ -3666,8 +3666,43 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   and says so.
 - (Computers) In Files, a folder's menu has Play and Add to the Media Player's list, and a song or a picture opens in
   the Media Player from Open with.
+- (Computers) Touch monitors: the Touch Monitor (Standard) and the Advanced Touch Monitor, flat panels with their glass
+  flush to the bezel and a touch mark on the chin, used where they stand. With the crosshair on the glass a right click
+  taps, holding and moving drags, and holding still a second is the right button; the first touch puts the computer's
+  screen on the glass, and the touches after it reach it there. A touch on a field, a document or a prompt brings up a
+  typing line where the chat's is, which types into the screen as the keyboard would, Enter sending Enter and Escape
+  putting it away, while the mouse still aims and the right button still touches; Frames 10 and Frames 11 also put up
+  their touch keyboard on the glass, docked along the desktop's foot and floating in its middle. Touch monitors of one
+  kind join into one big touch screen. Sneaking uses the block, and a click on the bezel sits down at it as before.
+- (Computers) Scanners, a flatbed for each era on the peripheral cable: the Pakard ScanJot, the Epsilon Perfecta 1240U,
+  the Pakard ScanJot G4050, the Epsilon Perfecta V600 and the Epsilon Perfecta V39, at 8, 4, 2, 1 and 0.5 seconds a
+  page. Their lid opens while they read what lies on the glass, and the item stays: a written book or a book and quill
+  becomes a .book, an enchanted book a .ench, a map a .map, and a Printed Paper sheet a .txt or a .pix, in the scans
+  folder of the system at the cable's other end. The .book and the .ench open in the Editor and the .map in Paint, each
+  with its icon in every desktop's look; a .ench and a .map are sealed to the world that scanned them.
+- (Computers) A printer copies a scanned map onto an empty map in its tray, from the Print dialog, `PRINT` or `lp`.
+- (Computers) The Large Scale Printer, a Legacy machine 4 wide, 3 tall and 3 deep of the Paper Feeder, the Print Unit,
+  the Inking Unit and the Perfect Binder, the one machine that prints books: 3 paper and 2 seconds a book, paper by
+  hand, a bus or a hopper, energy through its back. A peripheral cable to its port lists it in the systems' Print
+  dialog for .book and .ench files, and the help prints the systems' and languages' own books on it (Frames 95's
+  Print, CDE's File > Print, Ctrl+P). Its books go into the network or a chest beside it, by a switch; a written book
+  comes out as a copy, a book and quill as a book and quill, and an enchanted book with every enchantment at its level.
+  The server setting `printing.enchanted_books` turns the printing of enchanted books off, and it then refuses them
+  saying why.
+- (Computers) The Vinyl RW Drive, one for each era, and the Blank Vinyl Record. Soundfoundry records any music disc a
+  jukebox plays into Music/Vinyl, in the song's own time, while the drive plays it aloud, and cuts a recording of a disc
+  onto a blank vinyl, the cut being the original disc itself; its VNL button on the Legacy and Transition looks and its
+  Vinyl page on the Standard and the Advanced drive it.
+- (Computers) Easy Disc Creator, by Roxa, a program on a CD for the Frames systems from Frames 95 on: it copies a
+  floppy, a CD, a DVD, a Blu-ray disc, a USB stick or a vinyl onto a blank of the same format or a larger one, at the
+  medium's write speed, reading the source first and asking for the blank when there is one drive. Install discs copy
+  like any other; the disks of the network's storage and the .dat files never do.
+- (Computers) The Extended CD Drive, a duplicator tower two blocks tall with one reading tray and seven writing trays,
+  working on its own through its screen: the Legacy's for CDs, the Transition's for DVDs and CDs, the Advanced's for
+  Blu-ray discs, DVDs and CDs.
 
 ### Changed
+- (Computers) The DVD Drive is a Transition drive, as the Transition's own programs come on DVD.
 - (Computers) Virtual Studio's Start button starts debugging, and Ctrl+F5 runs without it; its configuration is a
   choice between Debug and Release, Debug first. In Virtual Studio Code F5 starts debugging, Ctrl+F5 runs the file, and
   the Run icon of the side bar opens Run and Debug.

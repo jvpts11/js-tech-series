@@ -631,6 +631,12 @@ public final class SigmaWindowApp implements IDesktopApp {
         return this.input.mouseScrolled(delta);
     }
 
+    /** A program's own window reads the keyboard as its program asks. */
+    @Override
+    public boolean takesTyping() {
+        return true;
+    }
+
     @Override
     public boolean charTyped(final char c) {
         return this.input.charTyped(c);

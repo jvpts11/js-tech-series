@@ -146,6 +146,23 @@ public enum FileType {
      * what the backup does, as a song's file weighs its song (see {@link BackupFile}). Only the service writes one.
      */
     BAK("bak", false, false, FileTypeNames.BAK),
+    /**
+     * A book a scanner read, written or still being written, as plain text: its title and author when it was signed,
+     * then each page under its own heading (see {@link BookFile}). A player edits it like any text, and the Large Scale
+     * Printer prints it back as the book it was.
+     */
+    BOOK("book", true, false, FileTypeNames.BOOK),
+    /**
+     * An enchanted book a scanner read: its enchantments in words, then the same as the printer reads them, sealed by
+     * the world (see {@link ScanFile}). It opens to be read but never to be edited, since a changed level would print
+     * a book nobody enchanted.
+     */
+    ENCH("ench", false, false, FileTypeNames.ENCH),
+    /**
+     * A map a scanner read: the map it is a copy of and its picture as Paint holds one, sealed the same way, so it
+     * prints back as that map and nothing else (see {@link ScanFile}).
+     */
+    MAP("map", false, false, FileTypeNames.MAP),
 
     /**
      * A file of a kind the machines do not know: whatever a player or a program chose to call it, such as

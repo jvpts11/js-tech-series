@@ -16,6 +16,7 @@ import static dev.jstech.computers.datagen.recipe.BenchItems.made;
 import static dev.jstech.computers.datagen.recipe.BenchItems.pvc;
 import static dev.jstech.computers.datagen.recipe.BenchItems.rows;
 import static dev.jstech.computers.datagen.recipe.BenchItems.steelPlate;
+import static dev.jstech.computers.datagen.recipe.BenchItems.steelRod;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.ingot;
 import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
 
@@ -54,6 +55,7 @@ final class MachineBlockRecipes {
         steps(output);
         chipFactory(output);
         assemblyLines(output);
+        largeScalePrinter(output);
     }
 
     /* The Vintage bench at the Crafting Table, and each next bench at the bench of the era before. */
@@ -255,6 +257,23 @@ final class MachineBlockRecipes {
                         of(Element.COPPER, Forms.WIRE), 4, motor, 1, board(before), 1);
             }
         }
+    }
+
+    /*
+     * The Large Scale Printer: its mechanical blocks at the Crafting Table, the rollers and motor that pull the paper,
+     * the ink tanks (PVC) with their pump, the heated glue pot (a coil) and its press; its Print Unit at the Legacy
+     * bench, the heads a controller chip each.
+     */
+    private static void largeScalePrinter(final RecipeOutput output) {
+        final Item motor = ChainParts.ELECTRIC_MOTOR.get();
+        grid(output, block("large_scale_printer_paper_feeder"), 1, rows("PPP", "RMR", "PPP"), 'P', steelPlate(),
+                'R', steelRod(), 'M', motor);
+        grid(output, block("large_scale_printer_inking_unit"), 1, rows("VVV", "RMR", "PPP"), 'V', pvc(),
+                'R', steelRod(), 'M', motor, 'P', steelPlate());
+        grid(output, block("large_scale_printer_perfect_binder"), 1, rows("PCP", "RMR", "PPP"), 'P', steelPlate(),
+                'C', ChainParts.COPPER_COIL.get(), 'R', steelRod(), 'M', motor);
+        made(output, HardwareEra.LEGACY, block("large_scale_printer_print_unit"), steelPlate(), 4,
+                board(HardwareEra.LEGACY), 1, controller(HardwareEra.LEGACY), 4, motor, 1);
     }
 
     private static ItemLike block(final String id) {

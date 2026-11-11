@@ -12,12 +12,16 @@ import static dev.jstech.computers.guide.ComputersGuide.cablesOn;
 import static dev.jstech.computers.guide.ComputersGuide.itemsOf;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.MediaDevices;
+import dev.jstech.computers.block.ExtendedCdDriveBlock;
 import dev.jstech.computers.block.HubBlock;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.block.PrinterBlock;
 import dev.jstech.computers.block.RedstoneInterfaceBlock;
+import dev.jstech.computers.block.ScannerBlock;
 import dev.jstech.computers.block.SpeakerBlock;
 import dev.jstech.computers.block.SubwooferBlock;
+import dev.jstech.computers.block.VinylDriveBlock;
 import dev.jstech.computers.item.PrintedPaperItem;
 import dev.jstech.computers.os.media.MediaReaderBlock;
 import dev.jstech.core.cable.CoreCables;
@@ -45,8 +49,11 @@ final class PeripheralPages {
         monitors(guide, section);
         peripheralCables(guide, section);
         drives(guide, section);
+        extendedCdDrives(guide, section);
+        vinylDrives(guide, section);
         dockStation(guide, section);
         printers(guide, section);
+        scanners(guide, section);
         speakers(guide, section);
         redstoneInterfaces(guide, section);
         kvmSwitch(guide, section);
@@ -64,9 +71,10 @@ final class PeripheralPages {
                         + " through its own cable.")
                 .define("Peripheral Cable", "The cable that joins a computer to its devices. It carries no network:"
                         + " the network has its own data cables.")
-                .paragraph("Eight monitors come in five eras. The Vintage has four: the Mono I with paper-white, the"
+                .paragraph("Ten monitors come in five eras. The Vintage has four: the Mono I with paper-white, the"
                         + " Mono II with green, the Amber, and the CGA with sixteen colours. The Legacy is the first"
-                        + " full colour tube. The Transition, Standard and Advanced monitors are flat colour panels.")
+                        + " full colour tube. The Transition, Standard and Advanced monitors are flat colour panels,"
+                        + " and the Standard and the Advanced also come as touch monitors.")
                 .table("The monitors", "Monitor", "Era", "Picture", "Joins others")
                 .row(GuideCell.words("Mono I Monitor"), GuideCell.words("Vintage"),
                         GuideCell.words("Paper-white, every system in white"), GuideCell.words("No"))
@@ -84,6 +92,10 @@ final class PeripheralPages {
                         GuideCell.words("Colour flat panel"), GuideCell.words("Yes"))
                 .row(GuideCell.words("Color Monitor"), GuideCell.words("Advanced"),
                         GuideCell.words("Colour flat panel"), GuideCell.words("Yes"))
+                .row(GuideCell.words("Touch Monitor"), GuideCell.words("Standard"),
+                        GuideCell.words("Colour flat panel, touch screen"), GuideCell.words("Yes, touch monitors"))
+                .row(GuideCell.words("Advanced Touch Monitor"), GuideCell.words("Advanced"),
+                        GuideCell.words("Colour flat panel, touch screen"), GuideCell.words("Yes, touch monitors"))
                 .define("Flat panel", "A monitor that can join others into one big screen: the Transition, Standard"
                         + " and Advanced monitors.")
                 .paragraph("A flat panel joins its neighbours into one big screen. Put monitors of the same kind side"
@@ -131,6 +143,22 @@ final class PeripheralPages {
                 .define("KVM", "Keyboard, video and mouse: one monitor and keyboard that reach several machines.")
                 .paragraph("A picture tube, in the Vintage or the Legacy, makes a sound when it switches on or off. A"
                         + " flat panel goes dark without a sound.")
+                .paragraph("A touch monitor is used where it stands, without sitting down at it. Its glass is flush"
+                        + " with its bezel, and its chin carries the touch mark. Aim at the glass and right click to"
+                        + " tap; hold the button and move to drag; hold still for a second for the right button. The"
+                        + " first touch wakes it: the computer's screen comes up on the glass, and every touch after"
+                        + " that reaches it. Sneak to use the block as usual, and click the bezel to sit down at it.")
+                .paragraph("A touch on something that takes typing, a text field, a document or a prompt, brings up"
+                        + " the typing line where the chat's line is. What you type goes to the screen as you type"
+                        + " it; Enter sends Enter, and Escape puts the line away. While the line is up, the mouse"
+                        + " still aims and the right button still touches. Frames 10 and Frames 11 also put up their"
+                        + " touch keyboard on the glass: Frames 10 along the foot of the desktop, Frames 11 floating"
+                        + " in the middle. Hide puts it away until the next field you touch. The other systems take"
+                        + " the text through the line alone.")
+                .paragraph("Touch monitors join only touch monitors of their own kind, into one big touch screen,"
+                        + " one surface.")
+                .define("Touch monitor", "A flat monitor you use by touching its glass in the world: the Touch"
+                        + " Monitor of the Standard and the Advanced Touch Monitor.")
                 .ifSomethingGoesWrong("No computer found in range over a Peripheral Cable",
                         "Run the peripheral cable all the way to the computer, within the reach of its era"
                                 + " ([](jsc:peripheral_cables)), or stand the monitor right against the computer.",
@@ -324,6 +352,111 @@ final class PeripheralPages {
                 .register();
     }
 
+    private static void extendedCdDrives(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("extended_cd_drives", section).titled("The Extended CD Drive")
+                .icon(MediaDevices.LEGACY_EXTENDED_CD_DRIVE)
+                .coversAll(blocksOf(ExtendedCdDriveBlock.class))
+                .paragraph("The Extended CD Drive is a duplicator tower, two blocks tall: one tray that reads and"
+                        + " seven trays that write, as the real towers copied discs by the dozen. It works on its own,"
+                        + " with no computer, through its own screen.")
+                .table("The towers", "Tower", "Era", "Copies")
+                .row(GuideCell.words("Extended CD Drive (Legacy)"), GuideCell.words("Legacy"),
+                        GuideCell.words("CDs"))
+                .row(GuideCell.words("Extended CD Drive (Transition)"), GuideCell.words("Transition"),
+                        GuideCell.words("DVDs and CDs"))
+                .row(GuideCell.words("Extended CD Drive (Advanced)"), GuideCell.words("Advanced"),
+                        GuideCell.words("Blu-ray discs, DVDs and CDs"))
+                .steps("Put the disc to copy in the READ tray of its screen.",
+                        "Put a blank disc of the same format, or a larger one, in each writing tray you want a copy"
+                                + " in.",
+                        "Press COPY. The tower reads the disc, then writes every blank, its lamps blinking while they"
+                                + " write and staying lit once their copy is done.",
+                        "Take the copies out of their trays, or press EJECT.")
+                .paragraph("It copies at the write speed of the medium, and copies what Easy Disc Creator copies"
+                        + " ([](jsc:easy_disc_creator)): install discs too, but never a disc that holds the network's"
+                        + " storage.")
+                .ifSomethingGoesWrong("The screen says NOTHING TO READ.",
+                        "Put a disc with something on it in the READ tray.",
+                        "The screen says HOLDS STORAGE.",
+                        "The disc holds the network's storage, and the tower does not copy items.",
+                        "The screen says NO BLANKS.",
+                        "Put blank discs of a format the tower writes in its writing trays.")
+                .seeAlso("jsc:drives", "jsc:easy_disc_creator")
+                .register();
+    }
+
+    private static void vinylDrives(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("vinyl_rw_drives", section).titled("The Vinyl RW Drive").icon(MediaDevices.VINYL_DRIVE)
+                .coversAll(blocksOf(VinylDriveBlock.class))
+                .covers(MediaDevices.BLANK_VINYL_RECORD)
+                .paragraph("The Vinyl RW Drive reads vinyl and cuts it. There is one in each era, and you join it to"
+                        + " its computer by a peripheral cable like any device. Soundfoundry drives it: the VNL button on"
+                        + " its Legacy and Transition looks, and its Vinyl page on the Standard and the Advanced.")
+                .paragraph("To record, lay a music disc on its platter, the game's or another mod's, and press Record."
+                        + " The drive plays the song aloud in the room, and Soundfoundry records it, in the song's own"
+                        + " time, into an audio file in Music/Vinyl. The recording is kept when the song ends; stopped"
+                        + " before, it is lost.")
+                .paragraph("To cut, lay a Blank Vinyl Record on the platter, pick a recording and press Cut. The drive"
+                        + " cuts it, again in the song's time, and the cut is the original disc itself: music discs"
+                        + " are rare, and they are the one thing a copy may make. Only a song that came from a disc"
+                        + " goes onto a vinyl. Blank Vinyl Records are made at the Electronics Workbench, of 2 PVC"
+                        + " sheets and 1 paper.")
+                .define("Platter", "The turntable of the drive, where the record lies while it plays or is cut.")
+                .ifSomethingGoesWrong("Put a music disc on the drive to record it.",
+                        "Right-click the drive with a music disc to lay it on the platter.",
+                        "Put a blank vinyl in the drive to cut onto it.",
+                        "Right-click the drive with a Blank Vinyl Record.",
+                        "Only a song that came from a disc goes onto a vinyl.",
+                        "Cut a recording the drive made from a disc, or a copy of one.",
+                        "The recording could not be kept on the computer's disk.",
+                        "Make room on the computer's disk, then record the song again.")
+                .seeAlso("jsc:soundfoundry", "jsc:peripheral_cables")
+                .register();
+    }
+
+    private static void scanners(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("scanners", section).titled("Scanners").icon(MediaDevices.SCANNER)
+                .coversAll(blocksOf(ScannerBlock.class))
+                .paragraph("A scanner reads what lies on its glass into a file, on the computer at the other end of its"
+                        + " peripheral cable. There is a flatbed scanner in each era. The item stays as it was:"
+                        + " scanning only reads it.")
+                .table("The scanners", "Scanner", "Era", "A page takes")
+                .row(GuideCell.words("Pakard ScanJot"), GuideCell.words("Vintage"), GuideCell.amount(8, "s"))
+                .row(GuideCell.words("Epsilon Perfecta 1240U"), GuideCell.words("Legacy"), GuideCell.amount(4, "s"))
+                .row(GuideCell.words("Pakard ScanJot G4050"), GuideCell.words("Transition"),
+                        GuideCell.amount(2, "s"))
+                .row(GuideCell.words("Epsilon Perfecta V600"), GuideCell.words("Standard"), GuideCell.amount(1, "s"))
+                .row(GuideCell.words("Epsilon Perfecta V39"), GuideCell.words("Advanced"),
+                        GuideCell.words("0.5 s"))
+                .table("What it reads", "On the glass", "File", "Opens in")
+                .row(GuideCell.words("Written book"), GuideCell.code(".book"), GuideCell.words("Editor"))
+                .row(GuideCell.words("Book and quill"), GuideCell.words(".book, unsigned"), GuideCell.words("Editor"))
+                .row(GuideCell.words("Enchanted book"), GuideCell.code(".ench"), GuideCell.words("Editor"))
+                .row(GuideCell.words("Map"), GuideCell.code(".map"), GuideCell.words("Paint"))
+                .row(GuideCell.words("Printed Paper"), GuideCell.words(".txt, or .pix for a picture"),
+                        GuideCell.words("Editor, or Paint"))
+                .steps("Right-click the scanner with the item to lay it on the glass.",
+                        "Open the scanner and press SCAN. Its lid opens and it reads page by page.",
+                        "The file is in the scans folder of the computer's system.")
+                .define("Scans folder", "Where a scanner puts its files: Users/Public/Documents/Scans on Frames and"
+                        + " MC-DOS, and Documents/Scans in the home folder on Linux, FreeBSD and UNIX System V.")
+                .paragraph("A .book starts with its title and its author, and each page under its heading. Edit it as"
+                        + " you like, and the Large Scale Printer prints it ([](jsc:large_scale_printer)); an unsigned"
+                        + " one prints back as a book and quill. A .ench and a .map are sealed to the world that"
+                        + " scanned them: changed, or carried to another world, they no longer print. Paint opens a"
+                        + " .map to look at, and saves it as a .pix.")
+                .ifSomethingGoesWrong("The scanner says GLASS EMPTY.",
+                        "Lay a book, a map or a printed sheet on the glass.",
+                        "The scanner says NO COMPUTER.",
+                        "Join it to a computer with a peripheral cable ([](jsc:peripheral_cables)).",
+                        "The scanner says NO SYSTEM.",
+                        "The computer has no system to keep the file: install one.",
+                        "The scanner says DISK FULL.",
+                        "Make room on the computer's disk.")
+                .seeAlso("jsc:printers", "jsc:large_scale_printer")
+                .register();
+    }
+
     private static void dockStation(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("dock_station", section).titled("The Dock Station").icon(ComputingModule.DOCK_STATION)
                 .paragraph("The Dock Station reads storage disks and Universal Serial Bus (USB) flash drives for a"
@@ -438,9 +571,9 @@ final class PeripheralPages {
                 .paragraph("A tick is a twentieth of a second, so 20 ticks make a second. The fewer ticks a page takes,"
                         + " the faster the printer.")
                 .subheading("Paper and the output")
-                .paragraph("The tray takes plain paper only. Right-click the printer with paper to fill its tray. Each"
-                        + " page takes one sheet from the tray. When the tray is empty, the job waits with the status"
-                        + " \"no paper\".")
+                .paragraph("The tray takes plain paper, and empty maps for copying a map. Right-click the printer with"
+                        + " paper to fill its tray. Each page takes one sheet from the tray. When the tray is empty,"
+                        + " the job waits with the status \"no paper\".")
                 .paragraph("The printer puts finished pages in its three output places. When they are full, the status"
                         + " says \"take the sheets\". Take the sheets from the printer's window: shift-click a sheet to"
                         + " move it into your inventory.")
@@ -482,6 +615,13 @@ final class PeripheralPages {
                 .row(GuideCell.words("Pakard FotoSmart C4280"), GuideCell.code("fotosmart"))
                 .row(GuideCell.words("Pakard LaserJot 1102"), GuideCell.code("laserjot"))
                 .row(GuideCell.words("Epsilon EcoTonk ET-2720"), GuideCell.code("ecotonk"))
+                .subheading("Copying a map, and books")
+                .paragraph("A .map file, which a scanner reads from a map ([](jsc:scanners)), prints onto an empty map"
+                        + " in the tray: print it from the computer, or send it with PRINT or lp, and the printer"
+                        + " gives the same map back, drawn. With no empty map in the tray, the job waits with the"
+                        + " status \"no empty map\". A .map prints only in the world whose scanner read it.")
+                .paragraph("Books are printed by the Large Scale Printer alone, a machine of its own"
+                        + " ([](jsc:large_scale_printer)).")
                 .ifSomethingGoesWrong("Nothing comes out.",
                         "Read the status. \"no paper\" means the tray is empty, so add plain paper. \"take the sheets\""
                                 + " means the output is full, so take the sheets out.",
@@ -492,7 +632,10 @@ final class PeripheralPages {
                         "A picture in colour came out in black and white.",
                         "Print it on a printer that prints in colour: the Legacy, Transition or Advanced printer.",
                         "The lp command says the destination is \"non-existent\".",
-                        "Use the name of a printer joined to the computer. lpstat shows them.")
+                        "Use the name of a printer joined to the computer. lpstat shows them.",
+                        "The file is not a map a scanner of this world read.",
+                        "A .map prints only as it was scanned in this world; one that was changed, or comes from"
+                                + " another world, does not.")
                 .seeAlso("jsc:peripheral_cables", "jsc:dos_printing", "jsc:printing")
                 .register();
     }

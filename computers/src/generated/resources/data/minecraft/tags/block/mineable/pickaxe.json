@@ -99,6 +99,10 @@
     "jsc:preinstaller_console",
     "jsc:preinstaller_board_fixture",
     "jsc:preinstaller_disk_dock",
+    "jsc:large_scale_printer_paper_feeder",
+    "jsc:large_scale_printer_print_unit",
+    "jsc:large_scale_printer_inking_unit",
+    "jsc:large_scale_printer_perfect_binder",
     "jsc:crusher_terminal",
     "jsc:grinder_terminal",
     "jsc:induction_furnace_terminal",
@@ -131,6 +135,7 @@
     "jsc:assembly_standard_terminal",
     "jsc:assembly_advanced_terminal",
     "jsc:prebuilder_terminal",
-    "jsc:preinstaller_terminal"
+    "jsc:preinstaller_terminal",
+    "jsc:large_scale_printer_terminal"
   ]
 }

@@ -54,7 +54,9 @@ public final class SoundfoundryLayout {
     public static final int STEREO_X = 234;
     public static final int FORMAT_Y = 34;
     public static final Rect VOLUME = new Rect(106, 47, 72, 9);
-    public static final Rect BALANCE = new Rect(184, 47, 36, 9);
+    public static final Rect BALANCE = new Rect(184, 47, 18, 9);
+    /** The Vinyl RW Drive's plate, which takes the playlist's place. */
+    public static final Rect VNL = new Rect(204, 46, 20, 11);
     public static final Rect PL = new Rect(226, 46, 20, 11);
     public static final Rect NET = new Rect(248, 46, 22, 11);
     public static final Rect POSITION = new Rect(6, 61, 264, 9);
@@ -88,6 +90,23 @@ public final class SoundfoundryLayout {
     public static final Rect MISC = new Rect(108, 131, 32, 12);
     public static final Rect LISTS = new Rect(144, 131, 32, 12);
     public static final Rect TOTAL = new Rect(182, 131, 88, 12);
+
+    /* The vinyl plate: its lines over the progress and level bars, the list of recordings, and its buttons. */
+    public static final int VINYL_TEXT_X = 9;
+    public static final int VINYL_DRIVE_Y = 18;
+    public static final int VINYL_WORK_Y = 30;
+    public static final Rect VINYL_PROGRESS = new Rect(6, 42, 264, 6);
+    public static final Rect VINYL_METER = new Rect(6, 52, 264, 7);
+    public static final int VINYL_SAVING_Y = 65;
+    public static final int VINYL_FROM_Y = 77;
+    public static final int VINYL_CUT_Y = 101;
+    public static final Rect VINYL_SCREEN = new Rect(6, 16, 264, 110);
+    public static final Rect REC = new Rect(6, 131, 30, 12);
+    public static final Rect VINYL_STOP = new Rect(40, 131, 30, 12);
+    public static final Rect CUT = new Rect(74, 131, 30, 12);
+    public static final Rect VINYL_EJECT = new Rect(108, 131, 32, 12);
+    public static final Rect LIST_BUTTON = new Rect(144, 131, 32, 12);
+    public static final Rect VINYL_TIME = new Rect(182, 131, 88, 12);
 
     private SoundfoundryLayout() {
     }
@@ -162,7 +181,7 @@ public final class SoundfoundryLayout {
         for (final Named part : new Named[] {
                 new Named("display", DISPLAY), new Named("song", SONG), new Named("kbps", KBPS),
                 new Named("khz", KHZ), new Named("volume", VOLUME), new Named("balance", BALANCE),
-                new Named("pl", PL), new Named("net", NET), new Named("position", POSITION),
+                new Named("vnl", VNL), new Named("pl", PL), new Named("net", NET), new Named("position", POSITION),
                 new Named("previous", PREVIOUS), new Named("play", PLAY), new Named("pause", PAUSE),
                 new Named("stop", STOP), new Named("next", NEXT), new Named("eject", EJECT),
                 new Named("shuffle", SHUFFLE), new Named("repeat", REPEAT), new Named("mark", MARK)}) {
@@ -178,6 +197,19 @@ public final class SoundfoundryLayout {
                 new Named("list", LIST), new Named("add", ADD), new Named("remove", REMOVE),
                 new Named("select", SELECT), new Named("misc", MISC), new Named("lists", LISTS),
                 new Named("total", TOTAL)}) {
+            l.box(part.name(), part.rect().x(), top + part.rect().y(), part.rect().w(), part.rect().h());
+        }
+        return l;
+    }
+
+    /** Every part of the player over the vinyl plate, open, for the same test. */
+    public static GuiLayout vinylLayout() {
+        final GuiLayout l = new GuiLayout(WIDTH, PLAYER_H + PLAYLIST_H);
+        final int top = PLAYER_H;
+        for (final Named part : new Named[] {
+                new Named("screen", VINYL_SCREEN), new Named("rec", REC), new Named("stop", VINYL_STOP),
+                new Named("cut", CUT), new Named("eject", VINYL_EJECT), new Named("list", LIST_BUTTON),
+                new Named("time", VINYL_TIME)}) {
             l.box(part.name(), part.rect().x(), top + part.rect().y(), part.rect().w(), part.rect().h());
         }
         return l;

@@ -929,6 +929,11 @@ public final class GatewayManagerApp implements IDesktopApp {
     }
 
     @Override
+    public boolean takesTyping() {
+        return renamePopup.isOpen();
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         return renamePopup.isOpen() && renamePopup.charTyped(c);
     }

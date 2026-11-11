@@ -1,0 +1,175 @@
+{
+ "format_version": "1.8.0",
+ "animations": {
+  "animation.vinyl_rw_drive.spin_vintage": {
+   "loop": true,
+   "animation_length": 1.8,
+   "bones": {
+    "record": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "1.8": [
+       0,
+       -360,
+       0
+      ]
+     }
+    },
+    "platter": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "1.8": [
+       0,
+       -360,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.vinyl_rw_drive.spin_legacy": {
+   "loop": true,
+   "animation_length": 1.8,
+   "bones": {
+    "record": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "1.8": [
+       0,
+       -360,
+       0
+      ]
+     }
+    },
+    "platter": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "1.8": [
+       0,
+       -360,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.vinyl_rw_drive.spin_transition": {
+   "loop": true,
+   "animation_length": 1.8,
+   "bones": {
+    "record": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "1.8": [
+       0,
+       -360,
+       0
+      ]
+     }
+    },
+    "platter": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "1.8": [
+       0,
+       -360,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.vinyl_rw_drive.spin_standard": {
+   "loop": true,
+   "animation_length": 1.8,
+   "bones": {
+    "record": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "1.8": [
+       0,
+       -360,
+       0
+      ]
+     }
+    },
+    "platter": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "1.8": [
+       0,
+       -360,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.vinyl_rw_drive.spin_advanced": {
+   "loop": true,
+   "animation_length": 1.8,
+   "bones": {
+    "record": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "1.8": [
+       0,
+       -360,
+       0
+      ]
+     }
+    },
+    "platter": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "1.8": [
+       0,
+       -360,
+       0
+      ]
+     }
+    }
+   }
+  }
+ }
+}

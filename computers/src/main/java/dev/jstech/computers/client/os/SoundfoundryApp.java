@@ -55,7 +55,10 @@ public final class SoundfoundryApp implements IDesktopApp {
     private final TreeSet<Integer> picked = new TreeSet<>();
     private final float[] levels = new float[SoundfoundryLayout.BARS];
     private OsSkin skin = OsSkin.fallback();
+    private final SoundfoundryVinylPlate vinyl;
     private boolean playlistShown = true;
+    /* The Vinyl RW Drive's plate, which takes the playlist's place under the player while it is shown. */
+    private boolean vinylShown;
     private boolean playerShaded;
     private boolean listShaded;
     private int scroll;
@@ -98,6 +101,7 @@ public final class SoundfoundryApp implements IDesktopApp {
     public SoundfoundryApp(final BlockPos host) {
         this.host = host;
         this.dialog = new FileDialog(host, this);
+        this.vinyl = new SoundfoundryVinylPlate(host);
         look();
     }
 
@@ -113,8 +117,8 @@ public final class SoundfoundryApp implements IDesktopApp {
 
     @Override
     public int defaultHeight() {
-        return SoundfoundryLayout.playerHeight(playerShaded)
-                + SoundfoundryLayout.playlistHeight(playlistShown, listShaded);
+        return SoundfoundryLayout.playerHeight(playerShaded) + (vinylShown ? SoundfoundryLayout.PLAYLIST_H
+                : SoundfoundryLayout.playlistHeight(playlistShown, listShaded));
     }
 
     @Override
@@ -140,7 +144,7 @@ public final class SoundfoundryApp implements IDesktopApp {
     @Override
     public boolean frameDragAt(final int x, final int y) {
         final int top = playerHeight();
-        return onBar(x, y) || playlistShown && onBar(x, y - top);
+        return onBar(x, y) || (playlistShown || vinylShown) && onBar(x, y - top);
     }
 
     @Override
@@ -206,7 +210,9 @@ public final class SoundfoundryApp implements IDesktopApp {
         } else {
             renderPlayer(g, font, x, y, known);
         }
-        if (playlistShown) {
+        if (vinylShown) {
+            vinyl.render(g, font, x, y + top, focused, pressedIndex(true));
+        } else if (playlistShown) {
             if (listShaded) {
                 SoundfoundrySkin.plate(g, x, y + top, SoundfoundryLayout.WIDTH, SoundfoundryLayout.SHADE_H);
                 SoundfoundrySkin.bar(g, font, x, y + top, words(SoundfoundryAppTexts.PLAYLIST), focused,
@@ -231,6 +237,12 @@ public final class SoundfoundryApp implements IDesktopApp {
         final int top = playerHeight();
         if (ly < top) {
             clickedPlayer(lx, ly, button);
+        } else if (vinylShown) {
+            if (SoundfoundryLayout.CLOSE.contains(lx, ly - top)) {
+                vinylShown = false;
+            } else {
+                vinyl.clicked(lx, ly - top);
+            }
         } else if (playlistShown) {
             clickedPlaylist(lx, ly - top, button);
         }
@@ -393,8 +405,11 @@ public final class SoundfoundryApp implements IDesktopApp {
                 && known.state().status() != SoundfoundryStatePayload.STOPPED) {
             dragging = DRAG_POSITION;
             dragValue = SoundfoundryLayout.valueAt(SoundfoundryLayout.POSITION, SoundfoundryLayout.POSITION_THUMB, lx);
+        } else if (SoundfoundryLayout.VNL.contains(lx, ly)) {
+            vinylShown = !vinylShown;
         } else if (SoundfoundryLayout.PL.contains(lx, ly)) {
-            playlistShown = !playlistShown;
+            playlistShown = !playlistShown || vinylShown;
+            vinylShown = false;
         } else if (SoundfoundryLayout.NET.contains(lx, ly)) {
             ActiveDesktop.openOrFocus(SoundfoundryShareApp.KEY);
         } else if (SoundfoundryLayout.PREVIOUS.contains(lx, ly)) {
@@ -732,7 +747,9 @@ public final class SoundfoundryApp implements IDesktopApp {
         SoundfoundrySkin.slider(g, x + vol.x(), y + vol.y(), vol.w(), volume, !device);
         final Rect bal = SoundfoundryLayout.BALANCE;
         SoundfoundrySkin.slider(g, x + bal.x(), y + bal.y(), bal.w(), balance, !device);
-        labelled(g, font, x, y, SoundfoundryLayout.PL, SoundfoundryAppTexts.PL, device && playlistShown, !device);
+        labelled(g, font, x, y, SoundfoundryLayout.VNL, SoundfoundryAppTexts.VNL, device && vinylShown, !device);
+        labelled(g, font, x, y, SoundfoundryLayout.PL, SoundfoundryAppTexts.PL, device && playlistShown
+                && !vinylShown, !device);
         labelled(g, font, x, y, SoundfoundryLayout.NET, SoundfoundryAppTexts.NET,
                 device && ActiveDesktop.windowOpen(SoundfoundryShareApp.KEY), !device);
         final Rect pos = SoundfoundryLayout.POSITION;

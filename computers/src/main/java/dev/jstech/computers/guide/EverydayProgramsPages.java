@@ -326,7 +326,8 @@ final class EverydayProgramsPages {
                         "Paint says \"That picture is too large to open here\".",
                         "Open a smaller picture.",
                         "Paint refuses a file and says it is not a picture.",
-                        "Open a file that ends in .pix.")
+                        "Open a file that ends in .pix, or a .map a scanner read, which Paint saves as a .pix"
+                                + " ([](jsc:scanners)).")
                 .subheading("Exceed")
                 .paragraph("Exceed is a sheet of cells, as a spreadsheet is. It has 26 columns, from A to Z, and"
                         + " 99 rows. Each cell has a name made of its column letter and its row number, such as"
@@ -399,6 +400,26 @@ final class EverydayProgramsPages {
                         "67ark says an archive holds at most 512 files.",
                         "Pack the files into two archives.")
                 .seeAlso("jsc:programs", "jsc:this_pc_and_desktop_tools")
+                .register();
+        guide.page("easy_disc_creator", section).titled("Easy Disc Creator").icon(ComputingModule.CD_ROM)
+                .paragraph("Easy Disc Creator, by Roxa, copies a medium onto a blank one of the same format or a"
+                        + " larger one: floppy disks, CDs, DVDs, Blu-ray discs, USB sticks, and vinyl through a"
+                        + " Vinyl RW Drive ([](jsc:vinyl_rw_drives)). It comes on a CD and installs on the Frames"
+                        + " systems, from Frames 95 on ([](jsc:programs)).")
+                .steps("Pick the drive to copy from under Copy from, and the drive to record to under Record to.",
+                        "Choose how many copies you want, up to 9 copies.",
+                        "Press Copy. It reads the source, writes the blank and checks the copy, at the write speed"
+                                + " of the medium.")
+                .paragraph("With one drive, it reads the source first, then asks for the blank: take the source out,"
+                        + " put the blank in and go on. Install discs copy like any other disc. Items never do: it"
+                        + " refuses the disks that hold the network's storage and the .dat files.")
+                .paragraph("A vinyl is copied by recording it and cutting it: on a Vinyl RW Drive, it records the"
+                        + " disc in the song's own time, asks for a Blank Vinyl Record and cuts the song onto it.")
+                .ifSomethingGoesWrong("Easy Disc Creator refuses the disc.",
+                        "It holds the network's storage or a .dat file, which never copy.",
+                        "The blank is too small.",
+                        "Use a blank of the same format or a larger one.")
+                .seeAlso("jsc:drives", "jsc:extended_cd_drives", "jsc:vinyl_rw_drives")
                 .register();
         guide.page("games", section).titled("Minesweeper, Solitaire and Snake").icon(ComputingModule.MONITOR)
                 .paragraph("Three games run on the desktop systems. Each one is installed like any other program"
@@ -743,6 +764,12 @@ final class EverydayProgramsPages {
                         + " every Soundfoundry you play it on.")
                 .paragraph("The server streams only while it has the memory to hold the stream open. So a computer"
                         + " asks to listen before it plays, and asks again every little while.")
+                .subheading("Vinyl")
+                .paragraph("With a Vinyl RW Drive on the computer's cable ([](jsc:vinyl_rw_drives)), Soundfoundry"
+                        + " records the music discs a jukebox plays and cuts them onto vinyl. On the Legacy and"
+                        + " Transition looks, the VNL button opens the drive's plate, with Record, Stop, Cut and Eject"
+                        + " and the list of recordings; on the Standard and the Advanced, the Vinyl page in the"
+                        + " sidebar does the same. The recordings are kept in Music/Vinyl.")
                 .ifSomethingGoesWrong("The song line says NO SOUND CARD INSTALLED.",
                         "Install a sound card in the computer.",
                         "A network song does not play.",

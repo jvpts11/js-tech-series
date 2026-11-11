@@ -252,7 +252,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:operations_catalogue",
-  "order": 118,
+  "order": 123,
   "section": "jsc:operations",
   "title": "jsc.guide.operations_catalogue.title"
 }

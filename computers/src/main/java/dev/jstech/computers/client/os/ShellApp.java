@@ -206,6 +206,12 @@ public final class ShellApp implements IDesktopApp {
         return this.view.keyReleased(key, scanCode, modifiers);
     }
 
+    /** A terminal is typed at. */
+    @Override
+    public boolean takesTyping() {
+        return true;
+    }
+
     @Override
     public boolean charTyped(final char c) {
         return this.view.charTyped(c);

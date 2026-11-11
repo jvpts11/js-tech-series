@@ -139,6 +139,34 @@
           {
             "words": "jsc.guide.monitors.table1_8_4"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table1_9_1"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_9_2"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_9_3"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_9_4"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.monitors.table1_10_1"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_10_3"
+          },
+          {
+            "words": "jsc.guide.monitors.table1_10_4"
+          }
         ]
       ]
     },
@@ -313,6 +341,23 @@
       "text": "jsc.guide.monitors.text11"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.monitors.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text13"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.monitors.text14"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.monitors.definition6",
+      "term": "jsc.guide.monitors.term6"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -388,9 +433,11 @@
     "jsc:legacy_monitor",
     "jsc:transition_monitor",
     "jsc:monitor",
-    "jsc:color_monitor"
+    "jsc:color_monitor",
+    "jsc:touch_monitor",
+    "jsc:advanced_touch_monitor"
   ],
-  "order": 60,
+  "order": 61,
   "section": "jsc:peripherals",
   "title": "jsc.guide.monitors.title"
 }

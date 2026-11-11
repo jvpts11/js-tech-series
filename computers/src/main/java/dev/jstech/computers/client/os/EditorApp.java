@@ -574,6 +574,11 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     }
 
     @Override
+    public boolean takesTyping() {
+        return find.hasFocus() || IDesktopApp.typingIn(root);
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         if (find.hasFocus()) {
             return find.charTyped(c);

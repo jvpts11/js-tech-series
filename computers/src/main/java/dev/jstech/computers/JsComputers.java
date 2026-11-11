@@ -23,6 +23,7 @@ import dev.jstech.computers.chain.machine.ChainMachineBlocks;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.chain.machine.WaferTooltip;
 import dev.jstech.computers.audio.MusicImports;
+import dev.jstech.computers.audio.VinylUploads;
 import dev.jstech.computers.block.SmallComputerBlock;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.audio.catalog.SoundfoundryCatalog;
@@ -35,6 +36,7 @@ import dev.jstech.computers.guide.ComputersGuide;
 import dev.jstech.computers.hardware.HardwareKinds;
 import dev.jstech.computers.integration.jei.payload.JeiPayloads;
 import dev.jstech.computers.item.PartTooltips;
+import dev.jstech.computers.machine.DiscCopies;
 import dev.jstech.computers.machine.FileCopyJobs;
 import dev.jstech.computers.machine.NetworkListening;
 import dev.jstech.computers.machine.MachineListing;
@@ -59,6 +61,7 @@ import dev.jstech.computers.registry.ComputerRegistry;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.registry.OwnComputers;
 import dev.jstech.computers.registry.OwnHardware;
+import dev.jstech.computers.scan.ScanKeeper;
 import dev.jstech.computers.scripting.ScriptedHardware;
 import dev.jstech.computers.trace.IsmsTraces;
 import dev.jstech.core.audio.media.MediaKeepers;
@@ -161,6 +164,8 @@ public class JsComputers {
         CoreStates.register(PendingAwards.WAITING);
         // Songs players bring from their own computers, kept on a computer's disk.
         MusicImports.register();
+        // The sound of a disc a Vinyl RW Drive records, brought from the recording player's game.
+        VinylUploads.register();
         // The catalogue's songs stay on the server however long nobody plays them.
         MediaKeepers.register(SoundfoundryCatalog::media);
         // How each desktop moves, declared before the data generation writes it and the packs replace it.
@@ -178,8 +183,10 @@ public class JsComputers {
         MachineOperators.listen();
         PendingAwards.listen();
         SoundfoundryCatalog.listen();
+        ScanKeeper.listen();
         SoundfoundryCommand.listen();
         FileCopyJobs.listen();
+        DiscCopies.listen();
         DebugPayloads.listen();
         NetworkListening.listen();
         CraftingPayloads.listen();

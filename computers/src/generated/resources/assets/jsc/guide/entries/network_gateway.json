@@ -216,7 +216,7 @@
   "items": [
     "jsc:network_gateway"
   ],
-  "order": 147,
+  "order": 152,
   "section": "jsc:gateway",
   "title": "jsc.guide.network_gateway.title"
 }

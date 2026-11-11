@@ -50,6 +50,8 @@ final class DesktopInput {
     private DesktopWindow pressedButton;
     /** When the icon that is picked was clicked, which tells a double click. */
     private long pickedAt;
+    /** Whether the button went down on the touch keyboard, whose drag and release are its own. */
+    private boolean onKeyboard;
 
     /** How close two clicks on one icon must come to open it, in milliseconds. */
     private static final long DOUBLE_CLICK_MS = 300L;
@@ -68,6 +70,16 @@ final class DesktopInput {
         if (!desktop.view().onGlass(absX, absY)) {
             return Click.TAKEN;
         }
+        // On a touch monitor the system's touch keyboard takes the touches that land on it, ahead of everything.
+        final TouchKeyboard keyboard = desktop.touchKeyboard();
+        final double atX = desktop.view().localX(absX);
+        final double atY = desktop.view().localY(absY);
+        onKeyboard = keyboard.shown() && keyboard.box().contains(atX, atY);
+        if (onKeyboard) {
+            keyboard.touch(atX, atY).ifPresent(this::typeTouched);
+            return Click.TAKEN;
+        }
+        keyboard.reveal();
         if (clickedOverlay(absX, absY, button)) {
             return Click.TAKEN;
         }
@@ -90,7 +102,7 @@ final class DesktopInput {
 
     /** The pointer moved to a point on the game's screen with a button held. */
     Click drag(final double absX, final double absY, final int button) {
-        if (desktop.notices().popupUp()) {
+        if (onKeyboard || desktop.notices().popupUp()) {
             return Click.TAKEN;
         }
         final DesktopViewport view = desktop.view();
@@ -135,6 +147,10 @@ final class DesktopInput {
         final DesktopViewport view = desktop.view();
         final double x = view.localX(absX);
         final double y = view.localY(absY);
+        if (onKeyboard) {
+            onKeyboard = false;
+            return Click.TAKEN;
+        }
         desktop.volume().mouseReleased();
         if (desktop.notices().releasePopup(x, y, button)) {
             return Click.TAKEN;
@@ -773,6 +789,19 @@ final class DesktopInput {
             w.snapTo(0, top, halfW, workH);
         } else if (x >= view.width() - 4) {
             w.snapTo(halfW, top, view.width() - halfW, workH);
+        }
+    }
+
+    /* What a key of the touch keyboard types, typed as the keyboard's own key would be. */
+    private void typeTouched(final TouchKeyboard.Typed typed) {
+        if (!typed.text().isEmpty()) {
+            for (int i = 0; i < typed.text().length(); i++) {
+                typed(typed.text().charAt(i));
+            }
+            return;
+        }
+        if (!keyFirst(typed.key(), 0, typed.modifiers())) {
+            key(typed.key(), 0, typed.modifiers());
         }
     }
 

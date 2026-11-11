@@ -43,7 +43,7 @@ public final class PeripheralCableClientTests {
             new Row(ComputingModule.TRANSITION_PERIPHERAL_CABLE, ComputingModule.TRANSITION_MONITOR,
                     ComputingModule.DVD_DRIVE, "dvi", "usb_white"),
             new Row(ComputingModule.PERIPHERAL_CABLE, ComputingModule.MONITOR,
-                    ComputingModule.DVD_DRIVE, "hdmi", "usb3"));
+                    ComputingModule.DOCK_STATION, "hdmi", "usb3"));
 
     private PeripheralCableClientTests() {
     }

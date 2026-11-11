@@ -176,7 +176,7 @@
   ],
   "icon": "jsc:server",
   "id": "jsc:network_services",
-  "order": 95,
+  "order": 100,
   "section": "jsc:network_operation",
   "title": "jsc.guide.network_services.title"
 }

@@ -105,6 +105,9 @@ final class DesktopPainter {
         desktop.drags().render(g, sw, tbY, perCol);
         g.disableScissor();
         renderOverlays(g, sw, sh, lmx, lmy, partialTick);
+        if (desktop.touchKeyboard().shown()) {
+            desktop.touchKeyboard().paint(g, lmx, lmy);
+        }
         renderVeil(g, sw, sh);
         // The player's pointer in the system's own cursors, over everything on the glass and kept to it.
         if (desktop.surface().ownPointer() && lmx >= 0 && lmy >= 0 && lmx < sw && lmy < sh) {

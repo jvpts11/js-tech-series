@@ -458,6 +458,12 @@ public final class BackupConsoleApp implements IDesktopApp {
     }
 
     @Override
+    public boolean takesTyping() {
+        final Popup open = openPopup();
+        return IDesktopApp.typingIn(open != null ? open : root);
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         final Popup open = openPopup();
         return open != null ? open.charTyped(c) : root.charTyped(c);

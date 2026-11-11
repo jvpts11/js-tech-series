@@ -230,6 +230,11 @@ public final class SoftwareManagerApp implements IDesktopApp {
     }
 
     @Override
+    public boolean takesTyping() {
+        return this.typing;
+    }
+
+    @Override
     public boolean charTyped(final char c) {
         if (!this.typing || c < ' ') {
             return false;

@@ -458,6 +458,16 @@ public final class IsmsApp implements IDesktopApp, CodeFileReplies.IReader {
         return doc != null && doc.isQuery() && doc.code.keyPressed(key, scanCode, modifiers);
     }
 
+    /** A dialog, the find strip, the search, or a query open in its editor. */
+    @Override
+    public boolean takesTyping() {
+        if (dialogs.isOpen() || find.isOpen() && find.hasFocus() || focus == Focus.SEARCH) {
+            return true;
+        }
+        final IsmsDocument doc = current();
+        return !context.isOpen() && !menuBar.isOpen() && doc != null && doc.isQuery();
+    }
+
     @Override
     public boolean charTyped(final char c) {
         if (dialogs.isOpen()) {

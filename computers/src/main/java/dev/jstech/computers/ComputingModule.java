@@ -446,9 +446,15 @@ public final class ComputingModule {
             monitor("monitor", MonitorKind.STANDARD).named("Monitor").register();
     public static final BlockEntry<MonitorBlock> COLOR_MONITOR =
             monitor("color_monitor", MonitorKind.COLOR).named("Color Monitor").register();
+    // The touch versions of the two flat panels of the Standard and the Advanced, used by touching their glass.
+    public static final BlockEntry<MonitorBlock> TOUCH_MONITOR =
+            monitor("touch_monitor", MonitorKind.TOUCH_STANDARD).named("Touch Monitor").register();
+    public static final BlockEntry<MonitorBlock> ADVANCED_TOUCH_MONITOR =
+            monitor("advanced_touch_monitor", MonitorKind.TOUCH_ADVANCED).named("Advanced Touch Monitor").register();
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<MonitorBlockEntity>> MONITOR_BE =
             CONTENT.blockEntity("monitor", MonitorBlockEntity::new, MONO_I_MONITOR, VINTAGE_MONITOR, AMBER_MONITOR,
-                    CGA_MONITOR, LEGACY_MONITOR, TRANSITION_MONITOR, MONITOR, COLOR_MONITOR);
+                    CGA_MONITOR, LEGACY_MONITOR, TRANSITION_MONITOR, MONITOR, COLOR_MONITOR, TOUCH_MONITOR,
+                    ADVANCED_TOUCH_MONITOR);
 
     /*
      * The small computers. Each machine comes in the tower of each age up to the Transition, and from the Standard
@@ -1334,6 +1340,7 @@ public final class ComputingModule {
         QuinceItems.init();
         PortableItems.init();
         CoolingItems.init();
+        MediaDevices.init();
         ComputingSounds.init();
         ComputingAudioDevices.init();
         CONTENT.register(modEventBus);

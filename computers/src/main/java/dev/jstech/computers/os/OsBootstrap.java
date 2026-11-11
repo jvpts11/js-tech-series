@@ -921,6 +921,15 @@ public final class OsBootstrap {
                     .described("Set the network's backups, watch them run and restore them.")
                     .withEra(LEGACY).withHouse(SoftwareHouse.VAULTIS).withRam(32),
             /*
+             * Easy Disc Creator copies a medium onto a blank one of the same format or a larger one, and a music disc
+             * through the Vinyl RW Drive; never the network's storage (computers/docs/design/peripherals.md). On a
+             * CD, from Frames 95 on.
+             */
+            ProgramSpec.of(rl("easy_disc_creator"), "edc", false, FRAMES_ONLY, 32, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Easy Disc Creator")
+                    .described("Copy a floppy disk, a disc, a USB stick or a vinyl onto a blank one.")
+                    .withEra(LEGACY).withHouse(SoftwareHouse.ROXA).withRam(16),
+            /*
              * Remote Control: the graphical way into the network's other machines (a headless rack server
              * above all). Any desktop, Frames XP or newer, the point-and-click twin of ssh.
              */

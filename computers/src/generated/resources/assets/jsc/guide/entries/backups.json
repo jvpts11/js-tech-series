@@ -234,7 +234,7 @@
     "jsc:lto6_tape",
     "jsc:lto9_tape"
   ],
-  "order": 97,
+  "order": 102,
   "section": "jsc:network_operation",
   "title": "jsc.guide.backups.title"
 }

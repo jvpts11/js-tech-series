@@ -18,8 +18,11 @@ import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.blockentity.RedstoneInterfaceBlockEntity;
+import dev.jstech.computers.blockentity.ExtendedCdDriveBlockEntity;
+import dev.jstech.computers.blockentity.ScannerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.blockentity.UpsBlockEntity;
+import dev.jstech.computers.blockentity.VinylDriveBlockEntity;
 import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
@@ -62,6 +65,38 @@ public final class ComputingLooks {
     public static final String PRINTER_POWER_LAMP = "lamp_power";
     public static final String PRINTER_BUSY_LAMP = "lamp_busy";
     public static final String PRINTER_PAPER = "paper";
+    /**
+     * The flatbed scanners, one model each era; they share one animation file, the lid lying closed at rest and, while
+     * a page is read, standing open with the light bar running under the glass, a clip of each for each era.
+     */
+    public static final GeoLook<ScannerBlockEntity> SCANNER = GeoLook.of(JsComputers.MODID, "scanner", "scanner",
+            scanner -> scanner(scanner.model().era()));
+    /** A scanner's light bar, lit while it reads, its busy lamp, and the stand-in for what lies on the glass. */
+    public static final String SCANNER_BAR_LAMP = "lamp_bar";
+    public static final String SCANNER_BUSY_LAMP = "lamp_busy";
+    public static final String SCANNER_ITEM = "item";
+    /** What a scanner's item does not show: its lamps and anything on its glass. */
+    public static final List<String> SCANNER_AT_REST = List.of(SCANNER_BAR_LAMP, SCANNER_BUSY_LAMP, SCANNER_ITEM);
+    /**
+     * The Vinyl RW Drives, one model each era; they share one animation file, the record and the platter turning at
+     * thirty-three and a third while the drive records or cuts, a clip for each era.
+     */
+    public static final GeoLook<VinylDriveBlockEntity> VINYL_DRIVE = GeoLook.of(JsComputers.MODID, "vinyl",
+            "vinyl_rw_drive", drive -> vinylDrive(drive.era()));
+    /** A drive's record, shown while one lies on its platter, its lamp lit while it works, and its ring of light. */
+    public static final String VINYL_RECORD = "record";
+    public static final String VINYL_REC_LAMP = "lamp_rec";
+    public static final String VINYL_RING_LAMP = "lamp_ring";
+    /** What a drive's item does not show: a record, and its lamps. */
+    public static final List<String> VINYL_DRIVE_AT_REST = List.of(VINYL_RECORD, VINYL_REC_LAMP, VINYL_RING_LAMP);
+    /** The Extended CD Drives, a tower two blocks tall each era; a lamp for the reading tray and each writing tray. */
+    public static final GeoLook<ExtendedCdDriveBlockEntity> EXTENDED_CD_DRIVE = GeoLook.of(JsComputers.MODID,
+            "disc_tower", "extended_cd_drive", tower -> extendedCdDrive(tower.era()));
+    /** A tower's lamps: the reading tray's, then the seven writing trays'. */
+    public static final List<String> EXTENDED_CD_DRIVE_LAMPS = List.of("lamp_0", "lamp_1", "lamp_2", "lamp_3",
+            "lamp_4", "lamp_5", "lamp_6", "lamp_7");
+    /** What a tower's item does not show: its lamps. */
+    public static final List<String> EXTENDED_CD_DRIVE_AT_REST = EXTENDED_CD_DRIVE_LAMPS;
     /** The Dock Station: one model, its trays marking where each disk is drawn, no clips. */
     public static final GeoLook<DockStationBlockEntity> DOCK_STATION = GeoLook.of(JsComputers.MODID, "dock",
             "dock_station", dock -> "dock_station");
@@ -164,6 +199,10 @@ public final class ComputingLooks {
             "legacy_pattern_encoder", "transition_pattern_encoder", "pattern_encoder", "advanced_pattern_encoder");
     private static final EraTable<String> PRINTERS = EraTable.ofFive("vintage_printer", "legacy_printer",
             "transition_printer", "printer", "advanced_printer");
+    private static final EraTable<String> SCANNERS = EraTable.ofFive("vintage_scanner", "legacy_scanner",
+            "transition_scanner", "scanner", "advanced_scanner");
+    private static final EraTable<String> VINYL_DRIVES = EraTable.ofFive("vintage_vinyl_rw_drive",
+            "legacy_vinyl_rw_drive", "transition_vinyl_rw_drive", "vinyl_rw_drive", "advanced_vinyl_rw_drive");
     private static final EraTable<String> SERVER_RACKS = EraTable.ofFive("vintage_server_rack",
             "legacy_server_rack", "transition_server_rack", "server_rack", "advanced_server_rack");
     private static final EraTable<String> SUPERCOMPUTER_RACKS = EraTable.of("supercomputer_rack")
@@ -254,6 +293,26 @@ public final class ComputingLooks {
     /** The model of the printer of {@code era}: the Standard one has no era in its name, as its block has none. */
     public static String printer(final Era era) {
         return PRINTERS.get(era);
+    }
+
+    /** The model of the scanner of {@code era}: the Standard one has no era in its name, as its block has none. */
+    public static String scanner(final Era era) {
+        return SCANNERS.get(era);
+    }
+
+    /** The model of the Vinyl RW Drive of {@code era}: the Standard one has no era in its name. */
+    public static String vinylDrive(final Era era) {
+        return VINYL_DRIVES.get(era);
+    }
+
+    /** The model of the Extended CD Drive of {@code era}: the Legacy's CD tower, the Transition's, the Advanced's. */
+    public static String extendedCdDrive(final Era era) {
+        final Era parts = HardwareEra.withParts(era);
+        if (parts == HardwareEra.ADVANCED) {
+            return "advanced_extended_cd_drive";
+        }
+        return parts == HardwareEra.TRANSITION || parts == HardwareEra.STANDARD ? "transition_extended_cd_drive"
+                : "legacy_extended_cd_drive";
     }
 
     /** The model of a rack's cabinet: by kind first, then by era. */

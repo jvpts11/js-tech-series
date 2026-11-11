@@ -30,6 +30,7 @@ import static dev.jstech.computers.datagen.recipe.ChainRecipeItems.of;
 
 import dev.jstech.computers.chain.ChainParts;
 import dev.jstech.core.jstechseries.Element;
+import dev.jstech.core.jstechseries.SeriesAlloys;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.material.Forms;
@@ -87,6 +88,12 @@ final class PeripheralRecipes {
                 board(HardwareEra.STANDARD), 1, polycarbonate(), 2);
         made(output, HardwareEra.ADVANCED, item("color_monitor"), ChainParts.SELF_LIT_PANEL.get(), 1,
                 board(HardwareEra.ADVANCED), 1, polycarbonate(), 2);
+        // A touch monitor is the monitor with its touch layer (an indium tin oxide foil), cover glass and controller.
+        final Item touchLayer = of(SeriesAlloys.INDIUM_TIN_OXIDE, Forms.FOIL);
+        made(output, HardwareEra.STANDARD, item("touch_monitor"), item("monitor"), 1, touchLayer, 1,
+                Items.GLASS_PANE, 1, controller(HardwareEra.STANDARD), 1);
+        made(output, HardwareEra.ADVANCED, item("advanced_touch_monitor"), item("color_monitor"), 1, touchLayer, 1,
+                Items.GLASS_PANE, 1, controller(HardwareEra.ADVANCED), 1);
     }
 
     /*
@@ -114,7 +121,11 @@ final class PeripheralRecipes {
     /*
      * A drive in a case of its own: an optical one its motor, a lens, the laser diode of its era and an etched board;
      * the floppy its motor, a magnetic head and an etched board. The Dock Station's trays are a SATA port for each disk
-     * size and an M.2 slot, with its USB bridge.
+     * size and an M.2 slot, with its USB bridge. The scanner its glass, a lens, its sensor and controller (2 controller
+     * chips), the carriage's motor, its lamp (a cold cathode lamp, an LED from the Standard), its board and its box; the
+     * Vinyl RW Drive its platter (a steel plate) and motor and its cutting head (a magnetic head driven by a copper
+     * coil); the Extended CD Drive, as the real duplicator towers, its eight drives (one reads, seven write) and, from
+     * the Transition, its little screen.
      */
     private static void drives(final RecipeOutput output) {
         final Item motor = ChainParts.ELECTRIC_MOTOR.get();
@@ -128,6 +139,24 @@ final class PeripheralRecipes {
                 ChainParts.GALLIUM_NITRIDE_LASER_DIODE.get(), 1, board(HardwareEra.ADVANCED), 1, polycarbonate(), 1);
         made(output, HardwareEra.STANDARD, item("dock_station"), polycarbonate(), 2, board(HardwareEra.STANDARD), 1,
                 controller(HardwareEra.STANDARD), 1, part("storage_sata"), 2, part("storage_m2"), 1);
+        final Item head = ChainParts.MAGNETIC_HEAD.get();
+        final Item coil = ChainParts.COPPER_COIL.get();
+        for (final Era era : ChainParts.ERAS) {
+            final Item lamp = era.isAtMost(HardwareEra.TRANSITION) ? ChainParts.COLD_CATHODE_LAMP.get()
+                    : ChainParts.LED.get();
+            made(output, era, ofEra(era, "scanner"), Items.GLASS_PANE, 1, glassLens(), 1, controller(era), 2, motor,
+                    1, lamp, 1, board(era), 1, plastic(era), 1);
+            made(output, era, ofEra(era, "vinyl_rw_drive"), steelPlate(), 1, motor, 1, head, 1, coil, 1, board(era),
+                    1, plastic(era), 1);
+        }
+        made(output, HardwareEra.LEGACY, item("legacy_extended_cd_drive"), item("internal_cd_drive"), 8,
+                steelPlate(), 4, board(HardwareEra.LEGACY), 1, controller(HardwareEra.LEGACY), 2);
+        made(output, HardwareEra.TRANSITION, item("transition_extended_cd_drive"), item("internal_dvd_drive"), 8,
+                steelPlate(), 4, board(HardwareEra.TRANSITION), 1, controller(HardwareEra.TRANSITION), 2,
+                ChainParts.LCD_SCREEN.get(), 1);
+        made(output, HardwareEra.ADVANCED, item("advanced_extended_cd_drive"), item("internal_blu_ray_drive"), 8,
+                steelPlate(), 4, board(HardwareEra.ADVANCED), 1, controller(HardwareEra.ADVANCED), 2,
+                ChainParts.LED_SCREEN.get(), 1);
     }
 
     /*
@@ -204,6 +233,7 @@ final class PeripheralRecipes {
                 controller(HardwareEra.STANDARD), 1, board(HardwareEra.STANDARD), 1, polycarbonate(), 1, copperFoil(),
                 2);
         made(output, HardwareEra.VINTAGE, item("tape_reel"), pvc(), 2, dust(Element.IRON), 1);
+        made(output, HardwareEra.VINTAGE, item("blank_vinyl_record"), pvc(), 2, Items.PAPER, 1);
         made(output, HardwareEra.LEGACY, item("dlt_tape"), pvc(), 2, dust(Element.IRON), 1, polycarbonate(), 1);
         made(output, HardwareEra.TRANSITION, item("lto3_tape"), pvc(), 2, dust(Element.IRON), 2, polycarbonate(), 1,
                 memory(HardwareEra.TRANSITION), 1);

@@ -156,7 +156,7 @@
     }
   ],
   "id": "jsc:freebsd_help",
-  "order": 318,
+  "order": 323,
   "section": "jsc:freebsd_tools",
   "title": "jsc.guide.freebsd_help.title"
 }

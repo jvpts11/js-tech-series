@@ -47,4 +47,12 @@ interface DesktopSurface {
     default boolean ownPointer() {
         return false;
     }
+
+    /**
+     * Whether the desktop is used by touching it on a touch monitor's glass, where a system with a touch keyboard puts
+     * it up for typing: only the screen a player's game holds on such a glass is.
+     */
+    default boolean touched() {
+        return false;
+    }
 }

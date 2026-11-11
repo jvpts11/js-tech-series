@@ -102,6 +102,19 @@ nothing else; the catalogue reaches a Standard computer only through one.
 Playlists are `.m3u` files in the `Playlists` folder of the computer's music folder, the liked songs one
 of them, and a playlist can hold streamed songs as well as files.
 
+## Vinyl
+
+*Added 2026-11-11.*
+
+With a Vinyl RW Drive on a computer's peripheral cable, Soundfoundry records the music discs a jukebox
+plays, the game's or another mod's, and cuts them onto vinyl: the VNL button on its Legacy and
+Transition looks, the Vinyl page on the Standard and the Advanced. The drive plays the disc aloud in the
+room, and the player whose computer records it reads the song from their own game's resources and
+brings it to the server like any other song, in the song's own time. The recording is kept in
+`Music/Vinyl` when the song ends; a world that stops before loses it. Cutting a recording onto a Blank
+Vinyl Record takes the song's time again and gives back the original disc itself, the one thing a copy
+may make, and only a song that came from a disc goes onto a vinyl.
+
 ## Settings
 
 Under `[media]` in `jstech-balance.toml`:

@@ -32,6 +32,7 @@ import static dev.jstech.computers.client.PrinterTexts.LINKED;
 import static dev.jstech.computers.client.PrinterTexts.MORE;
 import static dev.jstech.computers.client.PrinterTexts.NOTHING;
 import static dev.jstech.computers.client.PrinterTexts.NOW;
+import static dev.jstech.computers.client.PrinterTexts.NO_MAP;
 import static dev.jstech.computers.client.PrinterTexts.NO_PAPER;
 import static dev.jstech.computers.client.PrinterTexts.OFFLINE;
 import static dev.jstech.computers.client.PrinterTexts.OUT;
@@ -209,6 +210,7 @@ public class PrinterScreen extends AbstractComputerScreen<PrinterMenu> {
         return switch (printer.waiting()) {
             case PAUSED -> PAUSED;
             case NO_PAPER -> NO_PAPER;
+            case NO_MAP -> NO_MAP;
             case OUTPUT_FULL -> OUTPUT_FULL;
             case NONE -> printer.printing() ? PRINTING : WAITING;
         };

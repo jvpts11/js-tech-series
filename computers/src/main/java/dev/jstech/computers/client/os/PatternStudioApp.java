@@ -1105,6 +1105,12 @@ public final class PatternStudioApp implements IInventoryBandApp {
         return inputTarget().mouseScrolled(lastMouseX, lastMouseY, delta);
     }
 
+    /** The amount it asks for takes typing, and so do its fields. */
+    @Override
+    public boolean takesTyping() {
+        return amountPopup.isOpen() || IDesktopApp.typingIn(root);
+    }
+
     @Override
     public boolean charTyped(final char c) {
         return inputTarget().charTyped(c);

@@ -26,6 +26,39 @@ final class SoundfoundryAppTexts {
     static final TextKey STEREO = TextKey.of("jsc.soundfoundry.skin.stereo", "STEREO");
     static final TextKey PL = TextKey.of("jsc.soundfoundry.skin.pl", "PL");
     static final TextKey NET = TextKey.of("jsc.soundfoundry.skin.net", "NET");
+    /* The Vinyl RW Drive's plate. */
+    static final TextKey VNL = TextKey.of("jsc.soundfoundry.skin.vnl", "VNL");
+    static final TextKey VINYL = TextKey.of("jsc.soundfoundry.skin.vinyl", "SOUNDFOUNDRY VINYL");
+    static final TextKey VINYL_NO_DRIVE = TextKey.of("jsc.soundfoundry.skin.vinyl_no_drive",
+            "NO VINYL RW DRIVE ON THE CABLE");
+    static final TextKey VINYL_DISC = TextKey.of("jsc.soundfoundry.skin.vinyl_disc", "VINYL RW DRIVE   MUSIC DISC: %s");
+    static final TextKey VINYL_BLANK = TextKey.of("jsc.soundfoundry.skin.vinyl_blank",
+            "VINYL RW DRIVE   A BLANK VINYL");
+    static final TextKey VINYL_EMPTY = TextKey.of("jsc.soundfoundry.skin.vinyl_empty", "VINYL RW DRIVE   EMPTY");
+    static final TextKey VINYL_RECORDING = TextKey.of("jsc.soundfoundry.skin.vinyl_recording",
+            "RECORDING IN THE SONG'S OWN TIME: %s / %s");
+    static final TextKey VINYL_CUTTING = TextKey.of("jsc.soundfoundry.skin.vinyl_cutting",
+            "CUTTING IN THE SONG'S OWN TIME: %s / %s");
+    static final TextKey VINYL_READY = TextKey.of("jsc.soundfoundry.skin.vinyl_ready", "READY");
+    static final TextKey VINYL_SAVING = TextKey.of("jsc.soundfoundry.skin.vinyl_saving", "SAVING TO: %s");
+    static final TextKey VINYL_KEPT = TextKey.of("jsc.soundfoundry.skin.vinyl_kept", "LAST KEPT: %s");
+    static final TextKey VINYL_FROM_DISC = TextKey.of("jsc.soundfoundry.skin.vinyl_from_disc",
+            "FROM A DISC: IT CAN BE CUT ONTO A VINYL");
+    static final TextKey VINYL_PUT_BLANK = TextKey.of("jsc.soundfoundry.skin.vinyl_put_blank",
+            "CUT: PUT A BLANK VINYL IN THE DRIVE");
+    static final TextKey VINYL_CUT_CHOSEN = TextKey.of("jsc.soundfoundry.skin.vinyl_cut_chosen",
+            "CUT: %s ONTO THE BLANK VINYL");
+    static final TextKey VINYL_NONE = TextKey.of("jsc.soundfoundry.skin.vinyl_none",
+            "NO RECORDINGS IN MUSIC/VINYL YET");
+    static final TextKey VINYL_NO_DISC_ROW = TextKey.of("jsc.soundfoundry.skin.vinyl_no_disc_row", "NO DISC");
+    static final TextKey REC = TextKey.of("jsc.soundfoundry.skin.rec", "REC");
+    static final TextKey VINYL_STOP = TextKey.of("jsc.soundfoundry.skin.vinyl_stop", "STOP");
+    static final TextKey CUT = TextKey.of("jsc.soundfoundry.skin.cut", "CUT");
+    static final TextKey VINYL_EJECT = TextKey.of("jsc.soundfoundry.skin.vinyl_eject", "EJECT");
+    static final TextKey VINYL_BRINGING = TextKey.of("jsc.soundfoundry.vinyl_bringing",
+            "Bringing the disc's sound...");
+    static final TextKey VINYL_BRINGING_PERCENT = TextKey.of("jsc.soundfoundry.vinyl_bringing_percent",
+            "Bringing the disc's sound: %s%%");
     static final TextKey SHUFFLE = TextKey.of("jsc.soundfoundry.skin.shuffle", "SHUFFLE");
     static final TextKey REPEAT = TextKey.of("jsc.soundfoundry.skin.repeat", "REPEAT");
     static final TextKey OUT_NONE = TextKey.of("jsc.soundfoundry.skin.out_none", "OUT  -");

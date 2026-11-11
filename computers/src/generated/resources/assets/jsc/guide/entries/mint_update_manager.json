@@ -36,7 +36,7 @@
     }
   ],
   "id": "jsc:mint_update_manager",
-  "order": 275,
+  "order": 280,
   "section": "jsc:mint_programs",
   "title": "jsc.guide.mint_update_manager.title"
 }

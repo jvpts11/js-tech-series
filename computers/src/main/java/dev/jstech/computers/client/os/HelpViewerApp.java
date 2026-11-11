@@ -14,6 +14,7 @@ import dev.jstech.computers.gui.help.HelpTexts;
 import dev.jstech.computers.gui.help.HelpTree;
 import dev.jstech.computers.gui.help.HelpWindowTexts;
 import dev.jstech.computers.gui.layout.HelpViewerLayout;
+import dev.jstech.computers.operation.payload.printer.PrintManualPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.core.client.gui.component.ContextMenu;
@@ -34,6 +35,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -337,6 +339,11 @@ public final class HelpViewerApp implements IDesktopApp {
             return this.menuBar.keyPressed(key, scanCode, modifiers);
         }
         final boolean alt = (modifiers & GLFW.GLFW_MOD_ALT) != 0;
+        // Ctrl+P prints the book shown, as a help program prints its topic, on the machine's Large Scale Printer.
+        if ((modifiers & GLFW.GLFW_MOD_CONTROL) != 0 && key == GLFW.GLFW_KEY_P) {
+            this.printBook();
+            return true;
+        }
         if (alt && key == GLFW.GLFW_KEY_LEFT) {
             this.back();
             return true;
@@ -375,6 +382,11 @@ public final class HelpViewerApp implements IDesktopApp {
             }
         }
         return true;
+    }
+
+    @Override
+    public boolean takesTyping() {
+        return this.typing;
     }
 
     @Override
@@ -918,6 +930,8 @@ public final class HelpViewerApp implements IDesktopApp {
             case FRAMES_95 -> {
                 if (index == 0) {
                     this.display();
+                } else if (index == 1) {
+                    this.printBook();
                 } else if (index == 2) {
                     ActiveDesktop.closeWindowFor(this);
                 }
@@ -1040,8 +1054,20 @@ public final class HelpViewerApp implements IDesktopApp {
     /* CDE's menus */
 
     private List<ContextMenu.Item> fileMenu() {
-        return List.of(new ContextMenu.Item(GameText.resolve(HelpWindowTexts.CLOSE), true,
-                () -> ActiveDesktop.closeWindowFor(this)));
+        return List.of(new ContextMenu.Item(GameText.resolve(HelpWindowTexts.PRINT), true, this::printBook),
+                new ContextMenu.Item(GameText.resolve(HelpWindowTexts.CLOSE), true,
+                        () -> ActiveDesktop.closeWindowFor(this)));
+    }
+
+    /*
+     * Sends the book shown to the machine's Large Scale Printer: the server prints it when it is a book of the systems
+     * and the languages and a printer is on the cable, and the desktop's notification says what became of it.
+     */
+    private void printBook() {
+        final String manual = this.manualShown();
+        if (!manual.isEmpty()) {
+            PacketDistributor.sendToServer(new PrintManualPayload(this.host, manual));
+        }
     }
 
     private List<ContextMenu.Item> editMenu() {

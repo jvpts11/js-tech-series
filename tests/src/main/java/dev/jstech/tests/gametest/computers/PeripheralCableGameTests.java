@@ -217,7 +217,8 @@ public final class PeripheralCableGameTests {
         TestCables.lay(helper, toScreen, ComputingModule.PERIPHERAL_CABLE);
         helper.setBlock(new BlockPos(2, 2, 0), monitorFacing(Direction.WEST));
         TestCables.lay(helper, toDrive, ComputingModule.PERIPHERAL_CABLE);
-        helper.setBlock(new BlockPos(0, 2, 2), facingBlock(ComputingModule.DVD_DRIVE.get(), Direction.SOUTH));
+        // The Standard's own drive, on the Standard's cable: the Dock Station (the DVD Drive is the Transition's).
+        helper.setBlock(new BlockPos(0, 2, 2), facingBlock(ComputingModule.DOCK_STATION.get(), Direction.SOUTH));
         helper.startSequence()
                 .thenExecuteAfter(LINK_TICKS, () -> {
                     helper.assertTrue(plugsAt(helper, toScreen, Direction.EAST).contains(plug("hdmi")),

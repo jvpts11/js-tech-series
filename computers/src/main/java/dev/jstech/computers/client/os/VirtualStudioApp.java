@@ -2066,6 +2066,17 @@ public final class VirtualStudioApp implements IDesktopApp, CodeFileReplies.IRea
                 && this.terminal.keyReleased(key, scanCode, modifiers);
     }
 
+    /** A question it has up, its command palette, its terminal, or a document open on its Solution page. */
+    @Override
+    public boolean takesTyping() {
+        final Popup popup = openPopup();
+        if (popup != null) {
+            return IDesktopApp.typingIn(popup);
+        }
+        return this.palette.isOpen() || this.typingInTerminal && this.terminal.visible()
+                || this.page == Page.SOLUTION && this.workspace.current() != null;
+    }
+
     @Override
     public boolean charTyped(final char c) {
         final Popup popup = openPopup();

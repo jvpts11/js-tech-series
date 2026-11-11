@@ -74,7 +74,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:what_operations_are",
-  "order": 117,
+  "order": 122,
   "section": "jsc:operations",
   "title": "jsc.guide.what_operations_are.title"
 }

@@ -443,6 +443,33 @@ and mends a quarter of the bad sectors left; while it runs, that disk answers th
   access point ([The network](NETWORK.md#wi-fi)). A card draws nothing.
 - **Integra Phi** coprocessors (four of them), for supercomputer nodes.
 
+## Peripherals
+
+*Added 2026-11-11.*
+
+A computer's devices hang on its peripheral cable ([Cables](CABLES.md)). Besides the monitors, drives, printers,
+speakers and the Dock Station:
+
+- **Touch monitors**: the Touch Monitor (Standard) and the Advanced Touch Monitor, the flat panels of their era with
+  a touch layer, used where they stand. With the crosshair on the glass, a right click taps, holding and moving
+  drags, and holding still a second is the right button; the first touch puts the computer's screen on the glass,
+  and the touches after it reach it. A touch on something that takes typing brings up a typing line where the chat's
+  is, and on Frames 10 and Frames 11 their touch keyboard on the glass; the mouse still aims while the line is up.
+  Sneaking uses the block, and a click on the bezel sits down at it as at any monitor. Touch monitors of one kind
+  join into one big touch screen.
+- **Scanners**, one per era: the Pakard ScanJot (Vintage, 8 s a page), the Epsilon Perfecta 1240U (Legacy, 4 s), the
+  Pakard ScanJot G4050 (Transition, 2 s), the Epsilon Perfecta V600 (Standard, 1 s) and the Epsilon Perfecta V39
+  (Advanced, 0.5 s). Lay a book, a map or a printed sheet on the glass and scan it; the item stays, and the file
+  goes to the computer's scans folder ([Systems](SYSTEMS.md#programs)). A printer copies a scanned map onto an empty
+  map in its tray.
+- **The Vinyl RW Drive**, one per era, driven by Soundfoundry ([Music on a server](SOUNDFOUNDRY.md#vinyl)): it plays a
+  music disc aloud while Soundfoundry records it, and cuts a recording of a disc onto a Blank Vinyl Record (2 PVC
+  sheets and 1 paper at the Vintage bench), the cut being the original disc itself.
+- **The Extended CD Drive**, a duplicator tower two blocks tall with one reading tray and seven writing trays: the
+  Legacy's for CDs, the Transition's for DVDs and CDs, the Advanced's for Blu-ray discs, DVDs and CDs. It copies on
+  its own, through its screen, what Easy Disc Creator copies.
+- **The DVD Drive** is a Transition drive.
+
 ## What can go wrong
 
 - **A system will not install, or the setup lists a disk's system as "for ... processors".** The system is built for

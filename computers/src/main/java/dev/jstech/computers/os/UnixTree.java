@@ -102,4 +102,9 @@ public record UnixTree(List<String> home, String mounts, List<String> desktop, L
     public String picturesPath() {
         return homePath() + "/Pictures";
     }
+
+    /** The folder a scanner's files are kept in, made the first time one is scanned. */
+    public String scansPath() {
+        return homePath() + "/Documents/Scans";
+    }
 }

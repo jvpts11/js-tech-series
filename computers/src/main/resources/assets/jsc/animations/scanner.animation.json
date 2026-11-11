@@ -1,0 +1,355 @@
+{
+ "format_version": "1.8.0",
+ "animations": {
+  "animation.scanner.open_vintage": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lid": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.6": [
+       -92,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.close_vintage": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lid": {
+     "rotation": {
+      "0.0": [
+       -92,
+       0,
+       0
+      ],
+      "0.6": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.bar_vintage": {
+   "loop": true,
+   "animation_length": 4.0,
+   "bones": {
+    "lamp_bar": {
+     "position": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.8": [
+       0,
+       0,
+       0
+      ],
+      "2.4": [
+       0,
+       0,
+       8.5
+      ],
+      "4.0": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.open_legacy": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lid": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.6": [
+       -92,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.close_legacy": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lid": {
+     "rotation": {
+      "0.0": [
+       -92,
+       0,
+       0
+      ],
+      "0.6": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.bar_legacy": {
+   "loop": true,
+   "animation_length": 4.0,
+   "bones": {
+    "lamp_bar": {
+     "position": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.8": [
+       0,
+       0,
+       0
+      ],
+      "2.4": [
+       0,
+       0,
+       8.5
+      ],
+      "4.0": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.open_transition": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lid": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.6": [
+       -92,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.close_transition": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lid": {
+     "rotation": {
+      "0.0": [
+       -92,
+       0,
+       0
+      ],
+      "0.6": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.bar_transition": {
+   "loop": true,
+   "animation_length": 4.0,
+   "bones": {
+    "lamp_bar": {
+     "position": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.8": [
+       0,
+       0,
+       0
+      ],
+      "2.4": [
+       0,
+       0,
+       8.5
+      ],
+      "4.0": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.open_standard": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lid": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.6": [
+       -92,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.close_standard": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lid": {
+     "rotation": {
+      "0.0": [
+       -92,
+       0,
+       0
+      ],
+      "0.6": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.bar_standard": {
+   "loop": true,
+   "animation_length": 4.0,
+   "bones": {
+    "lamp_bar": {
+     "position": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.8": [
+       0,
+       0,
+       0
+      ],
+      "2.4": [
+       0,
+       0,
+       8.5
+      ],
+      "4.0": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.open_advanced": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lid": {
+     "rotation": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.6": [
+       -92,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.close_advanced": {
+   "loop": "hold_on_last_frame",
+   "animation_length": 0.6,
+   "bones": {
+    "lid": {
+     "rotation": {
+      "0.0": [
+       -92,
+       0,
+       0
+      ],
+      "0.6": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  },
+  "animation.scanner.bar_advanced": {
+   "loop": true,
+   "animation_length": 4.0,
+   "bones": {
+    "lamp_bar": {
+     "position": {
+      "0.0": [
+       0,
+       0,
+       0
+      ],
+      "0.8": [
+       0,
+       0,
+       0
+      ],
+      "2.4": [
+       0,
+       0,
+       8.5
+      ],
+      "4.0": [
+       0,
+       0,
+       0
+      ]
+     }
+    }
+   }
+  }
+ }
+}

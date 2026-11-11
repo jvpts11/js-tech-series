@@ -621,6 +621,10 @@ public final class DiskFilesystem {
         if (type == FileType.BAK) {
             return BackupFile.read(content) != null;
         }
+        // A scanned enchanted book or map prints back as what it names, so only one the world sealed is written.
+        if (type == FileType.ENCH || type == FileType.MAP) {
+            return ScanSeal.key().map(key -> ScanFile.open(content, key) != null).orElse(false);
+        }
         final RecordingFile recording = RecordingFile.read(content);
         if (!type.recording()) {
             return recording == null;
@@ -704,6 +708,10 @@ public final class DiskFilesystem {
              * the song, and text renamed into one would be a song nobody brought.
              */
             if (newType != file.type() && (newType.recording() || file.type().recording())) {
+                return false;
+            }
+            // Nor does a name turn a file into a kind its content is not, such as text into a sealed scan.
+            if (newType != file.type() && !holdsItsKind(newType, file.content())) {
                 return false;
             }
             disk.set(ComputingComponents.FILESYSTEM.get(),

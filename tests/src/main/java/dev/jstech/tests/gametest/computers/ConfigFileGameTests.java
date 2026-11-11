@@ -265,7 +265,8 @@ public final class ConfigFileGameTests {
         same(helper, "jscomputers-server.toml", ComputersServerConfig.FILE.fileName(), "the computers' file");
         final List<String> computers = new ArrayList<>(List.of("balance.hdd_latency_ticks",
                 "balance.ssd_latency_ticks", "balance.nvme_latency_ticks", "balance.subframe_efficiency_factor",
-                "balance.program_machine_micros", "balance.program_server_micros", "power.draw_energy", "update.cost",
+                "balance.program_machine_micros", "balance.program_server_micros", "power.draw_energy",
+                "printing.enchanted_books", "update.cost",
                 "hardware.psu_failures", "hardware.psu_life_multiplier", "temperature.ambient_base",
                 "temperature.biome_factor", "temperature.nether_extra", "temperature.restart_below_c",
                 "item_loss.power_loss", "item_loss.network_split", "item_loss.network_conflict",

@@ -345,7 +345,7 @@
   ],
   "icon": "jsc:cluster_management_computer",
   "id": "jsc:cluster_installs",
-  "order": 142,
+  "order": 147,
   "section": "jsc:cluster_tools",
   "title": "jsc.guide.cluster_installs.title"
 }

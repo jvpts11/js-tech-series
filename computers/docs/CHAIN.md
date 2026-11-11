@@ -123,6 +123,17 @@ What each machine draws and how long a step takes, as first estimates:
 | Siemens Reactor | 60 s | 5 kW | Coil Winder | 4 s | 0.5 kW |
 | Optical Polisher | 10 s | 1 kW | Display Line | 30 s | 3 kW |
 | Prebuilder | 10 s | 1 kW | Preinstaller | 10 s, and 1 s every 100 MB | 1 kW |
+| Large Scale Printer | 2 s | 2 kW | | | |
+
+The **Large Scale Printer** (added 2026-11-11) is a Legacy machine 4 wide, 3 tall and 3 deep, of the Machine Casing,
+the Paper Feeder, the Print Unit, the Inking Unit and the Perfect Binder, its Power Entry at the back. It is the one
+machine that prints books: 3 paper a book, from its feeder by hand, an Item Inlet fed by a bus or a hopper. Its
+Peripheral Port takes a peripheral cable from a computer, whose systems then list it in their Print dialog for .book
+and .ench files ([Systems](SYSTEMS.md#programs)). A switch in its window sends the books into that computer's network
+or into a chest beside its Item Outlet; with neither, they wait. A written book comes out as a copy, a book and quill
+as a book and quill, and an enchanted book with every enchantment at the level it was scanned with, unless the server
+setting `printing.enchanted_books` is off, when it refuses them and says why. The Paper Feeder, Inking Unit and
+Perfect Binder are made at the Crafting Table, the Print Unit at the Legacy bench.
 
 ## The recipes
 

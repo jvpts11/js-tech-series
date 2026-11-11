@@ -32,6 +32,13 @@ public final class PrintTexts {
     public static final TextKey USES = TextKey.of("jsc.print.uses", "Uses %s sheets from the tray (%s left).");
     public static final TextKey USES_ONE = TextKey.of("jsc.print.uses_one", "Uses 1 sheet from the tray (%s left).");
     public static final TextKey LOOKING = TextKey.of("jsc.print.looking", "Looking for printers...");
+    public static final TextKey BOOK = TextKey.of("jsc.print.book", "Book");
+    public static final TextKey BOOK_BY = TextKey.of("jsc.print.book_by", "%s, by %s");
+    public static final TextKey PAGES_SIGNED = TextKey.of("jsc.print.pages_signed", "%s pages, signed");
+    public static final TextKey PAGES_UNSIGNED = TextKey.of("jsc.print.pages_unsigned", "%s pages, book and quill");
+    public static final TextKey ENCHANTED_BOOK = TextKey.of("jsc.print.enchanted_book", "enchanted book");
+    public static final TextKey PAPER_FEEDER = TextKey.of("jsc.print.paper_feeder", "Paper: %s sheets in the feeder");
+    public static final TextKey USES_BOOKS = TextKey.of("jsc.print.uses_books", "Uses %s sheets, %s a book (%s left).");
     public static final TextKey PREVIEW_PAGE = TextKey.of("jsc.print.preview_page", "%s of %s");
     public static final TextKey SENT_TITLE = TextKey.of("jsc.print.sent_title", "Printing");
     public static final TextKey FAILED_TITLE = TextKey.of("jsc.print.failed_title", "Could not print");

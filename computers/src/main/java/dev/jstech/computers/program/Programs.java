@@ -155,6 +155,10 @@ public final class Programs {
     public static final ResourceLocation BACKUP_CONSOLE =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "backup_console");
 
+    /** Easy Disc Creator: Roxa's copier of media onto blanks, from Frames 95 on. */
+    public static final ResourceLocation EASY_DISC_CREATOR =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "easy_disc_creator");
+
     /** Soundfoundry: Voidsoft's music player. */
     public static final ResourceLocation SOUNDFOUNDRY =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "soundfoundry");

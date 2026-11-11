@@ -228,7 +228,7 @@
     }
   ],
   "id": "jsc:sound_library",
-  "order": 430,
+  "order": 435,
   "section": "jsc:library_machine",
   "title": "jsc.guide.sound_library.title"
 }

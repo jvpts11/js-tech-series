@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.core.client.gui.component.Panel;
+import dev.jstech.core.client.gui.component.UiComponent;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
@@ -172,6 +174,26 @@ public interface IDesktopApp {
     /** Handles a key press while this app's window is focused; returns true if consumed. */
     default boolean keyPressed(int key, int scanCode, int modifiers) {
         return false;
+    }
+
+    /**
+     * Whether the program takes typing now: a field with its caret, a document, a prompt. On a touch monitor a touch
+     * that leaves such a program in front brings up the typing line, and the system's touch keyboard where it has one.
+     */
+    default boolean takesTyping() {
+        return false;
+    }
+
+    /**
+     * Whether something in {@code root}, at any depth, has the keyboard and takes every key as typing: what a program
+     * built of components answers {@link #takesTyping()} with.
+     */
+    static boolean typingIn(final Panel root) {
+        final UiComponent focused = root.focusedChild();
+        if (focused instanceof Panel inner) {
+            return typingIn(inner);
+        }
+        return focused != null && focused.takesTyping();
     }
 
     /** Handles a key being let go while this app's window is focused; returns true if consumed. */

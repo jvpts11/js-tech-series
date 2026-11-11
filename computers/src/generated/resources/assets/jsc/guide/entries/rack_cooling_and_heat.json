@@ -154,7 +154,7 @@
     }
   ],
   "id": "jsc:rack_cooling_and_heat",
-  "order": 52,
+  "order": 53,
   "section": "jsc:racks",
   "title": "jsc.guide.rack_cooling_and_heat.title"
 }

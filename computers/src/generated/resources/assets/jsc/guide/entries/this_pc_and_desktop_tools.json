@@ -234,7 +234,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:this_pc_and_desktop_tools",
-  "order": 70,
+  "order": 74,
   "section": "jsc:desktop_apps",
   "title": "jsc.guide.this_pc_and_desktop_tools.title"
 }

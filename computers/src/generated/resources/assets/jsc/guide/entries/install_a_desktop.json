@@ -177,7 +177,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:install_a_desktop",
-  "order": 240,
+  "order": 245,
   "section": "jsc:desktop_environments",
   "title": "jsc.guide.install_a_desktop.title"
 }

@@ -350,6 +350,18 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.printers.heading6"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.text12"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.printers.text13"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -374,6 +386,10 @@
         {
           "fix": "jsc.guide.printers.fix5",
           "problem": "jsc.guide.printers.problem5"
+        },
+        {
+          "fix": "jsc.guide.printers.fix6",
+          "problem": "jsc.guide.printers.problem6"
         }
       ]
     },
@@ -396,7 +412,7 @@
     "jsc:advanced_printer",
     "jsc:printed_paper"
   ],
-  "order": 64,
+  "order": 67,
   "section": "jsc:peripherals",
   "title": "jsc.guide.printers.title"
 }

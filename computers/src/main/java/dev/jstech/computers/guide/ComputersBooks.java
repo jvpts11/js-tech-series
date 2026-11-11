@@ -19,6 +19,7 @@ import dev.jstech.core.guide.ManualItem;
 import dev.jstech.core.guide.ModGuide;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * The books of the systems and the languages, beside the Guide to Operations: the Frames Resource Kit, the Linux Desk
@@ -48,6 +49,20 @@ public final class ComputersBooks {
             .named("The Book of Sigma").register();
 
     private ComputersBooks() {
+    }
+
+    /**
+     * The book whose manual is {@code manual}, which the Large Scale Printer prints from a computer's help; empty for
+     * a manual no book of the systems and the languages is (computers/docs/design/manuals.md).
+     */
+    public static Optional<ItemEntry<ManualItem>> ofManual(final String manual) {
+        for (final ItemEntry<ManualItem> book : List.of(FRAMES_RESOURCE_KIT, LINUX_DESK_REFERENCE, LINUX_BY_HAND,
+                DAEMON_HANDBOOK, LEARNING_IQL, BOOK_OF_SIGMA)) {
+            if (book.get().manual().equals(manual)) {
+                return Optional.of(book);
+            }
+        }
+        return Optional.empty();
     }
 
     /** Declares the six books, their styles and their chapters, then the pages of each chapter in printed order. */

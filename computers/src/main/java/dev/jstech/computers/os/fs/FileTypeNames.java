@@ -39,6 +39,9 @@ final class FileTypeNames {
     static final TextKey PIX = TextKey.of("jsc.file_type.pix", "Picture");
     static final TextKey PNG = TextKey.of("jsc.file_type.png", "PNG picture");
     static final TextKey BAK = TextKey.of("jsc.file_type.bak", "Backup");
+    static final TextKey BOOK = TextKey.of("jsc.file_type.book", "Book");
+    static final TextKey ENCH = TextKey.of("jsc.file_type.ench", "Enchanted book");
+    static final TextKey MAP = TextKey.of("jsc.file_type.map", "Map");
 
     private FileTypeNames() {
     }

@@ -90,7 +90,7 @@ public final class MonitorScreenRenderer implements BlockEntityRenderer<MonitorB
             pose.translate(0.0F, 0.0F, -LIFT / 2);
         }
         final MonitorBlockEntity screen = monitor.screen();
-        final float[] glass = glass(kind, wide, tall);
+        final float[] glass = picture(kind, wide, tall);
         final int scale = Math.min(MOST_SCALE, Math.max(SCALE, wide));
         if (state.getValue(MonitorBlock.LIT)) {
             // A lit screen shines by itself, whatever light falls on it.
@@ -147,11 +147,12 @@ public final class MonitorScreenRenderer implements BlockEntityRenderer<MonitorB
         pose.scale(-1.0F / FRONT, -1.0F / FRONT, 1.0F);
     }
 
-    /*
-     * Where the picture goes, in units across the front: on a monitor alone its own glass; on a big screen the glass
-     * inside one bezel and above one chin. The picture keeps its shape, centred where the glass is a shade off it.
+    /**
+     * Where the picture goes, in units across the front from its top left, {@link MonitorKind#FRONT} to a block, as
+     * {@code {left, top, right, bottom}}: on a monitor alone its own glass; on a big screen the glass inside one bezel
+     * and above one chin. The picture keeps its shape, centred where the glass is a shade off it.
      */
-    private static float[] glass(final MonitorKind kind, final int wide, final int tall) {
+    public static float[] picture(final MonitorKind kind, final int wide, final int tall) {
         return fitted(kind.glass(0), kind.glass(1), wide * FRONT - (FRONT - kind.glass(2)),
                 tall * FRONT - (FRONT - kind.glass(3)));
     }
@@ -177,12 +178,12 @@ public final class MonitorScreenRenderer implements BlockEntityRenderer<MonitorB
         final Bezels bezels = BEZELS.get();
         final int bezel = switch (kind) {
             case TRANSITION -> bezels.transition();
-            case COLOR -> bezels.color();
+            case COLOR, TOUCH_ADVANCED -> bezels.color();
             default -> bezels.standard();
         };
         final int chin = switch (kind) {
             case TRANSITION -> bezels.transitionStrip();
-            case COLOR -> bezels.colorChin();
+            case COLOR, TOUCH_ADVANCED -> bezels.colorChin();
             default -> bezels.standardChin();
         };
         final int glassBottom = height - ((int) FRONT - kind.glass(3));

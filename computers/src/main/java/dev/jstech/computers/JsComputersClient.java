@@ -18,6 +18,8 @@ import dev.jstech.computers.client.monitor.MonitorChrome;
 import dev.jstech.computers.client.monitor.MonitorPainter;
 import dev.jstech.computers.client.monitor.MonitorPictureCache;
 import dev.jstech.computers.client.monitor.SessionFaces;
+import dev.jstech.computers.client.monitor.TouchFinger;
+import dev.jstech.computers.client.monitor.TouchScreens;
 import dev.jstech.computers.client.os.DesktopCopies;
 import dev.jstech.computers.client.os.ParkedEditors;
 import dev.jstech.computers.config.ComputersClientConfig;
@@ -66,6 +68,9 @@ public class JsComputersClient {
         MonitorPainter.listen();
         MonitorPictureCache.listen();
         SessionFaces.listen();
+        // The touch monitors: the screen held on the glass, and the finger on it.
+        TouchScreens.listen();
+        TouchFinger.listen();
         DesktopCopies.listen();
         ParkedEditors.listen();
     }

@@ -239,6 +239,7 @@ need the network to run a particular engine ([The network](NETWORK.md#engines)),
 | Prophet Reactive Console | Standard | Declares the state the network keeps with Prophet YourIQL. |
 | Remote Control | Standard | Takes over another machine of the network and uses it on this screen. |
 | Backup Console | Legacy | Sets the network's backups, watches them run and restores them (added 2026-11-11). |
+| Easy Disc Creator | Legacy | Roxa's disc copier for the Frames systems, from Frames 95 on: copies a floppy, a CD, a DVD, a Blu-ray disc, a USB stick or, through a Vinyl RW Drive, a vinyl onto a blank of the same format or a larger one, at the medium's write speed; with one drive it reads the source, then asks for the blank. Install discs copy like any other; the disks of the network's storage and the .dat files never do (added 2026-11-11). |
 
 And editors (Vim, Emacs, Virtual Studio, Virtual Studio Code, Knot), the Σ# and Σ compilers ([Σ#](SIGMA.md)),
 Soundfoundry (music), Paint, Exposure, Exceed, Midsoft Messenger, screenfetch, and games (Minesweeper, Solitaire,
@@ -250,6 +251,16 @@ Cinnamon, Audio on CDE and the QuinceTime Player on Quince's systems. It plays t
 player Soundfoundry plays through, and image sequences: a folder of pictures from Paint or a camera, shown in the
 order of their names at 12 a second (1 to 20 in its options). A folder's menu in Files has Play and Add to its list.
 A song needs a sound card; pictures play without one.
+
+Scanners (added 2026-11-11, [Hardware](HARDWARE.md#peripherals)) put their files in the system's scans folder,
+`Users/Public/Documents/Scans` on Frames and MC-DOS and `Documents/Scans` in the home folder on Linux, FreeBSD and
+UNIX System V: a written book or a book and quill as a **.book** (its title and author, then each page under its
+heading, which the Editor opens and changes), an enchanted book as a **.ench** (the Editor), a map as a **.map**
+(Paint, which saves it as a .pix), and a Printed Paper sheet as a .txt or a .pix. A .ench and a .map are sealed to
+the world that scanned them: changed, or carried to another world, they no longer print. A .map prints onto an
+empty map in a printer's tray, from the computer, `PRINT` or `lp`; a .book and a .ench print only on the Large Scale
+Printer, from the Print dialog, as do the systems' and languages' own books from the help (Frames 95's Print, CDE's
+File > Print, Ctrl+P).
 
 ### Backups
 

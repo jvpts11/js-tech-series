@@ -144,6 +144,12 @@ final class QuinceInfoApp implements IDesktopApp {
         }
     }
 
+    /** Its two sizes are typed in, one or the other always taking the digits. */
+    @Override
+    public boolean takesTyping() {
+        return true;
+    }
+
     @Override
     public boolean charTyped(final char c) {
         final StringBuilder typed = this.focus == 0 ? this.minimum : this.preferred;

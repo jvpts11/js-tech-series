@@ -169,6 +169,8 @@ final class DesktopState {
     private final DesktopPointers pointers = new DesktopPointers(this);
     /** Its machine's copies under way, as a copy window or what its system showed instead. */
     private final CopyWindows copies = new CopyWindows(this);
+    /** The system's touch keyboard, on a touch monitor's glass, for the systems that have one. */
+    private final TouchKeyboard touchKeyboard = new TouchKeyboard(this);
     /**
      * The boot picture's colour giving way to this desktop when it came straight up out of one, or none; a monitor
      * the player walked up to later shows its desktop at once.
@@ -285,6 +287,23 @@ final class DesktopState {
     @Nullable
     Slot hoveredSlot() {
         return painter.hovered();
+    }
+
+    /** The system's touch keyboard, up on a touch monitor's glass while something takes typing. */
+    TouchKeyboard touchKeyboard() {
+        return touchKeyboard;
+    }
+
+    /**
+     * Whether something on the desktop takes typing now: an icon being renamed, or the program of the window in front
+     * with a field, a document or a prompt of its own taking it.
+     */
+    boolean takesTyping() {
+        if (deskFiles.isRenaming()) {
+            return true;
+        }
+        final DesktopWindow front = wm.focused();
+        return front != null && front.app().takesTyping();
     }
 
     /** Where the pointer is drawn this frame, desktop-local, to a fraction of a pixel. */

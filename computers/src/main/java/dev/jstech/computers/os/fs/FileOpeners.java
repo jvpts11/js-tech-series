@@ -71,6 +71,10 @@ public final class FileOpeners {
         BY_TYPE.put(FileType.OGG, List.of("soundfoundry", MEDIA_PLAYER));
         BY_TYPE.put(FileType.WAV, List.of("soundfoundry", MEDIA_PLAYER));
         BY_TYPE.put(FileType.PNG, List.of(MEDIA_PLAYER));
+        // A scanned book reads and edits in the editor, an enchanted book only reads there, and a map shows in Paint.
+        BY_TYPE.put(FileType.BOOK, List.of(EDITOR));
+        BY_TYPE.put(FileType.ENCH, List.of(EDITOR));
+        BY_TYPE.put(FileType.MAP, List.of("paint"));
         BY_TYPE.put(FileType.TXT, List.of(EDITOR));
         BY_TYPE.put(FileType.CFG, List.of(EDITOR));
         BY_TYPE.put(FileType.CSV, List.of(EDITOR));

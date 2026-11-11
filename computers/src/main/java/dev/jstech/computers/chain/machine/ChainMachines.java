@@ -12,8 +12,11 @@ import static dev.jstech.computers.registry.ComputingContent.CONTENT;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.WorkbenchBlockEntity;
 import dev.jstech.computers.chain.ChainBenches;
+import dev.jstech.computers.menu.LargeScalePrinterMenu;
+import dev.jstech.computers.printer.LargeScalePrinterBlockEntity;
 import dev.jstech.core.content.BlockEntry;
 import dev.jstech.core.content.Device;
+import dev.jstech.core.content.Device.IMenuFactory;
 import dev.jstech.core.content.Drops;
 import dev.jstech.core.content.IBlockLook;
 import dev.jstech.core.content.IBlockModel;
@@ -227,6 +230,14 @@ public final class ChainMachines {
                 .legend("a=item_outlet,b=preinstaller_cradle,c=power_entry,d=item_inlet,e=preinstaller_console,"
                         + "f=preinstaller_disk_dock,g=preinstaller_board_fixture")
                 .works(PreinstallerBlockEntity::new).declare();
+        // The Legacy's book factory and the only printer of books, with a window of its own; its draw is an estimate.
+        machine("large_scale_printer").named("Large Scale Printer").step(2, 2_000)
+                .slots(LargeScalePrinterBlockEntity.INPUTS, LargeScalePrinterBlockEntity.OUTPUTS, 0, 0, 0, 0)
+                .shape("abbc,bbbd,ebbb", "fgg#,bbbb,bbbh", "bbib,bbbb,bbbb")
+                .legend("a=item_outlet,b=machine_casing,c=large_scale_printer_paper_feeder,d=item_inlet,"
+                        + "e=power_entry,f=large_scale_printer_perfect_binder,g=large_scale_printer_print_unit,"
+                        + "h=peripheral_port,i=large_scale_printer_inking_unit")
+                .works(LargeScalePrinterBlockEntity::new).opens(LargeScalePrinterMenu::open).declare();
     }
 
     private ChainMachines() {
@@ -333,6 +344,7 @@ public final class ChainMachines {
         private final Map<Era, Integer> serves = new LinkedHashMap<>();
         private boolean linked;
         private IEntityMaker entity = ChainMachineBlockEntity::new;
+        private IMenuFactory<ChainMachineBlockEntity> menu = MachineMenu::new;
 
         Builder(final String id) {
             this.id = id;
@@ -341,6 +353,12 @@ public final class ChainMachines {
         /* A machine that does work of its own rather than recipes: its terminal's block entity. */
         Builder works(final IEntityMaker maker) {
             this.entity = maker;
+            return this;
+        }
+
+        /* A machine with a window of its own instead of every machine's: what its terminal opens. */
+        Builder opens(final IMenuFactory<ChainMachineBlockEntity> factory) {
+            this.menu = factory;
             return this;
         }
 
@@ -416,10 +434,11 @@ public final class ChainMachines {
             CONTENT.model("chain/" + id).file("jsmodels/chain/" + id + ".glb").formedFrom(machine.patternId())
                     .register();
             final String casing = TEXTURES + legend.get(layers.getFirst().getFirst().charAt(0));
+            final IMenuFactory<ChainMachineBlockEntity> opened = menu;
             final BlockEntry<ChainMachineTerminalBlock> terminal = CONTENT.block(machine.terminalPath(),
                             properties -> new ChainMachineTerminalBlock(properties,
                                     Device.of(() -> DECLARED.get(id).type().get())
-                                            .ticks(MachineBlockEntity::serverTick).opensMenu(MachineMenu::new), id))
+                                            .ticks(MachineBlockEntity::serverTick).opensMenu(opened), id))
                     .named(english + " Terminal")
                     .properties(properties -> properties.mapColor(MapColor.METAL).strength(3.0F)
                             .sound(SoundType.METAL))

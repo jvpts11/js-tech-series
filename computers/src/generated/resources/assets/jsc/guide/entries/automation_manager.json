@@ -234,7 +234,7 @@
     }
   ],
   "id": "jsc:automation_manager",
-  "order": 138,
+  "order": 143,
   "section": "jsc:automation_jobs",
   "title": "jsc.guide.automation_manager.title"
 }

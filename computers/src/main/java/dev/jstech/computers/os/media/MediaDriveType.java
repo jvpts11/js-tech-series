@@ -124,15 +124,17 @@ public enum MediaDriveType implements IStableName {
     /**
      * The era the drive is of, which decides the port on its back (save the Dock's, see {@link #portEra()}) and so the
      * peripheral cables it takes: the floppy
-     * drive the Vintage's parallel port, the CD drive the Legacy's USB, the DVD drive and the Dock the Standard's
-     * USB 3, the Blu-ray drive the Advanced's USB-C. A case's front port came with the Transition's case.
+     * drive the Vintage's parallel port, the CD drive the Legacy's USB, the DVD drive the Transition's USB 2, the Dock
+     * the Standard's USB 3, the Blu-ray drive the Advanced's USB-C. The DVD drive is the Transition's, as the real
+     * ones were and as that era's programs need, since they come on DVDs; a Standard computer reaches it with a
+     * Transition cable. A case's front port came with the Transition's case.
      */
     public Era era() {
         return switch (this) {
             case FLOPPY_DRIVE -> HardwareEra.VINTAGE;
             case CD_DRIVE -> HardwareEra.LEGACY;
-            case USB_PORT -> HardwareEra.TRANSITION;
-            case DVD_DRIVE, DOCK_STATION -> HardwareEra.STANDARD;
+            case USB_PORT, DVD_DRIVE -> HardwareEra.TRANSITION;
+            case DOCK_STATION -> HardwareEra.STANDARD;
             case BLU_RAY_DRIVE -> HardwareEra.ADVANCED;
         };
     }

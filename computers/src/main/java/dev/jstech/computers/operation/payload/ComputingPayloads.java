@@ -25,6 +25,8 @@ import dev.jstech.computers.operation.payload.sheet.SheetPayloads;
 import dev.jstech.computers.operation.payload.music.SoundfoundryCoverPayloads;
 import dev.jstech.computers.operation.payload.music.SoundfoundryPagePayloads;
 import dev.jstech.computers.operation.payload.music.SoundfoundryPayloads;
+import dev.jstech.computers.operation.payload.disccopy.DiscCopyPayloads;
+import dev.jstech.computers.operation.payload.vinyl.VinylPayloads;
 import dev.jstech.computers.operation.payload.music.SoundfoundrySharePayloads;
 import dev.jstech.computers.operation.payload.social.SocialPayloads;
 import dev.jstech.computers.operation.payload.backup.BackupPayloads;
@@ -95,6 +97,8 @@ public final class ComputingPayloads {
         BackupPayloads.register(registrar);
         MediaPayloads.register(registrar);
         SoundfoundryPayloads.register(registrar);
+        VinylPayloads.register(registrar);
+        DiscCopyPayloads.register(registrar);
         SoundfoundrySharePayloads.register(registrar);
         SoundfoundryPagePayloads.register(registrar);
         SoundfoundryCoverPayloads.register(registrar);

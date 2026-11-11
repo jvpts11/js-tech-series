@@ -2575,6 +2575,16 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         return true;
     }
 
+    /** A question it has up (an amount to ask for, to craft) takes typing, and so does its search box. */
+    @Override
+    public boolean takesTyping() {
+        if (filterMenu.isOpen() || keyboardOnGrid()) {
+            return false;
+        }
+        final Panel target = inputTarget();
+        return target != root || IDesktopApp.typingIn(root);
+    }
+
     @Override
     public boolean charTyped(final char c) {
         if (filterMenu.isOpen()) {

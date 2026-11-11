@@ -9,6 +9,8 @@ package dev.jstech.computers.printer;
 
 import dev.jstech.computers.blockentity.PrinterBlockEntity;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.fs.ScanFile;
+import dev.jstech.computers.os.fs.ScanSeal;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -18,6 +20,7 @@ import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.OptionalInt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
@@ -34,6 +37,9 @@ public final class Printers {
     private static final TextKey PRINTING = TextKey.of("jsc.printer.state.printing", "Printing");
     private static final TextKey PAUSED = TextKey.of("jsc.printer.state.paused", "Paused");
     private static final TextKey NO_PAPER = TextKey.of("jsc.printer.state.no_paper", "Out of paper");
+    private static final TextKey NO_MAP = TextKey.of("jsc.printer.state.no_map", "Needs an empty map");
+    private static final TextKey NOT_A_MAP = TextKey.of("jsc.printer.not_a_map",
+            "%s is not a map a scanner of this world read.");
     private static final TextKey OUTPUT_FULL = TextKey.of("jsc.printer.state.output_full",
             "Output tray full");
     private static final TextKey WAITING = TextKey.of("jsc.printer.state.waiting", "%s (%s waiting)");
@@ -91,6 +97,33 @@ public final class Printers {
         return new Result(printer, job, SENT.with(document.title(), printer.model().displayName()));
     }
 
+    /**
+     * Puts copies of a scanned map in the queue of {@code printer}, each onto an empty map from its tray, or says why it
+     * could not: no printer, a full queue, or a file the world did not seal (computers/docs/design/peripherals.md).
+     *
+     * @param title   the file's name, which names the job in the queue
+     * @param content the {@code .map} file's content
+     * @param user    who sent it, as {@code lpstat} names a request's owner
+     */
+    public static Result printMap(final ServerLevel level, @Nullable final PrinterBlockEntity printer,
+                                  final String title, final String machine, final String program,
+                                  final String content, final int copies, final String user) {
+        if (printer == null) {
+            return new Result(null, null, NO_PRINTER.text());
+        }
+        final OptionalInt map = ScanSeal.key().map(key -> ScanFile.open(content, key)).map(ScanFile::mapOf)
+                .orElse(OptionalInt.empty());
+        if (map.isEmpty()) {
+            return new Result(printer, null, NOT_A_MAP.with(title));
+        }
+        final PrinterBlockEntity.PrintJob job = printer.submitMap(PrintedDocument.text(title, machine, program,
+                List.of("")), map.getAsInt(), copies, user, level.getGameTime());
+        if (job == null) {
+            return new Result(printer, null, QUEUE_FULL.with(printer.model().displayName()));
+        }
+        return new Result(printer, job, SENT.with(title, printer.model().displayName()));
+    }
+
     /** The printers {@code host} prints on, by position. */
     public static List<PrinterBlockEntity> of(final ServerLevel level, final IOsHost host) {
         final List<Long> linked = new ArrayList<>(host.enabledEndpoints());
@@ -141,6 +174,7 @@ public final class Printers {
         final Text state = switch (printer.waiting()) {
             case PAUSED -> PAUSED.text();
             case NO_PAPER -> NO_PAPER.text();
+            case NO_MAP -> NO_MAP.text();
             case OUTPUT_FULL -> OUTPUT_FULL.text();
             case NONE -> printer.printing() ? PRINTING.text() : READY.text();
         };

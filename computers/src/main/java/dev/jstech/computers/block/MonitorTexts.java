@@ -56,7 +56,9 @@ final class MonitorTexts {
     static final TextKey FLAT_PANEL = TextKey.of("block.jsc.monitor.tube.flat", "Flat panel");
     static final TextKey JOINS = TextKey.of("block.jsc.monitor.joins",
             "Joins the same monitors beside it into one screen, up to %s wide and %s tall");
-
+    /* How a touch monitor is used, in its tooltip: on its glass in the world, never at a screen sat down at. */
+    static final TextKey TOUCH = TextKey.of("block.jsc.monitor.touch",
+            "Touch screen: right click the glass to tap, hold and move to drag, hold still a second to right click");
     private MonitorTexts() {
     }
 
