@@ -78,6 +78,8 @@ final class FilesTexts {
     static final TextKey EJECT = TextKey.of("jsc.files.eject", "Eject");
     static final TextKey REFRESH = TextKey.of("jsc.files.refresh", "Refresh");
     static final TextKey EXTRACT_HERE = TextKey.of("jsc.files.extract_here", "Extract here");
+    static final TextKey PLAY = TextKey.of("jsc.files.play", "Play");
+    static final TextKey ADD_TO_LIST = TextKey.of("jsc.files.add_to_list", "Add to %s list");
     static final TextKey COMPRESS_TO = TextKey.of("jsc.files.compress_to", "Compress to %s");
 
     // Frames 7's command bar and Frames 10's ribbon: its tabs, its commands and the captions of their groups.

@@ -78,6 +78,13 @@ final class DesktopNames {
     static final TextKey QUINCE_HELP_VIEWER = TextKey.of("jsc.desktop.quince.help_viewer", "Help Viewer");
     static final TextKey QUINCE_DISK_FIRST_AID = TextKey.of("jsc.desktop.quince.disk_first_aid", "Disk First Aid");
     static final TextKey QUINCE_DISK_UTILITY = TextKey.of("jsc.desktop.quince.defrag", "Disk Utility");
+    // The Media Player under each desktop's own name for it; Frames 95 and 11 call it plain Media Player.
+    static final TextKey FRAMES_MEDIA_PLAYER = TextKey.of("jsc.desktop.frames.media_player", "Frames Media Player");
+    static final TextKey KDE_MEDIA_PLAYER = TextKey.of("jsc.desktop.kde_plasma.media_player", "Dragon Player");
+    static final TextKey GNOME_MEDIA_PLAYER = TextKey.of("jsc.desktop.gnome.media_player", "Videos");
+    static final TextKey CINNAMON_MEDIA_PLAYER = TextKey.of("jsc.desktop.cinnamon.media_player", "Celluloid");
+    static final TextKey CDE_MEDIA_PLAYER = TextKey.of("jsc.desktop.cde.media_player", "Audio");
+    static final TextKey QUINCE_MEDIA_PLAYER = TextKey.of("jsc.desktop.quince.media_player", "QuinceTime Player");
 
     private DesktopNames() {
     }

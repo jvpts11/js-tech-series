@@ -278,7 +278,7 @@
     }
   ],
   "id": "jsc:network_watches",
-  "order": 420,
+  "order": 422,
   "section": "jsc:library_network",
   "title": "jsc.guide.network_watches.title"
 }

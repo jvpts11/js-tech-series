@@ -30,6 +30,9 @@ public final class FileOpeners {
     /** The plain text editor every desktop ships, and the last resort for anything readable. */
     public static final String EDITOR = "editor";
 
+    /** The Media Player every desktop ships, which plays songs and pictures. */
+    public static final String MEDIA_PLAYER = "media_player";
+
     /**
      * The program runtime, which opens a compiled program by running it.
      *
@@ -63,9 +66,11 @@ public final class FileOpeners {
          * nothing at all and Open with offered no program for it, which looked like the file being broken.
          */
         BY_TYPE.put(FileType.ARK, List.of("ark"));
-        BY_TYPE.put(FileType.PIX, List.of("paint"));
-        BY_TYPE.put(FileType.OGG, List.of("soundfoundry"));
-        BY_TYPE.put(FileType.WAV, List.of("soundfoundry"));
+        // The Media Player every desktop comes with plays songs and pictures too, after the program each is made in.
+        BY_TYPE.put(FileType.PIX, List.of("paint", MEDIA_PLAYER));
+        BY_TYPE.put(FileType.OGG, List.of("soundfoundry", MEDIA_PLAYER));
+        BY_TYPE.put(FileType.WAV, List.of("soundfoundry", MEDIA_PLAYER));
+        BY_TYPE.put(FileType.PNG, List.of(MEDIA_PLAYER));
         BY_TYPE.put(FileType.TXT, List.of(EDITOR));
         BY_TYPE.put(FileType.CFG, List.of(EDITOR));
         BY_TYPE.put(FileType.CSV, List.of(EDITOR));
@@ -129,7 +134,7 @@ public final class FileOpeners {
             return out;
         }
         for (final String program : everyOpener()) {
-            if (!out.contains(program) && (program.equals(EDITOR) || installed.contains(program))) {
+            if (!out.contains(program) && (shipped(program) || installed.contains(program))) {
                 out.add(program);
             }
         }
@@ -166,7 +171,7 @@ public final class FileOpeners {
     public static List<String> available(final String path, final List<String> installed) {
         final List<String> out = new ArrayList<>();
         for (final String program : forPath(path)) {
-            if (program.equals(EDITOR) || installed.contains(program)) {
+            if (shipped(program) || installed.contains(program)) {
                 out.add(program);
             }
         }
@@ -225,5 +230,10 @@ public final class FileOpeners {
     /** The type of a path, or null when there is no path at all. */
     private static FileType typeOf(final String path) {
         return path == null ? null : FileType.of(extensionOf(path));
+    }
+
+    /* Whether every desktop ships the program, so it opens files without being installed: the editor and the player. */
+    private static boolean shipped(final String program) {
+        return program.equals(EDITOR) || program.equals(MEDIA_PLAYER);
     }
 }

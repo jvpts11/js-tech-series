@@ -169,7 +169,11 @@ the rack, and room for processors and expansion cards:
   [Cooling](#cooling)). The KVM Switch, the Rack UPS, the Cooling Unit, the battery expansion and the PDU come in every
   era, and a rack seats the units of its era and the earlier ones, as it does servers. The
   **Fibre Optic Interface** is how a rack takes the fibre backbone: the Standard's takes the Fibre Optic Cable, the
-  Advanced's, in an Advanced rack, the OM5 Fibre Cable as well.
+  Advanced's, in an Advanced rack, the OM5 Fibre Cable as well. The **Tape Library** (2U, every era; added
+  2026-11-11) holds ten tapes of its own era and a drive that winds them, where the Backup Service keeps the
+  network's backups ([Systems and programs](SYSTEMS.md#backups)): the 9-track reel (150 MB) in the Vintage's, the DLT
+  (40 GB) in the Legacy's, the LTO-3 (400 GB) in the Transition's, the LTO-6 (2.5 TB) in the Standard's and the
+  LTO-9 (18 TB) in the Advanced's. On a tape an item weighs what it weighs on a disk of the tape's era.
 - A **supercomputer** is every Supercomputer Rack tied together by the high compute cable, meeting the network at
   one **HBW Interface**.
 - A **Server Router** groups the racks behind each of its faces into a datacenter section (added 2026-11-08: one per

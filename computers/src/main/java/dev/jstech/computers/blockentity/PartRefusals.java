@@ -53,6 +53,10 @@ public final class PartRefusals {
             "The case has no bay here");
     public static final TextKey DRIVE_BAY = TextKey.of("jsc.part_refusal.drive_bay",
             "A drive bay takes only a disk");
+    public static final TextKey TAPE_SLOT = TextKey.of("jsc.part_refusal.tape_slot",
+            "A Tape Library's slot takes only a tape");
+    public static final TextKey TAPE_OF_ITS_ERA = TextKey.of("jsc.part_refusal.tape_of_its_era",
+            "A Tape Library reads only the tapes of its own era");
     public static final TextKey COOLER_TOO_NEW = TextKey.of("jsc.part_refusal.cooler_too_new",
             "This cooler is of a later era than the case: its mount has nothing to hold it");
     public static final TextKey NO_RADIATOR_ROOM = TextKey.of("jsc.part_refusal.no_radiator_room",

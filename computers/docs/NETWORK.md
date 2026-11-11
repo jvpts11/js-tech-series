@@ -190,6 +190,11 @@ The network's storage is the disks of the **Servers** in its racks. An **Externa
 use a chest beside it as storage too, ten times slower than a server. **Import** and **Export Buses** bring items
 in from an inventory and send them out to one ([Cables](CABLES.md#buses)).
 
+A server running the **Data Compressor** (Vaultis, Standard; added 2026-11-11) fits a fifth more items on its
+drives, and every read from it waits two ticks longer: worth it on a hard disk, a poor trade on NVMe. The network
+keeps a **book of losses** of the items that stop existing, which a backup restores from
+([Systems and programs](SYSTEMS.md#backups)).
+
 **Datacenter sections** (added 2026-11-08). The racks behind one face of a **Server Router** are a section, which
 the **Cluster Manager** runs as one machine ([Hardware](HARDWARE.md#servers-and-their-racks)). Its **Diagnostics** tab
 shows, over the last minute, the section's latency (the ticks from a request entering the router to its server's

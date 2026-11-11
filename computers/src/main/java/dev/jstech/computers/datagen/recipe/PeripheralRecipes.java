@@ -188,7 +188,8 @@ final class PeripheralRecipes {
      * The floppy disk is its film in a PVC case. A rewritable disc is the blank disc and its reflector, with the
      * phase-change layer the real ones have (silver for the CD-RW's, silver and indium for the DVD-RW's, germanium for
      * the BD-RE's); a DVD is two discs bonded. A USB stick is memory chips by its size, its controller, board, case and
-     * plug.
+     * plug. A tape is its film (PVC) and its magnetic coat (iron oxide on the reel and the DLT, metal particles on the
+     * LTO-3, barium ferrite after) in a cartridge with, from the LTO, its memory chip.
      */
     private static void media(final RecipeOutput output) {
         final Item blank = ChainParts.BLANK_DISC.get();
@@ -202,5 +203,13 @@ final class PeripheralRecipes {
         made(output, HardwareEra.STANDARD, item("usb_flash_drive"), memory(HardwareEra.STANDARD), 4,
                 controller(HardwareEra.STANDARD), 1, board(HardwareEra.STANDARD), 1, polycarbonate(), 1, copperFoil(),
                 2);
+        made(output, HardwareEra.VINTAGE, item("tape_reel"), pvc(), 2, dust(Element.IRON), 1);
+        made(output, HardwareEra.LEGACY, item("dlt_tape"), pvc(), 2, dust(Element.IRON), 1, polycarbonate(), 1);
+        made(output, HardwareEra.TRANSITION, item("lto3_tape"), pvc(), 2, dust(Element.IRON), 2, polycarbonate(), 1,
+                memory(HardwareEra.TRANSITION), 1);
+        made(output, HardwareEra.STANDARD, item("lto6_tape"), pvc(), 2, ChainParts.FERRITE.get(), 1, polycarbonate(),
+                1, memory(HardwareEra.STANDARD), 1);
+        made(output, HardwareEra.ADVANCED, item("lto9_tape"), pvc(), 2, ChainParts.FERRITE.get(), 2, polycarbonate(),
+                1, memory(HardwareEra.ADVANCED), 1);
     }
 }

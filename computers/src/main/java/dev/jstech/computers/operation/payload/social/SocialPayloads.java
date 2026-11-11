@@ -10,12 +10,14 @@ package dev.jstech.computers.operation.payload.social;
 import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.client.os.KnotApp;
 import dev.jstech.computers.client.os.MessengerApp;
+import dev.jstech.computers.client.os.MessengerKeptDialog;
 import dev.jstech.computers.client.portable.PortableApps;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.KnotActionPayload;
 import dev.jstech.computers.operation.payload.KnotStatePayload;
 import dev.jstech.computers.operation.payload.MessengerActionPayload;
+import dev.jstech.computers.operation.payload.MessengerKeptPayload;
 import dev.jstech.computers.operation.payload.MessengerStatePayload;
 import dev.jstech.computers.operation.payload.files.FileAccess;
 import dev.jstech.computers.os.FilesystemKind;
@@ -67,6 +69,8 @@ public final class SocialPayloads {
                 ComputerAccess.machine(MessengerActionPayload::hostPos), SocialPayloads::handleMessenger);
         registrar.playToClient(MessengerStatePayload.TYPE, MessengerStatePayload.STREAM_CODEC,
                 ClientPayloadHandlers.onMainThread(SocialPayloads::handleMessengerState));
+        registrar.playToClient(MessengerKeptPayload.TYPE, MessengerKeptPayload.STREAM_CODEC,
+                ClientPayloadHandlers.onMainThread(SocialPayloads::handleMessengerKept));
         ComputerAccess.accept(registrar, KnotActionPayload.TYPE, KnotActionPayload.STREAM_CODEC,
                 ComputerAccess.machine(KnotActionPayload::hostPos), SocialPayloads::handleKnot);
         registrar.playToClient(KnotStatePayload.TYPE, KnotStatePayload.STREAM_CODEC,
@@ -77,8 +81,47 @@ public final class SocialPayloads {
 
     private static void handleMessenger(final MessengerActionPayload payload, final ServerPlayer player,
                                         final ServerLevel level) {
-        talk(player, level, serviceFor(player, level, payload.hostPos(), payload.monitorPos(),
-                Programs.MESSENGER_SERVICE), payload.action(), payload.room(), payload.text());
+        final ServerServices.Host host = serviceFor(player, level, payload.hostPos(), payload.monitorPos(),
+                Programs.MESSENGER_SERVICE);
+        // The window is at the service's own server when the machine it is on is that very unit of that rack.
+        final boolean atServer = host != null && host.rack().getBlockPos().equals(payload.hostPos())
+                && host.rack().shownRow() == host.slot();
+        if (payload.action() >= MessengerActionPayload.KEPT) {
+            if (atServer) {
+                keep(player, level, host, payload.action(), payload.room());
+            }
+            return;
+        }
+        talk(player, level, host, payload.action(), payload.room(), payload.text(), atServer);
+    }
+
+    /*
+     * The kept conversations, at the service's own server: listed, one deleted or all of them. Whoever is at that
+     * server may, there being no accounts yet to keep it to an administrator; the deletion reaches every Messenger
+     * through the same path as anything said.
+     */
+    private static void keep(final ServerPlayer player, final ServerLevel level, final ServerServices.Host host,
+                             final int action, final String room) {
+        final KeptConversations kept = KeptConversations.at(level, host);
+        if (kept == null) {
+            return;
+        }
+        if (action == MessengerActionPayload.DELETE) {
+            kept.delete(room);
+        } else if (action == MessengerActionPayload.DELETE_ALL) {
+            kept.deleteAll();
+        }
+        final List<MessengerKeptPayload.Kept> rows = new ArrayList<>();
+        for (final MessengerLog.Conversation conversation : kept.list()) {
+            if (rows.size() == MessengerKeptPayload.MOST) {
+                break;
+            }
+            rows.add(new MessengerKeptPayload.Kept(
+                    TextBounds.clip(conversation.room(), MessengerKeptPayload.MOST_LETTERS),
+                    TextBounds.clip(String.join(", ", conversation.names()), MessengerKeptPayload.MOST_LETTERS),
+                    conversation.lines(), conversation.bytes(), kept.clockAt(conversation.lastAt())));
+        }
+        PacketDistributor.sendToPlayer(player, new MessengerKeptPayload(rows, kept.status().bytes()));
     }
 
     /**
@@ -89,6 +132,12 @@ public final class SocialPayloads {
     public static void talk(final ServerPlayer player, final ServerLevel level,
                             @Nullable final ServerServices.Host host, final int action, final String asked,
                             final String text) {
+        talk(player, level, host, action, asked, text, false);
+    }
+
+    private static void talk(final ServerPlayer player, final ServerLevel level,
+                             @Nullable final ServerServices.Host host, final int action, final String asked,
+                             final String text, final boolean atServer) {
         if (host == null) {
             /*
              * No server on this network is running it. The window is told so rather than left waiting, and
@@ -96,7 +145,7 @@ public final class SocialPayloads {
              * has nowhere at all to go, and letting it look sent would be the worst of the answers.
              */
             PacketDistributor.sendToPlayer(player, new MessengerStatePayload(
-                    new MessengerStatePayload.Service(false, "", 0L, 0),
+                    new MessengerStatePayload.Service(false, "", 0L, 0, false),
                     List.of(), List.of(MessengerLog.LOBBY), MessengerLog.LOBBY, List.of()));
             return;
         }
@@ -115,7 +164,7 @@ public final class SocialPayloads {
             log.disconnect(who);
             return; // nothing to draw for a window that is closing
         }
-        log.connect(who, room, now);
+        log.connect(who, room, now, atServer);
         final boolean spoke = switch (action) {
             case MessengerActionPayload.SAY -> log.say(room, who, text, now, false) != null;
             case MessengerActionPayload.NUDGE -> log.say(room, who, "", now, true) != null;
@@ -145,8 +194,7 @@ public final class SocialPayloads {
      * window says goodbye when it closes, but a client that crashed or a player who logged out never got
      * to, and the service's memory cost would climb with people who are not there any more.
      */
-    private static void tellEveryone(final ServerLevel level, final ServerServices.Host host,
-                                     final MessengerLog log) {
+    static void tellEveryone(final ServerLevel level, final ServerServices.Host host, final MessengerLog log) {
         for (final String who : log.connected()) {
             final ServerPlayer other = level.getServer().getPlayerList().getPlayerByName(who);
             if (other == null) {
@@ -169,7 +217,7 @@ public final class SocialPayloads {
         return new MessengerStatePayload(
                 new MessengerStatePayload.Service(true,
                         TextBounds.clip(host.name(), MessengerStatePayload.Service.MAX_HOST),
-                        log.historyBytes(), log.ramMb()),
+                        log.historyBytes(), log.ramMb(), log.atServer(viewer)),
                 names(connected), names(rooms), TextBounds.clip(room, MessengerStatePayload.MAX_NAME_LETTERS), lines);
     }
 
@@ -189,6 +237,10 @@ public final class SocialPayloads {
         // A computer's window or a portable's app has it open: whichever it is shows it.
         MessengerApp.accept(payload);
         PortableApps.take(payload);
+    }
+
+    private static void handleMessengerKept(final MessengerKeptPayload payload, final Player player) {
+        MessengerKeptDialog.accept(payload);
     }
 
     /* The repository */

@@ -168,7 +168,7 @@
     }
   ],
   "id": "jsc:make_conf",
-  "order": 295,
+  "order": 297,
   "section": "jsc:gentoo_base",
   "title": "jsc.guide.make_conf.title"
 }

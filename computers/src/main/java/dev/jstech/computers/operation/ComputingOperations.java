@@ -179,9 +179,10 @@ public final class ComputingOperations {
         }));
         registry.register(instant(DROP, DROP_NAME, DropArgs.class, OperationCategory.STORAGE, a -> {
             if (a.key() == null) {
-                a.mainframe().networkIndex().dropAll(a.level(), a.mainframe().networkUuid());
+                a.mainframe().networkIndex().dropAll(a.level(), a.mainframe().networkUuid(), a.mainframe().hostname());
             } else {
-                a.mainframe().networkIndex().dropType(a.level(), a.mainframe().networkUuid(), a.key(), null);
+                a.mainframe().networkIndex().dropType(a.level(), a.mainframe().networkUuid(), a.key(), null,
+                        a.mainframe().hostname());
             }
             return OperationStatus.COMPLETED;
         }));

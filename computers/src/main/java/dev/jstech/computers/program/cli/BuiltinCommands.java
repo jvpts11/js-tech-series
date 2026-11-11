@@ -117,6 +117,8 @@ public final class BuiltinCommands {
                 new SoftwareCommands.Store(),
                 new SoftwareCommands.IqlEngineCommand(),
                 new SoftwareCommands.Services(),
+                // The Messenger Service's conversations, at the server that keeps them.
+                new MsgsvcCommand(),
                 new SoftwareCommands.Maint("analyze", IqlVerb.ANALYZE),
                 new SoftwareCommands.Maint("reindex", IqlVerb.REINDEX),
                 new SoftwareCommands.Maint("vacuum", IqlVerb.VACUUM),

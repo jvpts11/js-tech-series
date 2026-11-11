@@ -364,7 +364,7 @@
     }
   ],
   "id": "jsc:emacs",
-  "order": 251,
+  "order": 253,
   "section": "jsc:the_editors",
   "title": "jsc.guide.emacs.title"
 }

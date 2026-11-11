@@ -249,6 +249,10 @@
       "command": "jsc:command/mc_net/sgdb"
     },
     {
+      "type": "command",
+      "command": "jsc:command/mc_net/msgsvc"
+    },
+    {
       "type": "see",
       "entries": [
         "jsc:interactor_screen",
@@ -258,7 +262,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:mc_net_commands",
-  "order": 100,
+  "order": 102,
   "section": "jsc:mc_net_terminal",
   "title": "jsc.guide.mc_net_commands.title"
 }

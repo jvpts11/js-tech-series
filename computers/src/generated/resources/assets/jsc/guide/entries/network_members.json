@@ -96,7 +96,7 @@
   ],
   "icon": "jsc:server_rack",
   "id": "jsc:network_members",
-  "order": 83,
+  "order": 84,
   "section": "jsc:network_basics",
   "title": "jsc.guide.network_members.title"
 }

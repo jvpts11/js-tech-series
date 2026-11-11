@@ -36,6 +36,15 @@ public record MessengerActionPayload(BlockPos hostPos, BlockPos monitorPos, int 
     /** Say this window is closed, so the service stops counting the memory it was holding for it. */
     public static final int LEAVE = 3;
 
+    /** Ask for the conversations the service keeps, which only its own server is answered. */
+    public static final int KEPT = 4;
+
+    /** Delete the kept conversation in the room named, at the service's own server. */
+    public static final int DELETE = 5;
+
+    /** Delete every kept conversation, at the service's own server. */
+    public static final int DELETE_ALL = 6;
+
     public static final CustomPacketPayload.Type<MessengerActionPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "messenger_action"));
 

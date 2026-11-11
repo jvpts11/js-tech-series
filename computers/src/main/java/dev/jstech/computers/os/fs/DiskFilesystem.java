@@ -617,6 +617,10 @@ public final class DiskFilesystem {
         if (type == FileType.PIX && PixImage.decode(content) == null) {
             return false;
         }
+        // A backup file weighs the backup it names, so only one that names a backup is written under its kind.
+        if (type == FileType.BAK) {
+            return BackupFile.read(content) != null;
+        }
         final RecordingFile recording = RecordingFile.read(content);
         if (!type.recording()) {
             return recording == null;

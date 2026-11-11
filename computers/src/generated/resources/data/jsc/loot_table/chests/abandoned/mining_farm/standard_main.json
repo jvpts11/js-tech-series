@@ -138,6 +138,30 @@
               "components": {
                 "jsc:media_payload": {
                   "SaveVersion": 1,
+                  "Value": "jsc:data_compressor"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:usb_flash_drive"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
                   "Value": "jsc:exceed"
                 }
               },

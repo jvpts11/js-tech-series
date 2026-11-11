@@ -1,0 +1,23 @@
+{
+  "type": "jsc:legacy_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jscore:iron_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:dlt_tape"
+    }
+  ]
+}

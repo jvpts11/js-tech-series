@@ -45,7 +45,7 @@
     }
   ],
   "id": "jsc:iql_count",
-  "order": 342,
+  "order": 344,
   "section": "jsc:iql_verbs",
   "title": "jsc.guide.iql_count.title"
 }

@@ -26,6 +26,8 @@
     "jsc:legacy_cooling_unit",
     "jsc:legacy_ups_battery_expansion",
     "jsc:legacy_pdu",
+    "jsc:legacy_tape_library",
+    "jsc:dlt_tape",
     "jsc:legacy_peripheral_cable",
     "jsc:legacy_hub",
     "jsc:legacy_monitor",

@@ -157,7 +157,7 @@
     "jsc:wifi_card_standard",
     "jsc:wifi_card_advanced"
   ],
-  "order": 88,
+  "order": 89,
   "section": "jsc:network_basics",
   "title": "jsc.guide.wireless.title"
 }

@@ -42,7 +42,9 @@ public enum IqlVerb {
     /** Index maintenance: rebuild. */
     REINDEX,
     /** Change an item the network holds with one of the asking computer's personal-use cards. */
-    UPDATE;
+    UPDATE,
+    /** Run one of the network's Backup Service jobs now, by its name: what a timed backup's job does. */
+    BACKUP;
 
     /** Resolves a keyword to a verb, case-insensitively; {@code SHOW} is an alias of {@link #QUERY}. */
     public static Optional<IqlVerb> fromKeyword(final String keyword) {

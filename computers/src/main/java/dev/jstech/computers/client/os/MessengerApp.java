@@ -51,6 +51,7 @@ public final class MessengerApp implements IDesktopApp {
     private static final int ROW_H = 10;
     private static final int COMPOSE_H = 28;
     private static final int STATUS_H = 11;
+    private static final int KEPT_H = 12;
     private static final int MARGIN = 3;
     /**
      * The Messenger's own colours, {@code jsc:app/messenger}: a contact online and away, the names on my lines and
@@ -75,10 +76,12 @@ public final class MessengerApp implements IDesktopApp {
     private final TextField compose = new TextField(MessengerLog.MAX_TEXT);
     private final Button send;
     private final Button nudge;
+    /* The way into what the service keeps, shown only at the service's own server. */
+    private final Button kept;
 
     private OsSkin skin = OsSkin.fallback();
     private MessengerStatePayload state = new MessengerStatePayload(
-            new MessengerStatePayload.Service(false, "", 0L, 0),
+            new MessengerStatePayload.Service(false, "", 0L, 0, false),
             List.of(), List.of("lobby"), "lobby", List.of());
     private String room = "lobby";
     private long lastAskMs;
@@ -95,6 +98,8 @@ public final class MessengerApp implements IDesktopApp {
         this.monitorPos = monitorPos;
         send = root.add(new Button(GameText.resolve(SocialTexts.SEND), this::say));
         nudge = root.add(new Button(GameText.resolve(SocialTexts.NUDGE), this::sendNudge));
+        kept = root.add(new Button(GameText.resolve(SocialTexts.KEPT_CONVERSATIONS),
+                () -> MessengerKeptDialog.openFor(this, host, monitorPos)));
         root.add(compose);
         open = this;
         look();
@@ -208,7 +213,11 @@ public final class MessengerApp implements IDesktopApp {
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
         g.fill(x, y, x + width, y + height, skin.windowBg());
         final int bottom = y + height - STATUS_H;
-        drawRoster(g, font, x, y, bottom);
+        // At the service's own server the roster gives its foot to the way into what the service keeps.
+        final boolean keeper = state.service().keeper();
+        kept.setVisible(keeper);
+        kept.setBounds(x + 2, bottom - KEPT_H - 2, ROSTER_W - 4, KEPT_H);
+        drawRoster(g, font, x, y, bottom, keeper ? bottom - KEPT_H - 4 : bottom);
         final int chatX = x + ROSTER_W + 1;
         drawConversation(g, font, chatX, y, x + width, bottom - COMPOSE_H);
         layoutCompose(font, chatX, bottom - COMPOSE_H, x + width - chatX);
@@ -223,7 +232,7 @@ public final class MessengerApp implements IDesktopApp {
      * names are what the list is made of rather than the rooms, because a player thinks in people.
      */
     private void drawRoster(final GuiGraphics g, final Font font, final int x, final int y,
-                            final int bottom) {
+                            final int bottom, final int namesBottom) {
         g.fill(x, y, x + ROSTER_W, bottom, skin.fieldBg());
         g.fill(x + ROSTER_W, y, x + ROSTER_W + 1, bottom, skin.edge());
         final boolean serving = state.service().online();
@@ -231,8 +240,8 @@ public final class MessengerApp implements IDesktopApp {
                 x + MARGIN, y + 2, serving ? skin.text() : PALETTE.get().mine());
         this.rosterLeft = x;
         this.rosterTop = y + TOOLBAR_H;
-        this.rosterBottom = bottom;
-        this.rosterRows = Math.max(0, (bottom - rosterTop) / ROW_H);
+        this.rosterBottom = namesBottom;
+        this.rosterRows = Math.max(0, (namesBottom - rosterTop) / ROW_H);
         final List<String> rows = rosterEntries();
         for (int i = 0; i < rows.size() && i < rosterRows; i++) {
             final String name = rows.get(i);

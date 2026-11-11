@@ -3635,6 +3635,37 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   block they stand in, and used from any part of them; and the ship's fixtures, the suit locker, the flight console, the oxygen panel and the bunk,
   once their part is formed, stand, are aimed at and are outlined as the ship's model draws them there, no longer as
   whole blocks.
+- (Computers) Kept conversations: whoever is at the server that runs the Messenger Service deletes the conversations
+  it keeps, from the Kept conversations button its Messenger shows there or with `msgsvc` at its prompt (`list`,
+  `delete N`, `delete --all`, `status`). A deleted conversation leaves every Messenger at once, without a word.
+- (Computers) The Data Compressor, a service of a server bay (Vaultis, Standard): its drives hold a fifth more items,
+  and every read from the bay waits two ticks longer; worth it on a hard disk, a poor trade on NVMe.
+- (Computers) The Tape Library, a 2U rack unit of every era with ten slots for the tapes of its era and a drive that
+  winds them, and the tapes: the 9-track reel (150 MB), the DLT (40 GB), the LTO-3 (400 GB), the LTO-6 (2.5 TB) and
+  the LTO-9 (18 TB). On a tape an item weighs what it weighs on a disk of the tape's era, so they hold 150, 2,560,
+  1,600, 10,240 and 73,728 items. Its card in the rack lists the tapes, what they hold and what the drive is doing.
+- (Computers) The book of losses: a network writes down every item that stops existing, with when, how many, how and
+  where: what a dead disk took, what a Defrag gave up on, what a RAID 0 lost with a drive, and what a DROP destroyed.
+- (Computers) The Backup Service (Vaultis, Legacy), a service on a rack server, and the Backup Console, its window on
+  any desktop, in four tabs: Jobs, Back up, Restore and Tapes. A job backs up the network's items, the files in every
+  computer's home folder, the computers' settings, the network's .craft patterns, the IQL and Sigma# scripts with the
+  Mainframe's saved views, procedures and jobs, and the computers' system images, to a Tape Library or to a file in the
+  Backups folder of another server's drive that weighs what the backup weighs. It runs by hand or at an hour, every
+  day or one day of the week, as an Automation Engine job. A restore gives items back through the book of losses, the
+  lesser of what the backup holds and what was lost since, each loss once: what was taken out, exported or crafted
+  never comes back, and a backup undoes a DROP. Files, settings, patterns and scripts are written back, and a system
+  image put back fixes a corrupted system. A tape winds to the end before it writes and to the backup before it reads.
+- (Computers) The network's language: `BACKUP <job>` runs one of the Backup Service's jobs now, and a WHEN reads the
+  world's clock, `clock = '02:00'`, and the day of the week, `weekday = 'Sunday'`.
+- (Computers) The Media Player, which comes with every desktop under its own name there: Media Player on Frames 95 and
+  11, Frames Media Player on XP, 7 and 10, Dragon Player on KDE Plasma, Videos on GNOME, Celluloid on Cinnamon, Audio on
+  CDE and the QuinceTime Player on Quince's systems, each looking like the player it is named after. It plays the
+  computer's songs through the computer's own player, the one Soundfoundry plays through, and image sequences: a
+  folder of pictures from Paint or a camera, shown in the order of their names at 12 a second, from 1 to 20 in its
+  options. CDE's Audio shows the picture where it draws a recording's wave. With no sound card it plays no recording,
+  and says so.
+- (Computers) In Files, a folder's menu has Play and Add to the Media Player's list, and a song or a picture opens in
+  the Media Player from Open with.
 
 ### Changed
 - (Computers) Virtual Studio's Start button starts debugging, and Ctrl+F5 runs without it; its configuration is a

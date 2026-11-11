@@ -83,6 +83,14 @@
           {
             "words": "jsc.guide.mainframe_commands.table1_9_2"
           }
+        ],
+        [
+          {
+            "literal": "msgsvc"
+          },
+          {
+            "words": "jsc.guide.mainframe_commands.table1_10_2"
+          }
         ]
       ]
     },
@@ -226,6 +234,18 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.mainframe_commands.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.mainframe_commands.text10"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/linux/msgsvc"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -259,7 +279,7 @@
     }
   ],
   "id": "jsc:mainframe_commands",
-  "order": 235,
+  "order": 237,
   "section": "jsc:shell_software",
   "title": "jsc.guide.mainframe_commands.title"
 }

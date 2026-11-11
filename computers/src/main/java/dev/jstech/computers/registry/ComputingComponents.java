@@ -9,6 +9,7 @@ package dev.jstech.computers.registry;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.backup.TapeContents;
 import dev.jstech.computers.chain.machine.WaferWork;
 import dev.jstech.computers.crafting.CraftingEras;
 import dev.jstech.computers.crafting.CraftingPattern;
@@ -255,6 +256,13 @@ public final class ComputingComponents {
     /* The link a portable is on, while an access point reaches it: for its tooltip and its system. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<PortableLink>>
             PORTABLE_LINK = saved("portable_link", PortableLink.CODEC, PortableLink.STREAM_CODEC);
+
+    /*
+     * What a tape holds: its label, where each backup on it lies and where its head stopped. The backups themselves are
+     * kept by the save, so a tape stays a small item however much it keeps.
+     */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<TapeContents>>
+            TAPE_CONTENTS = saved("tape_contents", TapeContents.CODEC, TapeContents.STREAM_CODEC);
 
     private ComputingComponents() {
     }

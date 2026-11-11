@@ -13,10 +13,16 @@ import dev.jstech.computers.client.assembly.AssemblyPainter;
 import dev.jstech.computers.client.theme.MonitorFrameStyle;
 import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.gui.layout.ServerRackLayout;
+import dev.jstech.computers.backup.TapeContents;
+import dev.jstech.computers.backup.TapeDrive;
+import dev.jstech.computers.backup.TapeFormat;
 import dev.jstech.computers.hardware.ComputerBuild;
+import dev.jstech.computers.hardware.DiskSpec;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.hardware.ThermalModel;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.item.TapeItem;
 import dev.jstech.computers.menu.ServerRackMenu;
 import dev.jstech.computers.operation.payload.RackBayPowerPayload;
 import dev.jstech.computers.os.OsDef;
@@ -401,9 +407,29 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 JsTechTheme.textS(g, font, server >= 0 ? GameText.resolve(ServerRackTexts.UNIT.with(server + 1))
                         : "--", px + ServerRackLayout.PWR_LABEL_DX, py + 3, colour);
             }
+            case TAPE_LIBRARY -> {
+                // The drive at the right end: its lamp amber while it winds, green while it reads or writes.
+                final int px = x + ServerRackLayout.PWR_X;
+                final int py = y + ServerRackLayout.pwrY(row, heightU);
+                final TapeDrive.State state = menu.tapeDrive(row);
+                JsTechTheme.button(g, px, py, ServerRackLayout.PWR_W, ServerRackLayout.PWR_H, false);
+                AssemblyPainter.drawLamp(g, px + ServerRackLayout.PWR_LAMP_DX, py + 4, driveColour(state),
+                        state != TapeDrive.State.IDLE);
+                JsTechTheme.textS(g, font, GameText.resolve(ServerRackTexts.TAPE_DRIVE),
+                        px + ServerRackLayout.PWR_LABEL_DX, py + 3, JsTechTheme.text());
+            }
             default -> {
             }
         }
+    }
+
+    /* The colour a tape drive's lamp and card line take: amber winding, green at work, dim with nothing to do. */
+    private static int driveColour(final TapeDrive.State state) {
+        return switch (state) {
+            case IDLE -> JsTechTheme.dim();
+            case WINDING -> JsTechTheme.amber();
+            case READING, WRITING -> JsTechTheme.green();
+        };
     }
 
     /* A readout at a unit's right end: its words in {@code colour}, and a lamp of the same beside them. */
@@ -464,6 +490,8 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 g.fill(cx + 13, cy + 1, cx + 15, cy + 3,
                         lit ? JsTechTheme.green() : AssemblyPainter.mix(JsTechTheme.green(), JsTechTheme.screen(), 0.75f));
             }
+            // A Tape Library's slot is a plain slot for a tape: its drive, not the slot, shows what it does.
+            case TAPE -> JsTechTheme.slot(g, cx, cy);
             case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> {
                 if (!stack.isEmpty()) {
                     JsTechTheme.slot(g, cx, cy);
@@ -519,6 +547,7 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 case PDU -> pduLines();
                 case DRIVE_SHELF -> shelfLines(top);
                 case COOLING_UNIT, VENT_PANEL -> coolingLines(top);
+                case TAPE_LIBRARY -> tapeLines(top);
                 default -> List.of();
             };
         }
@@ -676,6 +705,48 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                         array ? JsTechTheme.text() : JsTechTheme.dim()));
     }
 
+    /*
+     * A Tape Library: its tapes against its slots, what they hold and what is written on them, how many backups, what
+     * its drive is doing, and how many of the network's items the latest backup on them keeps.
+     */
+    private List<CardLine> tapeLines(final int top) {
+        final List<ItemStack> slots = menu.tapesIn(top);
+        int tapes = 0;
+        long holdsMb = 0L;
+        long usedMb = 0L;
+        int backups = 0;
+        TapeContents.Spot latest = null;
+        for (final ItemStack stack : slots) {
+            final TapeFormat format = TapeItem.formatOf(stack);
+            if (format == null) {
+                continue;
+            }
+            final TapeContents contents = TapeItem.contents(stack);
+            tapes++;
+            holdsMb += format.capacityMb();
+            usedMb += contents.used() * EraStorage.mbPerItem(format.era());
+            backups += contents.spots().size();
+            for (final TapeContents.Spot spot : contents.spots()) {
+                if (spot.items() > 0L && (latest == null || spot.madeAt() > latest.madeAt())) {
+                    latest = spot;
+                }
+            }
+        }
+        final TapeDrive.State drive = menu.tapeDrive(top);
+        final int text = JsTechTheme.text();
+        return List.of(
+                new CardLine(ServerRackTexts.CARD_TAPES, GameText.resolve(ServerRackTexts.OF_TOTAL.with(tapes,
+                        slots.size())), text),
+                new CardLine(ServerRackTexts.CARD_HOLDS, tapes == 0 ? "--" : DiskSpec.sizeLabel(holdsMb), text),
+                new CardLine(ServerRackTexts.CARD_USED, tapes == 0 ? "--" : DiskSpec.sizeLabel(usedMb), text),
+                new CardLine(ServerRackTexts.CARD_BACKUPS, String.valueOf(backups), text),
+                new CardLine(ServerRackTexts.CARD_DRIVE, GameText.resolve(ServerRackTexts.driveWord(drive)),
+                        driveColour(drive)),
+                new CardLine(ServerRackTexts.CARD_ITEMS, latest == null ? "--"
+                        : String.format(Locale.ROOT, "%,d", latest.items()),
+                        latest == null ? JsTechTheme.dim() : text));
+    }
+
     /* The top row of the first unit of {@code kind} in the rack, or -1 when it has none. */
     private int firstOf(final RackUnitItem.Kind kind) {
         for (int row = 0; row < ROWS; row++) {
@@ -799,6 +870,8 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
                 final Text raid = top < 0 ? null : menu.raidLabel(top);
                 g.renderTooltip(font, GameText.component(raid != null ? ServerRackTexts.ARRAY_MEMBER.with(raid)
                         : ServerRackTexts.DRIVE_BAY.text()), mouseX, mouseY);
+            } else if (role == RackLayout.SlotRole.TAPE) {
+                g.renderTooltip(font, GameText.component(ServerRackTexts.TAPE_SLOT), mouseX, mouseY);
             }
             return;
         }
@@ -858,7 +931,8 @@ public class ServerRackScreen extends AbstractComputerScreen<ServerRackMenu> {
         final RackUnitItem.Kind kind = row < 0 || row >= ROWS ? null : RackUnitItem.kindOf(menu.serverInBay(row));
         return kind == RackUnitItem.Kind.RACK_UPS || kind == RackUnitItem.Kind.UPS_BATTERY
                 || kind == RackUnitItem.Kind.PDU || kind == RackUnitItem.Kind.DRIVE_SHELF
-                || kind == RackUnitItem.Kind.COOLING_UNIT || kind == RackUnitItem.Kind.VENT_PANEL;
+                || kind == RackUnitItem.Kind.COOLING_UNIT || kind == RackUnitItem.Kind.VENT_PANEL
+                || kind == RackUnitItem.Kind.TAPE_LIBRARY;
     }
 
     /* Whether a computer is mounted with its top at row. */

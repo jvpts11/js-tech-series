@@ -9,6 +9,13 @@ package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.backup.BackupJobs;
+import dev.jstech.computers.backup.BackupService;
+import dev.jstech.computers.backup.LossCause;
+import dev.jstech.computers.backup.NetworkLosses;
+import dev.jstech.computers.backup.TapeDrive;
+import dev.jstech.computers.backup.TapeFormat;
+import dev.jstech.computers.backup.TapeWork;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.FibreReach;
@@ -35,6 +42,7 @@ import dev.jstech.computers.hardware.ThermalState;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerHardwareHandler;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.item.TapeItem;
 import dev.jstech.computers.machine.MachinePrograms;
 import dev.jstech.computers.machine.MachineServices;
 import dev.jstech.computers.os.BoardFirmware;
@@ -88,6 +96,7 @@ import dev.jstech.computers.storage.IDataSink;
 import dev.jstech.computers.storage.LocalStore;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.storage.StorageVolume;
 import dev.jstech.computers.storage.StoreSink;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.audio.Audio;
@@ -136,6 +145,7 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -202,6 +212,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     /* Quince's qServe, four in a row from the Legacy's to the Advanced's. */
     public static final int UNIT_QSERVE_LEGACY = 51;
     public static final int UNIT_QSERVE_ADVANCED = 54;
+    /* The Tape Libraries, five in a row from the Vintage's to the Advanced's. */
+    public static final int UNIT_TAPE_LIBRARY_VINTAGE = 55;
+    /** The most a Tape Library's drive keeps queued for the Backup Service, the one at the drive among them. */
+    public static final int MOST_TAPE_WORK = 8;
     /* The 1U server's face of each era, and the supercomputer node's, which only the Standard and the Advanced make. */
     private static final EraTable<Integer> SERVER_FACES = EraTable.ofFive(UNIT_SERVER_VINTAGE, UNIT_SERVER_LEGACY,
             UNIT_SERVER_TRANSITION, UNIT_SERVER_STANDARD, UNIT_SERVER_ADVANCED);
@@ -220,7 +234,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             "ups_battery_vintage", "ups_battery_legacy", "ups_battery_transition", "ups_battery_standard",
             "ups_battery_advanced", "pdu_vintage", "pdu_legacy", "pdu_transition", "pdu_standard", "pdu_advanced",
             "drive_shelf", "vent_panel_vintage", "vent_panel_legacy", "vent_panel_transition", "vent_panel_standard",
-            "vent_panel_advanced", "qserve_legacy", "qserve_transition", "qserve_standard", "qserve_advanced"};
+            "vent_panel_advanced", "qserve_legacy", "qserve_transition", "qserve_standard", "qserve_advanced",
+            "tape_library_vintage", "tape_library_legacy", "tape_library_transition", "tape_library_standard",
+            "tape_library_advanced"};
 
     /*
      * What the client copy knows about the cabinet: it holds no inventory, so the server sends the unit
@@ -274,6 +290,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             case PDU -> UNIT_PDU_VINTAGE + HardwareEra.partsIndex(unit.era());
             case DRIVE_SHELF -> UNIT_DRIVE_SHELF;
             case VENT_PANEL -> UNIT_VENT_PANEL_VINTAGE + HardwareEra.partsIndex(rackEra());
+            case TAPE_LIBRARY -> UNIT_TAPE_LIBRARY_VINTAGE + HardwareEra.partsIndex(unit.era());
         };
     }
 
@@ -399,6 +416,15 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private final DerivedInt temperatureShown = fields().derived("RackTemp", () -> thermal().celsius()).toMenu();
     /** Rebuild progress in permille, one handle per unit, filled in the constructor. */
     private final DerivedInt[] rebuildShown = new DerivedInt[CAPACITY_U];
+    /* The drive of each Tape Library, by the row it is topped at: what it winds and what it does there. */
+    private final TapeDrive[] tapeDrives = new TapeDrive[CAPACITY_U];
+    private final DerivedInt[] tapeDriveShown = new DerivedInt[CAPACITY_U];
+    /*
+     * What the Backup Service queued at each Tape Library's drive, by the row it is topped at, the first at the drive;
+     * kept only while the world runs, as the service writes down a job cut short. The count spares the tick a look.
+     */
+    private final List<ArrayDeque<TapeWork>> tapeQueues = new ArrayList<>();
+    private int tapeJobs;
     /** The row a linked monitor shows, plus one so that nothing shown travels as 0: what the unit card's KVM line reads. */
     private final DerivedInt screenShown = fields().derived("Screen", () -> soleComputerSlot() + 1).toMenu();
 
@@ -506,6 +532,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
          */
         final MessengerLog messenger = new MessengerLog();
         final KnotRepository knot = new KnotRepository("main");
+        final BackupJobs backups = new BackupJobs();
         /* The computers streaming from this machine's Soundfoundry Server; held only while they listen. */
         final SoundfoundryListeners listeners = new SoundfoundryListeners();
         /** Which of that desktop's workspaces is up, which goes wherever the windows it sorts go. */
@@ -550,6 +577,10 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             }
             if (Programs.KNOT_HUB.equals(program)) {
                 knot.clear();
+                return true;
+            }
+            if (Programs.BACKUP_SERVICE.equals(program)) {
+                backups.clear();
                 return true;
             }
             return false;
@@ -608,6 +639,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 state.installerMemo = saved.contains("Installer") ? saved.getCompound("Installer") : null;
                 ServiceStateNbt.loadMessenger(saved, state.messenger);
                 ServiceStateNbt.loadKnot(saved, state.knot);
+                state.backups.load(saved);
                 state.kernel.load(saved);
                 if (saved.contains("Studio") && getLevel() != null) {
                     state.studio.load(saved.getCompound("Studio"), getLevel().registryAccess());
@@ -690,6 +722,12 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     @Nullable
     public MessengerLog messengerAt(final int slot) {
         return consoleOf(slot) == null ? null : unitState(slot).messenger;
+    }
+
+    /** The backup jobs the machine at {@code slot} keeps, or null when that row holds no machine. */
+    @Nullable
+    public BackupJobs backupsAt(final int slot) {
+        return consoleOf(slot) == null ? null : unitState(slot).backups;
     }
 
     /** The source the machine at {@code slot} is keeping, or null when that row holds no machine. */
@@ -778,6 +816,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
         ServiceStateNbt.saveMessenger(tag, state.messenger);
         ServiceStateNbt.saveKnot(tag, state.knot);
+        state.backups.save(tag);
         state.kernel.save(tag);
         state.host.save(tag);
         if (getLevel() != null) {
@@ -824,9 +863,13 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
     private final ItemStackHandler frontSlots = new ItemStackHandler(CAPACITY_U * RackLayout.SLOTS_PER_U) {
         @Override
         public boolean isItemValid(final int slot, final ItemStack stack) {
-            // Each front slot takes only what its role cables: a drive in a drive bay, nothing in a blocked one.
+            /*
+             * Each front slot takes only what its role cables: a drive in a drive bay, a tape of the library's era in a
+             * Tape Library's slot, nothing in a blocked one.
+             */
             return switch (roleOfFrontSlot(slot)) {
                 case DRIVE -> fitsBay(stack);
+                case TAPE -> fitsTapeSlot(slot, stack);
                 case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> false;
             };
         }
@@ -994,9 +1037,26 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
      */
     public int corruptBay(final int slot, final double share, final double chance, final RandomSource random) {
         int hit = 0;
-        for (final ItemStack drive : claimedDriveStacks(slot)) {
-            if (random.nextDouble() < chance && DiskCorruption.corrupt(drive, share, null, true, random)) {
+        final List<ItemStack> drives = claimedDriveStacks(slot);
+        for (int index = 0; index < drives.size(); index++) {
+            final ItemStack drive = drives.get(index);
+            if (random.nextDouble() >= chance) {
+                continue;
+            }
+            // A drive that dies takes everything on it, sound or corrupted, and the network writes that down.
+            final StorageVolume volume = DriveVolumes.peek(drive);
+            final Map<StorageKey, Long> held = new HashMap<>(volume.items());
+            volume.corrupted().forEach((key, count) -> held.merge(key, count, Long::sum));
+            final boolean alive = !volume.dead();
+            if (DiskCorruption.corrupt(drive, share, null, true, random)) {
                 hit++;
+                if (alive && volume.dead() && level instanceof ServerLevel server) {
+                    final int disk = index + 1;
+                    asUnit(slot, () -> {
+                        NetworkLosses.lost(server, this, held, LossCause.DEAD_DISK, disk);
+                        return null;
+                    });
+                }
             }
         }
         if (hit > 0) {
@@ -1113,7 +1173,49 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         for (int slot = 0; slot < CAPACITY_U; slot++) {
             final int row = slot;
             rebuildShown[slot] = fields().derived("Rebuild" + row, () -> raidRebuildPermille(row)).toMenu();
+            tapeDrives[slot] = new TapeDrive();
+            tapeDriveShown[slot] = fields().derived("TapeDrive" + row, () -> tapeDrives[row].state().id())
+                    .toMenu();
+            tapeQueues.add(new ArrayDeque<>());
         }
+    }
+
+    /** The work at the drive of the Tape Library topped at {@code row}, or null when it has none. */
+    @Nullable
+    public TapeWork tapeWork(final int row) {
+        return row >= 0 && row < CAPACITY_U ? tapeQueues.get(row).peekFirst() : null;
+    }
+
+    /** Everything queued at the drive of the Tape Library topped at {@code row}, the one at the drive first. */
+    public List<TapeWork> tapeQueue(final int row) {
+        return row >= 0 && row < CAPACITY_U ? List.copyOf(tapeQueues.get(row)) : List.of();
+    }
+
+    /** Queues {@code work} at the drive of the Tape Library topped at {@code row}; false when its queue is full. */
+    public boolean queueTapeWork(final int row, final TapeWork work) {
+        if (row < 0 || row >= CAPACITY_U || tapeQueues.get(row).size() >= MOST_TAPE_WORK) {
+            return false;
+        }
+        tapeQueues.get(row).addLast(work);
+        tapeJobs++;
+        return true;
+    }
+
+    /** Lets the work at the drive of the Tape Library topped at {@code row} go, done or cut short. */
+    public void tapeWorkDone(final int row) {
+        if (row >= 0 && row < CAPACITY_U && tapeQueues.get(row).pollFirst() != null) {
+            tapeJobs--;
+        }
+    }
+
+    /** The drive of the Tape Library topped at {@code row}: idle and holding nothing while no library is there. */
+    public TapeDrive tapeDrive(final int row) {
+        return tapeDrives[Math.max(0, Math.min(CAPACITY_U - 1, row))];
+    }
+
+    /** What the drive of the Tape Library topped at {@code row} is doing, as last shown to the open menu. */
+    public TapeDrive.State tapeDriveShown(final int row) {
+        return TapeDrive.State.byId(row >= 0 && row < CAPACITY_U ? tapeDriveShown[row].getAsInt() : 0);
     }
 
     public ItemStackHandler getServers() {
@@ -1403,6 +1505,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         // Cached rather than worked out on every menu poll: the network lookup above bridges cable segments.
         linked = network != null || fabricLinked;
         arrays.tick();
+        if (tapeJobs > 0) {
+            BackupService.tick(level, this);
+        }
 
         final Set<UUID> present = new HashSet<>();
         int anchorReach = -1;
@@ -1724,8 +1829,18 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         }
         return switch (roleOfFrontSlot(slot)) {
             case DRIVE -> DriveVolumes.isDisk(stack) ? PartRefusals.DISK_TOO_NEW : PartRefusals.DRIVE_BAY;
+            case TAPE -> TapeItem.formatOf(stack) != null ? PartRefusals.TAPE_OF_ITS_ERA : PartRefusals.TAPE_SLOT;
             case BLOCKED_NO_UNIT, BLOCKED_BUDGET -> null;
         };
+    }
+
+    /* A tape of the library's own era, the only one its drive reads. */
+    private boolean fitsTapeSlot(final int slot, final ItemStack stack) {
+        final TapeFormat format = TapeItem.formatOf(stack);
+        final RackLayout.Unit unit = RackLayout.unitAt(slot / RackLayout.SLOTS_PER_U, mountedUnits());
+        return format != null && unit != null
+                && servers.getStackInSlot(unit.topU()).getItem() instanceof RackUnitItem library
+                && format.era().equals(library.era());
     }
 
     /** The rows holding computers, in rack order, the channels a KVM switch can address. */

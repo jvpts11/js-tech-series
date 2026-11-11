@@ -18,6 +18,8 @@ import dev.jstech.computers.os.install.SetupGate;
 import dev.jstech.computers.program.KnotRepository;
 import dev.jstech.computers.program.MessengerLog;
 import dev.jstech.computers.program.Programs;
+import dev.jstech.computers.program.ServerCliComputer;
+import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -31,6 +33,8 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 import java.util.List;
+
+import static dev.jstech.tests.testkit.computers.TestShell.text;
 
 /**
  * The two services whose cost follows how much they are used, on the machines that really run them.
@@ -251,6 +255,49 @@ public final class SocialServiceGameTests {
                             "a service nobody can reach keeps nothing");
                     helper.assertTrue(rack.knotAt(0).bytes() == 0L,
                             "and it weighs nothing either");
+                })
+                .thenSucceed();
+    }
+
+    /* The kept conversations, at the service's own server */
+
+    @GameTest(template = ARENA)
+    public static void msgsvc_deletesAKeptConversationOffTheServerItem(final GameTestHelper helper) {
+        final Base base = base(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerRackBlockEntity rack = base.rack();
+                    rack.consoleOf(0).install(MESSENGER.toString());
+                    final long now = helper.getLevel().getGameTime();
+                    rack.messengerAt(0).say(MessengerLog.LOBBY, "Ada", "the smelter stalled", now, false);
+                    rack.messengerAt(0).say(MessengerLog.privateRoom("Ada", "Grace"), "Grace", "on it", now, false);
+                    final ServerCliComputer cli = new ServerCliComputer(rack, helper.getLevel());
+                    final String listed = text(CliCommands.shellFor(cli, 80).run("msgsvc list", cli));
+                    helper.assertTrue(listed.contains("1  Everybody") && listed.contains("2  Ada, Grace"),
+                            "msgsvc lists both conversations; got " + listed);
+                    final String deleted = text(CliCommands.shellFor(cli, 80).run("msgsvc delete 2", cli));
+                    helper.assertTrue(deleted.startsWith("Deleted \"Ada, Grace\": 1 line,"),
+                            "and deletes the second; got " + deleted);
+                    // What comes back off the item is what the server kept: the deletion was written down at once.
+                    final ItemStack server = rack.getServers().extractItem(0, 1, false);
+                    rack.getServers().setStackInSlot(0, server);
+                    final MessengerLog back = rack.messengerAt(0);
+                    helper.assertTrue(back != null && back.conversations().size() == 1
+                                    && back.room(MessengerLog.privateRoom("Ada", "Grace"), 10).isEmpty(),
+                            "the deleted conversation is gone from the server item too");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void msgsvc_isNoCommandOnAServerWithoutTheService(final GameTestHelper helper) {
+        final Base base = base(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final ServerCliComputer cli = new ServerCliComputer(base.rack(), helper.getLevel());
+                    final String said = text(CliCommands.shellFor(cli, 80).run("msgsvc list", cli));
+                    helper.assertTrue(said.contains("not found"),
+                            "a server with no Messenger Service has no msgsvc; got " + said);
                 })
                 .thenSucceed();
     }

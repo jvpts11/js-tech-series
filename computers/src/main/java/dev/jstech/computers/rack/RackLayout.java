@@ -51,13 +51,17 @@ public final class RackLayout {
         /** A shelf of drives only, which extends the bays of the computer right above it. */
         SHELF,
         /** Equipment that serves the cabinet: a KVM switch, a UPS, a PDU, cooling. */
-        EQUIPMENT
+        EQUIPMENT,
+        /** A tape library, whose front slots take tapes rather than drives. */
+        LIBRARY
     }
 
     /** What one front-panel slot is, and, when blocked, why. */
     public enum SlotRole {
         /** Cabled as a drive bay by the chassis in this row. */
         DRIVE,
+        /** A tape library's slot, which takes a tape of the library's era. */
+        TAPE,
         /** No unit occupies this row, so the slot has nothing to cable it. */
         BLOCKED_NO_UNIT,
         /** A unit occupies the row but its chassis does not cable this many slots. */
@@ -178,7 +182,10 @@ public final class RackLayout {
             return SlotRole.BLOCKED_NO_UNIT;
         }
         final int ordinal = (uRow - unit.topU()) * SLOTS_PER_U + index;
-        return ordinal < unit.driveSlots() ? SlotRole.DRIVE : SlotRole.BLOCKED_BUDGET;
+        if (ordinal >= unit.driveSlots()) {
+            return SlotRole.BLOCKED_BUDGET;
+        }
+        return unit.role() == Role.LIBRARY ? SlotRole.TAPE : SlotRole.DRIVE;
     }
 
     /** How many rack units are currently occupied. */

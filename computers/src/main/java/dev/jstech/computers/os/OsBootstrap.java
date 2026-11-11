@@ -314,31 +314,39 @@ public final class OsBootstrap {
     /** What only Quince's own systems run: its viewer, its music, its browser, its store and its server tool. */
     private static final Set<Platform> QUINCE_ONLY = Set.of(Platform.QUINCE);
 
-    /** The ten built-in desktop apps every desktop environment can bundle, in rail order. */
+    /** The ten built-in desktop apps every desktop environment can bundle, in rail order, and the Media Player. */
     private static final List<ResourceLocation> BUILTIN_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
-            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("help_viewer"));
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("help_viewer"), rl("media_player"));
 
-    /** What the Frames editions bundle: the same, their Device Manager, and their Defrag. */
+    /** What the Frames editions bundle: the same, their Device Manager, their Defrag and their Media Player. */
     private static final List<ResourceLocation> FRAMES_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("device_manager"), rl("help_viewer"),
-            rl("defrag"));
+            rl("defrag"), rl("media_player"));
 
-    /** The Frames' system tools, kept under the Start menu with no icon on the wallpaper: the Defrag. */
-    private static final Set<ResourceLocation> FRAMES_TOOLS = Set.of(rl("defrag"));
+    /**
+     * The Frames' system tools and their Media Player, kept under the Start menu with no icon on the wallpaper, as the
+     * real ones are.
+     */
+    private static final Set<ResourceLocation> FRAMES_TOOLS = Set.of(rl("defrag"), rl("media_player"));
+
+    /** The Media Player, which every desktop lists in its menu and puts no icon of on the wallpaper. */
+    private static final Set<ResourceLocation> MEDIA_IN_MENU = Set.of(rl("media_player"));
 
     /**
      * Linux Mint's two programs, which Cinnamon lists in its menu and puts no icon of on the wallpaper, as the real
-     * one does; only Mint ships them, so on any other system they are not there to list.
+     * one does; only Mint ships them, so on any other system they are not there to list. Celluloid, its Media
+     * Player, is kept in the menu with them.
      */
-    private static final Set<ResourceLocation> MINT_TOOLS = Set.of(rl("software_manager"), rl("update_manager"));
+    private static final Set<ResourceLocation> MINT_TOOLS = Set.of(rl("software_manager"), rl("update_manager"),
+            rl("media_player"));
 
-    /** What CDE bundles: the same, and its Workstation Info, which no other desktop has. */
+    /** What CDE bundles: the same, its Workstation Info, which no other desktop has, and its Audio. */
     private static final List<ResourceLocation> CDE_APPS = List.of(
             rl("network"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("workstation_info"),
-            rl("help_viewer"));
+            rl("help_viewer"), rl("media_player"));
 
     /**
      * What the Quince System bundles: the Seeker, TextPad, the Calculator, its Control Panels, its About box and the
@@ -346,12 +354,12 @@ public final class OsBootstrap {
      */
     private static final List<ResourceLocation> QUINCE_SYSTEM_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("calculator"),
-            rl("help_viewer"));
+            rl("help_viewer"), rl("media_player"));
 
     /** What Quince OS 9 bundles: the same, qTunes, Expedition and Disk First Aid. */
     private static final List<ResourceLocation> QUINCE_OS_9_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("calculator"),
-            rl("qtunes"), rl("expedition"), rl("help_viewer"), rl("defrag"));
+            rl("qtunes"), rl("expedition"), rl("help_viewer"), rl("defrag"), rl("media_player"));
 
     /**
      * What Quince OS X and quinceOS bundle: the same with the Terminal, Activity Monitor, Preview, the Quince Store
@@ -360,30 +368,32 @@ public final class OsBootstrap {
     private static final List<ResourceLocation> QUINCE_X_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("preview"), rl("qtunes"),
-            rl("expedition"), rl("quince_store"), rl("help_viewer"), rl("defrag"));
+            rl("expedition"), rl("quince_store"), rl("help_viewer"), rl("defrag"), rl("media_player"));
 
     /** What Quince OS X Server bundles: Quince OS X's, and Server Admin for the services it runs. */
     private static final List<ResourceLocation> QUINCE_SERVER_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
             rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("preview"), rl("qtunes"),
-            rl("expedition"), rl("quince_store"), rl("help_viewer"), rl("defrag"), rl("server_admin"));
+            rl("expedition"), rl("quince_store"), rl("help_viewer"), rl("defrag"), rl("server_admin"),
+            rl("media_player"));
 
     private static final Map<ResourceLocation, TextKey> QUINCE_CLASSIC_NAMES = Map.of(
             rl("files"), DesktopNames.QUINCE_FILES, rl("editor"), DesktopNames.QUINCE_EDITOR,
             rl("settings"), DesktopNames.QUINCE_CONTROL_PANELS, rl("this_pc"), DesktopNames.QUINCE_ABOUT,
-            rl("help_viewer"), DesktopNames.QUINCE_HELP_CENTER);
+            rl("help_viewer"), DesktopNames.QUINCE_HELP_CENTER, rl("media_player"), DesktopNames.QUINCE_MEDIA_PLAYER);
 
     private static final Map<ResourceLocation, TextKey> QUINCE_OS_9_NAMES = Map.of(
             rl("files"), DesktopNames.QUINCE_FILES, rl("editor"), DesktopNames.QUINCE_EDITOR,
             rl("settings"), DesktopNames.QUINCE_CONTROL_PANELS, rl("this_pc"), DesktopNames.QUINCE_ABOUT,
-            rl("help_viewer"), DesktopNames.QUINCE_HELP_CENTER, rl("defrag"), DesktopNames.QUINCE_DISK_FIRST_AID);
+            rl("help_viewer"), DesktopNames.QUINCE_HELP_CENTER, rl("defrag"), DesktopNames.QUINCE_DISK_FIRST_AID,
+            rl("media_player"), DesktopNames.QUINCE_MEDIA_PLAYER);
 
     private static final Map<ResourceLocation, TextKey> QUINCE_X_NAMES = Map.of(
             rl("files"), DesktopNames.QUINCE_FILES, rl("editor"), DesktopNames.QUINCE_EDITOR,
             rl("settings"), DesktopNames.QUINCE_PREFERENCES, rl("command_prompt"), DesktopNames.QUINCE_TERMINAL,
             rl("this_pc"), DesktopNames.QUINCE_ABOUT, rl("system_monitor"), DesktopNames.QUINCE_MONITOR,
             rl("task_manager"), DesktopNames.QUINCE_FORCE_QUIT, rl("help_viewer"), DesktopNames.QUINCE_HELP_VIEWER,
-            rl("defrag"), DesktopNames.QUINCE_DISK_UTILITY);
+            rl("defrag"), DesktopNames.QUINCE_DISK_UTILITY, rl("media_player"), DesktopNames.QUINCE_MEDIA_PLAYER);
 
     /**
      * The built-in desktop environments. The Frames editions bundle their own (the id equals the OS id, so the
@@ -399,18 +409,21 @@ public final class OsBootstrap {
                     Map.of(rl("device_manager"), DesktopNames.FRAMES_95_SYSTEM, rl("help_viewer"),
                             DesktopNames.FRAMES_95_HELP), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
             new DesktopEnvironmentDef(rl("frames_xp"), "Frames XP", PanelStyle.FRAMES_XP, FRAMES_APPS, Map.of(
-                    rl("help_viewer"), DesktopNames.FRAMES_XP_HELP), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
+                    rl("help_viewer"), DesktopNames.FRAMES_XP_HELP, rl("media_player"),
+                    DesktopNames.FRAMES_MEDIA_PLAYER), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
             // Frames 7 calls the machine Computer, and keeps its settings in a Control Panel of categories.
             new DesktopEnvironmentDef(rl("frames_7"), "Frames 7", PanelStyle.FRAMES_7, FRAMES_APPS, Map.of(
                     rl("this_pc"), DesktopNames.FRAMES_7_COMPUTER, rl("settings"), DesktopNames.FRAMES_7_CONTROL_PANEL,
-                    rl("help_viewer"), DesktopNames.FRAMES_7_HELP), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
+                    rl("help_viewer"), DesktopNames.FRAMES_7_HELP, rl("media_player"),
+                    DesktopNames.FRAMES_MEDIA_PLAYER), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
             /*
              * Frames 10 named its file manager after what it explores, and the machine This PC, as 11 still does; both
              * call their Defrag Optimize Drives.
              */
             new DesktopEnvironmentDef(rl("frames_10"), "Frames 10", PanelStyle.FRAMES_10, FRAMES_APPS, Map.of(
                     rl("files"), DesktopNames.FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP,
-                    rl("defrag"), DesktopNames.OPTIMIZE_DRIVES), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
+                    rl("defrag"), DesktopNames.OPTIMIZE_DRIVES, rl("media_player"), DesktopNames.FRAMES_MEDIA_PLAYER),
+                    SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
             new DesktopEnvironmentDef(rl("frames_11"), "Frames 11", PanelStyle.FRAMES_11, FRAMES_APPS, Map.of(
                     rl("files"), DesktopNames.FILE_EXPLORER, rl("help_viewer"), DesktopNames.GET_HELP,
                     rl("defrag"), DesktopNames.OPTIMIZE_DRIVES), SoftwareHouse.MIDSOFT, FRAMES_TOOLS),
@@ -418,19 +431,21 @@ public final class OsBootstrap {
                     rl("files"), DesktopNames.KDE_FILES, rl("editor"), DesktopNames.KDE_EDITOR,
                     rl("command_prompt"), DesktopNames.KDE_TERMINAL, rl("calculator"), DesktopNames.KDE_CALCULATOR,
                     rl("system_monitor"), DesktopNames.KDE_MONITOR, rl("settings"), DesktopNames.KDE_SETTINGS,
-                    rl("this_pc"), DesktopNames.KDE_THIS_PC, rl("help_viewer"), DesktopNames.KDE_HELP),
-                    SoftwareHouse.KDE_GUILD),
+                    rl("this_pc"), DesktopNames.KDE_THIS_PC, rl("help_viewer"), DesktopNames.KDE_HELP,
+                    rl("media_player"), DesktopNames.KDE_MEDIA_PLAYER), SoftwareHouse.KDE_GUILD, MEDIA_IN_MENU),
             new DesktopEnvironmentDef(rl("gnome"), "GNOME", PanelStyle.GNOME, BUILTIN_APPS, Map.of(
                     rl("files"), DesktopNames.GNOME_FILES, rl("editor"), DesktopNames.GNOME_EDITOR,
                     rl("command_prompt"), DesktopNames.GNOME_TERMINAL, rl("calculator"), DesktopNames.GNOME_CALCULATOR,
                     rl("system_monitor"), DesktopNames.GNOME_MONITOR, rl("settings"), DesktopNames.GNOME_SETTINGS,
-                    rl("this_pc"), DesktopNames.GNOME_THIS_PC), SoftwareHouse.GNOME_TRUST),
+                    rl("this_pc"), DesktopNames.GNOME_THIS_PC, rl("media_player"), DesktopNames.GNOME_MEDIA_PLAYER),
+                    SoftwareHouse.GNOME_TRUST, MEDIA_IN_MENU),
             new DesktopEnvironmentDef(rl("cinnamon"), "Cinnamon", PanelStyle.CINNAMON, BUILTIN_APPS, Map.of(
                     rl("files"), DesktopNames.CINNAMON_FILES, rl("editor"), DesktopNames.CINNAMON_EDITOR,
                     rl("command_prompt"), DesktopNames.CINNAMON_TERMINAL,
                     rl("calculator"), DesktopNames.CINNAMON_CALCULATOR,
                     rl("system_monitor"), DesktopNames.CINNAMON_MONITOR,
-                    rl("settings"), DesktopNames.CINNAMON_SETTINGS, rl("this_pc"), DesktopNames.CINNAMON_THIS_PC),
+                    rl("settings"), DesktopNames.CINNAMON_SETTINGS, rl("this_pc"), DesktopNames.CINNAMON_THIS_PC,
+                    rl("media_player"), DesktopNames.CINNAMON_MEDIA_PLAYER),
                     SoftwareHouse.SPEARMINT, MINT_TOOLS),
             /*
              * CDE keeps its own names for what it bundles, which are plainer than anybody else's: it called a
@@ -441,7 +456,8 @@ public final class OsBootstrap {
                     rl("files"), DesktopNames.CDE_FILES, rl("editor"), DesktopNames.CDE_EDITOR,
                     rl("command_prompt"), DesktopNames.CDE_TERMINAL, rl("calculator"), DesktopNames.CDE_CALCULATOR,
                     rl("system_monitor"), DesktopNames.CDE_MONITOR, rl("settings"), DesktopNames.CDE_SETTINGS,
-                    rl("help_viewer"), DesktopNames.CDE_HELP), SoftwareHouse.OPEN_DESK_CONSORTIUM),
+                    rl("help_viewer"), DesktopNames.CDE_HELP, rl("media_player"), DesktopNames.CDE_MEDIA_PLAYER),
+                    SoftwareHouse.OPEN_DESK_CONSORTIUM, MEDIA_IN_MENU),
             /*
              * Quince's desktops, one per system under the system's id. Nothing of theirs lies on the desktop but the
              * disks and the Trash: their programs are opened from the Seeker, the fruit's menu and, from Quince OS X,
@@ -603,6 +619,15 @@ public final class OsBootstrap {
                     .named("Disk Defragmenter")
                     .described("Repairs the corrupted items on a disk, gives back what it can and mends a quarter of"
                             + " its bad sectors on every pass."),
+            /*
+             * The Media Player comes with every desktop, under each one's own name, and plays the machine's songs and
+             * its image sequences, the mod's video: a folder of pictures shown in the order of their names
+             * (computers/docs/design/programs.md).
+             */
+            ProgramSpec.of(rl("media_player"), "media", true, DESKTOPS, 0, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Media Player")
+                    .described("Plays the songs on this computer, and a folder of pictures as a film.")
+                    .withRam(8),
             /*
              * Quince's own programs, which come with its systems and run on nothing else (computers/docs/design/
              * quince.md): Preview shows a picture, qTunes plays the machine's songs, Expedition is the browser
@@ -869,6 +894,32 @@ public final class OsBootstrap {
                     .named("Integrity Monitor")
                     .described("Re-reads this bay after a hot swap, so the network index never has to doubt it.")
                     .withEra(STANDARD).withHouse(SoftwareHouse.VAULTIS).withRam(32),
+            /*
+             * Data Compressor packs a bay's items tighter, for more room at a slower read: a trade the player weighs
+             * against the drives, worth it on a hard disk and poor on NVMe (computers/docs/design/programs.md).
+             */
+            ProgramSpec.of(rl("data_compressor"), "datacomp", false, ALL_PLATFORMS, 32, ProgramKind.SERVICE, 0,
+                            HostScope.SERVER)
+                    .named("Data Compressor")
+                    .described("Packs this bay's items tighter: its drives hold a fifth more, and every read waits"
+                            + " two ticks longer. Worth it on a hard disk, a poor trade on NVMe.")
+                    .withEra(STANDARD).withHouse(SoftwareHouse.VAULTIS).withRam(64),
+            /*
+             * The Backup Service backs the network up to a Tape Library or another server's drive and puts it back:
+             * its items through the network's book of losses, so a restore never makes an item twice. The Backup
+             * Console is its window, the same pair as the Messenger and its service
+             * (computers/docs/design/programs.md).
+             */
+            ProgramSpec.of(rl("backup_service"), "backupsvc", false, ALL_PLATFORMS, 48, ProgramKind.SERVICE, 0,
+                            HostScope.SERVER)
+                    .named("Backup Service")
+                    .described("Backs this network up to a Tape Library or another server's drive, by hand or on a"
+                            + " schedule, and puts it back without making an item twice.")
+                    .withEra(LEGACY).withHouse(SoftwareHouse.VAULTIS).withRam(32),
+            ProgramSpec.of(rl("backup_console"), "backup", false, DESKTOPS, 48, ProgramKind.APP, 0, HostScope.ANY)
+                    .named("Backup Console")
+                    .described("Set the network's backups, watch them run and restore them.")
+                    .withEra(LEGACY).withHouse(SoftwareHouse.VAULTIS).withRam(32),
             /*
              * Remote Control: the graphical way into the network's other machines (a headless rack server
              * above all). Any desktop, Frames XP or newer, the point-and-click twin of ssh.

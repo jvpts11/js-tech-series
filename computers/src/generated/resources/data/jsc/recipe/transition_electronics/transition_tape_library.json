@@ -1,0 +1,31 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 4,
+      "item": "jscore:steel_plate"
+    },
+    {
+      "count": 2,
+      "item": "jscore:electric_motor"
+    },
+    {
+      "count": 2,
+      "item": "jscore:magnetic_head"
+    },
+    {
+      "count": 1,
+      "item": "jsc:etched_board_transition"
+    },
+    {
+      "count": 2,
+      "item": "jsc:controller_chip_transition"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:transition_tape_library"
+    }
+  ]
+}

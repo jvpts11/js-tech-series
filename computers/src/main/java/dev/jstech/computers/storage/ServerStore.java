@@ -54,7 +54,7 @@ public final class ServerStore implements IWeightedStore {
              */
             rack.markStorageChanged(serverSlot);
             rack.setChanged();
-        }, rack.serviceUp(serverSlot, Programs.LOAD_BALANCER));
+        }, rack.serviceUp(serverSlot, Programs.LOAD_BALANCER), DataCompression.roomPercent(rack, serverSlot));
     }
 
     public long capacity() {
@@ -80,9 +80,11 @@ public final class ServerStore implements IWeightedStore {
         final List<Long> sizes = rack.raidDriveSizes(serverSlot);
         /*
          * A degraded array still presents the volume it promised, so the size is charged against the
-         * member count and the size it was formed with rather than what is left in the bay right now.
+         * member count and the size it was formed with rather than what is left in the bay right now. A compressed
+         * array holds a share more on that volume, as a compressed drive does.
          */
-        return mode.volumeOf(sizes, rack.raidMemberCount(serverSlot), rack.raidPromisedVolume(serverSlot));
+        return mode.volumeOf(sizes, rack.raidMemberCount(serverSlot), rack.raidPromisedVolume(serverSlot))
+                * DataCompression.roomPercent(rack, serverSlot) / LocalStore.PLAIN_ROOM;
     }
 
     /**

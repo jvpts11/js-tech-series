@@ -142,6 +142,12 @@ public enum FileType {
     PNG("png", false, false, FileTypeNames.PNG, true),
 
     /**
+     * A backup the Backup Service wrote onto a server's drive: the file names the backup the world keeps and weighs
+     * what the backup does, as a song's file weighs its song (see {@link BackupFile}). Only the service writes one.
+     */
+    BAK("bak", false, false, FileTypeNames.BAK),
+
+    /**
      * A file of a kind the machines do not know: whatever a player or a program chose to call it, such as
      * {@code thing.fk}.
      *

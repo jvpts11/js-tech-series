@@ -82,6 +82,28 @@
           {
             "words": "jsc.guide.network_services.table1_6_3"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_services.table1_7_1"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_7_2"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_7_3"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.network_services.table1_8_1"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_8_2"
+          },
+          {
+            "words": "jsc.guide.network_services.table1_8_3"
+          }
         ]
       ]
     },
@@ -113,6 +135,19 @@
       "term": "jsc.guide.network_services.term3"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.network_services.text6"
+    },
+    {
+      "type": "define",
+      "definition": "jsc.guide.network_services.definition4",
+      "term": "jsc.guide.network_services.term4"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.network_services.text7"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -141,7 +176,7 @@
   ],
   "icon": "jsc:server",
   "id": "jsc:network_services",
-  "order": 94,
+  "order": 95,
   "section": "jsc:network_operation",
   "title": "jsc.guide.network_services.title"
 }

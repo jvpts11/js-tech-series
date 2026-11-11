@@ -32,6 +32,7 @@ import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.SystemLayout;
 import dev.jstech.computers.os.media.MediaVolume;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.CellGrid;
@@ -1894,6 +1895,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             final boolean dat = target.file().projectsItem();
             final boolean setup = isSetup(target);
             final boolean program = target.kind() == Kind.FILE && isProgram(target.file());
+            addMediaItems(items, target);
             items.add(item(setup || program ? FilesTexts.RUN : FilesTexts.OPEN, true, () -> open(target)));
             if (target.kind() == Kind.FILE && !dat && !setup) {
                 /*
@@ -1952,6 +1954,24 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         items.add(item(FilesTexts.REFRESH, true, () -> request(dir)));
         return items;
+    }
+
+    /**
+     * What the Media Player offers on a folder: Play, which plays its pictures as a sequence and its songs through the
+     * computer's player, and Add to the player's list, under the name this desktop calls the player
+     * (computers/docs/design/programs.md). Nothing on a desktop without one.
+     */
+    private void addMediaItems(final List<ContextMenu.Item> items, final Row target) {
+        if (target.kind() != Kind.DIR || target.file() == null || !ActiveDesktop.launches(MediaPlayerApp.PROGRAM)) {
+            return;
+        }
+        final String path = target.file().path();
+        final String player = ActiveDesktop.windowName(MediaPlayerApp.PROGRAM);
+        items.add(item(FilesTexts.PLAY, true,
+                () -> ActiveDesktop.requestOpenFileWith(Programs.MEDIA_PLAYER.getPath(), path)));
+        items.add(new ContextMenu.Item(GameText.resolve(FilesTexts.ADD_TO_LIST.with(player)), true,
+                () -> ActiveDesktop.requestOpenFileWith(Programs.MEDIA_PLAYER.getPath(), MediaPlayerApp.ADD + path)));
+        items.add(ContextMenu.Item.separator());
     }
 
     /**

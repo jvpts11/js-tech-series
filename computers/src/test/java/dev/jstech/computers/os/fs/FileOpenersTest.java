@@ -57,11 +57,12 @@ class FileOpenersTest {
     }
 
     @Test
-    void defaultFor_opensASongInTheMusicPlayerAndNeverInTheEditor() {
+    void defaultFor_opensASongInTheMusicPlayersAndNeverInTheEditor() {
         assertEquals("soundfoundry", FileOpeners.defaultFor("Music/song.ogg", List.of("soundfoundry")));
         assertEquals("soundfoundry", FileOpeners.defaultFor("Music/song.wav", List.of("soundfoundry")));
-        assertEquals("", FileOpeners.defaultFor("Music/song.ogg", EVERYTHING));
-        assertEquals(List.of(), FileOpeners.choices("Music/song.ogg", EVERYTHING));
+        // Without Soundfoundry, the Media Player every desktop ships plays it.
+        assertEquals(FileOpeners.MEDIA_PLAYER, FileOpeners.defaultFor("Music/song.ogg", EVERYTHING));
+        assertEquals(List.of(FileOpeners.MEDIA_PLAYER), FileOpeners.choices("Music/song.ogg", EVERYTHING));
     }
 
     @Test

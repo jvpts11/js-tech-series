@@ -200,7 +200,7 @@
     }
   ],
   "id": "jsc:apt",
-  "order": 266,
+  "order": 268,
   "section": "jsc:linux_packages",
   "title": "jsc.guide.apt.title"
 }

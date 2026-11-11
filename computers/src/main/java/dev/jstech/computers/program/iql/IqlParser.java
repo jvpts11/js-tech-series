@@ -144,6 +144,7 @@ public final class IqlParser {
             case QUERY -> parseQuery(verb);
             case ANALYZE, VACUUM, REINDEX -> parseMaintenance(verb);
             case UPDATE -> parseUpdate(verb);
+            case BACKUP -> parseBackup(verb);
             default -> parseAction(verb);
         };
     }
@@ -252,6 +253,19 @@ public final class IqlParser {
             throw unexpected(tokens.get(pos));
         }
         return new IqlOperation(verb, IqlOperation.NONE, object, "", "", null, null, "", false,
+                IqlOperation.NO_LIMIT, OperationPriority.DEFAULT, null);
+    }
+
+    /* BACKUP and the name of the job, a word or written in quotes, and nothing after it. */
+    private IqlOperation parseBackup(final IqlVerb verb) {
+        if (!peekType(Type.WORD) && !peekType(Type.STRING)) {
+            throw IqlError.of(IqlError.EXPECTED, IqlError.A_BACKUP_JOB);
+        }
+        final String job = tokens.get(pos++).text();
+        if (pos < tokens.size()) {
+            throw unexpected(tokens.get(pos));
+        }
+        return new IqlOperation(verb, IqlOperation.NONE, job, "", "", null, null, "", false,
                 IqlOperation.NO_LIMIT, OperationPriority.DEFAULT, null);
     }
 

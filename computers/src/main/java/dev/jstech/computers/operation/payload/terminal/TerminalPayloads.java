@@ -191,12 +191,14 @@ public final class TerminalPayloads {
             return;
         }
         final NetworkIndex index = mainframe.networkIndex();
+        // What is dropped goes into the network's book of losses as dropped from the machine whose terminal it was.
+        final String by = host.hostname();
         long destroyed = 0L;
         Text label;
         StorageKey recordKey;
         switch (payload.scope()) {
             case TerminalDropPayload.SCOPE_NETWORK -> {
-                destroyed = index.dropAll(level, net);
+                destroyed = index.dropAll(level, net, by);
                 label = FROM_NETWORK.text();
                 recordKey = StorageKey.of(labelledIcon(Items.TNT, GameText.component(NETWORK)));
             }
@@ -210,13 +212,13 @@ public final class TerminalPayloads {
                 } catch (final IllegalArgumentException malformed) {
                     return;
                 }
-                destroyed = index.dropServer(level, node);
+                destroyed = index.dropServer(level, net, node, by);
                 label = FROM_SERVER.text();
                 recordKey = StorageKey.of(labelledIcon(Items.TNT, Component.literal(serverLabel(level, node))));
             }
             case TerminalDropPayload.SCOPE_TYPES -> {
                 for (final StorageKey key : payload.types()) {
-                    destroyed += index.dropType(level, net, key, null);
+                    destroyed += index.dropType(level, net, key, null, by);
                 }
                 final int n = payload.types().size();
                 label = (n == 1 ? ONE_TYPE : TYPES).with(n);

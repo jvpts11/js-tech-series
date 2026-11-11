@@ -50,6 +50,10 @@ public record StoredFile(String path, FileType type, String content, long modifi
             final RecordingFile recording = RecordingFile.read(content);
             return recording == null ? text : recording.bytes();
         }
+        if (type == FileType.BAK) {
+            final BackupFile backup = BackupFile.read(content);
+            return backup == null ? text : backup.bytes();
+        }
         return type == FileType.ARK ? text + Archive.recordingBytes(content) : text;
     }
 

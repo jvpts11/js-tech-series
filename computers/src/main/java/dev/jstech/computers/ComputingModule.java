@@ -13,6 +13,7 @@ import dev.jstech.computers.abandoned.AbandonedBuildings;
 import dev.jstech.computers.advancement.JscTriggers;
 import dev.jstech.computers.audio.ComputingAudioDevices;
 import dev.jstech.computers.audio.ComputingSounds;
+import dev.jstech.computers.backup.TapeFormat;
 import dev.jstech.computers.block.AccessPointBlock;
 import dev.jstech.computers.block.CableRunTexts;
 import dev.jstech.computers.block.CaseStyle;
@@ -100,6 +101,7 @@ import dev.jstech.computers.item.PrintedPaperItem;
 import dev.jstech.computers.item.RackUnitItem;
 import dev.jstech.computers.item.ServerCaseItem;
 import dev.jstech.computers.item.ServerItem;
+import dev.jstech.computers.item.TapeItem;
 import dev.jstech.computers.item.WanGatewayBlockItem;
 import dev.jstech.computers.os.media.DockStationBlock;
 import dev.jstech.computers.os.media.DockStationBlockEntity;
@@ -1083,6 +1085,26 @@ public final class ComputingModule {
     // The shelf of drives of the late game, which turns a Storage Server into a great store.
     public static final ItemEntry<RackUnitItem> DRIVE_SHELF = rackUnit("drive_shelf", RackUnitItem.Kind.DRIVE_SHELF,
             HardwareEra.STANDARD).named("Drive Shelf").register();
+    // The Backup Service's cold storage: a Tape Library for every era, each taking the tapes of its own.
+    public static final ItemEntry<RackUnitItem> VINTAGE_TAPE_LIBRARY = rackUnit("vintage_tape_library",
+            RackUnitItem.Kind.TAPE_LIBRARY, HardwareEra.VINTAGE).named("Vintage Tape Library").register();
+    public static final ItemEntry<RackUnitItem> LEGACY_TAPE_LIBRARY = rackUnit("legacy_tape_library",
+            RackUnitItem.Kind.TAPE_LIBRARY, HardwareEra.LEGACY).named("Legacy Tape Library").register();
+    public static final ItemEntry<RackUnitItem> TRANSITION_TAPE_LIBRARY = rackUnit("transition_tape_library",
+            RackUnitItem.Kind.TAPE_LIBRARY, HardwareEra.TRANSITION).named("Transition Tape Library").register();
+    public static final ItemEntry<RackUnitItem> TAPE_LIBRARY = rackUnit("tape_library",
+            RackUnitItem.Kind.TAPE_LIBRARY, HardwareEra.STANDARD).named("Tape Library").register();
+    public static final ItemEntry<RackUnitItem> ADVANCED_TAPE_LIBRARY = rackUnit("advanced_tape_library",
+            RackUnitItem.Kind.TAPE_LIBRARY, HardwareEra.ADVANCED).named("Advanced Tape Library").register();
+    public static final ItemEntry<TapeItem> TAPE_REEL = tape("tape_reel", TapeFormat.REEL).named("Tape Reel")
+            .register();
+    public static final ItemEntry<TapeItem> DLT_TAPE = tape("dlt_tape", TapeFormat.DLT).named("DLT Tape").register();
+    public static final ItemEntry<TapeItem> LTO3_TAPE = tape("lto3_tape", TapeFormat.LTO_3).named("LTO-3 Tape")
+            .register();
+    public static final ItemEntry<TapeItem> LTO6_TAPE = tape("lto6_tape", TapeFormat.LTO_6).named("LTO-6 Tape")
+            .register();
+    public static final ItemEntry<TapeItem> LTO9_TAPE = tape("lto9_tape", TapeFormat.LTO_9).named("LTO-9 Tape")
+            .register();
     /*
      * The passive partner of the Cooling Unit: one panel for every era, drawn in the colour of the rack it is in, so it
      * is of the Vintage's, which every rack seats, and shown with what every era shares.
@@ -1787,6 +1809,12 @@ public final class ComputingModule {
     private static ItemBuilder<RackUnitItem> rackUnit(final String id, final RackUnitItem.Kind kind,
                                                       final Era era) {
         return CONTENT.item(id, properties -> new RackUnitItem(properties, kind, era)).tab(shelf(Shelf.RACK_BAYS, era));
+    }
+
+    /* A tape, shelved with the rack units of its era beside the Tape Library that takes it. */
+    private static ItemBuilder<TapeItem> tape(final String id, final TapeFormat format) {
+        return CONTENT.item(id, properties -> new TapeItem(properties, format))
+                .tab(shelf(Shelf.RACK_BAYS, format.era()));
     }
 
     /* A personal-use card, one for every era from the Legacy on, so shown with what every era shares. */

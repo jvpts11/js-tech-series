@@ -18,6 +18,8 @@
     "jsc:vintage_cooling_unit",
     "jsc:vintage_ups_battery_expansion",
     "jsc:vintage_pdu",
+    "jsc:vintage_tape_library",
+    "jsc:tape_reel",
     "jsc:vintage_peripheral_cable",
     "jsc:vintage_hub",
     "jsc:mono_i_monitor",

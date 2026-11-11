@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * What a messenger service is actually made of: the conversations it is keeping and what they weigh.
@@ -46,6 +47,8 @@ public final class MessengerLog {
 
     /** The room everybody is in unless they are talking to one person. */
     public static final String LOBBY = "lobby";
+
+    private static final long KILOBYTE = 1024L;
 
     /** What joins the two names of a room where two people are talking to each other. */
     private static final String PAIR = "|";
@@ -122,8 +125,11 @@ public final class MessengerLog {
     private final Map<String, Presence> connected = new LinkedHashMap<>();
     private long bytes;
 
-    /** Somebody with the messenger open: the room on their screen, and when they last said so. */
-    private record Presence(String room, long at) {
+    /**
+     * Somebody with the messenger open: the room on their screen, when they last said so, and whether their screen is
+     * the service's own server, where the kept conversations are theirs to delete.
+     */
+    private record Presence(String room, long at, boolean atServer) {
     }
 
     /**
@@ -230,12 +236,22 @@ public final class MessengerLog {
      * window into it, which is what {@link #roomOf} is for.
      */
     public boolean connect(final String who, final String room, final long at) {
+        return connect(who, room, at, false);
+    }
+
+    /** {@link #connect(String, String, long)}, saying too whether their messenger is open at the service's server. */
+    public boolean connect(final String who, final String room, final long at, final boolean atServer) {
         if (who == null || who.isBlank()) {
             return false;
         }
-        return connected.put(who,
-                new Presence(room == null || room.isBlank() ? LOBBY : room.toLowerCase(Locale.ROOT), at))
-                == null;
+        return connected.put(who, new Presence(room == null || room.isBlank() ? LOBBY : room.toLowerCase(Locale.ROOT),
+                at, atServer)) == null;
+    }
+
+    /** Whether somebody has their messenger open at the service's own server. */
+    public boolean atServer(final String who) {
+        final Presence presence = connected.get(who);
+        return presence != null && presence.atServer();
     }
 
     /** The room somebody has open, or the lobby when they have none open at all. */
@@ -285,9 +301,105 @@ public final class MessengerLog {
         return BASE_RAM_MB + connected.size() * RAM_PER_PERSON_MB;
     }
 
+    /**
+     * Every conversation the service keeps, in the order each was first spoken in: the room, the names of who is in it
+     * as they wrote them, how many lines were said, what they weigh and when the last one was said.
+     */
+    public List<Conversation> conversations() {
+        final Map<String, List<Message>> byRoom = new LinkedHashMap<>();
+        for (final Message message : messages) {
+            byRoom.computeIfAbsent(message.room(), room -> new ArrayList<>()).add(message);
+        }
+        final List<Conversation> out = new ArrayList<>();
+        for (final Map.Entry<String, List<Message>> room : byRoom.entrySet()) {
+            final List<Message> said = room.getValue();
+            long weight = 0L;
+            for (final Message message : said) {
+                weight += message.bytes();
+            }
+            out.add(new Conversation(room.getKey(), namesIn(room.getKey()), said.size(), weight,
+                    said.getLast().at()));
+        }
+        return List.copyOf(out);
+    }
+
+    /**
+     * Throws away everything said in {@code room}; answers what was thrown away, or null when the service keeps no
+     * such conversation. The room goes with it, from every list it was on.
+     */
+    @Nullable
+    public Conversation delete(final String room) {
+        final String wanted = room == null ? "" : room.toLowerCase(Locale.ROOT);
+        for (final Conversation conversation : conversations()) {
+            if (conversation.room().equals(wanted)) {
+                messages.removeIf(message -> message.room().equals(wanted));
+                bytes -= conversation.bytes();
+                return conversation;
+            }
+        }
+        return null;
+    }
+
+    /** Throws away every conversation; answers what was thrown away, oldest first. */
+    public List<Conversation> deleteAll() {
+        final List<Conversation> gone = conversations();
+        clear();
+        return gone;
+    }
+
+    /** What something weighs on a disk, in the unit that keeps the number short: 640 B, 12 KB, 1.4 MB. */
+    public static String sizeText(final long bytes) {
+        if (bytes < KILOBYTE) {
+            return bytes + " B";
+        }
+        if (bytes < KILOBYTE * KILOBYTE) {
+            return Math.round(bytes / (double) KILOBYTE) + " KB";
+        }
+        return String.format(Locale.ROOT, "%.1f MB", bytes / (double) (KILOBYTE * KILOBYTE));
+    }
+
     /** Throws away every message, which is the only way a full service is emptied. */
     public void clear() {
         messages.clear();
         bytes = 0L;
+    }
+
+    /*
+     * The names of a private room as its two wrote them wherever they spoke, since the room's own name is folded to
+     * lower case; the lobby is everybody's and names nobody.
+     */
+    private List<String> namesIn(final String room) {
+        if (!isPrivate(room)) {
+            return List.of();
+        }
+        final int bar = room.indexOf(PAIR.charAt(0));
+        final List<String> names = new ArrayList<>();
+        for (final String folded : List.of(room.substring(0, bar), room.substring(bar + 1))) {
+            String written = folded;
+            for (final Message message : messages) {
+                if (message.from().equalsIgnoreCase(folded)) {
+                    written = message.from();
+                    break;
+                }
+            }
+            names.add(written);
+        }
+        return List.copyOf(names);
+    }
+
+    /**
+     * One conversation the service keeps.
+     *
+     * @param room   its room, {@link #LOBBY} or two names
+     * @param names  who is in it as they wrote their names; none for the lobby, which is everybody's
+     * @param lines  how many things were said in it
+     * @param bytes  what it weighs on the disk
+     * @param lastAt the game time the last of them was said at
+     */
+    public record Conversation(String room, List<String> names, int lines, long bytes, long lastAt) {
+
+        public Conversation {
+            names = List.copyOf(names);
+        }
     }
 }

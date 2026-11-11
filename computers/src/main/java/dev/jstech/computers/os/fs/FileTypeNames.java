@@ -38,6 +38,7 @@ final class FileTypeNames {
     static final TextKey WAV = TextKey.of("jsc.file_type.wav", "Wave audio");
     static final TextKey PIX = TextKey.of("jsc.file_type.pix", "Picture");
     static final TextKey PNG = TextKey.of("jsc.file_type.png", "PNG picture");
+    static final TextKey BAK = TextKey.of("jsc.file_type.bak", "Backup");
 
     private FileTypeNames() {
     }

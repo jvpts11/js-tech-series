@@ -57,7 +57,9 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
         /** Ten drive bays and no server: it extends the bays of the server right above it. */
         DRIVE_SHELF("drive_shelf", 2),
         /** Passive ventilation, the cheap partner of the Cooling Unit: one for every era, in its rack's colour. */
-        VENT_PANEL("vent_panel", 1);
+        VENT_PANEL("vent_panel", 1),
+        /** Ten tapes of its era and the drive that winds them: the Backup Service's cold storage. */
+        TAPE_LIBRARY("tape_library", 2);
 
         private final String id;
         private final int heightU;
@@ -107,7 +109,9 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
     private static final TextKey VENT_EVERY_ERA = TextKey.of("item.jsc.vent_panel.every_era",
             "Fits a rack of every era, in the rack's colour");
     private static final TextKey ADDS = TextKey.of("item.jsc.rack_unit.adds", "+%s to the rack's UPS");
-    /* The drive bays of a shelf: two rows of five. */
+    private static final TextKey TAPE_TOOLTIP = TextKey.of("item.jsc.tape_library.tooltip",
+            "Ten tapes of its era for the Backup Service: cold storage, huge and slow");
+    /* The drive bays of a shelf: two rows of five; as many tapes in a library. */
     private static final int SHELF_DRIVES = 10;
 
     public RackUnitItem(final Properties properties, final Kind kind, final Era era) {
@@ -155,15 +159,19 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
         return kind.heightU();
     }
 
-    /** A drive shelf's bays; the other units cable none. */
+    /** A drive shelf's bays and a tape library's slots; the other units cable none. */
     @Override
     public int driveSlots() {
-        return kind == Kind.DRIVE_SHELF ? SHELF_DRIVES : 0;
+        return kind == Kind.DRIVE_SHELF || kind == Kind.TAPE_LIBRARY ? SHELF_DRIVES : 0;
     }
 
     @Override
     public RackLayout.Role rackRole() {
-        return kind == Kind.DRIVE_SHELF ? RackLayout.Role.SHELF : RackLayout.Role.EQUIPMENT;
+        return switch (kind) {
+            case DRIVE_SHELF -> RackLayout.Role.SHELF;
+            case TAPE_LIBRARY -> RackLayout.Role.LIBRARY;
+            default -> RackLayout.Role.EQUIPMENT;
+        };
     }
 
     /** The rack-unit kind of a stack, or null when the stack is not a rack unit. */
@@ -209,6 +217,7 @@ public class RackUnitItem extends Item implements IMountableRackUnit {
             case PDU -> PDU_TOOLTIP;
             case DRIVE_SHELF -> SHELF_TOOLTIP;
             case VENT_PANEL -> VENT_TOOLTIP;
+            case TAPE_LIBRARY -> TAPE_TOOLTIP;
         };
         tooltip.add(GameText.component(what).withStyle(ChatFormatting.GRAY));
         if (kind == Kind.RACK_UPS) {

@@ -64,10 +64,11 @@ final class AutomationPages {
                         + " already true at the first check fires the job once, at that check.")
                 .define("Rising edge", "The moment a condition turns from false to true. A WHEN job fires once for"
                         + " each such moment.")
-                .paragraph("A WHEN condition tests only the network's stock of an item, with qty(<item>), against a"
-                        + " number. The operators are =, ==, !=, <, >, <=, and >=. An item name without a colon means"
-                        + " minecraft:, so iron_ingot is minecraft:iron_ingot. A modded item needs its full name, with"
-                        + " its mod's name before the colon.")
+                .paragraph("A WHEN condition tests the network's stock of an item, with qty(<item>), against a number,"
+                        + " or the world's clock, with clock = '02:00' and weekday = 'Sunday'. The operators are =, =="
+                        + ", !=, <, >, <=, and >=. An item name without a colon means minecraft:, so iron_ingot is"
+                        + " minecraft:iron_ingot. A modded item needs its full name, with its mod's name before the"
+                        + " colon.")
                 .paragraph("WHEN EVENT waits for a world event the network sees: WHEN EVENT mymod:solar_storm COMING"
                         + " fires as the network first sees it coming, which needs a machine on the network that is"
                         + " the event's instrument; UNDER WAY fires as it begins where the network stands; ENDED fires"
@@ -108,6 +109,11 @@ final class AutomationPages {
                 .paragraph("Pausing a job keeps it in the list and stops it from firing. Restarting a job resumes it,"
                         + " and an EVERY job counts its interval again from now. DROP JOB removes the job and its pause"
                         + " with it.")
+                .subheading("Timed backups")
+                .paragraph("A backup you give an hour in the Backup Console is a job here too, named backup_ and the"
+                        + " backup's name, such as backup_Nightly: it runs BACKUP Nightly WHEN clock = '02:00'. The"
+                        + " console makes it, changes it and drops it with the backup, so change the hour in the"
+                        + " console rather than here ([](jsc:backups)).")
                 .ifSomethingGoesWrong("It says \"jobs are kept by the Automation Engine; install it on the Mainframe"
                         + " first\".",
                         "Install the Automation Engine on the Mainframe, then type the job again.",

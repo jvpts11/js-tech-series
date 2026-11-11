@@ -11,6 +11,7 @@ import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.machine.FileService;
@@ -26,6 +27,7 @@ import dev.jstech.computers.machine.PortsService;
 import dev.jstech.computers.machine.ProgramService;
 import dev.jstech.computers.machine.RemoteComputerService;
 import dev.jstech.computers.operation.payload.files.FileAccess;
+import dev.jstech.computers.operation.payload.social.KeptConversations;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.HostScope;
@@ -43,6 +45,7 @@ import dev.jstech.computers.os.boot.BootLines;
 import dev.jstech.computers.os.devices.DeviceMap;
 import dev.jstech.computers.os.devices.DeviceMaps;
 import dev.jstech.computers.program.cli.ICliComputer;
+import dev.jstech.computers.program.cli.IKeptConversations;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
@@ -358,6 +361,16 @@ abstract class ServerCliShell implements ICliComputer {
         final long day = time / 24000L + 1L;
         final long minutes = (time % 24000L) * 60L / 1000L + 6L * 60L;
         return WORLD_TIME.with(day, String.format(Locale.ROOT, "%02d:%02d", minutes / 60L % 24L, minutes % 60L));
+    }
+
+    /* The Messenger Service's conversations are kept by the server in the rack's row this shell addresses. */
+    @Override
+    @Nullable
+    public IKeptConversations keptConversations() {
+        if (!(hostBlock instanceof ServerRackBlockEntity rack) || rack.soleComputerSlot() < 0) {
+            return null;
+        }
+        return KeptConversations.at(level, new ServerServices.Host(rack, rack.soleComputerSlot()));
     }
 
     @Override

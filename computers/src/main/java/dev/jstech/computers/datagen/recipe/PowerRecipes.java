@@ -126,7 +126,8 @@ final class PowerRecipes {
      * Each is 2 steel plates for its 1U and what it needs: the Rack UPS a UPS's parts for 3 kW and 2.7 MJ; a UPS
      * Battery Expansion its 9 batteries, the controller that watches them and its link to the UPS; the PDU its metering
      * board, a current transformer and 8 outlets; the Cooling Unit an air conditioner, its compressor (a motor), its
-     * loop (2 copper pipes) and 2 fans.
+     * loop (2 copper pipes) and 2 fans. The Tape Library is 2U: 4 steel plates, its robot and its drives (2 motors and
+     * 2 magnetic heads), its board and the 2 controllers of its robot and its drive.
      */
     private static void rackUnits(final RecipeOutput output) {
         final Item transformer = ChainParts.TRANSFORMER.get();
@@ -140,6 +141,8 @@ final class PowerRecipes {
                     copperWire(), 8);
             made(output, era, ofEra(era, "cooling_unit"), steelPlate(), 2, board(era), 1, controller(era), 1,
                     caseFan(era), 2, ChainParts.ELECTRIC_MOTOR.get(), 1, coreItem("copper_pipe"), 2);
+            made(output, era, ofEra(era, "tape_library"), steelPlate(), 4, ChainParts.ELECTRIC_MOTOR.get(), 2,
+                    ChainParts.MAGNETIC_HEAD.get(), 2, board(era), 1, controller(era), 2);
         }
     }
 

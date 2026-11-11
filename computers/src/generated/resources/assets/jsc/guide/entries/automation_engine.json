@@ -215,6 +215,14 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.automation_engine.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.automation_engine.text14"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -277,7 +285,7 @@
   ],
   "icon": "jsc:mainframe",
   "id": "jsc:automation_engine",
-  "order": 135,
+  "order": 137,
   "section": "jsc:automation_jobs",
   "title": "jsc.guide.automation_engine.title"
 }

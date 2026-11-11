@@ -8,9 +8,15 @@
 package dev.jstech.computers.machine;
 
 import dev.jstech.computers.advancement.Acting;
+import dev.jstech.computers.backup.BackupJob;
+import dev.jstech.computers.backup.BackupService;
+import dev.jstech.computers.backup.BackupTexts;
+import dev.jstech.computers.backup.LossCause;
+import dev.jstech.computers.backup.NetworkLosses;
 import dev.jstech.computers.block.part.NamedBus;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.engine.EngineRole;
 import dev.jstech.computers.engine.EngineVerb;
 import dev.jstech.computers.engine.NetworkEngines;
@@ -335,6 +341,17 @@ public final class IqlService {
             return ICliComputer.OpResult.fail(OperationsService.NO_MAINFRAME);
         }
         IDataSink target = (k, amount, simulate) -> amount;
+        if ("DROP".equals(verb)) {
+            // What a DROP destroys stops existing, so the network writes it in its book of losses as it goes.
+            final NetworkUuid network = this.terminal.networkUuid();
+            final String by = this.terminal.hostname();
+            target = (k, amount, simulate) -> {
+                if (!simulate) {
+                    NetworkLosses.lost(this.level, network, Map.of(k, amount), LossCause.DROP, by, -1);
+                }
+                return amount;
+            };
+        }
         if ("DELETE".equals(verb) && op.to() != null && !op.to().isBlank()) {
             final NamedBus.Located bus = NamedBus.find(this.level, this.terminal.networkUuid(), op.to());
             if (bus == null) {
@@ -651,8 +668,21 @@ public final class IqlService {
             case UNLOCK -> this.operations.unlock(op.item());
             case ANALYZE, VACUUM, REINDEX -> this.operations.maintenance(op.verb());
             case UPDATE -> this.update(op);
+            case BACKUP -> this.backup(op);
             case QUERY, COUNT -> ICliComputer.OpResult.fail(READ_IS_NO_OPERATION);
         };
+    }
+
+    /* Runs one of the Backup Service's jobs by its name now, as a timed backup's Automation Engine job does. */
+    private ICliComputer.OpResult backup(final IqlOperation op) {
+        final NetworkUuid net = this.terminal.networkUuid();
+        final ServerServices.Host host = BackupService.serviceOf(this.level, net);
+        if (net == null || host == null) {
+            return ICliComputer.OpResult.fail(BackupTexts.NO_SERVICE);
+        }
+        final BackupService.Outcome outcome = BackupService.run(this.level, net, host, op.item());
+        return outcome.result() == BackupJob.RunState.RUNNING || outcome.result() == BackupJob.RunState.DONE
+                ? ICliComputer.OpResult.ok(outcome.said()) : ICliComputer.OpResult.fail(outcome.said());
     }
 
     /**

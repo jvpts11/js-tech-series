@@ -22,6 +22,8 @@
     "jsc:transition_cooling_unit",
     "jsc:transition_ups_battery_expansion",
     "jsc:transition_pdu",
+    "jsc:transition_tape_library",
+    "jsc:lto3_tape",
     "jsc:transition_peripheral_cable",
     "jsc:transition_hub",
     "jsc:transition_monitor",

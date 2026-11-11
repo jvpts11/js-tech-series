@@ -13,6 +13,7 @@ import dev.jstech.computers.datacenter.RackTraffic;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.os.defrag.DefragRunner;
+import dev.jstech.computers.storage.DataCompression;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.operation.ILatencyScheduler;
@@ -114,8 +115,12 @@ public abstract class AbstractTransferOperation implements INetworkOperation {
     protected final void addSource(final NodeUuid server, final long quantity, final StorageTier tier,
                                    final int ramLatencyTicks,
                                    @Nullable final ILatencyScheduler scheduler) {
-        // A disk the Defrag is going over answers twice as slowly while it does (computers/docs/design/storage.md).
-        final int diskLatency = tier.latencyTicks() * DefragRunner.waitFactor(server, level.getGameTime());
+        /*
+         * A disk the Defrag is going over answers twice as slowly while it does (computers/docs/design/storage.md), and
+         * a bay whose server compresses what it keeps waits for the unpacking on every read.
+         */
+        final int diskLatency = tier.latencyTicks() * DefragRunner.waitFactor(server, level.getGameTime())
+                + DataCompression.readWait(level, server);
         /*
          * A server's share moves no faster than its own hardware, nor than the slowest cable between it and the
          * Mainframe, which is worked out from the network as it stands when the Operation starts.

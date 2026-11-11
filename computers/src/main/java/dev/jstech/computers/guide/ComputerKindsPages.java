@@ -637,6 +637,8 @@ final class ComputerKindsPages {
                         GuideCell.words("Measures each bay's draw, and lets IQL and jobs switch the bays"))
                 .row(GuideCell.words("Drive Shelf"), GuideCell.words("2 U"),
                         GuideCell.words("Ten more drive bays for the server right above it"))
+                .row(GuideCell.words("Tape Library"), GuideCell.words("2 U"),
+                        GuideCell.words("Ten tapes of its era, where the Backup Service keeps its backups"))
                 .paragraph("The KVM Switch, the Rack UPS and the Cooling Unit come in every era, from the Vintage to"
                         + " the Advanced. A rack seats the units of its own era and of the earlier ones, as it does"
                         + " servers: a Vintage KVM Switch goes in a Standard rack, a Standard one never in a Vintage"
@@ -666,6 +668,10 @@ final class ComputerKindsPages {
                         + " from a prompt or from a job ([](jsc:iql_jobs)).")
                 .paragraph("A Drive Shelf adds its ten bays to the server mounted right above it: their drives join"
                         + " the server's storage and its array. A shelf with no server right above it does nothing.")
+                .paragraph("A Tape Library holds ten tapes of its own era, and a drive that winds them: cold storage"
+                        + " for the network's backups, huge and slow ([](jsc:backups)). It serves the network of the"
+                        + " servers in its rack. Its card lists the tapes, what they hold and what the drive is doing:"
+                        + " idle, winding, reading or writing.")
                 .ifSomethingGoesWrong("A rack with several computers has no way to pick one on the monitor.",
                         "Mount a KVM Switch in the rack. It takes one rack unit.",
                         "A unit does not go in, and the rack says it belongs in a newer rack.",
@@ -680,7 +686,11 @@ final class ComputerKindsPages {
                         "The servers shut themselves down while the power was out.",
                         "The Rack UPS's battery fell to 10%. Add UPS Battery Expansions to last longer.",
                         "UPDATE power says no bay is so.",
-                        "The rack needs a PDU, and the server has to be on the network.")
+                        "The rack needs a PDU, and the server has to be on the network.",
+                        "A tape does not go into the Tape Library.",
+                        "The library takes only the tapes of its own era: the reel in the Vintage's, the DLT in the"
+                                + " Legacy's, the LTO-3 in the Transition's, the LTO-6 in the Standard's and the LTO-9"
+                                + " in the Advanced's.")
                 .seeAlso("jsc:server_racks", "jsc:rack_cooling_and_heat", "jsc:upses")
                 .register();
     }

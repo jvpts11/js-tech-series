@@ -913,10 +913,20 @@ final class IqlLanguagePages {
                 .paragraph("WHEN fires the job once, when its condition turns from false to true. It does not fire "
                         + "again"
                         + " while the condition stays true. A condition that is already true fires at the first check.")
-                .paragraph("The only field a WHEN can read is qty(item), which is the network's total of that item. A"
-                        + " WHEN with any other field never fires.")
+                .paragraph("A WHEN reads three fields: qty(item), which is the network's total of that item; clock,"
+                        + " the world's clock as 'HH:MM'; and weekday, the day of the week by its name. A WHEN with any"
+                        + " other field never fires.")
                 .paragraph("A CREATE JOB whose statement is SET BUS with WHEN TIME does not make a job. It sets the"
                         + " hours of the bus instead ([](jsc:set_bus)).")
+                .subheading("WHEN on the clock, and BACKUP")
+                .paragraph("WHEN clock = '02:00' fires the job at two in the morning by the world's clock, once a day:"
+                        + " the clock reads that minute only, so the condition turns true once. Add AND weekday ="
+                        + " 'Sunday' to fire it on Sundays only. The days are Monday to Sunday, and the world's day,"
+                        + " like its clock, starts at six in the morning.")
+                .paragraph("BACKUP runs one of the Backup Service's jobs now, by its name: BACKUP Nightly. A backup"
+                        + " you give an hour in the Backup Console is such a job, which the console makes for you"
+                        + " ([](jsc:backups)).")
+                .listingIn("iql", "nightly.iql", "CREATE JOB backup_Nightly AS BACKUP Nightly WHEN clock = '02:00'")
                 .table("The replies for jobs", "Reply", "What it means")
                 .row(GuideCell.code("job <name> dropped"), GuideCell.words("The job no longer runs."))
                 .row(GuideCell.code("no job named <name>"), GuideCell.words("No job has that name."))

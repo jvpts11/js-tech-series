@@ -34,9 +34,10 @@ public record MessengerStatePayload(Service service, List<String> people, List<S
      * What the service is and what it costs.
      *
      * <p>Grouped rather than spread across the payload because a stream codec is built of at most six
-     * pairs, and because these four belong together: they are the service, and the rest is the talk.
+     * pairs, and because these belong together: they are the service, and the rest is the talk. {@code keeper} says
+     * the window is at the service's own server, where the conversations it keeps are there to delete.
      */
-    public record Service(boolean online, String host, long historyBytes, int ramMb) {
+    public record Service(boolean online, String host, long historyBytes, int ramMb, boolean keeper) {
 
         /**
          * The longest name of the machine running it that travels.
@@ -53,6 +54,7 @@ public record MessengerStatePayload(Service service, List<String> people, List<S
                         ByteBufCodecs.stringUtf8(MAX_HOST), Service::host,
                         ByteBufCodecs.VAR_LONG, Service::historyBytes,
                         ByteBufCodecs.VAR_INT, Service::ramMb,
+                        ByteBufCodecs.BOOL, Service::keeper,
                         Service::new);
     }
 

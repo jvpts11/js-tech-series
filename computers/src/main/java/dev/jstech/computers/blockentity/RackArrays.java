@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.backup.LossCause;
+import dev.jstech.computers.backup.NetworkLosses;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.hardware.ExpansionCardKind;
@@ -18,13 +20,16 @@ import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.LocalStore;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StorageVolume;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -190,9 +195,22 @@ final class RackArrays {
         }
         if (mode == RaidMode.RAID0) {
             notifyHotPull(top);
-            // The stripe is gone: every member, including the one on its way out, is blanked.
+            /*
+             * The stripe is gone: every member, including the one on its way out, is blanked, and what it held
+             * stopped existing, which the network writes down in its book of losses.
+             */
+            final Map<StorageKey, Long> held = new HashMap<>();
             for (final ItemStack drive : rack.claimedDriveStacks(top)) {
+                final StorageVolume volume = DriveVolumes.peek(drive);
+                volume.items().forEach((key, count) -> held.merge(key, count, Long::sum));
+                volume.corrupted().forEach((key, count) -> held.merge(key, count, Long::sum));
                 DriveVolumes.erase(drive);
+            }
+            if (rack.getLevel() instanceof ServerLevel server) {
+                rack.asUnit(top, () -> {
+                    NetworkLosses.lost(server, rack, held, LossCause.RAID0, -1);
+                    return null;
+                });
             }
             rack.markStorageChanged(top);
             rack.setChanged();

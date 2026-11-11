@@ -111,6 +111,17 @@
           {
             "words": "jsc.guide.rack_equipment.table1_9_3"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.rack_equipment.table1_10_1"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_10_2"
+          },
+          {
+            "words": "jsc.guide.rack_equipment.table1_10_3"
+          }
         ]
       ]
     },
@@ -147,6 +158,10 @@
       "text": "jsc.guide.rack_equipment.text9"
     },
     {
+      "type": "text",
+      "text": "jsc.guide.rack_equipment.text10"
+    },
+    {
       "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
@@ -180,6 +195,10 @@
         {
           "fix": "jsc.guide.rack_equipment.fix7",
           "problem": "jsc.guide.rack_equipment.problem7"
+        },
+        {
+          "fix": "jsc.guide.rack_equipment.fix8",
+          "problem": "jsc.guide.rack_equipment.problem8"
         }
       ]
     },
@@ -221,6 +240,11 @@
     "jsc:pdu",
     "jsc:advanced_pdu",
     "jsc:drive_shelf",
+    "jsc:vintage_tape_library",
+    "jsc:legacy_tape_library",
+    "jsc:transition_tape_library",
+    "jsc:tape_library",
+    "jsc:advanced_tape_library",
     "jsc:vent_panel",
     "jsc:fibre_optic_interface",
     "jsc:advanced_fibre_optic_interface"

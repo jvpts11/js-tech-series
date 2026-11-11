@@ -122,6 +122,26 @@
       "text": "jsc.guide.iql_jobs.text7"
     },
     {
+      "type": "heading",
+      "text": "jsc.guide.iql_jobs.heading3"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_jobs.text8"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.iql_jobs.text9"
+    },
+    {
+      "type": "listing",
+      "language": "iql",
+      "lines": [
+        "CREATE JOB backup_Nightly AS BACKUP Nightly WHEN clock = '02:00'"
+      ],
+      "name": "nightly.iql"
+    },
+    {
       "type": "table",
       "caption": "jsc.guide.iql_jobs.table2",
       "heads": [
@@ -222,7 +242,7 @@
     }
   ],
   "id": "jsc:iql_jobs",
-  "order": 355,
+  "order": 357,
   "section": "jsc:iql_saved_objects",
   "title": "jsc.guide.iql_jobs.title"
 }

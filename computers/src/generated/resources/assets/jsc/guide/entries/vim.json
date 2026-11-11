@@ -615,7 +615,7 @@
     }
   ],
   "id": "jsc:vim",
-  "order": 250,
+  "order": 252,
   "section": "jsc:the_editors",
   "title": "jsc.guide.vim.title"
 }

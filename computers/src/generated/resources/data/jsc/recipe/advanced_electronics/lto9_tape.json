@@ -1,0 +1,27 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 2,
+      "item": "jsc:ferrite"
+    },
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:memory_chip_advanced"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:lto9_tape"
+    }
+  ]
+}

@@ -8,6 +8,9 @@
 package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.backup.LossBook;
+import dev.jstech.computers.backup.LossCause;
+import dev.jstech.computers.backup.NetworkLosses;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.program.Programs;
@@ -27,6 +30,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.List;
 
 import static dev.jstech.tests.testkit.computers.NetworkFixtures.placeRunningMainframe;
 import static dev.jstech.tests.testkit.computers.NetworkFixtures.seededRack;
@@ -138,7 +143,7 @@ public final class NetworkIndexGameTests {
                 })
                 .thenExecuteAfter(2, () -> {
                     final long destroyed = mainframe.networkIndex().dropType(helper.getLevel(),
-                            mainframe.networkUuid(), StorageKey.of(Items.COBBLESTONE), null);
+                            mainframe.networkUuid(), StorageKey.of(Items.COBBLESTONE), null, "PC-01");
                     helper.assertTrue(destroyed == 50, "dropType destroys all 50 cobblestone; got " + destroyed);
                     final ServerStore store = seededRack(helper).getServerStorage(0);
                     helper.assertTrue(store.count(Items.COBBLESTONE) == 0, "the dropped type is gone");
@@ -159,9 +164,17 @@ public final class NetworkIndexGameTests {
                 .thenExecuteAfter(2, () -> {
                     helper.assertTrue(mainframe.networkIndex().catalogSize() == 2,
                             "two types catalogued before the wipe; got " + mainframe.networkIndex().catalogSize());
-                    final long destroyed = mainframe.networkIndex().dropAll(helper.getLevel(), mainframe.networkUuid());
+                    final long before = helper.getLevel().getGameTime() - 1L;
+                    final long destroyed = mainframe.networkIndex().dropAll(helper.getLevel(), mainframe.networkUuid(),
+                            "PC-01");
                     helper.assertTrue(destroyed == 80, "dropAll destroys all 80 units; got " + destroyed);
                     helper.assertTrue(seededRack(helper).getServerStorage(0).used() == 0, "the server is emptied");
+                    // What was dropped stopped existing, so the network's book of losses has it, by whom.
+                    final List<LossBook.Loss<StorageKey>> lost = NetworkLosses.of(helper.getLevel())
+                            .book(mainframe.networkUuid()).since(before);
+                    helper.assertTrue(lost.size() == 2 && lost.stream().allMatch(loss -> loss.cause() == LossCause.DROP
+                                    && "PC-01".equals(loss.machine())),
+                            "both kinds are in the book, dropped from PC-01; got " + lost);
                 })
                 // The per-tick ANALYZE drops the now-empty rows from the catalog.
                 .thenExecuteAfter(2, () -> helper.assertTrue(mainframe.networkIndex().catalogSize() == 0,
@@ -215,6 +228,45 @@ public final class NetworkIndexGameTests {
                     final int expected = Math.max(1, drive[0] * 85 / 100);
                     helper.assertTrue(cached == expected, "the Predictive Cache takes 15% off the server's reads: "
                             + drive[0] + " ticks become " + expected + "; got " + cached);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * The Data Compressor trades a slower read for more room: its server's drives hold a fifth more, and every read of
+     * them waits two ticks longer, which the index records as the latency a query pays.
+     */
+    @GameTest(template = ARENA)
+    public static void dataCompressor_holdsAFifthMoreAndWaitsTwoTicksMorePerRead(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = storageNetwork(helper);
+        final long[] plain = new long[2];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    final ServerRackBlockEntity rack = seededRack(helper);
+                    rack.getServerStorage(0).insert(Items.COBBLESTONE, 40);
+                    plain[0] = rack.getServerStorage(0).capacity();
+                    plain[1] = rack.getServerStorage(0).capacityMb();
+                })
+                .thenExecuteAfter(2, () -> {
+                    final int drive = mainframe.networkIndex().locations(StorageKey.of(Items.COBBLESTONE)).getFirst()
+                            .latencyTicks();
+                    final ServerRackBlockEntity rack = seededRack(helper);
+                    rack.consoleOf(0).install(Programs.DATA_COMPRESSOR.toString());
+                    final ServerStore store = rack.getServerStorage(0);
+                    helper.assertTrue(store.capacity() == plain[0] * 120 / 100,
+                            "the bay holds a fifth more: " + plain[0] + " items become " + plain[0] * 120 / 100
+                                    + "; got " + store.capacity());
+                    helper.assertTrue(store.capacityMb() == plain[1],
+                            "while its drives' nameplate stays what it was; got " + store.capacityMb());
+                    mainframe.networkIndex().rebuild(helper.getLevel(), mainframe.networkUuid());
+                    plain[0] = drive;
+                })
+                .thenExecuteAfter(2, () -> {
+                    final int packed = mainframe.networkIndex().locations(StorageKey.of(Items.COBBLESTONE)).getFirst()
+                            .latencyTicks();
+                    helper.assertTrue(packed == plain[0] + 2,
+                            "every read waits two ticks longer: " + plain[0] + " become " + (plain[0] + 2) + "; got "
+                                    + packed);
                 })
                 .thenSucceed();
     }

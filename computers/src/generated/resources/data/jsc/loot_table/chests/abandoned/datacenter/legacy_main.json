@@ -182,6 +182,54 @@
               "components": {
                 "jsc:media_payload": {
                   "SaveVersion": 1,
+                  "Value": "jsc:backup_console"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:cd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
+                  "Value": "jsc:backup_service"
+                }
+              },
+              "function": "minecraft:set_components"
+            }
+          ],
+          "name": "jsc:cd_rom"
+        },
+        {
+          "type": "minecraft:item",
+          "functions": [
+            {
+              "components": {
+                "jsc:media_kind": {
+                  "SaveVersion": 1,
+                  "Value": "program_install"
+                }
+              },
+              "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_payload": {
+                  "SaveVersion": 1,
                   "Value": "jsc:crafting_manager"
                 }
               },

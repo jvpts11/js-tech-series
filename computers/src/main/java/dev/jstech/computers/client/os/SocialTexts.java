@@ -34,6 +34,22 @@ final class SocialTexts {
     static final TextKey NOTHING_SAID = TextKey.of("jsc.messenger.nothing_said", "Nothing said yet");
     static final TextKey NO_MESSENGER =
             TextKey.of("jsc.messenger.no_messenger", "No Messenger Service on this network");
+    // The conversations the service keeps, at its own server.
+    static final TextKey KEPT_CONVERSATIONS = TextKey.of("jsc.messenger.kept", "Kept conversations");
+    static final TextKey KEPT_TITLE = TextKey.of("jsc.messenger.kept.title", "Messenger Service - kept conversations");
+    static final TextKey KEPT_INTRO = TextKey.of("jsc.messenger.kept.intro", "What this server keeps for the network.");
+    static final TextKey KEPT_CONVERSATION = TextKey.of("jsc.messenger.kept.conversation", "Conversation");
+    static final TextKey KEPT_LINES = TextKey.of("jsc.messenger.kept.lines", "Lines");
+    static final TextKey KEPT_SIZE = TextKey.of("jsc.messenger.kept.size", "Size");
+    static final TextKey KEPT_LAST_SAID = TextKey.of("jsc.messenger.kept.last_said", "Last said");
+    static final TextKey KEPT_SAID_AT = TextKey.of("jsc.messenger.kept.said_at", "Day %s, %s");
+    static final TextKey KEPT_ON_DISK = TextKey.of("jsc.messenger.kept.on_disk", "%s kept on this server's disk.");
+    static final TextKey KEPT_LEAVES = TextKey.of("jsc.messenger.kept.leaves",
+            "A deleted conversation leaves every Messenger on the network.");
+    static final TextKey KEPT_NONE = TextKey.of("jsc.messenger.kept.none", "This server keeps no conversations.");
+    static final TextKey KEPT_DELETE = TextKey.of("jsc.messenger.kept.delete", "Delete");
+    static final TextKey KEPT_DELETE_ALL = TextKey.of("jsc.messenger.kept.delete_all", "Delete all");
+    static final TextKey KEPT_CLOSE = TextKey.of("jsc.messenger.kept.close", "Close");
 
     // Knot.
     static final TextKey PUSH = TextKey.of("jsc.knot.push", "Push");

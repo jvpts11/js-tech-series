@@ -30,6 +30,10 @@ public final class LocalStore implements IWeightedStore {
     private final List<ItemStack> disks;
     private final Runnable onChanged;
     private final boolean balanced;
+    private final int roomPercent;
+
+    /** What drives hold when nothing packs their items tighter, in hundredths of their nameplate room. */
+    public static final int PLAIN_ROOM = 100;
 
     public LocalStore(final List<ItemStack> disks, final Runnable onChanged) {
         this(disks, onChanged, false);
@@ -41,9 +45,19 @@ public final class LocalStore implements IWeightedStore {
      *                 while its neighbours sit half empty.
      */
     public LocalStore(final List<ItemStack> disks, final Runnable onChanged, final boolean balanced) {
+        this(disks, onChanged, balanced, PLAIN_ROOM);
+    }
+
+    /**
+     * @param roomPercent how many items the drives hold, in hundredths of their nameplate room: more than a hundred
+     *                    when a service packs the items tighter, which is what the Data Compressor buys a server
+     */
+    public LocalStore(final List<ItemStack> disks, final Runnable onChanged, final boolean balanced,
+                      final int roomPercent) {
         this.disks = disks;
         this.onChanged = onChanged;
         this.balanced = balanced;
+        this.roomPercent = roomPercent;
     }
 
     /** The disks in the order a write should visit them: by free space when balancing, else as given. */
@@ -54,7 +68,7 @@ public final class LocalStore implements IWeightedStore {
         // The free weight of each disk is read once, so the sort does not look every drive up per comparison.
         final List<DiskRoom> rooms = new ArrayList<>(disks.size());
         for (final ItemStack disk : disks) {
-            rooms.add(new DiskRoom(disk, diskCapacity(disk) * StorageKey.MB_EQ_PER_ITEM
+            rooms.add(new DiskRoom(disk, room(disk) * StorageKey.MB_EQ_PER_ITEM
                     - DriveVolumes.peek(disk).usedWeight()));
         }
         rooms.sort(Comparator.comparingLong(DiskRoom::free).reversed());
@@ -71,6 +85,11 @@ public final class LocalStore implements IWeightedStore {
         return spec != null ? DriveVolumes.usableCapacity(disk, spec.capacityItems()) : 0L;
     }
 
+    /* The items a drive holds here: its room, packed tighter when a service compresses what it keeps. */
+    private long room(final ItemStack disk) {
+        return diskCapacity(disk) * roomPercent / PLAIN_ROOM;
+    }
+
     /** What one item costs on that drive, in megabytes: its era's word size decides. */
     private static long megabytesPerItem(final ItemStack disk) {
         final DiskSpec spec = HardwareRegistry.disk(disk);
@@ -81,7 +100,7 @@ public final class LocalStore implements IWeightedStore {
     public long capacity() {
         long total = 0L;
         for (final ItemStack disk : disks) {
-            total += diskCapacity(disk);
+            total += room(disk);
         }
         return total;
     }
@@ -101,14 +120,14 @@ public final class LocalStore implements IWeightedStore {
         return total;
     }
 
-    /** How many of those megabytes are spoken for, counted the same way, drive by drive. */
+    /** How many of those megabytes are spoken for, counted the same way, drive by drive, and less when packed. */
     public long usedMb() {
         long total = 0L;
         for (final ItemStack disk : disks) {
             total += DriveVolumes.peek(disk).usedWeight() * megabytesPerItem(disk)
                     / StorageKey.MB_EQ_PER_ITEM;
         }
-        return total;
+        return total * PLAIN_ROOM / roomPercent;
     }
 
     /**
@@ -292,7 +311,7 @@ public final class LocalStore implements IWeightedStore {
             if (remaining <= 0L) {
                 break;
             }
-            final long capacityWeight = diskCapacity(disk) * StorageKey.MB_EQ_PER_ITEM;
+            final long capacityWeight = room(disk) * StorageKey.MB_EQ_PER_ITEM;
             if (capacityWeight <= 0L) {
                 continue;
             }

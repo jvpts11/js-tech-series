@@ -110,7 +110,7 @@
     }
   ],
   "id": "jsc:stage_three",
-  "order": 294,
+  "order": 296,
   "section": "jsc:gentoo_base",
   "title": "jsc.guide.stage_three.title"
 }

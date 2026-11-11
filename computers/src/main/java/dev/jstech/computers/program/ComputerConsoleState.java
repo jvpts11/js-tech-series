@@ -129,6 +129,18 @@ public final class ComputerConsoleState {
         return settings;
     }
 
+    /** The settings alone, written down, as a backup keeps them. */
+    public CompoundTag settingsTag() {
+        final CompoundTag tag = new CompoundTag();
+        SettingsStorage.save(settings, tag);
+        return tag;
+    }
+
+    /** Puts back settings written down by {@link #settingsTag}, the rest of the console as it is. */
+    public void loadSettings(final CompoundTag tag) {
+        SettingsStorage.load(settings, tag);
+    }
+
     /** What Soundfoundry plays on this machine. */
     public SoundfoundryState soundfoundry() {
         return soundfoundry;

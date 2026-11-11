@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.os.defrag;
 
+import dev.jstech.computers.backup.LossCause;
+import dev.jstech.computers.backup.NetworkLosses;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.DiskSpec;
@@ -30,6 +32,7 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.NodeUuid;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -185,9 +188,12 @@ public final class DefragRunner {
         }
         final StorageVolume volume = DriveVolumes.of(disk);
         final int due = job.advance();
+        // What the pass gives up on stops existing, so a server's network writes it in its book of losses.
+        final Map<StorageKey, Long> lost = new HashMap<>();
         for (int i = 0; i < due; i++) {
-            tryOne(volume, disk, job, level.random);
+            tryOne(volume, disk, job, level.random, lost);
         }
+        NetworkLosses.lost(level, host, lost, LossCause.DEFRAG, job.disk() + 1);
         if (due > 0) {
             DriveVolumes.refreshUsage(disk, volume);
             host.storageChanged();
@@ -260,7 +266,7 @@ public final class DefragRunner {
      * something has taken that place since.
      */
     private static void tryOne(final StorageVolume volume, final ItemStack disk, final DefragJob job,
-                               final RandomSource random) {
+                               final RandomSource random, final Map<StorageKey, Long> lost) {
         final Iterator<Map.Entry<StorageKey, Long>> kinds = volume.corrupted().entrySet().iterator();
         if (kinds.hasNext()) {
             final Map.Entry<StorageKey, Long> next = kinds.next();
@@ -269,6 +275,9 @@ public final class DefragRunner {
             final long back = Corruption.share(count, job.chance() / 100.0, random::nextDouble);
             volume.recover(key, back);
             volume.lose(key, count - back);
+            if (count > back) {
+                lost.merge(key, count - back, Long::sum);
+            }
             final long backUnits = units(key, back);
             job.tried(backUnits, units(key, count) - backUnits);
             return;

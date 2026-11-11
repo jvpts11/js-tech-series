@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.menu;
 
+import dev.jstech.computers.backup.TapeDrive;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.block.ServerRackBlock;
@@ -272,6 +273,26 @@ public class ServerRackMenu extends CoreMenu {
         return shelf == null ? -1 : shelf.topU();
     }
 
+    /** What the drive of the Tape Library topped at {@code topRow} is doing, as the rack last told the screen. */
+    public TapeDrive.State tapeDrive(final int topRow) {
+        return rack.tapeDriveShown(topRow);
+    }
+
+    /** The tapes in the slots of the Tape Library topped at {@code topRow}, in slot order, empty for a free slot. */
+    public List<ItemStack> tapesIn(final int topRow) {
+        final List<RackLayout.Unit> mounted = mountedUnits();
+        final RackLayout.Unit unit = RackLayout.unitAt(topRow, mounted);
+        final List<ItemStack> tapes = new ArrayList<>();
+        for (int row = topRow; unit != null && row < topRow + unit.heightU(); row++) {
+            for (int column = 0; column < RackLayout.SLOTS_PER_U; column++) {
+                if (LAYOUT.roleAt(row, column, mounted) == RackLayout.SlotRole.TAPE) {
+                    tapes.add(frontSlotStack(row * RackLayout.SLOTS_PER_U + column));
+                }
+            }
+        }
+        return tapes;
+    }
+
     /** How many drives the drive bays of the unit topped at {@code topRow} hold, its own rows only. */
     public int drivesIn(final int topRow) {
         final List<RackLayout.Unit> mounted = mountedUnits();
@@ -430,7 +451,7 @@ public class ServerRackMenu extends CoreMenu {
         @Override
         public boolean isActive() {
             final RackLayout.SlotRole role = frontSlotRole(getSlotIndex());
-            return hasItem() || role == RackLayout.SlotRole.DRIVE;
+            return hasItem() || role == RackLayout.SlotRole.DRIVE || role == RackLayout.SlotRole.TAPE;
         }
     }
 }

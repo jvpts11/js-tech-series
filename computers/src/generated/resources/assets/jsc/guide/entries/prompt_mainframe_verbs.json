@@ -83,6 +83,14 @@
           {
             "words": "jsc.guide.prompt_mainframe_verbs.table1_9_2"
           }
+        ],
+        [
+          {
+            "literal": "msgsvc"
+          },
+          {
+            "words": "jsc.guide.prompt_mainframe_verbs.table1_10_2"
+          }
         ]
       ]
     },
@@ -226,6 +234,18 @@
     },
     {
       "type": "heading",
+      "text": "jsc.guide.prompt_mainframe_verbs.heading5"
+    },
+    {
+      "type": "text",
+      "text": "jsc.guide.prompt_mainframe_verbs.text10"
+    },
+    {
+      "type": "command",
+      "command": "jsc:command/mc_dos/msgsvc"
+    },
+    {
+      "type": "heading",
       "text": "jscore.guide.if_something_goes_wrong"
     },
     {
@@ -259,7 +279,7 @@
     }
   ],
   "id": "jsc:prompt_mainframe_verbs",
-  "order": 222,
+  "order": 224,
   "section": "jsc:prompt_programs_and_network",
   "title": "jsc.guide.prompt_mainframe_verbs.title"
 }

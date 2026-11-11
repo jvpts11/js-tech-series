@@ -238,10 +238,33 @@ need the network to run a particular engine ([The network](NETWORK.md#engines)),
 | Nextgre Planner Studio | Standard | Shows and steers how NextgreIQL plans the network's work. |
 | Prophet Reactive Console | Standard | Declares the state the network keeps with Prophet YourIQL. |
 | Remote Control | Standard | Takes over another machine of the network and uses it on this screen. |
+| Backup Console | Legacy | Sets the network's backups, watches them run and restores them (added 2026-11-11). |
 
 And editors (Vim, Emacs, Virtual Studio, Virtual Studio Code, Knot), the Σ# and Σ compilers ([Σ#](SIGMA.md)),
 Soundfoundry (music), Paint, Exposure, Exceed, Midsoft Messenger, screenfetch, and games (Minesweeper, Solitaire,
 Snake, 67ark).
+
+Every desktop also comes with a **Media Player** (added 2026-11-11), under its own name there: Media Player on
+Frames 95 and 11, Frames Media Player on XP, 7 and 10, Dragon Player on KDE Plasma, Videos on GNOME, Celluloid on
+Cinnamon, Audio on CDE and the QuinceTime Player on Quince's systems. It plays the computer's songs through the same
+player Soundfoundry plays through, and image sequences: a folder of pictures from Paint or a camera, shown in the
+order of their names at 12 a second (1 to 20 in its options). A folder's menu in Files has Play and Add to its list.
+A song needs a sound card; pictures play without one.
+
+### Backups
+
+*Added 2026-11-11.*
+
+The **Backup Service** (Vaultis, Legacy) runs on a server in a rack and backs the network up: its items, the files
+in every computer's home folder, the computers' settings, the network's .craft patterns, the IQL and Σ# scripts and
+the computers' system images. A job writes to a **Tape Library** ([Hardware](HARDWARE.md#servers-and-their-racks)) or
+to a file in the Backups folder of another server's drive, by hand or every day or week at an hour, as an Automation
+Engine job (`BACKUP <job>` in IQL, `WHEN clock = '02:00'`). The **Backup Console** on any desktop sets the jobs and
+restores the backups.
+
+Items come back only as far as they stopped existing: the network keeps a book of losses (a dead disk, a Defrag that
+gave up, a RAID 0 that lost a drive, a DROP), and a restore gives back, item by item, the lesser of what the backup
+holds and what the book lost since, each loss once. What was taken out, exported or crafted never comes back.
 
 ## The Mirror
 

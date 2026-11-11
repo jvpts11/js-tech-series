@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.operation;
 
+import dev.jstech.computers.backup.LossCause;
+import dev.jstech.computers.backup.NetworkLosses;
 import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
@@ -20,6 +22,7 @@ import dev.jstech.computers.operation.index.StorageAllocator;
 import dev.jstech.computers.operation.index.StorageLockTable;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.storage.DataCompression;
 import dev.jstech.computers.storage.ServerStore;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.network.ConnectivityIndex;
@@ -32,6 +35,7 @@ import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.uuid.NodeUuid;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -335,15 +339,16 @@ public final class NetworkIndex {
      * A server's read latency. Caching serves reads ahead of the drives, so the index records the latency
      * the query actually pays rather than the raw disk's. The read cache card is hardware in the server, its
      * cut set by its era; the Predictive Cache is software staging the hot items in RAM. They stack, because one
-     * shortens the fetch and the other avoids it.
+     * shortens the fetch and the other avoids it. A compressing bay adds the unpacking to whatever is left.
      */
     private static int latencyOf(final ServerRackBlockEntity rack, final int slot, final StorageTier tier) {
         int cut = rack.cacheCutPercent(slot);
         if (rack.serviceUp(slot, Programs.PREDICTIVE_CACHE)) {
             cut += PREDICTIVE_CACHE_CUT_PERCENT;
         }
-        return cut <= 0 ? tier.latencyTicks()
+        final int fetch = cut <= 0 ? tier.latencyTicks()
                 : Math.max(1, tier.latencyTicks() * Math.max(0, 100 - cut) / 100);
+        return fetch + DataCompression.readWait(rack, slot);
     }
 
     /** One node's contents as read on the main thread, for a catalog built off it. */
@@ -806,8 +811,12 @@ public final class NetworkIndex {
                 .orElse(null);
     }
 
+    /*
+     * Each DROP below writes what it destroyed in the network's book of losses, as dropped by {@code by}, the machine
+     * that ran it, so a backup can give it back.
+     */
     public long dropType(final ServerLevel level, final NetworkUuid network, final StorageKey key,
-                         @Nullable final Set<NodeUuid> allowed) {
+                         @Nullable final Set<NodeUuid> allowed, final String by) {
         if (network == null) {
             return 0L;
         }
@@ -821,29 +830,36 @@ public final class NetworkIndex {
                 destroyed += store.extract(key, store.count(key));
             }
         }
+        NetworkLosses.lost(level, network, Map.of(key, destroyed), LossCause.DROP, by, -1);
         return destroyed;
     }
 
-    public long dropServer(final ServerLevel level, final NodeUuid server) {
+    public long dropServer(final ServerLevel level, final NetworkUuid network, final NodeUuid server,
+                           final String by) {
         final ServerStore store = storeOf(level, server);
         if (store == null) {
             return 0L;
         }
-        long destroyed = 0L;
+        final Map<StorageKey, Long> destroyed = new HashMap<>();
         // Copy the keys first: extract mutates the store's view as it goes.
         for (final StorageKey key : new ArrayList<>(store.view().keySet())) {
-            destroyed += store.extract(key, store.count(key));
+            destroyed.merge(key, store.extract(key, store.count(key)), Long::sum);
         }
-        return destroyed;
+        NetworkLosses.lost(level, network, destroyed, LossCause.DROP, by, -1);
+        long total = 0L;
+        for (final long count : destroyed.values()) {
+            total += count;
+        }
+        return total;
     }
 
-    public long dropAll(final ServerLevel level, final NetworkUuid network) {
+    public long dropAll(final ServerLevel level, final NetworkUuid network, final String by) {
         if (network == null) {
             return 0L;
         }
         long destroyed = 0L;
         for (final ServerNode server : NetworkSystem.get(level).serversOf(network)) {
-            destroyed += dropServer(level, server.nodeUuid());
+            destroyed += dropServer(level, network, server.nodeUuid(), by);
         }
         return destroyed;
     }

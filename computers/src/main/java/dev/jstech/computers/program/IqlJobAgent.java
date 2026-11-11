@@ -20,6 +20,7 @@ import dev.jstech.computers.program.iql.IqlEventTrigger;
 import dev.jstech.computers.program.iql.IqlReachedTrigger;
 import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.time.GameCalendar;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.core.world.event.WorldEvent;
 import dev.jstech.core.world.event.WorldEvents;
@@ -48,14 +49,21 @@ import java.util.Map;
  */
 public final class IqlJobAgent {
 
-    private static final int EVAL_INTERVAL = 10;
-    private static final int QUERY_ROW_LIMIT = 64;
-
     private long clock;
     private final Map<String, Long> lastFired = new HashMap<>();
     private final Map<String, Boolean> lastCondition = new HashMap<>();
     /* The steps the network's team reached since the agent last looked, each heard once by the jobs waiting on it. */
     private final List<Reached> reached = new ArrayList<>();
+
+    private static final int EVAL_INTERVAL = 10;
+    private static final int QUERY_ROW_LIMIT = 64;
+    /** The WHEN field of the world's clock, read as {@code 'HH:MM'}. */
+    public static final String CLOCK = "clock";
+    /** The WHEN field of the day of the week, read as its English name. */
+    public static final String WEEKDAY = "weekday";
+    /** The days of the week a WHEN on {@value #WEEKDAY} names, in the order the world's calendar counts them. */
+    public static final String[] WEEKDAYS = {"Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
+            "Sunday"};
 
     public void tick(final MainframeBlockEntity mainframe, final ServerLevel level) {
         clock++;
@@ -192,13 +200,26 @@ public final class IqlJobAgent {
         return trigger.stage() == IqlEventTrigger.Stage.ENDED ? was && !seen : seen && !was;
     }
 
-    /** Resolves the fields a WHEN condition can test today: {@code qty(<item>)} against the live network. */
+    /**
+     * Resolves the fields a WHEN condition can test: {@code qty(<item>)} against the live network, and the world's
+     * clock, {@code clock} as {@code 'HH:MM'} and {@code weekday} as its English name, so a job can run every night at
+     * two or on Sundays, as a timed backup does. An equality on the clock holds for that minute only, so its rising
+     * edge fires the job once a day.
+     */
     private static String resolveField(final String field, final MainframeBlockEntity mainframe,
                                        final ServerLevel level) {
         final String lower = field.toLowerCase(Locale.ROOT);
         if (lower.startsWith("qty(") && lower.endsWith(")")) {
             final String itemName = field.substring(4, field.length() - 1).strip();
             return Long.toString(networkQuantity(mainframe, level, itemName));
+        }
+        final long dayTime = level.getDayTime();
+        if (lower.equals(CLOCK)) {
+            return String.format(Locale.ROOT, "%02d:%02d", GameCalendar.hourOf(dayTime),
+                    GameCalendar.minuteOf(dayTime));
+        }
+        if (lower.equals(WEEKDAY)) {
+            return WEEKDAYS[GameCalendar.dayOfWeek(dayTime)];
         }
         return null; // an unknown field makes the comparison false, so the job stays idle
     }

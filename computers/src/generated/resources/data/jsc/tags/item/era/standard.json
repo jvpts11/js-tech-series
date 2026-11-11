@@ -31,6 +31,8 @@
     "jsc:ups_battery_expansion",
     "jsc:pdu",
     "jsc:drive_shelf",
+    "jsc:tape_library",
+    "jsc:lto6_tape",
     "jsc:fibre_optic_interface",
     "jsc:peripheral_cable",
     "jsc:standard_hub",

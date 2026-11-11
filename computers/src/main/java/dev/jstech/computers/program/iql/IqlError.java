@@ -78,6 +78,7 @@ public final class IqlError extends IllegalArgumentException {
             "an action after SET (SMELT, ENCHANT, REPAIR, COMBINE, NAME)");
     static final TextKey AN_OFFER = TextKey.of("jsc.iql.expected.offer", "an offer after OFFER (1, 2 or 3)");
     static final TextKey A_NAME = TextKey.of("jsc.iql.expected.name", "a name in quotes after NAME");
+    static final TextKey A_BACKUP_JOB = TextKey.of("jsc.iql.expected.backup_job", "the name of a backup job");
 
     // A condition.
     static final TextKey UNKNOWN_OPERATOR = TextKey.of("jsc.iql.error.unknown_operator", "unknown operator: %s");

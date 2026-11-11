@@ -558,6 +558,7 @@ final class ShellPages {
                 .row(GuideCell.code("cluster"), GuideCell.words("A Cluster Management Computer"))
                 .row(GuideCell.code("gateway"), GuideCell.words("A computer with ports, for its Network Gateways"))
                 .row(GuideCell.code("borderlink"), GuideCell.words("A WAN Gateway Computer with Nouvell BorderLink"))
+                .row(GuideCell.code("msgsvc"), GuideCell.words("A server running the Messenger Service"))
                 .paragraph("The Mainframe is the computer that coordinates a network ([](jsc:mainframes)). Its"
                         + " commands are there only while it is on a network.")
                 .subheading("The engine and the services")
@@ -607,6 +608,12 @@ final class ShellPages {
                 .command(CommandGuidePages.id(Platform.LINUX, "cluster"))
                 .command(CommandGuidePages.id(Platform.LINUX, "gateway"))
                 .command(CommandGuidePages.id(Platform.LINUX, "borderlink"))
+                .subheading("The Messenger Service's conversations")
+                .paragraph("msgsvc, at the prompt of the server that runs the Messenger Service, looks after the"
+                        + " conversations it keeps ([](jsc:messenger)). msgsvc list numbers them, msgsvc delete 2"
+                        + " deletes the second, msgsvc delete --all deletes every one, and msgsvc status says what the"
+                        + " service keeps and weighs. A deleted conversation leaves every Messenger at once.")
+                .command(CommandGuidePages.id(Platform.LINUX, "msgsvc"))
                 .ifSomethingGoesWrong(
                         "The prompt says it does not know the command.",
                         "Type it at the prompt of the computer the table names for it.",

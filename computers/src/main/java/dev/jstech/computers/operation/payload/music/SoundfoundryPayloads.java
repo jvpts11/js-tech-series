@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.music;
 
+import dev.jstech.computers.audio.MediaLibrary;
 import dev.jstech.computers.audio.MusicPlayer;
 import dev.jstech.computers.audio.SongFiles;
 import dev.jstech.computers.audio.SongSources;
@@ -89,8 +90,10 @@ public final class SoundfoundryPayloads {
 
     private static void handleAction(final SoundfoundryActionPayload payload, final ServerPlayer player,
                                      final ServerLevel level) {
+        // The computer's player answers Soundfoundry and the Media Player alike, whichever plays its songs.
         if (!(level.getBlockEntity(payload.hostPos()) instanceof AbstractComputerBlockEntity computer)
-                || !computer.console().isInstalled(Programs.SOUNDFOUNDRY.toString())) {
+                || !(computer.console().isInstalled(Programs.SOUNDFOUNDRY.toString())
+                || MediaLibrary.playerOn(computer))) {
             return;
         }
         final int before = computer.console().soundfoundry().revision();

@@ -1,0 +1,27 @@
+{
+  "type": "jsc:transition_electronics",
+  "inputs": [
+    {
+      "count": 2,
+      "item": "jscore:pvc_sheet"
+    },
+    {
+      "count": 2,
+      "item": "jscore:iron_dust"
+    },
+    {
+      "count": 1,
+      "item": "jscore:polycarbonate_sheet"
+    },
+    {
+      "count": 1,
+      "item": "jsc:memory_chip_transition"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:lto3_tape"
+    }
+  ]
+}

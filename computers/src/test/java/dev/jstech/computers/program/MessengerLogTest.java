@@ -309,4 +309,57 @@ class MessengerLogTest {
         assertEquals(List.of(MessengerLog.LOBBY, MessengerLog.privateRoom("eve", "ada")), log.roomsFor("eve"));
         assertEquals(3, log.roomsFor("ada").size(), "the one in both sees both");
     }
+
+    @Test
+    void conversations_listEachRoomSpokenInWithItsNamesLinesWeightAndLastWord() {
+        log.say(MessengerLog.privateRoom("Ada", "Bob"), "Bob", "hi", 5L, false);
+        log.say(MessengerLog.LOBBY, "Ada", "morning", 7L, false);
+        log.say(MessengerLog.privateRoom("Ada", "Bob"), "Bob", "there?", 9L, false);
+        final List<MessengerLog.Conversation> kept = log.conversations();
+        assertEquals(2, kept.size(), "the lobby is a conversation only once something is said in it");
+        final MessengerLog.Conversation pair = kept.get(0);
+        assertEquals(List.of("Ada", "Bob"), pair.names(), "each name as its owner wrote it, wherever they did");
+        assertEquals(2, pair.lines());
+        assertEquals(9L, pair.lastAt());
+        assertEquals(List.of(), kept.get(1).names(), "the lobby is everybody's");
+        assertEquals(log.historyBytes(), pair.bytes() + kept.get(1).bytes());
+    }
+
+    @Test
+    void delete_takesOneConversationAndItsWeight() {
+        log.say(MessengerLog.privateRoom("ada", "bob"), "ada", "hi", 1L, false);
+        log.say(MessengerLog.LOBBY, "ada", "morning", 2L, false);
+        final long lobbyWeight = log.conversations().get(1).bytes();
+        final MessengerLog.Conversation gone = log.delete(MessengerLog.privateRoom("bob", "ada"));
+        assertNotNull(gone);
+        assertEquals(1, gone.lines());
+        assertEquals(lobbyWeight, log.historyBytes());
+        assertEquals(List.of(MessengerLog.LOBBY), log.rooms(), "the room leaves every list it was on");
+        assertNull(log.delete("nobody|here"), "a conversation not kept is not deleted");
+    }
+
+    @Test
+    void deleteAll_emptiesTheServiceAndAnswersWhatWent() {
+        log.say(MessengerLog.LOBBY, "ada", "one", 1L, false);
+        log.say(MessengerLog.privateRoom("ada", "bob"), "bob", "two", 2L, false);
+        assertEquals(2, log.deleteAll().size());
+        assertEquals(0, log.size());
+        assertEquals(0L, log.historyBytes());
+    }
+
+    @Test
+    void connect_remembersWhoseMessengerIsAtTheServer() {
+        log.connect("ada", MessengerLog.LOBBY, 1L, true);
+        log.connect("bob", MessengerLog.LOBBY, 1L);
+        assertTrue(log.atServer("ada"));
+        assertFalse(log.atServer("bob"));
+        assertFalse(log.atServer("eve"), "nor anybody with no messenger open");
+    }
+
+    @Test
+    void sizeText_writesAWeightInTheUnitThatKeepsItShort() {
+        assertEquals("640 B", MessengerLog.sizeText(640L));
+        assertEquals("3 KB", MessengerLog.sizeText(3_100L));
+        assertEquals("1.5 MB", MessengerLog.sizeText(1_572_864L));
+    }
 }

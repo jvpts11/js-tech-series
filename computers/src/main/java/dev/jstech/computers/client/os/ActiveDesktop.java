@@ -166,6 +166,12 @@ public final class ActiveDesktop {
         return desktop == null ? "" : desktop.packageVersion(programId);
     }
 
+    /** Whether the desktop that is up has a launcher for the program or window {@code key}: it is there to open. */
+    public static boolean launches(final String key) {
+        final DesktopState desktop = DesktopScreen.current();
+        return desktop != null && desktop.catalogue().byKey(key) != null;
+    }
+
     /** What a program is called, for a menu that offers it by id. */
     public static String openerName(final String programId) {
         return ProgramOpener.openerName(programId);

@@ -139,6 +139,22 @@ public final class Programs {
     public static final ResourceLocation INTEGRITY_MONITOR =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "integrity_monitor");
 
+    /** Data Compressor: a server service whose drives hold more items, each read waiting longer for it. */
+    public static final ResourceLocation DATA_COMPRESSOR =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "data_compressor");
+
+    /** Backup Service: backs up and restores the network, on a server in a rack. */
+    public static final ResourceLocation BACKUP_SERVICE =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "backup_service");
+
+    /** The Media Player: every desktop's player of the machine's songs and image sequences. */
+    public static final ResourceLocation MEDIA_PLAYER =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "media_player");
+
+    /** Backup Console: the Backup Service's window, on any desktop computer. */
+    public static final ResourceLocation BACKUP_CONSOLE =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "backup_console");
+
     /** Soundfoundry: Voidsoft's music player. */
     public static final ResourceLocation SOUNDFOUNDRY =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "soundfoundry");

@@ -19,6 +19,7 @@ import dev.jstech.computers.block.ChargingDockBlock;
 import dev.jstech.computers.block.RepeaterBlock;
 import dev.jstech.computers.block.RouterBlock;
 import dev.jstech.computers.hardware.WifiCardSpec;
+import dev.jstech.computers.item.TapeItem;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.portable.PortableItem;
 import dev.jstech.computers.program.cli.man.CommandGuidePages;
@@ -658,6 +659,10 @@ final class NetworkPages {
                         + " revision by revision."), GuideCell.words("Standard"))
                 .row(GuideCell.words("Soundfoundry Server"), GuideCell.words("Streams the music catalogue to every"
                         + " Soundfoundry on the network."), GuideCell.words("Standard"))
+                .row(GuideCell.words("Data Compressor"), GuideCell.words("Packs the bay's items tighter: its drives"
+                        + " hold a fifth more, and every read waits two ticks longer."), GuideCell.words("Standard"))
+                .row(GuideCell.words("Backup Service"), GuideCell.words("Backs the network up to a Tape Library or"
+                        + " another server's drive, and puts it back."), GuideCell.words("Legacy"))
                 .paragraph("Predictive Cache cuts the read latency of its bay by 15%, and a read never takes less than"
                         + " one tick. A read cache card in the same server adds its own cut on top of it.")
                 .define("Predictive Cache", "A service of a server bay that keeps the bay's most-wanted items ready"
@@ -672,6 +677,15 @@ final class NetworkPages {
                         + " single disk fills up while the others stand empty.")
                 .define("Load Balancer", "A service of a server bay that sends each write to the bay's emptiest"
                         + " disk, instead of filling the disks in turn.")
+                .paragraph("Data Compressor packs the items of its bay tighter, so its drives hold a fifth more. The"
+                        + " price is time: every read from the bay waits two ticks longer. On a hard disk that is a"
+                        + " small part of the wait and worth it; on NVMe, whose reads are quick, it triples the wait."
+                        + " The drives' labels do not change: the room comes from what each item takes on them, so a"
+                        + " compressed drive taken out of its bay can show more than full.")
+                .define("Data Compressor", "A service of a server bay that fits a fifth more items on its drives, at"
+                        + " two ticks more on every read.")
+                .paragraph("Backup Service backs the network up and puts it back. It is the subject of its own page"
+                        + " ([](jsc:backups)).")
                 .ifSomethingGoesWrong("A service does not answer.",
                         "Its server is off. Turn the server on.")
                 .ifSomethingGoesWrong("The index says a bay is unconfirmed after a hot swap.",
@@ -716,6 +730,80 @@ final class NetworkPages {
                 .ifSomethingGoesWrong("A replacement will not start.",
                         "Another replacement is under way, the engine is not installed, the Mainframe is off, or the"
                                 + " engine is already the running one.")
+                .register();
+        backups(guide, section);
+    }
+
+    private static void backups(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("backups", section).titled("Backups and the Tape Library").icon(ComputingModule.TAPE_LIBRARY)
+                .coversAll(itemsOf(TapeItem.class))
+                .paragraph("The Backup Service backs the network up and puts it back. It runs on a server in a rack,"
+                        + " like the Messenger Service, and the Backup Console is its window on any desktop computer:"
+                        + " the service keeps the jobs and the backups, the console sets them and restores them.")
+                .define("Backup Service", "The service on a rack server that backs the network up and restores it.")
+                .define("Backup Console", "The desktop window of the Backup Service, in four tabs: Jobs, Back up,"
+                        + " Restore and Tapes.")
+                .table("What a backup keeps", "Part", "What it is")
+                .row(GuideCell.words("Items"), GuideCell.words("What the network's storage holds."))
+                .row(GuideCell.words("Files"), GuideCell.words("The files in every computer's home folder."))
+                .row(GuideCell.words("Settings"), GuideCell.words("Every computer's settings."))
+                .row(GuideCell.words(".craft patterns"), GuideCell.words("The recipes of the network's Crafting"
+                        + " Computers."))
+                .row(GuideCell.words("IQL and Sigma# scripts"), GuideCell.words("The scripts on every computer, and"
+                        + " the Mainframe's saved views, procedures and jobs."))
+                .row(GuideCell.words("System images"), GuideCell.words("Every computer's system, which puts a"
+                        + " corrupted one right."))
+                .subheading("Where it goes")
+                .paragraph("A job writes its backups to a Tape Library or to a drive of another server. On a drive a"
+                        + " backup is one file, in the drive's Backups folder, that weighs what the backup weighs. A"
+                        + " Tape Library is cold storage, huge and slow: a tape winds to the end of what is written"
+                        + " before it writes, and to the backup before it reads, which takes a while.")
+                .table("The tapes", "Tape", "Era", "Holds")
+                .row(GuideCell.words("9-track reel"), GuideCell.words("Vintage"), GuideCell.words("150 items, 150 MB"))
+                .row(GuideCell.words("DLT"), GuideCell.words("Legacy"), GuideCell.words("2,560 items, 40 GB"))
+                .row(GuideCell.words("LTO-3"), GuideCell.words("Transition"), GuideCell.words("1,600 items, 400 GB"))
+                .row(GuideCell.words("LTO-6"), GuideCell.words("Standard"), GuideCell.words("10,240 items, 2.5 TB"))
+                .row(GuideCell.words("LTO-9"), GuideCell.words("Advanced"), GuideCell.words("73,728 items, 18 TB"))
+                .paragraph("On a tape, an item weighs what it weighs on a disk of the tape's era. A library takes only"
+                        + " the tapes of its own era, and serves the network of the servers in its rack.")
+                .subheading("When it runs")
+                .paragraph("A job runs by hand, with Run now in the Jobs tab, or at an hour you give it: every day, or"
+                        + " one day of the week. A timed job is an Automation Engine job as well, which runs BACKUP and"
+                        + " the job's name at that hour ([](jsc:automation_engine)), so the network needs the"
+                        + " Automation Engine on its Mainframe for it.")
+                .subheading("Restoring")
+                .paragraph("The Restore tab lists every backup the network holds, the newest first. Choose one, then"
+                        + " Restore. A backup on a drive comes back at once; one on a tape waits while the tape winds"
+                        + " to it, and the bar shows how long.")
+                .paragraph("Items come back only when they stopped existing. The network keeps a book of losses: what"
+                        + " a dead disk took, what a Defrag gave up on, what a RAID 0 lost with a drive, and what a"
+                        + " DROP destroyed. Restoring gives back, item by item, the lesser of what the backup holds and"
+                        + " what the book lost since the backup was made, and each loss comes back once, whatever"
+                        + " backup you restore it from. What was taken out, exported or crafted still exists, so it"
+                        + " never comes back: a backup undoes a DROP, not a SELECT.")
+                .define("Book of losses", "The network's record of the items that stopped existing: when, how many,"
+                        + " how and where.")
+                .paragraph("Files, settings, patterns and scripts are written back over what is there now. A system"
+                        + " image comes back only on the computers you tick, and puts each one's system back as it"
+                        + " was, which fixes a corrupted system.")
+                .subheading("The tapes")
+                .paragraph("The Tapes tab lists the tapes of a library with their labels, what each holds and when it"
+                        + " was last written. Label writes a name on a tape. Erase wipes it, and the backups on it go"
+                        + " for good. Eject takes the tape out of its slot, in front of the rack. Neither touches the"
+                        + " tape the drive is working on.")
+                .ifSomethingGoesWrong("The console says No Backup Service is running on this network.",
+                        "Install the Backup Service on a server in a rack of the network, and let the server run.",
+                        "A job's last run says no room.",
+                        "Its tapes or its drive are full. Put a blank tape in the library, erase one, or choose"
+                                + " another drive.",
+                        "A job's last run says nowhere to go.",
+                        "Its library has no tapes, or its server or drive is gone. Edit the job and choose where it"
+                                + " writes.",
+                        "A timed job never runs.",
+                        "Install the Automation Engine on the Mainframe; the status bar says when there is none.",
+                        "A restore gives nothing back.",
+                        "Nothing the backup holds was lost since it was made, or a restore already gave it back.")
+                .seeAlso("jsc:network_services", "jsc:rack_equipment", "jsc:automation_engine")
                 .register();
     }
 
@@ -940,6 +1028,7 @@ final class NetworkPages {
                 .command(CommandGuidePages.id(Platform.MC_NET, "sigma"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "sgpack"))
                 .command(CommandGuidePages.id(Platform.MC_NET, "sgdb"))
+                .command(CommandGuidePages.id(Platform.MC_NET, "msgsvc"))
                 .seeAlso("jsc:interactor_screen", "jsc:remote_control")
                 .register();
     }

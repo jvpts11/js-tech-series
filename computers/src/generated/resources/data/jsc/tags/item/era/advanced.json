@@ -36,6 +36,8 @@
     "jsc:advanced_cooling_unit",
     "jsc:advanced_ups_battery_expansion",
     "jsc:advanced_pdu",
+    "jsc:advanced_tape_library",
+    "jsc:lto9_tape",
     "jsc:advanced_fibre_optic_interface",
     "jsc:advanced_peripheral_cable",
     "jsc:advanced_hub",

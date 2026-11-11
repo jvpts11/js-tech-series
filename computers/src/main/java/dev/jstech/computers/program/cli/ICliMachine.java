@@ -308,6 +308,15 @@ public interface ICliMachine {
     }
 
     /**
+     * The conversations the Messenger Service of this very machine keeps, for whoever is at it to look through and
+     * delete; null when this machine runs no Messenger Service.
+     */
+    @Nullable
+    default IKeptConversations keptConversations() {
+        return null;
+    }
+
+    /**
      * What a computer that says nothing about itself answers. Named apart from the other parts' words, since a
      * computer is every one of these parts at once.
      */

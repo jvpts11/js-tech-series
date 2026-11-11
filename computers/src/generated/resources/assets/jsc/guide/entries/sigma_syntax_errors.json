@@ -354,7 +354,7 @@
     }
   ],
   "id": "jsc:sigma_syntax_errors",
-  "order": 448,
+  "order": 450,
   "section": "jsc:errors_compile",
   "title": "jsc.guide.sigma_syntax_errors.title"
 }

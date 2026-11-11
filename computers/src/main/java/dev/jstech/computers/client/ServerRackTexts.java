@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import dev.jstech.computers.backup.TapeDrive;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 
@@ -115,7 +116,29 @@ final class ServerRackTexts {
     static final TextKey WITH_UNIT = TextKey.of("jsc.rack.with_unit", "with %sU");
     static final TextKey SHELF_ALONE = TextKey.of("jsc.rack.shelf_alone", "No server above this shelf");
     static final TextKey SHELF_MOUNT = TextKey.of("jsc.rack.shelf_mount", "Mount it right under a server");
+    // A Tape Library's card, its drive and its slots.
+    static final TextKey CARD_TAPES = TextKey.of("jsc.rack.card_tapes", "TAPES");
+    static final TextKey CARD_USED = TextKey.of("jsc.rack.card_used", "USED");
+    static final TextKey CARD_BACKUPS = TextKey.of("jsc.rack.card_backups", "BACKUPS");
+    static final TextKey CARD_DRIVE = TextKey.of("jsc.rack.card_drive", "DRIVE");
+    static final TextKey CARD_ITEMS = TextKey.of("jsc.rack.card_items", "ITEMS");
+    static final TextKey TAPE_DRIVE = TextKey.of("jsc.rack.tape_drive", "RD");
+    static final TextKey TAPE_SLOT = TextKey.of("jsc.rack.tape_slot", "Takes a tape of the library's era");
+    static final TextKey DRIVE_IDLE = TextKey.of("jsc.rack.drive_idle", "idle");
+    static final TextKey DRIVE_WINDING = TextKey.of("jsc.rack.drive_winding", "winding");
+    static final TextKey DRIVE_READING = TextKey.of("jsc.rack.drive_reading", "reading");
+    static final TextKey DRIVE_WRITING = TextKey.of("jsc.rack.drive_writing", "writing");
 
     private ServerRackTexts() {
+    }
+
+    /** What a tape drive is doing, in the card's word for it. */
+    static TextKey driveWord(final TapeDrive.State state) {
+        return switch (state) {
+            case IDLE -> DRIVE_IDLE;
+            case WINDING -> DRIVE_WINDING;
+            case READING -> DRIVE_READING;
+            case WRITING -> DRIVE_WRITING;
+        };
     }
 }

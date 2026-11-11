@@ -81,12 +81,13 @@ public final class SongFiles {
         }
     }
 
-    private static ItemStack volumeOf(final ServerLevel level, final IOsHost computer, final String path) {
+    /* The disk or medium a path is on: a medium's for one that names it, else the system disk. */
+    static ItemStack volumeOf(final ServerLevel level, final IOsHost computer, final String path) {
         return path.startsWith(MEDIA) ? FileAccess.mediaStackFor(level, computer, path) : computer.systemDisk();
     }
 
     /* What a path on a medium starts with, the drive and its slash, which every song found there keeps. */
-    private static String driveOf(final String path) {
+    static String driveOf(final String path) {
         if (!path.startsWith(MEDIA)) {
             return "";
         }
@@ -94,7 +95,8 @@ public final class SongFiles {
         return slash < 0 ? path + "/" : path.substring(0, slash + 1);
     }
 
-    private static String inside(final String path) {
+    /* The path within its disk or medium. */
+    static String inside(final String path) {
         return path.startsWith(MEDIA) ? FileAccess.mediaSubPath(path) : path;
     }
 }
