@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:found_system"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.abandonware.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:cobweb"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.abandonware.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

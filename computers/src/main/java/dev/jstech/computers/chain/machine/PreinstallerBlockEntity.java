@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.chain.machine;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.core.blockentity.DerivedInt;
 import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.ValueField;
@@ -109,6 +110,15 @@ public final class PreinstallerBlockEntity extends ChainMachineBlockEntity {
         }
         if (inputsEmpty()) {
             note(Text.EMPTY);
+        }
+    }
+
+    /* A job that wrote a board's firmware is told the advancements as a flash. */
+    @Override
+    protected void madeThings(final int count, final long gameTime) {
+        super.madeThings(count, gameTime);
+        if (lastJob != null && lastJob.firmware()) {
+            JscEvents.awardOperator(this, JscEvents.FIRMWARE_FLASHED);
         }
     }
 

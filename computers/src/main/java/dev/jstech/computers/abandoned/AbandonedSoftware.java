@@ -64,9 +64,9 @@ public final class AbandonedSoftware {
      */
     public static List<ItemStack> graphicalSystem(final Era era) {
         if (HardwareEra.withParts(era) == HardwareEra.VINTAGE) {
-            return List.of(InstallerStacks.forSystem(UNIX), InstallerStacks.forProgram(CDE));
+            return List.of(InstallerStacks.found(InstallerStacks.forSystem(UNIX)), InstallerStacks.forProgram(CDE));
         }
-        return List.of(InstallerStacks.forSystem(AbandonedLoadouts.system(era)));
+        return List.of(InstallerStacks.found(InstallerStacks.forSystem(AbandonedLoadouts.system(era))));
     }
 
     /** The installer of {@code program}, boxed as a building holds it. */

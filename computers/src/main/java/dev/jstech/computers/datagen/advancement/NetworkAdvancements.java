@@ -58,5 +58,20 @@ public final class NetworkAdvancements extends JscAdvancementTab {
         this.goalWith(COMPUTERCRAFT, "talking_to_the_neighbours", "root",
                 ComputingModule.NETWORK_GATEWAY.item(), "Talking to the Neighbours",
                 "Hear a ComputerCraft computer through a Network Gateway", on(JscEvents.COMPUTERCRAFT_MESSAGE));
+
+        this.task("pretty_fly_for_a_wifi", "series_of_tubes", item("jsc:legacy_access_point"),
+                "Pretty Fly for a Wi-Fi", "Join a computer or a portable to an access point",
+                on(JscEvents.ACCESS_POINT_JOINED));
+        this.task("remote_work", "pretty_fly_for_a_wifi", item("jsc:sunsung_nebula_s10"), "Remote Work",
+                "Request items from the network on a portable", on(JscEvents.PORTABLE_REQUEST));
+        this.task("pics_or_it_didnt_happen", "pretty_fly_for_a_wifi", item("jsc:qphone_x"),
+                "Pics or It Didn't Happen", "Take a photo on a portable and send it to a computer",
+                on(JscEvents.PHOTO_SENT));
+        this.task("data_mining", "pretty_fly_for_a_wifi", Items.COMPASS, "Data Mining",
+                "Find a vein with the prospecting app", on(JscEvents.VEIN_FOUND));
+        this.task("asl", "series_of_tubes", Items.PAPER, "a/s/l?", "Send a message on the Messenger",
+                on(JscEvents.MESSAGE_SENT));
+        this.task("thin_client", "series_of_tubes", ComputingModule.ETHERNET_CABLE.item(), "Thin Client",
+                "Boot a computer over the network", on(JscEvents.NETWORK_BOOT));
     }
 }

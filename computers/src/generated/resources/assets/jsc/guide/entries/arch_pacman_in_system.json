@@ -155,7 +155,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:arch_pacman_in_system",
-  "order": 312,
+  "order": 314,
   "section": "jsc:arch_finish",
   "title": "jsc.guide.arch_pacman_in_system.title"
 }

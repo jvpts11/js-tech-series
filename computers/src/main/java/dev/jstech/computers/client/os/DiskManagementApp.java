@@ -348,7 +348,8 @@ public final class DiskManagementApp implements IDesktopApp {
 
     /* Format: the label, the file system and the quick format asked, then the warning before it is done. */
     private void format(final DiskReport.Disk disk, final DiskReport.Part part) {
-        final TextField label = new TextField(32).set(part.label().isEmpty() ? "New Volume" : part.label());
+        final TextField label = new TextField(32).set(part.label().isEmpty()
+                ? GameText.resolve(DiskToolTexts.DM_NEW_VOLUME_LABEL) : part.label());
         final List<FileSystemType> types = this.xp ? List.of(FileSystemType.NTFS, FileSystemType.FAT32)
                 : List.of(FileSystemType.NTFS, FileSystemType.FAT32, FileSystemType.EXFAT);
         final int[] chosen = {0};
@@ -411,7 +412,7 @@ public final class DiskManagementApp implements IDesktopApp {
         }
         final long max = room;
         final TextField amount = new TextField(12).set(Long.toString(max));
-        final TextField label = new TextField(32).set("New Volume");
+        final TextField label = new TextField(32).set(GameText.resolve(DiskToolTexts.DM_NEW_VOLUME_LABEL));
         final List<FileSystemType> types = this.xp ? List.of(FileSystemType.NTFS, FileSystemType.FAT32)
                 : List.of(FileSystemType.NTFS, FileSystemType.FAT32, FileSystemType.EXFAT);
         final int[] chosen = {0};

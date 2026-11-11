@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:fab/bare_metal",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "lithography",
+        "event": "jsc:chain_formed"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.bunny_suit.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:clean_room_casing"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.bunny_suit.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

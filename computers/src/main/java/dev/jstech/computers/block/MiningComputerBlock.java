@@ -10,6 +10,7 @@ package dev.jstech.computers.block;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.blockentity.ChunkAnchor;
 import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
@@ -199,6 +200,9 @@ public class MiningComputerBlock extends AbstractBigBlock implements IFaceConnec
             } else {
                 rig.seat(riser, player.getAbilities().instabuild ? held.copy() : held);
                 MachineOperators.note(rig, player);
+                if (rig.everyRiserHoldsACard()) {
+                    JscEvents.award(player, JscEvents.RISERS_FILLED);
+                }
                 level.playSound(null, origin, SoundEvents.METAL_PLACE, SoundSource.BLOCKS, 0.6F, 1.4F);
             }
         }

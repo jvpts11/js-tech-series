@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:teracoin/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:printed_3d"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.teracoin.you_wouldnt_download_a_car.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:prosa_i3_mk3"
+    },
+    "title": {
+      "translate": "advancements.jsc.teracoin.you_wouldnt_download_a_car.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

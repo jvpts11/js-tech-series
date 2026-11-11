@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:networks/series_of_tubes",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:access_point_joined"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.pretty_fly_for_a_wifi.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:legacy_access_point"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.pretty_fly_for_a_wifi.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.portable.PortableWalletPayload;
 import dev.jstech.computers.operation.payload.teracoin.WalletStatePayload;
 import dev.jstech.computers.teracoin.LedgerEntry;
 import dev.jstech.computers.teracoin.TeracoinAddress;
+import dev.jstech.computers.teracoin.TeracoinAwards;
 import dev.jstech.computers.teracoin.TeracoinChain;
 import dev.jstech.computers.teracoin.TeracoinState;
 import java.util.ArrayList;
@@ -45,15 +46,16 @@ public final class PortableWallet {
             devices.keepWallet(payload.device(), keys.address(), keys.key());
             teracoin.setDirty();
             note = WalletStatePayload.NOTE_CREATED;
+            TeracoinAwards.walletMade(player, keys.address());
         } else if (connected && payload.action() == PortableActionPayload.Action.WALLET_SEND
                 && !state.walletAddress().isEmpty()) {
-            note = send(level, teracoin, state, payload);
+            note = send(level, player, teracoin, state, payload);
         }
         PacketDistributor.sendToPlayer(player, view(chain, state, connected, payload, note));
     }
 
-    private static int send(final ServerLevel level, final TeracoinState teracoin, final PortableState state,
-                            final PortableActionPayload payload) {
+    private static int send(final ServerLevel level, final ServerPlayer player, final TeracoinState teracoin,
+                            final PortableState state, final PortableActionPayload payload) {
         final String to = payload.named().trim();
         if (!TeracoinAddress.valid(to)) {
             return WalletStatePayload.NOTE_BAD_ADDRESS;
@@ -62,6 +64,9 @@ public final class PortableWallet {
                 payload.amount(), "", level.getServer().overworld().getGameTime(),
                 level.getServer().overworld().getDayTime());
         teracoin.setDirty();
+        if (sent == TeracoinChain.SendResult.SENT) {
+            TeracoinAwards.sent(player, state.walletAddress(), to);
+        }
         return switch (sent) {
             case SENT -> WalletStatePayload.NOTE_SENT;
             case NOT_YOURS -> WalletStatePayload.NOTE_NOT_YOURS;

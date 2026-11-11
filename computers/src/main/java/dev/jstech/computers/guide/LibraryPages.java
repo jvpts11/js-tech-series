@@ -35,15 +35,17 @@ final class LibraryPages {
         achievementsSystems(guide, section);
         achievementsNetworks(guide, section);
         achievementsSigma(guide, section);
+        achievementsFab(guide, section);
+        achievementsTeracoin(guide, section);
     }
 
     private static void achievements(final ModGuide guide, final ModGuide.SectionRef section) {
         guide.page("achievements", section).titled("Achievements").icon(ComputingModule.PERSONAL_COMPUTER)
                 .paragraph("An achievement is a step the game records for you the first time you do something worth"
                         + " noting, such as building a working computer or booting your first system. You earn each"
-                        + " one once, and the game lists them in four tabs: Hardware, Operating Systems, Networks &"
-                        + " Operations, and Sigma.")
-                .table("The four tabs", "Tab", "What it rewards")
+                        + " one once, and the game lists them in six tabs: Fab, Hardware, Operating Systems,"
+                        + " Networks & Operations, Sigma and Teracoin.")
+                .table("The tabs", "Tab", "What it rewards")
                 .row(GuideCell.words("Hardware"),
                         GuideCell.words("Building computers, racks, datacenters and clusters."))
                 .row(GuideCell.words("Operating Systems"),
@@ -53,6 +55,11 @@ final class LibraryPages {
                                 + " IQL, and autocrafting."))
                 .row(GuideCell.words("Sigma"),
                         GuideCell.words("Writing, compiling and running Sigma and Sigma# programs."))
+                .row(GuideCell.words("Fab"),
+                        GuideCell.words("The chain from the ore to the chip: its machines, its masks and its"
+                                + " stations."))
+                .row(GuideCell.words("Teracoin"),
+                        GuideCell.words("Wallets, mining, the pools and the 3D printers."))
                 .paragraph("Each tab starts with a root, its first achievement, and the others hang from it. Every"
                         + " achievement has a kind. A task is a plain step, a goal is a larger milestone, a challenge"
                         + " asks for several separate things, and a secret stays hidden in its tab until you earn it."
@@ -69,7 +76,7 @@ final class LibraryPages {
                         "The operator is the last player who placed or used that machine. Use the machine yourself,"
                                 + " and its later achievements are yours.")
                 .seeAlso("jsc:achievements_hardware", "jsc:achievements_systems", "jsc:achievements_networks",
-                        "jsc:achievements_sigma")
+                        "jsc:achievements_sigma", "jsc:achievements_fab", "jsc:achievements_teracoin")
                 .define("Achievement", "A step the game records once for each player, when that player does"
                         + " something worth noting.")
                 .define("Operator", "The player a machine's own achievements are credited to: the last player who"
@@ -133,6 +140,37 @@ final class LibraryPages {
                         GuideCell.words("Bring a supercomputer online: Supercomputer Racks on High Compute Cable."),
                         GuideCell.words("The HBW Interface is on a network and has parallel crafts (more than"
                                 + " zero)."))
+                .row(GuideCell.words("The Megahertz Myth (task)"),
+                        GuideCell.words("Build a working Transition computer."),
+                        GuideCell.words("A computer of the Transition era is built and its build is valid."))
+                .row(GuideCell.words("Hyperthreaded (task)"),
+                        GuideCell.words("Build a working Advanced computer."),
+                        GuideCell.words("A computer of the Advanced era is built and its build is valid."))
+                .row(GuideCell.words("Magic Smoke (secret)"),
+                        GuideCell.words("Burn a power supply."),
+                        GuideCell.words("A power supply of one of your machines wears out and fails."))
+                .row(GuideCell.words("CPU Over Temperature (secret)"),
+                        GuideCell.words("Trip a computer's thermal protection."),
+                        GuideCell.words("One of your computers or racks reaches 100 °C and goes down."))
+                .row(GuideCell.words("Uninterruptible (task)"),
+                        GuideCell.words("Ride out a power loss on a UPS."),
+                        GuideCell.words("A running machine stays on through a power loss on a UPS's battery."))
+                .row(GuideCell.words("A Pea-Sized Dot (task)"),
+                        GuideCell.words("Fit a cooler with thermal paste."),
+                        GuideCell.words("A cooler of the Legacy or later, which is made with thermal paste, sits over"
+                                + " a processor."))
+                .row(GuideCell.words("RGB Makes It Faster (goal)"),
+                        GuideCell.words("Fill every fan slot of a case with Advanced case fans."),
+                        GuideCell.words("Every fan seat of the case holds an Advanced case fan."))
+                .row(GuideCell.words("N+1 (goal)"),
+                        GuideCell.words("Keep a server running when one unit of its redundant power supply fails."),
+                        GuideCell.words("One unit of a redundant supply fails and the machine stays on."))
+                .row(GuideCell.words("It Just Works (task)"),
+                        GuideCell.words("Build a working Quince machine."),
+                        GuideCell.words("A Quince machine is built and its build is valid."))
+                .row(GuideCell.words("Hard Copy (task)"),
+                        GuideCell.words("Print a book on the Large Scale Printer."),
+                        GuideCell.words("The Large Scale Printer prints its first copy for you."))
                 .paragraph("Time Traveller asks for the five eras that have a build achievement: Vintage, Legacy,"
                         + " Transition, Standard and Advanced. The eras Exa and Singularity have no build achievement.")
                 .paragraph("Each build hangs from the one before it: 640K Ought to Be Enough comes first, then Party"
@@ -243,6 +281,34 @@ final class LibraryPages {
                 .row(GuideCell.words("I'm In (task)"),
                         GuideCell.words("Take control of another computer through Remote Control."),
                         GuideCell.words("Remote Control opens a session on another machine."))
+                .row(GuideCell.words("hello (task)"),
+                        GuideCell.words("Start Quince System on a Russet 128K."),
+                        GuideCell.words("Quince System boots for the first time."))
+                .row(GuideCell.words("Good Enough to Lick (task)"),
+                        GuideCell.words("Install Quince OS X."),
+                        GuideCell.words("Quince OS X boots for the first time."))
+                .row(GuideCell.words("Only Two Remote Holes (task)"),
+                        GuideCell.words("Install OpenBSD."),
+                        GuideCell.words("OpenBSD boots for the first time."))
+                .row(GuideCell.words("Mint Condition (task)"),
+                        GuideCell.words("Install Linux Mint."),
+                        GuideCell.words("Linux Mint boots for the first time."))
+                .row(GuideCell.words("Slide to Unlock (task)"),
+                        GuideCell.words("Unlock a portable for the first time."),
+                        GuideCell.words("You slide, swipe or tap a portable's lock open."))
+                .row(GuideCell.words("Not Properly Shut Down (secret)"),
+                        GuideCell.words("Watch a system check its disk after a sudden shutdown."),
+                        GuideCell.words("A system starts by checking a disk a sudden shutdown left unclean."))
+                .row(GuideCell.words("Abandonware (task)"),
+                        GuideCell.words("Install a system found in an abandoned building."),
+                        GuideCell.words("An install finishes from the installer a building's chest held; a copy of"
+                                + " it does not count."))
+                .row(GuideCell.words("Shrink-Wrapped (task)"),
+                        GuideCell.words("Buy a system or a program from a Programmer."),
+                        GuideCell.words("You trade with a Programmer villager."))
+                .row(GuideCell.words("Just a Backup (task)"),
+                        GuideCell.words("Copy an installer disc onto a blank one."),
+                        GuideCell.words("Easy Disc Creator finishes a copy of a system's installer."))
                 .ifSomethingGoesWrong("A boot achievement did not appear after a reinstall.",
                         "The disk keeps the mark of its first welcome. Erase the disk, then install again, and the"
                                 + " next boot counts. If the disk was not erased, the system was already welcomed.",
@@ -307,6 +373,27 @@ final class LibraryPages {
                 .row(GuideCell.words("Talking to the Neighbours (goal, with ComputerCraft only)"),
                         GuideCell.words("Hear a ComputerCraft computer through a Network Gateway."),
                         GuideCell.words("A Network Gateway receives a message from a ComputerCraft computer."))
+                .row(GuideCell.words("Information Superhighway (goal)"),
+                        GuideCell.words("Join two networks through their WAN Gateways."),
+                        GuideCell.words("Two WAN Gateway Computers bring their line up in federation."))
+                .row(GuideCell.words("Pretty Fly for a Wi-Fi (task)"),
+                        GuideCell.words("Join a computer or a portable to an access point."),
+                        GuideCell.words("A computer or a portable links through a wireless access point."))
+                .row(GuideCell.words("Remote Work (task)"),
+                        GuideCell.words("Request items from the network on a portable."),
+                        GuideCell.words("A portable's network app asks the network for items."))
+                .row(GuideCell.words("Pics or It Didn't Happen (task)"),
+                        GuideCell.words("Take a photo on a portable and send it to a computer."),
+                        GuideCell.words("A photo from a portable's gallery is written on a computer."))
+                .row(GuideCell.words("Data Mining (task)"),
+                        GuideCell.words("Find a vein with the prospecting app."),
+                        GuideCell.words("The prospecting app finds a vein round you."))
+                .row(GuideCell.words("a/s/l? (task)"),
+                        GuideCell.words("Send a message on the Messenger."),
+                        GuideCell.words("You say something in a Messenger room, at a computer or on a portable."))
+                .row(GuideCell.words("Thin Client (task)"),
+                        GuideCell.words("Boot a computer over the network."),
+                        GuideCell.words("A computer starts a system the Mirror serves, through PXE or HTTP Boot."))
                 .paragraph("An Operation you asked for credits you. A scheduled Operation credits the operator of the"
                         + " Mainframe ([](jsc:mainframes)), and so does an IQL job that runs on its own.")
                 .paragraph("Two Out of Three Ain't Bad and Deadlock name two of the ways an Operation can end:"
@@ -371,6 +458,9 @@ final class LibraryPages {
                 .row(GuideCell.words("Five Nines (challenge)"),
                         GuideCell.words("Keep a program running for seven days without stopping."),
                         GuideCell.words("A program runs without stopping for 168,000 ticks."))
+                .row(GuideCell.words("Rubber Duck Debugging (task)"),
+                        GuideCell.words("Stop a program at a breakpoint."),
+                        GuideCell.words("Virtual Studio's debugger stops your program at a breakpoint."))
                 .paragraph("Five Nines counts ticks, not seconds: 24,000 ticks make one in-game day, so seven days make"
                         + " 168,000 ticks. A tick is the game's basic unit of time, one twentieth of a second"
                         + " ([](jsc:units_and_ticks)).")
@@ -388,6 +478,100 @@ final class LibraryPages {
                         "The program must run without a stop for 168,000 ticks. The game checks once every 1,200 ticks,"
                                 + " so it can appear up to a minute later.")
                 .seeAlso("jsc:sigma_compile", "jsc:sigma_run", "jsc:sigma_limits", "jsc:book_of_sigma")
+                .register();
+    }
+
+    private static void achievementsFab(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("achievements_fab", section).titled("Fab achievements").icon(ComputingModule.PERSONAL_COMPUTER)
+                .paragraph("The Fab tab follows the chain from the ore to the chip, and on to a whole computer. A"
+                        + " machine of the chain credits its operator, the last player who placed or used its"
+                        + " terminal.")
+                .table("The Fab achievements", "Achievement", "What it asks", "How it is earned")
+                .row(GuideCell.words("Some Assembly Required (root)"),
+                        GuideCell.words("Make a Vintage Electronics Workbench."),
+                        GuideCell.words("You hold a Vintage Electronics Workbench."))
+                .row(GuideCell.words("Bare Metal (task)"),
+                        GuideCell.words("Form your first machine of the chain."),
+                        GuideCell.words("Any machine of the chain stands whole round its terminal."))
+                .row(GuideCell.words("Nine Nines (task)"),
+                        GuideCell.words("Grow polysilicon in the Siemens Reactor."),
+                        GuideCell.words("The Siemens Reactor finishes its first work."))
+                .row(GuideCell.words("Pull Request (task)"),
+                        GuideCell.words("Pull your first silicon boule."),
+                        GuideCell.words("The Crystal Puller finishes its first work."))
+                .row(GuideCell.words("Wafer-Thin (task)"),
+                        GuideCell.words("Cut a boule into wafers."),
+                        GuideCell.words("The Wafer Saw finishes its first work."))
+                .row(GuideCell.words("Tape-Out (task)"),
+                        GuideCell.words("Write your first mask."),
+                        GuideCell.words("A Lithography Station writes a mask."))
+                .row(GuideCell.words("First Silicon (goal)"),
+                        GuideCell.words("Package your first chip."),
+                        GuideCell.words("The Packaging Line finishes its first work."))
+                .row(GuideCell.words("Bunny Suit (task)"),
+                        GuideCell.words("Build a Lithography Station."),
+                        GuideCell.words("A Lithography Station of any era stands whole."))
+                .row(GuideCell.words("Die Shrink (challenge)"),
+                        GuideCell.words("Expose a layer in the Lithography Station of every era."),
+                        GuideCell.words("A layer of a wafer of each of the five eras is exposed."))
+                .row(GuideCell.words("13.5 Nanometres (goal)"),
+                        GuideCell.words("Expose a layer with extreme ultraviolet light."),
+                        GuideCell.words("A layer of an Advanced wafer is exposed."))
+                .row(GuideCell.words("Burn-In (task)"),
+                        GuideCell.words("Make a screen on the Display Line."),
+                        GuideCell.words("The Display Line finishes its first work."))
+                .row(GuideCell.words("Pick and Place (goal)"),
+                        GuideCell.words("Let an Electronics Assembly Line make a part by itself."),
+                        GuideCell.words("An Electronics Assembly Line of any era finishes its first work."))
+                .row(GuideCell.words("Plug and Pray (task)"),
+                        GuideCell.words("Build a computer in the Prebuilder."),
+                        GuideCell.words("The Prebuilder finishes a computer."))
+                .row(GuideCell.words("Do Not Turn Off Your Computer (task)"),
+                        GuideCell.words("Flash a motherboard's firmware in the Preinstaller."),
+                        GuideCell.words("The Preinstaller finishes a job that writes a board's firmware."))
+                .paragraph("Die Shrink counts the era of the wafer, not of the station: the ArF station exposes both"
+                        + " the Transition's wafers and the Standard's.")
+                .seeAlso("jsc:electronics_workbench", "jsc:building_chain_machines", "jsc:lithography_stations")
+                .register();
+    }
+
+    private static void achievementsTeracoin(final ModGuide guide, final ModGuide.SectionRef section) {
+        guide.page("achievements_teracoin", section).titled("Teracoin achievements")
+                .icon(ComputingModule.PERSONAL_COMPUTER)
+                .paragraph("The Teracoin tab follows the coin: a wallet, mining, the pools and the 3D printers. A"
+                        + " wallet counts for the player who made it, and a miner for its machine's operator.")
+                .table("The Teracoin achievements", "Achievement", "What it asks", "How it is earned")
+                .row(GuideCell.words("Not Your Keys, Not Your Coins (root)"),
+                        GuideCell.words("Make a wallet in the Crypto Wallet."),
+                        GuideCell.words("You make a wallet, on a computer or on a portable."))
+                .row(GuideCell.words("Proof of Work (goal)"),
+                        GuideCell.words("Find a block."),
+                        GuideCell.words("One of your miners finds a block, alone or for a pool."))
+                .row(GuideCell.words("Pool Party (task)"),
+                        GuideCell.words("Join a mining pool."),
+                        GuideCell.words("One of your miners starts mining for a pool."))
+                .row(GuideCell.words("To the Moon (goal)"),
+                        GuideCell.words("Fill every riser of a Mining Computer."),
+                        GuideCell.words("You seat a card on the last empty riser of a rig."))
+                .row(GuideCell.words("Application-Specific (goal)"),
+                        GuideCell.words("Mine with an ASIC."),
+                        GuideCell.words("One of your ASICs mines."))
+                .row(GuideCell.words("Pizza Day (task)"),
+                        GuideCell.words("Send TRC to another player."),
+                        GuideCell.words("You send TRC to a wallet another player made."))
+                .row(GuideCell.words("HODL (challenge)"),
+                        GuideCell.words("Hold 1,000 TRC in one wallet for seven days without sending any."),
+                        GuideCell.words("A wallet you made keeps 1,000 TRC or more for seven game days, nothing"
+                                + " leaving it."))
+                .row(GuideCell.words("You Wouldn't Download a Car (task)"),
+                        GuideCell.words("Print an item on a 3D printer."),
+                        GuideCell.words("One of your 3D printers puts out an item."))
+                .row(GuideCell.words("The Halvening (secret)"),
+                        GuideCell.words("Be there when the reward halves."),
+                        GuideCell.words("You are on the server when a block's reward is half the one before."))
+                .paragraph("HODL starts over when the wallet sends anything, a 3D printer's payment among it, or drops"
+                        + " below 1,000 TRC. The game looks at the wallets once a minute.")
+                .seeAlso("jsc:teracoin", "jsc:mining", "jsc:mining_pools", "jsc:printers_3d")
                 .register();
     }
 

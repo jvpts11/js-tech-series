@@ -363,6 +363,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         power.hardwareChanged(buildValid() && heat.mayStart());
         setChanged();
         HardwareMilestones.report(this);
+        reportCooling();
         recordParts();
     }
 
@@ -557,6 +558,32 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             return fanRefusal(slot - layout().fanStart(), stack);
         }
         return PartRefusals.NOT_THIS_SLOT;
+    }
+
+    /*
+     * What the advancements are told of how the machine is cooled: a cooler made with thermal paste, one of the Legacy
+     * or later, over a processor; and every fan seat of the case holding an Advanced case fan.
+     */
+    private void reportCooling() {
+        if (level == null || level.isClientSide()) {
+            return;
+        }
+        for (int i = 0; i < Math.min(layout().coolerCount(), layout().cpuCount()); i++) {
+            final CoolerSpec cooler = hardware.cooler(i);
+            if (cooler != null && !cooler.era().isAtMost(HardwareEra.VINTAGE)
+                    && !getHardware().getStackInSlot(layout().cpuSlot(i)).isEmpty()) {
+                JscEvents.awardOperator(this, JscEvents.PASTE_FITTED);
+                break;
+            }
+        }
+        boolean advanced = layout().fanCount() > 0;
+        for (int seat = 0; seat < layout().fanCount() && advanced; seat++) {
+            final CaseFanSpec fan = HardwareRegistry.caseFan(getHardware().getStackInSlot(layout().fanStart() + seat));
+            advanced = fan != null && fan.era() == HardwareEra.ADVANCED;
+        }
+        if (advanced) {
+            JscEvents.awardOperator(this, JscEvents.ADVANCED_FANS);
+        }
     }
 
     /*
@@ -2103,6 +2130,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         if (heat.tick(level, worldPosition, level.getGameTime(), running, build == null || !running ? 0
                 : build.powerDraw(), hardware.cooling().budgetWatts())) {
             stopSuddenly(CrashCause.THERMAL_TRIP, CrashPages.Moment.none());
+            JscEvents.awardOperator(this, JscEvents.THERMAL_TRIP);
             logEvent(level, EventLevel.ERROR, NetworkEvents.THERMAL_TRIP.with(heat.lastTrip(),
                     ComputersServerConfig.restartBelow()));
             tripCorrupts(level);
@@ -2219,7 +2247,9 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             hardware.markDirty();
             hardwareChanged();
             logAlert(level, EventLevel.ERROR, AlertKind.POWER, PsuTexts.LOG_FAILED.with(supply));
+            JscEvents.awardOperator(this, JscEvents.PSU_FAILED);
         } else if (worn.unitLost()) {
+            JscEvents.awardOperator(this, JscEvents.PSU_UNIT_LOST);
             logAlert(level, EventLevel.WARN, AlertKind.POWER, PsuTexts.LOG_UNIT_FAILED.with(
                     worn.after().failedUnits(worn.spec()), worn.spec().units(), supply));
         } else if (worn.degradedNow()) {

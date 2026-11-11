@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:hardware/rack_em_up",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:psu_unit_lost"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.n_plus_one.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:psu_3000p"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.n_plus_one.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

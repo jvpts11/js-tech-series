@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.firmware;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.client.FirmwareScreen;
 import dev.jstech.computers.menu.MonitorSessionMenu;
@@ -81,6 +82,7 @@ public final class NetBootPayloads {
             PacketDistributor.sendToPlayer(player, menuOf(payload.host(), level, machine, failure));
             return;
         }
+        JscEvents.award(player, JscEvents.NETWORK_BOOT);
         // Whatever the machine restarts into, the installer or a live session, is what the monitor shows next.
         MonitorBlock.openSession(player, level, payload.monitor(), payload.host());
     }

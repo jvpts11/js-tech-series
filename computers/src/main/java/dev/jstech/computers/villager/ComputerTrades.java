@@ -8,6 +8,7 @@
 package dev.jstech.computers.villager;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.os.BoardFirmware;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -31,6 +32,7 @@ import java.util.function.Function;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.npc.VillagerTrades;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -38,6 +40,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.level.ItemLike;
+import net.neoforged.neoforge.event.entity.player.TradeWithVillagerEvent;
 import net.neoforged.neoforge.event.village.VillagerTradesEvent;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +86,14 @@ public final class ComputerTrades {
             "monitor", HardwareEra.ADVANCED, "color_monitor");
 
     private ComputerTrades() {
+    }
+
+    /** A trade with a Programmer, a system or a program bought, is told the advancements. */
+    public static void onTraded(final TradeWithVillagerEvent event) {
+        if (event.getAbstractVillager() instanceof Villager villager
+                && villager.getVillagerData().getProfession() == ComputerVillagers.PROGRAMMER.get()) {
+            JscEvents.award(event.getEntity(), JscEvents.PROGRAMMER_TRADE);
+        }
     }
 
     /** Gives the two professions their trades, level by level, when the game asks every profession for its own. */

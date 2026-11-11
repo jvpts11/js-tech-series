@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:systems/press_del",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:disk_checked"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.not_properly_shut_down.description"
+    },
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "jsc:disk_vaultis_trench_20m"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.not_properly_shut_down.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

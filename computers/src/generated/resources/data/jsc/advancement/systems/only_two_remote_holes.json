@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/not_linux",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:openbsd"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.only_two_remote_holes.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:pufferfish"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.only_two_remote_holes.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

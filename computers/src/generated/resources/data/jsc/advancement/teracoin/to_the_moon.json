@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:teracoin/proof_of_work",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:risers_filled"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.teracoin.to_the_moon.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "minecraft:firework_rocket"
+    },
+    "title": {
+      "translate": "advancements.jsc.teracoin.to_the_moon.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

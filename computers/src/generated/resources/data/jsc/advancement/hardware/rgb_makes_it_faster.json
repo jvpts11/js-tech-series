@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:hardware/a_pea_sized_dot",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:advanced_fans"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.rgb_makes_it_faster.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:case_fan_advanced"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.rgb_makes_it_faster.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

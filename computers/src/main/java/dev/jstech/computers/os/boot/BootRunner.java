@@ -379,8 +379,11 @@ public final class BootRunner {
                 PlayerSystemBoot.start(machine);
             }
             // Disks a sudden shutdown left unclean are checked first, as long as their file system takes.
-            phases.timeBoot(now, players ? PlayerSystemBoot.BOOT_TICKS : bootLength(machine),
-                    DiskChecks.atBoot(machine));
+            final DiskCheck check = DiskChecks.atBoot(machine);
+            phases.timeBoot(now, players ? PlayerSystemBoot.BOOT_TICKS : bootLength(machine), check);
+            if (!check.isEmpty()) {
+                JscEvents.awardHost(machine, JscEvents.DISK_CHECKED, "");
+            }
             /*
              * Whoever watched the self-test end is still looking at it, so they are shown the system coming up the
              * moment the machine knows how long that takes.

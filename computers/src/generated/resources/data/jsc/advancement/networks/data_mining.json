@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:networks/pretty_fly_for_a_wifi",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:vein_found"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.data_mining.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:compass"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.data_mining.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

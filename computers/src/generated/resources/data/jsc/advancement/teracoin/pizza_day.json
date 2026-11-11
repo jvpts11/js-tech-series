@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:teracoin/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:trc_sent"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.teracoin.pizza_day.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:pumpkin_pie"
+    },
+    "title": {
+      "translate": "advancements.jsc.teracoin.pizza_day.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

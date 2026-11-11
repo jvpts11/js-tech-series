@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:programmer_trade"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.shrink_wrapped.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:emerald"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.shrink_wrapped.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

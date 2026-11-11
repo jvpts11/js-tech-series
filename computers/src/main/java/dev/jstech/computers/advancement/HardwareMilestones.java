@@ -8,6 +8,7 @@
 package dev.jstech.computers.advancement;
 
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
+import dev.jstech.computers.os.QuinceStart;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.SeriesAxes;
 import dev.jstech.core.progression.PlayerProgress;
@@ -38,6 +39,9 @@ public final class HardwareMilestones {
         final Era era = machine.installedEra();
         if (era != null && machine.buildValid()) {
             JscEvents.awardOperator(machine, JscEvents.ERA_BUILT, eraDetail(era));
+            if (machine.quinceStart() != QuinceStart.NONE) {
+                JscEvents.awardOperator(machine, JscEvents.QUINCE_BUILT);
+            }
             if (machine.getLevel() instanceof ServerLevel level) {
                 MachineOperators.idOf(machine).ifPresent(operator ->
                         PlayerProgress.reach(level.getServer(), operator, SeriesAxes.HARDWARE_ERA, era));

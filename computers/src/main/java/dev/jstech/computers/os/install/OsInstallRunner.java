@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os.install;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.machine.PortsService;
 import dev.jstech.computers.menu.MonitorSessionMenu;
@@ -20,6 +21,7 @@ import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.media.IMediaDrive;
+import dev.jstech.computers.os.media.InstallerStacks;
 import dev.jstech.computers.os.media.MachineMedia;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.computers.os.media.MediaKind;
@@ -79,6 +81,7 @@ public final class OsInstallRunner {
             tell(level, machine, pos, job, system, MEDIUM_TAKEN_OUT.text());
             return;
         }
+        noteFound(machine, level, job);
         if (flow != null && !carry(machine, level, pos, job, flow)) {
             return;
         }
@@ -124,6 +127,21 @@ public final class OsInstallRunner {
         return over;
     }
 
+    /*
+     * As the copy starts, whether it reads an installer found in an abandoned building: only its first disk is ever
+     * found, and the drive holds the last one by the end.
+     */
+    private static void noteFound(final IOsHost machine, final ServerLevel level, final OsInstallJob job) {
+        if (job.found() || !job.hasReader() || job.ticksLeft() != job.ticksTotal()) {
+            return;
+        }
+        final IMediaDrive drive = MachineMedia.of(machine, level).find(job.volume());
+        if (drive != null && InstallerStacks.isFound(drive.medium())) {
+            job.markFound();
+            machine.markUnsaved();
+        }
+    }
+
     /** Writes the system, gives the machine the name it was asked for, and leaves the installer on its last page. */
     private static void finish(final IOsHost machine, final ServerLevel level,
                                final BlockPos pos, final OsInstallJob job, @Nullable final InstallerFlow flow,
@@ -135,6 +153,9 @@ public final class OsInstallRunner {
             machine.setInstaller(null);
             tell(level, machine, pos, job, system, DISK_REFUSED.text());
             return;
+        }
+        if (job.found()) {
+            JscEvents.awardHost(machine, JscEvents.FOUND_SYSTEM, "");
         }
         /*
          * The files are on the disk, but the machine is still running the installer until it restarts:

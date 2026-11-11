@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/hello",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:quince_os_x"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.good_enough_to_lick.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:prismarine_crystals"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.good_enough_to_lick.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

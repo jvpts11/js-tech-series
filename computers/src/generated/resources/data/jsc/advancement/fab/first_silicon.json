@@ -1,0 +1,31 @@
+{
+  "parent": "jsc:fab/tape_out",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "packaging_line",
+        "event": "jsc:chain_made"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.first_silicon.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:processor_chip_vintage_i486"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.first_silicon.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

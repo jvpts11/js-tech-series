@@ -260,7 +260,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:start_menus",
-  "order": 204,
+  "order": 206,
   "section": "jsc:desktop_working",
   "title": "jsc.guide.start_menus.title"
 }

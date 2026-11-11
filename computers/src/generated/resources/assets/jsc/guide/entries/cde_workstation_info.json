@@ -69,7 +69,7 @@
   ],
   "icon": "jsc:monitor",
   "id": "jsc:cde_workstation_info",
-  "order": 267,
+  "order": 269,
   "section": "jsc:cde_desktop",
   "title": "jsc.guide.cde_workstation_info.title"
 }

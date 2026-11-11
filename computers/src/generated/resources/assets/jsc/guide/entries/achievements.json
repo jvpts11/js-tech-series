@@ -43,6 +43,22 @@
           {
             "words": "jsc.guide.achievements.table1_4_2"
           }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements.table1_5_1"
+          },
+          {
+            "words": "jsc.guide.achievements.table1_5_2"
+          }
+        ],
+        [
+          {
+            "words": "jsc.guide.achievements.table1_6_1"
+          },
+          {
+            "words": "jsc.guide.achievements.table1_6_2"
+          }
         ]
       ]
     },
@@ -81,7 +97,9 @@
         "jsc:achievements_hardware",
         "jsc:achievements_systems",
         "jsc:achievements_networks",
-        "jsc:achievements_sigma"
+        "jsc:achievements_sigma",
+        "jsc:achievements_fab",
+        "jsc:achievements_teracoin"
       ]
     },
     {

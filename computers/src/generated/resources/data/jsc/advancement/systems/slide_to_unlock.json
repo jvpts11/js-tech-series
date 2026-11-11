@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:portable_unlocked"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.slide_to_unlock.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:qphone"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.slide_to_unlock.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

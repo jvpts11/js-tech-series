@@ -140,7 +140,7 @@
     }
   ],
   "id": "jsc:system_commands",
-  "order": 248,
+  "order": 250,
   "section": "jsc:shell_commands",
   "title": "jsc.guide.system_commands.title"
 }

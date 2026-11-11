@@ -9,6 +9,7 @@ package dev.jstech.computers.blockentity;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.AsicBlock;
 import dev.jstech.computers.teracoin.AsicModel;
 import dev.jstech.computers.teracoin.MinerKinds;
@@ -65,6 +66,8 @@ public class AsicBlockEntity extends SyncedBlockEntity implements INetworkMember
     private final ValueField<Boolean> alone = fields().value("Alone", Codec.BOOL, false).toClient();
     private final IntField status = fields().integer("Status", 0).toClient();
     private final ValueField<Boolean> powered = fields().value("Powered", Codec.BOOL, false).toClient();
+    /* Whether its mining was told the advancements since it was loaded, so it is not told every second. */
+    private boolean toldMining;
 
     /* The most its store takes from the line in a tick: more than any ASIC draws in one. */
     private static final long TAKES_A_TICK = 1_000L;
@@ -222,9 +225,15 @@ public class AsicBlockEntity extends SyncedBlockEntity implements INetworkMember
         MinerRunner.offer(level, network(), worldPosition, miner,
                 new MinerRunner.Miner(node, model.name() + " " + ShortId.of(node),
                         MinerKinds.asic(model.era().path()), model.hashrate()),
-                block -> found.set(found.get() + 1));
+                block -> {
+                    found.set(found.get() + 1);
+                    JscEvents.awardOperator(this, JscEvents.BLOCK_FOUND);
+                });
         if (miner.status() != MinerSettings.Status.ALONE && miner.status() != MinerSettings.Status.POOL) {
             uptime.set(0L);
+        } else if (!toldMining) {
+            toldMining = true;
+            JscEvents.awardOperator(this, JscEvents.ASIC_MINING);
         }
         shown();
     }

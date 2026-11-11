@@ -51,5 +51,7 @@ public final class SigmaAdvancements extends JscAdvancementTab {
                 "Have a program set an Operation going on the network", on(JscEvents.SIGMA_OPERATION));
         this.challenge("five_nines", "automate_the_boring_stuff", Items.NETHER_STAR, "Five Nines",
                 "Keep a program running for seven days without stopping", on(JscEvents.SIGMA_UPTIME));
+        this.task("rubber_duck_debugging", "erm_what_the_sigma", Items.FEATHER, "Rubber Duck Debugging",
+                "Stop a program at a breakpoint", on(JscEvents.BREAKPOINT));
     }
 }

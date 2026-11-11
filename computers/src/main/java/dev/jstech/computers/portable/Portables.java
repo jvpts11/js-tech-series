@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.portable;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.machine.MirrorService;
 import dev.jstech.computers.operation.payload.MessengerActionPayload;
@@ -183,6 +184,7 @@ public final class Portables {
                 }
             }
             case SEE_ALERTS -> devices.seeAll(device);
+            case UNLOCK -> JscEvents.award(player, JscEvents.PORTABLE_UNLOCKED);
             case CLEAR_ALERTS -> devices.clearAlerts(device);
             case TOGGLE_ALERT -> devices.toggle(device, AlertKind.byName(payload.named()));
             case WATCH -> {
@@ -279,8 +281,12 @@ public final class Portables {
         final WirelessStandard speed = WirelessStandard.older(model.wifi(), point.standard());
         final PortableLink link = new PortableLink(ShortId.of(network.asString()),
                 AccessPointBlockEntity.hostname(point.nodeUuid()), speed);
-        if (!link.equals(stack.get(ComputingComponents.PORTABLE_LINK.get()))) {
+        final PortableLink was = stack.get(ComputingComponents.PORTABLE_LINK.get());
+        if (!link.equals(was)) {
             stack.set(ComputingComponents.PORTABLE_LINK.get(), link);
+            if (was == null) {
+                JscEvents.award(player, JscEvents.ACCESS_POINT_JOINED);
+            }
         }
         PortableLinks.seen(level, new PortableLinks.Joined(id, model, network,
                 new WirelessLink(point.getBlockPos(), point.nodeUuid(), model.wifi(), point.standard()),
@@ -292,7 +298,7 @@ public final class Portables {
     @Nullable
     private static MobileApp appOf(final PortableActionPayload.Action action) {
         return switch (action) {
-            case INSTALL, SEE_ALERTS, CLEAR_ALERTS -> null;
+            case INSTALL, SEE_ALERTS, UNLOCK, CLEAR_ALERTS -> null;
             case TOGGLE_ALERT, WATCH, UNWATCH -> MobileApp.ALERTS;
             case NETWORK, REQUEST, TAKE, RETURN, DEPOSIT, DEPOSIT_ALL, CRAFT, PLAN -> MobileApp.NETWORK;
             case GALLERY, SEND_PICTURE, DELETE_PICTURE -> MobileApp.GALLERY;

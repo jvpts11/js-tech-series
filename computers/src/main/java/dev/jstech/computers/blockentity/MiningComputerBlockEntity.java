@@ -149,6 +149,16 @@ public class MiningComputerBlockEntity extends AbstractSmallComputerBlockEntity
         return index < 0 || index >= CARD_SLOTS ? null : installedPart(CARD_SLOTS_START + index);
     }
 
+    /** Whether every riser the rig carries is in, with a card standing on it. */
+    public boolean everyRiserHoldsACard() {
+        for (int i = 0; i < riserCount(); i++) {
+            if (!hasRiser(i) || cardOn(i).isEmpty()) {
+                return false;
+            }
+        }
+        return riserCount() > 0;
+    }
+
     /** How many cards stand on the risers, on either side. */
     public int seatedCards() {
         int seated = 0;

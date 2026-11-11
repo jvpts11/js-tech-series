@@ -143,7 +143,7 @@
     }
   ],
   "id": "jsc:disk_commands",
-  "order": 251,
+  "order": 253,
   "section": "jsc:shell_commands",
   "title": "jsc.guide.disk_commands.title"
 }

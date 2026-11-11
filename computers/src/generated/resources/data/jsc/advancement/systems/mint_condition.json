@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/universal",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:linux_mint"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.mint_condition.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:dvd_rw"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.mint_condition.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

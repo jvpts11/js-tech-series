@@ -27,6 +27,8 @@ final class DiskToolTexts {
     static final TextKey DM_MENU = TextKey.of("jsc.disk_tool.dm.menu", "File   Action   View   Help");
     static final TextKey DM_MENU_XP = TextKey.of("jsc.disk_tool.dm.menu_xp", "File   Action   View   Window   Help");
     static final TextKey DM_VOLUME = TextKey.of("jsc.disk_tool.dm.volume", "Volume");
+    /* The label Disk Management offers a volume it makes or formats, as Frames names one in its own language. */
+    static final TextKey DM_NEW_VOLUME_LABEL = TextKey.of("jsc.disk_tool.dm.new_volume_label", "New Volume");
     static final TextKey DM_LAYOUT = TextKey.of("jsc.disk_tool.dm.layout", "Layout");
     static final TextKey DM_TYPE = TextKey.of("jsc.disk_tool.dm.type", "Type");
     static final TextKey DM_FILE_SYSTEM = TextKey.of("jsc.disk_tool.dm.file_system", "File System");

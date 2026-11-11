@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:fab/plug_and_pray",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:firmware_flashed"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.do_not_turn_off_your_computer.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:motherboard_babyat_vintage"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.do_not_turn_off_your_computer.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

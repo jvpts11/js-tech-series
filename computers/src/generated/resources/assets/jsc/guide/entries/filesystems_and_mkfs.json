@@ -200,7 +200,7 @@
     }
   ],
   "id": "jsc:filesystems_and_mkfs",
-  "order": 301,
+  "order": 303,
   "section": "jsc:disk_tools",
   "title": "jsc.guide.filesystems_and_mkfs.title"
 }

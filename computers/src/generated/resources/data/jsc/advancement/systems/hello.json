@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "os": "jsc:quince_system"
+      },
+      "trigger": "jsc:os_first_boot"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.hello.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:russet_128k"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.hello.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

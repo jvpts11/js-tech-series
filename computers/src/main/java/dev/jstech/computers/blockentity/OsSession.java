@@ -668,6 +668,9 @@ final class OsSession {
             }
             copying.putInt("Total", this.installing.ticksTotal());
             copying.putInt("Left", this.installing.ticksLeft());
+            if (this.installing.found()) {
+                copying.putBoolean("Found", true);
+            }
             tag.put("Installing", copying);
         }
         if (this.installer != null) {
@@ -713,6 +716,9 @@ final class OsSession {
             this.installing = new OsInstallJob(copying.getString("Os"), copying.getInt("Slot"),
                     copying.getLong("Reader"), copying.contains("ReaderBay") ? copying.getInt("ReaderBay")
                     : MediaVolume.MEDIUM, copying.getInt("Total"), copying.getInt("Left"));
+            if (copying.getBoolean("Found")) {
+                this.installing.markFound();
+            }
         } else {
             this.installing = null;
         }

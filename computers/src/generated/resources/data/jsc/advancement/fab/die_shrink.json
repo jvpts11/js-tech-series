@@ -1,0 +1,71 @@
+{
+  "parent": "jsc:fab/bunny_suit",
+  "criteria": {
+    "jscore:advanced": {
+      "conditions": {
+        "detail": "jscore:advanced",
+        "event": "jsc:layer_exposed"
+      },
+      "trigger": "jscore:event"
+    },
+    "jscore:legacy": {
+      "conditions": {
+        "detail": "jscore:legacy",
+        "event": "jsc:layer_exposed"
+      },
+      "trigger": "jscore:event"
+    },
+    "jscore:standard": {
+      "conditions": {
+        "detail": "jscore:standard",
+        "event": "jsc:layer_exposed"
+      },
+      "trigger": "jscore:event"
+    },
+    "jscore:transition": {
+      "conditions": {
+        "detail": "jscore:transition",
+        "event": "jsc:layer_exposed"
+      },
+      "trigger": "jscore:event"
+    },
+    "jscore:vintage": {
+      "conditions": {
+        "detail": "jscore:vintage",
+        "event": "jsc:layer_exposed"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.die_shrink.description"
+    },
+    "frame": "challenge",
+    "icon": {
+      "count": 1,
+      "id": "jsc:finished_wafer_advanced"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.die_shrink.title"
+    }
+  },
+  "requirements": [
+    [
+      "jscore:vintage"
+    ],
+    [
+      "jscore:legacy"
+    ],
+    [
+      "jscore:transition"
+    ],
+    [
+      "jscore:standard"
+    ],
+    [
+      "jscore:advanced"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

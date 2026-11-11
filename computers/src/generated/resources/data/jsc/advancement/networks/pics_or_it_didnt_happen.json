@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:networks/pretty_fly_for_a_wifi",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:photo_sent"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.pics_or_it_didnt_happen.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:qphone_x"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.pics_or_it_didnt_happen.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

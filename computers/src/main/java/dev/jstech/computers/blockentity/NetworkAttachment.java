@@ -144,6 +144,9 @@ final class NetworkAttachment {
             this.machine.registerNode(system, resolved);
             this.registered = resolved;
         }
+        if (!wasAttached && resolved != null && point != null) {
+            JscEvents.awardOperator(this.machine, JscEvents.ACCESS_POINT_JOINED);
+        }
         if (!wasAttached && resolved != null && system.mainframeOf(resolved).isPresent()) {
             JscEvents.awardOperator(this.machine, JscEvents.COMPUTER_JOINED);
         } else if (wasAttached && resolved == null && this.machine.isRunning()) {

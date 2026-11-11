@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:fab/pick_and_place",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "prebuilder",
+        "event": "jsc:chain_made"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.plug_and_pray.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:vintage_personal_computer"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.plug_and_pray.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:fab/wafer_thin",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:mask_written"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.tape_out.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:mask_processor_vintage_i486"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.tape_out.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

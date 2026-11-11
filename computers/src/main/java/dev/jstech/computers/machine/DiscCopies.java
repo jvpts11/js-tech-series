@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.machine;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.audio.VinylDiscs;
 import dev.jstech.computers.blockentity.PatternEncoderBlockEntity;
 import dev.jstech.computers.blockentity.VinylDriveBlockEntity;
@@ -303,12 +304,12 @@ public final class DiscCopies {
         }
         for (final ServerLevel level : levels) {
             JOBS.entrySet().removeIf(entry -> entry.getKey().dimension().equals(level.dimension())
-                    && step(level, entry.getValue()));
+                    && step(level, entry.getKey().host(), entry.getValue()));
         }
     }
 
-    /* One tick of a copy; whether it is over and goes. */
-    private static boolean step(final ServerLevel level, final Job job) {
+    /* One tick of a copy made at the computer at {@code host}; whether it is over and goes. */
+    private static boolean step(final ServerLevel level, final BlockPos host, final Job job) {
         if (job.vinyl) {
             return stepVinyl(level, job);
         }
@@ -339,6 +340,11 @@ public final class DiscCopies {
             }
             case CHECKING -> {
                 job.made++;
+                // A medium with no kind reads as a system's installer, so only one carrying a system counts.
+                if (MediaItem.kind(job.image) == MediaKind.OS_INSTALL
+                        && job.image.has(ComputingComponents.MEDIA_PAYLOAD.get())) {
+                    JscEvents.awardOperatorAt(level, host, JscEvents.INSTALLER_COPIED);
+                }
                 if (job.made >= job.copies) {
                     job.phase = Phase.DONE;
                     job.note = DONE.text();

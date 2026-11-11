@@ -111,7 +111,10 @@ public final class MobileSession {
     /** Does what {@code tap} says; what the server keeps is sent through {@code send}. */
     public void tap(final MobileTap tap, final Consumer<PortableActionPayload> send) {
         switch (tap.action()) {
-            case UNLOCK -> go(MobilePage.HOME);
+            case UNLOCK -> {
+                go(MobilePage.HOME);
+                send.accept(action(PortableActionPayload.Action.UNLOCK, ""));
+            }
             case HOME -> {
                 if (page != MobilePage.LOCK) {
                     leaveApp(send);

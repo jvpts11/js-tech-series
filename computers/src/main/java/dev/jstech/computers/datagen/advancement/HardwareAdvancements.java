@@ -76,6 +76,28 @@ public final class HardwareAdvancements extends JscAdvancementTab {
         this.challenge("top500", "herding_cats", ComputingModule.SUPERCOMPUTER_RACK.item(), "TOP500",
                 "Bring a supercomputer online: Supercomputer Racks on High Compute Cable",
                 on(JscEvents.SUPERCOMPUTER_ONLINE));
+
+        this.task("megahertz_myth", "legacy_build", item("jsc:transition_personal_computer"), "The Megahertz Myth",
+                "Build a working Transition computer", built(HardwareEra.TRANSITION));
+        this.task("hyperthreaded", "standard_build", item("jsc:advanced_personal_computer"), "Hyperthreaded",
+                "Build a working Advanced computer", built(HardwareEra.ADVANCED));
+        this.secret("magic_smoke", "pc_master_race", item("jsc:psu_200"), "Magic Smoke", "Burn a power supply",
+                on(JscEvents.PSU_FAILED));
+        this.secret("cpu_over_temperature", "pc_master_race", Items.FIRE_CHARGE, "CPU Over Temperature",
+                "Trip a computer's thermal protection", on(JscEvents.THERMAL_TRIP));
+        this.task("uninterruptible", "pc_master_race", item("jsc:standard_ups"), "Uninterruptible",
+                "Ride out a power loss on a UPS", on(JscEvents.UPS_CARRIED));
+        this.task("a_pea_sized_dot", "pc_master_race", item("jsc:thermal_paste"), "A Pea-Sized Dot",
+                "Fit a cooler with thermal paste", on(JscEvents.PASTE_FITTED));
+        this.goal("rgb_makes_it_faster", "a_pea_sized_dot", item("jsc:case_fan_advanced"), "RGB Makes It Faster",
+                "Fill every fan slot of a case with Advanced case fans", on(JscEvents.ADVANCED_FANS));
+        this.goal("n_plus_one", "rack_em_up", item("jsc:psu_3000p"), "N+1",
+                "Keep a server running when one unit of its redundant power supply fails",
+                on(JscEvents.PSU_UNIT_LOST));
+        this.task("it_just_works", "pc_master_race", item("jsc:russet_128k"), "It Just Works",
+                "Build a working Quince machine", on(JscEvents.QUINCE_BUILT));
+        this.task("hard_copy", "pc_master_race", Items.BOOK, "Hard Copy", "Print a book on the Large Scale Printer",
+                on(JscEvents.BOOK_PRINTED));
     }
 
     private Supplier<Criterion<?>> built(final Era era) {

@@ -14,6 +14,7 @@ import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.teracoin.LedgerEntry;
 import dev.jstech.computers.teracoin.TeracoinAddress;
+import dev.jstech.computers.teracoin.TeracoinAwards;
 import dev.jstech.computers.teracoin.TeracoinChain;
 import dev.jstech.computers.teracoin.TeracoinState;
 import dev.jstech.computers.teracoin.WalletFiles;
@@ -117,9 +118,10 @@ public final class WalletPayloads {
                 } else {
                     path = written;
                     note = WalletStatePayload.NOTE_CREATED;
+                    TeracoinAwards.walletMade(player, keys.address());
                 }
             }
-            case WalletRequestPayload.SEND -> note = send(level, files, state, payload);
+            case WalletRequestPayload.SEND -> note = send(level, player, files, state, payload);
             case WalletRequestPayload.PRINT, WalletRequestPayload.AUTO_PRINT ->
                     note = WalletPrinting.act(level, host, files, payload);
             default -> {
@@ -128,8 +130,8 @@ public final class WalletPayloads {
         PacketDistributor.sendToPlayer(player, state(level, payload.hostPos(), host, files, path, note));
     }
 
-    private static int send(final ServerLevel level, final FileService files, final TeracoinState state,
-                            final WalletRequestPayload payload) {
+    private static int send(final ServerLevel level, final ServerPlayer player, final FileService files,
+                            final TeracoinState state, final WalletRequestPayload payload) {
         final Optional<WalletFiles.Wallet> wallet = WalletFiles.read(files, payload.wallet());
         if (wallet.isEmpty()) {
             return WalletStatePayload.NOTE_NOT_YOURS;
@@ -142,6 +144,9 @@ public final class WalletPayloads {
                 payload.amount(), payload.other().trim(), level.getServer().overworld().getGameTime(),
                 level.getServer().overworld().getDayTime());
         state.setDirty();
+        if (sent == TeracoinChain.SendResult.SENT) {
+            TeracoinAwards.sent(player, wallet.get().address(), to);
+        }
         return switch (sent) {
             case SENT -> WalletStatePayload.NOTE_SENT;
             case NOT_YOURS -> WalletStatePayload.NOTE_NOT_YOURS;

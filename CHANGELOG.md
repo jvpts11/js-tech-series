@@ -3789,6 +3789,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The guide's Disks and partitions section (partitions and file systems, the disk tools, two systems on
   one disk, snapshots, ZFS mirrors, swap), and the books' pages on FDISK and diskpart and on the disks, the swap and
   the snapshots at the Unix prompts.
+- (Computers) 50 new advancements, 119 in all, in two new tabs and the four of before. Fab, on white concrete, follows
+  the chain from the Vintage Electronics Workbench through the Siemens Reactor, the Crystal Puller, the Wafer Saw, a
+  mask, the Lithography Stations of every era and the Packaging Line to a computer built by the Prebuilder and
+  flashed by the Preinstaller. Teracoin, on gold, has the first wallet, a block found, a pool, a rig's risers filled,
+  an ASIC, a gift to another player's wallet, 1,000 TRC held for seven days, a 3D print and the halving. Hardware
+  gains the Transition and Advanced builds, a burnt supply, a thermal trip, a UPS, thermal paste, Advanced fans, a
+  redundant supply losing a unit, a Quince machine and a printed book; Operating Systems gains Quince System and OS X,
+  OpenBSD, Linux Mint, a portable unlocked, a disk checked after a sudden shutdown, a system installed from a
+  building's chest (only the installer found there counts, not a copy), a Programmer's trade and an installer copied;
+  Networks & Operations gains an access point, a portable's request, a photo sent, a vein found, a Messenger message
+  and a network boot; and Sigma a breakpoint. The hidden ones show only once earned, and the guide's achievement
+  pages list every one.
 
 ### Changed
 - (Computers) `mkfs` on Linux is `mkfs.ext4`, beside a `mkfs` for each other file system, and formats a partition,

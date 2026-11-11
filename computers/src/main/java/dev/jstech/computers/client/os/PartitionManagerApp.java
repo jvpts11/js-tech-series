@@ -296,8 +296,10 @@ public final class PartitionManagerApp implements IDesktopApp {
             }
             g.fill(x + 3, dy + 2, x + 13, dy + 9, c.ntfs());
             Draw.text(g, font, clip(font, disk.model(), DiskToolLayout.KPM_SIDE_W - 18), x + 16, dy, c.ink());
-            Draw.text(g, font, clip(font, size(disk.sizeMb()) + " - /dev/sd" + (char) ('a' + disk.index()),
-                    DiskToolLayout.KPM_SIDE_W - 18), x + 16, dy + 9, c.dim());
+            // The device a disk is under, a path the same in every language.
+            final String device = "/dev/sd" + (char) ('a' + disk.index());
+            Draw.text(g, font, clip(font, size(disk.sizeMb()) + " - " + device, DiskToolLayout.KPM_SIDE_W - 18),
+                    x + 16, dy + 9, c.dim());
             this.hits.add(new Hit(Hit.DEVICE, x, dy - 1, DiskToolLayout.KPM_SIDE_W, 19, disk.index()));
             dy += 21;
         }

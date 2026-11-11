@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:teracoin/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:pool_joined"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.teracoin.pool_party.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:water_bucket"
+    },
+    "title": {
+      "translate": "advancements.jsc.teracoin.pool_party.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

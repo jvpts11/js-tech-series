@@ -46,6 +46,28 @@ public final class JscEvents {
     public static final String DATACENTER_FORMED = "datacenter_formed";
     public static final String CLUSTER_RUN = "cluster_run";
     public static final String SUPERCOMPUTER_ONLINE = "supercomputer_online";
+    public static final String PSU_FAILED = "psu_failed";
+    public static final String THERMAL_TRIP = "thermal_trip";
+    /** A running machine carried through a power loss on a UPS's battery. */
+    public static final String UPS_CARRIED = "ups_carried";
+    /** A cooler made with thermal paste fitted over a processor. */
+    public static final String PASTE_FITTED = "paste_fitted";
+    /** Every fan seat of a case holding an Advanced case fan. */
+    public static final String ADVANCED_FANS = "advanced_fans";
+    /** One unit of a redundant power supply failing while its machine stays on. */
+    public static final String PSU_UNIT_LOST = "psu_unit_lost";
+    public static final String QUINCE_BUILT = "quince_built";
+    public static final String BOOK_PRINTED = "book_printed";
+
+    // The chain
+    /** Detail: the machine's family, its id or the one its kind shares ({@code ChainMachines.familyOf}). */
+    public static final String CHAIN_FORMED = "chain_formed";
+    /** Detail: the machine's family, as for {@link #CHAIN_FORMED}. */
+    public static final String CHAIN_MADE = "chain_made";
+    /** Detail: the era's name in lower case, of the layer a Lithography Station exposed. */
+    public static final String LAYER_EXPOSED = "layer_exposed";
+    public static final String MASK_WRITTEN = "mask_written";
+    public static final String FIRMWARE_FLASHED = "firmware_flashed";
 
     // Operating systems
     public static final String CLOCKWORK = "clockwork";
@@ -61,6 +83,14 @@ public final class JscEvents {
     public static final String SCREENFETCH = "screenfetch";
     /** Detail: the path of the id of the program the port installed. */
     public static final String BUILT_FROM_PORTS = "built_from_ports";
+    public static final String PORTABLE_UNLOCKED = "portable_unlocked";
+    /** A system checking its disk as it starts, after a sudden shutdown. */
+    public static final String DISK_CHECKED = "disk_checked";
+    /** A system installed from a medium found in an abandoned building. */
+    public static final String FOUND_SYSTEM = "found_system";
+    public static final String PROGRAMMER_TRADE = "programmer_trade";
+    /** An installer disc copied with Easy Disc Creator. */
+    public static final String INSTALLER_COPIED = "installer_copied";
 
     // Networks and Operations
     public static final String MAINFRAME_NETWORK = "mainframe_network";
@@ -80,6 +110,13 @@ public final class JscEvents {
     public static final String MAINFRAME_CONFLICT = "mainframe_conflict";
     public static final String MAINFRAME_CUT = "mainframe_cut";
     public static final String COMPUTERCRAFT_MESSAGE = "computercraft_message";
+    /** A computer or a portable linked through a wireless access point. */
+    public static final String ACCESS_POINT_JOINED = "access_point_joined";
+    public static final String PORTABLE_REQUEST = "portable_request";
+    public static final String PHOTO_SENT = "photo_sent";
+    public static final String VEIN_FOUND = "vein_found";
+    public static final String MESSAGE_SENT = "message_sent";
+    public static final String NETWORK_BOOT = "network_boot";
 
     // Sigma
     /** Detail: the installed program's id. */
@@ -96,6 +133,22 @@ public final class JscEvents {
     public static final String SIGMA_PUBLISHED = "sigma_published";
     public static final String SIGMA_ON_DOS = "sigma_on_dos";
     public static final String SIGMA_UPTIME = "sigma_uptime";
+    public static final String BREAKPOINT = "breakpoint";
+
+    // Teracoin
+    public static final String WALLET_MADE = "wallet_made";
+    public static final String BLOCK_FOUND = "block_found";
+    public static final String POOL_JOINED = "pool_joined";
+    /** Every riser of a Mining Computer holding a card. */
+    public static final String RISERS_FILLED = "risers_filled";
+    public static final String ASIC_MINING = "asic_mining";
+    /** TRC sent to an address another player made. */
+    public static final String TRC_SENT = "trc_sent";
+    /** 1,000 TRC held in one wallet for seven game days with nothing sent from it. */
+    public static final String HODL = "hodl";
+    public static final String PRINTED_3D = "printed_3d";
+    /** The block reward halving while the player is on the server. */
+    public static final String HALVING = "halving";
 
     public static final String HALT_STACK = "stack";
     public static final String HALT_DIVIDE = "divide";

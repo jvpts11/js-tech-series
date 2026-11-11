@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.UpsBlock;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
@@ -163,6 +164,7 @@ public final class UpsBlockEntity extends SyncedBlockEntity implements IDescribe
                 UpsNotices.onBattery(computer.getBlockPos(), computer, computer.consoleViewers(level),
                         ClientReplication.keyboardOf(computer.console()), reading);
                 computer.logAlert(level, EventLevel.WARN, AlertKind.UPS, NetworkEvents.ON_UPS.text());
+                JscEvents.awardOperator(computer, JscEvents.UPS_CARRIED);
             }
             if (low) {
                 // As real UPS software does: the system shuts itself down cleanly before the battery runs out.

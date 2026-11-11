@@ -108,5 +108,25 @@ public final class SystemAdvancements extends JscAdvancementTab {
                 "Win Minesweeper on the Expert board", on(JscEvents.MINESWEEPER_EXPERT));
         this.task("im_in", "root", Items.ENDER_EYE, "I'm In",
                 "Take control of another computer through Remote Control", on(JscEvents.REMOTE_CONTROL));
+
+        this.task("hello", "root", item("jsc:russet_128k"), "hello", "Start Quince System on a Russet 128K",
+                booted("quince_system"));
+        this.task("good_enough_to_lick", "hello", Items.PRISMARINE_CRYSTALS, "Good Enough to Lick",
+                "Install Quince OS X", booted("quince_os_x"));
+        this.task("only_two_remote_holes", "not_linux", Items.PUFFERFISH, "Only Two Remote Holes",
+                "Install OpenBSD", booted("openbsd"));
+        this.task("mint_condition", "universal", item("jsc:dvd_rw"), "Mint Condition", "Install Linux Mint",
+                booted("linux_mint"));
+        this.task("slide_to_unlock", "root", item("jsc:qphone"), "Slide to Unlock",
+                "Unlock a portable for the first time", on(JscEvents.PORTABLE_UNLOCKED));
+        this.secret("not_properly_shut_down", "press_del", HardwareItems.DISK_TRENCH_20M.get(),
+                "Not Properly Shut Down",
+                "Watch a system check its disk after a sudden shutdown", on(JscEvents.DISK_CHECKED));
+        this.task("abandonware", "root", Items.COBWEB, "Abandonware",
+                "Install a system found in an abandoned building", on(JscEvents.FOUND_SYSTEM));
+        this.task("shrink_wrapped", "root", Items.EMERALD, "Shrink-Wrapped",
+                "Buy a system or a program from a Programmer", on(JscEvents.PROGRAMMER_TRADE));
+        this.task("just_a_backup", "shrink_wrapped", item("jsc:cd_rw"), "Just a Backup",
+                "Copy an installer disc onto a blank one", on(JscEvents.INSTALLER_COPIED));
     }
 }

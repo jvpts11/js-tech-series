@@ -101,21 +101,8 @@
       "text": "jsc.guide.disk_tools_of_each_system.heading1"
     },
     {
-      "type": "checklist",
-      "lines": [
-        {
-          "item": "jsc.guide.disk_tools_of_each_system.check1"
-        },
-        {
-          "item": "jsc.guide.disk_tools_of_each_system.check2"
-        },
-        {
-          "item": "jsc.guide.disk_tools_of_each_system.check3"
-        },
-        {
-          "item": "jsc.guide.disk_tools_of_each_system.check4"
-        }
-      ]
+      "type": "text",
+      "text": "jsc.guide.disk_tools_of_each_system.text3"
     },
     {
       "type": "steps",
@@ -132,7 +119,7 @@
     },
     {
       "type": "text",
-      "text": "jsc.guide.disk_tools_of_each_system.text3"
+      "text": "jsc.guide.disk_tools_of_each_system.text4"
     },
     {
       "type": "session",

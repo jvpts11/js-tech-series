@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:hardware/legacy_build",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "jscore:transition",
+        "event": "jsc:era_built"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.megahertz_myth.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:transition_personal_computer"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.megahertz_myth.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

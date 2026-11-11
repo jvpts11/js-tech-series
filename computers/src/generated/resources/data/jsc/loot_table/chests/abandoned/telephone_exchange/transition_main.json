@@ -220,6 +220,15 @@
                 }
               },
               "function": "minecraft:set_components"
+            },
+            {
+              "components": {
+                "jsc:media_found": {
+                  "SaveVersion": 1,
+                  "Value": {}
+                }
+              },
+              "function": "minecraft:set_components"
             }
           ],
           "name": "jsc:dvd_rom"

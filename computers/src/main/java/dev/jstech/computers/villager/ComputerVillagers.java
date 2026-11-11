@@ -91,6 +91,7 @@ public final class ComputerVillagers {
         POIS.register(modBus);
         PROFESSIONS.register(modBus);
         NeoForge.EVENT_BUS.addListener(ComputerTrades::onTrades);
+        NeoForge.EVENT_BUS.addListener(ComputerTrades::onTraded);
         VillageShops.listen();
     }
 

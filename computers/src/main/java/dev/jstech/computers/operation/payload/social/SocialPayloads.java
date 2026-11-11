@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.social;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.client.os.KnotApp;
 import dev.jstech.computers.client.os.MessengerApp;
@@ -178,6 +179,9 @@ public final class SocialPayloads {
         if (spoke) {
             host.changed(); // what was said rides on the Server item, so it is written down at once
             tellEveryone(level, host, log);
+            if (action == MessengerActionPayload.SAY) {
+                JscEvents.award(player, JscEvents.MESSAGE_SENT);
+            }
         } else {
             PacketDistributor.sendToPlayer(player, stateOf(host, room, log, who));
         }

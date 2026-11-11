@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:systems/shrink_wrapped",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:installer_copied"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.systems.just_a_backup.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:cd_rw"
+    },
+    "title": {
+      "translate": "advancements.jsc.systems.just_a_backup.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -1,0 +1,31 @@
+{
+  "parent": "jsc:fab/bunny_suit",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "jscore:advanced",
+        "event": "jsc:layer_exposed"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.thirteen_point_five_nanometres.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:mask_processor_advanced_alder_lake"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.thirteen_point_five_nanometres.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

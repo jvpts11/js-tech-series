@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.PeripheralLinks;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.block.Printer3DBlock;
 import dev.jstech.computers.machine.FileService;
 import dev.jstech.computers.os.IOsHost;
@@ -346,6 +347,7 @@ public class Printer3DBlockEntity extends SyncedBlockEntity implements IPeripher
             return false;
         }
         printed.set(printed.get() + 1);
+        JscEvents.awardOperator(this, JscEvents.PRINTED_3D);
         final List<Job> now = new ArrayList<>(queue.get());
         final Job done = job.oneMore();
         if (done.done() >= done.copies()) {

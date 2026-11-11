@@ -194,7 +194,7 @@
     }
   ],
   "id": "jsc:sigma_control_flow",
-  "order": 410,
+  "order": 412,
   "section": "jsc:sigma_basics",
   "title": "jsc.guide.sigma_control_flow.title"
 }

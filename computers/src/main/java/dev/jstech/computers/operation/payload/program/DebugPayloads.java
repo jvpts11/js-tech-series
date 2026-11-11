@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload.program;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.machine.DebugSession;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -182,6 +183,9 @@ public final class DebugPayloads {
             final List<String> output = desk.session.output();
             final boolean ended = desk.session.ended();
             final boolean paused = !ended && desk.session.debugger().paused();
+            if (paused && !desk.paused && desk.session.debugger().stop() == Debugger.Reason.BREAKPOINT) {
+                JscEvents.award(player, JscEvents.BREAKPOINT);
+            }
             if (ended || paused != desk.paused || !output.isEmpty() || (!paused && now - desk.sent >= REFRESH_TICKS)) {
                 send(player, desk, now, output);
             }

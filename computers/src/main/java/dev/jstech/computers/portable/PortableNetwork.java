@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.portable;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.engine.CraftRequest;
 import dev.jstech.computers.operation.DataHandoff;
@@ -97,6 +98,7 @@ public final class PortableNetwork {
             // A device erased while its items were on their way has nowhere left for them.
             operation.abortWhen(() -> devices.find(device) == null);
             operation.onSettle(() -> refresh(player, level, device));
+            JscEvents.award(player, JscEvents.PORTABLE_REQUEST);
         }
     }
 

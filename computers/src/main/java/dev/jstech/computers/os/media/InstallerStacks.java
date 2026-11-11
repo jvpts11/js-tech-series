@@ -11,9 +11,11 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
+import dev.jstech.computers.registry.ComputingComponents;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Unit;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
@@ -77,6 +79,19 @@ public final class InstallerStacks {
             case USB -> ComputingModule.USB_FLASH_DRIVE.get();
             case BLU_RAY -> ComputingModule.BD_ROM.get();
         };
+    }
+
+    /** The same installer, marked as found in an abandoned building. */
+    public static ItemStack found(final ItemStack installer) {
+        if (!installer.isEmpty()) {
+            installer.set(ComputingComponents.MEDIA_FOUND.get(), Unit.INSTANCE);
+        }
+        return installer;
+    }
+
+    /** Whether an installer was found in an abandoned building. */
+    public static boolean isFound(final ItemStack installer) {
+        return installer.has(ComputingComponents.MEDIA_FOUND.get());
     }
 
     private static ItemStack stamped(final MediaFormat format, final MediaKind kind, final ResourceLocation payload) {

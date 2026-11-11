@@ -63,6 +63,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ChainMachines {
 
+    /** The family every Lithography Station belongs to, whatever its era. */
+    public static final String LITHOGRAPHY = "lithography";
+    /** The family every Electronics Assembly Line belongs to, whatever its era. */
+    public static final String ASSEMBLY = "assembly";
+
     private static final Map<String, Declared> DECLARED = new LinkedHashMap<>();
     /* What a tank holds, of a liquid or a gas, in millibuckets, and a gas tank's pressure over the open air's. */
     private static final int TANK = 4_000;
@@ -256,6 +261,17 @@ public final class ChainMachines {
     /** The machine of {@code id}, if it is one. */
     public static Optional<ChainMachine> byId(final String id) {
         return Optional.ofNullable(DECLARED.get(id)).map(Declared::machine);
+    }
+
+    /**
+     * What a machine counts as for the advancements: {@link #LITHOGRAPHY} for a Lithography Station and
+     * {@link #ASSEMBLY} for an Electronics Assembly Line of any era, its own id for every other.
+     */
+    public static String familyOf(final ChainMachine machine) {
+        if (machine.id().startsWith(LITHOGRAPHY + "_")) {
+            return LITHOGRAPHY;
+        }
+        return machine.id().startsWith(ASSEMBLY + "_") ? ASSEMBLY : machine.id();
     }
 
     /** The block entity type of {@code machine}'s terminal. */

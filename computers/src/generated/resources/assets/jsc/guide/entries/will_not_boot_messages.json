@@ -98,7 +98,7 @@
     }
   ],
   "id": "jsc:will_not_boot_messages",
-  "order": 324,
+  "order": 326,
   "section": "jsc:before_the_reboot",
   "title": "jsc.guide.will_not_boot_messages.title"
 }

@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:hardware/pc_master_race",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:thermal_trip"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.cpu_over_temperature.description"
+    },
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "minecraft:fire_charge"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.cpu_over_temperature.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

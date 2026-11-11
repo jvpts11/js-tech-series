@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:fab/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:chain_formed"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.bare_metal.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:machine_casing"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.bare_metal.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

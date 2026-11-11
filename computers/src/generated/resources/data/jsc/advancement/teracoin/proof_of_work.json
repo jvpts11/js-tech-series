@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:teracoin/root",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:block_found"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.teracoin.proof_of_work.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:mining_computer_transition"
+    },
+    "title": {
+      "translate": "advancements.jsc.teracoin.proof_of_work.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

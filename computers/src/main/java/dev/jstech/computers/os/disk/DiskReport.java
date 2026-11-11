@@ -374,7 +374,17 @@ public record DiskReport(List<Disk> disks, String error) {
 
         /** The refusal the table gave for a change, as a disk tool says it. */
         public static Refusal of(final DiskLayout.Refusal refusal) {
-            return Refusal.valueOf(refusal.name());
+            return switch (refusal) {
+                case TABLE_FULL -> TABLE_FULL;
+                case NO_ROOM -> NO_ROOM;
+                case NO_SUCH_PARTITION -> NO_SUCH_PARTITION;
+                case TOO_BIG_FOR_ITS_FILE_SYSTEM -> TOO_BIG_FOR_ITS_FILE_SYSTEM;
+                case BELOW_WHAT_IT_HOLDS -> BELOW_WHAT_IT_HOLDS;
+                case GROWS_ONLY_UNMOUNTED -> GROWS_ONLY_UNMOUNTED;
+                case SHRINKS_ONLY_UNMOUNTED -> SHRINKS_ONLY_UNMOUNTED;
+                case NEVER_SHRINKS -> NEVER_SHRINKS;
+                case NOT_EMPTY -> NOT_EMPTY;
+            };
         }
     }
 }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.teracoin;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.hardware.ComputerBuild;
@@ -68,7 +69,7 @@ public final class MinerRunner {
             return;
         }
         offer(level, host.networkUuid(), at, miner, new Miner(machineKey(host, at), Printers.machineName(host),
-                kindOf(host, build), hashes), found -> { });
+                kindOf(host, build), hashes), found -> JscEvents.awardHost(host, JscEvents.BLOCK_FOUND, ""));
     }
 
     /**
@@ -99,6 +100,9 @@ public final class MinerRunner {
             miner.stalled(MinerSettings.Status.WAITING_FOR_OWNER, poolName);
             pool.rack().setChanged();
             return;
+        }
+        if (pool != null && miner.status() != MinerSettings.Status.POOL) {
+            JscEvents.awardOperatorAt(level, at, JscEvents.POOL_JOINED);
         }
         miner.mined(who.hashes(), poolName, pool == null ? "" : pool.name(),
                 pool == null ? 0 : MiningPools.state(pool).feePermille());

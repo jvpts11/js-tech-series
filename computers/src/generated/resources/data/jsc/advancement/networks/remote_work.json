@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:networks/pretty_fly_for_a_wifi",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:portable_request"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.networks.remote_work.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:sunsung_nebula_s10"
+    },
+    "title": {
+      "translate": "advancements.jsc.networks.remote_work.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

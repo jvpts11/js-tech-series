@@ -93,7 +93,7 @@
   ],
   "icon": "jsc:cd_rom",
   "id": "jsc:arch_clock_and_name",
-  "order": 307,
+  "order": 309,
   "section": "jsc:arch_system",
   "title": "jsc.guide.arch_clock_and_name.title"
 }

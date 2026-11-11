@@ -89,6 +89,8 @@ public record PortableActionPayload(UUID device, Action action, String named, St
         INSTALL("install"),
         /** Marks every alert seen, as opening where they are listed does. */
         SEE_ALERTS("see_alerts"),
+        /** Says the player unlocked the device: slid, swiped or tapped its lock open. */
+        UNLOCK("unlock"),
         /** Lets every alert go. */
         CLEAR_ALERTS("clear_alerts"),
         /** Takes the kind of alert named, or stops taking it. */

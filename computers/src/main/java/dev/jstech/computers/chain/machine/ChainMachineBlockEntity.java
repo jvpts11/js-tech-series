@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.chain.machine;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.chain.machine.ChainMachines.Worked;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.core.blockentity.FieldFluidTank;
@@ -51,6 +52,8 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     /* The entries it told to draw nothing while its shape stands. */
     private final List<BlockPos> flagged = new ArrayList<>();
     private final LithoLink link;
+    /* Whether its shape stood at the last check, so its forming is told the advancements once. */
+    private boolean stood;
 
     /* Its store holds this many seconds of its draw, and takes twice a tick's draw at once. */
     private static final long STORE_SECONDS = 4;
@@ -123,8 +126,13 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     protected void structureChecked(final ServerLevel level) {
         final Optional<ShapeMatch.Formed> formed = formed() ? structure().structure() : Optional.empty();
         if (formed.isEmpty()) {
+            stood = false;
             unflag(level);
             return;
+        }
+        if (!stood) {
+            stood = true;
+            JscEvents.awardOperator(this, JscEvents.CHAIN_FORMED, ChainMachines.familyOf(machine));
         }
         flagged.clear();
         for (final long at : formed.get().parts()) {
@@ -137,6 +145,13 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
                 }
             }
         }
+    }
+
+    /* What it made is told the advancements, which count each machine's first. */
+    @Override
+    protected void madeThings(final int count, final long gameTime) {
+        super.madeThings(count, gameTime);
+        JscEvents.awardOperator(this, JscEvents.CHAIN_MADE, ChainMachines.familyOf(machine));
     }
 
     /*

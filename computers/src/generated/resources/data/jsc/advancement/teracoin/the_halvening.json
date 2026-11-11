@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:teracoin/proof_of_work",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:halving"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.teracoin.the_halvening.description"
+    },
+    "hidden": true,
+    "icon": {
+      "count": 1,
+      "id": "minecraft:clock"
+    },
+    "title": {
+      "translate": "advancements.jsc.teracoin.the_halvening.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

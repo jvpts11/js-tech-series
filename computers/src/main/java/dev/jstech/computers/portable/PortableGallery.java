@@ -8,6 +8,7 @@
 package dev.jstech.computers.portable;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.operation.payload.NetworkNodeInfo;
 import dev.jstech.computers.operation.payload.files.FileAccess;
 import dev.jstech.computers.operation.payload.network.NetworkPayloads;
@@ -121,7 +122,7 @@ public final class PortableGallery implements IMediaUploadHandler {
         final NetworkNodeInfo info = computer == null ? null
                 : NetworkPayloads.personalComputers(level, network).get(new NodeUuid(UUID.fromString(node)));
         final Text note = computer == null || info == null ? GONE.text()
-                : write(level, computer, nameOf(new NodeUuid(UUID.fromString(node)), info), picture);
+                : write(level, player, computer, nameOf(new NodeUuid(UUID.fromString(node)), info), picture);
         view(player, level, device, state, note);
     }
 
@@ -202,9 +203,12 @@ public final class PortableGallery implements IMediaUploadHandler {
         return MediaReceipt.accepted(TAKEN.text());
     }
 
-    /* Writes the picture's file on the computer called {@code computerName}, in its pictures folder; says how. */
-    private static Text write(final ServerLevel level, final IOsHost computer, final String computerName,
-                              final PortablePicture picture) {
+    /*
+     * Writes the picture {@code sender} sent as a file on the computer called {@code computerName}, in its pictures
+     * folder; says how.
+     */
+    private static Text write(final ServerLevel level, final ServerPlayer sender, final IOsHost computer,
+                              final String computerName, final PortablePicture picture) {
         final ItemStack disk = computer.systemDisk();
         final FilesystemKind kind = FileAccess.filesystemKindOf(computer);
         if (disk.isEmpty() || kind != FilesystemKind.HIERARCHICAL) {
@@ -223,6 +227,7 @@ public final class PortableGallery implements IMediaUploadHandler {
         computer.setChanged();
         if (result == DiskFilesystem.WriteResult.OK) {
             MediaStore.current().ifPresent(store -> store.used(picture.media()));
+            JscEvents.award(sender, JscEvents.PHOTO_SENT);
             return SENT.with(FsPaths.fileName(path), computerName);
         }
         return result == DiskFilesystem.WriteResult.DISK_FULL ? DISK_FULL.with(computerName)

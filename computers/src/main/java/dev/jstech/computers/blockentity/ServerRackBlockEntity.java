@@ -24,6 +24,7 @@ import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRackStructure;
 import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.crafting.PatternWorkbench;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.MachineOperators;
 import dev.jstech.computers.datacenter.RackTraffic;
 import dev.jstech.computers.eventlog.EventLevel;
@@ -655,6 +656,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                             copying.getString("Os"), copying.getInt("Slot"), copying.getLong("Reader"),
                             copying.contains("ReaderBay") ? copying.getInt("ReaderBay") : MediaVolume.MEDIUM,
                             copying.getInt("Total"), copying.getInt("Left"));
+                    if (copying.getBoolean("Found")) {
+                        state.installing.markFound();
+                    }
                 }
                 state.installerMemo = saved.contains("Installer") ? saved.getCompound("Installer") : null;
                 ServiceStateNbt.loadMessenger(saved, state.messenger);
@@ -837,6 +841,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             }
             copying.putInt("Total", state.installing.ticksTotal());
             copying.putInt("Left", state.installing.ticksLeft());
+            if (state.installing.found()) {
+                copying.putBoolean("Found", true);
+            }
             tag.put("Installing", copying);
         }
         final CompoundTag pages = installerPages(state);
@@ -3255,6 +3262,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
                 UpsNotices.onBattery(worldPosition, unitHost(slot), terminals.watching(level, slot),
                         ClientReplication.keyboardOf(unitState(slot).console), ups.reading(rating, drawn));
                 logBayAlert(level, slot, EventLevel.WARN, AlertKind.UPS, NetworkEvents.ON_UPS.text());
+                JscEvents.awardOperator(this, JscEvents.UPS_CARRIED);
             });
         }
         if (ups.low(rating)) {
@@ -3423,7 +3431,9 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
             if (worn.failedNow()) {
                 bayStopsSuddenly(slot, CrashCause.POWER_SUPPLY, CrashPages.Moment.hardware(supply));
                 logBayAlert(level, slot, EventLevel.ERROR, AlertKind.POWER, PsuTexts.LOG_FAILED.with(supply));
+                JscEvents.awardOperator(this, JscEvents.PSU_FAILED);
             } else if (worn.unitLost()) {
+                JscEvents.awardOperator(this, JscEvents.PSU_UNIT_LOST);
                 logBayAlert(level, slot, EventLevel.WARN, AlertKind.POWER, PsuTexts.LOG_UNIT_FAILED.with(
                         worn.after().failedUnits(worn.spec()), worn.spec().units(), supply));
             } else if (worn.degradedNow()) {
@@ -3443,6 +3453,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         if (!heat.tick(level, worldPosition, level.getGameTime(), load > 0, load, thermalBudgetWatts())) {
             return;
         }
+        JscEvents.awardOperator(this, JscEvents.THERMAL_TRIP);
         forEachRunningBay(slot -> {
             bayStopsSuddenly(slot, CrashCause.THERMAL_TRIP, CrashPages.Moment.none());
             logBay(level, slot, EventLevel.ERROR, NetworkEvents.THERMAL_TRIP.with(heat.lastTrip(),

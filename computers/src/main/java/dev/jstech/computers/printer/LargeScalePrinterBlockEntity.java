@@ -10,6 +10,7 @@ package dev.jstech.computers.printer;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.PeripheralLinks;
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
@@ -259,6 +260,7 @@ public final class LargeScalePrinterBlockEntity extends ChainMachineBlockEntity 
     protected void madeThings(final int count, final long gameTime) {
         super.madeThings(count, gameTime);
         printed.set(printed.get() + count);
+        JscEvents.awardOperator(this, JscEvents.BOOK_PRINTED);
         final List<BookJob> now = queue.get();
         if (now.isEmpty()) {
             return;

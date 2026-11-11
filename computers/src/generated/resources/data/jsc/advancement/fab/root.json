@@ -1,0 +1,33 @@
+{
+  "criteria": {
+    "done": {
+      "conditions": {
+        "items": [
+          {
+            "items": "jsc:vintage_electronics_workbench"
+          }
+        ]
+      },
+      "trigger": "minecraft:inventory_changed"
+    }
+  },
+  "display": {
+    "background": "minecraft:textures/block/white_concrete.png",
+    "description": {
+      "translate": "advancements.jsc.fab.root.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:vintage_electronics_workbench"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.root.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

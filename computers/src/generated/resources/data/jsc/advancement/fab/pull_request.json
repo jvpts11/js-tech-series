@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:fab/nine_nines",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "crystal_puller",
+        "event": "jsc:chain_made"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.pull_request.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jscore:silicon_boule"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.pull_request.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.portable;
 
+import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.operation.payload.network.NetworkLookup;
@@ -74,7 +75,11 @@ public final class PortableMaps {
 
     /** Sends {@code player} the veins the device's prospecting finds round them, the strongest first. */
     public static void prospect(final ServerPlayer player, final ServerLevel level, final UUID device) {
-        PacketDistributor.sendToPlayer(player, prospectOf(level, device, player.blockPosition()));
+        final PortableProspectPayload found = prospectOf(level, device, player.blockPosition());
+        if (!found.veins().isEmpty()) {
+            JscEvents.award(player, JscEvents.VEIN_FOUND);
+        }
+        PacketDistributor.sendToPlayer(player, found);
     }
 
     /** The veins the prospecting of the device {@code device} finds round {@code at}, the strongest first. */

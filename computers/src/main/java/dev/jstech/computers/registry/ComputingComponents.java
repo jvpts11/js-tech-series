@@ -146,6 +146,10 @@ public final class ComputingComponents {
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<Integer>>
             MEDIA_PART = saved("media_part", Codec.intRange(1, 16), ByteBufCodecs.VAR_INT);
 
+    // An installer found in an abandoned building, as its chest held it; a copy of it is not one.
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Unit>>
+            MEDIA_FOUND = saved("media_found", Codec.unit(Unit.INSTANCE), StreamCodec.unit(Unit.INSTANCE));
+
     /*
      * Which of the three content kinds this medium carries. Absent component → OS_INSTALL (safe
      * default that keeps legacy blank media behaving as installer media).

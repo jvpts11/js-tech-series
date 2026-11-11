@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:hardware/pc_master_race",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:paste_fitted"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.a_pea_sized_dot.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jsc:thermal_paste"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.a_pea_sized_dot.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

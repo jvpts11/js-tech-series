@@ -19,8 +19,8 @@ public final class JscAdvancementTabs {
 
     /** A fresh set of the tabs, written down again: each provider reads its own. */
     public static List<AdvancementTab> all() {
-        return List.of(new HardwareAdvancements(), new SystemAdvancements(), new NetworkAdvancements(),
-                new SigmaAdvancements());
+        return List.of(new FabAdvancements(), new HardwareAdvancements(), new SystemAdvancements(),
+                new NetworkAdvancements(), new SigmaAdvancements(), new TeracoinAdvancements());
     }
 
     /** Every title and description of every tab, for the language file. */

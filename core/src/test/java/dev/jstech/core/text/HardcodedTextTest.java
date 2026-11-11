@@ -211,6 +211,17 @@ class HardcodedTextTest {
             data(COMPUTERS + "program/cli/OpenBsdCommands.java", 13, "what OpenBSD's tools print: rc's (ok), the line"
                     + " syspatch fetches with, and pf's rules and counters: no OpenBSD tool ever printed in anything"
                     + " but its own words"),
+            data(COMPUTERS + "program/cli/DiskToolCommands.java", 17, "what the disk tools print, lsblk's and gpart's"
+                    + " columns, OpenBSD's fdisk and disklabel, and mke2fs's banner: no such tool ever printed in"
+                    + " anything but its own words"),
+            data(COMPUTERS + "program/cli/DiskToolLines.java", 14, "the names of partition types as fdisk prints"
+                    + " them, the same in every language"),
+            data(COMPUTERS + "program/cli/DiskpartProcess.java", 3, "diskpart's columns and its progress line, in"
+                    + " its own words"),
+            data(COMPUTERS + "program/cli/DosFdiskProcess.java", 2, "the partition types FDISK lists, in its own"
+                    + " words"),
+            data(COMPUTERS + "program/cli/SnapshotCommands.java", 12, COMMANDS + "; the subvolumes a btrfs installer"
+                    + " lays out, and zpool's states, in its own words"),
             data(COMPUTERS + "os/defrag/FsckLines.java", 37, "what fsck prints as it repairs a corrupted disk: no"
                     + " fsck ever printed in anything but its own words"),
             data(COMPUTERS + "os/KernelNames.java", 7, "kernel names as a system reports them, and the files a"

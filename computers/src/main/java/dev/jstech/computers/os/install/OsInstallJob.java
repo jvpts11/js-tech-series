@@ -38,6 +38,8 @@ public final class OsInstallJob {
     private final int readerBay;
     private final int ticksTotal;
     private int ticksLeft;
+    /* Whether the copy began from an installer found in an abandoned building. */
+    private boolean found;
 
     /**
      * A copy read from the medium of the reader at {@code readerPos}, or from no drive.
@@ -111,6 +113,16 @@ public final class OsInstallJob {
     /** Which of the reader's volumes the medium is on, as {@link MediaVolume#bay()} counts them. */
     public int readerBay() {
         return this.readerBay;
+    }
+
+    /** Whether the copy began from an installer found in an abandoned building. */
+    public boolean found() {
+        return this.found;
+    }
+
+    /** Marks the copy as begun from an installer found in an abandoned building. */
+    public void markFound() {
+        this.found = true;
     }
 
     /** Whether this copy is being read from a drive, and so can lose what it is reading. */

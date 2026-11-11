@@ -34,6 +34,8 @@ public final class TeracoinMining {
 
     /** The ticks between two weighings: a second. */
     public static final int SECOND = 20;
+    /* The ticks between two looks at the wallets the advancements watch: a minute. */
+    private static final int MINUTE = 1_200;
     /* The ticks in a world day. */
     private static final long DAY_TICKS = 24_000L;
     /* This second's miners, by the machine each runs on: a miner offering twice in a second counts once. */
@@ -76,6 +78,7 @@ public final class TeracoinMining {
         final FoundBlock found = chain.resolve(now, dayTime, dayTime / DAY_TICKS, miners, RANDOM);
         if (found != null) {
             pay(chain, found, offers);
+            TeracoinAwards.found(server, chain, found.height());
         }
         if (chain.version() != before) {
             state.setDirty();
@@ -86,6 +89,9 @@ public final class TeracoinMining {
     private static void onServerTick(final ServerTickEvent.Post event) {
         if (event.getServer().getTickCount() % SECOND == 0) {
             weigh(event.getServer());
+        }
+        if (event.getServer().getTickCount() % MINUTE == 0) {
+            TeracoinAwards.lookAtHolders(event.getServer(), event.getServer().overworld().getGameTime());
         }
     }
 

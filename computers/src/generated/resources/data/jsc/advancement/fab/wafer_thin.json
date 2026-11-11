@@ -1,0 +1,30 @@
+{
+  "parent": "jsc:fab/pull_request",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "wafer_saw",
+        "event": "jsc:chain_made"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.wafer_thin.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "jscore:silicon_wafer"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.wafer_thin.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

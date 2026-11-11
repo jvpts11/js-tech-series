@@ -158,7 +158,7 @@
     }
   ],
   "id": "jsc:installpkg",
-  "order": 346,
+  "order": 348,
   "section": "jsc:system_v_software",
   "title": "jsc.guide.installpkg.title"
 }

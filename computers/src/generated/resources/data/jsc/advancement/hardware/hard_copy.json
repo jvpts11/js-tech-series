@@ -1,0 +1,29 @@
+{
+  "parent": "jsc:hardware/pc_master_race",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "event": "jsc:book_printed"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.hardware.hard_copy.description"
+    },
+    "icon": {
+      "count": 1,
+      "id": "minecraft:book"
+    },
+    "title": {
+      "translate": "advancements.jsc.hardware.hard_copy.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}

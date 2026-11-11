@@ -114,13 +114,11 @@ final class PartitionsPages {
                         + " pending operations, and writes them only when you press Apply. Disks shows one disk at"
                         + " a time, with its volumes as a bar.")
                 .subheading("What every tool refuses")
-                .checklist("The partition the running system runs from, and a swap it swaps to, are never deleted"
-                                + " or formatted.",
-                        "A partition never shrinks below what it holds.",
-                        "Each file system resizes by its own rules, in the table on [](jsc:partitions): an ext4"
-                                + " partition in use only grows.",
-                        "A disk changes from MBR to GPT, or back, only when it is empty. A new partition table"
-                                + " erases the whole disk.")
+                .paragraph("The partition the running system runs from, and a swap it swaps to, are never deleted or"
+                        + " formatted. A partition never shrinks below what it holds, and each file system resizes"
+                        + " by its own rules, in the table on [](jsc:partitions): an ext4 partition in use only"
+                        + " grows. A disk changes from MBR to GPT, or back, only when it is empty, and a new"
+                        + " partition table erases the whole disk.")
                 .steps("Open Disk Management, or the tool of your system.",
                         "Right-click the volume, and choose Shrink Volume.",
                         "Type how many megabytes to free, and press Shrink.",

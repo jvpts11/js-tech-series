@@ -1,0 +1,31 @@
+{
+  "parent": "jsc:fab/first_silicon",
+  "criteria": {
+    "done": {
+      "conditions": {
+        "detail": "assembly",
+        "event": "jsc:chain_made"
+      },
+      "trigger": "jscore:event"
+    }
+  },
+  "display": {
+    "description": {
+      "translate": "advancements.jsc.fab.pick_and_place.description"
+    },
+    "frame": "goal",
+    "icon": {
+      "count": 1,
+      "id": "jsc:populated_board_vintage"
+    },
+    "title": {
+      "translate": "advancements.jsc.fab.pick_and_place.title"
+    }
+  },
+  "requirements": [
+    [
+      "done"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
