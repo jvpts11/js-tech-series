@@ -92,6 +92,10 @@ public final class SeriesManualsGameTests {
     private static final String SERIES_OWN = "jstech";
     /* The folder the Core writes the Technical Reference's chapters in. */
     private static final String FOLDER = "technical_reference";
+    /** The Computers' manuals, a folder of Markdown each. */
+    private static final List<String> COMPUTERS_FOLDERS = List.of("jsc/guide_to_operations", "jsc/book_of_sigma",
+            "jsc/frames_resource_kit", "jsc/linux_desk_reference", "jsc/linux_by_hand", "jsc/daemon_handbook",
+            "jsc/learning_iql");
     private static final List<String> SPINE = List.of(GuideTexts.WHAT_IT_IS.key(), GuideTexts.WHAT_IT_IS_FOR.key(),
             GuideTexts.HOW_TO_GET_IT.key(), GuideTexts.HOW_TO_USE_IT.key(), GuideTexts.WHAT_CAN_GO_WRONG.key());
     /** The chapters written as a guide in running text rather than in the five parts. */
@@ -226,8 +230,10 @@ public final class SeriesManualsGameTests {
             byFolder.computeIfAbsent(file.namespace() + "/" + file.folder(), key -> new TreeMap<>())
                     .computeIfAbsent(file.language(), key -> new TreeSet<>()).add(file.path());
         }
-        helper.assertTrue(byFolder.containsKey("jscore/" + FOLDER) && byFolder.containsKey("jstech/" + FOLDER),
-                "the Core's manual and the series' chapter are written in Markdown: " + byFolder.keySet());
+        helper.assertTrue(byFolder.containsKey("jscore/" + FOLDER) && byFolder.containsKey("jstech/" + FOLDER)
+                        && byFolder.keySet().containsAll(COMPUTERS_FOLDERS),
+                "the Core's manual, the series' chapter and the Computers' books are written in Markdown: "
+                        + byFolder.keySet());
         final List<String> wrong = new ArrayList<>();
         for (final Map.Entry<String, Map<String, Set<String>>> folder : byFolder.entrySet()) {
             final Set<String> english = folder.getValue().getOrDefault(ManualFile.ENGLISH, Set.of());
@@ -427,6 +433,10 @@ public final class SeriesManualsGameTests {
         helper.succeed();
     }
 
+    /*
+     * Every entry, manual and style of the series reads back the same from the file the game keeps it in, whether it
+     * is declared in Java or written in Markdown.
+     */
     @GameTest(template = ARENA)
     public static void seriesDeclarations_readBackFromTheirFilesTheSame(final GameTestHelper helper) {
         int entries = 0;
@@ -440,6 +450,15 @@ public final class SeriesManualsGameTests {
             guide.declaredStyles().forEach((path, style) -> helper.assertTrue(roundTrips(GuideCodecs.STYLE, style),
                     guide.namespace() + ":" + path + " reads back the same"));
         }
+        final MarkdownManuals.Gathered markdown = markdown();
+        for (final GuideEntry entry : markdown.entries().values()) {
+            if (SERIES.contains(GuideIds.namespace(entry.id()))) {
+                helper.assertTrue(roundTrips(GuideCodecs.ENTRY, entry), entry.id() + " reads back the same");
+                entries++;
+            }
+        }
+        markdown.manuals().values().forEach(manual -> helper.assertTrue(roundTrips(GuideCodecs.MANUAL, manual),
+                manual.id() + " reads back the same"));
         helper.assertTrue(entries > FEWEST_ENTRIES, "the series' chapters hold their entries; found " + entries);
         helper.succeed();
     }

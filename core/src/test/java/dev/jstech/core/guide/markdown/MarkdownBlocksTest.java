@@ -259,6 +259,28 @@ class MarkdownBlocksTest {
                 new GuideBlock.CardStep("Staging", "each spent stage comes loose", true))), blocks.get(1));
     }
 
+    @Test
+    void parse_keepsAHashThatEndsAHeadingsWords() {
+        final MarkdownBlocks.Parsed parsed = parse("""
+                # Sigma and Sigma#
+
+                ## Usage ##
+                """);
+
+        assertEquals(Optional.of("Sigma and Sigma#"), parsed.title());
+        assertEquals(List.of(new GuideBlock.Heading("Usage")), parsed.blocks());
+    }
+
+    @Test
+    void parse_keepsEscapedStarsOutOfEmphasis() {
+        final List<GuideBlock> blocks = parse("""
+                Change it to \\*.\\* to see every file, as using System.IO.\\*; brings in *all* of it.
+                """).blocks();
+
+        assertEquals(List.of(new GuideBlock.Paragraph(
+                "Change it to *.* to see every file, as using System.IO.*; brings in all of it.")), blocks);
+    }
+
     private static MarkdownBlocks.Parsed parse(final String body) {
         return MarkdownBlocks.parse(body, 1, IJsonBlocks.NONE);
     }

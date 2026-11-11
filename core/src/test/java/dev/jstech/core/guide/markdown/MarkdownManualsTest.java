@@ -132,6 +132,29 @@ class MarkdownManualsTest {
         assertEquals(Optional.empty(), ManualFile.at("mymod", "jstech/other/guide/en_us/kiln.md", "x"));
     }
 
+    @Test
+    void gather_keepsAnEntryAndAManualThatShareAnId() {
+        final MarkdownManuals.Gathered read = MarkdownManuals.gather(List.of(
+                file("en_us", "manual", """
+                        ---
+                        kind: manual
+                        style: mymod:binder
+                        chapters: [*]
+                        ---
+                        # The Guide
+                        """),
+                file("en_us", "machines/guide", """
+                        ---
+                        section: machines
+                        ---
+                        # The Guide, the book
+                        """)), "en_us", IJsonBlocks.NONE);
+
+        assertTrue(read.manuals().containsKey("mymod:guide"));
+        assertTrue(read.entries().containsKey("mymod:guide"));
+        assertTrue(read.problems().isEmpty(), () -> String.join("\n", read.problems()));
+    }
+
     private static ManualFile file(final String language, final String path, final String text) {
         return new ManualFile("mymod", "guide", language, path, text);
     }

@@ -4093,6 +4093,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) Tooltips of the slots a card fits are one sentence for every card ("Fits a PCI-e slot").
 - (Computers) A DROP runs without asking: the studio no longer asks before a DROP of items or of a saved view,
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
+- (Computers) Manuals: the Guide to Operations and the six books beside it are written in Markdown, a file for each
+  page in each language, so a resource pack rewrites or translates any page by shipping its file. They say what they
+  said before. The chain's pages are one section of the Guide, The Fab, opening with a page that walks the chain in
+  the order you use it, and the Teracoin section gains a page on the Crypto Wallet of a portable and Teracoin from a
+  program.
 
 ### Fixed
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
@@ -4312,6 +4317,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) The outline of a block aboard a moving structure no longer flickers: the player's aim met its blocks as they
   stood at the end of the tick, not as the frame drew them, so with the structure going, the crosshair fell on the
   block beside the one drawn under it, frame after frame. The aim now meets them as the frame draws them.
+- (Core) Manuals in Markdown: a heading keeps a "#" that ends its words ("Sigma and Sigma#"), as CommonMark has it;
+  a star written with a backslash before it stays a star, where it was read as emphasis and taken off ("*.*"); an
+  item of a header's list may hold a comma inside double quotes; and an entry and a manual may share an id, as a
+  book's own page in the library does, where the second was left out.
+- (Computers) `man` at a UNIX prompt finds an entry of the manuals written in Markdown again, the Core's among them,
+  by its name or its English title.
 
 ## [0.5.3a] - 2026-11-04
 

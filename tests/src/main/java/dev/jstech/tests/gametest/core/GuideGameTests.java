@@ -14,7 +14,6 @@ import com.mojang.serialization.JsonOps;
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.audio.SoundSpace;
-import dev.jstech.core.content.ModContent;
 import dev.jstech.core.guide.CoreGuide;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideChapter;
@@ -38,6 +37,7 @@ import dev.jstech.tests.TestGuide;
 import dev.jstech.tests.TestMultiblocks;
 import dev.jstech.tests.TestPress;
 import dev.jstech.tests.TestSounds;
+import dev.jstech.tests.testkit.TestManuals;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.commands.arguments.blocks.BlockStateParser;
@@ -201,15 +201,11 @@ public final class GuideGameTests {
     @GameTest(template = ARENA)
     public static void scenes_nameBlocksAndDataTheGameReads(final GameTestHelper helper) {
         int scenes = 0;
-        for (final ModContent content : ModContent.all()) {
-            for (final ModGuide guide : content.declaredGuides()) {
-                for (final GuideEntry entry : guide.declaredEntries()) {
-                    for (final GuideBlock block : entry.blocks()) {
-                        if (block instanceof GuideBlock.Scene scene) {
-                            scenes++;
-                            scene.blocks().forEach(placed -> readable(helper, entry.id(), placed));
-                        }
-                    }
+        for (final GuideEntry entry : TestManuals.entries()) {
+            for (final GuideBlock block : entry.blocks()) {
+                if (block instanceof GuideBlock.Scene scene) {
+                    scenes++;
+                    scene.blocks().forEach(placed -> readable(helper, entry.id(), placed));
                 }
             }
         }

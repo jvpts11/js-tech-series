@@ -91,20 +91,41 @@ public record FrontMatter(Map<String, String> fields, String body, int bodyLine)
         return listOf(this.get(name, ""));
     }
 
-    /** The items of a list written {@code [a, b]} or {@code a, b}, each trimmed, quotes taken off. */
+    /**
+     * The items of a list written {@code [a, b]} or {@code a, b}, each trimmed, quotes taken off. An item written in
+     * double quotes may hold a comma, as a line of a cover may: {@code ["Frames 95, XP and 7", Second Edition]}.
+     */
     static List<String> listOf(final String written) {
         String inside = written.strip();
         if (inside.startsWith("[") && inside.endsWith("]")) {
             inside = inside.substring(1, inside.length() - 1);
         }
         final List<String> items = new ArrayList<>();
-        for (final String item : inside.split(",")) {
-            final String value = unquoted(item.strip());
-            if (!value.isEmpty()) {
-                items.add(value);
+        final StringBuilder item = new StringBuilder();
+        boolean quoted = false;
+        for (int i = 0; i < inside.length(); i++) {
+            final char c = inside.charAt(i);
+            // A double quote opens an item only where the item starts, so a quote inside its words stays a quote.
+            if (c == QUOTE && (quoted || item.toString().isBlank())) {
+                quoted = !quoted;
+            }
+            if (c == ',' && !quoted) {
+                listed(items, item);
+            } else {
+                item.append(c);
             }
         }
+        listed(items, item);
         return List.copyOf(items);
+    }
+
+    /* Adds the item written so far to {@code items}, trimmed and its quotes taken off, unless it is empty. */
+    private static void listed(final List<String> items, final StringBuilder item) {
+        final String value = unquoted(item.toString().strip());
+        if (!value.isEmpty()) {
+            items.add(value);
+        }
+        item.setLength(0);
     }
 
     private static String unquoted(final String value) {

@@ -65,6 +65,15 @@ One tag per kind of thing, holding it in every era:
 What every era shares, in the tab J's Computers, is in the tags of its kind and in no era's tag. An installer is in
 the tags of its blank medium.
 
+## The manuals
+
+*Added 2026-11-11.* The Guide to Operations and the six books beside it are written in Markdown, one file for each
+page, under `assets/jsc/jstech/manuals/<book>/<language>/` in the mod's jar: `guide_to_operations`, `book_of_sigma`,
+`frames_resource_kit`, `linux_desk_reference`, `linux_by_hand`, `daemon_handbook` and `learning_iql`, in `en_us`
+and `pt_br`. A resource pack replaces any page by shipping a file at the same place, and translates a book by
+shipping a folder for its language; a page its language lacks is read in English. J's Core's
+[manuals guide](../../core/docs/MANUALS.md) gives the form of the files.
+
 ## With a datapack
 
 A datapack is a folder in the world's `datapacks` folder, holding a `pack.mcmeta` and a `data` folder; Minecraft's

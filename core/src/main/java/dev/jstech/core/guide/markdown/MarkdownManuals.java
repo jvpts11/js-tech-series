@@ -137,7 +137,7 @@ public final class MarkdownManuals {
             switch (head.get(KIND, "entry")) {
                 case "section" -> {
                     final String id = qualified(ns, head.get("id", file.name()));
-                    if (this.first(id, file)) {
+                    if (this.first("section", id, file)) {
                         this.sections.put(id, new GuideSection(id, head.number("order", 0), title,
                                 head.get("icon", ""), head.get("chapter", ns), head.get("code", ""),
                                 head.get("tab", "")));
@@ -146,7 +146,7 @@ public final class MarkdownManuals {
                 case "chapter" -> {
                     final String id = head.get("id", file.name().equals(MAIN_CHAPTER) ? ns
                             : GuideIds.of(ns, file.name()));
-                    if (this.first(id, file)) {
+                    if (this.first("chapter", id, file)) {
                         this.chapters.put(id, new GuideChapter(id, head.number("order", 0), title,
                                 head.get("tab", ""), String.join(" ", paragraphs(body.blocks())),
                                 !head.yes("own_books_only", false)));
@@ -158,7 +158,7 @@ public final class MarkdownManuals {
                     if (head.get("style").isEmpty() || chapters.isEmpty()) {
                         this.problems.add(new ManualFileException(0, "a manual names its style and its chapters")
                                 .at(file.where()));
-                    } else if (this.first(id, file)) {
+                    } else if (this.first("manual", id, file)) {
                         this.manuals.put(id, new GuideManual(id, title, head.list("cover"), head.get("edition", ""),
                                 head.get("part_number", ""), qualified(ns, head.get("style", "")), chapters,
                                 paragraphs(body.blocks()), head.number("priority", 0), head.get("icon", "")));
@@ -178,7 +178,7 @@ public final class MarkdownManuals {
                 this.problems.add(new ManualFileException(0, "an entry names the section it sits in").at(file.where()));
                 return;
             }
-            if (!this.first(id, file)) {
+            if (!this.first("entry", id, file)) {
                 return;
             }
             final Set<String> items = new LinkedHashSet<>(head.list("covers"));
@@ -190,9 +190,12 @@ public final class MarkdownManuals {
                     head.get("needs", "")));
         }
 
-        /* Whether {@code id} is named here first; a second file naming it is left out, and said so. */
-        private boolean first(final String id, final ManualFile file) {
-            final String before = this.named.putIfAbsent(id, file.where());
+        /*
+         * Whether {@code id} is named here first among the pieces of its kind; a second file naming it is left out, and
+         * said so. An entry and a manual may share an id, as a book's own page in the library does.
+         */
+        private boolean first(final String kind, final String id, final ManualFile file) {
+            final String before = this.named.putIfAbsent(kind + " " + id, file.where());
             if (before != null) {
                 this.problems.add(new ManualFileException(0, "it repeats the id " + id + " of " + before
                         + " and is left out").at(file.where()));

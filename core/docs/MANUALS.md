@@ -105,10 +105,11 @@ What the header says depends on what the file is, which its `kind` says (an entr
 | `chapter` | `order`, `tab` (a palette's id or a colour written `"#AARRGGBB"`), `own_books_only: true` for a chapter the Technical Reference leaves out; the file named `chapter.md` is the mod's main chapter, any other `mymod:<name>` | What it is about, on its opening page |
 | `manual` | `style` and `chapters` (required; `[*]` for every chapter), `cover` (its cover's lines), `edition`, `part_number`, `priority`, `icon` | The paragraphs of its "About this manual" |
 
-A name with no namespace (`section: machines`) is your mod's. Lists are written `[a, b]`. Java still registers what a
-player holds: the `ManualItem` that opens the book, and `GuideGifts.giveOnFirstJoin` if it is handed out. A family of
-items only your code knows, such as every part a mod adds to a machine, is registered once while the game loads and
-named by an entry's `covers_family`:
+A name with no namespace (`section: machines`) is your mod's. Lists are written `[a, b]`, and an item holding a comma
+is written in double quotes, as a cover's line may be: `cover: ["Frames 95, XP and 7", Second Edition]`. Java still
+registers what a player holds: the `ManualItem` that opens the book, and `GuideGifts.giveOnFirstJoin` if it is handed
+out. A family of items only your code knows, such as every part a mod adds to a machine, is registered once while the
+game loads and named by an entry's `covers_family`:
 
 ```java
 GuideFamilies.register("mymod:kiln_parts", () -> MyContent.KILN_PARTS.stream()
@@ -194,8 +195,7 @@ right still opens.
 
 *Added 2026-10-05.*
 
-A manual can be declared in Java instead, and the data generation writes its files; J's Computers and J's Industrial
-are written so.
+A manual can be declared in Java instead, and the data generation writes its files; J's Industrial is written so.
 
 ```java
 public final class MyGuide {

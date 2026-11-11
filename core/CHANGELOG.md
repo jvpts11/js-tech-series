@@ -2344,6 +2344,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The outline of a block aboard a moving structure no longer flickers: the player's aim met its blocks as they
   stood at the end of the tick, not as the frame drew them, so with the structure going, the crosshair fell on the
   block beside the one drawn under it, frame after frame. The aim now meets them as the frame draws them.
+- Manuals in Markdown: a heading keeps a "#" that ends its words ("Sigma and Sigma#"), as CommonMark has it;
+  a star written with a backslash before it stays a star, where it was read as emphasis and taken off ("*.*"); an
+  item of a header's list may hold a comma inside double quotes; and an entry and a manual may share an id, as a
+  book's own page in the library does, where the second was left out.
 
 ## [0.5.3a] - 2026-11-04
 

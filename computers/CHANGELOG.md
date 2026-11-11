@@ -946,6 +946,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Tooltips of the slots a card fits are one sentence for every card ("Fits a PCI-e slot").
 - A DROP runs without asking: the studio no longer asks before a DROP of items or of a saved view,
   procedure or job, as a real database does not. It still asks before a DELETE of ALL.
+- Manuals: the Guide to Operations and the six books beside it are written in Markdown, a file for each
+  page in each language, so a resource pack rewrites or translates any page by shipping its file. They say what they
+  said before. The chain's pages are one section of the Guide, The Fab, opening with a page that walks the chain in
+  the order you use it, and the Teracoin section gains a page on the Crypto Wallet of a portable and Teracoin from a
+  program.
 
 ### Fixed
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
@@ -954,6 +959,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   another order and showed a finished Operation as waiting and a running one as failed.
 - The Exa and the Singularity draw what the Advanced draws: the supercomputer rack, the server rack, the
   speaker and the Pattern Encoder's USB-C took the Standard's look in those eras.
+- `man` at a UNIX prompt finds an entry of the manuals written in Markdown again, the Core's among them,
+  by its name or its English title.
 
 ## [0.5.3a] - 2026-11-04
 

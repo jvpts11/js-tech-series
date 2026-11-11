@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.gui.help.HelpShelf;
 import dev.jstech.computers.guide.ComputersGuide;
+import dev.jstech.computers.guide.SigmaReferenceFacts;
 import dev.jstech.computers.os.KernelDef;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
@@ -21,14 +22,14 @@ import dev.jstech.computers.sigma.SigmaError;
 import dev.jstech.computers.vm.system.IMemberSpec;
 import dev.jstech.computers.vm.system.SystemApi;
 import dev.jstech.computers.vm.system.TypeSpec;
-import dev.jstech.core.content.ModContent;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideEntry;
+import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuideProse;
 import dev.jstech.core.guide.IGuideText;
-import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.guide.TextSize;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestManuals;
 import dev.jstech.tests.testkit.computers.TestFetchCommand;
 import java.util.ArrayList;
 import java.util.EnumSet;
@@ -72,6 +73,26 @@ public final class CoverageGameTests {
     private static final Pattern END = Pattern.compile("\\.+ ");
 
     private CoverageGameTests() {
+    }
+
+    /*
+     * The Sigma reference has a page for every namespace of the library, each printing the table of its calls read
+     * from the library itself: a namespace a later version brings needs its page written.
+     */
+    @GameTest(template = ARENA)
+    public static void sigmaReference_hasAPageForEveryNamespace(final GameTestHelper helper) {
+        final Map<String, GuideEntry> entries = TestManuals.markdown().entries();
+        final List<String> missing = new ArrayList<>();
+        for (final String namespace : SigmaReferenceFacts.namespaces()) {
+            final GuideEntry page = entries.get("jsc:sigma_reference_" + SigmaReferenceFacts.pathOf(namespace));
+            final boolean table = page != null && page.blocks().stream().anyMatch(block ->
+                    block instanceof GuideBlock.Table read && read.source().equals(SigmaReferenceFacts.of(namespace)));
+            if (!table) {
+                missing.add(namespace);
+            }
+        }
+        helper.assertTrue(missing.isEmpty(), "every namespace has its page and its table; not " + missing);
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 400)
@@ -125,30 +146,20 @@ public final class CoverageGameTests {
     private static Map<String, List<GuideEntry>> books() {
         final Map<String, List<GuideEntry>> byChapter = new HashMap<>();
         final Map<String, String> chapterOfSection = new HashMap<>();
-        final List<ModGuide> guides = new ArrayList<>();
-        for (final ModContent content : ModContent.all()) {
-            guides.addAll(content.declaredGuides());
-        }
-        for (final ModGuide guide : guides) {
-            guide.declaredSections().forEach(section -> chapterOfSection.put(section.id(), section.chapter()));
-        }
-        for (final ModGuide guide : guides) {
-            for (final GuideEntry entry : guide.declaredEntries()) {
-                byChapter.computeIfAbsent(chapterOfSection.getOrDefault(entry.section(), ""),
-                        chapter -> new ArrayList<>()).add(entry);
-            }
+        TestManuals.sections().forEach(section -> chapterOfSection.put(section.id(), section.chapter()));
+        for (final GuideEntry entry : TestManuals.entries()) {
+            byChapter.computeIfAbsent(chapterOfSection.getOrDefault(entry.section(), ""), chapter -> new ArrayList<>())
+                    .add(entry);
         }
         final Map<String, List<GuideEntry>> books = new HashMap<>();
-        for (final ModGuide guide : guides) {
-            guide.declaredManuals().forEach(manual -> {
-                final List<GuideEntry> entries = new ArrayList<>();
-                byChapter.forEach((chapter, held) -> {
-                    if (manual.holdsEvery() || manual.chapters().contains(chapter)) {
-                        entries.addAll(held);
-                    }
-                });
-                books.put(manual.id(), entries);
+        for (final GuideManual manual : TestManuals.manuals()) {
+            final List<GuideEntry> entries = new ArrayList<>();
+            byChapter.forEach((chapter, held) -> {
+                if (manual.holdsEvery() || manual.chapters().contains(chapter)) {
+                    entries.addAll(held);
+                }
             });
+            books.put(manual.id(), entries);
         }
         return books;
     }

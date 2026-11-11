@@ -10,11 +10,10 @@ package dev.jstech.tests.gametest.computers;
 import dev.jstech.computers.sigma.LanguageLevel;
 import dev.jstech.computers.sigma.SigmaSemantics;
 import dev.jstech.computers.sigma.SourceFile;
-import dev.jstech.core.content.ModContent;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideEntry;
-import dev.jstech.core.guide.ModGuide;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.testkit.TestManuals;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.gametest.framework.GameTest;
@@ -39,23 +38,18 @@ public final class SigmaListingsGameTests {
     public static void wholeProgramListings_compileAsPrinted(final GameTestHelper helper) {
         final List<String> broken = new ArrayList<>();
         int checked = 0;
-        for (final ModContent content : ModContent.all()) {
-            for (final ModGuide guide : content.declaredGuides()) {
-                for (final GuideEntry entry : guide.declaredEntries()) {
-                    for (final GuideBlock block : entry.blocks()) {
-                        if (block instanceof GuideBlock.Listing listing && wholeProgram(listing)) {
-                            checked++;
-                            final LanguageLevel level = "sg".equals(listing.language())
-                                    ? LanguageLevel.SIGMA : LanguageLevel.SIGMA_SHARP;
-                            final List<SourceFile> source = List.of(new SourceFile(listing.name(), listing.text()));
-                            // A listing of types alone, with no place to start, is checked as types and not run.
-                            final SigmaSemantics.Result result = startsSomewhere(listing.text())
-                                    ? SigmaSemantics.checkProgram(source, level) : SigmaSemantics.check(source);
-                            if (!result.ok()) {
-                                broken.add(entry.id() + " " + listing.name() + ": "
-                                        + String.join(" | ", result.lines()));
-                            }
-                        }
+        for (final GuideEntry entry : TestManuals.entries()) {
+            for (final GuideBlock block : entry.blocks()) {
+                if (block instanceof GuideBlock.Listing listing && wholeProgram(listing)) {
+                    checked++;
+                    final LanguageLevel level = "sg".equals(listing.language())
+                            ? LanguageLevel.SIGMA : LanguageLevel.SIGMA_SHARP;
+                    final List<SourceFile> source = List.of(new SourceFile(listing.name(), listing.text()));
+                    // A listing of types alone, with no place to start, is checked as types and not run.
+                    final SigmaSemantics.Result result = startsSomewhere(listing.text())
+                            ? SigmaSemantics.checkProgram(source, level) : SigmaSemantics.check(source);
+                    if (!result.ok()) {
+                        broken.add(entry.id() + " " + listing.name() + ": " + String.join(" | ", result.lines()));
                     }
                 }
             }

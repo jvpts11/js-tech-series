@@ -21,7 +21,6 @@ import dev.jstech.computers.program.cli.LiveInstallCommands;
 import dev.jstech.computers.program.cli.man.CommandGuidePages;
 import dev.jstech.computers.program.cli.man.ManPage;
 import dev.jstech.computers.program.cli.man.ManualEntries;
-import dev.jstech.core.content.ModContent;
 import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.guide.GuideChapter;
 import dev.jstech.core.guide.GuideCommand;
@@ -32,13 +31,13 @@ import dev.jstech.core.guide.GuideManual;
 import dev.jstech.core.guide.GuideSection;
 import dev.jstech.core.guide.IGuideText;
 import dev.jstech.core.guide.ManualReader;
-import dev.jstech.core.guide.ModGuide;
 import dev.jstech.core.guide.TextSize;
 import dev.jstech.core.text.ITextLanguage;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextFormat;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestGuide;
+import dev.jstech.tests.testkit.TestManuals;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -214,16 +213,12 @@ public final class CommandPagesGameTests {
     public static void books_printOnlyCommandPagesThatExist(final GameTestHelper helper) {
         final List<String> missing = new ArrayList<>();
         int printed = 0;
-        for (final ModContent content : ModContent.all()) {
-            for (final ModGuide guide : content.declaredGuides()) {
-                for (final GuideEntry entry : guide.declaredEntries()) {
-                    for (final GuideBlock block : entry.blocks()) {
-                        if (block instanceof GuideBlock.Command command) {
-                            printed++;
-                            if (GuideFacts.commandOf(command.source()).isEmpty()) {
-                                missing.add(entry.id() + " prints " + command.source());
-                            }
-                        }
+        for (final GuideEntry entry : TestManuals.entries()) {
+            for (final GuideBlock block : entry.blocks()) {
+                if (block instanceof GuideBlock.Command command) {
+                    printed++;
+                    if (GuideFacts.commandOf(command.source()).isEmpty()) {
+                        missing.add(entry.id() + " prints " + command.source());
                     }
                 }
             }

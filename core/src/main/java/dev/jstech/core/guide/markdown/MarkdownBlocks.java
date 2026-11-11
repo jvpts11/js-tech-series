@@ -38,7 +38,8 @@ public final class MarkdownBlocks {
     /** How many steps the entry's cards have so far. */
     private int cardSteps;
 
-    private static final Pattern HEADING = Pattern.compile("^ {0,3}(#{1,6})\\s+(.*?)\\s*#*\\s*$");
+    /* A heading's closing hashes, as CommonMark has them, follow a space: "# Sigma and Sigma#" keeps its own. */
+    private static final Pattern HEADING = Pattern.compile("^ {0,3}(#{1,6})\\s+(.*?)(?:\\s+#+)?\\s*$");
     private static final Pattern ORDERED = Pattern.compile("^ {0,3}\\d+[.)]\\s+(.*)$");
     private static final Pattern BULLET = Pattern.compile("^ {0,3}[-*+]\\s+(.*)$");
     private static final Pattern THEMATIC = Pattern.compile("^ {0,3}([-*_])(\\s*\\1){2,}\\s*$");
