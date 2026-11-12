@@ -103,6 +103,11 @@ sealed interface IFormChrome permits BevelChrome, LunaChrome, AeroChrome, MetroC
         return false;
     }
 
+    /** Whether a progress bar fills in separate blocks on a white field, as Frames XP's do, rather than in one run. */
+    default boolean blockProgress() {
+        return false;
+    }
+
     /** The thickness of the window frame in pixels. */
     default int frameThickness() {
         return 1;

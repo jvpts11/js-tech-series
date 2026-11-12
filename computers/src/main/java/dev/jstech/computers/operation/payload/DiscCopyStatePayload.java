@@ -52,25 +52,46 @@ public record DiscCopyStatePayload(BlockPos hostPos, List<Place> places, Copy co
     }
 
     /**
-     * A drive.
+     * A drive and what it holds, as data: the program words it in the player's own language.
      *
-     * @param pos    where it is
-     * @param letter the letter the program names it by
-     * @param drive  what kind of drive it is
-     * @param medium what it holds
-     * @param blank  whether it holds a blank to write on
-     * @param vinyl  whether it is a Vinyl RW Drive
+     * @param pos     where it is
+     * @param letter  the letter the program names it by
+     * @param drive   what kind of drive it is
+     * @param item    the item in it, or the air when it holds none
+     * @param name    the name the player gave the medium in it, or nothing
+     * @param blank   whether it holds a blank to write on
+     * @param vinyl   whether it is a Vinyl RW Drive
+     * @param storage whether the medium in it holds the network's storage
+     * @param bytes   how many bytes the medium in it holds
+     * @param song    the song of a music disc in it, by its id, or nothing
+     * @param seconds how long that song is, or 0
      */
-    public record Place(long pos, String letter, Text drive, Text medium, boolean blank, boolean vinyl) {
+    public record Place(long pos, String letter, Text drive, ResourceLocation item, String name, boolean blank,
+                        boolean vinyl, boolean storage, long bytes, String song, int seconds) {
 
-        public static final StreamCodec<RegistryFriendlyByteBuf, Place> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.VAR_LONG, Place::pos,
-                ByteBufCodecs.stringUtf8(2), Place::letter,
-                TextCodecs.STREAM_CODEC, Place::drive,
-                TextCodecs.STREAM_CODEC, Place::medium,
-                ByteBufCodecs.BOOL, Place::blank,
-                ByteBufCodecs.BOOL, Place::vinyl,
-                Place::new);
+        /** The longest name of a medium or a song sent; a longer one is cut to it. */
+        public static final int MOST_NAME = 64;
+
+        public static final StreamCodec<RegistryFriendlyByteBuf, Place> STREAM_CODEC = StreamCodec.of(
+                (buf, place) -> {
+                    ByteBufCodecs.VAR_LONG.encode(buf, place.pos());
+                    ByteBufCodecs.stringUtf8(2).encode(buf, place.letter());
+                    TextCodecs.STREAM_CODEC.encode(buf, place.drive());
+                    ResourceLocation.STREAM_CODEC.encode(buf, place.item());
+                    ByteBufCodecs.stringUtf8(MOST_NAME).encode(buf, place.name());
+                    ByteBufCodecs.BOOL.encode(buf, place.blank());
+                    ByteBufCodecs.BOOL.encode(buf, place.vinyl());
+                    ByteBufCodecs.BOOL.encode(buf, place.storage());
+                    ByteBufCodecs.VAR_LONG.encode(buf, place.bytes());
+                    ByteBufCodecs.stringUtf8(MOST_NAME).encode(buf, place.song());
+                    ByteBufCodecs.VAR_INT.encode(buf, place.seconds());
+                },
+                buf -> new Place(ByteBufCodecs.VAR_LONG.decode(buf), ByteBufCodecs.stringUtf8(2).decode(buf),
+                        TextCodecs.STREAM_CODEC.decode(buf), ResourceLocation.STREAM_CODEC.decode(buf),
+                        ByteBufCodecs.stringUtf8(MOST_NAME).decode(buf), ByteBufCodecs.BOOL.decode(buf),
+                        ByteBufCodecs.BOOL.decode(buf), ByteBufCodecs.BOOL.decode(buf),
+                        ByteBufCodecs.VAR_LONG.decode(buf), ByteBufCodecs.stringUtf8(MOST_NAME).decode(buf),
+                        ByteBufCodecs.VAR_INT.decode(buf)));
     }
 
     /**

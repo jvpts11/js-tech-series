@@ -15,15 +15,20 @@ import dev.jstech.computers.operation.payload.ComputerAccess;
 import dev.jstech.computers.operation.payload.DiscCopyActionPayload;
 import dev.jstech.computers.operation.payload.DiscCopyStatePayload;
 import dev.jstech.computers.os.IOsHost;
-import dev.jstech.computers.os.media.FormattedMediaItem;
+import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.core.Holder;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.JukeboxSong;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -35,9 +40,6 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 public final class DiscCopyPayloads {
 
     private static final TextKey VINYL_DRIVE = TextKey.of("jsc.disc_copier.vinyl_drive", "Vinyl RW Drive");
-    private static final TextKey EMPTY = TextKey.of("jsc.disc_copier.empty", "empty");
-    private static final TextKey BLANK = TextKey.of("jsc.disc_copier.blank", "blank %s");
-    private static final TextKey BLANK_VINYL = TextKey.of("jsc.disc_copier.blank_vinyl", "a blank vinyl");
 
     private DiscCopyPayloads() {
     }
@@ -68,10 +70,7 @@ public final class DiscCopyPayloads {
         final List<DiscCopyStatePayload.Place> places = new ArrayList<>();
         for (final DiscCopies.Place place : DiscCopies.places(level, host)) {
             if (places.size() < DiscCopyStatePayload.MOST_PLACES) {
-                places.add(new DiscCopyStatePayload.Place(place.pos(), Character.toString(place.letter()),
-                        place.vinyl() ? VINYL_DRIVE.text() : place.type() == null ? Text.EMPTY
-                                : place.type().driveName(), held(place), DiscCopies.blank(place.medium()),
-                        place.vinyl()));
+                places.add(placeOf(level, place));
             }
         }
         final DiscCopyStatePayload.Copy copy = DiscCopies.of(level, payload.hostPos())
@@ -82,18 +81,25 @@ public final class DiscCopyPayloads {
         PacketDistributor.sendToPlayer(player, new DiscCopyStatePayload(payload.hostPos(), places, copy, answer));
     }
 
-    /* What a drive holds, as the lists name it: nothing, a blank of its format, or the medium by its name. */
-    private static Text held(final DiscCopies.Place place) {
+    /*
+     * A drive and what it holds, as data: the item and the name the player gave it, whether it is a blank or holds the
+     * network's storage, its bytes, and a music disc's song, which the program words in the player's own language.
+     */
+    private static DiscCopyStatePayload.Place placeOf(final ServerLevel level, final DiscCopies.Place place) {
         final ItemStack medium = place.medium();
-        if (medium.isEmpty()) {
-            return EMPTY.text();
-        }
-        if (DiscCopies.blank(medium) && medium.getItem() instanceof FormattedMediaItem item) {
-            return BLANK.with(item.format().text());
-        }
-        if (place.vinyl() && VinylDiscs.blank(medium)) {
-            return BLANK_VINYL.text();
-        }
-        return Text.literal(medium.getHoverName().getString());
+        final Component name = medium.get(DataComponents.CUSTOM_NAME);
+        final Holder<JukeboxSong> song = place.vinyl()
+                ? VinylDiscs.songOf(medium, level.registryAccess()).orElse(null) : null;
+        final String songId = song == null ? "" : song.unwrapKey().map(key -> key.location().toString()).orElse("");
+        return new DiscCopyStatePayload.Place(place.pos(), Character.toString(place.letter()),
+                place.vinyl() ? VINYL_DRIVE.text() : place.type() == null ? Text.EMPTY : place.type().driveName(),
+                BuiltInRegistries.ITEM.getKey(medium.getItem()), cut(name == null ? "" : name.getString()),
+                DiscCopies.blank(medium), place.vinyl(), MediaItem.data(medium).total() > 0,
+                DiscCopies.bytesOf(medium), cut(songId), song == null ? 0 : (int) song.value().lengthInSeconds());
+    }
+
+    private static String cut(final String words) {
+        return words.length() <= DiscCopyStatePayload.Place.MOST_NAME ? words
+                : words.substring(0, DiscCopyStatePayload.Place.MOST_NAME);
     }
 }

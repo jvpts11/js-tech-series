@@ -114,6 +114,11 @@ public class FormattedMediaItem extends MediaItem {
         return stick != null ? stick.capacityBytes() : format.capacityBytes();
     }
 
+    /** What this medium's box says it holds: "700 MB" for a CD, its model's for a USB stick. */
+    public String soldAs() {
+        return MediaSizes.soldAs(format, stick);
+    }
+
     /** The era this medium was sold in: its format's, or its model's for a USB stick. */
     public Era era() {
         return stick != null ? stick.era() : format.era();
@@ -146,8 +151,8 @@ public class FormattedMediaItem extends MediaItem {
         if (!writable) {
             tooltip.add(GameText.component(READ_ONLY.with(format.text())).withStyle(ChatFormatting.GRAY));
         }
-        tooltip.add(GameText.component(CAPACITY.with(MediaSizes.soldAs(format, stick),
-                MediaSizes.grouped(capacityBytes()))).withStyle(ChatFormatting.AQUA));
+        tooltip.add(GameText.component(CAPACITY.with(soldAs(), MediaSizes.grouped(capacityBytes())))
+                .withStyle(ChatFormatting.AQUA));
         if (stick != null) {
             tooltip.add(GameText.component(STICK.with(stick.plug(), MinSpecTooltip.eraLabel(stick.era())))
                     .withStyle(ChatFormatting.GRAY));

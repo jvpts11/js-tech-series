@@ -69,8 +69,8 @@ public final class DiscCopies {
     private static final char FLOPPY_FIRST = 'A';
     private static final char OTHER_FIRST = 'D';
     private static final char VINYL_FIRST = 'V';
-    /** How long checking a copy takes, in ticks. */
-    private static final int CHECK_TICKS = 40;
+    /** How long checking a copy takes, in ticks; the program counts it in the time a copy will take. */
+    public static final int CHECK_TICKS = 40;
     private static final long BYTES_A_MEGABYTE = 1_048_576L;
     public static final int MOST_COPIES = 9;
     private static final TextKey NOT_A_MEDIUM = TextKey.of("jsc.disc_copier.not_a_medium",
@@ -155,7 +155,9 @@ public final class DiscCopies {
         }
         final MediaFormat format = format(from.medium());
         final long bytes = bytesOf(from.medium());
-        JOBS.put(key, new Job(from.pos(), to.pos(), from.letter(), to.letter(), format, bytes,
+        final MediaFormat blankFormat = format(to.medium());
+        JOBS.put(key, new Job(from.pos(), to.pos(), from.letter(), to.letter(), format,
+                blankFormat == null ? format : blankFormat, bytes,
                 Math.max(1, Math.min(MOST_COPIES, copies)), Phase.READING, ticksFor(format, bytes), from.medium()));
         return Text.EMPTY;
     }
@@ -287,8 +289,8 @@ public final class DiscCopies {
         if (drive.record(level).isEmpty()) {
             return drive.problem().words();
         }
-        final Job job = new Job(from.pos(), to.pos(), from.letter(), to.letter(), MediaFormat.CD, 1L, 1,
-                Phase.RECORDING, drive.length(), from.medium());
+        final Job job = new Job(from.pos(), to.pos(), from.letter(), to.letter(), MediaFormat.CD, MediaFormat.CD, 1L,
+                1, Phase.RECORDING, drive.length(), from.medium());
         job.vinyl = true;
         job.song = drive.song();
         job.kept = drive.lastSaved();
@@ -325,7 +327,8 @@ public final class DiscCopies {
                 job.phase = job.source == job.target ? Phase.ASKING : Phase.WRITING;
                 job.ask = job.phase == Phase.ASKING ? PUT_BLANK.with(Character.toString(job.sourceLetter),
                         job.format.text()) : Text.EMPTY;
-                job.left = ticksFor(job.format, job.bytes);
+                // Written at the blank's own speed; with one drive the blank's pace is set when it goes in.
+                job.left = ticksFor(job.blankFormat, job.bytes);
                 job.total = job.left;
             }
             case WRITING -> {
@@ -371,7 +374,9 @@ public final class DiscCopies {
         if (job.phase == Phase.RECORDING && drive.work() == VinylDriveBlockEntity.Work.NONE) {
             job.phase = drive.lastSaved().equals(job.kept) ? Phase.DONE : Phase.ASKING;
             job.note = job.phase == Phase.DONE ? drive.problem().words() : Text.EMPTY;
-            job.ask = VINYL_RECORDED.with(drive.lastSaved().substring(drive.lastSaved().lastIndexOf('/') + 1),
+            // The song by the name its recording was kept under, without the file's extension.
+            final String file = drive.lastSaved().substring(drive.lastSaved().lastIndexOf('/') + 1);
+            job.ask = VINYL_RECORDED.with(file.contains(".") ? file.substring(0, file.lastIndexOf('.')) : file,
                     Character.toString(job.targetLetter));
         } else if (job.phase == Phase.CUTTING && drive.work() == VinylDriveBlockEntity.Work.NONE) {
             job.phase = Phase.DONE;
@@ -477,6 +482,8 @@ public final class DiscCopies {
         private final char sourceLetter;
         private final char targetLetter;
         private final MediaFormat format;
+        /** The format of the blank in the drive recorded to, whose own speed the copy is written at. */
+        private final MediaFormat blankFormat;
         private final long bytes;
         private final int copies;
         private final ItemStack image;
@@ -491,13 +498,14 @@ public final class DiscCopies {
         private Text note = Text.EMPTY;
 
         Job(final long source, final long target, final char sourceLetter, final char targetLetter,
-            final MediaFormat format, final long bytes, final int copies, final Phase phase, final int ticks,
-            final ItemStack image) {
+            final MediaFormat format, final MediaFormat blankFormat, final long bytes, final int copies,
+            final Phase phase, final int ticks, final ItemStack image) {
             this.source = source;
             this.target = target;
             this.sourceLetter = sourceLetter;
             this.targetLetter = targetLetter;
             this.format = format;
+            this.blankFormat = blankFormat;
             this.bytes = bytes;
             this.copies = copies;
             this.phase = phase;

@@ -94,7 +94,7 @@ final class DesktopPopup extends Popup {
     }
 
     /** An 18x18 red error disc with a white X, square-pixel style. */
-    private static void drawErrorIcon(final GuiGraphics g, final int ox, final int oy) {
+    static void drawErrorIcon(final GuiGraphics g, final int ox, final int oy) {
         // A filled circle approximated by rows, so it reads as a disc at this small size.
         final int[] half = {4, 6, 7, 8, 9, 9, 9, 9, 8, 7, 6, 4};
         final int cx = ox + ICON / 2;

@@ -117,6 +117,9 @@ public final class OsSkin implements ISkin {
 
     /** The icon set the Transition Unix desktops draw with: Frames XP's, glossy as theirs were. */
     private static final String TRANSITION_ICONS = "frames_xp";
+    /* A block progress bar: the gap round its blocks, and a block with the gap after it. */
+    private static final int PROGRESS_INSET = 2;
+    private static final int PROGRESS_PITCH = 6;
 
     // Frames 95: classic grey bevel, navy title, square corners.
     static final OsSkin FRAMES_95 = new OsSkin(BevelChrome.INSTANCE, 0, 0, false, "frames_95",
@@ -416,6 +419,27 @@ public final class OsSkin implements ISkin {
     @Override
     public int progressFill() {
         return glossForm() ? DesktopShellPalette.get().lunaProgress() : accent();
+    }
+
+    /**
+     * A progress bar. Frames XP's fills in separate green blocks on a white field, as its own did; every other look
+     * fills in one run.
+     */
+    @Override
+    public void progress(final GuiGraphics g, final int x, final int y, final int w, final int h,
+                         final double fraction) {
+        if (!chrome.blockProgress()) {
+            ISkin.super.progress(g, x, y, w, h, fraction);
+            return;
+        }
+        Grounds.fill(g, x, y, x + w, y + h, fieldBg());
+        Draw.outline(g, x, y, w, h, edge());
+        final int room = w - 2 * PROGRESS_INSET;
+        final int blocks = (int) (room * Math.max(0.0, Math.min(1.0, fraction))) / PROGRESS_PITCH;
+        for (int i = 0; i < blocks; i++) {
+            final int bx = x + PROGRESS_INSET + i * PROGRESS_PITCH;
+            g.fill(bx, y + PROGRESS_INSET, bx + PROGRESS_PITCH - 1, y + h - PROGRESS_INSET, progressFill());
+        }
     }
 
     @Override

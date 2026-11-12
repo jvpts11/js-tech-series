@@ -33,6 +33,7 @@ import dev.jstech.tests.clienttest.computers.DeviceIconClientTests;
 import dev.jstech.tests.clienttest.computers.DeviceManagerClientTests;
 import dev.jstech.tests.clienttest.computers.DiskToolsClientTests;
 import dev.jstech.tests.clienttest.computers.DockStationClientTests;
+import dev.jstech.tests.clienttest.computers.EasyDiscCreatorClientTests;
 import dev.jstech.tests.clienttest.computers.EraBuildClientTests;
 import dev.jstech.tests.clienttest.computers.EraEndClientTests;
 import dev.jstech.tests.clienttest.computers.EraEverydayClientTests;
@@ -534,6 +535,7 @@ public final class ClientTestSuite {
             MessengerKeptClientTests.class,
             ScannerClientTests.class,
             ExtendedCdDriveClientTests.class,
+            EasyDiscCreatorClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,

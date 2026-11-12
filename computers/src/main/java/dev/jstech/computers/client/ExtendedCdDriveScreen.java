@@ -13,6 +13,7 @@ import dev.jstech.computers.gui.layout.ExtendedCdDriveLayout;
 import dev.jstech.computers.menu.ExtendedCdDriveMenu;
 import dev.jstech.computers.os.media.FormattedMediaItem;
 import dev.jstech.computers.os.media.MediaFormat;
+import dev.jstech.computers.os.media.MediaSizes;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -37,8 +38,6 @@ public class ExtendedCdDriveScreen extends AbstractComputerScreen<ExtendedCdDriv
 
     private static final int TICKS_A_SECOND = 20;
     private static final long BYTES_A_KILOBYTE = 1_024L;
-    private static final long BYTES_A_MEGABYTE = 1_048_576L;
-    private static final long MEGABYTES_A_GIGABYTE = 1_024L;
 
     public ExtendedCdDriveScreen(final ExtendedCdDriveMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -166,7 +165,7 @@ public class ExtendedCdDriveScreen extends AbstractComputerScreen<ExtendedCdDriv
             if (disc.getItem() instanceof FormattedMediaItem item) {
                 // The kind of disc by its own name (a CD-ROM, a DVD-RW), though the player named the disc.
                 small(g, clip(GameText.resolve(ExtendedCdDriveTexts.SIZE.with(item.getName(disc).getString(),
-                        size(tower.bytes()))), room), ExtendedCdDriveLayout.DISC_X,
+                        MediaSizes.label(tower.bytes()))), room), ExtendedCdDriveLayout.DISC_X,
                         ExtendedCdDriveLayout.DISC_Y + ExtendedCdDriveLayout.LINE, dim);
             }
         }
@@ -237,21 +236,6 @@ public class ExtendedCdDriveScreen extends AbstractComputerScreen<ExtendedCdDriv
                 JsTechTheme.text());
         readout(g, x, ExtendedCdDriveLayout.READOUT_Y + 2 * step, w, ExtendedCdDriveTexts.REFUSES,
                 GameText.resolve(ExtendedCdDriveTexts.STORAGE), JsTechTheme.dim());
-    }
-
-    /*
-     * A disc's size in whole megabytes, or gigabytes from a thousand and twenty-four of them, with a tenth below ten
-     * (a DVD's 3.9 GB); rounded up, so a disc holding less than a megabyte is not called empty.
-     */
-    private static String size(final long bytes) {
-        final long megabytes = (bytes + BYTES_A_MEGABYTE - 1) / BYTES_A_MEGABYTE;
-        if (megabytes < MEGABYTES_A_GIGABYTE) {
-            return GameText.resolve(ExtendedCdDriveTexts.MB.with(String.format(Locale.ROOT, "%,d", megabytes)));
-        }
-        final long tenths = (megabytes * 10 + MEGABYTES_A_GIGABYTE - 1) / MEGABYTES_A_GIGABYTE;
-        return GameText.resolve(ExtendedCdDriveTexts.GB.with(tenths < 100
-                ? String.format(Locale.ROOT, "%d.%d", tenths / 10, tenths % 10)
-                : String.format(Locale.ROOT, "%,d", (tenths + 9) / 10)));
     }
 
     /* The slowest format among the blanks in the writing trays, which sets the copy's pace; or none. */

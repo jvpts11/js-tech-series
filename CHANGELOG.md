@@ -4190,11 +4190,21 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a printed sheet, a map and an enchanted book each have their own paper and ink. Its header names the scanner in its
   era's accent and says which page it reads ("PAGE 3 OF 12"), what it makes and its pace sit in readouts, Scan stays
   lit while it reads, a map goes by its number, and the window takes the places of its design.
-- (Computers) The Extended CD Drive's window says what disc it reads by the disc's own kind and its size in megabytes
-  or gigabytes ("CD-ROM, 1 MB", "DVD-ROM, 3.9 GB"), where it gave only the format and called any disc under a
-  megabyte "0 MB"; each writing tray is a row of its own, the window is headed by the tower's name in its era's
+- (Computers) The Extended CD Drive's window says what disc it reads by the disc's own kind and its size ("CD-ROM,
+  120 KB", "DVD-ROM, 3.9 GB"), where it gave only the format and called any disc under a megabyte "0 MB"; each
+  writing tray is a row of its own, the window is headed by the tower's name in its era's
   accent without the era, Copy stays lit while it copies, the formats it writes fit their readout ("CD, DVD, BD"),
   and the window takes the places of its design.
+- (Computers) Easy Disc Creator's Disc Copier is drawn as designed: Roxa's band over its Copy tab, each drive chosen
+  from a list that says what every drive holds, a line under each field saying what the chosen one holds ("Plant
+  backup: a CD-RW, 150 KB of 700 MB", "A blank CD-RW, 700 MB: room for the copy", a music disc's song and length),
+  the speed with how long the copy will take, and the copies in a list; it opens with the first disc and the first
+  blank already chosen. While it copies, the steps done are green and Frames XP's bar fills in blocks, as Frames
+  XP's progress bars now all do. Its messages are boxes with the error mark, or the blank they ask for, beside the
+  words. Names of discs and drives are in the player's language, where they were in the server's.
+- (Computers) A copy between two drives is written at the blank's own speed, as Easy Disc Creator says, where it was
+  written at the speed of the disc copied. A vinyl copy waiting for its blank shows its recording done and its cut
+  waiting, where it showed a disc copy's steps, and names the song recorded without its file's extension.
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on

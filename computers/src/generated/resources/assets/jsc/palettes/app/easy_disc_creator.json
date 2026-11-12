@@ -1,8 +1,10 @@
 {
-  "banner": "#FFFBF8FD",
-  "line": "#FFE8DCEF",
-  "logo": "#FF6A2C8A",
-  "logoInk": "#FFFFFFFF",
-  "name": "#FF4B2066",
-  "sub": "#FF7A6A84"
+  "banner": "#FFE2D0EA",
+  "bannerTop": "#FFFFFFFF",
+  "done": "#FF2E7D32",
+  "line": "#FF7B2D8E",
+  "logo": "#FF7B2D8E",
+  "logoInk": "#FFE7D2EE",
+  "name": "#FF7B2D8E",
+  "sub": "#FF5A3A66"
 }

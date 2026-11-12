@@ -45,6 +45,11 @@ final class LunaChrome implements IFormChrome {
     }
 
     @Override
+    public boolean blockProgress() {
+        return true;
+    }
+
+    @Override
     public int edge(final OsSkin skin) {
         return this.palette.get().edge();
     }

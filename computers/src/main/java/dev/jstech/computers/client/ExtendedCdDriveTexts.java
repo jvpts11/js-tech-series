@@ -27,10 +27,8 @@ final class ExtendedCdDriveTexts {
     static final TextKey NOTE_2 = TextKey.of("jsc.extended_cd_drive.note_2", "Disc Creator copies.");
     static final TextKey NO_DISC = TextKey.of("jsc.extended_cd_drive.no_disc", "Put the disc to");
     static final TextKey NO_DISC_2 = TextKey.of("jsc.extended_cd_drive.no_disc_2", "copy here.");
-    /** The kind of disc read and its size, which is {@link #MB} or {@link #GB}. */
+    /** The kind of disc read and how much it holds. */
     static final TextKey SIZE = TextKey.of("jsc.extended_cd_drive.size", "%s, %s");
-    static final TextKey MB = TextKey.of("jsc.extended_cd_drive.mb", "%s MB");
-    static final TextKey GB = TextKey.of("jsc.extended_cd_drive.gb", "%s GB");
     /** Blu-ray by the mark its discs carry, where the formats a tower writes are listed. */
     static final TextKey BD = TextKey.of("jsc.extended_cd_drive.bd", "BD");
     static final TextKey TRAY = TextKey.of("jsc.extended_cd_drive.tray", "W%s");
