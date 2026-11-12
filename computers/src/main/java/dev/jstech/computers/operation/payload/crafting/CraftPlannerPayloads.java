@@ -9,6 +9,7 @@ package dev.jstech.computers.operation.payload.crafting;
 
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.client.os.CraftPlannerApp;
+import dev.jstech.computers.crafting.CraftPlanner;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.ProcessingPattern;
 import dev.jstech.computers.engine.ICraftPlanning;
@@ -20,6 +21,7 @@ import dev.jstech.computers.operation.payload.RequestCraftPlannerPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.util.Sizes;
 import dev.jstech.core.uuid.NetworkUuid;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Set;
@@ -41,6 +43,9 @@ import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHo
  * The Craft Planner's payloads: the tree of what a craft needs, step by step.
  */
 public final class CraftPlannerPayloads {
+
+    /* How many times a short plan is planned again with what it still lacks before it is drawn as it stands. */
+    private static final int TOP_UP_PASSES = 3;
 
     private CraftPlannerPayloads() {
     }
@@ -85,13 +90,14 @@ public final class CraftPlannerPayloads {
         final var machines = mf.networkProcessingPatterns();
         final Map<StorageKey, Long> stock = mf.networkIndex().snapshot();
         final var plan = planner.plan(key, quantity, patterns, machines, stock);
-        if (plan.steps().isEmpty()) {
+        final var whole = wholePlan(planner, plan, key, quantity, patterns, machines, stock);
+        if (whole.steps().isEmpty()) {
             return new CraftPlannerPayload(key.stack(1), quantity, false, false, 0L, 0L,
                     List.of(), List.of(), List.of());
         }
         final long maxFeasible = planner.maxFeasible(key, quantity, patterns, machines, stock);
         final List<CraftPlannerPayload.Stage> stages = new ArrayList<>();
-        for (final var step : plan.steps()) {
+        for (final var step : whole.steps()) {
             if (stages.size() >= CraftPlannerPayload.MAX_STAGES) {
                 break;
             }
@@ -99,7 +105,7 @@ public final class CraftPlannerPayloads {
                     step.produced()));
         }
         final List<CraftPlanPayload.Row> ingredients = new ArrayList<>();
-        for (final Map.Entry<StorageKey, Long> e : plan.rawConsumption().entrySet()) {
+        for (final Map.Entry<StorageKey, Long> e : whole.rawConsumption().entrySet()) {
             if (ingredients.size() >= CraftPlannerPayload.MAX_INGREDIENTS) {
                 break;
             }
@@ -110,6 +116,51 @@ public final class CraftPlannerPayloads {
         treeWalk(key, Math.max(1, quantity), 0, patterns, machines, tree, new HashSet<>());
         return new CraftPlannerPayload(key.stack(1), quantity, true, plan.feasible(), plan.produced(),
                 maxFeasible, stages, ingredients, tree);
+    }
+
+    /*
+     * The plan drawn whole: one the stock falls short of is planned again as if the network held the raw materials it
+     * lacks, so each stage shows all its runs and each ingredient what the plan needs against what the network holds.
+     * A raw material is one no pattern on the network makes; a short part the network makes is planned, not stocked.
+     */
+    private static CraftPlanner.Plan wholePlan(final ICraftPlanning planner, final CraftPlanner.Plan plan,
+                                               final StorageKey key, final long quantity,
+                                               final List<CraftingPattern> patterns,
+                                               final List<ProcessingPattern> machines,
+                                               final Map<StorageKey, Long> stock) {
+        CraftPlanner.Plan whole = plan;
+        final Map<StorageKey, Long> topped = new HashMap<>(stock);
+        for (int pass = 0; pass < TOP_UP_PASSES && !whole.feasible(); pass++) {
+            boolean added = false;
+            for (final Map.Entry<StorageKey, Long> lacking : whole.missing().entrySet()) {
+                if (!lacking.getKey().equals(key) && !makes(lacking.getKey(), patterns, machines)) {
+                    topped.merge(lacking.getKey(), lacking.getValue(), Long::sum);
+                    added = true;
+                }
+            }
+            if (!added) {
+                break;
+            }
+            whole = planner.plan(key, quantity, patterns, machines, topped);
+        }
+        return whole;
+    }
+
+    /* Whether a bench or a machine pattern on the network makes {@code key}. */
+    private static boolean makes(final StorageKey key, final List<CraftingPattern> patterns,
+                                 final List<ProcessingPattern> machines) {
+        for (final CraftingPattern pattern : patterns) {
+            if (StorageKey.of(pattern.result()).equals(key)) {
+                return true;
+            }
+        }
+        for (final ProcessingPattern machine : machines) {
+            final var output = machine.primaryOutput();
+            if (output != null && output.key().equals(key)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** Recursively expands one recipe path (crafting preferred, then a machine) into a pre-order tree. */

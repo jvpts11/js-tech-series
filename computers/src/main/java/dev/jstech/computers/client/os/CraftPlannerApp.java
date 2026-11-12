@@ -214,6 +214,11 @@ public final class CraftPlannerApp implements IDesktopApp {
         return plan != null && plan.craftable() && plan.feasible();
     }
 
+    /** How many of the plan's ingredients the network holds less of than the plan needs. */
+    public int shortIngredients() {
+        return shortRows().size();
+    }
+
     /** How many stages the plan of the picked target runs, or 0 while there is none. */
     public int planStages() {
         return plan == null ? 0 : plan.stages().size();
@@ -222,6 +227,21 @@ public final class CraftPlannerApp implements IDesktopApp {
     /** The desktop point of the Craft button as the last frame laid it out. */
     public int[] craftPoint() {
         return new int[] {craft.x() + craft.width() / 2, craft.y() + craft.height() / 2};
+    }
+
+    /** The desktop point of the quantity's + button as the last frame laid it out. */
+    public int[] plusPoint() {
+        return new int[] {qtyPlus.x() + qtyPlus.width() / 2, qtyPlus.y() + qtyPlus.height() / 2};
+    }
+
+    /** The desktop point of the Print button as the last frame laid it out. */
+    public int[] printPoint() {
+        return new int[] {print.x() + print.width() / 2, print.y() + print.height() / 2};
+    }
+
+    /** The Print window this planner opens over itself. */
+    public PrintDialog printDialog() {
+        return printDialog;
     }
 
     private void requestPlan() {
@@ -327,8 +347,14 @@ public final class CraftPlannerApp implements IDesktopApp {
         for (final var c : List.of(pillLabel, summaryLabel, viewToggle, craft, print)) {
             c.setVisible(craftable);
         }
-        // Nothing to craft with while an ingredient is short: the button greys until the network has it all.
-        craft.setEnabled(craftable && shortRows().isEmpty());
+        /*
+         * Nothing to craft with while an ingredient is short: the button greys until the network has it all, and the
+         * list on paper, what the plan still offers, takes the window's default button.
+         */
+        final boolean ready = craftable && shortRows().isEmpty();
+        craft.setEnabled(ready);
+        craft.setPrimary(ready);
+        print.setPrimary(!ready);
         final boolean steps = craftable && !treeMode;
         final boolean tree = craftable && treeMode;
         for (final var c : List.of(stagesHeader, stageList, ingredientsHeader, ingredientList)) {
@@ -363,7 +389,6 @@ public final class CraftPlannerApp implements IDesktopApp {
         final String cap = craft.label();
         final int cw = font.width(cap) + 14;
         craft.setBounds(rx + rw - cw, y + h - 13, cw, 13);
-        craft.setPrimary(true);
         final int printW = font.width(print.label()) + 14;
         print.setBounds(rx + rw - cw - 4 - printW, y + h - 13, printW, 13);
         if (tree) {
@@ -504,67 +529,108 @@ public final class CraftPlannerApp implements IDesktopApp {
 
     /*
      * The plan on paper, the shopping list: the target, the stages, the ingredients with what the network holds, and
-     * what it still lacks, each missing line on a grey band, then where and when it was printed.
+     * what it still lacks, each missing line on a grey band, then where and when it was printed. The three tables share
+     * their first column, so the runs, the needs and the missing counts start at one place down the page, and every
+     * figure stands right-aligned under its head, a missing count under the needs.
      */
     private void print() {
         if (plan == null || selected.isEmpty()) {
             return;
         }
-        final List<String> lines = new ArrayList<>();
-        lines.add(GameText.resolve(PRINT_TARGET.with(JsTechTheme.fmt(qty), selected.getHoverName().getString())));
-        lines.add("");
-        lines.add(GameText.resolve(STAGES));
+        final List<CraftPlanPayload.Row> missing = shortRows();
+        final String needWord = GameText.resolve(PRINT_NEED);
+        final String haveWord = GameText.resolve(PRINT_HAVE);
+        int needW = needWord.length();
+        int haveW = haveWord.length();
+        for (final CraftPlanPayload.Row row : plan.ingredients()) {
+            needW = Math.max(needW, JsTechTheme.fmt(row.need()).length());
+            haveW = Math.max(haveW, JsTechTheme.fmt(row.have()).length());
+        }
+        for (final CraftPlanPayload.Row row : missing) {
+            needW = Math.max(needW, JsTechTheme.fmt(row.need() - row.have()).length());
+        }
         final List<List<String>> stages = new ArrayList<>();
         for (int i = 0; i < plan.stages().size(); i++) {
             final CraftPlannerPayload.Stage stage = plan.stages().get(i);
             stages.add(List.of(GameText.resolve(PRINT_STAGE.with(i + 1, GameText.resolve(stage.name()))),
                     GameText.resolve((stage.machine() ? MACHINE_RUNS : BENCH_RUNS).with(stage.runs()))));
         }
-        lines.addAll(tableLines(stages, List.of()));
-        lines.add("");
         final List<List<String>> ingredients = new ArrayList<>();
         final List<Integer> shaded = new ArrayList<>();
-        ingredients.add(List.of(GameText.resolve(INGREDIENTS), GameText.resolve(PRINT_NEED),
-                GameText.resolve(PRINT_HAVE)));
+        ingredients.add(List.of(GameText.resolve(INGREDIENTS), figure(needWord, needW), figure(haveWord, haveW)));
         for (final CraftPlanPayload.Row row : plan.ingredients()) {
             if (row.have() < row.need()) {
                 shaded.add(ingredients.size());
             }
-            ingredients.add(List.of(row.item().getHoverName().getString(), JsTechTheme.fmt(row.need()),
-                    JsTechTheme.fmt(row.have())));
+            ingredients.add(List.of(row.item().getHoverName().getString(), figure(JsTechTheme.fmt(row.need()), needW),
+                    figure(JsTechTheme.fmt(row.have()), haveW)));
         }
-        lines.addAll(tableLines(ingredients, shaded));
-        final List<CraftPlanPayload.Row> missing = shortRows();
+        final List<List<String>> lacking = new ArrayList<>();
+        final List<Integer> every = new ArrayList<>();
         if (!missing.isEmpty()) {
-            lines.add("");
-            final List<List<String>> lacking = new ArrayList<>();
-            final List<Integer> every = new ArrayList<>();
             lacking.add(List.of(GameText.resolve(PRINT_MISSING), ""));
             every.add(0);
             for (final CraftPlanPayload.Row row : missing) {
                 every.add(lacking.size());
-                lacking.add(List.of(row.item().getHoverName().getString(), JsTechTheme.fmt(row.need() - row.have())));
+                lacking.add(List.of(row.item().getHoverName().getString(),
+                        figure(JsTechTheme.fmt(row.need() - row.have()), needW)));
             }
-            lines.addAll(tableLines(lacking, every));
+        }
+        final int first = firstColumn(stages, ingredients, lacking);
+        final List<String> lines = new ArrayList<>();
+        lines.add(GameText.resolve(PRINT_TARGET.with(JsTechTheme.fmt(qty), selected.getHoverName().getString())));
+        lines.add("");
+        lines.add(GameText.resolve(STAGES));
+        lines.addAll(tableLines(stages, List.of(), first));
+        lines.add("");
+        lines.addAll(tableLines(ingredients, shaded, first));
+        if (!lacking.isEmpty()) {
+            lines.add("");
+            lines.addAll(tableLines(lacking, every, first));
         }
         lines.add("");
         final String program = ActiveDesktop.windowName(PROGRAM);
         lines.add(GameText.resolve(PRINTED_FROM.with(program, ActiveDesktop.machineName())));
         final Minecraft mc = Minecraft.getInstance();
         final long dayTime = mc.level == null ? 0L : mc.level.getDayTime();
-        lines.add(GameText.resolve(PRINTED_AT.with(GameCalendar.day(dayTime), String.format(Locale.ROOT, "%02d:%02d",
-                GameCalendar.hourOf(dayTime), GameCalendar.minuteOf(dayTime)))));
+        // The first day is Day 1, as the desktop's clock counts them.
+        lines.add(GameText.resolve(PRINTED_AT.with(GameCalendar.day(dayTime) + 1, String.format(Locale.ROOT,
+                "%02d:%02d", GameCalendar.hourOf(dayTime), GameCalendar.minuteOf(dayTime)))));
         printDialog.show(PrintDialog.Document.text(GameText.resolve(PRINT_TITLE), program, String.join("\n", lines)));
     }
 
-    /* A table's lines, those of the rows at {@code shaded} on a grey band. */
-    private static List<String> tableLines(final List<List<String>> rows, final List<Integer> shaded) {
-        final String[] lines = PrintLayout.table(rows, false).split("\n");
+    /* A table's lines, its first column {@code first} wide, those of the rows at {@code shaded} on a grey band. */
+    private static List<String> tableLines(final List<List<String>> rows, final List<Integer> shaded,
+                                           final int first) {
+        final List<List<String>> padded = new ArrayList<>();
+        for (final List<String> row : rows) {
+            final List<String> cells = new ArrayList<>(row);
+            cells.set(0, cells.getFirst() + " ".repeat(Math.max(0, first - cells.getFirst().length())));
+            padded.add(cells);
+        }
+        final String[] lines = PrintLayout.table(padded, false).split("\n");
         final List<String> out = new ArrayList<>();
         for (int i = 0; i < lines.length; i++) {
             out.add(shaded.contains(i) ? PrintLayout.shaded(lines[i]) : lines[i]);
         }
         return out;
+    }
+
+    /* The widest first cell of these tables, as wide as a printed column goes. */
+    @SafeVarargs
+    private static int firstColumn(final List<List<String>>... tables) {
+        int widest = 0;
+        for (final List<List<String>> table : tables) {
+            for (final List<String> row : table) {
+                widest = Math.max(widest, row.getFirst().length());
+            }
+        }
+        return Math.min(widest, PrintLayout.MAX_COLUMN);
+    }
+
+    /* A figure right-aligned in {@code width} characters. */
+    private static String figure(final String value, final int width) {
+        return " ".repeat(Math.max(0, width - value.length())) + value;
     }
 
     private List<CraftCatalogPayload.Entry> filtered() {

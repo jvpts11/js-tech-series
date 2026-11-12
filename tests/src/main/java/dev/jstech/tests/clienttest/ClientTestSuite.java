@@ -25,6 +25,7 @@ import dev.jstech.tests.clienttest.computers.CableLineClientTests;
 import dev.jstech.tests.clienttest.computers.CdeClientTests;
 import dev.jstech.tests.clienttest.computers.ClusterDiagnosticsClientTests;
 import dev.jstech.tests.clienttest.computers.ComputerCaseClientTests;
+import dev.jstech.tests.clienttest.computers.CraftPlannerClientTests;
 import dev.jstech.tests.clienttest.computers.CraftingChainClientTests;
 import dev.jstech.tests.clienttest.computers.CrashPagesClientTests;
 import dev.jstech.tests.clienttest.computers.CreativeTabsClientTests;
@@ -546,6 +547,7 @@ public final class ClientTestSuite {
             LargeScalePrinterClientTests.class,
             TouchMonitorClientTests.class,
             ClusterDiagnosticsClientTests.class,
+            CraftPlannerClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,

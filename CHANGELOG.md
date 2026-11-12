@@ -4224,6 +4224,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   in the desktop's full text, its figures a third larger, the last hour on a fine grid under a legend of swatches,
   and the alerts' header on a band; it keeps the whole chart, four alerts and both notes in a maximized window. A
   section with one rack or one server says so in the singular, where it said "1 racks" and "1 servers".
+- (Computers) The Craft Planner shows a plan the network falls short of whole: each stage at all its runs and each
+  ingredient what the plan needs against what the network holds, so the red Missing pill names what is short and
+  Craft stays greyed while it is, where the plan was cut to the stock, offered to craft only part of it, and said an
+  item whose raw material the network had none of could not be crafted. While Craft is greyed, Print is the window's
+  default button. The printed list lines its three tables up on one column with each figure right-aligned under its
+  head, and dates itself from Day 1 as the desktop's clock does, where it said Day 0 on the first day.
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
