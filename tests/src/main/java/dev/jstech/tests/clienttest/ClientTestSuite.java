@@ -111,6 +111,7 @@ import dev.jstech.tests.clienttest.computers.PeripheralCableClientTests;
 import dev.jstech.tests.clienttest.computers.PowerClientTests;
 import dev.jstech.tests.clienttest.computers.PrinterClientTests;
 import dev.jstech.tests.clienttest.computers.ProphetClientTests;
+import dev.jstech.tests.clienttest.computers.QuinceClientTests;
 import dev.jstech.tests.clienttest.computers.RackClientTests;
 import dev.jstech.tests.clienttest.computers.RackCrashClientTests;
 import dev.jstech.tests.clienttest.computers.RedstoneInterfaceClientTests;
@@ -550,6 +551,7 @@ public final class ClientTestSuite {
             ClusterDiagnosticsClientTests.class,
             CraftPlannerClientTests.class,
             UpdateBadgeClientTests.class,
+            QuinceClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,

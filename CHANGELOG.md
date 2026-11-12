@@ -4230,6 +4230,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   item whose raw material the network had none of could not be crafted. While Craft is greyed, Print is the window's
   default button. The printed list lines its three tables up on one column with each figure right-aligned under its
   head, and dates itself from Day 1 as the desktop's clock does, where it said Day 0 on the first day.
+- (Computers) Quince: the startup disk's icon opens the Seeker on what the disk holds, where it opened on an empty
+  folder; quinceOS and Quince OS X Server draw Quince OS X's program icons in the Dock and on the desktop, where
+  most were plain stand-ins; the QuinceTime Player has its place and its icon in the Dock, after Preview; and an
+  all-in-one's name, light and vents stand under its glass as its face is designed, clear of the qRusset G3's
+  striped foot, which shows its shell's two tones side by side.
 - (Computers) Settings lists a computer's programs in the order they were installed, where the order changed from one
   time to the next, and its Programs page scrolls when there are more programs than the window holds, where the
   last ones ran off the window.

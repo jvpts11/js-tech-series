@@ -66,6 +66,8 @@ final class DesktopLaunchers {
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "quince_disk");
     /** The startup disk's name, as Quince's systems name the disk they install on. */
     static final TextKey QUINCE_DISK = TextKey.of("jsc.quince.disk_name", "Quince HD");
+    /* The system disk's root as the explorer asks for it: no path, where "/" would ask for a folder of that name. */
+    private static final String DISK_ROOT = "";
 
     DesktopLaunchers(final DesktopState desktop, final BlockPos host, final BlockPos monitorPos,
                      final ResourceLocation desktopId, final ResourceLocation osId,
@@ -167,10 +169,13 @@ final class DesktopLaunchers {
         if (desktop.panelStyle() == PanelStyle.PLAYER) {
             return;
         }
-        // Quince's desktops show the startup disk first, at the top of the right edge; opening it opens the Seeker.
+        /*
+         * Quince's desktops show the startup disk first, at the top of the right edge; opening it opens the Seeker at
+         * the disk's root, which the explorer names with no path at all.
+         */
         if (desktop.quince()) {
             icons.add(new Launcher(WindowKeys.of(FILES), GameText.resolve(QUINCE_DISK), QUINCE_DISK_ICON,
-                    () -> new FilesApp(host, desktopId.getPath(), "/", monitorPos)));
+                    () -> new FilesApp(host, desktopId.getPath(), DISK_ROOT, monitorPos)));
         }
         final DeskTrash trash = desktop.trash();
         if (trash.onWallpaper()) {

@@ -95,7 +95,7 @@ final class QuinceShell {
     private static final int PAD = 10;
     /** The Dock's programs, in its order; the Quince Store goes in before System Preferences from the Standard on. */
     private static final List<String> DOCK = List.of("files", "expedition", "qtunes", "editor", "preview",
-            "settings", "command_prompt");
+            "media_player", "settings", "command_prompt");
 
     QuinceShell(final DesktopState desktop) {
         this.desktop = desktop;

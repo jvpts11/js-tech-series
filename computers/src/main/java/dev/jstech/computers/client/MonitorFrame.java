@@ -41,6 +41,13 @@ public final class MonitorFrame {
 
     private static final float LABEL_SCALE = 0.75f;
 
+    /*
+     * How far under an all-in-one's glass its name, its light and its vents stand: just under the glass, clear of the
+     * foot along the bottom, and lower on a chin of its own colour, in the chin.
+     */
+    private static final int AIO_ROW_DY = 4;
+    private static final int CHIN_ROW_DY = 7;
+
     /**
      * Draws the era's monitor body around the glass rectangle {@code (sx, sy)} sized {@code sw x sh}, in absolute
      * screen coordinates. Call from {@code renderBg} before drawing the software window, which paints over the glass.
@@ -89,9 +96,9 @@ public final class MonitorFrame {
             g.fill(geo.x(), geo.chinY() - 6, geo.right(), geo.chinY() - 5, inks.chinLight());
         }
         if (face.foot()) {
-            // The translucent shell under the face shows along the foot, in its two tones.
-            for (int x = geo.x() + 1; x < geo.right() - 1; x += 2) {
-                g.fill(x, geo.bottom() - 9, x + 1, geo.bottom() - 1, ((x - geo.x()) / 2) % 2 == 0
+            // The translucent shell under the face shows along the foot, its two tones in stripes side by side.
+            for (int x = geo.x() + 1; x < geo.right() - 1; x++) {
+                g.fill(x, geo.bottom() - 9, x + 1, geo.bottom() - 1, (x - geo.x()) % 2 == 0
                         ? inks.chinLight() : inks.chinDeep());
             }
         }
@@ -100,13 +107,14 @@ public final class MonitorFrame {
         g.fill(geo.x(), geo.bottom() - 1, geo.right(), geo.bottom(), inks.dark());
         g.fill(geo.right() - 1, geo.y(), geo.right(), geo.bottom(), inks.dark());
         g.fill(sx - 1, sy - 1, sx + sw + 1, sy + sh + 1, inks.dark());
-        final int rowY = geo.chinY() + Math.max(0, (s.chinHeight() - GLYPH_H) / 2);
+        final int rowY = sy + sh + (face.chin() ? CHIN_ROW_DY : AIO_ROW_DY);
         Draw.text(g, font, face.label(), geo.x() + 8, rowY, inks.label());
         final int ledX = geo.right() - 11;
         g.fill(ledX, rowY, ledX + 5, rowY + 5, s.ledColor());
         int vx = ledX - 8;
+        // The vents are the slim monitor's, in its own grey, on every face.
         for (int i = 0; i < 2; i++) {
-            g.fill(vx - 12, rowY + 1, vx, rowY + 4, inks.dark());
+            g.fill(vx - 12, rowY + 1, vx, rowY + 4, s.ventColor());
             vx -= 16;
         }
     }

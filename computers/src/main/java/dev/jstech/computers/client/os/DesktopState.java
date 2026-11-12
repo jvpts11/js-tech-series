@@ -436,10 +436,11 @@ final class DesktopState {
     /**
      * The icon set to draw programs with. A period desktop asks for its own artwork first and falls back to that
      * desktop's modern icons, so a Legacy KDE still looks like KDE even before period icons are drawn for it; a
-     * Transition one draws the glossy set of its time.
+     * Transition one draws the glossy set of its time, and Quince's Server and quinceOS draw Quince OS X's, as their
+     * look says.
      */
     String icons() {
-        if (transitionPanel()) {
+        if (transitionPanel() || quince()) {
             return prefs.skin().iconSet();
         }
         return periodPanel() ? desktopId.getPath() + ProgramIcons.PERIOD_SUFFIX : desktopId.getPath();
