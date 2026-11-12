@@ -968,6 +968,25 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- Disks: a partition asked for with a size past what a number holds is refused, where its size wrapped
+  round and it was made; a partition named by a number past any partition's names none, where the command acted on
+  the one the number wrapped round to; and formatting another disk that carries a system no longer takes a
+  Mainframe's installed services with it, which only the disk it starts from does.
+- The Ion Implanter and the Advanced Lithography Station go on with the next layers while the dust or tin
+  left over waits in its slot, where they stood still until it was taken out; and an Electronics Workbench goes on
+  with the part under way when its chunk loads again, where it started the part over.
+- Σ#: a value sent on a channel, written longer than it weighs as a list of numbers is, reaches the
+  programs hearing it, where it stopped the server's tick, and one written past 128K letters is refused where it is
+  sent, as a generic component's is; a text too big for the program stops it before it is built (`Text.Format`,
+  `Text.Replace`, `Regex.Replace`, a `StringBuilder`'s `Append` and `ToString`), where it was built first and could
+  run the server out of memory; a pattern read reads at most 16M letters a call, and one nested too deep to compile
+  stops the program; a system registers at most 64 services, and a program watches at most 64 things at once.
+- Teracoin: the first window of blocks is timed from the first block found, so a world idle a long while
+  meets quick blocks as quick; a wallet whose file cannot be written leaves no address behind; a name already taken
+  in a folder written with its slash is seen as taken; and two miners off any network standing at the same place in
+  two worlds are told apart.
+- On the classic Quince systems, a question or a note is their own alert, the stop or the caution sign
+  beside the words and the round buttons along its foot, where it was the dialog of the other desktops.
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
   works through its computer.
 - The Network Interactor's Operations tab gives each Operation its own state, where it read the states in

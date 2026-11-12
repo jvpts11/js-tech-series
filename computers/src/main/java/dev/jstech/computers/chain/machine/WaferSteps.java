@@ -127,6 +127,8 @@ final class WaferSteps {
             if (layersLeft <= 0) {
                 needs.item(nugget(Element.TIN), 1);
                 left = DROPLET_LAYERS;
+            } else {
+                needs.spare(stack -> stack.is(nugget(Element.TIN)));
             }
             left--;
         }
@@ -198,12 +200,16 @@ final class WaferSteps {
         if (held == null) {
             return Optional.empty();
         }
+        final Item phosphorus = MaterialUses.item(Elements.of(Element.PHOSPHORUS), Forms.DUST).get();
+        final Item boron = MaterialUses.item(Elements.of(Element.BORON), Forms.DUST).get();
+        final Predicate<ItemStack> dopant = stack -> stack.is(phosphorus) || stack.is(boron);
         int left = layersLeft;
         if (layersLeft <= 0) {
-            final Item phosphorus = MaterialUses.item(Elements.of(Element.PHOSPHORUS), Forms.DUST).get();
-            final Item boron = MaterialUses.item(Elements.of(Element.BORON), Forms.DUST).get();
-            needs.item(stack -> stack.is(phosphorus) || stack.is(boron), 1);
+            needs.item(dopant, 1);
             left = DOPED_LAYERS;
+        } else {
+            // The dust left over waits for the layers it dopes after this one's; it does not stop this one.
+            needs.spare(dopant);
         }
         final int after = left - 1;
         return needs.make(held.next(WaferWork.Step.DEPOSITION), machine, worked.getFirst())
@@ -508,6 +514,14 @@ final class WaferSteps {
 
         void item(final Item wanted, final int count) {
             item(stack -> stack.is(wanted), count);
+        }
+
+        /* A slot holding what {@code wanted} accepts waits there for later work, and this work takes nothing of it. */
+        void spare(final Predicate<ItemStack> wanted) {
+            final int slot = find(wanted);
+            if (slot >= 0) {
+                slots[slot] = true;
+            }
         }
 
         void item(final Predicate<ItemStack> wanted, final int count) {

@@ -134,7 +134,8 @@ public class WorkbenchBlockEntity extends SyncedBlockEntity {
         if (changed) {
             changed = false;
             final Match found = find(level);
-            if (found == null || working == null || !found.holder().id().equals(working.holder().id())) {
+            // Loaded with none found yet, the bench goes on with the progress it saved on the part its trays hold.
+            if (found == null || working != null && !found.holder().id().equals(working.holder().id())) {
                 progress.set(0);
             }
             working = found;

@@ -113,6 +113,11 @@ final class ProgramWatches {
         this.named = null;
     }
 
+    /** Whether a watch kept is on {@code item} already. */
+    boolean watches(final String item) {
+        return this.items.contains(item);
+    }
+
     /**
      * Everything being watched, each once, in the order the watches kept first name it.
      *

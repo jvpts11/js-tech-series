@@ -588,7 +588,8 @@ final class OsSession {
         if (this.bootDisk == slot) {
             this.bootDisk = -1;
         }
-        if (result == OsDisks.FormatResult.ERASED_SYSTEM) {
+        // Only the system the machine starts from takes its software with it: another disk's system is just erased.
+        if (result == OsDisks.FormatResult.ERASED_SYSTEM && runningDisk) {
             if (runningConsole != null) {
                 runningConsole.wipeSoftware();
             }

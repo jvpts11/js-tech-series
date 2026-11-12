@@ -45,13 +45,16 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
@@ -161,6 +164,31 @@ public final class ChainGameTests {
             helper.assertTrue(bench.trays().getStackInSlot(0).isEmpty() && bench.trays().getStackInSlot(7).isEmpty(),
                     "its ingredients taken from their trays, wherever they lay");
         });
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void bench_goesOnWithItsProgressWhenItIsLoadedAgain(final GameTestHelper helper) {
+        final WorkbenchBlockEntity bench = bench(helper, ChainBenches.VINTAGE.get(), BENCH);
+        bench.trays().insertItem(0, memoryChips(VINTAGE, 2), false);
+        bench.trays().insertItem(7, new ItemStack(ChainParts.ETCHED_BOARDS.get(VINTAGE).get()), false);
+        final double[] before = new double[1];
+        final BlockPos at = helper.absolutePos(BENCH);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(bench.progress() > 0.2, "the part is under way"))
+                .thenExecute(() -> {
+                    // Saved and loaded again, as when its chunk unloads and comes back.
+                    final ServerLevel level = helper.getLevel();
+                    before[0] = bench.progress();
+                    final CompoundTag saved = bench.saveWithFullMetadata(level.registryAccess());
+                    level.removeBlockEntity(at);
+                    level.setBlockEntity(BlockEntity.loadStatic(at, level.getBlockState(at), saved,
+                            level.registryAccess()));
+                })
+                .thenIdle(1)
+                .thenExecute(() -> helper.assertTrue(helper.getLevel().getBlockEntity(at)
+                        instanceof WorkbenchBlockEntity loaded && loaded.progress() >= before[0],
+                        "loaded again, it goes on from where it was: " + before[0]))
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 120)

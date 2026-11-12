@@ -592,8 +592,8 @@ A pattern is priced by the characters it reads, a credit for every 4096, and one
 256 times over, as a pattern that backtracks without end does, halts the program. `Find` and `Sort` are written into
 the program as a loop around the function, the way a `foreach` is, and cost what those calls cost; a sort compares
 by insertion. `File.Size`, `File.Changed` and `File.Watch` read the machine's own drives, and a watch costs nothing
-to set: the machine looks each tick, as it does for `Network.Watch`. Taking from an empty queue or stack throws an
-`InvalidOperationException`.
+to set: the machine looks each tick, as it does for `Network.Watch`, and a program watches at most 64 things at
+once. Taking from an empty queue or stack throws an `InvalidOperationException`.
 
 ## Messages, flying and Teracoin
 
@@ -713,8 +713,9 @@ program making one there stops, saying so.
 
 A `GenericComponent` is named by its kind, `new GenericComponent("somemod:dial")`, and holds any value of the
 language in `Data`: a number, a text, a list, a map, an object of the program's own. Not a handler, a file, a
-thread, a window or a widget, nothing that holds itself, and at most 32 KB, sixteen levels deep and 4096 parts;
-what it holds is a copy, made when it is handed over and charged by its size, and saved with the program. What
+thread, a window or a widget, nothing that holds itself, and at most 32 KB, sixteen levels deep and 4096 parts,
+written in at most 128K letters as it travels; what it holds is a copy, made when it is handed over and charged by
+its size, and saved with the program. What
 a player does to it comes back to the handler given to `OnAction` as a `ComponentAction`, with a `Name` and a
 `Value`. The mod that adds the kind draws it, and says what it takes; a game without that mod shows a
 placeholder naming the kind. A kind that reaches outside the game, such as one showing a web address, is off

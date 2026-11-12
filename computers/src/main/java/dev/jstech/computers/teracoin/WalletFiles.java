@@ -130,6 +130,11 @@ public final class WalletFiles {
         return out.toString();
     }
 
+    /** Where the wallet named {@code name} in {@code folder} is written, the folder's own slash kept to one. */
+    public static String pathOf(final String folder, final String name) {
+        return join(folder, name + EXTENSION);
+    }
+
     /**
      * Writes a new wallet holding {@code keys} as {@code name} in {@code folder}, and a copy at the top of the drive
      * {@code copyTo} when it is not 0. The path written, or null when it could not be.
@@ -137,7 +142,7 @@ public final class WalletFiles {
     @Nullable
     public static String write(final FileService files, final String folder, final String name,
                                final TeracoinChain.Keys keys, final char copyTo) {
-        final String path = join(folder, name + EXTENSION);
+        final String path = pathOf(folder, name);
         if (files.exists(path)) {
             return null;
         }

@@ -163,6 +163,17 @@ class TeracoinChainTest {
     }
 
     @Test
+    void resolve_timesTheFirstWindowFromTheFirstBlockFound() {
+        chain.resolve(0L, 0L, 0L, List.of(), new Fixed(0.0));
+        final long later = TeracoinRules.DEFAULT.targetTicks() * 1_000L;
+        for (int i = 0; i < TeracoinRules.ADJUST_EVERY; i++) {
+            mine(address(1), later + i);
+        }
+
+        assertEquals(START * 4, chain.difficulty(0L), "a world idle a long while still meets quick blocks as quick");
+    }
+
+    @Test
     void resolve_neverLowersTheDifficultyBelowItsFloor() {
         final long slow = TeracoinRules.DEFAULT.targetTicks() * 100L;
         for (int i = 0; i < TeracoinRules.ADJUST_EVERY; i++) {

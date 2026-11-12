@@ -113,7 +113,8 @@ public record DiskLayout(PartitionScheme scheme, long diskMb, List<PartitionEntr
         }
         for (final FreeSpace gap : free()) {
             if (atMb >= gap.startMb() && atMb < gap.startMb() + gap.sizeMb()) {
-                if (sizeMb <= 0L || atMb + sizeMb > gap.startMb() + gap.sizeMb()) {
+                // Measured as the room left from where it starts, which a size as big as a long cannot wrap past.
+                if (sizeMb <= 0L || sizeMb > gap.startMb() + gap.sizeMb() - atMb) {
                     return Change.refused(Refusal.NO_ROOM);
                 }
                 final int number = lowestFreeNumber();

@@ -68,7 +68,7 @@ public final class MinerRunner {
             miner.stalled(MinerSettings.Status.NOTHING_HASHES, "");
             return;
         }
-        offer(level, host.networkUuid(), at, miner, new Miner(machineKey(host, at), Printers.machineName(host),
+        offer(level, host.networkUuid(), at, miner, new Miner(machineKey(host, level, at), Printers.machineName(host),
                 kindOf(host, build), hashes), found -> JscEvents.awardHost(host, JscEvents.BLOCK_FOUND, ""));
     }
 
@@ -118,11 +118,15 @@ public final class MinerRunner {
         return MinerKinds.machine(host.machine().id());
     }
 
-    /** The machine {@code host} as the miners tell each other apart: its node, or where it stands. */
-    public static String machineKey(final IOsHost host, @Nullable final BlockPos at) {
+    /**
+     * The machine {@code host} as the miners tell each other apart: its node, or where it stands, in which world, since
+     * two machines off any network may stand at the same place in two worlds.
+     */
+    public static String machineKey(final IOsHost host, @Nullable final ServerLevel level,
+                                    @Nullable final BlockPos at) {
         if (host.nodeUuid() != null) {
             return host.nodeUuid().value().toString();
         }
-        return at == null ? "" : at.toShortString();
+        return level == null || at == null ? "" : level.dimension().location() + " " + at.toShortString();
     }
 }

@@ -72,9 +72,7 @@ final class TextFunctions {
                 context.text(String.valueOf(target).toLowerCase(Locale.ROOT), line));
         registry.onObject(TEXT, "Trim", TEXT, (context, target, arguments, line) ->
                 context.text(String.valueOf(target).strip(), line));
-        registry.onObject(TEXT, "Replace", TEXT, (context, target, arguments, line) -> context.text(
-                String.valueOf(target).replace(String.valueOf(arguments[0]), String.valueOf(arguments[1])), line),
-                TEXT, TEXT);
+        registry.onObject(TEXT, "Replace", TEXT, TextFunctions::replace, TEXT, TEXT);
         registry.onObject(TEXT, "Split", "List<string>", TextFunctions::split, "char");
     }
 
@@ -91,10 +89,39 @@ final class TextFunctions {
             }
             // What is inserted is never read again, so an argument that contains "{1}" keeps it as written.
             final int index = Integer.parseInt(pattern.substring(at + 1, end));
-            result.append(arguments[index + 1]);
+            final String inserted = String.valueOf(arguments[index + 1]);
+            // Asked before each insert, so a pattern repeating a long argument stops the program, not the server.
+            context.fitsText((long) result.length() + inserted.length(), line);
+            result.append(inserted);
             at = end + 1;
         }
         return context.text(result.toString(), line);
+    }
+
+    /* Every {@code found} in the text made the other, once the program is sure it has room for what that makes. */
+    private static Object replace(final IPureContext context, final Object target, final Object[] arguments,
+                                  final int line) {
+        final String text = String.valueOf(target);
+        final String found = String.valueOf(arguments[0]);
+        final String with = String.valueOf(arguments[1]);
+        context.fitsText(replacedLength(text, found, with), line);
+        return context.text(text.replace(found, with), line);
+    }
+
+    /*
+     * How long {@code text} comes out with every {@code found} made {@code with}, as Java replaces them: an empty one
+     * is found before every letter and after the last.
+     */
+    private static long replacedLength(final String text, final String found, final String with) {
+        long count = 0L;
+        if (found.isEmpty()) {
+            count = text.length() + 1L;
+        } else {
+            for (int at = text.indexOf(found); at >= 0; at = text.indexOf(found, at + found.length())) {
+                count++;
+            }
+        }
+        return text.length() + count * ((long) with.length() - found.length());
     }
 
     /* Where the closing brace is when a {n} naming one of the arguments starts at that place, otherwise -1. */

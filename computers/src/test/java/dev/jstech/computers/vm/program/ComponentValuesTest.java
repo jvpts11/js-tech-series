@@ -78,6 +78,19 @@ class ComponentValuesTest {
     }
 
     @Test
+    void decode_readsBackAValueThatTravelsLongerThanItWeighs() {
+        final Values.ListValue numbers = new Values.ListValue();
+        for (int i = 0; i < 1900; i++) {
+            numbers.items().add(Long.MIN_VALUE);
+        }
+
+        final String written = ComponentValues.travelling(numbers, 0);
+
+        assertTrue(written.length() > ComponentValues.MOST_BYTES, "a number is written longer than it weighs");
+        assertEquals(1900, ((List<?>) ComponentValues.decode(written)).size());
+    }
+
+    @Test
     void copy_isMadeOfPartsOfItsOwnOnTheHeap() {
         final Heap heap = new Heap(64 * 1024);
         final Values.ListValue list = new Values.ListValue();

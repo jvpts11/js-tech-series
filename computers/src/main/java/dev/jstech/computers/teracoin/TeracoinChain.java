@@ -119,6 +119,16 @@ public final class TeracoinChain {
         return new Keys(address, key);
     }
 
+    /**
+     * Takes back a wallet just made whose file could not be written, so a failed attempt leaves nothing behind; one
+     * that anything has reached already is kept.
+     */
+    public void forget(final String address) {
+        if (!balances.containsKey(address) && keys.remove(address) != null) {
+            version++;
+        }
+    }
+
     /** Whether {@code key} spends from {@code address}. */
     public boolean owns(final String address, final String key) {
         return !key.isEmpty() && key.equals(keys.get(address));
@@ -194,9 +204,6 @@ public final class TeracoinChain {
     public FoundBlock resolve(final long now, final long dayTime, final long worldDays, final List<MinerOffer> offers,
                               final RandomGenerator random) {
         confirmDue(now);
-        if (windowStart < 0L) {
-            windowStart = now;
-        }
         long total = 0L;
         for (final MinerOffer offer : offers) {
             total = saturatedAdd(total, Math.max(0L, offer.hashrate()));
@@ -212,6 +219,10 @@ public final class TeracoinChain {
         final MinerOffer finder = pick(offers, total, random);
         height++;
         version++;
+        // The first window of blocks is timed from the first block found, not from when the world began.
+        if (windowStart < 0L) {
+            windowStart = now;
+        }
         confirmWaiting();
         final long reward = rewardAt(height);
         issued += reward;

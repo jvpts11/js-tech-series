@@ -97,6 +97,13 @@ public final class Process {
     private static final TextKey NO_THREAD = TextKey.of("jsc.vm.process.no_thread", "there is no thread here");
     private static final TextKey NO_WATCH_HANDLER = TextKey.of("jsc.vm.process.no_watch_handler",
             "there is no handler to call for %s");
+    private static final TextKey TOO_MANY_WATCHED = TextKey.of("jsc.vm.process.too_many_watched",
+            "a program watches at most %s things at once");
+    /*
+     * The things a program may watch at once: a watch costs nothing to set, and the machine looks each thing up on
+     * every tick, so the count is what bounds that work.
+     */
+    private static final int MOST_WATCHED = 64;
 
     private final ProgramImage program;
     private final Heap heap;
@@ -1275,6 +1282,9 @@ public final class Process {
                             final Values.DelegateValue handler, final int line) {
         if (handler == null || handler.chain().isEmpty()) {
             throw new Halt(Halt.Reason.NO_OBJECT, line, NO_WATCH_HANDLER.with(item));
+        }
+        if (!this.watches.watches(item) && this.watches.watching().size() >= MOST_WATCHED) {
+            throw new Halt(Halt.Reason.REFUSED, line, TOO_MANY_WATCHED.with(MOST_WATCHED));
         }
         final Values.Obj token = new Values.Obj("Subscription");
         token.set("Id", this.watches.nextId());

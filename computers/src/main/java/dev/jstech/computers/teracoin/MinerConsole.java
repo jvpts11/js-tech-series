@@ -64,7 +64,7 @@ public final class MinerConsole {
 
     /** The machine, as the miners tell each other apart. */
     public String machine() {
-        return MinerRunner.machineKey(host, null);
+        return MinerRunner.machineKey(host, null, null);
     }
 
     /** How the miner and the chain stand now. */

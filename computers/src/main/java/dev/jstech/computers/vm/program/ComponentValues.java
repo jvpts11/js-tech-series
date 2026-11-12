@@ -42,6 +42,11 @@ public final class ComponentValues {
     public static final int MOST_BYTES = 32 * 1024;
     public static final int MOST_DEPTH = 16;
     public static final int MOST_NODES = 4096;
+    /*
+     * The most letters a value travels as. A number weighs eight bytes and is written in up to some twenty-six, so a
+     * value within the bounds above may run past its weight in letters; one that runs past this travels nowhere.
+     */
+    private static final int MOST_TEXT = 128 * 1024;
 
     private static final TextKey NO_HANDLER = TextKey.of("jsc.vm.component_values.no_handler",
             "a component holds values, not handlers");
@@ -55,6 +60,8 @@ public final class ComponentValues {
             "a component's value has at most %s parts");
     private static final TextKey TOO_BIG = TextKey.of("jsc.vm.component_values.too_big",
             "a component's value weighs at most %s bytes");
+    private static final TextKey TOO_LONG = TextKey.of("jsc.vm.component_values.too_long",
+            "a value travels written in at most %s letters");
 
     private ComponentValues() {
     }
@@ -88,7 +95,12 @@ public final class ComponentValues {
      */
     public static String travelling(final Object value, final int line) {
         new Walk(line).check(value, 0);
-        return encode(value);
+        final String text = encode(value);
+        // Checked here, where the program can be told, so the one it reaches never meets a value it cannot read.
+        if (text.length() > MOST_TEXT) {
+            throw new Halt(Halt.Reason.REFUSED, line, TOO_LONG.with(MOST_TEXT), Halt.Thrown.ARGUMENT);
+        }
+        return text;
     }
 
     /** The value a component holds as the run of letters it travels as. */
@@ -105,7 +117,7 @@ public final class ComponentValues {
      * @throws IllegalArgumentException when the text is not a value, or one past the bounds
      */
     public static Object decode(final String text) {
-        if (text.length() > MOST_BYTES) {
+        if (text.length() > MOST_TEXT) {
             throw new IllegalArgumentException("too long");
         }
         final Reader reader = new Reader(text);

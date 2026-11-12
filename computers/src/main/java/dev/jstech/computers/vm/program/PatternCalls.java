@@ -32,6 +32,8 @@ final class PatternCalls {
     /** How many times over a pattern may read its text, and a little more for a short one. */
     private static final long READS_PER_CHARACTER = 256L;
     private static final long READS_AT_LEAST = 65_536L;
+    /* However long the text, one call reads no more than this, so it never holds the server's tick for long. */
+    private static final long READS_AT_MOST = 16L * 1024L * 1024L;
 
     private static final TextKey NOT_A_PATTERN = TextKey.of("jsc.vm.pattern.not_a_pattern",
             "'%s' is not a pattern: %s");
@@ -66,9 +68,18 @@ final class PatternCalls {
                     return process.heap().allocate(all, all.bytes(), line);
                 }), TEXT, TEXT);
         ProcessCalls.bind(bindings, OWNER, "Replace", null, (process, target, arguments, line) ->
-                matched(process, arguments, line, matcher -> process.heap().text(
-                        matcher.replaceAll(Matcher.quoteReplacement(String.valueOf(arguments[2]))
-                                .replace("\\$", "$")), line)), TEXT, TEXT, TEXT);
+                matched(process, arguments, line, matcher -> {
+                    final String replacement = Matcher.quoteReplacement(String.valueOf(arguments[2]))
+                            .replace("\\$", "$");
+                    // Built a match at a time, each asked to fit, so a long replacement stops the program in time.
+                    final StringBuilder out = new StringBuilder();
+                    while (matcher.find()) {
+                        matcher.appendReplacement(out, replacement);
+                        process.heap().fitsText(out.length(), line);
+                    }
+                    matcher.appendTail(out);
+                    return process.heap().text(out.toString(), line);
+                }), TEXT, TEXT, TEXT);
         ProcessCalls.bind(bindings, OWNER, "Split", null, (process, target, arguments, line) ->
                 matched(process, arguments, line, matcher -> {
                     final Values.ListValue parts = new Values.ListValue();
@@ -97,9 +108,12 @@ final class PatternCalls {
         } catch (final PatternSyntaxException wrong) {
             throw new Halt(Halt.Reason.BAD_CAST, line, NOT_A_PATTERN.with(written, wrong.getDescription()),
                     Halt.Thrown.ARGUMENT);
+        } catch (final StackOverflowError deep) {
+            // Compiling recurses too, as deep as the pattern nests its groups.
+            throw new Halt(Halt.Reason.OUT_OF_RANGE, line, TOO_DEEP.with(written));
         }
-        final CountedText counted = new CountedText(text,
-                Math.max(READS_AT_LEAST, READS_PER_CHARACTER * text.length()));
+        final CountedText counted = new CountedText(text, Math.min(READS_AT_MOST,
+                Math.max(READS_AT_LEAST, READS_PER_CHARACTER * text.length())));
         try {
             return work.apply(pattern.matcher(counted));
         } catch (final CountedText.ReadTooOften stopped) {

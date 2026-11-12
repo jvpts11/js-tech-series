@@ -187,6 +187,16 @@ public final class Heap implements IPureContext {
         entry.bytes = bytes;
     }
 
+    /** Halts, as a text that does not fit would, before a text of {@code characters} letters is made too big. */
+    @Override
+    public void fitsText(final long characters, final int line) {
+        // Counted with no overflow: a count past what any heap holds is simply too big.
+        final long bytes = characters > (Long.MAX_VALUE - HEADER) / 2 ? Long.MAX_VALUE : HEADER + 2L * characters;
+        if (bytes > free()) {
+            throw new Halt(Halt.Reason.OUT_OF_MEMORY, line, this.outOfMemory(bytes));
+        }
+    }
+
     /**
      * Frees something. A second free of the same thing is not a mistake in itself, because the
      * reference that named it is set to null by the same statement; using a freed one is.

@@ -675,7 +675,15 @@ final class UiMutator {
     private long data(final Values.Obj self, final Object value, final int line) {
         final ComponentValues.Copied copied = ComponentValues.copy(value, this.heap, line);
         final IComponentRule kind = ComponentRules.find(String.valueOf(self.get(UiWidgets.KIND)));
-        if (kind != null && !kind.takesData(ComponentValues.decode(ComponentValues.encode(copied.value())))) {
+        // Written as it travels to the screens, which read nothing longer than that.
+        final String written;
+        try {
+            written = ComponentValues.travelling(copied.value(), line);
+        } catch (final Halt tooLong) {
+            this.letGoAll(copied.value());
+            throw tooLong;
+        }
+        if (kind != null && !kind.takesData(ComponentValues.decode(written))) {
             this.letGoAll(copied.value());
             throw new Halt(Halt.Reason.REFUSED, line, KIND_REFUSES.with(kind.id()));
         }

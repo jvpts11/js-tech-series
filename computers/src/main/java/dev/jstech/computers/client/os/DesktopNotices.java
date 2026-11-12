@@ -157,9 +157,14 @@ final class DesktopNotices {
         showError(GameText.resolve(DesktopTexts.ERROR), GameText.resolve(DesktopTexts.DAT_LOCKED));
     }
 
-    /** Asks a question over the whole desktop, running {@code yes} only when the answer is Yes. */
+    /**
+     * Asks a question over the whole desktop, running {@code yes} only when the answer is Yes; on a classic Quince
+     * system, as its own alert.
+     */
     void ask(final String title, final String message, @Nullable final Runnable yes) {
-        this.popup = new QuestionPopup(title, message, desktop.textFont(), yes);
+        final QuinceLook look = desktop.quince() ? desktop.quinceShell().look() : null;
+        this.popup = new QuestionPopup(title, message, desktop.textFont(), yes,
+                look != null && look.classic() ? look : null);
     }
 
     /** The question or note up over the desktop, or null while none is. */

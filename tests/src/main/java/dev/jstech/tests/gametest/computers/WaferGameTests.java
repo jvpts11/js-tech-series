@@ -119,6 +119,40 @@ public final class WaferGameTests {
         });
     }
 
+    @GameTest(template = ARENA, timeoutTicks = 800)
+    public static void implanter_dopesTheNextLayerWhileTheDustLeftWaits(final GameTestHelper helper) {
+        final BlockPos terminal = formed(helper, machine("ion_implanter"));
+        final Item phosphorus = MaterialUses.item(Elements.of(Element.PHOSPHORUS), Forms.DUST).get();
+        helper.startSequence()
+                .thenExecuteAfter(20, () -> {
+                    final IItemHandler in = machineAt(helper, terminal).getInventory();
+                    in.insertItem(0, wafer(1, WaferWork.Step.IMPLANT), false);
+                    in.insertItem(1, new ItemStack(phosphorus, 2), false);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(
+                        ((WaferMachineBlockEntity) machineAt(helper, terminal)).layersLeft() == 7,
+                        "the first layer takes a dust, good for seven more"))
+                .thenExecute(() -> {
+                    final ChainMachineBlockEntity implanter = machineAt(helper, terminal);
+                    final IItemHandler in = implanter.getInventory();
+                    for (int slot = 0; slot < in.getSlots(); slot++) {
+                        if (implanter.layout().isOutput(slot)) {
+                            in.extractItem(slot, 64, false);
+                        }
+                    }
+                    in.insertItem(0, wafer(2, WaferWork.Step.IMPLANT), false);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(
+                        ((WaferMachineBlockEntity) machineAt(helper, terminal)).layersLeft() == 6,
+                        "the next layer is doped with the dust still standing in its slot: "
+                                + machineAt(helper, terminal).status() + " "
+                                + contents(machineAt(helper, terminal).getInventory())))
+                .thenExecute(() -> helper.assertTrue(
+                        machineAt(helper, terminal).getInventory().getStackInSlot(1).getCount() == 1,
+                        "and that dust waits there, untouched"))
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 300)
     public static void deposition_laysTheWiringAndSendsTheWaferBack(final GameTestHelper helper) {
         final BlockPos terminal = formed(helper, machine("deposition_chamber"));
@@ -187,6 +221,15 @@ public final class WaferGameTests {
                     "no wafer is started with no mask, a stray block in the mask's slot");
             helper.succeed();
         });
+    }
+
+    /* What each slot of {@code inventory} holds, for a failure to say. */
+    private static String contents(final IItemHandler inventory) {
+        final StringBuilder out = new StringBuilder();
+        for (int slot = 0; slot < inventory.getSlots(); slot++) {
+            out.append(slot).append('=').append(inventory.getStackInSlot(slot)).append(' ');
+        }
+        return out.toString();
     }
 
     /* A Vintage memory chip's wafer in process on {@code layer}, for {@code step}. */

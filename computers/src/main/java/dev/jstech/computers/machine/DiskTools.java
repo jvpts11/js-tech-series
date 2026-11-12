@@ -107,7 +107,8 @@ public final class DiskTools {
         final ItemStack disk = machine.diskInSlot(slot);
         final DiskLayout layout = DiskPartitions.layout(disk);
         final Set<String> mounted = mounted(machine);
-        final int number = (int) command.number();
+        // A number past what a partition can have names none, never the one it would wrap round to.
+        final int number = whole(command.number());
         final boolean inUse = mounted.contains(command.disk() + ":" + number);
         final DiskReport.Refusal refusal = switch (command.verb()) {
             case DELETE -> inUse ? DiskReport.Refusal.MOUNTED : write(disk, layout.delete(number), false);
@@ -139,7 +140,7 @@ public final class DiskTools {
             case ROLLBACK -> onPartition(disk, number,
                     view -> DiskSnapshots.rollBack(view, command.word(), command.amount() > 0L));
             case DESTROY -> onPartition(disk, number, view -> DiskSnapshots.destroy(view, command.word()));
-            case DEFAULT -> onPartition(disk, number, view -> DiskSnapshots.startFrom(view, (int) command.amount()));
+            case DEFAULT -> onPartition(disk, number, view -> DiskSnapshots.startFrom(view, whole(command.amount())));
             case SCRUB -> onPartition(disk, number, view -> scrub(view, disksOf(machine), time));
             case STARTUP -> startup(machine, slot, disk, number, inUse);
             case LOOK -> null;
@@ -148,6 +149,11 @@ public final class DiskTools {
             machine.markChanged();
         }
         return refusal;
+    }
+
+    /* A number a path asked for as a partition's or a snapshot's, or -1, which names none, past what one can be. */
+    private static int whole(final long asked) {
+        return asked >= 0L && asked <= Integer.MAX_VALUE ? (int) asked : -1;
     }
 
     /* Writes a change to the table, emptying the partition it made or formatted. */

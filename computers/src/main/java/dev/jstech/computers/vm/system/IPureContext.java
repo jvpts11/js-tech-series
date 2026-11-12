@@ -23,4 +23,10 @@ public interface IPureContext {
 
     /** Changes what something already on the heap weighs, as a collection does when it grows or shrinks. */
     void resize(Object value, long bytes, int line);
+
+    /**
+     * Stops the program, as a heap with no room does, when a text of {@code characters} letters would not fit on it
+     * now: asked before such a text is built, so a text too big for the program is never made at all.
+     */
+    void fitsText(long characters, int line);
 }

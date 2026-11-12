@@ -105,7 +105,7 @@ public final class WalletPayloads {
                     break;
                 }
                 final String folder = payload.other().isBlank() ? WalletFiles.folder(host) : payload.other();
-                if (files.exists(folder.replace('\\', '/') + "/" + name + WalletFiles.EXTENSION)) {
+                if (files.exists(WalletFiles.pathOf(folder.replace('\\', '/'), name))) {
                     note = WalletStatePayload.NOTE_NAME_TAKEN;
                     break;
                 }
@@ -114,6 +114,7 @@ public final class WalletPayloads {
                 final String written = WalletFiles.write(files, folder.replace('\\', '/'), name, keys,
                         payload.amount() == 1L ? WalletFiles.copyDrive(files) : 0);
                 if (written == null) {
+                    state.chain().forget(keys.address());
                     note = WalletStatePayload.NOTE_NOT_WRITTEN;
                 } else {
                     path = written;

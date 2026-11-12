@@ -108,21 +108,29 @@ final class TextToolFunctions {
             return builder;
         });
         registry.onObject(BUILDER, "ToString", TEXT, (context, target, arguments, line) -> {
+            final Values.Obj builder = builder(target, line);
+            context.fitsText(length(builder), line);
             final StringBuilder whole = new StringBuilder();
-            for (final Object piece : ((Values.ListValue) builder(target, line).get(PIECES)).items()) {
+            for (final Object piece : ((Values.ListValue) builder.get(PIECES)).items()) {
                 whole.append(piece);
             }
             return context.text(whole.toString(), line);
         });
     }
 
+    /*
+     * A piece costs the builder only a place in its list, the same piece appended twice being one text; so the builder
+     * grows no longer than the program could ever make into a text, and stops it there.
+     */
     private static Values.Obj append(final IPureContext context, final Object target, final String piece,
                                      final int line) {
         final Values.Obj builder = builder(target, line);
+        final long after = (long) length(builder) + piece.length();
+        context.fitsText(after, line);
         final Values.ListValue pieces = (Values.ListValue) builder.get(PIECES);
         pieces.items().add(piece);
         context.resize(pieces, pieces.bytes(), line);
-        builder.set(LENGTH, length(builder) + piece.length());
+        builder.set(LENGTH, (int) after);
         return builder;
     }
 

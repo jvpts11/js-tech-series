@@ -54,6 +54,14 @@ final class SystemCalls {
             "there is no desktop called %s");
     private static final TextKey NO_SUCH_PROCESS = TextKey.of("jsc.service.system.no_such_process",
             "there is no process %s here");
+    private static final TextKey TOO_MANY_SERVICES = TextKey.of("jsc.service.system.too_many_services",
+            "a system registers at most %s services");
+    private static final TextKey SERVICE_TOO_LONG = TextKey.of("jsc.service.system.service_too_long",
+            "a service's name is at most %s letters and its program's path at most %s");
+    /* The services a system may register, kept with the machine, and how long their names and programs may be. */
+    private static final int MOST_SERVICES = 64;
+    private static final int MOST_SERVICE_NAME = 64;
+    private static final int MOST_SERVICE_PROGRAM = 256;
 
     private SystemCalls() {
     }
@@ -176,7 +184,18 @@ final class SystemCalls {
     /* Programs run as services, by name. */
     private static void services(final Map<MemberId, MachineCalls.Binding<?>> bindings) {
         os(bindings, "Services", "Register", (system, call, target, arguments, line) -> {
-            anyRun(system, "Services.Register", line).registered().put(text(arguments, 0), text(arguments, 1));
+            final Map<String, String> registered = anyRun(system, "Services.Register", line).registered();
+            final String name = text(arguments, 0);
+            final String program = text(arguments, 1);
+            // Kept with the machine and saved with it, so what a system registers is bounded as what it saves.
+            if (name.length() > MOST_SERVICE_NAME || program.length() > MOST_SERVICE_PROGRAM) {
+                throw new Halt(Halt.Reason.OUT_OF_RANGE, line,
+                        SERVICE_TOO_LONG.with(MOST_SERVICE_NAME, MOST_SERVICE_PROGRAM));
+            }
+            if (!registered.containsKey(name) && registered.size() >= MOST_SERVICES) {
+                throw new Halt(Halt.Reason.REFUSED, line, TOO_MANY_SERVICES.with(MOST_SERVICES));
+            }
+            registered.put(name, program);
             return null;
         }, STRING, STRING);
         os(bindings, "Services", "Start", (system, call, target, arguments, line) -> {

@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.core.client.gui.component.Button;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.UiContext;
@@ -30,6 +31,10 @@ import org.lwjgl.glfw.GLFW;
  * <p>Yes and Enter do the thing and close the dialog; No and Escape close it and leave everything as it was. A note
  * is closed by OK, Enter or Escape. The message may run over several lines, each broken where it says so and wrapped
  * to the dialog's width.
+ *
+ * <p>On the classic Quince systems it is their alert (computers/docs/design/quince.md): the double frame or the
+ * Platinum box with no title, the stop sign on a note and the caution sign on a question, the words beside the sign,
+ * and the round buttons along the right of its foot, nothing dimmed behind it.
  */
 @PaletteHolder
 public final class QuestionPopup extends Popup {
@@ -40,6 +45,9 @@ public final class QuestionPopup extends Popup {
     private final Button second;
     @Nullable
     private final Runnable yes;
+    /** The classic Quince face it wears, or null for the dialog every other desktop has. */
+    @Nullable
+    private final QuinceLook classic;
 
     private static final int WIDTH = 214;
     private static final int TITLE_H = 14;
@@ -50,17 +58,33 @@ public final class QuestionPopup extends Popup {
     private static final int BTN_H = 16;
     private static final int BTN_GAP = 8;
     private static final int MAX_TEXT_WIDTH = WIDTH - PADDING * 2 - ICON - 6;
+    /* The classic alert as the approved mock lays it: its width, the sign's inset, the words, and the buttons. */
+    private static final int CLASSIC_WIDTH = 244;
+    private static final int CLASSIC_MIN_HEIGHT = 80;
+    private static final int CLASSIC_INSET = 14;
+    private static final int CLASSIC_TEXT_X = 42;
+    private static final int CLASSIC_TEXT_WIDTH = 180;
+    private static final int CLASSIC_LINE_H = 11;
+    private static final int CLASSIC_BUTTONS_UP = 24;
+    private static final int CLASSIC_FIRST_RIGHT = 66;
+    private static final int CLASSIC_SECOND_RIGHT = 128;
+    private static final int CLASSIC_BUTTON_W = 50;
+    private static final int CLASSIC_BUTTON_H = 13;
+    private static final int PLATINUM_BUTTON_H = 14;
     /** The question's own colours, {@code jsc:desktop/question}. */
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "desktop/question",
             new Colours(0x80000000, 0xFFF2C230, 0xFF8A6A00, 0xFF000000, 0xFF2F6FD0, 0xFFFFFFFF));
 
     /**
-     * A dialog that asks, when {@code yes} is what answering Yes does, or that only tells, when it is null.
+     * A dialog that asks, when {@code yes} is what answering Yes does, or that only tells, when it is null; in the
+     * face of a classic Quince system when {@code classic} is one.
      */
-    QuestionPopup(final String title, final String message, final Font font, @Nullable final Runnable yes) {
-        super(title, WIDTH, 0);
+    QuestionPopup(final String title, final String message, final Font font, @Nullable final Runnable yes,
+                  @Nullable final QuinceLook classic) {
+        super(classic == null ? title : "", classic == null ? WIDTH : CLASSIC_WIDTH, 0);
         this.yes = yes;
-        final List<String> wrapped = wrap(message, font);
+        this.classic = classic;
+        final List<String> wrapped = wrap(message, font, classic == null ? MAX_TEXT_WIDTH : CLASSIC_TEXT_WIDTH);
         for (final String line : wrapped) {
             this.lines.add(add(new Label(line)));
         }
@@ -72,11 +96,18 @@ public final class QuestionPopup extends Popup {
                     .setPrimary(true));
             this.second = add(new Button(GameText.resolve(DesktopTexts.QUESTION_NO), this::close));
         }
-        final int bodyH = PADDING + Math.max(ICON, wrapped.size() * LINE_H) + PADDING + BTN_H + PADDING;
-        setPreferredSize(WIDTH, TITLE_H + bodyH);
-        setDim(PALETTE.get().dim());
+        if (classic == null) {
+            final int bodyH = PADDING + Math.max(ICON, wrapped.size() * LINE_H) + PADDING + BTN_H + PADDING;
+            setPreferredSize(WIDTH, TITLE_H + bodyH);
+            setDim(PALETTE.get().dim());
+            setLayouter(this::layoutContent);
+        } else {
+            setPreferredSize(CLASSIC_WIDTH, Math.max(CLASSIC_MIN_HEIGHT,
+                    CLASSIC_INSET + wrapped.size() * CLASSIC_LINE_H + 6 + CLASSIC_BUTTONS_UP));
+            setDim(0);
+            setLayouter(this::layoutClassic);
+        }
         setCloseOnOutsideClick(false);
-        setLayouter(this::layoutContent);
         open();
     }
 
@@ -109,6 +140,10 @@ public final class QuestionPopup extends Popup {
 
     @Override
     public void render(final GuiGraphics g, final UiContext ctx) {
+        if (this.classic != null) {
+            renderClassic(g, ctx.font(), this.classic);
+            return;
+        }
         super.render(g, ctx);
         if (this.yes != null) {
             drawWarning(g, x() + PADDING, y() + TITLE_H + PADDING);
@@ -148,6 +183,48 @@ public final class QuestionPopup extends Popup {
         }
     }
 
+    /* The classic alert's words beside its sign, and its buttons along the right of its foot, the first the default. */
+    private void layoutClassic(final Popup p) {
+        int textY = p.y() + CLASSIC_INSET;
+        for (final Label line : this.lines) {
+            line.setBounds(p.x() + CLASSIC_TEXT_X, textY, CLASSIC_TEXT_WIDTH, 8);
+            textY += CLASSIC_LINE_H;
+        }
+        final int buttonsY = p.bottom() - CLASSIC_BUTTONS_UP;
+        final int height = classicButtonHeight();
+        this.first.setBounds(p.right() - CLASSIC_FIRST_RIGHT, buttonsY, CLASSIC_BUTTON_W, height);
+        if (this.second != null) {
+            this.second.setBounds(p.right() - CLASSIC_SECOND_RIGHT, buttonsY, CLASSIC_BUTTON_W, height);
+        }
+    }
+
+    private void renderClassic(final GuiGraphics g, final Font font, final QuinceLook look) {
+        final QuinceLook.Colours c = look.colours();
+        final boolean platinum = look == QuinceLook.PLATINUM;
+        QuinceArt.dialog(g, look, x(), y(), right(), bottom());
+        final String[] sign = this.yes == null ? platinum ? QuinceArt.STOP_RED : QuinceArt.STOP
+                : platinum ? QuinceArt.CAUTION_YELLOW : QuinceArt.CAUTION;
+        QuinceArt.sprite(g, sign, x() + CLASSIC_INSET, y() + CLASSIC_INSET, c.ink());
+        for (final Label line : this.lines) {
+            Draw.text(g, font, line.text(), line.x(), line.y(), c.ink());
+        }
+        classicButton(g, font, look, this.first, true);
+        if (this.second != null) {
+            classicButton(g, font, look, this.second, false);
+        }
+    }
+
+    private static void classicButton(final GuiGraphics g, final Font font, final QuinceLook look, final Button button,
+                                      final boolean primary) {
+        QuinceArt.button(g, look, button.x(), button.y(), button.width(), button.height(), primary, false);
+        Draw.textCentered(g, font, button.label(), button.x() + button.width() / 2, button.y() + 3,
+                QuinceArt.buttonInk(look, primary));
+    }
+
+    private int classicButtonHeight() {
+        return this.classic == QuinceLook.PLATINUM ? PLATINUM_BUTTON_H : CLASSIC_BUTTON_H;
+    }
+
     /** A warning sign, as the question the Windows of that time asked before a delete wore it. */
     private static void drawWarning(final GuiGraphics g, final int ox, final int oy) {
         for (int row = 0; row < 15; row++) {
@@ -171,14 +248,14 @@ public final class QuestionPopup extends Popup {
         g.fill(cx - 1, oy + 8, cx + 1, oy + 13, PALETTE.get().noteMark());
     }
 
-    /** Breaks the message where it says so, then wraps each part to the dialog's width on its spaces. */
-    private static List<String> wrap(final String message, final Font font) {
+    /** Breaks the message where it says so, then wraps each part to {@code width} on its spaces. */
+    private static List<String> wrap(final String message, final Font font, final int width) {
         final List<String> out = new ArrayList<>();
         for (final String part : message.split("\n")) {
             StringBuilder line = new StringBuilder();
             for (final String word : part.split(" ")) {
                 final String candidate = line.length() == 0 ? word : line + " " + word;
-                if (font.width(candidate) > MAX_TEXT_WIDTH && line.length() > 0) {
+                if (font.width(candidate) > width && line.length() > 0) {
                     out.add(line.toString());
                     line = new StringBuilder(word);
                 } else {
