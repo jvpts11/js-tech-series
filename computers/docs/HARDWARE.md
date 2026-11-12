@@ -286,7 +286,8 @@ plugs into the inlet in the middle of its back or of either side, and every comp
 face, draws from it. While the line brings what they draw, it feeds them and charges its battery on top (an empty
 battery is full in ten game minutes); when the line goes or falls short, the battery carries them, and the amber lamp
 lights; above what it carries it is in bypass, its green lamp blinking, and the computers run straight from the line,
-unprotected. A line one class too high, or a lightning surge, does not get through it: it takes nothing from that line
+unprotected. Its red lamp asks for a new battery once the battery is near its end, down to the 10% at which the
+systems shut themselves down. A line one class too high, or a lightning surge, does not get through it: it takes nothing from that line
 and carries the computers on its battery; two classes too high, not even a UPS holds. Looking at it says how it
 stands and how long the battery lasts.
 
@@ -355,7 +356,8 @@ plains, 38 °C in the desert and 8 °C in the snow, and the Nether adds 10 °C.
 
 A computer slowed by heat wears its power supply twice as fast. A thermal trip is a sudden shutdown: the disks it had
 in use are checked at the next start, the network's event log records an ERROR, and the computer does not start
-again until it has cooled below 60 °C; its next self-test warns of the trip, and the boot goes on. The temperature
+again until it has cooled below 60 °C, or to within 5 °C of surroundings warmer than 55 °C; its next self-test warns
+of the trip, and the boot goes on. The temperature
 shows in the assembly window (TEMP, HEAT, BUDGET, AMBIENT and CLOCK), on the TEMP tile of the terminal's Local tab,
 on the firmware's hardware page with the case fans that turn, and in the Device Manager under Cooling, beside the
 UPS's battery under Batteries. A computer's heat is J's Core's thermal budget for any mod ([API](API.md)). The server
@@ -365,7 +367,7 @@ the restart; there is no switch to turn temperature off.
 A rack has one temperature for its whole cabinet, by the same rules: its budget is 1,000 W, plus its Cooling Units,
 plus 500 W for every **Vent Panel**, against the watts of its powered bays. Its throttling at 90 °C is the cut racks
 always had, the budget over the load down to a quarter; at 100 °C every running bay goes dark at once, and none
-switches on until the cabinet has cooled below 60 °C.
+switches on until the cabinet has cooled as a computer must.
 
 ### Disks
 

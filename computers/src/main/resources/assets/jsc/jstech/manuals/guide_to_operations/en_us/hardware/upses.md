@@ -26,6 +26,8 @@ The battery lasts its joules over the draw: 480 kJ carry 800 W for ten minutes. 
 
 Above what it carries the UPS goes into bypass, and the green lamp blinks: the computers run straight from the line, and the battery protects nothing.
 
+The red lamp asks for a new battery once the battery is near its end, down to the 10% at which the systems shut themselves down.
+
 It also stands between the computers and a line of the wrong class. A line one class too high, or a surge, does not reach them: the UPS takes nothing from it and carries them on its battery. Two classes too high, not even a UPS holds.
 
 A rack has its own UPS, the Rack UPS, which takes a rack unit ([](jsc:rack_equipment)).

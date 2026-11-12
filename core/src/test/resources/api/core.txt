@@ -477,7 +477,9 @@ stable 4
 12 dev.jstech.core.bigblock.BigBlockPartBlockEntity  type abstract class extends SyncedBlockEntity
 12 dev.jstech.core.bigblock.BigBlockPartBlockEntity  BlockPos originPos()
 12 dev.jstech.core.bigblock.BigBlockPartBlockEntity  new(BlockEntityType<?>, BlockPos, BlockState)
+55 dev.jstech.core.bigblock.BigBlockPartBlockEntity  void moved(BlockPos, BlockMove)
 12 dev.jstech.core.bigblock.BigBlockPartBlockEntity  void setOrigin(BlockPos)
+55 dev.jstech.core.bigblock.BigBlockPartBlockEntity  void turn(UnaryOperator<Vec3i>)
 12 dev.jstech.core.bigblock.IBigBlock  type interface
 12 dev.jstech.core.bigblock.IBigBlock  abstract List<BlockPos> footprint(BlockPos, Direction)
 12 dev.jstech.core.bigblock.IBigBlock  default List<BlockPos> getObstructedBlocks(BlockGetter, BlockPos, Direction)

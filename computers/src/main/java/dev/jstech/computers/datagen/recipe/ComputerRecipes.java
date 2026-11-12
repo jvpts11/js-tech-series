@@ -94,11 +94,8 @@ final class ComputerRecipes {
         final Item pc = item(look + "personal_computer");
         made(output, era, pc, join(metals, front(era)));
         made(output, era, item(look + "crafting_computer"), empty(pc), 1, item(CRAFTING_CARDS.get(index(era))), 1);
-        // The Advanced High Performance case has no Cluster Management Computer.
-        if (!look.equals("advanced_high_performance_")) {
-            made(output, era, item(look + "cluster_management_computer"), empty(pc), 1,
-                    item(CLUSTER_CARDS.get(index(era))), 1);
-        }
+        made(output, era, item(look + "cluster_management_computer"), empty(pc), 1,
+                item(CLUSTER_CARDS.get(index(era))), 1);
     }
 
     /* Quince's logic boards, by the motherboards' rule with the numbers of the real machines of each year. */

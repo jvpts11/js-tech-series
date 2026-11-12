@@ -39,7 +39,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The disk tools (computers/docs/design/storage-devices.md): the machine refuses to delete or format the partition its
  * system runs from, converts only an empty disk, writes a new table erasing the disk, and resizes by the file system's
- * rules; Linux's lsblk, fdisk -l and mkfs, and Frames' DiskPart, say so as their real ones do.
+ * rules; Linux's lsblk, fdisk -l and mkfs, and Frames' DiskPart, say so as their real ones do; and the machine starts
+ * next from a volume chosen only when a system is on it.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -138,6 +139,29 @@ public final class DiskToolGameTests {
                             && all.contains("Only an empty disk can be converted."), "and says why not: " + all);
                     diskpart.answer("exit", 4L, sink);
                     helper.assertTrue(diskpart.over(), "exit leaves it");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void startup_choosesOnlyAVolumeWithASystemAndStartsFromItsDisk(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = withSecondDisk(helper, FRAMES_10);
+        helper.startSequence()
+                .thenExecute(() -> {
+                    helper.assertTrue(read(pc, DiskCommand.startup(1, 1)).refusal() == DiskReport.Refusal.NO_SYSTEM,
+                            "a volume with no system on it is never started from");
+                    final DiskReport.Disk own = DiskTools.report(pc, null).disk(0);
+                    DiskReport.Part running = null;
+                    for (final DiskReport.Part part : own.parts()) {
+                        if (part.mounted() && !part.swap()) {
+                            running = part;
+                        }
+                    }
+                    helper.assertTrue(running != null, "the system runs from a partition of its own disk");
+                    helper.assertTrue(read(pc, DiskCommand.startup(0, running.number())).refusal() == null,
+                            "its own volume is chosen");
+                    helper.assertTrue(pc.bootDiskSlot() == own.slot(),
+                            "and its disk is the one the machine starts from: " + pc.bootDiskSlot());
                 })
                 .thenSucceed();
     }

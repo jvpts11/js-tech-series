@@ -780,8 +780,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the wallet keeps by its price.
 - Create, from 6.0.11 on the 6.0 line: a contraption carries a small computer and sets it down switched
   off, shut down cleanly with its system, parts, files and node; a computer copying files or installing a system is a
-  block Create may not move, as are the Mainframe, the Server Rack, the Mining Computer and the WAN Gateway. A
-  computer aboard a ship of Create Aeronautics keeps running in flight, and Wi-Fi reaches from where the ship flies
+  block Create may not move. The Mainframe, the Server Rack, the Mining Computer and the WAN Gateway ride whole, each
+  of their blocks holding on to the others, and come down working, each part still bound to the machine however the
+  contraption turned it, the computers switched off and a rack's bays too. A computer aboard a ship of Create Aeronautics keeps running in flight, and Wi-Fi reaches from where the ship flies
   now, so a ship talks to the ground. With J's Industrial too, the industrial control cable reads Create's turning
   blocks into the `create_kinetics` table (speed, stress, capacity, overstressed, and a Rotation Speed Controller's
   target speed), and `UPDATE create_kinetics SET target_speed = ...` sets the Rotation Speed Controllers its WHERE
@@ -795,7 +796,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   with its pending operations, GNOME's Disks, diskpart, MC-DOS's FDISK, UNIX's fdisk, Linux's `fdisk -l`, `lsblk`
   and one `mkfs` for each file system, FreeBSD's `gpart show`, and OpenBSD's `fdisk` and `disklabel -h`. None deletes
   or formats the partition the system runs from or a swap it swaps to, a disk changes between MBR and GPT only when
-  empty, and a new table erases the disk.
+  empty, and a new table erases the disk. On the classic Quince systems, the Special menu's Erase Disk lists the
+  volumes the system reads and asks before it erases the one picked, the startup disk listed and never chosen, and
+  Set Startup lists the volumes with a system on them, the machine starting from the one picked the next time.
 - The installers' partition step, as each real one: Frames XP's text-mode list and its format choice,
   the table of Frames 7 to 11 with New, Delete, Format and Extend, Install alongside on Ubuntu and Linux Mint with its
   divider, Debian's and Fedora's partitions under each disk, and FreeBSD's Auto (ZFS), with a mirror on a second disk,
@@ -956,6 +959,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Large Scale Printer, the creative tabs being for creative.
 - The design pages describe what came with this release: J's Computers' and J's Core's pages say
   what is built, and each lists at its end only what is still to build.
+- Starting again after a thermal trip: a computer or a rack starts again below 60 °C, or within 5 °C of
+  surroundings warmer than 55 °C, where it waited to be within a degree of them; the event log and the assembly
+  window say how cool it has to be.
+- The MF PowerGuard's red lamp asks for a new battery once the battery is near its end, down to the 10%
+  at which the systems shut themselves down; it was always dark.
+- The Advanced High Performance Cluster Management Computer has its recipe, from the Advanced High
+  Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on

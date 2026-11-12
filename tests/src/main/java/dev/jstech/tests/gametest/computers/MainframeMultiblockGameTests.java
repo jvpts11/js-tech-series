@@ -14,12 +14,21 @@ import dev.jstech.computers.block.MainframeStructure;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
+import dev.jstech.core.bigblock.BigBlockPartBlockEntity;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructurePose;
+import dev.jstech.core.moving.StructureResult;
+import dev.jstech.core.moving.StructureYard;
+import dev.jstech.core.moving.YardLayout;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
@@ -35,7 +44,7 @@ import static dev.jstech.tests.testkit.computers.NetworkFixtures.placeRunningMai
 
 /**
  * GameTests for the Mainframe's cabinet, a big block: forming and dissolving, reading a cable on any part face, the
- * core face of the central column, teardown drops, and picking up an installed disk.
+ * core face of the central column, teardown drops, picking up an installed disk, and riding a moving structure whole.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -187,5 +196,56 @@ public final class MainframeMultiblockGameTests {
                                     + "); got " + be.storageItems());
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = "jsc_mainframe_moving")
+    public static void mainframe_ridesAMovingStructureWholeAndItsPartsTurnWithIt(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MainframeBlockEntity mainframe = formRunningMainframe(helper, new BlockPos(4, 2, 3), Direction.NORTH);
+        final List<BlockPos> cells = MainframeStructure.allPositions(mainframe.getBlockPos(), Direction.NORTH);
+        warm(level);
+        final StructureResult made = MovingStructures.assemble(level, helper.absolutePos(new BlockPos(3, 2, 3)),
+                helper.absolutePos(new BlockPos(5, 3, 4)));
+        helper.assertTrue(made.ok(), "the Mainframe makes a structure");
+        for (final BlockPos cell : cells) {
+            helper.assertTrue(level.getBlockState(cell).isAir(), "every block of it rides: " + cell);
+        }
+        final MovingStructure structure = made.structure();
+        final StructurePose at = structure.pose();
+        structure.teleport(StructurePose.turned(at.x(), at.y(), at.z(), 0, 1, 0, Math.toRadians(90)));
+        final StructureResult down = MovingStructures.setDown(structure);
+        helper.assertTrue(down.ok() && down.blocks() == cells.size(), "it is set down whole");
+        BlockPos origin = null;
+        for (final BlockPos each : BlockPos.betweenClosed(helper.absolutePos(new BlockPos(0, 1, 0)),
+                helper.absolutePos(new BlockPos(8, 5, 8)))) {
+            if (level.getBlockEntity(each) instanceof MainframeBlockEntity) {
+                origin = each.immutable();
+            }
+        }
+        helper.assertTrue(origin != null, "the Mainframe is on the ground again");
+        final Direction facing = level.getBlockState(origin).getValue(MainframeBlock.FACING);
+        helper.assertTrue(facing.getAxis() == Direction.Axis.X, "turned a quarter as the structure was: " + facing);
+        final List<BlockPos> parts = MainframeStructure.partPositions(origin, facing);
+        for (final BlockPos cell : parts) {
+            helper.assertTrue(level.getBlockEntity(cell) instanceof BigBlockPartBlockEntity part
+                    && origin.equals(part.originPos()), "each part still finds its origin: " + cell);
+        }
+        level.destroyBlock(parts.get(0), false);
+        for (final BlockPos cell : MainframeStructure.allPositions(origin, facing)) {
+            helper.assertTrue(level.getBlockState(cell).isAir(), "broken at a part, it goes whole: " + cell);
+        }
+        helper.succeed();
+    }
+
+    /* Loads the chunks of the yard's next plot, where a structure made now keeps its blocks. */
+    private static void warm(final ServerLevel level) {
+        final int plot = StructureYard.nextPlot(level);
+        final int cx = YardLayout.centreX(plot) >> 4;
+        final int cz = YardLayout.centreZ(plot) >> 4;
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                level.getChunk(cx + dx, cz + dz);
+            }
+        }
     }
 }

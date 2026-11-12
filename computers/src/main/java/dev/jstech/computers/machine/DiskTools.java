@@ -141,6 +141,7 @@ public final class DiskTools {
             case DESTROY -> onPartition(disk, number, view -> DiskSnapshots.destroy(view, command.word()));
             case DEFAULT -> onPartition(disk, number, view -> DiskSnapshots.startFrom(view, (int) command.amount()));
             case SCRUB -> onPartition(disk, number, view -> scrub(view, disksOf(machine), time));
+            case STARTUP -> startup(machine, slot, disk, number, inUse);
             case LOOK -> null;
         };
         if (refusal == null) {
@@ -194,6 +195,39 @@ public final class DiskTools {
         final DiskReport.Refusal refusal = change.apply(volume);
         DiskPartitions.commit(disk, volume);
         return refusal;
+    }
+
+    /*
+     * Has the machine start from the system on partition {@code number} of the disk in {@code slot} next time: that
+     * disk boots first, and starts that partition, which on a Master Boot Record is its active one. Another partition
+     * of the disk the system runs from is chosen only on a Master Boot Record, since that disk keeps the running one
+     * open until it stops.
+     */
+    @Nullable
+    private static DiskReport.Refusal startup(final IOsHost machine, final int slot, final ItemStack disk,
+                                              final int number, final boolean running) {
+        final DiskLayout layout = DiskPartitions.layout(disk);
+        final PartitionEntry partition = layout.find(number);
+        if (partition == null || !partition.holdsData()) {
+            return DiskReport.Refusal.NO_SUCH_PARTITION;
+        }
+        if (!OsDisks.hasSystem(DiskPartitions.view(disk, number))) {
+            return DiskReport.Refusal.NO_SYSTEM;
+        }
+        if (layout.scheme() == PartitionScheme.MBR) {
+            final DiskReport.Refusal refusal = partition.active() ? null : write(disk, layout.activate(number), false);
+            if (refusal != null) {
+                return refusal;
+            }
+        } else if (disk == machine.systemDisk()) {
+            if (!running) {
+                return DiskReport.Refusal.MOUNTED;
+            }
+        } else {
+            DiskPartitions.open(disk, number);
+        }
+        machine.setBootDiskSlot(slot);
+        return null;
     }
 
     /* Scrubs the ZFS pool a partition is the first member of, or the only one. */

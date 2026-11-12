@@ -23,7 +23,6 @@ import dev.jstech.computers.block.DataWires;
 import dev.jstech.computers.block.IEraChassisBlock;
 import dev.jstech.computers.client.audio.MachineSoundSources;
 import dev.jstech.computers.crafting.PatternWorkbench;
-import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.eventlog.EventLevel;
 import dev.jstech.computers.eventlog.NetworkEvents;
 import dev.jstech.computers.hardware.CaseCooling;
@@ -2132,7 +2131,7 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
             stopSuddenly(CrashCause.THERMAL_TRIP, CrashPages.Moment.none());
             JscEvents.awardOperator(this, JscEvents.THERMAL_TRIP);
             logEvent(level, EventLevel.ERROR, NetworkEvents.THERMAL_TRIP.with(heat.lastTrip(),
-                    ComputersServerConfig.restartBelow()));
+                    heat.restartBelow()));
             tripCorrupts(level);
         }
     }

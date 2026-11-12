@@ -532,9 +532,11 @@ public abstract class AbstractMachineAssemblyScreen<T extends AbstractContainerM
         if (!thermal.cooling()) {
             return List.of();
         }
+        final int restart = ThermalModel.shown(ThermalModel.restartBelow(ComputersServerConfig.restartBelow(),
+                thermal.ambient()), ThermalState.MOST_SHOWN);
         return List.of(GameText.component(AssemblyTexts.TOO_HOT).withColor(JsTechTheme.red()),
-                GameText.component(AssemblyTexts.COOLS_TO.with(ComputersServerConfig.restartBelow(),
-                        thermal.celsius())).withColor(JsTechTheme.dim()));
+                GameText.component(AssemblyTexts.COOLS_TO.with(restart, thermal.celsius()))
+                        .withColor(JsTechTheme.dim()));
     }
 
     /**

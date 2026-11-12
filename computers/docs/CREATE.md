@@ -16,8 +16,10 @@ starts from that computer, or moves into it, Create says the block cannot be mov
 assemble; the computer's own screens show what it is doing. Glued on beside, it is left where it stands, as Create
 leaves any block it may not move.
 
-The big machines never ride a contraption: the Mainframe, the Server Rack, the Mining Computer and the WAN Gateway
-stay where they stand, since their parts find their origin where it stood.
+The big machines ride whole: the Mainframe, the Server Rack, the Mining Computer and the WAN Gateway. Each of their
+blocks holds on to the others, so a contraption that takes one takes them all, and each part keeps the way to the
+machine's origin from itself, turned as the contraption turned it, so the machine works where it is set down. The
+Mainframe, the Mining Computer and the WAN Gateway come down switched off, and a rack with its bays switched off.
 
 ## Computers on ships
 

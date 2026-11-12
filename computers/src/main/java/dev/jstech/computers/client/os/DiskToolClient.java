@@ -78,6 +78,11 @@ final class DiskToolClient implements CodeFileReplies.IReader {
         }
     }
 
+    /** Asks the machine for its disks again now, as a menu that shows them opens. */
+    void refresh() {
+        this.ask(DiskCommand.look());
+    }
+
     /** Asks the machine for a change, its disks coming back after it. */
     void change(final String path) {
         this.refusal = null;

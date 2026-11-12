@@ -480,6 +480,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `CableBlockEntity.unsettled` makes a cable for a structure, its wires laid and its faces worked out on its first tick
   in the world (`settleLinks`). `ContentData.alsoLoot` adds a mod's own loot tables to the ones its blocks have, and
   `ContentLootProvider` takes the list of tables it writes, `blocks` the declared blocks'. Experimental.
+- Big blocks that turn: J's Core's API is at version 55. A big block's part keeps the way to its origin from
+  itself, so it holds wherever the big block is carried whole; on a moving structure it follows where the origin went
+  (`BigBlockPartBlockEntity.moved`), and a mod whose own mover turns blocks turns it with
+  `BigBlockPartBlockEntity.turn`. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

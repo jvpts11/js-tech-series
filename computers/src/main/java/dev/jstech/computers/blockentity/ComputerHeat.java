@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
  * How hot a machine is (computers/docs/design/temperature.md), a computer or a whole rack: where its temperature heads
  * for the heat it makes against what it takes away, how far it has got, what that costs its clock, and the trip when
  * not even a quarter of its clock holds the heat. A machine that tripped does not start again until it has cooled
- * below the settings' restart temperature.
+ * below the settings' restart temperature, or to within 5 °C of surroundings warmer than that.
  *
  * <p>While it runs, its curve follows the temperature its load would leave it at full clock, which the thresholds read
  * into what it shows and how fast it runs; once it stops, the curve follows what it really is, cooling to its
@@ -64,8 +64,8 @@ final class ComputerHeat {
         final double celsius = curve.at(now);
         reading = running ? ThermalModel.read(ambient, celsius)
                 : new ThermalModel.Reading(celsius, 1.0, false, false);
-        // Cool enough to start again; where the surroundings are warmer than that, once it is within a degree of them.
-        if (cooling && reading.celsius() < Math.max(ComputersServerConfig.restartBelow(), ambient + 1.0)) {
+        // Cool enough to start again; where the surroundings are too warm for that, once within 5 °C of them.
+        if (cooling && reading.celsius() < ThermalModel.restartBelow(ComputersServerConfig.restartBelow(), ambient)) {
             cooling = false;
         }
         if (running && reading.trips()) {
@@ -89,6 +89,11 @@ final class ComputerHeat {
     /** Whether it may start: not while it is still cooling from a trip. */
     boolean mayStart() {
         return !cooling;
+    }
+
+    /** Below what it starts again after a trip, in whole °C: the settings', or 5 °C over warmer surroundings. */
+    int restartBelow() {
+        return (int) Math.round(ThermalModel.restartBelow(ComputersServerConfig.restartBelow(), ambient()));
     }
 
     /** How hot it was at its last trip, in whole °C, for its next self-test to warn of; 0 when it did not trip. */

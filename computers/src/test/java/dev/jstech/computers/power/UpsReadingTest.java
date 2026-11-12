@@ -43,4 +43,12 @@ class UpsReadingTest {
         assertFalse(new UpsReading(UpsReading.Mode.BYPASS, 500, 3L).onBattery());
         assertTrue(new UpsReading(UpsReading.Mode.BYPASS, 500, 3L).present());
     }
+
+    @Test
+    void nearEnd_fromWhereTheSystemShutsItselfDown() {
+        assertTrue(new UpsReading(UpsReading.Mode.ON_BATTERY, UpsRating.SHUTDOWN_PERMILLE, 1L).nearEnd());
+        assertTrue(new UpsReading(UpsReading.Mode.ON_LINE, 0, 0L).nearEnd(), "an empty battery charging again");
+        assertFalse(new UpsReading(UpsReading.Mode.ON_BATTERY, UpsRating.SHUTDOWN_PERMILLE + 1, 2L).nearEnd());
+        assertFalse(UpsReading.NONE.nearEnd(), "no UPS, no lamp");
+    }
 }

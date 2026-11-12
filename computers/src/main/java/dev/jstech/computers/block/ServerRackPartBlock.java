@@ -39,7 +39,9 @@ import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.Mirror;
 import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
@@ -201,7 +203,8 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
     @Override
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
                             final BlockState newState, final boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel
+        /* Lifted whole, as a moving structure or a contraption takes its blocks, the cabinet is moved, not broken. */
+        if (!state.is(newState.getBlock()) && !movedByPiston && level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof ServerRackPartBlockEntity part
                 && part.originPos() != null) {
             /*
@@ -222,6 +225,17 @@ public class ServerRackPartBlock extends Block implements EntityBlock, IFaceConn
     @Nullable
     public BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
         return new ServerRackPartBlockEntity(pos, state);
+    }
+
+    /* Turned with its cabinet, as a moving structure or a contraption turns its blocks, its back turns too. */
+    @Override
+    protected BlockState rotate(final BlockState state, final Rotation rotation) {
+        return state.setValue(FACING, rotation.rotate(state.getValue(FACING)));
+    }
+
+    @Override
+    protected BlockState mirror(final BlockState state, final Mirror mirror) {
+        return state.rotate(mirror.getRotation(state.getValue(FACING)));
     }
 
     /* By the value a part keeps for its cabinet's era. */

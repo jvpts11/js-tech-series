@@ -131,6 +131,24 @@ public final class QuinceArt {
         "dyyyyyyyyyyyyyyd",
         "dddddddddddddddd"
     };
+    /**
+     * A hard disk as a list of volumes shows it, its lines in the caller's ink and the rest left clear, so a picked row
+     * draws it inverted on its own ground.
+     */
+    public static final String[] HD = {
+        "xxxxxxxxxxxxxxxx",
+        "x              x",
+        "x xxxxxxxxxxxx x",
+        "x x          x x",
+        "x x          x x",
+        "x xxxxxxxxxxxx x",
+        "x              x",
+        "x              x",
+        "x xx        x  x",
+        "x              x",
+        "xxxxxxxxxxxxxxxx",
+        " xx          xx "
+    };
 
     /** How many rows the fruit is, down which Pulp's gel goes from light to deep. */
     private static final int FRUIT_ROWS = 9;

@@ -4,7 +4,7 @@ order: 357
 ---
 # A barra de menus, o Seeker e o Dock
 
-Todo sistema da Quince inicia na sua área de trabalho. No alto fica a barra de menus: o menu da fruta à esquerda, depois Arquivo, Editar e Visualizar. O menu da fruta abre Sobre Este Computador. Nos sistemas clássicos ele também guarda alguns programas, e o menu Especial guarda Esvaziar Lixo, Reiniciar e Desligar. A partir do Quince OS X o menu da fruta guarda Preferências do Sistema, Forçar Encerrar, Reiniciar e Desligar, e os menus Ir e Janela entram na barra.
+Todo sistema da Quince inicia na sua área de trabalho. No alto fica a barra de menus: o menu da fruta à esquerda, depois Arquivo, Editar e Visualizar. O menu da fruta abre Sobre Este Computador. Nos sistemas clássicos ele também guarda alguns programas, e o menu Especial guarda Esvaziar Lixo, Apagar Disco, Definir Inicialização, Reiniciar e Desligar. Apagar Disco lista os volumes que o sistema lê e pergunta antes de apagar o que você escolher, formatando-o de novo no seu próprio sistema de arquivos; o disco de inicialização aparece na lista, e nunca é escolhido. Definir Inicialização lista os volumes com um sistema, e a máquina inicia pelo que você escolher na próxima vez que ligar. A partir do Quince OS X o menu da fruta guarda Preferências do Sistema, Forçar Encerrar, Reiniciar e Desligar, e os menus Ir e Janela entram na barra.
 
 > [!DEFINE] Barra de menus
 > A barra no alto da área de trabalho da Quince, com o menu da fruta à esquerda.

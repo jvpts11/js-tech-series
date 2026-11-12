@@ -29,6 +29,8 @@ public final class ThermalModel {
     public static final double FLOOR = 0.25;
     /** The rise over the surroundings at a load equal to the budget, in °C. */
     public static final double RISE_AT_BUDGET = 60.0;
+    /** How far over warm surroundings a machine that tripped may be and start again, in °C. */
+    public static final double RESTART_OVER_AMBIENT = 5.0;
 
     /* The share of its clock a machine keeps at 90 °C before it throttles: its boost gone, 1.5% a degree past 80. */
     private static final double BOOSTLESS = 0.85;
@@ -73,6 +75,14 @@ public final class ThermalModel {
         }
         final double floored = ambient + FLOOR / BOOSTLESS * Math.max(0.0, rise);
         return new Reading(floored, FLOOR, true, floored >= TRIP_AT);
+    }
+
+    /**
+     * Below what a machine that tripped starts again: {@code restartBelow}, the setting, or, where the surroundings at
+     * {@code ambient} are so warm that it could never cool that far, the surroundings plus 5 °C.
+     */
+    public static double restartBelow(final double restartBelow, final double ambient) {
+        return Math.max(restartBelow, ambient + RESTART_OVER_AMBIENT);
     }
 
     /** The degrees a reading shows, whole: rounded, and nothing past {@code most} however hot the sum comes out. */

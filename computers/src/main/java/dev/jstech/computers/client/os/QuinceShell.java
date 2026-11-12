@@ -11,7 +11,10 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.MachinePowerPayload;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
+import dev.jstech.computers.os.disk.DiskReport;
+import dev.jstech.computers.os.disk.DiskTexts;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
@@ -42,6 +45,12 @@ final class QuinceShell {
     private List<int[]> titles = List.of();
     /** The menus as last drawn, in the bar's order. */
     private List<Menu> menus = List.of();
+    /**
+     * The machine's disks as the Special menu reads them, asked for only as that menu opens: the machine answers one
+     * question of a file at a time, so asking in the background could take the answer a program is waiting for.
+     */
+    @Nullable
+    private DiskToolClient disks;
 
     private static final TextKey ABOUT = TextKey.of("jsc.quince.menu.about", "About This Computer");
     private static final TextKey ABOUT_APP = TextKey.of("jsc.quince.menu.about_app", "About %s");
@@ -70,7 +79,7 @@ final class QuinceShell {
     private static final TextKey SELECT_ALL = TextKey.of("jsc.quince.menu.select_all", "Select All");
     private static final TextKey CLEAN_UP = TextKey.of("jsc.quince.menu.clean_up", "Clean Up");
     private static final TextKey EMPTY_TRASH = TextKey.of("jsc.quince.menu.empty_trash", "Empty Trash");
-    private static final TextKey ERASE_DISK = TextKey.of("jsc.quince.menu.erase_disk", "Erase Disk");
+    private static final TextKey ERASE_DISK = TextKey.of("jsc.quince.menu.erase_disk", "Erase Disk...");
     private static final TextKey SET_STARTUP = TextKey.of("jsc.quince.menu.set_startup", "Set Startup...");
     private static final TextKey APPLICATIONS = TextKey.of("jsc.quince.menu.applications", "Applications");
     private static final TextKey HOME = TextKey.of("jsc.quince.menu.home", "Home");
@@ -113,6 +122,11 @@ final class QuinceShell {
         // The question of what to force quit stands while the machine asks it: closed, it comes back.
         if (!desktop.memoryAsk().isEmpty() && desktop.windowFor(QuinceMemoryApp.KEY) == null) {
             desktop.wm().open(QuinceMemoryApp.KEY, new QuinceMemoryApp(desktop));
+        }
+        // A change to a disk the Special menu asked for that the machine refused says why, as the disk tools do.
+        if (this.disks != null && this.disks.refusal() != null) {
+            desktop.notices().ask("", GameText.resolve(DiskTexts.reason(this.disks.refusal())), null);
+            this.disks.clearRefusal();
         }
         final QuinceLook look = look();
         final Font font = desktop.textFont();
@@ -210,7 +224,7 @@ final class QuinceShell {
             }
             final int title = titleAt(mx, my);
             if (title >= 0 && title != was) {
-                this.open = title;
+                openMenu(title);
             }
             return true;
         }
@@ -218,7 +232,7 @@ final class QuinceShell {
             final int title = titleAt(mx, my);
             if (title >= 0) {
                 desktop.closeMenus();
-                this.open = title;
+                openMenu(title);
             }
             return true;
         }
@@ -367,14 +381,39 @@ final class QuinceShell {
         final List<Item> items = new ArrayList<>();
         items.add(Item.of(GameText.resolve(CLEAN_UP), this::cleanUp));
         items.add(Item.of(GameText.resolve(EMPTY_TRASH), desktop.trashFull(), () -> desktop.trash().emptyNow()));
-        items.add(Item.of(GameText.resolve(ERASE_DISK), false, () -> { }));
+        // Both work on the disks as the machine last reported them, which the menu asked for as it opened.
+        final DiskReport report = this.disks == null ? DiskReport.NONE : this.disks.report();
+        final Era era = desktop.prefs().era();
+        items.add(Item.of(GameText.resolve(ERASE_DISK), QuinceDisksPopup.anyToErase(report, era),
+                () -> desktop.notices().show(QuinceDisksPopup.erase(look, disks(), era))));
         items.add(Item.RULE);
-        items.add(Item.of(GameText.resolve(SET_STARTUP), false, () -> { }));
+        items.add(Item.of(GameText.resolve(SET_STARTUP), QuinceDisksPopup.anyToStartFrom(report),
+                () -> desktop.notices().show(QuinceDisksPopup.startup(look, disks()))));
         items.add(Item.RULE);
         items.add(Item.of(GameText.resolve(RESTART), () -> desktop.cyclePower(MachinePowerPayload.ACTION_RESTART)));
         items.add(Item.of(GameText.resolve(SHUT_DOWN),
                 () -> desktop.cyclePower(MachinePowerPayload.ACTION_SHUTDOWN)));
         return items;
+    }
+
+    /* Puts down the menu of the title {@code title}; the Special menu asks the machine about its disks as it opens. */
+    private void openMenu(final int title) {
+        this.open = title;
+        if (title < this.menus.size() && this.menus.get(title).title().equals(GameText.resolve(SPECIAL))) {
+            if (this.disks == null) {
+                this.disks = new DiskToolClient(desktop.host());
+            } else {
+                this.disks.refresh();
+            }
+        }
+    }
+
+    /* What the Special menu last read of the disks, asked for now when it never was. */
+    private DiskToolClient disks() {
+        if (this.disks == null) {
+            this.disks = new DiskToolClient(desktop.host());
+        }
+        return this.disks;
     }
 
     private void cleanUp() {

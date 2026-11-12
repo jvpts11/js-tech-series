@@ -144,8 +144,9 @@ public class WanGatewayPartBlock extends HorizontalDirectionalBlock implements E
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos, final BlockState newState,
                             final boolean movedByPiston) {
         final BlockPos origin = origin(level, pos);
-        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel && origin != null
-                && level.getBlockState(origin).getBlock() instanceof AbstractBigBlock big) {
+        /* Lifted whole, as a moving structure or a contraption takes its blocks, the gateway is moved, not broken. */
+        if (!state.is(newState.getBlock()) && !movedByPiston && level instanceof ServerLevel serverLevel
+                && origin != null && level.getBlockState(origin).getBlock() instanceof AbstractBigBlock big) {
             big.dissolve(serverLevel, origin, state.getValue(FACING));
         }
         super.onRemove(state, level, pos, newState, movedByPiston);

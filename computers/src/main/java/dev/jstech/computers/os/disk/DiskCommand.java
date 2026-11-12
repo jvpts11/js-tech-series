@@ -116,6 +116,11 @@ public record DiskCommand(Verb verb, int disk, long number, long amount, String 
         return path(Verb.SCRUB, disk, number, 0L, "");
     }
 
+    /** Has the machine start from the system on partition {@code number} of the disk the next time it starts. */
+    public static String startup(final int disk, final int number) {
+        return path(Verb.STARTUP, disk, number, 0L, "");
+    }
+
     /** What a path asks, or null when it is not one of these or cannot be read. */
     @Nullable
     public static DiskCommand parse(final String path) {
@@ -148,7 +153,7 @@ public record DiskCommand(Verb verb, int disk, long number, long amount, String 
     /** What a disk tool asks. */
     public enum Verb {
         LOOK, DELETE, CREATE, FORMAT, RESIZE, ACTIVE, CONVERT, TABLE, LABEL, SNAPSHOT, ROLLBACK, DESTROY, DEFAULT,
-        SCRUB;
+        SCRUB, STARTUP;
 
         /** Its word in a path. */
         public String word() {

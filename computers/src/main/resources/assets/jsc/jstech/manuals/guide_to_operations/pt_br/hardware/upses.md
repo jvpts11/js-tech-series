@@ -26,6 +26,8 @@ A bateria dura os joules dela divididos pelo consumo: 480 kJ aguentam 800 W por 
 
 Acima do que aguenta, o nobreak entra em bypass, e a lâmpada verde pisca: os computadores rodam direto da linha, e a bateria não protege nada.
 
+A lâmpada vermelha pede uma bateria nova quando a bateria está perto do fim, nos 10% em que os sistemas se desligam sozinhos.
+
 Ele também fica entre os computadores e uma linha da classe errada. Uma linha uma classe acima, ou um surto, não chega até eles: o nobreak não tira nada dela e os mantém na bateria. Duas classes acima, nem um nobreak aguenta.
 
 Um rack tem o próprio nobreak, o Nobreak de Rack, que ocupa uma unidade de rack ([](jsc:rack_equipment)).

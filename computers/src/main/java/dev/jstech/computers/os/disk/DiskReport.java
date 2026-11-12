@@ -370,7 +370,9 @@ public record DiskReport(List<Disk> disks, String error) {
         /* ZFS rolls back past later snapshots only when told to let them go. */
         NEWER_SNAPSHOTS,
         /* A pool's verbs on a partition that is none. */
-        NOT_ZFS;
+        NOT_ZFS,
+        /* A volume with no system on it, which nothing starts from. */
+        NO_SYSTEM;
 
         /** The refusal the table gave for a change, as a disk tool says it. */
         public static Refusal of(final DiskLayout.Refusal refusal) {

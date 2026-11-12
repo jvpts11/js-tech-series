@@ -208,6 +208,11 @@ FDISK on MC-DOS, or of `fdisk` on UNIX.
 | UNIX System V | | `fdisk` |
 | FreeBSD | | `gpart show`, `zfs`, `zpool` |
 | OpenBSD | | `fdisk`, `disklabel -h` |
+| The Quince System, Quince OS 9 | the Special menu's Erase Disk and Set Startup | |
+
+On the classic Quince systems, **Erase Disk...** lists the volumes the system reads, the startup disk among them and
+never chosen, and asks before it erases the one picked, formatting it again in its own file system. **Set
+Startup...** lists the volumes with a system on them; the machine starts from the one picked the next time it starts.
 
 Every tool refuses to delete or format the partition the running system runs from, or a swap it swaps to; a
 partition resizes by its file system's rules and never below what it holds; a disk changes between MBR and GPT only

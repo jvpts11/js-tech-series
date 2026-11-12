@@ -22,7 +22,6 @@ import dev.jstech.computers.block.FibreReach;
 import dev.jstech.computers.block.ServerRackBlock;
 import dev.jstech.computers.block.ServerRackPartBlock;
 import dev.jstech.computers.block.ServerRackStructure;
-import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.crafting.PatternWorkbench;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.advancement.MachineOperators;
@@ -1164,6 +1163,19 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         flushConsole(slot);
         setChanged();
         bayPowerSwitched(slot);
+    }
+
+    /**
+     * A moving contraption set the cabinet down where it stands now: its machines rode out of the world with it, so
+     * each comes down shut down cleanly, its bay switched off as a player switches it, and stays off until someone
+     * switches it on.
+     */
+    public void setDownByContraption() {
+        for (int slot = 0; slot < CAPACITY_U; slot++) {
+            if (buildAt(slot) != null) {
+                setBayPower(slot, false);
+            }
+        }
     }
 
     /**
@@ -3463,7 +3475,7 @@ public class ServerRackBlockEntity extends SyncedBlockEntity
         forEachRunningBay(slot -> {
             bayStopsSuddenly(slot, CrashCause.THERMAL_TRIP, CrashPages.Moment.none());
             logBay(level, slot, EventLevel.ERROR, NetworkEvents.THERMAL_TRIP.with(heat.lastTrip(),
-                    ComputersServerConfig.restartBelow()));
+                    heat.restartBelow()));
             // Each drive it had in use may be corrupted by the trip.
             final int hit = corruptBay(slot, Corruption.TRIP_SHARE, Corruption.TRIP_CHANCE, level.random);
             if (hit > 0) {

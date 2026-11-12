@@ -19,8 +19,8 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 
 /**
  * Draws an MF PowerGuard as the UPS of its era, its lamps showing how it stands: the green one while the line carries
- * the load, blinking in bypass as a real one warns of an overload; the amber one while the battery carries it. The red
- * lamp that asks for a new battery stays dark: its battery does not wear.
+ * the load, blinking in bypass as a real one warns of an overload; the amber one while the battery carries it; and the
+ * red one that asks for a new battery once the battery is near its end, down to where the system shuts itself down.
  */
 public final class UpsRenderer implements IKitDriver<UpsBlockEntity> {
 
@@ -46,7 +46,7 @@ public final class UpsRenderer implements IKitDriver<UpsBlockEntity> {
                 || mode == UpsReading.Mode.BYPASS && DeviceLamps.blinkLit(ups.getLevel());
         DeviceLamps.show(pose, ComputingLooks.UPS_LINE_LAMP, line);
         DeviceLamps.show(pose, ComputingLooks.UPS_BATTERY_LAMP, mode == UpsReading.Mode.ON_BATTERY);
-        DeviceLamps.show(pose, ComputingLooks.UPS_REPLACE_LAMP, false);
+        DeviceLamps.show(pose, ComputingLooks.UPS_REPLACE_LAMP, ups.reading().nearEnd());
     }
 
     @Override

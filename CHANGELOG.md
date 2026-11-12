@@ -610,6 +610,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `CableBlockEntity.unsettled` makes a cable for a structure, its wires laid and its faces worked out on its first tick
   in the world (`settleLinks`). `ContentData.alsoLoot` adds a mod's own loot tables to the ones its blocks have, and
   `ContentLootProvider` takes the list of tables it writes, `blocks` the declared blocks'. Experimental.
+- (Core) Big blocks that turn: J's Core's API is at version 55. A big block's part keeps the way to its origin from
+  itself, so it holds wherever the big block is carried whole; on a moving structure it follows where the origin went
+  (`BigBlockPartBlockEntity.moved`), and a mod whose own mover turns blocks turns it with
+  `BigBlockPartBlockEntity.turn`. Experimental.
 - (Computers) The Mining Computer: J's Computers' API is at version 21. `HostScope.MINING_COMPUTER` is the Mining
   Computer's own scope, for a program or a command that runs only on a mining rig. Experimental.
 - (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of
@@ -3748,8 +3752,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the wallet keeps by its price.
 - (Computers) Create, from 6.0.11 on the 6.0 line: a contraption carries a small computer and sets it down switched
   off, shut down cleanly with its system, parts, files and node; a computer copying files or installing a system is a
-  block Create may not move, as are the Mainframe, the Server Rack, the Mining Computer and the WAN Gateway. A
-  computer aboard a ship of Create Aeronautics keeps running in flight, and Wi-Fi reaches from where the ship flies
+  block Create may not move. The Mainframe, the Server Rack, the Mining Computer and the WAN Gateway ride whole, each
+  of their blocks holding on to the others, and come down working, each part still bound to the machine however the
+  contraption turned it, the computers switched off and a rack's bays too. A computer aboard a ship of Create Aeronautics keeps running in flight, and Wi-Fi reaches from where the ship flies
   now, so a ship talks to the ground. With J's Industrial too, the industrial control cable reads Create's turning
   blocks into the `create_kinetics` table (speed, stress, capacity, overstressed, and a Rotation Speed Controller's
   target speed), and `UPDATE create_kinetics SET target_speed = ...` sets the Rotation Speed Controllers its WHERE
@@ -3763,7 +3768,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   with its pending operations, GNOME's Disks, diskpart, MC-DOS's FDISK, UNIX's fdisk, Linux's `fdisk -l`, `lsblk`
   and one `mkfs` for each file system, FreeBSD's `gpart show`, and OpenBSD's `fdisk` and `disklabel -h`. None deletes
   or formats the partition the system runs from or a swap it swaps to, a disk changes between MBR and GPT only when
-  empty, and a new table erases the disk.
+  empty, and a new table erases the disk. On the classic Quince systems, the Special menu's Erase Disk lists the
+  volumes the system reads and asks before it erases the one picked, the startup disk listed and never chosen, and
+  Set Startup lists the volumes with a system on them, the machine starting from the one picked the next time.
 - (Computers) The installers' partition step, as each real one: Frames XP's text-mode list and its format choice,
   the table of Frames 7 to 11 with New, Delete, Format and Extend, Install alongside on Ubuntu and Linux Mint with its
   divider, Debian's and Fedora's partitions under each disk, and FreeBSD's Auto (ZFS), with a mirror on a second disk,
@@ -4103,6 +4110,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Large Scale Printer, the creative tabs being for creative.
 - (Core, Computers) The design pages describe what came with this release: J's Computers' and J's Core's pages say
   what is built, and each lists at its end only what is still to build.
+- (Computers) Starting again after a thermal trip: a computer or a rack starts again below 60 °C, or within 5 °C of
+  surroundings warmer than 55 °C, where it waited to be within a degree of them; the event log and the assembly
+  window say how cool it has to be.
+- (Computers) The MF PowerGuard's red lamp asks for a new battery once the battery is near its end, down to the 10%
+  at which the systems shut themselves down; it was always dark.
+- (Computers) The Advanced High Performance Cluster Management Computer has its recipe, from the Advanced High
+  Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as

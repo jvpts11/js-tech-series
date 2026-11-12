@@ -93,6 +93,14 @@ class ThermalModelTest {
     }
 
     @Test
+    void restartBelow_isTheSettingOrFiveOverWarmerSurroundings() {
+        assertEquals(60.0, ThermalModel.restartBelow(60, PLAINS), 1e-9);
+        assertEquals(60.0, ThermalModel.restartBelow(60, 55), 1e-9);
+        assertEquals(65.0, ThermalModel.restartBelow(60, 60), 1e-9);
+        assertEquals(75.0, ThermalModel.restartBelow(60, 70), 1e-9);
+    }
+
+    @Test
     void shown_roundsAndCapsTheDegrees() {
         assertEquals(55, ThermalModel.shown(55.45, 999));
         assertEquals(999, ThermalModel.shown(Double.POSITIVE_INFINITY, 999));

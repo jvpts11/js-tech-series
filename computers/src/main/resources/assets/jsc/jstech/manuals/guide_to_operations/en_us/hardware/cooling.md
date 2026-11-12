@@ -46,7 +46,7 @@ Table: What the temperature does
 | 90 °C | Throttling: it slows down just enough to stay at 90 °C, down to 25% of its speed |
 | 100 °C | Thermal trip: when not even 25% holds the heat, it shuts down at once |
 
-Slowing down cuts the computer's capacity and its programs' credits, and wears its power supply twice as fast ([](jsc:power_supplies)). A thermal trip is a sudden shutdown: the disks are checked at the next start, and the computer does not start again until it has cooled below 60 °C. Its firmware's self-test then warns of the trip, and the boot goes on.
+Slowing down cuts the computer's capacity and its programs' credits, and wears its power supply twice as fast ([](jsc:power_supplies)). A thermal trip is a sudden shutdown: the disks are checked at the next start, and the computer does not start again until it has cooled below 60 °C, or to within 5 °C of surroundings warmer than 55 °C. Its firmware's self-test then warns of the trip, and the boot goes on.
 
 The temperature takes about half a minute to get most of the way to where a change leaves it. You read it in the assembly window, on the firmware's hardware page, under Cooling in the Device Manager, and on the TEMP tile of the terminal's Local tab.
 

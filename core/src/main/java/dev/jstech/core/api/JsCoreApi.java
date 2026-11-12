@@ -43,7 +43,7 @@ public final class JsCoreApi {
      * }
      * }</pre>
      */
-    public static final int VERSION = 54;
+    public static final int VERSION = 55;
 
     /**
      * The Core's packages that are part of the promise beside this one, each a kit a mod may build on.

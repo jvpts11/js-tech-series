@@ -41,6 +41,14 @@ public record UpsReading(Mode mode, int permille, long minutesLeft) {
         return this.mode == Mode.ON_BATTERY;
     }
 
+    /**
+     * Whether the battery is near its end, down to where the system shuts itself down, which the red "replace
+     * battery" lamp shows.
+     */
+    public boolean nearEnd() {
+        return present() && this.permille <= UpsRating.SHUTDOWN_PERMILLE;
+    }
+
     /** How full the battery is, in whole percent. */
     public int percent() {
         return this.permille / 10;

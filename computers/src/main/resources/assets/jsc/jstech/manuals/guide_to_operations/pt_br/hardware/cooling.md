@@ -46,7 +46,7 @@ Table: O que a temperatura faz
 | 90 °C | Throttling: ele desacelera só o bastante para ficar em 90 °C, até 25% da sua velocidade |
 | 100 °C | Desligamento térmico: quando nem 25% segura o calor, ele desliga na hora |
 
-Desacelerar corta a capacidade do computador e os créditos dos seus programas, e gasta a fonte duas vezes mais rápido ([](jsc:power_supplies)). Um desligamento térmico é um desligamento súbito: os discos são verificados na próxima partida, e o computador não liga de novo até esfriar abaixo de 60 °C. O autoteste do firmware então avisa do desligamento, e o boot segue.
+Desacelerar corta a capacidade do computador e os créditos dos seus programas, e gasta a fonte duas vezes mais rápido ([](jsc:power_supplies)). Um desligamento térmico é um desligamento súbito: os discos são verificados na próxima partida, e o computador não liga de novo até esfriar abaixo de 60 °C, ou até ficar a 5 °C de um ambiente mais quente que 55 °C. O autoteste do firmware então avisa do desligamento, e o boot segue.
 
 A temperatura leva cerca de meio minuto para chegar quase toda aonde uma mudança a leva. Você a lê na janela de montagem, na página de hardware do firmware, em Refrigeração no Gerenciador de Dispositivos e no bloco TEMP da aba Local do terminal.
 

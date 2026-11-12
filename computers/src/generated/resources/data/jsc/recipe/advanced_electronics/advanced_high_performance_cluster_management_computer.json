@@ -1,0 +1,20 @@
+{
+  "type": "jsc:advanced_electronics",
+  "inputs": [
+    {
+      "type": "jsc:empty_computer",
+      "count": 1,
+      "item": "jsc:advanced_high_performance_personal_computer"
+    },
+    {
+      "count": 1,
+      "item": "jsc:fabric_dpu"
+    }
+  ],
+  "outputs": [
+    {
+      "count": 1,
+      "id": "jsc:advanced_high_performance_cluster_management_computer"
+    }
+  ]
+}

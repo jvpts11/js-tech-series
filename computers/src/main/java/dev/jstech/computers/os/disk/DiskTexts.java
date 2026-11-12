@@ -56,6 +56,8 @@ public final class DiskTexts {
     private static final TextKey NEWER_SNAPSHOTS = TextKey.of("jsc.disk.refusal.newer_snapshots",
             "Later snapshots are kept: rolling back to this one lets them go.");
     private static final TextKey NOT_ZFS = TextKey.of("jsc.disk.refusal.not_zfs", "It is no ZFS pool.");
+    private static final TextKey NO_SYSTEM = TextKey.of("jsc.disk.refusal.no_system",
+            "There is no system on it to start from.");
 
     private DiskTexts() {
     }
@@ -81,6 +83,7 @@ public final class DiskTexts {
             case NO_SUCH_SNAPSHOT -> NO_SUCH_SNAPSHOT.text();
             case NEWER_SNAPSHOTS -> NEWER_SNAPSHOTS.text();
             case NOT_ZFS -> NOT_ZFS.text();
+            case NO_SYSTEM -> NO_SYSTEM.text();
         };
     }
 }

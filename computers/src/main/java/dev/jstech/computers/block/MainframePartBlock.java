@@ -164,7 +164,8 @@ public class MainframePartBlock extends HorizontalDirectionalBlock
     @Override
     protected void onRemove(final BlockState state, final Level level, final BlockPos pos,
                             final BlockState newState, final boolean movedByPiston) {
-        if (!state.is(newState.getBlock()) && level instanceof ServerLevel serverLevel
+        /* Lifted whole, as a moving structure or a contraption takes its blocks, the Mainframe is moved, not broken. */
+        if (!state.is(newState.getBlock()) && !movedByPiston && level instanceof ServerLevel serverLevel
                 && level.getBlockEntity(pos) instanceof MainframePartBlockEntity part
                 && part.originPos() != null
                 && level.getBlockState(part.originPos()).getBlock()

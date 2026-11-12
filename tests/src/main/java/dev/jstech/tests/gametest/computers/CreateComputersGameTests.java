@@ -11,6 +11,7 @@ import com.simibubi.create.api.contraption.BlockMovementChecks;
 import com.simibubi.create.content.contraptions.bearing.MechanicalBearingBlockEntity;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.AccessPointBlock;
+import dev.jstech.computers.block.MainframeStructure;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.integration.create.CreateComputers;
@@ -26,6 +27,7 @@ import dev.jstech.core.uuid.NodeUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.EraKit;
 import dev.jstech.tests.testkit.computers.EraNetwork;
+import dev.jstech.tests.testkit.computers.NetworkFixtures;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import dev.ryanhcode.sable.api.SubLevelAssemblyHelper;
 import dev.ryanhcode.sable.api.sublevel.SubLevelContainer;
@@ -60,7 +62,8 @@ import org.jetbrains.annotations.Nullable;
  * J's Computers with Create (computers/docs/design/implementation.md, "Create"): the work is on exactly when Create
  * is; a bearing's contraption carries a running computer and sets it down switched off, keeping its system, its parts
  * and its node, while a running computer beside it is only asked and goes on running; a computer installing a system
- * stays where it is, so the bearing does not assemble; the big machines stay where they stand; and, with Sable, a
+ * stays where it is, so the bearing does not assemble; a big machine rides whole, comes down switched off and each of
+ * its parts still finds its origin, however the bearing turned it; and, with Sable, a
  * computer aboard a sub-level goes on running and joins the network by Wi-Fi from where the sub-level stands. Each
  * test with a mod absent checks only that the work is off; run them with {@code -PwithCreate}, and with
  * {@code -PwithSable} for the ship. The classes of the mods are reached only from the nested classes, which load only
@@ -168,27 +171,52 @@ public final class CreateComputersGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, timeoutTicks = 200)
-    public static void contraption_movesNoPartOfABigMachine(final GameTestHelper helper) {
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void contraption_carriesABigMachineWholeAndItsPartsStayBound(final GameTestHelper helper) {
         if (!create()) {
             helper.assertFalse(CreateComputers.on(), "without Create the work is off");
             helper.succeed();
             return;
         }
-        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
-        final MainframeBlockEntity mainframe = EraNetwork.lay(world, EraKit.STANDARD).mainframe();
+        final MainframeBlockEntity mainframe = NetworkFixtures.formRunningMainframe(helper, ON_THE_BEARING,
+                Direction.NORTH);
+        final ServerLevel level = helper.getLevel();
         final BlockPos origin = mainframe.getBlockPos();
-        helper.assertFalse(WithCreate.movable(helper.getLevel(), origin),
-                "Create moves no Mainframe: its parts find it where it stood");
-        BlockPos part = null;
-        for (final Direction side : Direction.values()) {
-            if (helper.getLevel().getBlockEntity(origin.relative(side)) instanceof BigBlockPartBlockEntity) {
-                part = origin.relative(side);
-            }
-        }
-        helper.assertTrue(part != null, "the Mainframe stands on parts round its origin");
-        helper.assertFalse(WithCreate.movable(helper.getLevel(), part), "nor any part of it");
-        helper.succeed();
+        helper.assertTrue(WithCreate.movable(level, origin.east()), "Create may move a part of the Mainframe");
+        helper.assertTrue(WithCreate.attached(level, origin, Direction.EAST),
+                "and the origin holds on to it, so the Mainframe goes whole");
+        WithCreate.motor(helper, BEARING.below());
+        WithCreate.bearing(helper, BEARING);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(WithCreate.isContraption(helper, BEARING),
+                        "the bearing, turned, takes the Mainframe into its contraption"))
+                .thenExecute(() -> {
+                    for (final BlockPos cell : MainframeStructure.allPositions(origin, Direction.NORTH)) {
+                        helper.assertTrue(level.getBlockState(cell).isAir(), "every block of it rides: " + cell);
+                    }
+                    helper.setBlock(BEARING.below(), Blocks.AIR);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(level.getBlockEntity(origin) instanceof MainframeBlockEntity,
+                        "the bearing, stopped, sets the Mainframe down"))
+                .thenIdle(5)
+                .thenExecute(() -> {
+                    final MainframeBlockEntity set = (MainframeBlockEntity) level.getBlockEntity(origin);
+                    final Direction facing = set.getBlockState().getValue(HorizontalDirectionalBlock.FACING);
+                    final List<BlockPos> parts = MainframeStructure.partPositions(origin, facing);
+                    for (final BlockPos cell : parts) {
+                        helper.assertTrue(level.getBlockEntity(cell) instanceof BigBlockPartBlockEntity part
+                                && origin.equals(part.originPos()), "each part still finds its origin: " + cell);
+                        helper.assertTrue(level.getBlockState(cell).getValue(HorizontalDirectionalBlock.FACING)
+                                == facing, "and faces as it does: " + cell);
+                    }
+                    helper.assertFalse(set.isManualOn(), "it comes down switched off");
+                    level.destroyBlock(parts.get(0), false);
+                    for (final BlockPos cell : MainframeStructure.allPositions(origin, facing)) {
+                        helper.assertTrue(level.getBlockState(cell).isAir(), "broken at a part, it goes whole: "
+                                + cell);
+                    }
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = SHIP, timeoutTicks = 800)
@@ -276,6 +304,11 @@ public final class CreateComputersGameTests {
 
         static boolean movable(final Level level, final BlockPos pos) {
             return BlockMovementChecks.isMovementAllowed(level.getBlockState(pos), level, pos);
+        }
+
+        /* Whether Create takes the block beside {@code pos}, {@code towards}, with it. */
+        static boolean attached(final Level level, final BlockPos pos, final Direction towards) {
+            return BlockMovementChecks.isBlockAttachedTowards(level.getBlockState(pos), level, pos, towards);
         }
 
         /* A mechanical bearing at {@code at}, facing up. */
