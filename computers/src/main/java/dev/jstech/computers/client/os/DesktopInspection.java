@@ -39,6 +39,26 @@ interface DesktopInspection {
         return desktop().start().isOpen();
     }
 
+    /** Whether Frames XP's All Programs list stands open beside its Start menu. */
+    default boolean isAllProgramsOpen() {
+        return desktop().start().xpAllOpen();
+    }
+
+    /** The names Frames XP's All Programs list holds, in its order: every program, the system's places aside. */
+    default List<String> allProgramsLabels() {
+        final List<String> out = new ArrayList<>();
+        for (final Launcher l : desktop().start().xpPrograms()) {
+            out.add(l.label());
+        }
+        return out;
+    }
+
+    /** Screen y of the top of the launcher, which a test holds against the top of the desktop. */
+    default int startMenuTop() {
+        final DesktopViewport view = desktop().view();
+        return view.screenY(desktop().start().top(view.height() - DesktopScreen.TASKBAR_H));
+    }
+
     /** Screen position of the desktop's top-left corner: window and app geometry is relative to it. */
     default int desktopX() {
         return desktop().view().left();

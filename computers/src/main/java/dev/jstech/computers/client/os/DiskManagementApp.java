@@ -89,22 +89,22 @@ public final class DiskManagementApp implements IDesktopApp {
 
     @Override
     public int defaultWidth() {
-        return DiskToolLayout.W;
+        return DesktopWindow.windowWidthFor(DiskToolLayout.W);
     }
 
     @Override
     public int defaultHeight() {
-        return DiskToolLayout.H;
+        return DesktopWindow.windowHeightFor(DiskToolLayout.H);
     }
 
     @Override
     public int minWidth() {
-        return DiskToolLayout.W;
+        return DesktopWindow.windowWidthFor(DiskToolLayout.W);
     }
 
     @Override
     public int minHeight() {
-        return DiskToolLayout.H;
+        return DesktopWindow.windowHeightFor(DiskToolLayout.H);
     }
 
     @Override
@@ -127,22 +127,28 @@ public final class DiskManagementApp implements IDesktopApp {
         g.fill(x, y, x + width, y + height, this.skin.windowBg());
         Draw.text(g, font, GameText.resolve(this.xp ? DiskToolTexts.DM_MENU_XP : DiskToolTexts.DM_MENU), x + 4,
                 y + 2, this.skin.text());
-        for (int i = 0; i < 6; i++) {
+        // The toolbar's buttons, two and then three, each a small square button with its picture.
+        for (int i = 0; i < 5; i++) {
             final int bx = x + 4 + i * 12 + (i >= 2 ? 6 : 0);
-            g.fill(bx, y + DiskToolLayout.DM_TOOLBAR_Y + 1, bx + 8, y + DiskToolLayout.DM_TOOLBAR_Y + 9, c.tool());
+            final int by = y + DiskToolLayout.DM_TOOLBAR_Y + 1;
+            g.fill(bx, by, bx + 9, by + 9, c.tool());
+            Draw.outline(g, bx, by, 9, 9, c.edge());
+            g.fill(bx + 3, by + 3, bx + 6, by + 6, c.rule());
         }
         final DiskReport report = this.disks.report();
         final Map<String, String> letters = letters(report);
         this.volumes(g, font, x, y + DiskToolLayout.DM_LIST_Y, width, report, letters, c);
+        // The status bar runs along the foot of the window, whatever height the window is.
+        final int statusY = y + height - DiskToolLayout.BAR_H;
         int dy = y + DiskToolLayout.DM_MAP_Y;
         for (final DiskReport.Disk disk : report.disks()) {
-            if (dy + DiskToolLayout.DM_DISK_H > y + DiskToolLayout.DM_STATUS_Y) {
+            if (dy + DiskToolLayout.DM_DISK_H > statusY) {
                 break;
             }
             this.disk(g, font, x, dy, width, disk, letters, c);
             dy += DiskToolLayout.DM_DISK_H + DiskToolLayout.DM_DISK_GAP;
         }
-        this.statusBar(g, font, x, y + DiskToolLayout.DM_STATUS_Y, width, c);
+        this.statusBar(g, font, x, statusY, width, c);
         this.root.render(g, new UiContext(this.skin, font, mouseX, mouseY, partialTick));
     }
 
@@ -212,7 +218,7 @@ public final class DiskManagementApp implements IDesktopApp {
     /* The volumes: every partition with a file system Frames reads, the one chosen lit. */
     private void volumes(final GuiGraphics g, final Font font, final int x, final int y, final int width,
                          final DiskReport report, final Map<String, String> letters, final Colours c) {
-        final int[] cols = DiskToolLayout.DM_COLUMNS;
+        final int[] cols = DiskToolLayout.spread(DiskToolLayout.DM_COLUMNS, width, DiskToolLayout.W);
         final TextKey[] heads = {DiskToolTexts.DM_VOLUME, DiskToolTexts.DM_LAYOUT, DiskToolTexts.DM_TYPE,
                 DiskToolTexts.DM_FILE_SYSTEM, DiskToolTexts.DM_STATUS, DiskToolTexts.DM_CAPACITY,
                 DiskToolTexts.DM_FREE_SPACE, DiskToolTexts.DM_PERCENT_FREE};
@@ -237,9 +243,12 @@ public final class DiskManagementApp implements IDesktopApp {
                         GameText.resolve(DiskToolTexts.DM_BASIC), fileSystem(part), this.statusOf(part),
                         size(part.sizeMb()), part.fileSystem() == null || part.swap() ? "" : size(part.freeMb()),
                         part.sizeMb() == 0L ? "" : part.freeMb() * 100L / part.sizeMb() + " %"};
+                // The volume's small picture before its name.
+                g.fill(x + cols[0] + 1, ry + 1, x + cols[0] + 6, ry + 6, c.rule());
                 for (int i = 0; i < cells.length; i++) {
-                    final int room = (i + 1 < cols.length ? cols[i + 1] : width) - cols[i] - 3;
-                    Draw.text(g, font, clip(font, cells[i], room), x + cols[i] + 1, ry, this.skin.text());
+                    final int lead = i == 0 ? 8 : 0;
+                    final int room = (i + 1 < cols.length ? cols[i + 1] : width) - cols[i] - 3 - lead;
+                    Draw.text(g, font, clip(font, cells[i], room), x + cols[i] + 1 + lead, ry, this.skin.text());
                 }
                 this.hits.add(new Hit(x, ry - 1, width, DiskToolLayout.ROW, disk.index(), part.startMb(), part));
                 ry += DiskToolLayout.ROW;
@@ -253,15 +262,20 @@ public final class DiskManagementApp implements IDesktopApp {
                       final DiskReport.Disk disk, final Map<String, String> letters, final Colours c) {
         final int h = DiskToolLayout.DM_DISK_H;
         final int lw = DiskToolLayout.DM_LABEL_W;
+        final int line = DiskToolLayout.ROW;
         g.fill(x + 2, y, x + 2 + lw, y + h, c.cell());
-        Draw.text(g, font, GameText.resolve(DiskToolTexts.DM_DISK.with(disk.index())), x + 5, y + 1, c.ink());
-        Draw.text(g, font, GameText.resolve(DiskToolTexts.DM_BASIC), x + 5, y + 10, c.ink());
-        Draw.text(g, font, clip(font, size(disk.sizeMb()), lw - 4), x + 5, y + 19, c.ink());
+        // The disk's small picture, then its number, its kind, its size and that it is online.
+        g.fill(x + 4, y + 2, x + 11, y + 8, c.edge());
+        g.fill(x + 5, y + 3, x + 10, y + 7, c.tool());
+        Draw.text(g, font, GameText.resolve(DiskToolTexts.DM_DISK.with(disk.index())), x + 13, y + 1, c.ink());
+        Draw.text(g, font, GameText.resolve(DiskToolTexts.DM_BASIC), x + 5, y + 1 + line, c.ink());
+        Draw.text(g, font, clip(font, size(disk.sizeMb()), lw - 4), x + 5, y + 1 + 2 * line, c.ink());
+        Draw.text(g, font, GameText.resolve(DiskToolTexts.DM_ONLINE), x + 5, y + 1 + 3 * line, c.ink());
         this.hits.add(new Hit(x + 2, y, lw, h, disk.index(), -2L, null));
-        final List<long[]> spans = spans(disk);
+        final List<long[]> spans = DiskMap.spans(disk);
         final int bx = x + lw + 4;
         final int bw = width - lw - 6;
-        final int[] edges = edges(spans, disk.sizeMb(), bw);
+        final int[] edges = DiskMap.edges(spans, disk.sizeMb(), bw, MIN_BLOCK);
         for (int i = 0; i < spans.size(); i++) {
             final long[] span = spans.get(i);
             final DiskReport.Part part = span[2] < 0 ? null : disk.part((int) span[2]);
@@ -276,8 +290,8 @@ public final class DiskManagementApp implements IDesktopApp {
                     ? new String[]{size(span[1]), GameText.resolve(DiskToolTexts.DM_UNALLOCATED)}
                     : new String[]{volumeName(disk, part, letters), size(part.sizeMb()) + " " + fileSystem(part),
                     this.statusOf(part)};
-            for (int line = 0; line < lines.length; line++) {
-                Draw.text(g, font, clip(font, lines[line], room), left + 2, y + 4 + line * 8, c.ink());
+            for (int row = 0; row < lines.length; row++) {
+                Draw.text(g, font, clip(font, lines[row], room), left + 2, y + 5 + row * line, c.ink());
             }
             this.hits.add(new Hit(left, y, right - left, h, disk.index(), span[0], part));
         }
@@ -515,32 +529,6 @@ public final class DiskManagementApp implements IDesktopApp {
     private static String fileSystem(final DiskReport.Part part) {
         final FileSystemType fs = part.fileSystem();
         return fs == null || !shownAsVolume(part) && part.role() != PartitionRole.EFI ? "" : fs.displayName();
-    }
-
-    /* The partitions and the unallocated stretches of a disk in the order they lie, as {start, size, number}. */
-    private static List<long[]> spans(final DiskReport.Disk disk) {
-        final List<long[]> spans = new ArrayList<>();
-        for (final DiskReport.Part part : disk.parts()) {
-            spans.add(new long[]{part.startMb(), part.sizeMb(), part.number()});
-        }
-        for (final DiskLayout.FreeSpace gap : disk.layout().free()) {
-            spans.add(new long[]{gap.startMb(), gap.sizeMb(), -1L});
-        }
-        spans.sort((a, b) -> Long.compare(a[0], b[0]));
-        return spans;
-    }
-
-    /* Where each block starts across the map's width, by its size, none narrower than a name needs. */
-    private static int[] edges(final List<long[]> spans, final long diskMb, final int width) {
-        final int[] edges = new int[spans.size() + 1];
-        final int room = Math.max(0, width - MIN_BLOCK * spans.size());
-        int at = 0;
-        for (int i = 0; i < spans.size(); i++) {
-            edges[i] = at;
-            at += MIN_BLOCK + (int) (room * spans.get(i)[1] / Math.max(1L, diskMb));
-        }
-        edges[spans.size()] = Math.min(width, Math.max(at, width));
-        return edges;
     }
 
     private static String size(final long mb) {

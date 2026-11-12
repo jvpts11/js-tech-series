@@ -10,6 +10,7 @@ package dev.jstech.computers.gui.layout;
 import dev.jstech.core.gui.layout.GuiLayout;
 import org.junit.jupiter.api.Test;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DiskToolLayoutTest {
@@ -20,6 +21,18 @@ class DiskToolLayoutTest {
             final GuiLayout layout = DiskToolLayout.layout(tool);
             assertTrue(layout.isClean(), tool + ": " + layout.overlaps() + " " + layout.outOfBounds());
         }
+    }
+
+    @Test
+    void spread_keepsTheColumnsOfAWindowNoWiderThanItsDesign() {
+        final int[] columns = {0, 40, 100};
+        assertArrayEquals(columns, DiskToolLayout.spread(columns, 200, 200));
+        assertArrayEquals(columns, DiskToolLayout.spread(columns, 150, 200));
+    }
+
+    @Test
+    void spread_spreadsTheColumnsInProportionAcrossAWiderWindow() {
+        assertArrayEquals(new int[] {0, 60, 150}, DiskToolLayout.spread(new int[] {0, 40, 100}, 300, 200));
     }
 
     @Test

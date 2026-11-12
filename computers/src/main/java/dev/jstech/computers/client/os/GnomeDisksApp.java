@@ -79,22 +79,22 @@ public final class GnomeDisksApp implements IDesktopApp {
 
     @Override
     public int defaultWidth() {
-        return DiskToolLayout.W;
+        return DesktopWindow.windowWidthFor(DiskToolLayout.W);
     }
 
     @Override
     public int defaultHeight() {
-        return DiskToolLayout.H;
+        return DesktopWindow.windowHeightFor(DiskToolLayout.H);
     }
 
     @Override
     public int minWidth() {
-        return DiskToolLayout.W;
+        return DesktopWindow.windowWidthFor(DiskToolLayout.W);
     }
 
     @Override
     public int minHeight() {
-        return DiskToolLayout.H;
+        return DesktopWindow.windowHeightFor(DiskToolLayout.H);
     }
 
     @Override
@@ -261,6 +261,8 @@ public final class GnomeDisksApp implements IDesktopApp {
         Draw.text(g, font, head, x + (width - font.width(head)) / 2, y + 4, c.ink());
         final String dev = device(disk);
         Draw.text(g, font, dev, x + (width - font.width(dev)) / 2, y + 13, c.dim());
+        // The rule that parts the disk's name from its details.
+        g.fill(x, y + 23, x + width, y + 24, c.chosen());
         final int lx = x + width / 3;
         final String[][] rows = {
                 {GameText.resolve(DiskToolTexts.GD_MODEL), disk.model()},

@@ -990,6 +990,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   two worlds are told apart.
 - On the classic Quince systems, a question or a note is their own alert, the stop or the caution sign
   beside the words and the round buttons along its foot, where it was the dialog of the other desktops.
+- Every desktop's launcher stays on the screen however many programs are installed, where Frames 95's,
+  XP's and 7's, KDE's, Cinnamon's and the period desktops' ran up past the top of the screen. Frames XP's left column
+  holds the programs it has room for, and All Programs opens beside the menu the list of every program, in as many
+  columns as it needs, where it opened Settings; Frames 7's left column holds what it has room for and its search
+  finds the rest; the other launchers' lists scroll with the wheel, a thumb at their side.
+- Disk tools: Disk Management and the KDE Partition Manager show their status bar along the foot of the
+  window, which the window cut off, and open big enough for three disks, their columns spreading across a wider
+  window. Disk Management's disks show their picture and say they are online, and each volume has its picture; the
+  KDE Partition Manager draws each partition as wide as its share of the disk, filled as far as it is used, with a
+  padlock beside each mounted one and the drive's picture beside each device; GNOME's Disks rules off a disk's name
+  from its details; as the real tools did.
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
   works through its computer.
 - The Network Interactor's Operations tab gives each Operation its own state, where it read the states in

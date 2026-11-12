@@ -19,7 +19,7 @@ public final class DiskToolLayout {
 
     /** How big every tool's window is. */
     public static final int W = 340;
-    public static final int H = 220;
+    public static final int H = 240;
     /** The step from one row of text to the next, and the height of a bar along the top or the foot. */
     public static final int ROW = 9;
     public static final int BAR_H = 11;
@@ -31,7 +31,8 @@ public final class DiskToolLayout {
     public static final int DM_LIST_H = ROW * (DM_LIST_ROWS + 1) + 2;
     public static final int[] DM_COLUMNS = {2, 62, 96, 126, 166, 244, 280, 318};
     public static final int DM_MAP_Y = DM_LIST_Y + DM_LIST_H + 4;
-    public static final int DM_DISK_H = 30;
+    /** A disk's row of the map: its cell of four lines, and its blocks of three under their bar. */
+    public static final int DM_DISK_H = 40;
     public static final int DM_DISK_GAP = 3;
     public static final int DM_DISKS = 3;
     public static final int DM_LABEL_W = 56;
@@ -65,6 +66,21 @@ public final class DiskToolLayout {
     public static final int FORM_H = 150;
 
     private DiskToolLayout() {
+    }
+
+    /**
+     * Where the {@code columns} of a table laid out {@code designed} wide start in one {@code width} wide: where they
+     * were, or spread in proportion across a wider window, so a maximized tool shows its headings whole.
+     */
+    public static int[] spread(final int[] columns, final int width, final int designed) {
+        if (width <= designed) {
+            return columns;
+        }
+        final int[] spread = new int[columns.length];
+        for (int i = 0; i < columns.length; i++) {
+            spread[i] = columns[i] * width / designed;
+        }
+        return spread;
     }
 
     /** The tool's window laid out. */

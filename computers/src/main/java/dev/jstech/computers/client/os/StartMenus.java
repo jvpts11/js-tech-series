@@ -53,6 +53,10 @@ final class StartMenus {
     private int clickY;
     /** How the launcher is coming up: sliding out of the panel or growing, as its system shows one. */
     private Motion motion = Motion.FINISHED;
+    /** Whether Frames XP's All Programs list stands open beside its menu. */
+    private boolean xpAllOpen;
+    /** How far the wheel has turned a launcher's program list that is longer than it has room for, in rows. */
+    private int scroll;
 
     /** The longest search the box takes. */
     private static final int SEARCH_MAX = 24;
@@ -60,6 +64,11 @@ final class StartMenus {
     private static final Set<ResourceLocation> XP_PLACES = Set.of(
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "this_pc"), Programs.FILES, Programs.SETTINGS,
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "network"));
+    /* What of each launcher's height is not its program list: its margins, header, footer and Shut Down. */
+    private static final int PERIOD_FRAME = 8;
+    private static final int CLASSIC_FRAME = 6 + FramesLaunchers.MENU_ITEM_H + 8;
+    private static final int KDE_FRAME = LinuxLaunchers.KDE_HEADER_H + LinuxLaunchers.KDE_FOOTER_H + 8;
+    private static final int CINNAMON_FRAME = LinuxLaunchers.CIN_HEADER_H + 10;
 
     StartMenus(final DesktopState desktop) {
         this.desktop = desktop;
@@ -94,9 +103,71 @@ final class StartMenus {
         return open && desktop.panelStyle() == PanelStyle.FRAMES_10 && metro.released(mx, my);
     }
 
-    /** The wheel over an open launcher's list. */
+    /**
+     * The wheel over an open launcher: Frames 10 scrolls its own list, and a launcher whose programs are more than it
+     * has room for turns its list a row a notch.
+     */
     boolean scrolled(final double mx, final double my, final double dy) {
-        return open && desktop.panelStyle() == PanelStyle.FRAMES_10 && metro.scrolled(mx, my, dy);
+        if (!open) {
+            return false;
+        }
+        if (desktop.panelStyle() == PanelStyle.FRAMES_10 && !desktop.periodPanel() && !desktop.kde4()) {
+            return metro.scrolled(mx, my, dy);
+        }
+        final int[] list = scrollingList();
+        if (list == null || list[1] >= list[0]) {
+            return false;
+        }
+        scroll = Math.max(0, Math.min(firstRow(list[0], list[1]) - (int) Math.signum(dy), list[0] - list[1]));
+        return true;
+    }
+
+    /**
+     * How many rows of {@code rowH} a launcher's program list of {@code count} shows, when its other parts take
+     * {@code frame} of its height: every program while they fit above the panel, or as many as do.
+     */
+    int listRows(final int count, final int frame, final int rowH) {
+        final int room = (desktop.view().height() - DesktopScreen.TASKBAR_H - frame) / rowH;
+        return Math.min(count, Math.max(1, room));
+    }
+
+    /** The first row a program list of {@code count} rows shows, {@code shown} at a time: where the wheel left it. */
+    int firstRow(final int count, final int shown) {
+        return Math.max(0, Math.min(scroll, count - shown));
+    }
+
+    /** The rows the period launcher's list shows. */
+    int periodRows() {
+        return listRows(desktop.launcherList().size(), PERIOD_FRAME, FramesLaunchers.MENU_ITEM_H);
+    }
+
+    /** The rows the classic Start menu's list shows, over its Shut Down. */
+    int classicRows() {
+        return listRows(desktop.launcherList().size(), CLASSIC_FRAME, FramesLaunchers.MENU_ITEM_H);
+    }
+
+    /** The rows KDE's launcher's list shows. */
+    int kdeRows() {
+        return listRows(desktop.launcherList().size(), KDE_FRAME, LinuxLaunchers.KDE_ROW_H);
+    }
+
+    /** The rows Cinnamon's menu's list shows, of {@code count} its category and search leave. */
+    int cinnamonRows(final int count) {
+        return listRows(count, CINNAMON_FRAME, LinuxLaunchers.CIN_ROW_H);
+    }
+
+    /**
+     * Draws the thumb of a program list that is longer than its launcher has room for, in a strip two wide at
+     * {@code x} from {@code y}, {@code h} tall, where the rows it shows stand in the whole list.
+     */
+    void drawThumb(final GuiGraphics g, final int x, final int y, final int h, final int count, final int shown,
+                   final int colour) {
+        if (shown >= count) {
+            return;
+        }
+        final int thumb = Math.max(6, h * shown / count);
+        final int at = y + (h - thumb) * firstRow(count, shown) / (count - shown);
+        g.fill(x, at, x + 2, at + thumb, colour);
     }
 
     boolean isOpen() {
@@ -119,6 +190,8 @@ final class StartMenus {
             close();
         } else {
             open = true;
+            xpAllOpen = false;
+            scroll = 0;
             search.setLength(0);
             metro.reset();
             desktop.kickoff4().reset();
@@ -129,6 +202,8 @@ final class StartMenus {
     /** Closes the launcher and clears its search, so it opens fresh next time. */
     void close() {
         open = false;
+        xpAllOpen = false;
+        scroll = 0;
         search.setLength(0);
         linux.forgetCinnamonCategory();
     }
@@ -182,17 +257,17 @@ final class StartMenus {
              * A period launcher is a small program list, not a Plasma menu and not a full-screen overview: it is
              * sized by its own contents, like the classic launcher it is.
              */
-            return Math.max(4, count) * FramesLaunchers.MENU_ITEM_H + 8;
+            return Math.max(4, periodRows()) * FramesLaunchers.MENU_ITEM_H + PERIOD_FRAME;
         }
         if (desktop.kde4()) {
             return Kickoff4Menu.H;
         }
+        // A list launcher grows with its programs up to the top of the desktop, and its list scrolls past that.
         return switch (desktop.panelStyle()) {
-            case KDE -> LinuxLaunchers.KDE_HEADER_H + Math.max(6, count) * LinuxLaunchers.KDE_ROW_H
-                    + LinuxLaunchers.KDE_FOOTER_H + 8;
+            case KDE -> Math.max(6, kdeRows()) * LinuxLaunchers.KDE_ROW_H + KDE_FRAME;
             // The overview covers the whole desktop below the top bar.
             case GNOME -> desktop.view().height() - DesktopScreen.TASKBAR_H;
-            case CINNAMON -> LinuxLaunchers.CIN_HEADER_H + Math.max(5, count) * LinuxLaunchers.CIN_ROW_H + 10;
+            case CINNAMON -> Math.max(5, cinnamonRows(count)) * LinuxLaunchers.CIN_ROW_H + CINNAMON_FRAME;
             case FRAMES_7 -> aero.height();
             case FRAMES_10 -> metro.height();
             // Two columns: the taller of the programs (left) and the places (right) sets the body's height.
@@ -208,7 +283,7 @@ final class StartMenus {
                 yield 6 + FramesLaunchers.W11_SEARCH_H + 5 + 9 + rows * FramesLaunchers.W11_TILE_H + 5
                         + FramesLaunchers.W11_FOOTER_H + 5;
             }
-            default -> count * FramesLaunchers.MENU_ITEM_H + 6 + FramesLaunchers.MENU_ITEM_H + 8;
+            default -> classicRows() * FramesLaunchers.MENU_ITEM_H + CLASSIC_FRAME;
         };
     }
 
@@ -241,8 +316,17 @@ final class StartMenus {
         return tbY - height();
     }
 
-    /** The programs in the Frames XP menu's left column: everything that is not one of the system's places. */
+    /**
+     * The programs in the Frames XP menu's left column: those that are not the system's places, as many as the menu
+     * has room for above the taskbar. The rest wait under All Programs, which lists every one, as XP's did.
+     */
     List<Launcher> xpLeft() {
+        final List<Launcher> all = xpPrograms();
+        return all.subList(0, Math.min(all.size(), xpLeftRoom()));
+    }
+
+    /** Every program the Frames XP menu has, its places aside: what its All Programs list holds. */
+    List<Launcher> xpPrograms() {
         final List<Launcher> out = new ArrayList<>();
         for (final Launcher l : desktop.launcherList()) {
             if (!XP_PLACES.contains(l.programId())) {
@@ -250,6 +334,51 @@ final class StartMenus {
             }
         }
         return out;
+    }
+
+    /** Whether Frames XP's All Programs list stands open beside the menu. */
+    boolean xpAllOpen() {
+        return open && xpAllOpen;
+    }
+
+    /** Opens Frames XP's All Programs list beside the menu, or closes it when it is open. */
+    void toggleXpAll() {
+        xpAllOpen = !xpAllOpen;
+    }
+
+    /** How many rows each column of the All Programs list holds: as many as stand above the foot of its row. */
+    int xpAllRows(final int tbY) {
+        return Math.max(1, (xpAllBottom(tbY) - 2 * FramesLaunchers.XP_ALL_PAD) / FramesLaunchers.XP_ROW_H);
+    }
+
+    /** How many columns the All Programs list runs to, a new one each time the last is full. */
+    int xpAllColumns(final int tbY) {
+        final int rows = xpAllRows(tbY);
+        return Math.max(1, (xpPrograms().size() + rows - 1) / rows);
+    }
+
+    /** The left edge of the All Programs list: at the left column's edge, moved in when it would run off the side. */
+    int xpAllLeft(final int tbY) {
+        final int wide = xpAllColumns(tbY) * FramesLaunchers.XP_ALL_W;
+        return Math.max(0, Math.min(left() + FramesLaunchers.XP_LEFT_W, desktop.view().width() - wide - 2));
+    }
+
+    /** The top of the All Programs list, whose foot is level with the foot of the row that opened it. */
+    int xpAllTop(final int tbY) {
+        final int rows = Math.min(xpAllRows(tbY), xpPrograms().size());
+        return xpAllBottom(tbY) - rows * FramesLaunchers.XP_ROW_H - 2 * FramesLaunchers.XP_ALL_PAD;
+    }
+
+    /** The foot of the All Programs list: the foot of the All Programs row. */
+    int xpAllBottom(final int tbY) {
+        return xpBodyTop(tbY) + xpAllRow() + FramesLaunchers.XP_ALL_ROW_H;
+    }
+
+    /** The top-left corner of entry {@code i} of the All Programs list: down each column, the columns side by side. */
+    int[] xpAllCell(final int i, final int tbY) {
+        final int rows = xpAllRows(tbY);
+        return new int[] {xpAllLeft(tbY) + i / rows * FramesLaunchers.XP_ALL_W,
+                xpAllTop(tbY) + FramesLaunchers.XP_ALL_PAD + i % rows * FramesLaunchers.XP_ROW_H};
     }
 
     /** The system's places in the Frames XP menu's right column, in launcher order. */
@@ -447,11 +576,7 @@ final class StartMenus {
             return later[0];
         }
         if (desktop.panelStyle() == PanelStyle.FRAMES_XP && index >= 0 && index < all.size()) {
-            final boolean place = XP_PLACES.contains(all.get(index).programId());
-            final int colX = left() + (place ? FramesLaunchers.XP_LEFT_W + 3 : 3);
-            final int colW = place ? FramesLaunchers.XP_MENU_W - FramesLaunchers.XP_LEFT_W - 6
-                    : FramesLaunchers.XP_LEFT_W - 6;
-            return colX + colW / 2;
+            return xpPoint(all.get(index), desktop.view().height() - DesktopScreen.TASKBAR_H)[0];
         }
         return left() + FramesLaunchers.BAND_W + 30;
     }
@@ -465,14 +590,7 @@ final class StartMenus {
             return later[1];
         }
         if (desktop.panelStyle() == PanelStyle.FRAMES_XP && index >= 0 && index < all.size()) {
-            final Launcher target = all.get(index);
-            final boolean place = XP_PLACES.contains(target.programId());
-            final List<Launcher> column = place ? xpRight() : xpLeft();
-            final int row = Math.max(0, column.indexOf(target));
-            // The left column has a separator under its pinned block, so its rows are not a plain multiple.
-            final int rowY = place ? row * FramesLaunchers.XP_ROW_H : xpLeftRow(row);
-            return tbY - height() + FramesLaunchers.XP_HEADER_H + FramesLaunchers.XP_ORANGE_H + 3 + rowY
-                    + FramesLaunchers.XP_ROW_H / 2;
+            return xpPoint(all.get(index), tbY)[1];
         }
         return tbY - height() + 4 + index * FramesLaunchers.MENU_ITEM_H + FramesLaunchers.MENU_ITEM_H / 2;
     }
@@ -513,6 +631,67 @@ final class StartMenus {
     /** How tall the XP left column runs: its rows, its separator, and the "All Programs" row under them. */
     private int xpLeftColumnHeight() {
         return xpAllRow() + FramesLaunchers.XP_ALL_ROW_H;
+    }
+
+    /*
+     * How many programs the XP menu's left column has room for. The menu stands on the taskbar and may reach the top
+     * of the desktop, less its header, its footer, its two separators and its All Programs row.
+     */
+    private int xpLeftRoom() {
+        final int tbY = desktop.view().height() - DesktopScreen.TASKBAR_H;
+        final int frame = FramesLaunchers.XP_HEADER_H + FramesLaunchers.XP_ORANGE_H + FramesLaunchers.XP_FOOTER_H + 6
+                + 2 * FramesLaunchers.XP_SEP_H + FramesLaunchers.XP_ALL_ROW_H;
+        return Math.max(FramesLaunchers.XP_PINNED, (tbY - frame) / FramesLaunchers.XP_ROW_H);
+    }
+
+    /*
+     * The program list of a launcher that scrolls it when it is longer than there is room for, as {its rows, the rows
+     * shown}; null for a launcher that lays its programs out another way.
+     */
+    private int[] scrollingList() {
+        final int count = desktop.launcherList().size();
+        if (desktop.periodPanel()) {
+            return new int[] {count, periodRows()};
+        }
+        if (desktop.kde4()) {
+            return null;
+        }
+        return switch (desktop.panelStyle()) {
+            case KDE -> new int[] {count, kdeRows()};
+            case CINNAMON -> new int[] {linux.cinnamonCount(), cinnamonRows(count)};
+            case FRAMES_XP, FRAMES_7, FRAMES_10, FRAMES_11, GNOME -> null;
+            default -> new int[] {count, classicRows()};
+        };
+    }
+
+    /** The top of the XP menu's two columns, under its header and its rule of orange. */
+    private int xpBodyTop(final int tbY) {
+        return top(tbY) + FramesLaunchers.XP_HEADER_H + FramesLaunchers.XP_ORANGE_H + 3;
+    }
+
+    /*
+     * The middle of the XP menu's entry for {@code target}, where a test clicks it: its row in the column that lists
+     * it; for a program the left column has no room for, its row in All Programs while that is open, or else the All
+     * Programs row, whose click opens it.
+     */
+    private int[] xpPoint(final Launcher target, final int tbY) {
+        final int bodyTop = xpBodyTop(tbY);
+        final int half = FramesLaunchers.XP_ROW_H / 2;
+        if (XP_PLACES.contains(target.programId())) {
+            return new int[] {left() + FramesLaunchers.XP_LEFT_W + 3
+                    + (FramesLaunchers.XP_MENU_W - FramesLaunchers.XP_LEFT_W - 6) / 2,
+                    bodyTop + xpRight().indexOf(target) * FramesLaunchers.XP_ROW_H + half};
+        }
+        final int leftMiddle = left() + 3 + (FramesLaunchers.XP_LEFT_W - 6) / 2;
+        final int row = xpLeft().indexOf(target);
+        if (row >= 0) {
+            return new int[] {leftMiddle, bodyTop + xpLeftRow(row) + half};
+        }
+        if (xpAllOpen()) {
+            final int[] cell = xpAllCell(xpPrograms().indexOf(target), tbY);
+            return new int[] {cell[0] + FramesLaunchers.XP_ALL_W / 2, cell[1] + half};
+        }
+        return new int[] {leftMiddle, bodyTop + xpAllRow() + FramesLaunchers.XP_ALL_ROW_H / 2};
     }
 
     /** Hands a click to the launcher of this desktop's family, which knows where its entries are. */

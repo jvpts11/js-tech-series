@@ -90,6 +90,14 @@ final class EraJourney {
                     final DesktopScreen desktop = ctx.screen(DesktopScreen.class);
                     final int item = desktop.launcherLabels().indexOf(label);
                     ctx.click(desktop.startMenuItemX(item), desktop.startMenuItemY(item));
+                })
+                .then(SETTLE, () -> {
+                    // A program XP's menu had no room for was under All Programs, which the click opened.
+                    if (ctx.mc().screen instanceof DesktopScreen desktop && desktop.isStartOpen()
+                            && desktop.isAllProgramsOpen()) {
+                        final int item = desktop.launcherLabels().indexOf(label);
+                        ctx.click(desktop.startMenuItemX(item), desktop.startMenuItemY(item));
+                    }
                 });
     }
 

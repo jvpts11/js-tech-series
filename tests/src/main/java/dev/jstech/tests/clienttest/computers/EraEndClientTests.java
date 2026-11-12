@@ -14,7 +14,6 @@ import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.client.PersonalComputerScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.ShellApp;
-import dev.jstech.computers.gui.layout.AssemblyGeometry.SeatKind;
 import dev.jstech.computers.gui.layout.AssemblyGeometry;
 import dev.jstech.computers.hardware.GpuSpec;
 import dev.jstech.computers.hardware.SoundCardSpec;
@@ -25,6 +24,7 @@ import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.rack.RaidMode;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.testkit.client.ClientTestFailure;
@@ -48,6 +48,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.GameType;
 import org.lwjgl.glfw.GLFW;
 
@@ -56,9 +57,9 @@ import org.lwjgl.glfw.GLFW;
  * running on it, a craft under way, the rack's storage server holding its array as a mirror and the network up, the
  * world is saved and loaded again, and each is as it was: the window is open again when the player sits back down,
  * the program still runs, the craft carries on, the mirror is still a mirror over both its disks, and the network is
- * the same network. Then the computer is broken by a player who is not in creative: its case and every part fall
- * from it, the player picks them up, puts the case back down and builds it again through its screen, part by part,
- * and the system on its disk comes back up.
+ * the same network. Then the computer is broken by a player who is not in creative: it falls whole, every part
+ * inside it, the player picks it up and puts it back down, it stands with its parts in their seats, and switched on,
+ * the system on its disk comes back up.
  */
 public final class EraEndClientTests {
 
@@ -185,13 +186,11 @@ public final class EraEndClientTests {
     }
 
     /*
-     * The computer broken by a player out of creative, its case and parts picked up, the case put back down and
-     * built again through its screen, and its system up again on the monitor.
+     * The computer broken by a player out of creative comes back whole, every part inside it, as a rack server does;
+     * put back down, it stands with its parts in their seats, and switched on its system comes up on the monitor.
      */
     private static void rebuilt(final ClientTestContext ctx, final EraKit kit) {
         final List<Item> parts = parts(kit);
-        final List<SeatKind> seats = seats(kit);
-        final AtomicReference<List<ItemStack>> picked = new AtomicReference<>(List.of());
         ctx.thenWaitUntil(EraJourney.away(ctx), WAIT, "the desk to be left")
                 .thenServer(SETTLE, level -> {
                     ctx.serverPlayer().getInventory().clearContent();
@@ -202,50 +201,33 @@ public final class EraEndClientTests {
                 .thenWaitUntil(new Breaking(ctx, EraNetwork.COMPUTER), WAIT * 3,
                         "the computer to come apart under the player's hand")
                 .thenTeleport(SETTLE, EraNetwork.COMPUTER, Direction.NORTH)
-                .thenWaitUntilServer(level -> holds(ctx.serverPlayer().getInventory(), kit.computer().asItem())
-                                && parts.stream().allMatch(part -> holds(ctx.serverPlayer().getInventory(), part)),
-                        WAIT, "the case and every part to fall and be picked up",
+                .thenWaitUntilServer(level -> holds(ctx.serverPlayer().getInventory(), kit.computer().asItem()),
+                        WAIT, "the computer to fall whole and be picked up",
                         level -> "inventory=" + ctx.serverPlayer().getInventory().items)
                 .thenScreenshot(SETTLE, shot(kit, "broken"))
-                /*
-                 * What was picked up laid out along the hotbar, the case first and then the parts in the order they go
-                 * in, as the player would sort them: the very stacks that fell, so the disk keeps its system.
-                 */
+                // The very stack that fell, so the disk inside it keeps its system, put back in the hand.
                 .thenServer(SETTLE, level -> {
                     final Inventory inventory = ctx.serverPlayer().getInventory();
-                    final ItemStack caseStack = taken(inventory, kit.computer().asItem());
-                    final List<ItemStack> sorted = new ArrayList<>();
-                    for (final Item part : parts) {
-                        sorted.add(taken(inventory, part));
-                    }
+                    final ItemStack whole = taken(inventory, kit.computer().asItem());
+                    final List<Item> inside = inside(whole);
+                    ctx.assertTrue(parts.stream().allMatch(inside::contains), "every part is inside it: " + inside);
                     inventory.clearContent();
-                    picked.set(sorted);
                     ctx.serverPlayer().setGameMode(GameType.CREATIVE);
-                    ctx.give(0, caseStack);
+                    ctx.give(0, whole);
                 })
                 .thenTeleport(SETTLE, EAST_OF_THE_COMPUTER, Direction.WEST)
                 .then(SETTLE, () -> ctx.selectHotbar(0))
                 .thenPlace(1, EraNetwork.COMPUTER)
                 .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(EraNetwork.COMPUTER))
-                                instanceof PersonalComputerBlockEntity, WAIT, "the case to go back down",
+                                instanceof PersonalComputerBlockEntity, WAIT, "the computer to go back down",
                         level -> "found " + level.getBlockState(ctx.abs(EraNetwork.COMPUTER)))
-                .thenServer(0, level -> {
-                    for (int slot = 0; slot < 9; slot++) {
-                        ctx.give(slot, slot < picked.get().size() ? picked.get().get(slot) : ItemStack.EMPTY);
-                    }
-                })
+                .thenWaitUntilServer(level -> parts.stream().allMatch(part -> seated(computer(ctx, level), part)),
+                        WAIT, "every part to sit in it as it did",
+                        level -> "hardware=" + hardware(computer(ctx, level)))
                 .thenTeleport(SETTLE, BY_THE_COMPUTER, Direction.NORTH)
                 .then(SETTLE, () -> ctx.selectHotbar(8))
                 .then(1, () -> ctx.rightClick(EraNetwork.COMPUTER, Direction.SOUTH))
-                .thenAwaitScreen(PersonalComputerScreen.class, WAIT);
-        for (int i = 0; i < seats.size(); i++) {
-            final int slot = i;
-            final SeatKind kind = seats.get(i);
-            final int index = (int) seats.subList(0, i).stream().filter(kind::equals).count();
-            ctx.then(2, () -> EraJourney.seatFromHotbar(ctx, PersonalComputerScreen.class, slot, kind, index));
-        }
-        ctx.thenWaitUntilServer(level -> parts.stream().allMatch(part -> seated(computer(ctx, level), part)), WAIT,
-                        "every part to sit in the case again", level -> "hardware=" + hardware(computer(ctx, level)))
+                .thenAwaitScreen(PersonalComputerScreen.class, WAIT)
                 .then(SETTLE, () -> {
                     final AssemblyGeometry.Box power = ctx.screen(PersonalComputerScreen.class).geometry().power();
                     ctx.clickGui(power.x() + power.w() / 2, power.y() + power.h() / 2);
@@ -259,7 +241,7 @@ public final class EraEndClientTests {
                 .thenScreenshot(SETTLE * 3, shot(kit, "rebuilt"));
     }
 
-    /* The parts the era's computer is built from, in the order its screen takes them back. */
+    /* The parts the era's computer is built from. */
     private static List<Item> parts(final EraKit kit) {
         final Item board = kit.computerBoard();
         final List<Item> parts = new ArrayList<>(List.of(board, EraParts.cpuFor(board), EraParts.ramFor(board),
@@ -270,13 +252,17 @@ public final class EraEndClientTests {
         return parts;
     }
 
-    private static List<SeatKind> seats(final EraKit kit) {
-        final List<SeatKind> seats = new ArrayList<>(List.of(SeatKind.BOARD, SeatKind.CPU, SeatKind.RAM, SeatKind.PSU,
-                SeatKind.DISK, SeatKind.CARD));
-        if (!EraParts.board(kit.computerBoard()).hasOnBoardAudio()) {
-            seats.add(SeatKind.CARD);
+    /* The parts a computer carried as an item holds inside it. */
+    private static List<Item> inside(final ItemStack computer) {
+        final ItemContainerContents held = computer.getOrDefault(ComputingComponents.ASSEMBLED_HARDWARE.get(),
+                ItemContainerContents.EMPTY);
+        final List<Item> out = new ArrayList<>();
+        for (int slot = 0; slot < held.getSlots(); slot++) {
+            if (!held.getStackInSlot(slot).isEmpty()) {
+                out.add(held.getStackInSlot(slot).getItem());
+            }
         }
-        return seats;
+        return out;
     }
 
     /* Types a line at the prompt, the system's own or its terminal's, and sends it. */

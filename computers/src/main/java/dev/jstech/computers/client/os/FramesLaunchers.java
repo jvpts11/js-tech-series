@@ -74,6 +74,10 @@ final class FramesLaunchers {
     /** How many of the left column's entries are drawn as pinned (bold) at its top. */
     static final int XP_PINNED = 2;
     static final int XP_ALL_ROW_H = 15;
+    /** The width of a column of the All Programs list that XP opened beside its menu. */
+    static final int XP_ALL_W = 120;
+    /** The margin above and below the All Programs list's rows. */
+    static final int XP_ALL_PAD = 2;
     /*
      * Frames 11 Start: a compact floating panel with a search box, a pinned-app grid, and a footer power button.
      * Kept small (5 columns, tight tiles) so even a Mainframe's full app set fits above the taskbar.
@@ -111,9 +115,14 @@ final class FramesLaunchers {
         Draw.text(g, desktop.textFont(), desktop.deskName(), 0, 0, PERIOD.get().bandInk());
         pose.popPose();
 
+        // As many programs as the launcher has room for, from where the wheel turned its list.
         final int itemX = x + BAND_W + 6;
+        final List<Launcher> all = desktop.launcherList();
+        final int shown = desktop.start().periodRows();
+        final int first = desktop.start().firstRow(all.size(), shown);
         int my = y + 4;
-        for (final Launcher l : desktop.launcherList()) {
+        for (int i = first; i < first + shown; i++) {
+            final Launcher l = all.get(i);
             final boolean hov = desktop.hoverIn(itemX, my, x + w - itemX, MENU_ITEM_H);
             skin.listRow(g, itemX, my, x + w - 4 - itemX, MENU_ITEM_H, hov, false);
             ProgramIcons.draw(g, itemX + 2, my + 1, 14, 14, desktop.programIdFor(l.key()), desktop.icons());
@@ -121,6 +130,7 @@ final class FramesLaunchers {
                     hov ? skin.listRowText(true) : skin.text());
             my += MENU_ITEM_H;
         }
+        desktop.start().drawThumb(g, x + w - 4, y + 4, shown * MENU_ITEM_H, all.size(), shown, skin.accent());
     }
 
     boolean clickPeriod(final int mx, final int my, final int tbY) {
@@ -131,9 +141,10 @@ final class FramesLaunchers {
         if (mx < x || mx > x + w || my < y || my > y + h) {
             return false;
         }
+        final int shown = desktop.start().periodRows();
         final int idx = (int) Math.floor((my - (y + 4)) / (double) MENU_ITEM_H);
-        if (idx >= 0 && idx < desktop.launcherList().size()) {
-            desktop.start().choose(idx);
+        if (idx >= 0 && idx < shown) {
+            desktop.start().choose(desktop.start().firstRow(desktop.launcherList().size(), shown) + idx);
         }
         desktop.start().close();
         return true;
@@ -160,10 +171,14 @@ final class FramesLaunchers {
         pose.mulPose(Axis.ZP.rotationDegrees(-90));
         Draw.text(g, desktop.textFont(), desktop.deskName(), 0, 0, c.bandInk());
         pose.popPose();
-        // Program items with icons.
+        // Program items with icons, as many as the menu has room for, from where the wheel turned its list.
         final int itemX = x + BAND_W + 4;
+        final List<Launcher> all = desktop.launcherList();
+        final int shown = desktop.start().classicRows();
+        final int first = desktop.start().firstRow(all.size(), shown);
         int my = y + 4;
-        for (final Launcher l : desktop.launcherList()) {
+        for (int i = first; i < first + shown; i++) {
+            final Launcher l = all.get(i);
             final boolean hov = desktop.hoverIn(itemX, my, x + w - itemX, MENU_ITEM_H);
             if (hov) {
                 g.fill(itemX, my, x + w - 2, my + MENU_ITEM_H, theme.titleActive());
@@ -173,6 +188,7 @@ final class FramesLaunchers {
                     hov ? c.hoverInk() : theme.menuText());
             my += MENU_ITEM_H;
         }
+        desktop.start().drawThumb(g, x + w - 3, y + 4, shown * MENU_ITEM_H, all.size(), shown, theme.titleActive());
         // Separator, then Shut Down.
         g.fill(itemX, my + 1, x + w - 4, my + 2, c.ruleDark());
         g.fill(itemX, my + 2, x + w - 4, my + 3, c.ruleLight());
@@ -191,12 +207,12 @@ final class FramesLaunchers {
             return false;
         }
         final int itemsTop = y + 4;
-        final List<Launcher> all = desktop.launcherList();
+        final int shown = desktop.start().classicRows();
         final int idx = (int) Math.floor((my - itemsTop) / (double) MENU_ITEM_H);
-        if (idx >= 0 && idx < all.size()) {
-            desktop.start().choose(idx);
+        if (idx >= 0 && idx < shown) {
+            desktop.start().choose(desktop.start().firstRow(desktop.launcherList().size(), shown) + idx);
         } else {
-            final int shutY = itemsTop + all.size() * MENU_ITEM_H + 6;
+            final int shutY = itemsTop + shown * MENU_ITEM_H + 6;
             if (my >= shutY && my <= shutY + MENU_ITEM_H) {
                 desktop.power().open();
             }
@@ -236,9 +252,15 @@ final class FramesLaunchers {
         drawXpColumn(g, desktop.start().xpRight(), split + 3, bodyTop + 3,
                 w - XP_LEFT_W - 6, c.rightInk(), 0, false);
         drawXpFooter(g, x, y, w, h, bodyBot);
+        if (desktop.start().xpAllOpen()) {
+            drawXpAll(g, tbY);
+        }
     }
 
     boolean clickXp(final int mx, final int my, final int tbY) {
+        if (desktop.start().xpAllOpen() && clickXpAll(mx, my, tbY)) {
+            return true;
+        }
         final int x = desktop.start().left();
         final int w = XP_MENU_W;
         final int h = desktop.start().height();
@@ -362,8 +384,8 @@ final class FramesLaunchers {
     }
 
     /**
-     * The XP menu's left column: the pinned entries in bold, a separator, the rest, and the All Programs row
-     * that opens the page listing everything installed, services included.
+     * The XP menu's left column: the pinned entries in bold, a separator, as many more as it has room for, and the
+     * All Programs row that opens the list of every program beside the menu.
      */
     private void drawXpLeftColumn(final GuiGraphics g, final int colX, final int colY, final int colW) {
         final Luna c = LUNA.get();
@@ -453,7 +475,9 @@ final class FramesLaunchers {
             }
             final int allY = desktop.start().xpAllRow();
             if (dy >= allY && dy < allY + XP_ALL_ROW_H) {
-                desktop.start().openAllPrograms();
+                // All Programs opens its list beside the menu, and the menu stays open under it.
+                desktop.start().toggleXpAll();
+                return true;
             }
             return false;
         }
@@ -463,6 +487,48 @@ final class FramesLaunchers {
             desktop.start().choose(col.get(row));
         }
         return false;
+    }
+
+    /*
+     * XP's All Programs: every program in a list beside the menu, its foot level with the row that opened it, running
+     * on into a new column whenever the last one reaches the top of the desktop.
+     */
+    private void drawXpAll(final GuiGraphics g, final int tbY) {
+        final StartMenus start = desktop.start();
+        final List<Launcher> all = start.xpPrograms();
+        final int x = start.xpAllLeft(tbY);
+        final int y = start.xpAllTop(tbY);
+        final int w = start.xpAllColumns(tbY) * XP_ALL_W;
+        final int h = start.xpAllBottom(tbY) - y;
+        g.fill(x - 1, y - 1, x + w + 1, y + h + 1, LUNA.get().border());
+        g.fill(x, y, x + w, y + h, desktop.themeColours().menuBg());
+        for (int i = 0; i < all.size(); i++) {
+            final int[] cell = start.xpAllCell(i, tbY);
+            if (desktop.hoverIn(cell[0], cell[1], XP_ALL_W, XP_ROW_H)) {
+                g.fill(cell[0], cell[1], cell[0] + XP_ALL_W, cell[1] + XP_ROW_H, LUNA.get().rowHover());
+            }
+            ProgramIcons.draw(g, cell[0] + 2, cell[1], 14, 12, all.get(i).programId(), desktop.icons());
+            Draw.text(g, desktop.textFont(), desktop.shorten(all.get(i).label(), (XP_ALL_W - 22) / 6),
+                    cell[0] + 19, cell[1] + 4, desktop.themeColours().menuText());
+        }
+    }
+
+    /** A click on XP's All Programs list: an entry starts its program and closes the menu; false when it missed. */
+    private boolean clickXpAll(final int mx, final int my, final int tbY) {
+        final StartMenus start = desktop.start();
+        final List<Launcher> all = start.xpPrograms();
+        for (int i = 0; i < all.size(); i++) {
+            final int[] cell = start.xpAllCell(i, tbY);
+            if (mx >= cell[0] && mx < cell[0] + XP_ALL_W && my >= cell[1] && my < cell[1] + XP_ROW_H) {
+                start.choose(all.get(i));
+                start.close();
+                return true;
+            }
+        }
+        // Its margins and the empty foot of its last column take the click, and it stays open.
+        final int x = start.xpAllLeft(tbY);
+        return mx >= x && mx < x + start.xpAllColumns(tbY) * XP_ALL_W && my >= start.xpAllTop(tbY)
+                && my < start.xpAllBottom(tbY);
     }
 
     /** The Frames 11 search field, with its magnifier; gives back where the content under it starts. */

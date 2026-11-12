@@ -27,6 +27,7 @@ import dev.jstech.tests.clienttest.computers.CreativeTabsClientTests;
 import dev.jstech.tests.clienttest.computers.DesktopMenuClientTests;
 import dev.jstech.tests.clienttest.computers.DeviceIconClientTests;
 import dev.jstech.tests.clienttest.computers.DeviceManagerClientTests;
+import dev.jstech.tests.clienttest.computers.DiskToolsClientTests;
 import dev.jstech.tests.clienttest.computers.DockStationClientTests;
 import dev.jstech.tests.clienttest.computers.EraBuildClientTests;
 import dev.jstech.tests.clienttest.computers.EraEndClientTests;
@@ -52,6 +53,7 @@ import dev.jstech.tests.clienttest.computers.ExposureClientTests;
 import dev.jstech.tests.clienttest.computers.ExtremesClientTests;
 import dev.jstech.tests.clienttest.computers.FilesSyncClientTests;
 import dev.jstech.tests.clienttest.computers.FramesSevenTenClientTests;
+import dev.jstech.tests.clienttest.computers.FramesXpStartClientTests;
 import dev.jstech.tests.clienttest.computers.FreeBsdClientTests;
 import dev.jstech.tests.clienttest.computers.FullJourneyClientTests;
 import dev.jstech.tests.clienttest.computers.GatewayManagerClientTests;
@@ -109,6 +111,7 @@ import dev.jstech.tests.clienttest.computers.SoundfoundryClientTests;
 import dev.jstech.tests.clienttest.computers.SoundfoundryShareClientTests;
 import dev.jstech.tests.clienttest.computers.SoundfoundryStandardClientTests;
 import dev.jstech.tests.clienttest.computers.SourceBuildClientTests;
+import dev.jstech.tests.clienttest.computers.StartMenuFitClientTests;
 import dev.jstech.tests.clienttest.computers.SupercomputerJourneyClientTests;
 import dev.jstech.tests.clienttest.computers.SystemMotionClientTests;
 import dev.jstech.tests.clienttest.computers.SystemUiClientTests;
@@ -329,6 +332,8 @@ public final class ClientTestSuite {
             ExposureClientTests.class,
             FilesSyncClientTests.class,
             FramesSevenTenClientTests.class,
+            FramesXpStartClientTests.class,
+            StartMenuFitClientTests.class,
             TransitionDesktopsClientTests.class,
             CreativeTabsClientTests.class,
             RecipeViewClientTests.class,
@@ -501,6 +506,7 @@ public final class ClientTestSuite {
             PatternEncoderClientTests.class,
             PrinterClientTests.class,
             DockStationClientTests.class,
+            DiskToolsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,
             IsmsClientTests.class,

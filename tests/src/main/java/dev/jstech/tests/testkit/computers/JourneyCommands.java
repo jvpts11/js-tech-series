@@ -37,7 +37,10 @@ public final class JourneyCommands {
             "taskkill", "stops a running Σ program: the programming area starts one and stops it",
             "install", "needs the program's disc in a linked drive: installing from media is the programs area",
             "uninstall", "takes off what install put on: the programs area installs and removes",
-            "pckmgr", "needs a package mirror on the network: the programs area serves one");
+            "pckmgr", "needs a package mirror on the network: the programs area serves one",
+            "diskpart", "takes the terminal over with a prompt of its own: the disk tools are the storage area's",
+            "fdisk", "takes the terminal over with a menu of its own on MC-DOS and UNIX: the disk tools are the "
+                    + "storage area's");
 
     /*
      * The sequence of the commands that work on something, for each family of shell: each line leans on the lines

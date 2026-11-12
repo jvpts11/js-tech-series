@@ -59,8 +59,8 @@ public final class CableLineClientTests {
     }
 
     /*
-     * Lays each of {@code cables} in a row of its own between two Server Routers, which take every line of every era,
-     * and captures them once the last row has reached the router at its east end.
+     * Lays each of {@code cables} in a row of its own between two Advanced Server Routers, which take the lines of
+     * their era and every earlier one, and captures them once the last row has reached the router at its east end.
      */
     private static void rows(final ClientTestContext ctx, final String label, final List<CableEntry> cables) {
         final BlockPos lastEnd = new BlockPos(LENGTH, FLOOR, FIRST_ROW + cables.size() - 1);
@@ -69,9 +69,9 @@ public final class CableLineClientTests {
                     for (int row = 0; row < cables.size(); row++) {
                         final int z = FIRST_ROW + row;
                         level.setBlockAndUpdate(ctx.abs(new BlockPos(-LENGTH - 1, FLOOR, z)),
-                                ComputingModule.SERVER_ROUTER.get().defaultBlockState());
+                                ComputingModule.ADVANCED_SERVER_ROUTER.get().defaultBlockState());
                         level.setBlockAndUpdate(ctx.abs(new BlockPos(LENGTH + 1, FLOOR, z)),
-                                ComputingModule.SERVER_ROUTER.get().defaultBlockState());
+                                ComputingModule.ADVANCED_SERVER_ROUTER.get().defaultBlockState());
                         for (int x = -LENGTH; x <= LENGTH; x++) {
                             Cables.lay(level, ctx.abs(new BlockPos(x, FLOOR, z)), cables.get(row).get());
                         }

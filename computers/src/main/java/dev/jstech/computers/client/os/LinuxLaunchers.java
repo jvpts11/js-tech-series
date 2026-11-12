@@ -122,11 +122,15 @@ final class LinuxLaunchers {
             }
             Draw.text(g, desktop.textFont(), words(KDE_PLACES.get(i)), x + 8, py, i == 0 ? c.chosen() : c.muted());
         }
-        // App list.
+        // App list: as many as the launcher has room for, from where the wheel turned it.
         int my = bodyTop + 4;
         final int listX = x + KDE_SIDE_W + 4;
         final int listW = w - KDE_SIDE_W - 8;
-        for (final Launcher l : desktop.launcherList()) {
+        final List<Launcher> all = desktop.launcherList();
+        final int shown = desktop.start().kdeRows();
+        final int first = desktop.start().firstRow(all.size(), shown);
+        for (int i = first; i < first + shown; i++) {
+            final Launcher l = all.get(i);
             final boolean hov = desktop.hoverIn(listX, my, listW, KDE_ROW_H);
             if (hov) {
                 g.fill(listX, my, listX + listW, my + KDE_ROW_H, c.rowHover());
@@ -135,6 +139,8 @@ final class LinuxLaunchers {
             Draw.text(g, desktop.textFont(), desktop.shorten(l.label(), 18), listX + 22, my + 4, c.ink());
             my += KDE_ROW_H;
         }
+        desktop.start().drawThumb(g, listX + listW + 1, bodyTop + 4, shown * KDE_ROW_H, all.size(), shown,
+                c.muted());
         // Footer: session actions.
         g.fill(x, bodyBot, x + w, y + h, c.side());
         Draw.text(g, desktop.textFont(), words(DesktopTexts.SLEEP), x + 8, bodyBot + 4, c.hint());
@@ -161,10 +167,11 @@ final class LinuxLaunchers {
             }
             return true;
         }
-        if (my >= bodyTop && mx >= x + KDE_SIDE_W + 4) {
+        if (my >= bodyTop + 4 && mx >= x + KDE_SIDE_W + 4) {
+            final int shown = desktop.start().kdeRows();
             final int row = (my - (bodyTop + 4)) / KDE_ROW_H;
-            if (row >= 0 && row < desktop.launcherList().size()) {
-                desktop.start().choose(row);
+            if (row < shown) {
+                desktop.start().choose(desktop.start().firstRow(desktop.launcherList().size(), shown) + row);
                 desktop.start().close();
             }
         }
@@ -299,8 +306,13 @@ final class LinuxLaunchers {
         final String typed = desktop.start().searchText();
         Draw.text(g, desktop.textFont(), typed.isEmpty() ? words(DesktopTexts.SEARCH)
                 : desktop.shorten(typed + "_", 18), listX + 4, y + 7, typed.isEmpty() ? c.searchHint() : c.ink());
+        // As many as the menu has room for, from where the wheel turned the list.
         int my = y + CIN_HEADER_H;
-        for (final Launcher l : cinnamonShown()) {
+        final List<Launcher> list = cinnamonShown();
+        final int shown = cinnamonRowsShown(list.size());
+        final int first = desktop.start().firstRow(list.size(), shown);
+        for (int i = first; i < first + shown; i++) {
+            final Launcher l = list.get(i);
             final boolean hov = desktop.hoverIn(listX, my, listW, CIN_ROW_H);
             if (hov) {
                 g.fill(listX, my, listX + listW, my + CIN_ROW_H, c.hover());
@@ -309,6 +321,8 @@ final class LinuxLaunchers {
             Draw.text(g, desktop.textFont(), desktop.shorten(l.label(), 16), listX + 22, my + 4, c.ink());
             my += CIN_ROW_H;
         }
+        desktop.start().drawThumb(g, listX + listW + 1, y + CIN_HEADER_H, shown * CIN_ROW_H, list.size(), shown,
+                c.category());
     }
 
     boolean clickCinnamon(final int mx, final int my, final int tbY) {
@@ -346,10 +360,11 @@ final class LinuxLaunchers {
         }
         final int listX = catsX + CIN_CATS_W + 4;
         if (mx >= listX && my >= y + CIN_HEADER_H) {
-            final List<Launcher> shown = cinnamonShown();
+            final List<Launcher> list = cinnamonShown();
+            final int shown = cinnamonRowsShown(list.size());
             final int row = (my - (y + CIN_HEADER_H)) / CIN_ROW_H;
-            if (row >= 0 && row < shown.size()) {
-                desktop.start().choose(shown.get(row));
+            if (row < shown) {
+                desktop.start().choose(list.get(desktop.start().firstRow(list.size(), shown) + row));
                 desktop.start().close();
             }
         }
@@ -359,6 +374,16 @@ final class LinuxLaunchers {
     /** The menu was put away: Cinnamon's opens again on All, as Mint's does. */
     void forgetCinnamonCategory() {
         cinnamonChosen = 0;
+    }
+
+    /** How many programs Cinnamon's list holds, of the category chosen and what was typed. */
+    int cinnamonCount() {
+        return cinnamonShown().size();
+    }
+
+    /* How many of the {@code count} programs Cinnamon's list holds it shows at once, sized as the menu is by all. */
+    private int cinnamonRowsShown(final int count) {
+        return Math.min(count, desktop.start().cinnamonRows(desktop.launcherList().size()));
     }
 
     /* The programs Cinnamon's list shows: those whose names hold what was typed, in the category chosen. */

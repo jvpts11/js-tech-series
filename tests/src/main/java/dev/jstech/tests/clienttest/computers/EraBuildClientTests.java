@@ -11,6 +11,7 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.HardwareItems;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.block.AbstractSmallComputerBlock;
+import dev.jstech.computers.block.AccessPointBlock;
 import dev.jstech.computers.block.part.CablePartItem;
 import dev.jstech.computers.block.part.ComputingParts;
 import dev.jstech.computers.blockentity.AbstractSmallComputerBlockEntity;
@@ -65,6 +66,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.items.IItemHandler;
 import org.jetbrains.annotations.Nullable;
@@ -234,10 +236,18 @@ public final class EraBuildClientTests {
                 continue;
             }
             ctx.thenGive(0, new ItemStack(item))
-                    .then(SETTLE, () -> ctx.selectHotbar(0))
-                    .thenPlace(1, at)
-                    .thenWaitUntilServer(level -> placed(ctx, level, at, item), WAIT,
-                            name + " to go down from the hand", level -> "found " + level.getBlockState(ctx.abs(at)));
+                    .then(SETTLE, () -> ctx.selectHotbar(0));
+            if (item instanceof BlockItem held && held.getBlock() instanceof AccessPointBlock point
+                    && point.mounted()) {
+                // An access point fixed to a wall goes on the wall behind its cell, the wall laid there first.
+                ctx.thenServer(0, level -> level.setBlockAndUpdate(ctx.abs(at.north()),
+                                Blocks.STONE.defaultBlockState()))
+                        .thenPlaceAgainst(1, at, Direction.SOUTH);
+            } else {
+                ctx.thenPlace(1, at);
+            }
+            ctx.thenWaitUntilServer(level -> placed(ctx, level, at, item), WAIT,
+                    name + " to go down from the hand", level -> "found " + level.getBlockState(ctx.abs(at)));
         }
         ctx.thenScreenshot(SETTLE, (kit == null ? "shared" : shot(kit, "")) + "every-block");
     }

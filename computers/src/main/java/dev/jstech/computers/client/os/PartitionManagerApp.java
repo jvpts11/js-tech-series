@@ -74,6 +74,10 @@ public final class PartitionManagerApp implements IDesktopApp {
             DiskToolTexts.KPM_CLEAR, DiskToolTexts.KPM_NEW, DiskToolTexts.KPM_RESIZE, DiskToolTexts.KPM_DELETE,
             DiskToolTexts.KPM_PROPERTIES};
     private static final int TOOL_GAP = 7;
+    /* The narrowest a partition's box is drawn, so a small one still shows the start of its name. */
+    private static final int MIN_BOX = 20;
+    /* How strongly the used part of a box is filled with its file system's colour, as an alpha. */
+    private static final int USED_SHADE = 0x59000000;
     private static final int MENU_W = 110;
     private static final int MENU_ROW = 10;
     private static final double MB_PER_GIB = 1_024.0;
@@ -90,22 +94,22 @@ public final class PartitionManagerApp implements IDesktopApp {
 
     @Override
     public int defaultWidth() {
-        return DiskToolLayout.W;
+        return DesktopWindow.windowWidthFor(DiskToolLayout.W);
     }
 
     @Override
     public int defaultHeight() {
-        return DiskToolLayout.H;
+        return DesktopWindow.windowHeightFor(DiskToolLayout.H);
     }
 
     @Override
     public int minWidth() {
-        return DiskToolLayout.W;
+        return DesktopWindow.windowWidthFor(DiskToolLayout.W);
     }
 
     @Override
     public int minHeight() {
-        return DiskToolLayout.H;
+        return DesktopWindow.windowHeightFor(DiskToolLayout.H);
     }
 
     @Override
@@ -129,7 +133,9 @@ public final class PartitionManagerApp implements IDesktopApp {
         Draw.text(g, font, GameText.resolve(DiskToolTexts.KPM_MENU), x + 4, y + 2, c.ink());
         this.toolbar(g, font, x + 4, y + DiskToolLayout.KPM_TOOLBAR_Y + 1, c);
         final DiskReport report = this.disks.report();
-        this.devices(g, font, x, y + DiskToolLayout.KPM_TOP, report, c);
+        // The status bar runs along the foot of the window, whatever height the window is.
+        final int sy = y + height - DiskToolLayout.BAR_H;
+        this.devices(g, font, x, y + DiskToolLayout.KPM_TOP, sy - 2, report, c);
         final DiskReport.Disk disk = report.disk(this.device);
         final int rx = x + DiskToolLayout.KPM_SIDE_W + 2;
         final int rw = width - DiskToolLayout.KPM_SIDE_W - 4;
@@ -138,7 +144,6 @@ public final class PartitionManagerApp implements IDesktopApp {
             this.table(g, font, rx, y + DiskToolLayout.KPM_TABLE_Y, rw, disk, c);
         }
         this.pendingList(g, font, rx, y + DiskToolLayout.KPM_PENDING_Y, c);
-        final int sy = y + DiskToolLayout.KPM_STATUS_Y;
         g.fill(x, sy, x + width, sy + DiskToolLayout.BAR_H, c.side());
         final DiskReport.Refusal refusal = this.disks.refusal();
         Draw.text(g, font, refusal != null ? clip(font, GameText.resolve(DiskTexts.reason(refusal)), width - 8)
@@ -284,17 +289,21 @@ public final class PartitionManagerApp implements IDesktopApp {
         }
     }
 
-    private void devices(final GuiGraphics g, final Font font, final int x, final int y, final DiskReport report,
-                         final Colours c) {
-        g.fill(x, y, x + DiskToolLayout.KPM_SIDE_W, y + DiskToolLayout.KPM_STATUS_Y - DiskToolLayout.KPM_TOP - 2,
-                c.side());
+    /* The devices down the side, from {@code y} to {@code bottom}, the chosen one lit. */
+    private void devices(final GuiGraphics g, final Font font, final int x, final int y, final int bottom,
+                         final DiskReport report, final Colours c) {
+        g.fill(x, y, x + DiskToolLayout.KPM_SIDE_W, bottom, c.side());
         Draw.text(g, font, GameText.resolve(DiskToolTexts.KPM_DEVICES), x + 3, y + 2, c.dim());
         int dy = y + 13;
         for (final DiskReport.Disk disk : report.disks()) {
             if (disk.index() == this.device) {
                 g.fill(x, dy - 1, x + DiskToolLayout.KPM_SIDE_W, dy + 18, c.chosen());
             }
-            g.fill(x + 3, dy + 2, x + 13, dy + 9, c.ntfs());
+            // The drive's small picture: its case, and a red and a blue lamp on its front.
+            g.fill(x + 3, dy + 2, x + 13, dy + 9, c.dim());
+            g.fill(x + 4, dy + 3, x + 12, dy + 8, c.unallocated());
+            g.fill(x + 5, dy + 5, x + 7, dy + 7, c.swap());
+            g.fill(x + 9, dy + 5, x + 11, dy + 7, c.ntfs());
             Draw.text(g, font, clip(font, disk.model(), DiskToolLayout.KPM_SIDE_W - 18), x + 16, dy, c.ink());
             // The device a disk is under, a path the same in every language.
             final String device = "/dev/sd" + (char) ('a' + disk.index());
@@ -305,31 +314,40 @@ public final class PartitionManagerApp implements IDesktopApp {
         }
     }
 
-    /* The chosen device's partitions as boxes across its width, each edged in its file system's colour. */
+    /*
+     * The chosen device's partitions as boxes across its width, each as wide as its share of the disk, edged in its
+     * file system's colour and filled from the left as far as it is used; the chosen one edged dark.
+     */
     private void bar(final GuiGraphics g, final Font font, final int x, final int y, final int width,
                      final DiskReport.Disk disk, final Colours c) {
-        final List<long[]> spans = spans(disk);
-        int bx = x;
-        final int each = Math.max(14, (width - 2 * spans.size()) / Math.max(1, spans.size()));
-        for (final long[] span : spans) {
+        final List<long[]> spans = DiskMap.spans(disk);
+        final int[] edges = DiskMap.edges(spans, disk.sizeMb(), width, MIN_BOX);
+        final int h = DiskToolLayout.KPM_BAR_H;
+        for (int i = 0; i < spans.size(); i++) {
+            final long[] span = spans.get(i);
             final DiskReport.Part part = span[2] < 0 ? null : disk.part((int) span[2]);
-            final int w = Math.min(each, x + width - bx);
+            final int bx = x + edges[i];
+            final int w = edges[i + 1] - edges[i] - 2;
             final int edge = part == null ? c.unallocated() : this.colourOf(part, c);
-            final boolean here = span[0] == this.chosenStart;
-            g.fill(bx, y, bx + w, y + DiskToolLayout.KPM_BAR_H, here ? c.chosen() : c.paper());
-            Draw.outline(g, bx, y, w, DiskToolLayout.KPM_BAR_H, edge);
-            Draw.outline(g, bx + 1, y + 1, w - 2, DiskToolLayout.KPM_BAR_H - 2, edge);
+            g.fill(bx, y, bx + w, y + h, c.paper());
+            if (part != null && part.fileSystem() != null && !part.swap() && part.sizeMb() > 0L) {
+                final int used = (int) ((w - 4) * Math.min(part.usedMb(), part.sizeMb()) / part.sizeMb());
+                g.fill(bx + 2, y + 2, bx + 2 + used, y + h - 2, edge & 0x00FFFFFF | USED_SHADE);
+            }
+            final int frame = span[0] == this.chosenStart ? c.ink() : edge;
+            Draw.outline(g, bx, y, w, h, frame);
+            Draw.outline(g, bx + 1, y + 1, w - 2, h - 2, frame);
             final String name = part == null ? GameText.resolve(DiskToolTexts.KPM_UNALLOCATED) : device(disk, part);
             Draw.text(g, font, clip(font, name, w - 4), bx + 3, y + 3, c.ink());
             Draw.text(g, font, clip(font, size(span[1]), w - 4), bx + 3, y + 11, c.ink());
-            this.hits.add(new Hit(Hit.SPOT, bx, y, w, DiskToolLayout.KPM_BAR_H, span[0]));
-            bx += w + 2;
+            this.hits.add(new Hit(Hit.SPOT, bx, y, w, h, span[0]));
         }
     }
 
     private void table(final GuiGraphics g, final Font font, final int x, final int y, final int width,
                        final DiskReport.Disk disk, final Colours c) {
-        final int[] cols = DiskToolLayout.KPM_COLUMNS;
+        final int[] cols = DiskToolLayout.spread(DiskToolLayout.KPM_COLUMNS, width,
+                DiskToolLayout.W - DiskToolLayout.KPM_SIDE_W - 4);
         final TextKey[] heads = {DiskToolTexts.KPM_PARTITION, DiskToolTexts.KPM_TYPE, DiskToolTexts.KPM_MOUNT_POINT,
                 DiskToolTexts.KPM_LABEL, DiskToolTexts.KPM_SIZE, DiskToolTexts.KPM_USED, DiskToolTexts.KPM_AVAILABLE};
         for (int i = 0; i < heads.length; i++) {
@@ -337,7 +355,7 @@ public final class PartitionManagerApp implements IDesktopApp {
         }
         int ry = y + DiskToolLayout.ROW;
         int rows = 0;
-        for (final long[] span : spans(disk)) {
+        for (final long[] span : DiskMap.spans(disk)) {
             if (rows++ >= DiskToolLayout.KPM_TABLE_ROWS) {
                 break;
             }
@@ -351,13 +369,20 @@ public final class PartitionManagerApp implements IDesktopApp {
                     : new String[]{device(disk, part), part.fileSystem() == null ? "" : typeName(part),
                     mountPoint(part), part.label(), size(part.sizeMb()), part.fileSystem() == null || part.swap()
                     ? "" : size(part.usedMb()), part.fileSystem() == null || part.swap() ? "" : size(part.freeMb())};
+            if (part != null && !mountPoint(part).isEmpty()) {
+                // The padlock of a mounted partition, before its name: its shackle over its body.
+                Draw.outline(g, x + 1, ry, 4, 4, c.ink());
+                g.fill(x, ry + 3, x + 6, ry + 7, c.ink());
+            }
             for (int i = 0; i < cells.length; i++) {
-                final int left = x + cols[i] + (i == 1 ? 7 : 0);
+                // The name stands after the padlock's place, the type after its colour's square.
+                final int lead = i <= 1 ? 7 : 0;
                 if (i == 1) {
                     g.fill(x + cols[i], ry + 1, x + cols[i] + 5, ry + 6, part == null ? c.unallocated()
                             : this.colourOf(part, c));
                 }
-                Draw.text(g, font, clip(font, cells[i], room(cols, i, width) - (i == 1 ? 7 : 0)), left, ry, c.ink());
+                Draw.text(g, font, clip(font, cells[i], room(cols, i, width) - lead), x + cols[i] + lead, ry,
+                        c.ink());
             }
             this.hits.add(new Hit(Hit.SPOT, x, ry - 1, width, DiskToolLayout.ROW, span[0]));
             ry += DiskToolLayout.ROW;
@@ -521,18 +546,6 @@ public final class PartitionManagerApp implements IDesktopApp {
             }
         }
         return null;
-    }
-
-    private static List<long[]> spans(final DiskReport.Disk disk) {
-        final List<long[]> spans = new ArrayList<>();
-        for (final DiskReport.Part part : disk.parts()) {
-            spans.add(new long[]{part.startMb(), part.sizeMb(), part.number()});
-        }
-        for (final DiskLayout.FreeSpace gap : disk.layout().free()) {
-            spans.add(new long[]{gap.startMb(), gap.sizeMb(), -1L});
-        }
-        spans.sort((a, b) -> Long.compare(a[0], b[0]));
-        return spans;
     }
 
     private static String device(final DiskReport.Disk disk, final DiskReport.Part part) {

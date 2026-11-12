@@ -48,6 +48,8 @@ final class AeroStartMenu {
     private static final int ALL_ROW_H = 13;
     private static final int PICTURE = 22;
     private static final int SHUT_DOWN_H = 14;
+    /* What of the menu's height is not the programs of its left column: margins, a rule, All Programs, the search. */
+    private static final int LEFT_FRAME = 2 * PAD + SEP_H + ALL_ROW_H + 4 + SEARCH_H + 2 * PAD;
     /** The system's places, which the right column lists in this order rather than among the programs. */
     private static final List<ResourceLocation> PLACES = List.of(Programs.FILES,
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "this_pc"),
@@ -89,15 +91,13 @@ final class AeroStartMenu {
         return out;
     }
 
-    /** The menu's height: the taller of its two columns, both sized to every program, so it never resizes typing. */
+    /**
+     * The menu's height: the taller of its two columns, sized to every program, so it never resizes typing, but no
+     * taller than the desktop above the taskbar.
+     */
     int height() {
-        int all = 0;
-        for (final Launcher l : desktop.launcherList()) {
-            if (!PLACE_SET.contains(l.programId())) {
-                all++;
-            }
-        }
-        final int left = PAD + all * ROW_H + SEP_H + ALL_ROW_H + 4 + SEARCH_H + PAD;
+        final int rows = desktop.start().listRows(programCount(), LEFT_FRAME, ROW_H);
+        final int left = PAD + rows * ROW_H + SEP_H + ALL_ROW_H + 4 + SEARCH_H + PAD;
         final int right = PAD + PICTURE + 6 + PLACE_H + places().size() * PLACE_H + 8 + SHUT_DOWN_H + PAD;
         return Math.max(left, right) + 2 * PAD;
     }
@@ -130,7 +130,7 @@ final class AeroStartMenu {
         final int lh = h - 2 * PAD;
         g.fill(lx, ly, lx + LEFT_W, ly + lh, c.paper());
         Draw.outline(g, lx, ly, LEFT_W, lh, c.paperRim());
-        final List<Launcher> list = programs();
+        final List<Launcher> list = shownPrograms();
         final int pinned = desktop.start().searchText().isEmpty() ? Math.min(PINNED, list.size()) : 0;
         for (int i = 0; i < list.size(); i++) {
             final Launcher l = list.get(i);
@@ -230,7 +230,7 @@ final class AeroStartMenu {
             if (my >= searchY) {
                 return true;
             }
-            final List<Launcher> list = programs();
+            final List<Launcher> list = shownPrograms();
             for (int i = 0; i < list.size(); i++) {
                 final int ry = ly + 2 + rowY(i);
                 if (my >= ry && my < ry + ROW_H) {
@@ -270,8 +270,29 @@ final class AeroStartMenu {
             final int rx = x + PAD + LEFT_W + 4;
             return new int[] {rx + 20, ly + 2 + PICTURE + 6 + PLACE_H + place * PLACE_H + PLACE_H / 2};
         }
-        final int row = Math.max(0, programs().indexOf(target));
+        final int row = Math.max(0, shownPrograms().indexOf(target));
         return new int[] {x + PAD + LEFT_W / 2, ly + 2 + rowY(row) + ROW_H / 2};
+    }
+
+    /*
+     * The programs of the left column it has room for above the taskbar, of those the search leaves; the rest are a
+     * search away, as on Frames 7, whose column listed only some.
+     */
+    private List<Launcher> shownPrograms() {
+        final List<Launcher> listed = programs();
+        return listed.subList(0, Math.min(listed.size(),
+                desktop.start().listRows(programCount(), LEFT_FRAME, ROW_H)));
+    }
+
+    /* How many programs the left column has with nothing typed: every one but the places. */
+    private int programCount() {
+        int all = 0;
+        for (final Launcher l : desktop.launcherList()) {
+            if (!PLACE_SET.contains(l.programId())) {
+                all++;
+            }
+        }
+        return all;
     }
 
     /**

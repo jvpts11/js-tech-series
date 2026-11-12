@@ -124,6 +124,10 @@ the BSDs and UNIX a desktop is a package you add: **KDE Plasma**, **GNOME** and 
 comes with Cinnamon, and OpenBSD brings a desktop up only once xenodm is switched on. Each desktop looks like its
 era: KDE in the Transition is the KDE of that time, not of today.
 
+A launcher with more programs than it has room for stays on the screen (*added 2026-11-12*): Frames XP's All
+Programs opens the list of every program beside its Start menu, Frames 7's search finds what its column has no room
+for, and the other launchers' lists scroll with the wheel.
+
 Every desktop has the same programs under the names its system gives them: Network, This PC, Settings, Files,
 Editor, Command Prompt, System Monitor, Calculator, Network Manager and Help ([Help on a computer](#help-on-a-computer)).
 Frames adds the Device Manager; CDE adds Workstation Info.
