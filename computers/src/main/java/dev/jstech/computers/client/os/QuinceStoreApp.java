@@ -10,8 +10,10 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.program.StorePayloads;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -62,8 +64,12 @@ public final class QuinceStoreApp implements IDesktopApp {
             "No Mirror answers on this network, so the Store has nothing to show.");
     private static final TextKey UP_TO_DATE = TextKey.of("jsc.quince.store.up_to_date",
             "Every program here is up to date.");
-    private static final int ROW_H = 44;
+    /* A program's row: its icon, name, house and button, three rows in the window's own height as designed. */
+    private static final int ROW_H = 36;
     private static final int TAB_H = 14;
+    /* A program's words from its column's left, past its icon, and the room kept before the next column. */
+    private static final int TEXT_X = 28;
+    private static final int COLUMN_GAP = 6;
 
     /** The open Store that takes the Mirror's answers, or null when none is up. */
     @Nullable
@@ -151,8 +157,10 @@ public final class QuinceStoreApp implements IDesktopApp {
             final int cy = gridTop + (i / 2) * ROW_H;
             g.fill(cx, cy, cx + 22, cy + 22, c.face());
             ProgramIcons.draw(g, cx + 3, cy + 3, 16, 16, idOf(row.program()), "quince_os_x");
-            Draw.text(g, font, Component.literal(row.name()).withStyle(ChatFormatting.BOLD), cx + 28, cy, c.ink());
-            Draw.text(g, font, houseOf(row.program()), cx + 28, cy + 10, c.dim());
+            // Each column's words stop short of the next column, or of the window's edge.
+            final int room = width / 2 - TEXT_X - COLUMN_GAP;
+            Draw.text(g, font, boldFit(font, row.name(), room), cx + TEXT_X, cy, c.ink());
+            Draw.text(g, font, Texts.clip(font, houseOf(row.program()), room), cx + TEXT_X, cy + 10, c.dim());
             final String label = GameText.resolve(row.installed() ? INSTALLED : GET);
             final int bw = font.width(label) + 10;
             QuinceArt.roundRect(g, cx + 28, cy + 21, cx + 28 + bw, cy + 31, 4, c.select());
@@ -197,8 +205,8 @@ public final class QuinceStoreApp implements IDesktopApp {
             case 1, 2 -> rows.sort(Comparator.comparing(StorePayloads.Row::name));
             case 3 -> rows.removeIf(row -> !row.installed());
             case 4 -> rows.clear();
-            default -> {
-            }
+            // Featured: the programs a player opens first, the services that run behind them after.
+            default -> rows.sort(Comparator.comparing((StorePayloads.Row row) -> !isApp(row)));
         }
         return rows;
     }
@@ -213,8 +221,30 @@ public final class QuinceStoreApp implements IDesktopApp {
         return ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "generic");
     }
 
+    /* Whether the row gets a program with windows of its own, not a service. */
+    private static boolean isApp(final StorePayloads.Row row) {
+        final ProgramSpec spec = OsRegistry.getProgram(idOf(row.program()));
+        return spec != null && spec.kind() == ProgramKind.APP;
+    }
+
     private static String houseOf(final String command) {
         final ProgramSpec spec = OsRegistry.getProgram(idOf(command));
         return spec == null ? "" : spec.house().name();
+    }
+
+    /* The name in bold, or as much of its start as fits {@code room} in bold, followed by "..". */
+    private static Component boldFit(final Font font, final String name, final int room) {
+        if (font.width(bold(name)) <= room) {
+            return bold(name);
+        }
+        String out = name;
+        while (out.length() > 1 && font.width(bold(out + "..")) > room) {
+            out = out.substring(0, out.length() - 1);
+        }
+        return bold(out + "..");
+    }
+
+    private static Component bold(final String text) {
+        return Component.literal(text).withStyle(ChatFormatting.BOLD);
     }
 }

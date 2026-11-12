@@ -1092,6 +1092,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   show over the desktop the system went down on, where they were drawn behind it and the player saw only the
   stilled desktop with no Restart to press; Force Quit Applications names each program as the desktop does, where it
   wrote the window's key, and breaks its bold first line within the window.
+- Quince: the Quince Store features the programs with windows of their own before the services behind
+  them, shows three rows of them in its window as designed, and cuts a long name or house short of the next column,
+  where names ran into each other and off the window; the menu bar keeps its menus clear of the clock, leaving out
+  those that do not fit beside a long program name.
 - Settings lists a computer's programs in the order they were installed, where the order changed from one
   time to the next, and its Programs page scrolls when there are more programs than the window holds, where the
   last ones ran off the window.

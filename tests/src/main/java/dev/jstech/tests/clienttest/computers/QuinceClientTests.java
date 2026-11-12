@@ -21,7 +21,9 @@ import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.computers.EraParts;
+import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -58,6 +60,11 @@ public final class QuinceClientTests {
     private static final String QTUNES = "jsc:qtunes";
     private static final String EXPEDITION = "jsc:expedition";
     private static final String PREVIEW = "jsc:preview";
+    private static final String MEDIA_PLAYER = "jsc:media_player";
+    private static final String STORE = "jsc:quince_store";
+    /* The network behind the machine: the Mainframe running the Mirror, a router, and the cables to its back. */
+    private static final BlockPos STORE_ROUTER = MACHINE.south(2);
+    private static final BlockPos STORE_MAINFRAME = MACHINE.south(4);
     private static final String FORCE_QUIT = "quince_memory";
     /* What was running when a system went down, and the part pulled from the Russet 128K. */
     private static final String EXPEDITION_NAME = "Expedition";
@@ -169,6 +176,42 @@ public final class QuinceClientTests {
                 .thenScreenshot(SETTLE * 4, "osx-memory");
     }
 
+    /* qTunes on Quince OS X, with the songs the machine has. */
+    @ClientTest(timeoutTicks = 3000)
+    public static void quinceOsX_showsQtunes(final ClientTestContext ctx) {
+        final ClientTestContext steps = atDesktop(ctx, ComputingModule.QRUSSET_WHITE.get(),
+                QuinceItems.BOARD_QRUSSET_WHITE.get(), "quince_os_x");
+        opened(steps, ctx, QTUNES);
+        steps.thenScreenshot(SETTLE * 10, "osx-qtunes");
+    }
+
+    /* Preview and the QuinceTime Player on Quince OS X, side by side. */
+    @ClientTest(timeoutTicks = 3000)
+    public static void quinceOsX_showsPreviewAndTheQuinceTimePlayer(final ClientTestContext ctx) {
+        final ClientTestContext steps = atDesktop(ctx, ComputingModule.QRUSSET_WHITE.get(),
+                QuinceItems.BOARD_QRUSSET_WHITE.get(), "quince_os_x");
+        opened(steps, ctx, PREVIEW);
+        opened(steps, ctx, MEDIA_PLAYER);
+        steps.thenScreenshot(SETTLE * 10, "osx-media");
+    }
+
+    /*
+     * The Quince Store on Quince OS X gone flat, on a network whose Mainframe runs the Mirror: the programs the mod
+     * has, each to GET, the ones installed marked so.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void flat_showsTheQuinceStoreFromTheMirror(final ClientTestContext ctx) {
+        final ClientTestContext steps = atDesktop(ctx, ComputingModule.QRUSSET_SLIM.get(),
+                QuinceItems.BOARD_QRUSSET_THIN.get(), "quince_os_x", world -> {
+                    world.placeRunningMainframe(STORE_MAINFRAME).installMirror();
+                    world.setBlock(STORE_MAINFRAME.north(), ComputingModule.HBW_CABLE);
+                    world.setBlock(STORE_ROUTER, ComputingModule.PERSONAL_ROUTER.get());
+                    world.setBlock(STORE_ROUTER.north(), ComputingModule.ETHERNET_CABLE);
+                });
+        opened(steps, ctx, STORE);
+        steps.thenScreenshot(SETTLE * 20, "flat-store");
+    }
+
     /*
      * Opens the two programs, the second in front, then About This Computer from the fruit's menu, and the Get Info of
      * the program in front from the File menu, each shot for its mock.
@@ -226,7 +269,14 @@ public final class QuinceClientTests {
     /* The machine built on its board with that system, running, and its own glass open on the desktop. */
     private static ClientTestContext atDesktop(final ClientTestContext ctx, final Block block, final Item board,
                                                final String system) {
+        return atDesktop(ctx, block, board, system, world -> { });
+    }
+
+    /* The same, with {@code around} built beside the machine in the same build. */
+    private static ClientTestContext atDesktop(final ClientTestContext ctx, final Block block, final Item board,
+                                               final String system, final Consumer<TestWorldBuilder> around) {
         return ctx.thenBuild(0, world -> {
+                    around.accept(world);
                     world.setBlock(MACHINE, block.defaultBlockState()
                             .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
                     final PersonalComputerBlockEntity machine = world.blockEntity(MACHINE,

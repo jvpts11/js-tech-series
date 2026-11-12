@@ -94,8 +94,13 @@ public final class QuinceBars {
             titles.add(new int[] {at - 5, at + aw + 5});
             at += aw + 12;
         }
+        // The menus stop short of the clock and what stands at the right, as many as fit before them.
+        final int limit = rightStart(font, look, x, w, app, appIcon, clock) - gap;
         for (final String menu : menus) {
             final int mw = font.width(menu);
+            if (at + mw > limit) {
+                break;
+            }
             final boolean hot = open == titles.size();
             final int pad = look == QuinceLook.ONE_BIT ? 4 : 5;
             if (hot) {
@@ -187,6 +192,19 @@ public final class QuinceBars {
         }
         final int k = Math.floorDiv(mx - origin[0] + 2, DOCK_PITCH);
         return k >= 0 && k < count ? k : -1;
+    }
+
+    /* Where the right end of the bar begins: the bar's end on the Quince System, which has nothing there. */
+    private static int rightStart(final Font font, final QuinceLook look, final int x, final int w, final String app,
+                                  @Nullable final ResourceLocation appIcon, final String clock) {
+        if (look == QuinceLook.ONE_BIT) {
+            return x + w;
+        }
+        if (look == QuinceLook.PLATINUM) {
+            final int iconW = appIcon == null ? 0 : 11;
+            return x + w - 6 - iconW - 3 - font.width(app) - 12 - font.width(clock);
+        }
+        return x + w - 22 - font.width(clock);
     }
 
     /*
