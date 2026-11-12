@@ -18,6 +18,7 @@ import dev.jstech.tests.clienttest.computers.BackupConsoleClientTests;
 import dev.jstech.tests.clienttest.computers.BookPagesClientTests;
 import dev.jstech.tests.clienttest.computers.BookStylesClientTests;
 import dev.jstech.tests.clienttest.computers.BootSplashClientTests;
+import dev.jstech.tests.clienttest.computers.BuilderNetworkClientTests;
 import dev.jstech.tests.clienttest.computers.BusModelClientTests;
 import dev.jstech.tests.clienttest.computers.BusWindowClientTests;
 import dev.jstech.tests.clienttest.computers.CabinetItemClientTests;
@@ -552,6 +553,7 @@ public final class ClientTestSuite {
             CraftPlannerClientTests.class,
             UpdateBadgeClientTests.class,
             QuinceClientTests.class,
+            BuilderNetworkClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,
