@@ -615,7 +615,8 @@ public final class ShellView extends Panel implements ShellViews.IListener {
     /** What stands in front of what is typed: the prompt, a tool's question, or nothing while something runs. */
     private String promptNow() {
         if (this.keyboard.asking()) {
-            return this.keyboard.standing().text().stripTrailing();
+            // In the player's language: a keyed line off the wire knows no English of its own.
+            return this.keyboard.standing().toLine().text(GameText.LOADED).stripTrailing();
         }
         return this.busy ? "" : this.prompt;
     }

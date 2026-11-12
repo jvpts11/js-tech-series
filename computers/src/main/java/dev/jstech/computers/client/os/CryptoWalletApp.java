@@ -42,12 +42,18 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
+
+import static dev.jstech.computers.client.os.TabbedWindowLook.FIELD_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.HEADER_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.LINE_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.PAD;
+import static dev.jstech.computers.client.os.TabbedWindowLook.ROW_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.STATUS_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.TAB_H;
 
 /**
  * The Crypto Wallet, Blockwright's program for Teracoin (computers/docs/design/teracoin.md), on any desktop, in its
@@ -121,25 +127,26 @@ public final class CryptoWalletApp implements IDesktopApp {
     private static final int TRANSACTIONS = 3;
     private static final int PRINT = 4;
     private static final int WALLETS = 5;
-    private static final int TAB_H = 13;
-    private static final int BAND_H = 30;
-    private static final int STATUS_H = 11;
-    private static final int ROW_H = 10;
-    private static final int FIELD_H = 12;
-    private static final int BUTTON_H = 12;
-    private static final int PAD = 6;
-    private static final int LABEL_W = 46;
+    /* The band with the balance over the Overview, Send and Print tabs, and its coin. */
+    private static final int BAND_H = 43;
+    private static final int COIN_SIZE = 32;
+    private static final int BAND_TEXT_X = 47;
+    /* Where the Send tab's fields start, after their labels. */
+    private static final int SEND_LABEL_W = 65;
+    private static final int BUTTON_W = 64;
     private static final int LATEST = 5;
-    private static final int MODULE = 3;
-    private static final int QUIET = 5;
+    private static final int MODULE = 5;
+    private static final int QUIET = 4;
     private static final int SQUARE = BlockSquare.SIDE * MODULE + 2 * QUIET;
-    private static final int POPUP_W = 240;
-    private static final int POPUP_H = 118;
+    private static final int ADDRESS_H = 19;
+    private static final int RECEIVE_PITCH = 12;
+    private static final int POPUP_W = 360;
+    private static final int POPUP_H = 160;
+    private static final int POPUP_LABEL_W = 52;
     private static final int NOTE_MILLIS = 6000;
     private static final int COPIED_MILLIS = 2000;
     private static final long REFRESH_MILLIS = 2000L;
-    private static final float SMALL = Texts.SMALL;
-    private static final float BIG = 1.25f;
+    private static final float BIG = 1.75f;
     private static final int PLACES = 8;
 
     private static CryptoWalletApp active;
@@ -151,8 +158,8 @@ public final class CryptoWalletApp implements IDesktopApp {
         for (final TextKey key : TABS) {
             tabLabels.add(GameText.resolve(key));
         }
-        tabs = root.add(new TabStrip(tabLabels).fitToLabels(6).setOnSelect(index -> tab = index));
-        latestColumns = root.add(new ColumnHeader(words(CryptoWalletTexts.WHEN, CryptoWalletTexts.WHAT,
+        tabs = root.add(new TabStrip(tabLabels).fitToLabels(16).setOnSelect(index -> tab = index));
+        latestColumns = root.add(TabbedWindowLook.header(words(CryptoWalletTexts.WHEN, CryptoWalletTexts.WHAT,
                 CryptoWalletTexts.AMOUNT, CryptoWalletTexts.STATUS)));
         latestList = root.add(new ListView<>(this::latest, ROW_H, this::renderLatest));
         payTo = root.add(new TextField(TeracoinAddress.LENGTH));
@@ -160,12 +167,12 @@ public final class CryptoWalletApp implements IDesktopApp {
         sendAmount = root.add(new TextField(24));
         send = root.add(new Button(GameText.resolve(CryptoWalletTexts.SEND), this::send).setPrimary(true));
         clear = root.add(new Button(GameText.resolve(CryptoWalletTexts.CLEAR), this::clearSend));
-        waitingColumns = root.add(new ColumnHeader(words(CryptoWalletTexts.SENT_COLUMN, CryptoWalletTexts.TO_COLUMN,
-                CryptoWalletTexts.AMOUNT, CryptoWalletTexts.CONFIRMS)));
+        waitingColumns = root.add(TabbedWindowLook.header(words(CryptoWalletTexts.SENT_COLUMN,
+                CryptoWalletTexts.TO_COLUMN, CryptoWalletTexts.AMOUNT, CryptoWalletTexts.CONFIRMS)));
         waitingList = root.add(new ListView<>(this::waitingSends, ROW_H, this::renderWaiting));
         copy = root.add(new Button(() -> GameText.resolve(Util.getMillis() < copiedUntil ? CryptoWalletTexts.COPIED
                 : CryptoWalletTexts.COPY), this::copyAddress).setPrimary(true));
-        walletColumns = root.add(new ColumnHeader(words(CryptoWalletTexts.FILE, CryptoWalletTexts.ADDRESS,
+        walletColumns = root.add(TabbedWindowLook.header(words(CryptoWalletTexts.FILE, CryptoWalletTexts.ADDRESS,
                 CryptoWalletTexts.BALANCE)));
         walletList = root.add(new ListView<>(this::wallets, ROW_H, this::renderWallet)
                 .setOnClick((index, button, mx, my) -> pick(index)));
@@ -174,7 +181,7 @@ public final class CryptoWalletApp implements IDesktopApp {
             filters.add(root.add(new RadioGroup(List.of(() -> GameText.resolve(FILTERS[option])),
                     () -> filter == option ? 0 : -1, chosen -> filter = option)));
         }
-        moveColumns = root.add(new ColumnHeader(words(CryptoWalletTexts.WHEN, CryptoWalletTexts.WHAT,
+        moveColumns = root.add(TabbedWindowLook.header(words(CryptoWalletTexts.WHEN, CryptoWalletTexts.WHAT,
                 CryptoWalletTexts.AMOUNT, CryptoWalletTexts.BLOCKS)));
         moveList = root.add(new ListView<>(this::filtered, ROW_H, this::renderMove));
         newWallet = root.add(new Button(GameText.resolve(CryptoWalletTexts.NEW_WALLET), this::openNew));
@@ -235,22 +242,22 @@ public final class CryptoWalletApp implements IDesktopApp {
 
     @Override
     public int defaultWidth() {
-        return 368;
+        return 493;
     }
 
     @Override
     public int defaultHeight() {
-        return 232;
+        return 313;
     }
 
     @Override
     public int minWidth() {
-        return 330;
+        return 400;
     }
 
     @Override
     public int minHeight() {
-        return 214;
+        return 280;
     }
 
     @Override
@@ -282,10 +289,15 @@ public final class CryptoWalletApp implements IDesktopApp {
         if (!any) {
             renderEmpty(g, font, x, y, width);
         } else {
+            TabbedWindowLook.tabRow(g, skin, x, y, width);
             renderTab(g, font, x, y, width, height);
         }
         root.render(g, new UiContext(skin, font, mouseX, mouseY, partialTick));
-        renderStatusBar(g, font, x, y + height - STATUS_H, width);
+        if (state != null) {
+            TeracoinLook.statusBar(g, font, skin, x, y + height - STATUS_H, width, state.chain(), freshNote());
+        } else {
+            skin.statusBar(g, x, y + height - STATUS_H, width, STATUS_H);
+        }
     }
 
     @Override
@@ -567,12 +579,12 @@ public final class CryptoWalletApp implements IDesktopApp {
         final int px = x + PAD;
         final int pw = width - 2 * PAD;
         final int bottom = y + height - STATUS_H;
-        tabs.setBounds(x, y, width, TAB_H);
+        TabbedWindowLook.placeTabs(tabs, x, y, width);
         tabs.setVisible(any);
         tabs.setSelected(tab);
         firstWallet.setVisible(!any);
-        final int buttonW = Math.max(70, font.width(GameText.resolve(CryptoWalletTexts.NEW_WALLET)) + 16);
-        firstWallet.setBounds(x + (width - buttonW) / 2, y + 112, buttonW, BUTTON_H + 2);
+        final int buttonW = Math.max(BUTTON_W, font.width(GameText.resolve(CryptoWalletTexts.NEW_WALLET)) + 16);
+        firstWallet.setBounds(x + (width - buttonW) / 2, y + 116, buttonW, FIELD_H);
         final boolean overview = any && tab == OVERVIEW;
         final boolean sending = any && tab == SEND;
         final boolean receiving = any && tab == RECEIVE;
@@ -585,9 +597,11 @@ public final class CryptoWalletApp implements IDesktopApp {
         latestColumns.setVisible(overview);
         latestList.setVisible(overview);
         if (overview) {
-            latestColumns.setBounds(px, bodyTop + 37, pw, 11);
-            latestColumns.setColumnX(px + 3, px + 3 + pw * 18 / 100, px + pw * 63 / 100, px + pw * 82 / 100);
-            latestList.setBounds(px, bodyTop + 48, pw, Math.min(LATEST * ROW_H, bottom - 3 - (bodyTop + 48)));
+            final int tableTop = bodyTop + 52;
+            latestColumns.setBounds(px, tableTop, pw, HEADER_H);
+            latestColumns.setColumnX(TabbedWindowLook.columns(px, pw, 15, 57, 74));
+            latestList.setBounds(px, tableTop + HEADER_H, pw,
+                    Math.min(LATEST * ROW_H, bottom - 4 - (tableTop + HEADER_H)));
         }
 
         payTo.setVisible(sending);
@@ -598,17 +612,21 @@ public final class CryptoWalletApp implements IDesktopApp {
         waitingColumns.setVisible(sending);
         waitingList.setVisible(sending);
         if (sending) {
-            final int fieldX = px + LABEL_W;
-            final int trcW = font.width(GameText.resolve(CryptoWalletTexts.TRC)) + 6;
-            payTo.setBounds(fieldX, bodyTop + 4, pw - LABEL_W - trcW, FIELD_H);
-            sendLabel.setBounds(fieldX, bodyTop + 19, pw - LABEL_W - trcW, FIELD_H);
-            sendAmount.setBounds(fieldX, bodyTop + 34, pw - LABEL_W - trcW, FIELD_H);
-            final int buttonsY = bodyTop + 72;
-            clear.setBounds(px + pw - 50, buttonsY, 50, BUTTON_H);
-            send.setBounds(px + pw - 106, buttonsY, 50, BUTTON_H);
-            waitingColumns.setBounds(px, buttonsY + 28, pw, 11);
-            waitingColumns.setColumnX(px + 3, px + 3 + pw * 20 / 100, px + pw * 63 / 100, px + pw * 82 / 100);
-            waitingList.setBounds(px, buttonsY + 39, pw, Math.max(ROW_H, bottom - 3 - (buttonsY + 39)));
+            final int fieldX = x + PAD + SEND_LABEL_W;
+            final int fieldW = width - 80 - (fieldX - x);
+            payTo.setBounds(fieldX, bodyTop + 13, fieldW, FIELD_H);
+            sendLabel.setBounds(fieldX, bodyTop + 34, fieldW, FIELD_H);
+            sendAmount.setBounds(fieldX, bodyTop + 55, fieldW, FIELD_H);
+            // The buttons come under the note on fees, however many lines it wraps to.
+            final int noteLines = TabbedWindowLook.lines(font, GameText.resolve(CryptoWalletTexts.NO_FEE), pw).size();
+            final int buttonsY = bodyTop + 97 + Math.max(1, noteLines) * LINE_H + 8;
+            clear.setBounds(x + width - 11 - BUTTON_W, buttonsY, BUTTON_W, FIELD_H);
+            send.setBounds(clear.x() - 8 - BUTTON_W, buttonsY, BUTTON_W, FIELD_H);
+            final int tableTop = buttonsY + 40;
+            waitingColumns.setBounds(px, tableTop, pw, HEADER_H);
+            waitingColumns.setColumnX(TabbedWindowLook.columns(px, pw, 16, 60, 77));
+            waitingList.setBounds(px, tableTop + HEADER_H, pw,
+                    Math.max(ROW_H, bottom - 4 - (tableTop + HEADER_H)));
         }
 
         copy.setVisible(receiving);
@@ -616,60 +634,63 @@ public final class CryptoWalletApp implements IDesktopApp {
         walletColumns.setVisible(listsWallets);
         walletList.setVisible(listsWallets);
         if (receiving) {
-            copy.setBounds(px + pw - 50, bodyTop + 16, 50, FIELD_H);
-            final int listTop = bodyTop + 16 + FIELD_H + 6 + SQUARE + 16;
-            walletColumns.setBounds(px, listTop, pw, 11);
-            walletList.setBounds(px, listTop + 11, pw, Math.max(ROW_H, bottom - 3 - (listTop + 11)));
+            copy.setBounds(x + width - 133, bodyTop + 30, 53, FIELD_H);
+            final int tableTop = bodyTop + 55 + SQUARE + 22;
+            walletColumns.setBounds(px, tableTop, pw, HEADER_H);
+            walletList.setBounds(px, tableTop + HEADER_H, pw, Math.max(ROW_H, bottom - 4 - (tableTop + HEADER_H)));
         } else if (walletsTab) {
-            walletColumns.setBounds(px, bodyTop + 16, pw, 11);
-            walletList.setBounds(px, bodyTop + 27, pw, Math.max(ROW_H, bottom - BUTTON_H - 8 - (bodyTop + 27)));
+            walletColumns.setBounds(px, bodyTop + 26, pw, HEADER_H);
+            walletList.setBounds(px, bodyTop + 26 + HEADER_H, pw,
+                    Math.max(ROW_H, bottom - FIELD_H - 10 - (bodyTop + 26 + HEADER_H)));
         }
-        walletColumns.setColumnX(px + 3, px + pw * 35 / 100, px + pw * 70 / 100);
+        walletColumns.setColumnX(TabbedWindowLook.columns(px, pw, 21, 65));
         newWallet.setVisible(walletsTab);
         open.setVisible(walletsTab);
         if (walletsTab) {
             final int newW = font.width(GameText.resolve(CryptoWalletTexts.NEW_WALLET)) + 16;
-            open.setBounds(px + pw - 50, bottom - BUTTON_H - 4, 50, BUTTON_H);
-            newWallet.setBounds(px + pw - 56 - newW, bottom - BUTTON_H - 4, newW, BUTTON_H);
+            open.setBounds(x + width - 11 - BUTTON_W, bottom - FIELD_H - 5, BUTTON_W, FIELD_H);
+            newWallet.setBounds(open.x() - 8 - newW, bottom - FIELD_H - 5, newW, FIELD_H);
         }
 
-        int filterX = px + font.width(GameText.resolve(CryptoWalletTexts.SHOW)) + 8;
+        int filterX = px + font.width(GameText.resolve(CryptoWalletTexts.SHOW)) + 12;
         for (int i = 0; i < filters.size(); i++) {
             final RadioGroup option = filters.get(i);
             option.setVisible(history);
-            final int w = RadioGroup.BUTTON + RadioGroup.LABEL_GAP + font.width(GameText.resolve(FILTERS[i])) + 8;
-            option.setBounds(filterX, bodyTop + 4, w, RadioGroup.ROW);
+            final int w = RadioGroup.BUTTON + RadioGroup.LABEL_GAP + font.width(GameText.resolve(FILTERS[i])) + 12;
+            option.setBounds(filterX, bodyTop + 10, w, RadioGroup.ROW);
             filterX += w;
         }
         moveColumns.setVisible(history);
         moveList.setVisible(history);
         if (history) {
-            moveColumns.setBounds(px, bodyTop + 20, pw, 11);
-            moveColumns.setColumnX(px + 3, px + 3 + pw * 18 / 100, px + pw * 63 / 100, px + pw * 84 / 100);
-            moveList.setBounds(px, bodyTop + 31, pw, Math.max(ROW_H, bottom - 14 - (bodyTop + 31)));
+            moveColumns.setBounds(px, bodyTop + 29, pw, HEADER_H);
+            moveColumns.setColumnX(TabbedWindowLook.columns(px, pw, 15, 57, 75));
+            moveList.setBounds(px, bodyTop + 29 + HEADER_H, pw,
+                    Math.max(ROW_H, bottom - 18 - (bodyTop + 29 + HEADER_H)));
         }
     }
 
     private void layoutPopup(final Popup p) {
-        final int top = p.contentTop() + 4;
         final int left = p.x() + 8;
-        final int fieldX = left + LABEL_W;
-        final int fieldW = p.width() - 16 - LABEL_W;
+        final int top = p.contentTop() + 7;
+        final int fieldX = left + POPUP_LABEL_W;
+        final int fieldW = p.width() - 17 - POPUP_LABEL_W;
         nameField.setBounds(fieldX, top, fieldW, FIELD_H);
-        folderField.setBounds(fieldX, top + 16, fieldW, FIELD_H);
+        folderField.setBounds(fieldX, top + 20, fieldW, FIELD_H);
         final boolean usb = state != null && state.current().copyDrive() != 0;
         copyBox.setVisible(usb);
-        copyBox.setBounds(left, top + 33, p.width() - 16, 11);
-        cancel.setBounds(p.x() + p.width() - 58, p.y() + p.height() - BUTTON_H - 6, 50, BUTTON_H);
-        create.setBounds(p.x() + p.width() - 114, p.y() + p.height() - BUTTON_H - 6, 50, BUTTON_H);
+        copyBox.setBounds(left + 1, top + 42, p.width() - 18, 11);
+        cancel.setBounds(p.right() - 68, p.bottom() - FIELD_H - 8, 60, FIELD_H);
+        create.setBounds(p.right() - 133, p.bottom() - FIELD_H - 8, 60, FIELD_H);
     }
 
     private void renderEmpty(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         g.blit(MARK, x + width / 2 - 16, y + 34, 0, 0, 32, 32, 32, 32);
         final String heading = GameText.resolve(CryptoWalletTexts.NO_WALLET);
-        Draw.text(g, font, heading, x + (width - font.width(heading)) / 2, y + 76, skin.text());
+        final int headingW = Math.round(font.width(heading) * TabbedWindowLook.HEADING);
+        TabbedWindowLook.heading(g, font, heading, x + (width - headingW) / 2, y + 77, skin.text());
         final String line = GameText.resolve(CryptoWalletTexts.WALLET_IS);
-        Texts.small(g, font, line, x + (width - Texts.smallWidth(font, line)) / 2, y + 90, skin.dim());
+        Draw.text(g, font, line, x + (width - font.width(line)) / 2, y + 95, skin.dim());
     }
 
     private void renderTab(final GuiGraphics g, final Font font, final int x, final int y, final int width,
@@ -684,37 +705,42 @@ public final class CryptoWalletApp implements IDesktopApp {
         }
         switch (tab) {
             case OVERVIEW -> {
-                Texts.small(g, font, GameText.resolve(CryptoWalletTexts.WALLET), px, top + 5, skin.dim());
-                Texts.small(g, font, Texts.clip(font, GameText.resolve(CryptoWalletTexts.WALLET_IN.with(
-                        current.file(), current.folder())), (int) ((pw - LABEL_W) / SMALL)), px + LABEL_W, top + 5,
+                final String walletLine = GameText.resolve(CryptoWalletTexts.WALLET) + "  " + GameText.resolve(
+                        CryptoWalletTexts.WALLET_IN.with(current.file(), current.folder()));
+                Draw.text(g, font, Texts.clip(font, walletLine, pw), px, top + 8, skin.dim());
+                Draw.text(g, font, Texts.clip(font, GameText.resolve(CryptoWalletTexts.ADDRESS) + "  "
+                        + current.address(), pw), px, top + 20, skin.dim());
+                TabbedWindowLook.heading(g, font, GameText.resolve(CryptoWalletTexts.LATEST), px, top + 36,
                         skin.text());
-                Texts.small(g, font, GameText.resolve(CryptoWalletTexts.ADDRESS), px, top + 14, skin.dim());
-                Texts.small(g, font, current.address(), px + LABEL_W, top + 14, skin.text());
-                Draw.text(g, font, GameText.resolve(CryptoWalletTexts.LATEST), px, top + 27, skin.text());
                 if (moves().isEmpty()) {
-                    Texts.small(g, font, GameText.resolve(CryptoWalletTexts.NO_MOVES), px + 3, top + 51, skin.dim());
+                    Draw.text(g, font, GameText.resolve(CryptoWalletTexts.NO_MOVES), latestList.x() + 5,
+                            latestList.y() + 3, skin.dim());
                 }
             }
             case SEND -> {
-                Texts.small(g, font, GameText.resolve(CryptoWalletTexts.PAY_TO), px, top + 7, skin.text());
-                Texts.small(g, font, GameText.resolve(CryptoWalletTexts.LABEL), px, top + 22, skin.text());
-                Texts.small(g, font, GameText.resolve(CryptoWalletTexts.AMOUNT), px, top + 37, skin.text());
-                Texts.small(g, font, GameText.resolve(CryptoWalletTexts.TRC), sendAmount.right() + 4, top + 37,
+                final int fieldX = payTo.x();
+                Draw.text(g, font, GameText.resolve(CryptoWalletTexts.PAY_TO), px + 1, payTo.y() + 4, skin.text());
+                Draw.text(g, font, GameText.resolve(CryptoWalletTexts.LABEL), px + 1, sendLabel.y() + 4, skin.text());
+                Draw.text(g, font, GameText.resolve(CryptoWalletTexts.AMOUNT), px + 1, sendAmount.y() + 4,
                         skin.text());
-                Texts.small(g, font, GameText.resolve(CryptoWalletTexts.AVAILABLE.with(Trc.format(current.balance()))),
-                        px + LABEL_W, top + 49, skin.dim());
-                paragraph(g, font, GameText.resolve(CryptoWalletTexts.NO_FEE), px, top + 59, pw, skin.dim());
-                Draw.text(g, font, GameText.resolve(CryptoWalletTexts.WAITING_HEADING), px, top + 89, skin.text());
+                Draw.text(g, font, GameText.resolve(CryptoWalletTexts.TRC), sendAmount.right() + 5,
+                        sendAmount.y() + 4, skin.text());
+                Draw.text(g, font, GameText.resolve(CryptoWalletTexts.AVAILABLE.with(Trc.format(current.balance()))),
+                        fieldX, top + 79, skin.dim());
+                TabbedWindowLook.paragraph(g, font, GameText.resolve(CryptoWalletTexts.NO_FEE), px + 1, top + 97, pw,
+                        LINE_H, skin.dim());
+                TabbedWindowLook.heading(g, font, GameText.resolve(CryptoWalletTexts.WAITING_HEADING), px + 1,
+                        waitingColumns.y() - 14, skin.text());
             }
-            case RECEIVE -> renderReceive(g, font, px, top, pw, current);
+            case RECEIVE -> renderReceive(g, font, x, px, top, width, current);
             case TRANSACTIONS -> {
-                Texts.small(g, font, GameText.resolve(CryptoWalletTexts.SHOW), px, top + 7, skin.text());
-                Texts.small(g, font, GameText.resolve(CryptoWalletTexts.LINES_NOTE), px, y + height - STATUS_H - 11,
-                        skin.dim());
+                Draw.text(g, font, GameText.resolve(CryptoWalletTexts.SHOW), px + 1, top + 11, skin.text());
+                Draw.text(g, font, GameText.resolve(CryptoWalletTexts.LINES_NOTE), px + 1,
+                        y + height - STATUS_H - 13, skin.dim());
             }
             case PRINT -> printTab.render(g, font, skin, x, top, width);
-            case WALLETS -> Draw.text(g, font, GameText.resolve(CryptoWalletTexts.ON_THIS_COMPUTER), px, top + 4,
-                    skin.text());
+            case WALLETS -> TabbedWindowLook.heading(g, font, GameText.resolve(CryptoWalletTexts.ON_THIS_COMPUTER), px,
+                    top + 9, skin.text());
             default -> {
             }
         }
@@ -724,115 +750,96 @@ public final class CryptoWalletApp implements IDesktopApp {
                             final WalletStatePayload.Current current) {
         g.fill(x, top, x + width, top + BAND_H, skin.panelBg());
         g.fill(x, top + BAND_H - 1, x + width, top + BAND_H, skin.edge());
-        g.blit(COIN, x + PAD, top + 7, 0, 0, 16, 16, 16, 16);
-        Texts.small(g, font, GameText.resolve(CryptoWalletTexts.BALANCE), x + PAD + 22, top + 4, skin.dim());
+        g.blit(COIN, x + PAD, top + 5, COIN_SIZE, COIN_SIZE, 0, 0, 16, 16, 16, 16);
+        Draw.text(g, font, GameText.resolve(CryptoWalletTexts.BALANCE), x + BAND_TEXT_X, top + 5, skin.dim());
         Texts.scaled(g, font, GameText.resolve(CryptoWalletTexts.AMOUNT_TRC.with(Trc.format(current.balance()))),
-                x + PAD + 22, top + 13, BIG, colours().gold());
+                x + BAND_TEXT_X, top + 17, BIG, colours().gold());
         if (current.pending() > 0L) {
             final String pending = GameText.resolve(CryptoWalletTexts.PENDING) + "  "
                     + GameText.resolve(CryptoWalletTexts.AMOUNT_TRC.with(Trc.signed(current.pending(), PLACES)));
             final String confirms = GameText.resolve(CryptoWalletTexts.CONFIRMS_NEXT);
-            Texts.small(g, font, pending, x + width - PAD - Texts.smallWidth(font, pending), top + 6, skin.text());
-            Texts.small(g, font, confirms, x + width - PAD - Texts.smallWidth(font, confirms), top + 15,
-                    skin.dim());
+            Draw.text(g, font, pending, x + width - PAD - font.width(pending), top + 7, skin.text());
+            Draw.text(g, font, confirms, x + width - PAD - font.width(confirms), top + 19, skin.dim());
         }
     }
 
-    private void renderReceive(final GuiGraphics g, final Font font, final int px, final int top, final int pw,
-                               final WalletStatePayload.Current current) {
-        Draw.text(g, font, GameText.resolve(CryptoWalletTexts.YOUR_ADDRESS), px, top + 4, skin.text());
-        final int fieldW = pw - 56;
-        skin.field(g, px, top + 16, fieldW, FIELD_H, false);
-        Texts.small(g, font, current.address(), px + 4, top + 19, skin.text());
-        final int squareY = top + 16 + FIELD_H + 6;
-        g.fill(px, squareY, px + SQUARE, squareY + SQUARE, colours().paper());
-        Draw.outline(g, px, squareY, SQUARE, SQUARE, skin.edge());
+    private void renderReceive(final GuiGraphics g, final Font font, final int x, final int px, final int top,
+                               final int width, final WalletStatePayload.Current current) {
+        TabbedWindowLook.heading(g, font, GameText.resolve(CryptoWalletTexts.YOUR_ADDRESS), px + 3, top + 9,
+                skin.text());
+        final int fieldW = x + width - 140 - (px + 3);
+        skin.field(g, px + 3, top + 28, fieldW, ADDRESS_H, false);
+        Draw.text(g, font, Texts.clip(font, current.address(), fieldW - 10), px + 8, top + 34, skin.text());
+        final int squareX = px + 3;
+        final int squareY = top + 55;
+        g.fill(squareX, squareY, squareX + SQUARE, squareY + SQUARE, colours().paper());
+        Draw.outline(g, squareX, squareY, SQUARE, SQUARE, skin.edge());
         final boolean[][] square = BlockSquare.of(current.address());
         for (int row = 0; row < BlockSquare.SIDE; row++) {
             for (int column = 0; column < BlockSquare.SIDE; column++) {
                 if (square[row][column]) {
-                    final int bx = px + QUIET + column * MODULE;
+                    final int bx = squareX + QUIET + column * MODULE;
                     final int by = squareY + QUIET + row * MODULE;
                     g.fill(bx, by, bx + MODULE, by + MODULE, colours().ink());
                 }
             }
         }
-        final int textX = px + SQUARE + 10;
-        final int textW = pw - SQUARE - 10;
-        final int used = paragraph(g, font, GameText.resolve(CryptoWalletTexts.BELONGS), textX, squareY + 4, textW,
-                skin.text());
-        paragraph(g, font, GameText.resolve(CryptoWalletTexts.TO_BE_PAID), textX, squareY + 4 + used + 7, textW,
-                skin.text());
-        Draw.text(g, font, GameText.resolve(CryptoWalletTexts.ON_THIS_COMPUTER), px, squareY + SQUARE + 5,
-                skin.text());
+        final int textX = squareX + SQUARE + 12;
+        final int textW = x + width - PAD - textX;
+        final int used = TabbedWindowLook.paragraph(g, font, GameText.resolve(CryptoWalletTexts.BELONGS), textX,
+                squareY + 7, textW, RECEIVE_PITCH, skin.dim());
+        TabbedWindowLook.paragraph(g, font, GameText.resolve(CryptoWalletTexts.TO_BE_PAID), textX,
+                squareY + 7 + used + RECEIVE_PITCH, textW, RECEIVE_PITCH, skin.text());
+        TabbedWindowLook.heading(g, font, GameText.resolve(CryptoWalletTexts.ON_THIS_COMPUTER), squareX,
+                walletColumns.y() - 16, skin.text());
     }
 
     private void renderPopupWords(final GuiGraphics g, final Font font) {
         final int left = newPopup.x() + 8;
-        final int top = newPopup.contentTop() + 4;
-        Texts.small(g, font, GameText.resolve(CryptoWalletTexts.NAME), left, top + 3, skin.text());
-        Texts.small(g, font, GameText.resolve(CryptoWalletTexts.SAVE_IN), left, top + 19, skin.text());
-        final int boxTop = top + 47;
+        Draw.text(g, font, GameText.resolve(CryptoWalletTexts.NAME), left + 1, nameField.y() + 4, skin.text());
+        Draw.text(g, font, GameText.resolve(CryptoWalletTexts.SAVE_IN), left + 1, folderField.y() + 4,
+                skin.text());
+        final int boxTop = nameField.y() + 60;
         final int boxW = newPopup.width() - 16;
-        final List<FormattedCharSequence> lines = font.split(Component.literal(GameText.resolve(
-                CryptoWalletTexts.KEY_WARNING)), (int) ((boxW - 8) / SMALL));
-        final int boxH = Math.max(1, lines.size()) * 8 + 6;
+        final String warning = GameText.resolve(CryptoWalletTexts.KEY_WARNING);
+        final int boxH = Math.max(1, TabbedWindowLook.lines(font, warning, boxW - 10).size()) * LINE_H + 7;
         g.fill(left, boxTop, left + boxW, boxTop + boxH, colours().warnFill());
         Draw.outline(g, left, boxTop, boxW, boxH, colours().warnEdge());
-        paragraph(g, font, GameText.resolve(CryptoWalletTexts.KEY_WARNING), left + 4, boxTop + 3, boxW - 8,
-                colours().warnInk());
+        TabbedWindowLook.paragraph(g, font, warning, left + 5, boxTop + 4, boxW - 10, LINE_H, colours().warnInk());
         if (Util.getMillis() < noteUntil && note != WalletStatePayload.NOTE_NONE
                 && note != WalletStatePayload.NOTE_CREATED) {
-            Texts.small(g, font, Texts.clip(font, GameText.resolve(noteText(note)), (int) (boxW / SMALL)), left,
-                    newPopup.y() + newPopup.height() - BUTTON_H - 4, colours().gold());
+            Draw.text(g, font, Texts.clip(font, GameText.resolve(noteText(note)), create.x() - 8 - left), left,
+                    create.y() + 4, colours().gold());
         }
-    }
-
-    private void renderStatusBar(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
-        skin.statusBar(g, x, y, width, STATUS_H);
-        if (state == null) {
-            return;
-        }
-        final WalletStatePayload.Chain chain = state.chain();
-        final String left = Util.getMillis() < noteUntil && note != WalletStatePayload.NOTE_NONE
-                ? GameText.resolve(noteText(note))
-                : GameText.resolve(CryptoWalletTexts.CHAIN_LINE.with(grouped(chain.height()),
-                        grouped(chain.difficulty()), Trc.format(chain.reward(), rewardPlaces(chain.reward()))));
-        final String right = chain.toHalving() < 0 ? GameText.resolve(CryptoWalletTexts.NO_HALVING)
-                : GameText.resolve(CryptoWalletTexts.HALVING_IN.with(grouped(chain.toHalving())));
-        Texts.small(g, font, right, x + width - 4 - Texts.smallWidth(font, right), y + 2, skin.dim());
-        Texts.small(g, font, Texts.clip(font, left, (int) ((width - 12 - Texts.smallWidth(font, right)) / SMALL)),
-                x + 4, y + 2, skin.dim());
     }
 
     private void renderLatest(final GuiGraphics g, final UiContext ctx, final WalletStatePayload.Move move,
                               final int index, final int x, final int y, final int w, final int h,
                               final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, w, h, hovered, selected);
-        final int[] columns = {x + 3, x + 3 + w * 18 / 100, x + w * 63 / 100, x + w * 82 / 100};
-        cells(g, ctx, y, columns, w, when(move.dayTime()), what(move), Trc.signed(move.amount(), PLACES),
-                GameText.resolve(move.waiting() ? CryptoWalletTexts.PENDING_STATUS : CryptoWalletTexts.CONFIRMED));
+        TabbedWindowLook.cells(g, ctx, x, y, w, TabbedWindowLook.columns(x, w, 15, 57, 74), when(move.dayTime()),
+                what(move), Trc.signed(move.amount(), PLACES), GameText.resolve(move.waiting()
+                        ? CryptoWalletTexts.PENDING_STATUS : CryptoWalletTexts.CONFIRMED));
     }
 
     private void renderWaiting(final GuiGraphics g, final UiContext ctx, final WalletStatePayload.Move move,
                                final int index, final int x, final int y, final int w, final int h,
                                final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, w, h, hovered, selected);
-        final int[] columns = {x + 3, x + 3 + w * 20 / 100, x + w * 63 / 100, x + w * 82 / 100};
         final String to = move.label().isEmpty() ? TeracoinAddress.shortForm(move.other())
                 : GameText.resolve(CryptoWalletTexts.TO_LABEL.with(TeracoinAddress.shortForm(move.other()),
                         move.label()));
-        cells(g, ctx, y, columns, w, when(move.dayTime()), to, Trc.signed(move.amount(), PLACES),
-                GameText.resolve(CryptoWalletTexts.NEXT_BLOCK));
+        TabbedWindowLook.cells(g, ctx, x, y, w, TabbedWindowLook.columns(x, w, 16, 60, 77), when(move.dayTime()), to,
+                Trc.signed(move.amount(), PLACES), GameText.resolve(CryptoWalletTexts.NEXT_BLOCK));
     }
 
     private void renderMove(final GuiGraphics g, final UiContext ctx, final WalletStatePayload.Move move,
                             final int index, final int x, final int y, final int w, final int h,
                             final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, w, h, hovered, selected);
-        final int[] columns = {x + 3, x + 3 + w * 18 / 100, x + w * 63 / 100, x + w * 84 / 100};
-        cells(g, ctx, y, columns, w, when(move.dayTime()), what(move), Trc.signed(move.amount(), PLACES),
-                move.waiting() ? GameText.resolve(CryptoWalletTexts.WAITING) : grouped(move.blocks()));
+        TabbedWindowLook.cells(g, ctx, x, y, w, TabbedWindowLook.columns(x, w, 15, 57, 75), when(move.dayTime()),
+                what(move), Trc.signed(move.amount(), PLACES), move.waiting()
+                        ? GameText.resolve(CryptoWalletTexts.WAITING) : TabbedWindowLook.grouped(move.blocks()));
     }
 
     private void renderWallet(final GuiGraphics g, final UiContext ctx, final WalletStatePayload.Wallet one,
@@ -840,32 +847,8 @@ public final class CryptoWalletApp implements IDesktopApp {
                               final boolean hovered, final boolean selected) {
         final boolean shown = state != null && one.path().equals(state.current().path());
         ctx.skin().listRow(g, x, y, w, h, hovered, selected || shown);
-        final int[] columns = {x + 3, x + w * 35 / 100, x + w * 70 / 100};
-        cells(g, ctx, y, columns, w, one.file(), TeracoinAddress.shortForm(one.address()), Trc.format(one.balance()));
-    }
-
-    private void cells(final GuiGraphics g, final UiContext ctx, final int y, final int[] columns, final int w,
-                       final String... texts) {
-        final int end = columns[0] - 3 + w;
-        for (int i = 0; i < texts.length && i < columns.length; i++) {
-            final int room = (i + 1 < columns.length ? columns[i + 1] : end) - columns[i] - 4;
-            Texts.small(g, ctx.font(), Texts.clip(ctx.font(), texts[i], (int) (room / SMALL)), columns[i], y + 2,
-                    ctx.skin().text());
-        }
-    }
-
-    /* A paragraph in the small type wrapped to {@code width}; the height it took. */
-    static int paragraph(final GuiGraphics g, final Font font, final String text, final int x, final int y,
-                                 final int width, final int colour) {
-        final List<FormattedCharSequence> lines = font.split(Component.literal(text), (int) (width / SMALL));
-        g.pose().pushPose();
-        g.pose().translate(x, y, 0);
-        g.pose().scale(SMALL, SMALL, 1f);
-        for (int i = 0; i < lines.size(); i++) {
-            Draw.text(g, font, lines.get(i), 0, i * 10, colour);
-        }
-        g.pose().popPose();
-        return Math.round(lines.size() * 10 * SMALL);
+        TabbedWindowLook.cells(g, ctx, x, y, w, TabbedWindowLook.columns(x, w, 21, 65), one.file(),
+                TeracoinAddress.shortForm(one.address()), Trc.format(one.balance()));
     }
 
     private String what(final WalletStatePayload.Move move) {
@@ -875,9 +858,9 @@ public final class CryptoWalletApp implements IDesktopApp {
                     TeracoinAddress.shortForm(move.other()))
                     : move.label().isEmpty() ? CryptoWalletTexts.SENT_TO.with(TeracoinAddress.shortForm(move.other()))
                     : CryptoWalletTexts.SENT_TO_LABEL.with(TeracoinAddress.shortForm(move.other()), move.label());
-            case PAYOUT -> CryptoWalletTexts.POOL_PAYOUT.with(move.other(), grouped(move.block()));
-            case FEE -> CryptoWalletTexts.POOL_FEE.with(move.other(), grouped(move.block()));
-            case REWARD -> CryptoWalletTexts.BLOCK_REWARD.with(grouped(move.block()));
+            case PAYOUT -> CryptoWalletTexts.POOL_PAYOUT.with(move.other(), TabbedWindowLook.grouped(move.block()));
+            case FEE -> CryptoWalletTexts.POOL_FEE.with(move.other(), TabbedWindowLook.grouped(move.block()));
+            case REWARD -> CryptoWalletTexts.BLOCK_REWARD.with(TabbedWindowLook.grouped(move.block()));
             case PRINT -> CryptoWalletTexts.PRINTED.with(itemName(move.label()));
         });
     }
@@ -914,15 +897,6 @@ public final class CryptoWalletApp implements IDesktopApp {
             case WalletStatePayload.NOTE_AUTO_OFF -> CryptoWalletTexts.NOTE_AUTO_OFF;
             default -> CryptoWalletTexts.NOTE_QUEUE_FULL;
         };
-    }
-
-    private static String grouped(final long number) {
-        return String.format(Locale.ROOT, "%,d", number);
-    }
-
-    /* A reward's places: none for a whole one, every one for one halved past its whole TRC. */
-    private static int rewardPlaces(final long units) {
-        return units % Trc.UNITS == 0L ? 0 : PLACES;
     }
 
     private static String baseName(final String file) {

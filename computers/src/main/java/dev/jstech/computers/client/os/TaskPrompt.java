@@ -275,8 +275,8 @@ final class TaskPrompt implements ShellViews.IListener {
         }
         final List<TermRow> rows = this.scrollback.rows();
         final boolean typing = !this.waitingForKey && !(this.busy && !this.keyboard.asking());
-        final String standing = this.keyboard.asking() ? this.keyboard.standing().text().stripTrailing()
-                : this.prompt;
+        final String standing = this.keyboard.asking()
+                ? this.keyboard.standing().toLine().text(GameText.LOADED).stripTrailing() : this.prompt;
         final String line = typing ? standing + this.typed : "";
         final int room = screen.rows() - top - (typing ? 1 : 0);
         final int first = Math.max(0, rows.size() - room);

@@ -6734,6 +6734,7 @@
   "jsc.miner.label.round": "Rodada",
   "jsc.miner.label.share": "Parte",
   "jsc.miner.label.total": "Total",
+  "jsc.miner.minute": "1 minuto",
   "jsc.miner.minutes": "%s minutos",
   "jsc.miner.no_address": "Sem endereço de pagamento: miner --address trc1... define um",
   "jsc.miner.no_pool": "Nenhum pool chamado %s nesta rede",

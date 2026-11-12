@@ -120,7 +120,7 @@ public final class MiningPanelPayloads {
                     block.reward()));
         }
         return new MiningPanelStatePayload(hostPos, line, names, chosen, new MiningPanelStatePayload.Pool(
-                MiningPools.name(at), at.name(), pool.feePermille(), pool.owner(), yours(at, hostPos),
+                MiningPools.name(at), MiningPools.server(at), pool.feePermille(), pool.owner(), yours(at, hostPos),
                 pool.acceptedOnly(), hashrate, pool.foundCount(), pool.roundStart() < 0L ? -1L
                 : now - pool.roundStart(), pool.lastHour(now), shares, miners, blocks));
     }

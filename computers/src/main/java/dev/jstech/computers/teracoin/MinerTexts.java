@@ -98,6 +98,7 @@ public final class MinerTexts {
             "%s TRC for block %s (waiting for a block)");
     public static final TextKey STATUS_PAID = TextKey.of("jsc.miner.status.paid", "%s TRC for block %s");
     public static final TextKey STATUS_EXPECTED = TextKey.of("jsc.miner.status.expected", "a block about every %s");
+    public static final TextKey MINUTE = TextKey.of("jsc.miner.minute", "1 minute");
     public static final TextKey MINUTES = TextKey.of("jsc.miner.minutes", "%s minutes");
     public static final TextKey HOURS = TextKey.of("jsc.miner.hours", "%s hours");
     public static final TextKey DAYS = TextKey.of("jsc.miner.days", "%s days");

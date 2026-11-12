@@ -12,6 +12,7 @@ import dev.jstech.computers.operation.payload.DesktopShellRunPayload;
 import dev.jstech.computers.operation.payload.TerminalKeyboard;
 import dev.jstech.computers.operation.payload.WireLine;
 import dev.jstech.computers.program.cli.CliLine;
+import dev.jstech.core.text.GameText;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -84,7 +85,7 @@ final class ShellActions implements ShellViews.IListener {
         }
         final TerminalKeyboard keyboard = payload.keyboard();
         if (keyboard.asking()) {
-            this.asker.accept(new Question(keyboard.standing().text().stripTrailing(),
+            this.asker.accept(new Question(keyboard.standing().toLine().text(GameText.LOADED).stripTrailing(),
                     answer -> PacketDistributor.sendToServer(new DesktopShellRunPayload(this.host, answer,
                             this.session, COLUMNS))));
             return;

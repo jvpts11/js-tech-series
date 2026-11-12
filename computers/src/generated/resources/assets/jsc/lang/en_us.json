@@ -7858,6 +7858,7 @@
   "jsc.miner.label.round": "Round",
   "jsc.miner.label.share": "Share",
   "jsc.miner.label.total": "Total",
+  "jsc.miner.minute": "1 minute",
   "jsc.miner.minutes": "%s minutes",
   "jsc.miner.no_address": "No payout address: miner --address trc1... sets one",
   "jsc.miner.no_pool": "No pool named %s on this network",

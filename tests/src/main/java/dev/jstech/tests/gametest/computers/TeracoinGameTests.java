@@ -14,9 +14,14 @@ import dev.jstech.computers.blockentity.AsicBlockEntity;
 import dev.jstech.computers.blockentity.MiningComputerBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.Printer3DBlockEntity;
+import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.blockentity.ServerServices;
 import dev.jstech.computers.machine.FileService;
+import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.teracoin.AutoPrints;
 import dev.jstech.computers.teracoin.FoundBlock;
+import dev.jstech.computers.teracoin.MiningPools;
 import dev.jstech.computers.teracoin.TeracoinChain;
 import dev.jstech.computers.teracoin.TeracoinSettings;
 import dev.jstech.computers.teracoin.TeracoinState;
@@ -30,6 +35,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -40,7 +46,8 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * Teracoin in a world (computers/docs/design/teracoin.md): the chain saved with the world, a wallet that is a file on a
  * computer, a 3D printer paid item by item from that file, the wallet's Auto print, a Mining Computer's cards on its
- * risers and an ASIC that mines. The chain's rules, the pools' shares and the printers' motion are plain JUnit.
+ * risers, an ASIC that mines and a Mining Pool on a rack server. The chain's rules, the pools' shares and the
+ * printers' motion are plain JUnit.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -74,6 +81,29 @@ public final class TeracoinGameTests {
                 "the balance comes back from the save; got " + read.chain().balance(keys.address()));
         helper.assertTrue(read.chain().owns(keys.address(), keys.key()), "and the key still opens the address");
         helper.succeed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 1600)
+    public static void miningPool_onAServerNobodyNamed_goesByTheServersNetworkName(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = TestWorldBuilder.forGameTest(helper).buildCraftingNetwork().rack();
+        final IOsHost server = rack.unitHost(0);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> helper.assertTrue(server.installOs(
+                        ResourceLocation.fromNamespaceAndPath("jsc", "debian")), "Debian installs on the server"))
+                .thenWaitUntil(() -> helper.assertTrue(server.isRunning() && !server.booting() && !server.needsPost(),
+                        "the server comes up"))
+                .thenExecute(() -> rack.consoleOf(0).install(Programs.MINING_POOL.toString()))
+                .thenWaitUntil(() -> helper.assertTrue(!MiningPools.on(helper.getLevel(), rack.networkUuid())
+                        .isEmpty(), "the network finds the pool on its server"))
+                .thenExecute(() -> {
+                    final ServerServices.Host pool = MiningPools.on(helper.getLevel(), rack.networkUuid()).getFirst();
+                    helper.assertTrue(pool.name().isEmpty(), "nobody named the server");
+                    helper.assertTrue(MiningPools.server(pool).equals(pool.hostname())
+                                    && MiningPools.name(pool).equals(pool.hostname()) && !pool.hostname().isEmpty(),
+                            "the pool and its server go by the server's network name; got "
+                                    + MiningPools.name(pool) + " on " + MiningPools.server(pool));
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)
@@ -124,7 +154,8 @@ public final class TeracoinGameTests {
                     final TeracoinChain chain = TeracoinState.of(helper.getLevel().getServer()).chain();
                     helper.assertTrue(chain.balance(wallet[1]) == Trc.of(3),
                             "the item is paid the moment it starts; left " + chain.balance(wallet[1]));
-                    helper.assertTrue(chain.burned() == burned[0] + price, "and the TRC paid leave circulation");
+                    // The world has one chain, which the Auto print test beside this one burns into too.
+                    helper.assertTrue(chain.burned() >= burned[0] + price, "and the TRC paid leave circulation");
                 })
                 .thenWaitUntil(() -> helper.assertTrue(printer.output().getStackInSlot(0).is(Items.DIAMOND),
                         "a diamond comes out"))

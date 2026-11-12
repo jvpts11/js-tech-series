@@ -390,6 +390,13 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
 
     /* The record of the parts written again from the hardware, and whatever shows them told. */
     private void recordParts() {
+        /*
+         * The record is the server's to tell. A client's copy of the hardware holds only what an open screen's slots
+         * carry, so a rig's cards, seated in the world and in none of its slots, would drop out of it there.
+         */
+        if (level != null && level.isClientSide()) {
+            return;
+        }
         final ItemStackHandler slots = getHardware();
         final List<ResourceLocation> parts = new ArrayList<>(slots.getSlots());
         for (int slot = 0; slot < slots.getSlots(); slot++) {

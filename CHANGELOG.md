@@ -4166,6 +4166,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) Swap: the Task Manager's Memory page names the kind of memory after its size ("32.0 GB DDR4"), and
   top, when part of a program is in swap, ends with what that costs on the disk it is on and the program it slows the
   most.
+- (Computers) Teracoin: the Crypto Wallet and the Mining Panel are written in their desktop's own text, their headings
+  and the balance larger and their tabs roomier, as their designs draw them, where every line was in the small type;
+  they open big enough for it, the Print tab lays its prices three to a row with the order beside them, and their
+  tables' headings no longer offer a sort that sorted nothing.
+- (Computers) A Mining Pool on a server nobody has named goes by the server's name on the network, where the Mining
+  Panel said the network had no pool, the miners and ASICs listed it with no name and `miner status` said it ran on
+  nothing ("on , fee 1%").
+- (Computers) A mining rig's cards stay on its risers while its screen is open, where opening the screen counted none
+  and they went out of sight on the rig in the world until a card was next seated or taken off.
+- (Computers) A terminal window shows what a tool in front asks in the player's language, where it showed the
+  question's key ("jsc.miner.press_q" for the miner's Press Q to stop); and the miner opens in Blockwright's gold,
+  where it opened in a red, and counts "1 minute" since a pool's last block, where it said "1 minutes".
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on

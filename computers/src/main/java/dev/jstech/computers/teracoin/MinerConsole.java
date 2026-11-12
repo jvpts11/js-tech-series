@@ -97,7 +97,7 @@ public final class MinerConsole {
             return miner.pool().isEmpty() ? new CliLine(MinerTexts.ALONE_NO_POOL.with(pays), CliStyle.PLAIN)
                     : new CliLine(MinerTexts.NO_POOL.with(miner.pool()), CliStyle.ERROR);
         }
-        return new CliLine(MinerTexts.FOR_POOL.with(MiningPools.name(pool), pool.name(),
+        return new CliLine(MinerTexts.FOR_POOL.with(MiningPools.name(pool), MiningPools.server(pool),
                 percent(MiningPools.state(pool).feePermille()), pays), CliStyle.PLAIN);
     }
 
@@ -190,7 +190,8 @@ public final class MinerConsole {
     /** How long {@code seconds} is, in the largest unit that reads well. */
     public static Text duration(final long seconds) {
         if (seconds < 2L * SECONDS_PER_HOUR) {
-            return MinerTexts.MINUTES.with(Math.max(1L, seconds / 60L));
+            final long minutes = Math.max(1L, seconds / 60L);
+            return minutes == 1L ? MinerTexts.MINUTE.text() : MinerTexts.MINUTES.with(minutes);
         }
         if (seconds < 3L * 24L * SECONDS_PER_HOUR) {
             return MinerTexts.HOURS.with(seconds / SECONDS_PER_HOUR);

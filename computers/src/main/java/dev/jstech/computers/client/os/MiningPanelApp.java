@@ -10,7 +10,6 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.teracoin.MiningPanelRequestPayload;
 import dev.jstech.computers.operation.payload.teracoin.MiningPanelStatePayload;
-import dev.jstech.computers.operation.payload.teracoin.WalletStatePayload;
 import dev.jstech.computers.teracoin.MinerConsole;
 import dev.jstech.computers.teracoin.MinerKinds;
 import dev.jstech.computers.teracoin.MiningPool;
@@ -46,6 +45,13 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
+
+import static dev.jstech.computers.client.os.TabbedWindowLook.FIELD_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.HEADER_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.PAD;
+import static dev.jstech.computers.client.os.TabbedWindowLook.ROW_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.STATUS_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.TAB_H;
 
 /**
  * The Mining Panel, Blockwright's window on a network's Mining Pools (computers/docs/design/teracoin.md), as the
@@ -91,18 +97,22 @@ public final class MiningPanelApp implements IDesktopApp {
     private static final int MINERS = 1;
     private static final int BLOCKS = 2;
     private static final int SETTINGS = 3;
-    private static final int TAB_H = 13;
-    private static final int STATUS_H = 11;
-    private static final int ROW_H = 10;
-    private static final int FIELD_H = 12;
-    private static final int BUTTON_H = 12;
-    private static final int PAD = 6;
-    private static final int TILE_H = 22;
+    /* The Pool tab: the five figures as tiles, the last hour's chart beside the round's shares, the miners. */
+    private static final int TILE_TOP = 20;
+    private static final int TILE_H = 31;
+    private static final int TILE_GAP = 5;
     private static final int TILES = 5;
-    private static final int CHART_H = 30;
-    private static final int LABEL_W = 56;
-    private static final int FEE_STEPS = 6;
+    private static final int CHARTS_TOP = 57;
+    private static final int CHART_H = 57;
+    private static final int SHARE_PITCH = 23;
+    private static final int POOL_TABLE_TOP = 135;
     private static final int POOL_ROWS = 4;
+    /* The Settings tab: its fields after their labels, the fee's slider and the buttons that answer a miner. */
+    private static final int LABEL_W = 72;
+    private static final int SLIDER_W = 200;
+    private static final int SLIDER_H = 11;
+    private static final int FEE_STEPS = 6;
+    private static final int BUTTON_W = 64;
     private static final long REFRESH_MILLIS = 2000L;
     private static final double SECONDS_PER_HOUR = 3_600.0;
 
@@ -111,15 +121,15 @@ public final class MiningPanelApp implements IDesktopApp {
     /** The panel of the computer at {@code host}. */
     public MiningPanelApp(final BlockPos host) {
         this.host = host;
-        tabs = root.add(new TabStrip(this::tabLabels).fitToLabels(6).setOnSelect(index -> tab = index));
+        tabs = root.add(new TabStrip(this::tabLabels).fitToLabels(16).setOnSelect(index -> tab = index));
         poolChoice = root.add(new Dropdown(poolNames(), () -> chosenPool, index -> {
             chosenPool = index;
             request(MiningPanelRequestPayload.LOOK, "", 0L);
         }, words -> words));
-        minerColumns = root.add(new ColumnHeader(words(MiningPanelTexts.MINER, MiningPanelTexts.KIND,
+        minerColumns = root.add(TabbedWindowLook.header(words(MiningPanelTexts.MINER, MiningPanelTexts.KIND,
                 MiningPanelTexts.PAYS, MiningPanelTexts.HASHRATE, MiningPanelTexts.SHARE)));
         minerList = root.add(new ListView<>(this::miners, ROW_H, this::renderMiner));
-        blockColumns = root.add(new ColumnHeader(words(MiningPanelTexts.BLOCK, MiningPanelTexts.WHEN,
+        blockColumns = root.add(TabbedWindowLook.header(words(MiningPanelTexts.BLOCK, MiningPanelTexts.WHEN,
                 MiningPanelTexts.FOUND_BY, MiningPanelTexts.REWARD)));
         blockList = root.add(new ListView<>(this::blocks, ROW_H, this::renderBlock));
         nameField = root.add(new TextField(MiningPool.NAME_MOST)
@@ -132,7 +142,7 @@ public final class MiningPanelApp implements IDesktopApp {
                 () -> GameText.resolve(MiningPanelTexts.ACCEPTED)),
                 () -> state != null && state.pool().acceptedOnly() ? 1 : 0,
                 option -> request(MiningPanelRequestPayload.SET_ACCEPTED_ONLY, "", option)));
-        askingColumns = root.add(new ColumnHeader(words(MiningPanelTexts.MINER, MiningPanelTexts.KIND,
+        askingColumns = root.add(TabbedWindowLook.header(words(MiningPanelTexts.MINER, MiningPanelTexts.KIND,
                 MiningPanelTexts.PAYS, MiningPanelTexts.HASHRATE)));
         askingList = root.add(new ListView<>(this::asking, ROW_H, this::renderAsking)
                 .setOnClick((index, button, mx, my) -> pickAsking(index)));
@@ -185,22 +195,22 @@ public final class MiningPanelApp implements IDesktopApp {
 
     @Override
     public int defaultWidth() {
-        return 368;
+        return 493;
     }
 
     @Override
     public int defaultHeight() {
-        return 232;
+        return 313;
     }
 
     @Override
     public int minWidth() {
-        return 340;
+        return 400;
     }
 
     @Override
     public int minHeight() {
-        return 214;
+        return 280;
     }
 
     @Override
@@ -221,17 +231,19 @@ public final class MiningPanelApp implements IDesktopApp {
         layout(font, x, y, width, height, any);
         if (!any) {
             final String none = GameText.resolve(MiningPanelTexts.NO_POOL);
-            Draw.text(g, font, none, x + (width - font.width(none)) / 2, y + height / 2 - 12, skin.text());
-            final String hint = GameText.resolve(MiningPanelTexts.NO_POOL_HINT);
-            Texts.small(g, font, Texts.clip(font, hint, (int) ((width - 12) / Texts.SMALL)),
-                    x + (width - Math.min(width - 12, Texts.smallWidth(font, hint))) / 2, y + height / 2, skin.dim());
+            final int noneW = Math.round(font.width(none) * TabbedWindowLook.HEADING);
+            TabbedWindowLook.heading(g, font, none, x + (width - noneW) / 2, y + height / 2 - 18, skin.text());
+            final String hint = Texts.clip(font, GameText.resolve(MiningPanelTexts.NO_POOL_HINT), width - 2 * PAD);
+            Draw.text(g, font, hint, x + (width - font.width(hint)) / 2, y + height / 2, skin.dim());
         } else {
+            TabbedWindowLook.tabRow(g, skin, x, y, width);
             switch (tab) {
                 case POOL -> renderPool(g, font, x, y, width, height);
                 case MINERS, BLOCKS -> {
                     if ((tab == MINERS ? miners() : blocks()).isEmpty()) {
-                        Texts.small(g, font, GameText.resolve(tab == MINERS ? MiningPanelTexts.NO_MINERS
-                                : MiningPanelTexts.NO_BLOCKS), x + PAD + 3, y + TAB_H + 22, skin.dim());
+                        Draw.text(g, font, GameText.resolve(tab == MINERS ? MiningPanelTexts.NO_MINERS
+                                : MiningPanelTexts.NO_BLOCKS), x + PAD + 5, y + TAB_H + 8 + HEADER_H + 3,
+                                skin.dim());
                     }
                 }
                 case SETTINGS -> renderSettings(g, font, x, y, width, height);
@@ -240,7 +252,11 @@ public final class MiningPanelApp implements IDesktopApp {
             }
         }
         root.render(g, new UiContext(skin, font, mouseX, mouseY, partialTick));
-        renderStatusBar(g, font, x, y + height - STATUS_H, width);
+        if (state != null) {
+            TeracoinLook.statusBar(g, font, skin, x, y + height - STATUS_H, width, state.chain(), "");
+        } else {
+            skin.statusBar(g, x, y + height - STATUS_H, width, STATUS_H);
+        }
     }
 
     @Override
@@ -375,34 +391,32 @@ public final class MiningPanelApp implements IDesktopApp {
         final int px = x + PAD;
         final int pw = width - 2 * PAD;
         final int bottom = y + height - STATUS_H;
-        tabs.setBounds(x, y, width, TAB_H);
+        final int top = y + TAB_H;
+        TabbedWindowLook.placeTabs(tabs, x, y, width);
         tabs.setVisible(any);
         tabs.setSelected(tab);
         final boolean several = any && state.pools().size() > 1;
         poolChoice.setVisible(several);
-        poolChoice.setBounds(x + width - 104, y + 1, 100, TAB_H - 2);
+        poolChoice.setBounds(x + width - 108, y + 1, 100, TAB_H - 2);
         final boolean pool = any && tab == POOL;
         final boolean all = any && tab == MINERS;
         final boolean blocksTab = any && tab == BLOCKS;
         final boolean settings = any && tab == SETTINGS;
         minerColumns.setVisible(pool || all);
         minerList.setVisible(pool || all);
-        final int[] minerX = {px + 3, px + pw * 17 / 100, px + pw * 45 / 100, px + pw * 66 / 100, px + pw * 85 / 100};
-        minerColumns.setColumnX(minerX);
-        if (pool) {
-            final int tableTop = y + TAB_H + 14 + TILE_H + 6 + 10 + CHART_H + 6;
-            minerColumns.setBounds(px, tableTop, pw, 11);
-            minerList.setBounds(px, tableTop + 11, pw, Math.min(POOL_ROWS * ROW_H, bottom - 16 - (tableTop + 11)));
-        } else if (all) {
-            minerColumns.setBounds(px, y + TAB_H + 6, pw, 11);
-            minerList.setBounds(px, y + TAB_H + 17, pw, Math.max(ROW_H, bottom - 4 - (y + TAB_H + 17)));
-        }
+        minerColumns.setColumnX(TabbedWindowLook.columns(px, pw, 11, 36, 57, 74));
+        // The Pool tab's table sits under its tiles and charts; the Miners tab's table fills the tab.
+        final int minerTop = pool ? top + POOL_TABLE_TOP : top + 8;
+        minerColumns.setBounds(px, minerTop, pw, HEADER_H);
+        final int minerRoom = bottom - 4 - (minerTop + HEADER_H);
+        minerList.setBounds(px, minerTop + HEADER_H, pw, pool ? Math.min(POOL_ROWS * ROW_H, minerRoom - 13)
+                : Math.max(ROW_H, minerRoom));
         blockColumns.setVisible(blocksTab);
         blockList.setVisible(blocksTab);
         if (blocksTab) {
-            blockColumns.setBounds(px, y + TAB_H + 6, pw, 11);
-            blockColumns.setColumnX(px + 3, px + pw * 18 / 100, px + pw * 42 / 100, px + pw * 75 / 100);
-            blockList.setBounds(px, y + TAB_H + 17, pw, Math.max(ROW_H, bottom - 4 - (y + TAB_H + 17)));
+            blockColumns.setBounds(px, top + 8, pw, HEADER_H);
+            blockColumns.setColumnX(TabbedWindowLook.columns(px, pw, 18, 42, 75));
+            blockList.setBounds(px, top + 8 + HEADER_H, pw, Math.max(ROW_H, bottom - 4 - (top + 8 + HEADER_H)));
         }
         nameField.setVisible(settings);
         feeSlider.setVisible(settings);
@@ -413,17 +427,17 @@ public final class MiningPanelApp implements IDesktopApp {
         accept.setVisible(settings);
         refuse.setVisible(settings);
         if (settings) {
-            final int top = y + TAB_H + 16;
-            nameField.setBounds(px + LABEL_W, top, pw - LABEL_W, FIELD_H);
-            feeSlider.setBounds(px + LABEL_W + 4, top + 17, pw - LABEL_W - 40, 10);
-            ownerField.setBounds(px + LABEL_W, top + 40, pw - LABEL_W, FIELD_H);
-            who.setBounds(px + LABEL_W, top + 56, pw - LABEL_W, who.neededHeight());
-            final int listTop = top + 56 + who.neededHeight() + 16;
-            askingColumns.setBounds(px, listTop, pw, 11);
-            askingColumns.setColumnX(px + 3, px + pw * 20 / 100, px + pw * 50 / 100, px + pw * 75 / 100);
-            askingList.setBounds(px, listTop + 11, pw, Math.max(ROW_H, bottom - 32 - (listTop + 11)));
-            accept.setBounds(px + pw - 106, bottom - 30, 50, BUTTON_H);
-            refuse.setBounds(px + pw - 50, bottom - 30, 50, BUTTON_H);
+            final int fieldX = px + LABEL_W;
+            nameField.setBounds(fieldX, top + 25, x + width - PAD - fieldX, FIELD_H);
+            feeSlider.setBounds(fieldX, top + 46, SLIDER_W, SLIDER_H);
+            ownerField.setBounds(fieldX, top + 78, x + width - PAD - fieldX, FIELD_H);
+            who.setBounds(fieldX, top + 101, x + width - PAD - fieldX, who.neededHeight());
+            final int listTop = who.bottom() + 18;
+            askingColumns.setBounds(px, listTop, pw, HEADER_H);
+            askingColumns.setColumnX(TabbedWindowLook.columns(px, pw, 13, 38, 62));
+            refuse.setBounds(x + width - 11 - BUTTON_W, bottom - FIELD_H - 17, BUTTON_W, FIELD_H);
+            accept.setBounds(refuse.x() - 8 - BUTTON_W, refuse.y(), BUTTON_W, FIELD_H);
+            askingList.setBounds(px, listTop + HEADER_H, pw, Math.max(ROW_H, refuse.y() - 6 - (listTop + HEADER_H)));
         }
     }
 
@@ -437,43 +451,42 @@ public final class MiningPanelApp implements IDesktopApp {
                 ? GameText.resolve(MiningPanelTexts.HEADER_NO_OWNER.with(pool.name(), pool.host(), fee))
                 : GameText.resolve(MiningPanelTexts.HEADER.with(pool.name(), pool.host(), fee,
                         TeracoinAddress.shortForm(pool.owner())));
-        int top = y + TAB_H + 4;
-        Texts.small(g, font, Texts.clip(font, header, (int) (pw / Texts.SMALL)), px, top, skin.dim());
-        top += 10;
+        final int top = y + TAB_H;
+        Draw.text(g, font, Texts.clip(font, header, pw), px, top + 7, skin.dim());
         final double perHour = trcPerHour(pool.hashrate());
         final String[] labels = {GameText.resolve(MiningPanelTexts.HASHRATE),
-                GameText.resolve(MiningPanelTexts.AN_HOUR), GameText.resolve(MiningPanelTexts.A_DAY), GameText.resolve(MiningPanelTexts.A_WEEK),
-                GameText.resolve(MiningPanelTexts.BLOCKS_FOUND)};
-        final String[] values = {TeracoinHashrate.format(pool.hashrate()), String.format(Locale.ROOT, "%,.1f", perHour),
-                String.format(Locale.ROOT, "%,.0f", perHour * 24), String.format(Locale.ROOT, "%,.0f", perHour * 168),
+                GameText.resolve(MiningPanelTexts.AN_HOUR), GameText.resolve(MiningPanelTexts.A_DAY),
+                GameText.resolve(MiningPanelTexts.A_WEEK), GameText.resolve(MiningPanelTexts.BLOCKS_FOUND)};
+        final String[] values = {TeracoinHashrate.format(pool.hashrate()),
+                String.format(Locale.ROOT, "%,.1f", perHour), String.format(Locale.ROOT, "%,.0f", perHour * 24),
+                String.format(Locale.ROOT, "%,.0f", perHour * 168),
                 String.format(Locale.ROOT, "%,d", pool.foundCount())};
-        final int tileW = (pw - (TILES - 1) * 4) / TILES;
+        final int tileW = (pw - (TILES - 1) * TILE_GAP) / TILES;
+        final int tileY = top + TILE_TOP;
         for (int i = 0; i < TILES; i++) {
-            final int tx = px + i * (tileW + 4);
-            g.fill(tx, top, tx + tileW, top + TILE_H, skin.panelBg());
-            Draw.outline(g, tx, top, tileW, TILE_H, skin.edge());
-            Texts.small(g, font, Texts.clip(font, labels[i], (int) ((tileW - 6) / Texts.SMALL)), tx + 3, top + 3,
-                    skin.dim());
-            Draw.text(g, font, Texts.clip(font, values[i], tileW - 6), tx + 3, top + 12,
+            final int tx = px + i * (tileW + TILE_GAP);
+            g.fill(tx, tileY, tx + tileW, tileY + TILE_H, skin.panelBg());
+            Draw.outline(g, tx, tileY, tileW, TILE_H, skin.edge());
+            Draw.text(g, font, Texts.clip(font, labels[i], tileW - 10), tx + 5, tileY + 4, skin.dim());
+            final String value = Texts.clip(font, values[i], (int) ((tileW - 10) / TabbedWindowLook.HEADING));
+            TabbedWindowLook.heading(g, font, value, tx + 5, tileY + 15,
                     i >= 1 && i <= 3 ? colours().gold() : skin.text());
         }
-        top += TILE_H + 6;
-        final int half = pw / 2 - 4;
-        Draw.text(g, font, GameText.resolve(MiningPanelTexts.LAST_HOUR), px, top, skin.text());
-        Draw.text(g, font, GameText.resolve(MiningPanelTexts.SHARES), px + half + 8, top, skin.text());
-        top += 10;
-        renderHour(g, px, top, half, pool.lastHour());
-        renderShares(g, font, px + half + 8, top, half, pool.shares());
+        final int chartW = pw * 40 / 100;
+        final int sharesX = px + pw * 43 / 100;
+        Draw.text(g, font, GameText.resolve(MiningPanelTexts.LAST_HOUR), px, top + CHARTS_TOP, skin.text());
+        Draw.text(g, font, GameText.resolve(MiningPanelTexts.SHARES), sharesX, top + CHARTS_TOP, skin.text());
+        renderHour(g, px, top + CHARTS_TOP + 12, chartW, pool.lastHour());
+        renderShares(g, font, sharesX, top + CHARTS_TOP + 15, px + pw - sharesX, pool.shares());
         final long seconds = pool.hashrate() <= 0L ? 0L : state.chain().difficulty() / pool.hashrate();
         if (seconds > 0L) {
             final String every = GameText.resolve(MiningPanelTexts.EVERY.with(
                     GameText.resolve(MinerConsole.duration(seconds)),
                     TeracoinRules.ADJUST_EVERY - state.chain().height() % TeracoinRules.ADJUST_EVERY));
-            Texts.small(g, font, Texts.clip(font, every, (int) (pw / Texts.SMALL)), px, y + height - STATUS_H - 10,
-                    skin.dim());
+            Draw.text(g, font, Texts.clip(font, every, pw), px + 1, y + height - STATUS_H - 13, skin.dim());
         }
         if (miners().isEmpty()) {
-            Texts.small(g, font, GameText.resolve(MiningPanelTexts.NO_MINERS), px + 3, minerList.y() + 2,
+            Draw.text(g, font, GameText.resolve(MiningPanelTexts.NO_MINERS), minerList.x() + 5, minerList.y() + 3,
                     skin.dim());
         }
     }
@@ -497,7 +510,7 @@ public final class MiningPanelApp implements IDesktopApp {
     private void renderShares(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                               final List<MiningPanelStatePayload.Share> shares) {
         if (shares.isEmpty()) {
-            Texts.small(g, font, GameText.resolve(MiningPanelTexts.NO_SHARES), x, y + 2, skin.dim());
+            Draw.text(g, font, GameText.resolve(MiningPanelTexts.NO_SHARES), x, y, skin.dim());
             return;
         }
         int row = y;
@@ -506,67 +519,49 @@ public final class MiningPanelApp implements IDesktopApp {
             final String who = share.yours() ? GameText.resolve(MiningPanelTexts.YOU.with(
                     TeracoinAddress.shortForm(share.address()))) : TeracoinAddress.shortForm(share.address());
             final String part = String.format(Locale.ROOT, "%.1f%%", share.permille() / 10.0);
-            Texts.small(g, font, who, x, row, skin.text());
-            Texts.small(g, font, part, x + w - Texts.smallWidth(font, part), row, skin.text());
-            g.fill(x, row + 8, x + w, row + 11, colours().track());
-            g.fill(x, row + 8, x + (int) ((long) w * share.permille() / 1000L), row + 11, colours().share());
-            row += 15;
+            Draw.text(g, font, Texts.clip(font, who, w - font.width(part) - 8), x, row, skin.text());
+            Draw.text(g, font, part, x + w - font.width(part), row, skin.text());
+            g.fill(x, row + 11, x + w, row + 16, colours().track());
+            g.fill(x, row + 11, x + (int) ((long) w * share.permille() / 1000L), row + 16, colours().share());
+            row += SHARE_PITCH;
         }
     }
 
     private void renderSettings(final GuiGraphics g, final Font font, final int x, final int y, final int width,
                                 final int height) {
         final MiningPanelStatePayload.Pool pool = state.pool();
-        final int px = x + PAD;
-        final int top = y + TAB_H + 16;
-        Texts.small(g, font, GameText.resolve(MiningPanelTexts.YOURS.with(pool.name(), pool.host())), px, top - 11,
-                skin.dim());
-        Texts.small(g, font, GameText.resolve(MiningPanelTexts.NAME), px, top + 3, skin.text());
-        Texts.small(g, font, GameText.resolve(MiningPanelTexts.FEE), px, top + 18, skin.text());
-        final String fee = percent(pool.feePermille());
-        Draw.text(g, font, fee, feeSlider.right() + 8, top + 17, skin.text());
+        final int px = x + PAD + 1;
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(MiningPanelTexts.YOURS.with(pool.name(), pool.host())),
+                width - 2 * PAD), px, y + TAB_H + 9, skin.dim());
+        Draw.text(g, font, GameText.resolve(MiningPanelTexts.NAME), px, nameField.y() + 4, skin.text());
+        Draw.text(g, font, GameText.resolve(MiningPanelTexts.FEE), px, feeSlider.y() + 2, skin.text());
+        TabbedWindowLook.heading(g, font, percent(pool.feePermille()), feeSlider.right() + 13, feeSlider.y(),
+                skin.text());
         final int steps = FEE_STEPS - 1;
         for (int i = 0; i <= steps; i++) {
             final String label = GameText.resolve(MiningPanelTexts.PERCENT.with(i));
             final int lx = feeSlider.x() + (feeSlider.width() - 4) * i / steps;
-            Texts.small(g, font, label, lx - Texts.smallWidth(font, label) / 2 + 2, top + 29, skin.dim());
+            Draw.text(g, font, label, lx - font.width(label) / 2 + 2, feeSlider.bottom() + 2, skin.dim());
         }
-        Texts.small(g, font, GameText.resolve(MiningPanelTexts.FEE_TO), px, top + 43, skin.text());
-        Texts.small(g, font, GameText.resolve(MiningPanelTexts.WHO), px, top + 59, skin.text());
-        Draw.text(g, font, GameText.resolve(MiningPanelTexts.ASKING_HEADING), px, askingColumns.y() - 11,
-                skin.text());
+        Draw.text(g, font, GameText.resolve(MiningPanelTexts.FEE_TO), px, ownerField.y() + 4, skin.text());
+        Draw.text(g, font, GameText.resolve(MiningPanelTexts.WHO), px, who.y() + 1, skin.text());
+        TabbedWindowLook.heading(g, font, GameText.resolve(MiningPanelTexts.ASKING_HEADING), px,
+                askingColumns.y() - 16, skin.text());
         if (asking().isEmpty()) {
-            Texts.small(g, font, GameText.resolve(MiningPanelTexts.NOBODY_ASKS), px + 3, askingList.y() + 2,
-                    skin.dim());
+            Draw.text(g, font, GameText.resolve(MiningPanelTexts.NOBODY_ASKS), askingList.x() + 5,
+                    askingList.y() + 3, skin.dim());
         }
-        Texts.small(g, font, GameText.resolve(MiningPanelTexts.FEE_NOTE), px, y + height - STATUS_H - 10,
-                skin.dim());
-    }
-
-    private void renderStatusBar(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
-        skin.statusBar(g, x, y, width, STATUS_H);
-        if (state == null) {
-            return;
-        }
-        final WalletStatePayload.Chain chain = state.chain();
-        final String left = GameText.resolve(CryptoWalletTexts.CHAIN_LINE.with(grouped(chain.height()),
-                grouped(chain.difficulty()), Trc.format(chain.reward(), chain.reward() % Trc.UNITS == 0L ? 0
-                        : Trc.DECIMALS)));
-        final String right = chain.toHalving() < 0 ? GameText.resolve(CryptoWalletTexts.NO_HALVING)
-                : GameText.resolve(CryptoWalletTexts.HALVING_IN.with(grouped(chain.toHalving())));
-        Texts.small(g, font, right, x + width - 4 - Texts.smallWidth(font, right), y + 2, skin.dim());
-        Texts.small(g, font, Texts.clip(font, left, (int) ((width - 12 - Texts.smallWidth(font, right))
-                / Texts.SMALL)), x + 4, y + 2, skin.dim());
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(MiningPanelTexts.FEE_NOTE), width - 2 * PAD), px,
+                y + height - STATUS_H - 13, skin.dim());
     }
 
     private void renderMiner(final GuiGraphics g, final UiContext ctx, final MiningPanelStatePayload.Miner miner,
                              final int index, final int x, final int y, final int w, final int h,
                              final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, w, h, hovered, selected);
-        final int[] columns = {x + 3, x + w * 17 / 100, x + w * 45 / 100, x + w * 66 / 100, x + w * 85 / 100};
-        cells(g, ctx, y, columns, w, miner.name(), kindWords(miner.kind()),
-                TeracoinAddress.shortForm(miner.address()), TeracoinHashrate.format(miner.hashrate()),
-                miner.asking() ? GameText.resolve(MiningPanelTexts.ASKING)
+        TabbedWindowLook.cells(g, ctx, x, y, w, TabbedWindowLook.columns(x, w, 11, 36, 57, 74), miner.name(),
+                kindWords(miner.kind()), TeracoinAddress.shortForm(miner.address()),
+                TeracoinHashrate.format(miner.hashrate()), miner.asking() ? GameText.resolve(MiningPanelTexts.ASKING)
                         : String.format(Locale.ROOT, "%.1f%%", miner.permille() / 10.0));
     }
 
@@ -574,30 +569,20 @@ public final class MiningPanelApp implements IDesktopApp {
                               final int index, final int x, final int y, final int w, final int h,
                               final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, w, h, hovered, selected);
-        final int[] columns = {x + 3, x + w * 20 / 100, x + w * 50 / 100, x + w * 75 / 100};
-        cells(g, ctx, y, columns, w, miner.name(), kindWords(miner.kind()),
-                TeracoinAddress.shortForm(miner.address()), TeracoinHashrate.format(miner.hashrate()));
+        TabbedWindowLook.cells(g, ctx, x, y, w, TabbedWindowLook.columns(x, w, 13, 38, 62), miner.name(),
+                kindWords(miner.kind()), TeracoinAddress.shortForm(miner.address()),
+                TeracoinHashrate.format(miner.hashrate()));
     }
 
     private void renderBlock(final GuiGraphics g, final UiContext ctx, final MiningPanelStatePayload.Block block,
                              final int index, final int x, final int y, final int w, final int h,
                              final boolean hovered, final boolean selected) {
         ctx.skin().listRow(g, x, y, w, h, hovered, selected);
-        final int[] columns = {x + 3, x + w * 18 / 100, x + w * 42 / 100, x + w * 75 / 100};
-        cells(g, ctx, y, columns, w, grouped(block.height()), GameText.resolve(CryptoWalletTexts.WHEN_AT.with(
-                GameCalendar.day(block.dayTime()) + 1, String.format(Locale.ROOT, "%02d:%02d",
-                        GameCalendar.hourOf(block.dayTime()), GameCalendar.minuteOf(block.dayTime())))),
+        TabbedWindowLook.cells(g, ctx, x, y, w, TabbedWindowLook.columns(x, w, 18, 42, 75),
+                TabbedWindowLook.grouped(block.height()), GameText.resolve(CryptoWalletTexts.WHEN_AT.with(
+                        GameCalendar.day(block.dayTime()) + 1, String.format(Locale.ROOT, "%02d:%02d",
+                                GameCalendar.hourOf(block.dayTime()), GameCalendar.minuteOf(block.dayTime())))),
                 block.finder(), Trc.format(block.reward(), 2));
-    }
-
-    private void cells(final GuiGraphics g, final UiContext ctx, final int y, final int[] columns, final int w,
-                       final String... texts) {
-        final int end = columns[0] - 3 + w;
-        for (int i = 0; i < texts.length && i < columns.length; i++) {
-            final int room = (i + 1 < columns.length ? columns[i + 1] : end) - columns[i] - 4;
-            Texts.small(g, ctx.font(), Texts.clip(ctx.font(), texts[i], (int) (room / Texts.SMALL)), columns[i],
-                    y + 2, ctx.skin().text());
-        }
     }
 
     /* What a pool earns an hour at {@code hashrate}: its share of the blocks an hour, times the reward. */
@@ -633,10 +618,6 @@ public final class MiningPanelApp implements IDesktopApp {
 
     private static String percent(final int permille) {
         return permille % 10 == 0 ? permille / 10 + "%" : String.format(Locale.ROOT, "%.1f%%", permille / 10.0);
-    }
-
-    private static String grouped(final long number) {
-        return String.format(Locale.ROOT, "%,d", number);
     }
 
     private static List<String> words(final TextKey... keys) {

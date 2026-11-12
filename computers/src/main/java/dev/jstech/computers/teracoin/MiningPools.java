@@ -56,6 +56,14 @@ public final class MiningPools {
     /** The pool's name: the one its owner gave it, or its server's until they do. */
     public static String name(final ServerServices.Host host) {
         final String given = state(host).name();
-        return given.isEmpty() ? host.name() : given;
+        return given.isEmpty() ? server(host) : given;
+    }
+
+    /**
+     * The pool's server as the network lists it: the name a player gave it, or the one it goes by on the network,
+     * so a pool on a server nobody named is still seen and told apart.
+     */
+    public static String server(final ServerServices.Host host) {
+        return host.name().isEmpty() ? host.hostname() : host.name();
     }
 }

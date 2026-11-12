@@ -41,12 +41,14 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
+
+import static dev.jstech.computers.client.os.TabbedWindowLook.FIELD_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.PAD;
 
 /**
  * The Crypto Wallet's Print tab (computers/docs/design/teracoin.md, "The 3D Printer"): which of the computer's 3D
@@ -97,27 +99,31 @@ final class CryptoWalletPrint {
     private final Button ok;
     private final Button cancel;
 
-    private static final int PAD = 6;
-    private static final int LABEL_W = 34;
-    private static final int CHOICE_W = 96;
-    private static final int FIELD_H = 12;
-    private static final int BUTTON_H = 12;
-    private static final int GRID_DY = 30;
-    private static final int CELL_W = 72;
-    private static final int CELL_H = 24;
+    /* The printer's drop-down, after its label. */
+    private static final int LABEL_W = 43;
+    private static final int CHOICE_W = 127;
+    /* The price list's tiles, from the tab's top, three across when the order beside them has its room. */
+    private static final int GRID_DY = 44;
+    private static final int CELL_W = 104;
+    private static final int CELL_H = 31;
     private static final int INSET = 2;
-    private static final int MOST_COLUMNS = 4;
-    private static final int ORDER_MIN = 110;
-    private static final int GAP = 9;
-    private static final int ORDER_H = 94;
-    private static final int AUTO_H = 18;
-    private static final int COPIES_W = 24;
-    private static final int SPIN_W = 9;
-    private static final int POPUP_W = 270;
-    private static final int POPUP_H = 166;
-    private static final int POPUP_LABEL_W = 56;
-    private static final float SMALL = Texts.SMALL;
-    private static final float BIG_ICON = 1.5f;
+    private static final int MOST_COLUMNS = 3;
+    private static final int NAME_LINES = 2;
+    private static final int NAME_PITCH = 9;
+    private static final int ORDER_MIN = 150;
+    private static final int GAP = 8;
+    private static final int ORDER_H = 127;
+    private static final int ORDER_TEXT_X = 48;
+    private static final int AUTO_H = 26;
+    private static final int COPIES_W = 26;
+    private static final int SPIN_W = 11;
+    private static final int POPUP_W = 360;
+    private static final int POPUP_H = 220;
+    private static final int POPUP_LABEL_W = 78;
+    private static final int EXPLAINED_PITCH = 11;
+    private static final float BIG_ICON = 2f;
+    private static final float TILE_ICON = 4f / 3f;
+    private static final float CHOICE_ICON = 0.7f;
     /* The example's leftover, in thousandths of the price: 1.43 TRC over a price of 10, as the design shows it. */
     private static final long EXAMPLE_LEFT_PERMILLE = 143L;
     private static final int EXAMPLE_COUNT = 4;
@@ -162,15 +168,15 @@ final class CryptoWalletPrint {
                 .setLayouter(this::layoutAuto);
         byItself = autoPopup.add(new Checkbox(() -> GameText.resolve(CryptoWalletTexts.BY_ITSELF), () -> autoChosen,
                 () -> autoChosen = !autoChosen));
-        itemLabel = autoPopup.add(new Label(GameText.resolve(CryptoWalletTexts.ITEM)).setScale(SMALL));
-        printerLabel = autoPopup.add(new Label(GameText.resolve(CryptoWalletTexts.PRINTER)).setScale(SMALL));
-        keepLabel = autoPopup.add(new Label(GameText.resolve(CryptoWalletTexts.KEEP_AT_LEAST)).setScale(SMALL));
+        itemLabel = autoPopup.add(new Label(GameText.resolve(CryptoWalletTexts.ITEM)));
+        printerLabel = autoPopup.add(new Label(GameText.resolve(CryptoWalletTexts.PRINTER)));
+        keepLabel = autoPopup.add(new Label(GameText.resolve(CryptoWalletTexts.KEEP_AT_LEAST)));
         keep = autoPopup.add(new TextField(20));
-        trcLabel = autoPopup.add(new Label(GameText.resolve(CryptoWalletTexts.TRC)).setScale(SMALL));
+        trcLabel = autoPopup.add(new Label(GameText.resolve(CryptoWalletTexts.TRC)));
         explained = autoPopup.add(new Explained());
-        lastLine = autoPopup.add(new Label(this::lastPrinted, Label.Tone.DIM).setScale(SMALL));
+        lastLine = autoPopup.add(new Label(this::lastPrinted, Label.Tone.DIM));
         noteLine = autoPopup.add(new Label(() -> keepRefused ? GameText.resolve(CryptoWalletTexts.KEEP_INVALID)
-                : note.get()).setColor(gold).setScale(SMALL));
+                : note.get()).setColor(gold));
         ok = autoPopup.add(new Button(GameText.resolve(CryptoWalletTexts.OK), this::confirmAuto).setPrimary(true));
         cancel = autoPopup.add(new Button(GameText.resolve(CryptoWalletTexts.CANCEL), autoPopup::close));
         syncChoices();
@@ -204,7 +210,7 @@ final class CryptoWalletPrint {
         final int gridTop = top + GRID_DY;
         final int rows = Math.max(1, Math.min(totalRows, (bottom - AUTO_H - gridTop) / CELL_H));
         grid.setColumns(columns).setVisibleRows(rows).setTotalRows(totalRows).setCellCount(prices.size())
-                .place(px, gridTop);
+                .place(px - 1, gridTop);
         grid.setVisible(showing && !prices.isEmpty());
         if (!prices.isEmpty() && indexOfPrice(item) < 0) {
             item = prices.get(0).item();
@@ -213,19 +219,19 @@ final class CryptoWalletPrint {
             printer = printers.get(0).pos();
         }
         printerChoice.setVisible(showing && !printers.isEmpty());
-        printerChoice.setBounds(px + LABEL_W, top + 5, CHOICE_W, FIELD_H);
+        printerChoice.setBounds(px + LABEL_W, top + 9, CHOICE_W, FIELD_H);
         gridW = columns * CELL_W - INSET;
-        ruleY = gridTop + rows * CELL_H + 1;
-        orderX = px + gridW + GAP;
+        ruleY = gridTop + rows * CELL_H + 7;
+        orderX = px - 1 + columns * CELL_W + GAP;
         orderY = gridTop;
-        orderW = px + pw - orderX;
+        orderW = x + width - PAD - orderX;
         final boolean ordering = showing && indexOfPrice(item) >= 0;
         copies.setVisible(ordering);
-        copies.setBounds(orderX + 34, orderY + 36, COPIES_W, FIELD_H);
+        copies.setBounds(orderX + 47, orderY + 48, COPIES_W, FIELD_H);
         print.setVisible(showing);
         autoButton.setVisible(showing);
-        print.setBounds(orderX, orderY + ORDER_H + 3, orderW / 2 - 2, BUTTON_H);
-        autoButton.setBounds(orderX + orderW / 2 + 2, orderY + ORDER_H + 3, orderW - orderW / 2 - 2, BUTTON_H);
+        print.setBounds(orderX, orderY + ORDER_H + 6, orderW / 2 - 3, FIELD_H);
+        autoButton.setBounds(orderX + orderW / 2 + 3, orderY + ORDER_H + 6, orderW - orderW / 2 - 3, FIELD_H);
         print.setEnabled(ordering && !printers.isEmpty());
         autoButton.setEnabled(!prices.isEmpty() && (!printers.isEmpty() || auto().on()));
     }
@@ -233,29 +239,30 @@ final class CryptoWalletPrint {
     /** Draws what the tab's controls do not: the words, the order and the Auto print line. */
     void render(final GuiGraphics g, final Font font, final OsSkin skin, final int x, final int top, final int width) {
         final int px = x + PAD;
-        final int pw = width - 2 * PAD;
-        Texts.small(g, font, GameText.resolve(CryptoWalletTexts.PRINTER), px, top + 8, skin.text());
+        final int right = x + width - PAD;
+        Draw.text(g, font, GameText.resolve(CryptoWalletTexts.PRINTER), px + 1, top + 13, skin.text());
         if (printers().isEmpty()) {
-            Texts.small(g, font, GameText.resolve(CryptoWalletTexts.NONE_LINKED), px + LABEL_W, top + 8, skin.dim());
+            Draw.text(g, font, Texts.clip(font, GameText.resolve(CryptoWalletTexts.NONE_LINKED),
+                    right - (px + LABEL_W)), px + LABEL_W, top + 13, skin.dim());
         } else {
-            final int captionX = px + LABEL_W + CHOICE_W + 6;
-            Texts.small(g, font, Texts.clip(font, GameText.resolve(CryptoWalletTexts.ONE_OF_LINKED),
-                    (int) ((px + pw - captionX) / SMALL)), captionX, top + 8, skin.dim());
+            final int captionX = px + LABEL_W + CHOICE_W + 7;
+            Draw.text(g, font, Texts.clip(font, GameText.resolve(CryptoWalletTexts.ONE_OF_LINKED),
+                    right - captionX), captionX, top + 13, skin.dim());
         }
-        Texts.small(g, font, GameText.resolve(CryptoWalletTexts.WHAT_PRINTS), px, top + 21, skin.dim());
+        Draw.text(g, font, GameText.resolve(CryptoWalletTexts.WHAT_PRINTS), px + 1, top + 32, skin.dim());
         if (prices().isEmpty()) {
-            Texts.small(g, font, GameText.resolve(CryptoWalletTexts.PRINTS_NOTHING), px + 3, top + GRID_DY + 4,
+            Draw.text(g, font, GameText.resolve(CryptoWalletTexts.PRINTS_NOTHING), px + 3, top + GRID_DY + 4,
                     skin.dim());
         }
         renderOrder(g, font, skin);
-        g.fill(px, ruleY, px + gridW, ruleY + 1, skin.edge());
-        Texts.small(g, font, GameText.resolve(CryptoWalletTexts.AUTO_PRINT), px, ruleY + 5, skin.text());
+        g.fill(px - 1, ruleY, px - 1 + gridW, ruleY + 1, skin.edge());
+        Draw.text(g, font, GameText.resolve(CryptoWalletTexts.AUTO_PRINT), px + 1, ruleY + 7, skin.text());
         final WalletStatePayload.Auto auto = auto();
         final String line = auto.on() ? GameText.resolve(CryptoWalletTexts.AUTO_ON.with(nameOf(auto.item()),
                 printerName(auto.printer()), Trc.plain(auto.keep())))
                 : GameText.resolve(CryptoWalletTexts.AUTO_OFF);
-        final int lineX = px + 46;
-        Texts.small(g, font, Texts.clip(font, line, (int) ((px + gridW - lineX) / SMALL)), lineX, ruleY + 5,
+        final int lineX = x + 69;
+        Draw.text(g, font, Texts.clip(font, line, px - 1 + gridW - lineX), lineX, ruleY + 7,
                 auto.on() ? skin.text() : skin.dim());
     }
 
@@ -264,8 +271,8 @@ final class CryptoWalletPrint {
         final int index = indexOfPrice(autoItem);
         if (autoPopup.isOpen() && itemChoice.visible() && index >= 0) {
             g.pose().pushPose();
-            g.pose().translate(itemChoice.x() + 5, itemChoice.y() + 2, 0f);
-            g.pose().scale(0.5f, 0.5f, 0.5f);
+            g.pose().translate(itemChoice.x() + 3, itemChoice.y() + 2, 0f);
+            g.pose().scale(CHOICE_ICON, CHOICE_ICON, CHOICE_ICON);
             DesktopItems.item(g, shownOf(prices().get(index).item()).stack(), 0, 0);
             g.pose().popPose();
         }
@@ -347,24 +354,24 @@ final class CryptoWalletPrint {
     private void layoutAuto(final Popup p) {
         syncChoices();
         final Font font = Minecraft.getInstance().font;
-        final int left = p.x() + 8;
-        final int top = p.contentTop() + 4;
-        final int inner = p.width() - 16;
+        final int left = p.x() + 9;
+        final int top = p.contentTop() + 9;
+        final int inner = p.width() - 18;
         final int choiceX = left + POPUP_LABEL_W;
         byItself.setBounds(left, top, inner, 11);
-        itemLabel.setBounds(left, top + 18, POPUP_LABEL_W - 4, 7);
-        itemChoice.setBounds(choiceX, top + 15, inner - POPUP_LABEL_W, FIELD_H);
-        printerLabel.setBounds(left, top + 34, POPUP_LABEL_W - 4, 7);
-        autoPrinterChoice.setBounds(choiceX, top + 31, inner - POPUP_LABEL_W, FIELD_H);
-        keepLabel.setBounds(left, top + 50, POPUP_LABEL_W - 4, 7);
-        keep.setBounds(choiceX, top + 47, 44, FIELD_H);
-        trcLabel.setBounds(choiceX + 48, top + 50, 20, 7);
-        final int boxTop = top + 65;
+        itemLabel.setBounds(left, top + 22, POPUP_LABEL_W - 4, 9);
+        itemChoice.setBounds(choiceX, top + 19, inner - POPUP_LABEL_W, FIELD_H);
+        printerLabel.setBounds(left, top + 43, POPUP_LABEL_W - 4, 9);
+        autoPrinterChoice.setBounds(choiceX, top + 40, inner - POPUP_LABEL_W, FIELD_H);
+        keepLabel.setBounds(left, top + 64, POPUP_LABEL_W - 4, 9);
+        keep.setBounds(choiceX, top + 61, 53, FIELD_H);
+        trcLabel.setBounds(choiceX + 58, top + 64, 24, 9);
+        final int boxTop = top + 84;
         explained.setBounds(left, boxTop, inner, explained.heightFor(font, inner));
-        lastLine.setBounds(left, explained.bottom() + 5, inner, 7);
-        noteLine.setBounds(left, p.bottom() - BUTTON_H - 4, inner - 116, 7);
-        cancel.setBounds(p.right() - 58, p.bottom() - BUTTON_H - 6, 50, BUTTON_H);
-        ok.setBounds(p.right() - 114, p.bottom() - BUTTON_H - 6, 50, BUTTON_H);
+        lastLine.setBounds(left, explained.bottom() + 8, inner, 9);
+        cancel.setBounds(p.right() - 68, p.bottom() - FIELD_H - 8, 60, FIELD_H);
+        ok.setBounds(p.right() - 133, p.bottom() - FIELD_H - 8, 60, FIELD_H);
+        noteLine.setBounds(left, ok.y() + 4, ok.x() - 8 - left, 9);
         final boolean settable = !prices().isEmpty() && !printers().isEmpty();
         ok.setEnabled(!autoChosen || settable);
     }
@@ -379,35 +386,36 @@ final class CryptoWalletPrint {
         g.fill(orderX, orderY, orderX + orderW, orderY + ORDER_H, skin.panelBg());
         Draw.outline(g, orderX, orderY, orderW, ORDER_H, skin.edge());
         g.pose().pushPose();
-        g.pose().translate(orderX + 6, orderY + 6, 0f);
+        g.pose().translate(orderX + 8, orderY + 8, 0f);
         g.pose().scale(BIG_ICON, BIG_ICON, BIG_ICON);
         DesktopItems.item(g, one.stack(), 0, 0);
         g.pose().popPose();
-        final int textX = orderX + 36;
-        final int textW = orderX + orderW - 4 - textX;
-        Draw.text(g, font, Texts.clip(font, one.name(), textW), textX, orderY + 8, skin.text());
-        Texts.small(g, font, GameText.resolve(CryptoWalletTexts.EACH.with(Trc.plain(price.units()))), textX,
-                orderY + 20, gold.getAsInt());
-        Texts.small(g, font, GameText.resolve(CryptoWalletTexts.COPIES), orderX + 6, orderY + 39, skin.text());
+        final int textX = orderX + ORDER_TEXT_X;
+        final int textW = orderX + orderW - 6 - textX;
+        TabbedWindowLook.heading(g, font, Texts.clip(font, one.name(), (int) (textW / TabbedWindowLook.HEADING)), textX,
+                orderY + 11, skin.text());
+        Draw.text(g, font, Texts.clip(font, GameText.resolve(CryptoWalletTexts.EACH.with(Trc.plain(price.units()))),
+                textW), textX, orderY + 27, gold.getAsInt());
+        Draw.text(g, font, GameText.resolve(CryptoWalletTexts.COPIES), orderX + 8, orderY + 52, skin.text());
         final int sx = copies.right() + 1;
         skin.field(g, sx, copies.y(), SPIN_W, FIELD_H, false);
-        Texts.small(g, font, "+", sx + 2, copies.y() + 1, skin.dim());
-        Texts.small(g, font, "-", sx + 3, copies.y() + 6, skin.dim());
+        Draw.text(g, font, "+", sx + 3, copies.y(), skin.dim());
+        Draw.text(g, font, "-", sx + 3, copies.y() + 6, skin.dim());
         final int count = copiesChosen();
-        Texts.small(g, font, GameText.resolve(CryptoWalletTexts.TOTAL), orderX + 6, orderY + 54, skin.text());
+        Draw.text(g, font, GameText.resolve(CryptoWalletTexts.TOTAL), orderX + 8, orderY + 71, skin.text());
         final String total = GameText.resolve(CryptoWalletTexts.AMOUNT_TRC.with(Trc.plain(price.units() * count)));
-        Draw.text(g, font, total, orderX + orderW - 6 - font.width(total), orderY + 52, gold.getAsInt());
+        TabbedWindowLook.heading(g, font, total, orderX + orderW - 8 - Math.round(font.width(total)
+                * TabbedWindowLook.HEADING), orderY + 69, gold.getAsInt());
         final int printerIndex = indexOfPrinter(printer);
-        int noteY = orderY + 65;
+        int noteY = orderY + 85;
         if (printerIndex >= 0) {
             final int seconds = Printer3DModel.byName(printers().get(printerIndex).model()).itemSeconds();
-            Texts.small(g, font, Texts.clip(font, GameText.resolve(CryptoWalletTexts.TAKES.with(
-                    duration(seconds * count), seconds)), (int) ((orderW - 12) / SMALL)), orderX + 6, noteY,
-                    skin.dim());
-            noteY += 9;
+            Draw.text(g, font, Texts.clip(font, GameText.resolve(CryptoWalletTexts.TAKES.with(
+                    duration(seconds * count), seconds)), orderW - 16), orderX + 8, noteY, skin.dim());
+            noteY += 11;
         }
-        CryptoWalletApp.paragraph(g, font, GameText.resolve(CryptoWalletTexts.PAID_AS_STARTS), orderX + 6, noteY,
-                orderW - 12, skin.dim());
+        TabbedWindowLook.paragraph(g, font, GameText.resolve(CryptoWalletTexts.PAID_AS_STARTS), orderX + 8, noteY,
+                orderW - 16, NAME_PITCH, skin.dim());
     }
 
     private void renderTile(final GuiGraphics g, final UiContext ctx, final int index, final int x, final int y,
@@ -416,22 +424,22 @@ final class CryptoWalletPrint {
             return;
         }
         final WalletStatePayload.Price price = prices().get(index);
-        Draw.outline(g, x, y, w, h, price.item().equals(item) ? ctx.skin().accent() : ctx.skin().edge());
+        final boolean chosen = price.item().equals(item);
+        ctx.skin().listRow(g, x, y, w, h, hovered, chosen);
+        Draw.outline(g, x, y, w, h, chosen ? ctx.skin().accent() : ctx.skin().edge());
         final Shown one = shownOf(price.item());
-        DesktopItems.item(g, one.stack(), x + 3, y + (h - 16) / 2);
-        final List<FormattedCharSequence> lines = ctx.font().split(Component.literal(one.name()),
-                (int) ((w - 24) / SMALL));
-        final int nameLines = Math.max(1, Math.min(2, lines.size()));
-        final int textY = nameLines == 1 ? y + 4 : y + 1;
         g.pose().pushPose();
-        g.pose().translate(x + 22, textY, 0f);
-        g.pose().scale(SMALL, SMALL, 1f);
-        for (int i = 0; i < nameLines && i < lines.size(); i++) {
-            Draw.text(g, ctx.font(), lines.get(i), 0, i * 9, ctx.skin().text());
-        }
+        g.pose().translate(x + 4, y + (h - 21) / 2, 0f);
+        g.pose().scale(TILE_ICON, TILE_ICON, TILE_ICON);
+        DesktopItems.item(g, one.stack(), 0, 0);
         g.pose().popPose();
-        Texts.small(g, ctx.font(), GameText.resolve(CryptoWalletTexts.AMOUNT_TRC.with(Trc.plain(price.units()))),
-                x + 22, textY + nameLines * 7, gold.getAsInt());
+        final List<FormattedCharSequence> lines = TabbedWindowLook.lines(ctx.font(), one.name(), w - 35);
+        final int nameLines = Math.min(NAME_LINES, lines.size());
+        for (int i = 0; i < nameLines; i++) {
+            Draw.text(g, ctx.font(), lines.get(i), x + 29, y + 3 + i * NAME_PITCH, ctx.skin().text());
+        }
+        Draw.text(g, ctx.font(), GameText.resolve(CryptoWalletTexts.AMOUNT_TRC.with(Trc.plain(price.units()))),
+                x + 29, y + 4 + Math.max(1, nameLines) * NAME_PITCH, gold.getAsInt());
     }
 
     /* Builds the drop-downs again when the printers or the prices come and go, so each lists what there is. */
@@ -604,20 +612,19 @@ final class CryptoWalletPrint {
 
         /* How tall the box is at {@code width}: its two paragraphs and a margin. */
         int heightFor(final Font font, final int width) {
-            final int wrap = (int) ((width - 8) / SMALL);
-            final int lines = font.split(Component.literal(example()), wrap).size()
-                    + font.split(Component.literal(GameText.resolve(CryptoWalletTexts.AUTO_RUNS)), wrap).size();
-            return Math.round(lines * 10 * SMALL) + 6;
+            final int lines = TabbedWindowLook.lines(font, example(), width - 10).size()
+                    + TabbedWindowLook.lines(font, GameText.resolve(CryptoWalletTexts.AUTO_RUNS), width - 10).size();
+            return lines * EXPLAINED_PITCH + 7;
         }
 
         @Override
         public void render(final GuiGraphics g, final UiContext ctx) {
             g.fill(x(), y(), right(), bottom(), ctx.skin().panelBg());
             Draw.outline(g, x(), y(), width(), height(), ctx.skin().edge());
-            final int used = CryptoWalletApp.paragraph(g, ctx.font(), example(), x() + 4, y() + 3, width() - 8,
-                    ctx.skin().text());
-            CryptoWalletApp.paragraph(g, ctx.font(), GameText.resolve(CryptoWalletTexts.AUTO_RUNS), x() + 4,
-                    y() + 3 + used, width() - 8, ctx.skin().dim());
+            final int used = TabbedWindowLook.paragraph(g, ctx.font(), example(), x() + 5, y() + 4, width() - 10,
+                    EXPLAINED_PITCH, ctx.skin().text());
+            TabbedWindowLook.paragraph(g, ctx.font(), GameText.resolve(CryptoWalletTexts.AUTO_RUNS), x() + 5,
+                    y() + 4 + used, width() - 10, EXPLAINED_PITCH, ctx.skin().dim());
         }
     }
 }

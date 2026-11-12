@@ -104,7 +104,7 @@ public final class MinerRunner {
         if (pool != null && miner.status() != MinerSettings.Status.POOL) {
             JscEvents.awardOperatorAt(level, at, JscEvents.POOL_JOINED);
         }
-        miner.mined(who.hashes(), poolName, pool == null ? "" : pool.name(),
+        miner.mined(who.hashes(), poolName, pool == null ? "" : MiningPools.server(pool),
                 pool == null ? 0 : MiningPools.state(pool).feePermille());
         TeracoinMining.offer(new TeracoinMining.Offer(offer, pool,
                 item -> RareItems.deposit(level, network, at, item), found));

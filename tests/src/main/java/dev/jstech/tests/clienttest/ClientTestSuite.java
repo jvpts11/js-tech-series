@@ -124,6 +124,7 @@ import dev.jstech.tests.clienttest.computers.SwapClientTests;
 import dev.jstech.tests.clienttest.computers.SystemMotionClientTests;
 import dev.jstech.tests.clienttest.computers.SystemUiClientTests;
 import dev.jstech.tests.clienttest.computers.TaskbarClientTests;
+import dev.jstech.tests.clienttest.computers.TeracoinMachinesClientTests;
 import dev.jstech.tests.clienttest.computers.TeracoinWindowsClientTests;
 import dev.jstech.tests.clienttest.computers.TerminalEditorClientTests;
 import dev.jstech.tests.clienttest.computers.TerminalFontClientTests;
@@ -524,6 +525,7 @@ public final class ClientTestSuite {
             NetworkManagerClientTests.class,
             MediaPlayerClientTests.class,
             TeracoinWindowsClientTests.class,
+            TeracoinMachinesClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,

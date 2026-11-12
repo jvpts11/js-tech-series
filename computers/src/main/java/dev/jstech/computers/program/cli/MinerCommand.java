@@ -161,7 +161,8 @@ public final class MinerCommand implements ICliCommand {
             ctx.out().line(console.stall(MinerSettings.Status.NO_ADDRESS, ""));
             return;
         }
-        ctx.out().line(new CliLine(MinerTexts.BANNER.with(ProgramVersions.of(Programs.MINER)), CliStyle.ORANGE));
+        // Blockwright's gold, which on a terminal is its amber; the extended orange reads as a red there.
+        ctx.out().line(new CliLine(MinerTexts.BANNER.with(ProgramVersions.of(Programs.MINER)), CliStyle.WARN));
         ctx.out().line(console.whom());
         for (final CliLine line : console.devices()) {
             ctx.out().line(line);
