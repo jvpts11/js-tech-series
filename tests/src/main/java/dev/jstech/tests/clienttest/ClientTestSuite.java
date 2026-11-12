@@ -113,6 +113,7 @@ import dev.jstech.tests.clienttest.computers.RackClientTests;
 import dev.jstech.tests.clienttest.computers.RackCrashClientTests;
 import dev.jstech.tests.clienttest.computers.RedstoneInterfaceClientTests;
 import dev.jstech.tests.clienttest.computers.ScannerClientTests;
+import dev.jstech.tests.clienttest.computers.ScansFolderClientTests;
 import dev.jstech.tests.clienttest.computers.ServerRouterClientTests;
 import dev.jstech.tests.clienttest.computers.SettingsPersonalizeClientTests;
 import dev.jstech.tests.clienttest.computers.SettingsScreenClientTests;
@@ -538,6 +539,7 @@ public final class ClientTestSuite {
             BackupConsoleClientTests.class,
             MessengerKeptClientTests.class,
             ScannerClientTests.class,
+            ScansFolderClientTests.class,
             ExtendedCdDriveClientTests.class,
             EasyDiscCreatorClientTests.class,
             LargeScalePrinterClientTests.class,
