@@ -37,6 +37,10 @@ final class SoundfoundryVinylPlate {
     private static final int SECONDS_A_MINUTE = 60;
     private static final int METER_CELL = 6;
     private static final int METER_ROWS = 2;
+    /* Where the meter turns from green to yellow, and from yellow to red, as shares of its cells. */
+    private static final double METER_GREEN = 2.0 / 3.0;
+    private static final double METER_YELLOW = 26.0 / 30.0;
+    private static final String ELLIPSIS = "...";
 
     SoundfoundryVinylPlate(final BlockPos host) {
         this.host = host;
@@ -131,13 +135,13 @@ final class SoundfoundryVinylPlate {
                 : state.elapsed() / (double) state.length(), false);
         meter(g, x, y, state.work() == 1);
         if (state.work() == 1) {
-            line(g, font, x, y, SoundfoundryLayout.VINYL_SAVING_Y, SoundfoundryAppTexts.VINYL_SAVING
-                    .with(state.saving()), c.amberDim());
+            line(g, font, x, y, SoundfoundryLayout.VINYL_SAVING_Y, fitted(font, SoundfoundryAppTexts.VINYL_SAVING,
+                    state.saving()), c.amberDim());
             line(g, font, x, y, SoundfoundryLayout.VINYL_FROM_Y, SoundfoundryAppTexts.VINYL_FROM_DISC.text(),
                     c.amberDim());
         } else if (!state.saving().isEmpty()) {
-            line(g, font, x, y, SoundfoundryLayout.VINYL_SAVING_Y, SoundfoundryAppTexts.VINYL_KEPT
-                    .with(state.saving()), c.amberDim());
+            line(g, font, x, y, SoundfoundryLayout.VINYL_SAVING_Y, fitted(font, SoundfoundryAppTexts.VINYL_KEPT,
+                    state.saving()), c.amberDim());
         }
         final Text bringing = SoundfoundryVinyl.bringing();
         if (bringing != null) {
@@ -185,7 +189,10 @@ final class SoundfoundryVinylPlate {
         return all.stream().filter(VinylStatePayload.Recording::fromDisc).findFirst().orElse(null);
     }
 
-    /* The level meter: two rows of cells lit to the song's loudness while it records, still otherwise. */
+    /*
+     * The level meter: two rows of cells lit to the song's loudness while it records, still otherwise; green for the
+     * most of it, yellow near the top and red at it, as a recording meter shows.
+     */
     private static void meter(final GuiGraphics g, final int x, final int y, final boolean live) {
         final SoundfoundrySkin.Colours c = SoundfoundrySkin.c();
         final Rect meter = SoundfoundryLayout.VINYL_METER;
@@ -194,11 +201,31 @@ final class SoundfoundryVinylPlate {
         for (int row = 0; row < METER_ROWS; row++) {
             final int lit = live ? (int) (cells * (0.55 + 0.25 * Math.sin(now / 180.0 + row))) : 0;
             for (int cell = 0; cell < cells; cell++) {
-                final int colour = cell < lit ? cell > cells * 0.85 ? c.amber() : c.positionFill() : c.track();
+                final int colour = cell >= lit ? c.segmentOff() : cell < cells * METER_GREEN ? c.meterLow()
+                        : cell < cells * METER_YELLOW ? c.meterMid() : c.record();
                 SoundfoundrySkin.fill(g, x + meter.x() + cell * METER_CELL, y + meter.y() + row * 4, METER_CELL - 1, 3,
                         colour);
             }
         }
+    }
+
+    /*
+     * {@code key} with the path {@code path}, its first folders left off for an ellipsis until the line fits the
+     * screen: the end of a path, where the file is, is what is worth reading.
+     */
+    private static Text fitted(final Font font, final TextKey key, final String path) {
+        final Rect screen = SoundfoundryLayout.VINYL_SCREEN;
+        final int room = screen.w() - 2 * (SoundfoundryLayout.VINYL_TEXT_X - screen.x());
+        String shown = path;
+        int cut = 0;
+        while (font.width(GameText.resolve(key.with(shown)).toUpperCase(Locale.ROOT)) > room) {
+            cut = path.indexOf('/', cut + 1);
+            if (cut < 0) {
+                break;
+            }
+            shown = ELLIPSIS + path.substring(cut);
+        }
+        return key.with(shown);
     }
 
     private static void line(final GuiGraphics g, final Font font, final int x, final int y, final int lineY,

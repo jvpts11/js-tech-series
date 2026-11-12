@@ -15,6 +15,7 @@ import dev.jstech.computers.gui.layout.SoundfoundryLayout.Rect;
 import dev.jstech.computers.os.ProgramVersions;
 import dev.jstech.computers.operation.payload.SoundfoundryActionPayload;
 import dev.jstech.computers.operation.payload.SoundfoundryStatePayload;
+import dev.jstech.computers.operation.payload.VinylStatePayload;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.SoundfoundryState;
 import dev.jstech.core.client.audio.media.MediaPlayer;
@@ -97,6 +98,10 @@ public final class SoundfoundryApp implements IDesktopApp {
     private static final long MARQUEE_PACE = 60L;
     private static final String MARQUEE_GAP = "  ***  ";
     private static final String SAVE_NAME = "playlist.m3u";
+    /* The display's record lamp while the Vinyl RW Drive records, and a tick's milliseconds for its clock. */
+    private static final int RECORD_LAMP = 5;
+    private static final long MILLIS_A_TICK = 50L;
+    private static final int VINYL_RECORDING = 1;
 
     public SoundfoundryApp(final BlockPos host) {
         this.host = host;
@@ -699,6 +704,15 @@ public final class SoundfoundryApp implements IDesktopApp {
                     c.amber());
             centred(g, font, words(SoundfoundryAppTexts.DEVICE), x + display.x() + display.w() / 2, y + 35,
                     c.amber());
+        } else if (recording() != null) {
+            // While the Vinyl RW Drive records, the display shows the record lamp and the time recorded.
+            final VinylStatePayload vinylNow = recording();
+            SoundfoundrySkin.fill(g, x + SoundfoundryLayout.STATUS_X, y + SoundfoundryLayout.STATUS_Y + 1,
+                    RECORD_LAMP, RECORD_LAMP, c.record());
+            SoundfoundrySkin.clock(g, x + SoundfoundryLayout.CLOCK_X, y + SoundfoundryLayout.CLOCK_Y,
+                    vinylNow.elapsed() * MILLIS_A_TICK, true);
+            SoundfoundrySkin.bars(g, x + SoundfoundryLayout.BARS_X, y + SoundfoundryLayout.BARS_BOTTOM, levels,
+                    false);
         } else {
             final SoundfoundrySkin.Glyph glyph = status == SoundfoundryStatePayload.PLAYING
                     ? SoundfoundrySkin.Glyph.PLAY : status == SoundfoundryStatePayload.PAUSED
@@ -796,6 +810,9 @@ public final class SoundfoundryApp implements IDesktopApp {
             line = GameText.resolve(importing);
         } else if (known != null && !known.state().trouble().isEmpty()) {
             line = GameText.resolve(known.state().trouble());
+        } else if (recording() != null) {
+            line = GameText.resolve(SoundfoundryAppTexts.SONG_RECORDING.with(recording().song(),
+                    clockText(recording().length() * MILLIS_A_TICK)));
         } else {
             line = songLine(known);
         }
@@ -922,6 +939,13 @@ public final class SoundfoundryApp implements IDesktopApp {
     private static String clockText(final long millis) {
         final long seconds = Math.max(0L, millis / 1000L);
         return seconds / 60L + ":" + String.format(Locale.ROOT, "%02d", seconds % 60L);
+    }
+
+    /* The Vinyl RW Drive's state while it records a disc, or null when it does not. */
+    @Nullable
+    private VinylStatePayload recording() {
+        final VinylStatePayload vinylNow = SoundfoundryVinyl.state(host);
+        return vinylNow != null && vinylNow.drive() != 0L && vinylNow.work() == VINYL_RECORDING ? vinylNow : null;
     }
 
     /* What this machine's music plays under, as the server names it. */

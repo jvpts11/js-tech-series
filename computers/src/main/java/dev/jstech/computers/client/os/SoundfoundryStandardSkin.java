@@ -58,6 +58,16 @@ final class SoundfoundryStandardSkin {
         g.fill(x, y, x + w, y + h, colour);
     }
 
+    /** A round of {@code size} across with its corner at {@code (x, y)}, a row of pixels at a time: a record's face. */
+    static void round(final GuiGraphics g, final int x, final int y, final int size, final int colour) {
+        final double radius = size / 2.0;
+        for (int row = 0; row < size; row++) {
+            final double off = row + 0.5 - radius;
+            final int half = (int) Math.round(Math.sqrt(Math.max(0.0, radius * radius - off * off)));
+            g.fill(x + (int) radius - half, y + row, x + (int) radius + half, y + row + 1, colour);
+        }
+    }
+
     /** Text in the game's font on that ground, with the shadow that suits it. */
     static void text(final GuiGraphics g, final Font font, final String text, final int x, final int y,
                      final int colour, final int ground) {

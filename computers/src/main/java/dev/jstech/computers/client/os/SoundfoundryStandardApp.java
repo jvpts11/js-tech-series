@@ -468,10 +468,10 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
                 y + SoundfoundryStandardLayout.PLAYLISTS_Y, c.inkDim(), c.side());
         SoundfoundryStandardSkin.right(g, font, "+", x + 138, y + SoundfoundryStandardLayout.PLAYLISTS_Y,
                 c.inkDim(), c.side());
-        // The Vinyl RW Drive's page heads the playlists, its record's swatch dark with a white label.
+        // The Vinyl RW Drive's page heads the playlists, its swatch a record: dark, round, with a white label.
         final int vy = y + SoundfoundryStandardLayout.LIST_Y;
-        SoundfoundryStandardSkin.fill(g, x + SoundfoundryStandardLayout.SWATCH_X, vy - 1, 10, 10, c.inkOff());
-        SoundfoundryStandardSkin.fill(g, x + SoundfoundryStandardLayout.SWATCH_X + 3, vy + 2, 4, 4, c.ink());
+        SoundfoundryStandardSkin.round(g, x + SoundfoundryStandardLayout.SWATCH_X, vy - 1, 10, c.inkOff());
+        SoundfoundryStandardSkin.round(g, x + SoundfoundryStandardLayout.SWATCH_X + 3, vy + 2, 4, c.ink());
         SoundfoundryStandardSkin.text(g, font, words(SoundfoundryStandardTexts.VINYL),
                 x + SoundfoundryStandardLayout.LIST_TEXT_X, vy, page == VINYL_PAGE ? c.orange() : c.ink(), c.side());
         final List<String> playlists = playlistsOf(sidebar);
@@ -1042,7 +1042,7 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
                 }
             }
             case SoundfoundryPagePayload.LIBRARY -> clickedLibrary(lx, ly, area, known, button);
-            case VINYL_PAGE -> vinyl.clicked(lx - area.x(), ly - area.y(), area.w());
+            case VINYL_PAGE -> vinyl.clicked(lx, ly, area.w());
             case SoundfoundryPagePayload.CATALOG -> {
                 if (known == null) {
                     return;

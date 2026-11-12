@@ -100,7 +100,9 @@ final class SoundfoundryStandardTexts {
     static final TextKey VINYL_CUTTING = TextKey.of("jsc.soundfoundry.standard.vinyl_cutting",
             "Cutting %s in the song's own time: %s of %s");
     static final TextKey VINYL_GIVES_BACK = TextKey.of("jsc.soundfoundry.standard.vinyl_gives_back",
-            "When it ends, the drive gives back the disc itself.");
+            "When it ends, the drive gives back the disc itself: %s.");
+    /** The disc a cut becomes: the item's name and its song. */
+    static final TextKey VINYL_DISC_OF = TextKey.of("jsc.soundfoundry.standard.vinyl_disc_of", "%s, %s");
     static final TextKey VINYL_KEPT = TextKey.of("jsc.soundfoundry.standard.vinyl_kept", "Kept in %s");
 
     private SoundfoundryStandardTexts() {

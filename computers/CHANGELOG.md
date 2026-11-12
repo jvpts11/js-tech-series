@@ -1054,6 +1054,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A copy between two drives is written at the blank's own speed, as Easy Disc Creator says, where it was
   written at the speed of the disc copied. A vinyl copy waiting for its blank shows its recording done and its cut
   waiting, where it showed a disc copy's steps, and names the song recorded without its file's extension.
+- The Standard Soundfoundry's Vinyl page answers its clicks, where Record, Cut, Eject and the choice of
+  a recording landed off the page and did nothing. The page shows the drive's record beside its lines, its entry in
+  the sidebar is a round record, and a cut says which disc it gives back ("Music Disc, C418 - cat").
+- The classic Soundfoundry shows a vinyl recording on its own display, the record lamp and the time
+  recorded with the song marked "*** RECORDING"; its level meter is green to yellow to red, and the path a recording
+  is saved to fits the VNL plate, its first folders left off.
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
   works through its computer.
 - The Network Interactor's Operations tab gives each Operation its own state, where it read the states in

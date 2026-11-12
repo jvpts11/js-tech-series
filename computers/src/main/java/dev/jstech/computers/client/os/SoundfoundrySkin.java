@@ -38,7 +38,8 @@ final class SoundfoundrySkin {
             0xFF2A1A0C,
             0xFFC9C0B2, 0xFF8C8478, 0xFF5F574E,
             0xFF2A1A0C, 0xFF3B2410, 0xFF3B2A18, 0xFF3B2A18, 0xFF17151A,
-            0xFFE8892B, 0xFFFFD08A, 0xFF6B5A44, 0xFF8C7A60));
+            0xFFE8892B, 0xFFFFD08A, 0xFF6B5A44, 0xFF8C7A60,
+            0xFFFF3A2A, 0xFF3EE07A, 0xFFFFC21A));
 
     /* Which segments of a seven-segment digit are lit for each figure: a to g, clockwise from the top, g the middle. */
     private static final String[] SEGMENTS = {"abcdef", "bc", "abged", "abgcd", "fgbc", "afgcd", "afgedc", "abc",
@@ -343,6 +344,7 @@ final class SoundfoundrySkin {
                    int rowSelected,
                    int anvilLight, int anvilMid, int anvilDark,
                    int header, int rowPicked, int signalOff, int rule, int statusBar,
-                   int progress, int progressTop, int progressDone, int progressDoneTop) {
+                   int progress, int progressTop, int progressDone, int progressDoneTop,
+                   int record, int meterLow, int meterMid) {
     }
 }

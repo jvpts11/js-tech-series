@@ -4205,6 +4205,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) A copy between two drives is written at the blank's own speed, as Easy Disc Creator says, where it was
   written at the speed of the disc copied. A vinyl copy waiting for its blank shows its recording done and its cut
   waiting, where it showed a disc copy's steps, and names the song recorded without its file's extension.
+- (Computers) The Standard Soundfoundry's Vinyl page answers its clicks, where Record, Cut, Eject and the choice of
+  a recording landed off the page and did nothing. The page shows the drive's record beside its lines, its entry in
+  the sidebar is a round record, and a cut says which disc it gives back ("Music Disc, C418 - cat").
+- (Computers) The classic Soundfoundry shows a vinyl recording on its own display, the record lamp and the time
+  recorded with the song marked "*** RECORDING"; its level meter is green to yellow to red, and the path a recording
+  is saved to fits the VNL plate, its first folders left off.
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on

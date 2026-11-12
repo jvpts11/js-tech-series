@@ -122,6 +122,7 @@ import dev.jstech.tests.clienttest.computers.SigmaWidgetsClientTests;
 import dev.jstech.tests.clienttest.computers.SoundfoundryClientTests;
 import dev.jstech.tests.clienttest.computers.SoundfoundryShareClientTests;
 import dev.jstech.tests.clienttest.computers.SoundfoundryStandardClientTests;
+import dev.jstech.tests.clienttest.computers.SoundfoundryVinylClientTests;
 import dev.jstech.tests.clienttest.computers.SourceBuildClientTests;
 import dev.jstech.tests.clienttest.computers.StartMenuFitClientTests;
 import dev.jstech.tests.clienttest.computers.SupercomputerJourneyClientTests;
@@ -332,6 +333,7 @@ public final class ClientTestSuite {
             SoundfoundryClientTests.class,
             SoundfoundryShareClientTests.class,
             SoundfoundryStandardClientTests.class,
+            SoundfoundryVinylClientTests.class,
             SigmaEditorClientTests.class,
             SigmaConsoleClientTests.class,
             CabinetItemClientTests.class,

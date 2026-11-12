@@ -74,6 +74,8 @@ final class SoundfoundryAppTexts {
     static final TextKey IDLE = TextKey.of("jsc.soundfoundry.skin.idle", "SOUNDFOUNDRY %s");
     /** A song on the display: its place, what it is listed as and how long it runs. */
     static final TextKey SONG = TextKey.of("jsc.soundfoundry.skin.song", "%s. %s (%s)");
+    /** The display while the Vinyl RW Drive records a disc: its song and its length. */
+    static final TextKey SONG_RECORDING = TextKey.of("jsc.soundfoundry.skin.song_recording", "%s (%s) *** RECORDING");
     static final TextKey ROW = TextKey.of("jsc.soundfoundry.skin.row", "%s. %s");
     static final TextKey BY = TextKey.of("jsc.soundfoundry.skin.by", "%s - %s");
     static final TextKey IMPORTING = TextKey.of("jsc.soundfoundry.skin.importing", "IMPORTING %s OF %s: %s%%");

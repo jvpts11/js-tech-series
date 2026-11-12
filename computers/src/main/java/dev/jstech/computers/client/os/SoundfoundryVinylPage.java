@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.audio.VinylDiscs;
 import dev.jstech.computers.operation.payload.VinylActionPayload;
 import dev.jstech.computers.operation.payload.VinylStatePayload;
 import dev.jstech.core.client.gui.component.Texts;
@@ -18,6 +19,10 @@ import java.util.Locale;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.FormattedText;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -41,6 +46,12 @@ final class SoundfoundryVinylPage {
     private static final int BUTTON_W = 88;
     private static final int SMALL_BUTTON_W = 44;
     private static final int BUTTON_H = 14;
+    /* The drive's record beside its lines: its face, its groove and its hole across, and where the lines begin. */
+    private static final int RECORD = 16;
+    private static final int GROOVE = 8;
+    private static final int HOLE = 2;
+    private static final int BESIDE_RECORD = 26;
+    private static final int LINE_PITCH = 11;
     private static final int TICKS_A_SECOND = 20;
     private static final int SECONDS_A_MINUTE = 60;
     private static final String ARTIST_SPLIT = " - ";
@@ -64,9 +75,17 @@ final class SoundfoundryVinylPage {
             case VinylStatePayload.BLANK -> SoundfoundryStandardTexts.VINYL_BLANK.text();
             default -> SoundfoundryStandardTexts.VINYL_EMPTY.text();
         };
-        SoundfoundryStandardSkin.text(g, font, GameText.resolve(drive), px + PAD, py + DRIVE_Y, c.ink(), c.base());
-        SoundfoundryStandardSkin.text(g, font, words(SoundfoundryStandardTexts.VINYL_ONLY_DISC), px + PAD,
-                py + NOTE_Y, c.inkDim(), c.base());
+        // The drive's record beside its two lines: a white face, its dark groove and the label's hole.
+        final int iconY = py + DRIVE_Y - 2;
+        SoundfoundryStandardSkin.round(g, px + PAD + 2, iconY, RECORD, c.ink());
+        SoundfoundryStandardSkin.round(g, px + PAD + 2 + (RECORD - GROOVE) / 2, iconY + (RECORD - GROOVE) / 2,
+                GROOVE, c.base());
+        SoundfoundryStandardSkin.round(g, px + PAD + 2 + (RECORD - HOLE) / 2, iconY + (RECORD - HOLE) / 2, HOLE,
+                c.ink());
+        SoundfoundryStandardSkin.text(g, font, GameText.resolve(drive), px + PAD + BESIDE_RECORD, py + DRIVE_Y,
+                c.ink(), c.base());
+        SoundfoundryStandardSkin.text(g, font, words(SoundfoundryStandardTexts.VINYL_ONLY_DISC),
+                px + PAD + BESIDE_RECORD, py + NOTE_Y, c.inkDim(), c.base());
         final int fromX = px + pw * 58 / 100;
         final int artistX = px + pw * 38 / 100;
         final int right = px + pw - PAD;
@@ -127,8 +146,13 @@ final class SoundfoundryVinylPage {
             SoundfoundryStandardSkin.fill(g, px + PAD, ly + 12, state.length() <= 0 ? 0
                     : barW * state.elapsed() / state.length(), 3, c.orange());
             if (state.work() == 2) {
-                SoundfoundryStandardSkin.text(g, font, words(SoundfoundryStandardTexts.VINYL_GIVES_BACK), px + PAD,
-                        ly + 20, c.inkDim(), c.base());
+                // The disc's whole name, on a second line when it does not fit one.
+                int lineY = ly + 20;
+                for (final FormattedText part : font.getSplitter().splitLines(GameText.resolve(
+                        SoundfoundryStandardTexts.VINYL_GIVES_BACK.with(discName(state))), pw - 2 * PAD, Style.EMPTY)) {
+                    SoundfoundryStandardSkin.text(g, font, part.getString(), px + PAD, lineY, c.inkDim(), c.base());
+                    lineY += LINE_PITCH;
+                }
             }
         } else if (!state.problem().isEmpty()) {
             SoundfoundryStandardSkin.text(g, font, Texts.clip(font, GameText.resolve(state.problem()),
@@ -174,6 +198,14 @@ final class SoundfoundryVinylPage {
         } else if (lx >= PAD + BUTTON_W + 6 && lx < PAD + BUTTON_W + 6 + SMALL_BUTTON_W) {
             SoundfoundryVinyl.ask(host, VinylActionPayload.EJECT, "");
         }
+    }
+
+    /* The disc the cut under way becomes, by its item's name and its song ("Music Disc, C418 - cat"). */
+    private static String discName(final VinylStatePayload state) {
+        final ResourceLocation song = ResourceLocation.tryParse(state.songId());
+        final ItemStack disc = song == null ? ItemStack.EMPTY : VinylDiscs.discOf(song);
+        return disc.isEmpty() ? state.song() : GameText.resolve(SoundfoundryStandardTexts.VINYL_DISC_OF.with(
+                disc.getHoverName().getString(), state.song()));
     }
 
     /* The drive's one action now: Stop while it works, Record with a disc, Cut with a blank and a song to cut. */
