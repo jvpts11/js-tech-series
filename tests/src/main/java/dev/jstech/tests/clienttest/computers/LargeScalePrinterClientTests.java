@@ -43,6 +43,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -71,6 +72,8 @@ public final class LargeScalePrinterClientTests {
     private static final String DOCUMENTS = "Users/Public/Documents";
     private static final String BOOK = DOCUMENTS + "/Mine Log.book";
     private static final String EDITOR = "jsc:editor";
+    /* Before the machine's front and to its right, a few steps back from it. */
+    private static final BlockPos IN_FRONT = CORNER.offset(6, 0, -4);
 
     private LargeScalePrinterClientTests() {
     }
@@ -107,7 +110,12 @@ public final class LargeScalePrinterClientTests {
                 .thenScreenshot(1, "lsp-enchanted-off")
                 .then(0, () -> ComputersServerConfig.FILE.set(ComputersServerConfig.PRINT_ENCHANTED_BOOKS, true))
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
-                .thenAwaitNoScreen(SCREEN_WAIT);
+                .thenAwaitNoScreen(SCREEN_WAIT)
+                // The machine at work in the world, seen from before it and to the right, as its mock sees it.
+                .thenTeleport(SETTLE, IN_FRONT, Direction.SOUTH)
+                .then(SETTLE, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(CORNER.offset(2, 1, 1)))))
+                .then(SETTLE * 5, () -> ctx.mc().getToasts().clear())
+                .thenScreenshot(1, "lsp-in-the-world");
     }
 
     @ClientTest(timeoutTicks = 2400)

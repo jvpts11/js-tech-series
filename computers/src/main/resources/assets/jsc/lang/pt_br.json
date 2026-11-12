@@ -10125,6 +10125,7 @@
   "jsc.this_pc.with_clock": "%s · %s",
   "jsc.touch.line.line": "> %s",
   "jsc.touch.line.note": "Digitando no monitor de toque: Enter manda, Esc fecha",
+  "jsc.touch.line.note_wall": "Digitando na parede de toque: Enter manda, Esc fecha",
   "jsc.touch.line.title": "Digitando num monitor de toque",
   "jsc.trace.bench": "receitas de bancada",
   "jsc.trace.bus": "%s \"%s\": %s x%s",

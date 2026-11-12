@@ -22,18 +22,18 @@ import java.util.Optional;
 public final class TouchKeyboardLayout {
 
     /** The bar along its top, with its name and its close box. */
-    public static final int BAR = 10;
+    public static final int BAR = 12;
     /** The room between the bar and the first row. */
-    public static final int UNDER_BAR = 3;
+    public static final int UNDER_BAR = 5;
     /** The room kept round the rows. */
     public static final int MARGIN = 4;
     /** The room between two keys. */
     public static final int GAP = 2;
     /** How tall the docked keyboard of Frames 10 is. */
-    public static final int DOCKED_HEIGHT = 94;
+    public static final int DOCKED_HEIGHT = 121;
     /** How wide and tall the floating keyboard of Frames 11 is, and how far it stands above the taskbar. */
-    public static final int FLOATING_WIDTH = 258;
-    public static final int FLOATING_HEIGHT = 100;
+    public static final int FLOATING_WIDTH = 341;
+    public static final int FLOATING_HEIGHT = 133;
     public static final int FLOATING_LIFT = 6;
     /** The close box at the right of the bar. */
     public static final int CLOSE = 8;

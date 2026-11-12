@@ -1067,6 +1067,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Print window lists a computer's Large Scale Printers first when the document is a book, the first
   of them chosen, where a book went to the first page printer unless one was picked; the printers are listed in the
   desktop's own text, where it was the small one.
+- The touch keyboards of Frames 10 and Frames 11 are the size their design draws them, a third bigger,
+  their keys easier to touch; and the typing line of a wall of touch monitors says it types into the touch wall.
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
   works through its computer.
 - The Network Interactor's Operations tab gives each Operation its own state, where it read the states in

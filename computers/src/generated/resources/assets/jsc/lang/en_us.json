@@ -11463,6 +11463,7 @@
   "jsc.this_pc.with_clock": "%s · %s",
   "jsc.touch.line.line": "> %s",
   "jsc.touch.line.note": "Typing into the touch monitor: Enter sends, Esc closes",
+  "jsc.touch.line.note_wall": "Typing into the touch wall: Enter sends, Esc closes",
   "jsc.touch.line.title": "Typing into a touch monitor",
   "jsc.trace.bench": "bench recipes",
   "jsc.trace.bus": "%s \"%s\": %s x%s",

@@ -17,6 +17,9 @@ final class TouchTexts {
     static final TextKey TITLE = TextKey.of("jsc.touch.line.title", "Typing into a touch monitor");
     static final TextKey NOTE = TextKey.of("jsc.touch.line.note",
             "Typing into the touch monitor: Enter sends, Esc closes");
+    /** The same, when the touch monitors are joined into a wall. */
+    static final TextKey NOTE_WALL = TextKey.of("jsc.touch.line.note_wall",
+            "Typing into the touch wall: Enter sends, Esc closes");
     static final TextKey LINE = TextKey.of("jsc.touch.line.line", "> %s");
 
     private TouchTexts() {

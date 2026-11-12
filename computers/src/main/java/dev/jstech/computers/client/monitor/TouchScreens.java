@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.client.monitor;
 
+import dev.jstech.computers.block.MonitorPanel;
+import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.menu.IMonitorMenu;
 import dev.jstech.computers.monitor.TouchGesture;
@@ -76,6 +78,17 @@ public final class TouchScreens {
     @Nullable
     public static Screen held() {
         return held == null ? null : held.screen();
+    }
+
+    /** Whether the screen held stands on a wall of touch monitors joined into one picture, rather than on one. */
+    static boolean heldOnWall() {
+        final Minecraft minecraft = Minecraft.getInstance();
+        if (held == null || minecraft.level == null
+                || !(minecraft.level.getBlockEntity(held.monitor()) instanceof MonitorBlockEntity monitor)) {
+            return false;
+        }
+        final MonitorPanel panel = monitor.panel();
+        return panel != null && panel.width() * panel.height() > 1;
     }
 
     /** Waits a moment for the screen the machine behind the touch monitor at {@code monitor} opens. */

@@ -66,7 +66,7 @@ public final class TouchTypingScreen extends Screen {
     @Override
     public void render(final GuiGraphics g, final int mouseX, final int mouseY, final float partialTick) {
         final Inks inks = INKS.get();
-        final String note = GameText.resolve(TouchTexts.NOTE);
+        final String note = GameText.resolve(TouchScreens.heldOnWall() ? TouchTexts.NOTE_WALL : TouchTexts.NOTE);
         g.fill(2, height - 30, 6 + font.width(note) + 4, height - 18, inks.noteGround());
         Draw.text(g, font, note, 6, height - 28, inks.note());
         g.fill(2, height - 14, width - 2, height - 2, minecraft.options.getBackgroundColor(Integer.MIN_VALUE));

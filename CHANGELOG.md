@@ -4218,6 +4218,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The Print window lists a computer's Large Scale Printers first when the document is a book, the first
   of them chosen, where a book went to the first page printer unless one was picked; the printers are listed in the
   desktop's own text, where it was the small one.
+- (Computers) The touch keyboards of Frames 10 and Frames 11 are the size their design draws them, a third bigger,
+  their keys easier to touch; and the typing line of a wall of touch monitors says it types into the touch wall.
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on

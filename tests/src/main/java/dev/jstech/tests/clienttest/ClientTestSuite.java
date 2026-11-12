@@ -137,6 +137,7 @@ import dev.jstech.tests.clienttest.computers.TerminalEditorClientTests;
 import dev.jstech.tests.clienttest.computers.TerminalFontClientTests;
 import dev.jstech.tests.clienttest.computers.TerminalSelectionClientTests;
 import dev.jstech.tests.clienttest.computers.TerminalWidthClientTests;
+import dev.jstech.tests.clienttest.computers.TouchMonitorClientTests;
 import dev.jstech.tests.clienttest.computers.TransitionDesktopsClientTests;
 import dev.jstech.tests.clienttest.computers.TrashClientTests;
 import dev.jstech.tests.clienttest.computers.UiSweepClientTests;
@@ -540,6 +541,7 @@ public final class ClientTestSuite {
             ExtendedCdDriveClientTests.class,
             EasyDiscCreatorClientTests.class,
             LargeScalePrinterClientTests.class,
+            TouchMonitorClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,
