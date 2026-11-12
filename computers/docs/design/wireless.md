@@ -113,7 +113,8 @@ The tablets wear the look of their family's phone of the same era.
 - **A device's state** lives on the server, kept by the id the item carries. **Whoever loses the device loses what was
   on it:** when the item is destroyed (lava, fire, the void, despawning), the server erases its state and frees the
   room; and the state of a device that hasn't been in any inventory for 72 hours of the server running is erased too
-  (`[wireless] lost_device_hours`).
+  (`[wireless] lost_device_hours`), unless it was last in the inventory of a player who is away, whose inventory it is
+  still in; a device holding a wallet is never erased, so its key is never lost.
 
 With the portables comes the third family of systems and hardware, next to Frames and Linux: **Quince**, with its
 computers, servers and Mainframe as well ([Quince](quince.md)).

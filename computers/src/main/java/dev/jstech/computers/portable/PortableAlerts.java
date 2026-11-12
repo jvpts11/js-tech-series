@@ -129,7 +129,8 @@ public final class PortableAlerts {
         }
         if (now % SWEEP_EVERY == 0) {
             PortableDevices.get(server).eraseUnseenSince(now
-                    - ComputersServerConfig.lostDeviceHours() * TICKS_AN_HOUR);
+                    - ComputersServerConfig.lostDeviceHours() * TICKS_AN_HOUR,
+                    player -> server.getPlayerList().getPlayer(player) != null);
         }
     }
 

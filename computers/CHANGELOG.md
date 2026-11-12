@@ -964,6 +964,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   window say how cool it has to be.
 - The MF PowerGuard's red lamp asks for a new battery once the battery is near its end, down to the 10%
   at which the systems shut themselves down; it was always dark.
+- Lost portables: a portable last in the inventory of a player who is away is no longer let go after
+  72 hours unseen, since it is in their inventory still, and one holding a wallet is never let go, so its key is never
+  lost.
 - The Advanced High Performance Cluster Management Computer has its recipe, from the Advanced High
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 

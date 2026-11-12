@@ -19,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -50,6 +51,9 @@ public final class PortableState {
     private int version;
     private int nextPicture = 1;
     private long seenAt;
+    /* The player who last had it in their inventory, or null when it was last in its dock. */
+    @Nullable
+    private UUID carrier;
     /* The Crypto Wallet's one wallet: the address and the key that spends from it, kept on the device itself. */
     private String walletAddress = "";
     private String walletKey = "";
@@ -148,6 +152,12 @@ public final class PortableState {
         return seenAt;
     }
 
+    /** The player who last had it in their inventory, or null when it was last in its dock. */
+    @Nullable
+    public UUID carrier() {
+        return carrier;
+    }
+
     /** Counts up with every change its system shows. */
     public int version() {
         return version;
@@ -204,6 +214,7 @@ public final class PortableState {
         }
         state.nextPicture = Math.max(1, tag.getInt("NextPicture"));
         state.seenAt = tag.getLong("SeenAt");
+        state.carrier = tag.hasUUID("Carrier") ? tag.getUUID("Carrier") : null;
         state.walletAddress = tag.getString("WalletAddress");
         state.walletKey = tag.getString("WalletKey");
         return state;
@@ -364,9 +375,10 @@ public final class PortableState {
         return pictures.removeIf(picture -> picture.number() == number);
     }
 
-    /** Marks it in an inventory or its dock at {@code now}. */
-    void seen(final long now) {
+    /** Marks it in {@code carrier}'s inventory, or in its dock for none, at {@code now}. */
+    void seen(final long now, @Nullable final UUID carrier) {
         seenAt = now;
+        this.carrier = carrier;
     }
 
     /** The device's state as it is saved. */
@@ -411,6 +423,9 @@ public final class PortableState {
         tag.put("Pictures", gallery);
         tag.putInt("NextPicture", nextPicture);
         tag.putLong("SeenAt", seenAt);
+        if (carrier != null) {
+            tag.putUUID("Carrier", carrier);
+        }
         if (!walletAddress.isEmpty()) {
             tag.putString("WalletAddress", walletAddress);
             tag.putString("WalletKey", walletKey);

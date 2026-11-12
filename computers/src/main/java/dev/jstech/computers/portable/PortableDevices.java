@@ -16,7 +16,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Predicate;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -162,11 +164,11 @@ public final class PortableDevices extends SavedData {
         return state != null && changed(state.deletePicture(number));
     }
 
-    /** Marks the device {@code id} in an inventory or its dock at {@code now}. */
-    public void seen(final UUID id, final long now) {
+    /** Marks the device {@code id} in {@code carrier}'s inventory, or in its dock for none, at {@code now}. */
+    public void seen(final UUID id, final long now, @Nullable final UUID carrier) {
         final PortableState state = devices.get(id);
-        if (state != null && state.seenAt() != now) {
-            state.seen(now);
+        if (state != null && (state.seenAt() != now || !Objects.equals(state.carrier(), carrier))) {
+            state.seen(now, carrier);
             setDirty();
         }
     }
@@ -176,11 +178,17 @@ public final class PortableDevices extends SavedData {
         return changed(devices.remove(id) != null);
     }
 
-    /** Lets go every device not in an inventory nor a dock since {@code before}, and answers which they were. */
-    public List<UUID> eraseUnseenSince(final long before) {
+    /**
+     * Lets go every device not in an inventory nor a dock since {@code before}, and answers which they were. A device
+     * holding a wallet is never let go, nor one last in the inventory of a player who is away, whom {@code online}
+     * says is not on the server: it is in their inventory still.
+     */
+    public List<UUID> eraseUnseenSince(final long before, final Predicate<UUID> online) {
         final List<UUID> gone = new ArrayList<>();
         devices.entrySet().removeIf(entry -> {
-            if (entry.getValue().seenAt() < before) {
+            final PortableState state = entry.getValue();
+            final boolean away = state.carrier() != null && !online.test(state.carrier());
+            if (state.seenAt() < before && state.walletKey().isEmpty() && !away) {
                 gone.add(entry.getKey());
                 return true;
             }

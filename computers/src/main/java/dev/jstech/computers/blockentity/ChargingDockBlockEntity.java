@@ -139,7 +139,7 @@ public class ChargingDockBlockEntity extends SyncedBlockEntity {
     private void seen(final ItemStack held) {
         final UUID id = Portables.id(held);
         if (id != null && level instanceof ServerLevel server && server.getGameTime() % Portables.LOOK_EVERY == 0) {
-            PortableDevices.get(server.getServer()).seen(id, server.getGameTime());
+            PortableDevices.get(server.getServer()).seen(id, server.getGameTime(), null);
         }
     }
 }

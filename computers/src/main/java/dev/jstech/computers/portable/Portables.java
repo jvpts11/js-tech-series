@@ -132,7 +132,7 @@ public final class Portables {
         final PortableState state = devices.of(id, model);
         // In an inventory, on or flat, it is not lost.
         if (now % LOOK_EVERY == 0 || state.seenAt() == 0L) {
-            devices.seen(id, now);
+            devices.seen(id, now, player.getUUID());
         }
         if (!isOn(stack)) {
             switchOn(stack, model, now);

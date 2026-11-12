@@ -145,7 +145,8 @@ as a computer's.
 
 Whoever loses a portable loses what was on it: when its item is destroyed (lava, fire, the void, despawning) the server
 lets its state go, and a portable out of every inventory and every dock for 72 hours of the server running is let go
-too (`[wireless] lost_device_hours` in `jscomputers-server.toml`).
+too (`[wireless] lost_device_hours` in `jscomputers-server.toml`), unless it was last in the inventory of a player who
+is away; a portable holding a wallet is never let go.
 
 ## Two places over a long-distance line
 

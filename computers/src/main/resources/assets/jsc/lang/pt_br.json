@@ -3445,7 +3445,7 @@
   "jsc.configuration.update.tooltip": "O que as placas de uso pessoal cobram por mudar um item: fundir, encantar, reparar, combinar e nomear.",
   "jsc.configuration.wireless": "Sem fio",
   "jsc.configuration.wireless.lost_device_hours": "Dispositivos perdidos",
-  "jsc.configuration.wireless.lost_device_hours.tooltip": "Quanto tempo um dispositivo portátil pode ficar fora do inventário de todos os jogadores e de todas as bases de carga antes que o servidor apague o que havia nele, em horas de servidor rodando: os apps, os alertas, o armazenamento e as fotos.\nUm dispositivo cujo item é destruído (lava, fogo, o vazio, sumir no chão) é apagado na hora.",
+  "jsc.configuration.wireless.lost_device_hours.tooltip": "Quanto tempo um dispositivo portátil pode ficar fora do inventário de todos os jogadores e de todas as bases de carga antes que o servidor apague o que havia nele, em horas de servidor rodando: os apps, os alertas, o armazenamento e as fotos.\nUm dispositivo que esteve por último no inventário de um jogador ausente fica guardado, e um com carteira, sempre.\nUm dispositivo cujo item é destruído (lava, fogo, o vazio, sumir no chão) é apagado na hora.",
   "jsc.configuration.wireless.lost_device_hours.unit": "h",
   "jsc.configuration.wireless.tooltip": "Os dispositivos portáteis: quanto tempo um perdido guarda o que havia nele.",
   "jsc.copy.about_seconds": "Cerca de %s segundos",

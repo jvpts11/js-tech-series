@@ -390,10 +390,31 @@ public final class PortableAppsGameTests {
         final ItemStack kept = hold(player, PortableItems.QPHONE.get());
         final UUID lost = Portables.id(hold(player, PortableItems.QPHONE_5.get()));
         final long now = helper.getLevel().getGameTime();
-        devices.seen(Portables.id(kept), now + 10);
-        final List<UUID> gone = devices.eraseUnseenSince(now + 5);
+        devices.seen(Portables.id(kept), now + 10, player.getUUID());
+        final List<UUID> gone = devices.eraseUnseenSince(now + 5, everyone -> true);
         helper.assertTrue(gone.contains(lost) && devices.find(lost) == null, "the unseen one is let go");
         helper.assertTrue(devices.find(Portables.id(kept)) != null, "the one seen since stays");
+        helper.succeed();
+    }
+
+    /**
+     * A device last in the inventory of a player who is away is in their inventory still, and one holding a wallet is
+     * never let go, however long either goes unseen.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void lost_aDeviceOfAPlayerAwayOrHoldingAWalletStays(final GameTestHelper helper) {
+        final ServerPlayer player = player(helper);
+        final PortableDevices devices = PortableDevices.get(helper.getLevel().getServer());
+        final UUID carried = Portables.id(hold(player, PortableItems.QPHONE.get()));
+        final UUID wallet = Portables.id(hold(player, PortableItems.QPHONE_5.get()));
+        devices.keepWallet(wallet, "TRC1away", "key");
+        final long now = helper.getLevel().getGameTime();
+        devices.eraseUnseenSince(now + 5, nobody -> false);
+        helper.assertTrue(devices.find(carried) != null, "its player away, the device they carried stays");
+        final List<UUID> gone = devices.eraseUnseenSince(now + 5, everyone -> true);
+        helper.assertTrue(gone.contains(carried) && devices.find(carried) == null,
+                "with its player back and the device still unseen, it is let go");
+        helper.assertTrue(devices.find(wallet) != null, "while the one holding a wallet always stays");
         helper.succeed();
     }
 

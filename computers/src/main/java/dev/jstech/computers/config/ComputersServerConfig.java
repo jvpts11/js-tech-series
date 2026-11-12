@@ -240,6 +240,7 @@ public final class ComputersServerConfig {
             .comment("How long a portable device may be out of every player's inventory and every charging dock "
                             + "before the server lets go of what was on it, in hours of the server running: its apps, "
                             + "its alerts, its storage and its pictures.",
+                    "A device last in the inventory of a player who is away is kept, and one holding a wallet always.",
                     "A device whose item is destroyed (lava, fire, the void, despawning) is let go at once.")
             .named("Lost devices")
             .unit("h");

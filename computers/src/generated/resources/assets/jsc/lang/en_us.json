@@ -3951,7 +3951,7 @@
   "jsc.configuration.villagers.tooltip": "The two professions of the computers, and the villages' computer shop.",
   "jsc.configuration.wireless": "Wireless",
   "jsc.configuration.wireless.lost_device_hours": "Lost devices",
-  "jsc.configuration.wireless.lost_device_hours.tooltip": "How long a portable device may be out of every player's inventory and every charging dock before the server lets go of what was on it, in hours of the server running: its apps, its alerts, its storage and its pictures.\nA device whose item is destroyed (lava, fire, the void, despawning) is let go at once.",
+  "jsc.configuration.wireless.lost_device_hours.tooltip": "How long a portable device may be out of every player's inventory and every charging dock before the server lets go of what was on it, in hours of the server running: its apps, its alerts, its storage and its pictures.\nA device last in the inventory of a player who is away is kept, and one holding a wallet always.\nA device whose item is destroyed (lava, fire, the void, despawning) is let go at once.",
   "jsc.configuration.wireless.lost_device_hours.unit": "h",
   "jsc.configuration.wireless.tooltip": "The portable devices: how long a lost one keeps what was on it.",
   "jsc.console.already_open": "the %s is already open",
