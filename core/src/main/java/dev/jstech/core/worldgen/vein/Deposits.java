@@ -50,7 +50,7 @@ public final class Deposits {
     private static final Map<ResourceLocation, DepositType> DECLARED = new ConcurrentHashMap<>();
     private static final Set<ResourceLocation> SUPERSEDED = ConcurrentHashMap.newKeySet();
     private static final Map<ResourceLocation, BooleanSupplier> GATES = new ConcurrentHashMap<>();
-    private static volatile Known known = new Known(-1, -1, -1, -1, List.of());
+    private static volatile Known known = new Known(-1, -1, -1, -1, false, List.of());
 
     private Deposits() {
     }
@@ -99,23 +99,28 @@ public final class Deposits {
 
     /**
      * Every kind of vein the server lays, by id in order: those the data packs' files say, those declared that no
-     * file writes over, and the veins other mods' moved ores lie in ({@link MovedOres}), but none superseded.
+     * file writes over, and, while the server moves other mods' ores ({@link VeinBalance#moveOthers}), the veins
+     * those ores lie in ({@link MovedOres}); none superseded.
      */
     public static List<Entry> all() {
         final Known now = known;
         final long files = FILES.version();
         final long moved = MovedOres.version();
+        final boolean moving = VeinBalance.moveOthers();
         if (now.files() == files && now.declared() == DECLARED.size() && now.moved() == moved
-                && now.superseded() == SUPERSEDED.size()) {
+                && now.superseded() == SUPERSEDED.size() && now.moving() == moving) {
             return now.entries();
         }
         final Map<ResourceLocation, Entry> byId = new TreeMap<>();
         DECLARED.forEach((id, type) -> byId.put(id, new Entry(id, type, List.of())));
         FILES.entries().forEach((id, type) -> byId.put(id, new Entry(id, type, List.of())));
-        MovedOres.deposits().forEach(entry -> byId.putIfAbsent(entry.id(), entry));
+        // While other mods' ores are not moved they are laid scattered as their mods lay them, and in no vein.
+        if (moving) {
+            MovedOres.deposits().forEach(entry -> byId.putIfAbsent(entry.id(), entry));
+        }
         SUPERSEDED.forEach(byId::remove);
         final List<Entry> entries = List.copyOf(byId.values());
-        known = new Known(files, DECLARED.size(), moved, SUPERSEDED.size(), entries);
+        known = new Known(files, DECLARED.size(), moved, SUPERSEDED.size(), moving, entries);
         return entries;
     }
 
@@ -140,7 +145,7 @@ public final class Deposits {
     }
 
     /* The kinds as last worked out, and what they were worked out from. */
-    private record Known(long files, int declared, long moved, int superseded, List<Entry> entries) {
+    private record Known(long files, int declared, long moved, int superseded, boolean moving, List<Entry> entries) {
     }
 
     /** A kind of vein being declared; it starts as an overworld vein of every rock, as common as copper. */

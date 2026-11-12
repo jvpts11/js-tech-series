@@ -161,6 +161,10 @@ public final class VehicleHolds {
      * With not enough, it draws nothing.
      */
     public boolean draw(final double joules, final boolean electric) {
+        // A draw no number gives would leave what it owes no number, and it would never draw again.
+        if (!Double.isFinite(joules)) {
+            return false;
+        }
         if (joules <= 0) {
             return true;
         }

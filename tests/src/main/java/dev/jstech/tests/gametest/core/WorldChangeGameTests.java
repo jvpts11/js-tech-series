@@ -103,6 +103,14 @@ public final class WorldChangeGameTests {
             Retrogen.work(land, Integer.MAX_VALUE);
             helper.assertTrue(!Retrogen.done(lone).contains(TestWorldChanges.BEACON),
                     "a chunk whose neighbours are not loaded waits for them");
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    land.getChunk(LONE + dx, LONE + dz);
+                }
+            }
+            helper.assertTrue(Retrogen.waiting(land) >= 1, "its neighbours made new, it waits for its work again");
+            Retrogen.work(land, Integer.MAX_VALUE);
+            helper.assertTrue(Retrogen.done(lone).contains(TestWorldChanges.BEACON), "and has it");
         } finally {
             RuntimeDimensions.remove(server, copy);
         }

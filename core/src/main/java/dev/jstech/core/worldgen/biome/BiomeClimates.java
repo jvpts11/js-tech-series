@@ -66,7 +66,7 @@ public final class BiomeClimates {
      */
     public static double celsius(final Level level, final BlockPos pos) {
         final BlockPos at = MovingStructures.inWorld(level, pos);
-        return of(level.getBiome(at)).celsius(at.getY(), dayOfYear(level), daysAYear());
+        return of(level.getBiome(at)).celsius(at.getY(), dayOfYear(level), daysAYear(level));
     }
 
     /**
@@ -89,7 +89,7 @@ public final class BiomeClimates {
         if (own.isEmpty()) {
             return null;
         }
-        return new HeatClimate.Air(HeatMath.kelvin(own.get().celsius(pos.getY(), dayOfYear(level), daysAYear())),
+        return new HeatClimate.Air(HeatMath.kelvin(own.get().celsius(pos.getY(), dayOfYear(level), daysAYear(level))),
                 DimensionRulesData.of(level).at(pos.getY() + 0.5).pressure());
     }
 
@@ -101,11 +101,12 @@ public final class BiomeClimates {
             case AUTUMN -> 2;
             case WINTER -> 3;
         };
-        return before * (double) WorldCalendar.calendar().daysPerSeason() + now.dayOfSeason();
+        // Counted in the dimension's own seasons, as its date is: a world with a year of its own has its own length.
+        return before * (double) WorldCalendar.calendarOf(level).daysPerSeason() + now.dayOfSeason();
     }
 
-    private static double daysAYear() {
-        final GameCalendar calendar = WorldCalendar.calendar();
+    private static double daysAYear(final Level level) {
+        final GameCalendar calendar = WorldCalendar.calendarOf(level);
         return (double) calendar.daysPerSeason() * Season.perYear();
     }
 }

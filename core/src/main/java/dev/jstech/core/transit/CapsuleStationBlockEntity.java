@@ -194,13 +194,7 @@ public class CapsuleStationBlockEntity extends SyncedBlockEntity implements Line
 
     /** Takes in a capsule's {@code items}, all of them, if it has room for each; whether it did. */
     public boolean receive(final List<ItemStack> items) {
-        int empty = 0;
-        for (int slot = 0; slot < this.incoming.getSlots(); slot++) {
-            if (this.incoming.getStackInSlot(slot).isEmpty()) {
-                empty++;
-            }
-        }
-        if (empty < items.size()) {
+        if (emptyIncoming() < items.size()) {
             return false;
         }
         int slot = 0;
@@ -238,7 +232,8 @@ public class CapsuleStationBlockEntity extends SyncedBlockEntity implements Line
             return SendOutcome.NO_STATION;
         }
         final long now = level.getGameTime();
-        if (now < this.nextCapsule.get() || !readyToSend(level, slots.size())) {
+        if (now < this.nextCapsule.get() || !roomAt(level, station.get(), slots.size())
+                || !readyToSend(level, slots.size())) {
             return SendOutcome.NOT_YET;
         }
         launch(level, now, station.get(), slots);
@@ -339,10 +334,38 @@ public class CapsuleStationBlockEntity extends SyncedBlockEntity implements Line
                 slots.add(slot);
             }
         }
-        if (!readyToSend(level, slots.size())) {
+        if (!roomAt(level, station.get(), slots.size()) || !readyToSend(level, slots.size())) {
             return;
         }
         launch(level, now, station.get(), slots);
+    }
+
+    /*
+     * Whether the station at {@code to} has room for a capsule of {@code stacks} stacks beside the capsules already on
+     * their way to it: one it could not take would wait in the tubes, and more after it, for as long as it is full.
+     */
+    private static boolean roomAt(final ServerLevel level, final BlockPos to, final int stacks) {
+        if (!(level.getBlockEntity(to) instanceof CapsuleStationBlockEntity station)) {
+            return false;
+        }
+        int coming = stacks;
+        for (final Capsule capsule : CapsuleTransit.inFlight(level)) {
+            if (capsule.to().equals(to)) {
+                coming += capsule.items().size();
+            }
+        }
+        return station.emptyIncoming() >= coming;
+    }
+
+    /* How many of the slots of what came are empty. */
+    private int emptyIncoming() {
+        int empty = 0;
+        for (int slot = 0; slot < this.incoming.getSlots(); slot++) {
+            if (this.incoming.getStackInSlot(slot).isEmpty()) {
+                empty++;
+            }
+        }
+        return empty;
     }
 
     /* Sends a capsule of what waits in {@code slots} to the station at {@code to}, and spends what sending costs. */

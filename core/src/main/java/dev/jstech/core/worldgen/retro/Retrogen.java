@@ -182,10 +182,10 @@ public final class Retrogen {
         }
         if (event.isNewChunk()) {
             keep(chunk, new LinkedHashSet<>(declared()));
-            return;
+        } else {
+            look(level, chunk);
         }
-        look(level, chunk);
-        // A neighbour let go while this chunk was missing can go on now.
+        // A neighbour let go while this chunk was missing can go on now, whether this one is new or old.
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 final LevelChunk near = level.getChunkSource().getChunkNow(chunk.getPos().x + dx,

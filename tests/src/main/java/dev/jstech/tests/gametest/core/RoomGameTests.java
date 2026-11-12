@@ -28,6 +28,7 @@ import dev.jstech.core.room.GasMath;
 import dev.jstech.core.room.Room;
 import dev.jstech.core.room.RoomBalance;
 import dev.jstech.core.room.RoomEvent;
+import dev.jstech.core.room.RoomStore;
 import dev.jstech.core.room.RoomVent;
 import dev.jstech.core.room.Seal;
 import dev.jstech.core.room.Seals;
@@ -100,6 +101,8 @@ public final class RoomGameTests {
     private static final double CARRIED = 7;
     private static final Map<ResourceLocation, Double> NITROGEN = Map.of(AirMix.NITROGEN, 1.0);
     private static final Map<ResourceLocation, Double> OXYGEN = Map.of(AirMix.OXYGEN, 1.0);
+    /* A second of the rooms and a little more, in ticks. */
+    private static final int A_ROOMS_SECOND = 25;
 
     private RoomGameTests() {
     }
@@ -119,6 +122,22 @@ public final class RoomGameTests {
                             "full of the overworld's air; " + room.air());
                     final Climate inside = SealedRooms.climateAt(helper.getLevel(), helper.absolutePos(INSIDE));
                     helper.assertTrue(inside.temperature() == 20, "kept at 20 °C; " + inside);
+                })
+                .thenSucceed();
+    }
+
+    /* A second moves a room's air, which the world saves: the rooms are marked to be saved, or a reload undoes it. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void room_secondIsSavedWithTheWorld(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        hut(helper, LOW, HIGH, Blocks.STONE);
+        track(helper, INSIDE);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(room(helper, INSIDE).isPresent(), "the closed hut is a room"))
+                .thenExecute(() -> RoomStore.of(level).setDirty(false))
+                .thenExecuteAfter(A_ROOMS_SECOND, () -> {
+                    untrack(helper, INSIDE);
+                    helper.assertTrue(RoomStore.of(level).isDirty(), "a second of its air is kept to be saved");
                 })
                 .thenSucceed();
     }
@@ -220,6 +239,30 @@ public final class RoomGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(room(helper, INSIDE).map(Room::volume).orElse(0) == 8,
                         "and one taken away by a command"))
                 .thenExecute(() -> untrack(helper, INSIDE))
+                .thenSucceed();
+    }
+
+    /* A block set in a sealed room presses its air into the rest: none of it is lost, and the pressure rises. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 300)
+    public static void room_keepsItsAirWhenABlockIsSetInIt(final GameTestHelper helper) {
+        hut(helper, LOW, HIGH, Blocks.STONE);
+        track(helper, INSIDE);
+        final double[] held = new double[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(room(helper, INSIDE).map(Room::volume).orElse(0) == 8,
+                        "the room is found"))
+                .thenExecute(() -> {
+                    held[0] = moles(room(helper, INSIDE).orElseThrow());
+                    helper.setBlock(new BlockPos(4, 3, 4), Blocks.STONE);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(room(helper, INSIDE).map(Room::volume).orElse(0) == 7,
+                        "seven blocks of air left"))
+                .thenExecute(() -> {
+                    final double now = moles(room(helper, INSIDE).orElseThrow());
+                    untrack(helper, INSIDE);
+                    helper.assertTrue(Math.abs(now - held[0]) < held[0] * 1e-9,
+                            "the room holds all the air it held: " + now + " of " + held[0]);
+                })
                 .thenSucceed();
     }
 
@@ -781,6 +824,11 @@ public final class RoomGameTests {
 
     private static Optional<Room> room(final GameTestHelper helper, final BlockPos at) {
         return SealedRooms.roomAt(helper.getLevel(), helper.absolutePos(at));
+    }
+
+    /* Every mole of gas {@code room} holds, of whatever gas. */
+    private static double moles(final Room room) {
+        return room.gases().values().stream().mapToDouble(Double::doubleValue).sum();
     }
 
     private static void track(final GameTestHelper helper, final BlockPos at) {

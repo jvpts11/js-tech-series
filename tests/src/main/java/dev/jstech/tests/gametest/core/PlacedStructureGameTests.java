@@ -108,6 +108,7 @@ public final class PlacedStructureGameTests {
         helper.assertTrue(fit.suits(60, 66), "ground that rises as far as it allows suits it");
         helper.assertTrue(!fit.suits(60, 67), "steeper ground does not");
         helper.assertTrue(!fit.suits(39, 40) && !fit.suits(121, 122), "nor ground below or above its heights");
+        helper.assertTrue(!fit.suits(116, 121), "nor ground whose highest corner rises above them");
         helper.assertTrue(StructureFit.ANYWHERE.suits(-2000, 2000), "and any ground suits a structure of anywhere");
         helper.succeed();
     }

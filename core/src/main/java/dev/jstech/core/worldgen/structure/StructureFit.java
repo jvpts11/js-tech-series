@@ -45,6 +45,6 @@ public record StructureFit(int footprint, int slope, int minY, int maxY, boolean
 
     /** Whether ground whose corners lie from {@code lowest} to {@code highest} suits it. */
     public boolean suits(final int lowest, final int highest) {
-        return (this.slope < 0 || highest - lowest <= this.slope) && lowest >= this.minY && lowest <= this.maxY;
+        return (this.slope < 0 || highest - lowest <= this.slope) && lowest >= this.minY && highest <= this.maxY;
     }
 }

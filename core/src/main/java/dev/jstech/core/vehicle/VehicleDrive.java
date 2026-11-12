@@ -51,6 +51,8 @@ public final class VehicleDrive {
     private static final double HEAT_TIME = 60;
     private static final double TO_RPM = 60 / (2 * Math.PI);
     private static final double STILL = 0.5;
+    /* The least speed its force is worked out at, in turns a minute, so a stand never divides by nothing. */
+    private static final double LEAST_RPM = 1;
 
     /** The gear it is in: below nought reverse, nought neutral, from one up the forward gears. */
     public int gear() {
@@ -108,7 +110,9 @@ public final class VehicleDrive {
             // Its turning force: an electric motor's the same up to its base speed, its power's above; a burning
             // engine's what its power gives at the speed it turns.
             final double power = engine.electric() ? engine.power() : engine.power() * share(engine, rpm);
-            final double spinning = Math.max(rpm, engine.electric() ? ELECTRIC_BASE * engine.maxRpm() : idle) / TO_RPM;
+            // At least a turn a minute: a burning engine its data gives no idle pulls away from a stand with no less.
+            final double spinning = Math.max(LEAST_RPM, Math.max(rpm, engine.electric()
+                    ? ELECTRIC_BASE * engine.maxRpm() : idle)) / TO_RPM;
             force = power / spinning * ratio * TRANSMISSION / wheelRadius * controls.throttle() * Math.signum(gear);
             load = controls.throttle() * (engine.electric() ? 1 : share(engine, rpm));
         }

@@ -196,6 +196,16 @@ public final class VeinGameTests {
         helper.assertTrue(MovedOres.deposits().stream().anyMatch(entry -> entry.id()
                         .equals(MOVED_ORE.withPrefix("moved/")) && !entry.targets().isEmpty()),
                 "and it has a vein of its own to be moved into");
+        final boolean wasMoving = VeinBalance.moveOthers();
+        try {
+            VeinBalance.setMoveOthers(false);
+            helper.assertTrue(Deposits.get(MOVED_ORE.withPrefix("moved/")).isEmpty(),
+                    "a vein the server lays only while it moves the ore, laid scattered else");
+            VeinBalance.setMoveOthers(true);
+            helper.assertTrue(Deposits.get(MOVED_ORE.withPrefix("moved/")).isPresent(), "and laid while it does");
+        } finally {
+            VeinBalance.setMoveOthers(wasMoving);
+        }
         helper.succeed();
     }
 

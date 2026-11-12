@@ -127,8 +127,9 @@ public final class BuildingTools {
 
     /**
      * Where pasting {@code copy} from {@code face} of {@code clicked} puts each of its blocks, for a player facing
-     * {@code facing}: turned as the player has turned since copying, its lowest corner in front of the face, reaching
-     * away from the player, to their right and up; the lowest layer first.
+     * {@code facing}: turned as the player has turned since copying, one corner in the block in front of the face,
+     * reaching out of a side face, else away from the player, and to their right; up from a top face or a side, down
+     * from a bottom face; so it never covers the block clicked. The lowest layer first.
      */
     public static Map<BlockPos, BlockState> pasted(final CopiedRegion copy, final BlockPos clicked,
                                                    final Direction face, final Direction facing) {
@@ -136,6 +137,8 @@ public final class BuildingTools {
         final Map<BlockPos, BlockState> turned = new HashMap<>();
         int minX = Integer.MAX_VALUE;
         int minZ = Integer.MAX_VALUE;
+        int maxX = Integer.MIN_VALUE;
+        int maxZ = Integer.MIN_VALUE;
         final Vec3i size = copy.size();
         for (int y = 0; y < size.getY(); y++) {
             for (int z = 0; z < size.getZ(); z++) {
@@ -143,6 +146,8 @@ public final class BuildingTools {
                     final BlockPos at = new BlockPos(x, y, z).rotate(rotation);
                     minX = Math.min(minX, at.getX());
                     minZ = Math.min(minZ, at.getZ());
+                    maxX = Math.max(maxX, at.getX());
+                    maxZ = Math.max(maxZ, at.getZ());
                     final BlockState state = copy.at(x, y, z);
                     if (!state.isAir()) {
                         turned.put(at, state.rotate(rotation));
@@ -151,15 +156,17 @@ public final class BuildingTools {
             }
         }
         final BlockPos anchor = clicked.relative(face);
+        final Direction right = facing.getClockWise();
+        final int fromX = reach(Direction.Axis.X, face, facing, right) > 0 ? minX : maxX;
+        final int fromZ = reach(Direction.Axis.Z, face, facing, right) > 0 ? minZ : maxZ;
+        final int fromY = face == Direction.DOWN ? size.getY() - 1 : 0;
         final Map<BlockPos, BlockState> out = new LinkedHashMap<>();
-        final int offsetX = minX;
-        final int offsetZ = minZ;
         turned.entrySet().stream()
                 .sorted(Comparator.comparingInt((Map.Entry<BlockPos, BlockState> entry) -> entry.getKey().getY())
                         .thenComparingInt(entry -> entry.getKey().getX())
                         .thenComparingInt(entry -> entry.getKey().getZ()))
-                .forEach(entry -> out.put(anchor.offset(entry.getKey().getX() - offsetX, entry.getKey().getY(),
-                        entry.getKey().getZ() - offsetZ), entry.getValue()));
+                .forEach(entry -> out.put(anchor.offset(entry.getKey().getX() - fromX,
+                        entry.getKey().getY() - fromY, entry.getKey().getZ() - fromZ), entry.getValue()));
         return out;
     }
 
@@ -288,8 +295,8 @@ public final class BuildingTools {
             return Placed.STOPPED;
         }
         final Item item = state.getBlock().asItem();
-        if (item == Items.AIR || !level.getBlockState(pos).canBeReplaced() || !state.canSurvive(level, pos)
-                || !level.isUnobstructed(state, pos, CollisionContext.empty())
+        if (item == Items.AIR || level.isOutsideBuildHeight(pos) || !level.getBlockState(pos).canBeReplaced()
+                || !state.canSurvive(level, pos) || !level.isUnobstructed(state, pos, CollisionContext.empty())
                 || !Protection.may(Actor.of(player), ProtectedAction.PLACE, level, pos)) {
             return Placed.SKIPPED;
         }
@@ -299,7 +306,10 @@ public final class BuildingTools {
             return Placed.OUT;
         }
         final BlockSnapshot before = BlockSnapshot.create(level.dimension(), level, pos);
-        level.setBlock(pos, state, Block.UPDATE_ALL);
+        if (!level.setBlock(pos, state, Block.UPDATE_ALL)) {
+            from.giveBack(player, new ItemStack(item));
+            return Placed.SKIPPED;
+        }
         if (EventHooks.onBlockPlace(player, before, face)) {
             before.restore(Block.UPDATE_ALL);
             // A block that could not stay goes back where it came from.
@@ -308,6 +318,18 @@ public final class BuildingTools {
         }
         Tools.spend(player, tool);
         return Placed.DONE;
+    }
+
+    /*
+     * Which way along {@code axis} a pasted region reaches, 1 or -1: out of a side face across it, else the way the
+     * player faces or their right lies along it.
+     */
+    private static int reach(final Direction.Axis axis, final Direction face, final Direction facing,
+                             final Direction right) {
+        if (face.getAxis() == axis) {
+            return face.getAxisDirection().getStep();
+        }
+        return (facing.getAxis() == axis ? facing : right).getAxisDirection().getStep();
     }
 
     /* The turn from facing {@code from} to facing {@code to}, both across the ground. */

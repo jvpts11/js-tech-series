@@ -146,6 +146,29 @@ public final class IndustrialAirGameTests {
                 .thenSucceed();
     }
 
+    /* A station whose slots of what came are full takes no capsule: the sender keeps it till there is room. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void station_sendsNothingToAFullStation(final GameTestHelper helper) {
+        final PneumaticStation sender = post(helper);
+        helper.setBlock(IRON_STATION.south(), Blocks.AIR);
+        final PneumaticStation full = helper.getBlockEntity(IRON_STATION);
+        for (int slot = 0; slot < full.incoming().getSlots(); slot++) {
+            full.incoming().setStackInSlot(slot, new ItemStack(Items.DIRT));
+        }
+        sender.airPort().tank().insert(new MatterStack(CompressedAir.air(), PneumaticPost.AIR_A_SEND * 4), false);
+        sender.items().insertItem(0, new ItemStack(Items.IRON_INGOT, 8), false);
+        helper.startSequence()
+                .thenIdle(PneumaticPost.RULES.every() * 3)
+                .thenExecute(() -> {
+                    helper.assertTrue(inFlight(helper, IRON_STATION).isEmpty()
+                            && sender.outgoing().getStackInSlot(0).getCount() == 8, "while it is full the iron waits");
+                    full.incoming().setStackInSlot(0, ItemStack.EMPTY);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(sender.outgoing().getStackInSlot(0).isEmpty(),
+                        "with room, it sends"))
+                .thenSucceed();
+    }
+
     /*
      * A sender of address 1 joined by a run of tubes to a station of address 3, which iron goes to, and one of
      * address 7, which everything else goes to, each facing a chest.

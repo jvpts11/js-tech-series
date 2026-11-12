@@ -42,6 +42,15 @@ class VehicleDriveTest {
     }
 
     @Test
+    void step_pullsAwayWithAFiniteForceForABurningEngineOfNoIdle() {
+        final VehicleDrive.Engine noIdle = new VehicleDrive.Engine(90_000, 0, 4500, 0.3, false, 1);
+        final VehicleDrive.Result result = drive.step(noIdle, FIVE, RADIUS, ahead(1), 0, AIR, TICK);
+
+        assertTrue(Double.isFinite(result.force()) && result.force() > 0, "it pulls away: " + result.force());
+        assertTrue(Double.isFinite(result.joules()), "and burns a number: " + result.joules());
+    }
+
+    @Test
     void step_changesUpAsTheSpeedRises() {
         int gear = 0;
         for (int speed = 1; speed <= 40; speed++) {

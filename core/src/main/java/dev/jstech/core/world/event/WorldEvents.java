@@ -152,12 +152,14 @@ public final class WorldEvents {
      * for one that reaches only so far (a player's place, picked as it would be, when none is given), lasting its
      * kind's time.
      *
-     * @return whether it was planned: the kind exists, and no event of it is planned or under way there
+     * @return whether it was planned: the kind exists, happens in that dimension, and no event of it is planned or
+     *         under way there
      */
     public static boolean plan(final ServerLevel level, final ResourceLocation id, final int inTicks,
                                final Optional<BlockPos> centre) {
         final Optional<WorldEventType> type = get(level, id);
-        if (type.isEmpty() || planned(level).stream().anyMatch(event -> event.type().equals(id))) {
+        if (type.isEmpty() || !type.get().happensIn(level.dimension())
+                || planned(level).stream().anyMatch(event -> event.type().equals(id))) {
             return false;
         }
         final Optional<BlockPos> place = type.get().local() ? centre.or(() -> pickPlace(level, type.get()))

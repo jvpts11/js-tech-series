@@ -41,6 +41,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
@@ -94,6 +95,11 @@ public final class VehicleGameTests {
     private static final String BATCH = "jscore_vehicles";
     private static final String DECK_BATCH = "jscore_vehicles_deck";
     private static final DriverInput AHEAD = new DriverInput(1.0F, 0.0F, false, false);
+    private static final DriverInput BACK = new DriverInput(-1.0F, 0.0F, false, false);
+    /* How long the van backs up, and then is asked ahead, in ticks. */
+    private static final int BACKING = 30;
+    /* Where a vehicle's saved state names its kind. */
+    private static final String SAVED_KIND = "Vehicle";
 
     private VehicleGameTests() {
     }
@@ -125,6 +131,27 @@ public final class VehicleGameTests {
         helper.succeed();
     }
 
+    /* A vehicle of a kind no pack gives now keeps what it held, saved as it was, for when its kind comes back. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void van_ofAKindGoneKeepsWhatItHeld(final GameTestHelper helper) {
+        final VehicleEntity van = van(helper, new Vec3(4.5, 2, 4.5));
+        fuel(van, 300);
+        final CompoundTag saved = van.saveState();
+        van.discard();
+        final String kind = saved.getString(SAVED_KIND);
+        saved.putString(SAVED_KIND, "jstests:no_such_vehicle");
+        final VehicleEntity gone = new VehicleEntity(Vehicles.ENTITY.get(), helper.getLevel());
+        gone.loadState(saved);
+        helper.assertTrue(gone.holds().isEmpty(), "its kind is not known");
+        final CompoundTag again = gone.saveState();
+        again.putString(SAVED_KIND, kind);
+        final VehicleEntity back = new VehicleEntity(Vehicles.ENTITY.get(), helper.getLevel());
+        back.loadState(again);
+        helper.assertTrue(back.holds().map(held -> held.liquid().getFluidAmount()).orElse(0) == 300,
+                "saved again while its kind was gone, it still holds its fuel once it is back");
+        helper.succeed();
+    }
+
     @GameTest(template = ROAD, batch = BATCH, timeoutTicks = 200)
     public static void van_goesAheadOnItsFuelAndBurnsIt(final GameTestHelper helper) {
         final VehicleEntity van = van(helper, new Vec3(6.5, 2, 6.5));
@@ -140,6 +167,31 @@ public final class VehicleGameTests {
             van.discard();
             helper.succeed();
         });
+    }
+
+    /* Asked ahead while it rolls back, the van brakes and stops before it pulls away, as a car's driver expects. */
+    @GameTest(template = ROAD, batch = BATCH, timeoutTicks = 200)
+    public static void van_brakesWhenAskedAheadRollingBack(final GameTestHelper helper) {
+        final VehicleEntity van = van(helper, new Vec3(24.5, 2, 24.5));
+        fuel(van, 500);
+        final TestEntities.Robot robot = driver(helper, van);
+        robot.queue(new CoreRobotTasks.Drive(BACK, BACKING));
+        robot.queue(new CoreRobotTasks.Drive(AHEAD, BACKING));
+        final Vec3 start = van.position();
+        final double[] backed = new double[1];
+        helper.startSequence()
+                .thenExecuteAfter(BACKING, () -> {
+                    backed[0] = van.position().subtract(start).horizontalDistance();
+                    helper.assertTrue(backed[0] > 1, "the van backed up: " + backed[0] + " blocks");
+                })
+                .thenExecuteAfter(BACKING, () -> {
+                    final double after = van.position().subtract(start).horizontalDistance();
+                    robot.discard();
+                    van.discard();
+                    helper.assertTrue(after < backed[0] + 2, "asked ahead it braked rather than backing on: "
+                            + after + " blocks away after " + backed[0]);
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ROAD, batch = BATCH, timeoutTicks = 200)

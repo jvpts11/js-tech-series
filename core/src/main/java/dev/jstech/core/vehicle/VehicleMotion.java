@@ -156,7 +156,9 @@ final class VehicleMotion {
                 final Ground ground = ground(level, build);
                 final double grip = ground.grip(build);
                 final boolean backing = input.forward() < 0 && along < STILL;
-                final double throttle = backing ? -input.forward() : Math.max(0, input.forward());
+                // Asked ahead while rolling back, it brakes before it pulls, as asked back while rolling ahead.
+                final boolean against = againstTheRoll(input, along);
+                final double throttle = backing ? -input.forward() : against ? 0 : Math.max(0, input.forward());
                 final VehicleDrive.Controls controls = new VehicleDrive.Controls(throttle, backing,
                         !vehicle.switches().manual(), vehicle.takeShift(), running);
                 result = build.engine().isPresent()
@@ -169,8 +171,8 @@ final class VehicleMotion {
                     final double driven = mass * pull * Math.max(1, build.drivenWheels())
                             / Math.max(1, build.wheels().size());
                     force = Math.clamp(result.force(), -grip * driven, grip * driven);
-                    final boolean brakes = input.forward() < 0 && along > STILL;
-                    braking = brakes ? -input.forward() : vehicle.switches().parkingBrake() ? 1 : 0;
+                    final boolean brakes = input.forward() < 0 && along > STILL || against;
+                    braking = brakes ? Math.abs(input.forward()) : vehicle.switches().parkingBrake() ? 1 : 0;
                 }
                 vehicle.setSwitches(vehicle.switches().braking(braking > 0));
                 final double slope = -mass * pull * Math.sin(Math.toRadians(pitch));
@@ -221,7 +223,8 @@ final class VehicleMotion {
                     yield new VehicleDrive.Result(0, 0, 0, 0, air, 0);
                 }
                 final boolean backing = input.forward() < 0 && along < STILL;
-                final double throttle = backing ? -input.forward() : Math.max(0, input.forward());
+                final double throttle = backing ? -input.forward()
+                        : againstTheRoll(input, along) ? 0 : Math.max(0, input.forward());
                 yield drive().step(build.engine().get().spec().drive(build.engine().get().health()),
                         build.gearbox(), build.drivenRadius(), new VehicleDrive.Controls(throttle, backing,
                                 !vehicle.switches().manual(), vehicle.takeShift(), running), along, air, TICK);
@@ -242,6 +245,11 @@ final class VehicleMotion {
             lean(ground.pitch(), ground.roll());
             turnWheels(along, build);
         }
+    }
+
+    /* Whether {@code input} asks it ahead while it rolls back, faster than standing. */
+    private static boolean againstTheRoll(final DriverInput input, final double along) {
+        return input.forward() > 0 && along < -STILL;
     }
 
     /* Turns its wheels by how far it rolled this tick, kept within a turn. */

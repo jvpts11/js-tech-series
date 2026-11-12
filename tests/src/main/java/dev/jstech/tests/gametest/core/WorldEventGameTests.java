@@ -26,6 +26,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -86,6 +87,16 @@ public final class WorldEventGameTests {
                     NeoForge.EVENT_BUS.unregister(ended);
                 })
                 .thenSucceed();
+    }
+
+    /* A kind that happens only in some dimensions is planned nowhere else, by the schedule or by an operator. */
+    @GameTest(template = ARENA)
+    public static void event_isPlannedOnlyWhereItsKindHappens(final GameTestHelper helper) {
+        final ServerLevel nether = helper.getLevel().getServer().getLevel(Level.NETHER);
+        helper.assertTrue(nether != null && !WorldEvents.plan(nether, TestWorldChanges.STORM, 40, Optional.empty())
+                        && WorldEvents.planned(nether).stream().noneMatch(event -> event.type()
+                        .equals(TestWorldChanges.STORM)), "the overworld's storm is not planned in the Nether");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

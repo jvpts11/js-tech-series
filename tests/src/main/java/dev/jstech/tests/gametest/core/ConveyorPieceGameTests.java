@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import com.mojang.authlib.GameProfile;
 import dev.jstech.core.conveyor.BeltLane;
 import dev.jstech.core.conveyor.BeltSide;
 import dev.jstech.core.conveyor.BeltSlope;
@@ -18,11 +19,17 @@ import dev.jstech.core.inventory.ItemFilter;
 import dev.jstech.core.jstechseries.tools.SharedTools;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestConveyors;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -37,6 +44,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Core's pieces of conveyor beyond the plain belt: belts that rise and fall a block, laid to meet one another as
@@ -218,6 +226,25 @@ public final class ConveyorPieceGameTests {
         helper.succeed();
     }
 
+    /* What a diverter tells of its filter names each item by its key, so every player reads it in their language. */
+    @GameTest(template = ARENA)
+    public static void diverters_nameWhatTheyTurnAsideInThePlayersLanguage(final GameTestHelper helper) {
+        final BlockPos at = new BlockPos(2, Y, 2);
+        helper.setBlock(at, facing(TestConveyors.DIVERTER.get(), Direction.EAST));
+        final Listener player = new Listener(helper.getLevel());
+        final BlockPos origin = helper.absolutePos(BlockPos.ZERO);
+        player.moveTo(origin.getX() + 0.5, origin.getY() + Y, origin.getZ() + 0.5, -90F, 0F);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.REDSTONE));
+        click(helper, player, at, Direction.UP);
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.DIAMOND));
+        click(helper, player, at, Direction.UP);
+        final List<String> keys = new ArrayList<>();
+        keys(player.told, keys);
+        helper.assertTrue(keys.contains("item.minecraft.redstone") && keys.contains("item.minecraft.diamond"),
+                "both items go by their keys, not as words of the server's language: " + keys);
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = TIMEOUT)
     public static void machinesAbove_workItemsOnTheBeltAsTheyPass(final GameTestHelper helper) {
         final BlockPos first = new BlockPos(1, Y, 2);
@@ -293,5 +320,39 @@ public final class ConveyorPieceGameTests {
         final BlockPos pos = helper.absolutePos(relative);
         player.gameMode.useItemOn(player, helper.getLevel(), player.getMainHandItem(), InteractionHand.MAIN_HAND,
                 new BlockHitResult(Vec3.atCenterOf(pos).relative(face, 0.5), face, pos, false));
+    }
+
+    /* Every translation key in {@code component}, in its arguments and in what follows it. */
+    private static void keys(@Nullable final Component component, final List<String> into) {
+        if (component == null) {
+            return;
+        }
+        if (component.getContents() instanceof TranslatableContents translatable) {
+            into.add(translatable.getKey());
+            for (final Object arg : translatable.getArgs()) {
+                if (arg instanceof Component nested) {
+                    keys(nested, into);
+                }
+            }
+        }
+        for (final Component sibling : component.getSiblings()) {
+            keys(sibling, into);
+        }
+    }
+
+    /* A fake player who keeps the last message shown to them, which a fake player otherwise lets go. */
+    private static final class Listener extends FakePlayer {
+
+        @Nullable
+        private Component told;
+
+        Listener(final ServerLevel level) {
+            super(level, new GameProfile(UUID.randomUUID(), "diverter_listener"));
+        }
+
+        @Override
+        public void displayClientMessage(final Component message, final boolean overlay) {
+            this.told = message;
+        }
     }
 }

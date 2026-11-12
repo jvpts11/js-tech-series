@@ -209,6 +209,26 @@ public final class WorldEditGameTests {
                 .thenSucceed();
     }
 
+    /* An edit planned away from the server's thread, not undoable, leaves the player's last undoable one theirs. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void lastFor_keepsTheLastUndoableEditPastOneThatIsNot(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos at = farCorner();
+        final UUID player = UUID.randomUUID();
+        final WorldEdit undoable = WorldEdits.applyFor(level, player, EditPlan.builder()
+                .set(at, Blocks.GLASS.defaultBlockState()).undoable().build()).orElseThrow();
+        final AtomicReference<WorldEdit> planned = new AtomicReference<>();
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(undoable.over(), "the first edit is not over"))
+                .thenExecute(() -> planned.set(WorldEdits.planFor(level, player, BoundingBox.fromCorners(at,
+                        at.above()), snapshot -> EditPlan.builder().set(at.above(), Blocks.DIRT.defaultBlockState())
+                        .build()).orElseThrow()))
+                .thenWaitUntil(() -> helper.assertTrue(planned.get().over(), "the planned edit is not over"))
+                .thenExecute(() -> helper.assertTrue(WorldEdits.lastFor(player).orElseThrow() == undoable,
+                        "the edit they may undo is still the first"))
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void exportThenImport_setsTheBlocksTurnedWithWhatTheyHeld(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();

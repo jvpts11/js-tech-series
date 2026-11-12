@@ -267,18 +267,26 @@ public final class WorldEdits {
         return Optional.of(plan);
     }
 
-    /* Counts {@code edit} as {@code player}'s until it ends, and keeps it as the last they may undo. */
+    /*
+     * Counts {@code edit} as {@code player}'s until it ends, and keeps it as the last they may undo once its plan is
+     * known to be undoable: one still planning is kept as it begins, so it never displaces the last before then.
+     */
     private static WorldEdit counted(final WorldEdit edit, final UUID player) {
         edit.forPlayer(player);
         if (!edit.over()) {
             FOR_PLAYERS.add(edit);
             edit.whenOver(FOR_PLAYERS::remove);
         }
-        final EditPlan plan = edit.plan();
-        if (plan == null || plan.undoable()) {
-            LAST.put(player, edit);
-        }
+        keepToUndo(edit);
         return edit;
+    }
+
+    /* Keeps {@code edit} as the last its player may undo, when it is a player's and its plan is undoable. */
+    private static void keepToUndo(final WorldEdit edit) {
+        final EditPlan plan = edit.plan();
+        if (edit.player() != null && plan != null && plan.undoable()) {
+            LAST.put(edit.player(), edit);
+        }
     }
 
     /* What the block entity at {@code pos} holds, to be put back by an undo; null for a block with none. */
@@ -289,6 +297,7 @@ public final class WorldEdits {
 
     private static void begin(final WorldEdit edit, final EditPlan plan) {
         edit.planned(plan);
+        keepToUndo(edit);
         if (plan.size() == 0) {
             edit.end(WorldEdit.State.DONE);
         } else {

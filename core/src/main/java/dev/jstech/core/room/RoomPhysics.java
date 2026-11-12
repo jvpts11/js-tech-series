@@ -54,10 +54,12 @@ final class RoomPhysics {
             return;
         }
         final ServerLevel level = rooms.level();
+        boolean worked = false;
         for (final Room room : store.rooms().toArray(new Room[0])) {
             if (store.room(room.id()) == null || !loaded(level, room)) {
                 continue;
             }
+            worked = true;
             aboard(level, room);
             final double[] flow = outside(store, room);
             // A room open to the place round it, its air long the place's, is forgotten: a block asking for it finds
@@ -76,6 +78,10 @@ final class RoomPhysics {
             if (room.filledSince(room.air().breathable())) {
                 NeoForge.EVENT_BUS.post(new RoomEvent.Filled(level, room));
             }
+        }
+        // A second moves the rooms' air, water and fire, which are saved with the world: else a reload undoes them.
+        if (worked) {
+            store.setDirty();
         }
     }
 

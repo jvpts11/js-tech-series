@@ -13,14 +13,13 @@ import dev.jstech.core.inventory.ItemFilters;
 import dev.jstech.core.machine.MachineWrench;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextLists;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -155,16 +154,16 @@ public class DiverterBlock extends BeltPieceBlock {
             player.displayClientMessage(GameText.component(ConveyorTexts.DIVERTS_NOTHING), true);
             return;
         }
-        final List<Component> names = new ArrayList<>();
+        final List<Text> names = new ArrayList<>();
         for (final ItemFilter.Rule rule : filter.rules()) {
             if (rule instanceof ItemFilter.Fuzzy fuzzy) {
                 final ResourceLocation id = ResourceLocation.tryParse(fuzzy.item());
                 if (id != null) {
-                    names.add(BuiltInRegistries.ITEM.get(id).getDescription());
+                    names.add(GameText.of(BuiltInRegistries.ITEM.get(id).getDescription()));
                 }
             }
         }
-        final Text listed = GameText.of(ComponentUtils.formatList(names, Component.literal(LIST)));
+        final Text listed = TextLists.join(LIST, names);
         player.displayClientMessage(GameText.component(ConveyorTexts.DIVERTS.with(listed)), true);
     }
 }

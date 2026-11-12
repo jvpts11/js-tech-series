@@ -495,7 +495,12 @@ final class LevelRooms {
                 keeper = i;
             }
         }
-        final int total = Math.max(1, before.size());
+        // All its gas goes to its parts: the air of a block that became a wall is pressed into what is left of it.
+        int shared = 0;
+        for (final int each : overlap) {
+            shared += each;
+        }
+        final int total = Math.max(1, shared);
         for (int i = 0; i < parts.size(); i++) {
             final RoomFinder.Part part = parts.get(i);
             if (part.cells().isEmpty() || overlap[i] == 0 && i != keeper) {

@@ -64,6 +64,11 @@ public class VehicleEntity extends Entity implements IEnergyHolder, IAudible {
     private @Nullable VehicleDef builtWith;
     private int builtFrom = -1;
     private @Nullable VehicleHolds holds;
+    /*
+     * What it held as it was saved, kept as it was until its kind is known: one its pack no longer gives keeps its
+     * fuel, battery, boot and cargo for when the pack comes back.
+     */
+    private @Nullable CompoundTag unreadHolds;
     private @Nullable Ownership ownership;
     /* Whom its keys are cut for: kept as it is picked up and placed again, which makes a new entity of it. */
     private UUID keyId = UUID.randomUUID();
@@ -201,7 +206,12 @@ public class VehicleEntity extends Entity implements IEnergyHolder, IAudible {
             return Optional.empty();
         }
         build();
-        return Optional.of(holds(kind));
+        final VehicleHolds held = holds(kind);
+        if (unreadHolds != null) {
+            held.load(unreadHolds, level().registryAccess());
+            unreadHolds = null;
+        }
+        return Optional.of(held);
     }
 
     /** Its switches. */
@@ -705,8 +715,9 @@ public class VehicleEntity extends Entity implements IEnergyHolder, IAudible {
         drive.set(saved.contains(SAVED_GEAR) ? saved.getInt(SAVED_GEAR) : 1, saved.getDouble(SAVED_RPM),
                 saved.contains(SAVED_TEMPERATURE) ? saved.getDouble(SAVED_TEMPERATURE) : Double.NaN);
         partsChanged();
+        unreadHolds = tag.getCompound(SAVED_HOLDS);
         if (build() != null) {
-            holds().ifPresent(held -> held.load(tag.getCompound(SAVED_HOLDS), level().registryAccess()));
+            holds();
         }
     }
 
@@ -733,10 +744,14 @@ public class VehicleEntity extends Entity implements IEnergyHolder, IAudible {
         saved.putDouble(SAVED_RPM, drive.rpm());
         saved.putDouble(SAVED_TEMPERATURE, drive.temperature(AIR_TEMPERATURE));
         tag.put(SAVED_DRIVE, saved);
-        holds().ifPresent(held -> {
+        holds().ifPresentOrElse(held -> {
             final CompoundTag holding = new CompoundTag();
             held.save(holding, level().registryAccess());
             tag.put(SAVED_HOLDS, holding);
+        }, () -> {
+            if (unreadHolds != null) {
+                tag.put(SAVED_HOLDS, unreadHolds.copy());
+            }
         });
     }
 

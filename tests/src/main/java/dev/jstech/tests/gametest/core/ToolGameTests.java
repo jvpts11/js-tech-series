@@ -337,11 +337,55 @@ public final class ToolGameTests {
         helper.setBlock(6, 2, 6, Blocks.STONE);
         player.setYRot(90);
         use(helper, player, wand, new BlockPos(6, 2, 6), Direction.UP);
-        helper.assertBlockPresent(Blocks.STONE, 6, 3, 6);
-        helper.assertBlockProperty(new BlockPos(6, 3, 7), RotatedPillarBlock.AXIS, Direction.Axis.Z);
+        // Facing west, the stone that lay to the copier's right lies to the north, the player's right now.
+        helper.assertBlockPresent(Blocks.STONE, 6, 3, 5);
+        helper.assertBlockProperty(new BlockPos(6, 3, 6), RotatedPillarBlock.AXIS, Direction.Axis.Z);
         helper.assertTrue(player.getInventory().getItem(1).getCount() == 3
                         && player.getInventory().getItem(2).getCount() == 3,
                 "pasted turned a quarter as the player turned, from the inventory");
+        leave(helper, player);
+        helper.succeed();
+    }
+
+    /* Pasted from a side face, a region reaches out of the face, never into the block clicked. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void wand_pastesOutOfASideFace(final GameTestHelper helper) {
+        final ServerPlayer player = player(helper, "wand-side");
+        final ItemStack wand = new ItemStack(TestTools.WAND.get());
+        ItemStates.setMode(wand, TestTools.COPY);
+        player.setItemInHand(InteractionHand.MAIN_HAND, wand);
+        player.getInventory().setItem(1, new ItemStack(Items.STONE, 4));
+        helper.setBlock(2, 2, 2, Blocks.STONE);
+        helper.setBlock(2, 2, 3, Blocks.STONE);
+        player.setYRot(0);
+        use(helper, player, wand, new BlockPos(2, 2, 2), Direction.UP);
+        use(helper, player, wand, new BlockPos(2, 2, 3), Direction.UP);
+        ItemStates.setMode(wand, TestTools.PASTE);
+        helper.setBlock(6, 2, 6, Blocks.GLASS);
+        use(helper, player, wand, new BlockPos(6, 2, 6), Direction.NORTH);
+        helper.assertBlockPresent(Blocks.STONE, 6, 2, 5);
+        helper.assertBlockPresent(Blocks.STONE, 6, 2, 4);
+        helper.assertBlockPresent(Blocks.GLASS, 6, 2, 6);
+        helper.assertTrue(player.getInventory().getItem(1).getCount() == 2, "both stones placed, out of the face");
+        leave(helper, player);
+        helper.succeed();
+    }
+
+    /* At the top of the world a wand places nothing, and so takes no block and spends nothing. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void wand_placesNothingAboveTheWorldsTop(final GameTestHelper helper) {
+        final ServerPlayer player = player(helper, "wand-top");
+        final ItemStack wand = new ItemStack(TestTools.WAND.get());
+        ItemStates.setMode(wand, TestTools.PLANE);
+        player.setItemInHand(InteractionHand.MAIN_HAND, wand);
+        player.getInventory().setItem(1, new ItemStack(Items.STONE, 2));
+        final BlockPos top = new BlockPos(3, helper.getLevel().getMaxBuildHeight() - 1
+                - helper.absolutePos(BlockPos.ZERO).getY(), 3);
+        helper.setBlock(top, Blocks.STONE);
+        use(helper, player, wand, top, Direction.UP);
+        helper.assertTrue(player.getInventory().getItem(1).getCount() == 2,
+                "no stone taken for a place above the top: " + player.getInventory().getItem(1));
+        helper.setBlock(top, Blocks.AIR);
         leave(helper, player);
         helper.succeed();
     }
