@@ -38,6 +38,7 @@ public class ExtendedCdDriveScreen extends AbstractComputerScreen<ExtendedCdDriv
     private static final int TICKS_A_SECOND = 20;
     private static final long BYTES_A_KILOBYTE = 1_024L;
     private static final long BYTES_A_MEGABYTE = 1_048_576L;
+    private static final long MEGABYTES_A_GIGABYTE = 1_024L;
 
     public ExtendedCdDriveScreen(final ExtendedCdDriveMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -88,13 +89,17 @@ public class ExtendedCdDriveScreen extends AbstractComputerScreen<ExtendedCdDriv
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
         JsTechTheme.headerBar(g, x + ExtendedCdDriveLayout.HEADER_X, y + ExtendedCdDriveLayout.HEADER_Y,
                 ExtendedCdDriveLayout.HEADER_W);
-        Draw.text(g, font, title.getString().toUpperCase(Locale.ROOT), x + ExtendedCdDriveLayout.TITLE_X,
-                y + ExtendedCdDriveLayout.TITLE_Y, JsTechTheme.text());
+        // The tower's own name, without the era its block is named by: the window's look already says the era.
+        Draw.text(g, font, GameText.resolve(ExtendedCdDriveTexts.TITLE).toUpperCase(Locale.ROOT),
+                x + ExtendedCdDriveLayout.TITLE_X, y + ExtendedCdDriveLayout.TITLE_Y, JsTechTheme.accent());
         drawState(g, tower);
         JsTechTheme.panel(g, x + ExtendedCdDriveLayout.LEFT_X, y + ExtendedCdDriveLayout.LEFT_Y,
                 ExtendedCdDriveLayout.LEFT_W, ExtendedCdDriveLayout.PANEL_H);
-        JsTechTheme.panel(g, x + ExtendedCdDriveLayout.RIGHT_X, y + ExtendedCdDriveLayout.LEFT_Y,
-                ExtendedCdDriveLayout.RIGHT_W, ExtendedCdDriveLayout.PANEL_H);
+        for (int tray = 0; tray < ExtendedCdDriveBlockEntity.TRAYS; tray++) {
+            JsTechTheme.panel(g, x + ExtendedCdDriveLayout.ROW_X,
+                    y + ExtendedCdDriveLayout.ROW_Y + tray * ExtendedCdDriveLayout.ROW_STEP,
+                    ExtendedCdDriveLayout.ROW_W, ExtendedCdDriveLayout.ROW_H);
+        }
         for (final Slot slot : menu.slots) {
             if (slot.isActive()) {
                 JsTechTheme.slot(g, x + slot.x, y + slot.y);
@@ -158,26 +163,33 @@ public class ExtendedCdDriveScreen extends AbstractComputerScreen<ExtendedCdDriv
         } else {
             small(g, clip(disc.getHoverName().getString(), room), ExtendedCdDriveLayout.DISC_X,
                     ExtendedCdDriveLayout.DISC_Y, JsTechTheme.text());
-            final MediaFormat format = disc.getItem() instanceof FormattedMediaItem item ? item.format() : null;
-            if (format != null) {
-                small(g, clip(GameText.resolve(ExtendedCdDriveTexts.SIZE.with(format.text(),
-                        String.format(Locale.ROOT, "%,d", tower.bytes() / BYTES_A_MEGABYTE))), room),
-                        ExtendedCdDriveLayout.DISC_X, ExtendedCdDriveLayout.DISC_Y + ExtendedCdDriveLayout.LINE, dim);
+            if (disc.getItem() instanceof FormattedMediaItem item) {
+                // The kind of disc by its own name (a CD-ROM, a DVD-RW), though the player named the disc.
+                small(g, clip(GameText.resolve(ExtendedCdDriveTexts.SIZE.with(item.getName(disc).getString(),
+                        size(tower.bytes()))), room), ExtendedCdDriveLayout.DISC_X,
+                        ExtendedCdDriveLayout.DISC_Y + ExtendedCdDriveLayout.LINE, dim);
             }
         }
         final MediaFormat slowest = slowestBlank(tower);
-        box(g, ExtendedCdDriveLayout.SPEED_Y, ExtendedCdDriveTexts.SPEED, slowest == null ? "-"
+        readout(g, ExtendedCdDriveLayout.BOX_X, ExtendedCdDriveLayout.SPEED_Y, ExtendedCdDriveLayout.BOX_W,
+                ExtendedCdDriveTexts.SPEED, slowest == null ? "-"
                 : GameText.resolve(ExtendedCdDriveTexts.KB.with(String.format(Locale.ROOT, "%,d",
-                (long) PatternEncoderBlockEntity.bytesPerTick(slowest) * TICKS_A_SECOND / BYTES_A_KILOBYTE))));
+                (long) PatternEncoderBlockEntity.bytesPerTick(slowest) * TICKS_A_SECOND / BYTES_A_KILOBYTE))),
+                JsTechTheme.text());
         int done = 0;
         for (int tray = 0; tray < ExtendedCdDriveBlockEntity.TRAYS; tray++) {
             done += tower.written(tray) ? 1 : 0;
         }
-        box(g, ExtendedCdDriveLayout.COPIES_Y, ExtendedCdDriveTexts.COPIES, GameText.resolve(
-                ExtendedCdDriveTexts.COPIES_OF.with(done, Math.max(tower.copies(), done))));
+        readout(g, ExtendedCdDriveLayout.BOX_X, ExtendedCdDriveLayout.COPIES_Y, ExtendedCdDriveLayout.BOX_W,
+                ExtendedCdDriveTexts.COPIES, GameText.resolve(ExtendedCdDriveTexts.COPIES_OF.with(done,
+                Math.max(tower.copies(), done))), JsTechTheme.text());
         final boolean idle = tower.work() == ExtendedCdDriveBlockEntity.Work.IDLE;
-        button(g, ExtendedCdDriveLayout.COPY_X, ExtendedCdDriveTexts.COPY, idle && !disc.isEmpty(), mouseX, mouseY);
-        button(g, ExtendedCdDriveLayout.EJECT_X, ExtendedCdDriveTexts.EJECT, idle && !disc.isEmpty(), mouseX, mouseY);
+        final boolean pressable = idle && !disc.isEmpty();
+        // Copy stays lit while it copies, as a pressed key does; Eject reads plain while there is a disc to give.
+        button(g, ExtendedCdDriveLayout.COPY_X, ExtendedCdDriveTexts.COPY, pressable,
+                pressable || !idle ? JsTechTheme.accent() : dim, mouseX, mouseY);
+        button(g, ExtendedCdDriveLayout.EJECT_X, ExtendedCdDriveTexts.EJECT, pressable,
+                disc.isEmpty() ? dim : JsTechTheme.text(), mouseX, mouseY);
         small(g, GameText.resolve(ExtendedCdDriveTexts.NOTE_1), ExtendedCdDriveLayout.LABEL_X,
                 ExtendedCdDriveLayout.NOTE_Y, dim);
         small(g, GameText.resolve(ExtendedCdDriveTexts.NOTE_2), ExtendedCdDriveLayout.LABEL_X,
@@ -189,7 +201,7 @@ public class ExtendedCdDriveScreen extends AbstractComputerScreen<ExtendedCdDriv
         for (int tray = 0; tray < ExtendedCdDriveBlockEntity.TRAYS; tray++) {
             final int y = ExtendedCdDriveLayout.ROW_Y + tray * ExtendedCdDriveLayout.ROW_STEP;
             small(g, GameText.resolve(ExtendedCdDriveTexts.TRAY.with(tray + 1)), ExtendedCdDriveLayout.TRAY_LABEL_X,
-                    y + 6, JsTechTheme.dim());
+                    y + 5, JsTechTheme.dim());
             final int bx = leftPos + ExtendedCdDriveLayout.BAR_X;
             final int by = topPos + y + 7;
             g.fill(bx, by, bx + ExtendedCdDriveLayout.BAR_W, by + ExtendedCdDriveLayout.BAR_H, JsTechTheme.track());
@@ -203,20 +215,43 @@ public class ExtendedCdDriveScreen extends AbstractComputerScreen<ExtendedCdDriv
                     : tower.writing(tray) && tower.work() == ExtendedCdDriveBlockEntity.Work.WRITING
                     ? GameText.resolve(ExtendedCdDriveTexts.PERCENT.with((int) (tower.done() * 100)))
                     : GameText.resolve(ExtendedCdDriveTexts.READY);
-            JsTechTheme.textSRight(g, font, state, leftPos + ExtendedCdDriveLayout.STATE_X, topPos + y + 6,
-                    tower.written(tray) ? JsTechTheme.green() : JsTechTheme.dim());
+            JsTechTheme.textSRight(g, font, state, leftPos + ExtendedCdDriveLayout.STATE_X, topPos + y + 5,
+                    tower.written(tray) ? JsTechTheme.green() : empty ? JsTechTheme.dim() : JsTechTheme.text());
         }
     }
 
     private void drawReadouts(final GuiGraphics g, final ExtendedCdDriveBlockEntity tower) {
         final List<String> formats = new ArrayList<>();
         for (final MediaFormat format : ExtendedCdDriveBlockEntity.formats(tower.era())) {
-            formats.add(GameText.resolve(format.text()));
+            // Blu-ray by the mark on its discs, so the three formats fit the readout.
+            formats.add(format == MediaFormat.BLU_RAY ? GameText.resolve(ExtendedCdDriveTexts.BD)
+                    : GameText.resolve(format.text()));
         }
-        readout(g, 0, ExtendedCdDriveTexts.WRITES, String.join(", ", formats));
-        readout(g, 1, ExtendedCdDriveTexts.BURNED, GameText.resolve(ExtendedCdDriveTexts.DISCS.with(
-                String.format(Locale.ROOT, "%,d", tower.burned()))));
-        readout(g, 2, ExtendedCdDriveTexts.REFUSES, GameText.resolve(ExtendedCdDriveTexts.STORAGE));
+        final int x = ExtendedCdDriveLayout.READOUT_X;
+        final int w = ExtendedCdDriveLayout.READOUT_W;
+        final int step = ExtendedCdDriveLayout.READOUT_STEP;
+        readout(g, x, ExtendedCdDriveLayout.READOUT_Y, w, ExtendedCdDriveTexts.WRITES, String.join(", ", formats),
+                JsTechTheme.text());
+        readout(g, x, ExtendedCdDriveLayout.READOUT_Y + step, w, ExtendedCdDriveTexts.BURNED,
+                GameText.resolve(ExtendedCdDriveTexts.DISCS.with(String.format(Locale.ROOT, "%,d", tower.burned()))),
+                JsTechTheme.text());
+        readout(g, x, ExtendedCdDriveLayout.READOUT_Y + 2 * step, w, ExtendedCdDriveTexts.REFUSES,
+                GameText.resolve(ExtendedCdDriveTexts.STORAGE), JsTechTheme.dim());
+    }
+
+    /*
+     * A disc's size in whole megabytes, or gigabytes from a thousand and twenty-four of them, with a tenth below ten
+     * (a DVD's 3.9 GB); rounded up, so a disc holding less than a megabyte is not called empty.
+     */
+    private static String size(final long bytes) {
+        final long megabytes = (bytes + BYTES_A_MEGABYTE - 1) / BYTES_A_MEGABYTE;
+        if (megabytes < MEGABYTES_A_GIGABYTE) {
+            return GameText.resolve(ExtendedCdDriveTexts.MB.with(String.format(Locale.ROOT, "%,d", megabytes)));
+        }
+        final long tenths = (megabytes * 10 + MEGABYTES_A_GIGABYTE - 1) / MEGABYTES_A_GIGABYTE;
+        return GameText.resolve(ExtendedCdDriveTexts.GB.with(tenths < 100
+                ? String.format(Locale.ROOT, "%d.%d", tenths / 10, tenths % 10)
+                : String.format(Locale.ROOT, "%,d", (tenths + 9) / 10)));
     }
 
     /* The slowest format among the blanks in the writing trays, which sets the copy's pace; or none. */
@@ -233,34 +268,27 @@ public class ExtendedCdDriveScreen extends AbstractComputerScreen<ExtendedCdDriv
         return slowest;
     }
 
-    private void readout(final GuiGraphics g, final int index, final TextKey label, final String value) {
-        final int x = leftPos + ExtendedCdDriveLayout.READOUT_X;
-        final int y = topPos + ExtendedCdDriveLayout.READOUT_Y + index * ExtendedCdDriveLayout.READOUT_STEP;
-        JsTechTheme.panel(g, x, y, ExtendedCdDriveLayout.READOUT_W, ExtendedCdDriveLayout.READOUT_H);
+    /* One instrument of the window, at a point of it: its label small over its value, which sits right. */
+    private void readout(final GuiGraphics g, final int rx, final int ry, final int w, final TextKey label,
+                         final String value, final int colour) {
+        final int x = leftPos + rx;
+        final int y = topPos + ry;
+        JsTechTheme.panel(g, x, y, w, ExtendedCdDriveLayout.READOUT_H);
         JsTechTheme.textS(g, font, GameText.resolve(label), x + 3, y + 2, JsTechTheme.dim());
-        Draw.text(g, font, value, x + ExtendedCdDriveLayout.READOUT_W - 3 - font.width(value), y + 11,
-                JsTechTheme.text());
+        Draw.text(g, font, value, x + w - 3 - font.width(value), y + ExtendedCdDriveLayout.VALUE_Y, colour);
     }
 
-    private void box(final GuiGraphics g, final int y, final TextKey label, final String value) {
-        final int x = leftPos + ExtendedCdDriveLayout.BOX_X;
-        final int top = topPos + y;
-        JsTechTheme.panel(g, x, top, ExtendedCdDriveLayout.BOX_W, ExtendedCdDriveLayout.BOX_H);
-        JsTechTheme.textS(g, font, GameText.resolve(label), x + 3, top + 2, JsTechTheme.dim());
-        Draw.text(g, font, value, x + ExtendedCdDriveLayout.BOX_W - 3 - font.width(value), top + 10,
-                JsTechTheme.text());
-    }
-
-    private void button(final GuiGraphics g, final int bx, final TextKey label, final boolean active,
-                        final int mouseX, final int mouseY) {
+    /* A key of the window; {@code pressable} keys light up under the mouse. */
+    private void button(final GuiGraphics g, final int bx, final TextKey label, final boolean pressable,
+                        final int colour, final int mouseX, final int mouseY) {
         final int x = leftPos + bx;
         final int y = topPos + ExtendedCdDriveLayout.BUTTON_Y;
-        final boolean lit = active && mouseX >= x && mouseX < x + ExtendedCdDriveLayout.BUTTON_W && mouseY >= y
+        final boolean lit = pressable && mouseX >= x && mouseX < x + ExtendedCdDriveLayout.BUTTON_W && mouseY >= y
                 && mouseY < y + ExtendedCdDriveLayout.BUTTON_H;
         JsTechTheme.button(g, x, y, ExtendedCdDriveLayout.BUTTON_W, ExtendedCdDriveLayout.BUTTON_H, lit);
-        final int colour = !active ? JsTechTheme.dim() : lit ? JsTechTheme.text() : JsTechTheme.accent();
         final String words = GameText.resolve(label);
-        Draw.text(g, font, words, x + (ExtendedCdDriveLayout.BUTTON_W - font.width(words)) / 2, y + 3, colour);
+        Draw.text(g, font, words, x + (ExtendedCdDriveLayout.BUTTON_W - font.width(words)) / 2, y + 3,
+                lit ? JsTechTheme.text() : colour);
     }
 
     private ExtendedCdDriveBlockEntity tower() {

@@ -14,6 +14,8 @@ import dev.jstech.core.text.TextKey;
 @TextHolder
 final class ExtendedCdDriveTexts {
 
+    /** The tower's name over its window, the same in every era. */
+    static final TextKey TITLE = TextKey.of("jsc.extended_cd_drive.title", "Extended CD Drive");
     static final TextKey READ = TextKey.of("jsc.extended_cd_drive.read", "READ");
     static final TextKey SPEED = TextKey.of("jsc.extended_cd_drive.speed", "SPEED");
     static final TextKey COPIES = TextKey.of("jsc.extended_cd_drive.copies", "COPIES");
@@ -25,7 +27,12 @@ final class ExtendedCdDriveTexts {
     static final TextKey NOTE_2 = TextKey.of("jsc.extended_cd_drive.note_2", "Disc Creator copies.");
     static final TextKey NO_DISC = TextKey.of("jsc.extended_cd_drive.no_disc", "Put the disc to");
     static final TextKey NO_DISC_2 = TextKey.of("jsc.extended_cd_drive.no_disc_2", "copy here.");
-    static final TextKey SIZE = TextKey.of("jsc.extended_cd_drive.size", "%s, %s MB");
+    /** The kind of disc read and its size, which is {@link #MB} or {@link #GB}. */
+    static final TextKey SIZE = TextKey.of("jsc.extended_cd_drive.size", "%s, %s");
+    static final TextKey MB = TextKey.of("jsc.extended_cd_drive.mb", "%s MB");
+    static final TextKey GB = TextKey.of("jsc.extended_cd_drive.gb", "%s GB");
+    /** Blu-ray by the mark its discs carry, where the formats a tower writes are listed. */
+    static final TextKey BD = TextKey.of("jsc.extended_cd_drive.bd", "BD");
     static final TextKey TRAY = TextKey.of("jsc.extended_cd_drive.tray", "W%s");
     static final TextKey DONE = TextKey.of("jsc.extended_cd_drive.done", "DONE");
     static final TextKey EMPTY = TextKey.of("jsc.extended_cd_drive.empty", "EMPTY");

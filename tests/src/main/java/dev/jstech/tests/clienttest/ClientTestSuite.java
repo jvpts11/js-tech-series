@@ -54,6 +54,7 @@ import dev.jstech.tests.clienttest.computers.EraSystemProgramsClientTests;
 import dev.jstech.tests.clienttest.computers.EraSystemSetupClientTests;
 import dev.jstech.tests.clienttest.computers.EraSystemsClientTests;
 import dev.jstech.tests.clienttest.computers.ExposureClientTests;
+import dev.jstech.tests.clienttest.computers.ExtendedCdDriveClientTests;
 import dev.jstech.tests.clienttest.computers.ExtremesClientTests;
 import dev.jstech.tests.clienttest.computers.FilesSyncClientTests;
 import dev.jstech.tests.clienttest.computers.FramesSevenTenClientTests;
@@ -532,6 +533,7 @@ public final class ClientTestSuite {
             BackupConsoleClientTests.class,
             MessengerKeptClientTests.class,
             ScannerClientTests.class,
+            ExtendedCdDriveClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,

@@ -4190,6 +4190,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   a printed sheet, a map and an enchanted book each have their own paper and ink. Its header names the scanner in its
   era's accent and says which page it reads ("PAGE 3 OF 12"), what it makes and its pace sit in readouts, Scan stays
   lit while it reads, a map goes by its number, and the window takes the places of its design.
+- (Computers) The Extended CD Drive's window says what disc it reads by the disc's own kind and its size in megabytes
+  or gigabytes ("CD-ROM, 1 MB", "DVD-ROM, 3.9 GB"), where it gave only the format and called any disc under a
+  megabyte "0 MB"; each writing tray is a row of its own, the window is headed by the tower's name in its era's
+  accent without the era, Copy stays lit while it copies, the formats it writes fit their readout ("CD, DVD, BD"),
+  and the window takes the places of its design.
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
