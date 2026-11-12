@@ -664,6 +664,14 @@ public final class InstallerFlow {
         return disk.slot() == this.eraseSlot ? disk.sizeMb() : disk.freeMb();
     }
 
+    /**
+     * The partitions and free space a page lists on {@code disk}, in the order they lie: the disk the installation is
+     * set to erase counts as empty, one stretch of free space across it, as its free space does.
+     */
+    public List<DiskSpot> spotsOn(final Disk disk) {
+        return disk.slot() == this.eraseSlot ? List.of(DiskSpot.free(0L, disk.sizeMb())) : disk.spots();
+    }
+
     /** The disk in that slot, or null when the machine has none there. */
     public Disk diskAt(final int slot) {
         for (final Disk disk : this.disks) {

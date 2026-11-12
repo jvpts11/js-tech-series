@@ -49,6 +49,11 @@ public final class DiskToolsClientTests {
     }
 
     @ClientTest(timeoutTicks = 3000)
+    public static void diskManagement_framesTen_listsBothDisksAndTheirPartitions(final ClientTestContext ctx) {
+        shot(ctx, opened(ctx, "frames_10", null, DISK_MANAGEMENT), DISK_MANAGEMENT, "disk-management-frames-10");
+    }
+
+    @ClientTest(timeoutTicks = 3000)
     public static void diskManagement_framesXp_listsBothDisksAndTheirPartitions(final ClientTestContext ctx) {
         shot(ctx, opened(ctx, "frames_xp", null, DISK_MANAGEMENT), DISK_MANAGEMENT, "disk-management-frames-xp");
     }
@@ -68,6 +73,7 @@ public final class DiskToolsClientTests {
                              final String label) {
         opened.thenScreenshot(REPORT_WAIT, label)
                 .then(SETTLE, () -> ctx.clickDesktop(window(ctx, tool).buttonCentre(DesktopWindow.BUTTON_MAXIMIZE)))
+                .thenWaitUntil(() -> window(ctx, tool).maximized(), SCREEN_WAIT, "the tool to be maximized")
                 .thenScreenshot(REPORT_WAIT, label + "-maximized");
     }
 

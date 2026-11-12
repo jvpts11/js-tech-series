@@ -101,7 +101,19 @@ final class SettingsSnapshots {
                 computer.ramTotalMb(), computer.totalVramMb(),
                 osLabel, platform, installed, disks, ledger.usedMb(), ramUses, shares, st.remoteAllowed(),
                 soundOf(computer, st), gpuOf(computer),
-                MachineEffects.of(computer, st), MachineEffects.indexOf(computer), swapOf(computer, ledger));
+                MachineEffects.of(computer, st), MachineEffects.indexOf(computer), swapOf(computer, ledger),
+                ramKindOf(computer));
+    }
+
+    /* The kind of the machine's memory as its modules' sheets name it ("DDR3"); empty for one with no build. */
+    private static Text ramKindOf(final IOsHost computer) {
+        if (computer instanceof AbstractComputerBlockEntity machine) {
+            final ComputerBuild build = machine.currentBuild();
+            if (build != null && !build.rams().isEmpty()) {
+                return build.rams().getFirst().generation().label();
+            }
+        }
+        return Text.EMPTY;
     }
 
     /* The swap behind the machine's memory: how big, how full, and where, by the system's own name for it. */

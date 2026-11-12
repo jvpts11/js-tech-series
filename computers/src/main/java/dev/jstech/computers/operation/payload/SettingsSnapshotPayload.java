@@ -70,10 +70,11 @@ public record SettingsSnapshotPayload(
         Gpu gpu,
         DesktopEffects effects,
         ExperienceIndex experience,
-        Swap swap
+        Swap swap,
+        Text ramKind
 ) implements CustomPacketPayload {
 
-    /** A snapshot of a machine with no swap behind its memory. */
+    /** A snapshot of a machine with no swap behind its memory, its memory's kind untold. */
     public SettingsSnapshotPayload(final BlockPos hostPos, final String wallpaper, final String computerName,
                                    final int accent, final boolean clock12h, final int guiScale, final int brightness,
                                    final String saveDrive, final boolean removableAutoOpen, final String themePreset,
@@ -87,7 +88,7 @@ public record SettingsSnapshotPayload(
         this(hostPos, wallpaper, computerName, accent, clock12h, guiScale, brightness, saveDrive, removableAutoOpen,
                 themePreset, taskbarCentered, darkMode, netshare, cpuLabel, cpuMhz, cpuArch, ramMb, vramMb, osLabel,
                 platform, installed, disks, ramUsedMb, ramUses, shares, remoteAllowed, sound, gpu, effects, experience,
-                Swap.NONE);
+                Swap.NONE, Text.EMPTY);
     }
 
     /**
@@ -201,6 +202,7 @@ public record SettingsSnapshotPayload(
         sound = sound == null ? Sound.NONE : sound;
         gpu = gpu == null ? Gpu.NONE : gpu;
         experience = experience == null ? ExperienceIndex.NONE : experience;
+        ramKind = ramKind == null ? Text.EMPTY : ramKind;
     }
 
     @Override
@@ -295,6 +297,7 @@ public record SettingsSnapshotPayload(
         buf.writeVarInt(p.swap.usedMb());
         buf.writeUtf(TextBounds.clip(p.swap.where(), LABEL_MAX), LABEL_MAX);
         buf.writeVarInt(p.swap.speedPercent());
+        TextCodecs.STREAM_CODEC.encode(buf, p.ramKind);
     }
 
     private static SettingsSnapshotPayload decode(final RegistryFriendlyByteBuf buf) {
@@ -358,7 +361,8 @@ public record SettingsSnapshotPayload(
                 remoteAllowed, new Sound(volume, muted, output, hardware, plays, speakers), readGpu(buf),
                 DesktopEffects.STREAM_CODEC.decode(buf), new ExperienceIndex(buf.readVarInt(), buf.readVarInt(),
                         buf.readVarInt(), buf.readVarInt(), buf.readVarInt()),
-                new Swap(buf.readVarInt(), buf.readVarInt(), buf.readUtf(LABEL_MAX), buf.readVarInt()));
+                new Swap(buf.readVarInt(), buf.readVarInt(), buf.readUtf(LABEL_MAX), buf.readVarInt()),
+                TextCodecs.STREAM_CODEC.decode(buf));
     }
 
     private static void writeGpu(final RegistryFriendlyByteBuf buf, final Gpu gpu) {

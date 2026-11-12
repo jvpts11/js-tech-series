@@ -264,16 +264,18 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
     /**
      * The swap behind a machine's memory (computers/docs/design/hardware.md).
      *
-     * @param sizeMb   how big it is
-     * @param usedMb   how much is in it, what was promised past the memory
-     * @param areas    its swap partitions by the system's own names, on a system that keeps it on them
-     * @param pageFile the page file's name on a Frames, or empty
-     * @param programs how much of each program is in it, and how fast that leaves it running
+     * @param sizeMb       how big it is
+     * @param usedMb       how much is in it, what was promised past the memory
+     * @param areas        its swap partitions by the system's own names, on a system that keeps it on them
+     * @param pageFile     the page file's name on a Frames, or empty
+     * @param programs     how much of each program is in it, and how fast that leaves it running
+     * @param speedPercent the share of its speed what is in it runs at, by the disk it is on
      */
-    record SwapUse(int sizeMb, int usedMb, List<SwapArea> areas, String pageFile, List<SwapProgram> programs) {
+    record SwapUse(int sizeMb, int usedMb, List<SwapArea> areas, String pageFile, List<SwapProgram> programs,
+                   int speedPercent) {
 
         /** No swap at all. */
-        public static final SwapUse NONE = new SwapUse(0, 0, List.of(), "", List.of());
+        public static final SwapUse NONE = new SwapUse(0, 0, List.of(), "", List.of(), 100);
 
         public SwapUse {
             areas = List.copyOf(areas);

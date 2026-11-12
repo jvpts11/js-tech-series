@@ -40,7 +40,7 @@ final class UpsNotices {
     static final TextKey LOG_SHUTDOWN = TextKey.of("jsc.event_log.ups_shutdown",
             "Shut down by its UPS: the battery was down to 10%");
 
-    private static final TextKey CARRIES = TextKey.of("jsc.ups.carries", "The UPS carries the computer");
+    private static final TextKey CARRIES = TextKey.of("jsc.ups.carries", "The UPS carries the PC");
     private static final TextKey POWER_MANAGEMENT = TextKey.of("jsc.ups.power_management", "Power Management");
     private static final TextKey RUNNING_ON = TextKey.of("jsc.ups.running_on", "Running on the UPS battery");
     private static final TextKey DOS_OUT = TextKey.of("jsc.ups.dos_out",

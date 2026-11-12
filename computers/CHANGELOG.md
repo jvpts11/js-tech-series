@@ -1001,6 +1001,20 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   KDE Partition Manager draws each partition as wide as its share of the disk, filled as far as it is used, with a
   padlock beside each mounted one and the drive's picture beside each device; GNOME's Disks rules off a disk's name
   from its details; as the real tools did.
+- The Disk Defragmenter opens big enough for all it shows, where the window cut it off: the status bar
+  along the foot on XP, and on Frames 10 and 11 the right of its list of drives and the button under its schedule,
+  whose columns keep to the list and their headings to their columns.
+- Installers: a disk the installation is set to erase, as one formatted at the firmware is, is listed as
+  one stretch of unallocated space, as the installation counts it, where it still listed the partitions it would lose
+  under words about free space; under a disk that holds nothing, which the installation lays out afresh, Frames 7 to
+  11 say Next erases it, where they said it made a partition of free space and left every other partition; and the
+  sizes in their table keep to their columns on a big disk, where they ran into each other. The text setups of Frames
+  95 and XP are in the grey of their screens and underline their heading, as theirs did, and FreeBSD's menu of its ZFS
+  pool offers Select and Cancel, as bsdinstall's did, where it offered OK.
+- Frames' notice as its UPS takes over says the UPS carries the PC, on one line.
+- Swap: the Task Manager's Memory page names the kind of memory after its size ("32.0 GB DDR4"), and
+  top, when part of a program is in swap, ends with what that costs on the disk it is on and the program it slows the
+  most.
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
   works through its computer.
 - The Network Interactor's Operations tab gives each Operation its own state, where it read the states in

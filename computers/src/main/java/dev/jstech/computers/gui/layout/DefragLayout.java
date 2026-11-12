@@ -79,7 +79,7 @@ public final class DefragLayout {
     /* Frames 10 and 11: the words, the list of drives, the result, the buttons, the schedule, Close. */
     public static final int F10_STATUS_Y = 40;
     public static final int F10_LIST_Y = 51;
-    public static final int[] F10_COLUMNS = {8, 86, 156, 224};
+    public static final int[] F10_COLUMNS = {8, 70, 130, 210};
     public static final int F10_RESULT_Y = 94;
     public static final int F10_BUTTONS_Y = 118;
     public static final int[] F10_BUTTON_X = {172, 232};

@@ -48,6 +48,8 @@ final class InstallerFrames {
 
     /** How tall a title bar is in the frames that have one. */
     private static final int TITLE_BAR = 14;
+    /* How tall a capital of the text setups' font stands, at the font's own size, for the rule under a heading. */
+    private static final int TITLE_GLYPH_H = 8;
 
     /** The margins a console keeps either side of its columns, which a text-mode page keeps too. */
     private static final int WALL_MARGINS = 20;
@@ -136,8 +138,8 @@ final class InstallerFrames {
             new Ink(0xFF000000, 0xFF33FF66, 0xFF99FFBB, 0xFF2E8B2E, 0xFF33FF66, 0xFF000000,
                     0xFF33FF66, 0xFF000000, 0xFFFFB000, 0xFF000000, 0xFF33FF66));
     private static final Palette<Ink> FRAMES_INK = Palettes.declare(JsComputers.MODID, "installer/text/frames",
-            new Ink(0xFF0000A8, 0xFFC0C0C0, 0xFFFFFFFF, 0xFF7B7BB8, 0xFFC0C0C0, 0xFF000000,
-                    0xFFC0C0C0, 0xFF0000A8, 0xFFFFFF55, 0xFFC0C0C0, 0xFF000000));
+            new Ink(0xFF0000A8, 0xFFAAAAAA, 0xFFFFFFFF, 0xFF7B7BB8, 0xFFAAAAAA, 0xFF000000,
+                    0xFFAAAAAA, 0xFF0000A8, 0xFFFFFF55, 0xFFAAAAAA, 0xFF000000));
     private static final Palette<Ink> FRAMES_11_INK = Palettes.declare(JsComputers.MODID,
             "installer/text/frames_11",
             new Ink(0xFF0B1530, 0xFFE8EAF2, 0xFFFFFFFF, 0xFF9AA2B2, 0xFF3A6AE0, 0xFFFFFFFF,
@@ -257,8 +259,13 @@ final class InstallerFrames {
         final TermFace.Fitted wall = wall();
         final TermFace face = wall.face();
         final float scale = wall.scale();
-        TermText.draw(face, g, font, GameText.resolve(flow.style().title(flow.systemName())), sx + 8, sy + 8, scale,
-                ink.bright());
+        final String title = GameText.resolve(flow.style().title(flow.systemName()));
+        TermText.draw(face, g, font, title, sx + 8, sy + 8, scale, ink.bright());
+        if (flow.style() == InstallerStyle.FRAMES_95 || flow.style() == InstallerStyle.FRAMES_XP) {
+            // The Frames text setups underlined their heading, as far as it ran.
+            final int under = sy + 8 + Math.round(TITLE_GLYPH_H * scale) + 1;
+            g.fill(sx + 8, under, sx + 8 + TermText.width(face, title, scale), under + 1, ink.bright());
+        }
         // A heading longer than the screen goes on in a second line, as Frames XP's list of partitions does.
         final List<String> heading = wrapTerm(face, scale,
                 GameText.resolve(flow.style().heading(flow.page(), flow.systemName())), sw - 16);
@@ -804,13 +811,14 @@ final class InstallerFrames {
         if (!copying) {
             /*
              * The plain OK label is padded a couple of spaces either side, the way the real dialogs draw it; a
-             * button with a word of its own (Install, Reboot) carries none, and its hotkey is that word's own
-             * first letter rather than the padded one.
+             * button with a word of its own (Install, Select on the pool's menu, Reboot) carries none, and its hotkey
+             * is that word's own first letter rather than the padded one.
              */
-            final boolean plainOk = !welcome && !done;
+            final boolean pool = flow.page() == InstallerPage.POOL;
+            final boolean plainOk = !welcome && !done && !pool;
             final String okBody = plainOk ? "  " + GameText.resolve(InstallerScreenTexts.BSD_OK_BUTTON) + "  "
                     : GameText.resolve(welcome ? InstallerScreenTexts.BSD_INSTALL_BUTTON
-                            : InstallerScreenTexts.FRAME_REBOOT);
+                            : pool ? InstallerScreenTexts.BSD_SELECT_BUTTON : InstallerScreenTexts.FRAME_REBOOT);
             final int okHotkey = plainOk ? 2 : 0;
             final String cancelBody = GameText.resolve(InstallerScreenTexts.FRAME_CANCEL);
             final int by = dy + dh - InstallerLayout.BSD_BUTTON_ROW_DY;
@@ -821,7 +829,7 @@ final class InstallerFrames {
              * before it, so it carries none.
              */
             final boolean showCancel = flow.quittable() && (welcome || flow.page() == InstallerPage.COMPONENTS
-                    || flow.page() == InstallerPage.DISK || flow.page() == InstallerPage.MIRROR);
+                    || flow.page() == InstallerPage.DISK || pool || flow.page() == InstallerPage.MIRROR);
             final int nextW = bsdButtonWidth(font, okBody);
             final int cancelW = showCancel ? bsdButtonWidth(font, cancelBody) : 0;
             int cursorX = InstallerLayout.bsdButtonRowX(dx, dw, nextW, cancelW);

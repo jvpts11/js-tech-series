@@ -805,7 +805,10 @@ public final class TaskManagerApp implements IDesktopApp {
     private void renderMemory(final GuiGraphics g, final Font font, final int x, final int y, final int w,
                               final int h) {
         Draw.text(g, font, GameText.resolve(TaskManagerTexts.MEMORY), x, y, skin.text(), skin.windowBg());
-        final String size = GameText.resolve(TaskManagerTexts.GIGABYTES.with(gb(totalMb())));
+        // The size and, after it, the memory's kind, a name the same in every language.
+        final String kind = data == null ? "" : GameText.resolve(data.ramKind());
+        final String size = GameText.resolve(TaskManagerTexts.GIGABYTES.with(gb(totalMb())))
+                + (kind.isEmpty() ? "" : " " + kind);
         Texts.small(g, font, size, x + w - Texts.smallWidth(font, size), y + 1, skin.dim());
         final int graphH = 20;
         int row = y + 11;

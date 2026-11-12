@@ -417,7 +417,8 @@ abstract class ServerCliShell implements ICliComputer {
                     entry.heldBytes(), swapped == null ? 0 : swapped.inSwapMb(),
                     swapped == null ? 100 : swapped.speedPercent()));
         }
-        return new SwapUse(swap.sizeMb(), used, areas, swap.pageFile() == null ? "" : swap.pageFile(), programs);
+        return new SwapUse(swap.sizeMb(), used, areas, swap.pageFile() == null ? "" : swap.pageFile(), programs,
+                swap.speedPercent());
     }
 
     @Override

@@ -38,9 +38,9 @@ import net.minecraft.client.gui.GuiGraphics;
 final class InstallerDiskPages {
 
     /* Where the columns of the table of Frames 7 to 11 start, in hundredths of its width. */
-    private static final int TABLE_SIZE_AT = 47;
-    private static final int TABLE_FREE_AT = 60;
-    private static final int TABLE_HOLDS_AT = 72;
+    private static final int TABLE_SIZE_AT = 45;
+    private static final int TABLE_FREE_AT = 59;
+    private static final int TABLE_HOLDS_AT = 73;
     /* Frames XP's list: the letter, the partition and where its size ends, in hundredths of the box's width. */
     private static final int XP_LETTER_AT = 6;
     private static final int XP_NAME_AT = 13;
@@ -202,9 +202,10 @@ final class InstallerDiskPages {
             final int ink = here ? p.selectText() : p.text();
             final DiskSpot spot = pick.spot();
             pen.say(g, pen.fit(tableName(pick, letters.getOrDefault(i, "")), sizeAt - f.x() - 8), f.x() + 4, ty, ink);
-            pen.say(g, tableSize(spot.sizeMb()), sizeAt, ty, ink);
+            // Each cell is fitted to its column, so a big disk's sizes never run into the next.
+            pen.say(g, pen.fit(tableSize(spot.sizeMb()), freeAt - sizeAt - 4), sizeAt, ty, ink);
             if (spot.isFree() || spot.holdsData() || spot.role() == PartitionRole.EFI) {
-                pen.say(g, tableSize(spot.freeMb()), freeAt, ty, ink);
+                pen.say(g, pen.fit(tableSize(spot.freeMb()), holdsAt - freeAt - 4), freeAt, ty, ink);
             }
             pen.say(g, pen.fit(tableHolds(spot), f.x() + f.w() - holdsAt), holdsAt, ty, ink);
             rowMap.add(i);
@@ -331,10 +332,11 @@ final class InstallerDiskPages {
      * @return where the next line goes
      */
     static int partitionsUnder(final GuiGraphics g, final IInstallerPen pen, final InstallerFrames.Frame f,
-                               final InstallerFlow.Disk disk, final int y, final List<Integer> rowMap) {
+                               final InstallerFlow flow, final InstallerFlow.Disk disk, final int y,
+                               final List<Integer> rowMap) {
         final InstallerFrames.Paint p = f.paint();
         int ty = y;
-        for (final DiskSpot spot : disk.spots()) {
+        for (final DiskSpot spot : flow.spotsOn(disk)) {
             final String line = spot.isFree() ? of(InstallerScreenTexts.FREE_LINE.with(tableSize(spot.sizeMb())))
                     : of(InstallerScreenTexts.PART_LINE.with(spot.number(), tableSize(spot.sizeMb()),
                     spot.fileSystem() == null ? "" : spot.fileSystem().displayName(), tableHolds(spot)));
@@ -497,6 +499,10 @@ final class InstallerDiskPages {
                     flow.systemName()));
         }
         final String fs = plan.system().fs().displayName();
+        if (plan.wholeDisk() && flow.eraseSlot() != plan.slot()) {
+            // A disk that holds nothing is laid out afresh, the empty partitions on it with it.
+            return of(InstallerScreenTexts.NEXT_WHOLE.with(flow.systemName(), needs, diskIndexOf(flow, plan.slot())));
+        }
         if (!plan.made().contains(plan.systemPartition())) {
             return of(InstallerScreenTexts.NEXT_ON_PARTITION.with(flow.systemName(), needs));
         }

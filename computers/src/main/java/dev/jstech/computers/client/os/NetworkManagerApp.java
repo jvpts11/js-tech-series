@@ -442,8 +442,8 @@ public final class NetworkManagerApp implements IDesktopApp {
     }
 
     /**
-     * The centre of the Devices, Processes, Hardware, Map or Log tab ({@code devices}, {@code processes},
-     * {@code hardware}, {@code map}, {@code log}); for tests.
+     * The centre of the Devices, Processes, Hardware, Map, Log or Stats tab ({@code devices}, {@code processes},
+     * {@code hardware}, {@code map}, {@code log}, {@code stats}); for tests.
      */
     public int[] tabPoint(final String which) {
         return tabs.tabCenter(switch (which) {
@@ -451,6 +451,7 @@ public final class NetworkManagerApp implements IDesktopApp {
             case "hardware" -> TAB_HARDWARE;
             case "map" -> TAB_MAP;
             case "log" -> TAB_LOG;
+            case "stats" -> TAB_STATS;
             default -> TAB_DEVICES;
         });
     }

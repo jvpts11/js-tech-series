@@ -1463,7 +1463,7 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             ty += step;
             rowMap.add(i);
             if (partitionsUnder) {
-                ty = InstallerDiskPages.partitionsUnder(g, this, f, disk, ty, rowMap);
+                ty = InstallerDiskPages.partitionsUnder(g, this, f, this.flow, disk, ty, rowMap);
             }
         }
         if (partitionsUnder) {

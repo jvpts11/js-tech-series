@@ -164,6 +164,8 @@ public final class SwapCommands {
         private static final TextKey HEADER = TextKey.of("jsc.cli.tool.top.header",
                 "    PID USER      %CPU  %MEM     RES   SWAP COMMAND");
         private static final TextKey ROW = TextKey.of("jsc.cli.tool.top.row", "%s player    %s");
+        private static final TextKey IN_SWAP = TextKey.of("jsc.cli.tool.top.in_swap",
+                "A program runs its part in swap at %s of its share here: %s, %s%% of it in swap, runs at %s%%.");
 
         @Override public CommandScope scope() {
             return CommandScope.on(Platform.LINUX);
@@ -208,6 +210,15 @@ public final class SwapCommands {
                         program.name().toLowerCase(Locale.ROOT).replace(' ', '-'));
                 ctx.out().line(ROW.with(String.format(Locale.ROOT, "%7d", program.pid()), figures));
             }
+            // What swap costs here, told by the program it slows the most.
+            programs.stream().filter(program -> program.inSwapMb() > 0 && program.heldBytes() > 0L)
+                    .max(Comparator.comparingInt(ICliComputer.SwapProgram::inSwapMb)).ifPresent(most -> {
+                        final long heldMb = Math.max(1L, most.heldBytes() / RamLedger.BYTES_PER_MB);
+                        ctx.out().line("");
+                        ctx.out().styled(IN_SWAP.with(String.valueOf(swap.speedPercent() / 100.0),
+                                most.name().toLowerCase(Locale.ROOT).replace(' ', '-'),
+                                Math.min(100L, most.inSwapMb() * 100L / heldMb), most.speedPercent()), CliStyle.DIM);
+                    });
         }
 
         /* A program's share of the processor: of half the machine's time, what its share of what is promised takes. */

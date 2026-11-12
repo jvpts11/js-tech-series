@@ -10,6 +10,8 @@ package dev.jstech.tests.clienttest;
 import dev.jstech.computers.client.os.NetworkInteractorApp;
 import dev.jstech.testkit.client.ClientTests;
 import dev.jstech.tests.JsTests;
+import dev.jstech.tests.clienttest.computers.AdvancementTabsClientTests;
+import dev.jstech.tests.clienttest.computers.AnchorCardClientTests;
 import dev.jstech.tests.clienttest.computers.AssemblyScreensClientTests;
 import dev.jstech.tests.clienttest.computers.AutomationManagerClientTests;
 import dev.jstech.tests.clienttest.computers.BookPagesClientTests;
@@ -24,6 +26,7 @@ import dev.jstech.tests.clienttest.computers.ComputerCaseClientTests;
 import dev.jstech.tests.clienttest.computers.CraftingChainClientTests;
 import dev.jstech.tests.clienttest.computers.CrashPagesClientTests;
 import dev.jstech.tests.clienttest.computers.CreativeTabsClientTests;
+import dev.jstech.tests.clienttest.computers.DefragClientTests;
 import dev.jstech.tests.clienttest.computers.DesktopMenuClientTests;
 import dev.jstech.tests.clienttest.computers.DeviceIconClientTests;
 import dev.jstech.tests.clienttest.computers.DeviceManagerClientTests;
@@ -72,6 +75,7 @@ import dev.jstech.tests.clienttest.computers.MachineSoundClientTests;
 import dev.jstech.tests.clienttest.computers.MainframeClientTests;
 import dev.jstech.tests.clienttest.computers.McNetSpaceClientTests;
 import dev.jstech.tests.clienttest.computers.MediaDriveClientTests;
+import dev.jstech.tests.clienttest.computers.MediaPlayerClientTests;
 import dev.jstech.tests.clienttest.computers.MekanismClientTests;
 import dev.jstech.tests.clienttest.computers.MemberRunClientTests;
 import dev.jstech.tests.clienttest.computers.MemoryCrashClientTests;
@@ -85,6 +89,7 @@ import dev.jstech.tests.clienttest.computers.NetworkDeviceClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkEventLogClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkInteractorClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkLinksClientTests;
+import dev.jstech.tests.clienttest.computers.NetworkManagerClientTests;
 import dev.jstech.tests.clienttest.computers.PortableAppsClientTests;
 import dev.jstech.tests.clienttest.computers.PortableClientTests;
 import dev.jstech.tests.clienttest.computers.NetworkServicesClientTests;
@@ -96,11 +101,13 @@ import dev.jstech.tests.clienttest.computers.OutOfMemoryClientTests;
 import dev.jstech.tests.clienttest.computers.PanelStylesClientTests;
 import dev.jstech.tests.clienttest.computers.PatternEncoderClientTests;
 import dev.jstech.tests.clienttest.computers.PeripheralCableClientTests;
+import dev.jstech.tests.clienttest.computers.PowerClientTests;
 import dev.jstech.tests.clienttest.computers.PrinterClientTests;
 import dev.jstech.tests.clienttest.computers.ProphetClientTests;
 import dev.jstech.tests.clienttest.computers.RackClientTests;
 import dev.jstech.tests.clienttest.computers.RackCrashClientTests;
 import dev.jstech.tests.clienttest.computers.RedstoneInterfaceClientTests;
+import dev.jstech.tests.clienttest.computers.ServerRouterClientTests;
 import dev.jstech.tests.clienttest.computers.SettingsPersonalizeClientTests;
 import dev.jstech.tests.clienttest.computers.SettingsScreenClientTests;
 import dev.jstech.tests.clienttest.computers.SettingsSharingClientTests;
@@ -113,9 +120,11 @@ import dev.jstech.tests.clienttest.computers.SoundfoundryStandardClientTests;
 import dev.jstech.tests.clienttest.computers.SourceBuildClientTests;
 import dev.jstech.tests.clienttest.computers.StartMenuFitClientTests;
 import dev.jstech.tests.clienttest.computers.SupercomputerJourneyClientTests;
+import dev.jstech.tests.clienttest.computers.SwapClientTests;
 import dev.jstech.tests.clienttest.computers.SystemMotionClientTests;
 import dev.jstech.tests.clienttest.computers.SystemUiClientTests;
 import dev.jstech.tests.clienttest.computers.TaskbarClientTests;
+import dev.jstech.tests.clienttest.computers.TeracoinWindowsClientTests;
 import dev.jstech.tests.clienttest.computers.TerminalEditorClientTests;
 import dev.jstech.tests.clienttest.computers.TerminalFontClientTests;
 import dev.jstech.tests.clienttest.computers.TerminalSelectionClientTests;
@@ -507,6 +516,15 @@ public final class ClientTestSuite {
             PrinterClientTests.class,
             DockStationClientTests.class,
             DiskToolsClientTests.class,
+            SwapClientTests.class,
+            PowerClientTests.class,
+            DefragClientTests.class,
+            ServerRouterClientTests.class,
+            AnchorCardClientTests.class,
+            NetworkManagerClientTests.class,
+            MediaPlayerClientTests.class,
+            TeracoinWindowsClientTests.class,
+            AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,
             IsmsClientTests.class,

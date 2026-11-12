@@ -191,6 +191,8 @@ public final class EraEndClientTests {
      */
     private static void rebuilt(final ClientTestContext ctx, final EraKit kit) {
         final List<Item> parts = parts(kit);
+        // The player breaks it out of creative; a test that stops before putting it back must not leave them so.
+        ctx.afterTest(() -> ctx.player().connection.sendCommand("gamemode creative"));
         ctx.thenWaitUntil(EraJourney.away(ctx), WAIT, "the desk to be left")
                 .thenServer(SETTLE, level -> {
                     ctx.serverPlayer().getInventory().clearContent();

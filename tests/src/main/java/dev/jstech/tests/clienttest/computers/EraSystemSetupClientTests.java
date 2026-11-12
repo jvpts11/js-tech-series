@@ -34,8 +34,10 @@ import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.computers.EraKit;
 import dev.jstech.tests.testkit.computers.EraNetwork;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
@@ -128,7 +130,8 @@ public final class EraSystemSetupClientTests {
                     final int[] install = ctx.screen(FirmwareScreen.class).installButtonCenter();
                     ctx.click(install[0], install[1]);
                 })
-                .thenWaitUntil(new Answer(ctx, null, ComputerTerminalScreen.class), INSTALL_WAIT,
+                .thenWaitUntil(new Answer(ctx, null, ComputerTerminalScreen.class, "vintage-mc-net", false),
+                        INSTALL_WAIT,
                         "the installer's pages to be answered and MC-NET to come up on the Mainframe")
                 .thenWaitUntilServer(level -> mainframe(ctx, level).hasOs()
                                 && mcNet.equals(mainframe(ctx, level).installedOs().id())
@@ -179,6 +182,21 @@ public final class EraSystemSetupClientTests {
         bare(ctx, EraKit.STANDARD, 1);
         install(ctx, EraKit.STANDARD, os("frames_10"), "OFFICE", false);
         install(ctx, EraKit.STANDARD, os("frames_10"), "LIBRARY", true);
+    }
+
+    /** FreeBSD on a Standard machine with two disks goes on ZFS, its pool's page offering them both. */
+    @ClientTest(timeoutTicks = TIMEOUT)
+    public static void standard_freeBsdPutsItsPoolOnZfs(final ClientTestContext ctx) {
+        bare(ctx, EraKit.STANDARD, 2);
+        install(ctx, EraKit.STANDARD, os("freebsd"), "harbour", false, true);
+    }
+
+    /** Ubuntu after Frames 10 on the same disk offers to go alongside it, Frames 10's partition shrunk to make room. */
+    @ClientTest(timeoutTicks = TIMEOUT)
+    public static void standard_ubuntuGoesAlongsideFrames10(final ClientTestContext ctx) {
+        bare(ctx, EraKit.STANDARD, 1);
+        install(ctx, EraKit.STANDARD, os("frames_10"), "DESK", false);
+        install(ctx, EraKit.STANDARD, os("ubuntu"), "desk", false);
     }
 
     @ClientTest(timeoutTicks = TIMEOUT)
@@ -255,6 +273,12 @@ public final class EraSystemSetupClientTests {
      */
     private static void install(final ClientTestContext ctx, final EraKit kit, final ResourceLocation system,
                                 final String name, final boolean format) {
+        install(ctx, kit, system, name, format, false);
+    }
+
+    /* The same, and with {@code zfs} bsdinstall's first way on its partitioning page, Auto (ZFS), chosen. */
+    private static void install(final ClientTestContext ctx, final EraKit kit, final ResourceLocation system,
+                                final String name, final boolean format, final boolean zfs) {
         final MediaFormat medium = InstallMedia.forSystem(OsRegistry.getOs(system).minEra());
         final boolean south = medium == MediaFormat.FLOPPY || medium == MediaFormat.USB;
         final AtomicInteger hadSystem = new AtomicInteger();
@@ -276,7 +300,7 @@ public final class EraSystemSetupClientTests {
                     final int[] install = ctx.screen(FirmwareScreen.class).installButtonCenter();
                     ctx.click(install[0], install[1]);
                 })
-                .thenWaitUntil(new Answer(ctx, name, up), INSTALL_WAIT,
+                .thenWaitUntil(new Answer(ctx, name, up, shot(kit, system.getPath()), zfs), INSTALL_WAIT,
                         "the installer's pages to be answered and " + system.getPath() + " to come up")
                 .thenWaitUntilServer(level -> installed(computer(ctx, level), system), WAIT,
                         system.getPath() + " to be on the computer's disk", level -> "os="
@@ -444,26 +468,40 @@ public final class EraSystemSetupClientTests {
      * A player at an installer: on each page as it comes, a moment to read it, then its answer. The name is typed where
      * a name is asked, a guided list's work is begun with its own letter (and its first question opened when the letter
      * is not enough yet), the copy is waited out, and every other page is taken as it stands with Enter, the last one
-     * restarting the machine. Done once the system's own screen is up.
+     * restarting the machine. The pages that ask where the system goes are shot as they come. Done once the system's
+     * own screen is up.
      */
     private static final class Answer implements BooleanSupplier {
 
         private final ClientTestContext ctx;
         private final String name;
         private final Class<? extends Screen> up;
+        /* What the pages of where the system goes are shot as, for the side-by-side with their mocks. */
+        private final String label;
+        /* Whether bsdinstall's first way, Auto (ZFS), is chosen on its partitioning page, over the one it offers. */
+        private final boolean zfs;
+        private final Set<String> shot = new HashSet<>();
         private String page = "";
         private int ticks;
         private int tries;
         private int visited;
         private boolean named;
+        private boolean choseZfs;
 
         /** How many questions a gathered list is looked through for the name. */
         private static final int HUB_QUESTIONS = 9;
+        /** The pages that ask where the system goes on the disks. */
+        private static final Set<String> DISK_PAGES = Set.of("DISK", "ALONGSIDE", "FORMAT", "POOL");
+        /** How long a page is up before it is shot, so it is drawn. */
+        private static final int SHOT_AT = 6;
 
-        Answer(final ClientTestContext ctx, final String name, final Class<? extends Screen> up) {
+        Answer(final ClientTestContext ctx, final String name, final Class<? extends Screen> up, final String label,
+               final boolean zfs) {
             this.ctx = ctx;
             this.name = name;
             this.up = up;
+            this.label = label;
+            this.zfs = zfs;
         }
 
         @Override
@@ -482,7 +520,16 @@ public final class EraSystemSetupClientTests {
                 tries = 0;
                 return false;
             }
-            if (++ticks % 30 != 10 || "COPY".equals(page)) {
+            if (++ticks == SHOT_AT && DISK_PAGES.contains(page) && shot.add(page)) {
+                ctx.screenshot(label + "-" + page.toLowerCase(Locale.ROOT));
+            }
+            if (ticks % 30 != 10 || "COPY".equals(page)) {
+                return false;
+            }
+            if ("DISK".equals(page) && zfs && !choseZfs) {
+                // Auto (ZFS) stands first, over the cursor: one step up, and the page is taken on the next turn.
+                ctx.key(GLFW.GLFW_KEY_UP);
+                choseZfs = true;
                 return false;
             }
             if (("NAME".equals(page) || "SETTINGS".equals(page)) && name != null && !named) {

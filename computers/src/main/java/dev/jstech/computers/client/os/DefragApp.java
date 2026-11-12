@@ -95,24 +95,25 @@ public final class DefragApp implements IDesktopApp, CodeFileReplies.IReader {
         return ProgramClient.nameOf("defrag");
     }
 
+    // The window is the layout with the frame round it, so everything the layout places, its status bar too, shows.
     @Override
     public int defaultWidth() {
-        return DefragLayout.W;
+        return DesktopWindow.windowWidthFor(DefragLayout.W);
     }
 
     @Override
     public int defaultHeight() {
-        return DefragLayout.height(this.formOf);
+        return DesktopWindow.windowHeightFor(DefragLayout.height(this.formOf));
     }
 
     @Override
     public int minWidth() {
-        return DefragLayout.W;
+        return DesktopWindow.windowWidthFor(DefragLayout.W);
     }
 
     @Override
     public int minHeight() {
-        return DefragLayout.height(this.formOf);
+        return DesktopWindow.windowHeightFor(DefragLayout.height(this.formOf));
     }
 
     @Override
@@ -377,8 +378,10 @@ public final class DefragApp implements IDesktopApp, CodeFileReplies.IReader {
         g.fill(x, y, x + w, y + h, c.free());
         Draw.outline(g, x, y, w, h, c.listFrame());
         g.fill(x + 1, y + 1, x + w - 1, y + DefragLayout.LIST_ROW + 1, c.statusBar());
+        // A heading keeps to its column as the cells under it do.
         for (int i = 0; i < headers.size(); i++) {
-            Draw.text(g, font, GameText.resolve(headers.get(i)), x + columns[i] - 4 + 4, y + 2, c.ink());
+            final int limit = (i + 1 < columns.length ? columns[i + 1] : w) - columns[i] - 3;
+            Draw.text(g, font, clip(font, GameText.resolve(headers.get(i)), limit), x + columns[i], y + 2, c.ink());
         }
         final List<DefragState.Disk> disks = this.state.disks();
         for (int r = 0; r < Math.min(DefragLayout.LIST_ROWS, disks.size()); r++) {

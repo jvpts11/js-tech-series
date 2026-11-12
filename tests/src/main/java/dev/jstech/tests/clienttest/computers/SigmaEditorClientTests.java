@@ -153,6 +153,17 @@ public final class SigmaEditorClientTests {
         return app(ctx, STUDIO_LAUNCHER, VirtualStudioApp.class);
     }
 
+    /* The line of {@code text}, counted from one as the editor counts it, that holds {@code part}. */
+    private static int lineOf(final String text, final String part) {
+        final String[] lines = text.split("\n", -1);
+        for (int i = 0; i < lines.length; i++) {
+            if (lines[i].contains(part)) {
+                return i + 1;
+            }
+        }
+        throw new IllegalStateException("no line holds " + part);
+    }
+
     /** What the machine's terminal window has printed so far, or empty when there is none. */
     private static String terminalText(final ClientTestContext ctx) {
         final ShellApp shell = app(ctx, TERMINAL, ShellApp.class);
@@ -335,8 +346,11 @@ public final class SigmaEditorClientTests {
                         "and back at the installed compiler's once the project follows it again");
     }
 
-    /** The same program, run with F5: the editor builds it and runs it at its own terminal, in one key. */
-    @ClientTest(timeoutTicks = 3000)
+    /**
+     * The same program, run with F5: the editor builds it and runs it under its debugger, its line in the Debug
+     * Console, in one key; then stopped at a breakpoint.
+     */
+    @ClientTest(timeoutTicks = 4000)
     public static void virtualStudioCode_runsTheOpenFileWithF5(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
                     final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
@@ -362,13 +376,21 @@ public final class SigmaEditorClientTests {
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_S, GLFW.GLFW_MOD_CONTROL))
                 .thenWaitUntilServer(level -> onDisk(ctx, level, "progs/hello.sgs"),
                         SCREEN_WAIT, "the program to be on the machine's disk", level -> "")
-                // F5: the build goes first and the run waits for it, at the terminal panel.
+                // F5: the build goes first and the run waits for it, under the debugger, in the Debug Console.
                 .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_F5))
-                .thenWaitUntil(() -> editor(ctx).terminalText().contains("it runs"),
+                .thenWaitUntil(() -> editor(ctx).debugger().output().stream().anyMatch(l -> l.contains("it runs")),
                         SCREEN_WAIT * 3, "the program to print its line after F5")
                 .thenWaitUntilServer(level -> onDisk(ctx, level, "progs/build/hello.asm"),
                         SCREEN_WAIT, "the listing to be in the folder's build directory", level -> "")
-                .thenScreenshot(2, "ran-f5");
+                .thenScreenshot(2, "ran-f5")
+                // Under the debugger: a breakpoint on its one line stops it there.
+                .then(SETTLE, () -> editor(ctx).debugger().toggle(editor(ctx).openFile(), 1))
+                .then(SETTLE, () -> editor(ctx).startDebugging())
+                .thenWaitUntil(() -> editor(ctx).debugger().paused(), SCREEN_WAIT * 3,
+                        "the program to stop at its breakpoint")
+                .thenScreenshot(2, "debugging")
+                .then(SETTLE, () -> editor(ctx).debugger().stop())
+                .thenWaitUntil(() -> !editor(ctx).debugger().active(), SCREEN_WAIT, "the debugging to end");
     }
 
     /**
@@ -553,9 +575,10 @@ public final class SigmaEditorClientTests {
 
     /**
      * A project made the way the studio wants it: from the Start Window, through the wizard, into a
-     * solution with one project, built as a solution and started, with the program's line at the terminal.
+     * solution with one project, built as a solution and started, with the program's line at the terminal, then
+     * started under the debugger and stopped at a breakpoint on that line.
      */
-    @ClientTest(timeoutTicks = 3000)
+    @ClientTest(timeoutTicks = 4000)
     public static void virtualStudio_createsASolutionBuildsItAndStartsIt(final ClientTestContext ctx) {
         ctx.thenBuild(0, world -> {
                     final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
@@ -620,6 +643,15 @@ public final class SigmaEditorClientTests {
                         "the finished program to leave the machine's process list",
                         level -> "still listed: " + computerOf(ctx, level).programs().view().stream()
                                 .map(one -> one.name() + "/" + one.state()).toList())
+                // Under the debugger: a breakpoint on the program's line stops it there, with what it holds shown.
+                .then(SETTLE, () -> studio(ctx).debugger().toggle(studio(ctx).openFile(),
+                        lineOf(studio(ctx).text(), "Hello from Hello")))
+                .then(SETTLE, () -> studio(ctx).startDebugging())
+                .thenWaitUntil(() -> studio(ctx).debugger().paused(), SCREEN_WAIT * 3,
+                        "the program to stop at its breakpoint")
+                .thenScreenshot(2, "debugging")
+                .then(SETTLE, () -> studio(ctx).debugger().stop())
+                .thenWaitUntil(() -> !studio(ctx).debugger().active(), SCREEN_WAIT, "the debugging to end")
                 // The system's file window, opened for a solution: the folder is entered, the file picked, Open opens it.
                 .then(SETTLE, () -> studio(ctx).showOpenSolutionDialog())
                 .thenWaitUntil(() -> studio(ctx).dialog().isOpen() && studio(ctx).dialog().rowNames().contains("Hello"),

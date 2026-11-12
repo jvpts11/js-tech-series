@@ -110,6 +110,8 @@ final class InstallerScreenTexts {
                     + "stays.");
     static final TextKey NEXT_ON_PARTITION = TextKey.of("jsc.installer.screen.next_on_partition",
             "%s needs %s. Next installs on this partition beside its files; every other partition stays.");
+    static final TextKey NEXT_WHOLE = TextKey.of("jsc.installer.screen.next_whole",
+            "%s needs %s. Next erases Disk %s, which holds nothing, and installs there.");
     static final TextKey NEXT_FORMATTED = TextKey.of("jsc.installer.screen.next_formatted",
             "%s needs %s. Next formats this partition as %s and installs there; every other partition stays.");
 
@@ -280,6 +282,7 @@ final class InstallerScreenTexts {
     // bsdinstall's own pages.
     static final TextKey BSD_INSTALL_BUTTON = TextKey.of("jsc.installer.screen.bsd_install_button", "Install");
     static final TextKey BSD_OK_BUTTON = TextKey.of("jsc.installer.screen.bsd_ok_button", "OK");
+    static final TextKey BSD_SELECT_BUTTON = TextKey.of("jsc.installer.screen.bsd_select_button", "Select");
     static final TextKey BSD_WELCOME_BODY_1 = TextKey.of("jsc.installer.screen.bsd_welcome_body_1",
             "Welcome to %s! This will install");
     static final TextKey BSD_WELCOME_BODY_2 = TextKey.of("jsc.installer.screen.bsd_welcome_body_2",

@@ -354,6 +354,18 @@ class InstallerFlowTest {
     }
 
     @Test
+    void spotsOn_aDiskSetToBeErasedListsOneStretchOfFreeSpace() {
+        final InstallerFlow flow = frames11(List.of(FULL_WITH_UBUNTU));
+        assertEquals(FULL_WITH_UBUNTU.spots(), flow.spotsOn(FULL_WITH_UBUNTU), "before an erase, its partitions");
+        flow.askErase(FULL_WITH_UBUNTU.slot());
+        flow.confirmErase();
+        final List<DiskSpot> spots = flow.spotsOn(FULL_WITH_UBUNTU);
+        assertEquals(1, spots.size(), "the disk to be erased counts as empty");
+        assertTrue(spots.getFirst().isFree() && spots.getFirst().sizeMb() == FULL_WITH_UBUNTU.sizeMb(),
+                "one stretch of free space across it");
+    }
+
+    @Test
     void select_anotherDiskAfterConfirmingAnErase_takesTheEraseBack() {
         final InstallerFlow flow = frames11(List.of(EMPTY_500, FULL_WITH_UBUNTU));
         flow.askErase(FULL_WITH_UBUNTU.slot());

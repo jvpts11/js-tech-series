@@ -27,7 +27,7 @@ public final class DiskChoices {
         final List<Pick> picks = new ArrayList<>();
         for (int d = 0; d < flow.disks().size(); d++) {
             final InstallerFlow.Disk disk = flow.disks().get(d);
-            for (final DiskSpot spot : disk.spots()) {
+            for (final DiskSpot spot : flow.spotsOn(disk)) {
                 picks.add(new Pick(disk, spot, d));
             }
         }

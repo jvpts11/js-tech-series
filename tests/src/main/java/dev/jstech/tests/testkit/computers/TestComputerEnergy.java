@@ -11,15 +11,19 @@ import dev.jstech.computers.config.ComputersServerConfig;
 import dev.jstech.computers.workshop.UpdateCost;
 import dev.jstech.core.energy.IEnergyPort;
 import dev.jstech.tests.JsTests;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.gametest.framework.GameTestServer;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.server.ServerStartingEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 /**
  * The computers of a test run draw no energy: the tests that build a running computer bring no generator, and what
  * they test is not the energy. The few that test it turn the draw on in a batch of their own ({@link #drawing}) and
- * off again when they end, and feed their machines by hand ({@link #feed}, {@link #trickle}); the same goes for what
+ * off again when they end, and feed their machines by hand ({@link #feed}, {@link #trickle}), or, in a client test,
+ * which has no tick of its own, keep them fed as a line does until it goes ({@link #keepFed}); the same goes for what
  * the personal-use cards cost ({@link #costing}), whether power supplies wear ({@link #wearing}) and whether a sudden
  * shutdown loses what is in transit ({@link #losing}). A game started by hand is left as its settings say.
  */
@@ -39,6 +43,8 @@ public final class TestComputerEnergy {
     private static final long A_TICK = 4_000L;
     /* What a weak line gives in a tick: something, and far less than any computer draws. */
     private static final long A_TRICKLE = 1L;
+    /* The ports a client test, which has no tick of its own, keeps fed each tick as a line would, until it lets go. */
+    private static final Set<IEnergyPort> KEPT_FED = ConcurrentHashMap.newKeySet();
 
     private TestComputerEnergy() {
     }
@@ -51,6 +57,22 @@ public final class TestComputerEnergy {
             wearing(true);
             losing(true);
         }
+        KEPT_FED.clear();
+    }
+
+    @SubscribeEvent
+    public static void onTick(final ServerTickEvent.Pre event) {
+        KEPT_FED.forEach(TestComputerEnergy::feed);
+    }
+
+    /** Feeds {@code port} a tick's worth every tick from now on, as a line does, until {@link #letGo}. */
+    public static void keepFed(final IEnergyPort port) {
+        KEPT_FED.add(port);
+    }
+
+    /** Stops feeding every port {@link #keepFed} feeds: the line goes. */
+    public static void letGo() {
+        KEPT_FED.clear();
     }
 
     /** Has a sudden shutdown lose what the Operations carry, or give it back, for {@link #NO_LOSS_BATCH}. */
