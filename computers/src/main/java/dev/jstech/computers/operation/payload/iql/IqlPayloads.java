@@ -250,7 +250,8 @@ public final class IqlPayloads {
         final Map<StorageKey, Long> stock = mainframe.networkIndex().snapshot();
         final CraftPlanner.Plan plan = planner.plan(key, quantity, mainframe.networkPatterns(),
                 mainframe.networkProcessingPatterns(), stock);
-        if (plan.steps().isEmpty()) {
+        // A plan with no step may still have a recipe: none of its runs can start, and what it lacks is the answer.
+        if (plan.steps().isEmpty() && !mainframe.anythingMakes(key)) {
             return refused(window, PLAN_NO_RECIPE.with(GameText.of(key.displayName())));
         }
         final List<Text> lines = new ArrayList<>();

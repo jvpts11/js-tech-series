@@ -142,4 +142,12 @@ class ProjectTemplateTest {
         assertFalse(ProjectTemplate.isValidProjectName("Sorter,v2"));
         assertFalse(ProjectTemplate.isValidProjectName("My.App"));
     }
+
+    @Test
+    void isValidProjectName_refusesReservedWords() {
+        assertFalse(ProjectTemplate.isValidProjectName("class"));
+        assertFalse(ProjectTemplate.isValidProjectName("using"));
+        assertFalse(ProjectTemplate.isValidProjectName("static"));
+        assertTrue(ProjectTemplate.isValidProjectName("Class"));
+    }
 }

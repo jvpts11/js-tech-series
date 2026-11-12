@@ -9,6 +9,7 @@ package dev.jstech.computers.os.edit.project;
 
 import dev.jstech.computers.hardware.Isas;
 import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.sigma.lex.TokenKind;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -181,10 +182,11 @@ public enum ProjectTemplate {
 
     /**
      * Whether a name can be a project's name. The starter source uses it as a namespace, a class name and the text
-     * of a string literal, so it has to be an identifier: letters, digits and underscores, not starting with a digit.
+     * of a string literal, so it has to be an identifier: letters, digits and underscores, not starting with a digit,
+     * and no reserved word, which a source would not take as a name.
      */
     public static boolean isValidProjectName(final String name) {
-        if (name == null || name.isEmpty() || !isIdentifierStart(name.charAt(0))) {
+        if (name == null || name.isEmpty() || !isIdentifierStart(name.charAt(0)) || TokenKind.keyword(name) != null) {
             return false;
         }
         for (int i = 1; i < name.length(); i++) {

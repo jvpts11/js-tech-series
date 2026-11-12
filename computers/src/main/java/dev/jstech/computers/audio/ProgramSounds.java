@@ -200,7 +200,10 @@ public final class ProgramSounds {
                             final boolean stereoPlaces) {
         recordings.add(key);
         final int voices = stereoPlaces && song.info().channels() >= 2 ? 2 : 1;
-        computer.voices().take(level, false, key, voices, level.getGameTime() + ticks(song.info().millis()),
+        // A recording whose length nothing knows holds its voices till its session ends, which lets them go.
+        final long millis = MusicPlayer.millisOf(song.media(), song.info());
+        final long endsAt = millis > 0 ? level.getGameTime() + ticks(millis) : Long.MAX_VALUE;
+        computer.voices().take(level, false, key, voices, endsAt,
                 stopped -> {
                     MediaSessions.stop(stopped, key);
                     recordings.remove(key);

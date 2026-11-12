@@ -62,6 +62,13 @@ public final class ExternalStores {
         return found;
     }
 
+    /** Whether {@code node} is an External Storage Bus still mounted on a cable whose chunk is not loaded now. */
+    public static boolean waitingToLoad(final ServerLevel level, final NodeUuid node) {
+        final Map<NodeUuid, Mount> mounts = MOUNTS.get(level);
+        final Mount mount = mounts == null ? null : mounts.get(node);
+        return mount != null && !level.isLoaded(mount.cable());
+    }
+
     /** The External Storage Bus keeping {@code node}, or null when the node is no such bus. */
     @Nullable
     public static ExternalStorageBusPart find(final ServerLevel level, final NodeUuid node) {

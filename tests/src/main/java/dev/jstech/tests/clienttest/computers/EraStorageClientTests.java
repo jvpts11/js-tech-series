@@ -24,6 +24,7 @@ import dev.jstech.tests.testkit.computers.EraParts;
 import dev.jstech.tests.testkit.computers.PartSheets;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -203,12 +204,22 @@ public final class EraStorageClientTests {
                 .thenAwaitNoScreen(SCREEN_WAIT);
     }
 
-    /* Moves the firmware's storage selection {@code steps} times with {@code key}, applies it and waits for it. */
+    /*
+     * Moves the firmware's storage selection {@code steps} times with {@code key}, applies it and waits for it: once
+     * over independent disks, and twice over a working array, whose change the first Enter only arms.
+     */
     private static void mode(final ClientTestContext ctx, final int key, final int steps, final RaidMode mode) {
+        final AtomicBoolean working = new AtomicBoolean();
+        ctx.thenServer(0, level -> working.set(rack(ctx, level).raidModeOf(STORAGE_ROW) != RaidMode.NONE));
         for (int i = 0; i < steps; i++) {
             ctx.then(1, () -> ctx.key(key));
         }
         ctx.then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .then(1, () -> {
+                    if (working.get()) {
+                        ctx.key(GLFW.GLFW_KEY_ENTER);
+                    }
+                })
                 .thenWaitUntilServer(level -> rack(ctx, level).raidModeOf(STORAGE_ROW) == mode, SCREEN_WAIT,
                         "the firmware to set " + mode, level -> "mode=" + rack(ctx, level).raidModeOf(STORAGE_ROW));
     }

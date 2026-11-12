@@ -125,7 +125,8 @@ public final class ClusterManagerPayloads {
                 case ClusterManagerActionPayload.ACTION_CANCEL_JOB ->
                         cmc.cancelJob() ? ClusterManagerStateBuilder.JOB_CANCELLED.text() : Text.EMPTY;
                 case ClusterManagerActionPayload.ACTION_CYCLE_BALANCE -> {
-                    if (ref.face() != null && level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity router) {
+                    if (ref.face() != null
+                            && Loaded.blockEntity(level, ref.anchor()) instanceof ServerRouterBlockEntity router) {
                         router.cycleLoadBalanceMode(ref.face());
                     }
                     yield Text.EMPTY;
@@ -158,7 +159,8 @@ public final class ClusterManagerPayloads {
         if (ref != null) {
             final String typed = payload.name().strip().replaceAll("\\p{Cntrl}", "");
             final String name = TextBounds.clip(typed, ClusterRenamePayload.MAX_NAME);
-            if (ref.face() != null && level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity router) {
+            if (ref.face() != null
+                    && Loaded.blockEntity(level, ref.anchor()) instanceof ServerRouterBlockEntity router) {
                 router.setSectionName(ref.face(), name);
                 status = name.isEmpty() ? ClusterManagerStateBuilder.SECTION_CLEARED.text()
                         : ClusterManagerStateBuilder.SECTION_RENAMED.with(name);
@@ -246,7 +248,7 @@ public final class ClusterManagerPayloads {
             return ClusterManagerStateBuilder.NO_SERVERS.text();
         }
         final ServerRouterBlockEntity router =
-                level.getBlockEntity(ref.anchor()) instanceof ServerRouterBlockEntity r ? r : null;
+                Loaded.blockEntity(level, ref.anchor()) instanceof ServerRouterBlockEntity r ? r : null;
         final LoadBalanceMode mode = router != null
                 ? router.loadBalanceMode(ref.face())
                 : LoadBalanceMode.ROUND_ROBIN;

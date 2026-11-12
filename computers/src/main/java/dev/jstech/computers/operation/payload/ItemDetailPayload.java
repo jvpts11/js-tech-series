@@ -64,11 +64,14 @@ public record ItemDetailPayload(ItemStack item, long total, List<NetworkItemEntr
         return new ItemDetailPayload(item, total, storedIn, usedToMake, buses);
     }
 
-    /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */
+    /*
+     * Copied on the way in, so what the client is handed cannot change under it after it arrives, and each cut to
+     * what the wire carries of it, so no answer can break the packet and drop the player who asked.
+     */
     public ItemDetailPayload {
-        storedIn = List.copyOf(storedIn);
-        usedToMake = List.copyOf(usedToMake);
-        buses = List.copyOf(buses);
+        storedIn = List.copyOf(storedIn.subList(0, Math.min(storedIn.size(), MAX_STORED)));
+        usedToMake = List.copyOf(usedToMake.subList(0, Math.min(usedToMake.size(), MAX_USES)));
+        buses = List.copyOf(buses.subList(0, Math.min(buses.size(), MAX_BUSES)));
     }
 
     @Override

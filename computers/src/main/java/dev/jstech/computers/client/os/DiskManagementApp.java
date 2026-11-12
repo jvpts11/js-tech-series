@@ -452,8 +452,8 @@ public final class DiskManagementApp implements IDesktopApp {
 
     /* A warning that asks before it is done: OK or Yes does it, the other leaves it. */
     private void confirm(final TextKey title, final TextKey warning, final TextKey doIt, final Runnable action) {
-        this.form = new DiskForm(() -> GameText.resolve(title), DiskToolLayout.FORM_W, DiskToolLayout.FORM_H / 2 + 20)
-                .note(() -> GameText.resolve(warning), this.skin.text())
+        this.form = new DiskForm(() -> GameText.resolve(title), DiskToolLayout.FORM_W, DiskToolLayout.CONFIRM_H)
+                .warning(() -> GameText.resolve(warning), this.skin.text())
                 .buttons(() -> GameText.resolve(doIt), action, () -> GameText.resolve(
                         doIt == DiskToolTexts.DM_YES ? DiskToolTexts.DM_NO : DiskToolTexts.CANCEL));
         this.form.open();

@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.menu.CommandPromptMenu;
+import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -69,9 +70,11 @@ final class Viewers {
         this.watching.remove(viewer);
     }
 
-    /** Whether that player's open menu is this machine's prompt or desktop. */
+    /** Whether that player's open menu is this machine's prompt, its desktop, or a monitor's terminal of it. */
     private boolean shows(final ServerPlayer player) {
         return (player.containerMenu instanceof CommandPromptMenu prompt && this.host.equals(prompt.hostPos()))
-                || (player.containerMenu instanceof DesktopMenu desk && this.host.equals(desk.hostPos()));
+                || (player.containerMenu instanceof DesktopMenu desk && this.host.equals(desk.hostPos()))
+                || (player.containerMenu instanceof ComputerTerminalMenu terminal
+                        && this.host.equals(terminal.hostPos()));
     }
 }

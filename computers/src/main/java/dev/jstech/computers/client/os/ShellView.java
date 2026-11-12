@@ -250,6 +250,10 @@ public final class ShellView extends Panel implements ShellViews.IListener {
     public void release() {
         ShellViews.forget(this);
         CodeFileReplies.forget(this.opening);
+        if (this.editor != null) {
+            this.editor.discard();
+            this.editor = null;
+        }
     }
 
     /**

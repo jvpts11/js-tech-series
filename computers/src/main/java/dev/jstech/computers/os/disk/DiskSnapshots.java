@@ -34,6 +34,11 @@ public final class DiskSnapshots {
 
     /** The first number btrfs gives a snapshot: 256 and 257 are the root and home its installers lay out. */
     public static final int FIRST_NUMBER = 258;
+    /**
+     * The most snapshots a partition keeps. Each holds a whole copy of what the partition held, kept in the world's
+     * save, and one of a partition that has not changed weighs nothing, so the disk filling up never stops them.
+     */
+    public static final int MOST_KEPT = 64;
 
     private DiskSnapshots() {
     }
@@ -48,6 +53,9 @@ public final class DiskSnapshots {
         final StorageVolume store = DriveVolumes.of(volume);
         if (find(store, name) != null) {
             return DiskReport.Refusal.SNAPSHOT_EXISTS;
+        }
+        if (store.snapshots().size() >= MOST_KEPT) {
+            return DiskReport.Refusal.TOO_MANY_SNAPSHOTS;
         }
         int number = FIRST_NUMBER;
         for (final VolumeSnapshot kept : store.snapshots()) {

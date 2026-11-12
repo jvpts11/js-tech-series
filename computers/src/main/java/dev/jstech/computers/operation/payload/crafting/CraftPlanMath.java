@@ -28,7 +28,6 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -87,7 +86,7 @@ public final class CraftPlanMath {
                 rows = new ArrayList<>();
                 for (final var in : bench.ingredientTotals().entrySet()) {
                     final long need = Sizes.times(in.getValue(), runs);
-                    rows.add(new CraftPlanPayload.Row(in.getKey().stack(1), need,
+                    rows.add(new CraftPlanPayload.Row(in.getKey(), need,
                             Math.min(stock.getOrDefault(in.getKey(), 0L), need)));
                 }
                 final var patterns = mainframe.patternsPreferring(bench);
@@ -102,12 +101,12 @@ public final class CraftPlanMath {
                 if (inputs.size() >= CraftPlanPayload.MAX_INPUTS) {
                     break;
                 }
-                final StorageKey inputKey = StorageKey.of(row.item());
+                final StorageKey inputKey = row.key();
                 final boolean craftable = mainframe.anythingMakes(inputKey);
                 if (!row.satisfied() && !craftable) {
                     shortCraftable = false;
                 }
-                inputs.add(new RecipeChoice.Input(GameText.of(row.item().getHoverName()), row.need(),
+                inputs.add(new RecipeChoice.Input(GameText.of(row.name()), row.need(),
                         stock.getOrDefault(inputKey, 0L), craftable));
             }
             // A processing run whose short inputs something makes runs as one tree, so it is feasible after all.
@@ -139,11 +138,9 @@ public final class CraftPlanMath {
             if (rows.size() >= CraftPlanPayload.MAX_ROWS) {
                 break;
             }
-            final ItemStack icon = entry.getKey().stack(1);
-            if (!icon.isEmpty()) {
-                rows.add(new CraftPlanPayload.Row(icon, entry.getValue(),
-                        Math.min(stock.getOrDefault(entry.getKey(), 0L), entry.getValue())));
-            }
+            // A fluid, a chemical or matter is a row as an item is: the key names it and counts its stock.
+            rows.add(new CraftPlanPayload.Row(entry.getKey(), entry.getValue(),
+                    Math.min(stock.getOrDefault(entry.getKey(), 0L), entry.getValue())));
         }
         final boolean feasible = plan.feasible();
         final long maxFeasible = feasible ? quantity
@@ -222,7 +219,7 @@ public final class CraftPlanMath {
                     final long need = Sizes.times(in.getValue(), runs);
                     final long have = stock.getOrDefault(in.getKey(), 0L);
                     maxRuns = Math.min(maxRuns, have / Math.max(1, in.getValue()));
-                    rows.add(new CraftPlanPayload.Row(in.getKey().stack(1), need, Math.min(have, need)));
+                    rows.add(new CraftPlanPayload.Row(in.getKey(), need, Math.min(have, need)));
                 }
                 final long maxFirst = maxRuns == Long.MAX_VALUE ? 0 : maxRuns * bench.result().getCount();
                 return new MachinePlan(List.copyOf(rows), maxFirst >= firstDemand,
@@ -240,8 +237,7 @@ public final class CraftPlanMath {
             final long need = Sizes.times(in.amount(), runs);
             final long have = stock.getOrDefault(in.key(), 0L);
             maxRuns = Math.min(maxRuns, have / Math.max(1, in.amount()));
-            final ItemStack icon = in.key().stack(1);
-            rows.add(new CraftPlanPayload.Row(icon, need, Math.min(have, need)));
+            rows.add(new CraftPlanPayload.Row(in.key(), need, Math.min(have, need)));
         }
         final long maxFirst = maxRuns == Long.MAX_VALUE ? 0 : maxRuns * perRun;
         final long maxFinal = recipe.multi().isPresent()

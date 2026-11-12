@@ -32,6 +32,10 @@ import dev.jstech.computers.gui.layout.CraftingInterfaceLayout;
 import dev.jstech.computers.integration.jei.payload.SetProcessingPatternPayload;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.InterfaceView;
+import dev.jstech.computers.os.FilesystemKind;
+import dev.jstech.computers.os.fs.CraftFile;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.storage.StorageKey;
@@ -54,6 +58,7 @@ import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -69,6 +74,8 @@ public final class CraftingChainClientTests {
 
     private static final int SETTLE = 4;
     private static final int SCREEN_WAIT = 40;
+    /** The room a floppy is given for the craft a test writes onto it by hand. */
+    private static final long FLOPPY_ROOM = 1_000_000L;
     /** Long enough for a cold start's POST to play out on the monitor before the desktop shows. */
     private static final int BOOT_WAIT = 400;
 
@@ -194,9 +201,16 @@ public final class CraftingChainClientTests {
                     net.cc().togglePower();
                     world.setBlock(DRIVE, ComputingModule.FLOPPY_DRIVE.get());
                     world.placeMonitor(MONITOR, Direction.EAST);
-                    // A floppy already carrying a bench .craft, as an encoder leaves it (the Studio has its own test).
+                    /*
+                     * A floppy carrying a bench .craft written by hand: the recipe an encoder writes, spaced
+                     * apart, so the file's text is not the text the computer writes for that recipe.
+                     */
                     final ItemStack floppy = new ItemStack(ComputingModule.FLOPPY_DISK.get());
-                    CraftFiles.writeBench(floppy, CraftFiles.oakPlanks(), world.level().registryAccess());
+                    final String byHand = "  " + CraftFile.serialize(CraftFiles.oakPlanks(),
+                            world.level().registryAccess()).orElseThrow() + "\n";
+                    ctx.assertTrue(DiskFilesystem.write(floppy, "oak_planks.craft", FileType.CRAFT, byHand,
+                                    FLOPPY_ROOM, FilesystemKind.HIERARCHICAL) == DiskFilesystem.WriteResult.OK,
+                            "the hand-written craft goes on the floppy");
                     ctx.give(0, floppy);
                 })
                 // Insert the floppy: hold it and right-click the drive.
@@ -249,6 +263,16 @@ public final class CraftingChainClientTests {
                         throw new ClientTestFailure("no Crafting Computer at " + ctx.abs(CRAFTING_COMPUTER));
                     }
                     ctx.assertTrue(!cc.romPatterns().isEmpty(), "Load must put the pattern into the Recipe ROM");
+                    // Removal finds the mirror by the computer's own text, so that is what the mirror holds.
+                    final String canonical =
+                            CraftFile.serialize(cc.romPatterns().get(0), level.registryAccess()).orElseThrow();
+                    final List<String> mirrors = new ArrayList<>();
+                    for (final DiskFilesystem.FileEntry entry
+                            : DiskFilesystem.list(cc.systemDisk(), "crafts", FilesystemKind.HIERARCHICAL)) {
+                        mirrors.add(DiskFilesystem.read(cc.systemDisk(), entry.path()).orElse(""));
+                    }
+                    ctx.assertTrue(mirrors.equals(List.of(canonical)),
+                            "the loaded recipe is mirrored once, as the computer writes it; got " + mirrors);
                 })
                 .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
                 .thenAwaitNoScreen(SCREEN_WAIT);

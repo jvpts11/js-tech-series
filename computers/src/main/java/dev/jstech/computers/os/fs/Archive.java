@@ -10,6 +10,7 @@ package dev.jstech.computers.os.fs;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Sizes;
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -59,6 +60,8 @@ public final class Archive {
             TextKey.of("jsc.archive.no_tab_or_newline", "A file name may not hold a tab or a newline: %s");
     private static final TextKey SAME_NAME =
             TextKey.of("jsc.archive.same_name", "Two files would be archived under the name %s");
+    private static final TextKey BLANK_NAME =
+            TextKey.of("jsc.archive.blank_name", "A file named only with spaces cannot go in an archive");
 
     /**
      * Files that cannot be packed together, and why, in words for the player. Still an illegal argument, so a
@@ -138,6 +141,10 @@ public final class Archive {
             final String name = leaf(file.path());
             if (name.indexOf(SEPARATOR.charAt(0)) >= 0 || name.indexOf(NEWLINE) >= 0) {
                 throw new Refused(NO_TAB_OR_NEWLINE.with(name));
+            }
+            // The listing reads no file back by a blank name, so every file after it would come out shifted.
+            if (name.isBlank()) {
+                throw new Refused(BLANK_NAME.text());
             }
             /*
              * A file keeps only its own name inside, so two files of the same name from different folders
@@ -232,7 +239,8 @@ public final class Archive {
                     new String(bytes, at, entry.originalBytes(), StandardCharsets.UTF_8)));
             at = end;
         }
-        return out;
+        // A listing that leaves part of the payload unread has lost a line, and the files after it would be wrong.
+        return at == bytes.length ? out : List.of();
     }
 
     /** One file back out of an archive by name, or null when it is not in there. */
@@ -249,7 +257,7 @@ public final class Archive {
     public static long originalBytes(final String content) {
         long total = 0L;
         for (final Entry entry : entries(content)) {
-            total += entry.weighs();
+            total = Sizes.plus(total, entry.weighs());
         }
         return total;
     }
@@ -262,7 +270,8 @@ public final class Archive {
         long total = 0L;
         for (final Entry entry : entries(content)) {
             if (entry.type().recording()) {
-                total += entry.recordingBytes();
+                // Held at the largest a size can say: a listing written by hand must not add up past it to nothing.
+                total = Sizes.plus(total, entry.recordingBytes());
             }
         }
         return total;

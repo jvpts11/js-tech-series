@@ -40,6 +40,7 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -797,17 +798,28 @@ public final class CraftingManagerApp implements IDesktopApp {
     }
 
     private void downloadSelected() {
-        if (!selectedRefs.isEmpty()) {
-            PacketDistributor.sendToServer(new DownloadToMediaPayload(host, mediaVolumeKey,
-                    List.copyOf(selectedRefs)));
+        for (final List<Integer> batch : batches(List.copyOf(selectedRefs), DownloadToMediaPayload.MAX_INDICES)) {
+            PacketDistributor.sendToServer(new DownloadToMediaPayload(host, mediaVolumeKey, batch));
         }
     }
 
+    /* The highest first, a batch at a time: removing them in that order never moves one still to go. */
     private void removeSelected() {
-        if (!selectedRefs.isEmpty()) {
-            PacketDistributor.sendToServer(new RemoveRomCraftPayload(host, List.copyOf(selectedRefs)));
-            selectedRefs.clear();
+        final List<Integer> highestFirst = new ArrayList<>(selectedRefs);
+        highestFirst.sort(Comparator.reverseOrder());
+        for (final List<Integer> batch : batches(highestFirst, RemoveRomCraftPayload.MAX_INDICES)) {
+            PacketDistributor.sendToServer(new RemoveRomCraftPayload(host, batch));
         }
+        selectedRefs.clear();
+    }
+
+    /* What is picked, cut into batches no larger than a payload carries. */
+    private static List<List<Integer>> batches(final List<Integer> refs, final int most) {
+        final List<List<Integer>> out = new ArrayList<>();
+        for (int from = 0; from < refs.size(); from += most) {
+            out.add(List.copyOf(refs.subList(from, Math.min(refs.size(), from + most))));
+        }
+        return out;
     }
 
     private static void toggle(final Set<Integer> set, final int value) {

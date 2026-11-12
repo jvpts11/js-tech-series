@@ -243,13 +243,20 @@ final class ComputerPower {
      * What a change to the hardware does to the power: a machine whose build no longer stands goes dark,
      * and one set to start by itself comes up the moment its build stands again.
      *
-     * <p>The session is deliberately left alone, since a machine that went dark this way never passed
-     * through a power cut; and the hardware marks the machine to be saved itself, so this does not.
+     * <p>Going dark leaves the session alone, since a machine that went dark this way never passed through a power
+     * cut; coming back up is a cold start, as auto-start's own switch makes it, with its self-test and a fresh
+     * session, so the old desktop never resurfaces. The hardware marks the machine to be saved itself, so this does
+     * not.
      */
     void hardwareChanged(final boolean buildValid) {
         if (!buildValid) {
             this.manualOn = false;
         } else if (this.autoStart) {
+            if (!this.manualOn) {
+                this.phases.setNeedsPost(true);
+                this.endSession.run();
+                this.switched.accept(true);
+            }
             this.manualOn = true;
             this.stoppedSuddenly = false;
         }

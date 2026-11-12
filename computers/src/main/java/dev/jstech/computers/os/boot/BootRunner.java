@@ -245,7 +245,7 @@ public final class BootRunner {
             phases.halt();
             return;
         }
-        final boolean bootable = machine.hasOs() && health.state() != SystemIntegrity.State.NO_SYSTEM;
+        final boolean bootable = systemToBoot(machine, health);
         if (!bootable && !machine.hasBootableMedium()) {
             /*
              * Written down rather than simply left: the machine is standing at its own failure, and a monitor
@@ -316,17 +316,24 @@ public final class BootRunner {
          * what gives it somewhere to go, and that is how such a machine is repaired. The system is asked about
          * first because the medium means walking every drive the machine is cabled to.
          */
-        if (!(machine.hasOs() && SystemIntegrity.check(machine).whole()) && !machine.hasBootableMedium()) {
+        final SystemIntegrity.Result health = SystemIntegrity.check(machine);
+        if (!(machine.hasOs() && health.whole()) && !machine.hasBootableMedium()) {
             return;
         }
         phases.resume();
-        if (machine.hasOs()) {
+        // The medium it was given is what it goes on to when its own system is gone, as a self-test decides.
+        if (systemToBoot(machine, health)) {
             enterMenuOrBoot(machine, phases, level, pos, level.getGameTime());
             return;
         }
         if (machine.onScreen()) {
             ScreenSessions.bootWatchers(level, pos);
         }
+    }
+
+    /* Whether the machine's own system is one to start: installed, with its folder still on the disk. */
+    private static boolean systemToBoot(final IOsHost machine, final SystemIntegrity.Result health) {
+        return machine.hasOs() && health.state() != SystemIntegrity.State.NO_SYSTEM;
     }
 
     /** Stops at the boot manager when it has something to ask and the player wants it, and boots otherwise. */

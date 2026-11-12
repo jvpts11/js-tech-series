@@ -107,6 +107,13 @@ public final class TtyEditor {
         }
 
         /**
+         * The editor is gone without being quit, its terminal closed or let go: whatever this one keeps open for the
+         * machine's answers lets go of it, as quitting it would.
+         */
+        default void closed(final TtyEditor editor) {
+        }
+
+        /**
          * The whole glass, cell by cell, for a program that draws its own screen in colours (a menu shell) rather
          * than showing a file; null for an editor, which keeps its text and what it draws round it.
          *
@@ -354,6 +361,11 @@ public final class TtyEditor {
         this.path = target;
         this.dirty = false;
         say(TtyTexts.WRITTEN.with(name()));
+    }
+
+    /** Lets the editor go without quitting it: its terminal closed, or no one will take it up again. */
+    public void discard() {
+        this.keys.closed(this);
     }
 
     /** Gives the terminal back. */

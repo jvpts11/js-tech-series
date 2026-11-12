@@ -158,6 +158,14 @@ public interface IOsHost extends IPeripheralOwner, IBootingMachine, IInstallingM
     /** The disk the firmware boots (the preferred slot when it holds a system), or EMPTY. */
     ItemStack systemDisk();
 
+    /**
+     * The slot of the disk the firmware boots, the one {@link #systemDisk()} answers with, or {@code -1} when no disk
+     * holds a system. What works on the running system works here, never on the first disk a new install would take.
+     */
+    default int systemDiskSlot() {
+        return OsDisks.systemDiskSlot(this.diskSlots(), this::diskInSlot, this.bootDiskSlot());
+    }
+
     /** The firmware's preferred boot disk slot, or {@code -1} for "the first disk with a system". */
     int bootDiskSlot();
 

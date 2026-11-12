@@ -254,6 +254,8 @@ public final class ProgramService {
             return this.machine;
         }
         final ServerCliComputer remote = this.remotes.find(host);
-        return remote != null && remote.machine() instanceof AbstractComputerBlockEntity there ? there : null;
+        // Another machine is reached only while it runs and lets programs from elsewhere in, as any remote call is.
+        return remote != null && remote.running() && remote.remoteAllowed()
+                && remote.machine() instanceof AbstractComputerBlockEntity there ? there : null;
     }
 }

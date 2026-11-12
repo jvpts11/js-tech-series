@@ -8,11 +8,13 @@
 package dev.jstech.computers.operation.payload;
 
 import dev.jstech.computers.crafting.RecipeChoice;
+import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -52,14 +54,28 @@ public record CraftPlanPayload(ItemStack result, long quantity, List<Row> rows,
         this(result, quantity, rows, feasible, maxFeasible, estimateTicks, 0, List.of(), List.of(), 1);
     }
 
-    public record Row(ItemStack item, long need, long have) {
+    /**
+     * One thing a plan needs, by its key, so a fluid, a chemical or matter a machine takes is named and counted as
+     * what it is: an item stack would read it as nothing.
+     */
+    public record Row(StorageKey key, long need, long have) {
 
         public static final StreamCodec<RegistryFriendlyByteBuf, Row> STREAM_CODEC =
                 StreamCodec.composite(
-                        ItemStack.STREAM_CODEC, Row::item,
+                        StorageKey.STREAM_CODEC, Row::key,
                         ByteBufCodecs.VAR_LONG, Row::need,
                         ByteBufCodecs.VAR_LONG, Row::have,
                         Row::new);
+
+        /** Its icon: an item's own, nothing for a fluid, a chemical or matter. */
+        public ItemStack item() {
+            return key.stack(1);
+        }
+
+        /** Its name, whatever it is. */
+        public Component name() {
+            return key.displayName();
+        }
 
         public boolean satisfied() {
             return have >= need;

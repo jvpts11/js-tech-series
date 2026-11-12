@@ -110,6 +110,15 @@ public final class InfoKeys implements TtyEditor.IKeys {
         return true;
     }
 
+    /* Its terminal closed without q: the help it was listening for is let go all the same. */
+    @Override
+    public void closed(final TtyEditor editor) {
+        if (this.source != null) {
+            this.source.close();
+            this.source = null;
+        }
+    }
+
     private InfoHelp start(final TtyEditor editor) {
         if (this.info == null) {
             final String view = editor.path();
@@ -128,10 +137,7 @@ public final class InfoKeys implements TtyEditor.IKeys {
     }
 
     private void leave(final TtyEditor editor) {
-        if (this.source != null) {
-            this.source.close();
-            this.source = null;
-        }
+        closed(editor);
         editor.quit();
     }
 }

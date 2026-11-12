@@ -94,7 +94,7 @@ public final class WelcomeFacts {
 
     /** The slot the system that booted is on, or -1 when nothing carries one. */
     public static int bootedSlot(final IOsHost machine) {
-        return OsDisks.systemDiskSlot(machine.diskSlots(), machine::diskInSlot, machine.bootDiskSlot());
+        return machine.systemDiskSlot();
     }
 
     /** The drive the system that booted is on, as it is written on it. */

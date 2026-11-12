@@ -236,7 +236,7 @@ public final class ClusterManagerStateBuilder {
          */
         for (final long rackLong : ref.section().rackPositions()) {
             final BlockPos rackPos = BlockPos.of(rackLong);
-            if (!(level.getBlockEntity(rackPos) instanceof ServerRackBlockEntity rack)) {
+            if (!(Loaded.blockEntity(level, rackPos) instanceof ServerRackBlockEntity rack)) {
                 continue;
             }
             final int rIdx = rackIndex.computeIfAbsent(rackPos, r -> rackIndex.size() + 1);

@@ -8,6 +8,8 @@
 package dev.jstech.tests.gametest.computers;
 
 import com.mojang.authlib.GameProfile;
+import dev.jstech.computers.ComputingModule;
+import dev.jstech.computers.block.MiningComputerBlock;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
 import dev.jstech.computers.os.boot.DiskChecks;
@@ -24,6 +26,7 @@ import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestComputerEnergy;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -36,6 +39,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -290,6 +295,47 @@ public final class ComputerEnergyGameTests {
                     helper.assertTrue(fe == JsEnergy.speaksFe(), "FE is offered exactly while the series takes it");
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * Set to start by itself, a computer whose build stands again comes up cold: its self-test first, a new session.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void autoStart_comesUpColdOnceItsBuildStandsAgain(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    if (!pc.isAutoStart()) {
+                        pc.toggleAutoStart();
+                    }
+                    final ItemStack cpu = pc.getHardware().getStackInSlot(PersonalComputerBlockEntity.CPU_SLOT).copy();
+                    pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT, ItemStack.EMPTY);
+                    helper.assertTrue(!pc.isManualOn(), "without its processor it goes dark");
+                    pc.getHardware().setStackInSlot(PersonalComputerBlockEntity.CPU_SLOT, cpu);
+                    helper.assertTrue(pc.isManualOn() && pc.needsPost(),
+                            "with it back it comes up by itself, its self-test first");
+                })
+                .thenSucceed();
+    }
+
+    /** A wide mining rig takes its energy through its second block as through its first. */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void capability_offersTheEnergyPortThroughAMiningRigsSecondBlock(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        // The Standard rig is two blocks wide, the Transition one a single block.
+        helper.setBlock(PC, ComputingModule.MINING_COMPUTER_STANDARD.get());
+        final BlockPos origin = helper.absolutePos(PC);
+        final BlockState placed = level.getBlockState(origin);
+        final MiningComputerBlock rig = (MiningComputerBlock) placed.getBlock();
+        rig.setPlacedBy(level, origin, placed, null, ItemStack.EMPTY);
+        final List<BlockPos> parts = rig.footprint(origin, placed.getValue(HorizontalDirectionalBlock.FACING))
+                .stream().filter(at -> !at.equals(origin)).toList();
+        helper.assertTrue(!parts.isEmpty(), "the rig stands on more than one block");
+        for (final BlockPos at : parts) {
+            helper.assertTrue(level.getCapability(EnergyPorts.PORT, at, null) != null,
+                    "its block at " + at + " takes its energy; it is " + level.getBlockState(at));
+        }
+        helper.succeed();
     }
 
     /** With the draw off, the server's choice for a world with no energy at all, a computer runs on nothing. */

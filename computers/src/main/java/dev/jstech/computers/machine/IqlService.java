@@ -59,6 +59,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -83,6 +84,9 @@ public final class IqlService {
 
     /** Safety cap on how many item types a single {@code *} statement expands to. */
     private static final int MAX_WILDCARD_TYPES = 256;
+
+    /* A number as a person writes one: digits, a sign before them and a point among them, nothing else. */
+    private static final Pattern PLAIN_NUMBER = Pattern.compile("-?\\d+(\\.\\d+)?");
 
     private static final TextKey LIMIT_CAPPED =
             TextKey.of("jsc.service.iql.limit_capped", "%s item types were shown");
@@ -241,18 +245,23 @@ public final class IqlService {
     }
 
     /**
-     * Orders two values of a field the way a person reads them: as numbers when both are numbers, else as words
-     * regardless of case. A field the row does not have sorts after every value it does have.
+     * Orders two values of a field the way a person reads them: numbers by their size, before every word, and words
+     * regardless of case. A field the row does not have sorts after every value it does have. One order for any mix
+     * of values, so a column of numbers and words sorts the same way every time.
      */
     public static int compareFields(@Nullable final String a, @Nullable final String b) {
         if (a == null || b == null) {
             return a == null ? (b == null ? 0 : 1) : -1;
         }
-        try {
+        final boolean aNumber = PLAIN_NUMBER.matcher(a).matches();
+        final boolean bNumber = PLAIN_NUMBER.matcher(b).matches();
+        if (aNumber && bNumber) {
             return Double.compare(Double.parseDouble(a), Double.parseDouble(b));
-        } catch (final NumberFormatException notNumbers) {
-            return a.compareToIgnoreCase(b);
         }
+        if (aNumber != bNumber) {
+            return aNumber ? -1 : 1;
+        }
+        return a.compareToIgnoreCase(b);
     }
 
     /**

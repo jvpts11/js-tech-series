@@ -9,6 +9,7 @@ package dev.jstech.computers.os.fs;
 
 import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.core.jstechseries.tier.Era;
+import dev.jstech.core.util.Sizes;
 
 import java.nio.charset.StandardCharsets;
 
@@ -54,7 +55,7 @@ public record StoredFile(String path, FileType type, String content, long modifi
             final BackupFile backup = BackupFile.read(content);
             return backup == null ? text : backup.bytes();
         }
-        return type == FileType.ARK ? text + Archive.recordingBytes(content) : text;
+        return type == FileType.ARK ? Sizes.plus(text, Archive.recordingBytes(content)) : text;
     }
 
     /** The file's size in bytes, as {@link #bytesOf} weighs it. */

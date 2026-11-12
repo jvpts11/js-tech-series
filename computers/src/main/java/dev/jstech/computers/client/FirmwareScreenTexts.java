@@ -202,6 +202,8 @@ public final class FirmwareScreenTexts {
     // The key hints along the foot.
     static final TextKey FORMAT_ARMED = TextKey.of("jsc.firmware.screen.format_armed",
             "F again: FORMAT DISK (erases everything)   ESC: Exit");
+    static final TextKey RAID_ARMED = TextKey.of("jsc.firmware.screen.raid_armed",
+            "Enter again: CHANGE THE ARRAY (erases it)   ESC: Exit");
     static final TextKey SETUP_KEYS = TextKey.of("jsc.firmware.screen.setup_keys",
             "Enter: Boot   Tab: Page   F: Format   ESC: Exit");
 

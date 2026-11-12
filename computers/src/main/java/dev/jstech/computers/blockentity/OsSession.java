@@ -275,7 +275,7 @@ final class OsSession {
     }
 
     /** The slot the machine boots from, or -1 when nothing in it carries a system or it runs off its memory. */
-    private int systemDiskSlot() {
+    int systemDiskSlot() {
         if (!this.liveDisk.isEmpty()) {
             return -1;
         }

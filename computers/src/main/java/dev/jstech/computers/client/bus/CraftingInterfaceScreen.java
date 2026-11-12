@@ -64,6 +64,8 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
 
     private static final TextKey[] TAB_WORDS = {BusTexts.TAB_CONFIGURE, BusTexts.TAB_ACTIVITY, BusTexts.TAB_SOFTWARE};
     private static final int MOST_JOBS = 64;
+    /* What a line of code broken in two goes in by on the next, as the bus's Software tab breaks them. */
+    private static final String CONTINUED = "  ";
 
     public CraftingInterfaceScreen(final CraftingInterfaceMenu menu, final Inventory inventory,
                                    final Component title) {
@@ -635,7 +637,7 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
                 BusDraw.code(g, left + CraftingInterfaceLayout.LABEL_X, y, CraftingInterfaceLayout.ROW_W, box);
             }
             for (int i = 0; i < section.lines().size(); i++) {
-                BusDraw.small(g, font, BusDraw.clip(font, section.lines().get(i), CraftingInterfaceLayout.ROW_W - 6),
+                BusDraw.small(g, font, section.lines().get(i),
                         left + CraftingInterfaceLayout.LABEL_X + 3, y + CraftingInterfaceLayout.BOX_PAD
                                 + i * CraftingInterfaceLayout.LINE, section.code() ? JsTechTheme.accent()
                                 : JsTechTheme.dim());
@@ -656,20 +658,33 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
             return sections;
         }
         final String name = s.name();
-        sections.add(new Section(GameText.resolve(InterfaceTexts.ADDRESS), List.of("interface://" + name), true));
+        sections.add(new Section(GameText.resolve(InterfaceTexts.ADDRESS), wrapAll(List.of("interface://" + name)),
+                true));
         sections.add(new Section(GameText.resolve(InterfaceTexts.IQL),
-                InterfaceScript.iql(name, s.exclusive(), s.maxJobs(), s.paused()), true));
+                wrapAll(InterfaceScript.iql(name, s.exclusive(), s.maxJobs(), s.paused())), true));
         sections.add(new Section(GameText.resolve(InterfaceTexts.SIGMA),
-                InterfaceScript.sigma(name, s.exclusive(), s.maxJobs(), s.paused()), true));
+                wrapAll(InterfaceScript.sigma(name, s.exclusive(), s.maxJobs(), s.paused())), true));
         if (!s.marks().isEmpty()) {
             final List<String> marks = new ArrayList<>();
             s.marks().forEach((setting, program) -> marks.add(GameText.resolve(InterfaceTexts.SET_BY_LINE.with(
                     setting, program))));
-            sections.add(new Section(GameText.resolve(InterfaceTexts.SET_BY_PROGRAMS), marks, false));
+            sections.add(new Section(GameText.resolve(InterfaceTexts.SET_BY_PROGRAMS), wrapAll(marks), false));
         }
         sections.add(new Section("", BusDraw.lines(font, GameText.resolve(InterfaceTexts.SOFTWARE_NOTE),
                 CraftingInterfaceLayout.ROW_W - 6), false));
         return sections;
+    }
+
+    /* Each line broken where it runs past its box, the rest going in a little on the next, never cut short. */
+    private List<String> wrapAll(final List<String> code) {
+        final List<String> lines = new ArrayList<>();
+        for (final String line : code) {
+            final List<String> parts = BusDraw.lines(font, line, CraftingInterfaceLayout.ROW_W - 6);
+            for (int i = 0; i < parts.size(); i++) {
+                lines.add(i == 0 ? parts.get(i) : CONTINUED + parts.get(i).stripLeading());
+            }
+        }
+        return lines;
     }
 
     private void drawTabs(final GuiGraphics g, final int x, final int y, final int mouseX, final int mouseY) {

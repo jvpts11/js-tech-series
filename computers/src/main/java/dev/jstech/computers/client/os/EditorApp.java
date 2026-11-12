@@ -105,7 +105,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     public EditorApp(final BlockPos host) {
         this.host = host;
         this.dialog = new FileDialog(host, this);
-        this.find = new EditorFindBar(body::document);
+        this.find = new EditorFindBar(body::document, this::edited);
         openButton = root.add(new Button(GameText.resolve(EditorTexts.OPEN), this::chooseOpen));
         saveButton = root.add(new Button(GameText.resolve(EditorTexts.SAVE), this::save));
         saveAsButton = root.add(new Button(GameText.resolve(EditorTexts.SAVE_AS), this::chooseSaveAs));

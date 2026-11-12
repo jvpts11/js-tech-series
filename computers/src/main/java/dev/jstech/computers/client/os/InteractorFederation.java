@@ -48,7 +48,8 @@ public final class InteractorFederation {
     /* What the grid lists: the network's items, then what it can craft and holds none of. A new list on each answer. */
     private List<NetworkItemEntry> entries = List.of();
     private final Set<StorageKey> craftable = new HashSet<>();
-    private long askedAt = Long.MIN_VALUE;
+    /* Never asked: half the least a long holds, so the time since it never runs past what a long holds. */
+    private long askedAt = Long.MIN_VALUE / 2;
 
     public static final TextKey CAPTION = TextKey.of("jsc.interactor.federated.caption", "%s (FEDERATED)");
     public static final TextKey CAPTION_NONE = TextKey.of("jsc.interactor.federated.caption_none",

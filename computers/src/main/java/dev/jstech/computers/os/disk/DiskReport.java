@@ -366,6 +366,8 @@ public record DiskReport(List<Disk> disks, String error) {
         /* A file system that keeps no snapshots. */
         NO_SNAPSHOTS,
         SNAPSHOT_EXISTS,
+        /* A partition keeps no more snapshots than its most, each a whole copy of what it held. */
+        TOO_MANY_SNAPSHOTS,
         NO_SUCH_SNAPSHOT,
         /* ZFS rolls back past later snapshots only when told to let them go. */
         NEWER_SNAPSHOTS,

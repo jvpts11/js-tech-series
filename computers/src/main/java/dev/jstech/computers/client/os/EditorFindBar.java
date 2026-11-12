@@ -44,13 +44,16 @@ public final class EditorFindBar {
     private final Label hits;
 
     private final Supplier<TextDocument> document;
+    /* What its window does once Replace all changed the text, as a keystroke would: it marks the file changed. */
+    private final Runnable onChanged;
 
     private Mode mode = Mode.FIND;
     private boolean open;
     private String found = "";
 
-    public EditorFindBar(final Supplier<TextDocument> document) {
+    public EditorFindBar(final Supplier<TextDocument> document, final Runnable onChanged) {
         this.document = document;
+        this.onChanged = onChanged;
         findCaption = root.add(new Label(this::caption, Label.Tone.DIM));
         root.add(needle);
         replaceCaption = root.add(new Label(GameText.resolve(EditorTexts.REPLACE), Label.Tone.DIM));
@@ -203,6 +206,7 @@ public final class EditorFindBar {
         doc.setText(after);
         doc.setCursor(Math.min(line, Math.max(0, doc.lineCount() - 1)), 0);
         this.found = GameText.resolve(EditorTexts.REPLACED.with(changed));
+        this.onChanged.run();
     }
 
     /* What the field is for, which is what the strip is doing. */

@@ -19,11 +19,14 @@ import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.fs.FilesystemContents;
+import dev.jstech.computers.os.fs.StoredFile;
 import dev.jstech.computers.program.IqlEngine;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlDuration;
 import dev.jstech.computers.program.iql.IqlSavedObject;
+import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import java.util.Locale;
@@ -40,7 +43,6 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.jstech.computers.operation.payload.files.FileAccess.filesystemKindOf;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.resolveMainframe;
 import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHost;
 
@@ -100,13 +102,14 @@ public final class AutomationPayloads {
                     triggerSummary(job.triggerKind(), job.triggerSpec()), mf.isJobPaused(job.name())));
         }
         // The .iql scripts saved on the Mainframe's system disk, so an IQL-Script job can pick one.
+        // Every script on it, in whatever folder: a listing of one folder would show only those at its root.
         final List<String> files = new ArrayList<>();
         final ItemStack sysDisk = mf.systemDisk();
         if (!sysDisk.isEmpty()) {
-            for (final DiskFilesystem.FileEntry entry
-                    : DiskFilesystem.list(sysDisk, "", filesystemKindOf(mf))) {
-                if (entry.type() == FileType.IQL && files.size() < AutomationPayload.MAX_FILES) {
-                    files.add(entry.path());
+            for (final StoredFile file : sysDisk.getOrDefault(ComputingComponents.FILESYSTEM.get(),
+                    FilesystemContents.EMPTY).files().values()) {
+                if (file.type() == FileType.IQL && files.size() < AutomationPayload.MAX_FILES) {
+                    files.add(file.path());
                 }
             }
         }

@@ -109,7 +109,7 @@ public final class CraftPlannerPayloads {
             if (ingredients.size() >= CraftPlannerPayload.MAX_INGREDIENTS) {
                 break;
             }
-            ingredients.add(new CraftPlanPayload.Row(e.getKey().stack(1), e.getValue(),
+            ingredients.add(new CraftPlanPayload.Row(e.getKey(), e.getValue(),
                     stock.getOrDefault(e.getKey(), 0L)));
         }
         final List<CraftPlannerPayload.TreeNode> tree = new ArrayList<>();

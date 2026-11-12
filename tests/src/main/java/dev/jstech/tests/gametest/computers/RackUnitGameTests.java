@@ -64,6 +64,8 @@ public final class RackUnitGameTests {
 
     private static final String ARENA = "empty";
     private static final int SETTLE = 4;
+    /* A storage server's ten bays full, and one drive more, on the shelf under it. */
+    private static final int SHELVED_MIRROR = 11;
 
     private static ServerRackBlockEntity placeRack(final GameTestHelper helper, final BlockPos pos) {
         helper.setBlock(pos, ComputingModule.SERVER_RACK.get());
@@ -600,6 +602,35 @@ public final class RackUnitGameTests {
                     helper.assertTrue(rack.getServerStorage(0).capacity()
                                     == PartSheets.disk(nvmeDrive().getItem()).capacityItems(),
                             "a degraded array keeps the volume size it promised");
+                })
+                .thenSucceed();
+    }
+
+    /* A drive shelf's bays are its server's: a mirror member pulled from the shelf leaves as one from its own bays. */
+    @GameTest(template = ARENA)
+    public static void raid_mirrorSurvivesAMemberPulledFromItsDriveShelf(final GameTestHelper helper) {
+        final ServerRackBlockEntity rack = placeRack(helper, new BlockPos(2, 2, 2));
+        rack.getServers().setStackInSlot(0, ServerStacks.raidStorageServer());
+        helper.assertTrue(rack.getServers().insertItem(2, new ItemStack(ComputingModule.DRIVE_SHELF.get()), false)
+                .isEmpty(), "the shelf mounts under the 2U server");
+        int inserted = 0;
+        while (inserted < SHELVED_MIRROR && rack.insertDrive(0, nvmeDrive())) {
+            inserted++;
+        }
+        final int shelfBay = 2 * RackLayout.SLOTS_PER_U;
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    helper.assertTrue(DriveVolumes.isDisk(rack.getFrontSlots().getStackInSlot(shelfBay)),
+                            "a member stands in the shelf's first bay");
+                    helper.assertTrue(rack.setRaidMode(0, RaidMode.RAID1), "the mirror forms");
+                    rack.getServerStorage(0).insert(StorageKey.of(Items.COBBLESTONE), 900L);
+                    final ItemStack pulled = rack.getFrontSlots().extractItem(shelfBay, 1, false);
+                    helper.assertTrue(DriveVolumes.contents(pulled).items().isEmpty(),
+                            "the member pulled from the shelf comes out blank, never a second copy");
+                    helper.assertTrue(rack.getServerStorage(0).count(Items.COBBLESTONE) == 900L,
+                            "the mirror still serves every item; got "
+                                    + rack.getServerStorage(0).count(Items.COBBLESTONE));
+                    helper.assertTrue(rack.raidDegraded(0), "and reads as degraded");
                 })
                 .thenSucceed();
     }

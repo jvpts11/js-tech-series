@@ -13,12 +13,15 @@ import dev.jstech.computers.crafting.NetworkRecipe;
 import dev.jstech.computers.crafting.ProcessingPattern.ProcessingInput;
 import dev.jstech.computers.crafting.ProcessingPattern.ProcessingOutput;
 import dev.jstech.computers.crafting.ProcessingPattern;
+import dev.jstech.computers.operation.payload.CraftPlanPayload;
 import dev.jstech.computers.os.fs.CraftFile;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
+import io.netty.buffer.Unpooled;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluids;
@@ -226,6 +229,23 @@ public final class MachineCraftDataGameTests {
                 "a stack's data components survive the .craft round-trip");
         helper.assertFalse(back.inputs().get(0).key().equals(StorageKey.of(new ItemStack(Items.DIAMOND_SWORD))),
                 "and it differs from the plain item");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
+    public static void planRow_keepsAFluidInputsNameAcrossTheWire(final GameTestHelper helper) {
+        final StorageKey water = StorageKey.of(new FluidStack(Fluids.WATER, 1));
+        final CraftPlanPayload sent = new CraftPlanPayload(new ItemStack(Items.IRON_INGOT), 4,
+                List.of(new CraftPlanPayload.Row(water, 4000, 1000)), false, 1, 0);
+        final RegistryFriendlyByteBuf buf =
+                new RegistryFriendlyByteBuf(Unpooled.buffer(), helper.getLevel().registryAccess());
+        CraftPlanPayload.STREAM_CODEC.encode(buf, sent);
+        final CraftPlanPayload.Row row = CraftPlanPayload.STREAM_CODEC.decode(buf).rows().get(0);
+        helper.assertTrue(row.key().equals(water), "a machine's fluid input stays that fluid; got " + row.key());
+        helper.assertTrue(row.name().getString().equals(water.displayName().getString()),
+                "the row is named for the fluid, never Air; got " + row.name().getString());
+        helper.assertTrue(row.need() == 4000 && row.have() == 1000 && !row.satisfied(),
+                "the row keeps what it needs against what the network holds");
         helper.succeed();
     }
 

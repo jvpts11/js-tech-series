@@ -34,7 +34,7 @@ public record ProcessActionPayload(BlockPos hostPos, int kind, String name, int 
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, ProcessActionPayload::hostPos,
                     ByteBufCodecs.VAR_INT, ProcessActionPayload::kind,
-                    ByteBufCodecs.stringUtf8(48), ProcessActionPayload::name,
+                    ByteBufCodecs.stringUtf8(ProcessListPayload.ProcessLine.MAX_NAME), ProcessActionPayload::name,
                     ByteBufCodecs.VAR_INT, ProcessActionPayload::action,
                     ProcessActionPayload::new);
 

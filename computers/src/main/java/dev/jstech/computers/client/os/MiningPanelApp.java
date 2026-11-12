@@ -69,6 +69,9 @@ public final class MiningPanelApp implements IDesktopApp {
     private int tab;
     private int chosenPool;
     private int sentFee = -1;
+    /* The machine picked among those asking to join, by its id: the list is rebuilt with each answer, and reorders. */
+    @Nullable
+    private String askingPicked;
     private long lastRequestMillis;
     private int lastMouseX;
     private int lastMouseY;
@@ -167,6 +170,7 @@ public final class MiningPanelApp implements IDesktopApp {
             if (!payload.pool().yours() && active.tab == SETTINGS) {
                 active.tab = POOL;
             }
+            active.askingList.setSelected(active.askingIndex());
         }
     }
 
@@ -328,16 +332,29 @@ public final class MiningPanelApp implements IDesktopApp {
     }
 
     private void pickAsking(final int index) {
-        askingList.setSelected(index);
+        final List<MiningPanelStatePayload.Miner> waiting = asking();
+        askingPicked = index >= 0 && index < waiting.size() ? waiting.get(index).machine() : null;
+        askingList.setSelected(askingIndex());
     }
 
+    /* Answers the machine picked, if it still asks; the pick goes with the answer. */
     private void answer(final boolean yes) {
-        final List<MiningPanelStatePayload.Miner> waiting = asking();
-        final int chosen = askingList.selected();
-        if (chosen >= 0 && chosen < waiting.size()) {
-            request(yes ? MiningPanelRequestPayload.ACCEPT : MiningPanelRequestPayload.REFUSE,
-                    waiting.get(chosen).machine(), 0L);
+        if (askingIndex() >= 0) {
+            request(yes ? MiningPanelRequestPayload.ACCEPT : MiningPanelRequestPayload.REFUSE, askingPicked, 0L);
         }
+        askingPicked = null;
+        askingList.setSelected(-1);
+    }
+
+    /* Where the machine picked stands among those asking now; -1 when none is picked or it no longer asks. */
+    private int askingIndex() {
+        final List<MiningPanelStatePayload.Miner> waiting = asking();
+        for (int i = 0; i < waiting.size(); i++) {
+            if (waiting.get(i).machine().equals(askingPicked)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private List<String> tabLabels() {

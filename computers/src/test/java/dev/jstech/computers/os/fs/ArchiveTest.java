@@ -207,6 +207,31 @@ class ArchiveTest {
     }
 
     @Test
+    void unpack_refusesAListingThatLeavesPartOfTheBodyUnread() {
+        final String packed = Archive.pack(List.of(file("a.txt", FileType.TXT, "hello"),
+                file("b.txt", FileType.TXT, "world")));
+        final String lineLost = packed.replace("a.txt\ttxt\t5\n", "");
+        assertTrue(Archive.unpack(lineLost).isEmpty(), "b.txt must not come out holding a.txt's bytes");
+    }
+
+    @Test
+    void pack_refusesANameOfOnlySpaces() {
+        assertThrows(IllegalArgumentException.class, () -> Archive.pack(List.of(
+                file("   ", FileType.TXT, "x"), file("b.txt", FileType.TXT, "y"))));
+    }
+
+    @Test
+    void recordingBytes_holdsAtTheLargestSizeRatherThanWrappingRound() {
+        final String packed = Archive.pack(List.of(song()));
+        final String[] lines = packed.split("\n", -1);
+        final String listed = lines[1];
+        final String huge = listed.substring(0, listed.lastIndexOf('\t') + 1) + Long.MAX_VALUE;
+        final String twice = packed.replace(listed, huge + "\n" + huge.replace("song", "other"));
+        assertEquals(Long.MAX_VALUE, Archive.recordingBytes(twice), "the sum stops at the largest size");
+        assertTrue(StoredFile.bytesOf(FileType.ARK, twice) > 0L, "so the archive never weighs nothing");
+    }
+
+    @Test
     void pack_refusesNothingAtAll() {
         assertThrows(IllegalArgumentException.class, () -> Archive.pack(List.of()));
         assertThrows(IllegalArgumentException.class, () -> Archive.pack(null));

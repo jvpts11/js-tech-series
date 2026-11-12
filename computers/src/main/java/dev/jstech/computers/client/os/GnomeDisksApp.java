@@ -452,8 +452,8 @@ public final class GnomeDisksApp implements IDesktopApp {
 
     private void deleteAsked(final DiskReport.Disk disk, final DiskReport.Part part) {
         this.form = new DiskForm(() -> GameText.resolve(DiskToolTexts.GD_DELETE), DiskToolLayout.FORM_W,
-                DiskToolLayout.FORM_H / 2 + 20)
-                .note(() -> GameText.resolve(DiskToolTexts.GD_DELETE_ASK), PALETTE.get().ink())
+                DiskToolLayout.CONFIRM_H)
+                .warning(() -> GameText.resolve(DiskToolTexts.GD_DELETE_ASK), PALETTE.get().ink())
                 .buttons(() -> GameText.resolve(DiskToolTexts.GD_DELETE), () -> {
                     this.disks.change(DiskCommand.delete(disk.index(), part.number()));
                     this.chosenStart = -1L;

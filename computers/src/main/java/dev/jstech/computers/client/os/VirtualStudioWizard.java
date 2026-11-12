@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import static dev.jstech.computers.client.os.VirtualStudioLoader.join;
 
 import dev.jstech.computers.api.JsComputersApi;
+import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.os.edit.project.ProjectFile;
 import dev.jstech.computers.os.edit.project.ProjectTemplate;
 import dev.jstech.computers.os.edit.project.SolutionFile;
@@ -38,6 +39,7 @@ import java.util.Map;
 import java.util.function.Supplier;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 /**
  * The New Project wizard of the Virtual Studio: a first page that picks a template, narrowed by what is typed and
@@ -386,18 +388,55 @@ final class VirtualStudioWizard {
         final ProjectFile file = this.chosen.project(project);
         final SolutionFile base = this.addingToSolution ? this.loader.solution()
                 : new SolutionFile(sol, List.of(), "");
-        final SolutionFile solutionFile = base.withProject(SolutionFile.projectPath(file));
-        this.loader.saveFile(join(dir, SolutionFile.fileName(sol)), solutionFile.write());
-        this.loader.saveFile(join(join(dir, project), file.fileName()), file.write());
-        final String first = this.chosen.firstSource(project);
+        final String projectPath = join(join(dir, project), file.fileName());
+        final String solutionPath = join(dir, SolutionFile.fileName(sol));
+        // Nothing the player has is written over: a project, or a new solution, already there is refused.
+        whenAbsent(new ArrayDeque<>(this.addingToSolution ? List.of(projectPath) : List.of(solutionPath, projectPath)),
+                () -> write(template, project, dir, file, base, solutionPath, projectPath));
+    }
+
+    /* The solution file, the project file and the first source written, then the solution opened. */
+    private void write(final ProjectTemplate.Offer template, final String project, final String dir,
+                       final ProjectFile file, final SolutionFile base, final String solutionPath,
+                       final String projectPath) {
+        this.loader.saveFile(solutionPath, base.withProject(SolutionFile.projectPath(file)).write());
+        this.loader.saveFile(projectPath, file.write());
+        final String first = template.firstSource(project);
         if (!first.isEmpty()) {
-            this.loader.saveFile(join(join(dir, project), first), this.chosen.source(project));
+            this.loader.saveFile(join(join(dir, project), first), template.source(project));
         }
         /*
          * The files are on their way; asking for the solution now reads them once they have landed. The
          * first source waits for the solution to be in, since one file is waited for at a time.
          */
         this.loader.openSolution(dir, first.isEmpty() ? List.of() : List.of(join(join(dir, project), first)), "");
+    }
+
+    /* Runs {@code then} once the machine says none of {@code paths} is there; else says which is, and writes none. */
+    private void whenAbsent(final Deque<String> paths, final Runnable then) {
+        final String path = paths.pollFirst();
+        if (path == null) {
+            then.run();
+            return;
+        }
+        CodeFileReplies.expectContent(new CodeFileReplies.IReader() {
+            @Override
+            public void onContent(final String at, final String content, final boolean exists) {
+                if (exists) {
+                    VirtualStudioWizard.this.workspace.say(GameText.resolve(
+                            VirtualStudioTexts.ALREADY_THERE.with(shownLocation(at))));
+                } else {
+                    whenAbsent(paths, then);
+                }
+            }
+
+            @Override
+            public void onContentTooLarge(final String at) {
+                VirtualStudioWizard.this.workspace.say(GameText.resolve(
+                        VirtualStudioTexts.ALREADY_THERE.with(shownLocation(at))));
+            }
+        }, path);
+        PacketDistributor.sendToServer(new RequestFileContentPayload(this.host, path));
     }
 
     private void layoutTemplates(final Popup p) {

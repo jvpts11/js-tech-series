@@ -290,6 +290,10 @@ public final class SoundfoundryPagePayloads {
 
     private static Text addTo(final ServerLevel level, final AbstractComputerBlockEntity computer,
                               final String name, final String ref) {
+        // Only a list the machine keeps takes a song: one deleted from another window is not made again by it.
+        if (!SoundfoundryPlaylists.names(computer).contains(name)) {
+            return SoundfoundryTexts.PLAYLIST_NOT_SAVED.with(name);
+        }
         final List<String> songs = new ArrayList<>(SoundfoundryPlaylists.read(level, computer, name));
         if (songs.size() >= SoundfoundryState.MAX_SONGS) {
             return SoundfoundryTexts.LIST_FULL.with(SoundfoundryState.MAX_SONGS);

@@ -10,19 +10,26 @@ package dev.jstech.tests.gametest.computers;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.hardware.DiskSize;
+import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.DiskTools;
 import dev.jstech.computers.os.FileSystemType;
+import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.disk.DiskCommand;
 import dev.jstech.computers.os.disk.DiskPartitions;
 import dev.jstech.computers.os.disk.DiskReport;
 import dev.jstech.computers.os.disk.PartitionScheme;
+import dev.jstech.computers.os.fs.DiskFilesystem;
+import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.program.ServerCliComputer;
 import dev.jstech.computers.program.cli.CliCommands;
 import dev.jstech.computers.program.cli.CliLine;
 import dev.jstech.computers.program.cli.CliShell;
 import dev.jstech.computers.program.tty.ITtyProcess;
 import dev.jstech.computers.program.tty.ITtySink;
+import dev.jstech.computers.registry.HardwareRegistry;
+import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.util.Sizes;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestCli;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -167,6 +174,34 @@ public final class DiskToolGameTests {
     }
 
     /* A running PC of the Standard with that system, and a second, plain disk beside its own. */
+    /**
+     * What is free on a partition is what its files leave of its size, in whole megabytes rounded up: a size that is
+     * no whole number of items is held in more items than it has room for, and counting from those would call room
+     * free that is not there, which a resize would then take away from what the partition holds.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void freeSpace_isWhatTheFilesLeaveOfThePartition(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = withSecondDisk(helper, FRAMES_10);
+        helper.startSequence()
+                .thenExecute(() -> {
+                    final long perItem = EraStorage.mbPerItem(HardwareRegistry.disk(pc.diskInSlot(1)).era());
+                    final long size = perItem * 3 + perItem / 2 + 1;
+                    read(pc, DiskCommand.table(1, PartitionScheme.GPT));
+                    helper.assertTrue(read(pc, DiskCommand.create(1, 0L, size, "exfat")).refusal() == null,
+                            "a partition of " + size + " MB is made");
+                    final ItemStack volume = DiskPartitions.view(pc.diskInSlot(1), 1);
+                    helper.assertTrue(DiskPartitions.sizeMbOf(volume) == size, "at the size asked for");
+                    DiskFilesystem.write(volume, "notes.txt", FileType.TXT, "x".repeat(4_000), Long.MAX_VALUE,
+                            FilesystemKind.HIERARCHICAL);
+                    final long held = Sizes.ceilDiv(DiskFilesystem.filesWeight(volume) * perItem,
+                            StorageKey.MB_EQ_PER_ITEM);
+                    helper.assertTrue(held > 0 && DiskPartitions.freeMbOf(volume) == size - held,
+                            "free is the size less what the file takes; got " + DiskPartitions.freeMbOf(volume)
+                                    + " of " + size + ", the file taking " + held);
+                })
+                .thenSucceed();
+    }
+
     private static PersonalComputerBlockEntity withSecondDisk(final GameTestHelper helper,
                                                              final ResourceLocation system) {
         final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper)

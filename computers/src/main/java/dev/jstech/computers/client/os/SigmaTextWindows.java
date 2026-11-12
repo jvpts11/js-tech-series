@@ -46,6 +46,8 @@ public final class SigmaTextWindows {
     private long dialog;
     private String dialogPath = "";
     private UiLayout.Rect menuRect;
+    /* The first entry the open popup shows, which rolls to keep the one picked in view. */
+    private int popupTop;
 
     /** The terminal's sixteen colours, by what each part of a window is drawn in. */
     private static final int DESK = TextScreen.BLUE;
@@ -535,9 +537,13 @@ public final class SigmaTextWindows {
         x = Math.clamp(x, 0, Math.max(0, s.columns() - w));
         y = Math.clamp(y, 0, Math.max(0, s.rows() - h));
         s.box(x, y, w, h, TextScreen.cga(INK), TextScreen.cga(FACE), false);
-        for (int i = 0; i < h - 2 && i < entries.size(); i++) {
-            final String said = owner.row(entries.get(i));
-            final boolean lit = i == this.ui.popupScroll;
+        // A list longer than the box rolls to keep the entry picked in it.
+        final int visible = h - 2;
+        this.popupTop = Math.clamp(this.popupTop, this.ui.popupScroll - visible + 1, this.ui.popupScroll);
+        this.popupTop = Math.clamp(this.popupTop, 0, Math.max(0, entries.size() - visible));
+        for (int i = 0; i < visible && this.popupTop + i < entries.size(); i++) {
+            final String said = owner.row(entries.get(this.popupTop + i));
+            final boolean lit = this.popupTop + i == this.ui.popupScroll;
             if (SigmaMenus.SEPARATOR.equals(said)) {
                 s.put(x, y + 1 + i, "├" + "─".repeat(w - 2) + "┤", TextScreen.cga(INK), TextScreen.cga(FACE));
             } else {
@@ -917,7 +923,7 @@ public final class SigmaTextWindows {
             this.ui.closePopup();
             return;
         }
-        this.choose(window, row - rect.y() - 1);
+        this.choose(window, this.popupTop + row - rect.y() - 1);
     }
 
     /* Picks the entry of the open popup at that place in what it lists. */
@@ -941,12 +947,14 @@ public final class SigmaTextWindows {
         this.ui.popupOwner = bar.id();
         this.ui.popupMenu = menu;
         this.ui.popupScroll = 0;
+        this.popupTop = 0;
     }
 
     private void openCombo(final UiWindowPayload.Widget combo) {
         this.ui.popup = SigmaUiState.PopupKind.COMBO;
         this.ui.popupOwner = combo.id();
         this.ui.popupScroll = Math.max(0, combo.number(4) - 1);
+        this.popupTop = 0;
     }
 
     private void press(final UiWindowPayload window, final UiWindowPayload.Widget widget) {

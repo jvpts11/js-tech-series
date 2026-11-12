@@ -136,6 +136,11 @@ public final class IsmsApp implements IDesktopApp, CodeFileReplies.IReader {
         this.find = new EditorFindBar(() -> {
             final IsmsDocument doc = current();
             return doc == null ? null : doc.code.document();
+        }, () -> {
+            final IsmsDocument doc = current();
+            if (doc != null) {
+                doc.dirty = true;
+            }
         });
         this.processes.setOnPick((operation, button) -> pickOperation(operation));
         this.searchPanel.add(search);
@@ -1293,7 +1298,12 @@ public final class IsmsApp implements IDesktopApp, CodeFileReplies.IReader {
         if (doc.running()) {
             queries.cancel(doc);
         }
+        // The tab in front stays in front: one closed before it moves it a place along.
+        final int index = docs.indexOf(doc);
         docs.remove(doc);
+        if (index >= 0 && index < active) {
+            active--;
+        }
         active = Math.max(0, Math.min(active, docs.size() - 1));
     }
 

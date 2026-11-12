@@ -464,7 +464,9 @@ public final class PartitionManagerApp implements IDesktopApp {
         final List<FileSystemType> types = List.of(FileSystemType.EXT4, FileSystemType.EXT3, FileSystemType.BTRFS,
                 FileSystemType.XFS, FileSystemType.FAT32, FileSystemType.NTFS, FileSystemType.EXFAT,
                 FileSystemType.SWAP);
-        final int[] chosen = {Math.max(0, types.indexOf(part.fileSystem()))};
+        // A file system not in the list shows the first; only a type picked from the list, or recreating it, formats.
+        final int shown = Math.max(0, types.indexOf(part.fileSystem()));
+        final int[] chosen = {shown};
         final boolean[] recreate = {false};
         this.form = new DiskForm(() -> GameText.resolve(DiskToolTexts.KPM_PROPERTIES_TITLE.with(device(disk, part))),
                 DiskToolLayout.FORM_W, DiskToolLayout.FORM_H)
@@ -474,7 +476,7 @@ public final class PartitionManagerApp implements IDesktopApp {
                         () -> recreate[0] = !recreate[0]))
                 .buttons(() -> GameText.resolve(DiskToolTexts.OK), () -> {
                     final FileSystemType fs = types.get(chosen[0]);
-                    if (recreate[0] || fs != part.fileSystem()) {
+                    if (recreate[0] || chosen[0] != shown && fs != part.fileSystem()) {
                         this.queue(DiskToolTexts.KPM_OP_FORMAT.with(fs.displayName(), device(disk, part)),
                                 DiskCommand.format(disk.index(), part.number(), fs.serializedName()));
                     }
@@ -510,8 +512,8 @@ public final class PartitionManagerApp implements IDesktopApp {
     /* Apply: asked first, then every pending operation written in its order. */
     private void applyAsked() {
         this.form = new DiskForm(() -> GameText.resolve(DiskToolTexts.KPM_APPLY_TITLE), DiskToolLayout.FORM_W,
-                DiskToolLayout.FORM_H / 2 + 20)
-                .note(() -> GameText.resolve(DiskToolTexts.KPM_APPLY_ASK), PALETTE.get().ink())
+                DiskToolLayout.CONFIRM_H)
+                .warning(() -> GameText.resolve(DiskToolTexts.KPM_APPLY_ASK), PALETTE.get().ink())
                 .buttons(() -> GameText.resolve(DiskToolTexts.KPM_APPLY), () -> {
                     for (final Pending op : this.pending) {
                         this.disks.change(op.path());

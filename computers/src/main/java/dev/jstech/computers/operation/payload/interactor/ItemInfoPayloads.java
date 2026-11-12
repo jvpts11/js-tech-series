@@ -134,8 +134,9 @@ public final class ItemInfoPayloads {
             if (!(Loaded.blockEntity(level, cablePos) instanceof CableBlockEntity cable)) {
                 continue;
             }
+            // The wire carries so many buses at most: one cable's six faces are counted against it too.
             for (final Direction dir : Direction.values()) {
-                if (cable.getPart(dir)
+                if (buses.size() < ItemDetailPayload.MAX_BUSES && cable.getPart(dir)
                         instanceof AbstractBusPart bus
                         && bus.filterKeys().contains(key)) {
                     buses.add(new ItemDetailPayload.BusRef(bus.name(), bus.type().text()));

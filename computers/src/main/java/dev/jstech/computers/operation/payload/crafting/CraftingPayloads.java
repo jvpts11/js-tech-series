@@ -349,8 +349,8 @@ public final class CraftingPayloads {
                 continue;
             }
             final long shortfall = row.need() - row.have();
-            final Text name = GameText.of(row.item().getHoverName());
-            final var plan = planner.plan(StorageKey.of(row.item()), shortfall, patterns, machines, stock);
+            final Text name = GameText.of(row.name());
+            final var plan = planner.plan(row.key(), shortfall, patterns, machines, stock);
             if (plan.feasible() && !plan.steps().isEmpty()) {
                 if (lines.size() < CraftPlanPayload.MAX_COVER) {
                     lines.add(treeCovers

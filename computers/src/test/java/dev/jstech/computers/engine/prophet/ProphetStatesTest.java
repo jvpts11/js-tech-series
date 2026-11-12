@@ -59,10 +59,26 @@ class ProphetStatesTest {
         states.evaluate(1, 0, this::held);
         states.started("steel", 212);
         stock.put("steel", 512L);
-        states.settled("steel", 212, 1);
+        states.settled("steel", 212, 212, 1);
 
         assertTrue(states.evaluate(2, 1, this::held).isEmpty());
         assertEquals(ProphetStates.Status.HOLDING, states.keepOf("steel").status());
+    }
+
+    @Test
+    void evaluate_asksAgainForWhatTheWorkDidNotMake() {
+        stock.put("steel", 300L);
+        states.keep("steel", 512, IProphetStatement.UNBOUNDED);
+        states.evaluate(1, 0, this::held);
+        states.started("steel", 212);
+        // The work settled having made nothing: no count changed, and nothing is on its way.
+        states.settled("steel", 212, 0, 1);
+        states.cannotHold("steel");
+        states.evaluate(2, 1, this::held);
+
+        assertEquals(0L, states.keepOf("steel").inFlight());
+        assertEquals(ProphetStates.Status.CANNOT_HOLD, states.keepOf("steel").status(),
+                "what it did not make is not counted as arriving, so the state cannot hold rather than holds");
     }
 
     @Test
@@ -72,7 +88,7 @@ class ProphetStatesTest {
         states.evaluate(1, 0, this::held);
         states.started("steel", 212);
         // The work handed its steel over, and the network's count has not seen it yet.
-        states.settled("steel", 212, 1);
+        states.settled("steel", 212, 212, 1);
 
         assertTrue(states.evaluate(1, 1, this::held).isEmpty(), "what just came is not asked for again");
         stock.put("steel", 512L);

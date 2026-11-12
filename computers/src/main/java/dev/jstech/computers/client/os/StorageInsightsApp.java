@@ -40,10 +40,12 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.WeakHashMap;
 
 import static dev.jstech.computers.client.os.StorageInsightsTexts.ALL_STOCKED;
 import static dev.jstech.computers.client.os.StorageInsightsTexts.BACK;
@@ -106,10 +108,14 @@ public final class StorageInsightsApp implements IDesktopApp {
     private boolean detailMode;
     @Nullable
     private ItemDetailPayload detail;
+    /* The item this window last asked the detail of, which its answer is matched to. */
+    @Nullable
+    private ItemStack asked;
     private int lastMouseX;
     private int lastMouseY;
 
-    private static StorageInsightsApp active;
+    /* Every Storage Insights window open: each takes the answers, so a second window never starves the first. */
+    private static final Set<StorageInsightsApp> OPEN = Collections.newSetFromMap(new WeakHashMap<>());
 
     // components
     private final Panel root = new Panel();
@@ -203,19 +209,23 @@ public final class StorageInsightsApp implements IDesktopApp {
         busList = root.add(new ListView<BusRef>(() -> detail == null ? List.of() : detail.buses(), DETAIL_ROW_H, this::renderBusRow));
         busesEmpty = root.add(new Label(GameText.resolve(NOT_ON_A_BUS), Label.Tone.DIM));
 
-        active = this;
+        OPEN.add(this);
         request();
     }
 
+    /** Routes the network's answer to every open window: the windows a player has open read one network. */
     public static void accept(final StorageInsightsPayload payload) {
-        if (active != null) {
-            active.data = payload;
+        for (final StorageInsightsApp open : List.copyOf(OPEN)) {
+            open.data = payload;
         }
     }
 
+    /** Routes an item's detail to the windows that asked about that item. */
     public static void acceptDetail(final ItemDetailPayload payload) {
-        if (active != null) {
-            active.detail = payload;
+        for (final StorageInsightsApp open : List.copyOf(OPEN)) {
+            if (open.asked != null && ItemStack.isSameItem(open.asked, payload.item())) {
+                open.detail = payload;
+            }
         }
     }
 
@@ -231,8 +241,13 @@ public final class StorageInsightsApp implements IDesktopApp {
 
     @Override
     public void onRestored() {
-        active = this;
+        OPEN.add(this);
         request();
+    }
+
+    @Override
+    public void onClosed() {
+        OPEN.remove(this);
     }
 
     @Override
@@ -263,7 +278,7 @@ public final class StorageInsightsApp implements IDesktopApp {
     @Override
     public void applySkin(final OsSkin osSkin) {
         this.skin = osSkin;
-        active = this;
+        OPEN.add(this);
     }
 
     // rendering
@@ -551,6 +566,7 @@ public final class StorageInsightsApp implements IDesktopApp {
         }
         detailMode = true;
         detail = null;
+        asked = stack.copy();
         root.focus(null);
         PacketDistributor.sendToServer(new RequestItemDetailPayload(host, monitorPos, stack));
     }

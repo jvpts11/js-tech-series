@@ -152,10 +152,15 @@ public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockE
                 standing.zSign() * from[standing.zFrom()]);
     }
 
-    /* Lets go of what removed machines hold, or of everything. */
+    /*
+     * Lets go of what removed machines hold, and those no longer formed and working, or of everything: a machine whose
+     * structure broke is no longer drawn, so its renderer never hears it stopped.
+     */
     private static void release(final boolean everything) {
         HELD.entrySet().removeIf(entry -> {
-            if (everything || entry.getKey().isRemoved()) {
+            final ChainMachineBlockEntity terminal = entry.getKey();
+            if (everything || terminal.isRemoved() || !terminal.formed()
+                    || terminal.status() != MachineStatus.WORKING) {
                 entry.getValue().release();
                 return true;
             }

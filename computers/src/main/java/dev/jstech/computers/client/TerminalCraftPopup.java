@@ -155,8 +155,8 @@ final class TerminalCraftPopup {
         } else {
             for (int i = 0; i < Math.min(PLAN_ROWS, plan.rows().size()); i++) {
                 final var row = plan.rows().get(i);
-                screen.drawDataIcon(g, StorageKey.of(row.item()), -1L, px + 6, rowY - 2);
-                Draw.text(g, screen.tabFont(), trim(row.item().getHoverName().getString(), 14),
+                screen.drawDataIcon(g, row.key(), -1L, px + 6, rowY - 2);
+                Draw.text(g, screen.tabFont(), trim(row.name().getString(), 14),
                         px + 26, rowY + 2, JsTechTheme.text());
                 final String counts = ComputerTerminalScreen.fmt(row.have()) + " / "
                         + ComputerTerminalScreen.fmt(row.need());

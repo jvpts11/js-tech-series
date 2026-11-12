@@ -55,11 +55,10 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.jetbrains.annotations.Nullable;
 
-import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.craftFileNameFor;
-import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.deleteCraftFromDisk;
+import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.mirror;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.mirrorFileName;
 import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.reconcileCraftsFolder;
-import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.writeCraftToDisk;
+import static dev.jstech.computers.operation.payload.crafting.CraftFilesOnDisk.unmirror;
 import static dev.jstech.computers.operation.payload.files.FileAccess.commitMedia;
 import static dev.jstech.computers.operation.payload.files.FileAccess.mediaStackFor;
 
@@ -215,7 +214,7 @@ public final class CraftManagerPayloads {
             loaded++;
             if (recipe.bench().isPresent()) {
                 // A bench recipe is mirrored under crafts/ on the system disk, so it shows in the Files app.
-                writeCraftToDisk(cc, craftFileNameFor(recipe.bench().get()), content.get());
+                mirror(cc, recipe.bench().get(), level.registryAccess());
             }
         }
         cc.setChanged();
@@ -244,8 +243,7 @@ public final class CraftManagerPayloads {
             final CraftPlaces.Place place = places.at(CraftPlaces.placeOf(ref));
             final NetworkRecipe taken = place == null ? null : place.take(CraftPlaces.entryOf(ref));
             if (taken != null && taken.bench().isPresent()) {
-                CraftFile.serialize(taken.bench().get(), level.registryAccess()).ifPresent(content ->
-                        deleteCraftFromDisk(cc, craftFileNameFor(taken.bench().get()), content));
+                unmirror(cc, taken.bench().get(), level.registryAccess());
             }
         }
         cc.setChanged();

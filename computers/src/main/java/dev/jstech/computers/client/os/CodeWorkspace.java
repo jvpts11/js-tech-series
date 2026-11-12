@@ -352,6 +352,15 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
         }
     }
 
+    /* A file too large to open is said so, and the files after it in the list are opened all the same. */
+    @Override
+    public void onContentTooLarge(final String path) {
+        this.status = GameText.resolve(EditorTexts.TOO_LARGE.with(ProblemReport.nameOf(path)));
+        if (!this.toOpen.isEmpty() || !this.endOn.isEmpty()) {
+            openNext();
+        }
+    }
+
     /**
      * What is open here, as a window remembers it for the machine: the folder, then every file on a
      * tab, then the one in front, a line each.
@@ -452,6 +461,10 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
             return;
         }
         this.docs.remove(index);
+        // The file in front stays in front: one closed before it moves it a place along.
+        if (index < this.current) {
+            this.current--;
+        }
         this.current = Math.min(this.current, this.docs.size() - 1);
     }
 
@@ -925,7 +938,8 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
 
     @Override
     public void onFolder(final FolderContentPayload folder) {
-        this.folderComplaints.clear();
+        // A survey answers for its own folder: what other folders' surveys found stands.
+        this.folderComplaints.keySet().removeIf(path -> dirOf(path).equals(folder.dir()));
         this.folderTexts.keySet().removeIf(path -> dirOf(path).equals(folder.dir()));
         for (final var file : folder.files()) {
             this.folderTexts.put(file.path(), file.text());

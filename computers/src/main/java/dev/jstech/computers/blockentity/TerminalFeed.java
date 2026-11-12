@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.blockentity;
 
+import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
@@ -77,10 +78,12 @@ final class TerminalFeed {
         final CliLine shown = ended ? this.terminal.prompt() : null;
         final String prompt = shown == null ? "" : shown.text();
         final TerminalKeyboard keyboard = shown == null ? held : TerminalKeyboard.atPrompt(shown);
+        // A desktop's terminal and a monitor's Console heading are shell views; a Command Prompt is its own screen.
         for (final ServerPlayer viewer : viewers) {
-            PacketDistributor.sendToPlayer(viewer, viewer.containerMenu instanceof DesktopMenu
-                    ? new DesktopShellOutputPayload(prompt, out.lines(), keyboard)
-                    : new CommandOutputPayload(prompt, out.lines(), keyboard));
+            PacketDistributor.sendToPlayer(viewer,
+                    viewer.containerMenu instanceof DesktopMenu || viewer.containerMenu instanceof ComputerTerminalMenu
+                            ? new DesktopShellOutputPayload(prompt, out.lines(), keyboard)
+                            : new CommandOutputPayload(prompt, out.lines(), keyboard));
         }
     }
 }

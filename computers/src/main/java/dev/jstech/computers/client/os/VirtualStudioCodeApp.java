@@ -87,6 +87,8 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
     /** Folders and files opened on each machine lately, kept for the Welcome page while the game runs. */
     private static final Map<BlockPos, Deque<String>> RECENT = new LinkedHashMap<>();
     private static final int RECENT_MAX = 5;
+    /* What follows a folder among the recent entries, telling it from a file. */
+    private static final String FOLDER_MARK = "/";
 
     private final BlockPos host;
     private final CodeWorkspace workspace;
@@ -303,7 +305,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
         this.folderOpen = true;
         this.side = Side.EXPLORER;
         this.workspace.setFolder(dir);
-        remember(dir);
+        remember(dir + FOLDER_MARK);
     }
 
     /** Runs a line at the terminal panel, as typing it and pressing return does. */
@@ -470,7 +472,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
                 item(StudioTexts.OPEN_FILE_ITEM, this.folderOpen, this::openFileByName),
                 item(StudioTexts.OPEN_FOLDER_ITEM, true, this::pickFolder)));
         for (final String path : recent()) {
-            items.add(item(StudioTexts.RECENT.with(shortName(path)), true, () -> openRecent(path)));
+            items.add(item(StudioTexts.RECENT.with(recentName(path)), true, () -> openRecent(path)));
         }
         items.add(ContextMenu.Item.separator());
         items.add(item(StudioTexts.SAVE, hasDoc(), this.workspace::save));
@@ -646,12 +648,18 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
 
     /* What the commands do */
 
-    private void openRecent(final String path) {
-        final int dot = shortName(path).lastIndexOf('.');
-        if (dot > 0) {
-            openFile(path);
+    /* The name a recent entry is listed by: a folder's without the slash it is kept with. */
+    private static String recentName(final String entry) {
+        return shortName(entry.endsWith(FOLDER_MARK) ? entry.substring(0, entry.length() - FOLDER_MARK.length())
+                : entry);
+    }
+
+    /* A recent folder is kept with a slash after it, so a folder named with a dot opens as the folder it is. */
+    private void openRecent(final String entry) {
+        if (entry.endsWith(FOLDER_MARK)) {
+            openFolder(entry.substring(0, entry.length() - FOLDER_MARK.length()));
         } else {
-            openFolder(path);
+            openFile(entry);
         }
     }
 
@@ -1209,7 +1217,7 @@ public final class VirtualStudioCodeApp implements IDesktopApp {
             ly += 9;
         }
         for (final String path : recent) {
-            ly = link(g, font, left, ly, shortName(path), () -> openRecent(path), palette);
+            ly = link(g, font, left, ly, recentName(path), () -> openRecent(path), palette);
         }
         final int rightX = x + width / 2 + 6;
         int ry = y + 32;

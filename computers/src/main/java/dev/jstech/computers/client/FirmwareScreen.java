@@ -84,6 +84,7 @@ import static dev.jstech.computers.client.FirmwareScreenTexts.PSU_WORN;
 import static dev.jstech.computers.client.FirmwareScreenTexts.RAID0_STRENGTH;
 import static dev.jstech.computers.client.FirmwareScreenTexts.RAID1_STRENGTH;
 import static dev.jstech.computers.client.FirmwareScreenTexts.RAID5_STRENGTH;
+import static dev.jstech.computers.client.FirmwareScreenTexts.RAID_ARMED;
 import static dev.jstech.computers.client.FirmwareScreenTexts.RAID_CONTROLLER;
 import static dev.jstech.computers.client.FirmwareScreenTexts.RAM_SLOTS;
 import static dev.jstech.computers.client.FirmwareScreenTexts.SCANNING_DEVICES;
@@ -183,6 +184,8 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
 
     /** The array mode highlighted on the storage page, and where its rows were drawn. */
     private RaidMode storageSel = RaidMode.NONE;
+    /* Whether Enter was pressed once on a change to a working array, which a second press applies. */
+    private boolean raidArmed;
     private int storageRowY;
     private int storageRowH = 10;
     private static final TextKey[] PAGES = {PAGE_BOOT_NAME, PAGE_BOOT_ORDER, PAGE_HARDWARE_NAME, PAGE_STORAGE_NAME};
@@ -305,7 +308,11 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     /** Routes the server's boot-entry state to the open firmware screen. */
     public static void accept(final FirmwareStatePayload payload) {
         if (active != null && active.computerPos.equals(payload.hostPos())) {
+            final boolean first = active.state == null;
             active.state = payload;
+            if (first) {
+                active.storageSel = active.currentRaid();
+            }
             active.selected = Math.max(0, Math.min(active.selected, Math.max(0, active.rows().size() - 1)));
         }
     }
@@ -381,11 +388,20 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
     private void activateSelected() {
         // On the storage page Enter applies the highlighted array mode; there are no boot entries there.
         if (page == PAGE_STORAGE) {
-            if (state != null && state.raid().present()
-                    && (storageSel == RaidMode.NONE || state.raid().drives() >= storageSel.minDrives())) {
-                send(FirmwareActionPayload.of(computerPos, monitorPos,
-                        FirmwareActionPayload.ACTION_RAID_MODE, storageSel.id(), -1));
+            final RaidMode now = currentRaid();
+            if (state == null || !state.raid().present() || storageSel == now
+                    || storageSel != RaidMode.NONE && state.raid().drives() < storageSel.minDrives()) {
+                raidArmed = false;
+                return;
             }
+            // A working array may lose what it holds when its mode changes: the first press arms it, as format does.
+            if (now != RaidMode.NONE && !raidArmed) {
+                raidArmed = true;
+                return;
+            }
+            raidArmed = false;
+            send(FirmwareActionPayload.of(computerPos, monitorPos,
+                    FirmwareActionPayload.ACTION_RAID_MODE, storageSel.id(), -1));
             return;
         }
         final FirmwareStatePayload.Entry e = selectedEntry();
@@ -1184,8 +1200,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         for (int i = 0; i < tabHits.length; i++) {
             if (in(tabHits[i], mouseX, mouseY)) {
                 page = i;
-                selected = 0;
-                confirmFormatRef = Long.MIN_VALUE;
+                pageTurned();
                 return true;
             }
         }
@@ -1282,13 +1297,13 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             }
             case 258 -> { // Tab
                 page = (page + 1) % PAGES.length;
-                selected = 0;
-                confirmFormatRef = Long.MIN_VALUE;
+                pageTurned();
                 return true;
             }
             case 265 -> { // Up
                 if (page == PAGE_STORAGE) {
                     storageSel = storageSel.previous();
+                    raidArmed = false;
                 } else {
                     selected = Math.max(0, selected - 1);
                 }
@@ -1298,6 +1313,7 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
             case 264 -> { // Down
                 if (page == PAGE_STORAGE) {
                     storageSel = storageSel.next();
+                    raidArmed = false;
                 } else {
                     selected = Math.min(Math.max(0, rows().size() - 1), selected + 1);
                 }
@@ -1348,11 +1364,27 @@ public class FirmwareScreen extends AbstractComputerScreen<MonitorSessionMenu> {
         if (System.currentTimeMillis() < noticeUntil) {
             return notice;
         }
+        if (page == PAGE_STORAGE && raidArmed) {
+            return of(RAID_ARMED);
+        }
         final FirmwareStatePayload.Entry e = selectedEntry();
         if (e != null && e.kind() == FirmwareStatePayload.KIND_DISK && confirmFormatRef == e.ref()) {
             return of(FORMAT_ARMED);
         }
         return of(SETUP_KEYS);
+    }
+
+    /* A page turned to: nothing armed, and the storage page highlights the array's mode, so Enter alone keeps it. */
+    private void pageTurned() {
+        selected = 0;
+        confirmFormatRef = Long.MIN_VALUE;
+        storageSel = currentRaid();
+        raidArmed = false;
+    }
+
+    /* The mode the machine's array is in now; independent volumes before the machine has said. */
+    private RaidMode currentRaid() {
+        return state == null ? RaidMode.NONE : RaidMode.find(state.raid().mode());
     }
 
     @Override

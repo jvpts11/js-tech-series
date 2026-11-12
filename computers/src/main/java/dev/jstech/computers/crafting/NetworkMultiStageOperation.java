@@ -72,6 +72,10 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
     @Nullable
     private UUID pendingStageId;
     private boolean done;
+    /* Whether a stage made less than it was asked: the pipeline goes on with what it made, and ends partial. */
+    private boolean cameShort;
+    /* What the last stage delivered to the network, the pipeline's own made. */
+    private long delivered;
     private byte status = OperationRecord.STATUS_PROCESSING;
     private OperationFailure cause = OperationFailure.NONE;
     private OperationPriority priority = OperationPriority.DEFAULT;
@@ -123,6 +127,7 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         tag.putString("Label", requesterLabel);
         tag.putByte(NetworkCraftOperation.PRIORITY_KEY, (byte) priority.id());
         tag.putInt("StageIndex", stageIndex);
+        tag.putBoolean("Short", cameShort);
         if (currentStage instanceof IPersistentOperation stage && !currentStage.isDone()) {
             tag.putUUID("StageId", stage.operationId());
         } else if (pendingStageId != null) {
@@ -150,6 +155,7 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
                 tag.getLong("Requested"), tag.getString("Label"),
                 tag.hasUUID(ID_KEY) ? tag.getUUID(ID_KEY) : UUID.randomUUID());
         op.stageIndex = tag.getInt("StageIndex");
+        op.cameShort = tag.getBoolean("Short");
         op.pendingStageId = tag.hasUUID("StageId") ? tag.getUUID("StageId") : null;
         op.priority = NetworkCraftOperation.savedPriority(tag);
         if (op.pool != null) {
@@ -197,6 +203,9 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
 
     /** The stage this restored pipeline waited on was fully delivered during the restore: move on to the next. */
     public void skipCompletedStage() {
+        if (this.stageIndex == this.pattern.stages().size() - 1) {
+            this.delivered = this.pattern.stageDemands(this.requested)[this.stageIndex];
+        }
         this.currentStage = null;
         this.pendingStageId = null;
         this.stageIndex++;
@@ -209,7 +218,7 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         }
         if (currentStage == null) {
             if (stageIndex >= pattern.stages().size()) {
-                status = OperationRecord.STATUS_COMPLETED;
+                status = cameShort ? OperationRecord.STATUS_PARTIAL : OperationRecord.STATUS_COMPLETED;
                 finish();
                 return;
             }
@@ -225,9 +234,14 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
             return;
         }
         if (currentStage.isDone()) {
-            // Take whatever status the finished stage carried; a failed stage fails the whole pipeline.
+            /*
+             * Take whatever status the finished stage carried: one that made its share, or part of it, lets the next
+             * go on with what it made; one that failed, timed out or was stopped fails the whole pipeline, as the
+             * pattern promises.
+             */
             final OperationRecord stageRecord = currentStage.toRecord();
-            if (stageRecord.status() == OperationRecord.STATUS_FAILED) {
+            if (stageRecord.status() != OperationRecord.STATUS_COMPLETED
+                    && stageRecord.status() != OperationRecord.STATUS_PARTIAL) {
                 status = OperationRecord.STATUS_FAILED;
                 /*
                  * The stage's own reason, where it gave one: a pipeline that failed because its third stage ran
@@ -238,6 +252,10 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
                                 String.valueOf(pattern.stages().size()));
                 finish();
                 return;
+            }
+            cameShort |= stageRecord.status() == OperationRecord.STATUS_PARTIAL;
+            if (stageIndex == pattern.stages().size() - 1) {
+                delivered = stageRecord.moved();
             }
             stageIndex++;
             currentStage = null;
@@ -382,8 +400,9 @@ public final class NetworkMultiStageOperation implements IPersistentOperation {
         return buildRecord(done ? status : OperationRecord.STATUS_PROCESSING);
     }
 
+    /* What it made is what its last stage delivered, nothing until that stage is done: never which stage it is on. */
     private OperationRecord buildRecord(final byte recordStatus) {
-        return new OperationRecord(operationId, OperationRecord.TYPE_CRAFT, resultKey, requested, stageIndex,
+        return new OperationRecord(operationId, OperationRecord.TYPE_CRAFT, resultKey, requested, delivered,
                 recordStatus, priority, List.of(), List.of()).withCause(cause);
     }
 }

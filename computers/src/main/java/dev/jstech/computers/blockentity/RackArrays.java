@@ -178,8 +178,9 @@ final class RackArrays {
      * departing member held is moved onto the drives that stay, and it comes out blank.
      */
     void onMemberRemoved(final int frontSlot) {
+        // A drive shelf's bays are the computer's it extends: their drives are members of that computer's array.
         final RackLayout.Unit unit =
-                RackLayout.unitAt(frontSlot / RackLayout.SLOTS_PER_U, rack.mountedUnits());
+                RackLayout.ownerOfRow(frontSlot / RackLayout.SLOTS_PER_U, rack.mountedUnits());
         if (unit == null) {
             return;
         }

@@ -109,6 +109,23 @@ public final class ReceivingBusPart extends ImportBusPart {
         markHostChanged();
     }
 
+    /**
+     * What it saw of {@code key} went down to {@code now}, taken away by a player or a hopper: what stays is only what
+     * is still there, so what the machine makes on top of it is credited.
+     */
+    public void lowerBaseline(final StorageKey key, final long now) {
+        final Long seen = baseline.get(key);
+        if (seen == null || now >= seen) {
+            return;
+        }
+        if (now <= 0L) {
+            baseline.remove(key);
+        } else {
+            baseline.put(key, now);
+        }
+        markHostChanged();
+    }
+
     /** Its interfaces are idle and owe nothing: it forgets what it saw. */
     public void stopWatching() {
         if (watching) {

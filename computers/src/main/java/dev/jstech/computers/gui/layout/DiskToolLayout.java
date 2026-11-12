@@ -64,6 +64,8 @@ public final class DiskToolLayout {
     /** A dialog of a disk tool. */
     public static final int FORM_W = 240;
     public static final int FORM_H = 150;
+    /** A dialog that asks before it does: its title, a warning of five lines and its two buttons. */
+    public static final int CONFIRM_H = FORM_H / 2 + 47;
 
     private DiskToolLayout() {
     }

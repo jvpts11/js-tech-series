@@ -255,14 +255,12 @@ public final class CodeArea extends UiComponent {
         return true;
     }
 
-    /** The height of one row on the screen, at the size the text is drawn. */
-    private int rowHeight() {
-        return Math.max(1, Math.round(LINE_H * this.scale));
-    }
-
-    /** How many rows fit. */
+    /**
+     * How many rows fit: counted in the unscaled units the rows are drawn in, a row's pitch the line's height times
+     * the scale exactly, never rounded, so a zoom between whole sizes counts the rows it draws.
+     */
     public int visibleLines() {
-        return Math.max(1, (height() - 2) / rowHeight());
+        return Math.max(1, (int) ((height() / (double) this.scale - 2) / LINE_H));
     }
 
     /** The width the numbers take, which is what the code is indented past, in unscaled units. */
@@ -599,9 +597,9 @@ public final class CodeArea extends UiComponent {
         return "";
     }
 
-    /** The row under a screen y, which may be past the last. */
+    /** The row under a screen y, which may be past the last: in the unscaled units the rows are drawn in. */
     private int lineAt(final double my) {
-        return this.scroll + (int) Math.floor((my - y() - 1) / (double) rowHeight());
+        return this.scroll + (int) Math.floor(((my - y()) / this.scale - 1) / LINE_H);
     }
 
     /** The column a screen x falls on within {@code text}, snapping to the nearer edge of a character. */

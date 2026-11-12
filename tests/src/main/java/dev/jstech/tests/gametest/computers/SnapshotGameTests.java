@@ -14,6 +14,8 @@ import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.machine.DiskTools;
 import dev.jstech.computers.os.disk.DiskCommand;
 import dev.jstech.computers.os.disk.DiskPartitions;
+import dev.jstech.computers.os.disk.DiskReport;
+import dev.jstech.computers.os.disk.DiskSnapshots;
 import dev.jstech.computers.os.disk.PartitionScheme;
 import dev.jstech.computers.os.disk.ZfsMember;
 import dev.jstech.computers.os.disk.ZfsMirrors;
@@ -120,6 +122,30 @@ public final class SnapshotGameTests {
                 .thenSucceed();
     }
 
+    /** A partition keeps no more snapshots than its most, and zfs says why the one past it is not taken. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void zfs_keepsNoMoreSnapshotsThanItsMost(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity pc = withSecondDisk(helper, FREEBSD);
+        helper.startSequence()
+                .thenExecute(() -> {
+                    ask(pc, DiskCommand.create(SECOND, 0L, 1_024L, "zfs"));
+                    for (int i = 0; i < DiskSnapshots.MOST_KEPT; i++) {
+                        helper.assertTrue(report(pc, DiskCommand.snapshot(SECOND, 1, "s" + i)).refusal() == null,
+                                "snapshot " + i + " is taken");
+                    }
+                    helper.assertTrue(report(pc, DiskCommand.snapshot(SECOND, 1, "one_more")).refusal()
+                                    == DiskReport.Refusal.TOO_MANY_SNAPSHOTS,
+                            "the one past the most is refused");
+                    helper.assertTrue(volume(pc, 1).snapshots().size() == DiskSnapshots.MOST_KEPT,
+                            "and is not kept");
+                    final ServerCliComputer cli = new ServerCliComputer(pc, helper.getLevel());
+                    final CliShell.Response said = CliCommands.shellFor(cli, 100).run("zfs snapshot ada1p1@again", cli);
+                    helper.assertTrue(TestCli.contains(said, "the most a partition keeps"),
+                            "zfs says why; it said " + said);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void mirror_repairsOnReadAndOnScrubAndNotWithoutItsOtherMember(final GameTestHelper helper) {
         final PersonalComputerBlockEntity pc = withSecondDisk(helper, FREEBSD);
@@ -197,6 +223,10 @@ public final class SnapshotGameTests {
 
     private static void ask(final PersonalComputerBlockEntity pc, final String path) {
         DiskTools.reply(pc, pc.getLevel(), path);
+    }
+
+    private static DiskReport report(final PersonalComputerBlockEntity pc, final String path) {
+        return DiskReport.read(DiskTools.reply(pc, pc.getLevel(), path));
     }
 
     private static StorageVolume volume(final PersonalComputerBlockEntity pc, final int number) {

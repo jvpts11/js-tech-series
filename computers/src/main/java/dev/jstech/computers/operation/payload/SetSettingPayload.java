@@ -32,7 +32,8 @@ public record SetSettingPayload(BlockPos hostPos, String key, String value) impl
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC, SetSettingPayload::hostPos,
                     ByteBufCodecs.stringUtf8(48), SetSettingPayload::key,
-                    ByteBufCodecs.stringUtf8(128), SetSettingPayload::value,
+                    // A wallpaper's value is a picture's whole path with its prefix: the longest path a disk holds.
+                    ByteBufCodecs.stringUtf8(PayloadCodecs.MOST_PATH), SetSettingPayload::value,
                     SetSettingPayload::new);
 
     @Override

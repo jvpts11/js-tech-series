@@ -187,14 +187,26 @@ public final class NetworkIndex {
                 dirty.add(bus.node());
             }
         }
-        // Nodes no longer on the network (or unresolvable) leave the catalog entirely.
+        /*
+         * Nodes no longer on the network leave the catalog entirely, and the Operations that reach them are lost with
+         * them. A node still on it whose chunk is not loaded only leaves the catalog until it loads, to be read again
+         * then: what its Operations carry is not lost for a chunk let go.
+         */
+        final Set<NodeUuid> registered = new HashSet<>();
+        system.serversOf(network).forEach(server -> registered.add(server.nodeUuid()));
+        system.personalComputersOf(network).forEach(pc -> registered.add(pc.nodeUuid()));
         final List<NodeUuid> gone = new ArrayList<>();
+        final List<NodeUuid> unloaded = new ArrayList<>();
         for (final NodeUuid indexed : indexedModCounts.keySet()) {
             if (!live.containsKey(indexed) && !livePcs.containsKey(indexed) && !liveExternal.containsKey(indexed)) {
-                gone.add(indexed);
+                if (registered.contains(indexed) || ExternalStores.waitingToLoad(level, indexed)) {
+                    unloaded.add(indexed);
+                } else {
+                    gone.add(indexed);
+                }
             }
         }
-        if (dirty.isEmpty() && gone.isEmpty()) {
+        if (dirty.isEmpty() && gone.isEmpty() && unloaded.isEmpty()) {
             return; // nothing changed, the whole pass cost only counter comparisons
         }
         version++;
@@ -211,9 +223,13 @@ public final class NetworkIndex {
         }
         final Set<NodeUuid> stale = new HashSet<>(dirty);
         stale.addAll(gone);
+        stale.addAll(unloaded);
         left.addAll(gone);
         dropServers(stale);
         for (final NodeUuid node : gone) {
+            indexedModCounts.remove(node);
+        }
+        for (final NodeUuid node : unloaded) {
             indexedModCounts.remove(node);
         }
         for (final NodeUuid node : dirty) {

@@ -437,7 +437,7 @@ public final class CraftPlannerApp implements IDesktopApp {
         final String s = GameText.resolve(ok ? HAVE.with(JsTechTheme.fmt(r.have()))
                 : NEED_HAVE.with(JsTechTheme.fmt(r.need()), JsTechTheme.fmt(r.have())));
         itemIcon(g, r.item(), x + 1, y - 1, 11);
-        Draw.text(g, font, Texts.clip(font, r.item().getHoverName().getString(), w - 21 - font.width(s)), x + 15, y,
+        Draw.text(g, font, Texts.clip(font, r.name().getString(), w - 21 - font.width(s)), x + 15, y,
                 ctx.skin().text());
         Draw.text(g, font, s, x + w - font.width(s), y, ok ? PALETTE.get().good() : PALETTE.get().missing());
     }
@@ -522,7 +522,7 @@ public final class CraftPlannerApp implements IDesktopApp {
         if (missing.isEmpty()) {
             return GameText.resolve(SUMMARY.with(JsTechTheme.fmt(plan.maxFeasible()), plan.stages().size()));
         }
-        final String first = missing.getFirst().item().getHoverName().getString();
+        final String first = missing.getFirst().name().getString();
         return GameText.resolve(missing.size() == 1 ? ONE_SHORT.with(first)
                 : MANY_SHORT.with(first, missing.size() - 1));
     }
@@ -562,7 +562,7 @@ public final class CraftPlannerApp implements IDesktopApp {
             if (row.have() < row.need()) {
                 shaded.add(ingredients.size());
             }
-            ingredients.add(List.of(row.item().getHoverName().getString(), figure(JsTechTheme.fmt(row.need()), needW),
+            ingredients.add(List.of(row.name().getString(), figure(JsTechTheme.fmt(row.need()), needW),
                     figure(JsTechTheme.fmt(row.have()), haveW)));
         }
         final List<List<String>> lacking = new ArrayList<>();
@@ -572,7 +572,7 @@ public final class CraftPlannerApp implements IDesktopApp {
             every.add(0);
             for (final CraftPlanPayload.Row row : missing) {
                 every.add(lacking.size());
-                lacking.add(List.of(row.item().getHoverName().getString(),
+                lacking.add(List.of(row.name().getString(),
                         figure(JsTechTheme.fmt(row.need() - row.have()), needW)));
             }
         }

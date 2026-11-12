@@ -33,7 +33,8 @@ public record DownloadToMediaPayload(
         String mediaVolumeKey,
         List<Integer> romIndices) implements CustomPacketPayload {
 
-    private static final int MAX_INDICES = 50;
+    /** The most patterns one payload writes: more go in payloads one after another. */
+    public static final int MAX_INDICES = 50;
 
     public static final CustomPacketPayload.Type<DownloadToMediaPayload> TYPE =
             new CustomPacketPayload.Type<>(

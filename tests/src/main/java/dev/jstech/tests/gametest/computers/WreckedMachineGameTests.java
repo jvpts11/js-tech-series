@@ -7,12 +7,16 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.boot.SystemIntegrity;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
+import dev.jstech.computers.os.media.MediaItem;
+import dev.jstech.computers.os.media.MediaKind;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
@@ -20,6 +24,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -44,6 +49,8 @@ public final class WreckedMachineGameTests {
 
     /** How long a self-test is given to play out before the machine is asked where it got to. */
     private static final int POST_WAIT = 200;
+    /** A drive beside the machine at (2,2,2), where a disc to start from goes. */
+    private static final BlockPos DRIVE = new BlockPos(3, 2, 2);
 
     private static final ResourceLocation FRAMES_XP =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "frames_xp");
@@ -193,7 +200,7 @@ public final class WreckedMachineGameTests {
      * nowhere to go. A disk still saying a system is installed is not somewhere to go, which is the whole
      * mistake a machine would be making if it booted one.
      */
-    @GameTest(template = ARENA, timeoutTicks = POST_WAIT * 2)
+    @GameTest(template = ARENA, timeoutTicks = POST_WAIT * 3)
     public static void aMachineWithNoSystemLeft_staysAtItsFailureUntilThereIsSomewhereToGo(
             final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = machine(helper, FRAMES_11);
@@ -210,7 +217,16 @@ public final class WreckedMachineGameTests {
                             "with nothing left on the disk the machine stays where it is");
                     helper.assertTrue(computer.hasOs(),
                             "although the disk still says a system is installed, which is the trap");
+                    // An install disc in a drive beside it is somewhere to go.
+                    helper.setBlock(DRIVE, ComputingModule.CD_DRIVE.get());
+                    final ItemStack disc = new ItemStack(ComputingModule.CD_ROM.get());
+                    MediaItem.setKind(disc, MediaKind.OS_INSTALL);
+                    MediaItem.setPayload(disc, FRAMES_11);
+                    ((MediaReaderBlockEntity) helper.getBlockEntity(DRIVE)).mediaSlot().setStackInSlot(0, disc);
                 })
+                .thenWaitUntil(() -> helper.assertFalse(computer.haltedAtPost(), "the disc lets the machine go on"))
+                .thenExecute(() -> helper.assertTrue(!computer.booting() && !computer.atBootMenu(),
+                        "on to the disc, never into the system whose folder is gone"))
                 .thenSucceed();
     }
 

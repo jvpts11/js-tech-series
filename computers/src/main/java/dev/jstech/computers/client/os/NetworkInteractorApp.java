@@ -3323,7 +3323,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 final CraftPlanPayload.Row row = craftPlan.rows().get(i);
                 final int color = row.satisfied() ? ctx.skin().text() : InteractorPalette.get().shortage();
                 DesktopItems.item(g, row.item(), px, ry - 2);
-                Texts.small(g, font, Texts.clip(font, row.item().getHoverName().getString(), Texts.smallFits(w - 100)),
+                Texts.small(g, font, Texts.clip(font, row.name().getString(), Texts.smallFits(w - 100)),
                         px + 18, ry, color);
                 final String counts = formatCount(row.have()) + " / " + formatCount(row.need());
                 Texts.small(g, font, counts, px + w - 10 - Texts.smallWidth(font, counts), ry,
@@ -3669,7 +3669,7 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
         final List<String> out = new ArrayList<>();
         if (craftPlan != null) {
             for (final CraftPlanPayload.Row row : craftPlan.rows()) {
-                out.add(row.item().getHoverName().getString() + " " + row.have() + "/" + row.need() + (row.satisfied() ? "" : "!"));
+                out.add(row.name().getString() + " " + row.have() + "/" + row.need() + (row.satisfied() ? "" : "!"));
             }
         }
         return out;

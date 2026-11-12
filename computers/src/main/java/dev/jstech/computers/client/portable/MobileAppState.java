@@ -183,6 +183,10 @@ public final class MobileAppState {
 
     /** Opens the Messenger's room {@code named}; empty for the list of rooms. */
     public void room(final String named) {
+        // What was being written was for the room it was written in, never sent on to another.
+        if (!named.equals(room)) {
+            draft = "";
+        }
         room = named;
         typing = named.isEmpty() ? Field.NONE : Field.MESSAGE;
     }

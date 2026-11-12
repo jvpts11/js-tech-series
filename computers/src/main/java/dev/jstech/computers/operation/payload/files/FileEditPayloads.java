@@ -149,6 +149,10 @@ public final class FileEditPayloads {
             return;
         }
         final String real = media ? mediaSubPath(path) : path;
+        if (real.isEmpty()) {
+            // A volume's root, a whole medium among them, is not an entry that can be deleted.
+            return;
+        }
         final FilesystemKind kind = kindOf(computer, path);
         // Try removing a real file first; if the path is a folder, remove it recursively.
         if (DiskFilesystem.delete(vol, real)

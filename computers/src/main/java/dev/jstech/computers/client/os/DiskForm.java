@@ -36,6 +36,7 @@ final class DiskForm extends Popup {
     private static final int ROW = 14;
     private static final int CONTROL_H = 12;
     private static final int NOTE_LINES = 2;
+    private static final int WARNING_LINES = 5;
     private static final int TEXT_ROW = 9;
     private static final int PAD = 6;
     private static final int BUTTON_W = 50;
@@ -48,22 +49,30 @@ final class DiskForm extends Popup {
 
     /** A row with a label and a figure beside it. */
     DiskForm info(final Supplier<String> label, final Supplier<String> value) {
-        return this.row(label, this.add(new Label(value)), null, 0);
+        return this.row(label, this.add(new Label(value)), null, 0, 0);
     }
 
     /** A row with a label and a control beside it: a field, a choice. */
     DiskForm control(final Supplier<String> label, final UiComponent control) {
-        return this.row(label, this.add(control), null, 0);
+        return this.row(label, this.add(control), null, 0, 0);
     }
 
     /** A row that is a control across the width: a box to tick. */
     DiskForm wide(final UiComponent control) {
-        return this.row(null, this.add(control), null, 0);
+        return this.row(null, this.add(control), null, 0, 0);
     }
 
     /** A note across the width, broken over two lines, in that colour. */
     DiskForm note(final Supplier<String> text, final int colour) {
-        return this.row(null, null, text, colour);
+        return this.row(null, null, text, colour, NOTE_LINES);
+    }
+
+    /**
+     * A warning across the width of a dialog that asks before it does, broken over as many as five lines, so a
+     * long warning's question is never cut off: such a dialog is made tall enough to hold them.
+     */
+    DiskForm warning(final Supplier<String> text, final int colour) {
+        return this.row(null, null, text, colour, WARNING_LINES);
     }
 
     /** The two buttons at its foot: the one that does it, and Cancel. */
@@ -88,12 +97,12 @@ final class DiskForm extends Popup {
             if (row.note() != null) {
                 int line = 0;
                 for (final String part : wrap(ctx, row.note().get(), this.width() - 2 * PAD)) {
-                    if (line++ < NOTE_LINES) {
+                    if (line++ < row.lines()) {
                         Draw.text(g, ctx.font(), part, this.x() + PAD, ty + (line - 1) * TEXT_ROW, row.colour(),
                                 ctx.skin().windowBg());
                     }
                 }
-                ty += NOTE_LINES * TEXT_ROW - ROW;
+                ty += row.lines() * TEXT_ROW - ROW;
             }
             ty += ROW;
         }
@@ -108,7 +117,7 @@ final class DiskForm extends Popup {
                 final int left = row.label() == null ? this.x() + PAD : half;
                 row.control().setBounds(left, ty, this.right() - PAD - left, CONTROL_H);
             }
-            ty += row.note() != null ? NOTE_LINES * TEXT_ROW : ROW;
+            ty += row.note() != null ? row.lines() * TEXT_ROW : ROW;
         }
         final int by = this.bottom() - CONTROL_H - PAD;
         if (this.cancel != null) {
@@ -120,8 +129,8 @@ final class DiskForm extends Popup {
     }
 
     private DiskForm row(@Nullable final Supplier<String> label, @Nullable final UiComponent control,
-                         @Nullable final Supplier<String> note, final int colour) {
-        this.rows.add(new Row(label, control, note, colour));
+                         @Nullable final Supplier<String> note, final int colour, final int lines) {
+        this.rows.add(new Row(label, control, note, colour, lines));
         return this;
     }
 
@@ -145,8 +154,8 @@ final class DiskForm extends Popup {
         return out;
     }
 
-    /** One row: its label, its control, or a note across it in its colour. */
+    /** One row: its label, its control, or a note across it in its colour over as many lines as it may take. */
     private record Row(@Nullable Supplier<String> label, @Nullable UiComponent control,
-                       @Nullable Supplier<String> note, int colour) {
+                       @Nullable Supplier<String> note, int colour, int lines) {
     }
 }

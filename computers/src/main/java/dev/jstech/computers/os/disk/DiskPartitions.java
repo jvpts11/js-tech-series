@@ -19,6 +19,7 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
+import dev.jstech.core.util.Sizes;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -129,10 +130,16 @@ public final class DiskPartitions {
         if (spec == null) {
             return sizeMb;
         }
-        final long freeWeight = OsDisks.systemDiskFreeWeight(volume);
-        final long freeMb = freeWeight * EraStorage.mbPerItem(spec.era()) / StorageKey.MB_EQ_PER_ITEM;
-        final boolean holds = freeWeight < capacityItems(volume) * StorageKey.MB_EQ_PER_ITEM;
-        return Math.max(0L, holds ? Math.min(freeMb, sizeMb - 1L) : Math.min(freeMb, sizeMb));
+        /*
+         * Counted from what is held, rounded up: the capacity is whole items, which a size that is not a multiple of
+         * an item's megabytes rounds up past the partition, so counting from the free weight would call room free
+         * that is not there, and a resize would take a partition below what it holds.
+         */
+        final long capacityWeight = capacityItems(volume) * StorageKey.MB_EQ_PER_ITEM;
+        final long usedWeight = Math.max(0L, capacityWeight - OsDisks.systemDiskFreeWeight(volume));
+        final long usedMb = Sizes.ceilDiv(Sizes.times(usedWeight, EraStorage.mbPerItem(spec.era())),
+                StorageKey.MB_EQ_PER_ITEM);
+        return Math.max(0L, sizeMb - usedMb);
     }
 
     /** The file system of a volume, or null for a raw partition or a disk with nothing open. */

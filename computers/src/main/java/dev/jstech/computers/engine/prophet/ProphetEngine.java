@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.UUID;
 import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.nbt.CompoundTag;
@@ -139,6 +140,7 @@ public final class ProphetEngine implements INetworkEngine {
         if (mind.retryDue(now, RETRY_TICKS)) {
             mind.states().retry();
         }
+        landResumed(core, mind);
         final List<ProphetStates.Reaction> reactions = mind.states().evaluate(core.networkIndex().version(), now,
                 item -> held(core, mind, item));
         for (final ProphetStates.Reaction reaction : reactions) {
@@ -229,6 +231,8 @@ public final class ProphetEngine implements INetworkEngine {
         if (operation.isDone()) {
             // It settled before it could be noted, so the settle callback found nothing to close.
             mind.ended(item, operation);
+        } else {
+            mind.flying(operation.operationId(), item, amount);
         }
         mind.reacted(now, item, ProphetTexts.ASKED_FOR.with(amount, GameText.of(key.displayName()),
                 ShortId.of(operation.operationId().toString())));
@@ -241,16 +245,52 @@ public final class ProphetEngine implements INetworkEngine {
      */
     private static void settled(final MainframeBlockEntity core, final ProphetMind mind, final String item,
                                 final long amount, @Nullable final INetworkOperation operation) {
-        mind.states().settled(item, amount, core.networkIndex().version());
+        // Only what the work made is on its way into the network; an operation of no count made all it was asked.
+        final long made = operation instanceof PendingCraftOperation pending
+                ? pending.delivered() == null ? 0L : pending.delivered().delivered()
+                : operation instanceof NetworkCraftOperation craft ? craft.delivered() : amount;
+        mind.states().settled(item, amount, made, core.networkIndex().version());
         if (operation != null) {
             mind.ended(item, operation);
+            mind.landed(operation.operationId());
         }
-        final boolean madeNothing = operation instanceof PendingCraftOperation pending
-                ? pending.delivered() == null || pending.delivered().delivered() <= 0
-                : operation instanceof NetworkCraftOperation craft && craft.delivered() <= 0;
-        if (madeNothing) {
+        if (made <= 0) {
             mind.states().cannotHold(item);
         }
+    }
+
+    /*
+     * Settles the crafts read back from the save that are done or gone: a craft resumed after a reload no longer calls
+     * back. One gone was finished as it was resumed, or could not be, and what it made is in the count already.
+     */
+    private static void landResumed(final MainframeBlockEntity core, final ProphetMind mind) {
+        for (final Map.Entry<UUID, ProphetMind.Flying> entry : mind.resumed().entrySet()) {
+            final INetworkOperation operation = core.findOperation(entry.getKey());
+            if (operation != null && !operation.isDone()
+                    || operation == null && stillCrafting(core, mind.key(entry.getValue().item()))) {
+                continue;
+            }
+            final long made = operation instanceof NetworkCraftOperation craft ? craft.delivered() : 0L;
+            mind.states().settled(entry.getValue().item(), entry.getValue().asked(), made,
+                    core.networkIndex().version());
+            mind.landed(entry.getKey());
+        }
+    }
+
+    /*
+     * Whether a craft of {@code key} it asked for is under way: one resumed after a reload comes back under a new id.
+     */
+    private static boolean stillCrafting(final MainframeBlockEntity core, @Nullable final StorageKey key) {
+        if (key == null) {
+            return false;
+        }
+        for (final INetworkOperation operation : core.liveOperations()) {
+            if (operation instanceof NetworkCraftOperation craft && ASKER.equals(craft.requesterLabel())
+                    && !operation.isDone() && key.equals(operation.liveRecord().key())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /* Runs what a watch says: CRAFT item TO n makes up to that level; anything else is a statement. */

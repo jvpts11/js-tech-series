@@ -13,11 +13,10 @@ import dev.jstech.computers.operation.payload.OperationRecord;
 import dev.jstech.computers.wan.FederatedOperation;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.text.GameText;
-import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-
-import java.util.List;
+import org.jetbrains.annotations.Nullable;
 
 /** The Operations tab: a scrollable log of recent network operations with a provenance detail pane. */
 final class OpsTerminalTab extends AbstractTerminalTab {
@@ -32,12 +31,20 @@ final class OpsTerminalTab extends AbstractTerminalTab {
         super(screen, menu);
     }
 
-    /** The live operations followed by the recent log, so a craft in flight shows the moment it starts, not
-     *  only once it has finished. Live ones come first; their status (PROCESSING/PENDING) tells them apart. */
+    /** The live operations followed by the recent log, as the screen lists them for its clicks and its wheel. */
     private List<OperationRecord> ops() {
-        final List<OperationRecord> out = new ArrayList<>(menu.activeOps());
-        out.addAll(menu.operationsLog());
-        return out;
+        return screen.listedOps();
+    }
+
+    /* The operation picked in the list, wherever it stands in it now; none when nothing is, or it has gone. */
+    @Nullable
+    private OperationRecord picked(final List<OperationRecord> ops) {
+        for (final OperationRecord op : ops) {
+            if (op.id().equals(screen.selectedOp)) {
+                return op;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -48,7 +55,7 @@ final class OpsTerminalTab extends AbstractTerminalTab {
         final int start = clampOpScroll(ops.size());
         for (int i = 0; i < OPS_ROWS && start + i < ops.size(); i++) {
             final int ry = cy + 32 + i * 12;
-            final boolean sel = (start + i) == screen.selectedOp;
+            final boolean sel = ops.get(start + i).id().equals(screen.selectedOp);
             g.fill(cx, ry, cx + cw, ry + 11, sel ? TAB_ON() : PANEL());
             if (sel) {
                 g.fill(cx, ry, cx + 2, ry + 11, ACCENT());
@@ -65,8 +72,9 @@ final class OpsTerminalTab extends AbstractTerminalTab {
         }
         g.fill(cx, cy + DETAIL_Y, cx + cw, cy + DETAIL_Y + 50, PANEL());
         g.fill(cx, cy + DETAIL_Y, cx + cw, cy + DETAIL_Y + 1, LINE());
-        if (screen.selectedOp >= 0 && screen.selectedOp < ops.size()) {
-            drawDataIcon(g, ops.get(screen.selectedOp).key(), -1L, cx + 5, cy + DETAIL_Y + 6);
+        final OperationRecord picked = picked(ops);
+        if (picked != null) {
+            drawDataIcon(g, picked.key(), -1L, cx + 5, cy + DETAIL_Y + 6);
         }
     }
 
@@ -86,8 +94,8 @@ final class OpsTerminalTab extends AbstractTerminalTab {
         for (int i = 0; i < OPS_ROWS && start + i < ops.size(); i++) {
             opListRow(g, cx, cy + 34 + i * 12, cw, ops.get(start + i));
         }
-        if (screen.selectedOp >= 0 && screen.selectedOp < ops.size()) {
-            final OperationRecord op = ops.get(screen.selectedOp);
+        final OperationRecord op = picked(ops);
+        if (op != null) {
             Draw.text(g, font(), op.name().getString(), cx + 24, cy + DETAIL_Y + 6, TEXT());
             /*
              * Show "all" for an uncapped request, so a Long.MAX demand never renders as an absurd,

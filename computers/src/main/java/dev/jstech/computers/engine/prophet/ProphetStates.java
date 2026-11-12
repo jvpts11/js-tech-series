@@ -168,18 +168,28 @@ public final class ProphetStates {
         }
     }
 
-    /**
-     * Work for {@code item}'s state settled when the catalog stood at {@code version}: {@code amount} is no longer on
-     * its way. What it made is counted as arriving until the catalog changes, since the network's count of what it
-     * holds catches up a little after the work hands its items over; without that, a state would ask again for what
-     * just came.
-     */
-    public void settled(final String item, final long amount, final long version) {
+    /** Work of {@code amount} read back from the save is still on its way for {@code item}'s state, as it was. */
+    public void resumed(final String item, final long amount) {
         final KeepState state = keepOf(item);
         if (state != null) {
-            final long settled = Math.min(amount, state.inFlight);
+            state.inFlight += amount;
+            dirty = true;
+        }
+    }
+
+    /**
+     * Work for {@code item}'s state settled when the catalog stood at {@code version}: the {@code asked} it was set
+     * going for is no longer on its way, and the {@code made} of it is counted as arriving until the catalog changes,
+     * since the network's count of what it holds catches up a little after the work hands its items over; without
+     * that, a state would ask again for what just came. What it did not make is not counted at all, so the state asks
+     * for it again.
+     */
+    public void settled(final String item, final long asked, final long made, final long version) {
+        final KeepState state = keepOf(item);
+        if (state != null) {
+            final long settled = Math.min(asked, state.inFlight);
             state.inFlight -= settled;
-            state.arriving += settled;
+            state.arriving += Math.min(Math.max(0L, made), settled);
             state.arrivedAt = version;
             dirty = true;
         }

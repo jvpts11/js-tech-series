@@ -1747,6 +1747,12 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         return session.systemDisk();
     }
 
+    /** The slot of the disk the machine booted, a one-time boot's included, or -1 when it runs off its memory. */
+    @Override
+    public int systemDiskSlot() {
+        return session.systemDiskSlot();
+    }
+
     @Override
     public boolean liveSession() {
         return session.liveSession();

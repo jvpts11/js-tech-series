@@ -7,7 +7,6 @@
  */
 package dev.jstech.computers;
 
-import dev.jstech.computers.blockentity.AbstractCabinetComputerBlockEntity;
 import dev.jstech.computers.blockentity.AccessPointBlockEntity;
 import dev.jstech.computers.blockentity.ChargingDockBlockEntity;
 import dev.jstech.computers.blockentity.AbstractComputerBlockEntity;
@@ -164,14 +163,17 @@ public final class ComputingCapabilities {
         });
     }
 
-    /* The cabinet a block of it belongs to, or none while it is bound to no cabinet that is loaded. */
+    /*
+     * The computer a block of it belongs to, a cabinet's or a wide mining rig's, or none while it is bound to no
+     * computer that is loaded.
+     */
     @Nullable
     private static AbstractComputerBlockEntity cabinetOf(final BigBlockPartBlockEntity part) {
         final BlockPos origin = part.originPos();
         if (origin == null || part.getLevel() == null) {
             return null;
         }
-        return Loaded.blockEntity(part.getLevel(), origin) instanceof AbstractCabinetComputerBlockEntity cabinet
-                ? cabinet : null;
+        return Loaded.blockEntity(part.getLevel(), origin) instanceof AbstractComputerBlockEntity computer
+                ? computer : null;
     }
 }

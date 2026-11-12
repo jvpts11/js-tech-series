@@ -441,6 +441,23 @@ public final class OsFilesystemGameTests {
     }
 
     /**
+     * The root is not a folder rmdir removes: a delete that reached it, as one of a whole medium did, would take
+     * everything on the disk with it.
+     */
+    @GameTest(template = ARENA)
+    public static void fs_rmdirLeavesTheRootAlone(final GameTestHelper helper) {
+        final ItemStack disk = new ItemStack(ComputingModule.disk(StorageTier.NVME, DiskSize.TB_1));
+        DiskFilesystem.mkdir(disk, "Work", FilesystemKind.HIERARCHICAL);
+        DiskFilesystem.write(disk, "Work/a.txt", FileType.TXT, "x", 1000L, FilesystemKind.HIERARCHICAL);
+        DiskFilesystem.write(disk, "top.txt", FileType.TXT, "y", 1000L, FilesystemKind.HIERARCHICAL);
+        helper.assertFalse(DiskFilesystem.rmdir(disk, "", FilesystemKind.HIERARCHICAL),
+                "rmdir of the root removes nothing");
+        helper.assertTrue(DiskFilesystem.exists(disk, "Work/a.txt") && DiskFilesystem.exists(disk, "top.txt"),
+                "every file stays on the disk");
+        helper.succeed();
+    }
+
+    /**
      * Renaming a directory re-keys every file nested under it, preserving content.
      */
     @GameTest(template = ARENA)

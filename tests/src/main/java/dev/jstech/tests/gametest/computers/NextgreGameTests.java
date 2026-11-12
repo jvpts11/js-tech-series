@@ -367,6 +367,23 @@ public final class NextgreGameTests {
                 .thenSucceed();
     }
 
+    /** EXPLAIN ANALYZE SELECT shows the plan and runs the SELECT as well, as an EXPLAIN ANALYZE of a CRAFT does. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void explainAnalyzeSelect_runsTheSelect(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork net = planksNetwork(helper, 8);
+        helper.startSequence()
+                .thenWaitUntil(() -> ready(helper, net, 8L))
+                .thenExecute(() -> {
+                    final IqlEngine.Outcome outcome = query(helper, net, "EXPLAIN ANALYZE SELECT 4 oak_log");
+                    helper.assertTrue(outcome.ok(), "EXPLAIN ANALYZE SELECT answers; said " + outcome.message());
+                    helper.assertTrue(column(outcome, 0).get(0).startsWith("Index Seek Oak Log x4"),
+                            "with the plan; " + column(outcome, 0));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(indexed(net, Items.OAK_LOG) == 4L,
+                        "the four logs were taken; the network holds " + indexed(net, Items.OAK_LOG)))
+                .thenSucceed();
+    }
+
     /** EXPLAIN SELECT lists the part no server holds as a row of its own, so the rows add up to the seek. */
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void explainSelect_listsWhatNoServerHoldsAsItsOwnRow(final GameTestHelper helper) {

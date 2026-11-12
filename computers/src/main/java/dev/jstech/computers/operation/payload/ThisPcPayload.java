@@ -11,6 +11,7 @@ import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.storage.DiskHealth;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextCodecs;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -120,7 +121,8 @@ public record ThisPcPayload(BlockPos host, WireMachine machine, List<WireDisk> d
         // Written by hand: composite() tops out at six pairs, and the card carries seventeen fields.
         public static final StreamCodec<RegistryFriendlyByteBuf, WireMachine> STREAM_CODEC =
                 StreamCodec.of((buf, m) -> {
-                    buf.writeUtf(m.name(), 96);
+                    // A name a world kept from before names were clipped still goes, cut to what the wire carries.
+                    buf.writeUtf(TextBounds.clip(m.name(), 96), 96);
                     TextCodecs.STREAM_CODEC.encode(buf, m.kind());
                     TextCodecs.STREAM_CODEC.encode(buf, m.era());
                     buf.writeUtf(m.osLabel(), 64);

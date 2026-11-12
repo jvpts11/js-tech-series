@@ -43,7 +43,10 @@ public final class ParkedEditors {
 
     /** Keeps the editor that was open at that machine's terminal. */
     public static void park(final BlockPos machine, final long session, final TtyEditor editor) {
-        KEPT.put(machine.immutable(), new Kept(session, editor));
+        final Kept before = KEPT.put(machine.immutable(), new Kept(session, editor));
+        if (before != null && before.editor() != editor) {
+            before.editor().discard();
+        }
     }
 
     /**
@@ -54,11 +57,19 @@ public final class ParkedEditors {
     @Nullable
     public static TtyEditor take(final BlockPos machine, final long session) {
         final Kept kept = KEPT.remove(machine);
-        return kept != null && kept.session() == session ? kept.editor() : null;
+        if (kept == null) {
+            return null;
+        }
+        if (kept.session() != session) {
+            kept.editor().discard();
+            return null;
+        }
+        return kept.editor();
     }
 
     /** Leaving a world leaves its machines behind, and the same place in another world is another machine. */
     public static void leftTheWorld(final ClientPlayerNetworkEvent.LoggingOut event) {
+        KEPT.values().forEach(kept -> kept.editor().discard());
         KEPT.clear();
     }
 }

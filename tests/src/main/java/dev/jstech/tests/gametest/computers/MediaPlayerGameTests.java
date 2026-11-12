@@ -81,6 +81,8 @@ public final class MediaPlayerGameTests {
                 "at its own size, small as it is; got " + (image == null ? "nothing" : image.getWidth() + "x"
                         + image.getHeight()));
         helper.assertTrue(image.getRGB(0, 0) == PixImage.colourOf(5), "with its colours");
+        helper.assertTrue(MediaLibrary.frame(helper.getLevel(), pc, SUNRISE + "/frame01.pix") == png,
+                "a picture asked for again is the one made before, not made a second time");
         helper.assertTrue(MediaLibrary.frame(helper.getLevel(), pc, SUNRISE + "/missing.pix") == null,
                 "and a file that is not there is no picture");
         helper.succeed();

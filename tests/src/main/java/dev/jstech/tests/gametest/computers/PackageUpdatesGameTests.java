@@ -28,8 +28,10 @@ import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
@@ -137,6 +139,21 @@ public final class PackageUpdatesGameTests {
                             "apt says it cannot reach the Mirror; got " + said);
                 })
                 .thenSucceed();
+    }
+
+    /* A package of files past what one string of a save holds is kept whole with its Mainframe, saved and loaded. */
+    @GameTest(template = ARENA)
+    public static void mirrorShelf_keepsAPackageLargerThanAStringOfASave(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = mainframe(helper, "ubuntu");
+        mainframe.installMirror();
+        final String large = "x".repeat(70_000);
+        helper.assertTrue(mainframe.shelve(THEIRS, large), "the Mirror takes the package");
+        final CompoundTag saved = mainframe.saveWithFullMetadata(helper.getLevel().registryAccess());
+        final MainframeBlockEntity again = (MainframeBlockEntity) BlockEntity.loadStatic(mainframe.getBlockPos(),
+                mainframe.getBlockState(), saved, helper.getLevel().registryAccess());
+        helper.assertTrue(again != null && large.equals(again.shelvedPackage(THEIRS)),
+                "and loads it back whole");
+        helper.succeed();
     }
 
     /**

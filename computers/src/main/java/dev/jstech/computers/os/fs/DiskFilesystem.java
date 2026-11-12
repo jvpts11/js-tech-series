@@ -527,7 +527,8 @@ public final class DiskFilesystem {
      * files) from a hierarchical disk.
      *
      * <p>Virtual {@code .dat} entries are never stored in the {@code FILESYSTEM} component, so they
-     * are unaffected. Returns {@code false} when the kind is not hierarchical or nothing matched.
+     * are unaffected. Returns {@code false} when the kind is not hierarchical, the path is the root, or nothing
+     * matched.
      *
      * @param disk the disk {@link ItemStack} to modify
      * @param path the directory path to remove recursively
@@ -535,7 +536,8 @@ public final class DiskFilesystem {
      * @return true if at least one directory or file was removed
      */
     public static boolean rmdir(final ItemStack disk, final String path, final FilesystemKind kind) {
-        if (kind != FilesystemKind.HIERARCHICAL || installerLocked(disk)) {
+        // An empty path is the volume's root, under which everything sits: it is never removed as a folder.
+        if (kind != FilesystemKind.HIERARCHICAL || installerLocked(disk) || path.isEmpty()) {
             return false;
         }
         final FilesystemContents fs = disk.getOrDefault(

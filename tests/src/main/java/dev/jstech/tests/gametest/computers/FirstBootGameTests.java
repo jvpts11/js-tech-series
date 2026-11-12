@@ -184,6 +184,23 @@ public final class FirstBootGameTests {
     }
 
     /**
+     * What works on the running system, quinceOS's Reinstall and First Aid among them, finds it on the disk it booted
+     * from, never on the first disk a new install would take: here an empty one before it.
+     */
+    @GameTest(template = ARENA)
+    public static void systemDiskSlot_isTheDiskTheSystemRunsFrom(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacy(helper);
+        computer.getHardware().setStackInSlot(PersonalComputerBlockEntity.DISK_SLOTS_START + 1,
+                new ItemStack(ComputingModule.disk(StorageTier.HDD, DiskSize.GB_500)));
+        helper.assertTrue(computer.installOs(UBUNTU, 1), "Ubuntu goes on the second disk");
+        helper.assertTrue(computer.defaultInstallSlot() == 0, "a new install would take the empty first disk");
+        helper.assertTrue(computer.systemDiskSlot() == 1,
+                "the system runs from the second disk; got " + computer.systemDiskSlot());
+        helper.assertTrue(WelcomeFacts.bootedSlot(computer) == 1, "and the welcome says so");
+        helper.succeed();
+    }
+
+    /**
      * A tip is only worth showing while it is true, so the one about installing software says where software
      * comes from on THIS machine rather than naming a Mirror that is not answering.
      */

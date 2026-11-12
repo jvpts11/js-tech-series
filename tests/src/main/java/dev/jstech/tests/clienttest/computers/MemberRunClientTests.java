@@ -29,6 +29,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,8 @@ public final class MemberRunClientTests {
     private static final int SCREEN_WAIT = 160;
     private static final int BOOT_WAIT = 600;
     private static final int LONG_BEAM = 120;
+    /* What the Operation settled after the beam asked for, to tell it apart in the log. */
+    private static final long LATER_ONES = 7;
 
     private static final BlockPos COMPUTER = new BlockPos(5, 2, 2);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
@@ -100,7 +103,18 @@ public final class MemberRunClientTests {
                         () -> "log " + manager(ctx).logShown())
                 .then(0, () -> ctx.assertTrue(logged(ctx).getFirst().status() == OperationRecord.STATUS_DISCARDED,
                         "called off: " + logged(ctx).getFirst()))
-                .thenScreenshot(SETTLE, "log");
+                .thenScreenshot(SETTLE, "log")
+                // An Operation settled after the beam heads the log, which lists the newest first.
+                .thenServer(0, level -> mainframe(ctx, level).recordOperation(OperationRecord.TYPE_SELECT,
+                        new ItemStack(Items.DIRT), LATER_ONES, LATER_ONES, OperationRecord.STATUS_COMPLETED, List.of()))
+                .thenWaitUntil(() -> manager(ctx).logShown().stream().anyMatch(op -> op.requested() == LATER_ONES),
+                        SCREEN_WAIT, "the later one in the log", () -> "log " + manager(ctx).logShown())
+                .then(0, () -> {
+                    final List<OperationRecord> shown = manager(ctx).logShown();
+                    ctx.assertTrue(shown.getFirst().requested() == LATER_ONES
+                                    && shown.indexOf(logged(ctx).getFirst()) > 0,
+                            "the newest first, the beam after it: " + shown);
+                });
     }
 
     /** A Frames XP Mainframe brought up at its desktop on a monitor, the test accelerator cabled to it. */

@@ -34,6 +34,7 @@ import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Virtual Studio's build: the queue of projects to compile, the folders read for their sources, the Output
@@ -338,7 +339,9 @@ final class VirtualStudioBuild {
         final IProgrammingLanguage.CompileResult result = language.compile(sources,
                 InstalledCompilers.options(language, project.platform(), project.languageVersion(),
                         this.withDebug(project.defines())));
-        finishBuild(project.name(), join(this.loader.projectDir(project.name()), project.entry()), result, names);
+        // A library makes no listing of its own: building it checks it, and writes nothing.
+        finishBuild(project.name(), project.buildsAListing()
+                ? join(this.loader.projectDir(project.name()), project.entry()) : null, result, names);
         buildNext();
     }
 
@@ -352,9 +355,17 @@ final class VirtualStudioBuild {
         return fromDisk;
     }
 
-    private void finishBuild(final String what, final String outputPath,
+    private void finishBuild(final String what, @Nullable final String outputPath,
                              final IProgrammingLanguage.CompileResult result,
                              final Map<String, String> names) {
+        if (result.ok() && outputPath == null) {
+            print(VirtualStudioTexts.BUILD_SUCCEEDED_NAMED.with(what), Tone.SUCCEEDED);
+            this.workspace.say(GameText.resolve(VirtualStudioTexts.BUILD_SUCCEEDED));
+            if (this.buildQueue.isEmpty()) {
+                PacketDistributor.sendToServer(new MachineSoundPayload(this.host, SystemSound.NOTIFY));
+            }
+            return;
+        }
         if (result.ok()) {
             if (!FileSaves.send(this.host, outputPath, result.binary())) {
                 // A listing longer than a file holds is not written, and the build is not called a success.

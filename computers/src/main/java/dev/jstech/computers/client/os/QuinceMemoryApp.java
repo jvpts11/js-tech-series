@@ -21,6 +21,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * The question Quince OS X and quinceOS ask when the machine runs out of memory for its programs
@@ -36,6 +37,8 @@ final class QuinceMemoryApp implements IDesktopApp {
     private final DesktopState desktop;
     /** The row chosen in the list. */
     private int chosen;
+    /* The first program the list shows: more than fit roll through it, by the wheel or the arrows. */
+    private int top;
     /* Where the list and the button were last drawn, so a click lands on what it was drawn under. */
     private int listX;
     private int listY;
@@ -52,6 +55,8 @@ final class QuinceMemoryApp implements IDesktopApp {
     private static final TextKey FORCE_QUIT = TextKey.of("jsc.quince.memory.force_quit", "Force Quit");
     private static final int ROW = 14;
     private static final int LIST_H = 72;
+    /* How many programs the list shows at once. */
+    private static final int SHOWN = LIST_H / ROW;
 
     QuinceMemoryApp(final DesktopState desktop) {
         this.desktop = desktop;
@@ -90,15 +95,16 @@ final class QuinceMemoryApp implements IDesktopApp {
         }
         final List<MemoryAskPayload.Asked> asked = this.desktop.memoryAsk();
         this.chosen = Math.max(0, Math.min(this.chosen, asked.size() - 1));
+        this.top = Math.max(0, Math.min(this.top, asked.size() - SHOWN));
         this.listX = x + 6;
         this.listY = ty + 4;
         this.listW = width - 12;
         g.fill(this.listX, this.listY, this.listX + this.listW, this.listY + LIST_H, c.light());
         ChromeShapes.outline(g, this.listX, this.listY, this.listW, LIST_H, c.shade());
-        for (int k = 0; k < asked.size() && (k + 1) * ROW <= LIST_H; k++) {
-            final MemoryAskPayload.Asked one = asked.get(k);
+        for (int k = 0; this.top + k < asked.size() && k < SHOWN; k++) {
+            final MemoryAskPayload.Asked one = asked.get(this.top + k);
             final int ry = this.listY + 3 + k * ROW;
-            final boolean picked = k == this.chosen;
+            final boolean picked = this.top + k == this.chosen;
             if (picked) {
                 g.fill(this.listX + 1, ry - 2, this.listX + this.listW - 1, ry + 11, c.select());
             }
@@ -123,13 +129,34 @@ final class QuinceMemoryApp implements IDesktopApp {
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         if (mouseX >= this.listX && mouseX < this.listX + this.listW && mouseY >= this.listY
                 && mouseY < this.listY + LIST_H) {
-            this.chosen = (int) ((mouseY - this.listY - 1) / ROW);
+            this.chosen = this.top + (int) ((mouseY - this.listY - 1) / ROW);
             return;
         }
         if (mouseX >= this.button[0] && mouseX < this.button[0] + this.button[2] && mouseY >= this.button[1]
                 && mouseY < this.button[1] + this.button[3]) {
             forceQuit();
         }
+    }
+
+    /* The wheel rolls the list a program at a time. */
+    @Override
+    public boolean mouseScrolled(final double delta) {
+        this.top = Math.max(0, Math.min(this.top - (int) Math.signum(delta),
+                this.desktop.memoryAsk().size() - SHOWN));
+        return true;
+    }
+
+    /* The arrows move the choice, the list rolling to keep it in view. */
+    @Override
+    public boolean keyPressed(final int key, final int scanCode, final int modifiers) {
+        if (key != GLFW.GLFW_KEY_UP && key != GLFW.GLFW_KEY_DOWN) {
+            return false;
+        }
+        final int size = this.desktop.memoryAsk().size();
+        this.chosen = Math.max(0, Math.min(size - 1, this.chosen + (key == GLFW.GLFW_KEY_DOWN ? 1 : -1)));
+        this.top = Math.max(0, Math.min(this.top, this.chosen));
+        this.top = Math.max(this.top, this.chosen - SHOWN + 1);
+        return true;
     }
 
     /** Ends the chosen program; the machine puts the question away once that leaves enough room. */

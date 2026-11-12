@@ -1119,6 +1119,55 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   speaker and the Pattern Encoder's USB-C took the Standard's look in those eras.
 - `man` at a UNIX prompt finds an entry of the manuals written in Markdown again, the Core's among them,
   by its name or its English title.
+- Crafting: a pipeline whose stage times out or ends short stops there, as a partial craft saved as one,
+  where the next stages went on with what was not there, and its record counts what its last stage made, where it
+  counted the stage's number; a bus's baseline drops when a machine's held items leave, so later outputs are
+  credited; a plan's fluid and matter inputs are named and counted as what they are, where they read as Air with
+  nothing in stock; a recipe the Crafting Manager loads from a file written by hand is mirrored as the computer writes
+  it, so taking it out of the ROM takes its mirror too, where the mirror stayed and another was written beside it; and
+  the planner says what a recipe lacks when none of its runs can start, where it said no recipe made the item.
+- Operations: a SELECT or MOVE into another computer or Server stops once that machine is broken, where it
+  went on taking items out of the network into a store nobody kept; a server or bus whose chunk is let go waits for
+  it to load, where the network took it for gone; Storage Insights lists a bus's faces within what its reply carries;
+  the Network Manager's log lists the newest Operation first, where it listed the oldest first; EXPLAIN ANALYZE on a
+  SELECT runs the SELECT; and IQL orders a column of numbers and words the same way every time.
+- Prophet: a craft that made less than asked is asked for again for what it did not make, where all of it
+  counted as on its way; and the crafts it has under way are saved with the Mainframe and taken up again after a
+  reload, where it forgot them and ordered them twice.
+- The gateway runs a program at no more than the host's priority ceiling, watches at most 32 names a
+  computer and refuses a chemical nobody knows, and says nothing of stock when it is turned off, where it said there
+  was none.
+- Files and disks: deleting the entry of a whole medium deletes nothing, where it erased everything on
+  it; a restore writes through the disk's own checks; an archive refuses a file named only with spaces, where every
+  file after it came out holding the wrong bytes, and one that does not unpack whole gives nothing back; an archive
+  written by hand no longer weighs nothing by claiming recordings too large to add up; and a project named after a
+  reserved word (`class`, `using`) is refused, where its first source did not compile.
+- Systems: a machine standing at its self-test with its system folder deleted goes on to a disc put in
+  after, never into the deleted system; the Linux desktops list their disk tool, KDE's Partition Manager and GNOME's
+  Disks, in their menus, where it had no launcher; an installation keeps the disk it was prepared on once its copy
+  begins; the drive a player's packages are installed on, listed and removed from is the system's; and a program
+  handle on another machine needs that machine running and allowing remote programs.
+- Firmware: the storage page shows the array the machine has, where it showed none, and a change to an
+  array in use asks for Enter a second time.
+- A Mirror shelf holding a package larger than a save's longest text is saved whole, where the world's
+  save failed; a playlist deleted in one window is not made again by adding to it from another; and a broken Import
+  Bus gives a fluid or chemical it held back to its source, where the fluid was lost.
+- A machine started again after a rebuild comes up cold, where it came back with its old desktop; a
+  program's recording of unknown length keeps its voice to the end; and a monitor's Console heading shows a running
+  tool's output.
+- Payloads stay within what they carry, where a player was disconnected: a rack server's long name on This
+  PC, a process name up to a job's length, a wallpaper's long path, and a Crafting Manager removing more recipes than
+  one message holds, which it now sends in turns.
+- Windows: a second Settings or Storage Insights window gets its own answers, where only the last opened
+  did; closing an editor or ISMS tab left of the one in front keeps that one in front; a text window's pop-up list
+  scrolls to its pick; a restored desktop gives each window of a program its own place; a click on a zoomed editor
+  lands on the row under it, Replace All marks the file changed, and checking one folder keeps the problems found in
+  the others; the Virtual Studio reopens a recent folder with a dot in its name as a folder, builds nothing for a
+  library, and refuses a new project over a solution that is there, where it wrote over its files; and the Crafting
+  Interface's Software tab wraps its statements instead of cutting them.
+- The Pattern Studio says the disc is out after it was ejected, where it said the bay was empty; the IQL
+  script picker lists every script on the system disk; and the Cluster Manager reads unloaded racks without loading
+  them.
 
 ## [0.5.3a] - 2026-11-04
 

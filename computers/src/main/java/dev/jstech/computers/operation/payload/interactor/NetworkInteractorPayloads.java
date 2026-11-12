@@ -138,9 +138,7 @@ public final class NetworkInteractorPayloads {
                 : mainframe.networkOperations().pull(payload.key(), qty, dest.handler(), dest.label(), sources);
         if (op != null) {
             op.setPriority(payload.priority());
-            if (!dest.move()) {
-                op.abortWhen(gone(host)); // the pull lands in this computer: stop once it is gone
-            }
+            op.abortWhen(dest.gone()); // nothing more is taken out once the machine it lands in is gone
         }
         if (op != null) {
             op.onSettle(refresher(player, level, host));

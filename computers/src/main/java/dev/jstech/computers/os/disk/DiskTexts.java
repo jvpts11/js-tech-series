@@ -51,6 +51,8 @@ public final class DiskTexts {
             "Its file system keeps no snapshots: btrfs, ZFS and APFS do.");
     private static final TextKey SNAPSHOT_EXISTS = TextKey.of("jsc.disk.refusal.snapshot_exists",
             "A snapshot of that name is already there.");
+    private static final TextKey TOO_MANY_SNAPSHOTS = TextKey.of("jsc.disk.refusal.too_many_snapshots",
+            "It already keeps %s snapshots, the most a partition keeps: delete one to take another.");
     private static final TextKey NO_SUCH_SNAPSHOT = TextKey.of("jsc.disk.refusal.no_such_snapshot",
             "There is no such snapshot.");
     private static final TextKey NEWER_SNAPSHOTS = TextKey.of("jsc.disk.refusal.newer_snapshots",
@@ -80,6 +82,7 @@ public final class DiskTexts {
             case NOT_IN_THIS_ERA -> NOT_IN_THIS_ERA.text();
             case NO_SNAPSHOTS -> NO_SNAPSHOTS.text();
             case SNAPSHOT_EXISTS -> SNAPSHOT_EXISTS.text();
+            case TOO_MANY_SNAPSHOTS -> TOO_MANY_SNAPSHOTS.with(DiskSnapshots.MOST_KEPT);
             case NO_SUCH_SNAPSHOT -> NO_SUCH_SNAPSHOT.text();
             case NEWER_SNAPSHOTS -> NEWER_SNAPSHOTS.text();
             case NOT_ZFS -> NOT_ZFS.text();

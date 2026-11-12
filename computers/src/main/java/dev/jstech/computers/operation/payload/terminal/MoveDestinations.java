@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.pcLabel;
@@ -43,10 +44,11 @@ public final class MoveDestinations {
 
     /**
      * A resolved SELECT destination: where the pulled items land, the provenance label, whether it is a
-     * MOVE (into another Server), and that target Server's node (so it can be excluded as a source).
+     * MOVE (into another Server), that target Server's node (so it can be excluded as a source), and whether the
+     * machine it lands in is gone, so an Operation running over many ticks stops writing into a store nobody keeps.
      */
     public record Dest(IDataSink handler, String label,
-                       boolean move, @Nullable NodeUuid target) {
+                       boolean move, @Nullable NodeUuid target, BooleanSupplier gone) {
     }
 
     @Nullable
@@ -68,14 +70,14 @@ public final class MoveDestinations {
         final MainframeBlockEntity mf = resolveMainframe(level, net);
         if (mf != null && mf.nodeUuid() != null && mf.nodeUuid().equals(target)) {
             return new Dest(new StoreSink(mf.localStore()),
-                    "Mainframe", false, null);
+                    "Mainframe", false, null, mf::isRemoved);
         }
         // A Personal Computer on the network: a SELECT into its own local storage (leaves the network).
         for (final NetworkSystem.PersonalComputerNode pc : NetworkSystem.get(level).personalComputersOf(net)) {
             if (pc.nodeUuid().equals(target)
                     && Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
                 return new Dest(new StoreSink(pcBe.localStore()),
-                        pcLabel(pcBe, target), false, null);
+                        pcLabel(pcBe, target), false, null, pcBe::isRemoved);
             }
         }
         return resolveServerDest(level, net, key);
@@ -83,7 +85,8 @@ public final class MoveDestinations {
 
     @Nullable
     private static Dest resolveTerminalDest(final IComputerTerminalHost host) {
-        return host.usableStorageSlots() > 0 ? new Dest(host.localStorage(), "storage", false, null) : null;
+        return host.usableStorageSlots() > 0
+                ? new Dest(host.localStorage(), "storage", false, null, gone(host)) : null;
     }
 
     @Nullable
@@ -110,7 +113,9 @@ public final class MoveDestinations {
                         instanceof ServerRackBlockEntity rack
                         ? new Dest(new StoreSink(
                                 rack.getServerStorage(loc.slot())),
-                                serverLabel(level, target), true, target)
+                                serverLabel(level, target), true, target,
+                                // Gone with its rack, or taken out of the slot it was in.
+                                () -> rack.isRemoved() || !system.locationOf(target).equals(Optional.of(loc)))
                         : null)
                 .orElse(null);
     }

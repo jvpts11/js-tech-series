@@ -44,6 +44,8 @@ final class CommunityPackages {
 
     /* What a path from the disk's root starts with. */
     private static final String ROOT = "/";
+    /* The system disk's drive, which every machine and the desktop read packages from. */
+    private static final String SYSTEM_DRIVE = "C:";
 
     private static final TextKey UNREADABLE =
             TextKey.of("jsc.service.community.unreadable", "the Mirror's copy of this package is not readable");
@@ -131,7 +133,7 @@ final class CommunityPackages {
         if (console == null || console.communityProgram(wanted) == null) {
             return null;
         }
-        final String folder = folderOf(wanted);
+        final String folder = onSystem(folderOf(wanted));
         // Its own files and nothing else: what was written when it was installed.
         for (final ICliComputer.FsEntry file : this.files.listDisk(folder).entries()) {
             // The listing's name is the whole last segment, extension and all.
@@ -156,9 +158,10 @@ final class CommunityPackages {
         }
         // Its own folder, made before anything is written into it.
         final String folder = folderOf(wanted);
-        this.files.makeDir(ROOT + Packed.INSTALL_DIR);
+        final String onDisk = onSystem(folder);
+        this.files.makeDir(onSystem(ROOT + Packed.INSTALL_DIR));
         // A folder already there is as good as one made now: it is where the files go either way.
-        if (!this.files.makeDir(folder).ok() && !this.files.folderExists(folder)) {
+        if (!this.files.makeDir(onDisk).ok() && !this.files.folderExists(onDisk)) {
             return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(wanted, NO_FOLDERS));
         }
         for (final Map.Entry<String, String> file : packedFiles.entrySet()) {
@@ -166,7 +169,7 @@ final class CommunityPackages {
             if (!Packed.isSafeFileName(file.getKey())) {
                 return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(wanted, UNREADABLE));
             }
-            final ICliComputer.FsResult written = this.files.installFile(folder + "/" + file.getKey(),
+            final ICliComputer.FsResult written = this.files.installFile(onDisk + "/" + file.getKey(),
                     file.getValue());
             if (!written.ok()) {
                 return ICliComputer.OpResult.fail(CliTexts.SAID_BY.with(wanted, written.message()));
@@ -185,5 +188,13 @@ final class CommunityPackages {
      */
     private static String folderOf(final String name) {
         return ROOT + Packed.folderOf(name);
+    }
+
+    /*
+     * A path from the disk's root, on the system drive whatever drive the prompt stands on: a root path alone keeps
+     * the prompt's drive, and a package installed from D: would land where nothing looks for it.
+     */
+    private static String onSystem(final String fromRoot) {
+        return SYSTEM_DRIVE + fromRoot;
     }
 }

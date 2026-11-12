@@ -77,6 +77,8 @@ final class VirtualStudioTexts {
     static final TextKey ONE_WORD =
             TextKey.of("jsc.virtual_studio.one_word",
                     "A project name is one word of letters, digits and underscores, not starting with a digit");
+    static final TextKey ALREADY_THERE = TextKey.of("jsc.virtual_studio.already_there",
+            "%s is already there: pick another name or place, and nothing is written over");
     static final TextKey PROJECT_LOCATION = TextKey.of("jsc.virtual_studio.project_location", "Project Location");
 
     // The project's properties, and the options.

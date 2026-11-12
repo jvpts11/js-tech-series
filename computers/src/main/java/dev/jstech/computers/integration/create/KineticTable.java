@@ -79,8 +79,12 @@ public final class KineticTable {
         }
         for (final AbstractComputerBlockEntity computer : computersOf(level, network)) {
             for (final long at : computer.linkedEndpoints()) {
-                final IMachineParameters values = level.getCapability(IMachineParameters.CAPABILITY, BlockPos.of(at),
-                        null);
+                // A linked machine whose chunk is not loaded is not read: reading it would load it on the server.
+                final BlockPos pos = BlockPos.of(at);
+                if (!Loaded.at(level, pos)) {
+                    continue;
+                }
+                final IMachineParameters values = level.getCapability(IMachineParameters.CAPABILITY, pos, null);
                 if (values != null && values.parameter(CAPACITY).isPresent()) {
                     out.add(new Read(computer, at, values));
                 }

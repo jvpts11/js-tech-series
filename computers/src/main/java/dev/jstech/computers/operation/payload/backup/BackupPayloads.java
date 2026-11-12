@@ -9,7 +9,7 @@ package dev.jstech.computers.operation.payload.backup;
 
 import static dev.jstech.computers.operation.payload.terminal.TerminalHosts.niHost;
 
-import dev.jstech.computers.backup.BackupArchive;
+import dev.jstech.computers.backup.BackupHolders;
 import dev.jstech.computers.backup.BackupJob;
 import dev.jstech.computers.backup.BackupJobs;
 import dev.jstech.computers.backup.BackupPart;
@@ -148,11 +148,9 @@ public final class BackupPayloads {
                 yield BackupTexts.LABELLED.with(n + 1, label);
             }
             case BackupActionPayload.ERASE -> {
-                final BackupArchive archive = BackupArchive.of(level);
-                for (final TapeContents.Spot spot : on.spots()) {
-                    archive.remove(spot.backup());
-                }
                 library.write(n, on.erased());
+                BackupHolders.forgetUnheld(level, network, on.spots().stream().map(TapeContents.Spot::backup)
+                        .toList());
                 yield BackupTexts.ERASED.with(n + 1);
             }
             default -> {

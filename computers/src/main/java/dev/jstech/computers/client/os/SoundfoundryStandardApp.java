@@ -221,7 +221,9 @@ public final class SoundfoundryStandardApp implements IDesktopApp {
             return;
         }
         try {
-            page = Math.clamp(Integer.parseInt(parts[0]), SoundfoundryPagePayload.HOME,
+            // The Vinyl page stands apart from the numbered pages, and comes back as itself.
+            final int parsed = Integer.parseInt(parts[0]);
+            page = parsed == VINYL_PAGE ? VINYL_PAGE : Math.clamp(parsed, SoundfoundryPagePayload.HOME,
                     SoundfoundryPagePayload.CATALOG);
             scroll = Math.max(0, Integer.parseInt(parts[1]));
         } catch (final NumberFormatException malformed) {

@@ -11,6 +11,7 @@ import dev.jstech.computers.os.FileSystemType;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.disk.DiskCommand;
 import dev.jstech.computers.os.disk.DiskReport;
+import dev.jstech.computers.os.disk.DiskTexts;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -206,6 +207,8 @@ public final class SnapshotCommands {
                     found.part().number(), nameOf(target)));
             if (after.refusal() == DiskReport.Refusal.SNAPSHOT_EXISTS) {
                 ctx.out().error(EXISTS.with(target));
+            } else if (after.refusal() != null) {
+                ctx.out().error(DiskTexts.reason(after.refusal()));
             } else {
                 ctx.out().line(CREATED.with(source, target));
             }
@@ -425,6 +428,8 @@ public final class SnapshotCommands {
                     .index(), pool.found().part().number(), pool.within(dataset)));
             if (after.refusal() == DiskReport.Refusal.SNAPSHOT_EXISTS) {
                 ctx.out().error(EXISTS.with(dataset));
+            } else if (after.refusal() != null) {
+                ctx.out().error(DiskTexts.reason(after.refusal()));
             }
         }
 

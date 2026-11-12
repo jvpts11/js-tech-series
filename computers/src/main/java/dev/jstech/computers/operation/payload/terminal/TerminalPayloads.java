@@ -55,7 +55,6 @@ import java.util.Set;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.resolveMainframe;
 import static dev.jstech.computers.operation.payload.network.NetworkLookup.serverLabel;
 import static dev.jstech.computers.operation.payload.network.NetworkPayloads.collectComputers;
-import static dev.jstech.computers.operation.payload.terminal.MoveDestinations.gone;
 import static dev.jstech.computers.operation.payload.terminal.MoveDestinations.resolveDest;
 import static dev.jstech.computers.operation.payload.terminal.MoveDestinations.sourcesWithout;
 import static dev.jstech.computers.operation.payload.terminal.MoveDestinations.toNodes;
@@ -291,9 +290,7 @@ public final class TerminalPayloads {
                 ? mainframe.networkOperations().move(key, payload.quantity(), dest.handler(), dest.label(), sources)
                 : mainframe.networkOperations().pull(key, payload.quantity(), dest.handler(), dest.label(), sources);
         if (op != null) {
-            if (!dest.move()) {
-                op.abortWhen(gone(host)); // the pull lands in this computer: stop once it is gone
-            }
+            op.abortWhen(dest.gone()); // nothing more is taken out once the machine it lands in is gone
             op.onSettle(() -> sendSnapshot(player, level, net));
         }
     }

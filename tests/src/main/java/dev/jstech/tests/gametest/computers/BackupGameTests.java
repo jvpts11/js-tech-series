@@ -310,6 +310,37 @@ public final class BackupGameTests {
                 .thenSucceed();
     }
 
+    /* A backup a drive's file still holds keeps what it holds when another of its holders lets it go. */
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void forgetUnheld_keepsABackupAFileStillHolds(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = NetworkFixtures.storageNetwork(helper);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> withLibraryAndDiamonds(helper))
+                .thenExecuteAfter(2, () -> {
+                    final ServerServices.Host host = startService(helper, mainframe);
+                    final List<ItemStack> drives = host.machine().diskStacks();
+                    final int drive = drives.indexOf(drives.stream().filter(stack -> !stack.isEmpty()).findFirst()
+                            .orElseThrow());
+                    host.rack().backupsAt(host.slot()).put(job(BackupJob.Target.disk(
+                            host.machine().nodeUuid().value(), drive), BackupJob.Schedule.BY_HAND));
+                    helper.assertTrue(BackupService.run(helper.getLevel(), mainframe.networkUuid(), host, JOB)
+                            .result() == BackupJob.RunState.DONE, "a backup onto a drive is written at once");
+                    final UUID id = BackupHolders.of(helper.getLevel(), mainframe.networkUuid()).getFirst().id();
+                    BackupHolders.forgetUnheld(helper.getLevel(), mainframe.networkUuid(), List.of(id));
+                    helper.assertTrue(BackupArchive.of(helper.getLevel()).get(id) != null,
+                            "the drive's file still holds it, so the world keeps it");
+                    final ItemStack disk = host.machine().diskStacks().get(drive);
+                    final String file = disk.getOrDefault(ComputingComponents.FILESYSTEM.get(),
+                            FilesystemContents.EMPTY).files().values().stream()
+                            .filter(one -> one.type() == FileType.BAK).findFirst().orElseThrow().path();
+                    helper.assertTrue(DiskFilesystem.delete(disk, file), "the backup's file is deleted");
+                    BackupHolders.forgetUnheld(helper.getLevel(), mainframe.networkUuid(), List.of(id));
+                    helper.assertTrue(BackupArchive.of(helper.getLevel()).get(id) == null,
+                            "held nowhere now, the world lets it go");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 600)
     public static void backupOfWallets_givesBackAWalletWhoseFileWasLost(final GameTestHelper helper) {
         final MainframeBlockEntity mainframe = NetworkFixtures.storageNetwork(helper);

@@ -296,6 +296,12 @@ public final class SoundfoundryServerGameTests {
                     act(helper, base.pc(), SoundfoundryActionPayload.PLAYLIST_REMOVE, "Mining Mix");
                     helper.assertTrue(SoundfoundryPlaylists.read(level, base.pc(), "Mining Mix").isEmpty(),
                             "and a song taken out is gone from it");
+                    // A page left open on a list deleted from another window must not make the list again.
+                    act(helper, base.pc(), SoundfoundryActionPayload.PLAYLIST_DELETE, "Mining Mix");
+                    act(helper, base.pc(), SoundfoundryActionPayload.PLAYLIST_ADD, "Mining Mix", song);
+                    helper.assertTrue(SoundfoundryPlaylists.names(base.pc()).equals(
+                                    List.of(SoundfoundryPlaylists.LIKED)),
+                            "a deleted playlist stays deleted; listed " + SoundfoundryPlaylists.names(base.pc()));
                 })
                 .thenSucceed();
     }

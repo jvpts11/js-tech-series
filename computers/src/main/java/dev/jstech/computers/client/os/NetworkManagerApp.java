@@ -582,12 +582,10 @@ public final class NetworkManagerApp implements IDesktopApp {
         return events.exportedPath();
     }
 
-    /** Routes the recent Operations log to the open window; it arrives oldest-first and is shown newest-first. */
+    /** Routes the recent Operations log to the open window; it arrives newest-first, as the Mainframe keeps it. */
     public static void acceptOpsLog(final List<OperationRecord> ops) {
         if (active != null) {
-            final List<OperationRecord> reversed = new ArrayList<>(ops);
-            Collections.reverse(reversed);
-            active.logNewestFirst = reversed;
+            active.logNewestFirst = List.copyOf(ops);
             active.refreshAskers();
         }
     }

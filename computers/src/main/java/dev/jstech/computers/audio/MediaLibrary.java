@@ -25,7 +25,10 @@ import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +50,18 @@ public final class MediaLibrary {
     private static final long MOST_SOURCE_PIXELS = 4096L * 4096L;
     /* The most bytes of a camera's picture read, past which it is not one either. */
     private static final int MOST_SOURCE_BYTES = 64 * 1024 * 1024;
+    /* How many made pictures are kept, so a sequence played again, or a picture asked for twice, is not made twice. */
+    private static final int MOST_KEPT = 32;
+    /* What is kept for a file that holds no picture, so it is not read again either. */
+    private static final byte[] NO_PICTURE = new byte[0];
+    /* The pictures made last, by what their files hold; asked for from the workers that make them. */
+    private static final Map<Made, byte[]> KEPT = Collections.synchronizedMap(
+            new LinkedHashMap<>(MOST_KEPT, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(final Map.Entry<Made, byte[]> eldest) {
+                    return size() > MOST_KEPT;
+                }
+            });
 
     private MediaLibrary() {
     }
@@ -169,20 +184,43 @@ public final class MediaLibrary {
      */
     @Nullable
     public static byte[] frame(final ServerLevel level, final IOsHost computer, final String path) {
-        final String content = SongFiles.content(level, computer, path).orElse(null);
+        return made(path, SongFiles.content(level, computer, path).orElse(null));
+    }
+
+    /**
+     * The picture a file at {@code path} holds, from what it holds, made as {@link #frame} makes it. It reads no
+     * world, so a worker can make it away from the server's tick; a picture made lately is not made again.
+     */
+    @Nullable
+    public static byte[] made(final String path, @Nullable final String content) {
         if (content == null) {
             return null;
         }
+        final Made which = new Made(FileType.ofPath(path), content);
+        byte[] png = KEPT.get(which);
+        if (png == null) {
+            png = make(which);
+            KEPT.put(which, png);
+        }
+        return png == NO_PICTURE ? null : png;
+    }
+
+    /* The picture a file of that kind holding that makes, or NO_PICTURE when it holds none this reads. */
+    private static byte[] make(final Made which) {
         try {
-            final BufferedImage image = switch (FileType.ofPath(path)) {
-                case PIX -> pixels(PixImage.decode(content));
-                case PNG -> camera(RecordingFile.read(content));
+            final BufferedImage image = switch (which.type()) {
+                case PIX -> pixels(PixImage.decode(which.content()));
+                case PNG -> camera(RecordingFile.read(which.content()));
                 default -> null;
             };
-            return image == null ? null : PictureScaling.png(fitted(image));
+            return image == null ? NO_PICTURE : PictureScaling.png(fitted(image));
         } catch (final IOException unreadable) {
-            return null;
+            return NO_PICTURE;
         }
+    }
+
+    /* What a picture is made from: the kind of its file and what the file holds. */
+    private record Made(FileType type, String content) {
     }
 
     @Nullable

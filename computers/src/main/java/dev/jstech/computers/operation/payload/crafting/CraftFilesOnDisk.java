@@ -16,6 +16,7 @@ import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import java.util.Locale;
 import java.util.Optional;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -39,38 +40,28 @@ public final class CraftFilesOnDisk {
     }
 
     /**
-     * Mirrors a {@code .craft} onto the Crafting Computer's system disk under {@code crafts/} so the
-     * loaded recipes are visible (and copyable) in the Files app. A flat filesystem keeps them at the
-     * root; a hierarchical one nests them in {@code crafts/}. A recipe whose content is already mirrored
-     * stays where it is; otherwise it takes {@code base.craft}, or {@code base_2.craft}, ... when that name
-     * holds a different recipe, so two recipes for the same result never share a file. A no-op when there is
-     * no system disk.
+     * Mirrors a bench recipe onto the Crafting Computer's system disk so the loaded recipes are visible (and
+     * copyable) in the Files app. The mirror holds the recipe as this computer writes it, never the text of the
+     * file it was loaded from: removal and the folder's repair find a mirror by that text, and a file written by
+     * hand would never match it. A no-op when there is no system disk.
      */
-    static void writeCraftToDisk(final CraftingComputerBlockEntity cc, final String base, final String content) {
-        if (mirrorPath(cc, base + ".craft") == null) {
-            return;
-        }
-        final ItemStack disk = cc.systemDisk();
-        final FilesystemKind kind = filesystemKindOf(cc);
-        if (kind == FilesystemKind.HIERARCHICAL) {
-            DiskFilesystem.mkdir(disk, CRAFTS_DIR, kind);
-        }
-        if (findMirror(cc, base, content) != null) {
-            return;
-        }
-        DiskFilesystem.write(disk, firstFreeMirror(cc, base), FileType.CRAFT, content, cc.systemDiskFreeWeight(),
-                kind, cc.getLevel() == null ? 0L : cc.getLevel().getGameTime());
+    static void mirror(final CraftingComputerBlockEntity cc, final CraftingPattern pattern,
+                       final HolderLookup.Provider registries) {
+        CraftFile.serialize(pattern, registries).ifPresent(content -> write(cc, craftFileNameFor(pattern), content));
     }
 
     /**
-     * Deletes the mirror of one recipe from the Crafting Computer's system disk, if present. Only the file that
-     * holds exactly this recipe goes; a same-named file of another recipe stays.
+     * Deletes the mirror of one bench recipe from the Crafting Computer's system disk, if present. Only the file
+     * that holds exactly this recipe goes; a same-named file of another recipe stays.
      */
-    static void deleteCraftFromDisk(final CraftingComputerBlockEntity cc, final String base, final String content) {
-        final String path = findMirror(cc, base, content);
-        if (path != null) {
-            DiskFilesystem.delete(cc.systemDisk(), path);
-        }
+    static void unmirror(final CraftingComputerBlockEntity cc, final CraftingPattern pattern,
+                         final HolderLookup.Provider registries) {
+        CraftFile.serialize(pattern, registries).ifPresent(content -> {
+            final String path = findMirror(cc, craftFileNameFor(pattern), content);
+            if (path != null) {
+                DiskFilesystem.delete(cc.systemDisk(), path);
+            }
+        });
     }
 
     /**
@@ -90,7 +81,7 @@ public final class CraftFilesOnDisk {
             }
             final String base = craftFileNameFor(pattern);
             if (findMirror(cc, base, content.get()) == null) {
-                writeCraftToDisk(cc, base, content.get());
+                write(cc, base, content.get());
                 wrote = true;
             }
         }
@@ -106,6 +97,27 @@ public final class CraftFilesOnDisk {
     static String mirrorFileName(final NetworkRecipe recipe) {
         return recipe.bench().isPresent() ? craftFileNameFor(recipe.bench().get())
                 : sanitizeFileBase(recipe.displayName());
+    }
+
+    /*
+     * Writes a recipe's text under crafts/ on the system disk, at the root of a flat filesystem. Text already
+     * mirrored stays where it is; otherwise it takes base.craft, or base_2.craft, ... when that name holds a
+     * different recipe, so two recipes for the same result never share a file.
+     */
+    private static void write(final CraftingComputerBlockEntity cc, final String base, final String content) {
+        if (mirrorPath(cc, base + ".craft") == null) {
+            return;
+        }
+        final ItemStack disk = cc.systemDisk();
+        final FilesystemKind kind = filesystemKindOf(cc);
+        if (kind == FilesystemKind.HIERARCHICAL) {
+            DiskFilesystem.mkdir(disk, CRAFTS_DIR, kind);
+        }
+        if (findMirror(cc, base, content) != null) {
+            return;
+        }
+        DiskFilesystem.write(disk, firstFreeMirror(cc, base), FileType.CRAFT, content, cc.systemDiskFreeWeight(),
+                kind, cc.getLevel() == null ? 0L : cc.getLevel().getGameTime());
     }
 
     /* The mirror path holding exactly this content under the base name or its numbered variants, or null. */

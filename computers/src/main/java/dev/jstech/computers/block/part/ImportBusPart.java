@@ -161,10 +161,10 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
     @Override
     public void dropContents(final ServerLevel level) {
         /*
-         * Drop a buffered item back into the world; a buffered fluid (rare, transient) is discarded.
-         * If an INSERT operation is in flight, the payload was already extracted from the source but
-         * not yet confirmed by the network, so drop what the network has not taken yet; nothing is silently
-         * lost, and the operation is stopped so it cannot also insert the dropped items.
+         * Drop a buffered item back into the world; a buffered fluid or chemical, which cannot lie on the ground,
+         * goes back into the block it was taken from, as far as that takes it. If an INSERT operation is in flight,
+         * the payload was already extracted from the source but not yet confirmed by the network, so give back what
+         * the network has not taken yet; the operation is stopped so it cannot also insert what was given back.
          */
         final StorageKey drop = bufferKey != null ? bufferKey : flushedKey;
         final long dropAmount = bufferKey != null ? bufferAmount : unconfirmedAmount();
@@ -174,10 +174,14 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
             }
             activeOp = null;
         }
-        if (drop != null && drop.isItem() && dropAmount > 0L && host != null) {
-            Containers.dropItemStack(level,
-                    host.getBlockPos().getX(), host.getBlockPos().getY(), host.getBlockPos().getZ(),
-                    drop.stack((int) Math.min(dropAmount, Integer.MAX_VALUE)));
+        if (drop != null && dropAmount > 0L && host != null) {
+            if (drop.isItem()) {
+                Containers.dropItemStack(level,
+                        host.getBlockPos().getX(), host.getBlockPos().getY(), host.getBlockPos().getZ(),
+                        drop.stack((int) Math.min(dropAmount, Integer.MAX_VALUE)));
+            } else {
+                neighborPort().insert(drop, dropAmount, false);
+            }
         }
         bufferKey = null;
         bufferAmount = 0L;

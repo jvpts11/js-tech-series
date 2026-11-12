@@ -315,10 +315,14 @@ public final class OsBootstrap {
     /** What only Quince's own systems run: its viewer, its music, its browser, its store and its server tool. */
     private static final Set<Platform> QUINCE_ONLY = Set.of(Platform.QUINCE);
 
-    /** The ten built-in desktop apps every desktop environment can bundle, in rail order, and the Media Player. */
+    /**
+     * The ten built-in desktop apps the Linux desktops bundle, in rail order, then the Media Player and the disk tool
+     * each of them ships (KDE's Partition Manager, GNOME's Disks).
+     */
     private static final List<ResourceLocation> BUILTIN_APPS = List.of(
             rl("network"), rl("this_pc"), rl("settings"), rl("files"), rl("editor"), rl("command_prompt"),
-            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("help_viewer"), rl("media_player"));
+            rl("system_monitor"), rl("calculator"), rl("network_manager"), rl("help_viewer"), rl("media_player"),
+            rl("disks"));
 
     /** What the Frames editions bundle: the same, their Device Manager, their Defrag and their Media Player. */
     private static final List<ResourceLocation> FRAMES_APPS = List.of(
@@ -333,16 +337,19 @@ public final class OsBootstrap {
     private static final Set<ResourceLocation> FRAMES_TOOLS = Set.of(rl("defrag"), rl("disk_management"),
             rl("media_player"));
 
-    /** The Media Player, which every desktop lists in its menu and puts no icon of on the wallpaper. */
-    private static final Set<ResourceLocation> MEDIA_IN_MENU = Set.of(rl("media_player"));
+    /**
+     * The Media Player, and the disk tool where a desktop ships one, which every desktop lists in its menu and puts no
+     * icon of on the wallpaper.
+     */
+    private static final Set<ResourceLocation> MEDIA_IN_MENU = Set.of(rl("media_player"), rl("disks"));
 
     /**
      * Linux Mint's two programs, which Cinnamon lists in its menu and puts no icon of on the wallpaper, as the real
      * one does; only Mint ships them, so on any other system they are not there to list. Celluloid, its Media
-     * Player, is kept in the menu with them.
+     * Player, and its Disks are kept in the menu with them.
      */
     private static final Set<ResourceLocation> MINT_TOOLS = Set.of(rl("software_manager"), rl("update_manager"),
-            rl("media_player"));
+            rl("media_player"), rl("disks"));
 
     /** What CDE bundles: the same, its Workstation Info, which no other desktop has, and its Audio. */
     private static final List<ResourceLocation> CDE_APPS = List.of(

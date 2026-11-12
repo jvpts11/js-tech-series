@@ -55,6 +55,7 @@ import net.minecraft.client.gui.Font;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -164,7 +165,9 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             ComputerTerminalMenu.TAB_CONSOLE};
 
     private int netScrollRow;
-    int selectedOp;
+    /* The operation picked in the list, by its id, so it stays picked as operations start and finish round it. */
+    @Nullable
+    UUID selectedOp;
     private int opScroll;
     int taskSubTab;
 
@@ -1222,7 +1225,17 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             return -1;
         }
         final int idx = opScroll + row;
-        return idx < menu.operationsLog().size() ? idx : -1;
+        return idx < listedOps().size() ? idx : -1;
+    }
+
+    /**
+     * The operations the Operations heading lists: the live ones followed by the recent log, so a craft in flight
+     * shows the moment it starts, not only once it has finished. Their status tells them apart.
+     */
+    List<OperationRecord> listedOps() {
+        final List<OperationRecord> out = new ArrayList<>(menu.activeOps());
+        out.addAll(menu.operationsLog());
+        return out;
     }
 
     void tile(final GuiGraphics g, final int x, final int y, final String key,
@@ -1552,8 +1565,9 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
         if (menu.activeTab() == ComputerTerminalMenu.TAB_OPS) {
             final int row = opsRowAt((int) mouseX, (int) mouseY);
             if (row >= 0) {
-                selectedOp = row;
-                openOpPopup(menu.operationsLog().get(row)); // click a logged op -> SubOperations popup
+                final OperationRecord op = listedOps().get(row);
+                selectedOp = op.id();
+                openOpPopup(op); // click an op, live or logged -> SubOperations popup
                 return true;
             }
         }
@@ -1810,8 +1824,8 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
             return true;
         }
         if (menu.activeTab() == ComputerTerminalMenu.TAB_OPS && dy != 0) {
-            final int max = Math.max(0, menu.operationsLog().size() - OPS_ROWS);
-            opScroll = Math.max(0, Math.min(max, opScroll - (int) Math.signum(dy)));
+            opScroll -= (int) Math.signum(dy);
+            clampOpScroll(listedOps().size());
             return true;
         }
         final ITerminalTab heading = showing();

@@ -50,10 +50,13 @@ import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.function.BooleanSupplier;
 
 /**
@@ -108,7 +111,8 @@ public final class SettingsApp implements IDesktopApp {
     private int lastMouseX;
     private int lastMouseY;
 
-    private static SettingsApp active;
+    /* Every Settings window open, each answered for its own computer: a second window never starves the first. */
+    private static final Set<SettingsApp> OPEN = Collections.newSetFromMap(new WeakHashMap<>());
 
     /** The monitor this desktop runs on (the firmware restart reopens setup there); null when unknown. */
     @Nullable
@@ -338,16 +342,21 @@ public final class SettingsApp implements IDesktopApp {
         homeButton.setVisible(false);
         loadingLabel = root.add(new Label(GameText.resolve(SettingsTexts.LOADING), Label.Tone.DIM));
         root.add(pagePanel);
-        active = this;
+        OPEN.add(this);
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
         PacketDistributor.sendToServer(new UpdatePayloads.Ask(host));
     }
 
     @Override
     public void onRestored() {
-        active = this;
+        OPEN.add(this);
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
         PacketDistributor.sendToServer(new UpdatePayloads.Ask(host));
+    }
+
+    @Override
+    public void onClosed() {
+        OPEN.remove(this);
     }
 
     /**
@@ -355,24 +364,29 @@ public final class SettingsApp implements IDesktopApp {
      * that changes something rebuilds the page, so one the desktop asked for leaves a field being typed in alone.
      */
     public static void acceptUpdates(final UpdatePayloads.Listing payload) {
-        if (active == null || !active.host.equals(payload.host())) {
-            return;
-        }
         final Map<String, UpdatePayloads.Update> byId = new HashMap<>();
         for (final UpdatePayloads.Update update : payload.rows()) {
             byId.put(update.program(), update);
         }
-        if (!byId.equals(active.updates)) {
-            active.updates = Map.copyOf(byId);
-            active.snapshots++;
+        for (final SettingsApp open : List.copyOf(OPEN)) {
+            if (open.host.equals(payload.host()) && !byId.equals(open.updates)) {
+                open.updates = Map.copyOf(byId);
+                open.snapshots++;
+            }
         }
     }
 
-    /** Routes a settings snapshot reply to the open Settings window. */
+    /** Routes a settings snapshot reply to every Settings window open on that computer. */
     public static void accept(final SettingsSnapshotPayload payload) {
-        if (active != null && active.host.equals(payload.hostPos())) {
-            active.data = payload;
-            active.snapshots++;
+        boolean shown = false;
+        for (final SettingsApp open : List.copyOf(OPEN)) {
+            if (open.host.equals(payload.hostPos())) {
+                open.data = payload;
+                open.snapshots++;
+                shown = true;
+            }
+        }
+        if (shown) {
             // Reflect accent, brightness, clock, wallpaper, taskbar layout and dark mode on the live desktop now.
             ActiveDesktop.applyLivePrefs(payload.accent(), payload.brightness(), payload.clock12h(),
                     payload.wallpaper(), payload.taskbarCentered(), payload.darkMode(), payload.guiScale());

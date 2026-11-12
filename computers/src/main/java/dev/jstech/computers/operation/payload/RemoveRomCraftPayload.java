@@ -31,7 +31,8 @@ public record RemoveRomCraftPayload(
         BlockPos hostPos,
         List<Integer> romIndices) implements CustomPacketPayload {
 
-    private static final int MAX_INDICES = 50;
+    /** The most patterns one payload removes: more go in payloads one after another. */
+    public static final int MAX_INDICES = 50;
 
     public static final CustomPacketPayload.Type<RemoveRomCraftPayload> TYPE =
             new CustomPacketPayload.Type<>(

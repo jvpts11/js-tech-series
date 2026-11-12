@@ -9,6 +9,7 @@ package dev.jstech.computers.menu;
 
 import dev.jstech.computers.registry.ComputingMenus;
 import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
+import dev.jstech.computers.blockentity.IWatchedConsole;
 import dev.jstech.computers.blockentity.MonitorBlockEntity;
 import dev.jstech.computers.blockentity.WanGatewayBlockEntity;
 import dev.jstech.computers.gui.layout.ComputerTerminalLayout;
@@ -190,6 +191,14 @@ public class ComputerTerminalMenu extends CoreMenu implements IMonitorMenu {
         playerInventory(playerInventory, layout.playerInventoryAt(), () -> !borderLinkSpace());
 
         this.readings = new ComputerReadings(host, level, this::value, this::flag);
+        // Its Console heading is the machine's prompt: whoever has it open hears what a running tool says next.
+        IWatchedConsole.opened(playerInventory.player, this.hostPos);
+    }
+
+    @Override
+    public void removed(final Player player) {
+        super.removed(player);
+        IWatchedConsole.closed(player, this.hostPos);
     }
 
     /**

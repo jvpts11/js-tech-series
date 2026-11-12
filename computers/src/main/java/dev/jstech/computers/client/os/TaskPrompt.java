@@ -147,6 +147,10 @@ final class TaskPrompt implements ShellViews.IListener {
         ShellViews.forget(this);
         CodeFileReplies.forget(this.opening);
         this.ended = true;
+        if (this.editor != null) {
+            this.editor.discard();
+            this.editor = null;
+        }
     }
 
     @Override

@@ -463,8 +463,9 @@ final class MainframeServices {
         tag.putBoolean("AutomationEngineInstalled", automationEngineInstalled);
         tag.putBoolean("MirrorInstalled", mirrorInstalled);
         if (!shelved.isEmpty()) {
+            // A package holds every file of it, so its text may run past what a string of a save holds.
             final CompoundTag shelf = new CompoundTag();
-            shelved.forEach(shelf::putString);
+            shelved.forEach((name, text) -> LongText.put(shelf, name, text));
             tag.put("MirrorShelf", shelf);
         }
         if (!catalog.isEmpty()) {
@@ -538,7 +539,7 @@ final class MainframeServices {
         shelved.clear();
         final CompoundTag shelf = tag.getCompound("MirrorShelf");
         for (final String name : shelf.getAllKeys()) {
-            shelved.put(name, shelf.getString(name));
+            shelved.put(name, LongText.get(shelf, name));
         }
         catalog.clear();
         final ListTag objects = tag.getList("IqlCatalog", Tag.TAG_COMPOUND);

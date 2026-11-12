@@ -8,6 +8,7 @@
 package dev.jstech.computers.blockentity;
 
 import dev.jstech.computers.machine.MachinePrograms;
+import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
@@ -124,9 +125,10 @@ final class ProgramFeed {
         final var desktop = new DesktopShellOutputPayload(false, holdsTerminal, prompt, wire, "", "", 0, false,
                 false, onDesktop);
         final var terminal = new CommandOutputPayload(prompt, wire, atTerminal);
+        // A desktop's terminal and a monitor's Console heading are shell views; a Command Prompt is its own screen.
         for (final ServerPlayer viewer : viewers) {
-            PacketDistributor.sendToPlayer(viewer,
-                    viewer.containerMenu instanceof DesktopMenu ? desktop : terminal);
+            PacketDistributor.sendToPlayer(viewer, viewer.containerMenu instanceof DesktopMenu
+                    || viewer.containerMenu instanceof ComputerTerminalMenu ? desktop : terminal);
         }
     }
 }

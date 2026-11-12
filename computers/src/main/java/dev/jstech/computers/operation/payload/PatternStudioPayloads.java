@@ -246,10 +246,12 @@ public final class PatternStudioPayloads {
                     status = (enc.hasMedia() ? EJECTED : BAY_EMPTY).text();
                 } else {
                     final ItemStack out = enc.ejectMedia();
-                    if (!out.isEmpty() && !player.addItem(out)) {
+                    // Asked before the disc goes into the inventory, which empties the stack it was handed.
+                    final boolean had = !out.isEmpty();
+                    if (had && !player.addItem(out)) {
                         player.drop(out, false);
                     }
-                    status = (out.isEmpty() ? BAY_EMPTY : EJECTED).text();
+                    status = (had ? EJECTED : BAY_EMPTY).text();
                 }
             }
             default -> {

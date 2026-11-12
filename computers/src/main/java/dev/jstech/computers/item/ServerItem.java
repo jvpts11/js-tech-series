@@ -55,6 +55,8 @@ import java.util.UUID;
 public class ServerItem extends Item
         implements IMountableRackUnit {
 
+    /* The longest name a server keeps, as every computer's. */
+    private static final int MOST_NAME = 32;
     private static final TextKey TOOLTIP = TextKey.of("item.jsc.server.tooltip", "Operates only inside a Server Rack");
     private static final TextKey NODE_TOOLTIP = TextKey.of("item.jsc.supercomputer_node.tooltip",
             "A full computer: assemble it, seat a Phi, wire it with High Compute Cable");
@@ -189,12 +191,14 @@ public class ServerItem extends Item
         return stack.getOrDefault(ComputingComponents.COMPUTER_NAME.get(), "");
     }
 
+    /** Names the server, as long a name as any computer's, which every window and wire carries whole. */
     public static void setCustomName(final ItemStack stack, final String name) {
         final String trimmed = name.strip();
         if (trimmed.isEmpty()) {
             stack.remove(ComputingComponents.COMPUTER_NAME.get());
         } else {
-            stack.set(ComputingComponents.COMPUTER_NAME.get(), trimmed);
+            stack.set(ComputingComponents.COMPUTER_NAME.get(), trimmed.length() > MOST_NAME
+                    ? trimmed.substring(0, MOST_NAME) : trimmed);
         }
     }
 

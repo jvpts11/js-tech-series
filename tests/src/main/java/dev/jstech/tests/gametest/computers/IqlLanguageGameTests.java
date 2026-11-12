@@ -23,6 +23,7 @@ import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -64,6 +65,26 @@ public final class IqlLanguageGameTests {
         if (IqlService.isLimitCapped(256, 256) || IqlService.isLimitCapped(0, 256)) {
             helper.fail("a LIMIT within the cap, or none, is not a cut to report");
         }
+        helper.succeed();
+    }
+
+    /** A column of numbers and words sorts one way however it starts: numbers by size first, then words, then none. */
+    @GameTest(template = ARENA)
+    public static void compareFields_ordersAMixOfNumbersAndWordsAlike(final GameTestHelper helper) {
+        final List<String> mixed = new ArrayList<>();
+        for (int i = 0; i < ROWS; i++) {
+            mixed.add(i % 3 == 0 ? Integer.toString(i) : i % 3 == 1 ? Integer.toHexString(i) + "a" : "1d");
+        }
+        mixed.add(null);
+        final List<String> sorted = new ArrayList<>(mixed);
+        sorted.sort(IqlService::compareFields);
+        final List<String> again = new ArrayList<>(mixed.reversed());
+        again.sort(IqlService::compareFields);
+        helper.assertTrue(sorted.equals(again), "the same order from either end: " + sorted);
+        helper.assertTrue("0".equals(sorted.getFirst()) && sorted.getLast() == null,
+                "the numbers first, from the least, and the missing value last: " + sorted);
+        helper.assertTrue(IqlService.compareFields("2", "10") < 0 && IqlService.compareFields("10", "1a") < 0
+                && IqlService.compareFields("1a", "2") > 0, "a number before every word, words by their letters");
         helper.succeed();
     }
 

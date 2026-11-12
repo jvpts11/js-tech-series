@@ -11,6 +11,7 @@ import dev.jstech.computers.operation.INetworkOperation;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextTags;
+import java.lang.ref.WeakReference;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
@@ -35,6 +36,13 @@ final class ProphetMind {
     /** The last thing done for each item, and the Operations set going for it lately. */
     private final Map<String, Text> lastReaction = new HashMap<>();
     private final Map<String, Deque<Started>> operations = new HashMap<>();
+    /*
+     * The crafts set going and not settled, by id, kept with the Mainframe: those set going since it loaded settle by
+     * their own callback; those read from its save are looked for by id, since a craft resumed after a reload no
+     * longer calls back, and settle when they are found done or gone.
+     */
+    private final Map<UUID, Flying> flying = new HashMap<>();
+    private final Map<UUID, Flying> resumed = new HashMap<>();
     private final Map<String, StorageKey> keys = new HashMap<>();
     private int interval = DEFAULT_INTERVAL;
     private long maxBatch = DEFAULT_BATCH;
@@ -137,10 +145,26 @@ final class ProphetMind {
             return;
         }
         for (final Started started : kept) {
-            if (started.live == operation) {
+            if (started.live.get() == operation) {
                 started.end();
             }
         }
+    }
+
+    /** Notes a craft of {@code asked} set going for {@code item}, until it lands. */
+    void flying(final UUID id, final String item, final long asked) {
+        flying.put(id, new Flying(item, asked));
+    }
+
+    /** The craft {@code id} settled. */
+    void landed(final UUID id) {
+        flying.remove(id);
+        resumed.remove(id);
+    }
+
+    /** The crafts read from the save still on their way, which are looked for by id. */
+    Map<UUID, Flying> resumed() {
+        return Map.copyOf(resumed);
     }
 
     /** Lets go of everything remembered for {@code item}: its last reaction and the Operations noted for it. */
@@ -200,6 +224,17 @@ final class ProphetMind {
             done.add(row);
         }
         tag.put("Reactions", done);
+        final ListTag aloft = new ListTag();
+        final Map<UUID, Flying> all = new HashMap<>(resumed);
+        all.putAll(flying);
+        all.forEach((id, craft) -> {
+            final CompoundTag row = new CompoundTag();
+            row.putUUID("Id", id);
+            row.putString("Item", craft.item());
+            row.putLong("Asked", craft.asked());
+            aloft.add(row);
+        });
+        tag.put("Flying", aloft);
     }
 
     static ProphetMind load(final CompoundTag tag) {
@@ -238,7 +273,19 @@ final class ProphetMind {
             read.add(new Reacted(row.getLong("At"), TextTags.read(row.getCompound("What"))));
         }
         mind.reactions.addAll(read);
+        final ListTag aloft = tag.getList("Flying", Tag.TAG_COMPOUND);
+        for (int i = 0; i < aloft.size(); i++) {
+            final CompoundTag row = aloft.getCompound(i);
+            if (row.hasUUID("Id")) {
+                mind.resumed.put(row.getUUID("Id"), new Flying(row.getString("Item"), row.getLong("Asked")));
+                mind.states.resumed(row.getString("Item"), row.getLong("Asked"));
+            }
+        }
         return mind;
+    }
+
+    /** A craft on its way: what it was set going for, and how much it was asked to make. */
+    record Flying(String item, long asked) {
     }
 
     /** Something it did, and when. */
@@ -249,13 +296,16 @@ final class ProphetMind {
     static final class Started {
 
         private final UUID id;
-        @Nullable
-        private INetworkOperation live;
+        /*
+         * Held weakly: an Operation reaches its Mainframe, the key this mind is kept by, so a strong hold would keep a
+         * Mainframe let go with its chunk alive for as long as the engine is.
+         */
+        private WeakReference<INetworkOperation> live;
         private byte endedWith;
 
         private Started(final INetworkOperation operation) {
             this.id = operation.operationId();
-            this.live = operation;
+            this.live = new WeakReference<>(operation);
         }
 
         UUID id() {
@@ -264,13 +314,15 @@ final class ProphetMind {
 
         /** Where it stands: its live status while it runs, the one it ended with after. */
         byte status() {
-            return live == null ? endedWith : live.liveRecord().status();
+            final INetworkOperation operation = live.get();
+            return operation == null ? endedWith : operation.liveRecord().status();
         }
 
         private void end() {
-            if (live != null) {
-                endedWith = live.liveRecord().status();
-                live = null;
+            final INetworkOperation operation = live.get();
+            if (operation != null) {
+                endedWith = operation.liveRecord().status();
+                live = new WeakReference<>(null);
             }
         }
     }

@@ -11,13 +11,17 @@ import dev.jstech.computers.blockentity.CraftingComputerBlockEntity;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.crafting.CraftingPattern;
 import dev.jstech.computers.crafting.NetworkRecipe;
+import dev.jstech.computers.machine.DriveTable;
 import dev.jstech.computers.operation.NetworkStorage;
+import dev.jstech.computers.operation.payload.files.FileAccess;
 import dev.jstech.computers.os.DiskSystems;
+import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.UnixTree;
 import dev.jstech.computers.os.boot.SystemIntegrity;
+import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.FilesystemContents;
 import dev.jstech.computers.os.fs.FsPaths;
@@ -304,7 +308,7 @@ public final class BackupContents {
                     DiskSystems.CODEC.parse(NbtOps.INSTANCE, image.get(SYSTEMS)).result()
                             .ifPresent(systems -> disk.set(ComputingComponents.DISK_SYSTEMS.get(), systems));
                 }
-                writeFiles(disk, decode(image.get(FILES)));
+                writeFiles(disk, decode(image.get(FILES)), FileAccess.filesystemKindOf(host));
                 if (image.contains(CONSOLE) && host.console() != null) {
                     host.console().load(image.getCompound(CONSOLE));
                 }
@@ -313,16 +317,17 @@ public final class BackupContents {
         }
         final ItemStack disk = diskFor(host);
         if (disk != null) {
+            final FilesystemKind kind = FileAccess.filesystemKindOf(host);
             if (parts.contains(BackupPart.FILES) && one.contains(FILES)) {
-                writeFiles(disk, decode(one.get(FILES)));
+                writeFiles(disk, decode(one.get(FILES)), kind);
                 wrote = true;
             }
             if (parts.contains(BackupPart.SCRIPTS) && one.contains(SCRIPTS)) {
-                writeFiles(disk, decode(one.get(SCRIPTS)));
+                writeFiles(disk, decode(one.get(SCRIPTS)), kind);
                 wrote = true;
             }
             if (parts.contains(BackupPart.WALLETS) && one.contains(WALLETS)) {
-                writeFiles(disk, decode(one.get(WALLETS)));
+                writeFiles(disk, decode(one.get(WALLETS)), kind);
                 wrote = true;
             }
         }
@@ -347,15 +352,19 @@ public final class BackupContents {
         return disks.isEmpty() ? null : disks.getFirst();
     }
 
-    private static void writeFiles(final ItemStack disk, final FilesystemContents kept) {
-        FilesystemContents now = disk.getOrDefault(ComputingComponents.FILESYSTEM.get(), FilesystemContents.EMPTY);
+    /*
+     * Puts {@code kept}'s folders and files back on {@code disk} as writing them would: a file only where it fits,
+     * beside the one it replaces, never onto an installer's disc nor over a folder of its name.
+     */
+    private static void writeFiles(final ItemStack disk, final FilesystemContents kept, final FilesystemKind kind) {
         for (final String dir : kept.directories()) {
-            now = now.withDir(dir);
+            DiskFilesystem.mkdirs(disk, dir, kind);
         }
         for (final StoredFile file : kept.files().values()) {
-            now = now.with(file);
+            DiskFilesystem.write(disk, file.path(), file.type(), file.content(),
+                    DriveTable.freeWeightOf(disk) + DiskFilesystem.weightOf(disk, file.path()), kind,
+                    file.modified());
         }
-        disk.set(ComputingComponents.FILESYSTEM.get(), now);
     }
 
     /* The files and folders under {@code folder}, the folder itself among them. */

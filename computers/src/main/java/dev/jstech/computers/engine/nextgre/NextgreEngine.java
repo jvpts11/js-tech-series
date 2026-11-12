@@ -116,7 +116,13 @@ public final class NextgreEngine implements INetworkEngine {
             return craftStatement(core, statement, parsed, operation);
         }
         if (parsed.explain() && operation != null && operation.verb() == IqlVerb.SELECT && parsed.hints().isEmpty()) {
-            return explainSelect(core, statement, operation);
+            final IqlEngine.Outcome plan = explainSelect(core, statement, operation, parsed.analyze());
+            // EXPLAIN ANALYZE runs the SELECT as well, once its plan is shown: what it took is what the plan says.
+            if (!plan.ok() || !parsed.analyze()) {
+                return plan;
+            }
+            final IqlEngine.Outcome ran = new IqlEngine(core, caller, rowLimit, false).run(parsed.core());
+            return ran.ok() ? new IqlEngine.Outcome(true, ran.said(), plan.rows(), plan.table()) : ran;
         }
         return fail((parsed.explain() ? NextgreTexts.EXPLAINS_ONLY : NextgreTexts.HINTS_ON_CRAFT).text());
     }
@@ -339,7 +345,7 @@ public final class NextgreEngine implements INetworkEngine {
 
     /* EXPLAIN SELECT: which servers would hand the items over, and what that takes. */
     private IqlEngine.Outcome explainSelect(final MainframeBlockEntity core, final String statement,
-                                            final IqlOperation operation) {
+                                            final IqlOperation operation, final boolean analyze) {
         final StorageKey key = StorageKey.byName(operation.item());
         if (key == null) {
             return fail(NextgreTexts.UNKNOWN_ITEM.with(operation.item()));
@@ -370,11 +376,11 @@ public final class NextgreEngine implements INetworkEngine {
         final Text said = NextgreTexts.SEEK_PLANNED.with(quantity, name, Math.max(0, nodes.size() - 1),
                 seek.ticks());
         final NextgreState state = state(core);
-        final NextgrePlanView view = new NextgrePlanView(state.takeId(), statement, false,
+        final NextgrePlanView view = new NextgrePlanView(state.takeId(), statement, analyze,
                 core.getLevel() == null ? 0L : core.getLevel().getGameTime(),
                 List.of(new NextgrePlanView.Alternative(1, NextgreTexts.AS_THE_NETWORK.text(), seek.ticks(),
-                        Text.EMPTY, true, List.of())), nodes, 0L, NextgrePlanView.UNKNOWN, NextgrePlanView.PLANNED,
-                said);
+                        Text.EMPTY, true, List.of())), nodes, 0L, NextgrePlanView.UNKNOWN,
+                analyze ? NextgrePlanView.RUNNING : NextgrePlanView.PLANNED, said);
         state.remember(view, null);
         save(core, state);
         return new IqlEngine.Outcome(true, said, rows(view), table(view));

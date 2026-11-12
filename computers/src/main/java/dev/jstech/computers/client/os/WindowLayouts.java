@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.operation.payload.DesktopWindowsPayload;
 import dev.jstech.computers.os.OpenWindow;
 import dev.jstech.computers.os.WorkspaceSet;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -53,10 +54,10 @@ final class WindowLayouts {
      * instead of a fresh window. Access-ordered and bounded, so a long session that visits many machines does not
      * grow it without limit.
      */
-    private static final Map<BlockPos, Map<String, IDesktopApp>> SAVED_APPS =
+    private static final Map<BlockPos, Map<String, List<IDesktopApp>>> SAVED_APPS =
             new LinkedHashMap<>(16, 0.75f, true) {
                 @Override
-                protected boolean removeEldestEntry(final Map.Entry<BlockPos, Map<String, IDesktopApp>> eldest) {
+                protected boolean removeEldestEntry(final Map.Entry<BlockPos, Map<String, List<IDesktopApp>>> eldest) {
                     return size() > MAX_SAVED_DESKTOPS;
                 }
             };
@@ -124,8 +125,13 @@ final class WindowLayouts {
             }
             return apps;
         }
-        final Map<String, IDesktopApp> kept = SAVED_APPS.get(host);
-        return kept == null ? Map.of() : kept;
+        final Map<String, List<IDesktopApp>> kept = SAVED_APPS.get(host);
+        if (kept == null) {
+            return Map.of();
+        }
+        final Map<String, IDesktopApp> apps = new LinkedHashMap<>();
+        kept.forEach((key, instances) -> apps.put(key, instances.getFirst()));
+        return apps;
     }
 
     /**
@@ -146,10 +152,14 @@ final class WindowLayouts {
         }
         // Only a desktop that has workspaces comes back on another than the first.
         wm.setWorkspace(desktop.hasWorkspaces() ? payload.workspace() : 0);
-        final Map<String, IDesktopApp> savedApps = SAVED_APPS.get(host);
+        // Each window takes a kept instance of its own, in order: a program open twice comes back as two.
+        final Map<String, ArrayDeque<IDesktopApp>> savedApps = new HashMap<>();
+        SAVED_APPS.getOrDefault(host, Map.of()).forEach((key, instances) ->
+                savedApps.put(key, new ArrayDeque<>(instances)));
         final DesktopViewport view = desktop.view();
         for (final OpenWindow ow : payload.toOpenWindows()) {
-            IDesktopApp app = savedApps != null ? savedApps.get(ow.key()) : null;
+            final ArrayDeque<IDesktopApp> waiting = savedApps.get(ow.key());
+            IDesktopApp app = waiting != null ? waiting.pollFirst() : null;
             final boolean kept = app != null;
             if (app == null) {
                 app = desktop.opener().factoryFor(ow.key());
@@ -179,6 +189,8 @@ final class WindowLayouts {
                 app.restoreState(ow.state());
             }
         }
+        // A kept instance no window came back for is closed, as its window would have closed it.
+        savedApps.values().forEach(left -> left.forEach(IDesktopApp::onClosed));
     }
 
     /**
@@ -311,12 +323,12 @@ final class WindowLayouts {
         if (!powerCycling && !mirroring) {
             PacketDistributor.sendToServer(DesktopWindowsPayload.of(host, snapshot(), wm.workspace()));
         }
-        final Map<String, IDesktopApp> apps = new LinkedHashMap<>();
+        final Map<String, List<IDesktopApp>> apps = new LinkedHashMap<>();
         for (final DesktopWindow w : wm.all()) {
             if (w.dialog()) {
                 w.app().onClosed();
             } else if (!(w.app() instanceof SigmaWindowApp) && !(w.app() instanceof CopyProgressApp)) {
-                apps.put(w.appKey(), w.app());
+                apps.computeIfAbsent(w.appKey(), key -> new ArrayList<>()).add(w.app());
             }
         }
         if (apps.isEmpty()) {

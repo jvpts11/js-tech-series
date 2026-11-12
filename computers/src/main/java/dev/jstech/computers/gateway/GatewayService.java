@@ -30,6 +30,7 @@ import dev.jstech.computers.vm.program.IProgramParent;
 import dev.jstech.computers.vm.program.ProgramPriority;
 import dev.jstech.computers.vm.system.CallCost;
 import dev.jstech.computers.vm.system.SigmaCosts;
+import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralOwner;
 import dev.jstech.core.text.Text;
@@ -43,6 +44,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalLong;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -82,6 +84,8 @@ public final class GatewayService {
     private static final String FLUID_PREFIX = "fluid/";
     private static final String CHEMICAL_PREFIX = "chemical/";
     private static final int WHAT_LENGTH = GatewayLog.TEXT_LENGTH;
+    /* How many names one computer watches at most. */
+    private static final int MOST_WATCHES = 32;
 
     /** A list the other side asks for, priced as a program's read is, by how many rows it brings back. */
     private static final CallCost ROWS = CallCost.perRow(SigmaCosts.READ);
@@ -139,6 +143,8 @@ public final class GatewayService {
     private static final TextKey UNKNOWN_FLUID = TextKey.of("jsc.service.gateway.unknown_fluid", "unknown fluid: %s");
     private static final TextKey UNKNOWN_CHEMICAL =
             TextKey.of("jsc.service.gateway.unknown_chemical", "unknown chemical: %s");
+    private static final TextKey TOO_MANY_WATCHES = TextKey.of("jsc.service.gateway.too_many_watches",
+            "a computer watches %s names at most: stop watching one first");
     private static final TextKey UNKNOWN_ITEM = TextKey.of("jsc.service.gateway.unknown_item", "unknown item: %s");
     private static final TextKey NOT_ON_NETWORK =
             TextKey.of("jsc.service.gateway.not_on_network", "the computer is not on a network");
@@ -202,7 +208,8 @@ public final class GatewayService {
         }
         if (given.startsWith(CHEMICAL_PREFIX)) {
             final ResourceLocation id = ResourceLocation.tryParse(given.substring(CHEMICAL_PREFIX.length()));
-            if (id == null) {
+            // Only a chemical the game knows, as a fluid's or an item's name must be one it knows.
+            if (id == null || !ChemicalBridges.exists(id)) {
                 throw new GatewayRefusedException(UNKNOWN_CHEMICAL.with(name));
             }
             return StorageKey.chemical(id);
@@ -234,13 +241,16 @@ public final class GatewayService {
         };
     }
 
-    /** What the network holds of {@code name}, for the watches; zero for a name it does not know. */
-    public static long stockOf(final NetworkGatewayBlockEntity gateway, final String name) {
+    /**
+     * What the network holds of {@code name}, for the watches; none while the gateway cannot look, disabled or
+     * refused, or for a name it does not know, which is not the same as holding nothing of it.
+     */
+    public static OptionalLong stockOf(final NetworkGatewayBlockEntity gateway, final String name) {
         try {
             final GatewayService service = of(gateway);
-            return service.storage().count(resolve(name));
-        } catch (final GatewayRefusedException unknown) {
-            return 0L;
+            return OptionalLong.of(service.storage().count(resolve(name)));
+        } catch (final GatewayRefusedException refused) {
+            return OptionalLong.empty();
         }
     }
 
@@ -470,7 +480,7 @@ public final class GatewayService {
             throw denied(caller, what, CANNOT_RUN.with(computer));
         }
         final ProgramLauncher.Launch launch = ProgramLauncher.launch(machine, program, remote::readFile,
-                new ArrayList<>(args), IProgramParent.NONE, ProgramPriority.named(priority), 0);
+                new ArrayList<>(args), IProgramParent.NONE, programPriorityOf(priority), 0);
         if (!launch.ok()) {
             throw denied(caller, what, switch (launch.refusal()) {
                 case NO_RUNNER -> NO_RUNNER.with(program);
@@ -490,6 +500,11 @@ public final class GatewayService {
     public long watch(final Caller caller, final String name) throws GatewayRefusedException {
         read(caller, "watch " + name);
         final StorageKey key = resolve(name);
+        // A computer watches so many names at most: each is looked up every second, at its host's cost.
+        if (!gateway.watchesOf(caller.id()).containsKey(nameOf(key))
+                && gateway.watchesOf(caller.id()).size() >= MOST_WATCHES) {
+            throw denied(caller, "watch " + nameOf(key), TOO_MANY_WATCHES.with(MOST_WATCHES));
+        }
         final long total = storage().count(key);
         gateway.watch(caller.id(), nameOf(key), total);
         gateway.logged(caller.label(), "watch " + nameOf(key), LOG_OK.text(), GatewayLog.Tone.OK);
@@ -578,6 +593,28 @@ public final class GatewayService {
         final OperationPriority asked = name == null ? OperationPriority.DEFAULT
                 : OperationPriority.fromKeyword(name).orElse(OperationPriority.DEFAULT);
         return gateway.permissions().cap(asked);
+    }
+
+    /*
+     * The level a program it starts runs at: what was asked, never above the gateway's ceiling, which no request
+     * through it outranks, whether it starts an Operation or a program.
+     */
+    private ProgramPriority programPriorityOf(@Nullable final String name) {
+        final ProgramPriority asked = ProgramPriority.named(name);
+        final OperationPriority ceiling = gateway.permissions().cap(OperationPriority.HIGH);
+        final ProgramPriority most = ceiling.compareTo(OperationPriority.MEDIUM) < 0 ? ProgramPriority.LOW
+                : ceiling.compareTo(OperationPriority.HIGH) < 0 ? ProgramPriority.MEDIUM : ProgramPriority.HIGH;
+        return rank(asked) <= rank(most) ? asked : most;
+    }
+
+    /* How high a program's level stands, the one that runs only when all else waits lowest. */
+    private static int rank(final ProgramPriority priority) {
+        return switch (priority) {
+            case IDLE -> 0;
+            case LOW -> 1;
+            case MEDIUM -> 2;
+            case HIGH -> 3;
+        };
     }
 
     private String started(final Caller caller, final String what, final INetworkOperation op, final int cost) {

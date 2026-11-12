@@ -749,8 +749,13 @@ public final class FirmwarePayloads {
         if (system == null || system.platform() != Platform.QUINCE) {
             return;
         }
+        // Both work on the disk the system runs from, never on the first disk a new install would take.
+        final int slot = machine.systemDiskSlot();
+        if (slot < 0) {
+            return;
+        }
         if (payload.action() == RecoveryPayload.FIRST_AID) {
-            DefragRunner.begin(machine, level, Math.max(0, machine.defaultInstallSlot()));
+            DefragRunner.begin(machine, level, slot);
             return;
         }
         if (!machine.keepsInstalls()) {
@@ -761,7 +766,7 @@ public final class FirmwarePayloads {
         if (flow.disks().isEmpty()) {
             return;
         }
-        flow.select(machine.defaultInstallSlot());
+        flow.select(slot);
         machine.leaveStartupChoices();
         machine.setInstaller(flow);
         machine.setInstalling(new OsInstallJob(system.id().toString(), flow.targetSlot(), OsInstallJob.NO_READER, 0,

@@ -14,8 +14,12 @@ import dev.jstech.computers.hardware.DiskSize;
 import dev.jstech.computers.hardware.StorageTier;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.operation.payload.OperationRecord;
+import dev.jstech.computers.operation.payload.TerminalSelectPayload;
+import dev.jstech.computers.operation.payload.terminal.MoveDestinations;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.connect.Connection;
+import dev.jstech.core.jstechseries.network.NetworkSystem;
+import dev.jstech.core.jstechseries.network.ServerNode;
 import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
@@ -32,6 +36,8 @@ import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
+
+import java.util.List;
 
 import static dev.jstech.tests.testkit.computers.NetworkFixtures.placeRunningMainframe;
 
@@ -485,6 +491,30 @@ public final class NetworkOperationGameTests {
                     helper.assertTrue(!log.isEmpty() && log.get(0).type() == OperationRecord.TYPE_DELETE,
                             "it must be logged as a DELETE, not a SELECT");
                 })
+                .thenSucceed();
+    }
+
+    /**
+     * A MOVE into another Server runs over many ticks, so its destination says when the machine it lands in is
+     * gone, and the Operation stops writing into a store nobody keeps.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void moveDestination_isGoneWithTheRackItLandsIn(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork net = TestWorldBuilder.forGameTest(helper).buildCraftingNetwork();
+        final MoveDestinations.Dest[] dest = new MoveDestinations.Dest[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    final NetworkUuid uuid = net.mainframe().networkUuid();
+                    final List<ServerNode> servers = List.copyOf(NetworkSystem.get(helper.getLevel()).serversOf(uuid));
+                    helper.assertTrue(servers.size() == 1, "the rack's server is on the network; got " + servers);
+                    dest[0] = MoveDestinations.resolveDest(net.cc(), helper.getLevel(), uuid,
+                            TerminalSelectPayload.DEST_SERVER, servers.getFirst().nodeUuid().value().toString());
+                    helper.assertTrue(dest[0] != null && dest[0].move() && !dest[0].gone().getAsBoolean(),
+                            "a MOVE into the server, which is there");
+                    helper.getLevel().removeBlock(net.rack().getBlockPos(), false);
+                })
+                .thenExecuteAfter(1, () -> helper.assertTrue(dest[0].gone().getAsBoolean(),
+                        "with its rack broken, the server it landed in is gone"))
                 .thenSucceed();
     }
 }

@@ -181,6 +181,31 @@ public final class InstallerPartitionGameTests {
                 .thenSucceed();
     }
 
+    /** Once the copy has started, the disk it was prepared on is the disk it goes on, whatever is asked after. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void aStartedCopy_staysOnTheDiskItWasPreparedOn(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = mainframeWith(helper, FREEBSD, 2);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    mainframe.setNeedsPost(false);
+                    helper.assertTrue(FirmwarePayloads.beginInstall(helper.getLevel(), mainframe, -1L, -1) == null,
+                            "the installer opens");
+                    final InstallerFlow flow = mainframe.installer();
+                    for (int page = 0; page < flow.style().stages().size() && !flow.started(); page++) {
+                        flow.next();
+                    }
+                    helper.assertTrue(flow.started(), "the copy began");
+                    final int prepared = flow.targetSlot();
+                    final int other = prepared == 0 ? 1 : 0;
+                    flow.select(other);
+                    flow.askErase(other);
+                    flow.confirmErase();
+                    helper.assertTrue(flow.targetSlot() == prepared,
+                            "it stays on disk " + prepared + "; got " + flow.targetSlot());
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void framesXpDeletesAPartition_andItsRoomIsUnpartitionedSpace(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);

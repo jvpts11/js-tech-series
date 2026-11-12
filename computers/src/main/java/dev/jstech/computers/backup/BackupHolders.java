@@ -17,7 +17,9 @@ import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.uuid.NetworkUuid;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -89,6 +91,23 @@ public final class BackupHolders {
         }
         out.sort(Comparator.comparingLong(Held::clock).reversed());
         return out;
+    }
+
+    /**
+     * Lets the world's archive go of each of {@code ids} that no tape or drive of {@code network} holds any more: a
+     * backup another tape or a copy of its file on a drive still holds keeps what it holds, so that copy restores.
+     */
+    public static void forgetUnheld(final ServerLevel level, final NetworkUuid network, final Collection<UUID> ids) {
+        final Set<UUID> held = new HashSet<>();
+        for (final Held one : of(level, network)) {
+            held.add(one.id());
+        }
+        final BackupArchive archive = BackupArchive.of(level);
+        for (final UUID id : ids) {
+            if (!held.contains(id)) {
+                archive.remove(id);
+            }
+        }
     }
 
     /** The backup {@code id} where a drive of {@code network} holds it, or null when no drive does. */

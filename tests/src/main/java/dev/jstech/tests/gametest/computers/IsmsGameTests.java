@@ -343,6 +343,25 @@ public final class IsmsGameTests {
                 .thenSucceed();
     }
 
+    /** A recipe none of whose runs can start yet still has a plan: the one that says what it lacks. */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void plan_ofARecipeWithNothingInStockSaysWhatItLacks(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork net = TestWorldBuilder.forGameTest(helper).buildCraftingNetwork();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> net.cc().loadPattern(CraftFiles.oakPlanks()))
+                .thenWaitUntil(() -> helper.assertFalse(net.mainframe().networkPatterns().isEmpty(),
+                        "the network knows the planks recipe"))
+                .thenExecute(() -> {
+                    final IsmsPlanPayload plan = IqlPayloads.plan(net.mainframe(), 3, "oak_planks", 8);
+                    final List<String> said = plan.lines().stream().map(GameText::resolve).toList();
+                    helper.assertTrue(plan.ok(), "a recipe with no logs to start from is still planned; got " + said);
+                    helper.assertTrue(plan.depth().get(0) == 0 && !plan.depth().contains(1)
+                                    && plan.depth().contains(2),
+                            "the root, no step it can take, and what it lacks; got " + plan.depth() + " " + said);
+                })
+                .thenSucceed();
+    }
+
     /** The Profiler hears a statement come and go, the Operation it starts, settle, and the lock it takes. */
     @GameTest(template = ARENA, timeoutTicks = 400)
     public static void trace_hearsStatementsOperationsAndLocks(final GameTestHelper helper) {

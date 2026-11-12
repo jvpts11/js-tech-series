@@ -801,14 +801,18 @@ public final class InstallerFlow {
      * the copy starts rather than after it.
      */
     public void select(final int slot) {
+        // Once the copy has started, the disk it was prepared on is the disk it goes on.
+        if (this.started()) {
+            return;
+        }
         final Disk disk = this.diskAt(slot);
         if (disk != null) {
-            // An erase was agreed to for the disk chosen then; choosing another before the copy starts takes it back.
-            if (slot != this.eraseSlot && !this.started()) {
+            // An erase was agreed to for the disk chosen then; choosing another takes it back.
+            if (slot != this.eraseSlot) {
                 this.eraseSlot = NO_DISK;
             }
             // Where it went on the disk chosen before means nothing on this one.
-            if (slot != this.targetSlot && !this.started()) {
+            if (slot != this.targetSlot) {
                 this.placement = this.placement.onAnotherDisk();
             }
             this.targetSlot = slot;
@@ -838,7 +842,8 @@ public final class InstallerFlow {
 
     /** Takes the offer: the disk counts as empty from here, and the machine erases it before it copies. */
     public void confirmErase() {
-        if (this.erasePrompt != NO_DISK) {
+        // An erase agreed to after the copy started would move the system onto a disk nothing prepared.
+        if (this.erasePrompt != NO_DISK && !this.started()) {
             this.eraseSlot = this.erasePrompt;
             this.targetSlot = this.erasePrompt;
             this.erasePrompt = NO_DISK;

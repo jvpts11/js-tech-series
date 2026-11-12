@@ -260,6 +260,10 @@ public final class CraftingDispatch {
                     bus.startWatching(snapshot(port));
                     continue;
                 }
+                // What was taken out of the machine since it was seen no longer stands in the way of what it makes.
+                for (final StorageKey key : List.copyOf(bus.baseline().keySet())) {
+                    bus.lowerBaseline(key, port.count(key));
+                }
                 for (final StorageKey key : port.available()) {
                     creditKey(level, now, bus, port, key, live, parts, toNetwork);
                 }

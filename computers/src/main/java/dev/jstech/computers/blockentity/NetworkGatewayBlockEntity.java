@@ -62,6 +62,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 /**
  * The Network Gateway: the device that puts this data network within reach of ComputerCraft's computers.
@@ -588,7 +589,12 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
     private void tickWatches() {
         for (final Map.Entry<Integer, Map<String, Long>> byComputer : watches.entrySet()) {
             for (final Map.Entry<String, Long> watched : byComputer.getValue().entrySet()) {
-                final long total = GatewayService.stockOf(this, watched.getKey());
+                final OptionalLong looked = GatewayService.stockOf(this, watched.getKey());
+                // A look the gateway could not make tells nothing: the total it last heard stands.
+                if (looked.isEmpty()) {
+                    continue;
+                }
+                final long total = looked.getAsLong();
                 charge(SigmaCosts.READ);
                 if (total != watched.getValue()) {
                     final long previous = watched.getValue();
