@@ -72,6 +72,7 @@ import dev.jstech.tests.clienttest.computers.InfoCenterClientTests;
 import dev.jstech.tests.clienttest.computers.InstallMediaClientTests;
 import dev.jstech.tests.clienttest.computers.InteracTuiClientTests;
 import dev.jstech.tests.clienttest.computers.IsmsClientTests;
+import dev.jstech.tests.clienttest.computers.LargeScalePrinterClientTests;
 import dev.jstech.tests.clienttest.computers.LeftoverProgramsClientTests;
 import dev.jstech.tests.clienttest.computers.LiveInstallClientTests;
 import dev.jstech.tests.clienttest.computers.MachineSoundClientTests;
@@ -538,6 +539,7 @@ public final class ClientTestSuite {
             ScannerClientTests.class,
             ExtendedCdDriveClientTests.class,
             EasyDiscCreatorClientTests.class,
+            LargeScalePrinterClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,

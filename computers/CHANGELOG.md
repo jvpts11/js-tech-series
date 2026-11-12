@@ -1060,6 +1060,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The classic Soundfoundry shows a vinyl recording on its own display, the record lamp and the time
   recorded with the song marked "*** RECORDING"; its level meter is green to yellow to red, and the path a recording
   is saved to fits the VNL plate, its first folders left off.
+- The Large Scale Printer's window is headed by the machine's name in its era's accent, where it gave its
+  terminal block's; an enchanted book queued before the server turned their printing off says "off on this server"
+  in red, as the Enchanted readout's "off" now is, where it said it was waiting; each queued book sits in a slot, and
+  the window takes the places of its design.
+- The Print window lists a computer's Large Scale Printers first when the document is a book, the first
+  of them chosen, where a book went to the first page printer unless one was picked; the printers are listed in the
+  desktop's own text, where it was the small one.
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
   works through its computer.
 - The Network Interactor's Operations tab gives each Operation its own state, where it read the states in

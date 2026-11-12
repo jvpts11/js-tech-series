@@ -724,6 +724,7 @@
   "jsc.large_scale_printer.nothing": "Nada",
   "jsc.large_scale_printer.now": "AGORA",
   "jsc.large_scale_printer.off": "desligado",
+  "jsc.large_scale_printer.off_here": "desligado neste servidor",
   "jsc.large_scale_printer.one_book": "1 livro",
   "jsc.large_scale_printer.pace_1": "Livros encadernam em",
   "jsc.large_scale_printer.pace_2": "%s s cada.",

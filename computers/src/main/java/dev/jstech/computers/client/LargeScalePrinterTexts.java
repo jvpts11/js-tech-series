@@ -34,6 +34,8 @@ final class LargeScalePrinterTexts {
     static final TextKey TIMES = TextKey.of("jsc.large_scale_printer.times", "%s  x%s");
     static final TextKey FROM_PRINTING = TextKey.of("jsc.large_scale_printer.from_printing", "from %s, printing");
     static final TextKey FROM_WAITING = TextKey.of("jsc.large_scale_printer.from_waiting", "from %s, waiting");
+    /** A queued enchanted book once the server has turned their printing off. */
+    static final TextKey OFF_HERE = TextKey.of("jsc.large_scale_printer.off_here", "off on this server");
     static final TextKey MORE = TextKey.of("jsc.large_scale_printer.more", "and %s more");
     static final TextKey NOW = TextKey.of("jsc.large_scale_printer.now", "NOW");
     static final TextKey NOTHING = TextKey.of("jsc.large_scale_printer.nothing", "Nothing");

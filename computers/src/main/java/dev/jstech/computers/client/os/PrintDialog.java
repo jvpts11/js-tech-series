@@ -26,6 +26,7 @@ import dev.jstech.computers.printer.Printers;
 import dev.jstech.core.client.gui.component.AmountStepper;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Checkbox;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
 import dev.jstech.core.client.gui.component.Panel;
@@ -36,6 +37,7 @@ import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.gui.component.WaitBar;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import net.minecraft.client.gui.Font;
@@ -110,7 +112,7 @@ public final class PrintDialog implements IDesktopApp {
     /** The labels in front of each setting's row in the dialog with a preview, and the size of its note's letters. */
     private static final int ROW_LABEL_W = 58;
     private static final float NOTE_SCALE = 0.75F;
-    private static final int ROW_H = 11;
+    private static final int ROW_H = 13;
     private static final int LIST_H = 34;
     /** The width of the controls' column in the dialog with a preview. */
     private static final int CONTROLS_W = 170;
@@ -189,7 +191,9 @@ public final class PrintDialog implements IDesktopApp {
     /** The printers the machine answered with, and its name. */
     public void onPrinters(final String machineName, final List<PrintersPayload.Row> rows) {
         this.machine = machineName;
-        this.printers = List.copyOf(rows);
+        // A book goes to a Large Scale Printer, so for one the printers of books head the list, the first chosen.
+        this.printers = isBook() ? rows.stream().sorted(Comparator.comparing(PrintDialog::printsPages)).toList()
+                : List.copyOf(rows);
         this.listed = true;
         this.chosen = 0;
         printerList.setSelected(rows.isEmpty() ? -1 : 0);
@@ -465,7 +469,8 @@ public final class PrintDialog implements IDesktopApp {
         final String kind = LargeScalePrinters.MODEL.equals(row.model()) ? GameText.resolve(LargeScalePrinters.BOOKS)
                 : model == null ? "" : GameText.resolve(model.colorWord());
         final String color = kind.isEmpty() ? "" : "  (" + kind + ")";
-        Texts.small(g, ctx.font(), GameText.resolve(name(row)) + color, x + 3, y + 3, skin.text());
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), GameText.resolve(name(row)) + color, w - 6), x + 3, y + 3,
+                skin.text());
     }
 
     /* The page being printed, small, as the flat desktops preview it: the lines of print as grey bars. */
@@ -608,6 +613,11 @@ public final class PrintDialog implements IDesktopApp {
     private boolean books() {
         final PrintersPayload.Row row = current();
         return row != null && LargeScalePrinters.MODEL.equals(row.model());
+    }
+
+    /* Whether a printer prints pages, rather than books as a Large Scale Printer does. */
+    private static boolean printsPages(final PrintersPayload.Row row) {
+        return !LargeScalePrinters.MODEL.equals(row.model());
     }
 
     /* Whether what is being printed is a book a Large Scale Printer prints: a .book or a .ench file. */

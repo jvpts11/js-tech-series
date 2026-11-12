@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.layout.LargeScalePrinterLayout;
 import dev.jstech.computers.menu.LargeScalePrinterMenu;
 import dev.jstech.computers.printer.BookJob;
 import dev.jstech.computers.printer.LargeScalePrinterBlockEntity;
+import dev.jstech.computers.printer.LargeScalePrinters;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.jstechseries.theme.client.JsTechTheme;
 import dev.jstech.core.jstechseries.tier.Era;
@@ -98,8 +99,9 @@ public class LargeScalePrinterScreen extends AbstractComputerScreen<LargeScalePr
         JsTechTheme.window(g, x, y, imageWidth, imageHeight);
         JsTechTheme.headerBar(g, x + LargeScalePrinterLayout.HEADER_X, y + LargeScalePrinterLayout.HEADER_Y,
                 LargeScalePrinterLayout.HEADER_W);
-        Draw.text(g, font, title.getString().toUpperCase(Locale.ROOT), x + LargeScalePrinterLayout.TITLE_X,
-                y + LargeScalePrinterLayout.TITLE_Y, JsTechTheme.text());
+        // The machine's own name, not its terminal block's, in its era's accent.
+        Draw.text(g, font, GameText.resolve(LargeScalePrinters.NAME).toUpperCase(Locale.ROOT),
+                x + LargeScalePrinterLayout.TITLE_X, y + LargeScalePrinterLayout.TITLE_Y, JsTechTheme.accent());
         drawState(g, printer);
         JsTechTheme.panel(g, x + LargeScalePrinterLayout.LEFT_X, y + LargeScalePrinterLayout.LEFT_Y,
                 LargeScalePrinterLayout.LEFT_W, LargeScalePrinterLayout.PANEL_H);
@@ -170,9 +172,10 @@ public class LargeScalePrinterScreen extends AbstractComputerScreen<LargeScalePr
         box(g, LargeScalePrinterLayout.BOOK_Y, LargeScalePrinterTexts.A_BOOK,
                 GameText.resolve(LargeScalePrinterTexts.THREE_SHEETS.with(LargeScalePrinterBlockEntity.SHEETS_A_BOOK)));
         drawButton(g, LargeScalePrinterLayout.PAUSE_X, printer.paused() ? LargeScalePrinterTexts.RESUME
-                : LargeScalePrinterTexts.PAUSE, true, mouseX, mouseY);
-        drawButton(g, LargeScalePrinterLayout.CANCEL_X, LargeScalePrinterTexts.CANCEL, !printer.rows().isEmpty(),
-                mouseX, mouseY);
+                : LargeScalePrinterTexts.PAUSE, true, JsTechTheme.accent(), mouseX, mouseY);
+        final boolean queued = !printer.rows().isEmpty();
+        drawButton(g, LargeScalePrinterLayout.CANCEL_X, LargeScalePrinterTexts.CANCEL, queued,
+                queued ? JsTechTheme.text() : dim, mouseX, mouseY);
         small(g, GameText.resolve(LargeScalePrinterTexts.PACE_1), LargeScalePrinterLayout.LABEL_X,
                 LargeScalePrinterLayout.PACE_Y, dim);
         small(g, GameText.resolve(LargeScalePrinterTexts.PACE_2.with(printer.machine().seconds())),
@@ -199,13 +202,18 @@ public class LargeScalePrinterScreen extends AbstractComputerScreen<LargeScalePr
         for (int i = 0; i < shown; i++) {
             final LargeScalePrinterBlockEntity.Row row = rows.get(i);
             final int y = LargeScalePrinterLayout.ROW_Y + i * LargeScalePrinterLayout.ROW_STEP;
+            JsTechTheme.slot(g, leftPos + LargeScalePrinterLayout.TEXT_X, topPos + y);
             g.renderItem(icon(row.kind()), leftPos + LargeScalePrinterLayout.TEXT_X, topPos + y);
+            final int lineY = y + LargeScalePrinterLayout.ROW_TEXT_DY;
             small(g, clip(GameText.resolve(LargeScalePrinterTexts.TIMES.with(row.title(), row.copies())), room),
-                    LargeScalePrinterLayout.ROW_TEXT_X, y, JsTechTheme.text());
-            small(g, clip(GameText.resolve((row.printing() ? LargeScalePrinterTexts.FROM_PRINTING
-                            : LargeScalePrinterTexts.FROM_WAITING).with(row.from())), room),
-                    LargeScalePrinterLayout.ROW_TEXT_X, y + LargeScalePrinterLayout.NOTE_LINE,
-                    row.printing() ? JsTechTheme.amber() : dim);
+                    LargeScalePrinterLayout.ROW_TEXT_X, lineY, JsTechTheme.text());
+            // An enchanted book the server has since turned off waits in the queue, saying why it will not print.
+            final boolean refused = row.kind() == BookJob.Kind.ENCHANTED && !printer.enchantedAllowed();
+            final String state = refused ? GameText.resolve(LargeScalePrinterTexts.OFF_HERE)
+                    : GameText.resolve((row.printing() ? LargeScalePrinterTexts.FROM_PRINTING
+                            : LargeScalePrinterTexts.FROM_WAITING).with(row.from()));
+            small(g, clip(state, room), LargeScalePrinterLayout.ROW_TEXT_X, lineY + LargeScalePrinterLayout.NOTE_LINE,
+                    refused ? JsTechTheme.red() : row.printing() ? JsTechTheme.amber() : dim);
         }
         if (shown < rows.size()) {
             small(g, GameText.resolve(LargeScalePrinterTexts.MORE.with(rows.size() - shown)),
@@ -248,22 +256,25 @@ public class LargeScalePrinterScreen extends AbstractComputerScreen<LargeScalePr
     /* The switch of where the books go, the books printed, and the server's word on enchanted books. */
     private void drawReadouts(final GuiGraphics g, final LargeScalePrinterBlockEntity printer) {
         readout(g, 0, LargeScalePrinterTexts.GO_TO, GameText.resolve(printer.toNetwork()
-                ? LargeScalePrinterTexts.THE_NETWORK : LargeScalePrinterTexts.THE_CHEST));
+                ? LargeScalePrinterTexts.THE_NETWORK : LargeScalePrinterTexts.THE_CHEST), JsTechTheme.text());
         readout(g, 1, LargeScalePrinterTexts.PRINTED, GameText.resolve(printer.printed() == 1
                 ? LargeScalePrinterTexts.ONE_BOOK.text()
-                : LargeScalePrinterTexts.BOOKS.with(String.format(Locale.ROOT, "%,d", printer.printed()))));
+                : LargeScalePrinterTexts.BOOKS.with(String.format(Locale.ROOT, "%,d", printer.printed()))),
+                JsTechTheme.text());
         readout(g, 2, LargeScalePrinterTexts.ENCHANTED, GameText.resolve(printer.enchantedAllowed()
-                ? LargeScalePrinterTexts.ALLOWED : LargeScalePrinterTexts.OFF));
+                ? LargeScalePrinterTexts.ALLOWED : LargeScalePrinterTexts.OFF),
+                printer.enchantedAllowed() ? JsTechTheme.text() : JsTechTheme.red());
     }
 
-    private void readout(final GuiGraphics g, final int index, final TextKey label, final String value) {
+    private void readout(final GuiGraphics g, final int index, final TextKey label, final String value,
+                         final int colour) {
         final int x = leftPos + LargeScalePrinterLayout.READOUT_X;
         final int y = topPos + LargeScalePrinterLayout.READOUT_Y + index * LargeScalePrinterLayout.READOUT_STEP;
         JsTechTheme.panel(g, x, y, LargeScalePrinterLayout.READOUT_W, LargeScalePrinterLayout.READOUT_H);
         JsTechTheme.textS(g, font, GameText.resolve(label), x + 3, y + 2, JsTechTheme.dim());
         final String shown = clipFull(value, LargeScalePrinterLayout.READOUT_W - 6);
-        Draw.text(g, font, shown, x + LargeScalePrinterLayout.READOUT_W - 3 - font.width(shown), y + 11,
-                JsTechTheme.text());
+        Draw.text(g, font, shown, x + LargeScalePrinterLayout.READOUT_W - 3 - font.width(shown),
+                y + LargeScalePrinterLayout.VALUE_Y, colour);
     }
 
     /* A labelled box of the left panel, its value at its right edge. */
@@ -272,20 +283,21 @@ public class LargeScalePrinterScreen extends AbstractComputerScreen<LargeScalePr
         final int top = topPos + y;
         JsTechTheme.panel(g, x, top, LargeScalePrinterLayout.BOX_W, LargeScalePrinterLayout.BOX_H);
         JsTechTheme.textS(g, font, GameText.resolve(label), x + 3, top + 2, JsTechTheme.dim());
-        Draw.text(g, font, value, x + LargeScalePrinterLayout.BOX_W - 3 - font.width(value), top + 10,
-                JsTechTheme.text());
+        Draw.text(g, font, value, x + LargeScalePrinterLayout.BOX_W - 3 - font.width(value),
+                top + LargeScalePrinterLayout.VALUE_Y, JsTechTheme.text());
     }
 
-    private void drawButton(final GuiGraphics g, final int bx, final TextKey label, final boolean active,
-                            final int mouseX, final int mouseY) {
+    /* A key of the window; {@code pressable} keys light up under the mouse. */
+    private void drawButton(final GuiGraphics g, final int bx, final TextKey label, final boolean pressable,
+                            final int colour, final int mouseX, final int mouseY) {
         final int x = leftPos + bx;
         final int y = topPos + LargeScalePrinterLayout.BUTTON_Y;
-        final boolean lit = active && mouseX >= x && mouseX < x + LargeScalePrinterLayout.BUTTON_W && mouseY >= y
+        final boolean lit = pressable && mouseX >= x && mouseX < x + LargeScalePrinterLayout.BUTTON_W && mouseY >= y
                 && mouseY < y + LargeScalePrinterLayout.BUTTON_H;
         JsTechTheme.button(g, x, y, LargeScalePrinterLayout.BUTTON_W, LargeScalePrinterLayout.BUTTON_H, lit);
-        final int colour = !active ? JsTechTheme.dim() : lit ? JsTechTheme.text() : JsTechTheme.accent();
         final String words = GameText.resolve(label);
-        Draw.text(g, font, words, x + (LargeScalePrinterLayout.BUTTON_W - font.width(words)) / 2, y + 3, colour);
+        Draw.text(g, font, words, x + (LargeScalePrinterLayout.BUTTON_W - font.width(words)) / 2, y + 3,
+                lit ? JsTechTheme.text() : colour);
     }
 
     /* The book a row prints, as its icon: a system's book is drawn as a plain book. */

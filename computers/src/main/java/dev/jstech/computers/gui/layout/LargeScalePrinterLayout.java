@@ -18,73 +18,77 @@ import dev.jstech.core.gui.layout.GuiLayout;
 public final class LargeScalePrinterLayout {
 
     public static final int WIDTH = 268;
-    public static final int HEIGHT = 250;
+    public static final int HEIGHT = 254;
     public static final float SMALL = 0.75F;
 
     public static final int HEADER_X = 6;
     public static final int HEADER_Y = 6;
     public static final int HEADER_W = 256;
-    public static final int HEADER_H = 14;
+    public static final int HEADER_H = 17;
     public static final int TITLE_X = 10;
-    public static final int TITLE_Y = 9;
+    public static final int TITLE_Y = 10;
     public static final int TITLE_CHARS = 22;
     public static final int STATE_RIGHT = HEADER_X + HEADER_W - 4;
     public static final int LAMP_SIZE = 4;
 
     /** The left panel: the feeder, its sheets, a book's sheets, the buttons and the pace. */
     public static final int LEFT_X = 8;
-    public static final int LEFT_Y = 24;
+    public static final int LEFT_Y = 28;
     public static final int LEFT_W = 92;
-    public static final int PANEL_H = 136;
+    public static final int PANEL_H = 138;
     public static final int LABEL_X = 12;
-    public static final int FEEDER_LABEL_Y = 28;
+    public static final int FEEDER_LABEL_Y = 32;
     public static final int FEEDER_X = 12;
-    public static final int FEEDER_Y = 35;
-    public static final int FEEDER_NOTE_X = 33;
-    public static final int FEEDER_NOTE_Y = 36;
+    public static final int FEEDER_Y = 41;
+    public static final int FEEDER_NOTE_X = 32;
+    public static final int FEEDER_NOTE_Y = 41;
     public static final int NOTE_LINE = 8;
     public static final int NOTE_CHARS = 16;
     public static final int BOX_X = 12;
     public static final int BOX_W = 84;
     public static final int BOX_H = 20;
-    public static final int SHEETS_Y = 58;
-    public static final int BOOK_Y = 82;
-    public static final int BUTTON_Y = 108;
+    /** Where a box's or a readout's value sits under its label. */
+    public static final int VALUE_Y = 9;
+    public static final int SHEETS_Y = 68;
+    public static final int BOOK_Y = 92;
+    public static final int BUTTON_Y = 120;
     public static final int BUTTON_H = 14;
     public static final int PAUSE_X = 12;
     public static final int CANCEL_X = 56;
     public static final int BUTTON_W = 40;
-    public static final int PACE_Y = 130;
+    public static final int PACE_Y = 142;
     public static final int PACE_CHARS = 22;
 
     /** The right panel: the queue's rows, then the book printing now and its bar. */
-    public static final int RIGHT_X = 104;
-    public static final int RIGHT_W = 158;
-    public static final int TEXT_X = 108;
-    public static final int QUEUE_LABEL_Y = 28;
-    public static final int ROW_Y = 36;
+    public static final int RIGHT_X = 106;
+    public static final int RIGHT_W = 154;
+    public static final int TEXT_X = 110;
+    public static final int QUEUE_LABEL_Y = 32;
+    /** A row's book in its slot, its lines beside it a pixel lower. */
+    public static final int ROW_Y = 41;
     public static final int ROW_STEP = 24;
     public static final int ROWS = 3;
     public static final int ROW_ICON = 16;
-    public static final int ROW_TEXT_X = 128;
+    public static final int ROW_TEXT_X = 130;
+    public static final int ROW_TEXT_DY = 1;
     /* As many small characters as a row's room holds, and the room under the queue; the screen cuts a longer line. */
     public static final int ROW_CHARS = 28;
     public static final int NOW_CHARS = 33;
-    public static final int NOW_LABEL_Y = 110;
-    public static final int NOW_Y = 118;
-    public static final int BAR_Y = 130;
-    public static final int BAR_W = 150;
+    public static final int NOW_LABEL_Y = 117;
+    public static final int NOW_Y = 126;
+    public static final int BAR_Y = 137;
+    public static final int BAR_W = 146;
     public static final int BAR_H = 4;
-    public static final int PAGES_Y = 138;
+    public static final int PAGES_Y = 145;
 
     /** The player's inventory, and the three readouts beside it. */
     public static final int INV_X = 8;
-    public static final int INV_Y = 166;
-    public static final int READOUT_X = 178;
-    public static final int READOUT_W = 84;
-    public static final int READOUT_H = 22;
-    public static final int READOUT_Y = 166;
-    public static final int READOUT_STEP = 26;
+    public static final int INV_Y = 174;
+    public static final int READOUT_X = 176;
+    public static final int READOUT_W = 86;
+    public static final int READOUT_H = 20;
+    public static final int READOUT_Y = 174;
+    public static final int READOUT_STEP = 24;
     public static final int READOUTS = 3;
 
     private LargeScalePrinterLayout() {
@@ -96,7 +100,7 @@ public final class LargeScalePrinterLayout {
         layout.text("title", TITLE_X, TITLE_Y, TITLE_CHARS, 1.0F);
         // The two panels are the ground the rest stands on, so they are drawn under it and not checked against it.
         layout.text("feederLabel", LABEL_X, FEEDER_LABEL_Y, 6, SMALL);
-        layout.slot("feeder", FEEDER_X + 1, FEEDER_Y + 1);
+        layout.slot("feeder", FEEDER_X, FEEDER_Y);
         for (int i = 0; i < 3; i++) {
             layout.text("feederNote" + i, FEEDER_NOTE_X, FEEDER_NOTE_Y + i * NOTE_LINE, NOTE_CHARS, SMALL);
         }
@@ -109,8 +113,8 @@ public final class LargeScalePrinterLayout {
         layout.text("queueLabel", TEXT_X, QUEUE_LABEL_Y, 6, SMALL);
         for (int i = 0; i < ROWS; i++) {
             layout.box("rowIcon" + i, TEXT_X, ROW_Y + i * ROW_STEP, ROW_ICON, ROW_ICON);
-            layout.text("rowTitle" + i, ROW_TEXT_X, ROW_Y + i * ROW_STEP, ROW_CHARS, SMALL);
-            layout.text("rowFrom" + i, ROW_TEXT_X, ROW_Y + i * ROW_STEP + NOTE_LINE, ROW_CHARS, SMALL);
+            layout.text("rowTitle" + i, ROW_TEXT_X, ROW_Y + ROW_TEXT_DY + i * ROW_STEP, ROW_CHARS, SMALL);
+            layout.text("rowFrom" + i, ROW_TEXT_X, ROW_Y + ROW_TEXT_DY + i * ROW_STEP + NOTE_LINE, ROW_CHARS, SMALL);
         }
         layout.text("nowLabel", TEXT_X, NOW_LABEL_Y, 6, SMALL);
         layout.text("now", TEXT_X, NOW_Y, NOW_CHARS, SMALL);

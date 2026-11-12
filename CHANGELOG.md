@@ -4211,6 +4211,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The classic Soundfoundry shows a vinyl recording on its own display, the record lamp and the time
   recorded with the song marked "*** RECORDING"; its level meter is green to yellow to red, and the path a recording
   is saved to fits the VNL plate, its first folders left off.
+- (Computers) The Large Scale Printer's window is headed by the machine's name in its era's accent, where it gave its
+  terminal block's; an enchanted book queued before the server turned their printing off says "off on this server"
+  in red, as the Enchanted readout's "off" now is, where it said it was waiting; each queued book sits in a slot, and
+  the window takes the places of its design.
+- (Computers) The Print window lists a computer's Large Scale Printers first when the document is a book, the first
+  of them chosen, where a book went to the first page printer unless one was picked; the printers are listed in the
+  desktop's own text, where it was the small one.
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
