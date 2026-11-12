@@ -1509,6 +1509,7 @@
   "jsc.archive.all_already_there": "Todos os %s já estão lá",
   "jsc.archive.at_least_one": "Um pacote deve conter pelo menos um arquivo",
   "jsc.archive.at_most": "Um pacote comporta no máximo %s arquivos",
+  "jsc.archive.blank_name": "Um arquivo cujo nome é só espaços não pode entrar num pacote",
   "jsc.archive.damaged": "O pacote está danificado",
   "jsc.archive.holds_itself": "Um pacote não pode conter a si mesmo",
   "jsc.archive.invalid_name": "Nome de pacote inválido",

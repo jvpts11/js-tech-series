@@ -1576,6 +1576,7 @@
   "jsc.archive.all_already_there": "All %s are already there",
   "jsc.archive.at_least_one": "An archive must hold at least one file",
   "jsc.archive.at_most": "An archive holds at most %s files",
+  "jsc.archive.blank_name": "A file named only with spaces cannot go in an archive",
   "jsc.archive.damaged": "The archive is damaged",
   "jsc.archive.holds_itself": "An archive cannot hold itself",
   "jsc.archive.invalid_name": "Invalid archive name",
