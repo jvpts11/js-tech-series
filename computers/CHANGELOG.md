@@ -951,6 +951,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   said before. The chain's pages are one section of the Guide, The Fab, opening with a page that walks the chain in
   the order you use it, and the Teracoin section gains a page on the Crypto Wallet of a portable and Teracoin from a
   program.
+- Survival in the documentation: the Guide's welcome and library pages, the README, Getting started and
+  the modpack page say that every part is made along the mod's own chain and every book at the Crafting Table or the
+  Large Scale Printer, the creative tabs being for creative.
+- The design pages describe what came with this release: J's Computers' and J's Core's pages say
+  what is built, and each lists at its end only what is still to build.
 
 ### Fixed
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on

@@ -4,9 +4,11 @@ What every block and item of J's Computers is made of, and where. The chain itse
 their numbers and how a chip is made, is in [Survival](survival.md). Every number is a first estimate, and every
 recipe is data that JEI, EMI and the manuals show and that a modpack can change through KubeJS.
 
-## To build
+## The recipes
 
-Nothing on this page exists yet.
+All of it exists: the data generation writes every recipe below from these tables, and the items that came after it
+(the Tape Library, the Large Scale Printer, the scanners, the touch monitors, the Mining Computer and the 3D printers)
+brought their recipes with them.
 
 ### How the recipes are written
 
@@ -24,6 +26,9 @@ Nothing on this page exists yet.
 - **What the chain is made of.** What is mined, grown and processed: no dye, no mob's drop, and no vanilla gadget
   standing in for a component (a hopper is not a pump, a comparator not a chip). Vanilla's mined and grown things are
   fine: iron, copper, gold, redstone, lapis lazuli, diamond, sand, coal, logs, glass, paper.
+- **The chain can be switched off.** `survival.own_chain` off takes away the recipes of the chain's machines, from
+  the ore to the chip, and its veins; the benches and their recipes stay ([Survival](survival.md)).
+- **A bench takes its time.** A bench recipe takes 200 ticks unless its row says otherwise (an estimate).
 - **Bigger takes more.** In a family, each bigger or faster member takes at least one more of something it counts
   (a chip, a contact, a battery), so no two members share a recipe and the order reads as the real one.
 - **How a grid is written.** Its rows, top to bottom, separated by slashes, each cell by its code below and a dot
@@ -557,8 +562,8 @@ of its look:
 
 The **Crafting Computer** is the Personal Computer of the same case with its era's Crafting Card in it for
 good, and the **Cluster Management Computer** the same with its era's Cluster Interface Card (the
-Transition's takes the Legacy's Management NIC, which its PCI Express slots take); the Advanced High
-Performance case has no Cluster Management Computer. The **Mining Computer** is an open frame:
+Transition's takes the Legacy's Management NIC, which its PCI Express slots take), the Advanced High
+Performance case's among them. The **Mining Computer** is an open frame:
 
 | Computer | Bench | Recipe |
 | --- | --- | --- |
@@ -819,7 +824,7 @@ Vintage and gold after.
 | --- | --- | --- |
 | Thin Coaxial Cable | Vintage | 2 copper wires, 2 copper foils and 1 PVC sheet |
 | Thick Coaxial Cable | Vintage | 4 copper wires, 4 copper foils and 2 PVC sheets |
-| Telephone Line | Vintage | 2 copper wires and 1 PVC sheet |
+| Telephone | Vintage | 2 copper wires and 1 PVC sheet |
 | Crafting Cable | Vintage | 3 copper wires, 1 PVC sheet and 1 redstone |
 | Vintage Peripheral Cable (DE-9, DB-25) | Vintage | 4 copper wires, 1 PVC sheet and 1 tin nugget |
 | Ethernet Cable | Legacy | 4 copper wires and 1 PVC sheet |
@@ -966,8 +971,8 @@ its blades, PVC in the Vintage and polycarbonate after; the bigger fan takes mor
 carries its light ring (an LED). The stock cooler is an aluminium plate in the Vintage, with a fan and thermal
 paste from the Legacy and a copper rod from the Transition; the tower cooler 4 aluminium sheets, 2 copper rods
 (the heat pipes), a fan and thermal paste; the all-in-one MF AquaLoop a copper plate, the pump (a motor), the
-radiator (4 aluminium sheets on the 240, 6 on the 360), 2 or 3 fans, the hose (PVC), its water (a water bottle,
-about the 250 mB it holds) and thermal paste.
+radiator (4 aluminium sheets on the 240, 6 on the 360), 2 or 3 fans, the hose (PVC), its water (a water bottle, the
+game's potion of water, its glass going in with it, about the 250 mB it holds) and thermal paste.
 
 | Item | Bench | Recipe |
 | --- | --- | --- |

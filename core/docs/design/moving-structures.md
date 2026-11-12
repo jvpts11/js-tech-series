@@ -6,11 +6,11 @@ of Create Aeronautics, Valkyrien Skies and Create's contraptions, as an open-sou
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026: real blocks that really move, by rule and by physics, with a
-steady solver, living and working aboard, rooms, joints, held structures, parting and joining, structures born whole
-from a template, block entities that keep their places through every move, commands to run them, the layer beside
-Create and Create Aeronautics, and the physics of structures far apart worked out beside the server's thread. How a
-mod uses it, with code: [Moving structures](../MOVING_STRUCTURES.md).
+Everything this page designs is built, as of November 2026, except what *Still to build* at the end lists: real blocks
+that really move, by rule and by physics, with a steady solver, living and working aboard, rooms, joints, held
+structures, parting and joining, structures born whole from a template, block entities that keep their places through
+every move, commands to run them, the layer beside Create and Create Aeronautics, and the physics of structures far
+apart worked out beside the server's thread. How a mod uses it, with code: [Moving structures](../MOVING_STRUCTURES.md).
 
 ## The design
 
@@ -148,6 +148,8 @@ harvest, ploughs, placers. A combine harvester drives and harvests at once.
 - **Block entities that remember places of their own** keep them through every move: any mod's, the places they saved
   written as the game writes places following the blocks they name, turned with the structure's pose; and a hook by
   the block entity's type for those that keep them some other way, declared by their mod or by another that knows it.
+  **Big-block parts keep their origin relative to themselves** and turn with a moving structure, or with a Create
+  contraption, so a big machine rides whole and stands whole where it is set down.
 - **Running structures by command**: freezing one, taking one away, and saving one as a structure file, beside the
   commands to make, move and set one down.
 
@@ -168,3 +170,8 @@ conflict or crash the game where they meet:
 - **Behind a guard,** isolated, pinned to the versions its tests cover, with GameTests for each place they meet; a
   version outside that range turns the layer off with a warning in the log, and the kit then refuses every meeting
   with that mod's structures.
+
+## Still to build
+
+- **Big-block parts keeping their origin relative to themselves**, so they turn with a moving structure or a Create
+  contraption.

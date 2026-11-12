@@ -15,7 +15,7 @@ Quando um computador liga, a primeira coisa que ele roda é o firmware ([](jsc:f
 
 Para montar um computador funcional você precisa de peças: uma placa-mãe, um processador (CPU), memória (RAM) e uma fonte de alimentação (PSU). Um disco guarda o sistema, e uma placa de vídeo (GPU) mostra a imagem no monitor. Cada peça tem a sua própria entrada, e [Montando seu primeiro computador](jsc:first_computer) as reúne.
 
-Todas as peças deste mod vêm das abas criativas: o J's Computers não tem receitas de fabricação próprias. J's Computers reúne o que todas as eras têm em comum, e há uma aba para cada era, de J's Computers - Vintage até J's Computers - Advanced ([](jsc:eras)). Um modpack pode dar receitas ao mod, com o KubeJS ou um datapack; então o visualizador de receitas, o JEI ou o EMI, mostra como cada coisa é feita.
+No survival você faz cada peça ao longo da cadeia do próprio mod, do minério que você cava à Bancada de Eletrônica da era dela ([](jsc:fab_from_ore)), e o visualizador de receitas, o JEI ou o EMI, mostra como cada coisa é feita. No criativo, as peças ficam nas abas criativas: J's Computers reúne o que todas as eras têm em comum, e há uma aba para cada era, de J's Computers - Vintage até J's Computers - Advanced ([](jsc:eras)).
 
 ## Como ler este manual
 

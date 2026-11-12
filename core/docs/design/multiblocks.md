@@ -5,11 +5,12 @@ says what the shape is, checks the world against it, turns it into one machine, 
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: shapes by
+Everything this page designs is built, as of November 2026, except what *Still to build* at the end lists: shapes by
 pattern and by rule, the inside that counts, ports as blocks anywhere on the shell, the entries a multiblock lets
 stand on the places it chooses, forming, the Structure Projector and the Multiblock Builder, the recipe viewers' pages,
 multiblocks entirely as data, the studio's recorder of patterns, multiblocks moving, and big blocks as a kind of
-their own. How a mod uses it, with code: [Multiblocks](../MULTIBLOCKS.md).
+their own. Carbon added the Builder's sources, so J's Computers' portables let it build from a network's storage.
+How a mod uses it, with code: [Multiblocks](../MULTIBLOCKS.md).
 
 ### Words
 
@@ -102,6 +103,10 @@ outside the series builds its multiblocks as it likes; the kit takes any block.
   GregTech's terminal, aimed at a terminal or at a Structure Projector (then building where the projector shows), says
   what it will place and how much the player has, asks the player to choose where a place allows several blocks, and
   builds it block by block from the player's inventory; with J's Computers installed, from the network's storage.
+  Building tools and the Builder share one kind of **source**, which any mod may give: it has a name, says whether it
+  can be used now, counts a block on the server, gives one and takes back what is left. The building tools take from
+  the first source that has the block, the player's inventory before the rest; the Builder takes from the one the
+  player chooses and shows its counts, twice a second while it is read.
   Before it places anything it takes out, from the top down as a player would break them, the blocks standing where
   the multiblock must be left empty or in its places, giving them back to where it takes its blocks from (in creative
   it only clears); its terminal goes in last, turned as the multiblock stands.
@@ -127,8 +132,6 @@ what it held, however it goes. Its cells remember the origin, so a cable touchin
 
 ## Still to build
 
-- **The Multiblock Builder taking from a network's storage** is J's Computers' side of it, when J's Computers moves onto
-  the Core.
 - **The network port**, a block of the Core's shared content for any multiblock: an entry a multiblock may declare,
   never needed to form it, into which a data cable plugs. It sees the computer standing in the multiblock's place for
   one and puts that computer on the network, so a building is worked from the network through its computer, never

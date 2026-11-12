@@ -1,8 +1,9 @@
 # Getting started
 
 Your first computer, and then your first network, for a player who has never used J's Computers. Every block
-and part here is in the creative menu: the computers have no crafting recipes yet, on purpose, because they will
-be made from the parts the industrial chains produce.
+and part here is in the creative menu, where the steps below take them from. In survival you make each of them
+along the mod's own chain, from the ore you dig to the Electronics Workbench of its era ([The chain](CHAIN.md)),
+and you find a few in the world ([Found in the world](FOUND_IN_THE_WORLD.md)).
 
 ## The idea in one paragraph
 

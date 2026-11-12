@@ -5,9 +5,10 @@ behaving, instead of the usual "items and fluids", where "fluid" ends up meaning
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: each state
-its own, with its storage, its line and its bridges, pressure that bursts, and the containment of exotic matter with
-the Antimatter Trap. How a mod uses it, with code: [Energy and resources](../ENERGY_AND_RESOURCES.md).
+Everything this page designs is built, as of November 2026: each state its own, with its storage, its line and its
+bridges, pressure that bursts, the containment of exotic matter with the Antimatter Trap, and, since Carbon, J's
+Computers' storage keeping every state. How a mod uses it, with code: [Energy and
+resources](../ENERGY_AND_RESOURCES.md).
 
 ## The design
 
@@ -65,7 +66,3 @@ and radiation belts, with no other mod installed.
 - **Without energy it stops taking more and releases nothing**: there are no accidents with exotic matter.
 - The **Antimatter Trap** is containment in its form for antimatter, a Penning trap.
 - Each mod gives the blocks its recipes, as with the rest of the shared content.
-
-## Still to build
-
-- **J's Computers' storage keeping every state**, when J's Computers moves onto the Core.

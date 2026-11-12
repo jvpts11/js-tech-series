@@ -8,9 +8,9 @@ The series has no logic gates, no integrated circuits and no cables of many chan
 
 ## What exists today
 
-Everything this page designs is built on the Core's side, as of October 2026: every sensor on redstone, signals by
-frequency with their reach and conflicts, the signal probe, and signals on moving structures and in block spaces. How a
-mod uses it, with code: [Redstone and signals](../SIGNALS.md). What is left is under *Still to build* at the end.
+Everything this page designs is built, as of November 2026: every sensor on redstone, signals by frequency with their
+reach and conflicts, the signal probe, signals on moving structures and in block spaces, and the bridge to J's
+Computers' network. How a mod uses it, with code: [Redstone and signals](../SIGNALS.md).
 
 ## The design
 
@@ -40,11 +40,8 @@ mod uses it, with code: [Redstone and signals](../SIGNALS.md). What is left is u
   it stands, each with whose it is, where it comes from, how well it arrives and the value it carries, conflicts
   marked; it finds where reception is good enough for a receiver or a relay, and points out a transmitter in the
   world.
-- **Bridges to J's Computers' network**: redstone in and out of the network.
+- **Bridges to J's Computers' network**: redstone in and out of the network, through J's Computers' Redstone
+  Interface, which reads the kit's sensors and strengths and gives out the network's signals as the kit's.
 - **It works on moving structures and in multipart spaces.**
 - **No storms of updates**: signals by frequency and sensors change only when what they carry changes, so a large build
   doesn't weigh on the game.
-
-## Still to build
-
-- **The bridge to J's Computers' network** (its Redstone Interface on the kit), when J's Computers moves onto the Core.

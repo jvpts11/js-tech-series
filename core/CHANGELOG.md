@@ -2189,6 +2189,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Eras in saves: an era is saved by its id (`jscore:legacy`), and progress along every axis by the
   step's name, so an era another mod inserts moves nothing a world saved. A world saved before starts its progress
   over, and the era advancements wait for the era by its id.
+- The design pages describe what came with this release: J's Computers' and J's Core's pages say
+  what is built, and each lists at its end only what is still to build.
 
 ### Fixed
 - Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as

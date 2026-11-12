@@ -9,7 +9,7 @@ Um livro é um item que você pode segurar. O Guia de Operações é o primeiro,
 
 Um manual é um destes sete livros, lido como páginas no jogo. Você vira as páginas e encontra os capítulos do mesmo jeito que lê este Guia.
 
-Você pega os livros na aba criativa J's Computers, entre os programas, ao lado deste Guia. O J's Computers não tem receitas de fabricação próprias, então a aba criativa é onde você pega um, a menos que o seu modpack tenha dado uma receita aos livros; se tiver, o visualizador de receitas a mostra.
+Você faz este Guia na mesa de trabalho, e a ajuda de um computador imprime os outros livros na Impressora de Grande Escala ([](jsc:large_scale_printer)). No criativo, os livros ficam na aba J's Computers, entre os programas, ao lado deste Guia.
 
 Quando você abre a ajuda de um computador, o sistema abre primeiro o seu próprio livro, e os outros seguem na ordem deles. A ajuda do MC-NET abre o Guia de Operações.
 

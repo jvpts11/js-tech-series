@@ -2,12 +2,9 @@
 
 The third family of hardware and systems, next to Midsoft's Frames and Linux: **Quince**, a maker and software house in
 the manner of Apple (the quince is the apple's cousin), with its own computers, servers, Mainframe, phones and tablets,
-and its own systems, desktop and mobile. It follows the real history of its model, as parody. Nothing of it exists yet;
-it is decided for Carbon.
+and its own systems, desktop and mobile. It follows the real history of its model, as parody.
 
-## To build
-
-### The machines
+## The machines
 
 | Era | Computer | Processor (instruction set) | System | Firmware |
 | --- | --- | --- | --- | --- |
@@ -27,19 +24,23 @@ it is decided for Carbon.
   ([Computers](computers.md)). Quince had no large machines before.
 - **The phones and tablets:** the qPhone and the qPad, with qOS ([Wireless](wireless.md)).
 
-### Closed hardware
+## Closed hardware
 
 A Quince machine takes a Quince logic board, and a Quince logic board takes only the processors its era gives it
 (Motoroller, PowerQ, the Integra ones of the Transition and the Standard, and Quince's own); it never goes into another
 maker's case, and no other board goes into a Quince case. There are sixteen logic boards: one for each machine, one
 for the qServe of each era and one for the Quince Mainframe of each era. Memory modules, disks and graphics cards are
-the common ones; the all-in-ones draw with the graphics on their board. Quince's own chips carry memory in their
-package, unified with the graphics, and the Advanced logic boards keep the common memory slots besides.
+the common ones; the all-in-ones draw with the graphics on their board, and their screen takes no video memory. Quince's
+own chips carry memory in their package, unified with the graphics, and the Advanced logic boards keep the common memory
+slots besides. Quince's machines have no drive bays. Their chips' figures (clock, power, cores, memory, graphics and
+efficiency) are estimates.
 
 Powering a Quince machine on while sneaking opens its firmware's start-up choices, as holding the key did: the
-Startup Manager from the Transition on (its options on the Advanced), Open Firmware's `ok` prompt on the Legacy.
+Startup Manager from the Transition on, listing the volumes there are, and on the Advanced its options, which open the
+setup as far as quinceOS's recovery; Open Firmware's `ok` prompt on the Legacy. A Legacy machine started as usual shows
+the Happy Quince on Quince OS 9's grey.
 
-### Instruction sets
+## Instruction sets
 
 | ISA | Word | Runs programs built for | Processors of |
 | --- | --- | --- | --- |
@@ -48,12 +49,13 @@ Startup Manager from the Transition on (its options on the Advanced), Open Firmw
 | ARM64 | 64 bits | ARM64 | Quince, Advanced |
 
 The Integra years run x86-64, as every other computer of those eras. A Σ or Σ# program builds for one of these with
-`sigma build --isa`, or as a **universal** build that carries several at once and runs on each
-([Σ and Σ#](sigma.md)). Two translators carry programs across a switch, as Rosetta did: **Champollion** (named after the
-man who read the Rosetta Stone) runs PowerPC programs on Quince OS X on Integra, at half their speed, and
-**Champollion 2** runs x86-64 programs on quinceOS on Quince's own chips, at 80%.
+`sigma build --isa`, or as a **universal** build that carries several at once and runs on each ([Σ and Σ#](sigma.md)).
+Two translators carry programs across a switch, as Rosetta did: **Champollion** (named after the man who read the
+Rosetta Stone) runs PowerPC programs on Quince OS X on Integra, at half their speed, and **Champollion 2** runs x86-64
+programs, never 32-bit x86 ones, on quinceOS on Quince's own chips, at 80%. Where a program has both a native build and
+one a translator runs, the native one runs.
 
-### The systems
+## The systems
 
 | System | First era | Kernel | Boots to | Disk | Memory | Install | Packages |
 | --- | --- | --- | --- | ---: | ---: | --- | --- |
@@ -87,7 +89,7 @@ Disk and memory in MB, estimates, as for every system ([Operating systems](opera
   runs its services from **Server Admin**: the Mainframe's, which are the Mirror, the IQL Engine and the Automation
   Engine.
 
-### Crashes and memory
+## Crashes and memory
 
 - **The crash pages:** the bomb, *Sorry, a system error occurred*, on the Quince System and Quince OS 9, wherever the
   game brings a system down, its Restart losing whatever was open; the grey page in English, French, German and
@@ -100,10 +102,15 @@ Disk and memory in MB, estimates, as for every system ([Operating systems](opera
   programs and lets the player choose which to force to quit; nothing ends without the player, and the kernel panics
   only when nothing is left.
 
-### File systems
+## File systems
 
 Quince formats as its real one did ([Storage devices](storage-devices.md)): **HFS** on the Quince System, **HFS+** on
 Quince OS 9 and Quince OS X, journaled from Quince OS X (back in seconds after a power loss), and **APFS** on
 quinceOS, copy-on-write with snapshots, as btrfs and ZFS. Only Quince's systems read and write them. **Disk
 Utility** is Quince's disk tool from Quince OS X on; Quince OS 9 has **Drive Setup**, and the Quince System formats
-only at its install.
+only at its install. On the classic systems, the Special menu's **Erase Disk** erases a volume, after asking, and **Set
+Startup** chooses the volume the machine starts from.
+
+## To build
+
+Nothing on this page is left to build.

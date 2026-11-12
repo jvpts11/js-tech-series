@@ -48,8 +48,9 @@ memory and runs the network engine ([Operations](operations.md)). Its processors
 graphics card one more parallel queue ([Hardware](hardware.md)). Its disks hold its system, its engine and its programs,
 not the network's storage. It joins the network on the backbone.
 
-It is a 3×2×2 big block, placed whole, drawn as **one** model by its origin block, with running, network and fault lights and a
-service panel that comes off. It has no operator panel: it is read on a monitor. It has a failover switch (below).
+It is a 3×2×2 big block, placed whole, drawn as **one** model by its origin block, with running, network and fault
+lights and a service panel that comes off. It has no operator panel: it is read on a monitor. It has a failover switch
+(below).
 
 ### Crafting Computer
 
@@ -138,26 +139,37 @@ active. A Mainframe in failover never causes a conflict on its own.
 
 What happens when two Mainframes meet, and to a network whose Mainframe is gone, is in [The network](network.md).
 
-## To build
+## Quince's computers
 
-### Quince's computers
+The third family's machines: its Personal Computers in every era, the all-in-ones among them with their screen in
+their own block and no monitor, its qServe in the racks and the **Quince Mainframe** from the Transition on, running
+Quince OS X Server, in the Mainframe's cabinet ([Quince](quince.md)).
 
-The third family's machines, decided for Carbon: its Personal Computers in every era, the all-in-ones among them with
-their screen in their own block and no monitor, its qServe in the racks and the **Quince Mainframe** from the
-Transition on, running Quince OS X Server ([Quince](quince.md)).
+## Portables, the Mining Computer and the WAN Gateway Computer
 
-### A computer as one item
+- **The PDA, the Smartphone and the Tablet**, portable devices with mobile systems, joined to the network over Wi-Fi:
+  the PDA from the Legacy on, the Smartphone from the Transition on, the Tablet from the Standard on
+  ([Wireless](wireless.md)).
+- **The Mining Computer**, the mining rig: a computer with no case, an open frame holding a motherboard and several
+  graphics cards on risers, from the Transition on. Managing a fleet of rigs is software, not a computer
+  ([Teracoin](teracoin.md)).
+- **The WAN Gateway Computer**, a computer 4 blocks wide, 2 tall and 2 deep in the Mainframe's cabinet, that links
+  distant places over the long-distance line with its WAN Interface Cards. It joins the backbone on any face, as a
+  Personal Computer's node does ([The network](network.md)).
+
+## A computer as one item
 
 Breaking a computer that is one block (the Personal Computer, the Crafting Computer, the Cluster Management Computer,
-the small computers to come) gives the whole computer, with its parts inside, as a rack server does today; parts come
-out by opening the case. The Prebuilder makes computers as that same item, and its motherboard needs firmware from the
-Preinstaller before the computer can start ([Survival](survival.md)).
+the small computers) gives the whole computer, with its parts inside, as a rack server does; parts come out by opening
+the case. The Prebuilder makes computers as that same item, and its motherboard needs firmware from the Preinstaller
+before the computer can start: a board with none powers its fans and nothing else ([Survival](survival.md)).
 
-### Making a Subframe
+## Making a Subframe
 
 The role comes from the software. The network engine of a Mainframe ([Operations](operations.md)) runs in one of two
 roles, **orchestrator** or **Subframe**, chosen in the Services tab of that machine's Network Manager or at the prompt
-(`iqlengine role subframe`, and the same verb in the other engines). A Mainframe whose engine runs as a Subframe:
+(`iqlengine role subframe`); the other engines take the role in the Services tab or through `iqlengine role`. A
+Mainframe whose engine runs as a Subframe:
 
 - doesn't count for network conflicts and doesn't start the network's index, which only the orchestrator has;
 - lends capacity and queues to the orchestrator, if both run the same engine;
@@ -166,10 +178,10 @@ roles, **orchestrator** or **Subframe**, chosen in the Services tab of that mach
 
 The failover switch stays as it is.
 
-### A Subframe taking the orchestrator's place
+## A Subframe taking the orchestrator's place
 
 When the orchestrator falls (no owner on the stretch for 60 ticks, as with failover), a Subframe takes the network over
-as its Mainframe:
+as its Mainframe. Only the orchestrator's role fails over this way:
 
 - a Mainframe in failover takes over first, if there is one; without one, a Subframe, first one running the same engine,
   then one running another engine, the one with the lowest position in each case;
@@ -182,18 +194,15 @@ as its Mainframe:
 - the fallen orchestrator's Operations are discarded, as in failover: nothing resumes from a checkpoint, and each is
   logged as DISCARDED with what it had left ([Operations](operations.md)).
 
-### Computers still to build
+The computers J's Space adds when both mods are installed (Mission Control, Satellite Control, Space Research, Flight
+Control and Aerospace Design) belong to J's Space ([The series](series.md)).
+
+## To build
 
 Each of these is designed with its own system, and like everything in J's Computers, each exists per era.
 
 | Computer | What it is | Designed in |
 | --- | --- | --- |
-| PDA, Smartphone, Tablet | Portable devices with mobile systems, joined to the network over wireless: the PDA from the Legacy on, the Smartphone from the Transition on, the Tablet from the Standard on. | [Wireless](wireless.md) |
 | AI Server | A server built for AI, with a GPU baseboard that pools its cards' video memory, in the AI Rack. | [Artificial intelligence](ai.md) |
-| Mining Computer | The mining rig: a computer with no case, an open frame holding a motherboard and several graphics cards on risers, from the Transition on. Managing a fleet of rigs is software, not a computer. | [Teracoin](teracoin.md) |
 | Security Control Computer | Not a block: the role of the server that runs the network's directory service. | [Security](security.md) |
-| WAN Gateway Computer | A very wide computer that links distant places over the long-distance line, with WAN Interface Cards. | [The network](network.md) |
 | Simulation Node | A node of the cosmological simulator's cluster, with the Singularity's hardware. | [The cosmological simulator](simulator.md) |
-
-The computers J's Space adds when both mods are installed (Mission Control, Satellite Control, Space Research, Flight
-Control and Aerospace Design) belong to J's Space ([The series](series.md)).

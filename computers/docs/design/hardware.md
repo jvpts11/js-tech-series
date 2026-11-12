@@ -145,11 +145,12 @@ Memory has two jobs:
    maximum is 8 × 32,768 = 262,144 items.
 2. **Working memory.** Memory is also where the computer's own work lives. The operating system, the desktop, every
    service, every program running, every open window and every Σ# process takes megabytes, in a **memory ledger** per
-   computer, kept on the server. A computer's total memory is the sum of its modules. What decides whether a program fits
-   is the memory it *promises* to need beside what is already promised, and what a program promises grows with the era of
-   the machine; one that doesn't fit is answered as the system does ([Operating systems](operating-systems.md)). The
-   screens show what is really *held* at that moment, which is usually less. Every system's Task Manager and System Monitor read the same ledger ([Programs](programs.md),
-   [Operating systems](operating-systems.md)). Graphics on the die take their memory from here.
+   computer, kept on the server. A computer's total memory is the sum of its modules. What decides whether a program
+   fits is the memory it *promises* to need beside what is already promised, and what a program promises grows with the
+   era of the machine; one that doesn't fit is answered as the system does ([Operating systems](operating-systems.md)).
+   The screens show what is really *held* at that moment, which is usually less. Every system's Task Manager and System
+   Monitor read the same ledger ([Programs](programs.md), [Operating systems](operating-systems.md)). Graphics on the
+   die take their memory from here.
 
 Memory never stores items as storage. Fast reads of the most requested items are the job of the Predictive Cache and the
 Cache Card ([Servers and racks](servers-and-racks.md)), which never lose an item.
@@ -327,41 +328,54 @@ cable after a hub reaches as far again, and hubs hang from hubs. Monitors and sp
 The mining and simulation boards are designed with their systems ([Teracoin](teracoin.md),
 [The cosmological simulator](simulator.md)).
 
+### Quince's hardware
+
+Quince's logic boards take only the processors of their era: the Motoroller 68000, the PowerQ G3 and G4, Integra in
+the Transition and the Standard, and Quince's Q1 to Q3, on the 68k, PowerPC and ARM64 instruction sets, with
+Champollion to run programs across a switch ([Quince](quince.md)).
+
+### Cooling parts
+
+Every processor on a board has a cooler slot, and each era has its coolers and case fans, with the tower and water
+coolers of the Standard and the Advanced ([Temperature](temperature.md)).
+
+### Workstations with two processors
+
+Three EATX boards with two sockets, for the Standard and the Advanced, as the Legacy already has two:
+
+| Board | Form factor | Socket | CPUs | Memory | Memory slots | Bus | Expansion slots | Disks |
+| --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: |
+| MF EATX Standard WS Motherboard (2x LGA 2011) | EATX | LGA 2011 | 2 | DDR3 | 16 | PCIe 3.0 | 7 | 6 |
+| MF EATX Advanced WS Motherboard (2x LGA 4677) | EATX | LGA 4677 | 2 | DDR5 | 16 | PCIe 5.0 | 7 | 6 |
+| MF EATX Advanced WS Motherboard (2x SP5) | EATX | SP5 | 2 | DDR5 | 16 | PCIe 5.0 | 7 | 6 |
+
+They go where EATX goes: the Cluster Management Computer, the Personal Computer from the Transition on, and the rack
+servers; never the Crafting Computer. A two-socket EATX board makes the Personal Computer and the Cluster Management
+Computer count two processors and eight memory modules, as real two-socket workstations do, and each processor takes
+its own cooler. The catalogue lists them.
+
+### Swap
+
+Between memory and the disks sits swap: Linux, FreeBSD, OpenBSD and UNIX keep it on a partition of its own, Frames in a
+file (`WIN386.SWP` on Frames 95, `pagefile.sys` from Frames XP on). MC-DOS and MC-NET have none.
+
+- What a computer can promise is its memory plus its swap: a program that doesn't fit in the memory left goes partly to
+  swap, and only when memory and swap are both spent does the system answer out of memory, its own way (the crash pages
+  of Frames, the out-of-memory killer of the Unixes, [Operating systems](operating-systems.md)).
+- What lives in swap runs slower, by the disk it is on: a program with part of itself in swap gets its share of the
+  processor times 0.25 on a hard disk, 0.6 on an SSD and 0.9 on NVMe, for the part of it that is in swap. Estimates.
+- The installers make it: on Linux and the BSDs a swap partition as big as the memory, on Frames a page file the system
+  sizes itself (one and a half times the memory on Frames 95 and XP, as big as the memory from Frames 7 on). Swap
+  weighs on the disk as files do ([Storage devices](storage-devices.md)).
+- The Task Manager and the System Monitor show it: on Frames XP the PF Usage and the commit charge against its limit,
+  on Frames 10 and 11 a Memory page with what is promised, and on the others the swap line; each shows the programs
+  partly in swap and the speed they run at. At the prompt: `free`, `swapon` and `top` (with its SWAP column) on Linux,
+  `swapinfo` and `sysctl` on FreeBSD; MC-DOS's `mem` has no swap to show.
+
 ## To build
 
-- **Quince's hardware**, decided for Carbon: its logic boards, which take only the processors of their era (Motoroller
-  68000, PowerQ G3 and G4, Integra in the Transition and the Standard, Quince's Q1 to Q3), and the 68k, PowerPC and
-  ARM64 instruction sets, with Champollion to run programs across a switch ([Quince](quince.md)).
 - **Expansion slots in groups** on every motherboard: see [Eras](eras.md). Today each board has one kind of slot.
 - **Compute cards without video outputs**, on the AI Server's GPU baseboard: see [Artificial intelligence](ai.md). Today
   the Tessera cards work as ordinary graphics cards; the MI300X and the NPUs only exist as art.
-- **Cooling parts:** a cooler slot for every processor on the board, and the coolers and case fans of each era, with the
-  tower and water coolers of the Standard and the Advanced ([Temperature](temperature.md)).
-- **Workstations with two processors:** three new EATX boards with two sockets, for the Standard and the Advanced, as
-  the Legacy already has two:
-
-  | Board | Form factor | Socket | CPUs | Memory | Memory slots | Bus | Expansion slots | Disks |
-  | --- | --- | --- | ---: | --- | ---: | --- | ---: | ---: |
-  | MF EATX Standard WS Motherboard (2x LGA 2011) | EATX | LGA 2011 | 2 | DDR3 | 16 | PCIe 3.0 | 7 | 6 |
-  | MF EATX Advanced WS Motherboard (2x LGA 4677) | EATX | LGA 4677 | 2 | DDR5 | 16 | PCIe 5.0 | 7 | 6 |
-  | MF EATX Advanced WS Motherboard (2x SP5) | EATX | SP5 | 2 | DDR5 | 16 | PCIe 5.0 | 7 | 6 |
-
-  They go where EATX goes: the Cluster Management Computer, the Personal Computer from the Transition on, and the rack
-  servers; never the Crafting Computer. A two-socket EATX board makes the Personal Computer and the Cluster Management
-  Computer count two processors and eight memory modules, as real two-socket workstations do; with temperature, each
-  processor takes its own cooler. Today those computers count one processor and four modules whatever their board
-  offers. The catalogue lists the boards once the code declares them.
-- **Swap.** Between memory and the disks sits swap: Linux, FreeBSD, OpenBSD and UNIX keep it on a partition of its own,
-  Frames in a file (`WIN386.SWP` on Frames 95, `pagefile.sys` from Frames XP on). MC-DOS and MC-NET have none.
-  - What a computer can promise is its memory plus its swap: a program that doesn't fit in the memory left goes partly
-    to swap, and only when memory and swap are both spent does the system answer out of memory, its own way (the crash
-    pages of Frames, the out-of-memory killer of the Unixes, [Operating systems](operating-systems.md)).
-  - What lives in swap runs slower, by the disk it is on: a program with part of itself in swap gets its share of the
-    processor times 0.25 on a hard disk, 0.6 on an SSD and 0.9 on NVMe, for the part of it that is in swap. Estimates.
-  - The installers make it: on Linux and the BSDs a swap partition as big as the memory, on Frames a page file the
-    system sizes itself (one and a half times the memory on Frames 95 and XP, as big as the memory from Frames 7 on).
-    Swap weighs on the disk as files do ([Storage devices](storage-devices.md)).
-  - The Task Manager and the System Monitor show it: on Frames XP the PF Usage and the commit charge against its limit,
-    on Frames 10 and 11 a Memory page with what is promised, and on the others the swap line; each shows the programs
-    partly in swap and the speed they run at. At the prompt: `free`, `swapon` and `top` (with its SWAP column) on Linux,
-    `swapinfo` and `sysctl` on FreeBSD; MC-DOS's `mem` has no swap to show.
+- **The two-socket boards drawn inside their case**, after a mock: first the tower with the EATX board in the Advanced
+  High Performance case. Today the six two-socket boards work and are not drawn in the case.

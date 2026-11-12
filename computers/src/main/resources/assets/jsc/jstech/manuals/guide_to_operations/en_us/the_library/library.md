@@ -9,7 +9,7 @@ A book is an item you can hold. The Guide to Operations is the first, and six mo
 
 A manual is one of these seven books, read as pages in the game. You turn its pages and find its chapters the same way you read this Guide.
 
-You get the books from the creative tab J's Computers, among the programs, beside this Guide. J's Computers has no crafting recipes of its own, so the creative tab is where you take one, unless your modpack gave the books a recipe; the recipe viewer shows it if so.
+You make this Guide at the Crafting Table, and a computer's help prints the other books at the Large Scale Printer ([](jsc:large_scale_printer)). In creative, the books are on the tab J's Computers, among the programs, beside this Guide.
 
 When you open a computer's help, the system opens its own book first, and the other books follow in their order. The help of MC-NET opens the Guide to Operations.
 

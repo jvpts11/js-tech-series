@@ -94,9 +94,22 @@ across as many machines as the network has.
 - JEI support: the ingredient list sits beside every monitor screen and recipes transfer straight into the
   Pattern Studio. EMI's list keeps clear of the monitor screens too. Mekanism machines can be driven through the
   network when Mekanism is present.
-
-Recipes for the computing blocks are missing on purpose: they arrive with the industrial chains that
-make their parts. Play it in creative for now.
+- Survival: the mod's own chain, from the ores to an Electronics Workbench per era and the machines that make the
+  parts in numbers, the Prebuilder and the Preinstaller that make whole computers, recipes for everything, abandoned
+  buildings with computers to salvage, and the Programmer and the IT Technician villagers. How it goes is in
+  [docs/CHAIN.md](docs/CHAIN.md).
+- Quince, the third family of computers, with its own processors, servers, Mainframe and six systems; the WAN
+  Gateway Computer and long-distance lines between networks; the Subframe that takes a fallen Mainframe's place.
+- Power and heat: computers draw their power through their supplies, which wear and fail, ride outages on UPSes,
+  heat up by what they run and are cooled by the parts fitted.
+- Wi-Fi access points and cards, and the portables: PDAs, phones and tablets with their own systems and apps.
+- Teracoin, the world's cryptocurrency: wallets, the Mining Computer, the ASICs, Mining Pools and the 3D printers
+  that turn TRC into items.
+- Disks with partitions, file systems, snapshots, mirrors and swap; backups on tape; touch monitors, scanners and
+  the Large Scale Printer that prints the manuals.
+- Σ# 3: a debugger, programs that hear the network, read their machine, talk to each other across networks, fly the
+  structure their computer stands on and use Teracoin; and systems and desktops written by players.
+- Computers aboard Create's contraptions and Aeronautics' ships, and Create's machines read and set from a program.
 
 Everything is explained, from your first computer to building on the mod, in the
 [J's Computers documentation](docs/README.md).
@@ -110,6 +123,8 @@ Everything is explained, from your first computer to building on the mod, in the
 - [Mekanism](https://github.com/mekanism/Mekanism) (optional, its machines and chemicals join the network).
 - [CC: Tweaked](https://tweaked.cc) 1.120 or newer (optional, for the Network Gateway; without it the
   block links and holds items but its ComputerCraft side never comes up).
+- [Create](https://modrinth.com/mod/create) 6.0 (optional, for computers aboard its contraptions and reading its
+  machines; [docs/CREATE.md](docs/CREATE.md)).
 
 It does not need [J's Industrial](../industrial/README.md): the network drives any machine that exposes
 the usual item and energy capabilities, whichever mod it comes from.

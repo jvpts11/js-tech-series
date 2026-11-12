@@ -137,6 +137,24 @@ its own path, and J's Industrial adds another:
 J's Core keeps, per player, the era they have reached, as a progression axis (`jscore:hardware_era`). Advancements can
 wait on it, and operators set it with `/jstech progress`.
 
+### Recipes, disks and reaching an era
+
+- **Every part has its recipe**, by J's Computers' easy chain ([Survival](survival.md)), and the industrial path when
+  J's Industrial is installed (above).
+- **Disks only in machines of their era or newer:** a new machine reads old disks, and an old one refuses a disk newer
+  than itself (in rack bays, by the server's era), saying "Too new for this computer", or this server, or this Dock
+  Station. A Dock Station's trays take the Standard's disks and older; a pen drive in its USB port goes in whatever its
+  era.
+- **Reaching an era by building:** a player reaches an era the first time a valid assembly of that era is powered on,
+  at the same moment as the "Build a working ... computer" advancements, which takes the operator and their team to the
+  era, forward only. Assembly counts, owning the parts does not. J's Industrial and the other mods gate content on
+  the era a player has reached.
+- **What an era or a tier reached sets off on the network:** when a team reaches an era, or one of J's Industrial's
+  tiers with J's Industrial installed, every network the team owns writes it in its event log (INFO, "Era Standard
+  reached by" the team, "Tier T3 reached by" the team), and an Automation Engine job waits on it with `WHEN ERA
+  standard REACHED` or `WHEN TIER t3 REACHED`, set off once ([Operations](operations.md)). Nothing else shows: the
+  advancement already marks the era.
+
 ## To build
 
 - **Motherboards with slots in groups**, like real ones: the video slot (AGP or PCI Express x16) and, next to it, the
@@ -145,15 +163,3 @@ wait on it, and operators set it with `/jstech progress`.
   Graphics cards go in the video slot, other cards in a slot of their bus family, and the slot bandwidth cut applies per
   group. Legacy sound cards are PCI, as the real ones were, and so is the Legacy Crafting Card. Today each board has a
   single kind of slot, and the Legacy sound cards sit on AGP 8x and PCIe 1.0.
-- **Recipes for every part**, by J's Computers' easy chain ([Survival](survival.md)), and the industrial path when J's
-  Industrial is installed (above).
-- **Disks only in machines of their era or newer:** a new machine reads old disks, an old one refuses a disk newer than
-  itself (in rack bays, by the server's era). Today any disk goes in any computer.
-- **Reaching an era by building:** a player reaches an era the first time they assemble and power on a working computer
-  of that era, at the same moment as the "Build a working ... computer" advancements. Assembly counts, owning the parts
-  does not, and the axis only moves forward. This lets J's Industrial and the other mods gate content on the era a
-  player has reached. Today only an operator moves the axis.
-- **What an era or a tier reached sets off on the network:** when a team reaches an era, or one of J's Industrial's
-  tiers with J's Industrial installed, every network the team owns writes it in its event log (INFO, "Era Standard
-  reached by" the team, "Tier T3 reached by" the team), and an Automation Engine job can wait on it as it waits on the
-  world's events ([Operations](operations.md)). Nothing else shows: the advancement already marks the era.

@@ -1,13 +1,15 @@
 # Advancements
 
-J's Computers has 69 advancements in four tabs, each with its own root:
+J's Computers has 119 advancements in six tabs, each with its own root:
 
 | Tab | Count | What they are about |
 | --- | ---: | --- |
-| Hardware | 14 | assembling machines of each era, racks, the supercomputer (TOP500), memory filled to the top |
-| Networks | 15 | the network, SELECT, automatic crafting, conflicts and deadlocks |
-| Σ | 13 | writing, compiling, publishing and running programs |
-| Systems | 27 | installing and using the systems (I Use Arch BTW, Format C:, RTFM, Press DEL to Enter Setup) |
+| Fab | 14 | the chain, from the ore to the chip |
+| Hardware | 24 | assembling machines of each era, racks, the supercomputer (TOP500), memory filled to the top, power and heat |
+| Networks | 22 | the network, SELECT, automatic crafting, conflicts and deadlocks, wireless and distant networks |
+| Σ | 14 | writing, compiling, publishing, running and debugging programs |
+| Systems | 36 | installing and using the systems (I Use Arch BTW, Format C:, RTFM, Press DEL to Enter Setup) |
+| Teracoin | 9 | wallets, mining, pools and the 3D printers |
 
 Their names are jokes from computing culture, in English. Some are challenges.
 
@@ -15,14 +17,15 @@ They fire through the mod's own triggers, on the server, when the player does th
 time, an Operation finishing, a program travelling through the Mirror). What finishes long after it was asked for (an
 Operation, a job that fires at night) is kept with the world and granted the next time the player joins.
 
-## To build
+The era a player has reached moves with the "Build a working ... computer" advancements ([Eras](eras.md)).
 
-- **The era a player has reached** moves with the "Build a working ... computer" advancements: see [Eras](eras.md).
-- **The Carbon front's advancements**, 50 more, in two new tabs and the four of today, for what the front
-  brings: the chain, power and heat, Quince, the new systems, wireless and the portables, Teracoin, the
-  buildings and the villagers. Afterwards:
+## The advancements Carbon brought
 
-  | Tab | Today | New | Then |
+Fifty, in two new tabs and the four older ones, for what Carbon brought: the chain, power and heat, Quince, the new
+systems, wireless and the portables, Teracoin, the buildings and the villagers. The hidden ones stay hidden until
+earned. Before and after:
+
+  | Tab | Before | New | Now |
   | --- | ---: | ---: | ---: |
   | Fab | 0 | 14 | 14 |
   | Hardware | 14 | 10 | 24 |
@@ -41,7 +44,7 @@ Operation, a job that fires at night) is kept with the world and granted the nex
   | Nine Nines | Grow polysilicon in the Siemens Reactor | task | Bare Metal | the Siemens Reactor's first polysilicon | polysilicon |
   | Pull Request | Pull your first silicon boule | task | Nine Nines | the Crystal Puller's first silicon boule | silicon boule |
   | Wafer-Thin | Cut a boule into wafers | task | Pull Request | the Wafer Saw's first wafers | silicon wafer |
-  | Tape-Out | Write your first mask | task | Wafer-Thin | the first mask written (from a Layout in the Vintage, by the computer after) | a Vintage processor mask |
+  | Tape-Out | Write your first mask | task | Wafer-Thin | the first mask written, whichever way | a Vintage processor mask |
   | First Silicon | Package your first chip | goal | Tape-Out | the Packaging Line's first chip | a Vintage processor chip |
   | Bunny Suit | Build a Lithography Station | task | Bare Metal | the first Lithography Station formed | Clean Room Casing |
   | Die Shrink | Expose a layer in the Lithography Station of every era | challenge | Bunny Suit | a layer exposed in the Lithography Station of each of the five eras | an Advanced finished wafer |
@@ -111,3 +114,7 @@ Operation, a job that fires at night) is kept with the world and granted the nex
   | HODL | Hold 1,000 TRC in one wallet for seven days without sending any | challenge | Pizza Day | 1,000 TRC in one wallet for seven game days with nothing sent from it | diamond (diamond hands) |
   | You Wouldn't Download a Car | Print an item on a 3D printer | task | Not Your Keys, Not Your Coins | a 3D printer's first item | Prosa i3 MK3 |
   | The Halvening | Be there when the reward halves | task, hidden | Proof of Work | being on the server when the reward halves | clock |
+
+## To build
+
+Nothing on this page is left to build.

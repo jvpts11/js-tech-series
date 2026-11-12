@@ -6,7 +6,7 @@ page ([The API of the J's Tech Series](../../../docs/API.md)).
 
 ## What exists today
 
-Everything this page designs is built, as of November 2026: the API is at version 35; the Core's kits are promised,
+Everything this page designs is built, as of November 2026: the API is at version 54; the Core's kits are promised,
 experimental, each listed in `JsCoreApi.PROMISED_PACKAGES` and documented from zero; the photo of the promise, line by
 line, travels in the Core's jar for a mod to check against; and J's Example builds on the promise alone. How a mod
 uses it: [The API of the J's Tech Series](../../../docs/API.md) and [Getting started](../GETTING_STARTED.md). What is

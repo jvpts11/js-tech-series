@@ -99,19 +99,15 @@ A medium holds a system's installer, a program's installer, or data (files, craf
 **pressed** (CD-ROM, DVD-ROM, BD-ROM), which nothing can write, or **rewritable** (CD-RW, DVD-RW, BD-RE); floppy disks
 and USB sticks can always be written. The drives are peripherals ([Peripherals](peripherals.md)).
 
-Today a medium's room is counted in items of 4 MB: a floppy disk holds 1,024, a CD 8,192, a DVD 65,536, a USB stick
-262,144 and a Blu-ray 1,048,576.
+A medium's room is counted in bytes, as the real ones were: a floppy disk 1,474,560 bytes (1.44 MB), a CD 700 MB, a
+DVD 4.7 GB, a Blu-ray 25 GB, and the Vaultis Pocket sticks 8G, 16G and 32G of the Standard and 64G of the Advanced.
+Files weigh what they weigh. Installation media are pressed images that project their files: what a system takes once
+installed counts on the disk it goes to, not on the medium, so an installer always fits on its medium. Capacity only
+limits writable media, with files and patterns, and a copy asks for a blank medium of at least the source's bytes. A
+tooltip's "Free:" counts in units of 1,024. A machine takes only the disks of its era or older ([Eras](eras.md)).
 
 The media of the AI are designed with it ([Artificial intelligence](ai.md)). Disk corruption is in
 [Storage](storage.md).
-
-## To build
-
-- **Real capacities for removable media**, in bytes: a floppy disk 1.44 MB, a CD 700 MB, a DVD 4.7 GB, a USB stick 8 to
-  64 GB by model, a Blu-ray 25 GB. Files weigh what they weigh. Installation media are pressed images that project their
-  files: what a system takes once installed counts on the disk it goes to, not on the medium, so an installer always
-  fits on its medium. Capacity only limits writable media, with files and patterns.
-- **Disks only in machines of their era or newer**: see [Eras](eras.md).
 
 ### Partitions and file systems
 
@@ -183,3 +179,7 @@ only the modern ones do.
   it without asking.
 - **Every partition is a volume of its own** ([Volumes](#volumes), above), and the network counts each partition in a
   file system it reads as a volume of its storage. A swap partition is never one.
+
+## To build
+
+- **Owners of files**, once accounts come ([Security](security.md)): FAT and exFAT keep none, the others do.

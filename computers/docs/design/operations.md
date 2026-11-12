@@ -291,24 +291,32 @@ QUERY disks
 
 Every engine and every version has its own dialect. A line that is refused says where reading stopped.
 
-## To build
+## What came with Carbon
 
 - **DROP without asking.** A DROP runs with no confirmation, no phrase to type and no question, as on a real database.
-  Today the ISMS asks before a DROP.
+  A DELETE of ALL still asks first.
 - **UPDATE costs energy**, taken from the computer that has the cards, and the cards draw their watts like any card
   ([Power](power.md)). Each action spends its own (estimates; 1 J is 1 FE): smelting, 2 kJ an item; enchanting, 10 kJ
   for every level the vanilla table would ask; repairing, 2 kJ for every 1% of durability given back; combining, 10 kJ
   for every level the vanilla anvil would ask; naming, 5 kJ. The server's settings (`jscomputers-server.toml`,
   `[update] cost`) choose what is paid: energy (the default), XP (half the vanilla levels of the one asking, at least
   1, and no lapis lazuli), both (the energy and that half), or nothing. The Workshop pays the same
-  ([Programs](programs.md)). Today enchanting and the anvil cost levels, and the furnace nothing.
+  ([Programs](programs.md)).
 - **The network's event log**, apart from the Operations log, records what happens to every machine, with **levels**:
   INFO (turned on, turned off), WARN (a degraded power supply, a UPS on battery, stock below a threshold) and ERROR (a
   network conflict, a power loss, items lost, corruption, a failed power supply, a WAN link going down). It is read in
   the Network Manager's Log tab ([Interface](interface.md)), with filters by level, machine and period; it prints, and
-  it **exports** to a file on a disk. The portable devices' notifications come from it ([Wireless](wireless.md)). The
-  **audit** log (who did what) belongs to security ([Security](security.md)).
+  it **exports** to a `.txt` file on a disk. A network keeps 7 days of it, 2,000 entries at most (estimates). The
+  portable devices' notifications come from it ([Wireless](wireless.md)).
+- **Operations of other mods:** the Mainframe dispatches the kinds of Operation other mods declare through J's Core,
+  with `RUN <type> [ON <machine>] [WITH field = value]`.
+- **BACKUP** runs the Backup Service's jobs, and an Automation Engine job waits on the time of day and the weekday with
+  the `clock` and `weekday` fields of WHEN ([Programs](programs.md)).
+- **Longer statistics:** see [Interface](interface.md).
+
+## To build
+
 - **Access control:** GRANT, REVOKE and AUTH are security's Operations. They are checked when the dispatch admits an
   Operation, in O(1); a network without a directory allows everything; permissions belong to players, and ID Cards serve
   physical access ([Security](security.md)).
-- **Longer statistics:** see [Interface](interface.md).
+- The **audit** log (who did what) belongs to security ([Security](security.md)).

@@ -50,8 +50,8 @@ these pages is a first estimate, to be tuned in play.
 ## The order of building
 
 The Core grows with the mods that need it, so each part is built when its first real user starts, by its dependencies.
-The ten steps below were built in this order, and are done; what each page still lists comes next, before J's
-Computers and J's Industrial are moved onto the Core:
+The ten steps below were built in this order, and are done; what each page still lists comes next, as the mods that
+need it grow:
 
 1. **Order in the house**: the series' package and the wider promise, with the test of everything reachable; J's
    Computers' settings and programming languages move to J's Computers; telemetry leaves the peripheral types; the J's

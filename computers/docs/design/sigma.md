@@ -95,7 +95,8 @@ class Low : IScript {
 
 The compiler doesn't put out an opaque binary: it puts out **assembly**, a stack machine listing in text, one
 instruction per line, which the player opens in the Editor and follows. The first line is the format's version
-(`.asm 1`); a machine refuses a newer version with a clear message.
+(`.asm 3`, or `.asm 4` for a program that needs it, above); a machine refuses a newer version with a clear
+message.
 
 The instructions: constants (`ldc.i4 ldc.i8 ldc.r4 ldc.r8 ldstr ldnull`), locals and fields
 (`ldloc stloc ldfld stfld ldsfld stsfld ldthis`), arithmetic and logic
@@ -259,27 +260,28 @@ the same on every machine of its line and in every world. What an add-on adds in
 which brings whatever it wants and compiles to the listing the machines already run, an **instruction set** (a new kind
 of machine), or a **component type** for programs' windows ([The API](api.md)).
 
-## To build
+## Version 3 and what came with it
 
-- **Version 3 of Σ and Σ#**, decided for Carbon (`sgsc` 3.0 and `scc` 3.0, updated from the Mirror like any
+- **Version 3 of Σ and Σ#** (`sgsc` 3.0 and `scc` 3.0, updated from the Mirror like any
   package). Since Boron, its words are kept: each is refused at the word with S2014 and what to write until then, and
-  none can be a name; version 3 accepts them, and `--lang 2` still refuses them as today.
+  none can be a name; version 3 accepts them, and `--lang 2` still refuses them.
   - **Exceptions in Σ#:** `try`, `catch (Type name)`, a `catch` with no type, `finally` and `throw` (with no `when`
     filters and no `throw` expressions). A small hierarchy after C#'s: `Exception` (`Message`, `File`, `Line`,
     `Trace` with up to 16 calls, `Inner`), `NullReferenceException` (reaching nothing), `ObjectDisposedException`
     (using what was freed), `DivideByZeroException`, `IndexOutOfRangeException`, `ArgumentException` and
     `ArgumentOutOfRangeException`, `InvalidOperationException`, `FormatException` (`Convert.Int` on text that isn't a
-    number), `IOException` and `FileNotFoundException`, `NetworkException` (asking a network there isn't). A player
-    makes their own by extending `Exception`.
-  - **The errors that stop a program today throw these instead.** Uncaught, they stop it as today, with the message
-    and now the trace, so an old program behaves exactly the same. What answers today keeps answering (`File.Write`
-    returns false, `Convert.TryInt`). Running out of memory and more than 1,024 nested calls still stop the program
+    number), `IOException` and `FileNotFoundException`, `NetworkException` (asking a network there isn't), and
+    `AccessViolationException` (below): thirteen in all. A player makes their own by extending `Exception`.
+  - **The errors that used to stop a program throw these instead.** Uncaught, they stop it as before, with the message
+    and now the trace, so an old program behaves exactly the same. What answered keeps answering (`File.Write` returns
+    false, `Convert.TryInt`). Running out of memory and more than 1,024 nested calls still stop the program
     with no exception, as .NET's stack overflow does: catching the lack of memory would need memory.
   - **The price:** entering a `try` costs nothing; a `throw` costs 50 instructions, and 5 more for every call it
     unwinds.
-  - **`finally`** runs as the calls unwind, as in C#, so the `dispose` calls of a block that leaves halfway still run.
-    A program stopped by `sigma stop`, the Task Manager or `kill` with TERM runs its pending `finally` blocks, within
-    one tick's credits, and then `OnDestroy`; `kill -9` and a machine losing power run nothing, as SIGKILL does.
+  - **`finally`** runs as the calls unwind, as in C#, so the `dispose` calls of a block that leaves halfway still run. A
+    program stopped by `sigma stop`, the Task Manager or `kill` with TERM runs its pending `finally` blocks, within one
+    tick's credits, and then `OnDestroy`; `kill -9` and a machine losing power run nothing, not even `OnDestroy`, as
+    SIGKILL does.
   - **`goto`:** in Σ#, C#'s whole form (labels, `goto case`, `goto default`), with its rules: a jump may leave a
     block, never enter one. In Σ, only `goto` to a label, as in C.
   - **`const`**, as in C#, on fields and locals, for values known when compiling (numbers, `bool`, `char`, strings,
@@ -299,7 +301,7 @@ of machine), or a **component type** for programs' windows ([The API](api.md)).
       `comefrom` inside a switched-off region doesn't fire, and neither does one whose label lies in such a region.
     - `reinstate label;` switches the region on again; switching on what is on does nothing.
     - Each costs 1 instruction. The listing gains `abstain`, `reinstate` and `brabst` (jump past the region while it
-      is switched off), in the same format `.asm 2`. Boron keeps the three words as it keeps the others.
+      is switched off), in format 3. Boron keeps the three words as it keeps the others.
   - **New words are contextual.** Every word version 3 brings that Boron did not keep (`sealed`, `params`,
     `nameof`, `operator`, `unsafe`, `stackalloc`, `byte`, `ignore`, `remember` and the rest) is a word only where
     the language expects it, as C# did with `var`: a version 2 program that uses one as a name still compiles.
@@ -314,17 +316,18 @@ of machine), or a **component type** for programs' windows ([The API](api.md)).
     comparisons in pairs (`==` with `!=`, `<` with `>`) as C# asks; `this[...]` with `get` and `set`. No
     conversion operators.
   - **Pointers**, as C#'s unsafe code, only inside `unsafe` (a block or a method) in Σ#; a `.sg` file is unsafe
-    throughout, as C was. `int*`, `long*`, `byte*`, `void*` and pointers to structs that hold only values; `&` of
-    a local, `*`, `->`, `p[i]`, `p + n`, `p - q` and the comparisons; `stackalloc`, freed when the method returns.
-    No pointer reaches an object of a class, so there is no `fixed`. The type `byte` comes with them. Raw memory
-    is `Memory.Alloc`, `AllocZeroed`, `Resize`, `Free`, `Copy`, `Fill` and `Compare`; Σ writes them with C's old
-    names (`malloc`, `calloc`, `realloc`, `free`, `memcpy`, `memset`, `memcmp`). Every block knows its size: reading
-    outside a live block, a freed one or `null` is an `AccessViolationException` in Σ#, and in Σ the process dies
-    with its system's own words (`Segmentation fault (core dumped)` on Linux and the BSDs, a General Protection
-    Fault on Frames 3.x, "has performed an illegal operation" on Frames 95 and 98, the bomb on the classic Quince
-    systems). The bytes count exactly in the program's memory. A read or a write through a pointer costs 1
-    instruction, `Alloc` and `Free` cost what `new` and `dispose` cost, `Copy` and `Fill` 1 for every 64 bytes.
-    The listing gains the instructions in `.asm 2`, written only for a program that uses them.
+    throughout, as C was. `int*`, `long*`, `byte*`, `void*` and pointers to structs that hold only values; `&` of a
+    local or of a parameter taken by value, `*`, `->`, `p[i]`, `p + n`, `p - q` and the comparisons, `sizeof(T)` for a
+    type's size; `stackalloc`, freed when the method returns (Σ# only: Σ has none and uses `malloc`). A field of a
+    pointer type exists only in Σ. No pointer reaches an object of a class, so there is no `fixed`. The type `byte`
+    comes with them. Raw memory is `Memory.Alloc`, `AllocZeroed`, `Resize`, `Free`, `Copy`, `Fill` and `Compare`; Σ
+    writes them with C's old names (`malloc`, `calloc`, `realloc`, `free`, `memcpy`, `memset`, `memcmp`). Every block
+    knows its size: reading outside a live block, a freed one or `null` is an `AccessViolationException` in Σ#, and in Σ
+    the process dies with its system's own words (`Segmentation fault (core dumped)` on Linux, the BSDs, UNIX and Quince
+    OS X, "has performed an illegal operation" on Frames 95 and 98, the bomb on the classic Quince systems, and a plain
+    line on Frames NT, MC-DOS and MC-NET). The bytes count exactly in the program's memory. A read or a write through a
+    pointer costs 1 instruction, `Alloc` and `Free` cost what `new` and `dispose` cost, `Copy` and `Fill` 1 for every 64
+    bytes. The listing gains the instructions in format 4, written only for a program that uses them.
   - **`#if`, `#elif`, `#else`, `#endif`, `#define`, `#undef`, `#error` and `#warning`**, in Σ and Σ#, with symbols
     the compiler defines: the instruction set (as `--isa` names it), the era, `SIGMA_3`, and `DEBUG` in a build
     for the debugger; a project defines its own.
@@ -334,20 +337,28 @@ of machine), or a **component type** for programs' windows ([The API](api.md)).
     it; each costs 1 instruction.
   - **Σ 3** gets what C has, `goto` to a label, `const`, pointers with the memory calls and `#if`, plus the
     INTERCAL words above; Σ still never has exceptions.
-  - **The listing:** exceptions need handler tables and new instructions (`throw`, `rethrow`, `leave`, `endfinally`),
-    in the format `.asm 2`. The compiler writes `.asm 2` only for a program that uses them: a version 3 program with
-    no `try` comes out as `.asm 1` and runs on an older runtime. `goto` uses the `br` that exists, and `const` adds no
-    instruction.
-  - **The library of version 3** (each new look, read or write priced as today's: 5, 10, 50, 100, 200):
+  - **The listing:** exceptions need handler tables and new instructions (`throw`, `rethrow`, `leave`, `endfinally`).
+    The listing is written in format 3, and in format 4 only for a program that uses exceptions, pointers or the
+    debugger's lines: a version 3 program with no `try` runs on an older runtime. `goto` uses the `br` that exists, and
+    `const` adds no instruction.
+  - **The library of version 3** (each new look, read or write priced as the rest: 5, 10, 50, 100, 200):
     - `System.Machine`: `Power` (the machine's draw in W, its power supply, the UPS and its charge), `Thermal`
-      (temperature, thermal budget, throttling), `Wireless` (signal, access point, speed), `Disk` (health,
-      corruption, bad sectors, the last Defrag), `Sensors` (any J's Core sensor joined to the machine, by name:
-      thermometers, Geiger counters, pressure, tachometers, J's Energy meters), `Signals` (J's Core's signals by
-      frequency, sent and heard) and `Settings` (a program's own settings, kept the system's way: the registry on
-      Frames, `~/.config` on Linux, `/etc` for services).
+      (temperature, thermal budget, throttling), `Wireless` (the signal as the reach left, 100 beside the access point
+      and 0 at the edge of its reach, the access point, the speed), `DiskHealth`, a type of its own since `Disk` is
+      `System.OS`'s (health, corruption, bad sectors, the last Defrag, as the Defrag kept it), `Sensors` (the J's Core
+      sensor in front of a Redstone Interface linked to the machine, by the interface's name: thermometers, Geiger
+      counters, pressure, tachometers, J's Energy meters), `Signals` (J's Core's signals by frequency, through a
+      Redstone Interface: a radio read, a transmitter sent through, every frequency heard) and `Settings` (a
+      program's own settings, kept the system's way: Frames' registry, in the `SOFTWARE` hive under
+      `HKEY_LOCAL_MACHINE\SOFTWARE`; an INI file on MC-DOS; `~/.config/<program>/settings` on Linux and the BSDs, or
+      `/etc/<program>.conf` for a service; `~/Library/Preferences/<program>.plist` on Quince OS X and the System
+      Folder's Preferences on the classic Quince systems). A server in a rack reads its own supply, and the rack's UPS
+      and heat.
     - `System.Text`: `StringBuilder`, `Regex` (priced by the text it reads), `Json` (a tree of `JsonValue` read
       with indexers) and `Csv` (rows of `List<string>`), `Hash` (SHA-256, CRC32) and `Base64`.
-    - `System.Collections`: `Queue<T>`, `Stack<T>`, `Set<T>`, `List.Sort` and `List.Find` with lambdas.
+    - `System.Collections`: `Queue<T>`, `Stack<T>`, `Set<T>`, `List.Sort` and `List.Find` with lambdas, the sort an
+      insertion sort that keeps equal elements in order. `Func` with two arguments is allowed in any version;
+      `List.Sort` and `List.Find`, which use it, need version 3.
     - `System.IO`: `Directory` and `Path`, a file's size and the tick it last changed, and `File.Watch(path,
       handler)` as a source of events.
     - `System.Utils`: `Calendar` (the world's day, week, season and year from J's Core) and `Stopwatch` (ticks and
@@ -355,30 +366,39 @@ of machine), or a **component type** for programs' windows ([The API](api.md)).
     - `System.Network`: `EventLog.Write(level, text)` into the network's event log, read by others through
       `Network.OnEvent`; `Channel`, named ports between programs on different computers, over the network, the
       federation and wireless: a message carries text or a copied value of up to 32 KB (as `GenericComponent`'s
-      `Data`), sending costs 200, and each hop adds its latency.
-    - `System.Navigation`: the autopilot of J's Core's moving structures (go to a point, hold altitude, follow a
-      route, dock) and their readings (altitude, speed, tilt, heading).
-    - `System.Teracoin`: `Wallet` (balance, send, address), `Chain` (height, difficulty), `Miner`, `Pool`.
-    - `System.Robots`, commanding J's Core's robots (queued tasks, with loops, conditions and sensing written in the
-      program), is designed now and built when J's Robotics exists.
+      `Data`), sending costs 200, and a value takes a tick for every hop: its network, one more from a computer on
+      Wi-Fi, and one for each border it crosses.
+    - `System.Navigation`: the autopilot of the J's Core moving structure the computer stands on (`GoTo`,
+      `HoldAltitude`, `FollowRoute`, `Dock`, `Release`) and the readings a flight sensor gives where it stands
+      (altitude, pressure, speed, climb, pitch, roll, heading, the ground below and what is ahead).
+    - `System.Teracoin`: `Wallet` (balance, send, address, by the wallet's file), `Chain` (height, difficulty,
+      reward), `Miner` (read and set as the `miner` command does) and `Pool`.
   - **A debugger:** breakpoints on a line, stepping, the locals and the call stack, in Virtual Studio, Virtual
     Studio Code and at the terminal with `sgdb`, which takes gdb's commands and `info credits`. A build with
     `sgsc --debug` carries the debugger's lines and defines `DEBUG`. Each step spends credits as running does, and
-    the spend shows in the Diagnostic Tools and on the status bar, orange while debugging.
-- **Generics defined by the player** (classes and methods with type parameters), in version 4, with no cycle set. Today
-  Σ# only has the built-in collections as generics. Σ stays a subset of Σ#.
+    the spend shows in the Diagnostic Tools and on the status bar, orange while debugging. A program under the
+    debugger belongs to it: it is not saved with the world and ends when the debugging stops; a player has one session
+    at a time, and a breakpoint on a line with no code stops at the next.
 - **Two more event sources:**
   - `Operations.OnSettled(handler)`, or `OnSettled(operation, handler)` for just one: an Operation settled ("tell me
     when this craft is done");
-  - `Network.OnEvent(handler)`: the network's event log ([Operations](operations.md)), with the level and the machine,
-    so a program can react to a UPS on battery, a degraded power supply or a conflict.
+  - `Network.OnEvent(handler)`: the network's event log ([Operations](operations.md)), with the level (info, warn or
+    error) and the machine, so a program can react to a UPS on battery, a degraded power supply or a conflict.
+    `OnSettled` hears only the Operations the network's log records, neither nested nor silent ones.
 - **The language reference in the game:** a section of the Guide to Operations ([Manuals](manuals.md)) with the files
   and forms of a program, the library by namespace, every API object with its price in credits, the errors and the
   versions. It is read in the book and on every system through its help (`man sigma`, `info sigma`, Help Topics, Get
-  Help; [Operating systems](operating-systems.md)), written once for both. Today the reference is only the public Σ#
-  guide.
+  Help; [Operating systems](operating-systems.md)), written once for both: the Guide's last chapter, a page for every
+  namespace, its tables read from the library itself.
 - **Building for Quince's instruction sets** (68k, PowerPC, ARM64) with `sigma build --isa`, and **universal** builds
   that carry several at once; Champollion runs a program across a switch ([Quince](quince.md)).
 - **`System.OS`**, the namespace an operating system or a desktop environment written by a player is made with, in Σ#
-  and through `Standard` in Σ; `sigma build --os` and `sigma build --desktop` write them out
+  only; `sigma build --os` and `sigma build --desktop` write them out
   ([Systems written by players](player-systems.md)).
+
+## To build
+
+- **Generics defined by the player** (classes and methods with type parameters), in version 4, with no cycle set.
+  Σ# only has the built-in collections as generics. Σ stays a subset of Σ#.
+- **`System.Robots`**, commanding J's Core's robots (queued tasks, with loops, conditions and sensing written in the
+  program), designed now and built when J's Robotics exists.

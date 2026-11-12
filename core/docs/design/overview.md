@@ -7,7 +7,7 @@ working from one release to the next.
 
 ## What exists today
 
-Nearly all of the Core is built, as of October 2026: the platform, the series' shared model and the shared content,
+Nearly all of the Core is built, as of November 2026: the platform, the series' shared model and the shared content,
 in the three layers below. Its programmers' documentation explains every part from zero, with code
 ([J's Core documentation](../README.md)); these pages say what each part is for, the rules behind it, and, at the end
 of each, what is still to come.

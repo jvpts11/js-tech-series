@@ -29,9 +29,7 @@ On a Mainframe, the network's index lives in memory: it is cleared when the Main
 Operations: they are saved on the Mainframe and resume when it loads again, unless they outlive the time an orphaned
 Operation is kept ([Operations](operations.md)).
 
-## To build
-
-### Energy
+## Energy
 
 Computers draw **J's Energy**, J's Core's energy, which is measured in real units: a computer draws, in watts, what its
 parts draw, through its power supply.
@@ -52,9 +50,7 @@ watts drawn from the grid = watts of the parts / efficiency of the power supply
   they give out); the efficiency only weighs on what is drawn from the grid.
 - Without energy a computer doesn't start; losing the energy while it runs is a power loss (below).
 
-Today computers draw no energy, and the efficiency is only shown in the tooltip.
-
-### Power supply failure
+## Power supply failure
 
 A power supply wears out and in the end fails. Failure is a consequence of the player's choices (a power supply too
 small, a hot rack), not bad luck: whoever sizes power supplies well almost never sees it.
@@ -90,30 +86,7 @@ small, a hot rack), not bad luck: whoever sizes power supplies well almost never
 - **Cost:** wear is worked out from the time on and the load when the machine changes state, or once a game minute;
   nothing per tick.
 
-Today power supplies don't wear or fail, and the 3000P is an ordinary power supply named "(Redundant)".
-
-### Overvoltage
-
-A power supply connects in J's Core's low voltage class. Energy of a higher class reaching it, a wrong cable or a
-lightning surge, does what it does to real computers (estimates):
-
-- **One class above:** the **power supply burns**, as a power supply failure (above), and the other parts **may burn
-  with it**, as a real power supply that blows sometimes takes the board along: the motherboard 15%, each processor,
-  memory module and expansion card 10%, each disk 5%. A burnt disk loses what it held, as a dead real drive. The
-  computer shuts down suddenly (below).
-- **Two classes above or more**, an arc flash: the power supply burns, and every part has a 50% chance. The case stands.
-
-Two things protect a computer, as in real life:
-
-- **a fuse**: computers have J's Core's protection tab with its fuse slot, as every machine of the series. With the
-  right fuse nothing burns, but the computer shuts down at once, which is still a sudden shutdown;
-- **a UPS** between the line and the computer, which isolates the load from the grid as real double-conversion UPSes do:
-  it protects from overvoltage one class above **without shutting the computer down**. Against two classes above, not
-  even a UPS holds.
-
-The overvoltage setting of J's Core turns all of this off: a computer on a higher class then just doesn't start.
-
-### Shutting down suddenly
+## Shutting down suddenly
 
 A computer also shuts down **suddenly**: on a **power loss** (the energy source goes away, a generator runs out of fuel,
 an energy cable breaks) or a **power supply failure**. The Operations running stop and their locks are released as on a
@@ -126,9 +99,7 @@ didn't: its CHKDSK is run by hand. How long depends on the file system: a long c
 without a journal (FAT, exFAT, ext2, UFS), seconds with one (NTFS, ext3, ext4, XFS), none on copy-on-write (btrfs, ZFS)
 ([Storage devices](storage-devices.md)). It erases nothing. A clean shutdown skips the check.
 
-Today shutting down only exists in its clean form, and there are no disk checks.
-
-### Items lost when the network fails
+## Items lost when the network fails
 
 A player who lets the network fail pays for it. When the network goes down in the middle of work, the items in transit
 are lost, in each situation the settings turn on:
@@ -144,7 +115,7 @@ There is one key per situation (`jscomputers-server.toml`, `[item_loss]`: `power
 shutdown. What protects against the loss is what real life uses: the UPS, the redundant power supply and failover
 between Mainframes ([Computers](computers.md)).
 
-### The UPS
+## The UPS
 
 A UPS block per era, the MF PowerGuard, and the Rack UPS (1U) for a whole rack. The PowerGuard is a whole block, as
 real tower UPSes are: the energy cable plugs into the inlet in the middle of its back or of either side, its outlets
@@ -171,6 +142,34 @@ are on top, and its front shows the battery, with its screen, its button and its
   them ([Servers and racks](servers-and-racks.md)).
 - An empty battery charges in 10 game minutes, and what it takes is drawn on top of the load.
 - Above what it carries, the UPS goes into **bypass**, as a real one does: the computer runs straight from the line,
-  unprotected, and the UPS beeps.
+  unprotected. The beep comes with the sound pass.
+- Its red "replace battery" lamp lights when the battery is near its end.
+- A supply of the wrong voltage class reaching the UPS is its to take, as below.
 
-Today there are no UPS blocks, and the Rack UPS takes 1U with no effect.
+## To build
+
+### Overvoltage
+
+A power supply connects in J's Core's low voltage class. Energy of a higher class reaching it, a wrong cable or a
+lightning surge, does what it does to real computers (estimates):
+
+- **One class above:** the **power supply burns**, as a power supply failure (above), and the other parts **may burn
+  with it**, as a real power supply that blows sometimes takes the board along: the motherboard 15%, each processor,
+  memory module and expansion card 10%, each disk 5%. A burnt disk loses what it held, as a dead real drive. The
+  computer shuts down suddenly (below).
+- **Two classes above or more**, an arc flash: the power supply burns, and every part has a 50% chance. The case stands.
+
+Two things protect a computer, as in real life:
+
+- **a fuse**: computers have J's Core's protection tab with its fuse slot, as every machine of the series. With the
+  right fuse nothing burns, but the computer shuts down at once, which is still a sudden shutdown;
+- **a UPS** between the line and the computer, which isolates the load from the grid as real double-conversion UPSes do:
+  it protects from overvoltage one class above **without shutting the computer down**. Against two classes above, not
+  even a UPS holds.
+
+The overvoltage setting of J's Core turns all of this off: a computer on a higher class then just doesn't start.
+
+Today only the UPS takes a supply of the wrong class; a computer has no fuse slot, and nothing of it burns.
+
+- **The bypass beep and a power supply's coil whine**, with the sound pass.
+

@@ -208,19 +208,19 @@ When a program needs more than is free, each system answers as its real one did:
 - **Linux, FreeBSD and UNIX** let the program in and their kernel's out-of-memory killer ends what holds the most (a
   window, a program, a service; of equals, the latest), until everything fits, each logged in the kernel's own words
   (`Out of memory: Killed process 1234 (calc)` on Linux, `pid 1234 (calc), jid 0, uid 0, was killed: out of swap space`
-  on FreeBSD, `NOTICE: out of memory: process 1234 (calc) killed` on UNIX), printed on the console and kept for
-  `dmesg`. A desktop closes the window that went with a balloon (*Out of memory*); a program ended in front of a terminal
-  leaves the shell's `Killed`; a service ended stays down until the machine starts over (a Mainframe's network engine,
+  on FreeBSD, `NOTICE: out of memory: process 1234 (calc) killed` on UNIX), printed on the console and kept for `dmesg`.
+  A desktop closes the window that went with a balloon (*Out of memory*); a program ended in front of a terminal leaves
+  the shell's `Killed`; a service ended stays down until the machine starts over (a Mainframe's network engine,
   Automation Engine and Mirror included). Only when nothing is left to end does the kernel panic.
 - **MC-DOS and MC-NET** refuse the program and say why.
 
 A crash is the machine's, not the screen's: the page is on every monitor showing the machine, nothing typed or clicked
 reaches anything, everything the machine ran dies, and once the page has stood its time the machine starts over from its
-self-test into an empty session (FreeBSD's countdown stops on a key, and the next key reboots). A **red page** is a fault
-of the hardware: a memory module, an expansion card or the system's disk taken out of a running machine (the hot-swap
-bays excepted, they are made for it); Linux and FreeBSD panic on a machine check and UNIX on a memory parity error. A
-machine left whole starts over; one left with no computer goes dark. The processor, the board or the power supply taken
-out switch it off at once, with no page.
+self-test into an empty session (FreeBSD's countdown stops on a key, and the next key reboots). A **red page** is a
+fault of the hardware: a memory module, an expansion card or the system's disk taken out of a running machine (the
+hot-swap bays excepted, they are made for it); Linux and FreeBSD panic on a machine check and UNIX on a memory parity
+error. A machine left whole starts over; one left with no computer goes dark. The processor, the board or the power
+supply taken out switch it off at once, with no page.
 
 `ps` on a Unix lists the system's own processes before the programs: its first process at number 1 (systemd on the
 distributions that start it, init on Gentoo, FreeBSD and UNIX) and each running service at a number it keeps; the
@@ -242,14 +242,15 @@ the kernel ignores a kill of init from the system; here it is what it would do i
 - **Appliances** (the Server Router, the switches) only have firmware.
 - The registries of kernels, systems, desktops and operating spaces are open to add-ons ([The API](api.md)).
 
-## To build
+## The firmware, the systems that came with Carbon, and the red page
 
 - **More triggers of the red page,** on every computer and rack server: a thermal trip, a failing power supply, unstable
   power ([Temperature](temperature.md), [Power](power.md)). On Frames each has its stop code: the heat
   `MACHINE_CHECK_EXCEPTION` on XP and `WHEA_UNCORRECTABLE_ERROR` from 7 on, a failing power supply and unstable power
   `INTERNAL_POWER_ERROR`; on 10 and 11 the page's *What failed* names the part or the cause.
 - **The firmware lives on the motherboard.** A board made in survival comes out with no firmware, and a computer with a
-  blank board shows nothing; the Preinstaller writes the firmware of the board's era onto it ([Survival](survival.md)).
+  blank board powers its fans and nothing more, its monitor with no signal; the Preinstaller writes the firmware of the
+  board's era onto it ([Survival](survival.md)).
 - **Network boot from the Mirror.** From the Legacy, the firmware's setup can boot from the network (PXE); from the
   Standard, UEFI boots over HTTP; the Vintage cannot. On a network whose Mainframe serves the Mirror, the firmware lists
   the systems published there, the players' own included, and boots the installer of the one chosen; the install then
@@ -258,49 +259,55 @@ the kernel ignores a kill of init from the system; here it is what it would do i
   firmware's page, with INSTALL. The list shows only what the machine runs (its era and its processor), each system
   with its house, the players' with their author and "community", and Boot from the local disk last. The entry
   is always there: with no Mirror on the network it says *No Mirror answered on the network* and goes back to the
-  firmware. Today a system is only installed from the Mirror from inside a running one ([Programs](programs.md)).
+  firmware ([Programs](programs.md)).
 - **Systems and desktops written by players**, in Σ or Σ#, through the `System.OS` namespace
   ([Systems written by players](player-systems.md)).
-- **OpenBSD,** decided for Carbon: the proactively secure Unix, by the Blowfish Project, at version 7.5 (fixed), from
+- **OpenBSD:** the proactively secure Unix, by the Blowfish Project, at version 7.5 (fixed), from
   the Legacy, on a kernel of its own (`openbsd`), booting to the terminal, 1,024 MB of disk and 12 of memory,
   packages with `pkg_add` and the ports. Its mark is Puffy, which its `screenfetch` draws, and one sea wallpaper
   serves every desktop it takes.
   - Its installer is the real one, questions and answers at the terminal: *(I)nstall, (U)pgrade, (A)utoinstall or
-    (S)hell?*, the host name, the network, root's password, sshd, X, the disk (`wd0` on IDE disks, `sd0` on SATA)
-    and the sets (`bsd`, `bsd.rd`, `base`, `comp`, `man`), from the medium or from the Mirror over the network. Leaving
-    a set out only saves its room on the disk, but `man` and `comp` take their commands with them.
+    (S)hell?*, sshd, X, the disk (`wd0` on IDE disks, `sd0` on SATA) and the sets; the questions that change nothing in
+    the game (the host name, the network, the password, the time zone, the user) come already answered, (`bsd`,
+    `bsd.rd`, `base`, `comp`, `man`), from the medium or from the Mirror over the network. Leaving a set out only saves
+    its room on the disk, but `man` and `comp` take their commands with them.
   - It boots through `boot>`, waiting five seconds with no count shown: any key stops the wait, and Enter or `boot`
     starts. It shows its own lines (*Automatic boot in progress: starting file system checks*, *starting network
     daemons*), greets with *Welcome to OpenBSD: The proactively secure Unix-like operating system* and runs `ksh`, its
     prompt the host name and `#`.
   - Secure by default: a service installed comes switched off and is switched on with `rcctl enable`, and with a
-    desktop installed it still starts at the terminal until `rcctl enable xenodm`. It has `doas`, and `syspatch` is
-    how the system shows the update badge for itself ([Programs](programs.md)). The player stays root until
-    accounts come ([Security](security.md)).
+    desktop installed it still starts at the terminal until `rcctl enable xenodm`. `pf`, `pflogd` and `syslogd`
+    belong to the base system: always on, they refuse `disable`; `cron` and `sshd` are the machine's own switches, and
+    the Mainframe's services stay out of `rcctl`. It has `doas`, and `syspatch` is how the system shows the update
+    badge for itself ([Programs](programs.md)). The login is `player` until accounts come ([Security](security.md)).
   - Its panic stops in the kernel debugger, at `ddb>`: the machine waits until the player types `boot reboot`, with
     `trace`, `ps` and `show panic` there too.
   - Its memory follows the Unix family's rule, with OpenBSD's own line; it takes the desktop packages FreeBSD takes.
   - With security, it is the system of the network's defence: `pf` is the network's firewall, OpenBSD machines are
     the hardest to attack, and `pledge` and `unveil` restrict what a program may do; designed with security.
-- **Linux Mint,** decided for Carbon: from the Standard (the era of the mod's Cinnamon), on the `linux` kernel, the one
+- **Linux Mint:** from the Standard (the era of the mod's Cinnamon), on the `linux` kernel, the one
   distribution that boots to its desktop, Cinnamon; 12,288 MB of disk and 64 of memory. Its medium boots a live
   desktop, which writes nothing to the disk, with *Install Linux Mint* on it: the guided installer, in five screens
   (the installation type, the divider beside another system, who you are, the copy, the end), with no language,
   keyboard or time zone to ask. Mint goes on ext4 with a swap as big as the memory, beside another system by
-  shrinking its partition with the divider, and its password waits for the accounts. Packages through `apt`, the
+  shrinking its partition with the divider, and its password waits for the accounts; the name shown is the player's,
+  the user `player`. Packages through `apt`, the
   store, and two programs of its own, by Spearmint Linux: the **Software Manager**, Mint's store on the Mirror's
   catalogue, by Mint's categories with Network and Desktops, with no ratings, a featured row and the newest
   arrivals; and the **Update Manager**, which applies a program at once and the desktop the next time it starts, its
   shield on the panel only when there are updates ([Programs](programs.md)).
-- **Accounts and passwords:** every system has real user accounts and its `passwd`; with a directory on the network, the
-  login is the network's ([Security](security.md)). Today they only exist as pages.
 - **The portable devices' mobile systems** ([Wireless](wireless.md)): real systems, from the factory, with no installer,
-  parodies of the real ones, with the registry's apps and the Mirror's store: Midsoft's **Frames Pocket** on the PDAs,
-  **qOS** on Quince's phones and tablets, and **Droidix**, open and on the Linux kernel, on the other makers'. With them
-  comes the **third family of systems and hardware**, next to Frames and Linux: **Quince**, in the manner of Apple,
-  with its computers, servers and Mainframe, its phones and tablets, its systems (the Quince System, Quince OS 9,
-  Quince OS X, Quince OS X Server, quinceOS and qOS) and the instruction sets they bring (68k, PowerPC, ARM64), decided
-  for Carbon ([Quince](quince.md)).
+  parodies of the real ones, with their own catalogue's apps and the Mirror's store: Midsoft's **Frames Pocket** on the
+  PDAs, **qOS** on Quince's phones and tablets, and **Droidix**, open and on the Linux kernel, on the other makers'.
+  With them comes the **third family of systems and hardware**, next to Frames and Linux: **Quince**, in the manner of
+  Apple, with its computers, servers and Mainframe, its phones and tablets, its systems (the Quince System, Quince OS 9,
+  Quince OS X, Quince OS X Server, quinceOS and qOS) and the instruction sets they bring (68k, PowerPC, ARM64)
+  ([Quince](quince.md)). The classic Quince systems have no prompt, as the real ones had none.
+
+## To build
+
+- **Accounts and passwords:** every system has real user accounts and its `passwd`; with a directory on the network, the
+  login is the network's ([Security](security.md)).
 - **The web of the world:** **sites** are files (pages, images) on a rack server running a **web server** service (a
   parody of a real one, like the Messenger Service); the **browser** is a program per era, a parody of the real ones
   (Netscape and Internet Explorer in the Legacy, Firefox and Chrome later), and shows the network's sites. Through the

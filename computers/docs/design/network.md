@@ -69,7 +69,7 @@ Each line does one job and has a cable per era it exists in, with the era's plug
 | --- | --- | --- | --- | --- | --- | --- |
 | Access | small computers to a router | Thin Coaxial | Ethernet | Cat 5e | Gigabit Ethernet | Cat 6a |
 | Backbone | routers, the Mainframe and racks | Thick Coaxial | HBW | 10GBASE-CX4 | Fibre Optic | OM5 Fibre |
-| Long distance | distant networks, between WAN Gateway Computers | Telephone Line | Leased Line | T3 Line | VLDC | Dark Fibre |
+| Long distance | distant networks, between WAN Gateway Computers | Telephone | Leased Line | T3 Line | VLDC | Dark Fibre |
 | High compute | a supercomputer's nodes to its HBW Interface | | | InfiniBand | High Compute | OSFP |
 | Crafting | a Crafting Computer to the parts that feed its machines | Crafting Cable, the same in every era | | | | |
 
@@ -165,48 +165,51 @@ left behind expire once they outlive the time an orphaned Operation is kept (24 
 ## Keeping chunks loaded
 
 A computer in an unloaded chunk stops, and resumes when the chunk loads again, without losing anything. Nothing in J's
-Computers loads a chunk on its own; J's Core already has chunk loading per owner, which the pieces below will use.
+Computers loads a chunk on its own; J's Core already has chunk loading per owner, which the two pieces below use.
 
-## To build
-
-### Conflicts that cost
+## Conflicts that cost
 
 - In a network conflict, the items the discarded Operations were carrying **are lost** (configurable,
-  [Power](power.md)). Today they go back where they were.
+  [Power](power.md)).
 - The **storage of both networks gets corrupted**: part of the stored items (10%, an estimate) become corrupted, through
   the corruption mechanic ([Storage](storage.md); the `network_conflict` key in `[item_loss]`). Each network's owner
-  recovers what luck leaves with the **Defrag**. Today a conflict corrupts nothing.
+  recovers what luck leaves with the **Defrag**. The corruption hits both networks once a conflict.
 - So joining a cable of another player's network to yours, as an attack, brings down and corrupts **both** networks: the
   attacker pays the same as the victim.
+- A network that splits under a transfer loses what the transfer was carrying (`item_loss.network_split`), whichever
+  machine left it.
 
-### Two pieces to keep machines working
+## Two pieces to keep machines working
 
 - **The Network Anchor Card:** an expansion card per era that keeps the chunks around the computer it is in loaded. It
   uses J's Core's chunk loading per owner, always within the owner's quota (`world.chunks_per_owner`), and draws its
   watts like any card ([Power](power.md)). Estimates: the computer's own chunk at 5 W in the Vintage and 8 W in the
-  Legacy, 3 by 3 chunks at 10 W in the Transition and 12 W in the Standard, 5 by 5 at 15 W in the Advanced.
+  Legacy, 3 by 3 chunks at 10 W in the Transition and 12 W in the Standard, 5 by 5 at 15 W in the Advanced. In a rack
+  it takes the largest reach among its linked servers; with the quota full it keeps what fits and logs it once.
 - **The Space Persistor:** a block of J's Core, the series' chunk loader (the Chicken Chunks one, with a technological
   look). The player chooses its radius and the rest on the block, within the owner's quota; whether it draws energy, and
   how much, is up to J's Core's settings. It serves any mod, not only computers.
 
-### The WAN Gateway Computer
+## The WAN Gateway Computer
 
-The **WAN Gateway Computer** links distant places through the **long-distance line**: the Telephone Line, the Leased
+The **WAN Gateway Computer** links distant places through the **long-distance line**: the Telephone, the Leased
 Line, the T3 Line, the VLDC and the Dark Fibre, one per era. (The Network Gateway is something else: the bridge with
-ComputerCraft, [Peripherals](peripherals.md).) Today only the long-distance line exists, with no function.
+ComputerCraft, [Peripherals](peripherals.md).)
 
 **Its shape:** a very wide computer, a 4×2×2 big block, bigger than the Mainframe's 3×2×2, drawn as one model per era
 from the Vintage to the Advanced, like the long-distance line, with 4 ports for that line. It takes hardware like any
 computer (motherboard, processors, memory, power supply), runs a system, and its function is **software**: the
 **Nouvell BorderLink** service, by Nouvell Networks after the real BorderManager, one version per era, installed on it.
-Hardware is capacity, software is role.
+Hardware is capacity, software is role. A line works only while the gateways at both ends run BorderLink and both
+ports are on; a new port starts with leave to look only. The gateway joins the backbone on any face, as a Personal
+Computer's node does, and takes a fibre backbone only with the Optical Network Card.
 
 **Its specialised hardware:** the **WAN Interface Cards**, one per port (4 ports, so up to 4 cards), only in the WAN
 Gateway Computer, each in its era's bus slot. A card takes the line of its era and the earlier ones, like cable ports:
 
 | Era | Card | Line | The real equivalent |
 | --- | --- | --- | --- |
-| Vintage | Modem Card | Telephone Line | the internal modem |
+| Vintage | Modem Card | Telephone | the internal modem |
 | Legacy | T1 Card (with CSU/DSU) | Leased Line | the T1/E1 card |
 | Transition | T3 Card | T3 Line | the DS3 card |
 | Standard | VLDC Card | VLDC | the VLDC card |
@@ -243,3 +246,11 @@ whether it relays for other networks, and turning the port on or off. Groups of 
 ([Security](security.md)).
 
 **Cost:** no merging of indexes every tick; a query to the other network goes to its Mainframe when it is asked.
+
+The cards' draw, estimates: the WAN Interface Cards 3, 6, 12, 18 and 25 W, the Network Anchor Cards 5, 8, 10, 12 and
+15 W, from the Vintage to the Advanced. MC-NET's Federated tab gets a stack with GET, every stack with Shift, and
+crafts 1, or 64 with Shift.
+
+## To build
+
+Nothing on this page is left to build.

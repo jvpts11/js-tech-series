@@ -7,14 +7,17 @@ made with are the Core's.
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: terrain and
+Everything this page designs is built, as of November 2026, except what *Still to build* at the end lists: terrain and
 biomes declared in code down to their noises, density functions and surface rules, with the Core's own kinds of
 density function, any mod's world changed as data, landforms, rock in layers, seas of any liquid, veins, their field
 manual and prospecting, reservoirs, structures and settlements, any mod's structures tuned by an operator, finding
 things, map markers, the sky, the day and the weather of each dimension, the physics kit, worlds that change, large
 edits undone and saved as structure files, fields over chunks, chunks kept loaded with a reason each and by the
 server's rule while their owner is away, the Space Persistor, and the proof that the same seed makes the same world on
-any number of threads. How a mod uses it, with code: [The world](../WORLD.md).
+any number of threads. Carbon added structure pieces that choose their template as they are placed, big blocks raised
+whole by a structure, cables a structure lays finding their links on the first tick, a mod's own loot tables (a
+structure's chests) written beside its blocks', and the network reading the world's events. How a mod uses it, with
+code: [The world](../WORLD.md).
 
 ## The design
 
@@ -87,6 +90,10 @@ A **structure generation kit**, built on vanilla's data-driven structures and th
   height and flatness, buried and half-buried placement;
 - **fitting the terrain**: foundations that reach down to the ground, and carving where the ground is in the way;
 - **large layouts** of many pieces, including **settlements that grow over time** up to a size set when they generate;
+- **pieces that choose their template** as they are placed (`jscore:chosen`): by the distance from the world's origin,
+  by a setting, by anything the world says there, the same answer for the same place in every chunk the piece reaches;
+- **big blocks raised whole** where a structure places one, and **cables a structure lays** finding their links on the
+  first tick;
 - **weathered variants made by rule** (rusted metal, dead panels, cracked glass) instead of drawn by hand;
 - **loot that adds another mod's items only when that mod is installed**;
 - **structures as discoverable targets**: instruments and maps find them, imprecisely at first;
@@ -177,7 +184,8 @@ In the spirit of Lodestone's world events:
 - **Only where they make sense**: a solar storm strikes whoever is unsheltered in the inner Solar System, an earthquake
   a region.
 - **Commands for operators** to start, delay or cancel an event, and a consequence setting per event.
-- **Read by the network**: J's Computers warns, and can react (putting machines in safety).
+- **Read by the network**: J's Computers warns, and can react (putting machines in safety): its QUERY lists the
+  events, the network's log writes them, and a job starts WHEN an EVENT is COMING, UNDER WAY or ENDED.
 
 ### Fields over chunks
 

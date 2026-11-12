@@ -30,10 +30,20 @@ chapter.
 - On a computer, every system's help reads the same manuals beside its commands
   ([Operating systems](operating-systems.md)).
 
+## How they are written
+
+The Guide to Operations and the six books are written in Markdown, a file for each page in each language, as J's
+Core's manuals are; their items, their looks, the tables they read from the mod's things and the families of items an
+entry is the page of stay in code. A resource pack rewrites or translates any page by shipping its file. The Σ#
+language reference is the Guide's last chapter, a page for every namespace of the library ([Σ and Σ#](sigma.md)), and
+the Guide's chain is one section, The Fab, opening with the chain in the order it is used.
+
+## Getting the books
+
+The Guide to Operations is made at the Crafting Table, a binder; the books of the systems and the languages are
+printed by the Large Scale Printer from the help of a computer whose system has them, as every book is printed
+([Peripherals](peripherals.md)), and turn up in libraries, offices and universities ([Recipes](recipes.md)).
+
 ## To build
 
-- **The Σ# language reference** as a section of the Guide to Operations ([Σ and Σ#](sigma.md)).
-- **Getting the books:** the Guide to Operations is made at the Crafting Table, a binder; the books of the
-  systems and the languages are printed by the Large Scale Printer from the help of a computer whose system has
-  them, as every book is printed ([Peripherals](peripherals.md)), and turn up in libraries, offices and
-  universities ([Recipes](recipes.md)).
+Nothing on this page is left to build.

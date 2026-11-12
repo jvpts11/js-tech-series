@@ -1,34 +1,33 @@
 # Systems written by players
 
 A player can write an operating system of their own, and a desktop environment of their own, in Σ or Σ#, as they would
-write any program, and boot it on any computer. Nothing of it exists yet.
+write any program, and boot it on any computer.
 
-## To build
-
-### The idea
+## The idea
 
 Writing a system is writing a large program, not simulating hardware: no memory tables, no interrupt handlers, no weeks
 of low-level work. A new namespace of the standard library, `System.OS`, gives a system what it needs to declare how it
 works and to run, and the mod does the heavy part in its own code (drawing, files, windows), so a system written in Σ#
 stays fast enough on a weak machine. The mod's own systems are not rewritten: they keep working as they do.
 
-### The namespace `System.OS`
+## The namespace `System.OS`
 
 A system is a class that implements `ISystem`: `OnBoot`, `OnTick`, `OnInput` and `OnShutdown`. It declares its name,
 its version, its author, the era and instruction set it targets, and the memory it keeps for itself, as the mod's own
-systems do ([Operating systems](operating-systems.md)). In Σ, the same calls are functions of `Standard`
-([Σ and Σ#](sigma.md)).
+systems do ([Operating systems](operating-systems.md)), each written with `=>` and a value known when compiling
+(the compiler says so with S3061 to S3065). Only Σ# declares a system, since Σ has no properties or interfaces to
+declare one with; Σ keeps the simple calls of `Standard` ([Σ and Σ#](sigma.md)).
 
 | Type | What it gives | Its members |
 | --- | --- | --- |
 | `ISystem` | the system itself | `Name`, `Version`, `Author`, `Era`, `Isa`, `MemoryMb`, `Kernel`; `OnBoot()`, `OnTick()`, `OnInput(e)`, `OnShutdown()` |
 | `Kernel` | the kernel's policies, below | `Kernel.Of("linux")`, or `Kernel.Own()` with `.Scheduler(kind, slice)`, `.FileSystem(kind)`, `.Drivers(classes)`, `.MemoryRule(rule)`, `.Shell(family or its own)`; the events `OnSchedule` and `OnOutOfMemory` |
-| `Console` | the monitor's text screen | `Write`, `WriteLine`, `Clear`, `Cursor(x, y)`, `Colours(fore, back)` in the era's palette, `Size` (the columns and rows of the monitor's text mode) |
+| `Screen` | the monitor's text screen | `Write`, `WriteLine`, `Clear`, `Cursor(x, y)`, `Colours(fore, back)` in the era's palette, `Size` (the columns and rows of the monitor's text mode) |
 | `Input` | the keyboard and the mouse, as they come from the monitor | events for a key, a character, the mouse moving and a click; `Focus(process)` chooses who gets the input |
 | `Processes` | Σ and Σ# programs, their priorities and signals | `Start(path, args)`, `Stop(pid, signal)`, `List()`, `SetPriority(pid, level)`, `Yield()`, `Current` |
-| `Disk` | the file system of the disk the system is on | open, read, write, delete, list, move, make folders; `Free`, `Size`; `Mount` for the other disks and media |
-| `Memory` | what is held and what is free | `Total`, `Free`, `HeldBy(pid)`, `Ledger()` (the Task Manager's list) |
-| `Services` | programs run as services, up while the system is | `Register(name, path)`, `Start`, `Stop`, `Status`; the registered ones come up at boot, in order |
+| `Disk` | the file system of the disk the system is on | open, read, write, delete, list, move, make folders; `Free`, `Size`; `Mounted` for the other disks and media |
+| `Memory` | what is held and what is free | `TotalMb`, `FreeMb`, `HeldBy(pid)`, `Ledger()` (the Task Manager's list) |
+| `Services` | programs run as services, up while the system is | `Register(name, path)`, `Start`, `Stop`, `Status`; the registered ones come up at boot, in order. A service is a class of the system's own code, compiled into its `.asm` |
 | `Drivers` | the devices the machine has, and which of them the system drives | `Devices()` (each with its class), `Has(class)` |
 | `Boot` | what is shown while the system comes up | `Line(text)`, `Logo(image)`, `Progress(percent)`, `Done()` |
 | `Panic` | brings the machine down on a crash page with the system's own message | `Halt(message)`; the page: one of the mod's (the blue one, the black text of a kernel panic, the red one) or the system's own, `Colours(background, text)`, which its boot page wears too; `RebootAfter(seconds)` |
@@ -36,7 +35,7 @@ systems do ([Operating systems](operating-systems.md)). In Σ, the same calls ar
 
 The windows of a graphical system are `System.UI`'s, which every program already uses.
 
-### The kernel
+## The kernel
 
 The mod describes each of its kernels by a scheduler, a file system and a shell family. A player system uses the same
 model:
@@ -67,7 +66,7 @@ model:
 - **The shell:** one of the mod's families (DOS, POSIX, MC-NET), with its commands, or one of the system's own,
   written in Σ#. Commands the system adds are programs.
 
-### Running
+## Running
 
 - The system is the machine's process 1 and spends the machine's instruction credits, as any program does; the work
   the mod does for it (drawing, files, windows) costs it nothing more. The programs it starts are its children.
@@ -75,21 +74,25 @@ model:
   and the system's name in a corner; the panic page shows the `Halt` message at the top, the error with its file and
   line, the system, its author, the process and the memory, and at the foot *Restarting in N seconds* with
   `RebootAfter`, or *Restart the computer* without it.
-- **Memory:** the system's process may hold up to a quarter of the machine's memory (a program, 64 MB, as today), and
-  the `MemoryMb` it declares goes into the memory ledger as the mod's systems' does.
-- **A fault:** an exception the system's code doesn't catch is a panic, with the exception and its line, on the
-  system's panic page; the page stays until the player restarts the machine or `RebootAfter` does. It never reaches
-  the game's server.
+- **Memory:** the system's process may hold up to a quarter of the machine's memory (a program, 64 MB), and the
+  `MemoryMb` it declares goes into the memory ledger as the mod's systems' does. While the system itself runs,
+  `OnOutOfMemory` is not asked.
+- **With no driver:** with no text driver, what the system writes goes nowhere; with no graphics driver,
+  `Desktop.Start` is refused. The `none` scheduler runs process 1 and the program in front, and `OnSchedule` is told of
+  process 1 too.
+- **A fault:** an exception the system's code doesn't catch is a panic, with the exception and its line, on the system's
+  panic page, which says "Name went down." where a `Halt` message would be; the page stays until the player restarts the
+  machine or `RebootAfter` does. It never reaches the game's server.
 - **What it runs, the trade between its own and compatible:** a system on one of the mod's kernels counts as that
   kernel's family for the catalogue, so a system on `linux` installs what Linux installs, the mod's services and a
   Mainframe's network engines included ([Programs](programs.md)). A system with a kernel of its own runs only Σ and Σ#
   programs and services, and the mod's desktop packages: a Mainframe with a player system runs the network engine only
-  when that system stands on one of the mod's kernels. The programs built into the mod's systems (the Calculator, Paint
-  and the rest) belong to those systems.
+  when that system stands on one of the mod's kernels. The rack servers never run a player's system. The programs
+  built into the mod's systems (the Calculator, Paint and the rest) belong to those systems.
 - **What it may reach:** the disks and devices of its own machine, and the network only through the calls every
   program has. Never another machine's disk, never the game.
 
-### The desktop
+## The desktop
 
 - **A built-in desktop:** a player system can start one of the mod's desktop packages (KDE Plasma, GNOME, Cinnamon,
   CDE) with its own programs, as a Linux distribution does.
@@ -97,9 +100,12 @@ model:
   look (its palette, its panel, its Start menu, the style of its window frames, its icons and wallpaper from image files
   on the disk) and brings its own programs in Σ#. Moving windows and the focus stay in the mod's code, on the player's
   side, so a player's desktop is as smooth as the mod's. A player's desktop is a package, installed on the player's
-  systems and on the mod's systems that take desktop packages, as KDE Plasma is.
+  systems and on the mod's systems that take desktop packages, as KDE Plasma is. On the mod's desktops it takes their
+  ways: on Frames the controls and their relief, on Plasma the pointers and the motion, Yelp's help, GNOME's task
+  manager; minimised windows are in the menu, and no icons sit on the wallpaper. A player's packages install into
+  `/PROGRAMS` at the root of the disk.
 
-### Building and sharing
+## Building and sharing
 
 - `sigma build --os` writes a system onto an install medium of its era (a floppy, a CD or a USB stick, by its size);
   `sigma build --desktop` makes a desktop package.
@@ -109,4 +115,8 @@ model:
 - Systems and desktops are published to the Mirror as packages, and any machine of the network installs them from there
   ([Programs](programs.md)); media copy them too.
 - **Trust:** a package shows its author on the Mirror and on its medium, and only a machine's owner installs a system
-  on it. Signatures and real trust come with security ([Security](security.md)).
+  on it.
+
+## To build
+
+- **Trust:** signatures and real trust, with security ([Security](security.md)).

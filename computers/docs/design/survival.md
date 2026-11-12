@@ -2,10 +2,10 @@
 
 How a player gets every computer, part and program of J's Computers without the creative menu: the mod's own chain of
 machines and benches, the Prebuilder and the Preinstaller that turn parts into working computers, and the abandoned
-buildings and villagers where the software is found. Today none of it exists: everything comes from the creative tab,
-and a modpack can write its own recipes and loot through KubeJS ([The API](api.md)).
+buildings and villagers where the software is found. All of it exists; the creative tab still lists everything, and a
+modpack can change the recipes and the loot through a datapack or KubeJS ([The API](api.md)).
 
-## To build
+## How it works
 
 ### Two chains
 
@@ -204,7 +204,7 @@ Crafting Interface, so the network's autocrafting runs the whole chain ([Autocra
 | Silicon | Siemens Reactor | 2x3x2 | metallurgical silicon, hydrogen chloride and hydrogen into polysilicon |
 | | Crystal Puller | 2x3x2 | polysilicon and a dopant into a boule; also gallium arsenide, aluminium gallium indium phosphide, gallium nitride and calcium fluoride |
 | | Wafer Saw | 2x2x2 | a boule into wafers, cut and polished flat |
-| The chip factory | Lithography Station | 3x3x2 | a wafer's layer exposed through its mask; one per era |
+| The chip factory | Lithography Station | 3x3x2 | a wafer's layer exposed through its mask; one per era, the Transition and the Standard sharing one ArF station, which draws 4 kW on the Transition's recipes and 6 kW on the Standard's |
 | | Plasma Etcher | 2x2x2 | the exposed layer etched |
 | | Ion Implanter | 3x2x2 | the layer doped |
 | | Deposition Chamber | 2x2x2 | metal laid on the layer (aluminium, copper, tungsten, cobalt), the magnetic layer of disk platters and floppy film, the chromium of a mask blank, the gold electrodes of oscillator crystals |
@@ -217,12 +217,13 @@ Crafting Interface, so the network's autocrafting runs the whole chain ([Autocra
 | | Optical Polisher | 2x2x2 | quartz into mask plates, glass and calcium fluoride into lenses, polycarbonate into blank discs; draws glass fibre, and optical fibre from germanium-doped glass |
 | Displays | Display Line | 3x3x2 | tube screens with their phosphor, flat screens with indium tin oxide, LED panels |
 
-- **Entries** tell what they are by their connector and their band: green takes in, orange gives out, yellow is
-  energy, and the peripheral socket is cyan. The Coke Oven needs no energy. The Chemical Reactor has two liquid and two
-  gas inlets, the Air Separation Unit a gas outlet for each gas, the Siemens Reactor two gas inlets, the Crystal Puller
-  one (the nitrogen of gallium nitride), the Plasma Etcher a fluid and two gas inlets, the Board Etcher one for its
-  ferric chloride, the Display Line two fluid inlets (liquid crystal and mercury), and the Lithography Station a gas
-  inlet for its laser (Legacy, Transition, Standard) and a liquid inlet for its immersion (Transition, Standard).
+- **Entries** tell what they are by their connector and their band: green takes in, orange gives out, yellow is energy,
+  and the peripheral socket is cyan. The Coke Oven needs no energy. The Chemical Reactor has two liquid and two gas
+  inlets, the Air Separation Unit four gas outlets, each carrying any gas, the Siemens Reactor two gas inlets, the
+  Crystal Puller one (the nitrogen of gallium nitride), the Plasma Etcher a fluid and two gas inlets, the Board Etcher
+  one for its ferric chloride, the Display Line two fluid inlets (liquid crystal and mercury), and the Lithography
+  Station a gas inlet for its laser (Legacy, Transition, Standard) and a liquid inlet for its immersion (Transition,
+  Standard).
 - **Every machine shows what it is processing:** it draws the recipe at work with its material, its colour, its part
   and its form, and gives off its particles in the colour of what comes out. A machine of a single recipe (the Coke
   Oven, the Air Separation Unit, the Siemens Reactor) always shows the same.
@@ -277,7 +278,7 @@ lithography draws 10 kW, as the real one is the hungriest machine of a fab.
   nickel into 10; metallurgical silicon, 1 sand and 1 coke;
   calcium carbide, 1 calcite and 1 coke.
 - **Gases:** each step of the Air Separation Unit takes air and gives 780 mB of nitrogen, 210 of oxygen, 9 of argon and
-  1 of krypton. Krypton is raised well above its real share, or the Transition's laser would take hours to fill.
+  1 of krypton. Krypton is raised well above its real share, or the Legacy's KrF laser would take hours to fill.
 - **Electrolysis:** 1,000 mB of water into 1,000 of hydrogen and 500 of oxygen; 1 salt and 1,000 of water into 500 of
   chlorine, 500 of hydrogen and 1 caustic soda, as the real chlor-alkali cell does; 1 alumina and 1 coke into 1
   aluminium (the carbon anode is used up, as in the real cell); 1 copper ingot into 1 refined copper ingot.
@@ -368,7 +369,8 @@ the station's mask slot and is never used up. Its blank is a mask plate from the
 nugget laid on it in the Deposition Chamber. The Vintage station writes it by photo-reduction from a **Layout**, the
 chip's drawing cut in PVC film at the Vintage bench, as real layouts were cut in film and photographed down: the
 blank and the Layout give the mask, and the Layout is used up ([Recipes](recipes.md)). From the Legacy on, the
-linked computer writes the mask.
+linked computer is to write the mask, through a lithography program with a mask picker, which is still to build.
+Tape-Out counts the first mask written, whichever way ([Advancements](advancements.md)).
 
 **Lasers and LEDs.** The Crystal Puller also grows the boules of light: gallium arsenide (Legacy) from 2 gallium and 2
 arsenic; aluminium gallium indium phosphide (Transition) from 1 aluminium, 1 gallium, 1 indium and 1 phosphorus;
@@ -380,13 +382,13 @@ Line cuts a finished one into 16 laser diodes or 32 LEDs. It grows calcium fluor
 ### Chips are made by the computers of the era before
 
 From the Legacy on, an era's Lithography Station only works linked by peripheral cable, on its peripheral socket (a
-block of the station's own), to a computer of the era before or later, switched on and running: the computer runs the
-lithography. Every layer takes 20 seconds, and while it exposes the station runs on the computer as the `litho`
-process, holding memory: 2 MB for the Legacy's station, 32 MB for the Transition's, 256 MB for the Standard's, 2 GB
-for the Advanced's. A computer two eras newer than the one asked for exposes in half the time. The Vintage station
-needs no computer, since there is no era before it. Making a new era's computers is the work of the previous era's.
-Every era's station is the same body with its era's light: a mercury lamp in the Vintage, a KrF laser in the Legacy,
-an ArF laser with immersion in the Transition and the Standard, EUV in the Advanced.
+block of the station's own), to a computer of the era before the recipe's, or newer, switched on and running: the
+computer runs the lithography. Every layer takes 20 seconds, and while it exposes the station runs on the computer as
+the `litho` process, holding memory: 2 MB for the Legacy's station, 32 MB for the Transition's, 256 MB for the
+Standard's, 2 GB for the Advanced's. A computer two eras newer than the one asked for exposes in half the time. The
+Vintage station needs no computer, since there is no era before it. Making a new era's computers is the work of the
+previous era's. Every era's station is the same body with its era's light: a mercury lamp in the Vintage, a KrF laser in
+the Legacy, an ArF laser with immersion in the Transition and the Standard, EUV in the Advanced.
 
 ### The parts
 
@@ -415,8 +417,10 @@ assembling a computer by hand works as it does today.
   blocks are the Case Lift, two Robot Arms and the Parts Tray, with its terminal.
 - It builds every computer that is one block: the Personal Computer, the Crafting Computer, the Cluster Management
   Computer, the small computers to come, and every rack server chassis. The Mainframe and the other big blocks are
-  assembled where they stand.
-- It takes the Crafting Interface, so the network orders computers like any other craft.
+  assembled where they stand. A rack server chassis rises and comes down with no arm at work: its parts are not drawn
+  on the trays.
+- It takes the Crafting Interface, so the network orders computers like any other craft. Its window is J's Core's
+  standard machine screen.
 
 **Breaking a computer gives the whole computer**, with its parts inside, as a rack server does today. Parts come out by
 opening the case.
@@ -437,7 +441,7 @@ because the first computer already needs it.
   Legacy and the Transition, UEFI from the Standard ([Operating systems](operating-systems.md)).
 - It takes an assembled computer (it writes the firmware, then a system and programs onto its system disk), a loose
   motherboard (the firmware only) and a loose disk (a system and programs, which is how a rack server's bay drives get
-  their system).
+  their system). In a rack server it writes the firmware only.
 - The system and the programs come from media put into it, which it reads and never uses up: one copy installs as many
   machines as the player wants, as a factory image does.
 - It takes the Crafting Interface, so the network prepares machines on its own.
@@ -446,11 +450,12 @@ because the first computer already needs it.
 ### Abandoned buildings
 
 Twenty kinds of building lie abandoned across the Overworld, on land. Each is of one era, picked by its distance from
-the world's spawn: the Vintage near it, the Advanced far away, among the eras that building may be of. About one in
-five is **working**: its machines are whole, with their systems installed and on their network, and they switch on and
-run; once computers draw energy, a bank of charged J's Core basic batteries keeps them going for about a game day,
-then they go dark until the batteries are charged again. The rest are ruins, with their loot in chests and inside
-the broken machines (parts in the cases, boxed software on the shelves, media, cables, whole computers, manuals).
+the world's spawn: the Vintage near it, the Advanced far away, among the eras that building may be of. About one in five
+is **working**: its machines are whole, with their systems installed and on their network, and they switch on and run; a
+bank of charged J's Core basic batteries keeps them going for about a game day, then they go dark until the batteries
+are charged again. The bank stands with no cable to it in sight: the building's wiring is lost. The rest are ruins, with
+their loot in chests and inside the broken machines (parts in the cases, boxed software on the shelves, media, cables,
+whole computers, manuals).
 
 The spacing is the average distance, in chunks, between two buildings of the same kind (estimates); all twenty
 together give about one building every 190 blocks, most of them the small common ones.
@@ -474,7 +479,7 @@ together give about one building every 190 blocks, most of them the small common
 | Game studio | Legacy to Advanced | 72 | games and high-end graphics cards |
 | Hacker's den | Legacy to Advanced | 72 | a home-made rack, odd hardware, rare software, in a basement |
 | Electronics factory | all | 72 | the chain's machines half broken, wafers and chips: where the chain is learned |
-| Crypto mining farm | Standard, Advanced | 72 | Mining Computers and ASICs mining ([Teracoin](teracoin.md)) |
+| Crypto mining farm | Standard, Advanced | 72 | Mining Computers mining, whole in a farm that works and with a third of their cards gone in a ruin; no ASICs ([Teracoin](teracoin.md)) |
 | Datacenter | Legacy to Advanced | 112 | racks of servers, a Server Router, cables; large |
 | Supercomputing centre | Standard, Advanced | 160 | supercomputer racks and Phi coprocessors; the rarest |
 
@@ -492,10 +497,11 @@ together give about one building every 190 blocks, most of them the small common
   its monitor side by side, a chair in front. The signs are in English and never name an invented company.
 - The **hardware box** is a loot block of its own, printed with its era's machine.
 - **Each building's own case:** the electronic waste dump works through its office's computer; the delivery van never
-  works; a software house office draws one of the houses (never Midsoft) from the era of its first product, in that
-  house's colour; a ruined Midsoft office has been looted; a ruined bank's vault has been broken open; the game studio
-  has its era's top graphics card; the electronics factory has six of the chain's machines, formed and working, or
-  broken back into their blocks in a ruin; the hacker's den is in the basement of an ordinary house.
+  works; a software house office has the house its era's sign names, never Midsoft: Nouvell in the Vintage, Daylight
+  Foundation in the Standard and Autodeck in the other eras, in that house's colour; a ruined Midsoft office has been
+  looted; a ruined bank's vault has been broken open; the game studio has its era's top graphics card; the electronics
+  factory has six of the chain's machines, formed and working, or broken back into their blocks in a ruin; the hacker's
+  den is in the basement of an ordinary house.
 
 The buildings are J's Computers' own. Each one can be switched off in the settings, with its spacing and the eras it
 may be of.
@@ -560,3 +566,9 @@ enabled = true
 spacing = 112                            # chunks between two of them, on average
 eras = ["legacy", "transition", "standard", "advanced"]
 ```
+
+## To build
+
+- The lithography program on the computer linked to a Legacy or later Lithography Station, with the mask picker that
+  writes the station's mask.
+- The coil whine of a machine under load, with the sound pass.

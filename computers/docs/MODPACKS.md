@@ -1,8 +1,9 @@
 # Modpacks: recipes and loot
 
-J's Computers has no crafting recipes of its own, and it puts nothing in the world's chests: everything it adds comes
-from its creative tabs. For now that makes it a mod to play in creative. A modpack that wants it in survival can give
-it both, recipes and loot, with a plain datapack or with [KubeJS](https://kubejs.com). This page shows how.
+J's Computers comes with a recipe for everything it adds, along its own chain ([The chain](CHAIN.md)), and puts its
+loot in the chests of its abandoned buildings ([Found in the world](FOUND_IN_THE_WORLD.md)). A modpack can change
+both, giving a thing another recipe or putting the mod's things in other chests, with a plain datapack or with
+[KubeJS](https://kubejs.com). This page shows how.
 
 The examples below are the mod's own test data with the namespace changed to `mypack`: the tests load them and check
 what they make, so each one works as printed.

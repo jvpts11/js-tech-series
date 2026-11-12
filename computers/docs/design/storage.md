@@ -85,11 +85,11 @@ There is no Message Bus and no Redstone Bus face: the Redstone Interface is a pe
 
 ## Chemicals, the third kind of data
 
-A storage key has three kinds: ITEM, FLUID and CHEMICAL. A chemical (the gases and substances of mods like Mekanism) is
-known by its registry id and weighs like a fluid, in mB (1,000 mB = one item). The bridge to the mod that defines them
-(in J's Core) only exists when that mod is present; without it, nothing in the mod mentions chemicals, not even the
-tooltips. Buses, disks, terminal and Operations treat the three kinds the same way. The terminal and the desktop draw a
-fluid with its texture and a chemical with a colour swatch, with the amount in mB.
+A storage key has a kind: ITEM, one of the states of matter below, or CHEMICAL. A chemical (the gases and substances of
+mods like Mekanism) is known by its registry id and weighs like a fluid, in mB (1,000 mB = one item). The bridge to the
+mod that defines them (in J's Core) only exists when that mod is present; without it, nothing in the mod mentions
+chemicals, not even the tooltips. Buses, disks, terminal and Operations treat every kind the same way. The terminal and
+the desktop draw a fluid with its texture and a chemical with a colour swatch, with the amount in mB.
 
 ## Handing things over by hand
 
@@ -105,15 +105,15 @@ tab and the local tab):
 
 Any new route for handing a stack to a computer follows this rule.
 
-## To build
+## Corruption
 
-### Corruption
+Corruption never happens in normal play. It only comes from exceptional events: a **network conflict** ([The
+network](network.md)), a **thermal trip** (each disk of the machine that shut down has a 25% chance of having 5% of what
+it holds corrupted, estimates, [Temperature](temperature.md)) and, with security, **viruses** and **hacking**
+([Security](security.md)).
 
-Corruption never happens in normal play. It only comes from exceptional events: a **network conflict**
-([The network](network.md)), a **thermal trip** (a chance of corrupting the disk of the machine that shut down,
-[Temperature](temperature.md)) and, with security, **viruses** and **hacking** ([Security](security.md)).
-
-- A share of the stored items (10% in a conflict, an estimate) becomes **corrupted**, marked inside the volume.
+- A share of the stored items (10% in a conflict, an estimate, on both networks, once a conflict) becomes
+  **corrupted**, marked inside the volume. The damage is a share of what the disk holds.
   Corrupted items leave the index and can't be requested; the Storage Insights and This PC show how much of each disk is
   corrupted. They don't vanish at once: they wait for the Defrag.
 - It can also hit a disk's **system files**; a system missing files may not start
@@ -122,9 +122,10 @@ Corruption never happens in normal play. It only comes from exceptional events: 
   by what goes over 50% (a disk 70% corrupted loses 20% of its capacity); over 90% the disk dies.
 - The private part of a Personal Computer is never affected.
 
-**The Defrag** is the classic defragmenter, a program every computer comes with: `DEFRAG` on MC-DOS, the Disk
-Defragmenter on Frames, and `fsck` on Linux, FreeBSD and UNIX, which is what repairs a disk on those systems. It runs on
-the computer and tries every corrupted item once a pass, with a chance by disk kind (estimates):
+**The Defrag** is the classic defragmenter, a program every computer comes with: `DEFRAG` on MC-DOS and MC-NET, the Disk
+Defragmenter on Frames (Optimize Drives on Frames 10 and 11), and `fsck` on Linux, FreeBSD and UNIX, which is what
+repairs a disk on those systems. It runs on the computer and tries every corrupted item once a pass, with a chance by
+disk kind (estimates):
 
 - a hard disk recovers 95%;
 - an SSD recovers while the damage is under 70% (a base chance of 70%, minus 10 points for every 10% more damage);
@@ -142,13 +143,18 @@ a pass saying what it recovered and what was lost.
 **Settings:** in `[item_loss]` ([Power](power.md)), the `corruption` key turns all corruption off, and
 `network_conflict` only the corruption that comes from a conflict.
 
-### Every state of matter
+## Every state of matter
 
 J's Core splits matter into its states: items, liquids, gases, plasmas, supercritical fluids, slurries and exotic
-matter. The storage key follows: its kinds become ITEM, LIQUID (today's FLUID), GAS, PLASMA, SUPERCRITICAL, SLURRY and
-EXOTIC, as J's Core declares them, and every one weighs as fluids do today, 1,000 mB to an item. CHEMICAL stays only
+matter. The storage key follows: its kinds are ITEM, LIQUID, GAS, PLASMA, SUPERCRITICAL, SLURRY and EXOTIC, as J's
+Core declares them, and every one weighs as fluids always have, 1,000 mB to an item. The code's key for liquids stays
+FLUID, so saved worlds keep theirs; a player sees Liquid. CHEMICAL stays only
 for what has no state in J's Core (Mekanism's infusion types and pigments); Mekanism's gases and slurries come in
-through the bridge as GAS and SLURRY. Buses, disks, the terminal and Operations treat every kind the same way, as they
-do the three of today, and the terminal shows each with its picture: a liquid's texture, a gas's or a plasma's colour
-swatch. The category filters list them by state: Items, Liquids, Gases, Plasmas, Supercritical, Slurries and Exotic
-matter, with Chemicals for Mekanism's.
+through the bridge as GAS and SLURRY. Buses, disks, the terminal and Operations treat every kind the same way, and the
+terminal shows each with its picture: a liquid's texture, a gas's or a plasma's colour swatch. The category filters
+list them by state: Items, Liquids, Gases, Plasmas, Supercritical, Slurries and Exotic matter, with Chemicals for
+Mekanism's.
+
+## To build
+
+- **Viruses and hacking**, the corruption security brings ([Security](security.md)).

@@ -1,11 +1,9 @@
 # Wireless
 
 Wireless is an essential part of the mod, like the cables: it can't be turned off ([Overview](overview.md)). It starts
-in the Legacy, when Wi-Fi arrives; the Vintage has no wireless. Nothing on this page exists yet.
+in the Legacy, when Wi-Fi arrives; the Vintage has no wireless.
 
-## To build
-
-### Access points
+## Access points
 
 The **Wireless Access Point** (WAP) is a network device, linked by a data cable, that draws energy and gives the
 wireless network to the portable devices and to the computers with a Wi-Fi card around it. There is one per era, each
@@ -24,11 +22,12 @@ limit of devices.
 The Legacy's (a blue and black box with two antennas) and the Transition's (glossy black, three antennas) stand on a
 desk and take their cables from behind, each line showing its socket where it meets the face ([Quince](quince.md)); the
 Standard's (a white disc with a blue ring) and the Advanced's (a rounded square with a light bar) go on a ceiling or a
-wall on their mounting plate and take their cables through that face. Data and energy come on two lines, with no Power
+wall on their mounting plate, never on a floor, and take their cables through that face; their ring and their light
+  bar are always lit. Data and energy come on two lines, with no Power
 over Ethernet. The Network Manager shows each as an ACCESS POINT node, and its tooltip gives its reach, its speed and
 its draw.
 
-### Wi-Fi cards
+## Wi-Fi cards
 
 An expansion card per era (PCI in the Legacy, PCI Express x1 later) that joins a computer to the network through an
 access point instead of a cable, at the speed of the older of the two, the card or the access point, as real Wi-Fi
@@ -37,7 +36,7 @@ Bluetooth on the same card; the antennas stand out of the computer's back. A car
 the small computers take one (the Personal Computer, the Crafting Computer, the Cluster Management Computer): the
 Mainframe and the racks stay on the backbone, by cable ([The network](network.md)).
 
-### Portable devices
+## Portable devices
 
 The PDA, the Smartphone and the Tablet follow real history, each per era: the PDA in the Legacy and the Transition (the
 Pocket PC with Wi-Fi), the Smartphone from the Transition on (2007) and the Tablet from the Standard on (2010). Each has
@@ -72,10 +71,11 @@ The twelve devices, each with its system as it was in its years:
 The tablets wear the look of their family's phone of the same era.
 
 - **The mobile system** is a real system, from the factory, with no installer: parodies of the real ones
-  ([Operating systems](operating-systems.md)). **Apps** are programs of the registry with a mobile platform, installed
-  through the Mirror like an app store ([Programs](programs.md)). The basic ones: the network (a simpler version of the
-  Network Interactor, to request, deposit, see the stock and craft anywhere an access point reaches), notifications
-  (below), the Crypto Wallet ([Teracoin](teracoin.md)) and the Messenger.
+  ([Operating systems](operating-systems.md)). **Apps** are entries of the mobile systems' own catalogue, served by the
+  Mirror like an app store ([Programs](programs.md)). From the factory a device has the network (a simpler version of
+  the Network Interactor, to request, deposit, see the stock and craft anywhere an access point reaches) and the
+  alerts (below), and the smartphones and tablets the camera, the gallery and Maps; the Crypto Wallet
+  ([Teracoin](teracoin.md)), the Messenger and prospecting install from the store.
 - Portable devices have no "tabs": they run their mobile system and its apps.
 - **In play:** in the hand a device is held as the game holds an item, its screen lit; in use it rises to the middle
   of the view over the blurred world, its own face framing its screen. Its battery is the item's bar, always in
@@ -87,7 +87,8 @@ The tablets wear the look of their family's phone of the same era.
   page, qOS's lock screen and Notification Center, Droidix's lock screen and shade) and as a badge on the app's
   icon. Settings show the hardware, the Wi-Fi and the battery.
 - **The apps by era:** the Crypto Wallet from the Transition, the Messenger from the Standard, the camera, the gallery
-  and Maps only on the smartphones and tablets, prospecting from the Standard. The stores (the Frames Marketplace,
+  and Maps only on the smartphones and tablets, prospecting from the Standard. A photo is the view cut to 4:3, and the
+  gallery keeps 60. The stores (the Frames Marketplace,
   the Quince Store and the Droidix Store) are served by the Mirror, and everything in them is free.
 - **The network app** has three tabs, Stock, Device and Craft, in the Network Interactor's words. A request puts the
   items into the device's own storage, never straight into the inventory; the Device tab takes them to the inventory
@@ -104,7 +105,8 @@ The tablets wear the look of their family's phone of the same era.
   never their coordinates, and shows them as a compass and bars ([Survival](survival.md)). There is
   no extra reach: another access point, on its cable, is how wireless goes further.
 - **The battery:** a portable runs on its battery, charged in the **Mobile Device Charging Dock** of its era on any
-  energy; a charge lasts about two game days of use, less on a PDA (estimates). The dock holds a device of its era by
+  energy; a charge lasts about two game days of use on a smartphone or a tablet and a day and a half on a PDA, and the
+  docks charge at 5, 5, 10 and 15 W by era (estimates). The dock holds a device of its era by
   the device's own model (a cradle in the Legacy, a white base in the Transition, an aluminium stand in the Standard,
   a wireless stand in the Advanced), the screen showing the battery filling, the dock's lamp lit. It has no window:
   a right click puts a device in and takes it out. Its energy comes from behind.
@@ -116,20 +118,32 @@ The tablets wear the look of their family's phone of the same era.
 With the portables comes the third family of systems and hardware, next to Frames and Linux: **Quince**, with its
 computers, servers and Mainframe as well ([Quince](quince.md)).
 
-### Notifications
+## Notifications
 
 The network sends **alerts** to the players' portable devices: an item below a threshold, an Operation that failed, a
 degraded power supply ([Power](power.md)), a UPS running on battery, a network conflict. Each player turns the five
 kinds on or off in the Alerts app, and watches the items they choose, with a level for each, on their own device; a
-rule for the whole network belongs to the automation. By default alerts only reach the device; a setting of each
-player (`jscomputers-client.toml`, `notifications_on_hud`) shows them on the HUD too, as J's Core notifications at the
-attention level, naming the device they came from. Who can see which alerts is decided with
+watched item warns once until it is back above its level. Alerts only reach a device on the network, within an access
+point's reach. A rule for the whole network belongs to the automation. By default alerts only reach the device; a
+setting of each player (`jscomputers-client.toml`, `notifications_on_hud`) shows them on the HUD too, as J's Core
+notifications at the attention level, naming the device they came from. Who can see which alerts is decided with
 security ([Security](security.md)).
 
 Inside the desktops, the system's own notifications (the Action Center, the balloons) and the advancement toasts carry
 on as they are.
 
-### Cost
+## Cost
 
 One index of access points per network, checked on a timer, never per player and per tick. Reach through space (the
 Communication Satellites) belongs to J's Space ([The series](series.md)).
+
+## Building from the network
+
+A player carrying a portable joined to an access point builds from the network's storage: J's Core's building tools and
+its Multiblock Builder take the blocks they place from the network, and give back what is left, as they take from the
+player's inventory. Until security comes, a network lets anyone's portable take from it.
+
+## To build
+
+- A password and a pattern on the lock screen, when security reaches the portables ([Security](security.md)).
+- Paint opening a PNG, so the camera's photos open beyond the device's gallery.

@@ -116,23 +116,24 @@ inventory, the Crafting Interface feeds any machine with slots and the usual cap
 the bridge. J's Core's Space Persistor makes Chicken Chunks unnecessary ([The network](network.md)). New specific
 integrations are decided when there is a concrete reason, always behind a guard.
 
-**To build: Create**, decided for Carbon, behind a guard and isolated in an adapter like every optional mod:
+**Create**, behind a guard and isolated in an adapter like every optional mod:
 
 - **On Create's contraptions** (lifts, bearings, trains), whose blocks leave the world: a computer shuts down cleanly
   when the contraption is assembled, as `shutdown` does, keeps everything, and stays off when it is taken apart. It
   refuses to be assembled while it does what it cannot lose (a copy, an install, Operations under way on a Mainframe or
-  a server): the contraption doesn't assemble, and both Create's message and the computer's state say why.
+  a server): the contraption doesn't assemble; Create says the block cannot be moved, and the computer's screens say
+  why. The big machines (the Mainframe, the Server Rack, the Mining Computer, the WAN Gateway) ride too: their parts
+  keep their origin relative to themselves and turn with the contraption, as they do on J's Core's moving
+  structures.
 - **On Create Aeronautics' ships**, whose blocks stay real on Sable's sub-levels, the computers and the peripherals
-  aboard keep working in flight, once it is checked that the sub-levels keep their positions and their block
-  entities running; if they don't, the computers fall back to the contraptions' rule.
+  aboard keep working in flight.
 - **To the ground** a ship talks by wireless: an Access Point aboard reaches one on the ground within its reach, and a
   data cable never crosses between them ([Wireless](wireless.md)).
-- **Create's machines:** items and fluids already go through the buses. The industrial control cable reads a kinetic
-  network for SELECT (its speed, stress and capacity, as the `create_kinetics` table) and an UPDATE sets a Rotation
-  Speed Controller's target speed; clutches and gearshifts stay the Redstone Interface's.
-- **Versions:** Create, Create Aeronautics and Sable are pinned at their stable versions when Carbon opens, with
-  GameTests on them; outside the tested range the integration turns itself off with a warning in the log, never a
-  crash.
+- **Create's machines:** items and fluids already go through the buses. With J's Industrial installed, its industrial
+  control cable reads a kinetic network for SELECT (its speed, stress and capacity, as the `create_kinetics` table) and
+  an UPDATE sets a Rotation Speed Controller's target speed; clutches and gearshifts stay the Redstone Interface's.
+- **Versions:** Create 6.0, Create Aeronautics and Sable are pinned at their stable versions, with GameTests on them;
+  outside the tested range the integration turns itself off with a warning in the log, never a crash.
 
 ## Saving
 
@@ -147,14 +148,13 @@ integrations are decided when there is a concrete reason, always behind a guard.
 - A save from an older version is read or refused with a message; breaking worlds between alpha versions is acceptable.
 - The code is the source of what each block and item keeps: this design doesn't list the fields.
 
-## To build
+## The keys Carbon brought
 
-**J's Computers' numbers leave J's Core's file.** The disks' latency, the Subframe's share and the time programs may
-spend move from `jstech-balance.toml` to `jscomputers-server.toml`; the Operations framework's keys (how long an
-Operation waits, how it climbs in priority, how long a saved one may wait) stay in J's Core's file, which every mod of
-the series reads.
-
-The keys of the systems still to build, which come with them:
+**J's Computers' numbers are in its own file.** The disks' latency, the Subframe's share and the time programs may
+spend are in `jscomputers-server.toml`'s `[balance]`, no longer in `jstech-balance.toml`; the Operations framework's
+keys (how long an Operation waits, how it climbs in priority, how long a saved one may wait) stay in J's Core's file,
+which every mod of the series reads. Beside the sections below, the server's file keeps `[power]`, `[boot]`,
+`[install_by_hand]`, `[prompt]`, `[programs]`, `[printing]` and `[soundfoundry]`, each described with what it sets.
 
 ```toml
 # jscomputers-server.toml
@@ -190,3 +190,8 @@ lost_device_hours = 72                   # a portable out of every inventory thi
 [client]
 notifications_on_hud = false             # the network's alerts on the HUD too (Wireless)
 ```
+
+## To build
+
+- **The `[ai]` section**, the AI's list of the items that can be generated and the tokens of each, comes with the AI
+  ([Artificial intelligence](ai.md)).

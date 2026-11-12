@@ -108,23 +108,29 @@ The **Storage Insights** (a Vaultis program) is the storage dashboard: the total
 search and favourites), the types under a threshold, how full each server is, and each type's detail (where it is, what
 makes it, which buses filter it).
 
-## To build
+## Power, heat, graphs, the event log and the statistics
 
-- **The Local header shows the draw** (the parts' watts and the FE per tick taken from the grid, [Power](power.md)) and
-  the machine's **id**, which tells it apart from machines with the same name (each machine's detail in the Network
-  Manager shows it too). Temperature comes with [Temperature](temperature.md).
+- **The Local header shows the draw** (the parts' watts and the energy taken from the grid, [Power](power.md)), the
+  machine's temperature ([Temperature](temperature.md)) and the machine's **id**, which tells it apart from machines
+  with the same name (each machine's detail in the Network Manager shows it too).
 - **Graphs:** the Task Manager and the System Monitor show the **processor's use**, the share of the instruction credits
   per tick ([Σ and Σ#](sigma.md)) that programs spend, in a graph like a real system's performance tab, and the
-  **energy** one (watts and FE per tick); temperature's comes with temperature.
+  **energy**: the Task Manager's Power page on Frames XP, 7, 10 and 11, the System Monitor's Power and Temperature pages
+  on the others, where KDE's and GNOME's task managers have no Power page. A graphics card's temperature is not shown.
+  On Frames XP and 7 a click on the status bar changes the period, and every window counts in the game's time.
 - **The shopping list:** the Craft Planner's Print prints the plan, with what is missing highlighted. The **history** of
-  crafts is the Operations log, filtered by CRAFT in the Network Manager.
+  crafts is the Operations log, filtered by CRAFT in the Network Manager; the log still keeps 32 entries.
 - **The network's event log** in the Log tab, with levels INFO, WARN and ERROR per machine, filters by level, machine
-  and period, Print, and export to a file on a disk ([Operations](operations.md)).
+  and period, Print, and export to a file on a disk ([Operations](operations.md)). It opens on the last day.
 - **Longer statistics:**
   - windows of the last hour, the last game day and the last 7 game days, kept as counters per interval (O(1));
-  - each server's **uptime** (the time since its last boot), in the Devices tab;
+  - each server's **uptime** (the time since its last boot), in the Devices tab, in days alone from 100 days on;
   - **the network's graph:** the use of the orchestration capacity over the last 2 hours. Each machine's processor graph
-    is in the Task Manager; temperature's comes with temperature.
+    is in the Task Manager.
 - **Mining:** the Mining Panel program and the Crypto Wallet ([Teracoin](teracoin.md)).
 - **Portable devices** have no tabs: they run their mobile system and its apps; the network app is a simpler Network
   Interactor ([Wireless](wireless.md)). The **notifications** are in [Wireless](wireless.md) too.
+
+## To build
+
+- **A graphics card's temperature**, when graphics cards have one.

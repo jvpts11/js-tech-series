@@ -6,7 +6,7 @@ its mod's.
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026: the framework with its resources, sides, never jammed,
+Everything this page designs is built, as of November 2026: the framework with its resources, sides, never jammed,
 recipes, control, setting up fast, upgrades, and the screen with the machine's last ten minutes. How a mod uses it,
 with code: [Machines](../MACHINES.md). Nothing of this page is left to build; J's Industrial's compressed air reaches a
 machine through the framework's ports for other resources.
@@ -24,7 +24,8 @@ The framework gathers what the machines of Mekanism, Thermal and EnderIO do, in 
   the machine makes into the inventory or line next to it, as the discharge pumps of real machines do, and
   **auto-input** pulls from a neighbour; each with its rate and its filters, per face and per resource.
 - **Its state is always in view**: the screen says whether it is working, waiting for input, has its output full, has no
-  energy, is on undervoltage or overvoltage, has a blown fuse, is damaged, or is turned off by redstone. In the world, a
+  energy, is on undervoltage or overvoltage, has a blown fuse, is damaged, or is turned off by redstone; and, under the
+  status, why it waits when its kind of machine can say more (the reason it refused what it was given). In the world, a
   working machine shows it, with its sound and particles for starting, working and stopping.
 - **No wear.** A machine is only damaged by overvoltage, an explosion, sabotage or overheating.
 - **Failing safe.** A machine built to be forgotten, as a mod's sources from fusion up are, declares that it fails
@@ -70,6 +71,9 @@ The framework gathers what the machines of Mekanism, Thermal and EnderIO do, in 
   worn out, becomes its spent form, which a data map names, or is gone. One that cannot be damaged, a die, never wears.
 - **JEI and EMI fill the machine**: their "+" button moves what a recipe takes from the player's inventory into the
   machine's slots.
+- **Exact inputs**, for a kind of recipe that asks for them: while a slot or a tank holds anything the recipe does not
+  take, the machine makes nothing, so no recipe is ever made from part of another's inputs. Otherwise a recipe takes
+  what it needs from among whatever the machine holds.
 
 ### Control
 

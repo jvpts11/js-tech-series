@@ -202,52 +202,63 @@ By Integra, PCIe 3.0, Standard:
 Redstone is not a card: it is the Redstone Interface peripheral (above). RAID is not a card either: it is the RAID
 Controller bay gadget ([Servers and racks](servers-and-racks.md)).
 
+## The drives, touch and the Dock Station
+
+- **The DVD Drive is a Transition drive,** as the real ones were and as the Transition's programs need, since they
+  install from DVD ([Programs](programs.md)); the internal DVD drive of a case's bay is of the Transition too.
+- **Touchscreen monitors:** a touch version of the flat monitors from the Standard on. A player uses the computer by
+  touching the monitor's face in the world, with the right button, without opening the screen. Its glass is flush to
+  the edge, with the touch mark on its chin, and joined touch monitors make one big screen, one surface. The first
+  touch only wakes the monitor; then a right click taps, holding and moving drags, and holding still for a second is
+  the right click. The touch keyboard is that of Frames 10 and 11; the other systems take the text through the typing
+  line alone, where the chat's is, which sends every key but Esc. Clicking the frame still sits the player down.
+- **The Dock Station only takes disks of its era or older** in its trays, the Standard's and older; a pen drive in its
+  USB port goes in whatever its era ([Eras](eras.md)).
+
+## Copying music, media and books
+
+- **The Vinyl RW Drive**, one per era, reads and cuts vinyl. Soundfoundry records any disc a jukebox plays, the game's
+  or another mod's, into an audio file, in the song's own time. With a blank vinyl record in the drive, it cuts the
+  recording onto it, again in the song's time, and the cut is the original disc itself: music discs are rare, and they
+  are the one thing a copy may make. Only a song that came from a disc goes onto a vinyl. The drive plays the music
+  aloud in the room while Soundfoundry records it; Soundfoundry's VNL button (on the Legacy and Transition skins) and
+  its Vinyl page (on the Standard and Advanced) drive it, and keep the recordings in Music/Vinyl. A recording or a cut
+  the world stops in the middle of is lost. Blank vinyl records are made at the Electronics Workbench.
+- **Easy Disc Creator**, by Roxa, a program on a CD from Frames 95 on, copies a medium onto a blank one of the same
+  format or a larger one, at the medium's write speed, shown in KB/s: floppy disks, CDs, DVDs, Blu-ray discs, USB
+  sticks, and vinyl through the Vinyl RW Drive. With one drive it reads the source first and then asks for the blank.
+  Install discs copy like any other. Items never do: it refuses the disks that hold the network's storage and the .dat
+  files.
+- **The Extended CD Drive** is a duplicator tower two blocks tall, one reading tray and seven writing trays, from the
+  Legacy, with a DVD version from the Transition and a Blu-ray one from the Advanced. It works on its own, through its
+  screen in the look of its era's devices, its speeds in KB/s; the DVD version reads and writes CDs too, and the Blu-ray
+  one all three.
+- **The scanner**, a flatbed per era on the peripheral cable like the printer (the Pakard ScanJot, the Epsilon Perfecta
+  1240U, the Pakard ScanJot G4050, the Epsilon Perfecta V600 and the V39), reads a written book or a book and quill into
+  a .book file, an enchanted book into a .ench file and a map into a .map file, and the Printed Paper back into a .txt
+  or a .pix. Its lid is closed at rest and opens while it reads, at 8, 4, 2, 1 and 0.5 seconds a page by era; the item
+  stays and nothing is used up, and the file goes into the scans folder of the system at the cable's other end. A book
+  and quill becomes an unsigned .book, which prints back as a book and quill. The .book and the .ench open in the
+  Editor and the .map in Paint, each with its file icon. A .ench and a .map belong to the world they were scanned in:
+  changed, or carried to another world, they do not print.
+- **Printing the copies**: the printer copies a map onto an empty map in its tray. Books are printed by the **Large
+  Scale Printer** alone, a multiblock 4 wide, 3 tall and 3 deep, from the Legacy, of the Paper Feeder, the Print Unit,
+  the Inking Unit and the Perfect Binder, which draws 2 kW through its back. Paper goes in by hand, an import bus or a
+  hopper; a book costs 3 paper and nothing else and takes 2 seconds (estimates), a written book comes out as a copy, and
+  an enchanted book comes out with every enchantment at the level it was scanned with. What it prints goes straight into
+  the network or into a chest beside it, by a switch, and one of its blocks takes a peripheral cable, through which a
+  computer sends it what to print: it is a printer in the systems' Print dialog, with a queue of 16 jobs of up to 64
+  copies each. The server setting `printing.enchanted_books` turns the printing of enchanted books off, and the printer
+  then refuses them saying why.
+
+## The cards that came with Carbon
+
+The Wi-Fi cards ([Wireless](wireless.md)), the WAN Interface Cards and the Network Anchor Card
+([The network](network.md)).
+
 ## To build
 
-- **The DVD Drive becomes a Transition drive,** decided for Carbon, as the real ones were and as the Transition's
-  programs need, since they install from DVD ([Programs](programs.md)). Today it is a Standard drive, and the internal
-  DVD drive of a case's bay is already of the Transition.
-- **Touchscreen monitors,** decided for Carbon: a touch version of the flat monitors from the Standard on. A player
-  uses the computer by touching the monitor's face in the world, with the right button, without opening the screen.
-  Its glass is flush to the edge, with the touch mark on its chin, and joined touch monitors make one big screen,
-  one surface. A right click taps; holding and moving drags; holding still for a second is the right click. A text
-  field opens the system's touch keyboard on the face and a typing line where the chat's is; a system with no touch
-  keyboard takes the text through the line alone.
-- **The Dock Station only takes disks of its era or older** in its trays ([Eras](eras.md)). Today it takes disks of any
-  era.
-- **Copying music, media and books, decided for Carbon:**
-  - **The Vinyl RW Drive**, one per era, reads and cuts vinyl. Soundfoundry records any disc a jukebox plays, the
-    game's or another mod's, into an audio file, in the song's own time. With a blank vinyl record in the drive, it
-    cuts the recording onto it, again in the song's time, and the cut is the original disc itself: music discs are
-    rare, and they are the one thing a copy may make. Only a song that came from a disc goes onto a vinyl. The drive
-    plays the music aloud in the room while Soundfoundry records it; Soundfoundry's VNL button (on the Legacy and
-    Transition skins) and its Vinyl page (on the Standard and Advanced) drive it, and keep the recordings in
-    Music/Vinyl. Blank vinyl records are made at the Electronics Workbench.
-  - **Easy Disc Creator**, by Roxa, a program on a CD from Frames 95 on, copies a medium onto a blank one of the same
-    format or a larger one, at the medium's write speed: floppy disks, CDs, DVDs, Blu-ray discs, USB sticks, and vinyl
-    through the Vinyl RW Drive. With one drive it reads the source first and then asks for the blank. Install discs
-    copy like any other. Items never do: it refuses the disks that hold the network's storage and the .dat files.
-  - **The Extended CD Drive** is a duplicator tower two blocks tall, one reading tray and seven writing trays, from the
-    Legacy, with a DVD version from the Transition and a Blu-ray one from the Advanced. It works on its own, through its
-    screen in the look of its era's devices; the DVD version reads and writes CDs too, and the Blu-ray one all three.
-  - **The scanner**, a flatbed per era on the peripheral cable like the printer (the Pakard ScanJot, the Epsilon
-    Perfecta 1240U, the Pakard ScanJot G4050, the Epsilon Perfecta V600 and the V39), reads a written book or a book and
-    quill into a .book file, an enchanted book into a .ench file and a map into a .map file, and the Printed Paper back
-    into a .txt or a .pix. Its lid is closed at rest and opens while it reads, at 8, 4, 2, 1 and 0.5 seconds a page by
-    era; the item stays and nothing is used up, and the file goes into the scans folder of the system at the cable's
-    other end. A book and quill becomes an unsigned .book, which prints back as a book and quill. The .book and the
-    .ench open in the Editor and the .map in Paint, each with its file icon.
-  - **Printing the copies**: the printer copies a map onto an empty map in its tray. Books are printed by the **Large
-    Scale Printer** alone, a multiblock 4 wide, 3 tall and 3 deep, from the Legacy, of the Paper Feeder, the Print Unit,
-    the Inking Unit and the Perfect Binder, which draws energy through its back. Paper goes in by hand, an import bus or
-    a hopper; a book costs 3 paper and nothing else and takes 2 seconds, and an enchanted book comes out with every
-    enchantment at the level it was scanned with. What it prints goes straight into the network or into a chest beside
-    it, by a switch, and one of its blocks takes a peripheral cable, through which a computer sends it what to print:
-    it is a printer in the systems' Print dialog. A server setting turns the printing of enchanted books off, and the
-    printer then refuses them saying why.
 - **Cards still to build**, each designed with its system and existing per era:
-  - the Wi-Fi cards ([Wireless](wireless.md));
-  - the WAN Interface Cards and the Network Anchor Card ([The network](network.md));
   - the NPUs ([Artificial intelligence](ai.md));
   - the HSM modules ([Security](security.md));
   - the Simulation Interface ([The cosmological simulator](simulator.md)).

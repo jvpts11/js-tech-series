@@ -17,8 +17,8 @@ A program takes **no** orchestration capacity from Operations. What it spends:
 - **Video memory:** graphical windows and programs that draw (Paint).
 - **Instructions:** a Σ# program spends the machine's instruction credits ([Σ and Σ#](sigma.md)).
 
-What a program holds grows with the era of the machine it runs on, and a computer that hasn't the memory for it answers as
-its system does: Frames goes down, Linux, FreeBSD and UNIX end what holds the most, MC-DOS and MC-NET refuse it
+What a program holds grows with the era of the machine it runs on, and a computer that hasn't the memory for it answers
+as its system does: Frames goes down, Linux, FreeBSD and UNIX end what holds the most, MC-DOS and MC-NET refuse it
 ([Operating systems](operating-systems.md)).
 
 What decides whether a program installs on a machine:
@@ -236,20 +236,22 @@ package, and each manager's update verb brings the out-of-date ones to the regis
 version is the version of the language it knows (sgsc 2.0 is Σ# 2). Out-of-date programs keep running; they never break
 on their own.
 
-## To build
+## The programs that came with Carbon
 
 - **Programs in survival.** Installation media are never crafted: they are found in abandoned buildings and sold by the
   Programmer, a villager whose level is the era of what it sells ([Survival](survival.md)). Media copy them and the
-  Mirror serves them, as today.
+  Mirror serves them.
 - **Systems and desktops written by players** are packages too: published to the Mirror and installed from it, or
   copied on media ([Systems written by players](player-systems.md)).
 - **The "update available" badge.** Settings > Programs marks, on every desktop and in its skin, every program whose
-  version on the Mirror is newer than the installed one, with *update available: 1.4 (installed 1.3)* under its name
-  and an Update button that installs the new version as the manager's upgrade does; the page counts the updates at
-  the top. Each package manager marks them in its own list, with its real command: `apt list --upgradable`,
-  `dnf check-update`, `pacman -Qu`, `emerge -pvuD @world`, `pkg version -vRL=`, `pkg_add -un`; on OpenBSD, `syspatch`
-  is the badge for the system itself. Frames and UNIX System V, with no manager, have Settings alone, and Linux
-  Mint's Update Manager follows the same rule, with its shield on the panel.
+  version on the Mirror is different from the installed one, not only newer, with *update available: 1.4 (installed
+  1.3)* under its name and an Update button that installs the new version as the manager's upgrade does; the page counts
+  the updates at the top. Each package manager marks them in its own list, with its real command: `apt list
+  --upgradable`, `dnf check-update`, `pacman -Qu`, `emerge -pvuD @world`, `pkg version -vRL=`, `pkg_add -un`, and `keg
+  outdated` on Quince's systems; on OpenBSD, `syspatch` is the badge for the system itself. Settings > Programs also
+  lists the players' packages, each with Uninstall, and shows 0 or a dash for a version it doesn't know. Frames and UNIX
+  System V, with no manager, have Settings alone, and Linux Mint's Update Manager follows the same rule, with its shield
+  on the panel.
 - **The Backup Service:** a service on a rack server (there is no backup chassis) that backs up files, settings,
   `.craft` patterns, IQL and Σ# scripts, Teracoin wallets ([Teracoin](teracoin.md)), system images and the
   network's items.
@@ -257,12 +259,14 @@ on their own.
     losses** (a failure, a Defrag that gave up, a dead disk, a RAID 0 that lost a drive, a virus, a DROP), and restoring
     gives back, item by item, the lesser of what the backup holds and what the ledger lost since it, each loss once.
     What left the network, was exported or was crafted never comes back; a backup undoes a DROP.
-  - It keeps backups on another server's disk or in the **Tape Library**, a 2U rack unit per era with ten tape slots
-    and its card ([Servers and racks](servers-and-racks.md)): cold storage, huge and slow. The tapes are items of their
-    era, with their real native capacity, and on a tape an item weighs what it weighs on a disk of the tape's era: the
-    reel holds 150 items, the DLT 2,560, the LTO-3 1,600, the LTO-6 10,240 and the LTO-9 73,728. A tape winds before it
-    reads or writes.
-  - Backups run by hand or as an Automation Engine job (every night, for example).
+  - It keeps backups on another server's disk, as a `.bak` in its Backups folder, or in the **Tape Library**, a 2U rack
+    unit per era with ten tape slots and its card, which takes only the tapes of its era and serves the network of the
+    servers in its rack ([Servers and racks](servers-and-racks.md)): cold storage, huge and slow. The tapes are items of
+    their era, with their real native capacity, and on a tape an item weighs what it weighs on a disk of the tape's era:
+    the reel holds 150 items, the DLT 2,560, the LTO-3 1,600, the LTO-6 10,240 and the LTO-9 73,728. A tape winds before
+    it reads or writes.
+  - Backups run by hand or as an Automation Engine job, with the BACKUP verb (every night, for example, with the
+    `clock` and `weekday` fields of WHEN). The ledger of losses counts the servers in racks.
   - **Restoring** puts files back: a system image fixes a corrupted system ([Storage](storage.md)); a restored wallet
     gives back access to its coins; items come back as above.
   - The **Backup Console** (Vaultis, Legacy, any desktop machine) is its window, in four tabs (Jobs, Back up, Restore
@@ -271,7 +275,7 @@ on their own.
 - **The Messenger** never reaches the game's chat: conversations stay on the network. Whoever is at the Messenger
   Service's server deletes the conversations it keeps (only its administrator once accounts exist), with `msgsvc`
   (`list`, `delete N`, `delete --all`, `status`); a deleted conversation leaves every Messenger without notice.
-- **More programs**, decided and waiting:
+- **More programs:**
   - **The Media Player** comes with every desktop system (it isn't installed), under each environment's real name:
     Media Player on Frames 95, Frames Media Player from Frames XP on, Dragon Player on KDE Plasma, Videos on
     GNOME, Celluloid on Cinnamon, Audio on CDE and the QuinceTime Player on Quince's systems ([Quince](quince.md)). It
@@ -283,10 +287,10 @@ on their own.
     ([Sound](sound.md)): with no sound card it plays no recordings. Command `media`, 8 MB of memory.
   - **The Data Compressor:** a storage service on a server (Vaultis, Standard). More items per disk (+20%, an estimate)
     at the cost of a longer wait on every read (+2 ticks): good on a hard disk, debatable on an SSD, bad on NVMe, where
-    it triples the wait. A trade-off for the player to decide.
+    it triples the wait. A trade-off for the player to decide. A compressed disk taken out of its bay can show more
+    than full.
   - **Teracoin's software** ([Teracoin](teracoin.md)), by a new house, **Blockwright**: the Crypto Wallet, the Mining
     Panel, the `miner` at the prompt and the Mining Pool service.
-  - **The firewall, the IDS and the antivirus**, with security's second phase ([Security](security.md)).
   - **The Defrag**, which every computer comes with ([Storage](storage.md)).
   - **The disk tools**, which every system ships: **FDISK** at the prompt on MC-DOS and Frames 95; **Disk Management**
     (and `diskpart`) on Frames XP to 11; `fdisk` on every Linux, with the **KDE Partition Manager** on KDE Plasma and
@@ -295,8 +299,6 @@ on their own.
     They partition, format and resize by the rules of [Storage devices](storage-devices.md), and refuse to touch the
     partition the system runs from. The table Arch's `fdisk` writes during the install is the disk's real table from
     then on.
-  - **The AI framework** of each era, the **inference service** and the **AI management program**
-    ([Artificial intelligence](ai.md)).
 
   Their figures (estimates), as in the table above:
 
@@ -312,5 +314,14 @@ on their own.
 
   Linux Mint's Software Manager (64 MB) and Update Manager (32 MB) come with it, by Spearmint Linux
   ([Operating systems](operating-systems.md)).
-- **How they look:** every new program wears the skin of the desktop it runs on, as the others do (only Soundfoundry
-  has a skin of its own), and each has an approved mock before any code of its window.
+
+## How new programs look
+
+Every new program wears the skin of the desktop it runs on, as the others do (only Soundfoundry
+has a skin of its own), and each has an approved mock before any code of its window.
+
+## To build
+
+- **The firewall, the IDS and the antivirus**, with security's second phase ([Security](security.md)).
+- **The AI framework** of each era, the **inference service** and the **AI management program**
+  ([Artificial intelligence](ai.md)).

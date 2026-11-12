@@ -28,7 +28,7 @@ any item of the mod to open its page.
 
 | Page | What it covers |
 | --- | --- |
-| [Recipes and loot](MODPACKS.md) | Giving J's Computers recipes and chest loot with a datapack or KubeJS: ids, tags, installers. |
+| [Recipes and loot](MODPACKS.md) | Giving J's Computers recipes and chest loot with a datapack or KubeJS: ids, tags, installers; rewriting or translating the manuals with a resource pack. |
 
 ## For addon authors
 

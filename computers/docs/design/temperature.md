@@ -14,9 +14,7 @@ throughput ceiling, and the rack's window shows "THROTTLED x%". The numbers are 
 
 A rack over its budget also halves the life of its power supplies once they wear ([Power](power.md)).
 
-## To build
-
-### The thermal budget of every computer
+## The thermal budget of every computer
 
 Every computer, a block or in a rack, gets a thermal budget in watts: the heat it can take away from itself. The heat it
 makes is the watts of its parts. Every number here is an estimate.
@@ -44,15 +42,16 @@ makes is the watts of its parts. Every number here is an estimate.
 
   Every processor has a cooler slot over its socket. A water cooler takes the cooler slot and two of the case's fan
   slots for its radiator: the two on top when the case has them, otherwise the two at the front; the 360 mm one
-  takes two as well. A processor with no cooler adds nothing to the budget.
+  takes two as well. In the cases with a 5.25-inch bay, the drive there runs across the upper front fan, as it does
+  in the High Performance and Aesthetic cases. A processor with no cooler adds nothing to the budget.
 - **Quince's all-in-ones** have the budget of their era's case, fixed: their insides are closed
   ([Quince](quince.md)).
 - **A Mainframe's** cabinet takes away 1,500 W, plus its processors' coolers, one over each socket.
 - **A server in a rack** has no cooler of its own: the rack cools it, and the rack's budget counts no coolers.
-- **A rack** keeps its budget as it is today (1,000 W, plus 1,500 W for every Cooling Unit), and every Vent Panel adds
-  500 W ([Servers and racks](servers-and-racks.md)). The rack has one temperature for the whole cabinet, shared by every
-  machine in it as the budget is, and follows the same thresholds as every other computer: the cut it has today (the
-  budget over the load, down to 25%) is exactly what the throttling at 90 °C does.
+- **A rack** has 1,000 W, plus 1,500 W for every Cooling Unit, and every Vent Panel adds 500 W
+  ([Servers and racks](servers-and-racks.md)). The rack has one temperature for the whole cabinet, shared by every
+  machine in it as the budget is, and follows the same thresholds as every other computer: its cut (the budget over
+  the load, down to 25%) is exactly what the throttling at 90 °C does.
 - **Portable devices** (PDAs, smartphones, tablets) have no temperature.
 
 An example: a Standard gaming PC (a 95 W processor, a 250 W graphics card and 50 W for the rest) in a Neutral case with
@@ -67,7 +66,7 @@ seats, for a second processor and memory modules 5 to 8, shown only when a two-s
 All of this is in J's Computers, without J's Industrial. J's Industrial's machines (heat pipes, chillers, towers) can
 join later, trading heat through a heat capability of J's Core.
 
-### Temperature and its thresholds
+## Temperature and its thresholds
 
 The **temperature** is the surroundings' temperature plus the rise the load causes: the surroundings + 60 × (the load ÷
 the budget). With the surroundings at 20 °C and the load equal to the budget, the machine is at 80 °C.
@@ -86,12 +85,12 @@ The thresholds follow a real PC's:
 | 100 °C | **thermal trip**: if not even 25% holds the temperature, it shuts down suddenly, like a real processor's emergency cut-off |
 
 A thermal trip is a sudden shutdown ([Power](power.md)): the items in transit are lost (if the settings say so), and
-there is a **chance of the disk being corrupted** ([Storage](storage.md)). The machine only starts again once it has
-cooled below 60 °C, and the POST shows the real warning, "CPU over temperature". This only happens to whoever gets it
-wrong (a processor with no cooler, a closed case in the Nether, too few fans for what is inside): a machine sized well
-stays under 80 °C.
+each disk has a 25% chance of being corrupted, in 5% of what it holds (estimates, [Storage](storage.md)). The machine
+only starts again once it has cooled below 60 °C, or below its surroundings plus 5 °C where they are hotter than 55 °C,
+and the POST shows the real warning, "CPU over temperature". This only happens to whoever gets it wrong (a processor
+with no cooler, a closed case in the Nether, too few fans for what is inside): a machine sized well stays under 80 °C.
 
-### Where it shows, and what else it weighs on
+## Where it shows, and what else it weighs on
 
 - The temperature shows in the Local header, in the Task Manager's graph ([Interface](interface.md)), in the Device
   Manager, in the rack's window ("THROTTLED x%" with the degrees) and in the firmware, whose hardware page shows the
@@ -111,4 +110,6 @@ stays under 80 °C.
   restart_below_c = 60                     # a machine that tripped starts again under this
   ```
 
-Today only the rack's thermal budget exists, in watts, with its cut down to 25%; block computers have no temperature.
+## To build
+
+Nothing on this page is left to build.

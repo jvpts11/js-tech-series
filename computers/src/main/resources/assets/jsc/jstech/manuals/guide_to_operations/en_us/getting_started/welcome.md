@@ -15,7 +15,7 @@ When a computer starts, the first thing it runs is the firmware ([](jsc:firmware
 
 To build a working computer you need parts: a motherboard, a processor (CPU), memory (RAM) and a power supply (PSU). A disk holds the system, and a graphics card (GPU) gives the monitor a picture. Each part has its own entry, and [Building your first computer](jsc:first_computer) puts them together.
 
-Every part of this mod comes from the creative tabs: J's Computers has no crafting recipes of its own. J's Computers holds what every era shares, and there is one tab for each era, from J's Computers - Vintage to J's Computers - Advanced ([](jsc:eras)). A modpack can give the mod recipes, with KubeJS or a datapack; then the recipe viewer, JEI or EMI, shows how each thing is made.
+In survival you make every part along the mod's own chain, from the ore you dig to the Electronics Workbench of its era ([](jsc:fab_from_ore)), and the recipe viewer, JEI or EMI, shows how each thing is made. In creative, the parts are on the creative tabs: J's Computers holds what every era shares, and there is one tab for each era, from J's Computers - Vintage to J's Computers - Advanced ([](jsc:eras)).
 
 ## How to read this manual
 

@@ -5,7 +5,7 @@ world, keys, and sound. Every mod of the series draws through it, so they look a
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026: screens declared in files with the layout engine and their
+Everything this page designs is built, as of November 2026: screens declared in files with the layout engine and their
 schema, styles and the tools that build them, the components, tooltips, fonts, motion, the HUD and its editor,
 notifications, the camera, accessibility, the settings of every mod and the sound kit. How a mod uses it, with code:
 [Screens](../SCREENS.md), [UI components](../UI_COMPONENTS.md), [Tooltips](../TOOLTIPS.md), [Fonts](../FONTS.md),
@@ -123,6 +123,7 @@ which goes past its end and settles there. A component is moved by its curves in
 - **Grouping**: ten alike warnings become one, with a count.
 - **A history**, opened by a key, of recent notifications.
 - **Actions**: a click opens the right place (the manual's page, the machine on the map).
+- **Where it came from**: a notification may name its origin (a device, a machine), said after the mod's name.
 - **The player chooses** where they appear, what to silence by kind and by mod, and a "do not disturb" mode.
 
 ### Tooltips

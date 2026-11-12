@@ -6,11 +6,12 @@ the contents and the index, searches them, and shows them in every manual that h
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026: the manuals with their chapters, sections and entries,
+Everything this page designs is built, as of November 2026: the manuals with their chapters, sections and entries,
 written in Markdown, the series' three manuals, the numbering, the styles as data, scenes in 3D and in motion, finding
 one's way (back and forward, bookmarks, search, the recipe viewers), the marks of what is new, live reload, the export
-to the web and the immersion. The Core's own chapter and the series' are Markdown files. What is left is under
-*Still to build* at the end. How a mod uses it, with code: [Manuals](../MANUALS.md).
+to the web and the immersion. The Core's own chapter, the series' and, since Carbon, J's Computers' Guide to
+Operations and its six books are Markdown files; J's Industrial's pages are still declared in code, under *Still to
+build* at the end. How a mod uses it, with code: [Manuals](../MANUALS.md).
 
 ## The design
 
@@ -58,7 +59,11 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
   with tables; links between entries go by their names; and the manual's own blocks (a recipe, a scene, a multiblock, a
   figure, a callout of a note, a warning or a plan, a table whose amounts are read from the code by name, a listing, a
   terminal session) are written in the file in a syntax of their own. The index, the glossary, the search and the
-  export to the web read the same files.
+  export to the web read the same files. A manual's items, its styles, the tables computed from the code, the
+  highlighting of its languages and the families of items an entry is the page of stay declared in code; everything
+  else is Markdown, so a resource pack rewrites or translates any page by shipping its file. The reader keeps a
+  trailing `#` in a heading and an escaped star as a star, lets an item of a header's list hold a comma inside double
+  quotes, and lets an entry and a manual share an id.
 
 ### Immersion
 
@@ -74,5 +79,5 @@ The framework gathers what GuideME, Patchouli, Modonomicon and Create's Ponder d
 
 ## Still to build
 
-- **J's Computers' manuals** (the Guide to Operations and its books) move to Markdown too, as J's Computers' last step
-  in this cycle; then the way of declaring entries in code goes, since no manual is left that uses it.
+- **J's Industrial's manual** (the Plant Drawings) moves to Markdown too, as J's Computers' did; then the way of
+  declaring entries in code goes, since no manual is left that uses it.

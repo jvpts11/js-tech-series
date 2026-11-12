@@ -98,10 +98,10 @@ computer:
 
 ## The Server Rack
 
-A 2 wide × 3 tall × 2 deep big block (12 blocks, placed whole), drawn as **one** model by its origin block. It holds servers and
-rack units in bays measured in U, and it is the only place servers work. There is a Server Rack per era (Vintage,
-Legacy, Transition, Standard, Advanced), and each takes servers of its era or older: a chassis of a later era is
-refused.
+A 2 wide × 3 tall × 2 deep big block (12 blocks, placed whole), drawn as **one** model by its origin block. It holds
+servers and rack units in bays measured in U, and it is the only place servers work. There is a Server Rack per era
+(Vintage, Legacy, Transition, Standard, Advanced), and each takes servers of its era or older: a chassis of a later era
+is refused.
 
 - The rack carries the network without being a member of it: the servers inside are members, with their own ids, and the
   rack is only their physical container. It has no hardware of its own; every server has its own power supply,
@@ -365,31 +365,38 @@ Core's model kit, drawn by the origin block, with every other block of the big b
 
 How racks are made is decided with how hardware is made ([Eras](eras.md)).
 
-## To build
+## The qServe, the Rack UPS and the rack units
 
 - **The qServe,** Quince's 1U server, one per era from the Legacy to the Advanced, in the ordinary racks
   ([Quince](quince.md)).
-- **The Rack UPS** protecting the whole rack from a power loss, like a UPS ([Power](power.md)). Today it takes 1U with
-  no effect.
-- **More rack units**, each with its system:
+- **The Rack UPS** protects the whole rack from a power loss, like a UPS ([Power](power.md)).
+- **The rack units**, each with its system:
 
   | Unit | Height | What it does |
   | --- | --- | --- |
-  | UPS Battery Expansion | 1U | Makes the Rack UPS last longer. They stack. ([Power](power.md)) |
+  | UPS Battery Expansion | 1U | Makes the Rack UPS last longer, 2.7 MJ more each. They stack. ([Power](power.md)) |
   | Vent Panel | 1U | Passive ventilation: adds 500 W to the thermal budget ([Temperature](temperature.md)), the cheap partner of the Cooling Unit. One for every era: it takes the colour of the rack it is in. |
-  | PDU (Power Distribution Unit) | 1U | Measures the energy per bay and makes the bays' power programmable: it exposes their power to IQL, so an UPDATE or a JOB turns servers on and off by rule. Real power automation. ([Power](power.md)) |
-  | Drive Shelf (JBOD) | 2U | A shelf of drives only (10 front slots, no server): it extends the bays of the server **right above it** in the stack. With no server above, it does nothing. A Storage Server with shelves is the monster NAS of the late game. |
-  | Tape Library | 2U | Cold storage for the Backup Service ([Programs](programs.md)): files, settings, system images and the network's items, on ten tapes of its era. Huge and slow; a tape winds before it reads or writes. Nothing duplicates through it: restoring gives back only what the network lost. |
+  | PDU (Power Distribution Unit) | 1U | Measures the energy per bay and makes the bays' power programmable: `QUERY power` reads it, and `UPDATE power SET on = yes` or `no` (in a JOB too) turns servers on and off by rule. Real power automation. ([Power](power.md)) |
+  | Drive Shelf (JBOD) | 2U | A shelf of drives only (10 front slots, no server): it extends the bays of the server **right above it** in the stack. With no server above, it does nothing. A Storage Server with shelves is the monster NAS of the late game. Its tooltip says "with 5U" where its own watts would be, as no bay drive draws energy yet. |
+  | Tape Library | 2U | Cold storage for the Backup Service ([Programs](programs.md)): files, settings, system images and the network's items, on ten tapes. It takes only the tapes of its era and serves the network of the servers in its rack, and the backup's book of losses counts only the servers in racks. Huge and slow: a tape winds end to end in 60, 90, 90, 100 and 110 seconds by era (estimates) before it reads or writes. Nothing duplicates through it: restoring gives back only what the network lost. |
+
+## The Server Router per era and the diagnostics
+
+- **A Server Router per era**, like the ordinary routers, with the rack budget growing with the era (estimates): Legacy
+  4, Transition 8, Standard 16, Advanced 32, and the eras after the Advanced 32 too. The Vintage has no datacenter
+  sections: its racks join the backbone directly.
+- **Diagnostics per section**, in the Cluster Manager, the program that runs the sections as one machine, with the last
+  hour's history as the Network Manager's Stats tab has: the **latency** (ticks from entering the router to the
+  server's answer, averaged over the last minute, against the section's base), the **throughput** (items a second
+  through the section, against its most) and the **alerts**: a server's disks over 90% full (WARN) or 98% (ERROR), a
+  rack over its thermal budget, the section's router at its rack budget, the latency over twice the section's base
+  (WARN). The alerts go into the network's event log ([Operations](operations.md)).
+- A Network Anchor Card keeps its chunks loaded under the quota of the rack's operator, the last player to place or
+  use it ([The network](network.md)).
+
+## To build
 
 - **The AI Rack** (Standard and Advanced), the third type of rack: only AI Servers and their units (the GPU Interconnect
   Switch, the Coolant Distribution Unit, the Power Shelf, the High Compute Switch), with a much larger thermal budget
   ([Artificial intelligence](ai.md)).
-- **A Server Router per era**, like the ordinary routers, with the rack budget growing with the era (estimates): Legacy
-  4, Transition 8, Standard 16, Advanced 32. The Vintage has no datacenter sections: its racks join the backbone
-  directly. Today there is one Server Router, with 8 racks in all.
-- **Diagnostics per section**, in the Cluster Manager, the program that runs the sections as one machine, with the last
-  hour's history as the Network Manager's Stats tab has: the **latency** (ticks from entering the router to the
-  server's answer, averaged over the last minute), the **throughput** (items a second through the section) and the
-  **alerts**: a server's disks over 90% full (WARN) or 98% (ERROR), a rack over its thermal budget, the section's router
-  at its rack budget, the latency over twice the section's base (WARN). The alerts go into the network's event log
-  ([Operations](operations.md)).
+- **The bay drives' own draw**, when bay drives draw energy: the Drive Shelf then shows its watts.

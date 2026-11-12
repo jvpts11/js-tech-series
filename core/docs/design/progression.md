@@ -5,24 +5,26 @@ reached without depending on it.
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026, except what *Still to build* at the end lists: the axes and
-the eras as a registry, axes that move by playing, progression kept per team, milestones, knowledge and the knowledge
-gate, the knowledge seal of structures, research with its discoveries and its kinds of data, advancements, and naming
-what is discovered. How a mod uses it, with code:
-[Progression](../PROGRESSION.md).
+Everything this page designs is built, as of November 2026: the axes and the eras as a registry, with J's Computers'
+hardware reading the same eras since Carbon, axes that move by playing, progression kept per team, milestones, knowledge
+and the knowledge gate, the knowledge seal of structures, research with its discoveries and its kinds of data,
+advancements, and naming what is discovered. How a mod uses it, with code: [Progression](../PROGRESSION.md).
 
 ## The design
 
 ### Eras as a registry
 
-The eras stop being a closed list. Each era has an **id**, a name, a colour and a **position in the order**, and is
-saved by its id; an add-on's era goes after Singularity or between two eras, and every rule that asks for "this era or
-later" follows the order. It touches what blocks have saved, so it is done in one go, together with J's Computers'
-registries of hardware and computers, when the first mod that needs them starts. Breaking alpha worlds is acceptable.
+The eras are a registry, not a closed list. Each era has an **id**, a name, a colour and a **position in the order**,
+and is saved by its id and sent by its name; an add-on's era goes after Singularity or between two eras, and every rule
+that asks for "this era or later" follows the order. A value kept per era falls back to the nearest earlier era that
+has one. J's Computers' hardware, computers and the seven eras they are made in are on it, so there is one kind of era
+in the series.
 
 ### The axes move by playing
 
-- The **hardware era** moves forward the first time a player builds a computer of that era (J's Computers).
+- The **hardware era** moves forward the first time a player builds a computer of that era (J's Computers): a valid
+  assembly of that era, put together or linked, takes its operator and their team to the era, forward only, with the
+  era's advancement.
 - The **industrial tier** moves forward the first time a player makes that tier's circuit (J's Industrial).
 
 ### Progression kept per team
@@ -74,8 +76,3 @@ computer stand on the same thing and neither mod needs the other.
 The **fictional elements** (from 119 on) can be named by the player who first discovers one on a server: the element
 and its items take that name, kept with the world, sent to every player, and the same in every language. With the
 setting off, the names the series gives them are used ([Materials](materials.md)).
-
-## Still to build
-
-- **The hardware eras' axis read from the registry of eras**: the mechanism is built, and the axis J's Computers'
-  hardware reads moves onto it when J's Computers does.

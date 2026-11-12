@@ -5,7 +5,7 @@ back, and felt by those who stand too close. It is in the spirit of Mekanism's h
 
 ## What exists today
 
-Everything this page designs is built, as of October 2026. How a mod uses it, with code: [Heat](../HEAT.md). Nothing
+Everything this page designs is built, as of November 2026. How a mod uses it, with code: [Heat](../HEAT.md). Nothing
 of this page is left to build; the body's own temperature is the hazards' ([Hazards](hazards.md)).
 
 ## The design
@@ -31,6 +31,9 @@ of this page is left to build; the body's own temperature is the hazards' ([Haza
 - **Insulation**: materials that insulate, such as rock wool and aerogel.
 - **Overheating**: past its limit a machine is damaged; heat passes to its neighbours and can **light what burns**
   ([Explosions and fire](explosions-and-fire.md)).
+- **A heat budget**, for a machine whose heat is better kept in watts than as a body of heat: the heat its work makes
+  now, the heat it takes away from itself (its casing, its fans, its coolers), how hot that leaves it and how much of
+  its work it still does. A computer is one, and whatever reads or shows a machine's heat asks for it the same way.
 
 ### Seeing and feeling it
 

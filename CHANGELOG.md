@@ -4098,6 +4098,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   said before. The chain's pages are one section of the Guide, The Fab, opening with a page that walks the chain in
   the order you use it, and the Teracoin section gains a page on the Crypto Wallet of a portable and Teracoin from a
   program.
+- (Computers) Survival in the documentation: the Guide's welcome and library pages, the README, Getting started and
+  the modpack page say that every part is made along the mod's own chain and every book at the Crafting Table or the
+  Large Scale Printer, the creative tabs being for creative.
+- (Core, Computers) The design pages describe what came with this release: J's Computers' and J's Core's pages say
+  what is built, and each lists at its end only what is still to build.
 
 ### Fixed
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as

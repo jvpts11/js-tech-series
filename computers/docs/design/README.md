@@ -56,60 +56,30 @@ For using the mod rather than building it, the player and developer guides are o
 Everything below is designed and waiting to be built, in the order of the pages. Each item links to the page that
 describes it.
 
-- Survival: J's Computers' easy chain with a bench per era and its machines, the Prebuilder and the Preinstaller, the
-  firmware on the motherboard, computers broken whole, twenty abandoned buildings, the Programmer and the IT
-  Technician. [Survival](survival.md), [Eras](eras.md)
-- Recipes: every block and item, at the Crafting Table, the era's bench and its assembly line, or the chain's
-  machines, one recipe one result. [Recipes](recipes.md)
-- Disks only in machines of their era or newer, and the Dock Station only taking disks of its era or older.
-  [Eras](eras.md), [Peripherals](peripherals.md)
-- Decided for Carbon: the Vinyl RW Drive that records and cuts music discs, Easy Disc Creator and the Extended CD
-  Drive that copy media, the scanner, the Large Scale Printer that prints books in bulk, and touchscreen monitors
-  from the Standard on. [Peripherals](peripherals.md)
-- The hardware era a player has reached, moved by building a working computer. [Eras](eras.md)
-- Motherboards with expansion slots in groups, PCI sound cards on Legacy boards, and the cooling parts.
+- The lithography program on the computer linked to a Legacy or later Lithography Station, with its mask picker.
+  [Survival](survival.md)
+- Motherboards with expansion slots in groups, and PCI sound cards on Legacy boards. [Eras](eras.md),
   [Hardware](hardware.md)
-- Real byte capacities for removable media. [Storage devices](storage-devices.md)
-- Energy: computers draw J's Core's energy, in watts, through their power supply. [Power](power.md)
-- Power supply wear, failure and the redundant 3000P, and overvoltage with fuses and UPS protection. [Power](power.md)
-- Sudden shutdowns, item loss when the network fails, disk checks at boot, UPS blocks and the Rack UPS.
+- Compute cards without video outputs, and the two-socket boards drawn inside their case. [Hardware](hardware.md)
+- Owners of files, with accounts. [Storage devices](storage-devices.md)
+- Overvoltage on the computers, with their fuses; the bypass beep and the coil whine, with the sound pass.
   [Power](power.md)
-- Thermal budgets and temperatures for every computer, from the case, its fans and coolers and the biome, with
-  throttling and thermal trips. [Temperature](temperature.md)
-- Making Subframes, and Subframes taking over a fallen orchestrator. [Computers](computers.md)
-- The computers still to build: the portables, the AI Server, the Mining Computer, the WAN Gateway Computer and the
-  Simulation Node. [Computers](computers.md)
-- Rack units: UPS Battery Expansion, Vent Panel, PDU, Drive Shelf and Tape Library.
-  [Servers and racks](servers-and-racks.md)
-- The AI Rack. [Servers and racks](servers-and-racks.md), [Artificial intelligence](ai.md)
-- A Server Router per era, and diagnostics per section. [Servers and racks](servers-and-racks.md)
-- Wireless: access points, Wi-Fi cards, portable devices and their notifications. [Wireless](wireless.md)
-- Network conflicts that lose items and corrupt both networks' storage. [The network](network.md)
-- The Network Anchor Card and J's Core's Space Persistor. [The network](network.md)
-- The WAN Gateway Computer: network extension and federation. [The network](network.md)
-- DROP without asking, and the UPDATE's cost in energy. [Operations](operations.md)
-- The network's event log. [Operations](operations.md), [Interface](interface.md)
-- Storage corruption and the Defrag, and a storage key for every state of matter. [Storage](storage.md)
-- In the interface: the draw and the id in the Local header, the performance graphs, the Craft Planner's Print and the
-  CRAFT filter, and longer statistics. [Interface](interface.md)
-- Programs: the "update available" badge, the Backup Service and its console, the Media Player of every desktop, the
-  Data Compressor, Blockwright's Teracoin software and the rest. [Programs](programs.md)
-- Version 3 of Σ and Σ#: exceptions, `goto`, `const`, and INTERCAL's `comefrom`, `abstainfrom` and `reinstate`; later
-  the player's generics; two new event sources, and the language reference in the game. [Σ and Σ#](sigma.md)
-- More triggers of the red page, the firmware on the motherboard, network boot from the Mirror, OpenBSD and Linux
-  Mint, accounts and passwords, the portables' mobile systems with a third family of systems, and the web of the
-  world. [Operating systems](operating-systems.md)
-- Operating systems and desktops written by players, through `System.OS`.
-  [Systems written by players](player-systems.md)
-- Quince, the third family: its all-in-ones and towers in every era, the qServe, the Quince Mainframe from the
-  Transition, the 68k, PowerPC and ARM64 instruction sets with Champollion, and its six systems. [Quince](quince.md)
+- The AI Server, the Security Control Computer and the Simulation Node. [Computers](computers.md)
+- The AI Rack, and the bay drives' own draw. [Servers and racks](servers-and-racks.md),
+  [Artificial intelligence](ai.md)
+- The NPUs, the HSM modules and the Simulation Interface. [Peripherals](peripherals.md)
+- The portables' password and pattern, and Paint opening a PNG. [Wireless](wireless.md)
+- Access control (GRANT, REVOKE and AUTH) and the audit log. [Operations](operations.md)
+- Viruses and hacking. [Storage](storage.md)
+- A graphics card's temperature. [Interface](interface.md)
+- The firewall, the IDS and the antivirus, and the AI's programs. [Programs](programs.md)
+- The player's generics, in version 4, and `System.Robots`. [Σ and Σ#](sigma.md)
+- Accounts and passwords, and the web of the world. [Operating systems](operating-systems.md)
+- Trust in the players' systems, with signatures. [Systems written by players](player-systems.md)
 - Security: the directory, roles, ID cards, hardware security modules, and later offensive security.
   [Security](security.md)
 - The AI: AI Servers, datasets, models, training, generation and forecasting. [Artificial intelligence](ai.md)
-- Teracoin: mining, pools, wallets, blocks and the 3D Printer. [Teracoin](teracoin.md)
+- Teracoin as J's Economy's currency. [Teracoin](teracoin.md)
 - The cosmological simulator. [The cosmological simulator](simulator.md)
-- Fifty more advancements, with the Fab and Teracoin tabs. [Advancements](advancements.md)
-- The hardware, computer and era registries in the API, the event for an era reached, temperature for other mods,
-  and dataset and model types. [The API](api.md)
-- Create: computers that shut down on contraptions and keep working on Create Aeronautics' ships, and Create's
-  machines read and commanded by the network. [Implementation](implementation.md)
+- The AI's dataset and model types, and Teracoin's API for J's Economy. [The API](api.md)
+- The `[ai]` settings. [Implementation](implementation.md)
