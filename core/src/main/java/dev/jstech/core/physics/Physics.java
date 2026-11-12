@@ -37,6 +37,7 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.util.ObfuscationReflectionHelper;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.EntityTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
@@ -88,6 +89,9 @@ public final class Physics {
                 .playToClient(OwnLawsPayload.TYPE, OwnLawsPayload.STREAM_CODEC, Physics::onOwnLaws));
         NeoForge.EVENT_BUS.addListener(EntityTickEvent.Pre.class, Physics::beforeTick);
         NeoForge.EVENT_BUS.addListener(EntityTickEvent.Post.class, Physics::afterTick);
+        // A player's game learns the laws they carry as they join, and again as they come back from death without.
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, event -> tellOwn(event.getEntity()));
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerRespawnEvent.class, event -> tellOwn(event.getEntity()));
         SpaceLaws.listen();
         MatterLaws.listen();
     }
@@ -155,10 +159,7 @@ public final class Physics {
     /** Has {@code entity} carry {@code laws} wherever it goes; {@link Laws#NONE} to carry none. */
     public static void own(final Entity entity, final Laws laws) {
         entity.setData(CoreAttachments.OWN_LAWS.get(), laws);
-        if (entity instanceof ServerPlayer player && player.connection != null
-                && player.connection.hasChannel(OwnLawsPayload.TYPE)) {
-            PacketDistributor.sendToPlayer(player, new OwnLawsPayload(laws));
-        }
+        tellOwn(entity);
     }
 
     /**
@@ -193,6 +194,15 @@ public final class Physics {
                     entity.getZ(), centre.x(), centre.y(), centre.z(), centre.g(), centre.radius(), fall, falling);
         };
         entity.addDeltaMovement(new Vec3(change[0], change[1], change[2]));
+    }
+
+    /* Tells a player's game the laws they carry, which it moves them by: none for one that carries none. */
+    private static void tellOwn(final Entity entity) {
+        if (entity instanceof ServerPlayer player && player.connection != null
+                && player.connection.hasChannel(OwnLawsPayload.TYPE)) {
+            PacketDistributor.sendToPlayer(player, new OwnLawsPayload(player.hasData(CoreAttachments.OWN_LAWS.get())
+                    ? player.getData(CoreAttachments.OWN_LAWS.get()) : Laws.NONE));
+        }
     }
 
     /*

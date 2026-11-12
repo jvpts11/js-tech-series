@@ -17,6 +17,8 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.LongSupplier;
 import org.jetbrains.annotations.ApiStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Work done away from the main thread, and its result handed back to the main thread, where the game may be touched:
@@ -33,6 +35,8 @@ public final class TaskRunner {
     private final LongSupplier nanoClock;
     private final Queue<Runnable> handBacks = new ConcurrentLinkedQueue<>();
     private final Set<Task<?>> live = ConcurrentHashMap.newKeySet();
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(TaskRunner.class);
 
     /** A runner on {@code workers}, timing its budget by {@code nanoClock}. */
     public TaskRunner(final ExecutorService workers, final LongSupplier nanoClock) {
@@ -112,7 +116,12 @@ public final class TaskRunner {
             live.remove(task);
             if (!task.cancelled()) {
                 task.finish();
-                handBack.run();
+                // What a caller does with a result is its own: a throw is told and ends nothing else, nor the tick.
+                try {
+                    handBack.run();
+                } catch (final RuntimeException thrown) {
+                    LOGGER.error("A task's hand-back threw", thrown);
+                }
             }
         });
     }

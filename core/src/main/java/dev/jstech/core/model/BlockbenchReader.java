@@ -292,6 +292,7 @@ public final class BlockbenchReader {
         };
         final Map<String, ModelAnimation.Tracks> bones = new LinkedHashMap<>();
         final List<ModelAnimation.Event> events = new ArrayList<>();
+        double latest = 0;
         if (animation.has("animators")) {
             for (final Map.Entry<String, JsonElement> entry : animation.getAsJsonObject("animators").entrySet()) {
                 final JsonObject animator = entry.getValue().getAsJsonObject();
@@ -300,6 +301,7 @@ public final class BlockbenchReader {
                     final JsonObject keyframe = each.getAsJsonObject();
                     final String channel = ModelJson.string(keyframe, "channel", "rotation");
                     final double time = ModelJson.number(keyframe, "time", 0);
+                    latest = Math.max(latest, time);
                     switch (channel) {
                         case "sound" -> event(keyframe, time, ModelAnimation.EventKind.SOUND, events);
                         case "particle" -> event(keyframe, time, ModelAnimation.EventKind.PARTICLE, events);
@@ -318,8 +320,10 @@ public final class BlockbenchReader {
                 }
             }
         }
-        return new ModelAnimation(ModelJson.string(animation, "name", "animation"),
-                ModelJson.number(animation, "length", 0), loop, bones, Map.of(), events);
+        // Blockbench saves no length (0) for an animation whose length is left to it: it ends at its last keyframe.
+        final double length = ModelJson.number(animation, "length", 0);
+        return new ModelAnimation(ModelJson.string(animation, "name", "animation"), length > 0 ? length : latest,
+                loop, bones, Map.of(), events);
     }
 
     private static AnimationChannel channel(final List<Keyframe> keyframes, final AnimationChannel.Kind kind) {

@@ -208,7 +208,7 @@ public final class AnimationController {
         return List.copyOf(out);
     }
 
-    /* Tells of the events whose times lie after {@code after} and up to {@code upTo}, round every loop between. */
+    /* Tells of the events whose times lie after {@code after} and up to {@code upTo}, round the loops between. */
     private void events(final ModelAnimation playing, final double after, final double upTo,
                         final IAnimationListener listener) {
         if (playing.events().isEmpty() || upTo <= after) {
@@ -223,12 +223,14 @@ public final class AnimationController {
             }
             return;
         }
-        final long firstRound = (long) Math.floor(Math.max(0, after) / length);
+        // Unseen for a while, it was not drawn: it tells of the last loop's events only, not of every loop it missed.
+        final double from = Math.max(after, upTo - length);
+        final long firstRound = (long) Math.floor(Math.max(0, from) / length);
         final long lastRound = (long) Math.floor(upTo / length);
         for (long round = firstRound; round <= lastRound; round++) {
             for (final ModelAnimation.Event event : playing.events()) {
                 final double at = round * length + event.time();
-                if (at > after && at <= upTo) {
+                if (at > from && at <= upTo) {
                     listener.event(this.name, playing, event);
                 }
             }

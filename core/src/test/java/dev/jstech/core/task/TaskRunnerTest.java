@@ -75,6 +75,20 @@ class TaskRunnerTest {
     }
 
     @Test
+    void drain_goesOnPastAHandBackThatThrows() {
+        final List<Integer> results = new ArrayList<>();
+        runner.submit(() -> 1, result -> {
+            throw new IllegalStateException("a caller's own trouble");
+        }, failure -> { });
+        waitUntilWaiting(1);
+        runner.submit(() -> 2, results::add, failure -> { });
+        waitUntilWaiting(2);
+
+        assertEquals(2, runner.drain(Long.MAX_VALUE), "the throw ends neither the drain nor its caller");
+        assertEquals(List.of(2), results);
+    }
+
+    @Test
     void drain_handsOneBackEvenWithNoBudget() {
         runner.submit(() -> 1, result -> { }, failure -> { });
         waitUntilWaiting(1);

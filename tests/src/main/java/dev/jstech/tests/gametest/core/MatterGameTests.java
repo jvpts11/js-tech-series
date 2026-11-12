@@ -12,12 +12,15 @@ import dev.jstech.core.chemical.ChemicalBridges;
 import dev.jstech.core.chemical.IChemicalPort;
 import dev.jstech.core.grid.GridKind;
 import dev.jstech.core.integration.mekanism.MekanismIntegration;
+import dev.jstech.core.inventory.FaceMode;
+import dev.jstech.core.inventory.ItemFilter;
 import dev.jstech.core.jstechseries.Element;
 import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.ExoticMatter;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.ContainmentTank;
+import dev.jstech.core.matter.FaceMatterHandler;
 import dev.jstech.core.matter.MatterBridges;
 import dev.jstech.core.matter.MatterGrids;
 import dev.jstech.core.matter.MatterRelease;
@@ -101,6 +104,18 @@ public final class MatterGameTests {
                 "what it holds is saved with it: " + loaded.held());
         helper.assertTrue(loaded.release().map(MatterStack::amount).orElse(0L) == 150_000L
                 && loaded.held().isEmpty(), "and a broken tank lets it all out");
+        helper.succeed();
+    }
+
+    /* A line checks the pressure of what gives it a gas against what it holds: a face of a block gives the block's. */
+    @GameTest(template = ARENA)
+    public static void face_givesOutItsBlocksPressure(final GameTestHelper helper) {
+        final MatterTank tank = new MatterTank(MatterState.GAS, 1_000L, 200L, () -> { });
+        tank.insert(new MatterStack(Elements.of(Element.HYDROGEN), 150_000L), false);
+        final FaceMatterHandler face = new FaceMatterHandler(tank, FaceMode.OUT, ItemFilter.EVERYTHING);
+
+        helper.assertTrue(face.pressureNow(0) == tank.pressureNow(0) && tank.pressureNow(0) == 150.0,
+                "the face gives out at the tank's 150 times the air's pressure, not at " + face.pressureNow(0));
         helper.succeed();
     }
 

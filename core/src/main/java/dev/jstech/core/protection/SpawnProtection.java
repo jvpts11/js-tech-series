@@ -26,6 +26,10 @@ final class SpawnProtection implements IProtectionAdapter {
 
     @Override
     public Verdict ask(final Actor actor, final ProtectedAction action, final ServerLevel level, final BlockPos pos) {
+        // As the game's own, it keeps the blocks round the spawn: who is hurt or shot there is left to the rest.
+        if (action == ProtectedAction.HURT || action == ProtectedAction.SHOOT) {
+            return Verdict.ABSTAIN;
+        }
         final MinecraftServer server = level.getServer();
         return switch (actor) {
             case Actor.Person person -> server.isUnderSpawnProtection(level, pos, person.player()) ? Verdict.DENY

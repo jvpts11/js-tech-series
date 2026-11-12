@@ -195,6 +195,64 @@ class UsdReaderTest {
                 int[] faceVertexIndices = [0, 1, 2]
             }
             """;
+    /* A stage whose hub comes from a layer that takes its blade from a third. */
+    private static final String ROTOR = """
+            #usda 1.0
+            (
+                defaultPrim = "Rotor"
+            )
+
+            def Xform "Rotor"
+            {
+                def "Hub" (
+                    references = @./parts/hub.usda@
+                )
+                {
+                }
+            }
+            """;
+    private static final String HUB = """
+            #usda 1.0
+            (
+                defaultPrim = "Hub"
+            )
+
+            def Xform "Hub"
+            {
+                def "Blade" (
+                    references = @./parts/blade.usda@
+                )
+                {
+                }
+            }
+            """;
+    /* A stage taking the second prim of a library that names no default prim. */
+    private static final String ROOM = """
+            #usda 1.0
+
+            def Xform "Room"
+            {
+                def "Seat" (
+                    references = @./props.usda@</Chair>
+                )
+                {
+                }
+            }
+            """;
+    private static final String PROPS = """
+            #usda 1.0
+
+            def Xform "Table"
+            {
+            }
+
+            def Mesh "Chair"
+            {
+                point3f[] points = [(0, 0, 0), (4, 0, 0), (4, 1, 0)]
+                int[] faceVertexCounts = [3]
+                int[] faceVertexIndices = [0, 1, 2]
+            }
+            """;
 
     @Test
     void text_placesEachPrimAsABoneInTheStagesUnit() {
@@ -310,6 +368,26 @@ class UsdReaderTest {
         final ModelBone spare = fan.bone("Spare").orElseThrow();
         assertEquals(1, spare.meshes().size(), "and the spare the blade's, taken in from its own stage");
         assertEquals(5 * CENTIMETRE, spare.translation().x(), EPSILON);
+    }
+
+    @Test
+    void text_takesInALayerThatReferencesAThird() {
+        final ModelData rotor = UsdReader.read("rotor.usda", ROTOR.getBytes(StandardCharsets.UTF_8),
+                path -> switch (path) {
+                    case "parts/hub.usda" -> HUB.getBytes(StandardCharsets.UTF_8);
+                    case "parts/blade.usda" -> BLADE.getBytes(StandardCharsets.UTF_8);
+                    default -> null;
+                });
+        final ModelBone blade = rotor.bone("Blade").orElseThrow();
+        assertEquals("Hub", blade.parent());
+        assertEquals(1, blade.meshes().size(), "the hub's blade, taken in by the hub's own layer");
+    }
+
+    @Test
+    void text_takesThePrimAReferenceNamesInAnotherFile() {
+        final ModelData room = UsdReader.read("room.usda", ROOM.getBytes(StandardCharsets.UTF_8),
+                path -> path.equals("props.usda") ? PROPS.getBytes(StandardCharsets.UTF_8) : null);
+        assertEquals(1, room.bone("Seat").orElseThrow().meshes().size(), "the chair it names, not the table first");
     }
 
     @Test

@@ -218,6 +218,26 @@ public final class MovingStructurePartingGameTests {
                 .thenSucceed();
     }
 
+    /* The drill reaches two blocks ahead: past the air before it, it mines the stone beyond till it is mined. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
+    public static void tools_aDrillMinesTheFirstBlockInItsReach(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(new BlockPos(3, 3, 4), TestAboard.DRILL.get().defaultBlockState()
+                .setValue(DirectionalBlock.FACING, Direction.EAST));
+        helper.setBlock(new BlockPos(2, 3, 4), Blocks.CHEST);
+        final MovingStructure rig = assembled(helper, new BlockPos(2, 3, 4), new BlockPos(3, 3, 4));
+        helper.setBlock(new BlockPos(5, 3, 4), Blocks.STONE);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertBlockPresent(Blocks.AIR, new BlockPos(5, 3, 4)))
+                .thenExecute(() -> {
+                    final BlockPos chest = find(level, rig, state -> state.is(Blocks.CHEST));
+                    helper.assertTrue(level.getBlockEntity(chest) instanceof ChestBlockEntity box
+                            && box.countItem(Items.COBBLESTONE) == 1, "the stone two blocks ahead was mined");
+                    MovingStructures.takeAway(rig);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
     public static void tools_aHarvesterTakesRipeWheatAndPlantsItAgain(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();

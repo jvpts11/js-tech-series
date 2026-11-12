@@ -65,6 +65,8 @@ public final class SignalsGameTests {
     private static final String WIDE = "bench";
     /* How long a test waits on the air: a recheck of every frequency and a little more. */
     private static final int WAIT = SignalRadio.RECHECK_EVERY + 40;
+    /* A few ticks, far fewer than a recheck's: what a chain of radios takes to settle. */
+    private static final int CHAIN_SETTLES = 5;
 
     private SignalsGameTests() {
     }
@@ -83,6 +85,28 @@ public final class SignalsGameTests {
                     + receiver.signal());
             helper.assertBlockProperty(lamp, RedstoneLampBlock.LIT, true);
         });
+    }
+
+    /*
+     * A receiver beside a transmitter of another frequency feeds it: what the first hears goes on down the chain at
+     * once, not at the next recheck of every frequency.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 60)
+    public static void receiver_feedsATransmitterBesideIt(final GameTestHelper helper) {
+        final UUID owner = owner("chain");
+        radio(helper, new BlockPos(1, 2, 4), TestRadios.TRANSMITTER.get(), owner, Tuning.on(Band.PRIVATE, 5));
+        final RadioBlockEntity first = radio(helper, new BlockPos(4, 2, 4), TestRadios.RECEIVER.get(), owner,
+                Tuning.on(Band.PRIVATE, 5));
+        radio(helper, new BlockPos(5, 2, 4), TestRadios.TRANSMITTER.get(), owner, Tuning.on(Band.PRIVATE, 6));
+        final RadioBlockEntity last = radio(helper, new BlockPos(8, 2, 4), TestRadios.RECEIVER.get(), owner,
+                Tuning.on(Band.PRIVATE, 6));
+        helper.startSequence()
+                .thenIdle(CHAIN_SETTLES)
+                .thenExecute(() -> helper.setBlock(new BlockPos(0, 2, 4), Blocks.REDSTONE_BLOCK))
+                .thenWaitUntil(() -> helper.assertTrue(first.signal() == Reading.FULL, "the first receiver hears"))
+                .thenExecuteAfter(CHAIN_SETTLES, () -> helper.assertTrue(last.signal() == Reading.FULL,
+                        "and the last hears what the first fed on: " + last.signal()))
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA)

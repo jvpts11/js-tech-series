@@ -104,15 +104,17 @@ public final class UsdReader {
     private UsdPrim source(final UsdPrim stage, final Reference reference) {
         UsdPrim layer = stage;
         if (!reference.asset().isEmpty()) {
-            layer = this.layers.computeIfAbsent(reference.asset().toLowerCase(Locale.ROOT), key -> {
+            final String key = reference.asset().toLowerCase(Locale.ROOT);
+            if (!this.layers.containsKey(key)) {
                 final byte[] bytes = this.files.apply(strip(reference.asset()));
-                if (bytes == null) {
-                    return null;
+                final UsdPrim read = bytes == null ? null : layer(reference.asset(), bytes);
+                // Kept before its own references are taken in: a layer they lead to, or one leading back, finds it.
+                this.layers.put(key, read);
+                if (read != null) {
+                    compose(read, read, 1);
                 }
-                final UsdPrim read = layer(reference.asset(), bytes);
-                compose(read, read, 1);
-                return read;
-            });
+            }
+            layer = this.layers.get(key);
             if (layer == null) {
                 return null;
             }
@@ -167,7 +169,7 @@ public final class UsdReader {
                 out.addAll(references(each));
             }
         } else if (written instanceof UsdPrim.Asset asset) {
-            out.add(new Reference(asset.path(), ""));
+            out.add(new Reference(asset.path(), asset.prim()));
         } else if (written instanceof String text) {
             final int at = text.indexOf('@');
             if (at >= 0) {

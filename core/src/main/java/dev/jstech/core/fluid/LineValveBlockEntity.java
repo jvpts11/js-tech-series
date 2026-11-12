@@ -332,6 +332,11 @@ public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOu
         }
 
         @Override
+        public double pressureNow(final int tank) {
+            return gas.pressureNow(tank);
+        }
+
+        @Override
         public long insert(final MatterStack stack, final boolean simulate) {
             return openNow && passes(stack.material().id()) ? gas.insert(stack, simulate) : 0L;
         }
@@ -368,6 +373,12 @@ public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOu
         @Override
         public long capacity(final int tank) {
             return gas.capacity(tank);
+        }
+
+        /* What it lets through keeps its pressure: the line ahead has to hold it as the one behind did. */
+        @Override
+        public double pressureNow(final int tank) {
+            return gas.pressureNow(tank);
         }
 
         @Override

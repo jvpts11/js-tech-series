@@ -94,7 +94,14 @@ final class UsdPrim {
         boolean relationship;
     }
 
-    /** An asset path, as {@code @textures/wood.png@} writes one. */
-    record Asset(String path) {
+    /**
+     * An asset path, as {@code @textures/wood.png@} writes one, and the path of a prim in it a reference names, as
+     * {@code @./props.usda@</Chair>} does; empty for none.
+     */
+    record Asset(String path, String prim) {
+
+        Asset(final String path) {
+            this(path, "");
+        }
     }
 }

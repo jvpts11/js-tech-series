@@ -379,10 +379,16 @@ final class UsdaParser {
         }
         this.at = end + fence.length();
         // A path to a prim of the asset may follow it.
+        String prim = "";
         if (this.at < this.text.length() && this.text.charAt(this.at) == '<') {
-            this.at = this.text.indexOf('>', this.at) + 1;
+            final int closed = this.text.indexOf('>', this.at);
+            if (closed < 0) {
+                throw broken("a prim path that ends");
+            }
+            prim = this.text.substring(this.at + 1, closed);
+            this.at = closed + 1;
         }
-        return new UsdPrim.Asset(this.text.substring(start, end));
+        return new UsdPrim.Asset(this.text.substring(start, end), prim);
     }
 
     private String string() {

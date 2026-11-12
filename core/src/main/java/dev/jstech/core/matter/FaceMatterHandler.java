@@ -14,6 +14,7 @@ import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MatterState;
 import java.util.Objects;
 import java.util.Optional;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * A store of matter as one face of a block gives it out: the block's own, filled only through a face that lets things
@@ -54,6 +55,13 @@ public final class FaceMatterHandler implements IMatterHandler {
     @Override
     public long capacity(final int tank) {
         return this.inner.capacity(tank);
+    }
+
+    /** The block's own pressure: a line it gives out to has to hold it, whatever face it gives it through. */
+    @ApiStatus.Experimental
+    @Override
+    public double pressureNow(final int tank) {
+        return this.inner.pressureNow(tank);
     }
 
     @Override

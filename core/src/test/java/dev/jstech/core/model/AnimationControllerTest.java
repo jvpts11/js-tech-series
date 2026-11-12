@@ -76,7 +76,7 @@ class AnimationControllerTest {
     }
 
     @Test
-    void apply_tellsOfEveryEventPassedRoundEveryLoop() {
+    void apply_tellsOfEveryEventPassedIntoTheNextLoop() {
         final ModelPose pose = new ModelPose(lid());
         final AnimationController controller = new AnimationController("lid");
         controller.play(raise(ModelAnimation.Loop.LOOP), 0, 0);
@@ -84,9 +84,22 @@ class AnimationControllerTest {
         final IAnimationListener listener = (name, animation, event) -> heard.add(event.value());
         controller.apply(pose, 0, new ExpressionContext(), listener);
         assertEquals(List.of("start"), heard, "an event at the start is heard as it starts");
-        controller.apply(pose, 2.6, new ExpressionContext(), listener);
-        assertEquals(List.of("start", "click", "start", "click", "start", "click"), heard,
-                "once a round for every round gone by");
+        controller.apply(pose, 0.6, new ExpressionContext(), listener);
+        controller.apply(pose, 1.2, new ExpressionContext(), listener);
+        assertEquals(List.of("start", "click", "start"), heard, "the click halfway, then the next loop's start");
+    }
+
+    @Test
+    void apply_tellsOfOnlyTheLastLoopAfterAGap() {
+        final ModelPose pose = new ModelPose(lid());
+        final AnimationController controller = new AnimationController("lid");
+        controller.play(raise(ModelAnimation.Loop.LOOP), 0, 0);
+        final List<String> heard = new ArrayList<>();
+        final IAnimationListener listener = (name, animation, event) -> heard.add(event.value());
+        controller.apply(pose, 0, new ExpressionContext(), listener);
+        controller.apply(pose, 600.6, new ExpressionContext(), listener);
+        assertEquals(List.of("start", "start", "click"), heard,
+                "ten minutes unseen, it tells of the last loop's start and click, not of six hundred of each");
     }
 
     /* A lid that rises eight pixels over a second, with a sound as it starts and a click halfway. */

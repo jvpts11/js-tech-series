@@ -152,6 +152,11 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private final Map<BlockPos, Integer> portSignals = new HashMap<>();
     /* The part of a tick its place's rate of time has left it, towards its next work. */
     private double timeCarried;
+    /*
+     * The ticks it has worked, its own clock for what it does every second or every few ticks: where time runs at
+     * another rate it works more or less often than the game ticks, which would skip or double them.
+     */
+    private long ownTicks;
 
     public static final TextKey PARAMETER_ON = TextKey.of("jscore.machine.parameter.on", "On");
     public static final TextKey PARAMETER_PROGRESS = TextKey.of("jscore.machine.parameter.progress", "Progress");
@@ -1027,6 +1032,7 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
     private void tickServer(final ServerLevel server) {
         ticked = true;
         final long now = server.getGameTime();
+        final long own = ownTicks++;
         if (structure != null) {
             structure.tick(server, worldPosition);
         }
@@ -1044,18 +1050,18 @@ public abstract class MachineBlockEntity extends SyncedBlockEntity implements IO
                 damage(harm);
             }
         }
-        if (health.damaged() && Math.floorMod(now + worldPosition.asLong(), MachineHealth.CRACKS_EVERY) == 0) {
+        if (health.damaged() && Math.floorMod(own + worldPosition.asLong(), MachineHealth.CRACKS_EVERY) == 0) {
             showCracks(server);
         }
         if (!signalRead) {
             readSignal(server);
         }
-        if (sides.automatic() && Math.floorMod(now + worldPosition.asLong(), MachineTransfers.EVERY) == 0) {
+        if (sides.automatic() && Math.floorMod(own + worldPosition.asLong(), MachineTransfers.EVERY) == 0) {
             MachineTransfers.run(server, this);
         }
         // Last tick's work and draw: counted before this tick changes them, whether or not it rests.
         statistics.tick(running.get(), drawn.get());
-        if (now % TICKS_A_SECOND == 0) {
+        if (own % TICKS_A_SECOND == 0) {
             countMinute(now);
             statistics.second(perMinute.get());
             history = MachineHistory.of(statistics, now);

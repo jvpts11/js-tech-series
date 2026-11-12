@@ -187,6 +187,7 @@
   "item.jstests.test_kit_crate": "Test kit crate",
   "item.jstests.test_kit_helmet": "Test kit helmet",
   "item.jstests.test_kit_installer": "Test Kit Installer",
+  "item.jstests.test_luck_module": "Test Luck Module",
   "item.jstests.test_magnet": "Test Magnet",
   "item.jstests.test_manual": "Test Manual",
   "item.jstests.test_module_helmet": "Test Module Helmet",

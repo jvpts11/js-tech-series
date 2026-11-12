@@ -206,7 +206,7 @@ public final class Modules {
             }
             final List<String> kinds = def.get().kinds();
             final List<InstalledModules.Socketed> sockets = installed(level, host).sockets();
-            final IEnergyStorage energy = host.getCapability(Capabilities.EnergyStorage.ITEM);
+            final IEnergyStorage energy = energyOf(host);
             for (int s = 0; s < sockets.size(); s++) {
                 final InstalledModules.Socketed socketed = sockets.get(s);
                 final ModuleDef module = socketed.on() ? module(level, socketed.module()).orElse(null) : null;
@@ -220,9 +220,10 @@ public final class Modules {
         if (before == null) {
             return;
         }
+        // A change is named by where its module sits: one now there may change another attribute under that name.
         for (final Map.Entry<ResourceLocation, Holder<Attribute>> change : before.entrySet()) {
             final AttributeInstance instance = wearer.getAttribute(change.getValue());
-            if (!now.containsKey(change.getKey()) && instance != null) {
+            if (!change.getValue().equals(now.get(change.getKey())) && instance != null) {
                 instance.removeModifier(change.getKey());
             }
         }

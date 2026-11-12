@@ -49,7 +49,7 @@ public final class TestAboard {
     /** A docking clamp, closing at a signal behind it. */
     public static final BlockEntry<TestPhysics.FacingBlock> CLAMP = block("test_clamp", "Test clamp",
             TestPhysics.FacingBlock::new);
-    /** A drill, mining as an iron pickaxe does. */
+    /** A drill, mining as an iron pickaxe does, two blocks ahead of it at most. */
     public static final BlockEntry<TestPhysics.FacingBlock> DRILL = block("test_drill", "Test drill",
             TestPhysics.FacingBlock::new);
     /** A harvester, taking ripe crops. */

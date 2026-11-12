@@ -618,6 +618,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `FieldFluidTank.inputOnly()` makes a tank pipes fill but never draw from, and the block draws on it with
   `FieldFluidTank.drainInside`; `ScrollState.showing(index)` scrolls just as far as brings a row into view.
   Experimental.
+- (Core) A face that gives out its block's pressure: J's Core's API is at version 57.
+  `FaceMatterHandler.pressureNow(tank)` is the pressure of the store behind the face, which a line it gives out to has
+  to hold. Experimental.
 - (Computers) The Mining Computer: J's Computers' API is at version 21. `HostScope.MINING_COMPUTER` is the Mining
   Computer's own scope, for a program or a command that runs only on a mining rig. Experimental.
 - (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of

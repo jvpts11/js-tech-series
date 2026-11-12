@@ -258,9 +258,12 @@ public final class CoreScripts {
 
     @SuppressWarnings("unchecked")
     private static <R, V> String mapValue(final DataMapType<R, V> map, final ResourceLocation entry) {
-        final Registry<R> registry = (Registry<R>) BuiltInRegistries.REGISTRY.get(map.registryKey().location());
+        // A registry a data pack fills, as the biomes', is the running server's, not among the game's own.
+        final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        final Registry<R> registry = server != null ? server.registryAccess().registry(map.registryKey()).orElse(null)
+                : (Registry<R>) BuiltInRegistries.REGISTRY.get(map.registryKey().location());
         if (registry == null) {
-            return "";
+            throw unknown("registry", map.registryKey().location().toString());
         }
         final Optional<Holder.Reference<R>> holder = registry.getHolder(entry);
         if (holder.isEmpty()) {

@@ -98,15 +98,24 @@ final class StructureTools {
             if (!worksAt(level, structure, target)) {
                 continue;
             }
-            final boolean done = switch (tool.kind()) {
+            final boolean worked = switch (tool.kind()) {
                 case DRILL -> drill(level, structure, pos, target, tool);
                 case HARVESTER -> harvest(level, structure, target, tool);
                 case PLOUGH -> plough(level, target);
                 case PLACER -> place(level, structure, target, frame, way);
             };
-            if (done && tool.kind() != BlockAboard.ToolKind.DRILL) {
-                ready.put(pos.immutable(), now + Math.max(1, Math.round(TICKS / tool.speed())));
+            // A drill works the first block in its reach it can mine, and that one alone till it is mined.
+            if (worked) {
+                if (tool.kind() != BlockAboard.ToolKind.DRILL) {
+                    ready.put(pos.immutable(), now + Math.max(1, Math.round(TICKS / tool.speed())));
+                }
                 return;
+            }
+        }
+        if (tool.kind() == BlockAboard.ToolKind.DRILL) {
+            final Progress left = mining.remove(pos);
+            if (left != null) {
+                level.destroyBlockProgress(left.id, left.target, -1);
             }
         }
     }
@@ -127,14 +136,16 @@ final class StructureTools {
         return Protection.may(Actor.world(structure.entity().blockPosition()), ProtectedAction.BREAK, level, target);
     }
 
-    /* A drill mines the block before it a little each tick, as fast as its speed and what it mines as allow. */
+    /*
+     * A drill mines the block before it a little each tick, as fast as its speed and what it mines as allow; whether
+     * there was a block there to mine.
+     */
     private boolean drill(final ServerLevel level, final MovingStructure structure, final BlockPos pos,
                           final BlockPos target, final BlockAboard.Tool tool) {
         final BlockState block = level.getBlockState(target);
         final float hardness = block.getDestroySpeed(level, target);
         if (block.isAir() || hardness < 0 || !block.getFluidState().isEmpty() && block.getCollisionShape(level,
                 target).isEmpty()) {
-            mining.remove(pos);
             return false;
         }
         final ItemStack with = tool.lootTool();
@@ -153,7 +164,7 @@ final class StructureTools {
         progress.done += rate;
         if (progress.done < MINED) {
             level.destroyBlockProgress(progress.id, target, (int) (progress.done * 10));
-            return false;
+            return true;
         }
         level.destroyBlockProgress(progress.id, target, -1);
         mining.remove(pos);

@@ -108,6 +108,49 @@ public final class ModuleGameTests {
         helper.succeed();
     }
 
+    /*
+     * A worn host pays its modules from its own store as a held one does, at any rate: the luck module spends more in
+     * its second than the helmet gives out to others in a tick.
+     */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void modules_wornSpendMoreThanTheirHostGivesOthers(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final ServerPlayer player = player(helper, "module-wearer-lucky");
+        final ItemStack helmet = new ItemStack(TestModules.HELMET.get());
+        charge(helmet);
+        Modules.install(level, helmet, 2, new ItemStack(TestModules.LUCK_MODULE.get()));
+        player.setItemSlot(EquipmentSlot.HEAD, helmet);
+        final double luck = player.getAttributeValue(Attributes.LUCK);
+        Modules.work(player);
+        helper.assertTrue(player.getAttributeValue(Attributes.LUCK) == luck + TestModules.LUCK_BOOST,
+                "the luck module works: " + player.getAttributeValue(Attributes.LUCK));
+        helper.assertTrue(energy(player.getItemBySlot(EquipmentSlot.HEAD)) == TestModules.HELMET_ENERGY
+                - TestModules.LUCK_ENERGY, "paid from the helmet");
+        leave(helper, player);
+        helper.succeed();
+    }
+
+    /* A module swapped for one that changes another attribute in the same socket takes back what the first changed. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void modules_swappedTakeBackWhatTheFirstChanged(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final ServerPlayer player = player(helper, "module-swapper");
+        final ItemStack helmet = new ItemStack(TestModules.HELMET.get());
+        charge(helmet);
+        Modules.install(level, helmet, 1, new ItemStack(TestModules.SPEED_MODULE.get()));
+        player.setItemSlot(EquipmentSlot.HEAD, helmet);
+        final double walking = player.getAttributeBaseValue(Attributes.MOVEMENT_SPEED);
+        Modules.work(player);
+        final ItemStack worn = player.getItemBySlot(EquipmentSlot.HEAD);
+        Modules.remove(level, worn, 1);
+        Modules.install(level, worn, 1, new ItemStack(TestModules.LUCK_MODULE.get()));
+        Modules.work(player);
+        helper.assertTrue(Math.abs(player.getAttributeValue(Attributes.MOVEMENT_SPEED) - walking) < 1.0e-9,
+                "the speed module's speed goes with it: " + player.getAttributeValue(Attributes.MOVEMENT_SPEED));
+        leave(helper, player);
+        helper.succeed();
+    }
+
     /* Fills {@code helmet} with energy, as a charger would, a transfer at a time. */
     private static void charge(final ItemStack helmet) {
         final IEnergyStorage energy = helmet.getCapability(Capabilities.EnergyStorage.ITEM);

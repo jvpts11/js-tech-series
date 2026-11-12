@@ -488,6 +488,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `FieldFluidTank.inputOnly()` makes a tank pipes fill but never draw from, and the block draws on it with
   `FieldFluidTank.drainInside`; `ScrollState.showing(index)` scrolls just as far as brings a row into view.
   Experimental.
+- A face that gives out its block's pressure: J's Core's API is at version 57.
+  `FaceMatterHandler.pressureNow(tank)` is the pressure of the store behind the face, which a line it gives out to has
+  to hold. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

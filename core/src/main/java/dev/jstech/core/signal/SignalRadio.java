@@ -250,13 +250,14 @@ public final class SignalRadio {
             }
         }
         RECOUNT.clear();
+        // A value heard may set off a transmitter beside its receiver: what that sends waits for the next tick.
         for (final Frequency frequency : List.copyOf(RESEND)) {
+            RESEND.remove(frequency);
             final Channel channel = CHANNELS.get(frequency);
             if (channel != null) {
                 resend(channel);
             }
         }
-        RESEND.clear();
     }
 
     /* Works out again who hears a frequency: whether it clashes, where it is sent from, and each receiver's bars. */

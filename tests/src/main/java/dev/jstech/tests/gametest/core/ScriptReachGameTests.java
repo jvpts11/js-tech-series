@@ -142,6 +142,9 @@ public final class ScriptReachGameTests {
                 "how glass seals; got " + CoreScripts.dataMap("jscore:seals", "minecraft:glass"));
         helper.assertTrue(CoreScripts.dataMap("jscore:seals", "minecraft:dirt").isEmpty(),
                 "what a map says nothing of is nothing");
+        helper.assertTrue(CoreScripts.dataMap("jscore:climate", "jstests:test_frost_flats").contains("temperature"),
+                "a map of a registry the data packs fill, a biome's climate; got "
+                        + CoreScripts.dataMap("jscore:climate", "jstests:test_frost_flats"));
         helper.assertTrue(refused(() -> CoreScripts.dataMap("jstests:no_such_map", "minecraft:stone")),
                 "a map nothing declared is refused");
         helper.succeed();

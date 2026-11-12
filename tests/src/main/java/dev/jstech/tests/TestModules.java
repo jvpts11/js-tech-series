@@ -50,6 +50,12 @@ public final class TestModules {
     public static final double SPEED_BOOST = 0.2;
     /** What the night vision module spends, in FE a second. */
     public static final int SIGHT_ENERGY = 50;
+    /**
+     * What the luck module spends, in FE a second, more than the helmet gives out to others in a tick, and the luck it
+     * adds.
+     */
+    public static final int LUCK_ENERGY = 5_000;
+    public static final double LUCK_BOOST = 1;
     /** What the charging station holds, and gives a robot each half second, in FE. */
     public static final int CHARGER_ENERGY = 100_000;
     public static final int CHARGER_FLOW = 2_000;
@@ -62,6 +68,8 @@ public final class TestModules {
             .named("Test Speed Module").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
     public static final ItemEntry<Item> SIGHT_MODULE = TestSounds.CONTENT.item("test_sight_module", Item::new)
             .named("Test Night Vision Module").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
+    public static final ItemEntry<Item> LUCK_MODULE = TestSounds.CONTENT.item("test_luck_module", Item::new)
+            .named("Test Luck Module").look(IItemLook.HANDMADE).tab(TestItems.ITEMS).register();
 
     public static final ModuleHostDef HELMET_DEF = Modules.declareHost(HELMET.getId(), ModuleHostDef.worn(List.of(
             new ModuleHostDef.Socket("visor", 1), new ModuleHostDef.Socket("core", 2))));
@@ -70,6 +78,9 @@ public final class TestModules {
                     AttributeModifier.Operation.ADD_MULTIPLIED_BASE))));
     public static final ModuleDef SIGHT_DEF = Modules.declare(SIGHT_MODULE.getId(), new ModuleDef("visor",
             SIGHT_ENERGY, List.of(new CoreModuleEffects.GivenEffect(MobEffects.NIGHT_VISION, 0))));
+    public static final ModuleDef LUCK_DEF = Modules.declare(LUCK_MODULE.getId(), new ModuleDef("core",
+            LUCK_ENERGY, List.of(new CoreModuleEffects.AttributeChange(Attributes.LUCK, LUCK_BOOST,
+                    AttributeModifier.Operation.ADD_VALUE))));
 
     /* Its block state and model are written by hand, as the test mod's are. */
     public static final BlockEntry<DeviceBlock> CHARGER = TestSounds.CONTENT.block("test_robot_charger",

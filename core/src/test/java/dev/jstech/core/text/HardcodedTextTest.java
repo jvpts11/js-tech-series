@@ -292,7 +292,7 @@ class HardcodedTextTest {
             data("core/src/main/java/dev/jstech/core/model/FbxReader.java", 4,
                     "the names FBX gives a model's own properties, which every exporter writes as they are"),
             data("core/src/main/java/dev/jstech/core/model/StepFile.java", 7, PARSER_WANTS),
-            data("core/src/main/java/dev/jstech/core/model/UsdaParser.java", 7, PARSER_WANTS),
+            data("core/src/main/java/dev/jstech/core/model/UsdaParser.java", 8, PARSER_WANTS),
             data("core/src/main/java/dev/jstech/core/model/ModelShaping.java", 4,
                     "what keeps a model from the triangles it says, which the data run stops with for the mod's "
                             + "maker"),

@@ -66,6 +66,8 @@ public final class PhysicsGameTests {
     private static final double AIR_DRAG = 0.98;
     /* How many ticks an item has fallen when it is weighed: long before it reaches the ground it is let go above. */
     private static final int WEIGHED_AT = 10;
+    /* Two of a machine's seconds where time runs at half speed, and a little more, in game ticks. */
+    private static final int TWO_SLOW_SECONDS = 90;
 
     private PhysicsGameTests() {
     }
@@ -242,6 +244,30 @@ public final class PhysicsGameTests {
                     helper.assertTrue(quickMade >= 2 * usualMade - 1 && quickMade > usualMade,
                             "where time runs twice as fast the machine makes twice as much: " + quickMade + " against "
                                     + usualMade);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * Where time runs at half speed a machine works every other game tick: the two machines, placed a tick apart, work
+     * on the even ticks and on the odd ones, and each still counts its seconds.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 160)
+    public static void time_slowerStillCountsTheMachinesSeconds(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final String id = id(helper, "slow_seconds");
+        Physics.add(level, area(helper, id, new BlockPos(0, 1, 0), new BlockPos(4, 4, 2), time(0.5)));
+        final long placedAt = level.getGameTime();
+        final KitMachineBlockEntity first = machine(helper, new BlockPos(1, 2, 1));
+        final KitMachineBlockEntity[] second = new KitMachineBlockEntity[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(level.getGameTime() % 2 != placedAt % 2, "a tick on"))
+                .thenExecute(() -> second[0] = machine(helper, new BlockPos(3, 2, 1)))
+                .thenExecuteAfter(TWO_SLOW_SECONDS, () -> {
+                    Physics.remove(level, id);
+                    helper.assertTrue(first.history().workedTicks() > 0 && second[0].history().workedTicks() > 0,
+                            "both machines counted a second: " + first.history().workedTicks() + " and "
+                                    + second[0].history().workedTicks() + " ticks worked");
                 })
                 .thenSucceed();
     }

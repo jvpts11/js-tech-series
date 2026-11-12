@@ -128,6 +128,23 @@ class BlockbenchReaderTest {
         assertEquals("creak", open.events().getFirst().value());
     }
 
+    @Test
+    void read_endsAnAnimationOfNoLengthAtItsLastKeyframe() {
+        final ModelData model = BlockbenchReader.read("fan", json("""
+                {"meta": {"format_version": "4.5", "model_format": "bedrock"},
+                 "elements": [],
+                 "outliner": [{"name": "blade", "uuid": "g1", "origin": [0, 0, 0], "children": []}],
+                 "animations": [{"name": "spin", "loop": "loop", "length": 0, "animators": {
+                   "g1": {"name": "blade", "type": "bone", "keyframes": [
+                     {"channel": "rotation", "time": 0, "data_points": [{"x": 0, "y": 0, "z": 0}]},
+                     {"channel": "rotation", "time": 2, "data_points": [{"x": 0, "y": 360, "z": 0}]}]},
+                   "effects": {"name": "Effects", "type": "effect", "keyframes": [
+                     {"channel": "sound", "time": 2.5, "data_points": [{"effect": "whir", "locator": ""}]}]}}}]}
+                """));
+        assertEquals(2.5, model.animations().getFirst().length(), EPSILON,
+                "an animation whose length Blockbench left to itself runs to its last keyframe, the whir");
+    }
+
     private static double area(final ModelMesh mesh) {
         double out = 0;
         final float[] p = mesh.positions();
