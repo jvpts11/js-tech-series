@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.RequestSettingsPayload;
 import dev.jstech.computers.operation.payload.SettingsSnapshotPayload;
 import dev.jstech.computers.os.IOsHost;
@@ -195,7 +196,7 @@ public final class QuinceAboutApp implements IDesktopApp {
         for (final String[] pair : new String[][] {
             {GameText.resolve(PROCESSOR), d.cpuMhz() + " MHz " + GameText.resolve(d.cpuLabel())},
             {GameText.resolve(MEMORY), d.ramMb() + " MB"},
-            {GameText.resolve(STARTUP), GameText.resolve(DesktopLaunchers.QUINCE_DISK)}}) {
+            {GameText.resolve(STARTUP), GameText.resolve(DiskFilesPayload.QUINCE_DISK)}}) {
             Draw.text(g, font, Component.literal(pair[0]).withStyle(ChatFormatting.BOLD), tx, ty, c.ink());
             Draw.text(g, font, pair[1], tx + 74, ty, c.ink());
             ty += 12;

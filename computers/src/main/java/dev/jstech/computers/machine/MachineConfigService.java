@@ -14,6 +14,7 @@ import dev.jstech.computers.program.ThemePreset;
 import dev.jstech.computers.program.cli.CliTexts;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.Text;
@@ -87,7 +88,8 @@ public final class MachineConfigService {
         final String name = console.computerName();
         lines.add(String.format(Locale.ROOT, "  %-12s%s", "name", name.isEmpty() ? UNNAMED.text().english() : name));
         lines.add(String.format(Locale.ROOT, "  %-12s%d permille", "netshare", this.diskPermille()));
-        lines.addAll(console.settings().summaryLines());
+        final OsDef os = this.terminal instanceof IOsHost machine ? machine.installedOs() : null;
+        lines.addAll(console.settings().summaryLines(ComputerSettings.defaultScale(os)));
         lines.add("  " + SHARE_HINT.with(this.terminal.hostname()).english());
         return lines;
     }

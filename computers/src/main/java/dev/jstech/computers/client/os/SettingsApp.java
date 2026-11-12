@@ -24,6 +24,7 @@ import dev.jstech.computers.os.DesktopEffects;
 import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.program.Accents;
+import dev.jstech.computers.program.ComputerSettings;
 import dev.jstech.computers.program.ThemePreset;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Draw;
@@ -991,7 +992,9 @@ public final class SettingsApp implements IDesktopApp {
          */
         caption(SettingsTexts.SCALE, x, y, w);
         y += 10;
-        final int scale = d.guiScale() <= 0 ? DesktopViewport.DEFAULT_SCALE : d.guiScale();
+        final DesktopState shown = DesktopScreen.current();
+        final int fallback = shown == null ? ComputerSettings.DEFAULT_SCALE : shown.view().defaultScale();
+        final int scale = d.guiScale() <= 0 ? fallback : d.guiScale();
         final int at = Math.max(0, SCALES.indexOf(scale));
         stepper(x, y, font, GameText.resolve(SettingsTexts.PERCENT.with(scale)),
                 () -> set("guiscale", Integer.toString(SCALES.get(Math.min(SCALES.size() - 1, at + 1)))),

@@ -23,14 +23,17 @@ import java.util.List;
  * Server to client: the listing of directory {@code dir} on a computer's system disk, for the Files
  * app. Each {@link WireFile} carries the file path, its extension, its disk-space weight in
  * mB-equivalents, whether it is read-only (a {@code .dat} storage projection or an installer's files),
- * and, for a {@code .dat}, the item it projects and how many are stored.
+ * and, for a {@code .dat}, the item it projects and how many are stored. With it, how big the system disk is and
+ * how much of it is free, in megabytes, which Quince's Seeker writes over its icons; both nought with no disk.
  */
 @TextHolder
-public record DiskFilesPayload(String dir, List<WireFile> files,
-                               List<WireVolume> volumes) implements CustomPacketPayload {
+public record DiskFilesPayload(String dir, List<WireFile> files, List<WireVolume> volumes, long diskMb,
+                               long freeMb) implements CustomPacketPayload {
 
     /* What a volume is called when nobody has named it, in the player's language. */
     public static final TextKey LOCAL_DISK = TextKey.of("jsc.disk_files.local_disk", "Local Disk");
+    /** The startup disk, as Quince's systems name the disk they install on. */
+    public static final TextKey QUINCE_DISK = TextKey.of("jsc.quince.disk_name", "Quince HD");
     public static final TextKey SETUP = TextKey.of("jsc.disk_files.setup", "%s Setup");
     public static final TextKey REMOVABLE_DRIVE = TextKey.of("jsc.disk_files.removable_drive", "Removable Drive");
     public static final TextKey NETWORK = TextKey.of("jsc.disk_files.network", "Network");
@@ -46,6 +49,8 @@ public record DiskFilesPayload(String dir, List<WireFile> files,
                     PayloadCodecs.PATH, DiskFilesPayload::dir,
                     WireFile.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_FILES)), DiskFilesPayload::files,
                     WireVolume.STREAM_CODEC.apply(ByteBufCodecs.list(MAX_VOLUMES)), DiskFilesPayload::volumes,
+                    ByteBufCodecs.VAR_LONG, DiskFilesPayload::diskMb,
+                    ByteBufCodecs.VAR_LONG, DiskFilesPayload::freeMb,
                     DiskFilesPayload::new);
 
     /* Copied on the way in, so what the client is handed cannot change under it after it arrives. */

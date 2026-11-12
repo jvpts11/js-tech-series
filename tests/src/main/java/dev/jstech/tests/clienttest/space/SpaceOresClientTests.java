@@ -19,7 +19,9 @@ import dev.jstech.tests.clienttest.ClientTestContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -49,8 +51,11 @@ public final class SpaceOresClientTests {
             new Ore(SeriesMinerals.OLIVINE, SpaceOres.MARTIAN_BASALT),
             new Ore(SeriesMinerals.JAROSITE, SpaceOres.MUDSTONE),
             new Ore(SeriesMinerals.GYPSUM, SpaceOres.MUDSTONE));
-    /* How far a texel of the game's ore is from its rock's, the three channels summed, to be a speck: the Core's. */
-    private static final int SPECK = 40;
+    /*
+     * How far a texel of the game's ore is from every colour of its rock, the three channels summed, to be a speck: the
+     * Core's. Told by colour, not by place, since the game draws its ores on a stone that is not its rock's picture.
+     */
+    private static final int SPECK = 36;
     /* Most speck texels change the rock under them; a few may by chance land on a texel of the same colour. */
     private static final double MOST_SPECKS = 0.9;
     private static final int SIZE = 16;
@@ -99,11 +104,15 @@ public final class SpaceOresClientTests {
                 final int[] gameOre = texels(ctx, ResourceLocation.withDefaultNamespace(look.pattern().texture(false)));
                 final int[] gameRock = texels(ctx, ResourceLocation.withDefaultNamespace(look.pattern().rock(false)));
                 final int sheen = look.sheen().getAsInt();
+                final Set<Integer> rockColours = new HashSet<>();
+                for (final int texel : gameRock) {
+                    rockColours.add(texel);
+                }
                 int specks = 0;
                 int changed = 0;
                 boolean shines = false;
                 for (int i = 0; i < SIZE * SIZE; i++) {
-                    if (difference(gameOre[i], gameRock[i]) > SPECK) {
+                    if (nearest(gameOre[i], rockColours) > SPECK) {
                         specks++;
                         changed += drawn[i] != rock[i] ? 1 : 0;
                         shines |= (drawn[i] & 0xFFFFFF) == sheen;
@@ -117,6 +126,15 @@ public final class SpaceOresClientTests {
                 ctx.assertTrue(shines, id + ": the brightest of them catch the mineral's sheen");
             }
         });
+    }
+
+    /* How far {@code argb} is from the nearest of {@code colours}, the three channels summed. */
+    private static int nearest(final int argb, final Set<Integer> colours) {
+        int least = Integer.MAX_VALUE;
+        for (final int colour : colours) {
+            least = Math.min(least, difference(argb, colour));
+        }
+        return least;
     }
 
     private static int difference(final int a, final int b) {

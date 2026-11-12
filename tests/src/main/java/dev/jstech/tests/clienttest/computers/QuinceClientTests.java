@@ -17,6 +17,7 @@ import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.CrashScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
+import dev.jstech.computers.client.os.FilesApp;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
 import dev.jstech.computers.os.OsRegistry;
@@ -30,6 +31,7 @@ import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.computers.EraParts;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -40,6 +42,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -57,8 +60,6 @@ public final class QuinceClientTests {
     /* A point every Quince all-in-one has glass at, in sixty-fourths of its front: the middle of the 128K's. */
     private static final int ON_THE_GLASS_X = 32;
     private static final int ON_THE_GLASS_Y = 22;
-    /* The scale Quince's desktops are designed at: a desktop pixel to a pixel of the game's interface. */
-    private static final int DESIGNED_SCALE = 100;
     private static final int WINDOW_WAIT = 200;
     private static final String FILES = "jsc:files";
     /* The startup disk's root, as its icon opens it. */
@@ -93,6 +94,10 @@ public final class QuinceClientTests {
     private static final String GET_INFO = "Get Info";
     /* How far down a window's title bar a click lands. */
     private static final int TITLE_DY = 5;
+    /* The startup disk's name, a folder on it, and what the Seeker keeps out of sight at its root. */
+    private static final String DISK_NAME = "Quince HD";
+    private static final String APPLICATIONS = "Applications";
+    private static final Set<String> OUT_OF_SIGHT = Set.of("bin", "etc", "tmp", "usr", "Volumes", "Desktop Folder");
 
     private QuinceClientTests() {
     }
@@ -100,24 +105,28 @@ public final class QuinceClientTests {
     @ClientTest(timeoutTicks = 2400)
     public static void quinceSystem_showsItsDesktop(final ClientTestContext ctx) {
         atDesktop(ctx, ComputingModule.RUSSET_128K.get(), QuinceItems.BOARD_RUSSET_128K.get(), "quince_system")
+                .thenWaitUntil(() -> seekerOnTheDisk(ctx), WINDOW_WAIT, "the Seeker on Quince HD")
                 .thenScreenshot(SETTLE, "qs-desktop");
     }
 
     @ClientTest(timeoutTicks = 2400)
     public static void quinceOs9_showsItsDesktop(final ClientTestContext ctx) {
         atDesktop(ctx, ComputingModule.QRUSSET_G3.getFirst().get(), QuinceItems.BOARD_QRUSSET_G3.get(), "quince_os_9")
+                .thenWaitUntil(() -> seekerOnTheDisk(ctx), WINDOW_WAIT, "the Seeker on Quince HD")
                 .thenScreenshot(SETTLE, "os9-desktop");
     }
 
     @ClientTest(timeoutTicks = 2400)
     public static void quinceOsX_showsItsDesktopInPulp(final ClientTestContext ctx) {
         atDesktop(ctx, ComputingModule.QRUSSET_WHITE.get(), QuinceItems.BOARD_QRUSSET_WHITE.get(), "quince_os_x")
+                .thenWaitUntil(() -> seekerOnTheDisk(ctx), WINDOW_WAIT, "the Seeker on Quince HD")
                 .thenScreenshot(SETTLE, "osx-desktop");
     }
 
     @ClientTest(timeoutTicks = 2400)
     public static void quinceOsX_showsItsDesktopGoneFlat(final ClientTestContext ctx) {
         atDesktop(ctx, ComputingModule.QRUSSET_SLIM.get(), QuinceItems.BOARD_QRUSSET_THIN.get(), "quince_os_x")
+                .thenWaitUntil(() -> seekerOnTheDisk(ctx), WINDOW_WAIT, "the Seeker on Quince HD")
                 .thenScreenshot(SETTLE, "flat-desktop");
     }
 
@@ -125,7 +134,19 @@ public final class QuinceClientTests {
     public static void quinceOs_showsItsDesktop(final ClientTestContext ctx) {
         atDesktop(ctx, ComputingModule.QRUSSET_COLOURS.getFirst().get(), QuinceItems.BOARD_QRUSSET_COLOUR.get(),
                 "quinceos")
+                .thenWaitUntil(() -> seekerOnTheDisk(ctx), WINDOW_WAIT, "the Seeker on Quince HD")
                 .thenScreenshot(SETTLE, "qos-desktop");
+    }
+
+    /* The Seeker opens a folder in its own window, titles it with the folder's name and lights it in its sidebar. */
+    @ClientTest(timeoutTicks = 2400)
+    public static void quinceOsX_seekerTitlesItsWindowWithTheFolder(final ClientTestContext ctx) {
+        atDesktop(ctx, ComputingModule.QRUSSET_WHITE.get(), QuinceItems.BOARD_QRUSSET_WHITE.get(), "quince_os_x")
+                .thenWaitUntil(() -> seekerOnTheDisk(ctx), WINDOW_WAIT, "the Seeker on Quince HD")
+                .thenAssert(SETTLE, () -> seeker(ctx).openNamed(APPLICATIONS), "Applications is on the disk")
+                .thenWaitUntil(() -> APPLICATIONS.equals(seeker(ctx).title()) && !seeker(ctx).names().isEmpty(),
+                        WINDOW_WAIT, "the Seeker on Applications")
+                .thenScreenshot(SETTLE, "osx-seeker-applications");
     }
 
     /*
@@ -246,7 +267,6 @@ public final class QuinceClientTests {
                             .setStackInSlot(0, floppies.getFirst().copy());
                     final PersonalComputerBlockEntity machine = world.blockEntity(MACHINE,
                             PersonalComputerBlockEntity.class);
-                    machine.console().settings().setGuiScale(DESIGNED_SCALE);
                     machine.togglePower();
                 })
                 .thenWaitUntilServer(level -> ctx.abs(MACHINE).equals(((MediaReaderBlockEntity) level
@@ -322,7 +342,6 @@ public final class QuinceClientTests {
                         throw new IllegalStateException("Quince OS X Server does not install on the Quince Mainframe");
                     }
                     mainframe.installMirror();
-                    mainframe.console().settings().setGuiScale(DESIGNED_SCALE);
                     mainframe.togglePower();
                     world.placeMonitor(SERVER_MONITOR, Direction.EAST);
                 })
@@ -407,7 +426,6 @@ public final class QuinceClientTests {
                     if (!machine.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, system))) {
                         throw new IllegalStateException(system + " does not install on " + block);
                     }
-                    machine.console().settings().setGuiScale(DESIGNED_SCALE);
                     machine.togglePower();
                 })
                 .thenTeleport(SETTLE, PLAYER, Direction.SOUTH)
@@ -418,6 +436,20 @@ public final class QuinceClientTests {
                 .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).windowFor(FILES) != null, WINDOW_WAIT,
                         "the startup disk's window")
                 .then(SETTLE * 10, () -> ctx.mc().getToasts().clear());
+    }
+
+    /* The startup disk's window as Quince names it, listing the disk with none of what its Seeker kept out of sight. */
+    private static boolean seekerOnTheDisk(final ClientTestContext ctx) {
+        final FilesApp seeker = seeker(ctx);
+        return seeker != null && DISK_NAME.equals(seeker.title()) && !seeker.names().isEmpty()
+                && seeker.names().stream().noneMatch(OUT_OF_SIGHT::contains);
+    }
+
+    /* The explorer in the startup disk's window, or null while there is none. */
+    @Nullable
+    private static FilesApp seeker(final ClientTestContext ctx) {
+        final DesktopWindow window = ctx.screen(DesktopScreen.class).windowFor(FILES);
+        return window != null && window.app() instanceof FilesApp files ? files : null;
     }
 
     /*

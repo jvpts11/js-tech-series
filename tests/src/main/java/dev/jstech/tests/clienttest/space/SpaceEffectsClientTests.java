@@ -28,7 +28,11 @@ public final class SpaceEffectsClientTests {
 
     private static final BlockPos EYE = new BlockPos(0, 2, 0);
     private static final BlockPos AT = new BlockPos(0, 9, 14);
-    private static final BlockPos GROUND = new BlockPos(0, 1, 10);
+    /*
+     * Where a touchdown's dust rises: on the ground, in the air over it, where a capsule's foot rests. Fired inside the
+     * ground block itself, the particles still in it took its light, none, and the cloud was drawn half dark.
+     */
+    private static final BlockPos GROUND = new BlockPos(0, 2, 10);
     private static final int SETTLE = 20;
     private static final int GROWN = 8;
     private static final int CHANNEL = 0xFF;

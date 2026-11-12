@@ -14,6 +14,7 @@ import dev.jstech.core.client.config.CoreConfigScreen;
 import dev.jstech.core.config.ConfigFile;
 import dev.jstech.core.config.ConfigFiles;
 import dev.jstech.core.config.ConfigKey;
+import dev.jstech.core.config.ConfigScreenTexts;
 import dev.jstech.core.config.ConfigTexts;
 import dev.jstech.core.config.format.ConfigFormats;
 import dev.jstech.core.gui.layout.ConfigScreenLayout;
@@ -21,6 +22,7 @@ import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import net.minecraft.client.resources.language.ClientLanguage;
 import net.minecraft.locale.Language;
 import net.neoforged.fml.ModContainer;
@@ -39,6 +41,14 @@ public final class SettingsScreenClientTests {
     private static final String RAW_KEY = ".configuration.";
     /** The languages the series ships its names in, each read on its own beside English. */
     private static final List<String> LANGUAGES = List.of("en_us", "pt_br");
+    /** The sections of the computers' world settings, in the order their file declares them. */
+    private static final List<String> WORLD_SECTIONS = List.of("Disks and programs", "Power", "Printing",
+            "Changing items", "Hardware", "Temperature", "Items lost", "Starting up", "Installing by hand",
+            "The prompt", "Soundfoundry", "Programs", "Wireless", "Survival", "Abandoned buildings", "Villagers",
+            "Teracoin");
+    /** What a group's heading keeps beside its name: the caret before it and the gap before its count. */
+    private static final int FOLD_CARET = 20;
+
     private SettingsScreenClientTests() {
     }
 
@@ -57,7 +67,11 @@ public final class SettingsScreenClientTests {
                         }
                         for (final String section : ConfigTexts.sectionsOf(file)) {
                             final String shown = names.getOrDefault(ConfigTexts.key(modId, section));
-                            if (!fits(ctx, shown, ConfigScreenLayout.railLabelWidth(width))) {
+                            // A top section is named on the rail; one inside it heads its group across the list.
+                            final boolean fit = section.contains(".")
+                                    ? ctx.mc().font.width(shown) <= groupRoom(ctx, names, width, file, section)
+                                    : fits(ctx, shown, ConfigScreenLayout.railLabelWidth(width));
+                            if (!fit) {
                                 wide.add(language + " section " + shown);
                             }
                         }
@@ -83,11 +97,11 @@ public final class SettingsScreenClientTests {
                 .thenAwaitScreen(CoreConfigScreen.class, 40)
                 .thenAssert(1, () -> screen(ctx).scopeLabels().equals(List.of("World", "This player")),
                         "a tab for the world's settings and one for the player's")
-                .thenAssert(0, () -> {
+                .then(0, () -> {
                     final List<String> rail = screen(ctx).railLabels();
-                    return rail.equals(List.of("Disks and programs", "Starting up", "Installing by hand", "The prompt",
-                            "Soundfoundry", "Programs")) && untranslated(rail).isEmpty();
-                }, "the world's tab lists its sections under their names")
+                    ctx.assertTrue(rail.equals(WORLD_SECTIONS) && untranslated(rail).isEmpty(),
+                            "the world's tab lists its sections under their names, got " + rail);
+                })
                 .then(0, () -> ctx.assertTrue(screen(ctx).openSection("Soundfoundry"), "the music section opens"))
                 .thenAssert(1, () -> screen(ctx).rowNames().containsAll(List.of("Music catalogue",
                         "Songs over Ethernet")) && untranslated(screen(ctx).rowNames()).isEmpty(),
@@ -174,6 +188,16 @@ public final class SettingsScreenClientTests {
     }
 
     /* Whether {@code name} is read whole in {@code room}: on one line, or on the two the screen gives a long one. */
+    /* How wide a group's name may be: its heading across the list, less its caret and how many settings it holds. */
+    private static int groupRoom(final ClientTestContext ctx, final Language names, final int width,
+                                 final ConfigFile file, final String section) {
+        final long count = file.keys().stream().filter(key -> key.dottedPath().startsWith(section + ".")).count();
+        final String settings = String.format(Locale.ROOT, names.getOrDefault(ConfigScreenTexts.SETTINGS.key()),
+                count);
+        return ConfigScreenLayout.controlRight(width) - ConfigScreenLayout.nameX(width) - FOLD_CARET
+                - ctx.mc().font.width(settings);
+    }
+
     private static boolean fits(final ClientTestContext ctx, final String name, final int room) {
         for (final String line : ConfigScreenLayout.nameLines(name, room, ctx.mc().font::width)) {
             if (ctx.mc().font.width(line) > room) {

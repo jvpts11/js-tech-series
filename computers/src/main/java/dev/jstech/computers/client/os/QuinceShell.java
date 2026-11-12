@@ -81,7 +81,7 @@ final class QuinceShell {
     private static final TextKey EMPTY_TRASH = TextKey.of("jsc.quince.menu.empty_trash", "Empty Trash");
     private static final TextKey ERASE_DISK = TextKey.of("jsc.quince.menu.erase_disk", "Erase Disk...");
     private static final TextKey SET_STARTUP = TextKey.of("jsc.quince.menu.set_startup", "Set Startup...");
-    private static final TextKey APPLICATIONS = TextKey.of("jsc.quince.menu.applications", "Applications");
+    static final TextKey APPLICATIONS = TextKey.of("jsc.quince.menu.applications", "Applications");
     private static final TextKey HOME = TextKey.of("jsc.quince.menu.home", "Home");
     private static final TextKey UTILITIES = TextKey.of("jsc.quince.menu.utilities", "Utilities");
     private static final TextKey MINIMIZE = TextKey.of("jsc.quince.menu.minimize", "Minimize");
@@ -98,7 +98,7 @@ final class QuinceShell {
             "media_player", "settings", "command_prompt");
     /* The folders the menus open, as the explorer names them: from the disk's root, which itself has no path. */
     private static final String DISK_ROOT = "";
-    private static final String APPLICATIONS_DIR = "Applications";
+    static final String APPLICATIONS_DIR = "Applications";
     private static final String UTILITIES_DIR = "Applications/Utilities";
 
     QuinceShell(final DesktopState desktop) {

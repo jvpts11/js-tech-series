@@ -161,8 +161,19 @@ public final class HelpWindowClientTests {
     private static ClientTestContext downTheTree(final ClientTestContext chain, final ClientTestContext ctx,
                                                  final HelpForm form, final String book, final String shot) {
         return chain.then(0, () -> DesktopScreen.requestOpen(HelpViewerApp.KEY))
-                .thenWaitUntil(() -> help(ctx) != null && reference(ctx) != null, SCREEN_WAIT,
+                .thenWaitUntil(() -> help(ctx) != null && !help(ctx).treeRows().isEmpty(), SCREEN_WAIT,
                         "help to open on its books")
+                /*
+                 * A short page, as CDE's is under its tree, holds the book's chapters but not the other manuals listed
+                 * after them: Page Down brings them into view, as it would for a player.
+                 */
+                .then(SETTLE, () -> {
+                    if (reference(ctx) == null) {
+                        ctx.key(GLFW.GLFW_KEY_PAGE_DOWN);
+                    }
+                })
+                .thenWaitUntil(() -> reference(ctx) != null, SCREEN_WAIT, "the Technical Reference in view",
+                        () -> "rows=" + help(ctx).treeRows() + " page=" + words(help(ctx)))
                 .thenAssert(0, () -> help(ctx).form() == form, "the desktop's own form of help")
                 .thenAssert(0, () -> help(ctx).treeRows().getFirst().endsWith(book),
                         "the book written for the system first")

@@ -22,6 +22,7 @@ import dev.jstech.computers.os.edit.project.SolutionFile;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.sigma.LanguageLevel;
+import dev.jstech.computers.sigma.SigmaVersions;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -304,7 +305,9 @@ public final class SigmaEditorClientTests {
     @ClientTest(timeoutTicks = 3000)
     public static void virtualStudio_holdsAProjectToAVersionFromItsProperties(final ClientTestContext ctx) {
         final String mark = LanguageLevel.SIGMA_SHARP.mark();
-        final String defaultLabel = "Default (" + mark + " 2)";
+        // The installed compiler knows the newest version, so Default follows that one.
+        final String newest = mark + " " + SigmaVersions.NEWEST;
+        final String defaultLabel = "Default (" + newest + ")";
         final String first = mark + " 1";
         studioOnFarm(ctx)
                 .then(SETTLE, () -> ctx.rightClickDesktop(studio(ctx).explorerRowPoint("v Farm *")))
@@ -313,9 +316,10 @@ public final class SigmaEditorClientTests {
                 .thenWaitUntil(() -> studio(ctx).propertiesOpen()
                                 && studio(ctx).versionButtonLabels().contains(defaultLabel),
                         SCREEN_WAIT, "the Properties window to offer Default and every version")
-                .thenAssert(0, () -> studio(ctx).versionButtonLabels().equals(List.of(defaultLabel, first, mark + " 2")),
-                        "Default, then one button for each version, oldest first")
-                .thenAssert(0, () -> studio(ctx).versionHintLines().get(0).contains("sgsc 2.0"),
+                .thenAssert(0, () -> studio(ctx).versionButtonLabels().equals(List.of(defaultLabel, first, mark + " 2",
+                                newest)), "Default, then one button for each version, oldest first")
+                .thenAssert(0, () -> studio(ctx).versionHintLines().get(0).contains("sgsc " + SigmaVersions.NEWEST
+                                + ".0"),
                         "Default names the installed compiler it follows")
                 .thenAssert(0, () -> studio(ctx).versionHintLines().get(2).startsWith("Farm.sgs(4,5): error S3057"),
                         "the example is the error a build of this project would print")
@@ -341,7 +345,7 @@ public final class SigmaEditorClientTests {
                                 .contains("langversion"),
                         SCREEN_WAIT, "Default to take the line back out of the project file",
                         level -> "project=" + diskText(ctx, level, FARM_PROJECT + "/Farm.sgsproj"))
-                .thenAssert(0, () -> studio(ctx).explorerLabels().contains(mark + " 2")
+                .thenAssert(0, () -> studio(ctx).explorerLabels().contains(newest)
                                 && !studio(ctx).explorerLabels().contains(first),
                         "and back at the installed compiler's once the project follows it again");
     }

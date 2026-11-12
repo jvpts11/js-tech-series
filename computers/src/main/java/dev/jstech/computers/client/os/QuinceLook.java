@@ -8,11 +8,14 @@
 package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
+import dev.jstech.computers.os.IOsHost;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,6 +102,18 @@ public enum QuinceLook {
             case "quinceos" -> QUINCE_OS;
             default -> null;
         };
+    }
+
+    /**
+     * The face of the Quince desktop under {@code desktopId} on the machine at {@code host}, by the era this game has
+     * that machine at, or null when that is no desktop of Quince's.
+     */
+    @Nullable
+    public static QuinceLook ofMachine(@Nullable final ResourceLocation desktopId, final BlockPos host) {
+        final Minecraft minecraft = Minecraft.getInstance();
+        final Era era = minecraft.level != null && minecraft.level.getBlockEntity(host) instanceof IOsHost machine
+                ? machine.displayEra() : null;
+        return of(desktopId, era);
     }
 
     /** This face's colours, as its palette has them now. */

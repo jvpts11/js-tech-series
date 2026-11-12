@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.operation.payload.DesktopFilesPayload;
+import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.os.DesktopEnvironmentDef;
 import dev.jstech.computers.os.HostScope;
 import dev.jstech.computers.os.IOsHost;
@@ -19,8 +20,6 @@ import dev.jstech.computers.os.ProgramKind;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.core.text.GameText;
-import dev.jstech.core.text.TextHolder;
-import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
  * present when the desktop bundles it and the machine and the system allow it; one installed later is present when
  * the machine's listing names it. The wallpaper wears the same launchers as icons, with the trash ahead of them.
  */
-@TextHolder
 final class DesktopLaunchers {
 
     private final DesktopState desktop;
@@ -64,8 +62,6 @@ final class DesktopLaunchers {
     /** The startup disk's picture on Quince's desktops, drawn from the program pictures of each set. */
     private static final ResourceLocation QUINCE_DISK_ICON =
             ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "quince_disk");
-    /** The startup disk's name, as Quince's systems name the disk they install on. */
-    static final TextKey QUINCE_DISK = TextKey.of("jsc.quince.disk_name", "Quince HD");
     /* The system disk's root as the explorer asks for it: no path, where "/" would ask for a folder of that name. */
     private static final String DISK_ROOT = "";
 
@@ -174,8 +170,8 @@ final class DesktopLaunchers {
          * the disk's root, which the explorer names with no path at all.
          */
         if (desktop.quince()) {
-            icons.add(new Launcher(WindowKeys.of(FILES), GameText.resolve(QUINCE_DISK), QUINCE_DISK_ICON,
-                    () -> new FilesApp(host, desktopId.getPath(), DISK_ROOT, monitorPos)));
+            icons.add(new Launcher(WindowKeys.of(FILES), GameText.resolve(DiskFilesPayload.QUINCE_DISK),
+                    QUINCE_DISK_ICON, () -> new FilesApp(host, desktopId.getPath(), DISK_ROOT, monitorPos)));
         }
         final DeskTrash trash = desktop.trash();
         if (trash.onWallpaper()) {

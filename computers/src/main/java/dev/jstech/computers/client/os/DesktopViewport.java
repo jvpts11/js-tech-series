@@ -11,6 +11,7 @@ import dev.jstech.computers.gui.MonitorGlass;
 import dev.jstech.computers.gui.layout.CdeFrontPanelLayout;
 import dev.jstech.computers.os.PanelStyle;
 import dev.jstech.computers.os.player.PlayerDesktop;
+import dev.jstech.computers.program.ComputerSettings;
 
 /**
  * Where a desktop sits on the game's screen and how big it draws: the monitor's glass, centred in the game's window,
@@ -26,9 +27,6 @@ final class DesktopViewport {
     /** How big the desktop draws everything, as a percentage of its designed size; 0 stands for the default. */
     private int scalePercent;
 
-    /** The percentage the desktop is drawn at when the machine has not been told another: the size that reads best. */
-    static final int DEFAULT_SCALE = 75;
-
     DesktopViewport(final DesktopState desktop) {
         this.desktop = desktop;
     }
@@ -38,9 +36,17 @@ final class DesktopViewport {
         this.scalePercent = percent;
     }
 
-    /** The scale as a factor: three quarters unless the setting says otherwise. */
+    /** The scale as a factor: the system's own default unless the setting says otherwise. */
     double scale() {
-        return (scalePercent <= 0 ? DEFAULT_SCALE : scalePercent) / 100.0;
+        return (scalePercent <= 0 ? defaultScale() : scalePercent) / 100.0;
+    }
+
+    /**
+     * The percentage the desktop is drawn at when the machine has not been told another: three quarters, the size that
+     * reads best, and Quince's at the size its systems were designed at.
+     */
+    int defaultScale() {
+        return desktop.quince() ? ComputerSettings.QUINCE_SCALE : ComputerSettings.DEFAULT_SCALE;
     }
 
     /**

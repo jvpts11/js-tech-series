@@ -365,6 +365,14 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   wallace (`uname` says Wallace), format their disks as HFS, HFS+, HFS+ journaled and APFS, and Disk Utility's First
   Aid prints what fsck_hfs does. Help is the Help Center, and the Help Viewer from Quince OS X, and opens on The
   Daemon Handbook, which gains a chapter on Quince's systems; the classic systems have no command line.
+- Quince's desktops are drawn at 100%, the size their systems were designed at, where every other system
+  keeps three quarters; the Display setting changes either.
+- The Seeker as each of Quince's systems drew it, titled with the folder it is on (Quince HD at the disk's
+  root, which is what a Quince system calls its startup disk until the player names it) and opening on its icons: the
+  Quince System's counts the items, what is in the disk and what is free under its title, Quince OS 9's says the
+  items and the room left over its list, and from Quince OS X it has back, forward and the views over a sidebar of
+  the devices and the places, with the items and the room left along its foot. Like the real one it keeps the Unix
+  folders, Volumes and the Desktop Folder out of sight at the disk's root.
 - Quince's classic systems open each program in a block of memory of its own, as its Get Info sets it:
   of one size on the Quince System; on Quince OS 9 in its preferred size while that much is free, in what is left
   above its minimum otherwise, and not at all below it. About This Computer shows each program's block and how much

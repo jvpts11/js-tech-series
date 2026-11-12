@@ -65,6 +65,8 @@ public final class NetworkInteractorClientTests {
     /** The band's first hotbar cell, after its three rows of the main inventory, and half a cell. */
     private static final int HOTBAR_BAND_CELL = 27;
     private static final int CELL_HALF = 9;
+    /** The Favourites tab, last of the seven: Status, Local, Network, Federated, Crafting, Operations, Favourites. */
+    private static final int FAVOURITES_TAB = 6;
 
     /*
      * The horizontal grip, the window's corner out, the vertical grip, the corner back in over the widened grid and,
@@ -309,7 +311,7 @@ public final class NetworkInteractorClientTests {
                 .thenScreenshot(2, "starred")
                 // The Favourites tab lists the starred ingot alone; Enter there opens its request dialog.
                 .then(1, () -> ctx.clickDesktop(point(ctx, interactor(ctx).favouritesTabCenter())))
-                .then(2, () -> ctx.assertTrue(interactor(ctx).activeTab() == 5
+                .then(2, () -> ctx.assertTrue(interactor(ctx).activeTab() == FAVOURITES_TAB
                                 && interactor(ctx).listedNames().equals(List.of("Iron Ingot")),
                         "the Favourites tab lists the star; tab=" + interactor(ctx).activeTab() + " got " + interactor(ctx).listedNames()))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))

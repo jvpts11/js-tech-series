@@ -11,6 +11,7 @@ import dev.jstech.computers.client.os.ActiveDesktop;
 import dev.jstech.computers.client.os.CodeFileReplies;
 import dev.jstech.computers.client.os.FilesApps;
 import dev.jstech.computers.gui.help.HelpViews;
+import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.machine.DiskTools;
 import dev.jstech.computers.operation.payload.ClientPayloadHandlers;
 import dev.jstech.computers.operation.payload.ComputerAccess;
@@ -23,6 +24,8 @@ import dev.jstech.computers.operation.payload.RequestFileContentPayload;
 import dev.jstech.computers.operation.payload.RequestFolderContentPayload;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.computers.os.defrag.DefragRunner;
 import dev.jstech.computers.os.defrag.DefragState;
@@ -43,11 +46,13 @@ import dev.jstech.computers.program.cli.menushell.MenuShellListing;
 import dev.jstech.computers.program.cli.menushell.MenuShellView;
 import dev.jstech.computers.program.cli.msd.MsdState;
 import dev.jstech.computers.program.cli.msd.MsdView;
+import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -100,13 +105,23 @@ public final class FilePayloads {
                                                final ServerLevel level) {
         final List<DiskFilesPayload.WireFile> wire = new ArrayList<>();
         final List<DiskFilesPayload.WireVolume> volumes = new ArrayList<>();
+        long diskMb = 0L;
+        long freeMb = 0L;
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
+            final DiskSpec system = HardwareRegistry.disk(computer.systemDisk());
+            if (system != null) {
+                diskMb = system.capacityMb();
+                freeMb = computer.systemDiskFreeMb();
+            }
             // The mountable volumes (drive tree): the system disk, then each linked drive with a medium.
             if (!computer.systemDisk().isEmpty()
                     && filesystemKindOf(computer)
                             != FilesystemKind.NONE) {
-                volumes.add(new DiskFilesPayload.WireVolume("",
-                        VolumeLabel.of(computer.systemDisk(), DiskFilesPayload.LOCAL_DISK.text())));
+                // Quince's systems call the disk they start from Quince HD until the player names it.
+                final OsDef os = computer.installedOs();
+                final TextKey unnamed = os != null && os.platform() == Platform.QUINCE ? DiskFilesPayload.QUINCE_DISK
+                        : DiskFilesPayload.LOCAL_DISK;
+                volumes.add(new DiskFilesPayload.WireVolume("", VolumeLabel.of(computer.systemDisk(), unnamed.text())));
             }
             for (final IMediaDrive drive : MachineMedia.of(computer, level).drives()) {
                 final ItemStack medium = drive.medium();
@@ -173,7 +188,7 @@ public final class FilePayloads {
         // The packet's list codec refuses more than MAX_FILES rows, so a crowded folder is clipped.
         final List<DiskFilesPayload.WireFile> sent = wire.size() > DiskFilesPayload.MAX_FILES
                 ? wire.subList(0, DiskFilesPayload.MAX_FILES) : wire;
-        PacketDistributor.sendToPlayer(player, new DiskFilesPayload(payload.dir(), sent, volumes));
+        PacketDistributor.sendToPlayer(player, new DiskFilesPayload(payload.dir(), sent, volumes, diskMb, freeMb));
     }
 
     /** Lists what a network path holds into {@code wire}: hosts, a host's shares, or a shared folder. */

@@ -93,6 +93,11 @@ public record UnixTree(List<String> home, String mounts, List<String> desktop, L
         return String.join("/", this.desktop);
     }
 
+    /** The folder a person's documents are kept in. */
+    public String documentsPath() {
+        return homePath() + "/Documents";
+    }
+
     /** The folder songs are kept in, made the first time one is brought. */
     public String musicPath() {
         return homePath() + "/Music";

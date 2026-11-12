@@ -441,7 +441,7 @@ class ComputerSettingsTest {
         settings.setClock12h(true);
         settings.setBrightness(80);
         settings.setTaskbarCentered(false);
-        final String joined = String.join("\n", settings.summaryLines());
+        final String joined = String.join("\n", settings.summaryLines(ComputerSettings.DEFAULT_SCALE));
         assertTrue(joined.contains("clock"));
         assertTrue(joined.contains("12h"));
         assertTrue(joined.contains("brightness"));
@@ -454,5 +454,16 @@ class ComputerSettingsTest {
         assertTrue(joined.contains("output"));
         assertTrue(joined.contains("effect"));
         assertTrue(joined.contains("effectspeed"));
+    }
+
+    @Test
+    void summaryLines_sayTheScalesDefaultTheyAreGiven() {
+        final String joined = String.join("\n", settings.summaryLines(ComputerSettings.QUINCE_SCALE));
+        assertTrue(joined.contains(ComputerSettings.QUINCE_SCALE + "% (default)"));
+    }
+
+    @Test
+    void defaultScale_isThreeQuartersWithNoSystem() {
+        assertEquals(ComputerSettings.DEFAULT_SCALE, ComputerSettings.defaultScale(null));
     }
 }

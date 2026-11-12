@@ -51,7 +51,8 @@ class LayoutAuditTest {
     private static final Set<String> COVERED = Set.of(
             "BusLayout", "ClusterManagementComputerLayout", "CraftingComputerLayout", "IsmsLayout",
             "ComputerTerminalLayout", "ServerRouterLayout", "NetworkInteractorLayout",
-            "CraftingInterfaceLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "ThisPcLayout",
+            "CraftingInterfaceLayout", "PatternEncoderLayout", "ServerRackLayout", "FilesLayout", "SeekerLayout",
+            "ThisPcLayout",
             "PatternStudioLayout", "NetworkGatewayLayout", "OpenWithLayout", "LoaderMenuLayout",
             "CdeFrontPanelLayout", "CdeWindowIconLayout", "CdeExitLayout", "CdeAppManagerLayout",
             "CdeStyleLayout", "WorkstationInfoLayout", "WorkstationDevicesLayout", "TrashLayout", "HelpViewerLayout", "SpeakerLayout",
@@ -295,6 +296,11 @@ class LayoutAuditTest {
                     dev.jstech.computers.gui.layout.FilesLayout.layout(size[0], size[1]), false));
             c.add(new AuditCase("FilesLayout.columns(" + size[0] + ")",
                     dev.jstech.computers.gui.layout.FilesLayout.columns(size[0]), false));
+            // The same window as Quince's Seeker, in each of the shapes its systems gave it.
+            for (final SeekerLayout.Form form : SeekerLayout.Form.values()) {
+                c.add(new AuditCase("SeekerLayout." + form + "(" + size[0] + "x" + size[1] + ")",
+                        SeekerLayout.layout(form, size[0], size[1]), false));
+            }
         }
         for (final int[] size : new int[][]{
                 {dev.jstech.computers.gui.layout.ThisPcLayout.MIN_W,

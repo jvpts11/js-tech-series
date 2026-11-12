@@ -14,6 +14,8 @@ import dev.jstech.computers.client.CrashScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.hardware.GpuSpec;
+import dev.jstech.computers.os.MachineSwap;
+import dev.jstech.computers.os.OsRegistry;
 import dev.jstech.computers.os.crash.CrashStyle;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.testkit.client.ClientTestFailure;
@@ -55,6 +57,10 @@ public final class MemoryCrashClientTests {
     private static final String CALCULATOR_KEY = "jsc:calculator";
     private static final ResourceLocation FRAMES_95 = ResourceLocation.fromNamespaceAndPath("jsc", "frames_95");
     private static final ResourceLocation FRAMES_XP = ResourceLocation.fromNamespaceAndPath("jsc", "frames_xp");
+    /* The XP machine's memory, what of it its system holds, and what a Calculator holds. */
+    private static final int XP_RAM_MB = 256;
+    private static final int XP_SYSTEM_MB = 128;
+    private static final int CALCULATOR_MB = 16;
 
     private MemoryCrashClientTests() {
     }
@@ -93,10 +99,15 @@ public final class MemoryCrashClientTests {
 
     /**
      * Frames XP, preemptive, warns first: the window that takes the memory past nine tenths opens with a balloon
-     * naming what holds the most, and the next one, which does not fit, brings the machine down on XP's own page.
+     * naming what holds the most, and the next one, which does not fit, brings the machine down on XP's own page. Its
+     * memory is the RAM and the page file it gives itself together, as a real XP ran low on virtual memory.
      */
-    @ClientTest(timeoutTicks = 7000)
+    @ClientTest(timeoutTicks = 9000)
     public static void framesXp_warnsPastNineTenthsAndThenGoesDown(final ClientTestContext ctx) {
+        final int total = XP_RAM_MB + MachineSwap.pageFileMb(OsRegistry.getOs(FRAMES_XP), XP_RAM_MB);
+        // The first Calculator that takes it past nine tenths, and the last one that still fits.
+        final int warns = ((total * 9 + 9) / 10 - XP_SYSTEM_MB + CALCULATOR_MB - 1) / CALCULATOR_MB;
+        final int fills = (total - XP_SYSTEM_MB) / CALCULATOR_MB;
         atTheDesk(ctx, FRAMES_XP, HardwareItems.RAM_SDRAM_256.get());
         // Whatever the system opened on its own start goes first, so only the Calculators hold memory.
         ctx.then(SETTLE, () -> {
@@ -107,30 +118,36 @@ public final class MemoryCrashClientTests {
                 }
             }
         }).thenWaitUntil(() -> desktop(ctx).openWindowLabels().isEmpty(), SCREEN_WAIT, "the desktop to be bare");
-        // 128 MB of 256 are the system's and each Calculator holds 16: six of them leave it under nine tenths.
-        for (int i = 0; i < 6; i++) {
+        // The system holds its own share, and each Calculator 16: up to the one before the warning, all is quiet.
+        for (int i = 1; i < warns; i++) {
             ctx.then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR));
         }
-        ctx.thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 6, SCREEN_WAIT,
-                        "six Calculators to open")
+        ctx.thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == warns - 1, SCREEN_WAIT,
+                        "the Calculators under nine tenths to open")
                 .thenAssert(SETTLE, () -> desktop(ctx).balloonTitle().isEmpty(), "no warning under nine tenths")
                 .then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR))
-                .thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 7
+                .thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == warns
                         && desktop(ctx).balloonTitle().equals("Low on memory"), SCREEN_WAIT,
-                        "the seventh, which takes it past nine tenths, to open with the warning")
+                        "the one that takes it past nine tenths to open with the warning",
+                        () -> "calculators=" + desktop(ctx).windowsFor(CALCULATOR).size() + " balloon="
+                                + desktop(ctx).balloonTitle() + " / " + desktop(ctx).balloonBody())
                 // A program is named once with all its windows hold, as the real warning listed programs.
-                .then(0, () -> ctx.assertTrue(desktop(ctx).balloonBody().contains("Calculator (112 MB)"),
+                .then(0, () -> ctx.assertTrue(desktop(ctx).balloonBody().contains("Calculator ("
+                                + warns * CALCULATOR_MB + " MB)"),
                         "the warning should name what holds the most; it says: " + desktop(ctx).balloonBody()))
-                .thenScreenshot(SETTLE, "xp-warning")
-                // The eighth fills the memory to the last megabyte, and the ninth does not fit.
-                .then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR))
-                .thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == 8, SCREEN_WAIT,
-                        "the eighth to open")
+                .thenScreenshot(SETTLE, "xp-warning");
+        // The rest fill the memory to the last megabyte, and the one after does not fit.
+        for (int i = warns; i < fills; i++) {
+            ctx.then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR));
+        }
+        ctx.thenWaitUntil(() -> desktop(ctx).windowsFor(CALCULATOR).size() == fills, SCREEN_WAIT,
+                        "the memory to be filled to the last megabyte",
+                        () -> "calculators=" + desktop(ctx).windowsFor(CALCULATOR).size())
                 .then(SETTLE, () -> DesktopSteps.launch(ctx, CALCULATOR))
                 .thenAwaitScreen(CrashScreen.class, SCREEN_WAIT)
                 .thenAssert(0, () -> crash(ctx).page().style() == CrashStyle.FRAMES_XP && !crash(ctx).page().red()
                                 && crash(ctx).page().stopCode().equals("MEMORY_MANAGEMENT"),
-                        "the ninth should bring it down on XP's own page")
+                        "the one that does not fit should bring it down on XP's own page")
                 .thenScreenshot(SETTLE, "xp-crash");
     }
 

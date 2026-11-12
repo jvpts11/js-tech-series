@@ -36,6 +36,14 @@ class UnixTreeTest {
     }
 
     @Test
+    void documentsPath_isAFolderTheSystemLaysDownInTheHome() {
+        for (final UnixTree tree : List.of(UnixTree.HOME_AND_MEDIA, UnixTree.SYSTEM_V, UnixTree.QUINCE_X)) {
+            assertEquals(tree.homePath() + "/Documents", tree.documentsPath());
+            assertTrue(tree.directories().contains(tree.documentsPath()), tree.toString());
+        }
+    }
+
+    @Test
     void of_givesSystemVItsOwnTreeAndTheOthersTheCommonOne() {
         assertSame(UnixTree.SYSTEM_V, UnixTree.of(Platform.UNIX));
         assertSame(UnixTree.HOME_AND_MEDIA, UnixTree.of(Platform.LINUX));

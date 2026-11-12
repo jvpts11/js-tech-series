@@ -8,6 +8,8 @@
 package dev.jstech.computers.program;
 
 import dev.jstech.computers.audio.SoundOutput;
+import dev.jstech.computers.os.OsDef;
+import dev.jstech.computers.os.Platform;
 import dev.jstech.computers.os.QuincePartitions;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
@@ -60,6 +62,12 @@ public final class ComputerSettings {
     public static final int MAX_PARTITIONS = 64;
     /** What a fresh machine pins: its file explorer. */
     public static final String DEFAULT_PINNED = "files";
+    /**
+     * The percentage a desktop is drawn at when its machine was told none: three quarters, the size that reads best,
+     * and Quince's at the size its systems were designed at.
+     */
+    public static final int DEFAULT_SCALE = 75;
+    public static final int QUINCE_SCALE = 100;
 
     /*
      * The words of the config listing around its keys and values, which are data a player types back. The listing
@@ -714,8 +722,16 @@ public final class ComputerSettings {
         return SettingKey.apply(this, key, value);
     }
 
-    /** Human-readable {@code key   value} lines for the {@code config} command's listing. */
-    public List<String> summaryLines() {
+    /** The percentage a desktop of that system is drawn at when its machine was told none. */
+    public static int defaultScale(@Nullable final OsDef os) {
+        return os != null && os.platform() == Platform.QUINCE ? QUINCE_SCALE : DEFAULT_SCALE;
+    }
+
+    /**
+     * Human-readable {@code key   value} lines for the {@code config} command's listing, the scale's default as
+     * {@code defaultScale} percent.
+     */
+    public List<String> summaryLines(final int defaultScale) {
         final List<String> lines = new ArrayList<>();
         lines.add(pad(SettingKey.CLOCK) + (clock12h ? "12h" : "24h"));
         lines.add(pad(SettingKey.THEME) + (themePreset.isEmpty() ? ThemePreset.SYSTEM.id() : themePreset));
@@ -724,7 +740,8 @@ public final class ComputerSettings {
         lines.add(pad(SettingKey.EFFECT) + (effectsOff.isEmpty() ? EFFECTS_ALL_ON.english()
                 : EFFECTS_OFF.with(String.join(", ", effectsOff)).english()));
         lines.add(pad(SettingKey.EFFECTSPEED) + effectSpeed + "%");
-        lines.add(pad(SettingKey.GUISCALE) + (guiScale == 0 ? DEFAULT_VALUE.with("75%").english() : guiScale + "%"));
+        lines.add(pad(SettingKey.GUISCALE) + (guiScale == 0 ? DEFAULT_VALUE.with(defaultScale + "%").english()
+                : guiScale + "%"));
         lines.add(pad(SettingKey.BRIGHTNESS) + brightness + "%");
         lines.add(pad(SettingKey.VOLUME) + volume + "%");
         lines.add(pad(SettingKey.MUTE) + (muted ? "on" : "off"));

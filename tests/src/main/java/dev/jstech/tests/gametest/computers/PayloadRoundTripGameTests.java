@@ -178,7 +178,8 @@ public final class PayloadRoundTripGameTests {
                 List.of(new DiskFilesPayload.WireFile("C:\\notes.txt", "txt", 4L, false, false),
                         new DiskFilesPayload.WireFile("C:\\Data", "", 0L, false, true, "minecraft:oak_log", 640L)),
                 List.of(new DiskFilesPayload.WireVolume("c", Text.literal("System")),
-                        new DiskFilesPayload.WireVolume("media:1", DiskFilesPayload.SETUP.with("Frames 11")))));
+                        new DiskFilesPayload.WireVolume("media:1", DiskFilesPayload.SETUP.with("Frames 11"))),
+                8_192L, 5_120L));
         helper.succeed();
     }
 

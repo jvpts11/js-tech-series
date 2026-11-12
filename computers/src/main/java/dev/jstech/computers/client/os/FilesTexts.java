@@ -45,6 +45,12 @@ final class FilesTexts {
     static final TextKey READ_ONLY_MEDIUM = TextKey.of("jsc.files.read_only_medium", "read-only medium");
     static final TextKey USED = TextKey.of("jsc.files.used", "%s mB used");
 
+    // Quince's Seeker: the disk's figures over its list or along its foot, and a folder of its sidebar.
+    static final TextKey IN_DISK = TextKey.of("jsc.files.seeker.in_disk", "%sK in disk");
+    static final TextKey K_FREE = TextKey.of("jsc.files.seeker.free", "%sK free");
+    static final TextKey AVAILABLE = TextKey.of("jsc.files.seeker.available", "%s, %s available");
+    static final TextKey DOCUMENTS = TextKey.of("jsc.files.seeker.documents", "Documents");
+
     // The properties.
     static final TextKey PROPERTIES = TextKey.of("jsc.files.properties", "Properties");
     static final TextKey CLOSE = TextKey.of("jsc.files.close", "Close");

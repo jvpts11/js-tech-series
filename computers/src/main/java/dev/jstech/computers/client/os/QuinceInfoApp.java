@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client.os;
 
+import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.os.MachineMemory;
 import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.QuincePartitions;
@@ -106,7 +107,7 @@ final class QuinceInfoApp implements IDesktopApp {
         int ty = y + 30;
         Draw.text(g, font, GameText.resolve(KIND) + " " + GameText.resolve(APPLICATION), x + 8, ty, c.ink());
         ty += 11;
-        Draw.text(g, font, GameText.resolve(WHERE) + " " + GameText.resolve(DesktopLaunchers.QUINCE_DISK), x + 8, ty,
+        Draw.text(g, font, GameText.resolve(WHERE) + " " + GameText.resolve(DiskFilesPayload.QUINCE_DISK), x + 8, ty,
                 c.ink());
         ty += 14;
         g.fill(x + 4, ty - 3, x + width - 4, ty - 2, c.shade());

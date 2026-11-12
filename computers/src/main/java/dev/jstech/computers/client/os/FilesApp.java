@@ -10,6 +10,7 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.api.JsComputersApi;
 import dev.jstech.computers.gui.layout.FilesLayout;
+import dev.jstech.computers.gui.layout.SeekerLayout;
 import dev.jstech.computers.machine.MachineListing;
 import dev.jstech.computers.operation.payload.ArchiveFilesPayload;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
@@ -26,11 +27,13 @@ import dev.jstech.computers.operation.payload.SaveFilePayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.UnixTree;
 import dev.jstech.computers.os.fs.Archive;
 import dev.jstech.computers.os.fs.FileOpeners;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.InstallerLayout;
 import dev.jstech.computers.os.fs.SystemLayout;
+import dev.jstech.computers.os.media.MediaSizes;
 import dev.jstech.computers.os.media.MediaVolume;
 import dev.jstech.computers.program.Programs;
 import dev.jstech.core.client.gui.component.Breadcrumbs;
@@ -46,6 +49,7 @@ import dev.jstech.core.client.gui.component.Popup;
 import dev.jstech.core.client.gui.component.SearchField;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.Texts;
+import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
 import dev.jstech.core.client.motion.MotionClock;
 import dev.jstech.core.motion.MotionKinds;
@@ -115,8 +119,30 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "app/files",
             new Colours(0xFF2E8B2E, 0x334C84F0, 0xCC4C84F0, 0x40000000, 0xD0303848, 0xFFFFFFFF, 0xFFF5F9FD,
                     0xFFDDE7F3));
+    /*
+     * What Quince's Seeker keeps out of sight at the disk's root, as the real one did: the Unix tree under Quince OS X,
+     * the folder other disks are mounted in, and the classic systems' Desktop Folder, whose files are on the desktop.
+     */
+    private static final Set<String> SEEKER_HIDDEN = Set.of("bin", "etc", "tmp", "usr", UnixTree.QUINCE_X.mounts(),
+            UnixTree.QUINCE_SYSTEM.desktopPath());
+    private static final long KB_PER_MB = 1024L;
+    private static final long BYTES_PER_MB = 1024L * 1024L;
+    /* Where a row of the Seeker's sidebar puts a heading, a picture and a name, in from its left. */
+    private static final int SIDEBAR_HEADING_X = 4;
+    private static final int SIDEBAR_ICON_X = 5;
+    private static final int SIDEBAR_TEXT_X = 16;
+    private static final int SEEKER_ICON_DY = 8;
 
     private OsSkin skin = OsSkin.fallback();
+    /**
+     * Quince's look when this explorer is a Quince system's Seeker, which draws its window as those systems did, or
+     * null on every other desktop.
+     */
+    @Nullable
+    private final QuinceLook seeker;
+    /** How big the system disk is and how much of it is free, in megabytes, as the last listing said. */
+    private long diskMb;
+    private long freeMb;
 
     private final BlockPos host;
     /*
@@ -193,6 +219,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private final Button forwardButton;
     private final Button upButton;
     private final Button viewButton;
+    /** The Seeker's views on Quince OS X's toolbar: the icons, then the list, the one in use lit. */
+    private final Button iconsButton;
+    private final Button listButton;
     private final Breadcrumbs address;
     private final SearchField search;
     private final ListView<TreeItem> treeList;
@@ -311,6 +340,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         this.host = host;
         this.monitorPos = monitorPos;
         this.skin = OsSkin.forDesktop(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, os));
+        this.seeker = QuinceLook.ofMachine(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, os), host);
+        // The Seeker opens on its icons, as Quince's systems always did.
+        this.iconView = this.seeker != null;
 
         backButton = root.add(new Button("<", this::goBack));
         forwardButton = root.add(new Button(">", this::goForward));
@@ -330,11 +362,14 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             applyFilterAndSort();
         });
         viewButton = root.add(new Button(() -> iconView ? "=" : "#", this::toggleView));
+        iconsButton = root.add(new Button("#", () -> showIcons(true)));
+        listButton = root.add(new Button("=", () -> showIcons(false)));
         organizeButton = root.add(new Button(GameText.resolve(FilesTexts.ORGANIZE), this::openOrganize));
         openButton = root.add(new Button(this::openLabel, this::openSelected));
         newFolderButton = root.add(new Button(GameText.resolve(FilesTexts.NEW_FOLDER_COMMAND), this::newFolder));
 
-        treeList = root.add(new ListView<TreeItem>(this::tree, FilesLayout.ROW_H, this::renderTreeRow)
+        treeList = root.add(new ListView<TreeItem>(this::tree,
+                seeker == null ? FilesLayout.ROW_H : SeekerLayout.SIDEBAR_ROW_H, this::renderTreeRow)
                 .setPadding(1, 2)
                 .setOnClick(this::treeClicked));
         columns = root.add(new ColumnHeader(List.of(GameText.resolve(FileDialogTexts.NAME_COLUMN),
@@ -344,7 +379,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         fileList = root.add(new ListView<Row>(() -> rows, FilesLayout.ROW_H, this::renderFileRow)
                 .setPadding(1, 1)
                 .setOnClick(this::rowClicked));
-        iconGrid = root.add(new CellGrid(1, 1, 1, ICON_CELL_W, ICON_CELL_H)
+        iconGrid = root.add(new CellGrid(1, 1, 1, seeker == null ? ICON_CELL_W : seekerForm().cellW(),
+                seeker == null ? ICON_CELL_H : seekerForm().cellH())
                 .setWells(false)
                 .setInset(2)
                 .setSelected(this::isSelected)
@@ -371,6 +407,21 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         }
         propertiesClose = properties.add(new Button(GameText.resolve(FilesTexts.CLOSE), properties::close)
                 .setPrimary(true));
+        if (seeker == null) {
+            iconsButton.setVisible(false);
+            listButton.setVisible(false);
+        } else {
+            // The Seeker has no up button, no address and no search; the classic systems' had no toolbar nor sidebar.
+            for (final UiComponent piece : List.of(upButton, address, search, viewButton, statusLeft, statusRight,
+                    organizeButton, openButton, newFolderButton)) {
+                piece.setVisible(false);
+            }
+            if (seeker.classic()) {
+                for (final UiComponent piece : List.of(backButton, forwardButton, iconsButton, listButton, treeList)) {
+                    piece.setVisible(false);
+                }
+            }
+        }
 
         FilesApps.register(this);
         request(initialDir);
@@ -385,6 +436,8 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     void accept(final DiskFilesPayload payload) {
         this.awaitingSince = Double.NaN;
         this.volumes = payload.volumes();
+        this.diskMb = payload.diskMb();
+        this.freeMb = payload.freeMb();
         rebuild(payload.files());
     }
 
@@ -446,9 +499,34 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         return dir;
     }
 
+    /** The explorer's name, or on Quince the folder its Seeker is on, which is what Quince's systems titled it. */
     @Override
     public String title() {
-        return GameText.resolve(FilesAppTexts.TITLE);
+        return seeker == null ? GameText.resolve(FilesAppTexts.TITLE) : placeName();
+    }
+
+    /** What the folder being shown is called: the disk's own name at a volume's root, else the folder's. */
+    private String placeName() {
+        if (dir.isEmpty()) {
+            return systemDiskName();
+        }
+        if (dir.equals(NET_ROOT)) {
+            return GameText.resolve(FilesTexts.NETWORK);
+        }
+        if (onMedia() && dir.equals(mediaRoot())) {
+            return volumeLabel(dir);
+        }
+        return onNetwork() ? netName(dir) : baseName(dir);
+    }
+
+    /* The system disk's name as the listing gives it, and Quince's own before the first listing has come. */
+    private String systemDiskName() {
+        for (final DiskFilesPayload.WireVolume v : volumes) {
+            if (v.key().isEmpty()) {
+                return GameText.resolve(v.label());
+            }
+        }
+        return GameText.resolve(DiskFilesPayload.QUINCE_DISK);
     }
 
     @Override
@@ -647,11 +725,15 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         if (dir.isEmpty()) {
             built.add(new Row(Kind.STORAGE, GameText.resolve(FilesTexts.STORAGE),
                     GameText.resolve(FilesTexts.STORED_ITEMS), "", FileIcons.Kind.FOLDER, null, null));
-        } else {
+        } else if (seeker == null || seeker.classic()) {
+            // The way up, which Quince OS X's Seeker does without: its back button and its sidebar take its place.
             built.add(new Row(Kind.UP, "..", GameText.resolve(FileDialogTexts.UP_ONE_LEVEL), "", FileIcons.Kind.UP,
                     null, null));
         }
         for (final DiskFilesPayload.WireFile f : files) {
+            if (seeker != null && dir.isEmpty() && f.directory() && SEEKER_HIDDEN.contains(f.path())) {
+                continue;
+            }
             if (f.directory()) {
                 final boolean drive = f.path().startsWith("media:") && f.path().indexOf('/') < 0;
                 final int depth = netDepth(f.path());
@@ -803,6 +885,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     // the drive tree
 
     private List<TreeItem> tree() {
+        if (seeker != null) {
+            return seekerSidebar();
+        }
         final List<TreeItem> out = new ArrayList<>();
         out.add(new TreeItem(GameText.resolve(FilesTexts.QUICK_ACCESS), "", true, false, -1));
         out.add(new TreeItem(GameText.resolve(FileDialogTexts.DESKTOP), desktopDirAt(host, !linux()), false, false,
@@ -819,6 +904,31 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         out.add(new TreeItem(GameText.resolve(FilesTexts.NETWORK), "", true, false, -1));
         out.add(new TreeItem(GameText.resolve(linux() ? FilesTexts.SHARES : FilesTexts.SHARED_FOLDERS), NET_ROOT,
                 false, false, -1));
+        return out;
+    }
+
+    /**
+     * Quince OS X's sidebar, as its Seeker had it: the disks and the network under DEVICES, then under PLACES the
+     * folders a person keeps going back to, in the tree Quince OS X and quinceOS lay down.
+     */
+    private List<TreeItem> seekerSidebar() {
+        final List<TreeItem> out = new ArrayList<>();
+        out.add(new TreeItem(GameText.resolve(FileDialogTexts.DEVICES_HEADING), "", true, false, -1));
+        for (int i = 0; i < volumes.size(); i++) {
+            final DiskFilesPayload.WireVolume v = volumes.get(i);
+            // The network the listing names among the volumes is the one row below, always there.
+            if (!v.key().equals(NET_ROOT)) {
+                out.add(new TreeItem(GameText.resolve(v.label()), v.key(), false, v.removable(), i));
+            }
+        }
+        out.add(new TreeItem(GameText.resolve(FilesTexts.NETWORK), NET_ROOT, false, false, -1));
+        out.add(new TreeItem(GameText.resolve(FileDialogTexts.PLACES), "", true, false, -1));
+        final UnixTree tree = UnixTree.QUINCE_X;
+        out.add(new TreeItem(GameText.resolve(FileDialogTexts.DESKTOP), tree.desktopPath(), false, false, -1));
+        out.add(new TreeItem(GameText.resolve(FileDialogTexts.HOME), tree.homePath(), false, false, -1));
+        out.add(new TreeItem(GameText.resolve(QuinceShell.APPLICATIONS), QuinceShell.APPLICATIONS_DIR, false, false,
+                -1));
+        out.add(new TreeItem(GameText.resolve(FilesTexts.DOCUMENTS), tree.documentsPath(), false, false, -1));
         return out;
     }
 
@@ -903,31 +1013,12 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
         final UiContext ctx = new UiContext(skin, font, mouseX, mouseY, partialTick);
-        g.fill(x, y, x + width, y + height, skin.windowBg());
-        final FilesLayout.Bar bar = bar();
         layout(x, y, width, height, font);
-
-        // The surfaces the components sit on: the toolbar rule, the tree rail, the list well, the status bar.
-        final int toolBottom = y + FilesLayout.toolY(bar) + FilesLayout.TOOL_H;
-        g.fill(x, toolBottom, x + width, toolBottom + 1, skin.edge());
-        if (bar == FilesLayout.Bar.RIBBON) {
-            drawRibbonTabs(g, font, x, y, width, mouseX, mouseY);
-        } else if (bar == FilesLayout.Bar.COMMAND) {
-            // Frames 7's command bar: a pale band under the address row, its own rule under it.
-            final int cb = toolBottom + FilesLayout.COMMAND_H;
-            g.fillGradient(x, toolBottom + 1, x + width, cb - 1, PALETTE.get().commandTop(),
-                    PALETTE.get().commandBottom());
-            g.fill(x, cb - 1, x + width, cb, skin.edge());
+        if (seeker != null) {
+            drawSeeker(g, font, x, y, width, height);
+        } else {
+            drawSurfaces(g, font, x, y, width, height, mouseX, mouseY);
         }
-        g.fill(treeList.x(), treeList.y(), treeList.right(), treeList.bottom(), skin.listHover());
-        g.fill(treeList.right() - 1, treeList.y(), treeList.right(), treeList.bottom(), skin.edge());
-        final int lx = x + FilesLayout.listX();
-        final int lw = FilesLayout.listW(width);
-        final int listY = y + FilesLayout.listY(bar);
-        final int listH = FilesLayout.listH(height, bar);
-        g.fill(lx, listY, lx + lw, listY + listH, skin.panelBg());
-        Draw.outline(g, lx, listY, lw, listH, skin.edge());
-        skin.statusBar(g, x, y + FilesLayout.statusY(height), width, FilesLayout.STATUS_H);
 
         dropTarget = dragging && !iconView ? folderRowAt(dragMx, dragMy) : -1;
         root.render(g, ctx);
@@ -951,6 +1042,89 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             drawRibbonBody(g, ctx, x, y, width);
         }
         context.render(g, ctx);
+    }
+
+    /** What the components sit on: the toolbar's rule, the bar under it, the tree, the list's well, the status bar. */
+    private void drawSurfaces(final GuiGraphics g, final Font font, final int x, final int y, final int width,
+                              final int height, final int mouseX, final int mouseY) {
+        g.fill(x, y, x + width, y + height, skin.windowBg());
+        final FilesLayout.Bar bar = bar();
+        final int toolBottom = y + FilesLayout.toolY(bar) + FilesLayout.TOOL_H;
+        g.fill(x, toolBottom, x + width, toolBottom + 1, skin.edge());
+        if (bar == FilesLayout.Bar.RIBBON) {
+            drawRibbonTabs(g, font, x, y, width, mouseX, mouseY);
+        } else if (bar == FilesLayout.Bar.COMMAND) {
+            // Frames 7's command bar: a pale band under the address row, its own rule under it.
+            final int cb = toolBottom + FilesLayout.COMMAND_H;
+            g.fillGradient(x, toolBottom + 1, x + width, cb - 1, PALETTE.get().commandTop(),
+                    PALETTE.get().commandBottom());
+            g.fill(x, cb - 1, x + width, cb, skin.edge());
+        }
+        g.fill(treeList.x(), treeList.y(), treeList.right(), treeList.bottom(), skin.listHover());
+        g.fill(treeList.right() - 1, treeList.y(), treeList.right(), treeList.bottom(), skin.edge());
+        final int lx = x + FilesLayout.listX();
+        final int lw = FilesLayout.listW(width);
+        final int listY = y + FilesLayout.listY(bar);
+        final int listH = FilesLayout.listH(height, bar);
+        g.fill(lx, listY, lx + lw, listY + listH, skin.panelBg());
+        Draw.outline(g, lx, listY, lw, listH, skin.edge());
+        skin.statusBar(g, x, y + FilesLayout.statusY(height), width, FilesLayout.STATUS_H);
+    }
+
+    /**
+     * The Seeker's own surfaces, as Quince's systems drew them: the Quince System's figures over two rules, Quince OS
+     * 9's centred over a sunken list, or Quince OS X's sidebar and white list with the figures along the foot.
+     */
+    private void drawSeeker(final GuiGraphics g, final Font font, final int x, final int y, final int width,
+                            final int height) {
+        final QuinceLook.Colours c = seeker.colours();
+        final SeekerLayout.Form form = seekerForm();
+        g.fill(x, y, x + width, y + height, c.face());
+        final int lx = x + SeekerLayout.listX(form);
+        final int ly = y + SeekerLayout.listY(form);
+        final int lw = SeekerLayout.listW(form, width);
+        final int lh = SeekerLayout.listH(form, height);
+        final String items = GameText.resolve(itemsText());
+        final int ty = y + SeekerLayout.FIGURES_DY;
+        switch (form) {
+            case CLASSIC -> {
+                Draw.text(g, font, items, x + SeekerLayout.FIGURES_IN, ty, c.ink());
+                if (onSystemDisk()) {
+                    final String inDisk = GameText.resolve(FilesTexts.IN_DISK.with(
+                            MediaSizes.grouped((diskMb - freeMb) * KB_PER_MB)));
+                    Draw.textCentered(g, font, inDisk, x + width / 2, ty, c.ink());
+                    final String free = GameText.resolve(FilesTexts.K_FREE.with(
+                            MediaSizes.grouped(freeMb * KB_PER_MB)));
+                    Draw.text(g, font, free, x + width - SeekerLayout.FIGURES_IN - font.width(free), ty, c.ink());
+                }
+                g.fill(x, y + SeekerLayout.FIRST_RULE_Y, x + width, y + SeekerLayout.FIRST_RULE_Y + 1, c.frame());
+                g.fill(x, y + SeekerLayout.SECOND_RULE_Y, x + width, y + SeekerLayout.SECOND_RULE_Y + 1, c.frame());
+            }
+            case PLATINUM -> {
+                Draw.textCentered(g, font, available(items), x + width / 2, y + 1, c.ink());
+                g.fill(lx, ly, lx + lw, ly + lh, c.light());
+                Draw.outline(g, lx, ly, lw, lh, c.shade());
+            }
+            case X -> {
+                g.fill(x, ly, x + form.sidebar(), ly + lh, c.sidebar());
+                g.fill(x + form.sidebar(), ly, x + form.sidebar() + 1, ly + lh, c.shade());
+                g.fill(lx, ly, lx + lw, ly + lh, c.light());
+                g.fill(x, ly + lh, x + width, ly + lh + 1, c.shade());
+                Draw.textCentered(g, font, available(items), lx + lw / 2,
+                        y + SeekerLayout.footY(form, height) + SeekerLayout.FIGURES_DY, c.ink());
+            }
+        }
+    }
+
+    /** The items and, on the system disk, how much of it is free: "6 items, 742 MB available". */
+    private String available(final String items) {
+        return onSystemDisk() ? GameText.resolve(FilesTexts.AVAILABLE.with(items,
+                MediaSizes.label(freeMb * BYTES_PER_MB))) : items;
+    }
+
+    /** Whether the folder shown is on the system disk, whose figures the listing carries. */
+    private boolean onSystemDisk() {
+        return !onMedia() && !onNetwork() && !dir.equals(STORAGE_PLACE);
     }
 
     /** The bar this file manager wears besides its toolbar: Frames 7's command bar, Frames 10's ribbon, or none. */
@@ -1253,6 +1427,10 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** Places every component from the content rectangle; the same layout the next click is read against. */
     private void layout(final int x, final int y, final int width, final int height, final Font font) {
+        if (seeker != null) {
+            layoutSeeker(x, y, width, height);
+            return;
+        }
         final FilesLayout.Bar bar = bar();
         final int ny = y + FilesLayout.navY(bar);
         backButton.setBounds(x + FilesLayout.navX(0), ny, FilesLayout.NAV_W, FilesLayout.NAV_H);
@@ -1280,21 +1458,65 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         columns.setColumnX(lx + 4 + FilesLayout.ICON_W + 3, x + FilesLayout.typeColX(width, typeColW, sizeColW),
                 x + FilesLayout.sizeColX(width, sizeColW));
 
-        final int listY = y + FilesLayout.listY(bar);
-        final int listH = FilesLayout.listH(height, bar);
-        fileList.setBounds(lx, listY, lw, listH);
-        fileList.setVisible(!iconView);
-        final int cols = Math.max(1, (lw - 4) / ICON_CELL_W);
-        final int gridRows = Math.max(1, (listH - 2) / ICON_CELL_H);
-        iconGrid.setColumns(cols).setVisibleRows(gridRows).setTotalRows((rows.size() + cols - 1) / cols)
-                .setCellCount(rows.size()).place(lx + 2, listY + 2);
-        iconGrid.setVisible(iconView);
-
+        placeList(lx, y + FilesLayout.listY(bar), lw, FilesLayout.listH(height, bar));
         layoutRenameFields(width);
 
         final int sy = y + FilesLayout.statusY(height) + 2;
         statusLeft.setBounds(x + 3, sy, width / 2 - 3, 8);
         statusRight.setBounds(x + width / 2, sy, width / 2 - 3, 8);
+    }
+
+    /** The list's well: the rows, or the icons in as many columns and rows as it holds. */
+    private void placeList(final int lx, final int listY, final int lw, final int listH) {
+        fileList.setBounds(lx, listY, lw, listH);
+        fileList.setVisible(!iconView);
+        final int cols = Math.max(1, (lw - 4) / iconGrid.cellWidth());
+        final int gridRows = Math.max(1, (listH - 2) / iconGrid.cellHeight());
+        iconGrid.setColumns(cols).setVisibleRows(gridRows).setTotalRows((rows.size() + cols - 1) / cols)
+                .setCellCount(rows.size()).place(lx + 2, listY + 2);
+        iconGrid.setVisible(iconView);
+    }
+
+    /**
+     * The Seeker's pieces: on Quince OS X back, forward and the views over the sidebar and the list, the list's
+     * headings while it shows rows; on the classic systems the list alone, under the figures.
+     */
+    private void layoutSeeker(final int x, final int y, final int width, final int height) {
+        final SeekerLayout.Form form = seekerForm();
+        if (form == SeekerLayout.Form.X) {
+            final int by = y + SeekerLayout.buttonY();
+            backButton.setBounds(x + SeekerLayout.buttonX(0), by, SeekerLayout.BUTTON_W, SeekerLayout.BUTTON_H);
+            backButton.setEnabled(!back.isEmpty());
+            forwardButton.setBounds(x + SeekerLayout.buttonX(1), by, SeekerLayout.BUTTON_W, SeekerLayout.BUTTON_H);
+            forwardButton.setEnabled(!forward.isEmpty());
+            iconsButton.setBounds(x + SeekerLayout.viewX(0), by, SeekerLayout.VIEW_W, SeekerLayout.BUTTON_H);
+            iconsButton.setPrimary(iconView);
+            listButton.setBounds(x + SeekerLayout.viewX(1), by, SeekerLayout.VIEW_W, SeekerLayout.BUTTON_H);
+            listButton.setPrimary(!iconView);
+            treeList.setBounds(x, y + SeekerLayout.listY(form), form.sidebar(), SeekerLayout.listH(form, height));
+        }
+        final int lx = x + SeekerLayout.listX(form);
+        final int lw = SeekerLayout.listW(form, width);
+        final int listY = y + SeekerLayout.listY(form);
+        final int listH = SeekerLayout.listH(form, height);
+        columns.setVisible(!iconView);
+        if (iconView) {
+            placeList(lx, listY, lw, listH);
+        } else {
+            columns.setBounds(lx, listY, lw, FilesLayout.COLS_H);
+            columns.setColumnX(lx + 4 + FilesLayout.ICON_W + 3, x + FilesLayout.typeColX(width, typeColW, sizeColW),
+                    x + FilesLayout.sizeColX(width, sizeColW));
+            placeList(lx, listY + FilesLayout.COLS_H, lw, listH - FilesLayout.COLS_H);
+        }
+        layoutRenameFields(width);
+    }
+
+    /** The shape of the Seeker this explorer is: the Quince System's, Quince OS 9's, or Quince OS X's and after. */
+    private SeekerLayout.Form seekerForm() {
+        if (seeker == QuinceLook.ONE_BIT) {
+            return SeekerLayout.Form.CLASSIC;
+        }
+        return seeker == QuinceLook.PLATINUM ? SeekerLayout.Form.PLATINUM : SeekerLayout.Form.X;
     }
 
     /**
@@ -1329,7 +1551,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             if (iconView) {
                 final int[] c = iconGrid.cellRect(renaming);
                 if (c != null) {
-                    renameField.setBounds(c[0], c[1] + c[3] - 12, c[2], FilesLayout.ROW_H);
+                    // Over the name: at the cell's foot, or right under the picture in the Seeker's cells.
+                    final int fieldY = seeker == null ? c[1] + c[3] - 12 : c[1] + SEEKER_ICON_DY + FileIcons.SIZE;
+                    renameField.setBounds(c[0], fieldY, c[2], FilesLayout.ROW_H);
                     renameField.setVisible(true);
                 }
             } else if (renaming >= fileList.scroll() && renaming < fileList.scroll() + fileList.visibleRows()) {
@@ -1356,6 +1580,10 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
     private void renderTreeRow(final GuiGraphics g, final UiContext ctx, final TreeItem item, final int index,
                                final int x, final int y, final int w, final int h, final boolean hovered,
                                final boolean selectedRow) {
+        if (seeker != null) {
+            renderSidebarRow(g, ctx.font(), item, x, y, w, h);
+            return;
+        }
         if (item.section()) {
             Draw.text(g, ctx.font(), item.label().toUpperCase(Locale.ROOT), x + 3, y + FilesLayout.TEXT_DY,
                     ctx.skin().dim());
@@ -1389,6 +1617,35 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             g.fill(ex, ey + 2, ex + 6, ey + 3, c);
             g.fill(ex, ey + 4, ex + 6, ey + 5, c);
         }
+    }
+
+    /**
+     * One row of the Seeker's sidebar: a heading in its grey, or a disk or a folder with its picture at half size, lit
+     * while it is the one open.
+     */
+    private void renderSidebarRow(final GuiGraphics g, final Font font, final TreeItem item, final int x, final int y,
+                                  final int w, final int h) {
+        final QuinceLook.Colours c = seeker.colours();
+        final int ty = y + (h - font.lineHeight) / 2 + 1;
+        if (item.section()) {
+            Draw.text(g, font, item.label(), x + SIDEBAR_HEADING_X, ty, c.heading());
+            return;
+        }
+        final boolean open = dir.equals(item.target());
+        if (open) {
+            g.fill(x, y, x + w, y + h, c.select());
+        }
+        if (!item.target().equals(NET_ROOT)) {
+            final FileIcons.Kind kind = isVolumeItem(item) ? (item.removable() ? FileIcons.Kind.BIN
+                    : FileIcons.Kind.HOME) : FileIcons.Kind.FOLDER;
+            g.pose().pushPose();
+            g.pose().translate(x + SIDEBAR_ICON_X, y + (h - FileIcons.SIZE / 2) / 2, 0);
+            g.pose().scale(0.5F, 0.5F, 1F);
+            FileIcons.draw(g, 0, 0, kind, iconSet());
+            g.pose().popPose();
+        }
+        Draw.text(g, font, Texts.clip(font, item.label(), w - SIDEBAR_TEXT_X - 2), x + SIDEBAR_TEXT_X, ty,
+                open ? c.selectInk() : c.ink());
     }
 
     /** The look the pictures are drawn in: the desktop's own set, or this window's skin's when no desktop is open. */
@@ -1439,27 +1696,35 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         final Row r = rows.get(index);
+        // The Seeker's icons stand lower in their roomier cells, each name right under its picture.
+        final int iconY = cy + (seeker == null ? 2 : SEEKER_ICON_DY);
         if (r.item() != null) {
-            DesktopItems.item(g, r.item(), cx + w / 2 - 8, cy + 2);
+            DesktopItems.item(g, r.item(), cx + w / 2 - 8, iconY);
         } else {
-            FileIcons.draw(g, cx + w / 2 - FileIcons.SIZE / 2, cy + 2, r.icon(), iconSet());
+            FileIcons.draw(g, cx + w / 2 - FileIcons.SIZE / 2, iconY, r.icon(), iconSet());
         }
         if (index != renaming) {
             final String label = Texts.clip(ctx.font(), r.name(), w - 4);
-            Draw.text(g, ctx.font(), label, cx + (w - ctx.font().width(label)) / 2, cy + h - 9,
+            final int labelY = seeker == null ? cy + h - 9 : iconY + FileIcons.SIZE + 2;
+            Draw.text(g, ctx.font(), label, cx + (w - ctx.font().width(label)) / 2, labelY,
                     ctx.skin().listRowText(isSelected(index)));
         }
     }
 
-    private String statusLeftText() {
+    /** How many files and folders are listed, the way back up and the stored items' folder left out: "6 items". */
+    private Text itemsText() {
         int items = 0;
         for (final Row r : rows) {
             if (r.kind() == Kind.FILE || r.kind() == Kind.DIR) {
                 items++;
             }
         }
+        return (items == 1 ? FileDialogTexts.ONE_ITEM : FileDialogTexts.ITEMS).with(items);
+    }
+
+    private String statusLeftText() {
         final int selectedCount = bandRows.size() > 1 ? bandRows.size() : (selected >= 0 ? 1 : 0);
-        Text left = (items == 1 ? FileDialogTexts.ONE_ITEM : FileDialogTexts.ITEMS).with(items);
+        Text left = itemsText();
         if (selectedCount > 0) {
             left = FilesTexts.WITH_SELECTED.with(left, selectedCount);
             if (selectedCount == 1 && selected >= 0 && selected < rows.size()) {
@@ -1578,8 +1843,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
 
     /** Whether the point is in the list's well: the area the rows or the tiles are shown in. */
     private boolean inListWell(final double mx, final double my) {
-        return mx >= lastX + FilesLayout.listX() && my >= lastY + FilesLayout.listY(bar())
-                && my < lastY + FilesLayout.statusY(contentH);
+        return mx >= fileList.x() && my >= fileList.y() && my < fileList.bottom();
     }
 
     private void treeClicked(final int index, final int button, final double mx, final double my) {
@@ -2174,7 +2438,7 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
      */
     @Nullable
     public String crossWindowDropDir(final DesktopWindow window, final double mouseX, final double mouseY) {
-        if (mouseX < lastX + FilesLayout.listX()) {
+        if (mouseX < fileList.x()) {
             return null;
         }
         if (dir.startsWith("media:") || onNetwork()) {
