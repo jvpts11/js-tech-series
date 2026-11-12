@@ -14,7 +14,8 @@ import dev.jstech.core.gui.layout.GuiLayout;
  * Mirror has at its right, then a row per installed program, its name at the left and Uninstall at the right, with
  * Update before it and a line under the name for a program the Mirror has newer.
  *
- * <p>Every place is measured from the page's top left, and the width of a word is the font's, given by the caller.
+ * <p>Every place is measured from the top left of the page's content, which scrolls when the programs are more than
+ * the window holds, and the width of a word is the font's, given by the caller.
  */
 public final class SettingsProgramsLayout {
 
@@ -43,6 +44,11 @@ public final class SettingsProgramsLayout {
     /** How tall a program's row is: one line, or two with the update's under the name. */
     public static int rowHeight(final boolean update) {
         return update ? UPDATE_ROW_H : ROW_H;
+    }
+
+    /** How tall the page's content is: the heading, then {@code programs} rows, {@code updates} of them updated. */
+    public static int contentHeight(final int programs, final int updates) {
+        return HEADING_H + (programs - updates) * ROW_H + updates * UPDATE_ROW_H;
     }
 
     /** How wide a button is for its word. */
@@ -74,14 +80,17 @@ public final class SettingsProgramsLayout {
     }
 
     /**
-     * A page {@code w} by {@code h}: the heading {@code headingW} wide with the count {@code countW} at its right, then
-     * a row per program, those {@code updated} with Update and their update's line {@code badgeW} wide, and buttons
-     * whose words are that wide.
+     * The page's content {@code w} wide: the heading {@code headingW} wide with the count {@code countW} at its right,
+     * then a row per program, those {@code updated} with Update and their update's line {@code badgeW} wide, and
+     * buttons whose words are that wide.
      */
-    public static GuiLayout layout(final int w, final int h, final int headingW, final int countW,
-                                   final boolean[] updated, final int uninstallWordW, final int updateWordW,
-                                   final int badgeW) {
-        final GuiLayout l = new GuiLayout(w, h);
+    public static GuiLayout layout(final int w, final int headingW, final int countW, final boolean[] updated,
+                                   final int uninstallWordW, final int updateWordW, final int badgeW) {
+        int updates = 0;
+        for (final boolean update : updated) {
+            updates += update ? 1 : 0;
+        }
+        final GuiLayout l = new GuiLayout(w, contentHeight(updated.length, updates));
         l.box("heading", 0, 0, headingW, LINE_H);
         final int countX = countX(w, headingW, countW);
         l.box("count", countX, NAME_Y, w - countX, smallLineHeight());

@@ -15,10 +15,9 @@ import org.junit.jupiter.api.Test;
 
 class SettingsProgramsLayoutTest {
 
-    /* The page in the narrowest Settings window and in one of its usual size, both of the usual height. */
+    /* The page in the narrowest Settings window and in one of its usual size. */
     private static final int NARROWEST = 143;
     private static final int USUAL = 169;
-    private static final int HEIGHT = 212;
     /* The words as the font measures them: the heading, a count of two figures, the buttons, an update's line. */
     private static final int HEADING_W = 48;
     private static final int COUNT_W = 96;
@@ -29,7 +28,7 @@ class SettingsProgramsLayoutTest {
     @Test
     void layout_isCleanAsTheMockShowsIt() {
         final boolean[] updated = {false, true, true, false, false};
-        final GuiLayout layout = SettingsProgramsLayout.layout(USUAL, HEIGHT, HEADING_W, COUNT_W, updated, UNINSTALL_W,
+        final GuiLayout layout = SettingsProgramsLayout.layout(USUAL, HEADING_W, COUNT_W, updated, UNINSTALL_W,
                 UPDATE_W, BADGE_W);
         assertTrue(layout.isClean(), layout.overlaps() + " " + layout.outOfBounds());
     }
@@ -37,9 +36,15 @@ class SettingsProgramsLayoutTest {
     @Test
     void layout_isCleanInTheNarrowestWindowWithEveryProgramUpdated() {
         final boolean[] updated = {true, true, true, true, true, true, true, true, true};
-        final GuiLayout layout = SettingsProgramsLayout.layout(NARROWEST, HEIGHT, HEADING_W, COUNT_W, updated,
+        final GuiLayout layout = SettingsProgramsLayout.layout(NARROWEST, HEADING_W, COUNT_W, updated,
                 UNINSTALL_W, UPDATE_W, BADGE_W * 2);
         assertTrue(layout.isClean(), layout.overlaps() + " " + layout.outOfBounds());
+    }
+
+    @Test
+    void contentHeight_takesEachRowAtItsHeight() {
+        assertEquals(SettingsProgramsLayout.HEADING_H + 3 * SettingsProgramsLayout.ROW_H
+                + 2 * SettingsProgramsLayout.UPDATE_ROW_H, SettingsProgramsLayout.contentHeight(5, 2));
     }
 
     @Test

@@ -119,6 +119,8 @@ public final class SettingsApp implements IDesktopApp {
     private final Panel pagePanel = new Panel();
     /** The Personalize page's own content, taller than its window once enough wallpapers are offered. */
     private final ScrollPanel personalizeScroll = new ScrollPanel();
+    /** The Programs page's rows, more than the window holds on a computer with many programs. */
+    private final ScrollPanel programsScroll = new ScrollPanel();
     private final Label loadingLabel;
     /** What the page was last built for; a change in any part rebuilds it. */
     private String builtFor = "";
@@ -479,7 +481,7 @@ public final class SettingsApp implements IDesktopApp {
          */
         final String key = page + "|" + snapshots + "|" + skin.form() + "|" + (monitorPos != null) + "|"
                 + px + "," + py + "," + pw + "," + ph + "|" + personalizeScroll.scroll() + "|"
-                + effectsPage.scrolled();
+                + programsScroll.scroll() + "|" + effectsPage.scrolled();
         if (key.equals(builtFor)) {
             return;
         }
@@ -509,7 +511,7 @@ public final class SettingsApp implements IDesktopApp {
             case 2 -> network(px, py, pw, font);
             case 3 -> storage(px, py, pw, font);
             case 4 -> display(px, py, pw, font);
-            case 5 -> programs(px, py, pw, font);
+            case 5 -> programs(px, py, pw, ph, font);
             case PAGE_SOUND -> sound(px, py, pw, font);
             case PAGE_EFFECTS -> effects(px, py, pw, ph, font);
             default -> comingSoon(px, py, pw, ph);
@@ -822,6 +824,11 @@ public final class SettingsApp implements IDesktopApp {
         return page;
     }
 
+    /** How many updates the Mirror has for this computer's programs, as the Programs page marks them. */
+    public int updatesShown() {
+        return updates.size();
+    }
+
     public int[] navCenter(final int index) {
         return nav.rowCenter(index);
     }
@@ -1087,22 +1094,32 @@ public final class SettingsApp implements IDesktopApp {
      * upgrade does, a line under the name saying which, and at the top how many updates there are. The Unix desktops
      * light such a row in their own colour; Frames lists its rows plain.
      */
-    private void programs(final int x, final int top, final int w, final Font font) {
+    private void programs(final int x, final int top, final int w, final int h, final Font font) {
         final SettingsSnapshotPayload d = data;
-        final Label heading = heading(SettingsTexts.PROGRAMS, x, top, w);
+        int updated = 0;
+        for (final String id : d.installed()) {
+            updated += updates.containsKey(id) ? 1 : 0;
+        }
+        // The rows scroll when there are more programs than the window holds.
+        programsScroll.clear();
+        pagePanel.add(programsScroll);
+        programsScroll.setStep(SettingsProgramsLayout.ROW_H)
+                .setContentHeight(SettingsProgramsLayout.contentHeight(d.installed().size(), updated));
+        programsScroll.setBounds(x, top, w, h);
+        final Label heading = heading(programsScroll, SettingsTexts.PROGRAMS, x, programsScroll.contentY(0), w);
         if (!updates.isEmpty()) {
             final TextKey counted = updates.size() == 1 ? SettingsTexts.UPDATES_ONE : SettingsTexts.UPDATES_MANY;
             final String count = GameText.resolve(counted.with(updates.size()));
             final int countX = SettingsProgramsLayout.countX(w, font.width(heading.text()),
                     Math.round(font.width(count) * SettingsProgramsLayout.SMALL));
-            pagePanel.add(new Label(count, Label.Tone.ACCENT).setAlign(Label.Align.RIGHT)
+            programsScroll.add(new Label(count, Label.Tone.ACCENT).setAlign(Label.Align.RIGHT)
                             .setScale(SettingsProgramsLayout.SMALL))
-                    .setBounds(x + countX, top + SettingsProgramsLayout.NAME_Y, w - countX,
+                    .setBounds(x + countX, programsScroll.contentY(SettingsProgramsLayout.NAME_Y), w - countX,
                             SettingsProgramsLayout.LINE_H);
         }
-        int y = top + SettingsProgramsLayout.HEADING_H;
+        int y = programsScroll.contentY(SettingsProgramsLayout.HEADING_H);
         if (d.installed().isEmpty()) {
-            caption(SettingsTexts.NO_PROGRAMS, x, y, w);
+            caption(programsScroll, SettingsTexts.NO_PROGRAMS, x, y, w);
             return;
         }
         final String uninstall = GameText.resolve(SettingsTexts.UNINSTALL);
@@ -1119,13 +1136,13 @@ public final class SettingsApp implements IDesktopApp {
             final int rowH = SettingsProgramsLayout.rowHeight(waiting != null);
             if (waiting != null && bands) {
                 final int pad = SettingsProgramsLayout.BAND_PAD;
-                pagePanel.add(new UpdateBand()).setBounds(x - pad, y - pad, w + 2 * pad, rowH);
+                programsScroll.add(new UpdateBand()).setBounds(x - pad, y - pad, w + 2 * pad, rowH);
             }
-            pagePanel.add(new Label("- " + name)).setBounds(x, y + SettingsProgramsLayout.NAME_Y,
+            programsScroll.add(new Label("- " + name)).setBounds(x, y + SettingsProgramsLayout.NAME_Y,
                     SettingsProgramsLayout.nameRoom(w, uninstallW, updateW, waiting != null),
                     SettingsProgramsLayout.LINE_H);
             // Per-row uninstall: the desktop counterpart of the shell's package removal.
-            pagePanel.add(new Button(uninstall, () -> {
+            programsScroll.add(new Button(uninstall, () -> {
                 PacketDistributor.sendToServer(new UninstallProgramPayload(host, id));
                 // The uninstall lands before these refreshes are processed (same connection, in order).
                 PacketDistributor.sendToServer(new RequestSettingsPayload(host));
@@ -1134,7 +1151,7 @@ public final class SettingsApp implements IDesktopApp {
             }).setLabelScale(0.85f)).setBounds(x + w - uninstallW, y + SettingsProgramsLayout.BUTTON_Y, uninstallW,
                     SettingsProgramsLayout.BUTTON_H);
             if (waiting != null) {
-                pagePanel.add(new Button(update, () -> {
+                programsScroll.add(new Button(update, () -> {
                     // The Mirror answers with what is left to update, and the desktop then reads the new versions.
                     PacketDistributor.sendToServer(new UpdatePayloads.Apply(host, List.of(id)));
                     ActiveDesktop.refreshActive();
@@ -1142,7 +1159,7 @@ public final class SettingsApp implements IDesktopApp {
                         .setBounds(x + SettingsProgramsLayout.updateX(w, uninstallW, updateW),
                                 y + SettingsProgramsLayout.BUTTON_Y, updateW, SettingsProgramsLayout.BUTTON_H);
                 final String installed = waiting.installed().isEmpty() ? "-" : waiting.installed();
-                pagePanel.add(new Label(GameText.resolve(SettingsTexts.UPDATE_AVAILABLE.with(waiting.available(),
+                programsScroll.add(new Label(GameText.resolve(SettingsTexts.UPDATE_AVAILABLE.with(waiting.available(),
                                 installed)), Label.Tone.ACCENT).setScale(SettingsProgramsLayout.SMALL))
                         .setBounds(x + SettingsProgramsLayout.BADGE_X, y + SettingsProgramsLayout.BADGE_Y,
                                 w - SettingsProgramsLayout.BADGE_X, SettingsProgramsLayout.LINE_H);

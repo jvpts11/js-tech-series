@@ -4230,6 +4230,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   item whose raw material the network had none of could not be crafted. While Craft is greyed, Print is the window's
   default button. The printed list lines its three tables up on one column with each figure right-aligned under its
   head, and dates itself from Day 1 as the desktop's clock does, where it said Day 0 on the first day.
+- (Computers) Settings lists a computer's programs in the order they were installed, where the order changed from one
+  time to the next, and its Programs page scrolls when there are more programs than the window holds, where the
+  last ones ran off the window.
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on

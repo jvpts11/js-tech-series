@@ -10,6 +10,7 @@ package dev.jstech.computers.program;
 import dev.jstech.computers.os.ProgramVersions;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -44,8 +45,9 @@ final class InstalledPrograms {
     private final Set<String> builtFromSource = new LinkedHashSet<>();
     private final Map<String, ComputerConsoleState.Community> community = new LinkedHashMap<>();
 
+    /* In the order they were installed, which is how Settings lists them; a plain copy of a set has no order. */
     Set<String> installed() {
-        return Set.copyOf(this.installed);
+        return Collections.unmodifiableSet(new LinkedHashSet<>(this.installed));
     }
 
     boolean isInstalled(final String programId) {

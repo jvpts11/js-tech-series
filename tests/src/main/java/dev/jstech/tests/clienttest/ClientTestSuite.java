@@ -146,6 +146,7 @@ import dev.jstech.tests.clienttest.computers.TrashClientTests;
 import dev.jstech.tests.clienttest.computers.UiSweepClientTests;
 import dev.jstech.tests.clienttest.computers.UnixClientTests;
 import dev.jstech.tests.clienttest.computers.UnixFreeBsdEditorsClientTests;
+import dev.jstech.tests.clienttest.computers.UpdateBadgeClientTests;
 import dev.jstech.tests.clienttest.computers.UpdateClientTests;
 import dev.jstech.tests.clienttest.computers.VintageShellsClientTests;
 import dev.jstech.tests.clienttest.computers.VolumeClientTests;
@@ -548,6 +549,7 @@ public final class ClientTestSuite {
             TouchMonitorClientTests.class,
             ClusterDiagnosticsClientTests.class,
             CraftPlannerClientTests.class,
+            UpdateBadgeClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,
