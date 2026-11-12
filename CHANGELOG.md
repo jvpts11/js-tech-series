@@ -4235,6 +4235,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   most were plain stand-ins; the QuinceTime Player has its place and its icon in the Dock, after Preview; and an
   all-in-one's name, light and vents stand under its glass as its face is designed, clear of the qRusset G3's
   striped foot, which shows its shell's two tones side by side.
+- (Computers) Quince: New Window and the Go menu's Applications and Utilities open those folders with what they hold,
+  where they opened empty; About This Computer names each program as the desktop does (TextPad, the Seeker), cuts a
+  long name short of its size, stands tall enough to keep the line under the bars in sight, and credits Quince
+  Computer, Inc.
 - (Computers) Settings lists a computer's programs in the order they were installed, where the order changed from one
   time to the next, and its Programs page scrolls when there are more programs than the window holds, where the
   last ones ran off the window.

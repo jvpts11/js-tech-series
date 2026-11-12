@@ -142,6 +142,18 @@ public final class DesktopScreen extends CoreContainerScreen<DesktopMenu>
         return state.launcherLabels();
     }
 
+    /** The middle of the Quince bar's title at {@code index}, the fruit's first, or null off Quince or past them. */
+    @Nullable
+    public int[] quinceTitlePoint(final int index) {
+        return state.quince() ? state.quinceShell().titlePoint(index) : null;
+    }
+
+    /** The middle of the item of that name in the Quince menu that is down, or null when none is or it has none. */
+    @Nullable
+    public int[] quinceItemPoint(final String label) {
+        return state.quince() ? state.quinceShell().itemPoint(label) : null;
+    }
+
     /** Whether {@code app} runs in the front (focused) window; what a recipe viewer's drop or transfer targets. */
     public boolean isFront(final IDesktopApp app) {
         return state.isFront(app);

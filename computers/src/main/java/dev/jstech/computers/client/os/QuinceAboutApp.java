@@ -16,6 +16,7 @@ import dev.jstech.computers.os.ProgramSpec;
 import dev.jstech.computers.os.RamLedger;
 import dev.jstech.computers.os.WindowKeys;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
@@ -60,12 +61,18 @@ public final class QuinceAboutApp implements IDesktopApp {
     private static final TextKey PROCESSOR = TextKey.of("jsc.quince.about.processor", "Processor");
     private static final TextKey MEMORY = TextKey.of("jsc.quince.about.memory", "Memory");
     private static final TextKey STARTUP = TextKey.of("jsc.quince.about.startup", "Startup Disk");
-    private static final TextKey COPYRIGHT = TextKey.of("jsc.quince.about.copyright", "(c) Quince Inc.");
+    private static final TextKey COPYRIGHT = TextKey.of("jsc.quince.about.copyright", "(c) Quince Computer, Inc.");
     private static final ResourceLocation THIS_PC = ResourceLocation.fromNamespaceAndPath("jsc", "this_pc");
     /** How often the machine is asked again while the window is up, in ticks. */
     private static final long ASK_EVERY = 40L;
     private static final int K = 1024;
     private static final int ROW = 16;
+    private static final int CLASSIC_H = 190;
+    private static final int MODERN_H = 120;
+    /* A row's name from the window's left, the right edge of its size, and the room kept between the two. */
+    private static final int NAME_X = 20;
+    private static final int SIZE_RIGHT = 146;
+    private static final int GAP = 4;
 
     /** The open window that takes the machine's answers, or null when none is up. */
     @Nullable
@@ -102,9 +109,10 @@ public final class QuinceAboutApp implements IDesktopApp {
         return 356;
     }
 
+    /* On the classic systems, tall enough for the system's row, five programs' and the line under the bars. */
     @Override
     public int defaultHeight() {
-        return this.look.classic() ? 150 : 120;
+        return this.look.classic() ? CLASSIC_H : MODERN_H;
     }
 
     @Override
@@ -156,9 +164,11 @@ public final class QuinceAboutApp implements IDesktopApp {
             if (row.icon() != null) {
                 ProgramIcons.draw(g, x + 6, by - 1, 10, 10, row.icon(), iconSet());
             }
-            Draw.text(g, font, row.name(), x + 20, by, c.ink());
             final String size = thousands(row.blockMb() * (long) K) + "K";
-            Draw.text(g, font, size, x + 146 - font.width(size), by, c.ink());
+            // A long name stops short of its size, which stands right-aligned before the bar.
+            final int nameRoom = SIZE_RIGHT - NAME_X - font.width(size) - GAP;
+            Draw.text(g, font, Texts.clip(font, row.name(), nameRoom), x + NAME_X, by, c.ink());
+            Draw.text(g, font, size, x + SIZE_RIGHT - font.width(size), by, c.ink());
             final int bx0 = x + 154;
             final int bw = Math.max(8, (x + width - 12 - bx0) * row.blockMb() / largest);
             g.fill(bx0, by, bx0 + bw, by + 9, c.light());
@@ -202,7 +212,9 @@ public final class QuinceAboutApp implements IDesktopApp {
             } else if (use.kind().equals(RamLedger.Kind.WINDOW.serializedName())) {
                 final ProgramSpec spec = WindowKeys.program(use.label());
                 if (spec != null) {
-                    rows.add(new Row(spec.displayName(), spec.id(), use.mb(), spec.ramMbOn(era, false)));
+                    // Named as the desktop names it: TextPad and the Seeker, not the editor and the files.
+                    rows.add(new Row(ActiveDesktop.windowName(use.label()), spec.id(), use.mb(),
+                            spec.ramMbOn(era, false)));
                 }
             }
         }

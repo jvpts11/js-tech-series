@@ -96,6 +96,10 @@ final class QuinceShell {
     /** The Dock's programs, in its order; the Quince Store goes in before System Preferences from the Standard on. */
     private static final List<String> DOCK = List.of("files", "expedition", "qtunes", "editor", "preview",
             "media_player", "settings", "command_prompt");
+    /* The folders the menus open, as the explorer names them: from the disk's root, which itself has no path. */
+    private static final String DISK_ROOT = "";
+    private static final String APPLICATIONS_DIR = "Applications";
+    private static final String UTILITIES_DIR = "Applications/Utilities";
 
     QuinceShell(final DesktopState desktop) {
         this.desktop = desktop;
@@ -115,6 +119,35 @@ final class QuinceShell {
     /** Puts any menu away. */
     void close() {
         this.open = -1;
+    }
+
+    /** The middle of the bar's title at {@code index} as the last frame laid it out, the fruit's first, or null. */
+    @Nullable
+    int[] titlePoint(final int index) {
+        if (index < 0 || index >= this.titles.size()) {
+            return null;
+        }
+        final int[] span = this.titles.get(index);
+        return new int[] {(span[0] + span[1]) / 2, QuinceBars.BAR_H / 2};
+    }
+
+    /** The middle of the item of that name in the menu that is down, or null when none is or it has none such. */
+    @Nullable
+    int[] itemPoint(final String label) {
+        if (this.open < 0 || this.open >= this.menus.size() || this.open >= this.titles.size()) {
+            return null;
+        }
+        final Menu menu = this.menus.get(this.open);
+        final int[] box = box(desktop.textFont(), menu, this.titles.get(this.open)[0]);
+        int y = box[1] + 2;
+        for (final Item item : menu.items()) {
+            final int h = item.rule() ? RULE : ROW;
+            if (!item.rule() && item.label().equals(label)) {
+                return new int[] {box[0] + box[2] / 2, y + h / 2};
+            }
+            y += h;
+        }
+        return null;
     }
 
     /** The bar along the top and, from Quince OS X on, the Dock along the foot. */
@@ -302,10 +335,9 @@ final class QuinceShell {
             out.add(new Menu(GameText.resolve(SPECIAL), special(look)));
         } else {
             out.add(new Menu(GameText.resolve(GO), List.of(
-                    Item.of(GameText.resolve(APPLICATIONS), () -> desktop.opener().openFolder("/Applications")),
+                    Item.of(GameText.resolve(APPLICATIONS), () -> desktop.opener().openFolder(APPLICATIONS_DIR)),
                     Item.of(GameText.resolve(HOME), () -> desktop.opener().openFolder(desktop.homeDir())),
-                    Item.of(GameText.resolve(UTILITIES),
-                            () -> desktop.opener().openFolder("/Applications/Utilities")))));
+                    Item.of(GameText.resolve(UTILITIES), () -> desktop.opener().openFolder(UTILITIES_DIR)))));
             out.add(new Menu(GameText.resolve(WINDOW), List.of(
                     Item.of(GameText.resolve(MINIMIZE), front() != null, this::minimizeFront),
                     Item.of(GameText.resolve(ZOOM), front() != null, this::zoomFront))));
@@ -354,7 +386,7 @@ final class QuinceShell {
         final DesktopWindow front = front();
         final List<Item> items = new ArrayList<>();
         if (look.lights()) {
-            items.add(Item.of(GameText.resolve(NEW_WINDOW), () -> desktop.opener().openFolder("/")));
+            items.add(Item.of(GameText.resolve(NEW_WINDOW), () -> desktop.opener().openFolder(DISK_ROOT)));
         } else {
             final int picked = desktop.iconGrid().picked();
             items.add(Item.of(GameText.resolve(OPEN), picked >= 0, () -> desktop.openSlot(picked)));

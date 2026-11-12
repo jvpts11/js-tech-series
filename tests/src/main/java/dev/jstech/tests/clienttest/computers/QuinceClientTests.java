@@ -13,6 +13,7 @@ import dev.jstech.computers.QuinceItems;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.hardware.MotherboardSpec;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -47,6 +48,18 @@ public final class QuinceClientTests {
     private static final String FILES = "jsc:files";
     /* The startup disk's root, as its icon opens it. */
     private static final String ROOT = "";
+    private static final String TEXTPAD = "jsc:editor";
+    private static final String CALCULATOR = "jsc:calculator";
+    private static final String QTUNES = "jsc:qtunes";
+    private static final String EXPEDITION = "jsc:expedition";
+    private static final String THIS_COMPUTER = "jsc:this_pc";
+    /* The bar's titles: the fruit's menu first, then the File menu on the classic systems. */
+    private static final int FRUIT = 0;
+    private static final int FILE_MENU = 1;
+    private static final String ABOUT = "About This Computer";
+    private static final String GET_INFO = "Get Info";
+    /* How far down a window's title bar a click lands. */
+    private static final int TITLE_DY = 5;
 
     private QuinceClientTests() {
     }
@@ -80,6 +93,57 @@ public final class QuinceClientTests {
         atDesktop(ctx, ComputingModule.QRUSSET_COLOURS.getFirst().get(), QuinceItems.BOARD_QRUSSET_COLOUR.get(),
                 "quinceos")
                 .thenScreenshot(SETTLE, "qos-desktop");
+    }
+
+    /*
+     * About This Computer with TextPad and the Calculator open, each in its block of memory, then TextPad's Get Info
+     * with its memory size.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void quinceSystem_showsItsMemoryInAboutAndGetInfo(final ClientTestContext ctx) {
+        memory(atDesktop(ctx, ComputingModule.RUSSET_128K.get(), QuinceItems.BOARD_RUSSET_128K.get(),
+                "quince_system"), ctx, CALCULATOR, TEXTPAD, "qs");
+    }
+
+    /* The same on Quince OS 9, with qTunes and Expedition open, then Expedition's Get Info. */
+    @ClientTest(timeoutTicks = 3000)
+    public static void quinceOs9_showsItsMemoryInAboutAndGetInfo(final ClientTestContext ctx) {
+        memory(atDesktop(ctx, ComputingModule.QRUSSET_G3.getFirst().get(), QuinceItems.BOARD_QRUSSET_G3.get(),
+                "quince_os_9"), ctx, QTUNES, EXPEDITION, "os9");
+    }
+
+    /*
+     * Opens the two programs, the second in front, then About This Computer from the fruit's menu, and the Get Info of
+     * the program in front from the File menu, each shot for its mock.
+     */
+    private static void memory(final ClientTestContext steps, final ClientTestContext ctx, final String first,
+                               final String front, final String label) {
+        steps.then(SETTLE, () -> DesktopScreen.requestOpen(first))
+                .thenWaitUntil(() -> desktop(ctx).windowFor(first) != null, WINDOW_WAIT, first + " to open")
+                .then(SETTLE, () -> DesktopScreen.requestOpen(front))
+                .thenWaitUntil(() -> desktop(ctx).windowFor(front) != null, WINDOW_WAIT, front + " to open")
+                .then(SETTLE, () -> ctx.clickDesktop(desktop(ctx).quinceTitlePoint(FRUIT)))
+                .thenWaitUntil(() -> desktop(ctx).quinceItemPoint(ABOUT) != null, WINDOW_WAIT, "the fruit's menu")
+                .then(SETTLE, () -> ctx.clickDesktop(desktop(ctx).quinceItemPoint(ABOUT)))
+                .thenWaitUntil(() -> desktop(ctx).windowFor(THIS_COMPUTER) != null, WINDOW_WAIT,
+                        "About This Computer")
+                .thenScreenshot(SETTLE * 4, label + "-about")
+                .then(SETTLE, () -> ctx.clickDesktop(desktop(ctx).windowFor(THIS_COMPUTER)
+                        .buttonCentre(DesktopWindow.BUTTON_CLOSE)))
+                .then(SETTLE, () -> ctx.clickDesktop(titleOf(desktop(ctx).windowFor(front))))
+                .then(SETTLE, () -> ctx.clickDesktop(desktop(ctx).quinceTitlePoint(FILE_MENU)))
+                .thenWaitUntil(() -> desktop(ctx).quinceItemPoint(GET_INFO) != null, WINDOW_WAIT, "the File menu")
+                .then(SETTLE, () -> ctx.clickDesktop(desktop(ctx).quinceItemPoint(GET_INFO)))
+                .thenScreenshot(SETTLE * 4, label + "-getinfo");
+    }
+
+    private static DesktopScreen desktop(final ClientTestContext ctx) {
+        return ctx.screen(DesktopScreen.class);
+    }
+
+    /* A point on a window's title bar, where a click brings it to the front. */
+    private static int[] titleOf(final DesktopWindow window) {
+        return new int[] {window.x() + window.width() / 2, window.y() + TITLE_DY};
     }
 
     /* The machine built on its board with that system, running, and its own glass open on the desktop. */
