@@ -10,6 +10,7 @@ package dev.jstech.industrial.line;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.core.worldgen.reservoir.Reservoirs;
 import java.util.Optional;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -53,9 +54,10 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
 
     /**
      * What the pump at {@code pos} takes now, given {@code room} millibuckets of room in its tank and what it
-     * remembers of where it took from last: taken from the world already; empty for nothing.
+     * remembers of where it took from last: taken from the world already; empty for nothing. Only a fluid that
+     * {@code fits} its tank is taken: one the tank would refuse stays where it is, never taken to be lost.
      */
-    FluidStack take(ServerLevel level, BlockPos pos, int room, Memory memory);
+    FluidStack take(ServerLevel level, BlockPos pos, int room, Predicate<Fluid> fits, Memory memory);
 
     /** What a pump remembers of where it took from, so it need not look again each time. */
     final class Memory {
@@ -93,8 +95,9 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
         }
 
         @Override
-        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room, final Memory memory) {
-            if (room <= 0) {
+        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room,
+                               final Predicate<Fluid> fits, final Memory memory) {
+            if (room <= 0 || !fits.test(Fluids.WATER)) {
                 return FluidStack.EMPTY;
             }
             for (final Direction side : Direction.values()) {
@@ -126,11 +129,12 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
         }
 
         @Override
-        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room, final Memory memory) {
+        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room,
+                               final Predicate<Fluid> fits, final Memory memory) {
             if (room < BUCKET) {
                 return FluidStack.EMPTY;
             }
-            final Optional<BlockPos> nearest = nearest(level, pos);
+            final Optional<BlockPos> nearest = nearest(level, pos, fits);
             if (nearest.isEmpty()) {
                 return FluidStack.EMPTY;
             }
@@ -139,8 +143,8 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
             return new FluidStack(found.getType(), BUCKET);
         }
 
-        /* The nearest fluid source block within reach, or none. */
-        private Optional<BlockPos> nearest(final ServerLevel level, final BlockPos pos) {
+        /* The nearest source block within reach of a fluid that fits the tank, or none. */
+        private Optional<BlockPos> nearest(final ServerLevel level, final BlockPos pos, final Predicate<Fluid> fits) {
             BlockPos best = null;
             double bestDistance = Double.MAX_VALUE;
             for (final BlockPos at : BlockPos.betweenClosed(pos.offset(-this.radius, -this.radius, -this.radius),
@@ -150,7 +154,7 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
                 }
                 // A block of the fluid itself, never a waterlogged block, which it would take away with the water.
                 final FluidState fluid = level.getFluidState(at);
-                if (fluid.isSource() && level.getBlockState(at).liquid()) {
+                if (fluid.isSource() && level.getBlockState(at).liquid() && fits.test(fluid.getType())) {
                     final double distance = at.distSqr(pos);
                     if (distance < bestDistance) {
                         bestDistance = distance;
@@ -179,7 +183,8 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
         }
 
         @Override
-        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room, final Memory memory) {
+        public FluidStack take(final ServerLevel level, final BlockPos pos, final int room,
+                               final Predicate<Fluid> fits, final Memory memory) {
             if (room <= 0) {
                 return FluidStack.EMPTY;
             }
@@ -194,7 +199,7 @@ public sealed interface PumpSource permits PumpSource.EndlessWater, PumpSource.D
             final Optional<Reservoirs.Held> held = Reservoirs.at(level, block.get());
             final Optional<Fluid> fluid = held.flatMap(found -> BuiltInRegistries.FLUID.getOptional(
                     found.reservoir().kind().type().fluid()));
-            if (fluid.isEmpty()) {
+            if (fluid.isEmpty() || !fits.test(fluid.get())) {
                 return FluidStack.EMPTY;
             }
             final int drawn = Reservoirs.drain(level, block.get(), Math.min(room, this.perTake), false);

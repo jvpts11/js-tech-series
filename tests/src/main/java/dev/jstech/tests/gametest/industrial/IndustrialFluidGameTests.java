@@ -172,6 +172,26 @@ public final class IndustrialFluidGameTests {
         });
     }
 
+    /** A pump holding water leaves a lava block nearer it where it is: its tank would refuse the lava. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void drainagePump_takesOnlyWhatItsTankHolds(final GameTestHelper helper) {
+        helper.setBlock(PUMP, TestFluidMachines.DRAINAGE_PUMP.get());
+        // Each in a basin of stone, so neither flows to the other and they stay the sources they were set as.
+        final BlockPos lava = PUMP.west(1);
+        basin(helper, lava, Blocks.LAVA);
+        final BlockPos water = PUMP.west(3);
+        basin(helper, water, Blocks.WATER);
+        final TestFluidMachines.DrainagePump pump = helper.getBlockEntity(PUMP);
+        pump.tank().fillInside(new FluidStack(Fluids.WATER, 1_000), IFluidHandler.FluidAction.EXECUTE);
+        helper.onEachTick(() -> pump.power().generate(pump.power().capacity()));
+        helper.succeedWhen(() -> {
+            helper.assertTrue(pump.tank().getFluidAmount() >= 2_000, "it takes the water further off; holds "
+                    + pump.tank().getFluidAmount());
+            helper.assertTrue(helper.getLevel().getFluidState(helper.absolutePos(lava)).isSourceOfType(Fluids.LAVA),
+                    "and the lava, which its tank would refuse, stays where it was");
+        });
+    }
+
     @GameTest(template = ARENA)
     public static void checkValve_letsThroughOneWayAndCountsItsFlow(final GameTestHelper helper) {
         final LineValveBlockEntity valve = valveLine(helper, TestFluidMachines.CHECK_VALVE.get(), Direction.EAST);
@@ -266,6 +286,18 @@ public final class IndustrialFluidGameTests {
     }
 
     /* A box of {@code casing}, {@code side} blocks a side, its terminal of {@code terminal} on a face. */
+    /* A source of {@code fluid} at {@code at}, stone under it and on each side but the pump's, so it stays put. */
+    private static void basin(final GameTestHelper helper, final BlockPos at, final Block fluid) {
+        helper.setBlock(at.below(), Blocks.STONE);
+        helper.setBlock(at.north(), Blocks.STONE);
+        helper.setBlock(at.south(), Blocks.STONE);
+        helper.setBlock(at.west(), Blocks.STONE);
+        if (!at.east().equals(PUMP)) {
+            helper.setBlock(at.east(), Blocks.STONE);
+        }
+        helper.setBlock(at, fluid);
+    }
+
     private static IndustrialTank box(final GameTestHelper helper, final int side, final Block casing,
                                       final Block terminal) {
         final int high = LOW.getX() + side - 1;

@@ -91,7 +91,9 @@ public abstract class IndustrialPump extends MachineBlockEntity {
         if (power().stored() < draw) {
             return MachineStatus.NO_ENERGY;
         }
-        final FluidStack taken = this.source.take(level, this.worldPosition, room, this.memory);
+        final FluidStack taken = this.source.take(level, this.worldPosition, room,
+                fluid -> this.tank.fillInside(new FluidStack(fluid, 1), IFluidHandler.FluidAction.SIMULATE) > 0,
+                this.memory);
         if (taken.isEmpty()) {
             // Nothing to take: it waits, and tries again as soon as it wakes.
             return MachineStatus.WAITING;

@@ -20,6 +20,7 @@ import dev.jstech.core.machine.MachineStatus;
 import dev.jstech.core.machine.MachineStructure;
 import dev.jstech.core.material.MatterState;
 import dev.jstech.core.matter.IMatterHandler;
+import dev.jstech.core.matter.MatterRelease;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.core.matter.MatterTank;
 import dev.jstech.core.multiblock.IStructureShape;
@@ -178,6 +179,14 @@ public abstract class IndustrialTank extends MachineBlockEntity {
             final Optional<MatterStack> held = this.gas.held();
             this.gas = new MarkedTank(this.rating, room * TankRating.CUBIC_METRE, this::setChanged);
             held.ifPresent(this.gas::set);
+            // What a tank made smaller has no room for is let out where it stands, never lost without a trace.
+            held.ifPresent(was -> {
+                final long kept = this.gas.held().map(MatterStack::amount).orElse(0L);
+                if (was.amount() > kept && this.level instanceof ServerLevel server) {
+                    MatterRelease.release(server, this.worldPosition, this.rating.state(),
+                            new MatterStack(was.material(), was.amount() - kept));
+                }
+            });
             setChanged();
         }
         if (outer[0] != this.sizedFor[0] || outer[1] != this.sizedFor[1] || outer[2] != this.sizedFor[2]) {

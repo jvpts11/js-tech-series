@@ -420,7 +420,11 @@ public class CrcBlockEntity extends MachineBlockEntity implements IMenuTitle {
         this.drawing = 0.0;
         if (watts > 0.0) {
             final long perTick = (long) Math.ceil(watts / TICKS_A_SECOND);
-            final long spent = power().spend(perTick);
+            /*
+             * A tick's work is paid whole or not at all: what a supply below the draw brings stays in the store until
+             * it makes up a tick, where spending it as it came took it for nothing and the CRC never worked.
+             */
+            final long spent = power().stored() >= perTick ? power().spend(perTick) : 0L;
             drew(spent);
             if (spent >= perTick) {
                 this.made += watts / TICKS_A_SECOND;
@@ -650,6 +654,13 @@ public class CrcBlockEntity extends MachineBlockEntity implements IMenuTitle {
 
     /* As its group's lowest CRC: every other on its discovery and queue, and the next once every team made it. */
     private void lead(final ServerLevel level, final List<CrcBlockEntity> group) {
+        // A group with nothing chosen takes the head of its queue, so what was queued while it stood idle starts.
+        if (this.chosen.get() == null && !this.queue.get().isEmpty()) {
+            final List<ResourceLocation> waiting = this.queue.get();
+            this.chosen.set(waiting.getFirst());
+            this.queue.set(List.copyOf(waiting.subList(1, waiting.size())));
+            this.outcome = null;
+        }
         final ResourceLocation id = this.chosen.get();
         if (id != null) {
             final Optional<Discovery> discovery = Discoveries.byId(id);

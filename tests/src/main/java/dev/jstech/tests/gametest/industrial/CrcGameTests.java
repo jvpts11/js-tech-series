@@ -474,6 +474,24 @@ public final class CrcGameTests {
         helper.succeed();
     }
 
+    /** A discovery queued while the group has nothing chosen is what the group takes up, never left waiting. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void queue_ofAGroupWithNothingChosenStartsItsFirstDiscovery(final GameTestHelper helper) {
+        final FakePlayer owner = player(helper, "crc_queuer");
+        final CrcBlockEntity crc = build(helper, TERMINAL, Map.of(cell(1, 0), CrcContent.POWER_ENTRY.get()));
+        crc.own(Ownership.of(owner.getUUID()));
+        owner.setPos(Vec3.atCenterOf(helper.absolutePos(TERMINAL.north())));
+        owner.containerMenu = new MachineMenu(0, owner.getInventory(), crc);
+        helper.assertTrue(CrcCalls.ENQUEUE.receive(owner, TestCrcResearch.SHORT.id())
+                && crc.chosenDiscovery().isEmpty(), "queued with nothing chosen");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(
+                        crc.chosenDiscovery().equals(Optional.of(TestCrcResearch.SHORT.id())),
+                        "the group takes up the head of its queue"))
+                .thenExecute(() -> helper.assertTrue(crc.queue().isEmpty(), "and the queue moves on"))
+                .thenSucceed();
+    }
+
     /* A player with a name of its own, whom the server never sees join. */
     private static FakePlayer player(final GameTestHelper helper, final String name) {
         return FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.randomUUID(), name));

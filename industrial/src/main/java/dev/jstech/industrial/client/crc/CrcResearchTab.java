@@ -338,9 +338,23 @@ final class CrcResearchTab implements ICrcTab {
             return;
         }
         final double share = read.share(discovery.id());
+        /*
+         * What the research lacks is worked out over every kind of data it takes, the rows the card has no room for
+         * among them: a kind left off the card must never let it say there is enough.
+         */
         double reach = 1.0;
         DataKind shortest = null;
         int shortBy = 0;
+        for (final Map.Entry<ResourceLocation, Integer> asked : cost.get().data().entrySet()) {
+            final int count = asked.getValue();
+            final int covered = Math.min(count, ResearchMath.spent(share, count) + read.held(asked.getKey()));
+            final double kindReach = covered / (double) count;
+            if (kindReach < reach) {
+                reach = kindReach;
+                shortest = DataKinds.byId(asked.getKey()).orElse(null);
+                shortBy = count - covered;
+            }
+        }
         for (final Map.Entry<ResourceLocation, Integer> asked : cost.get().data().entrySet()) {
             final Optional<DataKind> kind = DataKinds.byId(asked.getKey());
             final int count = asked.getValue();
@@ -361,14 +375,8 @@ final class CrcResearchTab implements ICrcTab {
             MachineArt.lamp(view.g(), view.x(CARD_RIGHT - 11), view.y(y + 1), lacking ? c.lampHot() : c.lampRun(),
                     true);
             y += 13;
-            final double kindReach = covered / (double) count;
-            if (kindReach < reach) {
-                reach = kindReach;
-                shortest = kind.orElse(null);
-                shortBy = count - covered;
-            }
         }
-        if (shortest == null) {
+        if (reach >= 1.0) {
             text(view, CrcScreenTexts.ENOUGH.text(), CARD_LEFT + 3, y, c.green(), CARD_ROOM);
             return;
         }
