@@ -373,7 +373,7 @@ public final class EasyDiscCreatorApp implements IDesktopApp {
     private void drawBanner(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
         final Brand brand = BRAND.get();
         for (int row = 0; row < BANNER_H; row++) {
-            g.fill(x, y + row, x + width, y + row + 1, blend(brand.bannerTop(), brand.banner(),
+            g.fill(x, y + row, x + width, y + row + 1, ChromeShapes.blend(brand.bannerTop(), brand.banner(),
                     row / (float) (BANNER_H - 1)));
         }
         g.fill(x, y + BANNER_H, x + width, y + BANNER_H + 1, brand.line());
@@ -763,16 +763,6 @@ public final class EasyDiscCreatorApp implements IDesktopApp {
         }
         final int minutes = Math.max(1, Math.round(seconds / (float) SECONDS_A_MINUTE));
         return minutes == 1 ? EasyDiscCreatorTexts.MINUTE.text() : EasyDiscCreatorTexts.MINUTES.with(minutes);
-    }
-
-    private static int blend(final int from, final int to, final float share) {
-        int out = 0xff000000;
-        for (int shift = 0; shift <= 16; shift += 8) {
-            final int a = from >> shift & 0xff;
-            final int b = to >> shift & 0xff;
-            out |= Math.round(a + (b - a) * share) << shift;
-        }
-        return out;
     }
 
     /* Roxa's mark: a purple disc, a pale ring round its middle, and the band's own light through its hole. */

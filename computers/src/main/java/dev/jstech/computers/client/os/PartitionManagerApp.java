@@ -23,6 +23,7 @@ import dev.jstech.core.client.gui.component.Dropdown;
 import dev.jstech.core.client.gui.component.Panel;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.machine.MachineArt;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -77,7 +78,7 @@ public final class PartitionManagerApp implements IDesktopApp {
     /* The narrowest a partition's box is drawn, so a small one still shows the start of its name. */
     private static final int MIN_BOX = 20;
     /* How strongly the used part of a box is filled with its file system's colour, as an alpha. */
-    private static final int USED_SHADE = 0x59000000;
+    private static final int USED_ALPHA = 89;
     private static final int MENU_W = 110;
     private static final int MENU_ROW = 10;
     private static final double MB_PER_GIB = 1_024.0;
@@ -332,7 +333,7 @@ public final class PartitionManagerApp implements IDesktopApp {
             g.fill(bx, y, bx + w, y + h, c.paper());
             if (part != null && part.fileSystem() != null && !part.swap() && part.sizeMb() > 0L) {
                 final int used = (int) ((w - 4) * Math.min(part.usedMb(), part.sizeMb()) / part.sizeMb());
-                g.fill(bx + 2, y + 2, bx + 2 + used, y + h - 2, edge & 0x00FFFFFF | USED_SHADE);
+                g.fill(bx + 2, y + 2, bx + 2 + used, y + h - 2, MachineArt.alpha(edge, USED_ALPHA));
             }
             final int frame = span[0] == this.chosenStart ? c.ink() : edge;
             Draw.outline(g, bx, y, w, h, frame);
