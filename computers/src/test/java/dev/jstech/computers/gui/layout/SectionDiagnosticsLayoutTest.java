@@ -14,6 +14,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class SectionDiagnosticsLayoutTest {
 
+    /* The pane of the Cluster Manager filling a Frames 10 desktop, as its mock shows the tab. */
+    private static final int MAXIMIZED_W = 400;
+    private static final int MAXIMIZED_H = 260;
+
     @Test
     void layout_defaultPaneWithFourAlerts_isClean() {
         assertTrue(SectionDiagnosticsLayout.layout(SectionDiagnosticsLayout.DEFAULT_W,
@@ -29,12 +33,23 @@ class SectionDiagnosticsLayoutTest {
     }
 
     @Test
-    void place_defaultPane_showsFourAlertsAndBothNotes() {
+    void place_defaultPane_showsAnAlertAndBothNotes() {
         final SectionDiagnosticsLayout.Placed placed = SectionDiagnosticsLayout.place(
                 SectionDiagnosticsLayout.DEFAULT_W, SectionDiagnosticsLayout.DEFAULT_H, 4);
-        assertEquals(4, placed.rows());
+        assertTrue(placed.rows() >= 1);
         assertEquals(SectionDiagnosticsLayout.NOTES, placed.notes());
         assertTrue(placed.chartH() >= SectionDiagnosticsLayout.MIN_CHART_H);
+        assertTrue(placed.notesY() + placed.notes() * SectionDiagnosticsLayout.LINE_H
+                <= SectionDiagnosticsLayout.DEFAULT_H);
+    }
+
+    @Test
+    void place_maximizedPane_showsFourAlertsBothNotesAndTheWholeChart() {
+        final SectionDiagnosticsLayout.Placed placed = SectionDiagnosticsLayout.place(MAXIMIZED_W, MAXIMIZED_H, 4);
+        assertEquals(4, placed.rows());
+        assertEquals(SectionDiagnosticsLayout.NOTES, placed.notes());
+        assertEquals(SectionDiagnosticsLayout.CHART_H, placed.chartH());
+        assertTrue(SectionDiagnosticsLayout.layout(MAXIMIZED_W, MAXIMIZED_H, 4).isClean());
     }
 
     @Test

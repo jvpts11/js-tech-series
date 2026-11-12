@@ -1069,6 +1069,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   desktop's own text, where it was the small one.
 - The touch keyboards of Frames 10 and Frames 11 are the size their design draws them, a third bigger,
   their keys easier to touch; and the typing line of a wall of touch monitors says it types into the touch wall.
+- Racks and servers: a datacenter section's Diagnostics tab in the Cluster Manager is drawn as designed,
+  in the desktop's full text, its figures a third larger, the last hour on a fine grid under a legend of swatches,
+  and the alerts' header on a band; it keeps the whole chart, four alerts and both notes in a maximized window. A
+  section with one rack or one server says so in the singular, where it said "1 racks" and "1 servers".
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
   works through its computer.
 - The Network Interactor's Operations tab gives each Operation its own state, where it read the states in

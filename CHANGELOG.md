@@ -4220,6 +4220,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   desktop's own text, where it was the small one.
 - (Computers) The touch keyboards of Frames 10 and Frames 11 are the size their design draws them, a third bigger,
   their keys easier to touch; and the typing line of a wall of touch monitors says it types into the touch wall.
+- (Computers) Racks and servers: a datacenter section's Diagnostics tab in the Cluster Manager is drawn as designed,
+  in the desktop's full text, its figures a third larger, the last hour on a fine grid under a legend of swatches,
+  and the alerts' header on a band; it keeps the whole chart, four alerts and both notes in a maximized window. A
+  section with one rack or one server says so in the singular, where it said "1 racks" and "1 servers".
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on

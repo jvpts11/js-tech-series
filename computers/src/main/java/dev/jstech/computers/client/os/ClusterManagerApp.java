@@ -359,9 +359,10 @@ public final class ClusterManagerApp implements IDesktopApp {
         return 330;
     }
 
+    /* Room for a section's Diagnostics in the desktop's own text: its tiles, its chart and one alert. */
     @Override
     public int minHeight() {
-        return 150;
+        return 180;
     }
 
     // state readers
@@ -1066,6 +1067,26 @@ public final class ClusterManagerApp implements IDesktopApp {
     public boolean charTyped(final char c) {
         final Popup popup = openPopup();
         return popup != null && popup.charTyped(c);
+    }
+
+    /** The middle of the window's tab {@code index} (Supercomputers, Datacenters, AI), for a test. */
+    public int[] tabPoint(final int index) {
+        return tabs.tabCenter(index);
+    }
+
+    /** The middle of the list's row {@code index}, a cluster or a section, for a test. */
+    public int[] clusterPoint(final int index) {
+        return clusterList.rowCenter(index);
+    }
+
+    /** The middle of the chosen cluster's tab {@code index}, a section's Diagnostics the third, for a test. */
+    public int[] subTabPoint(final int index) {
+        return (tab == 0 ? scSubTabs : dcSubTabs).tabCenter(index);
+    }
+
+    /** How many clusters or sections the open tab lists, for a test. */
+    public int listed() {
+        return clustersOfTab().size();
     }
 
     // helpers

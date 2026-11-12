@@ -23,7 +23,6 @@ import dev.jstech.core.text.TextKey;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.function.Supplier;
-import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 
 /**
@@ -75,16 +74,27 @@ final class SectionDiagnosticsView extends UiComponent {
             "%s ago the latency was over twice the base for %s.");
     private static final TextKey TO_THE_LOG = TextKey.of("jsc.section_diagnostics.to_the_log",
             "Every alert also goes into the network's event log.");
-    private static final float SMALL = 0.75f;
+    /* A tile's three lines: its label, its figure and the words under it, from its top. */
+    private static final int LABEL_DY = 3;
+    private static final int VALUE_DY = 11;
+    private static final int UNDER_DY = 22;
+    /* Where a row's words stand in it. */
+    private static final int ROW_TEXT_DY = 2;
     private static final int TICKS_A_SECOND = 20;
     private static final int TICKS_A_MINUTE = 1200;
     private static final int TICKS_AN_HOUR = 72_000;
-    /* The chart: its rows of dots, its columns (ten minutes apart), and the room over a line's highest point. */
-    private static final int GRID_ROWS = 4;
-    private static final int GRID_COLUMNS = 6;
+    /* The chart: its fine grid across and down, and the room over a line's highest point. */
+    private static final int GRID_ACROSS = 8;
+    private static final int GRID_DOWN = 7;
     private static final double HEADROOM = 1.25;
-    private static final int DOT = 2;
-    private static final int SWATCH = 6;
+    /* The grid and the table's header, half-way from the field's ground to its edge: light lines, a soft band. */
+    private static final float SOFT = 0.5f;
+    /* A legend's swatch, how far its word stands from it, and the room between the two legends. */
+    private static final int SWATCH = 7;
+    private static final int SWATCH_H = 2;
+    private static final int SWATCH_DY = 3;
+    private static final int SWATCH_GAP = 2;
+    private static final int LEGEND_GAP = 12;
 
     SectionDiagnosticsView(final Supplier<WireDiagnostics> data, final Supplier<Tones> toneSource) {
         this.data = data;
@@ -136,9 +146,11 @@ final class SectionDiagnosticsView extends UiComponent {
         g.fill(tx, ty, tx + p.tileW(), ty + SectionDiagnosticsLayout.TILE_H, ctx.skin().fieldBg());
         Draw.outline(g, tx, ty, p.tileW(), SectionDiagnosticsLayout.TILE_H, ctx.skin().edge());
         final int room = p.tileW() - 6;
-        small(g, ctx, clipSmall(ctx.font(), label, room), tx + 3, ty + 2, ctx.skin().dim());
-        ctx.skin().drawText(g, ctx.font(), Texts.clip(ctx.font(), value, room), tx + 3, ty + 9, valueColour);
-        small(g, ctx, clipSmall(ctx.font(), under, room), tx + 3, ty + 19, ctx.skin().dim());
+        words(g, ctx, Texts.clip(ctx.font(), label, room), tx + 3, ty + LABEL_DY, ctx.skin().dim());
+        // The number a third larger than the words round it, as the design sets a tile's figure.
+        ctx.skin().drawText(g, ctx.font(), Texts.clip(ctx.font(), value, (int) (room / TabbedWindowLook.HEADING)),
+                tx + 3, ty + VALUE_DY, valueColour, TabbedWindowLook.HEADING);
+        words(g, ctx, Texts.clip(ctx.font(), under, room), tx + 3, ty + UNDER_DY, ctx.skin().dim());
     }
 
     /* The last hour: its label and legend, the chart with its dotted grid and two lines, and its time marks. */
@@ -146,34 +158,29 @@ final class SectionDiagnosticsView extends UiComponent {
                        final SectionDiagnosticsLayout.Placed p) {
         final int left = x();
         final int right = x() + width();
-        small(g, ctx, GameText.resolve(LAST_HOUR), left, y() + p.chartLabelY(), ctx.skin().dim());
+        words(g, ctx, GameText.resolve(LAST_HOUR), left, y() + p.chartLabelY(), ctx.skin().dim());
         final String throughputWord = GameText.resolve(THROUGHPUT_LINE);
         final String latencyWord = GameText.resolve(LATENCY_LINE);
-        final int throughputX = right - smallWidth(ctx.font(), throughputWord);
-        final int latencyX = throughputX - SWATCH - 6 - smallWidth(ctx.font(), latencyWord);
-        legend(g, ctx, latencyWord, latencyX - SWATCH - 2, y() + p.chartLabelY(), tones.busy());
-        legend(g, ctx, throughputWord, throughputX - SWATCH - 2, y() + p.chartLabelY(), ctx.skin().accent());
+        final int throughputX = right - ctx.font().width(throughputWord) - SWATCH - SWATCH_GAP;
+        final int latencyX = throughputX - LEGEND_GAP - ctx.font().width(latencyWord) - SWATCH - SWATCH_GAP;
+        legend(g, ctx, latencyWord, latencyX, y() + p.chartLabelY(), tones.busy());
+        legend(g, ctx, throughputWord, throughputX, y() + p.chartLabelY(), ctx.skin().accent());
 
         final int top = y() + p.chartY();
         final int bottom = top + p.chartH();
         ctx.skin().chartGround(g, left, top, width(), p.chartH());
-        for (int row = 1; row < GRID_ROWS; row++) {
-            final int gy = top + p.chartH() * row / GRID_ROWS;
-            for (int gx = left + 1; gx < right - 1; gx += DOT) {
-                g.fill(gx, gy, gx + 1, gy + 1, ctx.skin().chartLine());
-            }
+        final int grid = soft(ctx, ctx.skin().chartLine());
+        for (int gy = top + GRID_DOWN; gy < bottom - 1; gy += GRID_DOWN) {
+            g.fill(left + 1, gy, right - 1, gy + 1, grid);
         }
-        for (int column = 1; column < GRID_COLUMNS; column++) {
-            final int gx = left + width() * column / GRID_COLUMNS;
-            for (int gy = top + 1; gy < bottom - 1; gy += DOT) {
-                g.fill(gx, gy, gx + 1, gy + 1, ctx.skin().chartLine());
-            }
+        for (int gx = left + GRID_ACROSS; gx < right - 1; gx += GRID_ACROSS) {
+            g.fill(gx, top + 1, gx + 1, bottom - 1, grid);
         }
         line(g, d.hourThroughput(), left + 1, top + 2, width() - 2, p.chartH() - 4, ctx.skin().accent());
         line(g, d.hourLatency(), left + 1, top + 2, width() - 2, p.chartH() - 4, tones.busy());
-        small(g, ctx, GameText.resolve(HOUR_AGO), left, y() + p.axisY(), ctx.skin().dim());
+        words(g, ctx, GameText.resolve(HOUR_AGO), left, y() + p.axisY(), ctx.skin().dim());
         final String now = GameText.resolve(NOW);
-        small(g, ctx, now, right - smallWidth(ctx.font(), now), y() + p.axisY(), ctx.skin().dim());
+        words(g, ctx, now, right - ctx.font().width(now), y() + p.axisY(), ctx.skin().dim());
     }
 
     /*
@@ -217,21 +224,21 @@ final class SectionDiagnosticsView extends UiComponent {
                         final SectionDiagnosticsLayout.Placed p) {
         final int left = x();
         final int right = x() + width();
-        small(g, ctx, GameText.resolve(ALERTS), left, y() + p.alertsLabelY(), ctx.skin().dim());
+        words(g, ctx, GameText.resolve(ALERTS), left, y() + p.alertsLabelY(), ctx.skin().dim());
         final int headerY = y() + p.headerY();
-        g.fill(left, headerY, right, headerY + SectionDiagnosticsLayout.HEADER_H, ctx.skin().panelBg());
+        g.fill(left, headerY, right, headerY + SectionDiagnosticsLayout.HEADER_H, soft(ctx, ctx.skin().edge()));
         final int textY = headerY + 1;
-        small(g, ctx, GameText.resolve(LEVEL), left + SectionDiagnosticsLayout.LEVEL_X, textY, ctx.skin().dim());
-        small(g, ctx, GameText.resolve(WHAT), left + SectionDiagnosticsLayout.WHAT_X, textY, ctx.skin().dim());
+        words(g, ctx, GameText.resolve(LEVEL), left + SectionDiagnosticsLayout.LEVEL_X, textY, ctx.skin().dim());
+        words(g, ctx, GameText.resolve(WHAT), left + SectionDiagnosticsLayout.WHAT_X, textY, ctx.skin().dim());
         final int sinceX = right - SectionDiagnosticsLayout.SINCE_W;
-        small(g, ctx, GameText.resolve(SINCE), sinceX, textY, ctx.skin().dim());
+        words(g, ctx, GameText.resolve(SINCE), sinceX, textY, ctx.skin().dim());
         if (p.rows() == 0) {
             return;
         }
-        final int rowsY = y() + p.rowsY();
+        final int rowsY = y() + p.rowsY() + ROW_TEXT_DY;
         final List<WireAlert> alerts = d.alerts();
         if (alerts.isEmpty()) {
-            small(g, ctx, GameText.resolve(NO_ALERTS), left + SectionDiagnosticsLayout.LEVEL_X, rowsY,
+            words(g, ctx, GameText.resolve(NO_ALERTS), left + SectionDiagnosticsLayout.LEVEL_X, rowsY,
                     ctx.skin().dim());
             return;
         }
@@ -242,14 +249,14 @@ final class SectionDiagnosticsView extends UiComponent {
             final WireAlert alert = alerts.get(i);
             final int ry = rowsY + i * SectionDiagnosticsLayout.ROW_H;
             final EventLevel level = EventLevel.byId(alert.level());
-            small(g, ctx, GameText.resolve(level.label()), left + SectionDiagnosticsLayout.LEVEL_X, ry,
+            words(g, ctx, GameText.resolve(level.label()), left + SectionDiagnosticsLayout.LEVEL_X, ry,
                     levelTone(ctx, level));
-            small(g, ctx, clipSmall(ctx.font(), GameText.resolve(alert.what()), whatRoom),
+            words(g, ctx, Texts.clip(ctx.font(), GameText.resolve(alert.what()), whatRoom),
                     left + SectionDiagnosticsLayout.WHAT_X, ry, ctx.skin().text());
-            small(g, ctx, GameText.resolve(duration(alert.standing())), sinceX, ry, ctx.skin().dim());
+            words(g, ctx, GameText.resolve(duration(alert.standing())), sinceX, ry, ctx.skin().dim());
         }
         if (cut) {
-            small(g, ctx, GameText.resolve(MORE.with(alerts.size() - shown)), left + SectionDiagnosticsLayout.WHAT_X,
+            words(g, ctx, GameText.resolve(MORE.with(alerts.size() - shown)), left + SectionDiagnosticsLayout.WHAT_X,
                     rowsY + shown * SectionDiagnosticsLayout.ROW_H, ctx.skin().dim());
         }
     }
@@ -262,17 +269,22 @@ final class SectionDiagnosticsView extends UiComponent {
         }
         int ny = y() + p.notesY();
         if (d.lastOverAgo() >= 0L) {
-            small(g, ctx, clipSmall(ctx.font(), GameText.resolve(LAST_OVER.with(duration(d.lastOverAgo()),
+            words(g, ctx, Texts.clip(ctx.font(), GameText.resolve(LAST_OVER.with(duration(d.lastOverAgo()),
                     duration(d.lastOverTicks()))), width()), x(), ny, ctx.skin().dim());
             ny += SectionDiagnosticsLayout.LINE_H;
         }
-        small(g, ctx, clipSmall(ctx.font(), GameText.resolve(TO_THE_LOG), width()), x(), ny, ctx.skin().dim());
+        words(g, ctx, Texts.clip(ctx.font(), GameText.resolve(TO_THE_LOG), width()), x(), ny, ctx.skin().dim());
     }
 
     private void legend(final GuiGraphics g, final UiContext ctx, final String word, final int x, final int y,
                         final int colour) {
-        g.fill(x, y + 3, x + SWATCH, y + 4, colour);
-        small(g, ctx, word, x + SWATCH + 2, y, ctx.skin().dim());
+        g.fill(x, y + SWATCH_DY, x + SWATCH, y + SWATCH_DY + SWATCH_H, colour);
+        words(g, ctx, word, x + SWATCH + SWATCH_GAP, y, ctx.skin().dim());
+    }
+
+    /* A line's colour carried half-way to the field's ground, so the grid and the band sit back from the figures. */
+    private static int soft(final UiContext ctx, final int colour) {
+        return ChromeShapes.blend(ctx.skin().fieldBg(), colour, SOFT);
     }
 
     /* The latency's colour: fine near its base, busy past half again, bad past twice. */
@@ -335,17 +347,10 @@ final class SectionDiagnosticsView extends UiComponent {
         return format.format(tenths / 10.0);
     }
 
-    private static void small(final GuiGraphics g, final UiContext ctx, final String text, final int x, final int y,
+    /* A line of the tab in the desktop's own text. */
+    private static void words(final GuiGraphics g, final UiContext ctx, final String text, final int x, final int y,
                               final int colour) {
-        ctx.skin().drawText(g, ctx.font(), text, x, y, colour, SMALL);
-    }
-
-    private static int smallWidth(final Font font, final String text) {
-        return Math.round(font.width(text) * SMALL);
-    }
-
-    private static String clipSmall(final Font font, final String text, final int pixels) {
-        return Texts.clip(font, text, (int) (pixels / SMALL));
+        ctx.skin().drawText(g, ctx.font(), text, x, y, colour);
     }
 
     /**

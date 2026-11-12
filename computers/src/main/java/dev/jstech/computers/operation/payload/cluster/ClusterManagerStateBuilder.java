@@ -63,13 +63,15 @@ public final class ClusterManagerStateBuilder {
     // The line under a cluster's name, in the list and in its detail.
     private static final TextKey SUPERCOMPUTER_LINE =
             TextKey.of("jsc.cluster.state.supercomputer_line", "%s nodes · %s/%s");
-    private static final TextKey SECTION_LINE = TextKey.of("jsc.cluster.state.section_line", "%s racks · %s srv");
+    private static final TextKey SECTION_LINE = TextKey.of("jsc.cluster.state.section_line", "%s · %s srv");
     private static final TextKey SUPERCOMPUTER_DETAIL = TextKey.of("jsc.cluster.state.supercomputer_detail",
             "HBW Interface at %s, %s, %s · %s · %s/%s crafts");
     private static final TextKey SECTION_DETAIL =
-            TextKey.of("jsc.cluster.state.section_detail", "%s · %s servers @ %s, %s, %s");
+            TextKey.of("jsc.cluster.state.section_detail", "%s · %s @ %s, %s, %s");
     private static final TextKey ONE_RACK = TextKey.of("jsc.cluster.state.one_rack", "%s rack");
     private static final TextKey RACKS = TextKey.of("jsc.cluster.state.racks", "%s racks");
+    private static final TextKey ONE_SERVER = TextKey.of("jsc.cluster.state.one_server", "%s server");
+    private static final TextKey SERVERS = TextKey.of("jsc.cluster.state.servers", "%s servers");
     /* A craft in the queue: what it makes and how many. */
     private static final TextKey CRAFT = TextKey.of("jsc.cluster.state.craft", "%s x%s");
     private static final TextKey MAINFRAME = TextKey.of("jsc.cluster.state.mainframe", "Mainframe");
@@ -130,7 +132,7 @@ public final class ClusterManagerStateBuilder {
             final int mode = balanceModeId(level, ref.routerPos(), ref.face());
             clusters.add(new ClusterManagerStatePayload.WireCluster(ClusterManagerStatePayload.KIND_DATACENTER, i,
                     ref.label(), ref.section().serverCount() > 0, ref.section().serverCount(), used, total, mode,
-                    SECTION_LINE.with(ref.section().rackCount(), ref.section().serverCount()),
+                    SECTION_LINE.with(racks(ref.section().rackCount()), ref.section().serverCount()),
                     cmc.reaches(RackChassis.RackType.SERVER)));
         }
         // The selected cluster in detail.
@@ -254,7 +256,7 @@ public final class ClusterManagerStateBuilder {
         final BlockPos rp = ref.routerPos();
         final ClusterManagerStatePayload.Detail detail = new ClusterManagerStatePayload.Detail(
                 ClusterManagerStatePayload.KIND_DATACENTER, selIndex, ref.label(),
-                SECTION_DETAIL.with(racks(ref.section().rackCount()), ref.section().serverCount(),
+                SECTION_DETAIL.with(racks(ref.section().rackCount()), servers(ref.section().serverCount()),
                         rp.getX(), rp.getY(), rp.getZ()),
                 ref.section().serverCount() > 0, balanceModeId(level, ref.routerPos(), ref.face()), nodes, List.of(),
                 diagnostics(level, ref.routerPos(), ref.face()));
@@ -403,6 +405,11 @@ public final class ClusterManagerStateBuilder {
     /* A count of racks, said as one or as many. */
     private static Text racks(final int count) {
         return (count == 1 ? ONE_RACK : RACKS).with(count);
+    }
+
+    /* A count of servers, said as one or as many. */
+    private static Text servers(final int count) {
+        return (count == 1 ? ONE_SERVER : SERVERS).with(count);
     }
 
     private static String programsLabel(final IOsHost host) {
