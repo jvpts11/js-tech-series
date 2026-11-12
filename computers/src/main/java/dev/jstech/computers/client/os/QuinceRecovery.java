@@ -9,6 +9,7 @@ package dev.jstech.computers.client.os;
 
 import dev.jstech.computers.JsComputers;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.guide.TextTable;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -57,9 +58,12 @@ public final class QuinceRecovery {
     private static final int Y1 = 210;
     private static final int ROW_Y = 72;
     private static final int ROW_H = 34;
+    /* A choice's words from the window's left, past its tile, and a line of them. */
+    private static final int TEXT_X = 40;
+    private static final int LINE_H = 9;
 
     private static final Palette<Colours> PALETTE = Palettes.declare(JsComputers.MODID, "quince/recovery",
-            new Colours(0xFF2A2A34, 0xFF3A8AE0, 0xFF6A4AC0, 0xFF7A7A86, 0xFFE2DCEE));
+            new Colours(0xFF2A2A34, 0xFF3A8AE0, 0xFF6A4AC0, 0xFF7A7A86, 0xFFE2DCEE, 0xFFFFFFFF));
 
     private QuinceRecovery() {
     }
@@ -83,9 +87,23 @@ public final class QuinceRecovery {
             }
             final int tile = i == 0 ? own.disk() : i == 1 ? own.system() : own.utility();
             QuinceArt.roundRect(g, X0 + 14, ry, X0 + 32, ry + 18, 3, tile);
+            if (i == REINSTALL) {
+                QuinceArt.fruit(g, look, X0 + 18, ry + 3, false);
+            } else {
+                disk(g, X0 + 14, ry, tile);
+            }
             Draw.text(g, font, Component.literal(GameText.resolve(NAMES.get(i))).withStyle(ChatFormatting.BOLD),
-                    X0 + 40, ry, c.ink());
-            Draw.text(g, font, GameText.resolve(WHATS.get(i)), X0 + 40, ry + 10, c.dim());
+                    X0 + TEXT_X, ry, c.ink());
+            // The line under the name breaks within the window, as many lines as its row holds.
+            int ly = ry + 10;
+            for (final String line : TextTable.wrap(GameText.resolve(WHATS.get(i)), X1 - 8 - (X0 + TEXT_X),
+                    font::width)) {
+                if (ly + LINE_H > ry + ROW_H - 4) {
+                    break;
+                }
+                Draw.text(g, font, line, X0 + TEXT_X, ly, c.dim());
+                ly += LINE_H;
+            }
         }
         if (checking) {
             Draw.text(g, font, GameText.resolve(CHECKING), X0 + 14, Y1 - 30, c.ink());
@@ -94,6 +112,12 @@ public final class QuinceRecovery {
         QuinceArt.button(g, look, go[0], go[1], go[2], go[3], true, false);
         Draw.textCentered(g, font, GameText.resolve(CONTINUE), go[0] + go[2] / 2, go[1] + 2,
                 QuinceArt.buttonInk(look, true));
+    }
+
+    /* A disk on a choice's tile, its slot in the tile's own colour, as the disk tools draw theirs. */
+    private static void disk(final GuiGraphics g, final int x, final int y, final int tile) {
+        QuinceArt.roundRect(g, x + 5, y + 5, x + 13, y + 13, 2, PALETTE.get().glyph());
+        g.fill(x + 7, y + 9, x + 11, y + 10, tile);
     }
 
     /** The choice under a point of the glass, or -1. */
@@ -119,7 +143,8 @@ public final class QuinceRecovery {
      * @param system  Reinstall's tile
      * @param utility Disk Utility's tile
      * @param picked  the row picked
+     * @param glyph   the disk drawn on a tile
      */
-    private record Colours(int ground, int disk, int system, int utility, int picked) {
+    private record Colours(int ground, int disk, int system, int utility, int picked, int glyph) {
     }
 }

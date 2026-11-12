@@ -4247,6 +4247,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   them, shows three rows of them in its window as designed, and cuts a long name or house short of the next column,
   where names ran into each other and off the window; the menu bar keeps its menus clear of the clock, leaving out
   those that do not fit beside a long program name.
+- (Computers) Quince: quinceOS Utilities breaks each choice's line within its window, where the lines ran past its
+  edge, and draws a disk or the fruit on each choice's tile, as designed.
 - (Computers) Settings lists a computer's programs in the order they were installed, where the order changed from one
   time to the next, and its Programs page scrolls when there are more programs than the window holds, where the
   last ones ran off the window.

@@ -11,7 +11,9 @@ import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.QuinceItems;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
+import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.client.BootSequenceScreen;
 import dev.jstech.computers.client.CrashScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
@@ -33,6 +35,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import org.lwjgl.glfw.GLFW;
 
 /**
  * Quince's systems on its own computers (computers/docs/design/quince.md), each as its mock draws it: the Quince System
@@ -65,6 +68,10 @@ public final class QuinceClientTests {
     /* The network behind the machine: the Mainframe running the Mirror, a router, and the cables to its back. */
     private static final BlockPos STORE_ROUTER = MACHINE.south(2);
     private static final BlockPos STORE_MAINFRAME = MACHINE.south(4);
+    /* The Quince Mainframe and the monitor beside it. */
+    private static final BlockPos QUINCE_MAINFRAME = new BlockPos(3, 2, 2);
+    private static final BlockPos SERVER_MONITOR = QUINCE_MAINFRAME.east();
+    private static final String SERVER_ADMIN = "jsc:server_admin";
     private static final String FORCE_QUIT = "quince_memory";
     /* What was running when a system went down, and the part pulled from the Russet 128K. */
     private static final String EXPEDITION_NAME = "Expedition";
@@ -210,6 +217,72 @@ public final class QuinceClientTests {
                 });
         opened(steps, ctx, STORE);
         steps.thenScreenshot(SETTLE * 20, "flat-store");
+    }
+
+    /*
+     * quinceOS's recovery: switched on sneaking, the machine stands at its start-up options, its last choice the Quince
+     * chip's Options gear, which opens the recovery's utilities.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void quinceOs_opensItsRecoveryFromTheStartupOptions(final ClientTestContext ctx) {
+        ctx.thenBuild(0, world -> {
+                    world.setBlock(MACHINE, ComputingModule.QRUSSET_COLOURS.getFirst().get().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
+                    final PersonalComputerBlockEntity machine = world.blockEntity(MACHINE,
+                            PersonalComputerBlockEntity.class);
+                    build(machine, QuinceItems.BOARD_QRUSSET_COLOUR.get());
+                    machine.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "quinceos"));
+                    // Its power button pressed while sneaking, which asks for the start-up options.
+                    machine.askStartupChoices(true);
+                    machine.togglePower();
+                })
+                .thenTeleport(SETTLE, PLAYER, Direction.SOUTH)
+                .thenRightClickFront(SETTLE, MACHINE, ON_THE_GLASS_X, ON_THE_GLASS_Y)
+                .thenAwaitScreen(BootSequenceScreen.class, BOOT_WAIT)
+                // The disk the machine starts from, then the gear after it.
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_RIGHT))
+                .then(SETTLE, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
+                .then(SETTLE * 4, () -> ctx.mc().getToasts().clear())
+                .thenScreenshot(SETTLE * 2, "qos-recovery");
+    }
+
+    /*
+     * Server Admin on Quince OS X Server, on the Quince Mainframe through its monitor: the machine's services, the
+     * Mirror running among them.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void server_showsServerAdmin(final ClientTestContext ctx) {
+        final ClientTestContext steps = ctx.thenBuild(0, world -> {
+                    world.setBlock(QUINCE_MAINFRAME, ComputingModule.QUINCE_MAINFRAME_STANDARD.get());
+                    final MainframeBlockEntity mainframe = world.blockEntity(QUINCE_MAINFRAME,
+                            MainframeBlockEntity.class);
+                    final Item board = QuinceItems.BOARD_MAINFRAME_S.get();
+                    final MotherboardSpec spec = EraParts.board(board);
+                    final ItemStackHandler parts = mainframe.getInventory();
+                    parts.setStackInSlot(MainframeBlockEntity.MOTHERBOARD_SLOT, new ItemStack(board));
+                    parts.setStackInSlot(MainframeBlockEntity.CPU_SLOTS_START, new ItemStack(EraParts.cpuFor(board)));
+                    parts.setStackInSlot(MainframeBlockEntity.RAM_SLOTS_START, new ItemStack(EraParts.ramFor(board)));
+                    parts.setStackInSlot(MainframeBlockEntity.PSU_SLOT, new ItemStack(EraParts.psuFor(spec.era())));
+                    parts.setStackInSlot(MainframeBlockEntity.DISK_SLOTS_START,
+                            new ItemStack(EraParts.diskFor(spec.era())));
+                    // A graphics card gives the machine the peripheral ports its monitor links to.
+                    parts.setStackInSlot(MainframeBlockEntity.GPU_SLOTS_START,
+                            new ItemStack(ComputingModule.GPU_HD_7970.get()));
+                    if (!mainframe.installOs(ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
+                            "quince_os_x_server"))) {
+                        throw new IllegalStateException("Quince OS X Server does not install on the Quince Mainframe");
+                    }
+                    mainframe.installMirror();
+                    mainframe.console().settings().setGuiScale(DESIGNED_SCALE);
+                    mainframe.togglePower();
+                    world.placeMonitor(SERVER_MONITOR, Direction.EAST);
+                })
+                .thenTeleport(SETTLE, SERVER_MONITOR.east(2), Direction.WEST)
+                .thenRightClick(SETTLE, SERVER_MONITOR)
+                .thenAwaitScreen(DesktopScreen.class, BOOT_WAIT)
+                .then(SETTLE * 10, () -> ctx.mc().getToasts().clear());
+        opened(steps, ctx, SERVER_ADMIN);
+        steps.thenScreenshot(SETTLE * 10, "server-admin");
     }
 
     /*
