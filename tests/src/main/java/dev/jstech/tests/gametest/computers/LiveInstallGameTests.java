@@ -37,6 +37,9 @@ import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 /**
  * Installing Arch and Gentoo by hand, typed at a real machine's terminal the way a player types it.
  *
@@ -252,6 +255,28 @@ public final class LiveInstallGameTests {
         helper.assertTrue(term.type("w").contains("The partition table has been altered."), "until it is written");
         helper.assertFalse(term.busy(), "and then the prompt comes back");
         helper.assertTrue(term.type("lsblk").contains("sda1"), "with the table on the disk");
+        helper.succeed();
+    }
+
+    /**
+     * A size given ends where the last sector the table leaves usable does: a partition of the whole disk would run
+     * past it, over the copy of the table at the disk's end, and is out of range as its last sector would be.
+     */
+    @GameTest(template = ARENA)
+    public static void fdisk_refusesASizeThatRunsPastTheLastUsableSector(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = legacyWithDisk(helper);
+        computer.console().startLiveInstall(LiveInstallState.Distro.ARCH);
+        final TerminalAt term = new TerminalAt(computer, helper.getLevel());
+        term.type("fdisk /dev/sda");
+        term.type("g");
+        final Matcher sectors = Pattern.compile("(\\d+) sectors").matcher(term.type("p"));
+        helper.assertTrue(sectors.find(), "the table names the disk's sectors");
+        final long wholeMb = Long.parseLong(sectors.group(1)) / 2_048L;
+        term.type("n");
+        term.type(TerminalTools.ENTER);
+        term.type(TerminalTools.ENTER);
+        helper.assertTrue(term.type("+" + wholeMb + "M").contains("out of range"),
+                "the whole disk is more than fits after its first sectors");
         helper.succeed();
     }
 

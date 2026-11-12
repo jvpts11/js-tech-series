@@ -113,7 +113,9 @@ public final class FsckCommand implements ICliCommand {
         private final List<String> phases;
         private boolean opened;
         private int printed;
-        private long lookedAt = Long.MIN_VALUE;
+        /* Whether it has looked at the repair yet, and when it last did; the first look is at once. */
+        private boolean looked;
+        private long lookedAt;
         private boolean over;
 
         Repair(final ICliComputer computer, final DefragLook look, final int disk) {
@@ -125,14 +127,15 @@ public final class FsckCommand implements ICliCommand {
 
         @Override
         public void begin(final long now) {
-            this.lookedAt = Long.MIN_VALUE;
+            this.looked = false;
         }
 
         @Override
         public void advance(final long now, @Nullable final ITtySink out) {
-            if (this.over || now - this.lookedAt < LOOK_EVERY) {
+            if (this.over || this.looked && now - this.lookedAt < LOOK_EVERY) {
                 return;
             }
+            this.looked = true;
             this.lookedAt = now;
             if (!this.opened) {
                 this.opened = true;

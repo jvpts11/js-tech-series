@@ -8,6 +8,7 @@
 package dev.jstech.computers.program.job;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
@@ -62,5 +63,12 @@ class MachineJobsTest {
 
         assertEquals(8, this.jobs.nextId());
         assertEquals(8, this.jobs.add("b.sh", JobWhen.AT_ONCE).id());
+    }
+
+    @Test
+    void roomForOneMore_countsTheJobsAlreadyHeld() {
+        assertTrue(MachineJobs.roomForOneMore(16, 10, 5), "ten used and five jobs leave a megabyte for a sixth");
+        assertFalse(MachineJobs.roomForOneMore(16, 10, 6), "six jobs fill what the programs leave");
+        assertTrue(MachineJobs.roomForOneMore(0, 0, 1_000), "a machine that reports no memory is not held to it");
     }
 }

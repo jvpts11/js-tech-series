@@ -255,6 +255,11 @@ final class TypeParser {
                     depth--;
                 } else if (kind == TokenKind.SHIFT_RIGHT) {
                     depth -= 2;
+                } else if (kind == TokenKind.DOT) {
+                    // A type argument may be named with its namespace or the type it is nested in: Game.Item.
+                    if (this.cursor.kindAt(at + 1) != TokenKind.IDENTIFIER) {
+                        return -1;
+                    }
                 } else if (kind != TokenKind.COMMA && kind != TokenKind.LEFT_BRACKET
                         && kind != TokenKind.RIGHT_BRACKET && kind != TokenKind.LEFT_PAREN
                         && kind != TokenKind.RIGHT_PAREN && kind != TokenKind.STAR && !this.isTypeStart(kind)) {

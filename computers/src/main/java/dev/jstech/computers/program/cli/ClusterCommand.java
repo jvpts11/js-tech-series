@@ -324,8 +324,10 @@ public final class ClusterCommand implements ICliCommand {
             ctx.out().error(CliTexts.USAGE.with(NAME, INSTALL_USAGE));
             return;
         }
+        // Started only when this call made the job: one already running is what refuses it.
+        final ClusterManagementComputerBlockEntity.InstallJob before = cmc.job();
         final Text result = cmc.startJob(c.ref(), kind);
-        if (cmc.job() != null) {
+        if (cmc.job() != null && cmc.job() != before) {
             ctx.out().ok(STARTED.with(result, cmc.parallelLanes()));
         } else {
             ctx.out().error(CliTexts.SAID_BY.with(NAME,result));

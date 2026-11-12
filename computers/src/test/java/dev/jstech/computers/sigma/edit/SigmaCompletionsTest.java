@@ -225,6 +225,25 @@ class SigmaCompletionsTest {
     }
 
     @Test
+    void scopeAt_findsANestedTypeByItsWholeNameBesideATopLevelOneOfItsName() {
+        final String trees = PRELUDE + """
+                class Node {
+                    public int Top;
+                }
+                class Tree {
+                    class Node {
+                        public int Leaf;
+                        public void Grow() {
+                            int x = 0;
+                        }
+                    }
+                }
+                """;
+        assertEquals("Tests.Tree.Node", readAt(trees, 8).scope().enclosing().qualifiedName(),
+                "inside Tree's Node, never the Node declared beside Tree");
+    }
+
+    @Test
     void scopeAt_isNowhereOutsideEveryType() {
         final Read read = readAt(PRELUDE + "\n\nclass Farm { }", 2);
         assertEquals(SigmaCompletions.Scope.NONE, read.scope());

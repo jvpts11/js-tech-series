@@ -55,5 +55,9 @@ class TrcTest {
         assertEquals(-1L, Trc.parse("1.000000001"));
         assertEquals(-1L, Trc.parse("12a"));
         assertEquals(-1L, Trc.parse("1234567890123"));
+        // Twelve digits and fewer whose units are past what a count holds wrapped round to some other amount.
+        assertEquals(-1L, Trc.parse("99999999999"));
+        assertEquals(-1L, Trc.parse("184467440738"));
+        assertEquals(Trc.of(92_233_720_368L), Trc.parse("92233720368"));
     }
 }

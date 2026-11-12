@@ -335,6 +335,34 @@ class ProcessTest {
     }
 
     @Test
+    void program_renamedOverAndOver_holdsOnlyItsLastName() {
+        // The name is read once, so only what the renames make is counted, not a literal read on every turn.
+        final Process once = run("""
+                        string name = "Farm Watch"; Program.SetName(name);
+                """);
+        final Process often = run("""
+                        string name = "Farm Watch";
+                        for (int i = 0; i < 200; i++) { Program.SetName(name); }
+                """);
+        assertFinished(often);
+        assertEquals(once.heap().used(), often.heap().used(), "a name it no longer has is let go");
+    }
+
+    @Test
+    void stringBuilder_clearedOverAndOver_holdsOnlyWhatIsInIt() {
+        final Process once = run("""
+                        string row = "row"; StringBuilder text = new StringBuilder();
+                        text.Clear(); text.AppendLine(row);
+                """);
+        final Process often = run("""
+                        string row = "row"; StringBuilder text = new StringBuilder();
+                        for (int i = 0; i < 200; i++) { text.Clear(); text.AppendLine(row); }
+                """);
+        assertFinished(often);
+        assertEquals(once.heap().used(), often.heap().used(), "a line cleared away is counted no more");
+    }
+
+    @Test
     void program_hasNoNameUntilItGivesItselfOne() {
         final Process process = run("        Console.PrintLine(\"quiet\");");
         assertFinished(process);

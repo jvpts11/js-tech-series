@@ -149,7 +149,12 @@ public final class PortableAlerts {
                 }
             }
             for (final Map.Entry<NetworkUuid, List<UUID>> entry : byNetwork.entrySet()) {
-                final Map<StorageKey, Long> stock = NetworkStorage.of(level, entry.getKey()).query();
+                final NetworkStorage storage = NetworkStorage.of(level, entry.getKey());
+                // Storage out of reach reads as none: nothing is said to be low until all of it is in view.
+                if (!storage.complete()) {
+                    continue;
+                }
+                final Map<StorageKey, Long> stock = storage.query();
                 final String network = ShortId.of(entry.getKey().asString());
                 for (final UUID device : entry.getValue()) {
                     watchOne(level, devices, device, stock, network);

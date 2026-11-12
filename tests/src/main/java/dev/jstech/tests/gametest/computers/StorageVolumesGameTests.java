@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import dev.jstech.computers.storage.ServerStorageContents;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.storage.StorageVolumes;
@@ -17,6 +18,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.TagParser;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -95,6 +97,36 @@ public final class StorageVolumesGameTests {
                 "nothing to encode right after a load; " + loaded.pendingEncodes() + " pending");
         final CompoundTag again = loaded.save(new CompoundTag(), registries);
         helper.assertTrue(itemsOf(again, stone) == itemsOf(saved, stone), "the loaded encoding is reused as it is");
+        helper.succeed();
+    }
+
+    /**
+     * A volume none of whose lines can be read now (their mod is gone for the moment) reads blank, and is still
+     * written as it was read, so the items come back with the mod.
+     */
+    @GameTest(template = ARENA)
+    public static void save_keepsAVolumeNoneOfWhoseLinesCanBeReadNow(final GameTestHelper helper) {
+        final StorageVolumes store = StorageVolumes.get(helper.getLevel().getServer());
+        final HolderLookup.Provider registries = helper.getLevel().registryAccess();
+        final UUID gone = UUID.randomUUID();
+        final CompoundTag saved;
+        try {
+            store.volume(gone).add(StorageKey.of(Items.BLAZE_ROD), 4L);
+            saved = store.save(new CompoundTag(), registries);
+        } finally {
+            store.remove(gone);
+        }
+        final CompoundTag fromAModGone;
+        try {
+            fromAModGone = TagParser.parseTag(saved.toString().replace("minecraft:blaze_rod", "gonemod:widget"));
+        } catch (final CommandSyntaxException unreadable) {
+            throw new IllegalStateException("the save does not read back", unreadable);
+        }
+        final StorageVolumes loaded = StorageVolumes.factory().deserializer().apply(fromAModGone, registries);
+        helper.assertTrue(loaded.volume(gone).blank(), "nothing of it can be read now");
+        final CompoundTag again = loaded.save(new CompoundTag(), registries);
+        helper.assertTrue(itemsOf(again, gone).toString().contains("gonemod:widget"),
+                "and it is written as it was read, its lines kept for the mod's return");
         helper.succeed();
     }
 

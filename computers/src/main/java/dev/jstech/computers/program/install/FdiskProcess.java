@@ -342,6 +342,11 @@ final class FdiskProcess implements ITtyProcess {
         this.stage = Stage.COMMAND;
         final int number = this.draft.size() + 1;
         final long room = this.sizeMb - this.taken();
+        /*
+         * A size given fits between the sector the partition starts on and the last one the table leaves usable, as
+         * the last-sector answer does: the disk's first sectors and the table's copy at its end are no partition's.
+         */
+        final long fits = (this.lastUsable() - this.nextStart() + 1L) / SECTORS_PER_MB;
         // A partition that took the rest of the disk leaves nothing, though it asked for no size to count.
         for (final LiveDisks.Partition part : this.draft) {
             if (part.sizeMb() <= 0) {
@@ -349,7 +354,7 @@ final class FdiskProcess implements ITtyProcess {
                 return;
             }
         }
-        if (room <= 0 || sizeMb < 0 || sizeMb > room) {
+        if (room <= 0 || sizeMb < 0 || sizeMb > fits) {
             say(out, OUT_OF_RANGE.text(), Text.EMPTY);
             return;
         }

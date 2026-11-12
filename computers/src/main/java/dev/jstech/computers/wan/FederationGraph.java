@@ -13,10 +13,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * The networks of a world and their federations, as the sides of their links stand this tick, and the ways between
@@ -63,8 +65,15 @@ public final class FederationGraph {
     /** Every network {@code from} reaches, each by its shortest way, the nearest first. */
     public List<FederationPath> reachable(final NetworkUuid from) {
         final Map<NetworkUuid, FederationPath> found = new LinkedHashMap<>();
+        /*
+         * The networks a way has gone on from. A network is reached by its shortest way, but gone on from by the
+         * first way into it that relays: the shortest may come in by a port that does not, and a longer one by one
+         * that does is what reaches the networks beyond.
+         */
+        final Set<NetworkUuid> goneOnFrom = new HashSet<>();
         final Deque<FederationPath> queue = new ArrayDeque<>();
         queue.add(new FederationPath(List.of(from), List.of(), PortSettings.NEW, Long.MAX_VALUE));
+        goneOnFrom.add(from);
         while (!queue.isEmpty()) {
             final FederationPath way = queue.poll();
             final NetworkUuid at = way.target();
@@ -72,7 +81,7 @@ public final class FederationGraph {
                 continue;
             }
             for (final NetworkUuid next : sides.getOrDefault(at, Map.of()).keySet()) {
-                if (way.networks().contains(next) || found.containsKey(next)) {
+                if (way.networks().contains(next)) {
                     continue;
                 }
                 final Optional<FederationEdge> out = side(at, next);
@@ -86,8 +95,10 @@ public final class FederationGraph {
                 edges.add(out.get());
                 final long speed = Math.min(way.speed(), Math.min(out.get().speed(), in.speed()));
                 final FederationPath longer = new FederationPath(networks, edges, in.settings(), speed);
-                found.put(next, longer);
-                queue.add(longer);
+                found.putIfAbsent(next, longer);
+                if (mayLeave(longer) && goneOnFrom.add(next)) {
+                    queue.add(longer);
+                }
             }
         }
         return List.copyOf(found.values());

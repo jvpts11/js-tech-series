@@ -287,7 +287,7 @@ public final class CliShell {
             return new Response(out.lines(), false);
         }
         final ICliComputer.MemoryUse memory = computer.memory();
-        if (memory.totalMb() > 0 && memory.usedMb() + MachineJobs.JOB_MB > memory.totalMb()) {
+        if (!MachineJobs.roomForOneMore(memory.totalMb(), memory.usedMb(), computer.jobs().size())) {
             out.error(NO_JOB_MEMORY);
             return new Response(out.lines(), false);
         }

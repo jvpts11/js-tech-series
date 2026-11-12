@@ -58,6 +58,17 @@ class TypeCheckTest {
     }
 
     @Test
+    void check_takesAStructForTheValueItIs() {
+        final String point = "struct Point { public int X; }\n";
+        assertReports("S3003", check(point + "class C {\n    void M() {\n Point p = null;\n    }\n}"));
+        final SigmaSemantics.Result locked = check(point + "class C {\n    void M() {\n Point p = new Point();"
+                + " lock (p) { }\n    }\n}");
+        assertTrue(!locked.diagnostics().isEmpty(), () -> "a struct has no lock to take: " + locked.lines());
+        assertClean(check(point + "class C {\n    void M() {\n Point p = new Point(); object o = p;"
+                + " bool isOne = o is Point;\n    }\n}"));
+    }
+
+    @Test
     void check_reportsANameThatStandsForNothing() {
         assertReports("S3001", body("int n = nowhere;"));
     }
@@ -182,6 +193,10 @@ class TypeCheckTest {
         assertReports("S3011", body("continue;"));
         assertClean(body("int n = 1; switch (n) { case 1: break; }"));
         assertReports("S3011", body("int n = 1; switch (n) { case 1: continue; }"));
+        // A lambda's body stands in none of the loops it was written inside.
+        assertReports("S3010", body("while (true) { Action a = () => { break; }; break; }"));
+        assertReports("S3011", body("while (true) { Action a = () => { continue; }; break; }"));
+        assertClean(body("Action a = () => { while (true) { break; } };"));
     }
 
     @Test

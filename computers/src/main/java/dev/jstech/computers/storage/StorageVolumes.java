@@ -137,8 +137,13 @@ public final class StorageVolumes extends SavedData {
         final ListTag list = new ListTag();
         final Set<UUID> snapshotsSaved = new HashSet<>();
         for (final Map.Entry<UUID, StorageVolume> entry : volumes.entrySet()) {
-            if (entry.getValue().blank()) {
-                continue; // a blank volume is recreated blank on demand; no need to write it
+            /*
+             * A blank volume is recreated blank on demand; no need to write it. One that reads blank only because
+             * none of its lines could be read (their mod is gone for now) keeps those lines, so it is written as it
+             * was read.
+             */
+            if (entry.getValue().blank() && !encoded.containsKey(entry.getKey())) {
+                continue;
             }
             final UUID id = entry.getKey();
             final CompoundTag one = new CompoundTag();

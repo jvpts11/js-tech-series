@@ -36,14 +36,35 @@ public final class ExternalStores {
     private ExternalStores() {
     }
 
-    /** Where an External Storage Bus sits. */
-    private record Mount(BlockPos cable, Direction face) {
+    /** Where an External Storage Bus sits, and the network it was on when it last said so. */
+    private record Mount(BlockPos cable, Direction face, @Nullable NetworkUuid network) {
     }
 
-    /** Notes that the bus keeping {@code node} sits on {@code face} of the cable at {@code cable}. */
+    /**
+     * Notes that the bus keeping {@code node} sits on {@code face} of the cable at {@code cable}, on {@code network}
+     * as it says it now.
+     */
     public static void register(final ServerLevel level, final NodeUuid node, final BlockPos cable,
-                                final Direction face) {
-        MOUNTS.computeIfAbsent(level, l -> new LinkedHashMap<>()).put(node, new Mount(cable.immutable(), face));
+                                final Direction face, @Nullable final NetworkUuid network) {
+        MOUNTS.computeIfAbsent(level, l -> new LinkedHashMap<>())
+                .put(node, new Mount(cable.immutable(), face, network));
+    }
+
+    /**
+     * Whether a bus last seen on {@code network} sits in a chunk that is not loaded now: what that network stores is
+     * then not all in view, and counting it would read the bus's inventory as empty.
+     */
+    public static boolean anyWaitingToLoad(final ServerLevel level, final NetworkUuid network) {
+        final Map<NodeUuid, Mount> mounts = MOUNTS.get(level);
+        if (mounts == null) {
+            return false;
+        }
+        for (final Mount mount : mounts.values()) {
+            if (network.equals(mount.network()) && !level.isLoaded(mount.cable())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** The External Storage Buses on {@code network} now, in the order they were first seen. */

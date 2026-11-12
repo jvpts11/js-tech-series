@@ -97,8 +97,10 @@ final class TextToolFunctions {
     private static void builder(final IntrinsicRegistry.Builder registry) {
         registry.onObject(BUILDER, "Append", BUILDER, (context, target, arguments, line) ->
                 append(context, target, String.valueOf(arguments[0]), line), TEXT);
+        // A piece the builder holds is counted as its list grows, as Append's is: made as the runtime's own text too,
+        // it would be counted twice and never let go, however often the builder is cleared.
         registry.onObject(BUILDER, "AppendLine", BUILDER, (context, target, arguments, line) ->
-                append(context, target, context.text(arguments[0] + "\n", line), line), TEXT);
+                append(context, target, arguments[0] + "\n", line), TEXT);
         registry.onObject(BUILDER, "Clear", BUILDER, (context, target, arguments, line) -> {
             final Values.Obj builder = builder(target, line);
             final Values.ListValue pieces = (Values.ListValue) builder.get(PIECES);

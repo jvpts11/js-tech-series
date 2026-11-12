@@ -206,9 +206,15 @@ public record Packed(Manifest manifest, Map<String, String> files) {
         return this.write().length();
     }
 
-    /** Files a finished body under its name, or says false when that name already has one. */
+    /**
+     * Files a finished body under its name, or says false when that name already has one, or when the body says it
+     * has no last newline and has no line at all, which no package is written as.
+     */
     private static boolean finished(final Map<String, String> files, final String name, final StringBuilder body,
                                     final boolean noFinalNewline) {
+        if (noFinalNewline && body.isEmpty()) {
+            return false;
+        }
         final String text = noFinalNewline ? body.substring(0, body.length() - 1) : body.toString();
         return files.putIfAbsent(name, text) == null;
     }

@@ -574,6 +574,7 @@ public final class Lowerer {
                 }
                 case IDecl.FieldDecl field -> {
                     this.kept = null; // a field's starting value is not inside any method, so it keeps nothing
+                    this.finder.checkInitializer(field.initializer(), field);
                     this.replaceIn(field.initializer());
                 }
                 case IDecl.TypeMember nested -> this.type(nested.type());

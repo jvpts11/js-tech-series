@@ -86,6 +86,19 @@ final class PipeCommands {
         return words;
     }
 
+    /* The file head or tail reads: the first plain word that is not the count of its -n, or none. */
+    private static String countedFile(final CliContext ctx) {
+        for (int i = 0; i < ctx.argCount(); i++) {
+            final String arg = ctx.arg(i);
+            if (arg.equals("-n")) {
+                i++;
+            } else if (!arg.startsWith("-")) {
+                return arg;
+            }
+        }
+        return "";
+    }
+
     static boolean flag(final CliContext ctx, final String unix, final String dos) {
         for (final String arg : ctx.args()) {
             final String said = arg.toLowerCase(Locale.ROOT);
@@ -252,8 +265,7 @@ final class PipeCommands {
         }
 
         @Override public void run(final CliContext ctx) {
-            final List<String> words = plainWords(ctx);
-            print(ctx, TextFilters.first(linesFor(ctx, words.isEmpty() ? "" : words.get(0)), many(ctx)));
+            print(ctx, TextFilters.first(linesFor(ctx, countedFile(ctx)), many(ctx)));
         }
     }
 
@@ -284,8 +296,7 @@ final class PipeCommands {
         }
 
         @Override public void run(final CliContext ctx) {
-            final List<String> words = plainWords(ctx);
-            print(ctx, TextFilters.last(linesFor(ctx, words.isEmpty() ? "" : words.get(0)), many(ctx)));
+            print(ctx, TextFilters.last(linesFor(ctx, countedFile(ctx)), many(ctx)));
         }
     }
 

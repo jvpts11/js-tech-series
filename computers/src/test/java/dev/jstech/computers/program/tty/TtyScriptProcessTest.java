@@ -36,6 +36,22 @@ class TtyScriptProcessTest {
     }
 
     @Test
+    void advance_anEffectThatFails_isNotRunAgain() {
+        final int[] runs = {0};
+        final TtyScriptProcess tool = started(TtyScript.script().effect(() -> {
+            runs[0]++;
+            throw new IllegalStateException("the disk went");
+        }).say("after").done());
+        try {
+            tool.advance(0, this.glass);
+        } catch (final IllegalStateException failed) {
+            // The terminal holding the tool lets it go; what matters here is that it would not fail again.
+        }
+        tool.advance(1, this.glass);
+        assertEquals(1, runs[0], "a failed effect is out of the script, not run on every turn");
+    }
+
+    @Test
     void advance_aToolThatOnlySpeaks_saysItAllAtOnceAndIsOver() {
         final TtyScriptProcess tool = started(TtyScript.script().say("one").say("two").done());
         tool.advance(0, this.glass);

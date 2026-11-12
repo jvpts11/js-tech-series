@@ -75,6 +75,9 @@ class IqlBusStatementTest {
         assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x COLOUR red"));
         assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x"));
         assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x WHEN TIME BETWEEN 25:00 AND 06:00"));
+        // A bus keeps whole hours: minutes are refused rather than dropped.
+        assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x WHEN TIME BETWEEN 18:30 AND 06:00"));
+        assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x WHEN TIME BETWEEN 18:zz AND 06:00"));
         assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x KEEP 16 trailing"));
     }
 

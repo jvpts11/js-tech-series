@@ -226,8 +226,7 @@ public final class Emitter {
         final MethodBody reading = new MethodBody(this, type, text);
         new ExpressionWriter(this, reading).value(reads, text);
         reading.emit(Opcode.RET);
-        written.addMethod(new AsmMethod("ToString", text.describe(), List.of(), false, reading.slotCount(),
-                reading.finish()));
+        written.addMethod(method("ToString", text.describe(), List.of(), false, reading));
         return written;
     }
 
@@ -291,8 +290,7 @@ public final class Emitter {
             new ExpressionWriter(this, body).value(lambda.body(), gives);
             body.emit(Opcode.RET);
         }
-        final AsmMethod made = this.finished(new AsmMethod(name, gives.describe(), written, false,
-                body.slotCount(), body.finish()), body);
+        final AsmMethod made = this.finished(method(name, gives.describe(), written, false, body), body);
         if (closure == null) {
             this.synthesized.add(made);
         } else {
@@ -415,14 +413,12 @@ public final class Emitter {
         if (!hasConstructor && !instanceStart.isEmpty()) {
             final MethodBody body = new MethodBody(this, type, ITypeSymbol.Primitive.VOID);
             this.statements(body).fieldStarts(instanceStart);
-            written.addMethod(this.finished(new AsmMethod(AsmMethod.CONSTRUCTOR, "void", List.of(), false,
-                    body.slotCount(), body.finish()), body));
+            written.addMethod(this.finished(method(AsmMethod.CONSTRUCTOR, "void", List.of(), false, body), body));
         }
         if (!staticStart.isEmpty()) {
             final MethodBody body = new MethodBody(this, type, ITypeSymbol.Primitive.VOID);
             this.statements(body).fieldStarts(staticStart);
-            written.addMethod(this.finished(new AsmMethod(AsmMethod.TYPE_SET_UP, "void", List.of(), true,
-                    body.slotCount(), body.finish()), body));
+            written.addMethod(this.finished(method(AsmMethod.TYPE_SET_UP, "void", List.of(), true, body), body));
         }
     }
 
@@ -441,8 +437,8 @@ public final class Emitter {
         body.parameters(method.parameters());
         body.openClosure(this.closures.forMethod(type, this.lowered.capturesOf(method)));
         this.statements(body).block(this.lowered.bodyOf(method));
-        return this.finished(new AsmMethod(method.name(), returns.describe(), this.written(method.parameters()),
-                method.modifiers().contains(IDecl.Modifier.STATIC), body.slotCount(), body.finish()), body);
+        return this.finished(method(method.name(), returns.describe(), this.written(method.parameters()),
+                method.modifiers().contains(IDecl.Modifier.STATIC), body), body);
     }
 
     private AsmMethod emitConstructor(final NamedType type, final IDecl.ConstructorDecl constructor,
@@ -465,8 +461,18 @@ public final class Emitter {
             body.openClosure(this.closures.forMethod(type, this.lowered.capturesOf(constructor)));
             writes.block(this.lowered.bodyOf(constructor));
         }
-        return this.finished(new AsmMethod(AsmMethod.CONSTRUCTOR, "void", this.written(constructor.parameters()),
-                false, body.slotCount(), body.finish()), body);
+        return this.finished(method(AsmMethod.CONSTRUCTOR, "void", this.written(constructor.parameters()), false,
+                body), body);
+    }
+
+    /*
+     * A method made of what a body wrote. The body is finished before its slots are counted: finishing can take hidden
+     * slots of its own, two for each parameter kept in raw memory, which a count read first would leave out.
+     */
+    private static AsmMethod method(final String name, final String returns, final List<String> parameters,
+                                    final boolean isStatic, final MethodBody body) {
+        final var code = body.finish();
+        return new AsmMethod(name, returns, parameters, isStatic, body.slotCount(), code);
     }
 
     /** The pair that fills a body in: what the method does, and, under that, the values it works out. */

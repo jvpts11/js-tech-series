@@ -75,8 +75,13 @@ public final class Trc {
         if (whole.length() > 12) {
             return -1L;
         }
-        final long wholeUnits = whole.isEmpty() ? 0L : Long.parseLong(whole) * UNITS;
         final long fraction = places.isEmpty() ? 0L : Long.parseLong((places + "00000000").substring(0, DECIMALS));
-        return wholeUnits + fraction;
+        try {
+            // Twelve digits still fit, their units do not always: past what a count holds is no amount either.
+            final long wholeUnits = whole.isEmpty() ? 0L : Math.multiplyExact(Long.parseLong(whole), UNITS);
+            return Math.addExact(wholeUnits, fraction);
+        } catch (final ArithmeticException pastTheEnd) {
+            return -1L;
+        }
     }
 }

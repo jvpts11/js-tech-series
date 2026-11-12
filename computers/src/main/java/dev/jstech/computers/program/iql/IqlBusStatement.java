@@ -140,9 +140,16 @@ public record IqlBusStatement(String bus, Change change) {
         }
     }
 
-    /* An hour of the day as written: 18:00, or 18. */
+    /*
+     * An hour of the day as written: 18:00, or 18. A bus keeps whole hours, so minutes other than none are refused
+     * rather than dropped: 18:30 would quietly be 18.
+     */
     private static int hour(final String written) {
-        final String digits = written.contains(":") ? written.substring(0, written.indexOf(':')) : written;
+        final int colon = written.indexOf(':');
+        if (colon >= 0 && !written.substring(colon + 1).equals("00")) {
+            throw IqlError.of(IqlError.NOT_AN_HOUR, written);
+        }
+        final String digits = colon >= 0 ? written.substring(0, colon) : written;
         try {
             final int hour = Integer.parseInt(digits);
             if (hour >= 0 && hour < 24) {

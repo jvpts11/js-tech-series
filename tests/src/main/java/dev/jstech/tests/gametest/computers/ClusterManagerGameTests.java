@@ -825,6 +825,26 @@ public final class ClusterManagerGameTests {
                 .thenSucceed();
     }
 
+    /** A second install while one runs is refused, and the shell says so, where it said the second had started. */
+    @GameTest(template = ARENA, timeoutTicks = INSTALL_TIMEOUT)
+    public static void clusterCommand_saysASecondInstallIsRefused(final GameTestHelper helper) {
+        final ClusterManagementComputerBlockEntity manager = placeBackbone(helper, fabricHostAdapter(), MC_DOS);
+        placeSupercomputer(helper);
+        linkReaderWithDisc(helper, READER_EAST, MediaKind.OS_INSTALL, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 4, () -> {
+                    final CliShell shell = CliCommands.newShell(52);
+                    final ServerCliComputer cli = new ServerCliComputer(manager, helper.getLevel());
+                    final String first = text(shell.run("cluster install SC-1 system", cli));
+                    helper.assertTrue(manager.job() != null && first.contains("follow it with"),
+                            "the first install starts; it said " + first);
+                    final String second = text(shell.run("cluster install SC-1 system", cli));
+                    helper.assertTrue(second.contains("a job is already running") && !second.contains("follow it"),
+                            "the second is refused, said as a refusal; it said " + second);
+                })
+                .thenSucceed();
+    }
+
     private static String text(final CliShell.Response response) {
         return response.lines().stream().map(CliLine::text).collect(Collectors.joining("\n"));
     }

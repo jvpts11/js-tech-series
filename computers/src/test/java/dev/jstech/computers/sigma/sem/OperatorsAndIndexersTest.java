@@ -133,6 +133,35 @@ class OperatorsAndIndexersTest {
     }
 
     @Test
+    void delegate_toAMethodTheObjectOverrides_runsTheOverride() {
+        assertEquals(List.of("loud"), run("""
+                delegate string Speak();
+                class Animal { public virtual string Say() { return "quiet"; } }
+                class Dog : Animal { public override string Say() { return "loud"; } }
+                class Tool {
+                    static void Main() {
+                        Animal pet = new Dog();
+                        Speak speak = pet.Say;
+                        Console.PrintLine(speak());
+                    }
+                }
+                """));
+    }
+
+    @Test
+    void indexer_twoWritersOfTheSameKeysAreOneDeclaredTwice() {
+        final List<String> said = errors("""
+                class Pair {
+                    public int this[int at] { set { } }
+                    public string this[int at] { set { } }
+                }
+                class Tool { static void Main() { } }
+                """);
+        assertTrue(said.stream().anyMatch(line -> line.contains("S3002")),
+                () -> "a write is chosen by its keys alone, so the second could never be: " + said);
+    }
+
+    @Test
     void indexer_withOnlyAReaderIsNotWritten() {
         final List<String> said = errors("""
                 class Lens { public int this[int at] => at; }

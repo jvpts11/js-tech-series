@@ -100,6 +100,25 @@ public final class ShellPipelineGameTests {
                 .thenSucceed();
     }
 
+    /** head and tail read a file named after their count, the way their usage writes them, as the file. */
+    @GameTest(template = ARENA)
+    public static void headAndTail_readTheFileAfterTheirCount(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    file(helper, computer, "notes.txt", NOTES);
+                    final List<String> first = shell(helper, computer, "head -n 1 notes.txt");
+                    final List<String> last = shell(helper, computer, "tail -n 1 notes.txt");
+                    helper.assertTrue(first.size() == 1 && !first.get(0).isBlank() && !says(first, "No such file"),
+                            "head reads the file, one line of it; got " + first);
+                    helper.assertTrue(last.size() == 1 && !last.get(0).isBlank() && !says(last, "No such file"),
+                            "and so does tail; got " + last);
+                    final List<String> grep = shell(helper, computer, "grep -n oak notes.txt");
+                    helper.assertTrue(says(grep, "oak log"), "grep's -n takes no count; got " + grep);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void anArrow_putsWhatWasPrintedIntoAFileAndBack(final GameTestHelper helper) {
         final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);

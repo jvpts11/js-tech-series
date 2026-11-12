@@ -12,7 +12,7 @@
 .class Corpus.StepsCorpus
 .field static int Total
 
-.method static void Main() slots 64
+.method static void Main() slots 66
     newobj  0closure1()
     stloc   0
     ldc.i4  0
@@ -504,33 +504,37 @@
     ldfld   Corpus.Counter.Value
     ldc.i4  1
     add
+    dup
+    stloc   60
     stfld   Corpus.Counter.Value
-    ldloc   11
-    ldfld   Corpus.Counter.Value
+    ldloc   60
     stloc   59
     ldloc   21
-    stloc   61
-    ldc.i4  0
     stloc   62
-    ldloc   61
+    ldc.i4  0
+    stloc   63
     ldloc   62
-    ldloc   61
+    ldloc   63
     ldloc   62
+    ldloc   63
     ldelem
     ldc.i4  1
     add
+    dup
+    stloc   64
     stelem
-    stloc   60
+    ldloc   64
+    stloc   61
     ldc.i4  7
     dup
     stloc   1
-    stloc   63
+    stloc   65
     ldstr   ""
     ldloc   59
     call    string.Concat(string, int) -> string
-    ldloc   60
+    ldloc   61
     call    string.Concat(string, int) -> string
-    ldloc   63
+    ldloc   65
     call    string.Concat(string, int) -> string
     call    Console.PrintLine(string) -> void
     ret

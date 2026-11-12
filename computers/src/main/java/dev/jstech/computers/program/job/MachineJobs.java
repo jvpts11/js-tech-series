@@ -76,6 +76,15 @@ public final class MachineJobs {
         return this.jobs.size() * JOB_MB;
     }
 
+    /**
+     * Whether a machine of {@code totalMb}, its programs using {@code usedMb}, has room for one more job beside the
+     * {@code held} it has: the memory a machine reports counts no job, so the jobs are counted here. A machine that
+     * reports no memory at all is not held to it.
+     */
+    public static boolean roomForOneMore(final int totalMb, final int usedMb, final int held) {
+        return totalMb <= 0 || (long) usedMb + (long) (held + 1) * JOB_MB <= totalMb;
+    }
+
     public boolean isEmpty() {
         return this.jobs.isEmpty();
     }

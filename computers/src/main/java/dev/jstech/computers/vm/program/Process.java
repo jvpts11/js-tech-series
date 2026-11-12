@@ -997,7 +997,12 @@ public final class Process {
     void setName(final String value, final int line) {
         this.identity.rename(value);
         if (this.self != null) {
+            // The name it had was the runtime's own text, let go as it is replaced: renames would fill the heap.
+            final Object was = this.self.get("Name");
             this.self.set("Name", this.text(this.identity.name(), line));
+            if (was instanceof String) {
+                this.heap.release(was);
+            }
         }
     }
 

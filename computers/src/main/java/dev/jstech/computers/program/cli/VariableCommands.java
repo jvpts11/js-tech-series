@@ -96,21 +96,23 @@ final class VariableCommands {
      * <p>The first equals sign is the one that counts, so a value with one in it keeps it: a path, a pattern
      * and a line of text are all things a person sets a name to.
      */
-    private static void assign(final CliContext ctx, final String said, final TextKey usage) {
+    /* Gives a name the value written after its equals sign; whether it did, having said why not. */
+    private static boolean assign(final CliContext ctx, final String said, final TextKey usage) {
         final int equals = said.indexOf('=');
         if (equals <= 0) {
             ctx.out().error(usage);
-            return;
+            return false;
         }
         final String name = said.substring(0, equals);
         if (!named(name)) {
             ctx.out().error(BAD_NAME);
-            return;
+            return false;
         }
         final ICliComputer.OpResult result = ctx.computer().setShellVariable(name, said.substring(equals + 1));
         if (!result.ok()) {
             ctx.out().error(result.message());
         }
+        return result.ok();
     }
 
     /** {@code SET}: the names there are, or one of them given a value. */
@@ -229,7 +231,19 @@ final class VariableCommands {
                 printAll(ctx);
                 return;
             }
-            assign(ctx, String.join(" ", ctx.args()), USAGE_ERROR);
+            /*
+             * Each word is an assignment of its own, as POSIX's export takes them, so a second one on the line is not
+             * read into the first one's value; a value with spaces is written in quotes. A bare name is one the shell
+             * already holds, which every program it starts reads.
+             */
+            for (final String word : ctx.args()) {
+                if (word.indexOf('=') < 0 && named(word)) {
+                    continue;
+                }
+                if (!assign(ctx, word, USAGE_ERROR)) {
+                    return;
+                }
+            }
         }
     }
 

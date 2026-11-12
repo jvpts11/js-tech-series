@@ -43,6 +43,62 @@ class ListLambdasTest {
     }
 
     @Test
+    void anElementWrittenAsAValue_answersWhatWasWritten() {
+        assertEquals(List.of("5 5", "7 7", "9 9"), printed("""
+                int[] numbers = new int[2];
+                int y = numbers[0] = 5;
+                Console.PrintLine(y + " " + numbers[0]);
+                List<int> list = new List<int>(); list.Add(0);
+                int z = list[0] = 7;
+                Console.PrintLine(z + " " + list[0]);
+                int w = numbers[1] += 9;
+                Console.PrintLine(w + " " + numbers[1]);
+                """));
+    }
+
+    @Test
+    void comparingFloatingNumbers_isFalseForNaNAndTakesMinusZeroAsZero() {
+        assertEquals(List.of("no no no no", "no no yes yes"), printed("""
+                double nan = Math.Sqrt(-1.0);
+                Console.PrintLine((nan > 1.0 ? "yes" : "no") + " " + (1.0 <= nan ? "yes" : "no") + " "
+                        + (nan >= 1.0 ? "yes" : "no") + " " + (nan < 1.0 ? "yes" : "no"));
+                double minus = -0.0;
+                Console.PrintLine((minus < 0.0 ? "yes" : "no") + " " + (0.0 > minus ? "yes" : "no") + " "
+                        + (minus <= 0.0 ? "yes" : "no") + " " + (0.0 >= minus ? "yes" : "no"));
+                """));
+    }
+
+    @Test
+    void find_ofAStructWithNoMatch_givesAnEmptyOneNotNothing() {
+        // Writing to a field of nothing would stop the program; an empty point takes the write.
+        assertEquals(List.of("2"), printedWith("struct Point { public int X; } ", """
+                List<Point> points = new List<Point>(); Point one = new Point(); one.X = 4; points.Add(one);
+                Point found = points.Find(p => p.X > 10);
+                found.X = 2;
+                Console.PrintLine("" + found.X);
+                """));
+    }
+
+    @Test
+    void anAssignmentToAFieldUsedAsAValue_worksOutItsObjectOnce() {
+        assertEquals(List.of("1 5 5"), printedWith("class Box { public int Value; } class Feed { "
+                + "public static int Asked; public static Box Kept = new Box(); "
+                + "public static Box Next() { Asked = Asked + 1; return Kept; } } ", """
+                int v = Feed.Next().Value = 5;
+                Console.PrintLine(Feed.Asked + " " + v + " " + Feed.Kept.Value);
+                """));
+    }
+
+    @Test
+    void find_keepsTwoCaughtLocalsOfOneNameApart() {
+        assertEquals(List.of("12", "3"), printed("""
+                List<int> numbers = new List<int>(); numbers.Add(3); numbers.Add(12);
+                if (numbers.Count > 0) { int x = 10; Console.PrintLine("" + numbers.Find(n => n > x)); }
+                if (numbers.Count > 0) { int x = 1; Console.PrintLine("" + numbers.Find(n => n > x)); }
+                """));
+    }
+
+    @Test
     void find_seesWhatTheLambdaCaught() {
         assertEquals(List.of("7"), printed("""
                 List<int> numbers = new List<int>(); numbers.Add(5); numbers.Add(7); int least = 6;
@@ -88,21 +144,27 @@ class ListLambdasTest {
 
     @Test
     void find_isRefusedBeforeTheThirdVersion() {
-        final SigmaCompiler.Result built = compiled("List<int> n = new List<int>(); int f = n.Find(x => x > 1);",
-                2);
+        final SigmaCompiler.Result built = compiled("",
+                "List<int> n = new List<int>(); int f = n.Find(x => x > 1);", 2);
         assertFalse(built.ok(), "the second version has no Find with a function");
         assertTrue(String.join("\n", built.lines()).contains("S3057"), () -> String.join("\n", built.lines()));
     }
 
-    private static SigmaCompiler.Result compiled(final String body, final int version) {
-        final String source = PRELUDE + "class Says : Script { public override void OnTick() { " + body + " } }";
+    private static SigmaCompiler.Result compiled(final String types, final String body, final int version) {
+        final String source = PRELUDE + types + "class Says : Script { public override void OnTick() { " + body
+                + " } }";
         return SigmaCompiler.compile(List.of(new SourceFile("Says.sgs", source)), AsmProgram.DEFAULT_ISA,
                 LanguageLevel.SIGMA_SHARP, version);
     }
 
     /** What the program printed, a line to an entry. */
     private static List<String> printed(final String body) {
-        final SigmaCompiler.Result built = compiled(body, 3);
+        return printedWith("", body);
+    }
+
+    /** The same, with {@code types} declared before the program. */
+    private static List<String> printedWith(final String types, final String body) {
+        final SigmaCompiler.Result built = compiled(types, body, 3);
         assertTrue(built.ok(), () -> String.join("\n", built.lines()));
         final AsmReader reader = new AsmReader(built.assembly());
         final ProgramImage program = ProgramImage.of(reader.read());

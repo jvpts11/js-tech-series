@@ -155,4 +155,21 @@ public final class MachineJobGameTests {
                 })
                 .thenSucceed();
     }
+
+    /** Days crontab does not know are refused, never dropped nor run every day as part of the command. */
+    @GameTest(template = ARENA)
+    public static void crontab_refusesDaysItDoesNotKnow(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity lab = wire(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    final List<String> said = shell(helper, lab, "crontab 06:00 Mon,Tue echo hi");
+                    helper.assertTrue(says(said, "are not days of the week"), "it says why; got " + said);
+                    helper.assertTrue(shell(helper, lab, "crontab 06:00 M,X,F echo hi").stream()
+                            .anyMatch(line -> line.contains("are not days")), "a list with one unknown day too");
+                    helper.assertTrue(lab.console().jobs().all().isEmpty(), "and nothing is scheduled");
+                    shell(helper, lab, "crontab 06:00 M,W,F echo hi");
+                    helper.assertTrue(lab.console().jobs().all().size() == 1, "known days are scheduled");
+                })
+                .thenSucceed();
+    }
 }

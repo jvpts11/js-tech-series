@@ -174,6 +174,8 @@ public final class Workshop {
             takeOutput(player, menu, held, here);
             return;
         }
+        // What lay on the anvil's left before, so the name follows a new item there and stays with the same one.
+        final ItemStack wasOnAnvil = slot == ANVIL_LEFT ? here.copy() : ItemStack.EMPTY;
         if (held.isEmpty()) {
             if (here.isEmpty()) {
                 return;
@@ -196,12 +198,14 @@ public final class Workshop {
                 menu.setCarried(here.copy());
                 slots.setStackInSlot(slot, held.copy());
             }
-            if (slot == ANVIL_LEFT && anvilName().isEmpty()) {
-                setAnvilName(slots.getStackInSlot(ANVIL_LEFT).getHoverName().getString());
-            }
         }
-        if (slot == ANVIL_LEFT && slots.getStackInSlot(ANVIL_LEFT).isEmpty()) {
-            setAnvilName("");
+        /*
+         * A new item on the anvil's left takes its own name, so the name typed for the one before never renames it,
+         * and nothing left there takes no name; more of the same item keeps the name typed for it.
+         */
+        final ItemStack onAnvil = slots.getStackInSlot(ANVIL_LEFT);
+        if (slot == ANVIL_LEFT && !ItemStack.isSameItemSameComponents(wasOnAnvil, onAnvil)) {
+            setAnvilName(onAnvil.isEmpty() ? "" : onAnvil.getHoverName().getString());
         }
         if (slot == FURNACE_IN) {
             progress.set(0);

@@ -62,7 +62,8 @@ public final class TtyScriptProcess implements ITtyProcess {
             if (!done) {
                 return;
             }
-            if (!this.steps.isEmpty() && this.steps.peekFirst() == step) {
+            // An effect took itself out before it ran; any other step that is done leaves the script now.
+            if (!(step instanceof TtyScript.Effect) && !this.steps.isEmpty() && this.steps.peekFirst() == step) {
                 this.steps.removeFirst();
             }
             this.printed = 0;
@@ -178,7 +179,9 @@ public final class TtyScriptProcess implements ITtyProcess {
         return done;
     }
 
-    private static boolean ran(final TtyScript.Effect effect) {
+    /* An effect leaves the script before it runs, so one that fails is not run again on the next turn. */
+    private boolean ran(final TtyScript.Effect effect) {
+        this.steps.removeFirst();
         effect.run().run();
         return true;
     }

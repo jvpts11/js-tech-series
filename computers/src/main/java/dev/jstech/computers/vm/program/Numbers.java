@@ -127,11 +127,35 @@ public final class Numbers {
 
     /** Which of two numbers is the greater, as a comparison gives back. */
     public static int compare(final Object left, final Object right) {
-        if (left instanceof Double || right instanceof Double
-                || left instanceof Float || right instanceof Float) {
+        if (floating(left, right)) {
             return Double.compare(toDouble(left), toDouble(right));
         }
         return Long.compare(toLong(left), toLong(right));
+    }
+
+    /*
+     * The ordered comparisons a program writes, as IEEE 754 has them for floating numbers: each is false when either
+     * side is NaN, and -0.0 is 0.0. The total order above puts NaN past everything, which no comparison may.
+     */
+
+    /** Whether {@code left} is below {@code right}. */
+    public static boolean less(final Object left, final Object right) {
+        return floating(left, right) ? toDouble(left) < toDouble(right) : toLong(left) < toLong(right);
+    }
+
+    /** Whether {@code left} is above {@code right}. */
+    public static boolean greater(final Object left, final Object right) {
+        return floating(left, right) ? toDouble(left) > toDouble(right) : toLong(left) > toLong(right);
+    }
+
+    /** Whether {@code left} is below or at {@code right}. */
+    public static boolean atMost(final Object left, final Object right) {
+        return floating(left, right) ? toDouble(left) <= toDouble(right) : toLong(left) <= toLong(right);
+    }
+
+    /** Whether {@code left} is above or at {@code right}. */
+    public static boolean atLeast(final Object left, final Object right) {
+        return floating(left, right) ? toDouble(left) >= toDouble(right) : toLong(left) >= toLong(right);
     }
 
     /** The same number with its sign turned round. */
@@ -186,5 +210,10 @@ public final class Numbers {
             return letter;
         }
         return value instanceof Number number ? number.doubleValue() : 0;
+    }
+
+    /* Whether either side is a floating number, which compares as IEEE 754 has it. */
+    private static boolean floating(final Object left, final Object right) {
+        return left instanceof Double || right instanceof Double || left instanceof Float || right instanceof Float;
     }
 }

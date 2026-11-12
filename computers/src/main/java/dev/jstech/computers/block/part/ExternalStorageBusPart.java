@@ -85,7 +85,7 @@ public final class ExternalStorageBusPart extends AbstractBusPart {
         if (registeredAt == Long.MIN_VALUE || now - registeredAt >= REGISTER_EVERY) {
             registeredAt = now;
             linked = network() != null;
-            ExternalStores.register(level, node(), host.getBlockPos(), face);
+            ExternalStores.register(level, node(), host.getBlockPos(), face, network());
         }
     }
 

@@ -14,8 +14,10 @@ import dev.jstech.computers.block.part.ExportBusPart;
 import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.bus.BusSettings;
+import dev.jstech.computers.operation.ExternalStores;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.core.multipart.PartType;
+import dev.jstech.core.uuid.NodeUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
@@ -30,6 +32,8 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.util.UUID;
 
 /**
  * The External Storage Bus: the network counts the inventory it faces as storage of its own, as much of it as the
@@ -59,6 +63,30 @@ public final class ExternalStorageGameTests {
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(stock(helper, mainframe, Items.EMERALD) == 20,
                         "the network holds the chest's 20 emeralds; got " + stock(helper, mainframe, Items.EMERALD)))
+                .thenSucceed();
+    }
+
+    /**
+     * A network whose bus sits in a chunk not loaded now is not all in view, so nothing reads its count of nothing as
+     * a count: a phone watching the stock waits for the bus's chunk rather than calling an item low.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void storage_isIncompleteWhileABusIsOutOfReach(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = network(helper);
+        chest(helper, SOUTH_CHEST, new ItemStack(Items.EMERALD, 20));
+        mount(helper, Direction.SOUTH, ComputingParts.EXTERNAL.get());
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(stock(helper, mainframe, Items.EMERALD) == 20,
+                        "the network holds the chest's emeralds"))
+                .thenExecute(() -> helper.assertTrue(
+                        NetworkStorage.of(helper.getLevel(), mainframe.networkUuid()).complete(),
+                        "with every store in view, the view is whole"))
+                // A second bus of the network's, somewhere no chunk is loaded.
+                .thenExecute(() -> ExternalStores.register(helper.getLevel(), new NodeUuid(UUID.randomUUID()),
+                        new BlockPos(30_000_000 - 16, 64, 30_000_000 - 16), Direction.UP, mainframe.networkUuid()))
+                .thenExecuteAfter(1, () -> helper.assertFalse(
+                        NetworkStorage.of(helper.getLevel(), mainframe.networkUuid()).complete(),
+                        "a bus out of reach leaves it incomplete"))
                 .thenSucceed();
     }
 

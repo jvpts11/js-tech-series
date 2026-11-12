@@ -85,13 +85,46 @@ final class CaptureFinder {
                     this.diagnostics.error(at.line(), at.column(), SigmaError.ADDRESS_KEPT, variable.name());
                     return null;
                 }
-                fields.putIfAbsent(variable, variable.name());
+                if (!fields.containsKey(variable)) {
+                    fields.put(variable, fieldName(fields, variable.name()));
+                }
             }
         }
         if (fields.isEmpty()) {
             return null;
         }
         return new Captures(fields, holdsThis);
+    }
+
+    /**
+     * Refuses, as not built yet, a lambda in a field's starting value that keeps a variable of a lambda around it. A
+     * starting value is in no method, so no closure would hold that variable, and the inner lambda would read a slot
+     * of its own nothing was ever put in.
+     */
+    void checkInitializer(final IExpr initializer, final INode at) {
+        if (initializer == null) {
+            return;
+        }
+        final Found start = new Found();
+        this.walk(initializer, 0, start);
+        for (final IExpr.Lambda lambda : start.lambdas) {
+            if (!this.inside(lambda).used.isEmpty()) {
+                this.cannotYet(at, NESTED_LAMBDA);
+                return;
+            }
+        }
+    }
+
+    /*
+     * The field a captured variable is kept in: its own name, or, when another captured local of the method has it,
+     * as two in sibling blocks may, its name after a number, which no name in a source can start with.
+     */
+    private static String fieldName(final Map<IBinding.Variable, String> fields, final String name) {
+        String field = name;
+        for (int n = 2; fields.containsValue(field); n++) {
+            field = n + name;
+        }
+        return field;
     }
 
     private static void keep(final Map<IBinding.Variable, Integer> into, final IBinding.Variable variable,

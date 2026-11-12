@@ -178,8 +178,15 @@ final class ListLambdas {
         this.body.emit(Opcode.STLOC, new IOperand.Slot(slot));
     }
 
-    /* What a variable of the element's type starts with: nought for a number or a character, false, or null. */
+    /*
+     * What a variable of the element's type starts with: nought for a number or a character, false, an empty struct,
+     * for a struct is never nothing, or null.
+     */
     private void emptyOf(final ITypeSymbol element) {
+        if (this.values.isStruct(element)) {
+            this.body.emit(Opcode.NEWOBJ, new IOperand.Constructor(element.describe(), List.of()));
+            return;
+        }
         if (!(element instanceof ITypeSymbol.Primitive primitive)) {
             this.body.emit(Opcode.LDNULL);
             return;

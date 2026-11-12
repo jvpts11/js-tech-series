@@ -73,12 +73,21 @@ public final class TypeRules {
         return type instanceof ITypeSymbol.PointerType pointer && !pointer.isVoid() ? pointer : null;
     }
 
-    /** Whether values of this type are references, so null fits and the object can be disposed. */
+    /** Whether values of this type are objects, which is/as can test and an object variable can hold. */
     public boolean isReference(final ITypeSymbol type) {
         if (type instanceof ITypeSymbol.ArrayType || type instanceof ITypeSymbol.GenericType) {
             return true;
         }
         return type instanceof NamedType named && named.kind() != NamedType.Kind.ENUM;
+    }
+
+    /**
+     * Whether a value of this type may be nothing, so null fits it and it can be locked on or disposed: an object of
+     * any kind but a struct, which is a value and is never nothing.
+     */
+    public boolean isNullable(final ITypeSymbol type) {
+        return this.isReference(type)
+                && !(type instanceof NamedType named && named.kind() == NamedType.Kind.STRUCT);
     }
 
     /** The named type behind a symbol, following a filled-in collection to its definition. */
@@ -110,7 +119,7 @@ public final class TypeRules {
             return true;
         }
         if (from == ITypeSymbol.Special.NULL) {
-            return this.isReference(to) || to instanceof ITypeSymbol.PointerType;
+            return this.isNullable(to) || to instanceof ITypeSymbol.PointerType;
         }
         if (from instanceof ITypeSymbol.PointerType source && to instanceof ITypeSymbol.PointerType target) {
             return target.isVoid() || source.isVoid() && this.voidPointerFitsAll;

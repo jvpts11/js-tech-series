@@ -188,6 +188,13 @@ class ParserTest {
     }
 
     @Test
+    void parse_tellsALocalDeclarationWhoseTypeArgumentIsADottedName() {
+        final List<IStmt> statements = body("List<Tools.Counter> x = null; Map<string, Game.Item> y = null;");
+        assertInstanceOf(IStmt.LocalDecl.class, statements.get(0), "a dotted type argument is still a type");
+        assertInstanceOf(IStmt.LocalDecl.class, statements.get(1));
+    }
+
+    @Test
     void parse_tellsACastFromAValueInBrackets() {
         final List<IStmt> statements = body("int a = 1; double b = (double) a; int c = (a) + a;");
         assertInstanceOf(IExpr.Cast.class, ((IStmt.LocalDecl) statements.get(1)).initializer());

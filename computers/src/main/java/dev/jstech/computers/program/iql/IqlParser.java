@@ -14,8 +14,10 @@ import dev.jstech.core.jstechseries.operation.OperationPriority;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * Parses IQL text into an {@link IqlOperation} intent. Pure logic (no Minecraft), so it is unit-tested
@@ -320,12 +322,18 @@ public final class IqlParser {
 
     /** Reads {@code FROM/TO/WHERE/IF/ORDER BY/LIMIT/PRIORITY} in any order until the tokens run out. */
     private void parseClauses(final Clauses acc, final boolean allowFlowClauses) {
+        // A clause said twice is refused: the second would quietly replace the first, an IF or a WHERE among them.
+        final Set<String> said = new HashSet<>();
         while (pos < tokens.size()) {
             final Token token = tokens.get(pos);
             if (token.type() != Type.WORD) {
                 throw unexpected(token);
             }
-            switch (token.text().toUpperCase(Locale.ROOT)) {
+            final String keyword = token.text().toUpperCase(Locale.ROOT);
+            if (!said.add(keyword)) {
+                throw IqlError.of(IqlError.CLAUSE_TWICE, keyword);
+            }
+            switch (keyword) {
                 case "FROM" -> {
                     requireFlowClause(allowFlowClauses, token);
                     pos++;
@@ -388,11 +396,17 @@ public final class IqlParser {
         if (token.text().endsWith("%")) {
             throw IqlError.of(IqlError.LIMIT_PERCENTAGE, token.text());
         }
+        final int limit;
         try {
-            return Integer.parseInt(token.text());
+            limit = Integer.parseInt(token.text());
         } catch (final NumberFormatException e) {
             throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_ROW_COUNT, token.text());
         }
+        // No cap at all is no LIMIT: a limit of none or fewer rows would read as none and return every row.
+        if (limit < 1) {
+            throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_ROW_COUNT, token.text());
+        }
+        return limit;
     }
 
     /** Parses a condition from the shared cursor and advances past it. */

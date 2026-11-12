@@ -206,8 +206,14 @@ final class CallDispatch {
         final List<Values.Bound> chain = delegate.chain();
         for (int i = chain.size() - 1; i >= 0; i--) {
             final Values.Bound bound = chain.get(i);
-            final MethodImage method =
-                    this.program.method(bound.owner(), bound.method(), bound.parameters());
+            MethodImage method = this.program.method(bound.owner(), bound.method(), bound.parameters());
+            // Made on an object, it runs the method of the type the object really is, as a direct call does.
+            if (bound.target() instanceof Values.Obj object && !object.type().equals(bound.owner())) {
+                final MethodImage own = this.program.method(object.type(), bound.method(), bound.parameters());
+                if (own != null && own.hasCode()) {
+                    method = own;
+                }
+            }
             if (method == null || !method.hasCode()) {
                 if (i == chain.size() - 1) {
                     throw new Halt(Halt.Reason.NO_SUCH_MEMBER, line, NOTHING_TO_CALL.with(bound.method()));

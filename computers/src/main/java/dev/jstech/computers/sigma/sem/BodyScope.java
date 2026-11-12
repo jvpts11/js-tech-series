@@ -228,6 +228,23 @@ final class BodyScope {
         return around;
     }
 
+    /**
+     * Sets the loops and switches around aside for a lambda's body, which stands in none of them: a break or a
+     * continue in it has nothing of the method's to leave. Gives back what was set aside, for {@link #putJumpsBack}.
+     */
+    int[] setJumpsAside() {
+        final int[] around = {this.loopDepth, this.switchDepth};
+        this.loopDepth = 0;
+        this.switchDepth = 0;
+        return around;
+    }
+
+    /** Puts back what {@link #setJumpsAside} set aside. */
+    void putJumpsBack(final int[] around) {
+        this.loopDepth = around[0];
+        this.switchDepth = around[1];
+    }
+
     /** Puts back what {@link #setHandlersAside} set aside. */
     void putHandlersBack(final List<Object> around) {
         this.handlers = around;

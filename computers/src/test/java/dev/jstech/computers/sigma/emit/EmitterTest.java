@@ -307,6 +307,18 @@ class EmitterTest {
     }
 
     @Test
+    void emit_saysSoWhenALambdaInAFieldsStartKeepsTheVariableOfTheOneAroundIt() {
+        final SigmaCompiler.Result result = build("""
+                delegate int Count();
+                delegate Count Maker(int a);
+                class Monitor : IScript {
+                    Maker make = (a) => () => a;
+                """ + ENTRY + "}\n");
+        assertFalse(result.ok(), "the inner lambda would read a slot nothing was put in");
+        assertTrue(result.lines().getFirst().contains("S4011"), () -> String.join("\n", result.lines()));
+    }
+
+    @Test
     void emit_writesAListingThatReadsBackAsItself() {
         final String listing = compile("""
                     private int threshold = 100;

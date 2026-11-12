@@ -78,6 +78,15 @@ class PackedTest {
     }
 
     @Test
+    void read_refusesAFileThatSaysItHasNoLastNewlineAndHasNoLineAtAll() {
+        final String written = built().write();
+        final int header = written.indexOf("\n--- ") + 1;
+        // Written by hand, as no package is: a file with the mark and nothing under it, then the next file.
+        final String broken = written.substring(0, header) + "--- broken.txt \\\n" + written.substring(header);
+        assertNull(Packed.read(broken), "refused as no package, never a failure of the reader");
+    }
+
+    @Test
     void fileName_saysWhatItIsAndWhichBuild() {
         assertEquals("stockwatch-1.2.0.cpk", built().fileName());
     }

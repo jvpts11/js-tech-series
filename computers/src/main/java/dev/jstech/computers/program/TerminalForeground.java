@@ -79,7 +79,14 @@ public final class TerminalForeground {
         if (this.tool == null) {
             return false;
         }
-        this.tool.advance(now, out);
+        try {
+            this.tool.advance(now, out);
+        } catch (final RuntimeException broken) {
+            // As with an answer: a tool that fails as it goes lets go of the terminal, not the machine's every tick.
+            JsComputers.LOGGER.warn("A terminal tool failed as it ran and was stopped: {}", broken.toString());
+            this.clear();
+            return true;
+        }
         return this.settle();
     }
 

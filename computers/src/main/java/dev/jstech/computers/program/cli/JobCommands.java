@@ -79,7 +79,7 @@ final class JobCommands {
             return;
         }
         final ICliComputer.MemoryUse memory = ctx.computer().memory();
-        if (memory.totalMb() > 0 && memory.usedMb() + MachineJobs.JOB_MB > memory.totalMb()) {
+        if (!MachineJobs.roomForOneMore(memory.totalMb(), memory.usedMb(), ctx.computer().jobs().size())) {
             ctx.out().error(dosStyle ? DOS_NO_MEMORY : NO_MEMORY);
             return;
         }
@@ -211,6 +211,8 @@ final class JobCommands {
                 TextKey.of("jsc.cli.job.crontab.example.evenings", "three evenings a week");
         private static final TextKey NOT_AN_HOUR =
                 TextKey.of("jsc.cli.job.crontab.not_an_hour", "%s is not an hour of the day");
+        private static final TextKey NOT_DAYS = TextKey.of("jsc.cli.job.crontab.not_days",
+                "%s are not days of the week: write them as M, T, W, Th, F, Sa, Su, with commas between");
 
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS);
@@ -265,7 +267,16 @@ final class JobCommands {
                 return;
             }
             final List<Integer> days = JobWhen.daysOf(ctx.arg(1));
-            final int from = days.isEmpty() ? 1 : 2;
+            /*
+             * A word naming days, or written as a list of them, must name every one: a day not understood would
+             * otherwise be dropped, or the whole list run every day as part of the command.
+             */
+            final boolean dayWord = !days.isEmpty() || ctx.arg(1).contains(",");
+            if (dayWord && days.size() != ctx.arg(1).split(",", -1).length) {
+                ctx.out().error(CliTexts.SAID_BY.with(name(), NOT_DAYS.with(ctx.arg(1))));
+                return;
+            }
+            final int from = dayWord ? 2 : 1;
             add(ctx, ctx.rest(from), JobWhen.at(hour, days), false);
         }
     }

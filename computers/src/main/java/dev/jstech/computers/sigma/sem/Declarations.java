@@ -593,13 +593,29 @@ public final class Declarations {
     }
 
     /*
+     * Whether two indexer setters take the same keys, whatever the values they write: a write is chosen by its keys
+     * alone, so the second would never be the one chosen.
+     */
+    private static boolean sameIndexerKeys(final IMemberSymbol.MethodSymbol one, final IMemberSymbol.MethodSymbol two) {
+        if (!IDecl.INDEXER_SET.equals(one.name()) || one.parameters().size() != two.parameters().size()) {
+            return false;
+        }
+        for (int i = 0; i < one.parameters().size() - 1; i++) {
+            if (!one.parameters().get(i).type().equals(two.parameters().get(i).type())) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    /*
      * Two methods may share a name as long as their parameters tell them apart; two that take the same
      * types are one method written twice, and a call could never say which it meant.
      */
     private void addMethod(final NamedType type, final IMemberSymbol.MethodSymbol method, final INode declaration) {
         for (final IMemberSymbol existing : type.members()) {
             if (existing instanceof IMemberSymbol.MethodSymbol other && other.name().equals(method.name())
-                    && other.sameParameters(method)) {
+                    && (other.sameParameters(method) || sameIndexerKeys(other, method))) {
                 this.diagnostics.error(declaration.line(), declaration.column(),
                         SigmaError.DUPLICATE_DECLARATION, method.describe());
                 return;

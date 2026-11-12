@@ -57,6 +57,19 @@ class FederationGraphTest {
     }
 
     @Test
+    void path_goesOnFromANetworkByTheWayInThatRelaysThoughAnotherReachedItFirst() {
+        // D is reached first through B, whose way into D does not relay; the way in from C does, and goes on to E.
+        final List<FederationEdge> sides = new ArrayList<>(link(A, B, PortSettings.NEW, RELAYING));
+        sides.addAll(link(A, C, PortSettings.NEW, RELAYING));
+        sides.addAll(link(B, D, PortSettings.NEW, PortSettings.NEW));
+        sides.addAll(link(C, D, PortSettings.NEW, RELAYING));
+        sides.addAll(link(D, E, PortSettings.NEW, PortSettings.NEW));
+        final FederationPath way = new FederationGraph(sides).path(A, E).orElseThrow();
+        assertEquals(3, way.hops());
+        assertEquals(List.of(C, D), way.relays());
+    }
+
+    @Test
     void path_crossesAtMostThreeLines() {
         final List<FederationEdge> chain = new ArrayList<>(link(A, B, PortSettings.NEW, RELAYING));
         chain.addAll(link(B, C, PortSettings.NEW, RELAYING));

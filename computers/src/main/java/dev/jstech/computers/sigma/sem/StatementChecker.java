@@ -542,16 +542,19 @@ final class StatementChecker {
 
     private void checkDispose(final IStmt.Dispose dispose) {
         final ITypeSymbol target = this.expressions.check(dispose.target(), null);
-        if (!this.scope.rules().isError(target) && !this.scope.rules().isReference(target)) {
+        if (!this.scope.rules().isError(target) && !this.scope.rules().isNullable(target)) {
             this.scope.report(dispose.line(), dispose.column(),
                     SigmaError.CANNOT_DISPOSE, target.describe());
         }
     }
 
-    /* Only something on the heap has a lock to take: a number is a value, and two copies of it are two things. */
+    /*
+     * Only something on the heap has a lock to take: a number or a struct is a value, and two copies of it are two
+     * things.
+     */
     private void checkLock(final IStmt.Lock lock) {
         final ITypeSymbol target = this.expressions.check(lock.target(), null);
-        if (!this.scope.rules().isError(target) && !this.scope.rules().isReference(target)) {
+        if (!this.scope.rules().isError(target) && !this.scope.rules().isNullable(target)) {
             this.scope.report(lock.line(), lock.column(), SigmaError.CANNOT_LOCK, target.describe());
         }
         this.checkStatement(lock.body());

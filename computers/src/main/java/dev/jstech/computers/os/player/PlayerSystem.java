@@ -25,10 +25,12 @@ import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import net.minecraft.resources.ResourceLocation;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.zip.CRC32;
 
 /**
  * An operating system a player wrote and built (computers/docs/design/player-systems.md): what it declared, the folder
@@ -159,10 +161,18 @@ public record PlayerSystem(ResourceLocation id, SystemFacts facts, String folder
         };
     }
 
-    /* A name as an id's piece: lower case, letters and digits, the rest as dashes, cut to {@code most}. */
+    /*
+     * A name as an id's piece: lower case, letters and digits, the rest as dashes, cut to {@code most}. A name cut
+     * short ends with a mark of the whole of it, so two long names that begin alike are two systems, not one that the
+     * second build would replace.
+     */
     private static String slug(final String written, final int most) {
         final String slug = written.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9.]+", "-").replaceAll("^-|-$", "");
-        final String cut = slug.length() > most ? slug.substring(0, most) : slug;
-        return cut.isEmpty() ? "unnamed" : cut;
+        if (slug.length() <= most) {
+            return slug.isEmpty() ? "unnamed" : slug;
+        }
+        final CRC32 whole = new CRC32();
+        whole.update(written.getBytes(StandardCharsets.UTF_8));
+        return slug.substring(0, most) + "-" + String.format(Locale.ROOT, "%08x", whole.getValue());
     }
 }

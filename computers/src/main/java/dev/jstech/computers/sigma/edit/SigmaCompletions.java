@@ -211,10 +211,21 @@ public final class SigmaCompletions {
         if (model == null || unit == null) {
             return Scope.NONE;
         }
-        IDecl.ITypeDecl around = spanning(unit.types(), line);
-        if (around == null) {
+        CompilationUnit.Declared top = null;
+        for (final CompilationUnit.Declared declared : unit.declared()) {
+            if (declared.type().line() <= line) {
+                top = declared;
+            }
+        }
+        if (top == null) {
             return Scope.NONE;
         }
+        IDecl.ITypeDecl around = top.type();
+        /*
+         * The type is found by its whole name, as it was declared under, so a nested Tree.Node is never taken for a
+         * Node declared beside Tree, nor for another type's nested Node.
+         */
+        String qualified = top.namespace().isEmpty() ? around.name() : top.namespace() + "." + around.name();
         int memberStart = around.line();
         while (true) {
             final IDecl.IMemberDecl member = around instanceof IDecl.ClassDecl made
@@ -227,8 +238,10 @@ public final class SigmaCompletions {
                 break;
             }
             around = nested.type();
+            qualified = qualified + "." + around.name();
         }
-        final NamedType enclosing = model.declaredType(around.name());
+        final NamedType exact = model.declaredType(qualified);
+        final NamedType enclosing = exact != null ? exact : model.declaredType(around.name());
         final List<IBinding.Variable> variables = new ArrayList<>();
         for (final SemanticModel.DeclaredVariable declared : model.variables()) {
             if (declared.file().equals(file) && declared.line() >= memberStart && declared.line() <= line) {

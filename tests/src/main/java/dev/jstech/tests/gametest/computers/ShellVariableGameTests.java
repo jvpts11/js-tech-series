@@ -83,6 +83,22 @@ public final class ShellVariableGameTests {
                 .thenSucceed();
     }
 
+    /** export takes each assignment on its line on its own, as POSIX's does; a value with spaces goes in quotes. */
+    @GameTest(template = ARENA)
+    public static void export_takesEachAssignmentOnItsOwn(final GameTestHelper helper) {
+        final PersonalComputerBlockEntity computer = machine(helper, DEBIAN);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    shell(helper, computer, "export A=1 B=2");
+                    final List<String> said = shell(helper, computer, "echo [$A] [$B]");
+                    helper.assertTrue(says(said, "[1] [2]"), "both names are set; got " + said);
+                    shell(helper, computer, "export GREETING=\"hello world\"");
+                    final List<String> spaced = shell(helper, computer, "echo $GREETING");
+                    helper.assertTrue(says(spaced, "hello world"), "a quoted value keeps its spaces; got " + spaced);
+                })
+                .thenSucceed();
+    }
+
     /** The DOS way: SET writes it, the shell reads it back between per cent signs, and SET alone lists. */
     @GameTest(template = ARENA)
     public static void set_setsANameOnTheFamilyThatWritesItThatWay(final GameTestHelper helper) {

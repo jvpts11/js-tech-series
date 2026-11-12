@@ -54,9 +54,12 @@ public final class NetworkStorage {
     private final Map<NodeUuid, Entry> byNode;
     /* The stores in the order they are filled: the highest priority first, ties as the network lists them. */
     private final List<Entry> fillOrder;
+    /* Whether every store the network has was in view when this was built; one in an unloaded chunk is left out. */
+    private final boolean complete;
 
-    private NetworkStorage(final List<Entry> entries) {
+    private NetworkStorage(final List<Entry> entries, final boolean complete) {
         this.entries = entries;
+        this.complete = complete;
         this.byNode = new HashMap<>(entries.size() * 2);
         for (final Entry entry : entries) {
             byNode.putIfAbsent(entry.node(), entry);
@@ -106,20 +109,26 @@ public final class NetworkStorage {
     private static NetworkStorage build(final ServerLevel level, final NetworkUuid network) {
         final NetworkSystem system = NetworkSystem.get(level);
         final List<Entry> entries = new ArrayList<>();
+        boolean complete = true;
         for (final ServerNode server : system.serversOf(network)) {
-            system.locationOf(server.nodeUuid()).ifPresent(loc -> {
-                if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
-                    entries.add(new Entry(server.nodeUuid(),
-                            new ServerNodeStore(rack.getServerStorage(loc.slot())), true));
-                }
-            });
+            final var loc = system.locationOf(server.nodeUuid()).orElse(null);
+            if (loc == null) {
+                continue;
+            }
+            final BlockPos at = BlockPos.of(loc.rackPos());
+            complete &= level.isLoaded(at);
+            if (Loaded.blockEntity(level, at) instanceof ServerRackBlockEntity rack) {
+                entries.add(new Entry(server.nodeUuid(), new ServerNodeStore(rack.getServerStorage(loc.slot())), true));
+            }
         }
         /*
          * A Personal Computer contributes only the published share of its disks, as a SELECT-source.
          * With the default-private permille this list is empty until the owner publishes some storage.
          */
         for (final NetworkSystem.PersonalComputerNode pc : system.personalComputersOf(network)) {
-            if (Loaded.blockEntity(level, BlockPos.of(pc.pos())) instanceof PersonalComputerBlockEntity pcBe) {
+            final BlockPos at = BlockPos.of(pc.pos());
+            complete &= level.isLoaded(at);
+            if (Loaded.blockEntity(level, at) instanceof PersonalComputerBlockEntity pcBe) {
                 entries.add(new Entry(pc.nodeUuid(), new PcPublicNodeStore(pcBe.localStore()), false));
             }
         }
@@ -128,20 +137,34 @@ public final class NetworkStorage {
             entries.add(new Entry(bus.node(), new ExternalNodeStore(bus), bus.access() != BusSettings.READ_ONLY,
                     bus.fillPriority()));
         }
-        return new NetworkStorage(entries);
+        complete &= !ExternalStores.anyWaitingToLoad(level, network);
+        return new NetworkStorage(entries, complete);
     }
 
     public static NetworkStorage ofServers(final ServerLevel level, final Collection<NodeUuid> nodes) {
         final NetworkSystem system = NetworkSystem.get(level);
         final List<Entry> entries = new ArrayList<>();
+        boolean complete = true;
         for (final NodeUuid node : nodes) {
-            system.locationOf(node).ifPresent(loc -> {
-                if (Loaded.blockEntity(level, BlockPos.of(loc.rackPos())) instanceof ServerRackBlockEntity rack) {
-                    entries.add(new Entry(node, new ServerNodeStore(rack.getServerStorage(loc.slot())), true));
-                }
-            });
+            final var loc = system.locationOf(node).orElse(null);
+            if (loc == null) {
+                continue;
+            }
+            final BlockPos at = BlockPos.of(loc.rackPos());
+            complete &= level.isLoaded(at);
+            if (Loaded.blockEntity(level, at) instanceof ServerRackBlockEntity rack) {
+                entries.add(new Entry(node, new ServerNodeStore(rack.getServerStorage(loc.slot())), true));
+            }
         }
-        return new NetworkStorage(entries);
+        return new NetworkStorage(entries, complete);
+    }
+
+    /**
+     * Whether every store the network has was in view when this was built. A server, a computer or a bus in a chunk
+     * that is not loaded is left out of what this counts, so a count of nothing may only mean it is out of reach.
+     */
+    public boolean complete() {
+        return complete;
     }
 
     /**

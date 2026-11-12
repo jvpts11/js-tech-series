@@ -158,7 +158,13 @@ public record IqlCraftingStatement(Part part, String name, Change change) {
                         pos++;
                         yield new MaxJobs(0);
                     }
-                    yield new MaxJobs((int) number());
+                    // A count past what an int holds would wrap round to another, or to none, meaning no cap.
+                    final int at = pos;
+                    final long most = number();
+                    if (most < 0 || most > Integer.MAX_VALUE) {
+                        throw IqlError.of(IqlError.EXPECTED_GOT, IqlError.A_COUNT, tokens.get(at).text());
+                    }
+                    yield new MaxJobs((int) most);
                 }
                 case "ROUTE" -> route();
                 default -> throw IqlError.of(IqlError.INTERFACE_UNKNOWN_SETTING, setting.text());

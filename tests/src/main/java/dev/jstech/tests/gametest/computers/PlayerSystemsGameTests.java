@@ -23,8 +23,12 @@ import dev.jstech.computers.os.crash.CrashPage;
 import dev.jstech.computers.os.fs.DiskFilesystem;
 import dev.jstech.computers.os.fs.FileType;
 import dev.jstech.computers.os.fs.PixImage;
+import dev.jstech.computers.os.fs.StoredFile;
+import dev.jstech.computers.os.player.PlayerCodecs;
 import dev.jstech.computers.os.player.PlayerDesktop;
+import dev.jstech.computers.os.player.PlayerSystem;
 import dev.jstech.computers.os.player.PlayerSystems;
+import dev.jstech.computers.sigma.SystemFacts;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.EraKit;
 import dev.jstech.tests.testkit.computers.EraNetwork;
@@ -32,9 +36,19 @@ import dev.jstech.tests.testkit.computers.TerminalHand;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtIo;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Operating systems and desktops that players write (computers/docs/design/player-systems.md): built at a prompt,
@@ -279,6 +293,47 @@ public final class PlayerSystemsGameTests {
         target.formatDisk(0);
         helper.assertTrue(target.installOs(idOf(version)), "the player's system installs");
         target.togglePower();
+    }
+
+    /** Two systems whose long names begin alike are two systems; a short name keeps the id it always had. */
+    @GameTest(template = "empty")
+    public static void idOf_tellsApartLongNamesThatBeginAlike(final GameTestHelper helper) {
+        final String alike = "The Long Running Operating System ";
+        final ResourceLocation one = PlayerSystem.idOf(facts(alike + "One", "1.0"));
+        final ResourceLocation two = PlayerSystem.idOf(facts(alike + "Two", "1.0"));
+        helper.assertFalse(one.equals(two), "two long names that begin alike get two ids; both " + one);
+        helper.assertTrue(one.equals(PlayerSystem.idOf(facts(alike + "One", "1.0"))),
+                "a system built again keeps its id");
+        helper.assertTrue(PlayerSystem.idOf(facts("Lantern OS", "1.0")).equals(idOf("1.0")),
+                "and a short name keeps the id it always had");
+        helper.succeed();
+    }
+
+    /**
+     * A file of box drawing as long as a file may be is more than a save's string holds, and the world keeps the
+     * system all the same, every letter of it.
+     */
+    @GameTest(template = "empty")
+    public static void system_keepsAFileLongerThanASavesString(final GameTestHelper helper) {
+        final String art = "█".repeat(StoredFile.MOST_CHARS);
+        final SystemFacts facts = facts("Lantern OS", "1.0");
+        final PlayerSystem system = new PlayerSystem(PlayerSystem.idOf(facts), facts, "lantern",
+                Map.of("wallpaper.txt", art));
+        final Tag saved = PlayerCodecs.SYSTEM.encodeStart(NbtOps.INSTANCE, system).getOrThrow();
+        final ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        try {
+            NbtIo.write((CompoundTag) saved, new DataOutputStream(bytes));
+        } catch (final IOException failed) {
+            throw new IllegalStateException("the system does not write to a save: " + failed.getMessage(), failed);
+        }
+        final PlayerSystem back = PlayerCodecs.SYSTEM.parse(NbtOps.INSTANCE, saved).getOrThrow();
+        helper.assertTrue(art.equals(back.files().get("wallpaper.txt")), "and reads back whole");
+        helper.succeed();
+    }
+
+    /* What Alex says of a system called {@code name} at {@code version}, all the id is made from. */
+    private static SystemFacts facts(final String name, final String version) {
+        return new SystemFacts(name, version, "Alex", "Standard", "x86", 64, SystemFacts.Kernel.OWN, List.of());
     }
 
     /* The id the world keeps Alex's Lantern OS at that version under. */

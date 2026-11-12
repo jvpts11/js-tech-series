@@ -63,13 +63,24 @@ public final class DiagnosticBag {
 
     private void add(final Diagnostic.Severity severity, final int line, final int column,
                      final SigmaError error, final Object... arguments) {
+        // A phrase handed in as a sentence is kept in English among the arguments, which a tool reads as data.
+        final Diagnostic made = new Diagnostic(this.file, line, column, severity, error.code(),
+                error.message(arguments),
+                Arrays.stream(arguments).map(argument -> Text.of(argument).english()).toList());
         if (this.diagnostics.size() >= MAX_DIAGNOSTICS) {
             this.capped = true;
+            // An error is never dropped for warnings, or a program with one would build: it takes a warning's place.
+            if (severity == Diagnostic.Severity.ERROR) {
+                for (int i = this.diagnostics.size() - 1; i >= 0; i--) {
+                    if (!this.diagnostics.get(i).isError()) {
+                        this.diagnostics.set(i, made);
+                        return;
+                    }
+                }
+            }
             return;
         }
-        // A phrase handed in as a sentence is kept in English among the arguments, which a tool reads as data.
-        this.diagnostics.add(new Diagnostic(this.file, line, column, severity, error.code(), error.message(arguments),
-                Arrays.stream(arguments).map(argument -> Text.of(argument).english()).toList()));
+        this.diagnostics.add(made);
     }
 
     /** Whether none of these is an error, which is when what they came from can go on to the next stage. */

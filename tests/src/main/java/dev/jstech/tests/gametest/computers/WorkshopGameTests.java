@@ -39,6 +39,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -238,6 +239,30 @@ public final class WorkshopGameTests {
                             "the repaired pickaxe is in the inventory");
                     helper.assertTrue(pc.workshop().slot(Workshop.ANVIL_LEFT).isEmpty()
                             && pc.workshop().slot(Workshop.ANVIL_RIGHT).getCount() < 3, "the inputs were used");
+                    leave(helper, player);
+                })
+                .thenSucceed();
+    }
+
+    /** An item swapped onto the anvil takes its own name: the name typed for the one before never renames it. */
+    @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void anvil_anItemSwappedOnTakesItsOwnName(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final PersonalComputerBlockEntity pc = world.placeRunningPersonalComputer(PC);
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> {
+                    install(pc, WorkshopCard.ANVIL);
+                    final ServerPlayer player = player(helper);
+                    final AbstractContainerMenu menu = player.inventoryMenu;
+                    menu.setCarried(new ItemStack(Items.DIAMOND_PICKAXE));
+                    pc.workshop().click(player, menu, Workshop.ANVIL_LEFT, 0);
+                    pc.workshop().setAnvilName("Digger");
+                    menu.setCarried(new ItemStack(Items.IRON_SWORD));
+                    pc.workshop().click(player, menu, Workshop.ANVIL_LEFT, 0);
+                    final String sword = new ItemStack(Items.IRON_SWORD).getHoverName().getString();
+                    helper.assertTrue(pc.workshop().anvilName().equals(sword),
+                            "the sword is named as itself, not Digger; got " + pc.workshop().anvilName());
+                    menu.setCarried(ItemStack.EMPTY);
                     leave(helper, player);
                 })
                 .thenSucceed();

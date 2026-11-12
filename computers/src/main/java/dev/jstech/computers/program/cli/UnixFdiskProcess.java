@@ -63,6 +63,8 @@ final class UnixFdiskProcess extends DiskToolProcess {
             "The disk configuration is updated.");
     private static final TextKey CANCELLED = TextKey.of("jsc.cli.unix_fdisk.cancelled",
             "The disk configuration is not changed.");
+    private static final TextKey PARTLY_UPDATED = TextKey.of("jsc.cli.unix_fdisk.partly_updated",
+            "The disk configuration is updated only in part: the changes above were refused.");
     private static final TextKey INVALID = TextKey.of("jsc.cli.unix_fdisk.invalid", "Invalid selection.");
 
     UnixFdiskProcess(final ICliComputer computer) {
@@ -112,13 +114,16 @@ final class UnixFdiskProcess extends DiskToolProcess {
             case "2" -> this.stage = Stage.ACTIVE;
             case "3" -> this.stage = Stage.DELETE;
             case "4" -> {
+                boolean refused = false;
                 for (final String path : this.pending) {
                     final DiskReport.Refusal refusal = this.change(path);
                     if (refusal != null) {
+                        refused = true;
                         say(out, new CliLine(reason(refusal), CliStyle.ERROR));
                     }
                 }
-                say(out, CliLine.of(UPDATED, CliStyle.OK));
+                // Updated is said only of a table written whole; one the disk refused a part of says so.
+                say(out, refused ? CliLine.of(PARTLY_UPDATED, CliStyle.ERROR) : CliLine.of(UPDATED, CliStyle.OK));
                 this.finish();
             }
             case "5" -> {

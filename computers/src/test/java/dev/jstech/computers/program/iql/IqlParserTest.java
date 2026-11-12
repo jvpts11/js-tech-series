@@ -400,4 +400,19 @@ class IqlParserTest {
         assertThrows(IllegalArgumentException.class, () -> IqlParser.parse("DELETE -1 cobblestone"));
         assertThrows(IllegalArgumentException.class, () -> IqlParser.parse("DELETE -5 cobblestone"));
     }
+
+    @Test
+    void parse_refusesAClauseSaidTwice() {
+        assertThrows(IllegalArgumentException.class,
+                () -> IqlParser.parse("SELECT 5 stone WHERE qty > 3 WHERE qty > 100"));
+        assertThrows(IllegalArgumentException.class,
+                () -> IqlParser.parse("DELETE 5 stone TO Trash IF qty > 9 IF qty > 0"));
+        assertThrows(IllegalArgumentException.class, () -> IqlParser.parse("SELECT 5 stone LIMIT 2 LIMIT 3"));
+    }
+
+    @Test
+    void parse_refusesALimitOfNoRows() {
+        assertThrows(IllegalArgumentException.class, () -> IqlParser.parse("QUERY items LIMIT 0"));
+        assertEquals(1, IqlParser.parse("QUERY items LIMIT 1").limit());
+    }
 }

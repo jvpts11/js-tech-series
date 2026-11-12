@@ -1168,6 +1168,27 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Pattern Studio says the disc is out after it was ejected, where it said the bay was empty; the IQL
   script picker lists every script on the system disk; and the Cluster Manager reads unloaded racks without loading
   them.
+- Shells: `head -n 20 notes.txt` and `tail -n 20 notes.txt` read the file, where they read the count as
+  its name; `export A=1 B=2` sets both names, where B went into A's value; crontab refuses days it does not know,
+  where a list it misread ran every day as part of the command; a machine's jobs count against its memory, so it
+  holds no more than its memory allows; `cluster install` says a second install is refused while one runs, where it
+  said it had started; a terminal tool that fails as it runs lets go of the terminal, where it failed again every
+  tick and took the machine's tick with it; and an installer's fdisk refuses a partition that would run past the last
+  sector the table leaves usable.
+- IQL: a clause said twice is refused, where the second replaced the first, an IF or a WHERE among them;
+  LIMIT takes one row or more, where LIMIT 0 returned every row; MAX JOBS past what a count holds is refused, where it
+  wrapped round to another number or to none; and a bus's TIME BETWEEN refuses minutes, where 18:30 was quietly 18.
+- Sigma and Sigma#: an element or a field written as a value answers what was written, where an element
+  answered nothing and a field's object was worked out twice; a floating comparison with NaN is false and -0.0 is
+  0.0, as IEEE 754 has them; an error after a hundred warnings is still reported, so the program does not build; a
+  method that takes a struct by its address has room for it; two caught locals of one name in sibling blocks are kept
+  apart; a lambda in a field's starting value that keeps the variable of the lambda around it is refused as not built
+  yet, where it read nothing; a type argument with a dotted name is read as a type; null no longer fits a struct, nor
+  may one be locked or disposed; a delegate made on an object runs the object's own override; completions inside a
+  nested type find that type; a package file marked with no last line and holding none is refused, where it failed
+  to read; and renaming a program over and over keeps only its last name in its memory.
+- The anvil card names an item put on it after another as itself, where it renamed it to the name typed
+  for the one before and charged for it.
 
 ## [0.5.3a] - 2026-11-04
 

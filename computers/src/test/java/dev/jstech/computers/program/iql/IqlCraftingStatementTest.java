@@ -77,6 +77,9 @@ class IqlCraftingStatementTest {
         assertThrows(IqlError.class, () -> IqlCraftingStatement.parse("SET INTERFACE x"));
         assertThrows(IqlError.class, () -> IqlCraftingStatement.parse("SET INTERFACE x SPEED 4"));
         assertThrows(IqlError.class, () -> IqlCraftingStatement.parse("SET INTERFACE x MAX JOBS many"));
+        // Past what an int holds it would wrap round: 4294967300 to 4, 2147483648 to none at all.
+        assertThrows(IqlError.class, () -> IqlCraftingStatement.parse("SET INTERFACE x MAX JOBS 4294967300"));
+        assertThrows(IqlError.class, () -> IqlCraftingStatement.parse("SET INTERFACE x MAX JOBS 2147483648"));
         assertThrows(IqlError.class, () -> IqlCraftingStatement.parse("SET INTERFACE x EXCLUSIVE ON OFF"));
         assertThrows(IqlError.class, () -> IqlCraftingStatement.parse("RENAME ROUTER North South"));
         assertThrows(IqlError.class, () -> IqlCraftingStatement.parse("SET ROUTER North SPEED 4"));

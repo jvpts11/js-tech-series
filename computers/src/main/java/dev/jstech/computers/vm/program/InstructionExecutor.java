@@ -176,10 +176,10 @@ final class InstructionExecutor {
         final boolean go = switch (opcode) {
             case BEQ -> this.values.same(left, right);
             case BNE -> !this.values.same(left, right);
-            case BLT -> Numbers.compare(left, right) < 0;
-            case BLE -> Numbers.compare(left, right) <= 0;
-            case BGT -> Numbers.compare(left, right) > 0;
-            default -> Numbers.compare(left, right) >= 0;
+            case BLT -> Numbers.less(left, right);
+            case BLE -> Numbers.atMost(left, right);
+            case BGT -> Numbers.greater(left, right);
+            default -> Numbers.atLeast(left, right);
         };
         this.jumpIf(frame, line, go);
     }
@@ -189,8 +189,8 @@ final class InstructionExecutor {
         final Object left = frame.pop();
         frame.push(switch (opcode) {
             case CEQ -> this.values.same(left, right);
-            case CLT -> Numbers.compare(left, right) < 0;
-            default -> Numbers.compare(left, right) > 0;
+            case CLT -> Numbers.less(left, right);
+            default -> Numbers.greater(left, right);
         });
     }
 

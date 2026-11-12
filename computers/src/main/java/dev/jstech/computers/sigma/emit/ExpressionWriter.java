@@ -332,8 +332,21 @@ final class ExpressionWriter {
             if (answerWanted && place instanceof Place.Local) {
                 this.body.emit(Opcode.DUP);
             }
+            /*
+             * An element or a field written as a value answers what was written. The write uses up what it was written
+             * into and the value, so the value is kept aside first: reading the place back would run its indexer, or
+             * work out the object it is a field of, a second time.
+             */
+            final boolean keptAside = place instanceof Place.Element || place instanceof Place.Held;
+            final int answer = answerWanted && keptAside ? this.body.hidden() : -1;
+            if (answer >= 0) {
+                this.body.emit(Opcode.DUP);
+                this.body.emit(Opcode.STLOC, new IOperand.Slot(answer));
+            }
             this.store(place, kept);
-            if (answerWanted && !(place instanceof Place.Local)) {
+            if (answer >= 0) {
+                this.body.emit(Opcode.LDLOC, new IOperand.Slot(answer));
+            } else if (answerWanted && !(place instanceof Place.Local)) {
                 this.reload(place, kept);
             }
             return;
@@ -569,8 +582,9 @@ final class ExpressionWriter {
                     this.body.emit(Opcode.LDLOC, new IOperand.Slot(this.body.slot(local.variable())));
             case Place.Captured captured -> this.body.loadKept(captured.variable());
             case Place.Shared shared -> this.loadMember(null, shared.member());
-            case Place.Held held -> this.loadMember(held.target(), held.member());
-            case Place.Element ignored -> { } // an element written as a value answers nothing, as before
+            // A field's and an element's answers are kept aside before the write, never read back.
+            case Place.Held ignored -> { }
+            case Place.Element ignored -> { }
             case Place.Memory ignored -> this.readKept(kept);
         }
     }
@@ -958,14 +972,41 @@ final class ExpressionWriter {
             case LESS -> this.body.emit(Opcode.CLT);
             case GREATER -> this.body.emit(Opcode.CGT);
             case LESS_EQUAL -> {
-                this.body.emit(Opcode.CGT);
-                this.invert();
+                if (floating(common)) {
+                    this.orEqual(Opcode.BLE);
+                } else {
+                    this.body.emit(Opcode.CGT);
+                    this.invert();
+                }
             }
             default -> {
-                this.body.emit(Opcode.CLT);
-                this.invert();
+                if (floating(common)) {
+                    this.orEqual(Opcode.BGE);
+                } else {
+                    this.body.emit(Opcode.CLT);
+                    this.invert();
+                }
             }
         }
+    }
+
+    /*
+     * An or-equal comparison of floating numbers, as the branch that asks it: false when either side is NaN, as
+     * IEEE 754 has it. The opposite comparison turned round would answer true for NaN, which is on neither side.
+     */
+    private void orEqual(final Opcode branch) {
+        final String yes = this.body.label();
+        final String end = this.body.label();
+        this.body.emit(branch, new IOperand.Label(yes));
+        this.body.emit(Opcode.LDC_I4, new IOperand.I4(0));
+        this.body.emit(Opcode.BR, new IOperand.Label(end));
+        this.body.mark(yes);
+        this.body.emit(Opcode.LDC_I4, new IOperand.I4(1));
+        this.body.mark(end);
+    }
+
+    private static boolean floating(final ITypeSymbol type) {
+        return type == ITypeSymbol.Primitive.FLOAT || type == ITypeSymbol.Primitive.DOUBLE;
     }
 
     /*

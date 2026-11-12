@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.computers.sigma.DesktopFacts;
 import dev.jstech.computers.sigma.SystemFacts;
+import dev.jstech.core.text.LongText;
 import net.minecraft.resources.ResourceLocation;
 
 import java.util.List;
@@ -57,8 +58,12 @@ public final class PlayerCodecs {
             Codec.STRING.listOf().fieldOf("programs").forGetter(DesktopFacts::programs)
     ).apply(inst, DesktopFacts::new));
 
-    /* A system's or a desktop's files, by path inside its folder. */
-    private static final Codec<Map<String, String>> FILES = Codec.unboundedMap(Codec.STRING, Codec.STRING);
+    /*
+     * A system's or a desktop's files, by path inside its folder. A file's text may be longer than a save's string
+     * holds, as one of box drawing or of any script but the Latin is at fewer letters than the files allow, and one
+     * such file would fail the save of every system and desktop the world keeps.
+     */
+    private static final Codec<Map<String, String>> FILES = Codec.unboundedMap(Codec.STRING, LongText.CODEC);
 
     public static final Codec<PlayerSystem> SYSTEM = RecordCodecBuilder.create(inst -> inst.group(
             ResourceLocation.CODEC.fieldOf("id").forGetter(PlayerSystem::id),

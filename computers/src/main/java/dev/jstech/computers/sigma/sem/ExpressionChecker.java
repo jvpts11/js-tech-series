@@ -571,6 +571,8 @@ final class ExpressionChecker {
         final Set<String> methodRegions = this.scope.regions();
         // It stands in none of the method's catches or finally blocks, whatever it was written inside.
         final List<Object> handlers = this.scope.setHandlersAside();
+        // Nor in any of its loops or switches, so a break or a continue in it is one with nothing to leave.
+        final int[] jumps = this.scope.setJumpsAside();
         if (lambda.block() != null) {
             final Labels labels = Labels.of(lambda.block(), this.scope);
             this.scope.regions(labels.switchable());
@@ -593,6 +595,7 @@ final class ExpressionChecker {
             this.scope.checkOutParameters(lambda.parameters(), lambda.body(), lambda);
         }
         this.scope.regions(methodRegions);
+        this.scope.putJumpsBack(jumps);
         this.scope.putHandlersBack(handlers);
         this.scope.scope(saved);
         this.scope.returnType(savedReturn);
