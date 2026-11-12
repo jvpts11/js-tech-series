@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.client.gui.logic;
 
+import org.jetbrains.annotations.ApiStatus;
+
 /**
  * Immutable scroll state for a row-based scrollable list.
  */
@@ -51,6 +53,16 @@ public record ScrollState(int totalItems, int visibleRows, int offset) {
 
     public ScrollState withTotalItems(final int newTotal) {
         return new ScrollState(newTotal, visibleRows, offset);
+    }
+
+    /**
+     * Scrolled just as far as brings row {@code index} into view, as a list follows a selection the keyboard moves:
+     * not at all while it is already shown.
+     */
+    @ApiStatus.Experimental
+    public ScrollState showing(final int index) {
+        final int up = Math.min(offset, index);
+        return new ScrollState(totalItems, visibleRows, Math.max(up, index - visibleRows + 1));
     }
 
     public boolean canScrollUp() {

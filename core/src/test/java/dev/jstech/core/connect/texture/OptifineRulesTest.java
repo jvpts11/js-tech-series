@@ -64,6 +64,17 @@ class OptifineRulesTest {
     }
 
     @Test
+    void tileFile_isNoneForANameTheGameWouldRefuse() {
+        final List<OptifineRule.Tile> tiles = OptifineRules.parse(GLASS,
+                "method=random\ntiles=Moss textures/block/Stone.png botania:block/x?.png moss\n").tiles();
+        assertEquals("", OptifineRules.tileFile(GLASS, tiles.get(0)), "a capital is no name of a texture");
+        assertEquals("", OptifineRules.tileFile(GLASS, tiles.get(1)));
+        assertEquals("", OptifineRules.tileFile(GLASS, tiles.get(2)));
+        assertEquals("minecraft:optifine/ctm/glass/moss.png", OptifineRules.tileFile(GLASS, tiles.get(3)),
+                "the names around them are kept");
+    }
+
+    @Test
     void spriteOf_isATexturesOwnIdOrItsPath() {
         assertEquals("minecraft:block/stone", OptifineRules.spriteOf("minecraft:textures/block/stone.png"));
         assertEquals("minecraft:optifine/ctm/glass/3", OptifineRules.spriteOf("minecraft:optifine/ctm/glass/3.png"));

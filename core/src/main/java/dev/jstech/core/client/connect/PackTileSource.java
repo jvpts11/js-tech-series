@@ -53,16 +53,22 @@ final class PackTileSource implements SpriteSource {
         }
         final String suffix = PackEmissive.suffix(resources);
         for (final String file : PackRules.load(resources).tileFiles()) {
-            final ResourceLocation location = ResourceLocation.parse(file);
+            // A file a pack names in a way the game refuses as a name is drawn from nothing, not the end of the atlas.
+            final ResourceLocation location = ResourceLocation.tryParse(file);
+            final ResourceLocation sprite = ResourceLocation.tryParse(OptifineRules.spriteOf(file));
+            if (location == null || sprite == null) {
+                continue;
+            }
             final Optional<Resource> resource = resources.getResource(location);
-            final ResourceLocation sprite = ResourceLocation.parse(OptifineRules.spriteOf(file));
             resource.ifPresent(found -> output.add(sprite, found));
             if (!suffix.isEmpty() && file.endsWith(PNG)) {
                 // A tile's glowing texture beside it goes into the atlas with it, under the tile's name and the ending.
-                final ResourceLocation glowing = ResourceLocation.parse(file.substring(0, file.length()
+                final ResourceLocation glowing = ResourceLocation.tryParse(file.substring(0, file.length()
                         - PNG.length()) + suffix + PNG);
-                resources.getResource(glowing).ifPresent(found -> output.add(PackEmissive.withSuffix(sprite, suffix),
-                        found));
+                if (glowing != null) {
+                    resources.getResource(glowing).ifPresent(found -> output.add(PackEmissive.withSuffix(sprite,
+                            suffix), found));
+                }
             }
         }
     }

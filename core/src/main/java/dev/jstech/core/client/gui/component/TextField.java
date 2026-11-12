@@ -282,9 +282,11 @@ public class TextField extends UiComponent {
                 case GLFW.GLFW_KEY_X -> {
                     Minecraft.getInstance().keyboardHandler.setClipboard(
                             state.hasSelection() ? state.selectedText() : state.edit());
-                    if (!state.deleteSelection()) {
-                        state.sync("");
+                    if (!state.hasSelection()) {
+                        // The whole text goes as an edit, which Enter or leaving the field then commits.
+                        state.selectAll();
                     }
+                    state.deleteSelection();
                     edited();
                 }
                 case GLFW.GLFW_KEY_V -> {

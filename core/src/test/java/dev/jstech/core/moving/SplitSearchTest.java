@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,20 @@ class SplitSearchTest {
         final List<Set<Long>> pieces = SplitSearch.pieces(Set.of(at(3, 64, 0), at(5, 64, 0)), blocks::contains);
         assertEquals(1, pieces.size());
         assertEquals(4, pieces.get(0).size());
+    }
+
+    @Test
+    void pieces_keepsSearchingFromBlocksFoundAfterTwoSearchesMeet() {
+        final Set<Long> blocks = new HashSet<>();
+        for (final int x : new int[] {0, 1, 2, 3, 5, 6}) {
+            blocks.add(at(x, 64, 0));
+        }
+        /*
+         * The searches from 2 and 3 meet on the first step of the one from 2, which then finds 1: the search goes on
+         * from 1 to 0, so the bar 0..3 goes on whole and only 5..6 parts from it.
+         */
+        final Set<Long> seeds = new LinkedHashSet<>(List.of(at(2, 64, 0), at(3, 64, 0), at(5, 64, 0)));
+        assertEquals(List.of(Set.of(at(5, 64, 0), at(6, 64, 0))), SplitSearch.pieces(seeds, blocks::contains));
     }
 
     @Test

@@ -111,7 +111,9 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
             this.lanes.add(new Lane(lane));
         }
         for (int i = 0; i < layout.inputTanks(); i++) {
-            inputTanks.add(fields().fluid("FluidIn" + i, layout.tankCapacity()).save().toClient().exposed());
+            // What it was given is its own to spend: a face that gives out gives only what it made.
+            inputTanks.add(fields().fluid("FluidIn" + i, layout.tankCapacity()).save().toClient().exposed()
+                    .inputOnly());
         }
         for (int i = 0; i < layout.outputTanks(); i++) {
             outputTanks.add(fields().fluid("FluidOut" + i, layout.tankCapacity()).save().toClient().exposed()
@@ -1031,7 +1033,7 @@ public abstract class ProcessingMachineBlockEntity extends MachineBlockEntity {
                         saturatedInt(take.amount(), times), false);
             }
             for (final Take take : work.fluidTakes()) {
-                inputTanks.get(take.index()).drain((int) Math.min(Integer.MAX_VALUE,
+                inputTanks.get(take.index()).drainInside((int) Math.min(Integer.MAX_VALUE,
                         saturated(effect.spent(take.amount()), times)), IFluidHandler.FluidAction.EXECUTE);
             }
             for (final Take take : work.matterTakes()) {

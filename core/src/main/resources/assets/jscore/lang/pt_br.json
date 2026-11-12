@@ -1248,6 +1248,7 @@
   "jscore.mcp.why.command_never": "/%s nunca está entre os comandos permitidos.",
   "jscore.mcp.why.command_not_here": "Comandos rodam só num mundo de teste, ou num servidor com o modo desenvolvedor ligado, para um operador.",
   "jscore.mcp.why.command_not_listed": "/%s não está entre os comandos permitidos.",
+  "jscore.mcp.why.command_stored": "Um bloco de comando roda um comando seu além dos permitidos: nunca se coloca um nem se dá um comando a ele.",
   "jscore.mcp.why.file_kind": "Arquivos terminados em %s não são lidos nem escritos: só dados, arte e som.",
   "jscore.mcp.why.file_missing": "Não existe o arquivo %s.",
   "jscore.mcp.why.file_outside": "%s está fora das pastas dos mods e do pacote.",

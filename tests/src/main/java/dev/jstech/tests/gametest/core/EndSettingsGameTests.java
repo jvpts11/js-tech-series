@@ -37,6 +37,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.phys.BlockHitResult;
@@ -154,6 +155,26 @@ public final class EndSettingsGameTests {
                 CableEndMenu.ITEMS_KEPT_MANY - CableEndMenu.ITEMS_KEPT_STEP))), "the ingot, keeping fifteen: "
                 + end.filter().rules());
         helper.assertTrue(menu.getCarried().getCount() == 12, "and the stack stays in the player's hand");
+        helper.succeed();
+    }
+
+    /* A rule cleared from the front moves the others up, and each goes round its own kinds, not the one before it. */
+    @GameTest(template = ARENA)
+    public static void ghost_clearedFromTheFrontLeavesTheOthersGoingRoundTheirOwnKinds(final GameTestHelper helper) {
+        final CableEndMenu menu = menu(helper, TestCableTypes.ITEM_LINE, "end_shift");
+        final FakePlayer player = player(helper, "end_shift");
+        final Item[] items = {Items.IRON_INGOT, Items.GOLD_INGOT, Items.COAL};
+        for (int k = 0; k < items.length; k++) {
+            menu.setCarried(new ItemStack(items[k]));
+            menu.clickMenuButton(player, CableEndMenu.FIRST_GHOST + k);
+        }
+        menu.setCarried(ItemStack.EMPTY);
+        menu.clickMenuButton(player, CableEndMenu.FIRST_GHOST);
+        menu.clickMenuButton(player, CableEndMenu.FIRST_CYCLE + 1);
+        final List<ItemFilter.Rule> rules = end(helper, TestCableTypes.ITEM_LINE).filter().rules();
+        helper.assertTrue(rules.size() == 2 && rules.get(0).equals(new ItemFilter.Fuzzy("minecraft:gold_ingot", 0L))
+                && rules.get(1).equals(EndFilters.kinds(GridKind.ITEM, "minecraft:coal").get(1)),
+                "the coal, moved up, goes on to its own next kind: " + rules);
         helper.succeed();
     }
 

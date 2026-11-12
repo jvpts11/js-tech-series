@@ -136,7 +136,8 @@ public final class SoundShaper {
         }
         SoundInstance heard = material(level, sound);
         final Optional<ResourceLocation> distant = SoundTraits.of(heard.getLocation()).heardAt(blocks);
-        if (distant.isPresent()) {
+        // A sound kept up by its own tick stays itself: in the far sound's place it would no longer be ticked.
+        if (distant.isPresent() && !(heard instanceof TickableSoundInstance)) {
             heard = new RelocatedSoundInstance(heard, distant.get());
         }
         if (prefs.acoustics() && !heard.isLooping() && !(heard instanceof TickableSoundInstance)

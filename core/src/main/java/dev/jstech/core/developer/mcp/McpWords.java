@@ -71,6 +71,8 @@ public final class McpWords {
     public static final TextKey COMMAND_NOT_HERE = TextKey.of("jscore.mcp.why.command_not_here",
             "Commands run only in a test world, or on a server with its developer mode on, for an operator.");
     public static final TextKey COMMAND_EMPTY = TextKey.of("jscore.mcp.why.command_empty", "There is no command.");
+    public static final TextKey COMMAND_STORED = TextKey.of("jscore.mcp.why.command_stored",
+            "A command block runs a command of its own past the allowed ones: one is never placed or given one.");
     public static final TextKey FILE_OUTSIDE = TextKey.of("jscore.mcp.why.file_outside",
             "%s is outside the mods' and the pack's folders.");
     public static final TextKey FILE_KIND = TextKey.of("jscore.mcp.why.file_kind",

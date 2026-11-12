@@ -55,6 +55,16 @@ public class TextEditStateTest {
     }
 
     @Test
+    public void deleteSelection_ofTheWholeTextIsAnEditStillToCommit() {
+        // Ctrl+X with nothing selected cuts the whole text: an edit to commit, not a new committed value.
+        final TextEditState state = holding("C:\\progs\\");
+        state.selectAll();
+        state.deleteSelection();
+        assertEquals("", state.edit());
+        assertTrue(state.dirty(), "the cut text is an edit the field still commits");
+    }
+
+    @Test
     public void selectAll_takesTheWholeEditAndCtrlCWouldCopyIt() {
         final TextEditState state = holding("C:\\progs\\");
         state.selectAll();

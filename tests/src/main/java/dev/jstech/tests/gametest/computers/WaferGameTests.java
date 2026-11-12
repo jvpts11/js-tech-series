@@ -102,6 +102,30 @@ public final class WaferGameTests {
                 "the etched wafer goes on to the implanter"));
     }
 
+    /* What a machine was given is its own to spend: nothing draws its acid back out, whichever way it asks. */
+    @GameTest(template = ARENA, timeoutTicks = 200)
+    public static void etcher_givesNoneOfTheAcidItWasGivenBackOut(final GameTestHelper helper) {
+        final ChainMachine etcher = machine("plasma_etcher");
+        final BlockPos terminal = formed(helper, etcher);
+        helper.runAfterDelay(20, () -> {
+            pour(helper, etcher, SeriesChemicals.HYDROFLUORIC_ACID);
+            final IFluidHandler whole = helper.getLevel().getCapability(Capabilities.FluidHandler.BLOCK,
+                    helper.absolutePos(terminal), null);
+            helper.assertTrue(whole != null, "the machine offers its tanks");
+            final FluidStack acid = new FluidStack(MaterialLiquids.fluid(SeriesChemicals.HYDROFLUORIC_ACID).get(),
+                    BUCKET);
+            helper.assertTrue(whole.drain(BUCKET, IFluidHandler.FluidAction.EXECUTE).isEmpty()
+                            && whole.drain(acid, IFluidHandler.FluidAction.EXECUTE).isEmpty(),
+                    "no pipe or bucket draws the acid back out of the machine");
+            int held = 0;
+            for (int tank = 0; tank < whole.getTanks(); tank++) {
+                held += whole.getFluidInTank(tank).getAmount();
+            }
+            helper.assertTrue(held == BUCKET, "the bucket of acid stays in the machine; it holds " + held);
+            helper.succeed();
+        });
+    }
+
     @GameTest(template = ARENA, timeoutTicks = 300)
     public static void implanter_dopesEightLayersWithOneDust(final GameTestHelper helper) {
         final BlockPos terminal = formed(helper, machine("ion_implanter"));

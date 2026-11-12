@@ -95,7 +95,8 @@ public final class PlayWaiting {
                 && chat.isEmpty()) {
             return WorldTools.done(McpCall.wrong("screen", McpWords.SOME_WORDS.text()));
         }
-        final int chatBefore = ChatLines.lines().size();
+        // Counted by the lines come so far, which the oldest dropping off a full chat never moves.
+        final long chatBefore = ChatLines.added();
         return PlayTasks.run(call, most + 1, (game, tick) -> {
             final boolean so = screen.map(words -> game.screen != null && (game.screen.getTitle().getString()
                     .toLowerCase(Locale.ROOT).contains(words) || game.screen.getClass().getSimpleName()
@@ -105,7 +106,7 @@ public final class PlayWaiting {
                     && component.flatMap(name -> shows.map(words -> game.screen instanceof IDataScreen data
                             && data.find(name).map(BuiltNode::component).map(found -> found.narration()
                             .getString().contains(words)).orElse(false))).orElse(true)
-                    && chat.map(words -> ChatLines.lines().stream().skip(chatBefore).anyMatch(line -> line.text()
+                    && chat.map(words -> ChatLines.since(chatBefore).stream().anyMatch(line -> line.text()
                             .contains(words))).orElse(true);
             if (so) {
                 final JsonObject out = new JsonObject();

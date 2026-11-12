@@ -17,6 +17,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class ScrollStateTest {
 
     @Test
+    void showing_scrollsJustFarEnoughToBringARowIntoView() {
+        final ScrollState top = ScrollState.of(30, 5);
+        assertEquals(0, top.showing(3).offset(), "a row already in view moves nothing");
+        assertEquals(1, top.showing(5).offset(), "the row past the last shown is brought up as the last");
+        assertEquals(10, top.showing(14).offset());
+        assertEquals(4, new ScrollState(30, 5, 10).showing(4).offset(), "a row above is brought down as the first");
+        assertEquals(25, top.showing(29).offset(), "never past the end");
+    }
+
+    @Test
     void of_startsAtZeroOffset() {
         ScrollState s = ScrollState.of(100, 10);
         assertEquals(0, s.offset());

@@ -614,6 +614,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   itself, so it holds wherever the big block is carried whole; on a moving structure it follows where the origin went
   (`BigBlockPartBlockEntity.moved`), and a mod whose own mover turns blocks turns it with
   `BigBlockPartBlockEntity.turn`. Experimental.
+- (Core) Tanks a machine spends from, and lists that follow the keys: J's Core's API is at version 56.
+  `FieldFluidTank.inputOnly()` makes a tank pipes fill but never draw from, and the block draws on it with
+  `FieldFluidTank.drainInside`; `ScrollState.showing(index)` scrolls just as far as brings a row into view.
+  Experimental.
 - (Computers) The Mining Computer: J's Computers' API is at version 21. `HostScope.MINING_COMPUTER` is the Mining
   Computer's own scope, for a program or a command that runs only on a mining rig. Experimental.
 - (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of
@@ -4130,6 +4134,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- (Core) A machine gives back none of the liquids it was given: a pipe or a bucket drawing from it takes what it
+  made, where it drew the liquid the machine was waiting to spend first and left the product in its tank.
 - (Computers) Disks: a partition asked for with a size past what a number holds is refused, where its size wrapped
   round and it was made; a partition named by a number past any partition's names none, where the command acted on
   the one the number wrapped round to; and formatting another disk that carries a system no longer takes a

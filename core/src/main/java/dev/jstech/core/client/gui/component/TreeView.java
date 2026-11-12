@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.gui.component;
 
+import dev.jstech.core.client.gui.logic.ScrollState;
 import dev.jstech.core.client.gui.logic.TreeModel;
 import java.util.List;
 import java.util.Objects;
@@ -108,6 +109,8 @@ public final class TreeView extends UiComponent {
         if (next >= 0 && next < rows.size()) {
             model.select(rows.get(next).node().id());
             onSelect.accept(rows.get(next).node().id());
+            // The view follows the selection the keys move, as far as keeps it in sight.
+            scroll = new ScrollState(rows.size(), rowsShown(), scroll).showing(next).offset();
             return true;
         }
         if ((key == GLFW.GLFW_KEY_RIGHT || key == GLFW.GLFW_KEY_LEFT) && at >= 0) {

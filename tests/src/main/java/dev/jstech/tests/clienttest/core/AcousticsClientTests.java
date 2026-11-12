@@ -25,8 +25,10 @@ import dev.jstech.tests.TestSounds;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.Map;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.SoundInstance;
+import net.minecraft.client.resources.sounds.TickableSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Holder;
@@ -176,6 +178,23 @@ public final class AcousticsClientTests {
                         "and it matters, so its sign comes up for a player who asked for signs");
     }
 
+    /*
+     * A sound kept up by its own tick, as a machine's loop is, stays itself far off: put in the far sound's place it
+     * would no longer be ticked, and stay silent at the volume it starts at for good.
+     */
+    @ClientTest(timeoutTicks = 200)
+    public static void loop_farOffKeepsTickingRatherThanTakeItsFarSound(final ClientTestContext ctx) {
+        final AudioPrefs prefs = AudioPrefsStore.prefs();
+        final boolean echoes = prefs.acoustics();
+        ctx.afterTest(() -> prefs.setAcoustics(echoes));
+        ctx.thenTeleport(0, STAND, Direction.NORTH)
+                .then(SETTLE, () -> prefs.setAcoustics(false))
+                .thenAssert(0, () -> SoundShaper.shape(ticking(ctx, TestSounds.BLAST.event().get(), 60))
+                                instanceof TickableSoundInstance shaped
+                                && shaped.getLocation().equals(TestSounds.BLAST.id()),
+                        "sixty blocks off, a ticking loop is still itself, and still ticked");
+    }
+
     @ClientTest(timeoutTicks = 600)
     public static void ringing_followsABlastCloseByUnlessAHelmetProtectsTheEars(final ClientTestContext ctx) {
         ctx.afterTest(() -> ctx.server().execute(() -> {
@@ -278,6 +297,25 @@ public final class AcousticsClientTests {
     private static SoundInstance at(final ClientTestContext ctx, final Holder<SoundEvent> event, final double east,
                                     final double up) {
         return at(ctx, event.value(), east, up);
+    }
+
+    /* A looping sound kept up by its own tick, {@code east} blocks east of the player's eyes. */
+    private static TickableSoundInstance ticking(final ClientTestContext ctx, final SoundEvent event,
+                                                 final double east) {
+        final Vec3 eyes = ctx.mc().gameRenderer.getMainCamera().getPosition();
+        return new AbstractTickableSoundInstance(event, SoundSource.BLOCKS, SoundInstance.createUnseededRandom()) {
+            {
+                this.x = eyes.x + east;
+                this.y = eyes.y;
+                this.z = eyes.z;
+                this.looping = true;
+            }
+
+            @Override
+            public void tick() {
+                this.volume = 1F;
+            }
+        };
     }
 
     private static boolean located(final SoundInstance sound, final ResourceLocation id) {

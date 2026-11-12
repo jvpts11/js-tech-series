@@ -92,7 +92,14 @@ public final class PackEmissive {
         try (BufferedReader reader = resource.get().openAsReader()) {
             final Properties properties = new Properties();
             properties.load(reader);
-            return properties.getProperty(SUFFIX, "").strip();
+            final String suffix = properties.getProperty(SUFFIX, "").strip();
+            // An ending the game would refuse in a texture's name glows nothing, rather than end the reload.
+            if (!ResourceLocation.isValidPath(suffix)) {
+                LOGGER.warn("The glowing textures of {} are left out: {} is no ending of a texture's name",
+                        PROPERTIES, suffix);
+                return "";
+            }
+            return suffix;
         } catch (final IOException | IllegalArgumentException broken) {
             LOGGER.warn("The glowing textures of {} are left out: {}", PROPERTIES, broken.getMessage());
             return "";
@@ -117,7 +124,10 @@ public final class PackEmissive {
         final Map<ResourceLocation, TextureAtlasSprite> found = new HashMap<>();
         final Map<ResourceLocation, Boolean> looked = new HashMap<>();
         for (final String tile : PackRules.current().tileFiles()) {
-            look(ResourceLocation.parse(OptifineRules.spriteOf(tile)), suffix, textures, found, looked);
+            final ResourceLocation sprite = ResourceLocation.tryParse(OptifineRules.spriteOf(tile));
+            if (sprite != null) {
+                look(sprite, suffix, textures, found, looked);
+            }
         }
         final boolean tilesGlow = !found.isEmpty();
         final List<Map.Entry<ModelResourceLocation, BakedModel>> wrap = new ArrayList<>();

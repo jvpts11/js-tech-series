@@ -38,6 +38,18 @@ class SafeCommandsTest {
     }
 
     @Test
+    void refusal_neverPlacesOrFeedsACommandBlockThatWouldRunAnotherLater() {
+        for (final String command : new String[] {
+            "setblock 0 64 0 minecraft:command_block{Command:\"op @a\"}",
+            "fill 0 64 0 1 64 1 minecraft:repeating_command_block",
+            "summon minecraft:command_block_minecart ~ ~ ~ {Command:\"stop\"}",
+            "data merge block 0 64 0 {Command:\"op @a\",auto:1b}"}) {
+            assertTrue(english(SafeCommands.refusal(command)).contains("never"), command);
+        }
+        assertEquals(Optional.empty(), SafeCommands.refusal("setblock 0 64 0 minecraft:chest{Lock:\"\"}"));
+    }
+
+    @Test
     void refusal_refusesWhatIsNotListedAndWhatIsNoCommand() {
         assertTrue(english(SafeCommands.refusal("somemod:command")).contains("never"));
         assertTrue(english(SafeCommands.refusal("unknowncommand")).contains("not among"));

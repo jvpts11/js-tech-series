@@ -88,7 +88,8 @@ public final class SplitSearch {
                     final Integer other = found.get(next);
                     if (other == null) {
                         found.put(next, root);
-                        front.add(next);
+                        // A meeting earlier in this step may have joined this search into another: it goes on there.
+                        fronts.get(find(parent, root)).add(next);
                     } else if (find(parent, other) != find(parent, root)) {
                         union(parent, fronts, find(parent, other), find(parent, root));
                     }

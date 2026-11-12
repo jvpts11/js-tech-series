@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.jstech.core.client.mcp.McpGame;
 import dev.jstech.core.client.mcp.McpPairingScreen;
+import dev.jstech.core.developer.mcp.McpCall;
 import dev.jstech.core.developer.mcp.McpGuard;
 import dev.jstech.core.developer.mcp.McpPermission;
 import dev.jstech.core.developer.mcp.McpProtocol;
@@ -23,7 +24,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.Deque;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
@@ -46,6 +49,8 @@ public final class McpPlayClientTests {
     private static final BlockPos STAND = new BlockPos(0, 2, 0);
     private static final BlockPos MACHINE = new BlockPos(0, 2, -3);
     private static final BlockPos WALK_TO = new BlockPos(3, 2, 0);
+    /* Far enough that the walk there is still under way when the server is turned off. */
+    private static final BlockPos FAR = new BlockPos(0, 2, 40);
     private static final int HOTBAR = 9;
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private static final String INITIALIZE = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":"
@@ -155,6 +160,36 @@ public final class McpPlayClientTests {
                                 "structuredContent") : new JsonObject());
                     });
         }
+    }
+
+    /* Turning the server off takes the keys back from a call still acting, as cutting every client off does. */
+    @ClientTest(timeoutTicks = 1600)
+    public static void off_takesTheKeysBackFromACallStillActing(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final List<McpCall> walking = new ArrayList<>();
+        final int[] port = new int[1];
+        ctx.afterTest(() -> {
+            McpGame.turn(false);
+            ctx.mc().setScreen(null);
+        });
+        ctx.thenTeleport(0, STAND, Direction.NORTH)
+                .then(SETTLE, () -> {
+                    McpGame.turn(true);
+                    port[0] = McpGame.running().orElseThrow().port();
+                    sent.set(post(port[0], null, INITIALIZE));
+                })
+                .thenAwaitScreen(McpPairingScreen.class, WAIT)
+                .then(SETTLE, () -> ctx.screen(McpPairingScreen.class).answer(Optional.of(McpPermission.ACT)))
+                .thenWaitUntil(() -> sent.get().isDone(), WAIT, "the client is let in")
+                .then(0, () -> sent.set(post(port[0], sent.get().join().headers().firstValue(McpProtocol.SESSION)
+                        .orElseThrow(), tool("player_walk_to", "{\"place\":" + place(ctx.abs(FAR)) + "}"))))
+                .thenWaitUntil(() -> !McpGame.acting().isEmpty(), WAIT, "the long walk to start")
+                .then(0, () -> {
+                    walking.addAll(McpGame.acting());
+                    McpGame.turn(false);
+                })
+                .thenAssert(0, () -> !walking.isEmpty() && walking.stream().allMatch(McpCall::takenBack),
+                        "turning the server off took the keys back from the walk under way");
     }
 
     private static String place(final BlockPos pos) {

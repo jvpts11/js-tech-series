@@ -42,6 +42,8 @@ public final class OptifineRules {
     private static final Pattern RANGE = Pattern.compile("(\\d+)-(\\d+)");
     private static final Pattern HEIGHTS = Pattern.compile("(\\(-?\\d+\\)|-?\\d+)(?:-(\\(-?\\d+\\)|-?\\d+))?");
     private static final Pattern OVERRIDE = Pattern.compile("ctm\\.(\\d+)");
+    /* A name the game takes for a resource: a namespace, then a path that may run through folders. */
+    private static final Pattern VALID_ID = Pattern.compile("[a-z0-9_.-]+:[a-z0-9_./-]+");
     private static final Map<String, OptifineRule.Method> METHODS = methods();
     private static final Map<String, Integer> FACES = faces();
 
@@ -94,18 +96,9 @@ public final class OptifineRules {
 
     /** Where a tile of a rule read from {@code file} is: {@code namespace:path}, its path ending in {@code .png}. */
     public static String tileFile(final String file, final OptifineRule.Tile tile) {
-        final String namespace = file.contains(":") ? file.substring(0, file.indexOf(':')) : DEFAULT_NAMESPACE;
-        final String path = file.contains(":") ? file.substring(file.indexOf(':') + 1) : file;
-        final String folder = path.contains("/") ? path.substring(0, path.lastIndexOf('/') + 1) : "";
-        return switch (tile.kind()) {
-            case IN_FOLDER -> namespace + ":" + folder + withPng(tile.value());
-            case PATH -> {
-                final String value = tile.value().startsWith(TILDE) ? OPTIFINE_FOLDER
-                        + tile.value().substring(TILDE.length()) : tile.value();
-                yield value.contains(":") ? withPng(value) : DEFAULT_NAMESPACE + ":" + withPng(value);
-            }
-            case SKIP, DEFAULT -> "";
-        };
+        final String named = namedFile(file, tile);
+        // A pack may name a tile the game refuses as a name (a capital, a stray sign): it is drawn from no file.
+        return VALID_ID.matcher(named).matches() ? named : "";
     }
 
     /**
@@ -320,6 +313,22 @@ public final class OptifineRules {
 
     private static String withPng(final String value) {
         return value.endsWith(PNG) ? value : value + PNG;
+    }
+
+    /* The file a tile names, as the pack wrote it. */
+    private static String namedFile(final String file, final OptifineRule.Tile tile) {
+        final String namespace = file.contains(":") ? file.substring(0, file.indexOf(':')) : DEFAULT_NAMESPACE;
+        final String path = file.contains(":") ? file.substring(file.indexOf(':') + 1) : file;
+        final String folder = path.contains("/") ? path.substring(0, path.lastIndexOf('/') + 1) : "";
+        return switch (tile.kind()) {
+            case IN_FOLDER -> namespace + ":" + folder + withPng(tile.value());
+            case PATH -> {
+                final String value = tile.value().startsWith(TILDE) ? OPTIFINE_FOLDER
+                        + tile.value().substring(TILDE.length()) : tile.value();
+                yield value.contains(":") ? withPng(value) : DEFAULT_NAMESPACE + ":" + withPng(value);
+            }
+            case SKIP, DEFAULT -> "";
+        };
     }
 
     private static Map<String, OptifineRule.Method> methods() {

@@ -484,6 +484,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   itself, so it holds wherever the big block is carried whole; on a moving structure it follows where the origin went
   (`BigBlockPartBlockEntity.moved`), and a mod whose own mover turns blocks turns it with
   `BigBlockPartBlockEntity.turn`. Experimental.
+- Tanks a machine spends from, and lists that follow the keys: J's Core's API is at version 56.
+  `FieldFluidTank.inputOnly()` makes a tank pipes fill but never draw from, and the block draws on it with
+  `FieldFluidTank.drainInside`; `ScrollState.showing(index)` scrolls just as far as brings a row into view.
+  Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2197,6 +2201,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A machine gives back none of the liquids it was given: a pipe or a bucket drawing from it takes what it
+  made, where it drew the liquid the machine was waiting to spend first and left the product in its tank.
 - Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - A HUD element in a bottom corner too wide for the room beside the hotbar, on a small window, stands over the

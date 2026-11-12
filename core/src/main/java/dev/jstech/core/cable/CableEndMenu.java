@@ -182,8 +182,14 @@ public final class CableEndMenu extends CoreMenu {
         return player -> {
             final ItemStack carried = getCarried();
             if (carried.isEmpty()) {
-                this.origins[slot] = null;
-                change(end -> end.withFilter(end.filter().without(slot)));
+                change(end -> {
+                    // The rules after the one taken out move up a slot, and what each was made from moves with it.
+                    if (slot < end.filter().rules().size()) {
+                        System.arraycopy(this.origins, slot + 1, this.origins, slot, this.origins.length - slot - 1);
+                        this.origins[this.origins.length - 1] = null;
+                    }
+                    return end.withFilter(end.filter().without(slot));
+                });
                 return;
             }
             final Optional<String> id = EndFilters.idFor(grid(), carried);

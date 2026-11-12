@@ -23,6 +23,8 @@ public final class FieldFluidTank extends FluidTank implements IField {
     private boolean exposed;
     /** Whether pipes may only draw from it: a machine's output, filled by the machine alone. */
     private boolean outputOnly;
+    /** Whether pipes may only fill it: a machine's input, drawn on by the machine alone. */
+    private boolean inputOnly;
 
     FieldFluidTank(final FieldFlags flags, final int capacity) {
         super(capacity);
@@ -35,14 +37,40 @@ public final class FieldFluidTank extends FluidTank implements IField {
         return this;
     }
 
+    /**
+     * Lets pipes fill the tank but never draw from it, as a face that gives out gives what the machine made; the block
+     * draws on it through {@link #drainInside}.
+     */
+    @ApiStatus.Experimental
+    public FieldFluidTank inputOnly() {
+        inputOnly = true;
+        return this;
+    }
+
     /** Fills the tank from inside the block, as a machine puts out what it made, whatever pipes may do. */
     public int fillInside(final FluidStack resource, final FluidAction action) {
         return super.fill(resource, action);
     }
 
+    /** Draws from the tank inside the block, as a machine spends what it was given, whatever pipes may do. */
+    @ApiStatus.Experimental
+    public FluidStack drainInside(final int maxDrain, final FluidAction action) {
+        return super.drain(maxDrain, action);
+    }
+
     @Override
     public int fill(final FluidStack resource, final FluidAction action) {
         return outputOnly ? 0 : super.fill(resource, action);
+    }
+
+    @Override
+    public FluidStack drain(final FluidStack resource, final FluidAction action) {
+        return inputOnly ? FluidStack.EMPTY : super.drain(resource, action);
+    }
+
+    @Override
+    public FluidStack drain(final int maxDrain, final FluidAction action) {
+        return inputOnly ? FluidStack.EMPTY : super.drain(maxDrain, action);
     }
 
     /** Keeps the fluid in the save. */

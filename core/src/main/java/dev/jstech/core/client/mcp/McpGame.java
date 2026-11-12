@@ -122,6 +122,8 @@ public final class McpGame {
         if (!on) {
             final McpServer server = running;
             running = null;
+            // A call still acting lets go of the player's keys, as when every client is cut off.
+            ACTING.forEach(McpCall::takeBack);
             if (server != null) {
                 server.protocol().revokeAll();
                 server.stop();

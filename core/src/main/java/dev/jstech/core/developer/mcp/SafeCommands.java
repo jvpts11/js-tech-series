@@ -33,6 +33,9 @@ public final class SafeCommands {
             "jstech", "neoforge", "forge", "config");
     /** The longest command taken. */
     public static final int LONGEST = 2000;
+    /* What every command block's and command cart's id holds, and the key a block's data stores its command under. */
+    private static final String COMMAND_BLOCK = "command_block";
+    private static final String STORED_COMMAND = "command";
 
     private SafeCommands() {
     }
@@ -50,6 +53,11 @@ public final class SafeCommands {
         }
         if (NEVER.contains(root) || root.contains(":")) {
             return Optional.of(McpWords.COMMAND_NEVER.with(root));
+        }
+        // A command block, or its cart, runs the command it holds in its own turn, past this list.
+        final String lower = plain.toLowerCase(Locale.ROOT);
+        if (lower.contains(COMMAND_BLOCK) || lower.indexOf('{') >= 0 && lower.contains(STORED_COMMAND)) {
+            return Optional.of(McpWords.COMMAND_STORED.text());
         }
         if (!ALLOWED.contains(root)) {
             return Optional.of(McpWords.COMMAND_NOT_LISTED.with(root));

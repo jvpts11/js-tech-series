@@ -2586,6 +2586,7 @@
   "jscore.mcp.why.command_never": "/%s is never among the allowed commands.",
   "jscore.mcp.why.command_not_here": "Commands run only in a test world, or on a server with its developer mode on, for an operator.",
   "jscore.mcp.why.command_not_listed": "/%s is not among the allowed commands.",
+  "jscore.mcp.why.command_stored": "A command block runs a command of its own past the allowed ones: one is never placed or given one.",
   "jscore.mcp.why.file_kind": "Files ending in %s are not read or written: only data, art and sound.",
   "jscore.mcp.why.file_missing": "There is no file %s.",
   "jscore.mcp.why.file_outside": "%s is outside the mods' and the pack's folders.",
