@@ -17,6 +17,7 @@ import dev.jstech.computers.os.install.InstallerFlow;
 import dev.jstech.computers.os.install.InstallerPage;
 import dev.jstech.computers.os.install.InstallerStyle;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.gui.component.Texts;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
@@ -127,7 +128,7 @@ final class InstallerQuince {
                     List.of("Edit", "Utilities", "Window", "Help"), QuinceBars.clock(), -1);
         }
         if (look.classic()) {
-            desktopIcons(g, font, look, flow, set, sh);
+            desktopIcons(g, font, look, flow, set, sw, sh);
         }
         final int[][] buttons = switch (flow.style()) {
             case QUINCE_SYSTEM -> easy(g, font, flow, ticksDone, held);
@@ -398,19 +399,22 @@ final class InstallerQuince {
 
     /** The disks and the Trash down the desktop's right side, the medium being read at the top. */
     private static void desktopIcons(final GuiGraphics g, final Font font, final QuinceLook look,
-                                     final InstallerFlow flow, final String set, final int sh) {
+                                     final InstallerFlow flow, final String set, final int sw, final int sh) {
         final boolean floppy = flow.style() == InstallerStyle.QUINCE_SYSTEM;
         final InstallerPage page = flow.page();
+        // A name stands centred under its icon, so it may be twice as wide as the room from the icon to the edge.
+        final int room = 2 * (sw - ICON_X) - 4;
         if (page != InstallerPage.INSERT && page != InstallerPage.DONE) {
             final String medium = floppy ? GameText.resolve(flow.style().disks().get(Math.max(0,
                     Math.min(flow.disk(), flow.style().disks().size()) - 1))) : GameText.resolve(OS_9_CD);
             icon(g, font, look, SkinSprites.find("device", floppy ? "floppy_drive" : "cd_drive", "disk", set),
-                    20, medium);
+                    20, Texts.clip(font, medium, room));
         }
         final InstallerFlow.Disk disk = flow.target();
-        icon(g, font, look, SkinSprites.find("device", "disk", "disk", set), 62, disk == null ? "" : disk.label());
+        icon(g, font, look, SkinSprites.find("device", "disk", "disk", set), 62,
+                disk == null ? "" : Texts.clip(font, disk.label(), room));
         icon(g, font, look, SkinSprites.find("program", "trash", "generic", set), sh - 42,
-                GameText.resolve(TrashKind.FREEDESKTOP.titleText()));
+                Texts.clip(font, GameText.resolve(TrashKind.FREEDESKTOP.titleText()), room));
     }
 
     /** One icon on the desktop, its name under it on a white ground as the classic systems wrote it. */

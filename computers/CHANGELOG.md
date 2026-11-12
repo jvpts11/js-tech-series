@@ -1098,6 +1098,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   those that do not fit beside a long program name.
 - Quince: quinceOS Utilities breaks each choice's line within its window, where the lines ran past its
   edge, and draws a disk or the fruit on each choice's tile, as designed.
+- Quince: the classic installers cut a long disk name on their desktop short of the glass's edge, where
+  it ran off the glass.
 - Settings lists a computer's programs in the order they were installed, where the order changed from one
   time to the next, and its Programs page scrolls when there are more programs than the window holds, where the
   last ones ran off the window.

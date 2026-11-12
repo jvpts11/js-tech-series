@@ -18,6 +18,11 @@ import dev.jstech.computers.client.CrashScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.operation.payload.firmware.FirmwarePayloads;
+import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.install.InstallerPage;
+import dev.jstech.computers.os.media.InstallerStacks;
+import dev.jstech.computers.os.media.MediaReaderBlockEntity;
 import dev.jstech.computers.os.crash.CrashCause;
 import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -68,6 +73,9 @@ public final class QuinceClientTests {
     /* The network behind the machine: the Mainframe running the Mirror, a router, and the cables to its back. */
     private static final BlockPos STORE_ROUTER = MACHINE.south(2);
     private static final BlockPos STORE_MAINFRAME = MACHINE.south(4);
+    /* The floppy drive behind the Russet, and how long the first floppy's copy may take. */
+    private static final BlockPos FLOPPY_DRIVE = MACHINE.south();
+    private static final int COPY_WAIT = 4800;
     /* The Quince Mainframe and the monitor beside it. */
     private static final BlockPos QUINCE_MAINFRAME = new BlockPos(3, 2, 2);
     private static final BlockPos SERVER_MONITOR = QUINCE_MAINFRAME.east();
@@ -217,6 +225,47 @@ public final class QuinceClientTests {
                 });
         opened(steps, ctx, STORE);
         steps.thenScreenshot(SETTLE * 20, "flat-store");
+    }
+
+    /*
+     * The Quince System installs from its three floppies: once the first is copied the installer asks for the second,
+     * naming it, and says the first has come out of the slot.
+     */
+    @ClientTest(timeoutTicks = 6000)
+    public static void quinceSystem_asksForItsSecondFloppy(final ClientTestContext ctx) {
+        final List<ItemStack> floppies = InstallerStacks.disksOf(OsRegistry.getOs(
+                ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "quince_system")));
+        ctx.thenBuild(0, world -> {
+                    world.setBlock(MACHINE, ComputingModule.RUSSET_128K.get().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, Direction.NORTH));
+                    build(world.blockEntity(MACHINE, PersonalComputerBlockEntity.class),
+                            QuinceItems.BOARD_RUSSET_128K.get());
+                    world.setBlock(FLOPPY_DRIVE, ComputingModule.FLOPPY_DRIVE.get().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+                    world.blockEntity(FLOPPY_DRIVE, MediaReaderBlockEntity.class).mediaSlot()
+                            .setStackInSlot(0, floppies.getFirst().copy());
+                    final PersonalComputerBlockEntity machine = world.blockEntity(MACHINE,
+                            PersonalComputerBlockEntity.class);
+                    machine.console().settings().setGuiScale(DESIGNED_SCALE);
+                    machine.togglePower();
+                })
+                .thenWaitUntilServer(level -> ctx.abs(MACHINE).equals(((MediaReaderBlockEntity) level
+                                .getBlockEntity(ctx.abs(FLOPPY_DRIVE))).ownerPos()), WINDOW_WAIT,
+                        "the drive to link to the Russet", level -> "unlinked")
+                .thenServer(SETTLE, level -> {
+                    final PersonalComputerBlockEntity machine = machine(ctx, level);
+                    ctx.assertTrue(FirmwarePayloads.installOsFromReader(level, machine, -1L, -1),
+                            "the installer opens");
+                    machine.installer().next();
+                })
+                .thenTeleport(SETTLE, PLAYER, Direction.SOUTH)
+                .thenRightClickFront(SETTLE, MACHINE, ON_THE_GLASS_X, ON_THE_GLASS_Y)
+                .thenWaitUntilServer(level -> machine(ctx, level).installer() != null
+                                && machine(ctx, level).installer().page() == InstallerPage.INSERT, COPY_WAIT,
+                        "the installer to ask for the second floppy", level -> "on " + (machine(ctx, level)
+                                .installer() == null ? "nothing" : machine(ctx, level).installer().page()))
+                .then(SETTLE * 4, () -> ctx.mc().getToasts().clear())
+                .thenScreenshot(SETTLE * 2, "qs-insert");
     }
 
     /*

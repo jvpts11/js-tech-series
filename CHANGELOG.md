@@ -4249,6 +4249,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   those that do not fit beside a long program name.
 - (Computers) Quince: quinceOS Utilities breaks each choice's line within its window, where the lines ran past its
   edge, and draws a disk or the fruit on each choice's tile, as designed.
+- (Computers) Quince: the classic installers cut a long disk name on their desktop short of the glass's edge, where
+  it ran off the glass.
 - (Computers) Settings lists a computer's programs in the order they were installed, where the order changed from one
   time to the next, and its Programs page scrolls when there are more programs than the window holds, where the
   last ones ran off the window.
