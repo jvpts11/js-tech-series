@@ -12,15 +12,20 @@ import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.QuinceItems;
 import dev.jstech.computers.blockentity.ComputerHardwareLayout;
 import dev.jstech.computers.blockentity.PersonalComputerBlockEntity;
+import dev.jstech.computers.client.CrashScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
 import dev.jstech.computers.client.os.DesktopWindow;
 import dev.jstech.computers.hardware.MotherboardSpec;
+import dev.jstech.computers.os.crash.CrashCause;
+import dev.jstech.computers.os.crash.CrashPages;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.computers.EraParts;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -52,6 +57,12 @@ public final class QuinceClientTests {
     private static final String CALCULATOR = "jsc:calculator";
     private static final String QTUNES = "jsc:qtunes";
     private static final String EXPEDITION = "jsc:expedition";
+    private static final String PREVIEW = "jsc:preview";
+    private static final String FORCE_QUIT = "quince_memory";
+    /* What was running when a system went down, and the part pulled from the Russet 128K. */
+    private static final String EXPEDITION_NAME = "Expedition";
+    private static final int EXPEDITION_PID = 12;
+    private static final String PULLED_PART = "memory";
     private static final String THIS_COMPUTER = "jsc:this_pc";
     /* The bar's titles: the fruit's menu first, then the File menu on the classic systems. */
     private static final int FRUIT = 0;
@@ -112,6 +123,52 @@ public final class QuinceClientTests {
                 "quince_os_9"), ctx, QTUNES, EXPEDITION, "os9");
     }
 
+    /* The Quince System's bomb, a part pulled from the running machine, waiting for Restart. */
+    @ClientTest(timeoutTicks = 3000)
+    public static void quinceSystem_bombsAndWaitsForRestart(final ClientTestContext ctx) {
+        crashed(atDesktop(ctx, ComputingModule.RUSSET_128K.get(), QuinceItems.BOARD_RUSSET_128K.get(),
+                "quince_system"), ctx, CrashCause.HARDWARE, CrashPages.Moment.hardware(PULLED_PART), "qs-bomb");
+    }
+
+    /* Quince OS 9's bomb, naming Expedition, which was running when it went down. */
+    @ClientTest(timeoutTicks = 3000)
+    public static void quinceOs9_bombsNamingTheProgram(final ClientTestContext ctx) {
+        final ClientTestContext steps = atDesktop(ctx, ComputingModule.QRUSSET_G3.getFirst().get(),
+                QuinceItems.BOARD_QRUSSET_G3.get(), "quince_os_9");
+        opened(steps, ctx, EXPEDITION);
+        crashed(steps, ctx, CrashCause.MEMORY, CrashPages.Moment.memory(EXPEDITION_NAME, EXPEDITION_PID, List.of()),
+                "os9-bomb");
+    }
+
+    /* Quince OS X falls to the grey page in its four languages. */
+    @ClientTest(timeoutTicks = 3000)
+    public static void quinceOsX_fallsToTheGreyPage(final ClientTestContext ctx) {
+        crashed(atDesktop(ctx, ComputingModule.QRUSSET_WHITE.get(), QuinceItems.BOARD_QRUSSET_WHITE.get(),
+                "quince_os_x"), ctx, CrashCause.MEMORY, CrashPages.Moment.memory(EXPEDITION_NAME, EXPEDITION_PID,
+                List.of()), "osx-restart");
+    }
+
+    /*
+     * Quince OS X out of application memory with Expedition, qTunes, Preview and TextPad open: it ends nothing and asks
+     * in Force Quit Applications what to quit, the programs paused until the player chooses.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void quinceOsX_asksWhatToForceQuit(final ClientTestContext ctx) {
+        final ClientTestContext steps = atDesktop(ctx, ComputingModule.QRUSSET_WHITE.get(),
+                QuinceItems.BOARD_QRUSSET_WHITE.get(), "quince_os_x");
+        for (final String program : List.of(TEXTPAD, PREVIEW, QTUNES, EXPEDITION)) {
+            opened(steps, ctx, program);
+        }
+        steps.thenServer(SETTLE, level -> {
+                    final PersonalComputerBlockEntity machine = machine(ctx, level);
+                    ctx.assertTrue(!machine.memoryShort(EXPEDITION_NAME, machine.ramLedger().freeMb() + 1),
+                            "a program asking for more than is free gets no room");
+                })
+                .thenWaitUntil(() -> desktop(ctx).windowFor(FORCE_QUIT) != null, WINDOW_WAIT,
+                        "Force Quit Applications")
+                .thenScreenshot(SETTLE * 4, "osx-memory");
+    }
+
     /*
      * Opens the two programs, the second in front, then About This Computer from the fruit's menu, and the Get Info of
      * the program in front from the File menu, each shot for its mock.
@@ -135,6 +192,26 @@ public final class QuinceClientTests {
                 .thenWaitUntil(() -> desktop(ctx).quinceItemPoint(GET_INFO) != null, WINDOW_WAIT, "the File menu")
                 .then(SETTLE, () -> ctx.clickDesktop(desktop(ctx).quinceItemPoint(GET_INFO)))
                 .thenScreenshot(SETTLE * 4, label + "-getinfo");
+    }
+
+    /* Opens {@code program} on the desktop and waits for its window. */
+    private static void opened(final ClientTestContext steps, final ClientTestContext ctx, final String program) {
+        steps.then(SETTLE, () -> DesktopScreen.requestOpen(program))
+                .thenWaitUntil(() -> desktop(ctx).windowFor(program) != null, WINDOW_WAIT, program + " to open");
+    }
+
+    /* Brings the running machine down for that cause and shoots the page it falls to. */
+    private static void crashed(final ClientTestContext steps, final ClientTestContext ctx, final CrashCause cause,
+                                final CrashPages.Moment moment, final String label) {
+        steps.thenServer(SETTLE, level -> ctx.assertTrue(machine(ctx, level).crash(cause, moment),
+                        "the running system goes down"))
+                .thenAwaitScreen(CrashScreen.class, WINDOW_WAIT)
+                .thenAssert(SETTLE * 10, () -> ctx.mc().screen instanceof CrashScreen, "the page stands on the glass")
+                .thenScreenshot(0, label);
+    }
+
+    private static PersonalComputerBlockEntity machine(final ClientTestContext ctx, final ServerLevel level) {
+        return (PersonalComputerBlockEntity) level.getBlockEntity(ctx.abs(MACHINE));
     }
 
     private static DesktopScreen desktop(final ClientTestContext ctx) {

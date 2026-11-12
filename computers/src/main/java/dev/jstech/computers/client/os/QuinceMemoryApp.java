@@ -79,12 +79,12 @@ final class QuinceMemoryApp implements IDesktopApp {
         final QuinceLook.Colours c = look.colours();
         QuinceArt.sprite(g, QuinceArt.CAUTION_YELLOW, x + 6, y + 6, c.ink());
         int ty = y + 4;
-        for (final String line : wrap(font, GameText.resolve(RUN_OUT), width - 40)) {
+        for (final String line : wrap(font, GameText.resolve(RUN_OUT), width - 40, true)) {
             Draw.text(g, font, Component.literal(line).withStyle(ChatFormatting.BOLD), x + 28, ty, c.ink());
             ty += 10;
         }
         ty += 4;
-        for (final String line : wrap(font, GameText.resolve(QUIT_SOME), width - 36)) {
+        for (final String line : wrap(font, GameText.resolve(QUIT_SOME), width - 36, false)) {
             Draw.text(g, font, line, x + 28, ty, c.ink());
             ty += 10;
         }
@@ -103,8 +103,10 @@ final class QuinceMemoryApp implements IDesktopApp {
                 g.fill(this.listX + 1, ry - 2, this.listX + this.listW - 1, ry + 11, c.select());
             }
             final int ink = picked ? c.selectInk() : c.ink();
-            Draw.text(g, font, one.name(), this.listX + 6, ry, ink);
-            Draw.text(g, font, GameText.resolve(PAUSED), this.listX + 10 + font.width(one.name()), ry,
+            // The machine names each by its window; the list writes the program's name, as the desktop does.
+            final String name = this.desktop.nameOf(one.name());
+            Draw.text(g, font, name, this.listX + 6, ry, ink);
+            Draw.text(g, font, GameText.resolve(PAUSED), this.listX + 10 + font.width(name), ry,
                     picked ? c.selectInk() : QuinceArt.colours().red());
             final String size = one.mb() >= 1024 ? String.format(Locale.ROOT, "%.2f GB", one.mb() / 1024.0)
                     : one.mb() + " MB";
@@ -139,12 +141,15 @@ final class QuinceMemoryApp implements IDesktopApp {
         }
     }
 
-    private static List<String> wrap(final Font font, final String text, final int width) {
+    /* The text in lines {@code width} wide, measured as it is drawn: in bold, which is wider, when {@code bold}. */
+    private static List<String> wrap(final Font font, final String text, final int width, final boolean bold) {
         final List<String> lines = new ArrayList<>();
         String line = "";
         for (final String word : text.split(" ")) {
             final String probe = line.isEmpty() ? word : line + " " + word;
-            if (font.width(probe) <= width || line.isEmpty()) {
+            final int probeW = bold ? font.width(Component.literal(probe).withStyle(ChatFormatting.BOLD))
+                    : font.width(probe);
+            if (probeW <= width || line.isEmpty()) {
                 line = probe;
             } else {
                 lines.add(line);

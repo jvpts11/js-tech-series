@@ -1088,6 +1088,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   where they opened empty; About This Computer names each program as the desktop does (TextPad, the Seeker), cuts a
   long name short of its size, stands tall enough to keep the line under the bars in sight, and credits Quince
   Computer, Inc.
+- Quince: the bomb of the Quince System and Quince OS 9 and the grey page of Quince OS X and quinceOS
+  show over the desktop the system went down on, where they were drawn behind it and the player saw only the
+  stilled desktop with no Restart to press; Force Quit Applications names each program as the desktop does, where it
+  wrote the window's key, and breaks its bold first line within the window.
 - Settings lists a computer's programs in the order they were installed, where the order changed from one
   time to the next, and its Programs page scrolls when there are more programs than the window holds, where the
   last ones ran off the window.

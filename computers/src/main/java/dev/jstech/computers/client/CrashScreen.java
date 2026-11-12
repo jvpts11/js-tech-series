@@ -24,6 +24,7 @@ import dev.jstech.computers.os.crash.CrashStyle;
 import dev.jstech.computers.os.crash.Debugger;
 import dev.jstech.computers.os.crash.QrCode;
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.gui.layout.DesktopZ;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
@@ -76,6 +77,11 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
 
     private static final int W = MonitorGlass.WIDTH;
     private static final int H = MonitorGlass.HEIGHT;
+    /*
+     * How far forward a Quince page is drawn: over everything the stilled desktop under it drew, its windows, its
+     * popups and the items in them, which stand forward of the screen's own ground.
+     */
+    private static final int ABOVE_DESKTOP = DesktopZ.POPUP + DesktopZ.ITEM_DEPTH;
     /** Drawn for this long when the machine did not say, which only a stale packet leaves. */
     private static final int FALLBACK_TICKS = 60;
     /**
@@ -291,7 +297,7 @@ public final class CrashScreen extends AbstractComputerScreen<MonitorSessionMenu
             g.fill(x, y, x + W, y + H, QuincePages.ground(this.page.style()));
         }
         g.pose().pushPose();
-        g.pose().translate(x, y, 0.0F);
+        g.pose().translate(x, y, ABOVE_DESKTOP);
         this.restartButton = QuincePages.draw(g, font, this.page, W, H);
         g.pose().popPose();
     }
