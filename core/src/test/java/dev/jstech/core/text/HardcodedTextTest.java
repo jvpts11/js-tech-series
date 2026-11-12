@@ -238,7 +238,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "teracoin/WalletFiles.java", 1, FILES),
             data(COMPUTERS + "os/boot/SystemIntegrity.java", 1, FILES),
             data(COMPUTERS + "os/install/InstallerStyle.java", 1, FILES),
-            data(COMPUTERS + "client/os/QuinceArt.java", 9, "small pictures drawn in characters"),
+            data(COMPUTERS + "client/os/QuinceArt.java", 10, "small pictures drawn in characters"),
             data(COMPUTERS + "wireless/WirelessStandard.java", 2,
                     "the names of the Wi-Fi standards, which are names in every language"),
             data(COMPUTERS + "os/edit/NanoWords.java", 1, "an editor's name and version on its title row"),
