@@ -8252,6 +8252,7 @@
   "jsc.scanner.state.not_linked": "SEM COMPUTADOR",
   "jsc.scanner.state.not_saved": "NÃO SALVO",
   "jsc.scanner.state.nothing_on_glass": "VIDRO VAZIO",
+  "jsc.scanner.state.page": "PÁGINA %s DE %s",
   "jsc.scanner.state.ready": "PRONTO",
   "jsc.scanner.state.scanning": "ESCANEANDO",
   "jsc.scanner.stop": "PARAR",

@@ -49,6 +49,8 @@ final class ScannerTexts {
     static final TextKey MAP_NUMBER = TextKey.of("jsc.scanner.map_number", "Map #%s");
     static final TextKey STATE_READY = TextKey.of("jsc.scanner.state.ready", "READY");
     static final TextKey STATE_SCANNING = TextKey.of("jsc.scanner.state.scanning", "SCANNING");
+    /** The state while a scan of many pages reads one of them: the page and how many there are. */
+    static final TextKey STATE_PAGE = TextKey.of("jsc.scanner.state.page", "PAGE %s OF %s");
     static final TextKey STATE_NOTHING = TextKey.of("jsc.scanner.state.nothing_on_glass", "GLASS EMPTY");
     static final TextKey STATE_NOT_LINKED = TextKey.of("jsc.scanner.state.not_linked", "NO COMPUTER");
     static final TextKey STATE_NO_SYSTEM = TextKey.of("jsc.scanner.state.no_system", "NO SYSTEM");

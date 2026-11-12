@@ -1,9 +1,14 @@
 {
-  "bar": "#FFFFFFF0",
-  "enchanted": "#FFC9A2FF",
+  "bar": "#FFFFFFE6",
+  "enchantedInk": "#FF6A3F86",
   "glow": "#FF96C8FF",
   "ink": "#FF3A3428",
   "land": "#FF6AA04A",
+  "mapPaper": "#FFD8C890",
+  "marker": "#FFD03A2A",
   "paper": "#FFE9DFC4",
+  "sheet": "#FFF4F4F0",
+  "sheetInk": "#FF3A3F48",
+  "shimmer": "#FFC9A2FF",
   "water": "#FF4A7AC8"
 }

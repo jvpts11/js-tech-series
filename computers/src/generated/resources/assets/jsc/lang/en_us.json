@@ -9613,6 +9613,7 @@
   "jsc.scanner.state.not_linked": "NO COMPUTER",
   "jsc.scanner.state.not_saved": "NOT SAVED",
   "jsc.scanner.state.nothing_on_glass": "GLASS EMPTY",
+  "jsc.scanner.state.page": "PAGE %s OF %s",
   "jsc.scanner.state.ready": "READY",
   "jsc.scanner.state.scanning": "SCANNING",
   "jsc.scanner.stop": "STOP",

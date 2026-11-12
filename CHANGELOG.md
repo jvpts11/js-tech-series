@@ -4185,6 +4185,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   squeezed to a letter, the buttons stand under the jobs, and the tables take the columns of its design.
 - (Computers) The Messenger's Kept conversations window lists its conversations in rows as tall as its design draws
   them, with room round its words and buttons, where the rows were squeezed together.
+- (Computers) A scanner's window shows the page under its glass as it is read, the light bar running down each page,
+  where it filled the preview over the whole scan and showed nothing of a map or an enchanted book until it was done;
+  a printed sheet, a map and an enchanted book each have their own paper and ink. Its header names the scanner in its
+  era's accent and says which page it reads ("PAGE 3 OF 12"), what it makes and its pace sit in readouts, Scan stays
+  lit while it reads, a map goes by its number, and the window takes the places of its design.
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
