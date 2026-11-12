@@ -63,6 +63,10 @@ public final class PlacesClientTests {
     private static final int UP = 3;
     private static final int TOWN_UP = 36;
 
+    /* The time a late map is asked that it takes the markers, and how long that may take: a second a refresh. */
+    private static final int READY_AT = 3;
+    private static final int MAP_WAIT = 200;
+
     private PlacesClientTests() {
     }
 
@@ -155,6 +159,15 @@ public final class PlacesClientTests {
                 .then(CHANGES, () -> ctx.lookAt(Vec3.atCenterOf(middle[0])))
                 .thenAwaitLandDrawn(ARRIVE)
                 .thenScreenshot(SHOOT, "town_grown_two_days_on");
+    }
+
+    /* A map not ready for the markers, as a minimap whose world opens late, is handed them again till it takes them. */
+    @ClientTest(timeoutTicks = 400)
+    public static void markers_reachAMapThatWasNotReadyAtFirst(final ClientTestContext ctx) {
+        final int[] asked = {0};
+        ctx.then(0, () -> ClientMarkers.add((level, markers) -> ++asked[0] >= READY_AT))
+                .thenWaitUntil(() -> asked[0] >= READY_AT, MAP_WAIT, "the map to be handed the markers again until "
+                        + "it takes them", () -> "asked " + asked[0] + " times");
     }
 
     @ClientTest(timeoutTicks = 1200)

@@ -25,6 +25,8 @@ public final class BeltLane<T> {
     private final double gap;
 
     private static final double END = 1.0;
+    /* How far a place may be off a gap by rounding alone: far below anything a belt carries. */
+    private static final double ROUNDING = 1.0e-9;
 
     /** A lane whose items keep {@code gap} of a block between them: a quarter for four to a block. */
     public BeltLane(final double gap) {
@@ -59,7 +61,8 @@ public final class BeltLane<T> {
      */
     public boolean roomAt(final double at) {
         for (final Entry<T> entry : this.entries) {
-            if (Math.abs(entry.at() - at) < this.gap) {
+            // A gap such as a third is no exact number: one stacked a gap behind stands a hair less than it away.
+            if (Math.abs(entry.at() - at) < this.gap - ROUNDING) {
                 return false;
             }
         }

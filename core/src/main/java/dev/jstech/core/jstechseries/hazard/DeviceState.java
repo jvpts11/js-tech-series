@@ -12,6 +12,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.ResourceLocation;
 
 /**
  * How a hazard device is set, kept on the item: the Geiger counter's range and whether it clicks, the dosimeter's
@@ -28,6 +29,8 @@ public record DeviceState(int range, boolean sound, boolean light, String shown)
     public static final DeviceState DEFAULT = new DeviceState(0, true, false, "");
     /** How many ranges the Geiger counter has: as printed, ten times and a hundred times. */
     public static final int RANGES = 3;
+    /* The longest a hazard's id shown may be. */
+    private static final int MOST_SHOWN = 128;
 
     public static final Codec<DeviceState> CODEC = RecordCodecBuilder.create(state -> state.group(
             Codec.intRange(0, RANGES - 1).optionalFieldOf("range", 0).forGetter(DeviceState::range),
@@ -40,11 +43,16 @@ public record DeviceState(int range, boolean sound, boolean light, String shown)
             ByteBufCodecs.VAR_INT, DeviceState::range,
             ByteBufCodecs.BOOL, DeviceState::sound,
             ByteBufCodecs.BOOL, DeviceState::light,
-            ByteBufCodecs.STRING_UTF8, DeviceState::shown,
+            ByteBufCodecs.stringUtf8(MOST_SHOWN), DeviceState::shown,
             DeviceState::new);
 
     public DeviceState {
         range = Math.floorMod(range, RANGES);
+        // The hazard shown is one's id or none: anything else a doctored game sends is none, never kept on the item.
+        if (shown == null || shown.length() > MOST_SHOWN
+                || !shown.isEmpty() && ResourceLocation.tryParse(shown) == null) {
+            shown = "";
+        }
     }
 
     /** The same, its RANGE button pressed: the next range, back to the first after the last. */

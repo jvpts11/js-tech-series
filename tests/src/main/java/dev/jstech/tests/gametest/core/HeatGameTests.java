@@ -7,6 +7,8 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.JsonOps;
 import dev.jstech.core.heat.HeatBody;
 import dev.jstech.core.heat.HeatClimate;
 import dev.jstech.core.heat.LevelHeat;
@@ -17,12 +19,14 @@ import dev.jstech.core.jstechseries.SeriesMaterials;
 import dev.jstech.core.jstechseries.SharedCatalogue;
 import dev.jstech.core.material.MaterialKind;
 import dev.jstech.core.material.MaterialLiquids;
+import dev.jstech.core.material.MaterialProperty;
 import dev.jstech.core.matter.MatterStack;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestCableTypes;
 import dev.jstech.tests.TestFluids;
 import dev.jstech.tests.TestHeat;
 import dev.jstech.tests.testkit.TestCables;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -79,6 +83,24 @@ public final class HeatGameTests {
                 && Math.abs(nitrogen.molarMass() - 0.028_014) < 1e-9, "liquid nitrogen's own data: " + nitrogen);
         helper.assertTrue(Double.isNaN(Thermal.of(SharedCatalogue.GASOLINE, false).heatOfBoiling()),
                 "and a liquid that says nothing of boiling has no heat of boiling");
+        helper.succeed();
+    }
+
+    /* A value no material can hold is an error in the file that gives it, never one in the server's tick. */
+    @GameTest(template = ARENA)
+    public static void materials_refuseInTheirFileWhatNoMaterialHolds(final GameTestHelper helper) {
+        for (final MaterialProperty<Double> above : List.of(Thermal.DENSITY, Thermal.SPECIFIC_HEAT, Thermal.MOLAR_MASS,
+                Thermal.LIQUID_DENSITY)) {
+            helper.assertTrue(above.codec().parse(JsonOps.INSTANCE, new JsonPrimitive(0)).isError(),
+                    above.id() + " of nothing is refused");
+        }
+        for (final MaterialProperty<Double> noLess : List.of(Thermal.CONDUCTIVITY, Thermal.MELTING, Thermal.BOILING,
+                Thermal.LATENT_HEAT)) {
+            helper.assertTrue(noLess.codec().parse(JsonOps.INSTANCE, new JsonPrimitive(-1)).isError(),
+                    noLess.id() + " below nothing is refused");
+            helper.assertTrue(noLess.codec().parse(JsonOps.INSTANCE, new JsonPrimitive(0)).isSuccess(),
+                    noLess.id() + " of nothing is a value");
+        }
         helper.succeed();
     }
 

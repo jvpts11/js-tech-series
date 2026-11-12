@@ -112,6 +112,18 @@ class MarkdownBlocksTest {
     }
 
     @Test
+    void parse_saysAPictureSizedPastAnyNumberAsAProblemRatherThanThrow() {
+        final MarkdownBlocks.Parsed parsed = parse("""
+                ![Too big](mymod:gui/guide/door "99999999999x20")
+
+                ![Too many frames](mymod:gui/guide/door "64x48 frames=99999999999 ticks=99999999999")
+                """);
+        assertEquals(1, parsed.problems().size(), "the picture of no size it can be is said: " + parsed.problems());
+        assertEquals(new GuideBlock.Picture("mymod:gui/guide/door", "", "{}", 64, 48, "Too many frames", 1, 1),
+                parsed.blocks().getFirst(), "counts past any number are left at one");
+    }
+
+    @Test
     void parse_readsAListingAndTheFencesOfTheManualsOwnBlocks() {
         final List<GuideBlock> blocks = parse("""
                 ```java Kiln.java

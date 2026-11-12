@@ -33,6 +33,8 @@ public final class ClientMarkers {
     private static final int EVERY = 20;
     private static volatile List<Marker> shown = List.of();
     private static volatile Object shownIn;
+    /* Whether a map was not ready for the markers last handed out, which are then handed to the maps again. */
+    private static volatile boolean undelivered;
     private static int ticks;
 
     private ClientMarkers() {
@@ -53,8 +55,8 @@ public final class ClientMarkers {
     public static void add(final IMapAdapter adapter) {
         ADAPTERS.add(Objects.requireNonNull(adapter, "adapter"));
         final ClientLevel level = Minecraft.getInstance().level;
-        if (level != null) {
-            adapter.show(level, shown);
+        if (level != null && !adapter.show(level, shown)) {
+            undelivered = true;
         }
     }
 
@@ -80,13 +82,16 @@ public final class ClientMarkers {
             return;
         }
         final List<Marker> now = MapMarkers.sentIn(level);
-        if (now.equals(shown) && level.dimension().equals(shownIn)) {
+        if (now.equals(shown) && level.dimension().equals(shownIn) && !undelivered) {
             return;
         }
         shown = now;
         shownIn = level.dimension();
+        undelivered = false;
         for (final IMapAdapter adapter : ADAPTERS) {
-            adapter.show(level, now);
+            if (!adapter.show(level, now)) {
+                undelivered = true;
+            }
         }
         FtbChunksIntegration.refresh();
     }

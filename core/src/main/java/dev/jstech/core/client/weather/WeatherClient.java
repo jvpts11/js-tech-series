@@ -11,8 +11,10 @@ import dev.jstech.core.JsCore;
 import dev.jstech.core.client.effect.ClientEffects;
 import dev.jstech.core.weather.WeatherKind;
 import dev.jstech.core.weather.Weathers;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -45,7 +47,8 @@ public final class WeatherClient {
     private static final float THICKEST = 0.95F;
     private static final float FOG_STARTS = 0.05F;
     private static final Vec3 DOWN = new Vec3(0, -1, 0);
-    private static final Set<Held> HELD = new HashSet<>();
+    /* Each weather's effect held, by the weather it stands for: the engine knows a holder by itself, not its likes. */
+    private static final Map<Held, Held> HELD = new HashMap<>();
 
     private WeatherClient() {
     }
@@ -88,7 +91,7 @@ public final class WeatherClient {
                 }
             }
         }
-        for (final Held gone : Set.copyOf(HELD)) {
+        for (final Held gone : List.copyOf(HELD.values())) {
             if (!wanted.contains(gone)) {
                 ClientEffects.release(gone);
                 HELD.remove(gone);
@@ -97,11 +100,20 @@ public final class WeatherClient {
         if (player == null) {
             return;
         }
-        for (final Held held : wanted) {
-            if (HELD.add(held)) {
+        for (final Held want : wanted) {
+            // The one held stands for its weather, and is held again when a new world took its effect away.
+            final Held held = HELD.computeIfAbsent(want, key -> key);
+            if (!ClientEffects.holds(held)) {
                 final double over = held.effect().equals(DUST) ? BLOWS_AT : FALLS_FROM;
-                ClientEffects.hold(held, held.effect(), () -> player.position().add(0, over, 0), () -> DOWN,
-                        held.colour());
+                final Vec3[] last = {player.position()};
+                ClientEffects.hold(held, held.effect(), () -> {
+                    // Over whoever plays now: a player is made anew on respawning.
+                    final LocalPlayer now = Minecraft.getInstance().player;
+                    if (now != null) {
+                        last[0] = now.position();
+                    }
+                    return last[0].add(0, over, 0);
+                }, () -> DOWN, held.colour());
             }
         }
     }

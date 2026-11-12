@@ -24,6 +24,9 @@ import java.util.Locale;
  */
 public final class ScreenCodecs {
 
+    /* The widest a grid's column may be given, in pixels. */
+    private static final int MOST_PIXELS = 4096;
+
     /** Room around a box: {@code 4}, {@code [2, 6]} (above and below, left and right) or {@code [1, 2, 3, 4]}. */
     public static final Codec<Insets> INSETS = Codec.either(Codec.intRange(0, 256), Codec.intRange(0, 256).listOf())
             .comapFlatMap(ScreenCodecs::insets, insets -> Either.right(List.of(insets.top(), insets.right(),
@@ -36,7 +39,7 @@ public final class ScreenCodecs {
     public static final Codec<Justify> JUSTIFY = named(Justify.class);
 
     /** A grid column: {@code "auto"}, {@code "1fr"}, {@code "18"} or {@code 18}. */
-    public static final Codec<Track> TRACK = Codec.either(Codec.intRange(0, 4096), Codec.STRING)
+    public static final Codec<Track> TRACK = Codec.either(Codec.intRange(0, MOST_PIXELS), Codec.STRING)
             .comapFlatMap(either -> either.map(pixels -> DataResult.success(Track.fixed(pixels)), ScreenCodecs::track),
                     track -> switch (track.kind()) {
                         case FIXED -> Either.left(track.value());
@@ -81,7 +84,12 @@ public final class ScreenCodecs {
             if (word.endsWith("fr")) {
                 return DataResult.success(Track.fraction(Integer.parseInt(word.substring(0, word.length() - 2))));
             }
-            return DataResult.success(Track.fixed(Integer.parseInt(word)));
+            final int pixels = Integer.parseInt(word);
+            // A width as text holds to what one written as a number does: none below nothing, none past the most.
+            if (pixels < 0 || pixels > MOST_PIXELS) {
+                return DataResult.error(() -> "\"" + text + "\" is no grid column's width: from 0 to " + MOST_PIXELS);
+            }
+            return DataResult.success(Track.fixed(pixels));
         } catch (final NumberFormatException notANumber) {
             return DataResult.error(() -> "\"" + text + "\" is no grid column: write auto, 1fr or a width");
         }

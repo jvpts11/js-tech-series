@@ -30,6 +30,19 @@ class BeltLaneTest {
     }
 
     @Test
+    void put_takesAnItemAGapBehindAnotherWhereTheGapIsAThird() {
+        // A third is no exact number: an item stacked a gap behind another stands a hair less than a gap from it.
+        final BeltLane<String> lane = new BeltLane<>(1.0 / 3);
+        lane.put("first", 1.0);
+        lane.put("second", 0.0);
+        lane.advance(1.0, 1.0, NONE_HELD);
+        final double behind = lane.entries().get(1).at();
+        final BeltLane<String> read = new BeltLane<>(1.0 / 3);
+        assertTrue(read.put("first", 1.0) && read.put("second", behind),
+                "both come back on as they stood, as a lane read from the save puts them: " + behind);
+    }
+
+    @Test
     void advance_keepsTheGapBehindAStoppedItem() {
         final BeltLane<String> lane = new BeltLane<>(QUARTER);
         lane.put("first", 1.0);

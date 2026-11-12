@@ -81,6 +81,10 @@ public final class StylePainter {
 
     private static void tile(final GuiGraphics g, final ResourceLocation texture, final int tw, final int th,
                              final int x, final int y, final int w, final int h) {
+        // A tile of no size, built in code as the file refuses one, would be drawn for ever.
+        if (tw <= 0 || th <= 0) {
+            return;
+        }
         for (int ty = 0; ty < h; ty += th) {
             final int rowH = Math.min(th, h - ty);
             for (int tx = 0; tx < w; tx += tw) {

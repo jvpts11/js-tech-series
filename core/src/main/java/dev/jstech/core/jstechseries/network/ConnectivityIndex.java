@@ -14,6 +14,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -304,8 +305,21 @@ public final class ConnectivityIndex {
         }
         grid.forgetBridge(device);
         rootToUuid.clear();
+        /*
+         * A part the device alone joined to its network's owner loses that network, as one a cable's removal cuts away
+         * does: its own owner, if it has one, lays its own network on it again. Each part is asked once.
+         */
+        final Set<Integer> cut = new HashSet<>();
         for (final Map.Entry<Long, NetworkUuid> entry : uuidByPos.entrySet()) {
-            rootToUuid.put(grid.rootOf(entry.getKey()), entry.getValue());
+            final int root = grid.rootOf(entry.getKey());
+            if (rootToUuid.containsKey(root) || cut.contains(root)) {
+                continue;
+            }
+            if (reachesItsOwner(entry.getKey(), entry.getValue())) {
+                rootToUuid.put(root, entry.getValue());
+            } else {
+                cut.add(root);
+            }
         }
     }
 

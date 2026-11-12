@@ -44,6 +44,12 @@ public record Thermal(double density, double specificHeat, double conductivity, 
 
     /* A thousand: joules in a kilojoule, grams in a kilogram, litres in a cubic metre. */
     private static final double KILO = 1_000.0;
+    /*
+     * The values a material's file may give, as a material holds them: a density, a heat or a mass above nothing, a
+     * conductivity, a melting or boiling point or a heat of boiling no less than nothing.
+     */
+    private static final Codec<Double> ABOVE_NOTHING = Codec.doubleRange(Double.MIN_VALUE, Double.MAX_VALUE);
+    private static final Codec<Double> NO_LESS_THAN_NOTHING = Codec.doubleRange(0.0, Double.MAX_VALUE);
 
     public static final TextKey DENSITY_NAME = TextKey.of("jscore.material_property.density", "Density");
     public static final TextKey SPECIFIC_HEAT_NAME = TextKey.of("jscore.material_property.specific_heat",
@@ -70,39 +76,39 @@ public record Thermal(double density, double specificHeat, double conductivity, 
             "%s g/mol");
 
     /** How many kilograms a cubic metre of it weighs. */
-    public static final MaterialProperty<Double> DENSITY = MaterialProperties.property(id("density"), Codec.DOUBLE,
+    public static final MaterialProperty<Double> DENSITY = MaterialProperties.property(id("density"), ABOVE_NOTHING,
             DENSITY_NAME).shown(MaterialProperty.Shown.SHIFT).format(value -> DENSITY_VALUE.with(number(value)))
             .declare();
     /** How many joules a kilogram of it holds for each kelvin. */
     public static final MaterialProperty<Double> SPECIFIC_HEAT = MaterialProperties.property(id("specific_heat"),
-            Codec.DOUBLE, SPECIFIC_HEAT_NAME).shown(MaterialProperty.Shown.SHIFT)
+            ABOVE_NOTHING, SPECIFIC_HEAT_NAME).shown(MaterialProperty.Shown.SHIFT)
             .format(value -> SPECIFIC_HEAT_VALUE.with(number(value))).declare();
     /** How many watts a metre of it conducts for each kelvin, through a square metre. */
     public static final MaterialProperty<Double> CONDUCTIVITY = MaterialProperties.property(id("conductivity"),
-            Codec.DOUBLE, CONDUCTIVITY_NAME).shown(MaterialProperty.Shown.SHIFT)
+            NO_LESS_THAN_NOTHING, CONDUCTIVITY_NAME).shown(MaterialProperty.Shown.SHIFT)
             .format(value -> CONDUCTIVITY_VALUE.with(number(value))).declare();
     /** How well its surface radiates, from 0 to 1. */
     public static final MaterialProperty<Double> EMISSIVITY = MaterialProperties.property(id("emissivity"),
             Codec.doubleRange(0.0, 1.0), EMISSIVITY_NAME).shown(MaterialProperty.Shown.NEVER).declare();
     /** Where it melts, in kelvin. */
-    public static final MaterialProperty<Double> MELTING = MaterialProperties.property(id("melting"), Codec.DOUBLE,
-            MELTING_NAME).shown(MaterialProperty.Shown.SHIFT).format(value -> KELVIN_VALUE.with(number(value)))
-            .declare();
+    public static final MaterialProperty<Double> MELTING = MaterialProperties.property(id("melting"),
+            NO_LESS_THAN_NOTHING, MELTING_NAME).shown(MaterialProperty.Shown.SHIFT)
+            .format(value -> KELVIN_VALUE.with(number(value))).declare();
     /** Where it boils in the overworld's air, in kelvin. */
-    public static final MaterialProperty<Double> BOILING = MaterialProperties.property(id("boiling"), Codec.DOUBLE,
-            BOILING_NAME).shown(MaterialProperty.Shown.SHIFT).format(value -> KELVIN_VALUE.with(number(value)))
-            .declare();
+    public static final MaterialProperty<Double> BOILING = MaterialProperties.property(id("boiling"),
+            NO_LESS_THAN_NOTHING, BOILING_NAME).shown(MaterialProperty.Shown.SHIFT)
+            .format(value -> KELVIN_VALUE.with(number(value))).declare();
     /** How many joules a kilogram of its liquid takes to boil, at its boiling point. */
     public static final MaterialProperty<Double> LATENT_HEAT = MaterialProperties.property(id("latent_heat"),
-            Codec.DOUBLE, LATENT_HEAT_NAME).shown(MaterialProperty.Shown.SHIFT)
+            NO_LESS_THAN_NOTHING, LATENT_HEAT_NAME).shown(MaterialProperty.Shown.SHIFT)
             .format(value -> LATENT_HEAT_VALUE.with(number(value / KILO))).declare();
     /** How many kilograms a mole of it weighs, as the molecules of its gas: two atoms for nitrogen. */
     public static final MaterialProperty<Double> MOLAR_MASS = MaterialProperties.property(id("molar_mass"),
-            Codec.DOUBLE, MOLAR_MASS_NAME).shown(MaterialProperty.Shown.SHIFT)
+            ABOVE_NOTHING, MOLAR_MASS_NAME).shown(MaterialProperty.Shown.SHIFT)
             .format(value -> MOLAR_MASS_VALUE.with(number(value * KILO))).declare();
     /** How many kilograms a cubic metre of its liquid weighs, for a material that is no liquid at room temperature. */
     public static final MaterialProperty<Double> LIQUID_DENSITY = MaterialProperties.property(id("liquid_density"),
-            Codec.DOUBLE, LIQUID_DENSITY_NAME).shown(MaterialProperty.Shown.SHIFT)
+            ABOVE_NOTHING, LIQUID_DENSITY_NAME).shown(MaterialProperty.Shown.SHIFT)
             .format(value -> DENSITY_VALUE.with(number(value))).declare();
 
     public Thermal {

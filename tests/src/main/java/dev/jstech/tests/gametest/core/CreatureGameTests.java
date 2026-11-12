@@ -7,6 +7,8 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
 import dev.jstech.core.creature.CoreCreatureBehaviours;
 import dev.jstech.core.creature.CreatureDef;
 import dev.jstech.core.creature.CreatureEntity;
@@ -101,6 +103,25 @@ public final class CreatureGameTests {
                 .getMobs(MobCategory.CREATURE).unwrap();
         helper.assertTrue(creatures.stream().anyMatch(data -> data.type == TestEntities.CHOKER.get()),
                 "and it added the choker to the biome here, which names no biome");
+        helper.succeed();
+    }
+
+    /* A file a creature's record refuses is an error in that file, left out, never the end of the whole reload. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void file_aRecordRefusesIsAnErrorRatherThanAThrow(final GameTestHelper helper) {
+        final JsonObject spawn = new JsonObject();
+        spawn.addProperty("weight", 10);
+        spawn.addProperty("least", 2);
+        final JsonObject air = new JsonObject();
+        air.addProperty("least", 20.0);
+        air.addProperty("most", 10.0);
+        helper.assertTrue(CreatureDef.Spawn.CODEC.parse(JsonOps.INSTANCE, spawn).isError(),
+                "a group of two at least and one at most is an error in its file");
+        helper.assertTrue(CreatureDef.Air.CODEC.parse(JsonOps.INSTANCE, air).isError(),
+                "an air borne up to less than it is lived on is an error in its file");
+        spawn.addProperty("most", 4);
+        helper.assertTrue(CreatureDef.Spawn.CODEC.parse(JsonOps.INSTANCE, spawn).isSuccess(),
+                "and a good one is read as ever");
         helper.succeed();
     }
 

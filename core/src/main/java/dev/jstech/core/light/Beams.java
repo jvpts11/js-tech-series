@@ -19,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
@@ -109,6 +110,11 @@ public final class Beams {
             double travelled = 0;
             while (travelled <= reach) {
                 final BlockPos at = BlockPos.containing(origin.add(way.scale(travelled)));
+                // A chunk not loaded stops the ray as a wall would: reading it would load the chunk, or make it.
+                if (level instanceof LevelReader reader && !reader.hasChunkAt(at)) {
+                    hit = last;
+                    break;
+                }
                 if (!at.equals(from)) {
                     final BlockState state = level.getBlockState(at);
                     if (LightBlock.fits(state)) {

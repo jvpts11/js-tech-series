@@ -10,8 +10,10 @@ package dev.jstech.core.connect.texture;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
@@ -61,6 +63,16 @@ class OptifineRulesTest {
         assertEquals(OptifineRule.TileKind.DEFAULT, tiles.get(4).kind());
         assertEquals("minecraft:textures/block/stone.png", OptifineRules.tileFile(GLASS, tiles.get(5)));
         assertEquals("botania:block/x.png", OptifineRules.tileFile(GLASS, tiles.get(6)));
+    }
+
+    @Test
+    void parse_refusesARangeOfTilesPastWhatAnyRuleNeedsBeforeCountingIt() {
+        assertTimeoutPreemptively(Duration.ofSeconds(2), () -> {
+            assertThrows(IllegalArgumentException.class, () -> OptifineRules.parse(GLASS,
+                    "method=random\ntiles=0-2147483647\n"), "a range to the last number never ends being counted");
+            assertThrows(IllegalArgumentException.class, () -> OptifineRules.parse(GLASS,
+                    "method=random\ntiles=0-99999999999999999999\n"), "nor does one past any number");
+        });
     }
 
     @Test

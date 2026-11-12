@@ -7,6 +7,8 @@
  */
 package dev.jstech.core.creature;
 
+import static dev.jstech.core.creature.RefusingCodecs.refusing;
+
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.air.AirMix;
@@ -127,7 +129,7 @@ public record CreatureDef(Optional<Double> health, Optional<Double> speed, Optio
     public record Spawn(List<ExtraCodecs.TagOrElementLocation> biomes, List<ResourceKey<Level>> dimensions, int weight,
                         int least, int most, Optional<MobCategory> category, Placement placement) {
 
-        public static final Codec<Spawn> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        public static final Codec<Spawn> CODEC = refusing(RecordCodecBuilder.create(instance -> instance.group(
                 ExtraCodecs.TAG_OR_ELEMENT_ID.listOf().optionalFieldOf("biomes", List.of()).forGetter(Spawn::biomes),
                 ResourceKey.codec(Registries.DIMENSION).listOf().optionalFieldOf("dimensions", List.of())
                         .forGetter(Spawn::dimensions),
@@ -137,7 +139,7 @@ public record CreatureDef(Optional<Double> health, Optional<Double> speed, Optio
                 MobCategory.CODEC.optionalFieldOf("category").forGetter(Spawn::category),
                 StableCodecs.byName(Placement.class).optionalFieldOf("placement", Placement.ON_GROUND)
                         .forGetter(Spawn::placement))
-                .apply(instance, Spawn::new));
+                .apply(instance, Spawn::new)));
 
         public Spawn {
             biomes = List.copyOf(biomes);
@@ -176,11 +178,11 @@ public record CreatureDef(Optional<Double> health, Optional<Double> speed, Optio
      */
     public record Air(ResourceLocation gas, double least, double most) {
 
-        public static final Codec<Air> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+        public static final Codec<Air> CODEC = refusing(RecordCodecBuilder.create(instance -> instance.group(
                 ResourceLocation.CODEC.optionalFieldOf("gas", AirMix.OXYGEN).forGetter(Air::gas),
                 Codec.doubleRange(0, 100_000).optionalFieldOf("least", 0.0).forGetter(Air::least),
                 Codec.doubleRange(0, 100_000).optionalFieldOf("most", 100_000.0).forGetter(Air::most))
-                .apply(instance, Air::new));
+                .apply(instance, Air::new)));
 
         public Air {
             if (most < least) {

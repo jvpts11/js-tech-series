@@ -72,16 +72,18 @@ public final class EndRouter {
         if (!modes[from].draws() || endLeft[from] <= 0) {
             return;
         }
-        // The first thing some end would take is offered, so what nobody wants never holds up what comes after it.
+        /*
+         * The first thing that moves this round and some end would take is offered, so neither what nobody wants nor
+         * what moves in another round holds up what comes after it.
+         */
+        final Role moves = round == 2 ? Role.STORE : Role.OUTPUT;
         final Offer<R> offer = source.offer(Math.min(left[0], endLeft[from]), resource -> source.allows(resource)
-                && carries.test(resource) && taken(ends, modes, from, resource, endLeft));
+                && carries.test(resource) && role(source, modes[from], resource) == moves
+                && taken(ends, modes, from, resource, endLeft));
         if (offer == null || offer.amount() <= 0) {
             return;
         }
         final R resource = offer.resource();
-        if (role(source, modes[from], resource) != (round == 2 ? Role.STORE : Role.OUTPUT)) {
-            return;
-        }
         final Role wanted = round == 1 ? Role.STORE : Role.INPUT;
         long remaining = offer.amount();
         for (final int to : destinations(ends, modes, from, resource, wanted, turn, endLeft)) {

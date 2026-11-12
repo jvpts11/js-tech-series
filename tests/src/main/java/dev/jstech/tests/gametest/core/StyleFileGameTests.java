@@ -120,6 +120,21 @@ public final class StyleFileGameTests {
         helper.succeed();
     }
 
+    /* A tile of no size would be drawn for ever: a file that gives one is an error, the piece left out. */
+    @GameTest(template = ARENA)
+    public static void tile_ofNoSizeIsAnErrorInItsFile(final GameTestHelper helper) {
+        for (final String size : new String[] {"[0, 2]", "[2, -1]"}) {
+            final DataResult<StyleSprite> read = StyleSprite.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(
+                    "{\"kind\": \"tile\", \"texture\": \"minecraft:textures/block/stone.png\", \"size\": " + size
+                            + "}"));
+            helper.assertTrue(read.isError(), "a tile sized " + size + " is refused");
+        }
+        helper.assertTrue(StyleSprite.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString("{\"kind\": \"tile\", "
+                + "\"texture\": \"minecraft:textures/block/stone.png\", \"size\": [16, 16]}")).isSuccess(),
+                "and one of a size is read as ever");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void resolve_saysAMissingParentAndAColourNobodySets(final GameTestHelper helper) {
         final StyleFile orphan = parse("{\"parent\": \"jstests:nowhere\", \"colours\": {\"text\": \"#FFFFFF\"}}");

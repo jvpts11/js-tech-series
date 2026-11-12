@@ -14,6 +14,9 @@ import net.minecraft.client.multiplayer.ClientLevel;
 /** How a map mod is handed the markers to show: those of the dimension the player is in, in place of the last. */
 public interface IMapAdapter {
 
-    /** Shows {@code markers}, all of {@code level}'s dimension, in place of the markers it showed before. */
-    void show(ClientLevel level, List<Marker> markers);
+    /**
+     * Shows {@code markers}, all of {@code level}'s dimension, in place of the markers it showed before; false when the
+     * map was not ready to take them, so they are handed to it again.
+     */
+    boolean show(ClientLevel level, List<Marker> markers);
 }

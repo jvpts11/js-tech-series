@@ -236,10 +236,14 @@ public final class ItemHazards {
         if (!jolted) {
             return;
         }
-        for (final ItemStack stack : List.copyOf(carrier.getInventory().items)) {
-            final Double strength = of(stack).get(UNSTABLE);
-            if (strength != null) {
-                goOff(carrier, stack, strength);
+        // What is held in the off hand is carried as much as what is in the pockets.
+        for (final List<ItemStack> stacks : List.of(List.copyOf(carrier.getInventory().items),
+                List.copyOf(carrier.getInventory().offhand))) {
+            for (final ItemStack stack : stacks) {
+                final Double strength = of(stack).get(UNSTABLE);
+                if (strength != null) {
+                    goOff(carrier, stack, strength);
+                }
             }
         }
     }

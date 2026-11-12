@@ -39,6 +39,7 @@ import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -258,6 +259,29 @@ public final class HazardGameTests {
         ItemHazards.second(geared);
         close(helper, 2, bare.getMaxHealth() - bare.getHealth(), "it burns the bare hand");
         close(helper, 0.5, geared.getMaxHealth() - geared.getHealth(), "a quarter of it through heat gear");
+        helper.succeed();
+    }
+
+    /* A device shows a hazard's id or none: a long or broken one a doctored game sends is never kept on the item. */
+    @GameTest(template = ARENA)
+    public static void devices_keepOnlyAHazardsIdAsTheOneShown(final GameTestHelper helper) {
+        helper.assertTrue(new DeviceState(0, true, false, "x".repeat(40_000)).shown().isEmpty(),
+                "a very long one is none");
+        helper.assertTrue(new DeviceState(0, true, false, "Not An Id!").shown().isEmpty(), "nor is one no id");
+        helper.assertTrue(new DeviceState(0, true, false, "jscore:radioactive").shown().equals("jscore:radioactive"),
+                "a hazard's id is kept");
+        helper.succeed();
+    }
+
+    /* What is unstable goes off when its carrier burns, held in the off hand as much as anywhere else. */
+    @GameTest(template = ARENA)
+    public static void itemHazards_unstableInTheOffHandGoesOffWhenItsCarrierBurns(final GameTestHelper helper) {
+        final Player carrier = helper.makeMockPlayer(GameType.SURVIVAL);
+        carrier.setItemInHand(InteractionHand.OFF_HAND, new ItemStack(Items.GUNPOWDER, 4));
+        helper.assertTrue(ItemHazards.of(new ItemStack(Items.GUNPOWDER)).containsKey(ItemHazards.UNSTABLE),
+                "gunpowder is unstable");
+        carrier.hurt(helper.getLevel().damageSources().onFire(), 2);
+        helper.assertTrue(carrier.getOffhandItem().isEmpty(), "the gunpowder held in the off hand went off");
         helper.succeed();
     }
 

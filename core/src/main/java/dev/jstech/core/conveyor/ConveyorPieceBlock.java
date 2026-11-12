@@ -299,6 +299,10 @@ public abstract class ConveyorPieceBlock extends Block implements EntityBlock {
             if (now.getValue(END)) {
                 return false;
             }
+            // Where the run goes on into a chunk not loaded it is not followed: reading there would load the chunk.
+            if (!aheadLoaded(level, at, now)) {
+                return false;
+            }
             if (!continues(level, at, now)) {
                 setEnd(level, at, now, true);
                 return false;
@@ -314,5 +318,14 @@ public abstract class ConveyorPieceBlock extends Block implements EntityBlock {
         if (state.getValue(END) != end) {
             level.setBlock(pos, state.setValue(END, end), Block.UPDATE_CLIENTS);
         }
+    }
+
+    /* Whether the blocks the piece in {@code state} at {@code pos} leaves into are loaded: reading them loads none. */
+    private static boolean aheadLoaded(final Level level, final BlockPos pos, final BlockState state) {
+        if (!(state.getBlock() instanceof ConveyorPieceBlock piece)) {
+            return true;
+        }
+        final BlockPos cell = piece.exit(state, pos).cell();
+        return level.isLoaded(cell) && level.isLoaded(cell.below());
     }
 }

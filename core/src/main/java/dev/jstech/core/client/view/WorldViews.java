@@ -146,8 +146,14 @@ public final class WorldViews {
         things(minecraft, level, sections, frustum, at, partial, player);
         layer(minecraft, target, RenderType.translucent(), sections, at, rotation, projection, true);
         layer(minecraft, target, RenderType.tripwire(), sections, at, rotation, projection, true);
+        /*
+         * Under Fabulous graphics the translucent layers hand the game's own target back when they end: the particles
+         * go on this picture's again. The clouds there are drawn on a target of their own, which the game blends into
+         * its own picture, not this one, so this picture goes without them.
+         */
+        target.bindWrite(false);
         minecraft.particleEngine.render(renderer.lightTexture(), CAMERA, partial, frustum, type -> true);
-        if (minecraft.options.getCloudsType() != CloudStatus.OFF) {
+        if (minecraft.options.getCloudsType() != CloudStatus.OFF && !Minecraft.useShaderTransparency()) {
             world.renderClouds(new PoseStack(), rotation, projection, partial, at.x, at.y, at.z);
         }
         view.popMatrix();

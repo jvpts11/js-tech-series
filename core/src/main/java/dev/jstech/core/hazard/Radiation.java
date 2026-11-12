@@ -92,9 +92,15 @@ public final class Radiation {
                 return;
             }
             final LevelRadiation left = from.getData(CoreAttachments.RADIATION);
+            /*
+             * Every source moved is taken up before any is laid down: in one world a block may move onto the place
+             * another moves from, and laid there first, it would be taken on again with the other's.
+             */
+            final Map<BlockPos, Map<RadiationKind, Double>> taken = new LinkedHashMap<>();
             for (final Map.Entry<BlockPos, BlockPos> each : move.moved().entrySet()) {
-                left.takeAt(each.getKey()).forEach((kind, strength) -> emit(to, each.getValue(), kind, strength));
+                taken.put(each.getValue(), left.takeAt(each.getKey()));
             }
+            taken.forEach((at, kinds) -> kinds.forEach((kind, strength) -> emit(to, at, kind, strength)));
         });
     }
 

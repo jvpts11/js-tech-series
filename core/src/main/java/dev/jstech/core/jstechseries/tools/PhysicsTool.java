@@ -75,6 +75,8 @@ public final class PhysicsTool {
     public static final int MOST = 100;
     public static final int FIRST = 40;
     public static final int STEP = 10;
+    /* The most modes one turn of the wheel steps through: past the tool's own, which go round. */
+    private static final int MOST_TURNS = 16;
     /** How far the tool reaches, in blocks. */
     public static final double REACH = 48;
     /** The tool's strength, in hundredths of its whole. */
@@ -174,7 +176,9 @@ public final class PhysicsTool {
             if (payload.strength()) {
                 stack.set(STRENGTH.get(), Math.clamp(strength(stack) + STEP * (long) payload.steps(), LEAST, MOST));
             } else {
-                for (int i = 0; i < Math.abs(payload.steps()); i++) {
+                // A wheel turns a few steps at a time: a count past that, which only a doctored game sends, is cut.
+                final int turns = Math.min(Math.abs(payload.steps()), MOST_TURNS);
+                for (int i = 0; i < turns; i++) {
                     ItemStates.cycleMode(stack, payload.steps() < 0);
                 }
             }

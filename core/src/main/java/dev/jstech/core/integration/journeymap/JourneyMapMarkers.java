@@ -60,9 +60,10 @@ public final class JourneyMapMarkers implements IClientPlugin, IMapAdapter {
     }
 
     @Override
-    public void show(final ClientLevel level, final List<Marker> markers) {
+    public boolean show(final ClientLevel level, final List<Marker> markers) {
+        // Until JourneyMap hands over its API it takes nothing, and is asked again.
         if (this.api == null) {
-            return;
+            return false;
         }
         this.api.removeAll(JsCore.MODID);
         for (final Marker marker : markers) {
@@ -86,6 +87,7 @@ public final class JourneyMapMarkers implements IClientPlugin, IMapAdapter {
                 LOGGER.warn("JourneyMap refused the map marker {}: {}", marker.id(), refused.toString());
             }
         }
+        return true;
     }
 
     private static MapPolygon corners(final ChunkPos chunk) {

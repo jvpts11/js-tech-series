@@ -32,14 +32,15 @@ public final class XaeroMarkers implements IMapAdapter {
     private static final int INITIALS = 2;
 
     @Override
-    public void show(final ClientLevel level, final List<Marker> markers) {
+    public boolean show(final ClientLevel level, final List<Marker> markers) {
+        // The minimap opens its world a moment after the player's: until then it takes nothing, and is asked again.
         final MinimapSession session = BuiltInHudModules.MINIMAP.getCurrentSession();
         if (session == null) {
-            return;
+            return false;
         }
         final MinimapWorld world = session.getWorldManager().getCurrentWorld();
         if (world == null || world.getContainer() == null) {
-            return;
+            return false;
         }
         final ThirdPartyWaypoints ours = world.getContainer().getThirdPartyWaypointManager().get(ORIGIN);
         ours.clear();
@@ -49,6 +50,7 @@ public final class XaeroMarkers implements IMapAdapter {
             ours.add(marker.id(), new Waypoint(marker.pos().getX(), marker.pos().getY(), marker.pos().getZ(), name,
                     initials, nearest(marker.colourIn(MapMarkers.layerOf(marker.layer())))));
         }
+        return true;
     }
 
     /* The index of the game's chat colour nearest {@code rgb}, which the minimap's colours follow. */

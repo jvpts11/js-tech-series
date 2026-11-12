@@ -47,8 +47,9 @@ public final class MarkdownBlocks {
     private static final Pattern IMAGE = Pattern.compile(
             "^\\s*!\\[([^\\]]*)]\\(\\s*(\\S+?)(?:\\s+\"([^\"]*)\")?\\s*\\)\\s*$");
     private static final Pattern ALERT = Pattern.compile("^\\[!(\\w+)]\\s*(.*)$");
-    private static final Pattern SIZE = Pattern.compile("^(\\d+)x(\\d+)$");
-    private static final Pattern NUMBER_OF = Pattern.compile("^(\\w+)=(\\d+)$");
+    /* A picture's size and counts are a few digits: a longer run, past what a number holds, reads as no size at all. */
+    private static final Pattern SIZE = Pattern.compile("^(\\d{1,5})x(\\d{1,5})$");
+    private static final Pattern NUMBER_OF = Pattern.compile("^(\\w+)=(\\d{1,5})$");
     private static final String FENCE = "```";
     private static final String TILDES = "~~~";
     private static final String COMMENT = "<!--";

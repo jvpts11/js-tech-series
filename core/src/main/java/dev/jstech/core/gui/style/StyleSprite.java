@@ -116,6 +116,8 @@ public sealed interface StyleSprite {
     final class Kinds {
 
         private static final List<String> NAMES = List.of("sprite", "slice", "tile", "flat", "none", "menu");
+        /* The largest tile a texture may be cut in, in pixels. */
+        private static final int MOST_TILE = 4096;
 
         private static final MapCodec<Sprite> SPRITE = ResourceLocation.CODEC.fieldOf("id").xmap(Sprite::new,
                 Sprite::id);
@@ -131,7 +133,9 @@ public sealed interface StyleSprite {
 
         private static final MapCodec<Tile> TILE = RecordCodecBuilder.mapCodec(i -> i.group(
                 ResourceLocation.CODEC.fieldOf("texture").forGetter(Tile::texture),
-                Codec.INT.listOf(2, 2).fieldOf("size").forGetter(t -> List.of(t.width(), t.height()))
+                // A tile of no size would be drawn for ever: one is a pixel at the least.
+                Codec.intRange(1, MOST_TILE).listOf(2, 2).fieldOf("size").forGetter(t -> List.of(t.width(),
+                        t.height()))
         ).apply(i, (texture, size) -> new Tile(texture, size.get(0), size.get(1))));
 
         private static final MapCodec<Flat> FLAT = RecordCodecBuilder.mapCodec(i -> i.group(

@@ -139,8 +139,10 @@ final class TestsPage extends StudioPage {
             return false;
         }
         final int row = (int) ((mouseY - right.y() - StudioDraw.HEAD - 2) / PICTURE_ROW);
-        if (mouseY < right.y() + StudioDraw.HEAD + 2 * PICTURE_ROW + 4 && row >= 0 && row < this.pictures.size()) {
-            this.choose(row);
+        // The rows show the list from the picture it has moved on to, not from the first.
+        final int picture = PictureRows.at(this.chosen, this.pictures.size(), row);
+        if (mouseY >= right.y() + StudioDraw.HEAD + 2 && picture >= 0) {
+            this.choose(picture);
             return true;
         }
         return false;
@@ -163,8 +165,8 @@ final class TestsPage extends StudioPage {
             this.take.setVisible(false);
             return;
         }
-        final int first = Math.max(0, Math.min(this.chosen, this.pictures.size() - 2));
-        for (int i = first; i < Math.min(this.pictures.size(), first + 2); i++) {
+        final int first = PictureRows.first(this.chosen, this.pictures.size());
+        for (int i = first; i < Math.min(this.pictures.size(), first + PictureRows.SHOWN); i++) {
             final Picture picture = this.pictures.get(i);
             final int y = area.y() + StudioDraw.HEAD + 4 + (i - first) * PICTURE_ROW;
             if (i == this.chosen) {

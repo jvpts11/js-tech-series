@@ -206,16 +206,19 @@ public final class DataScreenView {
         still.draw(g, revision, () -> {
             skin.window(g, left, top, width, height);
             for (final UiComponent component : root.children()) {
-                if (stillOnes.contains(component)) {
+                // One a hidden panel holds is hidden with it, steady as it draws.
+                if (stillOnes.contains(component) && component.visible()) {
                     component.render(g, ctx);
                 }
             }
         });
-        stillOnes.forEach(component -> component.setVisible(false));
+        // The picture holds them: the others are drawn over it without them, and those hidden stay hidden.
+        final List<UiComponent> pictured = stillOnes.stream().filter(UiComponent::visible).toList();
+        pictured.forEach(component -> component.setVisible(false));
         try {
             root.render(g, ctx);
         } finally {
-            stillOnes.forEach(component -> component.setVisible(true));
+            pictured.forEach(component -> component.setVisible(true));
         }
     }
 

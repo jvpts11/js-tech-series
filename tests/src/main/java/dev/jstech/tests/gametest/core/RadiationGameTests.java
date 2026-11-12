@@ -21,10 +21,16 @@ import dev.jstech.core.jstechseries.hazard.IonizingRadiation;
 import dev.jstech.core.jstechseries.hazard.NaturalRadiation;
 import dev.jstech.core.material.HostRocks;
 import dev.jstech.core.material.MaterialUses;
+import dev.jstech.core.moving.BlockMove;
+import dev.jstech.core.moving.StructureBlocksMovedEvent;
 import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestMaterials;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -41,7 +47,9 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -62,6 +70,8 @@ public final class RadiationGameTests {
     private static final String BATCH = "jscore_radiation";
     private static final String SETTINGS = "jscore_radiation_settings";
     private static final BlockPos SOURCE = new BlockPos(1, 2, 1);
+    /* How many sources a row moved one block along holds: enough that no order of reading them comes right by luck. */
+    private static final int SHIFTED = 5;
     private static final double CLOSE = 1.0E-3;
     /* An arena 48 across, wide enough to lay a vein anywhere the sections' edges fall. */
     private static final String WIDE = "bench";
@@ -90,6 +100,36 @@ public final class RadiationGameTests {
         }
         helper.assertTrue(Radiation.transmission(level, from, to, IonizingRadiation.RAYS) < 0.01,
                 "a block of gold stops nearly all of it");
+        helper.succeed();
+    }
+
+    /* A structure moved a block along in one world takes each source with its own block, the one moved onto too. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void move_inOneWorldTakesEachSourceWithItsOwnBlock(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        // A row of five sources, each moved one block along onto the next: whatever order the places are read in.
+        final List<BlockPos> row = new ArrayList<>();
+        final Map<BlockPos, BlockPos> moved = new HashMap<>();
+        for (int k = 0; k <= SHIFTED; k++) {
+            row.add(helper.absolutePos(SOURCE).east(k));
+        }
+        for (int k = 0; k < SHIFTED; k++) {
+            Radiation.emit(level, row.get(k), IonizingRadiation.RAYS, 100 * (k + 1));
+            moved.put(row.get(k), row.get(k + 1));
+        }
+        try {
+            NeoForge.EVENT_BUS.post(new StructureBlocksMovedEvent(new BlockMove(level, level, moved,
+                    Rotation.NONE)));
+            close(helper, 0, Radiation.strength(level, row.getFirst(), IonizingRadiation.RAYS), "none left behind");
+            for (int k = 0; k < SHIFTED; k++) {
+                close(helper, 100 * (k + 1), Radiation.strength(level, row.get(k + 1), IonizingRadiation.RAYS),
+                        "source " + k + " moved on with its block");
+            }
+        } finally {
+            for (final BlockPos pos : row) {
+                Radiation.emit(level, pos, IonizingRadiation.RAYS, 0);
+            }
+        }
         helper.succeed();
     }
 

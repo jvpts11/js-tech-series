@@ -42,6 +42,8 @@ public final class OptifineRules {
     private static final Pattern RANGE = Pattern.compile("(\\d+)-(\\d+)");
     private static final Pattern HEIGHTS = Pattern.compile("(\\(-?\\d+\\)|-?\\d+)(?:-(\\(-?\\d+\\)|-?\\d+))?");
     private static final Pattern OVERRIDE = Pattern.compile("ctm\\.(\\d+)");
+    /* The most tiles a rule may name: past every method's need, short of what a pack could make the game count. */
+    private static final int MOST_TILES = 4096;
     /* A name the game takes for a resource: a namespace, then a path that may run through folders. */
     private static final Pattern VALID_ID = Pattern.compile("[a-z0-9_.-]+:[a-z0-9_./-]+");
     private static final Map<String, OptifineRule.Method> METHODS = methods();
@@ -164,10 +166,15 @@ public final class OptifineRules {
             }
             final Matcher range = RANGE.matcher(word);
             if (range.matches()) {
-                final int from = Integer.parseInt(range.group(1));
-                final int to = Integer.parseInt(range.group(2));
-                for (int i = from; i <= to; i++) {
-                    out.add(new OptifineRule.Tile(OptifineRule.TileKind.IN_FOLDER, Integer.toString(i)));
+                // Counted only once it is known to fit, so a range to the end of the numbers is refused at once.
+                final long from = Long.parseLong(range.group(1));
+                final long to = Long.parseLong(range.group(2));
+                if (to - from + 1 > MOST_TILES - out.size()) {
+                    throw new IllegalArgumentException("a range of tiles past the " + MOST_TILES + " a rule may name: "
+                            + word);
+                }
+                for (long i = from; i <= to; i++) {
+                    out.add(new OptifineRule.Tile(OptifineRule.TileKind.IN_FOLDER, Long.toString(i)));
                 }
             } else if ("<skip>".equals(word)) {
                 out.add(new OptifineRule.Tile(OptifineRule.TileKind.SKIP, ""));

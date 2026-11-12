@@ -20,6 +20,9 @@ import java.util.Locale;
  */
 public final class StudioTests {
 
+    /* How a class of tests' name ends, squeezed. */
+    private static final String TESTS = "tests";
+
     private StudioTests() {
     }
 
@@ -72,9 +75,13 @@ public final class StudioTests {
                 return List.of();
             }
             final List<String> out = new ArrayList<>();
-            for (int i = 0; i < this.names.size(); i++) {
-                if (this.squeezed.get(i).contains(thing)) {
-                    out.add(this.names.get(i));
+            for (final String name : this.names) {
+                final int dot = name.indexOf('.');
+                final String owner = StudioTests.squeezed(dot < 0 ? "" : name.substring(0, dot));
+                final String test = StudioTests.squeezed(name.substring(dot + 1));
+                // The thing's own class of tests, or a test named for it first: not those of a thing named longer.
+                if (owner.startsWith(thing) && owner.endsWith(TESTS) || test.startsWith(thing)) {
+                    out.add(name);
                 }
             }
             return out;

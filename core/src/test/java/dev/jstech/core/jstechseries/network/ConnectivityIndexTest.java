@@ -13,6 +13,7 @@ import dev.jstech.core.uuid.NetworkUuid;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -430,6 +431,29 @@ class ConnectivityIndexTest {
         assertEquals(2, index.componentCount(), "a device that is gone joins nothing");
         assertEquals(uuid, index.joinedNetwork(pos(0, 0, 0)).orElseThrow());
         assertEquals(uuid, index.joinedNetwork(pos(10, 0, 0)).orElseThrow());
+    }
+
+    @Test
+    void forgetBridge_leavesARunCutFromTheMergedNetworksOwnerWithoutThatNetwork() {
+        index.onCablePlaced(pos(0, 0, 0), Set.of());
+        index.onCablePlaced(pos(10, 0, 0), Set.of());
+        final NetworkUuid first = NetworkUuid.random();
+        final NetworkUuid second = NetworkUuid.random();
+        index.assignUuid(pos(0, 0, 0), first);
+        index.assignUuid(pos(10, 0, 0), second);
+        index.anchor(pos(0, 1, 0), first, Set.of(pos(0, 0, 0)));
+        index.anchor(pos(10, 1, 0), second, Set.of(pos(10, 0, 0)));
+        index.bridge(DEVICE, Set.of(pos(0, 0, 0), pos(10, 0, 0)));
+        final NetworkUuid merged = index.networkOf(pos(0, 0, 0)).orElseThrow();
+
+        index.forgetBridge(DEVICE);
+
+        // The run whose owner kept the merged network keeps it; the other is free to take its own back.
+        final long kept = merged.equals(first) ? pos(0, 0, 0) : pos(10, 0, 0);
+        final long other = merged.equals(first) ? pos(10, 0, 0) : pos(0, 0, 0);
+        assertEquals(Optional.of(merged), index.joinedNetwork(kept));
+        assertEquals(Optional.empty(), index.joinedNetwork(other),
+                "a run cut from the merged network's owner is joined to none, so its own owner lays its network again");
     }
 
     @Test

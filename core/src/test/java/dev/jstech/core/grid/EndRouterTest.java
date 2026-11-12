@@ -162,6 +162,17 @@ class EndRouterTest {
         assertEquals(0, EndRouter.route(List.of(output, input), 1000, 0, WATER::equals, FakeEnd::move));
     }
 
+    @Test
+    void route_movesWhatAnEndGivesOutThoughItHoldsFirstWhatItKeeps() {
+        // The end keeps its "a" (it gives and takes it) and only gives its "b": the "a" offered first holds no "b" up.
+        final FakeEnd source = FakeEnd.store(1, 1000).with("a", 10).with("b", 10).refuses("b");
+        final FakeEnd input = FakeEnd.input(2, 1000);
+
+        route(List.of(source, input), 1000, 0);
+
+        assertEquals(10, input.holding("b"), "what it only gives goes out");
+    }
+
     private static long route(final List<FakeEnd> ends, final long budget, final long turn) {
         return EndRouter.route(ends, budget, turn, resource -> true, FakeEnd::move);
     }
@@ -176,6 +187,7 @@ class EndRouterTest {
         private final Map<String, Long> held = new TreeMap<>();
         private final Map<String, Long> keeps = new HashMap<>();
         private final Set<String> denied = new HashSet<>();
+        private final Set<String> refused = new HashSet<>();
         private EndMode mode = EndMode.NORMAL;
         private int priority;
         private long rate;
@@ -222,6 +234,12 @@ class EndRouterTest {
 
         FakeEnd denies(final String resource) {
             this.denied.add(resource);
+            return this;
+        }
+
+        /* The block takes none of {@code resource} in, though it gives it out. */
+        FakeEnd refuses(final String resource) {
+            this.refused.add(resource);
             return this;
         }
 
@@ -305,7 +323,7 @@ class EndRouterTest {
 
         @Override
         public long take(final String resource, final long most) {
-            if (!this.takes) {
+            if (!this.takes || this.refused.contains(resource)) {
                 return 0L;
             }
             long total = 0L;

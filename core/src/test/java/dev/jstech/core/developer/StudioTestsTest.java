@@ -28,6 +28,14 @@ class StudioTestsTest {
     }
 
     @Test
+    void naming_leavesOutTheTestsOfAThingWhoseNameHoldsItsName() {
+        final List<String> tests = List.of("compressortests.jams_when_full", "decompressortests.jams_when_full",
+                "compressorgametests.runs", "pumptests.decompressor_drains");
+        assertEquals(List.of("compressortests.jams_when_full", "compressorgametests.runs"),
+                StudioTests.naming(tests, "compressor"), "a decompressor's tests are not a compressor's");
+    }
+
+    @Test
     void naming_readsOnlyTheLastPartOfAPathInFolders() {
         assertEquals(List.of("compressortests.jams_when_full"), StudioTests.naming(TESTS, "machine/compressor"));
     }

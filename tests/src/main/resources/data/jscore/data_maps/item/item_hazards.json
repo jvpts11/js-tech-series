@@ -8,6 +8,9 @@
     },
     "minecraft:fermented_spider_eye": {
       "jscore:corrosive": 1
+    },
+    "minecraft:gunpowder": {
+      "jscore:unstable": 1
     }
   }
 }
