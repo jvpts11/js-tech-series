@@ -14,9 +14,8 @@ import java.util.Set;
 
 /**
  * What a backup can keep: the network's items, the files in its computers' home folders, their settings, the network's
- * {@code .craft} patterns, the IQL and Sigma# scripts, and the computers' system images
- * (computers/docs/design/programs.md). Teracoin's wallets join them with the Teracoin. Each has the id it travels by,
- * a bit of a mask, and the name it is saved by.
+ * {@code .craft} patterns, the IQL and Sigma# scripts, the computers' system images and their Teracoin wallets
+ * (computers/docs/design/programs.md). Each has the id it travels by, a bit of a mask, and the name it is saved by.
  */
 public enum BackupPart implements IStableId, IStableName {
 
@@ -31,7 +30,12 @@ public enum BackupPart implements IStableId, IStableName {
     /** The IQL and Sigma# scripts on every computer, and the Mainframe's saved views, procedures and jobs. */
     SCRIPTS(4, "scripts"),
     /** Every computer's system: what it runs, its system files and its console, which puts a corrupted one right. */
-    IMAGES(5, "images");
+    IMAGES(5, "images"),
+    /**
+     * Every computer's Teracoin wallets, wherever on its system's disk they are kept: each wallet is a file that holds
+     * the key of its address, and a lost one takes its coins with it (computers/docs/design/teracoin.md).
+     */
+    WALLETS(6, "wallets");
 
     private final int id;
     private final String serializedName;

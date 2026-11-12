@@ -11,6 +11,7 @@ import dev.jstech.computers.backup.BackupJob;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextCodecs;
+import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.UUIDUtil;
@@ -141,26 +142,41 @@ public record BackupStatePayload(Service service, List<Job> jobs, Form form, Lis
      * @param weight    what they weigh, in thousandths of an item
      * @param files     each computer's home folder, a line each
      * @param machines  the network's computers, by name
+     * @param wallets   the network's computers that keep a Teracoin wallet, by name
      * @param libraries the Tape Libraries a job can write to
      * @param drives    the other servers' drives a job can write to
      */
-    public record Form(long items, long weight, List<String> files, List<String> machines, List<Place> libraries,
-                       List<Place> drives) {
+    public record Form(long items, long weight, List<String> files, List<String> machines, List<String> wallets,
+                       List<Place> libraries, List<Place> drives) {
 
-        public static final Form EMPTY = new Form(0L, 0L, List.of(), List.of(), List.of(), List.of());
+        public static final Form EMPTY = new Form(0L, 0L, List.of(), List.of(), List.of(), List.of(), List.of());
 
-        public static final StreamCodec<RegistryFriendlyByteBuf, Form> STREAM_CODEC = StreamCodec.composite(
-                ByteBufCodecs.VAR_LONG, Form::items,
-                ByteBufCodecs.VAR_LONG, Form::weight,
-                ByteBufCodecs.stringUtf8(MOST_LINE).apply(ByteBufCodecs.list(MOST_PLACES)), Form::files,
-                ByteBufCodecs.stringUtf8(MOST_NAME).apply(ByteBufCodecs.list(MOST_PLACES)), Form::machines,
-                Place.STREAM_CODEC.apply(ByteBufCodecs.list(MOST_PLACES)), Form::libraries,
-                Place.STREAM_CODEC.apply(ByteBufCodecs.list(MOST_PLACES)), Form::drives,
-                Form::new);
+        private static final StreamCodec<ByteBuf, List<String>> LINES =
+                ByteBufCodecs.stringUtf8(MOST_LINE).apply(ByteBufCodecs.list(MOST_PLACES));
+        private static final StreamCodec<ByteBuf, List<String>> NAMES =
+                ByteBufCodecs.stringUtf8(MOST_NAME).apply(ByteBufCodecs.list(MOST_PLACES));
+        private static final StreamCodec<RegistryFriendlyByteBuf, List<Place>> PLACES =
+                Place.STREAM_CODEC.apply(ByteBufCodecs.list(MOST_PLACES));
+
+        /* Seven parts, one more than a composite codec takes, written out in their order. */
+        public static final StreamCodec<RegistryFriendlyByteBuf, Form> STREAM_CODEC = StreamCodec.of(
+                (buf, form) -> {
+                    ByteBufCodecs.VAR_LONG.encode(buf, form.items());
+                    ByteBufCodecs.VAR_LONG.encode(buf, form.weight());
+                    LINES.encode(buf, form.files());
+                    NAMES.encode(buf, form.machines());
+                    NAMES.encode(buf, form.wallets());
+                    PLACES.encode(buf, form.libraries());
+                    PLACES.encode(buf, form.drives());
+                },
+                buf -> new Form(ByteBufCodecs.VAR_LONG.decode(buf), ByteBufCodecs.VAR_LONG.decode(buf),
+                        LINES.decode(buf), NAMES.decode(buf), NAMES.decode(buf), PLACES.decode(buf),
+                        PLACES.decode(buf)));
 
         public Form {
             files = List.copyOf(files);
             machines = List.copyOf(machines);
+            wallets = List.copyOf(wallets);
             libraries = List.copyOf(libraries);
             drives = List.copyOf(drives);
         }

@@ -306,8 +306,8 @@ File > Print, Ctrl+P).
 *Added 2026-11-11.*
 
 The **Backup Service** (Vaultis, Legacy) runs on a server in a rack and backs the network up: its items, the files
-in every computer's home folder, the computers' settings, the network's .craft patterns, the IQL and Σ# scripts and
-the computers' system images. A job writes to a **Tape Library** ([Hardware](HARDWARE.md#servers-and-their-racks)) or
+in every computer's home folder, the computers' settings, the network's .craft patterns, the IQL and Σ# scripts, the
+computers' system images and their Teracoin wallets. A job writes to a **Tape Library** ([Hardware](HARDWARE.md#servers-and-their-racks)) or
 to a file in the Backups folder of another server's drive, by hand or every day or week at an hour, as an Automation
 Engine job (`BACKUP <job>` in IQL, `WHEN clock = '02:00'`). The **Backup Console** on any desktop sets the jobs and
 restores the backups.

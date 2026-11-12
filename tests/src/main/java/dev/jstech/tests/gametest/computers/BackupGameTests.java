@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.backup.BackupArchive;
+import dev.jstech.computers.backup.BackupContents;
 import dev.jstech.computers.backup.BackupHolders;
 import dev.jstech.computers.backup.BackupJob;
 import dev.jstech.computers.backup.BackupPart;
@@ -43,6 +44,9 @@ import dev.jstech.computers.rack.RackLayout;
 import dev.jstech.computers.rack.RaidMode;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.teracoin.TeracoinChain;
+import dev.jstech.computers.teracoin.TeracoinState;
+import dev.jstech.computers.teracoin.WalletFiles;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
@@ -53,6 +57,7 @@ import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.random.RandomGenerator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -302,6 +307,44 @@ public final class BackupGameTests {
                 })
                 .thenExecuteAfter(2, () -> helper.assertTrue(diamonds(helper) == DIAMONDS,
                         "with the dropped diamonds; have " + diamonds(helper)))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 600)
+    public static void backupOfWallets_givesBackAWalletWhoseFileWasLost(final GameTestHelper helper) {
+        final MainframeBlockEntity mainframe = NetworkFixtures.storageNetwork(helper);
+        final String[] wallet = new String[2];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> withLibraryAndDiamonds(helper))
+                .thenExecuteAfter(2, () -> {
+                    final ServerServices.Host host = startService(helper, mainframe);
+                    final IOsHost server = host.machine();
+                    final TeracoinChain.Keys keys = TeracoinState.of(helper.getLevel().getServer()).chain()
+                            .createWallet(RandomGenerator.getDefault());
+                    wallet[0] = WalletFiles.write(server.services().files(), WalletFiles.folder(server), "savings",
+                            keys, (char) 0);
+                    wallet[1] = keys.address();
+                    helper.assertTrue(wallet[0] != null, "the server keeps a wallet");
+                    helper.assertTrue(BackupContents.keepsWallets(server), "and the Back up tab can tell it does");
+                    final List<ItemStack> drives = server.diskStacks();
+                    final int drive = drives.indexOf(drives.stream().filter(stack -> !stack.isEmpty()).findFirst()
+                            .orElseThrow());
+                    host.rack().backupsAt(host.slot()).put(new BackupJob(JOB, EnumSet.of(BackupPart.WALLETS),
+                            BackupJob.Target.disk(server.nodeUuid().value(), drive), BackupJob.Schedule.BY_HAND, -1L,
+                            BackupJob.RunState.NEVER));
+                    helper.assertTrue(BackupService.run(helper.getLevel(), mainframe.networkUuid(), host, JOB)
+                            .result() == BackupJob.RunState.DONE, "the wallets are backed up onto a drive at once");
+                    helper.assertTrue(server.services().files().delete(wallet[0]), "and the wallet's file is lost");
+                })
+                .thenExecuteAfter(2, () -> {
+                    final UUID id = BackupHolders.of(helper.getLevel(), mainframe.networkUuid()).getFirst().id();
+                    BackupService.restore(helper.getLevel(), mainframe.networkUuid(), id,
+                            EnumSet.of(BackupPart.WALLETS), Set.of());
+                    final IOsHost server = startService(helper, mainframe).machine();
+                    helper.assertTrue(WalletFiles.read(server.services().files(), wallet[0])
+                                    .map(one -> one.address().equals(wallet[1])).orElse(false),
+                            "the restore puts the wallet back where it was, with its address");
+                })
                 .thenSucceed();
     }
 

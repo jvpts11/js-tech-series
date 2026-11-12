@@ -27,6 +27,7 @@ import dev.jstech.computers.program.iql.IqlDefinition;
 import dev.jstech.computers.program.iql.IqlSavedObject;
 import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.teracoin.WalletFiles;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.util.Loaded;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -69,6 +71,7 @@ public final class BackupContents {
     private static final String FILES = "files";
     private static final String SETTINGS = "settings";
     private static final String SCRIPTS = "scripts";
+    private static final String WALLETS = "wallets";
     private static final String IMAGE = "image";
     private static final String SYSTEMS = "systems";
     private static final String CONSOLE = "console";
@@ -223,6 +226,13 @@ public final class BackupContents {
         return UnixTree.of(os.platform(), os.familyRank()).homePath();
     }
 
+    /** Whether a computer keeps a Teracoin wallet on its system's disk, which a backup of wallets would keep. */
+    public static boolean keepsWallets(final IOsHost host) {
+        final ItemStack disk = host.systemDisk();
+        return disk != null && !disk.isEmpty() && !walletsIn(disk.getOrDefault(ComputingComponents.FILESYSTEM.get(),
+                FilesystemContents.EMPTY)).files().isEmpty();
+    }
+
     /* One computer's share of a backup; answers what it weighs. */
     private static long captureMachine(final NetworkMachines.Machine machine, final Set<BackupPart> parts,
                                        final Era era, final CompoundTag one) {
@@ -254,6 +264,11 @@ public final class BackupContents {
             final FilesystemContents scripts = scriptsIn(fs);
             one.put(SCRIPTS, encode(scripts));
             weight += scripts.usedWeight(era);
+        }
+        if (parts.contains(BackupPart.WALLETS)) {
+            final FilesystemContents wallets = walletsIn(fs);
+            one.put(WALLETS, encode(wallets));
+            weight += wallets.usedWeight(era);
         }
         if (parts.contains(BackupPart.IMAGES) && os != null && disk != null && !disk.isEmpty()) {
             final CompoundTag image = new CompoundTag();
@@ -306,6 +321,10 @@ public final class BackupContents {
                 writeFiles(disk, decode(one.get(SCRIPTS)));
                 wrote = true;
             }
+            if (parts.contains(BackupPart.WALLETS) && one.contains(WALLETS)) {
+                writeFiles(disk, decode(one.get(WALLETS)));
+                wrote = true;
+            }
         }
         if (parts.contains(BackupPart.SETTINGS) && one.contains(SETTINGS) && host.console() != null) {
             host.console().loadSettings(one.getCompound(SETTINGS));
@@ -355,6 +374,17 @@ public final class BackupContents {
             }
         }
         return new FilesystemContents(files, dirs);
+    }
+
+    /* Every wallet on a disk, wherever it is: the files the Crypto Wallet keeps an address's key in. */
+    private static FilesystemContents walletsIn(final FilesystemContents fs) {
+        final Map<String, StoredFile> files = new LinkedHashMap<>();
+        fs.files().forEach((path, file) -> {
+            if (path.toLowerCase(Locale.ROOT).endsWith(WalletFiles.EXTENSION)) {
+                files.put(path, file);
+            }
+        });
+        return new FilesystemContents(files, Set.of());
     }
 
     /* Every script on a disk, wherever it is. */

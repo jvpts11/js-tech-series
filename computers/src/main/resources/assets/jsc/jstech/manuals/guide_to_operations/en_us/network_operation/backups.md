@@ -24,6 +24,7 @@ Table: What a backup keeps
 | .craft patterns | The recipes of the network's Crafting Computers. |
 | IQL and Sigma# scripts | The scripts on every computer, and the Mainframe's saved views, procedures and jobs. |
 | System images | Every computer's system, which puts a corrupted one right. |
+| Teracoin wallets | Every computer's wallet files, each holding the key of its address: a lost one takes its coins with it. |
 
 ## Where it goes
 

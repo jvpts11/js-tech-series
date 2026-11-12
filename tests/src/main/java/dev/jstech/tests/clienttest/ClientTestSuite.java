@@ -14,6 +14,7 @@ import dev.jstech.tests.clienttest.computers.AdvancementTabsClientTests;
 import dev.jstech.tests.clienttest.computers.AnchorCardClientTests;
 import dev.jstech.tests.clienttest.computers.AssemblyScreensClientTests;
 import dev.jstech.tests.clienttest.computers.AutomationManagerClientTests;
+import dev.jstech.tests.clienttest.computers.BackupConsoleClientTests;
 import dev.jstech.tests.clienttest.computers.BookPagesClientTests;
 import dev.jstech.tests.clienttest.computers.BookStylesClientTests;
 import dev.jstech.tests.clienttest.computers.BootSplashClientTests;
@@ -526,6 +527,7 @@ public final class ClientTestSuite {
             MediaPlayerClientTests.class,
             TeracoinWindowsClientTests.class,
             TeracoinMachinesClientTests.class,
+            BackupConsoleClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,

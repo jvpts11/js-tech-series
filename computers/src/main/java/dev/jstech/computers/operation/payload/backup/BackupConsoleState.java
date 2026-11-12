@@ -114,9 +114,13 @@ final class BackupConsoleState {
         }
         final List<String> files = new ArrayList<>();
         final List<String> names = new ArrayList<>();
+        final List<String> wallets = new ArrayList<>();
         final List<BackupStatePayload.Place> drives = new ArrayList<>();
         for (final NetworkMachines.Machine machine : machines) {
             names.add(clip(machine.name()));
+            if (BackupContents.keepsWallets(machine.host())) {
+                wallets.add(clip(machine.name()));
+            }
             final String home = BackupContents.homeOf(machine.host().installedOs());
             if (!home.isEmpty()) {
                 files.add(TextBounds.clip(machine.name() + " " + shown(machine.host().installedOs(), home),
@@ -138,7 +142,8 @@ final class BackupConsoleState {
                     BackupJob.Target.library(library.rack().getBlockPos().asLong(), library.row()),
                     BackupHolders.libraryName(library), free * mbPerItem, mbPerItem));
         }
-        return new BackupStatePayload.Form(items, weight, first(files), first(names), first(places), first(drives));
+        return new BackupStatePayload.Form(items, weight, first(files), first(names), first(wallets), first(places),
+                first(drives));
     }
 
     private static void addDrives(final List<BackupStatePayload.Place> out, final NetworkMachines.Machine machine) {

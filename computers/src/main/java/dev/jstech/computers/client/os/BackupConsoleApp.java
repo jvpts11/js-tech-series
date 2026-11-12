@@ -13,13 +13,13 @@ import dev.jstech.computers.backup.BackupTexts;
 import dev.jstech.computers.backup.LossCause;
 import dev.jstech.computers.backup.TapeContents;
 import dev.jstech.computers.backup.TapeDrive;
-import dev.jstech.computers.backup.TapeFormat;
 import dev.jstech.computers.hardware.DiskSpec;
 import dev.jstech.computers.operation.payload.BackupActionPayload;
 import dev.jstech.computers.operation.payload.BackupStatePayload;
 import dev.jstech.core.client.gui.component.Button;
 import dev.jstech.core.client.gui.component.Checkbox;
 import dev.jstech.core.client.gui.component.ColumnHeader;
+import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.component.Dropdown;
 import dev.jstech.core.client.gui.component.Label;
 import dev.jstech.core.client.gui.component.ListView;
@@ -55,6 +55,14 @@ import net.minecraft.network.chat.Component;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
+
+import static dev.jstech.computers.client.os.TabbedWindowLook.FIELD_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.HEADER_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.LINE_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.PAD;
+import static dev.jstech.computers.client.os.TabbedWindowLook.ROW_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.STATUS_H;
+import static dev.jstech.computers.client.os.TabbedWindowLook.TAB_H;
 
 /**
  * The Backup Console: the window of the network's Backup Service, in four tabs, as the Messenger is the window of its
@@ -155,35 +163,38 @@ public final class BackupConsoleApp implements IDesktopApp {
 
     private static final TextKey[] TABS = {BackupConsoleTexts.JOBS_TAB, BackupConsoleTexts.BACK_UP_TAB,
             BackupConsoleTexts.RESTORE_TAB, BackupConsoleTexts.TAPES_TAB};
-    /** A new job keeps what a nightly backup of a network usually does: everything but the system images. */
-    private static final int DEFAULT_PARTS = BackupPart.mask(EnumSet.complementOf(EnumSet.of(BackupPart.IMAGES)));
+    /**
+     * A new job keeps what a nightly backup of a network usually does: everything but the system images and the
+     * wallets, whose keys a player chooses to copy anywhere.
+     */
+    private static final int DEFAULT_PARTS = BackupPart.mask(EnumSet.complementOf(EnumSet.of(BackupPart.IMAGES,
+            BackupPart.WALLETS)));
     private static final int DEFAULT_HOUR = 2;
     private static final int JOBS = 0;
     private static final int BACK_UP = 1;
     private static final int RESTORE = 2;
     private static final int TAPES = 3;
-    private static final int TAB_H = 13;
-    private static final int STATUS_H = 11;
-    private static final int ROW_H = 11;
-    private static final int BTN_H = 12;
-    private static final int PAD = 4;
-    private static final int GAP = 6;
-    private static final int LINE_H = 9;
-    private static final int POPUP_W = 200;
-    private static final int POPUP_H = 62;
+    private static final int GAP = 8;
+    /* From a table's last row to the buttons under it. */
+    private static final int BUTTONS_DY = 13;
+    /* A heading, a third larger than the body text. */
+    private static final int HEADING_H = 12;
+    private static final int BUTTON_W = 60;
+    /* A line of words: the body text and the room under it. */
+    private static final int TEXT_H = 9;
+    private static final int POPUP_W = 270;
+    private static final int POPUP_H = 84;
     private static final int NIGHT_ENDS = 6;
     private static final int NIGHT_STARTS = 20;
     private static final int NOTE_MILLIS = 6000;
-    private static final float SMALL = 0.75f;
-    private static final float HEADING = 0.85f;
+    private static final float HEADING = TabbedWindowLook.HEADING;
     /** Milliseconds between state requests, quicker while a drive winds so its bar moves. */
     private static final long REFRESH_MILLIS = 2000L;
     private static final long WINDING_MILLIS = 500L;
     private static final int TICKS_PER_SECOND = 20;
-    /* What the columns are measured against: a long name, a clock of a late day, a size near the top, five digits. */
+    /* What the losses' columns are measured against: a long name, a clock of a late day, five digits. */
     private static final String WIDE_NAME = "WWWWWWWW";
     private static final long WIDEST_CLOCK = 999L * 24_000L + 20_000L;
-    private static final long WIDEST_SIZE_MB = 999L * 1024L;
     private static final String DIGITS = "00000";
 
     private static BackupConsoleApp active;
@@ -195,14 +206,14 @@ public final class BackupConsoleApp implements IDesktopApp {
         for (final TextKey key : TABS) {
             tabLabels.add(GameText.resolve(key));
         }
-        tabs = root.add(new TabStrip(tabLabels).fitToLabels(6).setOnSelect(this::selectTab));
-        intro = root.add(new Label(this::introText, Label.Tone.DIM).setScale(SMALL));
+        tabs = root.add(new TabStrip(tabLabels).fitToLabels(16).setOnSelect(this::selectTab));
+        intro = root.add(new Label(this::introText, Label.Tone.DIM));
 
         jobColumns = root.add(columns(BackupConsoleTexts.JOB_COLUMN, BackupConsoleTexts.WHAT_COLUMN,
                 BackupConsoleTexts.WHERE_COLUMN, BackupConsoleTexts.WHEN_COLUMN, BackupConsoleTexts.LAST_RUN_COLUMN));
         jobList = root.add(new ListView<BackupStatePayload.Job>(this::jobs, ROW_H, this::renderJob)
                 .setSelectable(true));
-        noJobs = root.add(new Label(GameText.resolve(BackupConsoleTexts.NO_JOBS), Label.Tone.DIM).setScale(SMALL));
+        noJobs = root.add(new Label(GameText.resolve(BackupConsoleTexts.NO_JOBS), Label.Tone.DIM));
         newJob = root.add(new Button(GameText.resolve(BackupConsoleTexts.NEW_JOB), this::startNewJob));
         runNow = root.add(new Button(GameText.resolve(BackupConsoleTexts.RUN_NOW),
                 () -> act(BackupActionPayload.RUN, selectedJobName())).setPrimary(true));
@@ -211,21 +222,21 @@ public final class BackupConsoleApp implements IDesktopApp {
                 () -> act(BackupActionPayload.DELETE, selectedJobName())));
 
         whatHeading = root.add(new Label(GameText.resolve(BackupConsoleTexts.WHAT_HEADING)).setScale(HEADING));
-        nameLabel = root.add(new Label(GameText.resolve(BackupConsoleTexts.NAME), Label.Tone.DIM).setScale(SMALL));
+        nameLabel = root.add(new Label(GameText.resolve(BackupConsoleTexts.NAME), Label.Tone.DIM));
         nameField = root.add(new TextField(BackupJob.MOST_NAME));
         for (final BackupPart part : BackupPart.values()) {
             final int bit = BackupPart.mask(EnumSet.of(part));
             partBoxes.put(part, root.add(new Checkbox(() -> GameText.resolve(nameOf(part)),
-                    () -> (parts & bit) != 0, () -> parts ^= bit).setLabelScale(SMALL)));
-            partDetails.put(part, root.add(new Label(() -> partDetail(part), Label.Tone.DIM).setScale(SMALL)));
+                    () -> (parts & bit) != 0, () -> parts ^= bit)));
+            partDetails.put(part, root.add(new Label(() -> partDetail(part), Label.Tone.DIM)));
         }
         itemsNote = root.add(new Label(GameText.resolve(BackupConsoleTexts.ITEMS_NOTE), Label.Tone.DIM)
-                .setScale(SMALL));
+                );
         whereHeading = root.add(new Label(GameText.resolve(BackupConsoleTexts.WHERE_HEADING)).setScale(HEADING));
         toLibrary = root.add(new Option(this::libraryOption, () -> whereKind == 0, () -> whereKind = 0));
         toDrive = root.add(new Option(this::driveOption, () -> whereKind == 1, () -> whereKind = 1));
         nextPlace = root.add(new Button(GameText.resolve(BackupConsoleTexts.NEXT), this::nextPlace)
-                .setLabelScale(SMALL));
+                );
         whenHeading = root.add(new Label(GameText.resolve(BackupConsoleTexts.WHEN_HEADING)).setScale(HEADING));
         byHand = root.add(new Option(() -> GameText.resolve(BackupConsoleTexts.BY_HAND), () -> whenKind == 0,
                 () -> whenKind = 0));
@@ -253,23 +264,23 @@ public final class BackupConsoleApp implements IDesktopApp {
         backupList = root.add(new ListView<BackupStatePayload.Held>(this::backups, ROW_H, this::renderBackup)
                 .setOnClick(this::backupClicked));
         noBackups = root.add(new Label(GameText.resolve(BackupConsoleTexts.NO_BACKUPS), Label.Tone.DIM)
-                .setScale(SMALL));
+                );
         detailHeading = root.add(new Label(this::detailHeadingText).setScale(HEADING));
-        alsoLine = root.add(new Label(this::alsoText, Label.Tone.DIM).setScale(SMALL));
+        alsoLine = root.add(new Label(this::alsoText, Label.Tone.DIM));
         imageList = root.add(new ListView<BackupStatePayload.Image>(this::imagesOfChosen, ROW_H, this::renderImage)
                 .setOnClick(this::imageClicked));
         imageNote = root.add(new Label(GameText.resolve(BackupConsoleTexts.IMAGE_NOTE), Label.Tone.DIM)
-                .setScale(SMALL));
+                );
         lossColumns = root.add(columns(BackupConsoleTexts.ITEM_COLUMN, BackupConsoleTexts.LOST_COLUMN,
                 BackupConsoleTexts.WHEN_COLUMN, BackupConsoleTexts.HOW_COLUMN, BackupConsoleTexts.IN_BACKUP_COLUMN,
                 BackupConsoleTexts.BACK_COLUMN));
         lossList = root.add(new ListView<BackupStatePayload.Loss>(this::losses, ROW_H, this::renderLoss));
         onceNote = root.add(new Label(GameText.resolve(BackupConsoleTexts.ONCE_NOTE), Label.Tone.DIM)
-                .setScale(SMALL));
+                );
         existNote = root.add(new Label(GameText.resolve(BackupConsoleTexts.STILL_EXIST_NOTE), Label.Tone.DIM)
-                .setScale(SMALL));
-        restoringLine = root.add(new Label(this::restoringText).setScale(SMALL));
-        windLine = root.add(new Label(this::windText, Label.Tone.DIM).setScale(SMALL));
+                );
+        restoringLine = root.add(new Label(this::restoringText));
+        windLine = root.add(new Label(this::windText, Label.Tone.DIM));
         windBar = root.add(new ProgressBar(() -> detail().permille() / 10));
         restore = root.add(new Button(GameText.resolve(BackupConsoleTexts.RESTORE), this::restoreChosen)
                 .setPrimary(true));
@@ -280,7 +291,7 @@ public final class BackupConsoleApp implements IDesktopApp {
         tapeList = root.add(new ListView<BackupStatePayload.Tape>(this::tapesHeld, ROW_H, this::renderTape)
                 .setSelectable(true));
         noLibrary = root.add(new Label(GameText.resolve(BackupConsoleTexts.NO_LIBRARY_HERE), Label.Tone.DIM)
-                .setScale(SMALL));
+                );
         label = root.add(new Button(GameText.resolve(BackupConsoleTexts.LABEL), this::openLabel));
         erase = root.add(new Button(GameText.resolve(BackupConsoleTexts.ERASE), this::openErase));
         eject = root.add(new Button(GameText.resolve(BackupConsoleTexts.EJECT),
@@ -290,7 +301,7 @@ public final class BackupConsoleApp implements IDesktopApp {
         labelPopup = new TypedPopup(() -> GameText.resolve(BackupConsoleTexts.LABEL_TITLE.with(selectedTapeNumber())),
                 this::applyLabel).setLayouter(this::layoutLabelPopup);
         labelHint = labelPopup.add(new Label(GameText.resolve(BackupConsoleTexts.LABEL_HINT), Label.Tone.DIM)
-                .setScale(SMALL));
+                );
         labelField = labelPopup.add(new TextField(TapeContents.MOST_LABEL));
         labelApply = labelPopup.add(new Button(GameText.resolve(BackupConsoleTexts.APPLY), this::applyLabel)
                 .setPrimary(true));
@@ -298,7 +309,7 @@ public final class BackupConsoleApp implements IDesktopApp {
         erasePopup = new TypedPopup(() -> GameText.resolve(BackupConsoleTexts.ERASE_TITLE.with(selectedTapeNumber())),
                 this::applyErase).setLayouter(this::layoutErasePopup);
         eraseHint = erasePopup.add(new Label(() -> GameText.resolve(BackupConsoleTexts.ERASE_HINT.with(
-                selectedTapeBackups())), Label.Tone.DIM).setScale(SMALL));
+                selectedTapeBackups())), Label.Tone.DIM));
         eraseApply = erasePopup.add(new Button(GameText.resolve(BackupConsoleTexts.ERASE), this::applyErase)
                 .setPrimary(true));
         eraseCancel = erasePopup.add(new Button(GameText.resolve(BackupConsoleTexts.CANCEL), erasePopup::close));
@@ -357,22 +368,22 @@ public final class BackupConsoleApp implements IDesktopApp {
     // Wide enough for the five columns of the jobs and the two halves of the Back up tab.
     @Override
     public int defaultWidth() {
-        return 360;
+        return 480;
     }
 
     @Override
     public int defaultHeight() {
-        return 226;
+        return 301;
     }
 
     @Override
     public int minWidth() {
-        return 340;
+        return 420;
     }
 
     @Override
     public int minHeight() {
-        return 210;
+        return 270;
     }
 
     /** Until the service answers, the program can do nothing, which the pointer shows. */
@@ -396,8 +407,9 @@ public final class BackupConsoleApp implements IDesktopApp {
         }
         g.fill(x, y, x + width, y + height, skin.windowBg());
         layout(font, x, y, width, height);
+        TabbedWindowLook.tabRow(g, skin, x, y, width);
         root.render(g, new UiContext(skin, font, mouseX, mouseY, partialTick));
-        renderStatusBar(g, font, x, y + height - STATUS_H, width);
+        TabbedWindowLook.statusBar(g, font, skin, x, y + height - STATUS_H, width, leftStatus(), rightStatus());
     }
 
     @Override
@@ -673,6 +685,7 @@ public final class BackupConsoleApp implements IDesktopApp {
             case PATTERNS -> BackupConsoleTexts.PATTERNS;
             case SCRIPTS -> BackupConsoleTexts.SCRIPTS;
             case IMAGES -> BackupConsoleTexts.IMAGES;
+            case WALLETS -> BackupConsoleTexts.WALLETS;
         };
     }
 
@@ -685,6 +698,7 @@ public final class BackupConsoleApp implements IDesktopApp {
             case PATTERNS -> BackupConsoleTexts.PART_PATTERNS;
             case SCRIPTS -> BackupConsoleTexts.PART_SCRIPTS;
             case IMAGES -> BackupConsoleTexts.PART_IMAGES;
+            case WALLETS -> BackupConsoleTexts.PART_WALLETS;
         };
     }
 
@@ -699,6 +713,8 @@ public final class BackupConsoleApp implements IDesktopApp {
             case PATTERNS -> GameText.resolve(BackupConsoleTexts.THE_NETWORKS);
             case IMAGES -> !BackupPart.of(parts).contains(BackupPart.IMAGES)
                     ? GameText.resolve(BackupConsoleTexts.NONE_CHOSEN) : String.join(", ", form.machines());
+            case WALLETS -> form.wallets().isEmpty() ? GameText.resolve(BackupConsoleTexts.NO_WALLETS)
+                    : String.join(", ", form.wallets());
         };
     }
 
@@ -1071,9 +1087,9 @@ public final class BackupConsoleApp implements IDesktopApp {
 
     /** Places every component from the content rectangle and the state; hides what the tab has no use for. */
     private void layout(final Font font, final int x, final int y, final int width, final int height) {
-        tabs.setBounds(x, y, width, TAB_H);
+        TabbedWindowLook.placeTabs(tabs, x, y, width);
         tabs.setSelected(tab);
-        final int top = y + TAB_H + 3;
+        final int top = y + TAB_H + 8;
         final int bottom = y + height - STATUS_H - PAD;
         final int px = x + PAD;
         final int pw = width - PAD * 2;
@@ -1082,15 +1098,15 @@ public final class BackupConsoleApp implements IDesktopApp {
             c.setVisible(false);
         }
         intro.setVisible(ready && (tab == JOBS || tab == TAPES));
-        intro.setBounds(px, top, pw, 8);
+        intro.setBounds(px, top, pw, TEXT_H);
         if (!ready) {
             return;
         }
         switch (tab) {
-            case JOBS -> layoutJobs(font, x, px, pw, top + 10, bottom, width);
+            case JOBS -> layoutJobs(font, px, pw, top + 15, bottom);
             case BACK_UP -> layoutBackUp(font, px, pw, top, bottom);
-            case RESTORE -> layoutRestore(font, x, px, pw, top, bottom, width);
-            default -> layoutTapes(font, x, px, pw, top + 10, bottom, width);
+            case RESTORE -> layoutRestore(font, px, pw, top, bottom);
+            default -> layoutTapes(font, px, pw, top + 15, bottom);
         }
     }
 
@@ -1106,29 +1122,24 @@ public final class BackupConsoleApp implements IDesktopApp {
         return all;
     }
 
-    private void layoutJobs(final Font font, final int x, final int px, final int pw, final int top,
-                            final int bottom, final int width) {
-        final int by = bottom - BTN_H;
+    private void layoutJobs(final Font font, final int px, final int pw, final int top, final int bottom) {
         jobColumns.setVisible(true);
-        jobColumns.setBounds(x, top, width, ROW_H);
-        final int whatX = px + scaledWidth(font, WIDE_NAME) * 3 / 2 + GAP;
-        final int runX = x + width - PAD - scaledWidth(font, GameText.resolve(BackupConsoleTexts.LAST_RUN.with(
-                dayClock(WIDEST_CLOCK), GameText.resolve(BackupConsoleTexts.NO_TARGET))));
-        final int whenX = runX - scaledWidth(font, GameText.resolve(BackupConsoleTexts.WHEN_AT.with(
-                GameText.resolve(BackupConsoleTexts.WEDNESDAYS), clockText(0, 0)))) - GAP;
-        final int whereX = whenX - scaledWidth(font, GameText.resolve(BackupConsoleTexts.DRIVE_OF.with(
-                WIDE_NAME, driveLetter(0)))) - GAP;
-        jobColumns.setColumnX(px, whatX, whereX, whenX, runX);
+        jobColumns.setBounds(px, top, pw, HEADER_H);
+        jobColumns.setColumnX(TabbedWindowLook.columns(px, pw, 13, 40, 57, 75));
+        // The list as tall as its jobs, as far as the buttons right under it leave room.
+        final int room = (bottom - FIELD_H - BUTTONS_DY - (top + HEADER_H)) / ROW_H * ROW_H;
+        final int listH = Math.max(ROW_H, Math.min(Math.max(1, jobs().size()) * ROW_H, room));
         jobList.setVisible(!jobs().isEmpty());
-        jobList.setBounds(x, top + ROW_H, width, Math.max(ROW_H, (by - PAD - top - ROW_H) / ROW_H * ROW_H));
+        jobList.setBounds(px, top + HEADER_H, pw, listH);
         noJobs.setVisible(jobs().isEmpty());
-        noJobs.setBounds(px, top + ROW_H + 2, pw, 8);
+        noJobs.setBounds(px + 5, top + HEADER_H + 3, pw - 5, TEXT_H);
+        final int by = top + HEADER_H + listH + BUTTONS_DY;
         int bx = px;
         for (final Button button : List.of(newJob, runNow, edit, delete)) {
-            final int bw = font.width(button.label()) + 12;
+            final int bw = font.width(button.label()) + 16;
             button.setVisible(true);
-            button.setBounds(bx, by, bw, BTN_H);
-            bx += bw + PAD;
+            button.setBounds(bx, by, bw, FIELD_H);
+            bx += bw + 5;
         }
         final boolean picked = selectedJob() != null;
         runNow.setEnabled(picked);
@@ -1138,199 +1149,178 @@ public final class BackupConsoleApp implements IDesktopApp {
 
     private void layoutBackUp(final Font font, final int px, final int pw, final int top, final int bottom) {
         whatHeading.setVisible(true);
-        whatHeading.setBounds(px, top + 1, pw / 2, 8);
-        final int fieldW = 90;
+        whatHeading.setBounds(px, top + 1, pw / 2, HEADING_H);
+        final int fieldW = 130;
         nameField.setVisible(true);
-        nameField.setBounds(px + pw - fieldW, top - 1, fieldW, ROW_H + 1);
-        final int nameW = scaledWidth(font, GameText.resolve(BackupConsoleTexts.NAME));
+        nameField.setBounds(px + pw - fieldW, top - 2, fieldW, FIELD_H);
+        final int nameW = font.width(GameText.resolve(BackupConsoleTexts.NAME));
         nameLabel.setVisible(true);
-        nameLabel.setBounds(px + pw - fieldW - GAP - nameW, top + 2, nameW, 8);
-        final int boxW = scaledWidth(font, GameText.resolve(BackupConsoleTexts.SCRIPTS)) + 18;
-        int ry = top + 13;
+        nameLabel.setBounds(px + pw - fieldW - GAP - nameW, top + 2, nameW, TEXT_H);
+        // Each part with what it holds beside it, the details in a column of their own.
+        final int detailX = px + pw * 31 / 100;
+        int ry = top + 22;
         for (final BackupPart part : BackupPart.values()) {
             partBoxes.get(part).setVisible(true);
-            partBoxes.get(part).setBounds(px, ry, boxW, ROW_H - 1);
+            partBoxes.get(part).setBounds(px, ry, detailX - px - GAP, ROW_H);
             partDetails.get(part).setVisible(true);
-            partDetails.get(part).setBounds(px + boxW + GAP, ry + 2, pw - boxW - GAP, 8);
-            ry += ROW_H - 1;
+            partDetails.get(part).setBounds(detailX, ry + 2, px + pw - detailX, TEXT_H);
+            ry += ROW_H;
         }
         itemsNote.setVisible(true);
-        itemsNote.setBounds(px, ry + 2, pw, 8);
-        ry += 14;
-        final int rightX = px + pw * 3 / 5;
+        itemsNote.setBounds(px, ry + 2, pw, TEXT_H);
+        ry += 22;
+        final int rightX = px + pw * 59 / 100;
         final int leftW = rightX - px - GAP;
         whereHeading.setVisible(true);
-        whereHeading.setBounds(px, ry, leftW, 8);
+        whereHeading.setBounds(px, ry, leftW, HEADING_H);
         whenHeading.setVisible(true);
-        whenHeading.setBounds(rightX, ry, pw - (rightX - px), 8);
-        ry += 11;
+        whenHeading.setBounds(rightX, ry, pw - (rightX - px), HEADING_H);
+        ry += 16;
         toLibrary.setVisible(true);
         toLibrary.setBounds(px, ry, leftW, ROW_H);
         byHand.setVisible(true);
         byHand.setBounds(rightX, ry, pw - (rightX - px), ROW_H);
-        ry += ROW_H + 1;
+        ry += ROW_H;
         toDrive.setVisible(true);
         toDrive.setBounds(px, ry, leftW, ROW_H);
         asJob.setVisible(true);
         asJob.setBounds(rightX, ry, pw - (rightX - px), ROW_H);
-        ry += ROW_H + 2;
+        ry += ROW_H + 4;
         final int places = whereKind == 0 ? form().libraries().size() : form().drives().size();
         nextPlace.setVisible(places > 1);
-        nextPlace.setBounds(px + 13, ry, scaledWidth(font, GameText.resolve(BackupConsoleTexts.NEXT)) + 10, BTN_H);
-        final int dayW = scaledWidth(font, GameText.resolve(BackupConsoleTexts.WEDNESDAYS)) + 22;
+        nextPlace.setBounds(px + 13, ry, font.width(GameText.resolve(BackupConsoleTexts.NEXT)) + 16, FIELD_H);
+        final int dayW = font.width(GameText.resolve(BackupConsoleTexts.WEDNESDAYS)) + 22;
         dayChoice.setVisible(true);
         dayChoice.setEnabled(whenKind == 1);
-        dayChoice.setBounds(rightX + 13, ry, dayW, BTN_H);
+        dayChoice.setBounds(rightX + 13, ry, dayW, FIELD_H);
         hourChoice.setVisible(true);
         hourChoice.setEnabled(whenKind == 1);
-        hourChoice.setBounds(rightX + 13 + dayW + PAD, ry, scaledWidth(font, clockText(0, 0)) + 22, BTN_H);
-        final int by = bottom - BTN_H;
-        final int cancelW = font.width(cancel.label()) + 14;
-        final int createW = Math.max(font.width(GameText.resolve(BackupConsoleTexts.CREATE)),
-                font.width(GameText.resolve(BackupConsoleTexts.SAVE))) + 14;
+        hourChoice.setBounds(rightX + 13 + dayW + 5, ry, font.width(clockText(0, 0)) + 22, FIELD_H);
+        final int by = bottom - FIELD_H;
+        final int cancelW = Math.max(BUTTON_W, font.width(cancel.label()) + 16);
+        final int createW = Math.max(BUTTON_W, Math.max(font.width(GameText.resolve(BackupConsoleTexts.CREATE)),
+                font.width(GameText.resolve(BackupConsoleTexts.SAVE))) + 16);
         cancel.setVisible(true);
-        cancel.setBounds(px + pw - cancelW, by, cancelW, BTN_H);
+        cancel.setBounds(px + pw - cancelW, by, cancelW, FIELD_H);
         create.setVisible(true);
-        create.setBounds(px + pw - cancelW - PAD - createW, by, createW, BTN_H);
+        create.setBounds(px + pw - cancelW - GAP - createW, by, createW, FIELD_H);
         create.setEnabled(BackupJob.validName(nameField.edit().strip()) && parts != 0 && formTarget() != null);
     }
 
-    private void layoutRestore(final Font font, final int x, final int px, final int pw, final int top,
-                               final int bottom, final int width) {
+    private void layoutRestore(final Font font, final int px, final int pw, final int top, final int bottom) {
         backupColumns.setVisible(true);
-        backupColumns.setBounds(x, top, width, ROW_H);
-        final int jobX = px + scaledWidth(font, dayClock(WIDEST_CLOCK)) + GAP * 2;
-        final int onX = jobX + scaledWidth(font, WIDE_NAME) * 5 / 4 + GAP;
-        final int sizeX = x + width - PAD - scaledWidth(font, DiskSpec.sizeLabel(WIDEST_SIZE_MB)) - GAP;
-        backupColumns.setColumnX(px, jobX, onX, sizeX);
-        final int listRows = chosenBackup() == null ? 8 : 3;
+        backupColumns.setBounds(px, top, pw, HEADER_H);
+        backupColumns.setColumnX(TabbedWindowLook.columns(px, pw, 21, 37, 68));
+        final int listRows = chosenBackup() == null ? 8 : 4;
         backupList.setVisible(!backups().isEmpty());
-        backupList.setBounds(x, top + ROW_H, width, ROW_H * listRows);
+        backupList.setBounds(px, top + HEADER_H, pw, ROW_H * listRows);
         noBackups.setVisible(backups().isEmpty());
-        noBackups.setBounds(px, top + ROW_H + 2, pw, 8);
-        final int by = bottom - BTN_H;
+        noBackups.setBounds(px + 5, top + HEADER_H + 3, pw - 5, TEXT_H);
+        final int by = bottom - FIELD_H;
         final BackupStatePayload.Held held = chosenBackup();
         if (held != null) {
             final boolean items = BackupPart.of(held.parts()).contains(BackupPart.ITEMS);
-            int ry = top + ROW_H * (listRows + 1) + 3;
+            int ry = top + HEADER_H + ROW_H * listRows + 7;
             detailHeading.setVisible(true);
-            detailHeading.setBounds(px, ry, pw, 8);
-            ry += 10;
+            detailHeading.setBounds(px, ry, pw, HEADING_H);
+            ry += 16;
             alsoLine.setVisible(!alsoText().isEmpty());
-            alsoLine.setBounds(px, ry, pw, 8);
+            alsoLine.setBounds(px, ry, pw, TEXT_H);
             ry += alsoLine.visible() ? LINE_H : 0;
             if (!imagesOfChosen().isEmpty()) {
                 final int rows = Math.min(imagesOfChosen().size(), items ? 1 : 3);
                 imageList.setVisible(true);
-                imageList.setBounds(x, ry, width, ROW_H * rows);
+                imageList.setBounds(px, ry, pw, ROW_H * rows);
                 ry += ROW_H * rows;
                 imageNote.setVisible(!items);
-                imageNote.setBounds(px, ry + 1, pw, 8);
-                ry += imageNote.visible() ? LINE_H + 1 : 1;
+                imageNote.setBounds(px, ry + 3, pw, TEXT_H);
+                ry += imageNote.visible() ? LINE_H + 3 : 1;
             }
             if (items) {
                 lossColumns.setVisible(true);
-                lossColumns.setBounds(x, ry, width, ROW_H);
-                final int lostX = px + scaledWidth(font, WIDE_NAME + WIDE_NAME) + GAP;
-                final int whenX = lostX + scaledWidth(font, DIGITS) + GAP;
-                final int howX = whenX + scaledWidth(font, dayClock(WIDEST_CLOCK)) + GAP;
-                final int backX = x + width - PAD - scaledWidth(font, DIGITS);
-                final int inX = backX - scaledWidth(font, GameText.resolve(BackupConsoleTexts.IN_BACKUP_COLUMN))
+                lossColumns.setBounds(px, ry, pw, HEADER_H);
+                final int lostX = px + font.width(WIDE_NAME + WIDE_NAME) + GAP;
+                final int whenX = lostX + font.width(DIGITS) + GAP;
+                final int howX = whenX + font.width(dayClock(WIDEST_CLOCK)) + GAP;
+                final int backX = px + pw - PAD - font.width(DIGITS);
+                final int inX = backX - font.width(GameText.resolve(BackupConsoleTexts.IN_BACKUP_COLUMN))
                         - GAP;
-                lossColumns.setColumnX(px, lostX, whenX, howX, inX, backX);
+                lossColumns.setColumnX(px + 5, lostX, whenX, howX, inX, backX);
                 final int noteRoom = LINE_H * 3 + 2;
-                final int rows = Math.max(1, (by - noteRoom - LINE_H - ry - ROW_H) / ROW_H);
+                final int rows = Math.max(1, (by - noteRoom - LINE_H - ry - HEADER_H) / ROW_H);
                 lossList.setVisible(true);
-                lossList.setBounds(x, ry + ROW_H, width, ROW_H * rows);
-                ry += ROW_H * (rows + 1) + 1;
+                lossList.setBounds(px, ry + HEADER_H, pw, ROW_H * rows);
+                ry += HEADER_H + ROW_H * rows + 2;
                 onceNote.setVisible(true);
-                onceNote.setBounds(px, ry, pw, 8);
+                onceNote.setBounds(px, ry, pw, TEXT_H);
                 existNote.setVisible(true);
-                existNote.setBounds(px, ry + LINE_H, pw, 8);
+                existNote.setBounds(px, ry + LINE_H, pw, TEXT_H);
                 restoringLine.setVisible(true);
-                restoringLine.setBounds(px, ry + LINE_H * 2 + 2, pw, 8);
+                restoringLine.setBounds(px, ry + LINE_H * 2 + 2, pw, TEXT_H);
             }
         }
         final int windW = pw * 3 / 5;
         final boolean wind = detail().windTape() >= 0;
         windLine.setVisible(wind);
-        windLine.setBounds(px, by - 9, windW, 8);
+        windLine.setBounds(px, by - 10, windW, TEXT_H);
         windBar.setVisible(wind);
-        windBar.setBounds(px, by + 3, windW, 6);
-        final int closeW = font.width(close.label()) + 14;
-        final int restoreW = font.width(restore.label()) + 14;
+        windBar.setBounds(px, by + 4, windW, 6);
+        final int closeW = Math.max(BUTTON_W, font.width(close.label()) + 16);
+        final int restoreW = Math.max(BUTTON_W, font.width(restore.label()) + 16);
         close.setVisible(true);
-        close.setBounds(px + pw - closeW, by, closeW, BTN_H);
+        close.setBounds(px + pw - closeW, by, closeW, FIELD_H);
         restore.setVisible(held != null);
-        restore.setBounds(px + pw - closeW - PAD - restoreW, by, restoreW, BTN_H);
+        restore.setBounds(px + pw - closeW - GAP - restoreW, by, restoreW, FIELD_H);
         restore.setEnabled(restorable());
     }
 
-    private void layoutTapes(final Font font, final int x, final int px, final int pw, final int top,
-                             final int bottom, final int width) {
+    private void layoutTapes(final Font font, final int px, final int pw, final int top, final int bottom) {
         final boolean any = tapes().library().library();
         noLibrary.setVisible(!any);
-        noLibrary.setBounds(px, top, pw, 8);
+        noLibrary.setBounds(px, top, pw, TEXT_H);
         if (!any) {
             return;
         }
         tapeColumns.setVisible(true);
-        tapeColumns.setBounds(x, top, width, ROW_H);
-        final int labelX = px + scaledWidth(font, GameText.resolve(BackupConsoleTexts.SLOT_COLUMN)) + GAP * 2;
-        final int tapeX = labelX + scaledWidth(font, WIDE_NAME) * 3 / 2 + GAP;
-        final int usedX = tapeX + scaledWidth(font, GameText.resolve(BackupConsoleTexts.FORMAT.with(
-                TapeFormat.REEL.label(), DiskSpec.sizeLabel(TapeFormat.REEL.capacityMb())))) + GAP;
-        final int writtenX = usedX + scaledWidth(font, DiskSpec.sizeLabel(WIDEST_SIZE_MB)) + GAP;
-        tapeColumns.setColumnX(px, labelX, tapeX, usedX, writtenX);
-        final int by = bottom - BTN_H;
+        tapeColumns.setBounds(px, top, pw, HEADER_H);
+        tapeColumns.setColumnX(TabbedWindowLook.columns(px, pw, 8, 26, 49, 63));
+        final int by = bottom - FIELD_H;
         tapeList.setVisible(true);
-        tapeList.setBounds(x, top + ROW_H, width, Math.max(ROW_H, (by - PAD - top - ROW_H) / ROW_H * ROW_H));
+        tapeList.setBounds(px, top + HEADER_H, pw,
+                Math.max(ROW_H, (by - GAP - top - HEADER_H) / ROW_H * ROW_H));
         int bx = px;
         for (final Button button : List.of(label, erase, eject)) {
-            final int bw = font.width(button.label()) + 12;
+            final int bw = font.width(button.label()) + 16;
             button.setVisible(true);
             button.setEnabled(selectedTape() != null);
-            button.setBounds(bx, by, bw, BTN_H);
-            bx += bw + PAD;
+            button.setBounds(bx, by, bw, FIELD_H);
+            bx += bw + 5;
         }
-        final int nextW = font.width(nextLibrary.label()) + 12;
+        final int nextW = font.width(nextLibrary.label()) + 16;
         nextLibrary.setVisible(tapes().count() > 1);
-        nextLibrary.setBounds(px + pw - nextW, by, nextW, BTN_H);
+        nextLibrary.setBounds(px + pw - nextW, by, nextW, FIELD_H);
     }
 
     private void layoutLabelPopup(final Popup p) {
         final int cy = p.contentTop();
-        labelHint.setBounds(p.x() + PAD, cy + 1, p.width() - PAD * 2, 8);
-        labelField.setBounds(p.x() + PAD, cy + 12, p.width() - PAD * 2, ROW_H + 2);
-        final int bw = (p.width() - PAD * 2 - 2) / 2;
-        final int by = p.bottom() - BTN_H - PAD;
-        labelApply.setBounds(p.x() + PAD, by, bw, BTN_H);
-        labelCancel.setBounds(p.x() + PAD + bw + 2, by, bw, BTN_H);
+        labelHint.setBounds(p.x() + PAD, cy + 4, p.width() - PAD * 2, TEXT_H);
+        labelField.setBounds(p.x() + PAD, cy + 17, p.width() - PAD * 2, FIELD_H);
+        final int bw = (p.width() - PAD * 2 - GAP) / 2;
+        final int by = p.bottom() - FIELD_H - PAD;
+        labelApply.setBounds(p.x() + PAD, by, bw, FIELD_H);
+        labelCancel.setBounds(p.x() + PAD + bw + GAP, by, bw, FIELD_H);
     }
 
     private void layoutErasePopup(final Popup p) {
         final int cy = p.contentTop();
-        eraseHint.setBounds(p.x() + PAD, cy + 4, p.width() - PAD * 2, 8);
-        final int bw = (p.width() - PAD * 2 - 2) / 2;
-        final int by = p.bottom() - BTN_H - PAD;
-        eraseApply.setBounds(p.x() + PAD, by, bw, BTN_H);
-        eraseCancel.setBounds(p.x() + PAD + bw + 2, by, bw, BTN_H);
-    }
-
-    private static int scaledWidth(final Font font, final String text) {
-        return Math.round(font.width(text) * SMALL);
+        eraseHint.setBounds(p.x() + PAD, cy + 6, p.width() - PAD * 2, TEXT_H);
+        final int bw = (p.width() - PAD * 2 - GAP) / 2;
+        final int by = p.bottom() - FIELD_H - PAD;
+        eraseApply.setBounds(p.x() + PAD, by, bw, FIELD_H);
+        eraseCancel.setBounds(p.x() + PAD + bw + GAP, by, bw, FIELD_H);
     }
 
     // drawing
-
-    private void renderStatusBar(final GuiGraphics g, final Font font, final int x, final int y, final int width) {
-        skin.statusBar(g, x, y, width, STATUS_H);
-        final String right = rightStatus();
-        final int rightW = scaledWidth(font, right);
-        final String left = Texts.clip(font, leftStatus(), (int) ((width - rightW - PAD * 3) / SMALL));
-        Texts.scaled(g, font, left, x + PAD, y + 2, SMALL, skin.text());
-        Texts.scaled(g, font, right, x + width - PAD - rightW, y + 2, SMALL, skin.dim());
-    }
 
     private void renderJob(final GuiGraphics g, final UiContext ctx, final BackupStatePayload.Job job,
                            final int index, final int x, final int y, final int w, final int h,
@@ -1354,10 +1344,10 @@ public final class BackupConsoleApp implements IDesktopApp {
                              final int index, final int x, final int y, final int w, final int h,
                              final boolean hovered, final boolean selectedRow) {
         ctx.skin().listRow(g, x + 2, y, w - 4, h, hovered, false);
-        ctx.skin().checkbox(g, ctx.font(), x + PAD, y + 1, 8, images.contains(image.node()), hovered);
-        Texts.scaled(g, ctx.font(), Texts.clip(ctx.font(), GameText.resolve(BackupConsoleTexts.IMAGE_ROW.with(
-                image.machine(), image.system(), DiskSpec.sizeLabel(image.sizeMb()))),
-                (int) ((w - PAD * 3 - 10) / SMALL)), x + PAD + 12, y + 2, SMALL, ctx.skin().text());
+        ctx.skin().checkbox(g, ctx.font(), x + PAD, y + 2, 8, images.contains(image.node()), hovered);
+        Draw.text(g, ctx.font(), Texts.clip(ctx.font(), GameText.resolve(BackupConsoleTexts.IMAGE_ROW.with(
+                image.machine(), image.system(), DiskSpec.sizeLabel(image.sizeMb()))), w - PAD * 3 - 10),
+                x + PAD + 12, y + 3, ctx.skin().text());
     }
 
     private void renderLoss(final GuiGraphics g, final UiContext ctx, final BackupStatePayload.Loss loss,
@@ -1384,19 +1374,18 @@ public final class BackupConsoleApp implements IDesktopApp {
                 x + w - PAD);
     }
 
-    /* A row's cells at the small font, each clipped to the room before the next column. */
+    /* A row's cells, each clipped to the room before the next column. */
     private static void cells(final GuiGraphics g, final UiContext ctx, final ColumnHeader header, final int y,
                               final List<String> values, final int right) {
         final Font font = ctx.font();
         for (int i = 0; i < values.size(); i++) {
             final int cx = header.columnX(i);
             final int end = i + 1 < values.size() ? header.columnX(i + 1) - GAP / 2 : right;
-            Texts.scaled(g, font, Texts.clip(font, values.get(i), (int) ((end - cx) / SMALL)), cx, y + 2, SMALL,
-                    ctx.skin().text());
+            Draw.text(g, font, Texts.clip(font, values.get(i), end - cx), cx, y + 3, ctx.skin().text());
         }
     }
 
-    /** One option of a choice, its button and its words at the small font, so a long place fits its column. */
+    /** One option of a choice, its button and its words, a long place cut to its column. */
     private static final class Option extends UiComponent {
 
         private final Supplier<String> label;
@@ -1415,9 +1404,8 @@ public final class BackupConsoleApp implements IDesktopApp {
         public void render(final GuiGraphics g, final UiContext ctx) {
             final boolean over = enabled() && ctx.over(x(), y(), width(), height());
             ctx.skin().radio(g, x(), y() + (height() - BUTTON) / 2, BUTTON, chosen.getAsBoolean(), over);
-            final int fits = (int) ((width() - BUTTON - 4) / SMALL);
-            ctx.skin().drawText(g, ctx.font(), Texts.trim(ctx.font(), label.get(), fits), x() + BUTTON + 4,
-                    y() + 2, ctx.skin().text(), SMALL);
+            ctx.skin().drawText(g, ctx.font(), Texts.clip(ctx.font(), label.get(), width() - BUTTON - 4),
+                    x() + BUTTON + 4, y() + (height() - 7) / 2, ctx.skin().text(), 1f);
         }
 
         @Override

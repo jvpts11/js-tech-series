@@ -39,6 +39,7 @@ final class BackupConsoleTexts {
     static final TextKey PART_PATTERNS = TextKey.of("jsc.backup_console.part.patterns", ".craft patterns");
     static final TextKey PART_SCRIPTS = TextKey.of("jsc.backup_console.part.scripts", "scripts");
     static final TextKey PART_IMAGES = TextKey.of("jsc.backup_console.part.images", "system images");
+    static final TextKey PART_WALLETS = TextKey.of("jsc.backup_console.part.wallets", "Teracoin wallets");
     static final TextKey IMAGES_OF = TextKey.of("jsc.backup_console.images_of", "System images: %s");
     static final TextKey TAPE_LIBRARY = TextKey.of("jsc.backup_console.tape_library", "Tape Library");
     static final TextKey DRIVE_OF = TextKey.of("jsc.backup_console.drive_of", "%s, disk %s:");
@@ -73,6 +74,8 @@ final class BackupConsoleTexts {
     static final TextKey PATTERNS = TextKey.of("jsc.backup_console.patterns", ".craft patterns");
     static final TextKey SCRIPTS = TextKey.of("jsc.backup_console.scripts", "IQL and Sigma# scripts");
     static final TextKey IMAGES = TextKey.of("jsc.backup_console.images", "System images");
+    static final TextKey WALLETS = TextKey.of("jsc.backup_console.wallets", "Teracoin wallets");
+    static final TextKey NO_WALLETS = TextKey.of("jsc.backup_console.no_wallets", "no computer keeps one");
     static final TextKey ITEMS_DETAIL = TextKey.of("jsc.backup_console.items_detail",
             "the network's storage: %s items, %s");
     static final TextKey NO_HOMES = TextKey.of("jsc.backup_console.no_homes", "no home folders");

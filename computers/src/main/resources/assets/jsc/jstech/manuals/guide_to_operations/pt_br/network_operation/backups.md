@@ -24,6 +24,7 @@ Table: O que um backup guarda
 | Padrões .craft | As receitas dos Crafting Computers da rede. |
 | Scripts IQL e Sigma# | Os scripts de cada computador, e as views, procedures e tarefas salvas do Mainframe. |
 | Imagens do sistema | O sistema de cada computador, que conserta um que se corrompeu. |
+| Carteiras Teracoin | Os arquivos de carteira de cada computador, cada um com a chave do seu endereço: perdido, leva as moedas junto. |
 
 ## Para onde vai
 

@@ -4178,6 +4178,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) A terminal window shows what a tool in front asks in the player's language, where it showed the
   question's key ("jsc.miner.press_q" for the miner's Press Q to stop); and the miner opens in Blockwright's gold,
   where it opened in a red, and counts "1 minute" since a pool's last block, where it said "1 minutes".
+- (Computers) The Backup Service backs up Teracoin wallets: the Back up tab offers them beside the system images, with
+  the computers that keep one, and a restore puts a lost wallet's file back where it was, with its address.
+- (Computers) The Backup Console is written in its desktop's own text and opens big enough for it, where every line was
+  in a type smaller still than the small one: its jobs' table keeps a column for what each job keeps, where it was
+  squeezed to a letter, the buttons stand under the jobs, and the tables take the columns of its design.
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
