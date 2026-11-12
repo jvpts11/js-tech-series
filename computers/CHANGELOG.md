@@ -1032,6 +1032,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Backup Console is written in its desktop's own text and opens big enough for it, where every line was
   in a type smaller still than the small one: its jobs' table keeps a column for what each job keeps, where it was
   squeezed to a letter, the buttons stand under the jobs, and the tables take the columns of its design.
+- The Messenger's Kept conversations window lists its conversations in rows as tall as its design draws
+  them, with room round its words and buttons, where the rows were squeezed together.
 - A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on
   works through its computer.
 - The Network Interactor's Operations tab gives each Operation its own state, where it read the states in

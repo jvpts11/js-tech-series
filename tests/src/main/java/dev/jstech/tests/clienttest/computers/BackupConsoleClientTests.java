@@ -31,13 +31,15 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 /**
  * The Backup Console as a player sees it (computers/docs/design/programs.md), on Frames XP at a computer of a network
  * whose rack server runs the Backup Service, a Tape Library with two tapes in the rack below it and four jobs kept:
- * each of its tabs, as their mocks show them; and the rack's own window with the library on its card.
+ * each of its tabs, as their mocks show them; the rack's own window with the library on its card; and a Vintage
+ * rack's library of reels on its card.
  */
 public final class BackupConsoleClientTests {
 
@@ -48,6 +50,7 @@ public final class BackupConsoleClientTests {
     private static final int TAB_WAIT = 20;
     private static final BlockPos MAINFRAME = new BlockPos(1, 2, 2);
     private static final BlockPos RACK = new BlockPos(2, 2, 1);
+    private static final BlockPos VINTAGE_RACK = new BlockPos(4, 2, 2);
     private static final BlockPos ROUTER = new BlockPos(3, 2, 2);
     private static final BlockPos COMPUTER = new BlockPos(5, 2, 2);
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
@@ -131,6 +134,27 @@ public final class BackupConsoleClientTests {
                 // A click on the library's faceplate, clear of its bays, puts it on the card.
                 .then(SETTLE, () -> ctx.clickGui(ServerRackLayout.PWR_X - 8, ServerRackLayout.rowY(LIBRARY_ROW) + 10))
                 .thenScreenshot(TAB_WAIT, "tape-library-in-the-rack");
+    }
+
+    @ClientTest(timeoutTicks = 900)
+    public static void tapeLibrary_vintage_showsItsReelsOnTheRacksCard(final ClientTestContext ctx) {
+        // An empty hand: a rack clicked with a stack in hand would take it instead of opening.
+        ctx.thenServer(0, level -> ctx.serverPlayer().getInventory().clearContent())
+                .thenBuild(0, world -> {
+                    world.setBlock(VINTAGE_RACK, ComputingModule.VINTAGE_SERVER_RACK.get().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
+                    final ServerRackBlockEntity rack = world.blockEntity(VINTAGE_RACK, ServerRackBlockEntity.class);
+                    rack.getServers().insertItem(LIBRARY_ROW,
+                            new ItemStack(ComputingModule.VINTAGE_TAPE_LIBRARY.get()), false);
+                    for (int slot = FIRST_TAPE; slot < FIRST_TAPE + 6; slot++) {
+                        rack.getFrontSlots().insertItem(slot, new ItemStack(ComputingModule.TAPE_REEL.get()), false);
+                    }
+                })
+                .thenTeleport(SETTLE, VINTAGE_RACK.south(2), Direction.NORTH)
+                .thenRightClick(SETTLE, VINTAGE_RACK)
+                .thenAwaitScreen(ServerRackScreen.class, SCREEN_WAIT)
+                .then(SETTLE, () -> ctx.clickGui(ServerRackLayout.PWR_X - 8, ServerRackLayout.rowY(LIBRARY_ROW) + 10))
+                .thenScreenshot(TAB_WAIT, "vintage-tape-library-in-the-rack");
     }
 
     private static BackupJob job(final String name, final Set<BackupPart> parts, final BackupJob.Target target,

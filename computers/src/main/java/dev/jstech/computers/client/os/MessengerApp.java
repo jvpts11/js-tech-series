@@ -461,6 +461,11 @@ public final class MessengerApp implements IDesktopApp {
         return send.center();
     }
 
+    /** The desktop point in the middle of the Kept conversations button, from the last frame drawn. */
+    public int[] keptPoint() {
+        return kept.center();
+    }
+
     /** The Messenger's colours, as the palette above names them. */
     private record Colours(int online, int offline, int mine, int theirs, int nudge, int nudgeInk) {
     }

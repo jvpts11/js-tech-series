@@ -49,10 +49,11 @@ public final class MessengerKeptDialog implements IDesktopApp {
     private long bytes;
     private long lastAskMs;
     private static final int WIDTH = 300;
-    private static final int HEIGHT = 170;
-    private static final int ROW_H = 10;
-    private static final int MARGIN = 4;
-    private static final int BUTTON_H = 12;
+    private static final int HEIGHT = 224;
+    private static final int ROW_H = 15;
+    private static final int HEADER_H = 13;
+    private static final int MARGIN = 8;
+    private static final int BUTTON_H = 15;
     /** How often the list is asked for again, so what people say meanwhile shows up in it. */
     private static final long POLL_MS = 2000L;
     /* Where each column begins, as shares of the list's width. */
@@ -145,13 +146,13 @@ public final class MessengerKeptDialog implements IDesktopApp {
         Draw.text(g, font, GameText.resolve(SocialTexts.KEPT_INTRO), x + MARGIN, y + MARGIN, skin.text());
         final int listX = x + MARGIN;
         final int listW = width - MARGIN * 2;
-        final int headY = y + MARGIN + 12;
+        final int headY = y + MARGIN + 15;
         final int buttonsY = y + height - MARGIN - BUTTON_H;
-        final int notesY = buttonsY - 34;
-        header.setBounds(listX, headY, listW, ROW_H + 2);
+        final int notesY = buttonsY - 46;
+        header.setBounds(listX, headY, listW, HEADER_H);
         header.setColumnX(listX + 3, columnX(listX, listW, LINES_AT), columnX(listX, listW, SIZE_AT),
                 columnX(listX, listW, SAID_AT));
-        final int listTop = headY + ROW_H + 2;
+        final int listTop = headY + HEADER_H;
         g.fill(listX, listTop, listX + listW, notesY - 4, skin.fieldBg());
         g.fill(listX, notesY - 4, listX + listW, notesY - 3, skin.edge());
         list.setBounds(listX, listTop, listW, notesY - 4 - listTop);
@@ -163,11 +164,11 @@ public final class MessengerKeptDialog implements IDesktopApp {
         }
         Draw.text(g, font, GameText.resolve(SocialTexts.KEPT_ON_DISK.with(MessengerLog.sizeText(bytes))),
                 listX, notesY, skin.text());
-        int lineY = notesY + 11;
+        int lineY = notesY + 13;
         for (final FormattedCharSequence line
                 : font.split(Component.literal(GameText.resolve(SocialTexts.KEPT_LEAVES)), listW)) {
             Draw.text(g, font, line, listX, lineY, skin.dim());
-            lineY += 9;
+            lineY += 11;
         }
     }
 
@@ -245,10 +246,11 @@ public final class MessengerKeptDialog implements IDesktopApp {
         final int ink = skin.listRowText(selected);
         final Font font = ctx.font();
         final int linesX = columnX(x, w, LINES_AT);
-        Draw.text(g, font, font.plainSubstrByWidth(nameOf(row), linesX - x - 6), x + 3, y + 1, ink);
-        Draw.text(g, font, String.valueOf(row.lines()), linesX, y + 1, ink);
-        Draw.text(g, font, MessengerLog.sizeText(row.bytes()), columnX(x, w, SIZE_AT), y + 1, ink);
-        Draw.text(g, font, saidAt(row.saidAt()), columnX(x, w, SAID_AT), y + 1, ink);
+        final int textY = y + (h - 7) / 2;
+        Draw.text(g, font, font.plainSubstrByWidth(nameOf(row), linesX - x - 6), x + 3, textY, ink);
+        Draw.text(g, font, String.valueOf(row.lines()), linesX, textY, ink);
+        Draw.text(g, font, MessengerLog.sizeText(row.bytes()), columnX(x, w, SIZE_AT), textY, ink);
+        Draw.text(g, font, saidAt(row.saidAt()), columnX(x, w, SAID_AT), textY, ink);
     }
 
     private static int columnX(final int x, final int width, final double share) {

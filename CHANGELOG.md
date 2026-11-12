@@ -4183,6 +4183,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The Backup Console is written in its desktop's own text and opens big enough for it, where every line was
   in a type smaller still than the small one: its jobs' table keeps a column for what each job keeps, where it was
   squeezed to a letter, the buttons stand under the jobs, and the tables take the columns of its design.
+- (Computers) The Messenger's Kept conversations window lists its conversations in rows as tall as its design draws
+  them, with room round its words and buttons, where the rows were squeezed together.
 - (Core) Manuals: a word of code too wide for its line breaks after the angle bracket of a type's arguments, as
   `Action<OperationInfo>` does, where it was cut between two letters.
 - (Computers) A peripheral cable plugs into a Lithography Station's Peripheral Port, so a station of the Legacy on

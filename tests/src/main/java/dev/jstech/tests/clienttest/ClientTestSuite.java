@@ -81,6 +81,7 @@ import dev.jstech.tests.clienttest.computers.MekanismClientTests;
 import dev.jstech.tests.clienttest.computers.MemberRunClientTests;
 import dev.jstech.tests.clienttest.computers.MemoryCrashClientTests;
 import dev.jstech.tests.clienttest.computers.MenuSwapCursorClientTests;
+import dev.jstech.tests.clienttest.computers.MessengerKeptClientTests;
 import dev.jstech.tests.clienttest.computers.MonitorClientTests;
 import dev.jstech.tests.clienttest.computers.MotionClientTests;
 import dev.jstech.tests.clienttest.computers.MsdClientTests;
@@ -528,6 +529,7 @@ public final class ClientTestSuite {
             TeracoinWindowsClientTests.class,
             TeracoinMachinesClientTests.class,
             BackupConsoleClientTests.class,
+            MessengerKeptClientTests.class,
             AdvancementTabsClientTests.class,
             WorkshopClientTests.class,
             UpdateClientTests.class,
