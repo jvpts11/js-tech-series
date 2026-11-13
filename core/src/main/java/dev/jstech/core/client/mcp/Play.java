@@ -30,6 +30,9 @@ import net.minecraft.world.phys.Vec3;
 final class Play {
 
     static final String PLACE = "place";
+    /** The point of a block a tool looks at, in sixteenths of it, and how far each of its numbers goes. */
+    static final String AT = "at";
+    static final int SIXTEENTHS = 16;
 
     private Play() {
     }
@@ -64,6 +67,37 @@ final class Play {
     /** The point of {@code face} of the block at {@code pos} a click lands on: its middle. */
     static Vec3 faceOf(final BlockPos pos, final Direction face) {
         return Vec3.atCenterOf(pos).add(face.getStepX() * 0.5, face.getStepY() * 0.5, face.getStepZ() * 0.5);
+    }
+
+    /**
+     * The point of the block at {@code pos} the call asks to look at: its {@link #AT} point, in sixteenths of the
+     * block, put on {@code face} when one is named; else the face's middle, or the block's. None when the point asked
+     * is outside the block.
+     */
+    static Optional<Vec3> pointOf(final McpCall call, final BlockPos pos, final Optional<Direction> face) {
+        final Optional<BlockPos> at = place(call, AT);
+        if (at.isEmpty()) {
+            return Optional.of(face.map(side -> faceOf(pos, side)).orElse(Vec3.atCenterOf(pos)));
+        }
+        final BlockPos in = at.get();
+        if (Math.min(in.getX(), Math.min(in.getY(), in.getZ())) < 0
+                || Math.max(in.getX(), Math.max(in.getY(), in.getZ())) > SIXTEENTHS) {
+            return Optional.empty();
+        }
+        double x = in.getX() / (double) SIXTEENTHS;
+        double y = in.getY() / (double) SIXTEENTHS;
+        double z = in.getZ() / (double) SIXTEENTHS;
+        if (face.isPresent()) {
+            // On the face named: its own axis at the face's plane, the other two where the point says.
+            final Direction side = face.get();
+            final double plane = side.getAxisDirection() == Direction.AxisDirection.POSITIVE ? 1.0 : 0.0;
+            switch (side.getAxis()) {
+                case X -> x = plane;
+                case Y -> y = plane;
+                case Z -> z = plane;
+            }
+        }
+        return Optional.of(new Vec3(pos.getX() + x, pos.getY() + y, pos.getZ() + z));
     }
 
     /** A place as JSON. */

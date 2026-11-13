@@ -195,6 +195,7 @@ stable 0
 3 dev.jstech.space.api.SpaceWorlds  type final class
 3 dev.jstech.space.api.SpaceWorlds  static Map<ResourceLocation, SpaceWorld> all(Level)
 3 dev.jstech.space.api.SpaceWorlds  static Map<ResourceLocation, SpaceWorld> declared()
+19 dev.jstech.space.api.SpaceWorlds  static Optional<SpaceWorld> anywhere(ResourceLocation)
 3 dev.jstech.space.api.SpaceWorlds  static Optional<SpaceWorld> get(Level, ResourceLocation)
 3 dev.jstech.space.api.SpaceWorlds  static Optional<SpaceWorld> ofDimension(Level, ResourceKey<Level>)
 3 dev.jstech.space.api.SpaceWorlds  static SpaceWorld declare(ResourceLocation, SpaceWorld)

@@ -22,9 +22,23 @@ class RecordedTestTest {
     void toJson_andFromJson_bringEveryKindOfStepBack() {
         final RecordedTest test = new RecordedTest("jsindustrial", "compressor_starts", List.of(
                 new RecordedTest.Use("jsindustrial:compressor"), new RecordedTest.Click("start"),
-                new RecordedTest.ClickAt(-20, 14), new RecordedTest.Type("8"), new RecordedTest.Key(257),
+                new RecordedTest.ClickAt(-20, 14), new RecordedTest.Drag(-40, 60, 30, 60),
+                new RecordedTest.Scroll(5, -12, -2), new RecordedTest.Type("8"), new RecordedTest.Key(257),
                 new RecordedTest.Wait(10), new RecordedTest.Picture("running"), new RecordedTest.Close()));
         assertEquals(test, RecordedTest.fromJson(test.toJson()));
+    }
+
+    @Test
+    void fromJson_readsADragAndATurnOfTheWheelWrittenByHand() {
+        final RecordedTest read = RecordedTest.fromJson(JsonParser.parseString("{\"mod\":\"m\",\"name\":\"t\","
+                + "\"steps\":[{\"drag\":[-40,60,30,60]},{\"scroll\":[5,-12,3]}]}").getAsJsonObject());
+        assertEquals(List.of(new RecordedTest.Drag(-40, 60, 30, 60), new RecordedTest.Scroll(5, -12, 3)),
+                read.steps());
+    }
+
+    @Test
+    void scroll_turnsTheWheelANotchAtLeast() {
+        assertThrows(IllegalArgumentException.class, () -> new RecordedTest.Scroll(0, 0, 0));
     }
 
     @Test

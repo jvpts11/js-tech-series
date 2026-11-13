@@ -74,6 +74,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Gear that rolls: J's Space's API is at version 18. `ShipPart` gains `rolls`, whether a part of gear rolls
   on wheels, on the land and a runway, where feet stand where they come down; written in a part's file as `rolls`.
   Experimental.
+- A world with no level to ask by: J's Space's API is at version 19. `SpaceWorlds.anywhere` is the world of a
+  name wherever it is known, for what has no level at hand, as a manual's figures: the server's data packs, else those
+  the player's game was sent, else the declared. Experimental.
 
 ### Added
 - The Small Shipyard's Item Port is a store with a screen: a hold of two rows of nine places a player fills

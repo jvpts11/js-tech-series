@@ -307,6 +307,12 @@ public final class ToolTexts {
     /* Across and down from the middle. */
     public static final TextKey STEP_CLICK_AT = TextKey.of("gui.jscore.studio.tests.step_click_at",
             "Click %s, %s from the middle");
+    /* Where the drag starts and ends, across and down from the middle. */
+    public static final TextKey STEP_DRAG = TextKey.of("gui.jscore.studio.tests.step_drag",
+            "Drag from %s, %s to %s, %s from the middle");
+    /* The notches, and where, across and down from the middle. */
+    public static final TextKey STEP_SCROLL = TextKey.of("gui.jscore.studio.tests.step_scroll",
+            "Turn the wheel %s at %s, %s from the middle");
     /* What is typed. */
     public static final TextKey STEP_TYPE = TextKey.of("gui.jscore.studio.tests.step_type", "Type '%s'");
     /* The key. */

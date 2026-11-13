@@ -3123,6 +3123,7 @@
   "jsc.cli.tool.du.about": "Conta o que os arquivos nesta pasta ocupam, uma linha para cada um e um total no final.",
   "jsc.cli.tool.du.entries": "%s entradas",
   "jsc.cli.tool.du.entry": "%s entrada",
+  "jsc.cli.tool.du.size": "%s mB",
   "jsc.cli.tool.du.summary": "quanto espaço os arquivos daqui ocupam",
   "jsc.cli.tool.free.about": "Exibe a memória que este computador tem e o swap por trás dela: o que está usado, o que está livre e o que um programa novo ainda pode receber. Com -h os tamanhos aparecem em megabytes e gigabytes; sem ele, em kibibytes.",
   "jsc.cli.tool.free.header": "               total        used        free      shared  buff/cache   available",

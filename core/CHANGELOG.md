@@ -1678,16 +1678,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Fortune or Silk Touch; Translations shows what each language lacks and the texts too long for their place; Settings
   lists every setting with its default and range and exports them as the preset `pack`; Structures catches the
   blocks between two corners as a structure file, saves it to the mod and shows it as the Structure Projector shows a
-  multiblock; Tests records a client test as you play and keeps it as a file, and shows every mod's reference
-  pictures beside what the last run drew and the difference; Save saves a block and reads it back, field by field;
-  Logs shows every log system's level and last lines, and the errors that teach. A mod's own tool asks the server
-  through `StudioServices` and `StudioAnswers`.
+  multiblock; Tests records a client test as you play (clicks, drags, the mouse wheel and keys) and keeps it as a
+  file, and shows every mod's reference pictures beside what the last run drew and the difference; Save saves a
+  block and reads it back, field by field; Logs shows every log system's level and last lines, and the errors that
+  teach. A mod's own tool asks the server through `StudioServices` and `StudioAnswers`.
 - Recorded client tests: the files `assets/<mod>/jstech/client_tests/<name>.json`, which the studio writes, run
   as a suite of client tests of their mod with no code.
 - The MCP server: the studio's tools open to agents and to tools outside the game over the Model Context
   Protocol, at `http://127.0.0.1:25599/mcp`. Its key, "MCP server", is never in a file: the player turns it on from
   the game, in the studio's new Agents tab or with `/jstech mcp on`, for that run only. It listens on this computer
-  alone and refuses any request a web page sends or one that names another host; every client is let in by the
+  alone and refuses any request a web page sends or one that names another host; turned off, it lets go of every
+  connection a client kept open, so nothing is answered by a server that is off; every client is let in by the
   player, who is asked on the screen whether it may read, or read and act, and is given a key of its own that dies
   with the game; reading and acting are apart; files are read and written only in the mods' and the pack's folders,
   and never code; commands come from a safe list, only in a test world or for an operator; what players wrote comes
@@ -1698,8 +1699,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Tools to play the game for automated tests, on the MCP server of the player's game, through the input the
   player uses: seeing (where the player is and looks, what the crosshair is on, the inventory, the screen open and its
   components by name, a picture of the window, the blocks round the player, the chat and the game's log); acting
-  (walking to a place, jumping, sneaking, looking at a block or an entity, picking a hotbar slot, using, placing,
-  breaking, opening a block, clicking a component by name, typing, pressing a key, closing the screen); the test
+  (walking to a place, jumping, sneaking, looking at a block, at a point of one of its faces or at an entity, picking
+  a hotbar slot, using, placing, breaking, opening a block, clicking a component by name, dragging across a screen,
+  turning the mouse wheel over it, typing, pressing a key, closing the screen); the test
   world (giving items, setting blocks, saving and opening the world again, running GameTests by name, playing a
   client test kept as a file with its pictures compared); waiting for ticks or until a screen, a block, a component's
   words or a line of chat; and recording what the agent did as a client test. A tool that acts over many ticks stops

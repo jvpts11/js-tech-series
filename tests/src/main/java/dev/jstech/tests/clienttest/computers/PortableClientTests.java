@@ -20,13 +20,21 @@ import dev.jstech.computers.portable.PortableItem;
 import dev.jstech.computers.portable.PortableModel;
 import dev.jstech.computers.portable.Portables;
 import dev.jstech.computers.wireless.AccessPointMount;
+import dev.jstech.core.client.studio.StudioClient;
+import dev.jstech.core.client.studio.StudioScreen;
+import dev.jstech.core.client.studio.StudioSheet;
+import dev.jstech.core.client.studio.StudioTexts;
+import dev.jstech.core.client.studio.StudioTool;
+import dev.jstech.core.text.GameText;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
@@ -47,6 +55,28 @@ public final class PortableClientTests {
     private static final BlockPos PLAYER = new BlockPos(5, 2, 8);
 
     private PortableClientTests() {
+    }
+
+    /**
+     * The studio reads a portable as the game draws it: its item has a view of its own for the inventory, a picture
+     * there, and is drawn by code in the hand, so nothing of it is a texture missing.
+     */
+    @ClientTest(timeoutTicks = 300)
+    public static void portables_haveNoTextureMissingInTheStudio(final ClientTestContext ctx) {
+        final String missing = GameText.resolve(StudioTexts.NO_TEXTURE);
+        ctx.afterTest(() -> ctx.mc().setScreen(null));
+        ctx.then(0, () -> ctx.mc().setScreen(StudioClient.openOn(StudioTool.THINGS)))
+                .thenAwaitScreen(StudioScreen.class, WAIT)
+                .then(SETTLE, () -> {
+                    final StudioScreen studio = ctx.screen(StudioScreen.class);
+                    for (final ResourceLocation portable : List.of(PortableItems.QPHONE.getId(),
+                            PortableItems.QPAD_PRO.getId())) {
+                        ctx.assertTrue(studio.choose(portable), portable + " is among the things");
+                        final List<String> found = studio.sheet().orElseThrow().checks().stream()
+                                .map(StudioSheet.Check::title).toList();
+                        ctx.assertTrue(!found.contains(missing), portable + " has no texture missing: " + found);
+                    }
+                });
     }
 
     @ClientTest(timeoutTicks = 2400)

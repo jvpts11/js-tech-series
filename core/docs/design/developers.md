@@ -130,9 +130,10 @@ outside the game: everything the studio does, the server does, so a mod is made 
 - **The page of its tools**, made from the tools themselves: each tool with its mod, whether it reads or acts, whether
   it is off, its arguments with their types and limits, and its schema, served by the MCP server and written by
   `/jstech dump mcp`.
-  - **Moving and acting as a player**: walk to a place, jump, sneak, look at a block or an entity, pick a hotbar slot,
-    use, break, place, open a block, click a component by its name, type, press a key, close the screen. It goes
-    through the same input the player uses, so the test is real.
+  - **Moving and acting as a player**: walk to a place, jump, sneak, look at a block, at a point of one of its faces
+    (a button on a machine's front, a port) or at an entity, pick a hotbar slot, use, break, place, open a block, click
+    a component by its name, drag across a screen with a button held (a slider, a swipe), turn the mouse wheel over
+    it, type, press a key, close the screen. It goes through the same input the player uses, so the test is real.
   - **The test world**: give items, set blocks, the time and the weather, run the allowed commands, save and reload,
     and run the GameTests and the client tests.
   - **Waiting**: for ticks, or until something is true (a screen opens, a block changes, a component shows a text), with

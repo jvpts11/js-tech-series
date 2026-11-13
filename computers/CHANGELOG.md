@@ -1280,6 +1280,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   script that leaves an era out is told the eras there are.
 - The ISMS profiler: a trace started again from its own handler goes on hearing the network, and a
   completed statement shows no length rather than nought ticks.
+- Frames 10: the taskbar's search box shows what is typed into it, its end in sight when it is long, rather
+  than the line it waits with.
 
 ## [0.5.3a] - 2026-11-04
 

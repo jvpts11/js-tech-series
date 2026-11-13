@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.client.studio;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import dev.jstech.core.content.GeoLook;
 import dev.jstech.core.developer.GeoBones;
 import dev.jstech.core.text.GameText;
@@ -22,6 +23,7 @@ import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
@@ -96,11 +98,14 @@ final class ModelReader implements IStudioReader {
         }
         final ItemStack stack = new ItemStack(thing.item());
         final BakedModel model = Minecraft.getInstance().getItemRenderer().getModel(stack, null, null, 0);
+        // The item as the inventory draws it: a model with a view of its own for each place, its own for the inventory,
+        // and one drawn by code there, which names no texture to miss.
+        final BakedModel shown = model.applyTransform(ItemDisplayContext.GUI, new PoseStack(), false);
         if (model == Minecraft.getInstance().getModelManager().getMissingModel()) {
             sheet.check(new StudioSheet.Check(StudioSheet.Mark.ERROR, GameText.resolve(StudioTexts.NO_MODEL),
                     GameText.resolve(StudioTexts.NO_MODEL_DETAIL.with(thing.id().toString())),
                     Optional.of(StudioFiles.asset(file))));
-        } else if (missesTexture(model, null)) {
+        } else if (!shown.isCustomRenderer() && missesTexture(shown, null)) {
             textureMissing(sheet, file);
         }
     }

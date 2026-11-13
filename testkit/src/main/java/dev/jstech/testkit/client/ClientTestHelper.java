@@ -10,6 +10,7 @@ package dev.jstech.testkit.client;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.client.developer.ScreenGestures;
 import dev.jstech.core.jstechseries.peripheral.IPeripheralEndpoint;
 import java.io.File;
 import java.io.IOException;
@@ -617,22 +618,30 @@ public class ClientTestHelper {
         click(screen.getGuiLeft() + x + 0.5, screen.getGuiTop() + y + 0.5);
     }
 
+    /** Turns the wheel {@code notches} at the screen's point ({@code x}, {@code y}): up when more than nought. */
+    public void scroll(final double x, final double y, final double notches) {
+        ScreenGestures.scroll(screen(Screen.class), x, y, notches);
+    }
+
+    /**
+     * Drags the left button from the screen's point ({@code x}, {@code y}) to ({@code toX}, {@code toY}), in steps,
+     * as the agent's tools and a recorded test drag.
+     */
+    public void drag(final double x, final double y, final double toX, final double toY) {
+        ScreenGestures.drag(screen(Screen.class), x, y, toX, toY, 0);
+    }
+
     /** Turns the wheel {@code delta} notches at ({@code x}, {@code y}) from the container screen's top left. */
     public void scrollGui(final int x, final int y, final double delta) {
         final AbstractContainerScreen<?> screen = screen(AbstractContainerScreen.class);
-        screen.mouseScrolled(screen.getGuiLeft() + x + 0.5, screen.getGuiTop() + y + 0.5, 0.0, delta);
+        scroll(screen.getGuiLeft() + x + 0.5, screen.getGuiTop() + y + 0.5, delta);
     }
 
     /** Drags the left button from ({@code x1}, {@code y1}) to ({@code x2}, {@code y2}) of the container screen. */
     public void dragGui(final int x1, final int y1, final int x2, final int y2) {
         final AbstractContainerScreen<?> screen = screen(AbstractContainerScreen.class);
-        final double sx = screen.getGuiLeft() + x1 + 0.5;
-        final double sy = screen.getGuiTop() + y1 + 0.5;
-        final double ex = screen.getGuiLeft() + x2 + 0.5;
-        final double ey = screen.getGuiTop() + y2 + 0.5;
-        screen.mouseClicked(sx, sy, 0);
-        screen.mouseDragged(ex, ey, 0, ex - sx, ey - sy);
-        screen.mouseReleased(ex, ey, 0);
+        drag(screen.getGuiLeft() + x1 + 0.5, screen.getGuiTop() + y1 + 0.5, screen.getGuiLeft() + x2 + 0.5,
+                screen.getGuiTop() + y2 + 0.5);
     }
 
     /** Presses and lets go of a key on the open screen. */

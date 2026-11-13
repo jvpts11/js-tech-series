@@ -3432,6 +3432,7 @@
   "jsc.cli.tool.du.about": "Counts what the files in this folder take up, one line each and a total at the end.",
   "jsc.cli.tool.du.entries": "%s entries",
   "jsc.cli.tool.du.entry": "%s entry",
+  "jsc.cli.tool.du.size": "%s mB",
   "jsc.cli.tool.du.summary": "how much room the files here take",
   "jsc.cli.tool.free.about": "Prints the memory this computer has and the swap behind it: what is used, what is free and what a new program may still be given. With -h the sizes read in megabytes and gigabytes; without, in kibibytes.",
   "jsc.cli.tool.free.header": "               total        used        free      shared  buff/cache   available",

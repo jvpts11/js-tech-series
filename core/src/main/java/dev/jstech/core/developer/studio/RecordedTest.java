@@ -17,8 +17,9 @@ import java.util.regex.Pattern;
 
 /**
  * A client test kept from what a player did on the screens, as the studio's "Record a test" keeps it: the block used to
- * open a screen, each click on a component by its name (or a point, on a screen not declared in a file), what was
- * typed, the keys pressed, the waits, the pictures taken and the screen closed. Written as a file of its mod's,
+ * open a screen, each click on a component by its name (or a point, on a screen not declared in a file), each drag and
+ * turn of the wheel, what was typed, the keys pressed, the waits, the pictures taken and the screen closed. Written as
+ * a file of its mod's,
  * {@code assets/<mod>/jstech/client_tests/<name>.json}, which the test kit runs among the mod's client tests.
  *
  * @param mod   the mod whose test it is
@@ -37,6 +38,8 @@ public record RecordedTest(String mod, String name, List<Step> steps) {
     private static final String USE = "use";
     private static final String CLICK = "click";
     private static final String CLICK_AT = "click_at";
+    private static final String DRAG = "drag";
+    private static final String SCROLL = "scroll";
     private static final String TYPE = "type";
     private static final String KEY = "key";
     private static final String WAIT = "wait";
@@ -97,6 +100,10 @@ public record RecordedTest(String mod, String name, List<Step> steps) {
             case CLICK -> new Click(value.getAsString());
             case CLICK_AT -> new ClickAt(value.getAsJsonArray().get(0).getAsInt(),
                     value.getAsJsonArray().get(1).getAsInt());
+            case DRAG -> new Drag(value.getAsJsonArray().get(0).getAsInt(), value.getAsJsonArray().get(1).getAsInt(),
+                    value.getAsJsonArray().get(2).getAsInt(), value.getAsJsonArray().get(3).getAsInt());
+            case SCROLL -> new Scroll(value.getAsJsonArray().get(0).getAsInt(),
+                    value.getAsJsonArray().get(1).getAsInt(), value.getAsJsonArray().get(2).getAsInt());
             case TYPE -> new Type(value.getAsString());
             case KEY -> new Key(value.getAsInt());
             case WAIT -> new Wait(value.getAsInt());
@@ -125,7 +132,7 @@ public record RecordedTest(String mod, String name, List<Step> steps) {
     }
 
     /** One thing a recorded test does. */
-    public sealed interface Step permits Use, Click, ClickAt, Type, Key, Wait, Picture, Close {
+    public sealed interface Step permits Use, Click, ClickAt, Drag, Scroll, Type, Key, Wait, Picture, Close {
 
         /** The step as its file writes it: an object of one field, its kind. */
         JsonObject toJson();
@@ -171,6 +178,53 @@ public record RecordedTest(String mod, String name, List<Step> steps) {
             at.add(this.dx);
             at.add(this.dy);
             return one(CLICK_AT, at);
+        }
+    }
+
+    /**
+     * Drags the left button from one point of the screen to another, both from the screen's middle in the GUI's
+     * pixels: a slider moved, a phone unlocked, a thing carried across a screen.
+     *
+     * @param dx   how far right of the middle the drag starts
+     * @param dy   how far down
+     * @param toDx how far right of the middle it ends
+     * @param toDy how far down
+     */
+    public record Drag(int dx, int dy, int toDx, int toDy) implements Step {
+
+        @Override
+        public JsonObject toJson() {
+            final JsonArray at = new JsonArray();
+            at.add(this.dx);
+            at.add(this.dy);
+            at.add(this.toDx);
+            at.add(this.toDy);
+            return one(DRAG, at);
+        }
+    }
+
+    /**
+     * Turns the wheel at a point of the screen, from the screen's middle in the GUI's pixels.
+     *
+     * @param dx      how far right of the middle
+     * @param dy      how far down
+     * @param notches how far it turns: up when more than nought, down when less, never nought
+     */
+    public record Scroll(int dx, int dy, int notches) implements Step {
+
+        public Scroll {
+            if (notches == 0) {
+                throw new IllegalArgumentException("a turn of the wheel turns it a notch at least");
+            }
+        }
+
+        @Override
+        public JsonObject toJson() {
+            final JsonArray at = new JsonArray();
+            at.add(this.dx);
+            at.add(this.dy);
+            at.add(this.notches);
+            return one(SCROLL, at);
         }
     }
 

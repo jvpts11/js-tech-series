@@ -99,6 +99,41 @@ class McpServerTest {
         }
     }
 
+    @Test
+    void stop_closesAConnectionKeptOpenForTheNextRequest() throws IOException {
+        try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), this.server.port())) {
+            socket.setSoTimeout(5_000);
+            final OutputStream out = socket.getOutputStream();
+            out.write(("POST /mcp HTTP/1.1\r\nHost: 127.0.0.1:" + this.server.port() + "\r\nContent-Type: "
+                    + "application/json\r\nAccept: application/json, text/event-stream\r\nContent-Length: "
+                    + INITIALIZE.length() + "\r\n\r\n" + INITIALIZE).getBytes(StandardCharsets.UTF_8));
+            out.flush();
+            final InputStream in = socket.getInputStream();
+            final String paired = answer(in);
+            assertTrue(paired.startsWith("HTTP/1.1 200"), paired);
+            // Kept open for the next request, as a client's pool keeps it; turned off, the server lets it go now.
+            this.server.stop();
+            assertEquals(-1, in.read(), "the connection is closed, not left to answer for a server turned off");
+        }
+    }
+
+    /* One answer read from {@code in}: its head, and as much of its body as it says it holds. */
+    private static String answer(final InputStream in) throws IOException {
+        final StringBuilder head = new StringBuilder();
+        while (!head.toString().endsWith("\r\n\r\n")) {
+            final int next = in.read();
+            if (next < 0) {
+                return head.toString();
+            }
+            head.append((char) next);
+        }
+        final String field = "content-length:";
+        final int length = head.toString().lines().filter(line -> line.regionMatches(true, 0, field, 0,
+                field.length())).findFirst().map(line -> Integer.parseInt(line.substring(field.length()).strip()))
+                .orElse(0);
+        return head + new String(in.readNBytes(length), StandardCharsets.UTF_8);
+    }
+
     /* Sends {@code raw} and reads every byte the server answers until it closes the connection. */
     private String exchange(final String raw) throws IOException {
         try (Socket socket = new Socket(InetAddress.getLoopbackAddress(), this.server.port())) {

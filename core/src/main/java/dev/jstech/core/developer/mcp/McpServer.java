@@ -18,6 +18,8 @@ import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -34,6 +36,8 @@ public final class McpServer {
     private final IMcpLogger logger;
     private final Semaphore room = new Semaphore(CONNECTIONS);
     private final AtomicBoolean running = new AtomicBoolean(true);
+    /* The connections kept open between requests, waiting for the next one. */
+    private final Set<Socket> waiting = ConcurrentHashMap.newKeySet();
 
     /** How many connections are served at once, and how long one may stay silent, in milliseconds. */
     private static final int CONNECTIONS = 16;
@@ -85,7 +89,10 @@ public final class McpServer {
         return this.protocol;
     }
 
-    /** Stops listening, and closes the connections as their requests end. */
+    /**
+     * Stops listening, closes the connections waiting for a request, and closes the others as their requests end; so a
+     * client's next request, on a server turned on again, never reaches the one turned off.
+     */
     public void stop() {
         if (this.running.compareAndSet(true, false)) {
             for (final ServerSocket socket : this.sockets) {
@@ -95,6 +102,7 @@ public final class McpServer {
                     // Closing a socket that is closing already says nothing new.
                 }
             }
+            this.waiting.forEach(McpServer::close);
             this.logger.info("The MCP server stopped");
         }
     }
@@ -132,11 +140,18 @@ public final class McpServer {
             connection.setSoTimeout(SILENCE);
             while (this.running.get()) {
                 final Optional<McpHttp.Request> read;
+                this.waiting.add(connection);
                 try {
+                    // Stopped while it came to wait: stop has closed the others, and this one closes here.
+                    if (!this.running.get()) {
+                        return;
+                    }
                     read = McpHttp.read(in);
                 } catch (final McpHttp.Bad bad) {
                     McpHttp.write(out, McpHttp.Response.text(bad.status(), bad.getMessage()), true);
                     return;
+                } finally {
+                    this.waiting.remove(connection);
                 }
                 if (read.isEmpty()) {
                     return;

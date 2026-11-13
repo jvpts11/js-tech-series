@@ -230,7 +230,7 @@ class HardcodedTextTest {
             data(COMPUTERS + "os/OsRegistry.java", 2, "the kind of entry a registration names in the log"),
             data(COMPUTERS + "os/SoftwareHouse.java", 39, PRODUCTS),
             data(COMPUTERS + "os/FileSystemType.java", 1, PRODUCTS),
-            data(COMPUTERS + "os/UnixTree.java", 9, FILES),
+            data(COMPUTERS + "os/UnixTree.java", 10, FILES),
             data(COMPUTERS + "machine/ProgramSettingsService.java", 1, FILES),
             data(COMPUTERS + "machine/SettingsFormat.java", 1, "the header of a property list, as Quince OS X"
                     + " writes one whatever the language"),
@@ -262,6 +262,9 @@ class HardcodedTextTest {
             data(COMPUTERS + "sigma/LanguageLevel.java", 1, PRODUCTS),
             data("industrial/src/main/java/dev/jstech/industrial/integration/computers/MachineMonitor.java", 2,
                     PRODUCTS),
+            data("space/src/main/java/dev/jstech/space/api/RocketKit.java", 5, "what is wrong with a rocket kit, in"
+                    + " the error its data pack's file or its declaration is refused with, which its maker reads in"
+                    + " the log"),
             data(COMPUTERS + "sigma/edit/SigmaCompletions.java", 2,
                     "the marks for who declares a candidate, which are never drawn"),
             data(COMPUTERS + "sigma/sem/BareFunctions.java", 45, SIGNATURES),
@@ -324,7 +327,7 @@ class HardcodedTextTest {
             data(CORE + "client/studio/StudioMcpTools.java", 18, MCP_TOOLS),
             data(CORE + "client/mcp/PlaySeeing.java", 17, MCP_TOOLS),
             data(CORE + "client/mcp/PlayScene.java", 6, MCP_TOOLS),
-            data(CORE + "client/mcp/PlayActing.java", 47, MCP_TOOLS),
+            data(CORE + "client/mcp/PlayActing.java", 64, MCP_TOOLS),
             data(CORE + "client/mcp/PlayWorld.java", 22, MCP_TOOLS),
             data(CORE + "client/mcp/PlayWaiting.java", 22, MCP_TOOLS));
 

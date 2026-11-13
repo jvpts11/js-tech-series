@@ -273,6 +273,7 @@ final class MachineToolCommands {
                 "Counts what the files in this folder take up, one line each and a total at the end.");
         private static final TextKey ENTRY = TextKey.of("jsc.cli.tool.du.entry", "%s entry");
         private static final TextKey ENTRIES = TextKey.of("jsc.cli.tool.du.entries", "%s entries");
+        private static final TextKey SIZE = TextKey.of("jsc.cli.tool.du.size", "%s mB");
 
         @Override public CommandScope scope() {
             return CommandScope.on(CommandScope.UNIX_SYSTEMS).needing(CommandScope.Need.FILES);
@@ -309,11 +310,11 @@ final class MachineToolCommands {
             // Each entry with the room it takes, a folder by its slash, and the room of them all on the last line.
             long total = 0L;
             for (final ICliComputer.FsEntry entry : entries) {
-                ctx.out().row(entry.isDir() ? entry.name() + "/" : entry.name(),
-                        CliText.group(entry.weightMbEq()) + " mB");
+                ctx.out().row(Text.literal(entry.isDir() ? entry.name() + "/" : entry.name()),
+                        SIZE.with(CliText.group(entry.weightMbEq())));
                 total += entry.weightMbEq();
             }
-            ctx.out().row(".", CliText.group(total) + " mB");
+            ctx.out().row(Text.literal("."), SIZE.with(CliText.group(total)));
             ctx.out().dim(entries.size() == 1 ? ENTRY.with(entries.size()) : ENTRIES.with(entries.size()));
         }
     }

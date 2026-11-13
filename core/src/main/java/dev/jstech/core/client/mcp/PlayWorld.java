@@ -12,6 +12,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.client.developer.Pictures;
+import dev.jstech.core.client.developer.ScreenGestures;
 import dev.jstech.core.client.gui.data.BuiltNode;
 import dev.jstech.core.client.gui.data.IDataScreen;
 import dev.jstech.core.developer.ThingTests;
@@ -86,7 +87,8 @@ public final class PlayWorld {
                         McpPermission.ACT, PlayWorld::gameTests),
                 new McpTool("client_test_run", "Plays a client test kept as a file (as the studio's Record a test "
                         + "keeps them) in the world open, step by step, and answers with each picture compared with "
-                        + "its reference; one that compares no picture has not passed.", McpSchema.object()
+                        + "its reference and how many were; it passes when every step was made and every picture "
+                        + "matches.", McpSchema.object()
                         .words("mod", "The test's mod.", true).words("name", "The test's name.", true).build(),
                         McpPermission.ACT, PlayWorld::clientTest));
     }
@@ -202,9 +204,10 @@ public final class PlayWorld {
                 final JsonObject out = new JsonObject();
                 out.addProperty("steps", steps.size());
                 out.add("pictures", pictures);
-                // A test that compared no picture checked nothing, so it has not passed.
+                // Every step was made, or the run ended failed at it; as the test kit plays the file, it passes when
+                // its pictures match too, and how many were compared says whether it checked any.
                 out.addProperty("compared", pictures.size());
-                out.addProperty("passed", !pictures.isEmpty() && pictures.asList().stream().allMatch(picture ->
+                out.addProperty("passed", pictures.asList().stream().allMatch(picture ->
                         picture.getAsJsonObject().get("passed").getAsBoolean()));
                 return Optional.of(McpResult.json(out));
             }
@@ -277,6 +280,24 @@ public final class PlayWorld {
                 }
                 screen.mouseClicked(screen.width / 2.0 + clickAt.dx(), screen.height / 2.0 + clickAt.dy(), 0);
                 screen.mouseReleased(screen.width / 2.0 + clickAt.dx(), screen.height / 2.0 + clickAt.dy(), 0);
+                return Optional.of(true);
+            }
+            case RecordedTest.Drag drag -> {
+                final Screen screen = game.screen;
+                if (screen == null) {
+                    return Optional.of(false);
+                }
+                ScreenGestures.drag(screen, screen.width / 2.0 + drag.dx(), screen.height / 2.0 + drag.dy(),
+                        screen.width / 2.0 + drag.toDx(), screen.height / 2.0 + drag.toDy(), 0);
+                return Optional.of(true);
+            }
+            case RecordedTest.Scroll scroll -> {
+                final Screen screen = game.screen;
+                if (screen == null) {
+                    return Optional.of(false);
+                }
+                ScreenGestures.scroll(screen, screen.width / 2.0 + scroll.dx(), screen.height / 2.0 + scroll.dy(),
+                        scroll.notches());
                 return Optional.of(true);
             }
             case RecordedTest.Type type -> {

@@ -99,6 +99,16 @@ public final class RecordedClientTests {
                     final Screen screen = shown(game);
                     helper.click(screen.width / 2.0 + at.dx(), screen.height / 2.0 + at.dy());
                 });
+                case RecordedTest.Drag drag -> helper.then(SETTLE, () -> {
+                    final Screen screen = shown(game);
+                    helper.drag(screen.width / 2.0 + drag.dx(), screen.height / 2.0 + drag.dy(),
+                            screen.width / 2.0 + drag.toDx(), screen.height / 2.0 + drag.toDy());
+                });
+                case RecordedTest.Scroll scroll -> helper.then(SETTLE, () -> {
+                    final Screen screen = shown(game);
+                    helper.scroll(screen.width / 2.0 + scroll.dx(), screen.height / 2.0 + scroll.dy(),
+                            scroll.notches());
+                });
                 case RecordedTest.Type type -> helper.then(SETTLE, () -> helper.type(type.text()));
                 case RecordedTest.Key key -> helper.then(SETTLE, () -> helper.key(key.key()));
                 // A wait only waits: a step after a screen closed may be one that opens the next, which asks for none.

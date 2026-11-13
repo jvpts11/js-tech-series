@@ -37,9 +37,10 @@ import org.lwjgl.glfw.GLFW;
 
 /**
  * The studio's "Record a test": while it records, the block the player uses to open a screen, each click on a screen
- * (by the name of the component clicked, on a screen declared in a file), what is typed, the keys that move about a
- * screen, the waits between them and the pictures asked for are kept, in order. Two buttons over every screen take a
- * picture and stop. What was kept is shown in the studio's tests, which keeps it as a client test of its mod.
+ * (by the name of the component clicked, on a screen declared in a file), each drag and turn of the wheel, what is
+ * typed, the keys that move about a screen, the waits between them and the pictures asked for are kept, in order. Two
+ * buttons over every screen take a picture and stop. What was kept is shown in the studio's tests, which keeps it as a
+ * client test of its mod.
  */
 public final class TestRecorder {
 
@@ -55,12 +56,18 @@ public final class TestRecorder {
     private static final int BUTTON_HEIGHT = 12;
     private static final float SMALL = 0.75F;
     private static final String JSON = ".json";
+    /* How far, in the GUI's pixels, the left button moves between pressed and let go for a drag, not a click. */
+    private static final double DRAG_SLOP = 3.0;
 
     private static volatile boolean recording;
     private static @Nullable String mod;
     private static @Nullable String block;
     private static long lastTick;
     private static int pictures;
+    /* Where the left button was last pressed on a screen, and which step that press was kept as; -1 for none. */
+    private static double pressX;
+    private static double pressY;
+    private static int pressStep = -1;
 
     private TestRecorder() {
     }
@@ -70,6 +77,8 @@ public final class TestRecorder {
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(PlayerInteractEvent.RightClickBlock.class, TestRecorder::onUse);
         NeoForge.EVENT_BUS.addListener(ScreenEvent.MouseButtonPressed.Pre.class, TestRecorder::onClick);
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.MouseButtonReleased.Pre.class, TestRecorder::onRelease);
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.MouseScrolled.Pre.class, TestRecorder::onScroll);
         NeoForge.EVENT_BUS.addListener(ScreenEvent.CharacterTyped.Pre.class, TestRecorder::onType);
         NeoForge.EVENT_BUS.addListener(ScreenEvent.KeyPressed.Pre.class, TestRecorder::onKey);
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, event -> {
@@ -195,7 +204,51 @@ public final class TestRecorder {
         final Optional<String> named = screen instanceof IDataScreen data ? ScreenPoints.nameAt(data, x, y)
                 : Optional.empty();
         keep(named.<RecordedTest.Step>map(RecordedTest.Click::new).orElseGet(() -> new RecordedTest.ClickAt(
-                (int) Math.round(x - screen.width / 2.0), (int) Math.round(y - screen.height / 2.0))));
+                fromMiddle(x, screen.width), fromMiddle(y, screen.height))));
+        pressX = x;
+        pressY = y;
+        pressStep = STEPS.size() - 1;
+    }
+
+    /* The left button let go away from where it was pressed: the click kept for the press was a drag. */
+    private static void onRelease(final ScreenEvent.MouseButtonReleased.Pre event) {
+        final int pressed = pressStep;
+        pressStep = -1;
+        if (!recording || event.getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT || pressed != STEPS.size() - 1
+                || event.getScreen() instanceof StudioScreen) {
+            return;
+        }
+        final Screen screen = event.getScreen();
+        if (Math.abs(event.getMouseX() - pressX) >= DRAG_SLOP || Math.abs(event.getMouseY() - pressY) >= DRAG_SLOP) {
+            STEPS.set(pressed, new RecordedTest.Drag(fromMiddle(pressX, screen.width), fromMiddle(pressY,
+                    screen.height), fromMiddle(event.getMouseX(), screen.width), fromMiddle(event.getMouseY(),
+                    screen.height)));
+        }
+    }
+
+    /* A turn of the wheel, kept by the notch; turns at the same point one after another are kept as one. */
+    private static void onScroll(final ScreenEvent.MouseScrolled.Pre event) {
+        if (!recording || event.getScreen() instanceof StudioScreen) {
+            return;
+        }
+        final int notches = (int) Math.round(event.getScrollDeltaY());
+        if (notches == 0) {
+            return;
+        }
+        final Screen screen = event.getScreen();
+        final int dx = fromMiddle(event.getMouseX(), screen.width);
+        final int dy = fromMiddle(event.getMouseY(), screen.height);
+        if (!STEPS.isEmpty() && STEPS.getLast() instanceof RecordedTest.Scroll last && last.dx() == dx
+                && last.dy() == dy && last.notches() + notches != 0) {
+            STEPS.set(STEPS.size() - 1, new RecordedTest.Scroll(dx, dy, last.notches() + notches));
+        } else {
+            keep(new RecordedTest.Scroll(dx, dy, notches));
+        }
+    }
+
+    /* How far {@code at} is from the middle of a screen {@code size} across, in whole pixels. */
+    private static int fromMiddle(final double at, final int size) {
+        return (int) Math.round(at - size / 2.0);
     }
 
     private static void onType(final ScreenEvent.CharacterTyped.Pre event) {

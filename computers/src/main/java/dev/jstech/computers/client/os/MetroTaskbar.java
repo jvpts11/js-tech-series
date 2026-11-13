@@ -83,15 +83,18 @@ final class MetroTaskbar {
                 0.0F, 0.0F, GLYPH, GLYPH, GLYPH, GLYPH));
         g.setColor(1.0F, 1.0F, 1.0F, 1.0F);
 
-        // The search box, white, with its magnifier and the line it waits with.
+        // The search box, white, with its magnifier and what is typed into it, or the line it waits with; a long search
+        // keeps its end, where the typing is, in sight.
         final int sx = searchLeft();
         g.fill(sx, tbY + 3, sx + SEARCH_W, bottom - 3, c.search());
         final int my = tbY + DesktopScreen.TASKBAR_H / 2;
         Draw.outline(g, sx + 4, my - 4, 6, 6, c.searchInk());
         g.fill(sx + 9, my + 1, sx + 11, my + 3, c.searchInk());
-        final String hint = GameText.resolve(DesktopTexts.SEARCH_HINT);
-        Draw.text(g, desktop.textFont(), desktop.textFont().plainSubstrByWidth(hint, SEARCH_W - 18), sx + 15,
-                my - 3, c.searchInk());
+        final String typed = desktop.start().searchText();
+        final String line = typed.isEmpty() ? desktop.textFont().plainSubstrByWidth(GameText.resolve(
+                DesktopTexts.SEARCH_HINT), SEARCH_W - 18) : desktop.textFont().plainSubstrByWidth(typed, SEARCH_W - 18,
+                true);
+        Draw.text(g, desktop.textFont(), line, sx + 15, my - 3, c.searchInk());
 
         // Task View: two windows, one behind the other.
         final int vx = viewLeft();

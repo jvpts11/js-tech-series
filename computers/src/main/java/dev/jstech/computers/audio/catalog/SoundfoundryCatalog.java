@@ -233,7 +233,7 @@ public final class SoundfoundryCatalog {
             final int slash = rest.indexOf('/');
             if (entry.getKey().getNamespace().equals(FROM_CONFIG)) {
                 // The server folder's albums go by this name, so a pack's album under it would take one's place.
-                reading.passOver(entry.getKey().toString(), "its namespace is the one of the server's own albums");
+                reading.serversOwn(entry.getKey().toString());
             } else if (slash > 0 && rest.indexOf('/', slash + 1) < 0) {
                 byAlbum.computeIfAbsent(entry.getKey().getNamespace() + "/" + rest.substring(0, slash),
                         album -> new ArrayList<>()).add(entry);
@@ -402,6 +402,12 @@ public final class SoundfoundryCatalog {
         void passOver(final String where, final String why) {
             skipped++;
             LOGGER.warn("Soundfoundry catalogue: {} was passed over: {}", where, why);
+        }
+
+        void serversOwn(final String where) {
+            skipped++;
+            LOGGER.warn("Soundfoundry catalogue: {} was passed over: its namespace is the one of the server's own"
+                    + " albums", where);
         }
 
         void tooLarge(final String where) {

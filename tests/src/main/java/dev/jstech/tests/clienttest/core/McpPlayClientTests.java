@@ -9,12 +9,20 @@ package dev.jstech.tests.clienttest.core;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import dev.jstech.core.audio.AudioChannels;
+import dev.jstech.core.audio.AudioPrefs;
+import dev.jstech.core.client.audio.AudioMixer;
+import dev.jstech.core.client.audio.AudioPrefsStore;
+import dev.jstech.core.client.audio.mixer.SoundMixerScreen;
 import dev.jstech.core.client.mcp.McpGame;
 import dev.jstech.core.client.mcp.McpPairingScreen;
+import dev.jstech.core.client.studio.TestRecorder;
 import dev.jstech.core.developer.mcp.McpCall;
 import dev.jstech.core.developer.mcp.McpGuard;
 import dev.jstech.core.developer.mcp.McpPermission;
 import dev.jstech.core.developer.mcp.McpProtocol;
+import dev.jstech.core.developer.studio.RecordedTest;
+import dev.jstech.testkit.client.ClientTestFailure;
 import dev.jstech.tests.TestKitMachine;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
@@ -27,20 +35,29 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import net.minecraft.client.gui.components.AbstractSelectionList;
+import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * An agent playing the game as the player through the MCP server: it sees where the player is, sets up the test
  * world, opens a machine and reads its screen, walks, picks a slot, places and breaks a block, opens the inventory with
  * its key, takes a picture, waits for what it waits for, runs a GameTest, plays a client test kept as a file, records
- * what it did, and saves and opens the world again; every call over the wire.
+ * what it did, and saves and opens the world again; drags a slider, turns the wheel over a list and looks at a point of
+ * a face; every call over the wire.
  */
 public final class McpPlayClientTests {
 
@@ -51,7 +68,15 @@ public final class McpPlayClientTests {
     private static final BlockPos WALK_TO = new BlockPos(3, 2, 0);
     /* Far enough that the walk there is still under way when the server is turned off. */
     private static final BlockPos FAR = new BlockPos(0, 2, 40);
+    /* A block a little right of the machine, whose south face looks at the player standing at STAND. */
+    private static final BlockPos WALL = new BlockPos(1, 2, -3);
     private static final int HOTBAR = 9;
+    /* How far along its track the slider is dragged, and how near the volume it sets must come. */
+    private static final float QUARTER = 0.25F;
+    private static final float CLOSE = 0.03F;
+    /* How near, in blocks, the point looked at must be to the one asked for. */
+    private static final double AIMED = 0.02;
+    private static final String MACHINES = AudioChannels.MACHINES.id().toString();
     private static final HttpClient HTTP = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     private static final String INITIALIZE = "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":"
             + "{\"protocolVersion\":\"2025-11-25\",\"clientInfo\":{\"name\":\"Player test\",\"version\":\"1.0\"}}}";
@@ -68,16 +93,7 @@ public final class McpPlayClientTests {
             McpGame.turn(false);
             ctx.mc().setScreen(null);
         });
-        ctx.thenTeleport(0, STAND, Direction.NORTH)
-                .then(SETTLE, () -> {
-                    McpGame.turn(true);
-                    port[0] = McpGame.running().orElseThrow().port();
-                    sent.set(post(port[0], null, INITIALIZE));
-                })
-                .thenAwaitScreen(McpPairingScreen.class, WAIT)
-                .then(SETTLE, () -> ctx.screen(McpPairingScreen.class).answer(Optional.of(McpPermission.ACT)))
-                .thenWaitUntil(() -> sent.get().isDone(), WAIT, "the client is let in")
-                .then(0, () -> key.set(sent.get().join().headers().firstValue(McpProtocol.SESSION).orElseThrow()));
+        pair(ctx, sent, key, port);
         final Deque<Step> steps = new ArrayDeque<>();
         final BlockPos machine = ctx.abs(MACHINE);
         final BlockPos walkTo = ctx.abs(WALK_TO);
@@ -149,17 +165,78 @@ public final class McpPlayClientTests {
         steps.add(new Step("player_state", "{}", result -> ctx.assertTrue(result.has("x"),
                 "the player is back in the world")));
         for (final Step step : steps) {
-            ctx.then(SETTLE, () -> sent.set(post(port[0], key.get(), tool(step.tool(), step.arguments().get()))))
-                    .thenWaitUntil(() -> sent.get().isDone(), WAIT, "the tool " + step.tool() + " answers")
-                    .then(0, () -> {
-                        final JsonObject answer = JsonParser.parseString(sent.get().join().body()).getAsJsonObject();
-                        final JsonObject result = answer.getAsJsonObject("result");
-                        ctx.assertTrue(result != null && !result.has("isError"), step.tool() + " answers: "
-                                + answer);
-                        step.check().accept(result.has("structuredContent") ? result.getAsJsonObject(
-                                "structuredContent") : new JsonObject());
-                    });
+            run(ctx, sent, key, port, step);
         }
+    }
+
+    /**
+     * The gestures an agent makes as the player's hand does: a drag that moves a slider, a turn of the wheel that
+     * scrolls a list, and a look at a point of a face, not its middle; the drag and the turn kept as steps by a
+     * recording, as the player's own are.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void gestures_dragTurnTheWheelAndLookAtAPointOfAFace(final ClientTestContext ctx) {
+        final AtomicReference<CompletableFuture<HttpResponse<String>>> sent = new AtomicReference<>();
+        final AtomicReference<String> key = new AtomicReference<>();
+        final int[] port = new int[1];
+        final AudioPrefs prefs = AudioPrefsStore.prefs();
+        final Map<String, Float> volumes = prefs.volumes();
+        final BlockPos wall = ctx.abs(WALL);
+        ctx.afterTest(() -> {
+            McpGame.turn(false);
+            TestRecorder.stop();
+            prefs.setVolumes(volumes);
+            AudioPrefsStore.save();
+            AudioMixer.refreshVolumes();
+            ctx.mc().setScreen(null);
+            ctx.server().execute(() -> ctx.serverPlayer().serverLevel().setBlockAndUpdate(wall,
+                    Blocks.AIR.defaultBlockState()));
+        });
+        pair(ctx, sent, key, port);
+        // The machines' slider: where it starts, a quarter of the way along its track, and its height's middle.
+        final int[] slider = new int[3];
+        final int[] list = new int[2];
+        ctx.then(0, TestRecorder::start)
+                .then(SETTLE, () -> ctx.mc().setScreen(new SoundMixerScreen(null)))
+                .thenAwaitScreen(SoundMixerScreen.class, WAIT)
+                .then(SETTLE, () -> {
+                    final AbstractSliderButton first = first(ctx.screen(SoundMixerScreen.class),
+                            AbstractSliderButton.class);
+                    slider[0] = first.getX() + 4;
+                    slider[1] = first.getX() + 4 + Math.round((first.getWidth() - 8) * QUARTER);
+                    slider[2] = first.getY() + first.getHeight() / 2;
+                });
+        run(ctx, sent, key, port, new Step("screen_drag", () -> "{\"x\":" + slider[0] + ",\"y\":" + slider[2]
+                + ",\"to_x\":" + slider[1] + ",\"to_y\":" + slider[2] + "}", result -> ctx.assertTrue(
+                result.has("dragged"), "the drag is made: " + result)));
+        ctx.thenAssert(1, () -> Math.abs(prefs.volume(MACHINES) - QUARTER) < CLOSE, "dragged a quarter of the way "
+                + "along its track, the machines' slider sets them to a quarter")
+                .then(0, () -> ctx.screen(SoundMixerScreen.class).selectTab(1))
+                .then(SETTLE, () -> {
+                    final AbstractSelectionList<?> sounds = first(ctx.screen(SoundMixerScreen.class),
+                            AbstractSelectionList.class);
+                    list[0] = sounds.getX() + sounds.getWidth() / 2;
+                    list[1] = sounds.getY() + sounds.getHeight() / 2;
+                });
+        run(ctx, sent, key, port, new Step("screen_scroll", () -> "{\"x\":" + list[0] + ",\"y\":" + list[1]
+                + ",\"notches\":-3}", result -> ctx.assertTrue(result.has("scrolled"), "the wheel turns: "
+                + result)));
+        ctx.thenAssert(1, () -> first(ctx.screen(SoundMixerScreen.class), AbstractSelectionList.class)
+                .getScrollAmount() > 0, "turned down over the list of sounds, the wheel scrolls it")
+                .then(0, TestRecorder::stop)
+                .thenAssert(0, () -> TestRecorder.steps().stream().anyMatch(RecordedTest.Drag.class::isInstance)
+                        && TestRecorder.steps().stream().anyMatch(RecordedTest.Scroll.class::isInstance),
+                        "the recording keeps the drag and the turn of the wheel as steps")
+                .then(0, () -> ctx.mc().setScreen(null));
+        run(ctx, sent, key, port, new Step("world_set_block", "{\"place\":" + place(wall)
+                + ",\"block\":\"minecraft:stone\"}", result -> { }));
+        // A point near the top left of the face looking at the player: two sixteenths across, fourteen up.
+        run(ctx, sent, key, port, new Step("player_look_at", "{\"place\":" + place(wall) + ",\"face\":\"south\","
+                + "\"at\":{\"x\":2,\"y\":14,\"z\":0}}", result -> { }));
+        final Vec3 aimed = new Vec3(wall.getX() + 2 / 16.0, wall.getY() + 14 / 16.0, wall.getZ() + 1.0);
+        ctx.thenAssert(SETTLE, () -> ctx.mc().hitResult instanceof BlockHitResult hit
+                && hit.getBlockPos().equals(wall) && hit.getLocation().distanceTo(aimed) < AIMED,
+                "the player looks at that point of the face, not at its middle");
     }
 
     /* Turning the server off takes the keys back from a call still acting, as cutting every client off does. */
@@ -183,8 +260,11 @@ public final class McpPlayClientTests {
                 .thenWaitUntil(() -> sent.get().isDone(), WAIT, "the client is let in")
                 .then(0, () -> sent.set(post(port[0], sent.get().join().headers().firstValue(McpProtocol.SESSION)
                         .orElseThrow(), tool("player_walk_to", "{\"place\":" + place(ctx.abs(FAR)) + "}"))))
-                .thenWaitUntil(() -> !McpGame.acting().isEmpty(), WAIT, "the long walk to start")
+                .thenWaitUntil(() -> !McpGame.acting().isEmpty() || sent.get().isDone(), WAIT,
+                        "the long walk to start")
                 .then(0, () -> {
+                    ctx.assertTrue(!McpGame.acting().isEmpty(), "the long walk is under way, not answered: "
+                            + answer(sent.get()));
                     walking.addAll(McpGame.acting());
                     McpGame.turn(false);
                 })
@@ -192,8 +272,58 @@ public final class McpPlayClientTests {
                         "turning the server off took the keys back from the walk under way");
     }
 
+    /* Turns the server on and lets a client in to read and act, keeping its port and its key. */
+    private static void pair(final ClientTestContext ctx,
+                             final AtomicReference<CompletableFuture<HttpResponse<String>>> sent,
+                             final AtomicReference<String> key, final int[] port) {
+        ctx.thenTeleport(0, STAND, Direction.NORTH)
+                .then(SETTLE, () -> {
+                    McpGame.turn(true);
+                    port[0] = McpGame.running().orElseThrow().port();
+                    sent.set(post(port[0], null, INITIALIZE));
+                })
+                .thenAwaitScreen(McpPairingScreen.class, WAIT)
+                .then(SETTLE, () -> ctx.screen(McpPairingScreen.class).answer(Optional.of(McpPermission.ACT)))
+                .thenWaitUntil(() -> sent.get().isDone(), WAIT, "the client is let in")
+                .then(0, () -> key.set(sent.get().join().headers().firstValue(McpProtocol.SESSION).orElseThrow()));
+    }
+
+    /* Calls the step's tool over the wire and checks its answer. */
+    private static void run(final ClientTestContext ctx,
+                            final AtomicReference<CompletableFuture<HttpResponse<String>>> sent,
+                            final AtomicReference<String> key, final int[] port, final Step step) {
+        ctx.then(SETTLE, () -> sent.set(post(port[0], key.get(), tool(step.tool(), step.arguments().get()))))
+                .thenWaitUntil(() -> sent.get().isDone(), WAIT, "the tool " + step.tool() + " answers")
+                .then(0, () -> {
+                    final JsonObject answer = JsonParser.parseString(sent.get().join().body()).getAsJsonObject();
+                    final JsonObject result = answer.getAsJsonObject("result");
+                    ctx.assertTrue(result != null && !result.has("isError"), step.tool() + " answers: " + answer);
+                    step.check().accept(result.has("structuredContent") ? result.getAsJsonObject(
+                            "structuredContent") : new JsonObject());
+                });
+    }
+
+    /* The first of the screen's parts of {@code type}. */
+    private static <T> T first(final Screen screen, final Class<T> type) {
+        for (final GuiEventListener child : screen.children()) {
+            if (type.isInstance(child)) {
+                return type.cast(child);
+            }
+        }
+        throw new ClientTestFailure("the screen has no " + type.getSimpleName());
+    }
+
     private static String place(final BlockPos pos) {
         return "{\"x\":" + pos.getX() + ",\"y\":" + pos.getY() + ",\"z\":" + pos.getZ() + "}";
+    }
+
+    /* What a message sent came back with: the server's answer, or why none came. */
+    private static String answer(final CompletableFuture<HttpResponse<String>> sent) {
+        try {
+            return sent.isDone() ? sent.join().body() : "nothing yet";
+        } catch (final RuntimeException failed) {
+            return String.valueOf(failed.getCause() == null ? failed : failed.getCause());
+        }
     }
 
     private static String tool(final String name, final String arguments) {

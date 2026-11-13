@@ -363,6 +363,10 @@ final class TestsPage extends StudioPage {
             case RecordedTest.Use use -> GameText.resolve(ToolTexts.STEP_USE.with(use.block()));
             case RecordedTest.Click click -> GameText.resolve(ToolTexts.STEP_CLICK.with(click.component()));
             case RecordedTest.ClickAt at -> GameText.resolve(ToolTexts.STEP_CLICK_AT.with(at.dx(), at.dy()));
+            case RecordedTest.Drag drag -> GameText.resolve(ToolTexts.STEP_DRAG.with(drag.dx(), drag.dy(), drag.toDx(),
+                    drag.toDy()));
+            case RecordedTest.Scroll scroll -> GameText.resolve(ToolTexts.STEP_SCROLL.with(scroll.notches(),
+                    scroll.dx(), scroll.dy()));
             case RecordedTest.Type type -> GameText.resolve(ToolTexts.STEP_TYPE.with(type.text()));
             case RecordedTest.Key key -> GameText.resolve(ToolTexts.STEP_KEY.with(key.key()));
             case RecordedTest.Wait wait -> GameText.resolve(ToolTexts.STEP_WAIT.with(wait.ticks()));

@@ -9,6 +9,7 @@ package dev.jstech.core.client.mcp;
 
 import com.google.gson.JsonObject;
 import com.mojang.blaze3d.platform.InputConstants;
+import dev.jstech.core.client.developer.ScreenGestures;
 import dev.jstech.core.client.developer.ScreenPoints;
 import dev.jstech.core.client.gui.data.BuiltNode;
 import dev.jstech.core.client.gui.data.IDataScreen;
@@ -39,8 +40,9 @@ import net.minecraft.world.phys.Vec3;
 
 /**
  * What an agent does as the player, through the input the player uses: the movement keys held, the view turned as
- * the mouse turns it, the use and attack keys, the hotbar's keys, and a screen's own clicks, typing and keys. While
- * the studio records a test, what an agent does on a screen is kept as its steps.
+ * the mouse turns it, to a block, a point of it or an entity, the use and attack keys, the hotbar's keys, and a
+ * screen's own clicks, drags, turns of the wheel, typing and keys. While the studio records a test, what an agent does
+ * on a screen is kept as its steps.
  */
 public final class PlayActing {
 
@@ -54,6 +56,12 @@ public final class PlayActing {
     /* The heights a flight may be asked to reach. */
     private static final int MIN_HEIGHT = -2_048;
     private static final int MAX_HEIGHT = 30_000;
+    /* The most a turn of the wheel may be asked to turn it, either way, in notches. */
+    private static final int MOST_NOTCHES = 100;
+    /* What the point a tool looks at is, for the tools that look at a block. */
+    private static final String AT_ABOUT = "A point of the block to look at, in sixteenths of it from its lowest "
+            + "corner, as a model's coordinates count (0 to 16 each): a port or a button on a face; with a face, the "
+            + "point is on that face. Its middle, or the face's, when left out.";
 
     private PlayActing() {
     }
@@ -78,24 +86,27 @@ public final class PlayActing {
                             Minecraft.getInstance().options.keyShift.setDown(call.flag("down", true));
                             return done("sneaking", call.flag("down", true));
                         })),
-                new McpTool("player_look_at", "Turns the player to look at the middle of a block, of one of its "
-                        + "faces, or at an entity, as the mouse turns them.", McpSchema.object()
+                new McpTool("player_look_at", "Turns the player to look at a block, the middle of it, of one of its "
+                        + "faces or a point of it, or at an entity, as the mouse turns them.", McpSchema.object()
                         .place(Play.PLACE, "The block.", false).oneOf("face", "Which face of it.", faces(), false)
+                        .place(Play.AT, AT_ABOUT, false)
                         .whole("entity", "An entity's id, as player_state gives it.", 0, Integer.MAX_VALUE, false)
                         .build(), McpPermission.ACT, call -> Play.withPlayer(player -> look(player, call))),
                 new McpTool("hotbar_select", "Picks a slot of the hotbar, as its number key does.", McpSchema.object()
                         .whole("slot", "The slot, from 0 at the left.", 0, SLOTS - 1, true).build(), McpPermission.ACT,
                         call -> Play.withPlayer(player -> select(call))),
                 new McpTool("player_use", "Uses what the player holds on what they look at, as the use key does; "
-                        + "with a place, looks at it first.", McpSchema.object().place(Play.PLACE,
-                        "What to look at first.", false).oneOf("face", "Which face of it.", faces(), false).build(),
-                        McpPermission.ACT, call -> use(call, false)),
+                        + "with a place, looks at it first: a point of it, such as a port or a button on a face, "
+                        + "uses that part.", McpSchema.object().place(Play.PLACE, "What to look at first.", false)
+                        .oneOf("face", "Which face of it.", faces(), false).place(Play.AT, AT_ABOUT, false)
+                        .build(), McpPermission.ACT, call -> use(call, false)),
                 new McpTool("player_place", "Places the block the player holds against a face of a block, as the use "
                         + "key does.", McpSchema.object().place(Play.PLACE, "The block to place against.", true)
-                        .oneOf("face", "Which face of it.", faces(), true).build(), McpPermission.ACT,
-                        call -> use(call, false)),
+                        .oneOf("face", "Which face of it.", faces(), true).place(Play.AT, AT_ABOUT, false)
+                        .build(), McpPermission.ACT, call -> use(call, false)),
                 new McpTool("block_open", "Uses a block, as the use key does, and answers with the screen it opens.",
-                        McpSchema.object().place(Play.PLACE, "The block.", true).build(), McpPermission.ACT,
+                        McpSchema.object().place(Play.PLACE, "The block.", true).oneOf("face", "Which face of it.",
+                        faces(), false).place(Play.AT, AT_ABOUT, false).build(), McpPermission.ACT,
                         call -> use(call, true)),
                 new McpTool("player_break", "Breaks a block as the attack key held on it does, and answers once it is "
                         + "gone.", McpSchema.object().place(Play.PLACE, "The block.", true).build(),
@@ -107,6 +118,22 @@ public final class PlayActing {
                         .whole("y", "The point's y.", 0, 10_000, false)
                         .whole("button", "0 for the left button, 1 for the right.", 0, 1, false).build(),
                         McpPermission.ACT, call -> onScreen(call, PlayActing::click)),
+                new McpTool("screen_drag", "Drags the mouse across the screen open, its button pressed at one point, "
+                        + "moved in steps and let go at another: a slider, a slide to unlock, a thing carried.",
+                        McpSchema.object()
+                        .whole("x", "Where the drag starts, its x in the screen's pixels.", 0, 10_000, true)
+                        .whole("y", "Where it starts, its y.", 0, 10_000, true)
+                        .whole("to_x", "Where it ends, its x.", 0, 10_000, true)
+                        .whole("to_y", "Where it ends, its y.", 0, 10_000, true)
+                        .whole("button", "0 for the left button, 1 for the right.", 0, 1, false).build(),
+                        McpPermission.ACT, call -> onScreen(call, PlayActing::drag)),
+                new McpTool("screen_scroll", "Turns the mouse's wheel over a point of the screen open, as the wheel "
+                        + "does: a list or a page scrolled, a map drawn nearer.", McpSchema.object()
+                        .whole("x", "The point's x, in the screen's pixels.", 0, 10_000, true)
+                        .whole("y", "The point's y.", 0, 10_000, true)
+                        .whole("notches", "How far it turns: up when more than 0, down when less.", -MOST_NOTCHES,
+                                MOST_NOTCHES, true)
+                        .build(), McpPermission.ACT, call -> onScreen(call, PlayActing::scroll)),
                 new McpTool("screen_type", "Types words into the screen open, a character at a time, as the keyboard "
                         + "does.", McpSchema.object().words("text", "What to type.", true).build(),
                         McpPermission.ACT, call -> onScreen(call, PlayActing::type)),
@@ -249,8 +276,11 @@ public final class PlayActing {
         if (pos.isEmpty()) {
             return McpCall.wrong(Play.PLACE, McpWords.A_PLACE.text());
         }
-        Play.lookAt(player, face(call).map(face -> Play.faceOf(pos.get(), face)).orElse(Vec3.atCenterOf(
-                pos.get())));
+        final Optional<Vec3> point = Play.pointOf(call, pos.get(), face(call));
+        if (point.isEmpty()) {
+            return McpCall.wrong(Play.AT, McpWords.A_NUMBER.with(0, Play.SIXTEENTHS));
+        }
+        Play.lookAt(player, point.get());
         return done("looking", true);
     }
 
@@ -269,15 +299,17 @@ public final class PlayActing {
         if (opening && pos.isEmpty()) {
             return WorldTools.done(McpCall.wrong(Play.PLACE, McpWords.A_PLACE.text()));
         }
-        final Optional<Direction> face = face(call);
+        final Optional<Vec3> point = pos.flatMap(at -> Play.pointOf(call, at, face(call)));
+        if (pos.isPresent() && point.isEmpty()) {
+            return WorldTools.done(McpCall.wrong(Play.AT, McpWords.A_NUMBER.with(0, Play.SIXTEENTHS)));
+        }
         return PlayTasks.run(call, OPEN_TICKS + 10, (game, tick) -> {
             final LocalPlayer player = game.player;
             if (player == null) {
                 return Optional.of(McpResult.failed(McpTexts.NO_WORLD.text()));
             }
             if (tick == 1) {
-                pos.ifPresent(at -> Play.lookAt(player, face.map(side -> Play.faceOf(at, side)).orElse(
-                        Vec3.atCenterOf(at))));
+                point.ifPresent(at -> Play.lookAt(player, at));
                 return Optional.empty();
             }
             if (tick == 2) {
@@ -366,6 +398,41 @@ public final class PlayActing {
                 new RecordedTest.ClickAt((int) Math.round(x - screen.width / 2.0), (int) Math.round(y
                         - screen.height / 2.0))));
         return done("clicked", true);
+    }
+
+    private static McpResult drag(final Screen screen, final McpCall call) {
+        final Optional<Long> x = call.whole("x");
+        final Optional<Long> y = call.whole("y");
+        final Optional<Long> toX = call.whole("to_x");
+        final Optional<Long> toY = call.whole("to_y");
+        if (x.isEmpty() || y.isEmpty() || toX.isEmpty() || toY.isEmpty()) {
+            return McpCall.wrong("x", McpWords.A_NUMBER.with(0, screen.width));
+        }
+        final int button = (int) (long) call.whole("button").orElse(0L);
+        ScreenGestures.drag(screen, x.get(), y.get(), toX.get(), toY.get(), button);
+        // A recorded test drags with the left button, as the player's own drags are kept.
+        if (button == 0) {
+            TestRecorder.agentDid(new RecordedTest.Drag((int) Math.round(x.get() - screen.width / 2.0),
+                    (int) Math.round(y.get() - screen.height / 2.0), (int) Math.round(toX.get() - screen.width / 2.0),
+                    (int) Math.round(toY.get() - screen.height / 2.0)));
+        }
+        return done("dragged", true);
+    }
+
+    private static McpResult scroll(final Screen screen, final McpCall call) {
+        final Optional<Long> x = call.whole("x");
+        final Optional<Long> y = call.whole("y");
+        final Optional<Long> notches = call.whole("notches").filter(turned -> turned != 0);
+        if (x.isEmpty() || y.isEmpty()) {
+            return McpCall.wrong("x", McpWords.A_NUMBER.with(0, screen.width));
+        }
+        if (notches.isEmpty()) {
+            return McpCall.wrong("notches", McpWords.A_NUMBER.with(-MOST_NOTCHES, MOST_NOTCHES));
+        }
+        ScreenGestures.scroll(screen, x.get(), y.get(), notches.get());
+        TestRecorder.agentDid(new RecordedTest.Scroll((int) Math.round(x.get() - screen.width / 2.0),
+                (int) Math.round(y.get() - screen.height / 2.0), (int) (long) notches.get()));
+        return done("scrolled", true);
     }
 
     private static McpResult type(final Screen screen, final McpCall call) {
