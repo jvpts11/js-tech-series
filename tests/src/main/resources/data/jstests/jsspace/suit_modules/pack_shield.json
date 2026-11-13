@@ -1,0 +1,6 @@
+{
+  "name": "item.jstests.pack_shield",
+  "kind": "radiation",
+  "piece": "chest",
+  "amount": 0.25
+}

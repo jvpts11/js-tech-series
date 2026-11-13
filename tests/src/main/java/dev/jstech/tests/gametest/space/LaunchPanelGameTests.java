@@ -7,6 +7,9 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.moving.IStructureBody;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
@@ -27,13 +30,15 @@ import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * The Launch Panel: with no rocket on the pad, or in a thunderstorm, its count will not start; with its key and its
  * ignition armed and all go, the count runs from T-60 on the panel and on the rocket's clock, holds at T-6 while the
- * LAUNCH button has not been pressed, runs on once it is, and releases the rocket at T-0; and a rocket too heavy for
+ * LAUNCH button has not been pressed, runs on once it is, and releases the rocket at T-0, standing down once the rocket
+ * is gone, free for the next; and a rocket too heavy for
  * its engines, with the server keeping such engines unlit, is scrubbed at ignition with its tank still full.
  */
 @GameTestHolder(JsTests.MODID)
@@ -93,7 +98,7 @@ public final class LaunchPanelGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = WIDE, batch = BATCH + "_count", timeoutTicks = 1700)
+    @GameTest(template = WIDE, batch = BATCH + "_count", timeoutTicks = 2000)
     public static void panel_countsDownHoldsForLaunchAndReleases(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         // Fair weather for the whole count, whatever the sky was doing.
@@ -129,6 +134,20 @@ public final class LaunchPanelGameTests {
                 })
                 .thenWaitUntil(() -> helper.assertTrue(panel(level, panel).phase()
                         == LaunchPanelBlockEntity.Phase.RELEASED, "and at T-0 the rocket is released"))
+                // Once the rocket has climbed off and is gone from this world, the panel is free for the next launch.
+                .thenIdle(2 * SECOND)
+                .thenExecute(() -> {
+                    final List<IStructureBody> off = MovingStructures.near(level,
+                            new AABB(computer).inflate(16, 256, 16));
+                    helper.assertTrue(!off.isEmpty(), "the released rocket is a body over the pad");
+                    off.forEach(body -> {
+                        if (body instanceof MovingStructure structure) {
+                            MovingStructures.takeAway(structure);
+                        }
+                    });
+                })
+                .thenWaitUntil(() -> helper.assertTrue(panel(level, panel).phase()
+                        == LaunchPanelBlockEntity.Phase.SAFE, "its rocket gone, the panel stands down"))
                 .thenSucceed();
     }
 

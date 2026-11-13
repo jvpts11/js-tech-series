@@ -76,6 +76,27 @@ public final class StageImpactGameTests {
         });
     }
 
+    /** Wreckage with no ground near to come down on falls loose where the stage struck: none of it is lost. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
+    public static void fall_withNoGroundNearDropsItsWreckageLoose(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final Vec3 high = Vec3.atBottomCenterOf(helper.absolutePos(MIDDLE.above(100)));
+        SpaceServerConfig.FILE.set(SpaceServerConfig.FALLING_STAGES_DO_DAMAGE, false);
+        try {
+            final StageImpacts.Impact impact = StageImpacts.strike(level, high, DRY, LEFTOVER, SPEED, MADE, 8L);
+            final int salvaged = impact.salvage().stream().mapToInt(ItemStack::getCount).sum();
+            final List<ItemEntity> loose = level.getEntitiesOfClass(ItemEntity.class, new AABB(high, high)
+                    .inflate(LOOK));
+            final int dropped = loose.stream().mapToInt(item -> item.getItem().getCount()).sum();
+            loose.forEach(ItemEntity::discard);
+            helper.assertTrue(salvaged > 0, "the stage leaves salvage: " + impact.salvage());
+            helper.assertTrue(dropped == salvaged, "all of it falls loose, " + dropped + " of " + salvaged);
+        } finally {
+            SpaceServerConfig.FILE.set(SpaceServerConfig.FALLING_STAGES_DO_DAMAGE, true);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
     public static void fall_withTheDamageOffLeavesOnlyItsWreckage(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();

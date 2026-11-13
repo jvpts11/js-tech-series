@@ -16,6 +16,7 @@ import dev.jstech.core.jstechseries.hazard.CosmicRadiation;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.SpaceSuit;
 import dev.jstech.space.api.SpaceSuits;
+import dev.jstech.space.api.SuitModules;
 import dev.jstech.space.api.WorldDanger;
 import dev.jstech.space.api.WorldDangers;
 import dev.jstech.space.life.LifeSupport;
@@ -143,6 +144,20 @@ public final class LifeSupportGameTests {
         helper.assertTrue(LifeSupport.fit(level, chest, module("radiation_vest")), "the vest fits the chest");
         helper.assertTrue(Math.abs(Resistances.of(chest, DamageKinds.RADIATION) - 0.5) < CLOSE,
                 "and stops half the sky's radiation");
+        helper.succeed();
+    }
+
+    /** A radiation module that only a data pack names still shields the piece it is fitted to, as the pack says. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void modules_ofADataPackShieldAsTheirFileSays(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final ItemStack chest = new ItemStack(Items.IRON_CHESTPLATE);
+        final ResourceLocation shield = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "pack_shield");
+        helper.assertTrue(!SuitModules.declared().containsKey(shield), "no code declares the pack's module");
+        helper.assertTrue(LifeSupport.fit(level, chest, shield), "the pack's module fits the chest");
+        helper.assertTrue(Math.abs(Resistances.of(chest, DamageKinds.RADIATION) - 0.25) < CLOSE,
+                "and stops a quarter of the sky's radiation, as its file says: "
+                        + Resistances.of(chest, DamageKinds.RADIATION));
         helper.succeed();
     }
 

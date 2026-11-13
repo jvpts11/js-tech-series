@@ -21,6 +21,7 @@ import dev.jstech.space.api.Propellant;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.launch.RocketLaunch;
 import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.RocketBoilOff;
 import dev.jstech.space.rocket.RocketBurns;
@@ -173,6 +174,44 @@ public final class PropellantGameTests {
     }
 
     /**
+     * A rocket too heavy to climb burns on the pad till it burns out, and what it burnt there is gone from its tanks
+     * as surely as on a climb into space.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 300)
+    public static void rocket_burntOutOnThePadHasSpentItsPropellant(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos at = new BlockPos(2, 2, 2);
+        helper.setBlock(at, Blocks.IRON_BLOCK);
+        final StructureResult made = MovingStructures.assembleFor(level, helper.absolutePos(at),
+                helper.absolutePos(at), UUID.randomUUID());
+        helper.assertTrue(made.ok(), "the rocket's blocks are a moving structure");
+        final MovingStructure body = made.structure();
+        final RocketStack stack = RocketStack.of(part("sea_level_engine_3", 1), part("tank_3", LAYERS));
+        Rockets.register(level.getServer(), body.id(), stack, UUID.randomUUID());
+        // A little methalox, and so much water carried as dead weight that its engine cannot lift it.
+        final TankLoad heavy = new TankLoad(SkeletonPropellants.METHALOX, Map.of(METHANE, 22.0, OXYGEN, 78.0,
+                WATER, 2_000_000.0));
+        Rockets.load(level.getServer(), body.id(), 1, heavy);
+        helper.assertTrue(!RocketAscent.liftsOff(level, RocketAscent.burns(level, body)), "it is too heavy to lift");
+        final double[] pad = new double[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(body.ready(), "the rocket stands ready"))
+                .thenExecute(() -> {
+                    pad[0] = body.pose().y();
+                    RocketLaunch.lift(level, body);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(tankHeld(level, body) < heavy.total(),
+                        "burnt out on the pad, its tank holds less than it did: " + tankHeld(level, body)))
+                .thenExecute(() -> helper.assertTrue(body.pose().y() <= pad[0] + 1.0E-6,
+                        "and it never left the pad: " + body.pose().y() + " from " + pad[0]))
+                .thenExecute(() -> {
+                    Rockets.forget(level.getServer(), body.id());
+                    MovingStructures.takeAway(body);
+                })
+                .thenSucceed();
+    }
+
+    /**
      * A stage's boosters burn their own propellant down: their burn takes from the core's tank only what its engine
      * burns beside them, leaves the boosters spent, and a rocket reckoned after it has the core's burn alone.
      */
@@ -214,6 +253,12 @@ public final class PropellantGameTests {
             MovingStructures.takeAway(body);
         }
         helper.succeed();
+    }
+
+    /* What the record of {@code body}'s rocket says its tank at the place 1 holds, in kilograms. */
+    private static double tankHeld(final ServerLevel level, final MovingStructure body) {
+        return Rockets.get(level.getServer(), body.id()).map(rocket -> rocket.tanks().get(1))
+                .map(TankLoad::total).orElse(0.0);
     }
 
     /* The share of a full tank of {@code material} lost in an hour at the Overworld's warmth. */

@@ -12,12 +12,15 @@ import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.room.GasMath;
 import dev.jstech.core.room.Room;
+import dev.jstech.core.room.RoomLiving;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.SpaceSuit;
 import dev.jstech.space.api.SpaceSuits;
 import dev.jstech.space.life.LifeSupport;
 import dev.jstech.space.life.LunarSuit;
+import dev.jstech.space.life.OxygenBottleItem;
 import dev.jstech.space.life.SuitAir;
+import dev.jstech.space.life.SuitSupplies;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.testkit.gametest.GameTestPlayers;
@@ -25,13 +28,19 @@ import dev.jstech.tests.JsTests;
 import java.util.List;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -59,6 +68,34 @@ public final class ShipCabinAirGameTests {
     private static final int SUIT_AIR = 600;
 
     private ShipCabinAirGameTests() {
+    }
+
+    /**
+     * An oxygen bottle poured into the console's reserve gives it whole seconds of breathing, as many as it has room
+     * for, and the bottle pays just those: nothing is lost between them.
+     */
+    @GameTest(template = ARENA)
+    public static void console_takesWholeSecondsFromABottleAndItPaysJustThose(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(CONSOLE, ShipKitBlocks.FLIGHT_CONSOLE.get());
+        final BlockPos at = helper.absolutePos(CONSOLE);
+        final AirReserveEntity reserve = (AirReserveEntity) level.getBlockEntity(at);
+        // Room for two seconds and a half of breathing in the reserve.
+        final CompoundTag saved = reserve.saveWithoutMetadata(level.registryAccess());
+        helper.assertTrue(saved.contains("Oxygen"), "the reserve keeps its oxygen as Oxygen: " + saved);
+        saved.putDouble("Oxygen", AirReserveEntity.OXYGEN - 2.5 * RoomLiving.PLAYER_BREATH);
+        reserve.loadWithComponents(saved, level.registryAccess());
+        final ItemStack bottle = new ItemStack(SuitSupplies.OXYGEN_BOTTLE.get());
+        OxygenBottleItem.setAir(bottle, 10);
+        final Player player = helper.makeMockPlayer(GameType.SURVIVAL);
+        player.setItemInHand(InteractionHand.MAIN_HAND, bottle);
+        level.getBlockState(at).useItemOn(bottle, level, player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(at), Direction.UP, at, false));
+        helper.assertTrue(OxygenBottleItem.air(bottle) == 8, "the bottle pays two seconds: "
+                + OxygenBottleItem.air(bottle) + " left");
+        helper.assertTrue(Math.abs(reserve.oxygen() - (AirReserveEntity.OXYGEN - 0.5 * RoomLiving.PLAYER_BREATH))
+                < 1.0E-9, "and the reserve takes just those two: " + reserve.oxygen() + " mol");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 400)

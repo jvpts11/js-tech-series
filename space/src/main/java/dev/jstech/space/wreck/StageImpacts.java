@@ -202,18 +202,18 @@ public final class StageImpacts {
             }
         }
         /*
-         * A share whose column lies in a chunk not loaded goes with a piece that landed, or with one at the strike
-         * itself, so none of the salvage is lost; what a piece has no room for falls out beside it.
+         * A share whose column lies in a chunk not loaded, or has no ground near, goes with a piece that landed, or
+         * with one at the strike itself, so none of the salvage is lost; what a piece has no room for falls out
+         * beside it, and with no piece anywhere it all falls loose where the stage struck.
          */
         if (!unplaced.isEmpty()) {
             if (landed == null) {
                 landed = place(level, (int) Math.floor(at.x), (int) Math.floor(at.y), (int) Math.floor(at.z))
                         .orElse(null);
             }
-            if (landed != null) {
-                final BlockPos beside = landed.getBlockPos();
-                landed.hold(unplaced).forEach(stack -> Block.popResource(level, beside, stack));
-            }
+            final BlockPos beside = landed != null ? landed.getBlockPos() : BlockPos.containing(at);
+            final List<ItemStack> loose = landed != null ? landed.hold(unplaced) : unplaced;
+            loose.forEach(stack -> Block.popResource(level, beside, stack));
         }
     }
 

@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.space;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
@@ -44,6 +45,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -68,6 +70,8 @@ public final class StagingGameTests {
     private static final BlockPos OWNER = new BlockPos(1, 1, 1);
     private static final BlockPos PLATFORM = new BlockPos(36, 0, 36);
     private static final int PLATFORM_SIDE = 9;
+    /* A raft's one block, beside the rocket, to float a platform on. */
+    private static final BlockPos RAFT = new BlockPos(18, 2, 8);
     /*
      * What the first stage's tank holds, burnt out in a moment, and the second's; the rocket whose first stage falls
      * holds next to nothing in it and none in the second, so that stage is let go just over the pad going slowly, as
@@ -128,6 +132,47 @@ public final class StagingGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(wreckage(helper), "its wreckage lies where it struck: last at "
                         + stage[0].pose() + ", foot " + helper.absolutePos(FOOT) + ", blasts going "
                         + StageImpacts.pending(level)))
+                .thenSucceed();
+    }
+
+    /**
+     * A platform afloat on a moving structure is measured where the structure has it in the world, not where its
+     * blocks are kept: beside the rocket, it is the nearest, and the stages page shows it a few blocks off.
+     */
+    @GameTest(template = ARENA, batch = "jsspace_staging_afloat", timeoutTicks = 400)
+    public static void stagesPage_measuresAPlatformAfloatWhereItIs(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(RAFT, Blocks.IRON_BLOCK);
+        final MovingStructure raft = MovingStructures.assembleFor(level, helper.absolutePos(RAFT),
+                helper.absolutePos(RAFT), UUID.randomUUID()).structure();
+        helper.assertTrue(raft != null, "the raft is a moving structure");
+        final UUID platform = UUID.randomUUID();
+        final RocketStack stack = RocketStack.of(part("sea_level_engine_3"), part("landing_legs_3"), part("tank_3"),
+                part("separation_ring_3"), part("vacuum_engine_3"), part("tank_3"), part("capsule_3"));
+        final FlightComputerBlockEntity computer = build(helper, stack, Map.of(2, FIRST, 5, SECOND));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(raft.ready(), "the raft stands ready"))
+                .thenExecute(() -> {
+                    // The platform's terminal is the raft's block, kept far off in the yard.
+                    final Box box = raft.bounds();
+                    final BlockPos terminal = new BlockPos(box.minX(), box.minY(), box.minZ());
+                    helper.assertTrue(YardLayout.isYardBlock(terminal.getX()), "its block is kept in the yard");
+                    LandingPlatforms.note(level, platform, terminal, PLATFORM_SIDE,
+                            Ownership.of(UUID.randomUUID()).withAccess(Access.TEAM));
+                    computer.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.STAGES));
+                    computer.press(FlightComputerBlockEntity.LEFT, null);
+                    computer.press(FlightComputerBlockEntity.RIGHT + 2, null);
+                    helper.assertTrue(computer.choices().get(1) != null && computer.choices().get(1).platform()
+                            .map(platform::equals).orElse(false), "the raft's platform is the nearest");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(computer.shownPlatforms().get(1) != null,
+                        "the stages page shows where the first stage goes"))
+                .thenExecute(() -> {
+                    final int distance = computer.shownPlatforms().get(1).distance();
+                    LandingPlatforms.drop(level.getServer(), platform);
+                    MovingStructures.takeAway(raft);
+                    helper.assertTrue(distance < 64, "a few blocks off, as it is in the world: " + distance);
+                })
                 .thenSucceed();
     }
 

@@ -14,6 +14,7 @@ import dev.jstech.core.multiblock.shape.FormedPlace;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.room.GasMath;
 import dev.jstech.core.room.Room;
+import dev.jstech.core.room.RoomLiving;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.ShipKit;
 import dev.jstech.space.api.ShipKits;
@@ -120,6 +121,36 @@ public final class ShipFixtureGameTests {
                             + " seconds, the tanks hold " + air);
                     helper.assertTrue(Math.abs(taken - filled * 0.01) < 0.02, "taking the oxygen out of the cabin: "
                             + taken + " mol");
+                })
+                .thenSucceed();
+    }
+
+    /** Oxygen too little for a whole second more of breathing goes back into the cabin, not nowhere. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void oxygenPanel_givesBackWhatIsLessThanASecond(final GameTestHelper helper) {
+        hut(helper);
+        helper.setBlock(FIXTURE, ShipKitBlocks.OXYGEN_PANEL.get());
+        SealedRooms.track(helper.getLevel(), helper.absolutePos(INSIDE));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(room(helper) != null, "the hut is a cabin"))
+                .thenExecute(() -> {
+                    final ServerLevel level = helper.getLevel();
+                    final BlockPos inside = helper.absolutePos(INSIDE);
+                    // Two and a half seconds of breathing is all the oxygen the cabin has left.
+                    SealedRooms.take(level, inside, AirMix.OXYGEN, room(helper).moles(AirMix.OXYGEN));
+                    SealedRooms.give(level, inside, AirMix.OXYGEN, 2.5 * RoomLiving.PLAYER_BREATH);
+                    final ServerPlayer crew = GameTestPlayers.join(level, UUID.randomUUID(), "crew");
+                    final SpaceSuit suit = SpaceSuits.declared().get(LunarSuit.ID);
+                    final ItemStack chest = new ItemStack(LunarSuit.SUIT.get());
+                    LifeSupport.setAir(level, chest, suit, 0);
+                    crew.setItemSlot(EquipmentSlot.CHEST, chest);
+                    final int filled = OxygenPanelBlock.fill(level, helper.absolutePos(FIXTURE), crew);
+                    final double left = room(helper).moles(AirMix.OXYGEN);
+                    GameTestPlayers.leave(crew);
+                    SealedRooms.untrack(level, inside);
+                    helper.assertTrue(filled == 2, "two whole seconds go into the suit: " + filled);
+                    helper.assertTrue(Math.abs(left - 0.5 * RoomLiving.PLAYER_BREATH) < 1.0E-9,
+                            "and the half second left stays in the cabin: " + left + " mol");
                 })
                 .thenSucceed();
     }
