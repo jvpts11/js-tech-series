@@ -13,6 +13,7 @@ import dev.jstech.computers.block.MonitorBlock;
 import dev.jstech.computers.client.monitor.TouchScreens;
 import dev.jstech.computers.client.monitor.TouchTypingScreen;
 import dev.jstech.computers.client.os.DesktopScreen;
+import dev.jstech.computers.client.os.EditorApp;
 import dev.jstech.computers.operation.payload.files.FileAccess;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.computers.os.IOsHost;
@@ -108,6 +109,11 @@ public final class TouchMonitorClientTests {
                 .thenWaitUntil(() -> ctx.mc().screen instanceof TouchTypingScreen, SCREEN_WAIT,
                         "a tap on the Editor to open the line typed into")
                 .then(SETTLE, () -> ctx.type("Wall: a touch panel by the d"))
+                .thenAssert(SETTLE, () -> TouchScreens.held() instanceof DesktopScreen desktop
+                                && desktop.windowFor(EDITOR) != null
+                                && desktop.windowFor(EDITOR).app() instanceof EditorApp editor
+                                && editor.text().contains("Wall: a touch panel by the d"),
+                        "what the touch keyboard types goes into the Editor")
                 .then(SETTLE * 2, () -> ctx.mc().getToasts().clear())
                 .thenScreenshot(SETTLE, label);
     }

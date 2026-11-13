@@ -44,6 +44,8 @@ import java.util.OptionalLong;
 public final class JscNetworkCommand {
 
     private static final double REACH = 20.0;
+    /* How long a base just built is given to come up before it is said not to have, in ticks. */
+    private static final int VERDICT_TICKS = 200;
 
     private JscNetworkCommand() {
     }
@@ -97,6 +99,13 @@ public final class JscNetworkCommand {
             source.sendSuccess(() -> Component.literal("Stopped the running benchmark load before rebuilding."),
                     false);
         }
+        // The last base left standing would go on ticking under this one's benchmarks, and skew them.
+        final BigBaseScenario.Built previous = BenchmarkLoad.lastBuilt();
+        if (previous != null && !previous.mainframe().isRemoved()
+                && previous.mainframe().getLevel() instanceof ServerLevel was) {
+            previous.tearDown(was);
+            source.sendSuccess(() -> Component.literal("Took down the last benchmark base before building."), false);
+        }
         final long start = System.nanoTime();
         final TestWorldBuilder world = TestWorldBuilder.at(level, origin);
         final BigBaseScenario.Built built = BigBaseScenario.build(world, params);
@@ -108,9 +117,6 @@ public final class JscNetworkCommand {
         final int cleared = carveRoom(level, world);
         BenchmarkLoad.remember(built);
         final double ms = (System.nanoTime() - start) / 1_000_000.0;
-        final NetworkUuid network = built.mainframe().networkUuid();
-        final int servers = network == null ? 0
-                : NetworkSystem.get(level).serversOf(network).size();
         final BlockPos mainframePos = built.mainframe().getBlockPos();
         source.sendSuccess(() -> Component.literal(String.format(
                 "Built the benchmark base: %d cabinets, %d servers, %d nodes, %d PCs, %d item types in %.0f ms; "
@@ -118,17 +124,35 @@ public final class JscNetworkCommand {
                         + "Run '/jsc benchmark load <opsPerTick> <ticks>' to put traffic on it.",
                 params.racks(), params.servers(), params.nodes(), params.personalComputers(), types, ms, cleared,
                 mainframePos.getX(), mainframePos.getY(), mainframePos.getZ())), false);
-        /*
-         * Say so plainly when the base did not come up: a benchmark on a base with no network measures
-         * nothing at all, and the numbers would look fine.
-         */
-        if (network == null || servers < params.servers()) {
-            source.sendFailure(Component.literal(String.format(
-                    "The base did not come up whole: network %s, %d of %d servers registered. Build it somewhere"
-                            + " flat and open (a superflat world or the air) and try again.",
-                    network == null ? "MISSING" : "ok", servers, params.servers())));
-        }
+        // The racks register their servers from their own ticks, so whether the base came up is told once it has.
+        BenchmarkLoad.verdictWhen(() -> registered(level, built) >= params.servers(), VERDICT_TICKS,
+                () -> sayVerdict(source, level, built, params));
         return 1;
+    }
+
+    /*
+     * Says whether the base came up whole, and plainly when it did not: a benchmark on a base with no network
+     * measures nothing at all, and the numbers would look fine.
+     */
+    private static void sayVerdict(final CommandSourceStack source, final ServerLevel level,
+                                   final BigBaseScenario.Built built, final BigBaseScenario.Params params) {
+        final NetworkUuid network = built.mainframe().networkUuid();
+        final int servers = registered(level, built);
+        if (network != null && servers >= params.servers()) {
+            source.sendSuccess(() -> Component.literal(String.format(
+                    "The base came up whole: %d of %d servers registered.", servers, params.servers())), false);
+            return;
+        }
+        source.sendFailure(Component.literal(String.format(
+                "The base did not come up whole: network %s, %d of %d servers registered. Build it somewhere"
+                        + " flat and open (a superflat world or the air) and try again.",
+                network == null ? "MISSING" : "ok", servers, params.servers())));
+    }
+
+    /* How many of the base's servers its network has registered; none while it has no network. */
+    private static int registered(final ServerLevel level, final BigBaseScenario.Built built) {
+        final NetworkUuid network = built.mainframe().networkUuid();
+        return network == null ? 0 : NetworkSystem.get(level).serversOf(network).size();
     }
 
     /**

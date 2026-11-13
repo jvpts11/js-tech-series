@@ -93,17 +93,32 @@ public final class IndexMaintenanceGameTests {
                 .setValue(HorizontalDirectionalBlock.FACING, Direction.SOUTH));
         final ServerRackBlockEntity rackBe = world.blockEntity(rack, ServerRackBlockEntity.class);
         TestWorldBuilder.mountDefaultServer(rackBe, 0);
+        final long[] before = {0};
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 6, () -> rackBe.getServerStorage(0).insert(Items.COBBLESTONE, 200))
-                .thenExecuteAfter(2, () -> {
+                .thenWaitUntil(() -> helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 200,
+                        "the incremental pass catalogues the stock first"))
+                .thenExecute(() -> {
+                    /*
+                     * With the stock standing still, nothing but the rebuilt catalog being swapped in changes the
+                     * catalog's version, so that change is what tells the rebuild really ran.
+                     */
+                    before[0] = mainframe.networkIndex().version();
                     // The maintenance verbs run on the Mainframe's own prompt.
-                    final ServerCliComputer cli = new ServerCliComputer((IComputerTerminalHost) mainframe, helper.getLevel());
+                    final ServerCliComputer cli = new ServerCliComputer((IComputerTerminalHost) mainframe,
+                            helper.getLevel());
                     final CliShell shell = CliCommands.newShell(50);
                     helper.assertTrue(TestCli.contains(shell.run("reindex", cli), "REINDEX started"),
                             "the prompt answers at once and the rebuild runs on");
+                    helper.assertTrue(mainframe.networkIndex().version() == before[0],
+                            "the rebuild has not landed on the tick it was asked");
                 })
-                .thenExecuteAfter(3, () -> helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 200,
-                        "the rebuilt catalog holds the stock; got " + mainframe.networkIndex().available(COBBLE)))
+                .thenWaitUntil(() -> helper.assertTrue(mainframe.networkIndex().version() > before[0],
+                        "the rebuilt catalog to be swapped in"))
+                .thenExecute(() -> helper.assertTrue(mainframe.networkIndex().available(COBBLE) == 200
+                                && mainframe.networkIndex().health().isClean(),
+                        "the rebuilt catalog holds the stock and leaves the index clean; got "
+                                + mainframe.networkIndex().available(COBBLE)))
                 .thenSucceed();
     }
 }

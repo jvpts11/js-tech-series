@@ -186,7 +186,10 @@ public final class RadiationGameTests {
         Hazards.set(player, IonizingRadiation.DOSE, 1);
         Hazards.second(player, helper.getLevel());
         helper.assertTrue(Hazards.exposure(player, IonizingRadiation.DOSE) > 0, "the sky still reaches it");
-        close(helper, 1 - 0.0005, Hazards.level(player, IonizingRadiation.DOSE), "it recovers all the same");
+        // The recovery itself is measured, half a millisievert in the second, which a relative check would not see.
+        final double recovered = 1 - Hazards.level(player, IonizingRadiation.DOSE);
+        helper.assertTrue(Math.abs(recovered - 0.0005) <= 1.0E-9,
+                "it recovers all the same, half a millisievert a second: recovered " + recovered);
         helper.succeed();
     }
 
@@ -195,8 +198,10 @@ public final class RadiationGameTests {
         final Player player = standing(helper, new BlockPos(3, 1, 3));
         Hazards.set(player, IonizingRadiation.CONTAMINATION, 1_000);
         Hazards.second(player, helper.getLevel());
-        final double left = 1_000 * (1 - 0.0005);
-        close(helper, left, Hazards.level(player, IonizingRadiation.CONTAMINATION), "it sheds slowly on dry land");
+        final double left = Hazards.level(player, IonizingRadiation.CONTAMINATION);
+        // What it shed is measured itself, a twentieth of a percent of it, which a relative check would not see.
+        helper.assertTrue(Math.abs(1_000 - left - 0.5) <= 1.0E-9,
+                "it sheds slowly on dry land, half a kilobecquerel in the second: " + left + " left");
         close(helper, IonizingRadiation.DOSE.perSecond(IonizingRadiation.contaminationRate(left)),
                 Hazards.level(player, IonizingRadiation.DOSE), "what is left doses at a hundredth of a millisievert an"
                         + " hour a kilobecquerel");

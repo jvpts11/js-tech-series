@@ -101,7 +101,8 @@ public final class RecordedClientTests {
                 });
                 case RecordedTest.Type type -> helper.then(SETTLE, () -> helper.type(type.text()));
                 case RecordedTest.Key key -> helper.then(SETTLE, () -> helper.key(key.key()));
-                case RecordedTest.Wait wait -> helper.then(wait.ticks(), () -> shown(game));
+                // A wait only waits: a step after a screen closed may be one that opens the next, which asks for none.
+                case RecordedTest.Wait wait -> helper.then(wait.ticks(), () -> { });
                 case RecordedTest.Picture picture -> helper.then(SETTLE, () -> {
                     final Screen screen = shown(game);
                     if (screen instanceof AbstractContainerScreen<?> container) {

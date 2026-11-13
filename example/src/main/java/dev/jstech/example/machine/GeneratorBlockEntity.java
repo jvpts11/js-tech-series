@@ -18,6 +18,7 @@ import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -59,7 +60,7 @@ public final class GeneratorBlockEntity extends MachineBlockEntity {
         if (energy.getEnergyStored() >= energy.getMaxEnergyStored()) {
             return MachineStatus.OUTPUT_FULL;
         }
-        if (burning.get() <= 0 && !lightFuel()) {
+        if (burning.get() <= 0 && !lightFuel(level)) {
             return MachineStatus.WAITING;
         }
         burning.add(-1);
@@ -74,8 +75,11 @@ public final class GeneratorBlockEntity extends MachineBlockEntity {
         return burnLength.get() == 0 ? 0.0 : (double) burning.get() / burnLength.get();
     }
 
-    /* Takes the next piece of fuel from its slot and lights it, leaving behind what it leaves (a bucket of lava's). */
-    private boolean lightFuel() {
+    /*
+     * Takes the next piece of fuel from its slot and lights it. What a fuel leaves (a bucket of lava's empty bucket)
+     * comes out beside the generator: left in the slot, it would stand where the next fuel goes in.
+     */
+    private boolean lightFuel(final ServerLevel level) {
         final ItemStack fuel = getInventory().getStackInSlot(FUEL);
         final int length = fuel.getBurnTime(null);
         if (length <= 0) {
@@ -83,8 +87,8 @@ public final class GeneratorBlockEntity extends MachineBlockEntity {
         }
         final ItemStack left = fuel.getCraftingRemainingItem();
         getInventory().extractItem(FUEL, 1, false);
-        if (!left.isEmpty() && getInventory().getStackInSlot(FUEL).isEmpty()) {
-            getInventory().setStackInSlot(FUEL, left);
+        if (!left.isEmpty()) {
+            Block.popResource(level, getBlockPos().above(), left);
         }
         burning.set(length);
         burnLength.set(length);

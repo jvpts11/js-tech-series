@@ -117,7 +117,11 @@ public final class MotionClientTests {
     @ClientTest(timeoutTicks = 2400)
     public static void reducedMotion_drawsEveryWindowWhereItEnds(final ClientTestContext ctx) {
         booted(ctx, "frames_11", null, false)
-                .then(0, () -> ActiveDesktop.applyLiveEffects(SLOW))
+                .then(0, () -> {
+                    // Motion reduced for this test alone, as the player's setting would have it.
+                    moving(false);
+                    ctx.afterTest(() -> MotionClock.setReduced(false));
+                })
                 .then(SETTLE, () -> DesktopScreen.requestOpen(CALCULATOR))
                 .thenWaitUntil(() -> desktop(ctx).windowFor(CALCULATOR) != null, SCREEN_WAIT, "the Calculator window")
                 .thenAssert(0, () -> !desktop(ctx).windowMoving(CALCULATOR),

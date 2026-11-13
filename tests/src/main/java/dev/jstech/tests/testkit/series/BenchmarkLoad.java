@@ -23,6 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Random;
+import java.util.function.BooleanSupplier;
 
 /**
  * The traffic a busy base puts on its Mainframe, tick after tick: terminal pulls of random catalog
@@ -41,6 +42,12 @@ public final class BenchmarkLoad {
     private static Session active;
     @Nullable
     private static BigBaseScenario.Built lastBuilt;
+    /* A build's verdict waiting on its base to come up, and how many more ticks it waits at most. */
+    @Nullable
+    private static BooleanSupplier verdictReady;
+    @Nullable
+    private static Runnable verdict;
+    private static int verdictTicks;
 
     private BenchmarkLoad() {
     }
@@ -188,11 +195,23 @@ public final class BenchmarkLoad {
         return active;
     }
 
+    /**
+     * Gives {@code said} on the first server tick {@code ready} holds, or after {@code ticks} ticks if it never does:
+     * a base just built takes some ticks to come up, its racks registering their servers from their own ticks.
+     */
+    public static void verdictWhen(final BooleanSupplier ready, final int ticks, final Runnable said) {
+        verdictReady = ready;
+        verdict = said;
+        verdictTicks = ticks;
+    }
+
     /** Drops the run and the remembered base with the world they belong to, so neither outlives it. */
     @SubscribeEvent
     public static void onServerStopping(final ServerStoppingEvent event) {
         active = null;
         lastBuilt = null;
+        verdictReady = null;
+        verdict = null;
     }
 
     @SubscribeEvent
@@ -200,6 +219,12 @@ public final class BenchmarkLoad {
         final Session session = active;
         if (session != null && !session.tick()) {
             active = null;
+        }
+        final Runnable said = verdict;
+        if (said != null && (verdictReady.getAsBoolean() || --verdictTicks <= 0)) {
+            verdict = null;
+            verdictReady = null;
+            said.run();
         }
     }
 }

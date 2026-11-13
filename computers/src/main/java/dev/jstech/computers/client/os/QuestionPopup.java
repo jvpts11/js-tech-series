@@ -130,6 +130,12 @@ public final class QuestionPopup extends Popup {
         return new int[] {this.first.x() + this.first.width() / 2, this.first.y() + this.first.height() / 2};
     }
 
+    /** The desktop-local middle of the second button, No on a question, where a test clicks it; null on a note. */
+    public int[] secondButtonCentre() {
+        return this.second == null ? null
+                : new int[] {this.second.x() + this.second.width() / 2, this.second.y() + this.second.height() / 2};
+    }
+
     /** Answers Yes, as a click on it would. */
     public void answerYes() {
         close();

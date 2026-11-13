@@ -32,6 +32,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemStackHandler;
 
@@ -173,10 +174,27 @@ public final class TrashClientTests {
                                 .contains("cannot go to the Recycle Bin"), SCREEN_WAIT,
                         "Delete to say the file cannot go to the Recycle Bin, and ask")
                 .thenScreenshot(SETTLE, "trash-confirm-file-delete")
+                // No leaves the file where it is.
+                .then(SETTLE, () -> ctx.clickDesktop(question(ctx).secondButtonCentre()))
+                .thenAssert(SETTLE, () -> question(ctx) == null && files(ctx).names().contains(NOTES),
+                        "No leaves the file on the disc")
+                .thenServer(SETTLE, level -> ctx.assertTrue(DiskFilesystem.exists(disc(ctx, level), NOTES),
+                        "after No the file is still written on the disc itself"))
+                .then(SETTLE, () -> ctx.rightClickDesktop(files(ctx).rowPoint(NOTES)))
+                .thenWaitUntil(() -> files(ctx).contextOpen(), SCREEN_WAIT, "the file's menu to open again")
+                .then(SETTLE, () -> ctx.clickDesktop(files(ctx).contextPoint("Delete")))
+                .thenWaitUntil(() -> question(ctx) != null, SCREEN_WAIT, "Delete to ask again")
                 .then(SETTLE, () -> ctx.clickDesktop(question(ctx).firstButtonCentre()))
                 .thenWaitUntil(() -> !files(ctx).names().contains(NOTES), SCREEN_WAIT,
                         "Yes to delete the file for good")
-                .thenAssert(SETTLE, () -> !desktop(ctx).trashFull(), "and nothing went into the Recycle Bin");
+                .thenAssert(SETTLE, () -> !desktop(ctx).trashFull(), "and nothing went into the Recycle Bin")
+                .thenServer(SETTLE, level -> ctx.assertTrue(!DiskFilesystem.exists(disc(ctx, level), NOTES),
+                        "after Yes the file is gone from the disc itself"));
+    }
+
+    /* The disc in the drive, as the server holds it. */
+    private static ItemStack disc(final ClientTestContext ctx, final ServerLevel level) {
+        return ((MediaReaderBlockEntity) level.getBlockEntity(ctx.abs(DRIVE))).mediaSlot().getStackInSlot(0);
     }
 
     /** A Frames XP crafting computer at its desktop, with a file written on its disk at {@code path}. */

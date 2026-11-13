@@ -24,6 +24,8 @@ import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import org.lwjgl.glfw.GLFW;
 
+import java.util.List;
+
 /**
  * A system that builds what it installs, watched from its monitor: the package manager takes the glass, what
  * it prints arrives while it works, and the prompt comes back when the program is on the machine.
@@ -39,6 +41,8 @@ public final class SourceBuildClientTests {
     private static final BlockPos MONITOR = new BlockPos(6, 2, 2);
     private static final BlockPos PLAYER_AT_MONITOR = new BlockPos(8, 2, 2);
     private static final ResourceLocation GENTOO = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "gentoo");
+    private static final ResourceLocation KDE_PLASMA =
+            ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "kde_plasma");
 
     private SourceBuildClientTests() {
     }
@@ -55,14 +59,33 @@ public final class SourceBuildClientTests {
                 .thenWaitUntil(() -> said(ctx, "Total: 6 packages"), SCREEN_WAIT * 3,
                         "the manager to list the six packages a desktop comes to")
                 .thenScreenshot(2, "emerge-desktop-asks")
-                .thenAssert(0, () -> said(ctx, "dev-qt/qtbase-6.7.3") && said(ctx, "kde-plasma/plasma-meta-6.1.5"),
+                .thenAssert(0, () -> lineOf(ctx, "dev-qt/qtbase-6.7.3") >= 0
+                                && lineOf(ctx, "dev-qt/qtbase-6.7.3") < lineOf(ctx, "kde-plasma/plasma-meta-6.1.5"),
                         "the toolkit is first and the desktop itself is last")
                 .then(1, () -> ctx.type("n"))
                 .then(1, () -> ctx.key(GLFW.GLFW_KEY_ENTER))
                 .thenWaitUntil(() -> said(ctx, "Quitting."), SCREEN_WAIT, "the manager to say it is leaving")
                 .thenWaitUntilServer(level -> !machine(ctx, level).console().foreground().running(), SCREEN_WAIT,
                         "the terminal to be the shell's again", level -> "still held")
+                .thenServer(0, level -> ctx.assertTrue(
+                        !machine(ctx, level).console().isInstalled(KDE_PLASMA.toString()),
+                        "told no, it built nothing: the desktop is not on the machine"))
                 .thenScreenshot(2, "emerge-desktop-told-no");
+    }
+
+    /* The line of the prompt's scrollback that first holds {@code what}, or -1. */
+    private static int lineOf(final ClientTestContext ctx, final String what) {
+        final CommandPromptScreen<?> screen = ctx.screen(CommandPromptScreen.class);
+        if (screen == null) {
+            return -1;
+        }
+        final List<String> lines = screen.scrollbackText();
+        for (int i = 0; i < lines.size(); i++) {
+            if (lines.get(i).contains(what)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     @ClientTest(timeoutTicks = 3600)

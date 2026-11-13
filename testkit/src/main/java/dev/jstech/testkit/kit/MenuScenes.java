@@ -51,9 +51,11 @@ public final class MenuScenes {
         final BlockPos pos = helper.absolutePos(at);
         final BlockState state = helper.getLevel().getBlockState(pos);
         final BlockHitResult hit = new BlockHitResult(Vec3.atCenterOf(pos), Direction.UP, pos, false);
+        // What was open before is no answer: a block that opens nothing must not pass on a menu left open.
+        final AbstractContainerMenu before = player.containerMenu;
         final InteractionResult result = state.useWithoutItem(helper.getLevel(), player, hit);
         final AbstractContainerMenu menu = player.containerMenu;
-        if (menu == player.inventoryMenu) {
+        if (menu == player.inventoryMenu || menu == before) {
             throw Expect.failure(helper, at, "a menu opened: the block answered " + result + " and opened none");
         }
         final M opened = Expect.instance(helper, at, "the menu opened", type, menu);
