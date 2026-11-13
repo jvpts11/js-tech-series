@@ -299,15 +299,22 @@ final class MachineToolCommands {
         }
 
         @Override public void run(final CliContext ctx) {
-            final List<String> names = ctx.computer().fileNames();
-            if (names.isEmpty()) {
+            final ICliComputer.FsResult listed = ctx.computer().listDisk("");
+            final List<ICliComputer.FsEntry> entries = listed.ok() && listed.entries() != null ? listed.entries()
+                    : List.of();
+            if (entries.isEmpty()) {
                 ctx.out().dim("0  .");
                 return;
             }
-            for (final String name : names) {
-                ctx.out().row(name, "");
+            // Each entry with the room it takes, a folder by its slash, and the room of them all on the last line.
+            long total = 0L;
+            for (final ICliComputer.FsEntry entry : entries) {
+                ctx.out().row(entry.isDir() ? entry.name() + "/" : entry.name(),
+                        CliText.group(entry.weightMbEq()) + " mB");
+                total += entry.weightMbEq();
             }
-            ctx.out().dim(names.size() == 1 ? ENTRY.with(names.size()) : ENTRIES.with(names.size()));
+            ctx.out().row(".", CliText.group(total) + " mB");
+            ctx.out().dim(entries.size() == 1 ? ENTRY.with(entries.size()) : ENTRIES.with(entries.size()));
         }
     }
 

@@ -897,6 +897,38 @@ class ProcessTest {
     }
 
     @Test
+    void run_takesOffACombinedHandlerAsAWholeRun() {
+        final ProgramImage program = loadSource("""
+                delegate void Note(int n);
+                class Monitor : IScript {
+                    event Note Notes;
+                    event Note Both;
+
+                    void First(int n) { Console.PrintLine("first " + n); }
+                    void Second(int n) { Console.PrintLine("second " + n); }
+                    void Third(int n) { Console.PrintLine("third " + n); }
+
+                    public void OnInit() { }
+                    public void OnTick() {
+                        Both += First;
+                        Both += Second;
+                        Notes += First;
+                        Notes += Second;
+                        Notes += Third;
+                        Notes -= Both;
+                        Notes(1);
+                    }
+                    public void OnDestroy() { }
+                }
+                """);
+        final Process process = new Process(program, ROOM, IHost.still());
+        process.begin(process.create(program.entryPoint()), "OnTick");
+        process.step(PLENTY);
+        assertFinished(process);
+        assertEquals(List.of("third 1"), process.console());
+    }
+
+    @Test
     void run_carriesOnFromWhereItStopped() {
         final ProgramImage program = load("", """
                         for (int i = 0; i < 3; i++) {

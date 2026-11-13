@@ -71,6 +71,16 @@ class PackedTest {
     }
 
     @Test
+    void read_takesAPackageWhoseLinesEndWithACarriageReturnToo() {
+        final Packed before = built();
+        final String pasted = before.write().replace("\n", "\r\n");
+
+        final Packed after = Packed.read(pasted);
+        assertEquals(before.manifest(), after.manifest());
+        assertEquals(before.files().keySet(), after.files().keySet(), "the files keep their names");
+    }
+
+    @Test
     void read_refusesTextThatIsNotAPackage() {
         assertNull(Packed.read("just some notes"));
         assertNull(Packed.read(""));

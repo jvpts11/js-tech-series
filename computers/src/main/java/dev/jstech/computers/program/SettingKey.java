@@ -240,7 +240,8 @@ public enum SettingKey {
     @Nullable
     private static Integer parseAccent(final String value) {
         final String hex = value.startsWith("#") ? value.substring(1) : value;
-        if (hex.length() != 6) {
+        // Six digits only: a sign would be read as part of the number.
+        if (hex.length() != 6 || hex.charAt(0) == '+' || hex.charAt(0) == '-') {
             return null;
         }
         try {

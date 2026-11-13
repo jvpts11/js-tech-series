@@ -45,6 +45,7 @@ public final class TerminalForeground {
     private static final String ANSWERS = "Answers";
     private static final String TICK = "Tick";
     private static final String TEXT = "Text";
+    private static final String UNSEEN = "Unseen";
 
     /** The tool in front, or null when the prompt is there instead. */
     @Nullable
@@ -110,7 +111,7 @@ public final class TerminalForeground {
             this.clear();
             return true;
         }
-        this.answers.add(new Answer(now, unseen ? "" : typed));
+        this.answers.add(new Answer(now, unseen ? "" : typed, unseen));
         return this.settle();
     }
 
@@ -139,7 +140,8 @@ public final class TerminalForeground {
             return;
         }
         final ITtyProcess again = remake.apply(this.line);
-        if (again == null) {
+        // A tool told something not kept, a password, cannot be told it again: it is let go of, not told a blank.
+        if (again == null || this.answers.stream().anyMatch(Answer::unseen)) {
             this.clear();
             return;
         }
@@ -171,6 +173,9 @@ public final class TerminalForeground {
             final CompoundTag one = new CompoundTag();
             one.putLong(TICK, answer.tick());
             one.putString(TEXT, answer.text());
+            if (answer.unseen()) {
+                one.putBoolean(UNSEEN, true);
+            }
             told.add(one);
         }
         tag.put(ANSWERS, told);
@@ -182,7 +187,7 @@ public final class TerminalForeground {
         this.startedAt = tag.getLong(STARTED);
         for (final Tag each : tag.getList(ANSWERS, Tag.TAG_COMPOUND)) {
             final CompoundTag one = (CompoundTag) each;
-            this.answers.add(new Answer(one.getLong(TICK), one.getString(TEXT)));
+            this.answers.add(new Answer(one.getLong(TICK), one.getString(TEXT), one.getBoolean(UNSEEN)));
         }
     }
 
@@ -194,7 +199,7 @@ public final class TerminalForeground {
         return false;
     }
 
-    /** What a tool was told, and when, so it can be told again. */
-    private record Answer(long tick, String text) {
+    /** What a tool was told, and when, so it can be told again; an answer not for showing is not kept, only marked. */
+    private record Answer(long tick, String text, boolean unseen) {
     }
 }

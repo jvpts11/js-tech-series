@@ -94,6 +94,18 @@ class PointersTest {
     }
 
     @Test
+    void struct_withNothingInItStillTakesAByte() {
+        assertEquals(List.of("1"), run("""
+                struct Marker { }
+                class Tool {
+                    unsafe static void Main() {
+                        Console.PrintLine("" + sizeof(Marker));
+                    }
+                }
+                """));
+    }
+
+    @Test
     void struct_liesInMemoryFieldByField() {
         assertEquals(List.of("32", "4 40000000000 200 1.5", "3", "2"), run("""
                 struct Point { public int X; public long Y; public byte Z; public double W; }

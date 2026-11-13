@@ -47,9 +47,12 @@ public record BootMenu(BootManager manager, Text title, List<Entry> entries, int
     public BootMenu {
         manager = manager == null ? BootManager.NONE : manager;
         title = title == null ? Text.EMPTY : title;
-        entries = entries == null ? List.of() : List.copyOf(entries.size() > MOST_ENTRIES
-                ? entries.subList(0, MOST_ENTRIES) : entries);
-        defaultIndex = entries.isEmpty() ? 0 : Math.max(0, Math.min(defaultIndex, entries.size() - 1));
+        final List<Entry> all = entries == null ? List.of() : entries;
+        final Entry chosen = defaultIndex >= 0 && defaultIndex < all.size() ? all.get(defaultIndex) : null;
+        entries = List.copyOf(kept(all));
+        // The entry chosen keeps being chosen where the list was cut round it; the first when it was cut away.
+        final int at = chosen == null ? defaultIndex : Math.max(0, entries.indexOf(chosen));
+        defaultIndex = entries.isEmpty() ? 0 : Math.max(0, Math.min(at, entries.size() - 1));
         countdownTicks = Math.max(0, countdownTicks);
     }
 
@@ -61,6 +64,30 @@ public record BootMenu(BootManager manager, Text title, List<Entry> entries, int
     /** The seconds still on the clock, for the line that counts them down. */
     public int secondsLeft(final int ticksLeft) {
         return Math.max(0, (ticksLeft + 19) / 20);
+    }
+
+    /*
+     * The entries a menu holds, as many as it may: past that the systems make room, the ways into the setup and the
+     * restart, which come last, staying.
+     */
+    private static List<Entry> kept(final List<Entry> all) {
+        if (all.size() <= MOST_ENTRIES) {
+            return all;
+        }
+        int others = 0;
+        for (final Entry entry : all) {
+            if (entry.slot() < 0) {
+                others++;
+            }
+        }
+        int room = Math.max(0, MOST_ENTRIES - others);
+        final List<Entry> out = new ArrayList<>(MOST_ENTRIES);
+        for (final Entry entry : all) {
+            if (entry.slot() < 0 ? out.size() < MOST_ENTRIES : room-- > 0) {
+                out.add(entry);
+            }
+        }
+        return out;
     }
 
     /**

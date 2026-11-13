@@ -95,6 +95,17 @@ class TtyScriptProcessTest {
         assertEquals(2, this.glass.redraws, "the first drawing was a line, the two after it went over it");
     }
 
+    /** A glass that saw a bar half drawn is shown it finished, though it finished while nobody watched. */
+    @Test
+    void advance_aBarThatEndedUnwatched_isShownFinishedBeforeAnythingUnderIt() {
+        final TtyScriptProcess tool = started(TtyScript.script()
+                .redraw(10, progress -> CliLine.plain((int) (progress * 100) + "%")).pause(5).say("after").done());
+        tool.advance(5, this.glass);
+        tool.advance(12, null);
+        tool.advance(20, this.glass);
+        assertEquals(List.of("100%", "after"), this.glass.shown);
+    }
+
     @Test
     void advance_aFlood_poursItsLinesOutOverItsTime() {
         final TtyScriptProcess tool = started(

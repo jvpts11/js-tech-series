@@ -17,7 +17,9 @@ import java.util.Map;
  * JSON read into a tree the program holds (computers/docs/design/sigma.md): every value a JsonValue, an object of the
  * program's own made only of what any object holds (a kind, and a text, a number, a truth, a list or a map), so a tree
  * weighs what it holds and is saved with the program like anything else. A value is read with its indexers,
- * {@code doc["items"][0]}, which are its Get and At; reading a member or an element that is not there gives null.
+ * {@code doc["items"][0]}, which are its Get and At. A member that is not there reads as null, since a key is only
+ * a guess at what a document holds; an element past the end of an array halts, as reading past any list does, and
+ * reading either off a value that is not an object or an array gives null.
  */
 @TextHolder
 final class JsonFunctions {
@@ -50,6 +52,7 @@ final class JsonFunctions {
             "this is not JSON: it stops being JSON at character %s");
     private static final TextKey NOT_A = TextKey.of("jsc.vm.json.not_a", "a JSON %s is not %s");
     private static final TextKey NO_VALUE = TextKey.of("jsc.vm.json.no_value", "there is no JsonValue here");
+    private static final TextKey NO_TEXT = TextKey.of("jsc.vm.json.no_text", "there is no text here to read as JSON");
     private static final TextKey A_TEXT = TextKey.of("jsc.vm.json.a_text", "a text");
     private static final TextKey A_NUMBER = TextKey.of("jsc.vm.json.a_number", "a number");
     private static final TextKey A_TRUTH = TextKey.of("jsc.vm.json.a_truth", "true or false");
@@ -59,6 +62,10 @@ final class JsonFunctions {
 
     static void register(final IntrinsicRegistry.Builder registry) {
         registry.onType("Json", "Parse", TYPE, (context, target, arguments, line) -> {
+            // A null is no text, though written out it would be the word null, which reads as JSON.
+            if (arguments[0] == null) {
+                throw new Halt(Halt.Reason.NO_OBJECT, line, NO_TEXT.text());
+            }
             try {
                 return made(context, JsonReader.read(String.valueOf(arguments[0])), line);
             } catch (final JsonReader.NotJson wrong) {

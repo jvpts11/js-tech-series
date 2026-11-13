@@ -57,6 +57,10 @@ final class ExpressionParser {
             TokenKind.INT_LITERAL, TokenKind.LONG_LITERAL, TokenKind.FLOAT_LITERAL, TokenKind.DOUBLE_LITERAL,
             TokenKind.STRING_LITERAL, TokenKind.CHAR_LITERAL, TokenKind.TRUE, TokenKind.FALSE, TokenKind.NULL);
 
+    /** What can follow an expression and be read on to it: a member, a call, an index or a step. */
+    private static final Set<TokenKind> POSTFIX = EnumSet.of(TokenKind.DOT, TokenKind.POINTER_ARROW,
+            TokenKind.LEFT_PAREN, TokenKind.LEFT_BRACKET, TokenKind.PLUS_PLUS, TokenKind.MINUS_MINUS);
+
     /*
      * One table instead of nine near-identical methods; the index is the precedence level, lowest
      * binding first, exactly as C# orders them.
@@ -184,6 +188,12 @@ final class ExpressionParser {
         };
     }
 
+    /* Whether that token is the digits of the smallest int or long, which only a minus before them makes a number. */
+    private static boolean isSmallestMagnitude(final Token token) {
+        return token.kind() == TokenKind.INT_LITERAL && Integer.valueOf(Integer.MIN_VALUE).equals(token.value())
+                || token.kind() == TokenKind.LONG_LITERAL && Long.valueOf(Long.MIN_VALUE).equals(token.value());
+    }
+
     private static boolean isAssignable(final IExpr expression) {
         return expression instanceof IExpr.Name
                 || expression instanceof IExpr.Member
@@ -212,23 +222,38 @@ final class ExpressionParser {
             return this.parseUnary();
         }
         IExpr left = this.parseBinary(level + 1);
-        while (true) {
-            if (level == RELATIONAL_LEVEL
-                    && (this.cursor.check(TokenKind.IS) || this.cursor.check(TokenKind.AS))) {
-                final Token at = this.cursor.advance();
-                final TypeRef type = this.types.parseTypeRef();
-                left = new IExpr.TypeTest(left, type, at.is(TokenKind.AS),
-                        left == null ? at.line() : left.line(), left == null ? at.column() : left.column());
-                continue;
+        int links = 0;
+        try {
+            while (true) {
+                if (level == RELATIONAL_LEVEL
+                        && (this.cursor.check(TokenKind.IS) || this.cursor.check(TokenKind.AS))) {
+                    final Token at = this.cursor.advance();
+                    final TypeRef type = this.types.parseTypeRef();
+                    left = new IExpr.TypeTest(left, type, at.is(TokenKind.AS),
+                            left == null ? at.line() : left.line(), left == null ? at.column() : left.column());
+                    continue;
+                }
+                final TokenKind kind = this.cursor.matchAny(BINARY_LEVELS[level]);
+                if (kind == null) {
+                    return left;
+                }
+                /*
+                 * Each operator joined on puts what came before one level further down the tree, so a long run
+                 * of them counts against the same depth as brackets do: the stages after this walk that tree.
+                 */
+                if (!this.cursor.descend()) {
+                    return left;
+                }
+                links++;
+                final IExpr right = this.parseBinary(level + 1);
+                left = new IExpr.Binary(binaryOperator(kind), left, right,
+                        left == null ? this.cursor.peek().line() : left.line(),
+                        left == null ? this.cursor.peek().column() : left.column());
             }
-            final TokenKind kind = this.cursor.matchAny(BINARY_LEVELS[level]);
-            if (kind == null) {
-                return left;
+        } finally {
+            for (int i = 0; i < links; i++) {
+                this.cursor.ascend();
             }
-            final IExpr right = this.parseBinary(level + 1);
-            left = new IExpr.Binary(binaryOperator(kind), left, right,
-                    left == null ? this.cursor.peek().line() : left.line(),
-                    left == null ? this.cursor.peek().column() : left.column());
         }
     }
 
@@ -263,6 +288,11 @@ final class ExpressionParser {
                 return new IExpr.Unary(Operator.NOT, this.operand(), false, start.line(), start.column());
             case MINUS:
                 this.cursor.advance();
+                if (isSmallestMagnitude(this.cursor.peek())) {
+                    // -2147483648 is the one int whose digits alone fit no int, so the minus is read with them.
+                    final Token smallest = this.cursor.advance();
+                    return new IExpr.Literal(smallest.kind(), smallest.value(), start.line(), start.column());
+                }
                 return new IExpr.Unary(Operator.NEGATE, this.operand(), false, start.line(), start.column());
             case PLUS:
                 this.cursor.advance();
@@ -354,44 +384,64 @@ final class ExpressionParser {
 
     private IExpr parsePostfix() {
         IExpr expression = this.parsePrimary();
-        while (true) {
-            if (this.cursor.check(TokenKind.DOT)) {
-                final Token dot = this.cursor.advance();
-                final String name = this.cursor.expectIdentifier();
-                expression = new IExpr.Member(expression, name,
-                        expression == null ? dot.line() : expression.line(),
-                        expression == null ? dot.column() : expression.column());
-            } else if (this.cursor.check(TokenKind.POINTER_ARROW)) {
-                // p->F is (*p).F, as C and C# both say.
-                final Token arrow = this.cursor.advance();
-                final String name = this.cursor.expectIdentifier();
-                final int line = expression == null ? arrow.line() : expression.line();
-                final int column = expression == null ? arrow.column() : expression.column();
-                expression = new IExpr.Member(new IExpr.Unary(Operator.DEREFERENCE, expression, false, line, column),
-                        name, line, column);
-            } else if (this.cursor.check(TokenKind.LEFT_PAREN)) {
-                final Token at = this.cursor.peek();
-                final List<IExpr> arguments = this.parseArguments();
-                expression = new IExpr.Call(expression, arguments,
-                        expression == null ? at.line() : expression.line(),
-                        expression == null ? at.column() : expression.column());
-            } else if (this.cursor.check(TokenKind.LEFT_BRACKET)) {
-                final Token at = this.cursor.advance();
-                final IExpr index = this.parseExpression();
-                this.cursor.expect(TokenKind.RIGHT_BRACKET);
-                expression = new IExpr.Index(expression, index,
-                        expression == null ? at.line() : expression.line(),
-                        expression == null ? at.column() : expression.column());
-            } else if (this.cursor.check(TokenKind.PLUS_PLUS) || this.cursor.check(TokenKind.MINUS_MINUS)) {
-                final Token at = this.cursor.advance();
-                expression = new IExpr.Unary(at.is(TokenKind.PLUS_PLUS) ? Operator.INCREMENT : Operator.DECREMENT,
-                        expression, true,
-                        expression == null ? at.line() : expression.line(),
-                        expression == null ? at.column() : expression.column());
-            } else {
-                return expression;
+        int links = 0;
+        try {
+            while (true) {
+                if (!POSTFIX.contains(this.cursor.peek().kind())) {
+                    return expression;
+                }
+                // Each member, call or index read on puts what came before one level further down the tree.
+                if (!this.cursor.descend()) {
+                    return expression;
+                }
+                links++;
+                expression = this.postfixOn(expression);
+            }
+        } finally {
+            for (int i = 0; i < links; i++) {
+                this.cursor.ascend();
             }
         }
+    }
+
+    /** The member, call, index or step written straight after {@code expression}, read on to it. */
+    private IExpr postfixOn(final IExpr expression) {
+        if (this.cursor.check(TokenKind.DOT)) {
+            final Token dot = this.cursor.advance();
+            final String name = this.cursor.expectIdentifier();
+            return new IExpr.Member(expression, name,
+                    expression == null ? dot.line() : expression.line(),
+                    expression == null ? dot.column() : expression.column());
+        }
+        if (this.cursor.check(TokenKind.POINTER_ARROW)) {
+            // p->F is (*p).F, as C and C# both say.
+            final Token arrow = this.cursor.advance();
+            final String name = this.cursor.expectIdentifier();
+            final int line = expression == null ? arrow.line() : expression.line();
+            final int column = expression == null ? arrow.column() : expression.column();
+            return new IExpr.Member(new IExpr.Unary(Operator.DEREFERENCE, expression, false, line, column),
+                    name, line, column);
+        }
+        if (this.cursor.check(TokenKind.LEFT_PAREN)) {
+            final Token at = this.cursor.peek();
+            final List<IExpr> arguments = this.parseArguments();
+            return new IExpr.Call(expression, arguments,
+                    expression == null ? at.line() : expression.line(),
+                    expression == null ? at.column() : expression.column());
+        }
+        if (this.cursor.check(TokenKind.LEFT_BRACKET)) {
+            final Token at = this.cursor.advance();
+            final IExpr index = this.parseExpression();
+            this.cursor.expect(TokenKind.RIGHT_BRACKET);
+            return new IExpr.Index(expression, index,
+                    expression == null ? at.line() : expression.line(),
+                    expression == null ? at.column() : expression.column());
+        }
+        final Token at = this.cursor.advance();
+        return new IExpr.Unary(at.is(TokenKind.PLUS_PLUS) ? Operator.INCREMENT : Operator.DECREMENT,
+                expression, true,
+                expression == null ? at.line() : expression.line(),
+                expression == null ? at.column() : expression.column());
     }
 
     /*
@@ -467,6 +517,12 @@ final class ExpressionParser {
         }
         if (LITERALS.contains(start.kind())) {
             this.cursor.advance();
+            if (isSmallestMagnitude(start)) {
+                // Without a minus straight before it, 2147483648 is one past the largest int, as the lexer reads it.
+                this.diagnostics.error(start.line(), start.column(), SigmaError.MALFORMED_NUMBER, start.text());
+                return new IExpr.Literal(start.kind(), start.kind() == TokenKind.LONG_LITERAL ? (Object) 0L : 0,
+                        start.line(), start.column());
+            }
             return new IExpr.Literal(start.kind(), start.value(), start.line(), start.column());
         }
         switch (start.kind()) {

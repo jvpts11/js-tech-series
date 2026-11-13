@@ -66,6 +66,9 @@ class IqlKineticsStatementTest {
                 () -> IqlKineticsStatement.parse("UPDATE create_kinetics SET target_speed = 64 LIMIT 2"));
         assertThrows(IqlError.class, () -> IqlKineticsStatement.parse(
                 "UPDATE create_kinetics SET target_speed = 64 WHERE speed = 1 junk"));
+        assertThrows(IqlError.class, () -> IqlKineticsStatement.parse("UPDATE create_kinetics SET target_speed = NaN"));
+        assertThrows(IqlError.class,
+                () -> IqlKineticsStatement.parse("UPDATE create_kinetics SET target_speed = -Infinity"));
     }
 
     @Test

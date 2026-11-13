@@ -802,7 +802,14 @@ public final class DiskFilesystem {
             if (file.weight(eraOf(disk)) > freeWeight) {
                 return false;
             }
-            final FilesystemContents copied = fs.with(new StoredFile(dest, file.type(), file.content(),
+            // The copy's kind follows its name, by the same rules as a rename's.
+            final FileType newType = typeOfPath(dest, file.type());
+            if (newType.virtualProjection()
+                    || newType != file.type() && (newType.recording() || file.type().recording()
+                    || !holdsItsKind(newType, file.content()))) {
+                return false;
+            }
+            final FilesystemContents copied = fs.with(new StoredFile(dest, newType, file.content(),
                     file.modified()));
             if (overfull(copied)) {
                 return false;

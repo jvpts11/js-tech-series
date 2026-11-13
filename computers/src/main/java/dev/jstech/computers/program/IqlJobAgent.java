@@ -114,8 +114,8 @@ public final class IqlJobAgent {
 
     /** Re-arms a job's trigger so it reschedules from now (EVERY) or resets its edge detector (WHEN). */
     public void rearm(final String jobName) {
-        lastFired.remove(jobName);
-        lastCondition.remove(jobName);
+        lastFired.remove(keyOf(jobName));
+        lastCondition.remove(keyOf(jobName));
     }
 
     private boolean shouldFire(final IqlSavedObject job, final MainframeBlockEntity mainframe,
@@ -137,13 +137,13 @@ public final class IqlJobAgent {
         if (interval <= 0) {
             return false;
         }
-        final Long last = lastFired.get(job.name());
+        final Long last = lastFired.get(keyOf(job.name()));
         if (last == null) {
-            lastFired.put(job.name(), clock); // schedule from now rather than firing immediately
+            lastFired.put(keyOf(job.name()), clock); // schedule from now rather than firing immediately
             return false;
         }
         if (clock - last >= interval) {
-            lastFired.put(job.name(), clock);
+            lastFired.put(keyOf(job.name()), clock);
             return true;
         }
         return false;
@@ -171,8 +171,8 @@ public final class IqlJobAgent {
             return false;
         }
         final boolean now = condition.matches(field -> resolveField(field, mainframe, level));
-        final boolean was = lastCondition.getOrDefault(job.name(), false);
-        lastCondition.put(job.name(), now);
+        final boolean was = lastCondition.getOrDefault(keyOf(job.name()), false);
+        lastCondition.put(keyOf(job.name()), now);
         return now && !was; // rising edge: fire once when the condition turns true
     }
 
@@ -195,8 +195,8 @@ public final class IqlJobAgent {
                         : NetworkWorldEvents.underWay(level, network, event, now);
             }
         }
-        final boolean was = lastCondition.getOrDefault(job.name(), false);
-        lastCondition.put(job.name(), seen);
+        final boolean was = lastCondition.getOrDefault(keyOf(job.name()), false);
+        lastCondition.put(keyOf(job.name()), seen);
         return trigger.stage() == IqlEventTrigger.Stage.ENDED ? was && !seen : seen && !was;
     }
 
@@ -238,6 +238,11 @@ public final class IqlJobAgent {
         final String id = name.contains(":") ? name : "minecraft:" + name;
         final ResourceLocation location = ResourceLocation.tryParse(id.toLowerCase(Locale.ROOT));
         return location == null ? null : BuiltInRegistries.ITEM.getOptional(location).orElse(null);
+    }
+
+    /* A job's trigger is kept by its name as the catalogue keeps the job, whatever its letters' case. */
+    private static String keyOf(final String jobName) {
+        return jobName.toLowerCase(Locale.ROOT);
     }
 
     /* A step the team reached, by the ids of its axis and of the step. */

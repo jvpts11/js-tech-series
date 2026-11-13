@@ -88,6 +88,10 @@ public final class MinerCommand implements ICliCommand {
                     final String address = ctx.arg(++i).toLowerCase(Locale.ROOT);
                     if (!TeracoinAddress.valid(address)) {
                         ctx.out().error(CliTexts.SAID_BY.with(name(), MinerTexts.BAD_ADDRESS.with(address)));
+                        // What was set before the wrong word stays set, and is kept so.
+                        if (changed) {
+                            console.changed();
+                        }
                         return;
                     }
                     miner.setAddress(address);
@@ -108,6 +112,9 @@ public final class MinerCommand implements ICliCommand {
                 case "status", "start", "stop" -> verb = arg.toLowerCase(Locale.ROOT);
                 default -> {
                     ctx.out().error(CliTexts.USAGE.with(name(), usage()));
+                    if (changed) {
+                        console.changed();
+                    }
                     return;
                 }
             }

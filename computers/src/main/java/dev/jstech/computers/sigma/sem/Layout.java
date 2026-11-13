@@ -79,7 +79,8 @@ public final class Layout {
         for (final IMemberSymbol field : this.fieldsOf(named)) {
             end = align(end, this.alignOf(typeOf(field))) + this.sizeOf(typeOf(field));
         }
-        return align(end, this.alignOf(type));
+        // A struct with nothing in it still takes a byte, as in C#, so two of them never share an address.
+        return align(Math.max(1, end), this.alignOf(type));
     }
 
     /** The type of what a field or a property of a struct holds. */

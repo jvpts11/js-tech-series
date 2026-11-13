@@ -41,8 +41,9 @@ public final class InstallPlan {
 
     private static final TextKey NO_DISK = TextKey.of("jsc.install.plan.no_disk", "No disk is chosen.");
     private static final TextKey NO_ROOM = TextKey.of("jsc.install.plan.no_room", "There is not room for %s here.");
+    // Said of either table: an MBR one is full at four partitions, a GPT one at many more.
     private static final TextKey TABLE_FULL = TextKey.of("jsc.install.plan.table_full",
-            "The disk is MBR and already has its four partitions.");
+            "The disk's partition table has no room for another partition.");
     private static final TextKey TOO_BIG = TextKey.of("jsc.install.plan.too_big",
             "That file system cannot be made on a partition this big.");
     private static final TextKey NEEDS_FORMAT = TextKey.of("jsc.install.plan.needs_format",

@@ -28,6 +28,20 @@ class CalcEngineTest {
     }
 
     @Test
+    void evaluate_aPowerOrAnExpOfNoRealResultIsAnError() {
+        assertThrows(CalcEngine.CalcException.class, () -> eval("(-8)^(1/3)"));
+        assertThrows(CalcEngine.CalcException.class, () -> eval("10^400"));
+        assertThrows(CalcEngine.CalcException.class, () -> eval("exp(1000)"));
+    }
+
+    @Test
+    void evaluate_aNumberWithTwoPointsIsAnError() {
+        assertThrows(CalcEngine.CalcException.class, () -> eval("1.2.3"));
+        assertThrows(CalcEngine.CalcException.class, () -> eval("1..2"));
+        assertEquals(1.5, eval("1.5"), EPS);
+    }
+
+    @Test
     void evaluate_aDeepButReasonableNestingStillWorks() {
         assertEquals(3.0, eval("(".repeat(100) + "1+2" + ")".repeat(100)), EPS);
     }

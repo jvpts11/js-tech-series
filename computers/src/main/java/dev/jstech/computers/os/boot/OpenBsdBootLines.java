@@ -19,7 +19,8 @@ import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.text.Text;
-import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -117,8 +118,9 @@ final class OpenBsdBootLines {
         final boolean xenodm = machine.console() != null && machine.console().settings().xenodmEnabled()
                 && !BootLines.desktopOf(machine).isEmpty();
         out.line(Text.literal("starting local daemons:" + (cron ? " cron" : "") + (xenodm ? " xenodm" : "") + "."));
-        out.line(Text.literal(LocalDateTime.now().format(DateTimeFormatter.ofPattern("EEE MMM d HH:mm:ss 'UTC' yyyy",
-                Locale.ENGLISH))));
+        // The time in UTC, as the line says, whatever zone the server keeps.
+        out.line(Text.literal(ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern(
+                "EEE MMM d HH:mm:ss 'UTC' yyyy", Locale.ENGLISH))));
         return out.build();
     }
 

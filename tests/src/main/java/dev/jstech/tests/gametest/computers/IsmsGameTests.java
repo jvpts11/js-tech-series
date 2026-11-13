@@ -398,6 +398,36 @@ public final class IsmsGameTests {
                 .thenSucceed();
     }
 
+    /** A trace that ends itself from its own sink and starts another on the network goes on through the new one. */
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void trace_startedAgainFromItsOwnSinkHearsWhatComesNext(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork net = TestWorldBuilder.forGameTest(helper).buildCraftingNetwork();
+        final List<TraceEvent> second = new ArrayList<>();
+        final boolean[] restarted = {false};
+        final Runnable[] stop = new Runnable[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE, () -> net.seed(Items.DIRT, 50))
+                .thenWaitUntil(() -> helper.assertTrue(indexed(net, Items.DIRT) == 50L,
+                        "the network holds the dirt"))
+                .thenExecute(() -> {
+                    stop[0] = IsmsTraces.listen(net.mainframe().networkUuid(), TraceEventClass.Group.ALL, event -> {
+                        if (!restarted[0]) {
+                            restarted[0] = true;
+                            stop[0].run();
+                            stop[0] = IsmsTraces.listen(net.mainframe().networkUuid(), TraceEventClass.Group.ALL,
+                                    second::add);
+                        }
+                    });
+                    run(helper, net, 1, 1, 0, "QUERY items");
+                    helper.assertTrue(restarted[0], "the first trace heard the statement and started another");
+                    final int before = second.size();
+                    run(helper, net, 1, 1, 0, "QUERY items");
+                    stop[0].run();
+                    helper.assertTrue(second.size() > before, "and the new one hears the next statement");
+                })
+                .thenSucceed();
+    }
+
     /** A trace that picks only the statements hears nothing else. */
     @GameTest(template = ARENA, timeoutTicks = 300)
     public static void trace_hearsOnlyTheGroupsItPicks(final GameTestHelper helper) {

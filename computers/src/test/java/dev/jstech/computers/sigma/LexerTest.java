@@ -68,6 +68,40 @@ class LexerTest {
     }
 
     @Test
+    void tokenize_aRealMayStartAtItsPoint() {
+        final List<Token> tokens = this.scan(".5");
+        assertEquals(TokenKind.DOUBLE_LITERAL, tokens.get(0).kind());
+        assertEquals(0.5, tokens.get(0).value());
+        assertTrue(this.bag.sorted().isEmpty());
+    }
+
+    @Test
+    void tokenize_aMemberAfterAWholeNumberIsReadAsAMember() {
+        assertEquals(List.of(TokenKind.INT_LITERAL, TokenKind.DOT, TokenKind.IDENTIFIER, TokenKind.LEFT_PAREN,
+                TokenKind.RIGHT_PAREN, TokenKind.END_OF_FILE), kinds(this.scan("10.ToString()")));
+        assertTrue(this.bag.sorted().isEmpty());
+        this.scan("1.;");
+        assertEquals(1, this.bag.sorted().size(), "a point with nothing after it is still a malformed number");
+    }
+
+    @Test
+    void tokenize_aStringOrCharKeepsWhatWasTypedAsItsText() {
+        final List<Token> tokens = this.scan("\"a\\tb\" '\\n'");
+        assertEquals("\"a\\tb\"", tokens.get(0).text());
+        assertEquals("a\tb", tokens.get(0).value());
+        assertEquals("'\\n'", tokens.get(1).text());
+        assertEquals('\n', tokens.get(1).value());
+    }
+
+    @Test
+    void tokenize_aBackslashEndingALineLeavesTheStringUnclosedThere() {
+        final List<Token> tokens = this.scan("\"abc\\\nint x;");
+        assertEquals(1, this.bag.sorted().size(), "one mistake, the string that never ends");
+        assertEquals(1, this.bag.sorted().getFirst().line(), "said on the line the string starts on");
+        assertEquals(TokenKind.INT, tokens.get(1).kind(), "and the next line is read as code");
+    }
+
+    @Test
     void tokenize_alwaysEndsWithEndOfFile() {
         assertEquals(List.of(TokenKind.END_OF_FILE), kinds(this.scan("")));
         assertEquals(TokenKind.END_OF_FILE, this.scan("class C { }").getLast().kind());

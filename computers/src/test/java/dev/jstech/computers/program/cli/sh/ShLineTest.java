@@ -124,6 +124,19 @@ class ShLineTest {
     }
 
     @Test
+    void of_anArrowNamingAnEmptyNameIsASyntaxError() {
+        assertEquals(">", of("echo hi > \"\"").badToken());
+        assertEquals("<", of("sort < ''").badToken());
+    }
+
+    @Test
+    void of_anArrowOnACommandInTheMiddleOfAPipelineIsASyntaxError() {
+        assertEquals(">", of("echo hi > a.txt | echo bye").badToken(), "only the last command writes to a file");
+        assertEquals("<", of("echo x | sort < f.txt").badToken(), "only the first one reads from one");
+        assertEquals("", of("sort < f.txt | head > g.txt").badToken(), "and those two together are fine");
+    }
+
+    @Test
     void of_aWellFormedLineHasNoBadToken() {
         assertEquals("", of("ls | grep a > out.txt").badToken());
         assertEquals("", of("ls").badToken());

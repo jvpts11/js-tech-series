@@ -17,6 +17,7 @@ import dev.jstech.computers.registry.ComputingComponents;
 import dev.jstech.computers.registry.HardwareRegistry;
 import dev.jstech.computers.storage.DriveVolumes;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.computers.storage.StorageVolume;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import dev.jstech.core.util.Sizes;
@@ -45,7 +46,7 @@ public final class DiskPartitions {
 
     /*
      * What a volume holds, kept in the disk's own components for its open partition and with the table for the others.
-     * The disk's health, its bad sectors, is the disk's and not a partition's, so it is not among them.
+     * The disk's health is not among them: it is worked out again from the volume each time one is opened.
      */
     private static final List<Supplier<? extends DataComponentType<?>>> HELD = List.of(
             ComputingComponents.DISK_VOLUME, ComputingComponents.DISK_USAGE, ComputingComponents.FILESYSTEM,
@@ -102,8 +103,10 @@ public final class DiskPartitions {
     public static PartitionEntry partitionOf(final ItemStack volume) {
         final PartitionView view = volume.get(ComputingComponents.PARTITION_VIEW.get());
         if (view != null) {
-            return new PartitionEntry(view.number(), 0L, view.sizeMb(), FileSystemType.byName(view.fs()),
-                    PartitionRole.DATA, false);
+            // A raw partition's view has no file system, and the system's own partitions keep their role.
+            return new PartitionEntry(view.number(), 0L, view.sizeMb(),
+                    view.fs().isEmpty() ? null : FileSystemType.byName(view.fs()), PartitionRole.byName(view.role()),
+                    false);
         }
         return table(volume).openPartition();
     }
@@ -172,7 +175,8 @@ public final class DiskPartitions {
         view.remove(ComputingComponents.PARTITION_TABLE.get());
         view.applyComponents(table.heldBy(number));
         view.set(ComputingComponents.PARTITION_VIEW.get(), new PartitionView(number, partition.sizeMb(),
-                partition.fs() == null ? "" : partition.fs().serializedName()));
+                partition.fs() == null ? "" : partition.fs().serializedName(), partition.role().serializedName()));
+        healthFollowsTheVolume(view);
         return view;
     }
 
@@ -206,6 +210,7 @@ public final class DiskPartitions {
         clearHeld(disk);
         disk.applyComponents(incoming);
         write(disk, next.holding(number, DataComponentPatch.EMPTY).opened(number));
+        healthFollowsTheVolume(disk);
     }
 
     /**
@@ -289,6 +294,17 @@ public final class DiskPartitions {
         }
         erase(disk, table, number);
         relayout(disk, table(disk).layout());
+    }
+
+    /*
+     * The health a disk shows is worked out from its open volume, so a partition opened, or a view of one, shows its
+     * own and not the one open before. Only where the volumes are kept: elsewhere the stack is left as it came.
+     */
+    private static void healthFollowsTheVolume(final ItemStack volume) {
+        final StorageVolume live = DriveVolumes.peek(volume);
+        if (live != StorageVolume.EMPTY) {
+            DriveVolumes.refreshUsage(volume, live);
+        }
     }
 
     /*

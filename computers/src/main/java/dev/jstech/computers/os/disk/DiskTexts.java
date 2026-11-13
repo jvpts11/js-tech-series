@@ -21,8 +21,9 @@ public final class DiskTexts {
     static final TextKey MBR = TextKey.of("jsc.disk.scheme.mbr", "Master Boot Record");
     static final TextKey GPT = TextKey.of("jsc.disk.scheme.gpt", "GUID Partition Table");
 
+    // Said of either table: an MBR one is full at four partitions, a GPT one at many more.
     private static final TextKey TABLE_FULL = TextKey.of("jsc.disk.refusal.table_full",
-            "This disk already has four partitions, all an MBR disk can hold.");
+            "This disk's partition table has no room for another partition.");
     private static final TextKey NO_ROOM = TextKey.of("jsc.disk.refusal.no_room",
             "There is not enough free space there.");
     private static final TextKey NO_SUCH_PARTITION = TextKey.of("jsc.disk.refusal.no_such_partition",

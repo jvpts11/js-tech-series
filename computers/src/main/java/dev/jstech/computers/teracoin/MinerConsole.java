@@ -23,6 +23,7 @@ import dev.jstech.core.time.GameCalendar;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -36,15 +37,18 @@ public final class MinerConsole {
 
     private final IOsHost host;
     private final ServerLevel level;
+    /** Where the machine stands, which is what tells two machines off any network apart. */
+    private final BlockPos at;
 
     /* The column a status line's value starts at, and a device line's hashrate. */
     private static final int LABEL = 9;
     private static final int ROW_VALUE = 38;
     private static final long SECONDS_PER_HOUR = 3_600L;
 
-    public MinerConsole(final IOsHost host, final ServerLevel level) {
+    public MinerConsole(final IOsHost host, final ServerLevel level, final BlockPos at) {
         this.host = host;
         this.level = level;
+        this.at = at;
     }
 
     /** The miner's settings, kept with the machine. */
@@ -64,7 +68,7 @@ public final class MinerConsole {
 
     /** The machine, as the miners tell each other apart. */
     public String machine() {
-        return MinerRunner.machineKey(host, null, null);
+        return MinerRunner.machineKey(host, level, at);
     }
 
     /** How the miner and the chain stand now. */

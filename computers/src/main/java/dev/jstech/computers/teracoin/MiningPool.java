@@ -114,10 +114,14 @@ public final class MiningPool {
         return false;
     }
 
-    /** Takes the miner on {@code machine}, which asked to join. */
+    /**
+     * Takes the miner on {@code machine}, which asked to join. Only a miner that asked is taken, which is the only
+     * one the panel offers, so the miners kept as accepted are never more than the ones that ever asked.
+     */
     public void accept(final String machine) {
-        requests.remove(machine);
-        accepted.add(machine);
+        if (requests.remove(machine) != null) {
+            accepted.add(machine);
+        }
     }
 
     /** Turns down the request of the miner on {@code machine}. */

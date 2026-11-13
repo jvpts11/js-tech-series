@@ -19,6 +19,7 @@ import dev.jstech.core.jstechseries.tier.Eras;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.ResourceLocationException;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
@@ -176,12 +177,20 @@ public final class JsComputersScripts {
     }
 
     private static ResourceLocation id(final String id) {
-        return id.indexOf(':') < 0 ? ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, id)
-                : ResourceLocation.parse(id);
+        if (id == null) {
+            throw new IllegalArgumentException("an id was left out");
+        }
+        try {
+            return id.indexOf(':') < 0 ? ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, id)
+                    : ResourceLocation.parse(id);
+        } catch (final ResourceLocationException wrong) {
+            throw new IllegalArgumentException("'" + id + "' is not a valid id: " + wrong.getMessage(), wrong);
+        }
     }
 
     private static Era era(final String name) {
-        final Era found = Eras.byName(name).orElse(null);
+        // A script leaving the name out hands over null, which is answered like any name no era has.
+        final Era found = name == null ? null : Eras.byName(name).orElse(null);
         if (found != null) {
             return found;
         }

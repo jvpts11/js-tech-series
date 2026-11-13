@@ -20,19 +20,22 @@ import net.minecraft.network.codec.StreamCodec;
  *
  * @param number the partition's number
  * @param sizeMb its size, in megabytes
- * @param fs     its file system's name
+ * @param fs     its file system's name, empty for a raw partition
+ * @param role   its role's name: data, or the system's own partitions
  */
-public record PartitionView(int number, long sizeMb, String fs) {
+public record PartitionView(int number, long sizeMb, String fs, String role) {
 
     public static final Codec<PartitionView> CODEC = RecordCodecBuilder.create(inst -> inst.group(
             Codec.INT.fieldOf("number").forGetter(PartitionView::number),
             Codec.LONG.fieldOf("size").forGetter(PartitionView::sizeMb),
-            Codec.STRING.fieldOf("fs").forGetter(PartitionView::fs)
+            Codec.STRING.fieldOf("fs").forGetter(PartitionView::fs),
+            Codec.STRING.optionalFieldOf("role", "data").forGetter(PartitionView::role)
     ).apply(inst, PartitionView::new));
 
     public static final StreamCodec<ByteBuf, PartitionView> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.VAR_INT, PartitionView::number,
             ByteBufCodecs.VAR_LONG, PartitionView::sizeMb,
             ByteBufCodecs.STRING_UTF8, PartitionView::fs,
+            ByteBufCodecs.STRING_UTF8, PartitionView::role,
             PartitionView::new);
 }

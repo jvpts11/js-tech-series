@@ -164,6 +164,8 @@ class ComputerSettingsTest {
     @Test
     void applySetting_accentRejectsBadHex() {
         assertFalse(settings.applySetting("accent", "ZZZ"));
+        assertFalse(settings.applySetting("accent", "-00001"));
+        assertFalse(settings.applySetting("accent", "+00001"));
     }
 
     @Test

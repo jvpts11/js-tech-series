@@ -69,8 +69,8 @@ final class PatternCalls {
                 }), TEXT, TEXT);
         ProcessCalls.bind(bindings, OWNER, "Replace", null, (process, target, arguments, line) ->
                 matched(process, arguments, line, matcher -> {
-                    final String replacement = Matcher.quoteReplacement(String.valueOf(arguments[2]))
-                            .replace("\\$", "$");
+                    final String replacement = Matcher.quoteReplacement((String) process.heap().alive(arguments[2],
+                            line)).replace("\\$", "$");
                     // Built a match at a time, each asked to fit, so a long replacement stops the program in time.
                     final StringBuilder out = new StringBuilder();
                     while (matcher.find()) {
@@ -100,8 +100,9 @@ final class PatternCalls {
      */
     private static Object matched(final Process process, final Object[] arguments, final int line,
                                   final Function<Matcher, Object> work) {
-        final String text = String.valueOf(arguments[0]);
-        final String written = String.valueOf(arguments[1]);
+        // A text or a pattern that is null is nothing to read; written out it would be the word "null", and be matched.
+        final String text = (String) process.heap().alive(arguments[0], line);
+        final String written = (String) process.heap().alive(arguments[1], line);
         final Pattern pattern;
         try {
             pattern = Pattern.compile(written);

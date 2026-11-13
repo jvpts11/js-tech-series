@@ -61,6 +61,25 @@ public final class VintageShellGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void dosShell_treeShowsTheFoldersInAFolderDeeperThanTheWalkGoes(final GameTestHelper helper) {
+        final ServerCliComputer shell = shellOn(helper, MC_DOS);
+        final CliShell cli = CliCommands.shellFor(shell, 80);
+        final StringBuilder way = new StringBuilder("C:");
+        for (int level = 1; level <= 9; level++) {
+            way.append("\\L").append(level);
+            cli.run("md " + way, shell);
+        }
+        final String ninth = way.toString();
+        helper.assertTrue(shell.listDisk(ninth).ok(), "nine folders deep were made");
+        final MenuShellListing listing = MenuShellListing.read(MenuShellView.answer(shell,
+                MenuShellListing.view(ninth.substring(0, ninth.lastIndexOf('\\')))));
+        helper.assertTrue(listing.found(), "the eighth was read; got " + listing.dir());
+        helper.assertTrue(listing.tree().stream().anyMatch(f -> f.equalsIgnoreCase(ninth)),
+                "and the tree has the folder in it, past where the walk stops; got " + listing.tree());
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void dosShell_searchFindsFilesByTheirNames(final GameTestHelper helper) {
         final ServerCliComputer shell = shellOn(helper, MC_DOS);
         final MenuShellListing found = MenuShellListing.read(MenuShellView.answer(shell,

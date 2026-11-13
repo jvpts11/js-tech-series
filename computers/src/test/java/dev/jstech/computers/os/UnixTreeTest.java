@@ -39,8 +39,14 @@ class UnixTreeTest {
     void documentsPath_isAFolderTheSystemLaysDownInTheHome() {
         for (final UnixTree tree : List.of(UnixTree.HOME_AND_MEDIA, UnixTree.SYSTEM_V, UnixTree.QUINCE_X)) {
             assertEquals(tree.homePath() + "/Documents", tree.documentsPath());
-            assertTrue(tree.directories().contains(tree.documentsPath()), tree.toString());
         }
+        // Every tree lays its documents folder down, the early Quince systems' being their home itself.
+        for (final UnixTree tree : TREES) {
+            assertTrue(tree.directories().contains(tree.documentsPath()), tree.toString());
+            assertEquals(tree.documentsPath() + "/Scans", tree.scansPath());
+        }
+        assertEquals("Documents", UnixTree.QUINCE_OS_9.documentsPath());
+        assertEquals("Desktop Folder", UnixTree.QUINCE_SYSTEM.documentsPath());
     }
 
     @Test

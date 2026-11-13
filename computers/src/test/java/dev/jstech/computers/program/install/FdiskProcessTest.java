@@ -58,6 +58,32 @@ class FdiskProcessTest {
         assertEquals(512, this.disks.table("sda").get(0).sizeMb());
     }
 
+    @Test
+    void newPartition_aDecimalSizeIsRefusedRatherThanMisread() {
+        type("n", "", "", "+0.5G");
+        type("n", "", "", "+1.5G");
+        type("w");
+
+        assertEquals(0, this.disks.table("sda").size());
+    }
+
+    @Test
+    void newPartition_aSizeInPetabytesIsThatMuchAndSoOutOfRange() {
+        type("n", "", "", "+1P");
+        type("w");
+
+        assertEquals(0, this.disks.table("sda").size());
+    }
+
+    @Test
+    void newPartition_aNumberOrFirstSectorItCannotHonourIsAskedAgain() {
+        type("n", "3", "", "4096", "", "+100M");
+        type("w");
+
+        assertEquals(1, this.disks.table("sda").size(), "the refused answers made nothing");
+        assertEquals(100, this.disks.table("sda").get(0).sizeMb(), "and the defaults then made the one asked for");
+    }
+
     private void type(final String... lines) {
         for (final String line : lines) {
             this.fdisk.answer(line, 0L, null);

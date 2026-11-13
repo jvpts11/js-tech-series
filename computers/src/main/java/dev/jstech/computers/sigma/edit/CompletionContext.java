@@ -104,10 +104,14 @@ public final class CompletionContext {
      * Whether what is being written at {@code start} is the name on a {@code using} line.
      *
      * <p>Read from the text before it rather than from the whole line, so a using half written is still
-     * one, and a word that merely begins with those letters is not.
+     * one, and a word that merely begins with those letters is not. A using ended by its semicolon, or
+     * a block opened or closed after it, is a finished statement, and what follows it is not its name.
      */
     private static boolean isUsingLine(final String line, final int start) {
         final String before = line.substring(0, start).trim();
+        if (before.indexOf(';') >= 0 || before.indexOf('{') >= 0 || before.indexOf('}') >= 0) {
+            return false;
+        }
         return before.equals("using") || before.equals("using.") || before.startsWith("using ")
                 || (before.startsWith("using") && before.length() > 5 && before.charAt(5) == '.');
     }

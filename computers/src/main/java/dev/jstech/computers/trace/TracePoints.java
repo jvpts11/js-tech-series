@@ -61,11 +61,14 @@ public final class TracePoints {
                 List.of()));
     }
 
-    /** A statement came back, having read {@code rows} rows. */
+    /**
+     * A statement came back, having read {@code rows} rows. It came back the tick it went in, so it has no length to
+     * show, which a profiler's duration column says as an empty cell rather than as nought ticks.
+     */
     public static void statementCompleted(final ServerLevel level, @Nullable final NetworkUuid network,
                                           final String statement, final int rows, final Text said) {
         IsmsTraces.post(level, network, TraceEventClass.STATEMENT_COMPLETED, () -> IsmsTraces.event(level, network,
-                TraceEventClass.STATEMENT_COMPLETED, Text.literal(statement), rows, 0L, List.of(said)));
+                TraceEventClass.STATEMENT_COMPLETED, Text.literal(statement), rows, TraceEvent.NONE, List.of(said)));
     }
 
     /** The Mainframe took an Operation on. */

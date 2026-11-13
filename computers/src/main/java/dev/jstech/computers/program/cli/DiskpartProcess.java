@@ -215,6 +215,10 @@ final class DiskpartProcess extends DiskToolProcess {
 
     /* format fs=ntfs [quick] [label=NAME]: the selected partition, and its label after. */
     private void format(final String[] words, final String line, @Nullable final ITtySink out) {
+        // As the others: with no partition selected, the tool says so rather than ask the disk about none.
+        if (this.selected(out) == null) {
+            return;
+        }
         String fs = "ntfs";
         String label = "";
         for (final String word : words) {

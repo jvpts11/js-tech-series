@@ -9,6 +9,7 @@ package dev.jstech.computers.program.cli.sh;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
@@ -25,6 +26,21 @@ import java.util.Locale;
 public final class TextFilters {
 
     private TextFilters() {
+    }
+
+    /**
+     * A file's text as its lines: none for an empty file, and the newline that ends the last line ends it rather
+     * than starting one more, as every tool that reads lines has always taken it.
+     */
+    public static List<String> linesOf(final String content) {
+        if (content == null || content.isEmpty()) {
+            return List.of();
+        }
+        final List<String> lines = new ArrayList<>(List.of(content.split("\r?\n", -1)));
+        if (lines.size() > 1 && lines.get(lines.size() - 1).isEmpty()) {
+            lines.remove(lines.size() - 1);
+        }
+        return lines;
     }
 
     /** The lines that hold that text; with {@code invert}, the ones that do not. */
@@ -60,7 +76,8 @@ public final class TextFilters {
      */
     public static List<String> ordered(final List<String> lines, final boolean reverse, final boolean unique) {
         final List<String> out = new ArrayList<>(lines);
-        out.sort(String::compareToIgnoreCase);
+        // Ties of case broken by the letters themselves, so the same line always lands beside itself.
+        out.sort(String.CASE_INSENSITIVE_ORDER.thenComparing(Comparator.naturalOrder()));
         if (reverse) {
             Collections.reverse(out);
         }

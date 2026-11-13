@@ -150,4 +150,11 @@ class ProjectTemplateTest {
         assertFalse(ProjectTemplate.isValidProjectName("static"));
         assertTrue(ProjectTemplate.isValidProjectName("Class"));
     }
+
+    @Test
+    void isValidProjectName_refusesTheTypesAScriptStandsOn() {
+        assertFalse(ProjectTemplate.isValidProjectName("Script"));
+        assertFalse(ProjectTemplate.isValidProjectName("IScript"));
+        assertTrue(ProjectTemplate.isValidProjectName("Scripts"));
+    }
 }

@@ -455,6 +455,9 @@ public final class ComputerConsoleState {
      */
     public void clear() {
         load(new CompoundTag());
+        // Neither is saved with a disk, so a disk swapped in finds the shell at the top and talking to no machine.
+        locations.clear();
+        setSshTarget(null);
     }
 
     public void load(final CompoundTag tag) {

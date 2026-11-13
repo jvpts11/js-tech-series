@@ -261,13 +261,7 @@ public final class ShRunner {
     }
 
     private static List<String> linesOf(final String content) {
-        final List<String> lines = new ArrayList<>();
-        for (final String line : content.split("\r?\n", -1)) {
-            if (lines.size() >= MOST_PIPED_LINES) {
-                break;
-            }
-            lines.add(line);
-        }
-        return lines;
+        final List<String> lines = TextFilters.linesOf(content);
+        return new ArrayList<>(lines.size() > MOST_PIPED_LINES ? lines.subList(0, MOST_PIPED_LINES) : lines);
     }
 }

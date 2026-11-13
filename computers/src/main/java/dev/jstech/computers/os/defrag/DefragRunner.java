@@ -288,14 +288,15 @@ public final class DefragRunner {
             return;
         }
         final StoredFile file = files.next();
-        final boolean back = random.nextInt(100) < job.chance();
         volume.settleFile(file.path());
         final FilesystemContents now = disk.getOrDefault(ComputingComponents.FILESYSTEM.get(),
                 FilesystemContents.EMPTY);
-        if (back && !now.files().containsKey(file.path())) {
+        // Only a file put back in its place is recovered: one whose place another took since is lost.
+        final boolean restored = random.nextInt(100) < job.chance() && !now.files().containsKey(file.path());
+        if (restored) {
             disk.set(ComputingComponents.FILESYSTEM.get(), now.with(file));
         }
-        job.tried(back ? 1L : 0L, back ? 0L : 1L);
+        job.tried(restored ? 1L : 0L, restored ? 0L : 1L);
     }
 
     /* The pass has run its time: a quarter of the bad sectors left are mended, and its end is kept and told. */
@@ -306,16 +307,19 @@ public final class DefragRunner {
         volume.badSectors(badAfter);
         DriveVolumes.refreshUsage(disk, volume);
         host.storageChanged();
-        final DefragState.Result result = new DefragState.Result(job.disk(), job.found(), job.recovered(), job.lost(),
-                job.badBefore(), badAfter);
+        // What went bad during the pass and was tried too is counted as found, so the summary adds up.
+        final long found = Math.max(job.found(), job.recovered() + job.lost());
+        // The bad sectors told are the ones mended from, as the disk had them at the end, damage during the pass too.
+        final DefragState.Result result = new DefragState.Result(job.disk(), found, job.recovered(), job.lost(),
+                badBefore, badAfter);
         book.ended(result, volume.id(), now);
         host.markChanged();
         if (host.nodeUuid() != null) {
             PASSES.remove(host.nodeUuid());
             NetworkEvents.record(level, host.networkUuid(), job.lost() > 0L ? EventLevel.WARN : EventLevel.INFO,
                     host.nodeUuid(), NetworkEvents.machineName(host.customName(), host.machine(), host.nodeUuid()),
-                    NetworkEvents.DEFRAG_DONE.with(look(host).drive(job.disk()), job.found(), job.recovered(),
-                            job.lost(), job.badBefore(), badAfter));
+                    NetworkEvents.DEFRAG_DONE.with(look(host).drive(job.disk()), found, job.recovered(),
+                            job.lost(), badBefore, badAfter));
         }
     }
 

@@ -146,18 +146,48 @@ public final class SystemDeclarations {
         return out;
     }
 
-    /* The text a value spells: a string written out, a number, or several joined with +; null for anything else. */
+    /*
+     * The text a value spells: a string written out, a number, or several joined with +; null for anything else.
+     * Two numbers joined with + are added, as the language adds them, so 1 + 2 spells 3 and 2 + 1 + "b" spells 3b.
+     */
     private static String spell(final IExpr value) {
         return switch (value) {
             case IExpr.Literal literal when literal.kind() == TokenKind.STRING_LITERAL -> (String) literal.value();
             case IExpr.Literal literal when literal.value() instanceof Number number -> number.toString();
             case IExpr.Binary binary when binary.operator() == Operator.ADD -> {
+                final Number added = numberOf(binary);
+                if (added != null) {
+                    yield added.toString();
+                }
                 final String left = spell(binary.left());
                 final String right = spell(binary.right());
                 yield left == null || right == null ? null : left + right;
             }
             default -> null;
         };
+    }
+
+    /* The number a value comes to, when it is numbers and + alone; null otherwise. */
+    private static Number numberOf(final IExpr value) {
+        if (value instanceof IExpr.Literal literal && literal.kind() != TokenKind.STRING_LITERAL
+                && literal.value() instanceof Number number) {
+            return number;
+        }
+        if (!(value instanceof IExpr.Binary binary) || binary.operator() != Operator.ADD) {
+            return null;
+        }
+        final Number left = numberOf(binary.left());
+        final Number right = numberOf(binary.right());
+        if (left == null || right == null) {
+            return null;
+        }
+        if (left instanceof Double || left instanceof Float || right instanceof Double || right instanceof Float) {
+            return left.doubleValue() + right.doubleValue();
+        }
+        if (left instanceof Long || right instanceof Long) {
+            return left.longValue() + right.longValue();
+        }
+        return left.intValue() + right.intValue();
     }
 
     /* The library constant a value names, Era.Legacy: its name, when it is read off {@code owner}; else null. */

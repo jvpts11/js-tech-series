@@ -330,7 +330,7 @@ final class ProcessCalls {
      */
     private static void program(final Map<MemberId, Binding> bindings) {
         bind(bindings, "Program", "SetName", null, (process, target, arguments, line) -> {
-            process.setName(String.valueOf(arguments[0]), line);
+            process.setName((String) process.heap().alive(arguments[0], line), line);
             return null;
         }, STRING);
         bind(bindings, "Program", "Exit", null, (process, target, arguments, line) -> {

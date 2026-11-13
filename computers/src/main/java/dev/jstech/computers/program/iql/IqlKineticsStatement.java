@@ -60,6 +60,10 @@ public record IqlKineticsStatement(double speed, @Nullable IIqlCondition where) 
         } catch (final NumberFormatException notANumber) {
             throw IqlError.of(IqlError.KINETICS_NEEDS_SPEED);
         }
+        // NaN and Infinity read as numbers to Java, and are no speed a controller can be set to.
+        if (!Double.isFinite(speed)) {
+            throw IqlError.of(IqlError.KINETICS_NEEDS_SPEED);
+        }
         at++;
         if (at == tokens.size()) {
             return new IqlKineticsStatement(speed, null);

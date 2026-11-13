@@ -43,7 +43,8 @@ final class TokenCursor {
      *
      * <p>Far past anything written by hand, and low enough that the deepest reading of all, brackets inside
      * brackets, which passes through every level of operator precedence each time, stays well inside a thread's
-     * stack; the stages after this one walk the tree it builds, which is never deeper.
+     * stack; the stages after this one walk the tree it builds, which is never deeper. A run of operators, or of
+     * members and calls read one after another, goes one deeper with each it joins on, as the tree does.
      */
     static final int MAX_DEPTH = 128;
 

@@ -56,6 +56,18 @@ class IqlDefinitionParserTest {
     }
 
     @Test
+    void parse_createJob_aTriggerWordInsideANameIsNotTheTrigger() {
+        final IqlDefinition def = IqlDefinitionParser.tryParse(
+                "CREATE JOB on_rain AS restock WHEN EVENT weather:every");
+        assertEquals(IqlDefinition.TriggerKind.WHEN, def.triggerKind());
+        assertEquals("restock", def.body());
+        assertEquals("EVENT weather:every", def.triggerSpec());
+
+        final IqlDefinition tidy = IqlDefinitionParser.tryParse("CREATE JOB tidy AS { CALL sort }EVERY 5m");
+        assertEquals(IqlDefinition.TriggerKind.EVERY, tidy.triggerKind(), "a closed block may touch the word");
+    }
+
+    @Test
     void parse_dropView_isDefinition() {
         final IqlDefinition def = IqlDefinitionParser.tryParse("DROP VIEW low_stock");
         assertEquals(IqlDefinition.Verb.DROP, def.verb());

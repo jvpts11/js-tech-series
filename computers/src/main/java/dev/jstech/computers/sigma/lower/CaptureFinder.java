@@ -196,9 +196,10 @@ final class CaptureFinder {
             }
             case IStmt.Return give -> this.walk(give.value(), depth, found);
             case IStmt.Dispose dispose -> this.walk(dispose.target(), depth, found);
+            // A lock's body runs once each time it is entered, as a block does; it is no loop.
             case IStmt.Lock lock -> {
                 this.walk(lock.target(), depth, found);
-                this.walk(lock.body(), depth + 1, found);
+                this.walk(lock.body(), depth, found);
             }
             case IStmt.Unsafe unsafe -> this.walk(unsafe.body(), depth, found);
             case IStmt.Labeled labeled -> this.walk(labeled.statement(), depth, found);

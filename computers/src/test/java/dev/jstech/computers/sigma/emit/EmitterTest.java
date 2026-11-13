@@ -307,6 +307,17 @@ class EmitterTest {
     }
 
     @Test
+    void emit_letsALambdaKeepAVariableALockDeclares() {
+        // A lock's body runs once each time it is entered, so what it declares outlives no lambda's reading.
+        final String listing = compile("delegate int Count(string t);\nclass Box { }\n", """
+                    Box gate = new Box();
+                    void Use(Count c) { }
+                    void M() { lock (gate) { int n = 2; Use((t) => n); } }
+                """);
+        assertTrue(listing.contains(".field int n"), listing);
+    }
+
+    @Test
     void emit_saysSoWhenALambdaInAFieldsStartKeepsTheVariableOfTheOneAroundIt() {
         final SigmaCompiler.Result result = build("""
                 delegate int Count();

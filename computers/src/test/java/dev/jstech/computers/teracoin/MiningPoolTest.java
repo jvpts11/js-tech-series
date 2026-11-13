@@ -81,6 +81,15 @@ class MiningPoolTest {
     }
 
     @Test
+    void accept_takesOnlyAMinerThatAsked() {
+        pool.setAcceptedOnly(true);
+
+        pool.accept("never-asked");
+
+        assertFalse(pool.admits(offer("never-asked", ALICE, 300L)), "a name nobody sent in is not taken");
+    }
+
+    @Test
     void lastHour_averagesEachFiveMinutesOfWork() {
         pool.work(offer("rig-1", ALICE, 300L), 0L);
         pool.work(offer("rig-2", BOB, 100L), 0L);

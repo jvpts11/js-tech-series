@@ -69,6 +69,8 @@ final class DosFdiskProcess extends DiskToolProcess {
             "The active partition (A) is the one the machine starts.");
     private static final TextKey NOT_A_CHOICE = TextKey.of("jsc.cli.dos_fdisk.not_a_choice",
             "Invalid entry, please enter 1-%s.");
+    private static final TextKey BAD_SIZE = TextKey.of("jsc.cli.dos_fdisk.bad_size",
+            "Invalid entry, please enter a size in Mbytes.");
 
     DosFdiskProcess(final ICliComputer computer) {
         super(computer);
@@ -148,6 +150,13 @@ final class DosFdiskProcess extends DiskToolProcess {
             }
         }
         final long room = largest == null ? 0L : Math.min(largest.sizeMb(), FileSystemType.FAT16.mostPartitionMb());
+        // A size that is no number, or none, is a wrong entry, not a disk with no room.
+        if (!line.isEmpty() && number(line) <= 0L) {
+            say(out, new CliLine(BAD_SIZE.text(), CliStyle.ERROR));
+            this.stage = Stage.MENU;
+            this.menu(out);
+            return;
+        }
         final long asked = line.isEmpty() ? room : Math.min(room, number(line));
         if (largest == null || asked <= 0L) {
             this.back(DiskReport.Refusal.NO_ROOM, out);

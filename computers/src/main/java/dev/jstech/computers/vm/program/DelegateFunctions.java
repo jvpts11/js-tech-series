@@ -46,9 +46,15 @@ final class DelegateFunctions {
         if (combine) {
             chain.addAll(added.chain());
         } else {
-            for (int i = chain.size() - 1; i >= 0; i--) {
-                if (chain.get(i).equals(added.chain().getFirst())) {
-                    chain.remove(i);
+            /*
+             * As C# parts them: the last run of handlers that is the whole of what is taken off goes, so taking off
+             * a and b together from a, b, c leaves c; a run that is not there leaves the handlers as they were.
+             */
+            final List<Values.Bound> taken = added.chain();
+            for (int start = chain.size() - taken.size(); start >= 0; start--) {
+                final List<Values.Bound> run = chain.subList(start, start + taken.size());
+                if (run.equals(taken)) {
+                    run.clear();
                     break;
                 }
             }

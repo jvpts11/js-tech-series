@@ -229,8 +229,15 @@ public interface ICliComputer extends ICliMachine, ICliFiles, ICliNetwork, ICliO
      * A line in a storage listing: a name, a quantity, and an optional detail (e.g. where the item lives). The name
      * is read in the player's language where it is a thing's name, and its English is what a search and a program
      * compare against.
+     *
+     * <p>The id is the registry id of the thing the row is, or empty for a row that is not a thing the network
+     * holds; two things can share a name, and only the id says which of them a picked row was.
      */
-    record StoredItem(Text name, long quantity, Text detail) {
+    record StoredItem(Text name, long quantity, Text detail, String id) {
+
+        public StoredItem(final Text name, final long quantity, final Text detail) {
+            this(name, quantity, detail, "");
+        }
 
         public StoredItem(final Text name, final long quantity) {
             this(name, quantity, Text.EMPTY);

@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.computers.program.cli.CliText;
 import dev.jstech.computers.program.cli.ICliComputer;
 import dev.jstech.computers.program.iql.IIqlCondition;
 import dev.jstech.core.text.Text;
@@ -136,6 +137,25 @@ class InteracViewTest {
         assertTrue(says(narrow, "Cobblestone") && says(narrow, "storage-1"),
                 "and the list keeps the name whole and says where the thing is:\n"
                         + String.join("\n", narrow));
+    }
+
+    @Test
+    void screen_actsOnThePickedThingThoughAnotherSharesItsName() {
+        this.network.stock.add(new ICliComputer.StoredItem(Text.literal("Cobblestone"), 10L,
+                Text.literal("storage-2"), "othermod:cobblestone"));
+        final InteracState fourth = InteracState.OPENING.picking(3);
+
+        assertTrue(says(screen(fourth), "othermod:cobblestone"), "the panel names the one that is picked");
+        screen(fourth.asking("get" + InteracView.NOW, 42L));
+        assertEquals(List.of("hand othermod:cobblestone 42"), this.network.done);
+    }
+
+    @Test
+    void screen_keepsThePanelsNumbersWholeOnTheNarrowestGlassThatHasOne() {
+        final List<String> screen = InteracView.screen(this.network, InteracState.OPENING.on(56, TALL));
+        final String held = screen.stream().filter(line -> line.contains("Held by")).findFirst().orElse("");
+
+        assertTrue(held.substring(held.indexOf('|')).contains(CliText.group(2048L)), held);
     }
 
     /** A network of three things on two servers, with one operation in flight and one star. */

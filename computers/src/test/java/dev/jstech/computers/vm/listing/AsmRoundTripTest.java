@@ -204,6 +204,14 @@ class AsmRoundTripTest {
     }
 
     @Test
+    void read_saysAnInstructionAfterAFieldIsOutsideAnyMethod() {
+        final AsmProgram read = this.read(".asm 3\n.class C\n.method void Run() slots 0\n    ret\n.field int count\n"
+                + "    ldc.i4 1\n    ret\n");
+        assertEquals(List.of("A4008", "A4008"), this.codes(), "the two lines after the field are in no method");
+        assertEquals(1, read.type("C").methods().getFirst().body().size(), "and Run keeps only its own ret");
+    }
+
+    @Test
     void read_refusesAListingWithNoVersionLine() {
         this.read(".class C\n");
         assertEquals(List.of("A4001"), this.codes());

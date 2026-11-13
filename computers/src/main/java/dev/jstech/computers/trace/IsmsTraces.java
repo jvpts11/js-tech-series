@@ -135,8 +135,9 @@ public final class IsmsTraces {
             }
         }
         listeners.removeAll(gone);
+        // Only this list, if it is still the network's: a sink that ended its trace and started another made a new one.
         if (listeners.isEmpty()) {
-            LISTENERS.remove(network);
+            LISTENERS.remove(network, listeners);
         }
     }
 

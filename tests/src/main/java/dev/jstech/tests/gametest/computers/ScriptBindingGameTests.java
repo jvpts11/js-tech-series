@@ -195,6 +195,21 @@ public final class ScriptBindingGameTests {
             refused = expected.getMessage().contains("a test module") && expected.getMessage().contains("ddr9");
         }
         helper.assertTrue(refused, "a generation no one declared is refused, saying what and of what");
+        boolean cut = false;
+        try {
+            ScriptedHardware.read(HardwareCodecs.PROCESSOR, Map.of("era", "legacy", "isa", "x86",
+                    "socket", "jsc:socket_a", "cores", 1.5, "freq_mhz", 1300.0, "tdp_watts", 60.0), "a test cpu");
+        } catch (final IllegalArgumentException expected) {
+            cut = expected.getMessage().contains("a test cpu") && expected.getMessage().contains("whole number");
+        }
+        helper.assertTrue(cut, "a count with a fraction is refused rather than cut to a whole one");
+        boolean nameless = false;
+        try {
+            JsComputersScripts.systems(null);
+        } catch (final IllegalArgumentException expected) {
+            nameless = expected.getMessage().contains("vintage");
+        }
+        helper.assertTrue(nameless, "an era left out is refused like any other, naming the ones there are");
         helper.succeed();
     }
 

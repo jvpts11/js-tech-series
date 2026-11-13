@@ -197,7 +197,7 @@ public final class NetworkReadService {
                 .sorted((a, b) -> Long.compare(b.getValue(), a.getValue()))
                 .limit(Math.max(limit, 0))
                 .map(entry -> new ICliComputer.StoredItem(GameText.of(entry.getKey().displayName()), entry.getValue(),
-                        this.location(net, entry.getKey(), scopedServer)))
+                        this.location(net, entry.getKey(), scopedServer), entry.getKey().registryId().toString()))
                 .toList();
     }
 

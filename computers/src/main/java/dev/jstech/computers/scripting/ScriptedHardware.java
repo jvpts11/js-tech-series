@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.ResourceLocationException;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -81,7 +82,7 @@ public final class ScriptedHardware {
 
     /*
      * What a script engine hands over, made of the plain things a codec reads: its objects as maps, its arrays as
-     * lists and its strings as strings, whatever classes the engine keeps them in.
+     * lists, its strings as strings and its numbers as whole ones, whatever classes the engine keeps them in.
      */
     private static Object plain(final Object value) {
         if (value instanceof Map<?, ?> map) {
@@ -94,13 +95,33 @@ public final class ScriptedHardware {
             list.forEach(entry -> out.add(plain(entry)));
             return out;
         }
+        if (value instanceof Double || value instanceof Float) {
+            return whole(((Number) value).doubleValue());
+        }
         return value instanceof CharSequence text ? text.toString() : value;
+    }
+
+    /*
+     * A script's number as the whole number every field of a sheet is. Engines hand whole numbers over as doubles,
+     * so 65.0 is 65; 65.9 is refused rather than cut to 65, which the codec would do without a word.
+     */
+    private static long whole(final double number) {
+        if (!Double.isFinite(number) || Math.rint(number) != number || Math.abs(number) > Long.MAX_VALUE) {
+            throw new IllegalArgumentException(number + " is not a whole number");
+        }
+        return (long) number;
     }
 
     private static Item item(final Kept kept, final String what) {
         final String id = kept.item() == null ? "" : kept.item();
-        final ResourceLocation key = id.indexOf(':') < 0 ? ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, id)
-                : ResourceLocation.parse(id);
+        final ResourceLocation key;
+        try {
+            key = id.indexOf(':') < 0 ? ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, id)
+                    : ResourceLocation.parse(id);
+        } catch (final ResourceLocationException wrong) {
+            throw new IllegalArgumentException("the " + what + " " + id + " is not a valid id: " + wrong.getMessage(),
+                    wrong);
+        }
         final Item item = BuiltInRegistries.ITEM.get(key);
         if (item == Items.AIR) {
             throw new IllegalArgumentException("the " + what + " " + key + " is declared, but no item is registered "

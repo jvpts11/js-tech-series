@@ -19,6 +19,8 @@ import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -63,6 +65,9 @@ final class FdiskProcess implements ITtyProcess {
 
     /** The most partitions a table of this kind holds. */
     private static final int MOST = 128;
+
+    /** A size as the last question takes one: a whole number, a plus before it, and a unit after it or none. */
+    private static final Pattern SIZE = Pattern.compile("\\+?(\\d{1,9})(?:([KMGTPkmgtp])(?:iB|B)?)?");
 
     /* Its questions, each followed by a space the answer is typed after. */
     private static final TextKey ASK_COMMAND = TextKey.of("jsc.install.fdisk_process.ask_command",
@@ -161,7 +166,7 @@ final class FdiskProcess implements ITtyProcess {
         this.disk = disk;
         this.sizeMb = sizeMb;
         this.draft.addAll(disks.table(disk));
-        this.gpt = !this.draft.isEmpty();
+        this.gpt = disks.labelled(disk);
     }
 
     @Override
@@ -210,8 +215,8 @@ final class FdiskProcess implements ITtyProcess {
         final String typed = line.trim();
         switch (this.stage) {
             case COMMAND -> this.command(typed, out);
-            case NEW_NUMBER -> this.stage = Stage.NEW_FIRST;
-            case NEW_FIRST -> this.stage = Stage.NEW_LAST;
+            case NEW_NUMBER -> this.defaulted(typed, this.nextNumber(), Stage.NEW_FIRST, out);
+            case NEW_FIRST -> this.defaulted(typed, this.nextStart(), Stage.NEW_LAST, out);
             case NEW_LAST -> this.made(this.lastAnswerMb(typed), out);
             case TYPE_NUMBER -> this.picked(typed, Stage.TYPE_KIND, out);
             case TYPE_KIND -> this.typed(typed, out);
@@ -257,7 +262,7 @@ final class FdiskProcess implements ITtyProcess {
             case "t" -> this.ask(parts, Stage.TYPE_NUMBER, Stage.TYPE_KIND, out);
             case "d" -> this.ask(parts, Stage.DELETE_NUMBER, Stage.COMMAND, out);
             case "w" -> {
-                this.disks.writeTable(this.disk, this.draft);
+                this.disks.writeTable(this.disk, this.draft, this.gpt);
                 this.over = true;
                 say(out, ALTERED.text(), REREAD.text(), SYNCING.text(), Text.EMPTY);
             }
@@ -291,6 +296,19 @@ final class FdiskProcess implements ITtyProcess {
             return;
         }
         this.stage = which;
+    }
+
+    /**
+     * An answer to a question only its default answers here: a new partition takes the next number and starts
+     * where the last one ended, so nothing else is a value this editor can make, and it is refused as out of range
+     * and asked again rather than taken and quietly thrown away.
+     */
+    private void defaulted(final String typed, final long only, final Stage then, @Nullable final ITtySink out) {
+        if (typed.isEmpty() || typed.equals(Long.toString(only))) {
+            this.stage = then;
+            return;
+        }
+        say(out, OUT_OF_RANGE.text());
     }
 
     /** A partition named by its number, for a change of type or for deleting. */
@@ -477,22 +495,28 @@ final class FdiskProcess implements ITtyProcess {
     }
 
     /**
-     * A size as a person writes it at the last question: {@code +512M}, {@code +1G}, or nothing for the rest; -1 for
-     * one too large to be any disk's, which the question then refuses as out of range.
+     * A size as a person writes it at the last question: {@code +512M}, {@code +1G}, or nothing for the rest. -1 for
+     * anything else, a decimal or a size counted back from the end among them, and for one too large to be any
+     * disk's, which the question then refuses as out of range.
      */
     private static int megabytesOf(final String written) {
-        final String digits = written.replaceAll("[^0-9]", "");
-        if (digits.isEmpty()) {
+        if (written.isEmpty()) {
             return 0;
         }
         // Nine digits are past any disk already, and still short of what a long holds once a unit multiplies them.
-        if (digits.length() > 9) {
+        final Matcher size = SIZE.matcher(written);
+        if (!size.matches()) {
             return -1;
         }
-        final long value = Long.parseLong(digits);
-        final char unit = Character.toUpperCase(written.charAt(written.length() - 1));
-        final long megabytes = unit == 'G' ? value * 1024L : unit == 'T' ? value * 1024L * 1024L
-                : unit == 'K' ? Math.max(1L, value / 1024L) : value;
+        final long value = Long.parseLong(size.group(1));
+        final String unit = size.group(2) == null ? "M" : size.group(2).toUpperCase(Locale.ROOT);
+        final long megabytes = switch (unit) {
+            case "K" -> Math.max(1L, value / 1024L);
+            case "G" -> value * 1024L;
+            case "T" -> value * 1024L * 1024L;
+            case "P" -> value * 1024L * 1024L * 1024L;
+            default -> value;
+        };
         return megabytes > Integer.MAX_VALUE ? -1 : (int) megabytes;
     }
 

@@ -57,9 +57,10 @@ public record CrashPage(CrashStyle style, CrashCause cause, String stopCode, Str
 
     /** The page an operating system a player wrote came down on, in its own colours. */
     public static CrashPage of(final PlayerPanic player) {
+        // In a long: seconds past what an int of ticks holds would go round to almost none, so they stand the longest.
         return new CrashPage(CrashStyle.PLAYER, CrashCause.INIT_KILLED, "", "", "", List.of(),
-                player.standsUntilRestarted() ? 1 : Math.max(1, player.rebootSeconds() * TICKS_PER_SECOND), false,
-                player);
+                player.standsUntilRestarted() ? 1 : (int) Math.min(Integer.MAX_VALUE,
+                        Math.max(1L, (long) player.rebootSeconds() * TICKS_PER_SECOND)), false, player);
     }
 
     /** Whether the page stands until the player restarts the machine. */

@@ -27,6 +27,7 @@ import dev.jstech.computers.teracoin.TeracoinSettings;
 import dev.jstech.computers.teracoin.TeracoinState;
 import dev.jstech.computers.teracoin.Trc;
 import dev.jstech.computers.teracoin.WalletFiles;
+import dev.jstech.core.time.GameCalendar;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.Optional;
@@ -258,8 +259,13 @@ public final class TeracoinGameTests {
         helper.onEachTick(() -> line.receiveEnergy(ENERGY_A_TICK, false));
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(asic.mining(), "with its watts it mines; " + asic.status()))
-                .thenWaitUntil(() -> helper.assertTrue(TeracoinState.of(helper.getLevel().getServer()).chain()
-                        .balance(keys.address()) > 0L, "a Forge A2 alone soon finds a block and is paid"))
+                .thenWaitUntil(() -> {
+                    final TeracoinChain chain = TeracoinState.of(helper.getLevel().getServer()).chain();
+                    helper.assertTrue(chain.balance(keys.address()) > 0L, "a Forge A2 alone soon finds a block and is"
+                            + " paid; status " + asic.status() + ", found " + asic.found() + ", chain at "
+                            + chain.height() + ", difficulty " + chain.difficulty(helper.getLevel().getDayTime()
+                            / GameCalendar.DAY_TICKS));
+                })
                 .thenExecute(() -> helper.assertTrue(asic.found() > 0, "and counts the block it found"))
                 .thenSucceed();
     }

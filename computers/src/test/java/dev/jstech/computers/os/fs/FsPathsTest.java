@@ -43,6 +43,13 @@ class FsPathsTest {
     }
 
     @Test
+    void isValidPath_refusesAPathThatReadsAsAMediumsOrAnotherMachines() {
+        assertFalse(FsPaths.isValidPath("media:notes.txt", FilesystemKind.HIERARCHICAL));
+        assertFalse(FsPaths.isValidPath("NET:share/a.txt", FilesystemKind.HIERARCHICAL));
+        assertTrue(FsPaths.isValidPath("docs/media:notes.txt", FilesystemKind.HIERARCHICAL));
+    }
+
+    @Test
     void isValidPath_noneRejectsEverything() {
         assertFalse(FsPaths.isValidPath("a.txt", FilesystemKind.NONE));
     }

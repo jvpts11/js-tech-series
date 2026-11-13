@@ -48,7 +48,10 @@ public final class InteracRows {
         final IIqlCondition where = wanted.isEmpty()
                 ? null
                 : new IIqlCondition.Comparison("name", IIqlCondition.Op.CONTAINS, wanted);
-        return filtered(computer.query(where, "", cap), wanted, sort);
+        // By name the cap is taken after the order: taken first, by count, it left out the kinds held least.
+        final int asked = "count".equalsIgnoreCase(sort) ? cap : Integer.MAX_VALUE;
+        final List<ICliComputer.StoredItem> rows = filtered(computer.query(where, "", asked), wanted, sort);
+        return rows.size() > cap ? List.copyOf(rows.subList(0, cap)) : rows;
     }
 
     /**

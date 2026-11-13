@@ -14,6 +14,7 @@ import dev.jstech.computers.sigma.lex.TokenKind;
 import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -35,8 +36,11 @@ final class Constants {
     private final Map<IMemberSymbol.FieldSymbol, IDecl.FieldDecl> fields = new LinkedHashMap<>();
     /** The value each const field came to, or {@link #UNKNOWN} when it came to none. */
     private final Map<IMemberSymbol.FieldSymbol, Known> worked = new IdentityHashMap<>();
-    /** The const fields being worked out right now, so one worked out from itself is caught rather than recursed. */
-    private final Set<IMemberSymbol.FieldSymbol> working = new HashSet<>();
+    /**
+     * The const fields being worked out right now, in the order they were reached, so one worked out from itself is
+     * caught rather than recursed, and the ones round the loop told from the ones that only lead into it.
+     */
+    private final Set<IMemberSymbol.FieldSymbol> working = new LinkedHashSet<>();
     private final Set<IMemberSymbol.FieldSymbol> circular = new HashSet<>();
     private final Map<IBinding.Variable, Known> locals = new IdentityHashMap<>();
     /**
@@ -88,8 +92,14 @@ final class Constants {
             return null;
         }
         if (!this.working.add(field)) {
-            // Every const on the way round the loop is worked out from itself.
-            this.circular.addAll(this.working);
+            // Every const from this one on is on the way round the loop; one reached before it only reads the loop.
+            boolean onTheLoop = false;
+            for (final IMemberSymbol.FieldSymbol reached : this.working) {
+                onTheLoop |= reached == field;
+                if (onTheLoop) {
+                    this.circular.add(reached);
+                }
+            }
             return null;
         }
         final Known found = this.fold(declaration.initializer());

@@ -14,6 +14,7 @@ import dev.jstech.computers.program.iql.IqlLexer.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * One {@code SET BUS} statement: the bus it names and the one setting it changes, in the same words a bus's window
@@ -39,6 +40,13 @@ public record IqlBusStatement(String bus, Change change) {
 
     /** A quantity the statement leaves as it is. */
     public static final int UNCHANGED = -1;
+
+    /*
+     * The words a setting starts with. A list stops at one, so a second setting written after a filter is the
+     * mistake it is, said as one, rather than a list with the setting's words stored in it as items.
+     */
+    private static final Set<String> SETTINGS = Set.of("ON", "OFF", "MODE", "FILTER", "MATCH", "KEEP", "MAX",
+            "PRIORITY", "WHEN", "AFTER", "ACCESS");
 
     /** What a statement sets. */
     public sealed interface Change permits Power, Mode, Filter, Tags, Match, Quantities, ItemQuantities, Priority,
@@ -163,6 +171,10 @@ public record IqlBusStatement(String bus, Change change) {
 
     private static boolean word(final Token token, final String keyword) {
         return (token.type() == Type.WORD) && token.text().equalsIgnoreCase(keyword);
+    }
+
+    private static boolean startsASetting(final Token token) {
+        return token.type() == Type.WORD && SETTINGS.contains(token.text().toUpperCase(Locale.ROOT));
     }
 
     /* Reads the tokens of one statement left to right. */
@@ -316,7 +328,7 @@ public record IqlBusStatement(String bus, Change change) {
         private List<String> list() {
             final List<String> items = new ArrayList<>();
             String kind = null;
-            while (pos < tokens.size()) {
+            while (pos < tokens.size() && !startsASetting(tokens.get(pos))) {
                 for (final String part : tokens.get(pos++).text().split(",")) {
                     final String id = part.strip();
                     if (id.isEmpty()) {

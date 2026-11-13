@@ -15,6 +15,7 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -61,6 +62,8 @@ public enum ProjectTemplate {
     /* What the list adds under a shape in the smaller language, which runs where the full one does not. */
     private static final TextKey RUNS_EVERYWHERE = TextKey.of("jsc.project.runs_everywhere",
             "%s Runs on every machine, the earliest included.");
+    /* The types a script's starter stands on, in the smaller language and in the full one. */
+    private static final Set<String> SCRIPT_BASES = Set.of("Script", "IScript");
 
     ProjectTemplate(final TextKey title, final ProjectFile.Kind kind, final TextKey description,
                     final @Nullable TextKey kindWord) {
@@ -183,10 +186,12 @@ public enum ProjectTemplate {
     /**
      * Whether a name can be a project's name. The starter source uses it as a namespace, a class name and the text
      * of a string literal, so it has to be an identifier: letters, digits and underscores, not starting with a digit,
-     * and no reserved word, which a source would not take as a name.
+     * and no reserved word, which a source would not take as a name. Nor the name of the type a script's starter
+     * stands on: its class would stand on itself, which no build takes.
      */
     public static boolean isValidProjectName(final String name) {
-        if (name == null || name.isEmpty() || !isIdentifierStart(name.charAt(0)) || TokenKind.keyword(name) != null) {
+        if (name == null || name.isEmpty() || !isIdentifierStart(name.charAt(0)) || TokenKind.keyword(name) != null
+                || SCRIPT_BASES.contains(name)) {
             return false;
         }
         for (int i = 1; i < name.length(); i++) {

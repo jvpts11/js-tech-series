@@ -10,6 +10,7 @@ package dev.jstech.computers.os.fs;
 import dev.jstech.computers.hardware.EraStorage;
 import dev.jstech.computers.os.FilesystemKind;
 import dev.jstech.core.jstechseries.tier.Era;
+import java.util.Locale;
 
 /**
  * Pure utility methods for filesystem paths and file-size accounting.
@@ -30,6 +31,10 @@ public final class FsPaths {
      * what the packets carry, which is where the limit really is.
      */
     public static final int MAX_PATH_LENGTH = 160;
+
+    /* How a medium's path and another machine's begin, which the explorer and the shells route by. */
+    private static final String MEDIA_PREFIX = "media:";
+    private static final String NET_PREFIX = "net:";
 
     private FsPaths() {
     }
@@ -86,6 +91,11 @@ public final class FsPaths {
      */
     public static boolean isValidPath(final String path, final FilesystemKind kind) {
         if (path == null || kind == null || path.length() > MAX_PATH_LENGTH) {
+            return false;
+        }
+        // A path written as a medium's or another machine's is taken for one, so no file on a disk starts so.
+        final String start = path.toLowerCase(Locale.ROOT);
+        if (start.startsWith(MEDIA_PREFIX) || start.startsWith(NET_PREFIX)) {
             return false;
         }
         return switch (kind) {

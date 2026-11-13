@@ -156,10 +156,11 @@ public final class IqlDefinitionParser {
     /**
      * Index of the last {@code keyword} standing alone in {@code text} (case-insensitive) outside any quoted
      * name and any braces, or -1. The last one is the job's trigger: a bus or item name that happens to be
-     * the word is quoted, and a bus setting may itself say WHEN earlier in the body.
+     * the word is quoted, and a bus setting may itself say WHEN earlier in the body. Standing alone means
+     * spaces round it (or a closing bracket before it): {@code mod:every} is a name with the word in it.
      */
     private static int keywordIndex(final String text, final String keyword) {
-        final Matcher matcher = Pattern.compile("(?i)\\b" + keyword + "\\b").matcher(text);
+        final Matcher matcher = Pattern.compile("(?i)(?<![^\\s})])" + keyword + "(?!\\S)").matcher(text);
         int found = -1;
         while (matcher.find()) {
             if (isTopLevel(text, matcher.start())) {

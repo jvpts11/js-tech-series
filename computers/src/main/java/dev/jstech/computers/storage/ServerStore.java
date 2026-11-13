@@ -66,6 +66,10 @@ public final class ServerStore implements IWeightedStore {
     }
 
     private long capacity(final LocalStore drives) {
+        // An array's size is read off the cabinet, not off its drives, so a cabinet gone this tick says none too.
+        if (!isLive()) {
+            return 0L;
+        }
         final RaidMode mode = rack.raidModeOf(serverSlot);
         if (mode == RaidMode.NONE) {
             return drives.capacity();

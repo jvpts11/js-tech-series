@@ -422,7 +422,8 @@ public final class LiveInstallState {
         if (!point.equals(this.files.root())) {
             return LiveTurn.refused(CHROOT_NO_ROOT.with(point));
         }
-        if (!this.progress.base) {
+        // With its disk not mounted the place is an empty folder of the medium's, with no shell in it to run.
+        if (!this.progress.base || !this.disks.mounted()) {
             return LiveTurn.refused(CHROOT_NO_SHELL.text());
         }
         this.files.enter();

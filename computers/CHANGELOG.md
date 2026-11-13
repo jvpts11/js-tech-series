@@ -1250,6 +1250,36 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the desktop; and a Server's parts are not taken in or out of one no longer held.
 - Recipe viewers: a recipe of more slots than the Pattern Studio holds, or with a very long id, comes
   over instead of failing to send.
+- Systems and their disks: Quince OS 9 keeps its scans and wallets in Documents, not in a Documents
+  inside it; the start-up menu keeps the firmware setup and the chosen system when it has to leave systems out; a
+  player's system with a very long reboot delay waits all of it; a copy given another extension takes the kind it
+  names, as a rename does; the Recycle Bin says when its index is full rather than that the disk has no room; a name
+  on the system disk starting with media: or net: is refused, as it would read as another volume; a disk swapped
+  under the prompt leaves no folder or ssh target of the last one behind; and a server cabinet that has left the
+  world reads as holding nothing.
+- The prompt: du gives each thing's size and a total; interac lists by name from everything held, keeps
+  its panel's numbers whole on a narrow glass and acts on the thing picked when two share a name; the MC-DOS Shell's
+  tree shows the folders inside the folder looked at however deep it is, and its search reads up to 1,024 folders;
+  MSD changes only a port it draws; sh refuses an arrow naming an empty name and an arrow on a command in the middle
+  of a pipeline; an empty file reads as no lines, and a last newline starts none; a hidden answer a tool was given is
+  not given again after the world is loaded; and the calculator says when a power or a number is not one.
+- Settings and IQL: an accent colour written with a sign is refused; an IQL job's trigger is the same
+  whatever the case its name is written in, and a trigger word inside a name is not taken for the trigger; and SET
+  BUS refuses a second setting written after a filter's list instead of filing its words as items.
+- Installing by hand: fdisk refuses a partition number or a first sector it cannot give, and a size
+  written with a point or counted back from the end, instead of misreading them, and a size in P is petabytes;
+  mkfs refuses the mounted root and the mounted EFI partition, and a disk given a GPT label before any partition;
+  a place of the medium counts as bound into the new system only when it is bound under its root; and chroot needs
+  the root mounted.
+- Sigma: completion offers nothing after a finished using; .5, 10.ToString(), -2147483648 and
+  -9223372036854775808L read as they do in C#; an editor paints a string's whole width, and a mistake quotes it as
+  typed; a backslash ending a line leaves the string unclosed there; a lambda may keep a variable a lock declares;
+  a package pasted with Windows line ends reads; a very long run of operators or of calls is refused as too deep
+  rather than taking the compiler with it; -= takes off a combined handler as a whole; a listing's instructions
+  after a field are said to be outside any method; a project may not be named Script or IScript; and a startup
+  script that leaves an era out is told the eras there are.
+- The ISMS profiler: a trace started again from its own handler goes on hearing the network, and a
+  completed statement shows no length rather than nought ticks.
 
 ## [0.5.3a] - 2026-11-04
 

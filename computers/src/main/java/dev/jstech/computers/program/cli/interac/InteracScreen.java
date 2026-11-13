@@ -30,8 +30,18 @@ import java.util.List;
 @TextHolder
 public final class InteracScreen {
 
-    /** One row of the list: what it is, how much of it, and where it lives. */
-    public record Row(String name, String count, String detail) {
+    /**
+     * One row of the list: what it is, how much of it, and where it lives.
+     *
+     * <p>The id is the registry id of the thing the row is, or empty for a row that is not one; it is never
+     * drawn, and is what an action on the picked row acts on, since two things can share a name.
+     */
+    public record Row(String name, String count, String detail, String id) {
+
+        /** A row that is not a thing the network holds. */
+        public Row(final String name, final String count, final String detail) {
+            this(name, count, detail, "");
+        }
     }
 
     /**
@@ -161,11 +171,7 @@ public final class InteracScreen {
     /** The whole screen, row by row, as wide and as tall as the state says the glass is. */
     public static List<String> render(final InteracState state, final Data data) {
         final int wide = Math.max(40, state.columns());
-        /*
-         * The panel gives way on a narrow glass rather than pushing the list off it: the list is what the
-         * player is reading, and a panel with nothing beside it is no panel at all.
-         */
-        final int asideW = showsPanel(wide) ? Math.max(12, Math.min(ASIDE_W, wide - 34)) : 0;
+        final int asideW = asideWidth(state.columns());
         final int listW = wide - asideW;
         final int body = bodyRows(state);
         final List<String> out = new ArrayList<>(screenRows(state));
@@ -312,6 +318,17 @@ public final class InteracScreen {
      */
     public static boolean showsPanel(final int columns) {
         return columns >= PANEL_AT;
+    }
+
+    /**
+     * How wide the panel beside the list is on a glass that wide, its rule included, or 0 when none is drawn.
+     *
+     * <p>The panel gives way on a narrow glass rather than pushing the list off it: the list is what the
+     * player is reading, and a panel with nothing beside it is no panel at all.
+     */
+    public static int asideWidth(final int columns) {
+        final int wide = Math.max(40, columns);
+        return showsPanel(wide) ? Math.max(12, Math.min(ASIDE_W, wide - 34)) : 0;
     }
 
     /**

@@ -122,7 +122,8 @@ public final class ServerCliComputer extends ServerCliNetwork {
     @Override
     @Nullable
     public MinerConsole miner() {
-        return host instanceof IOsHost machine && machine.console() != null ? new MinerConsole(machine, level) : null;
+        return host instanceof IOsHost machine && machine.console() != null
+                ? new MinerConsole(machine, level, hostBlock.getBlockPos()) : null;
     }
 
     @Override

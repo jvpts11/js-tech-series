@@ -82,6 +82,12 @@ class IqlBusStatementTest {
     }
 
     @Test
+    void parse_aSecondSettingAfterAFilterListIsRefusedRatherThanFiledAsItems() {
+        assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x FILTER ONLY iron_ore MATCH FUZZY"));
+        assertThrows(IqlError.class, () -> IqlBusStatement.parse("SET BUS x FILTER TAG c:ores KEEP 16"));
+    }
+
+    @Test
     void tryParse_givesASetBusStatementItsOwnResult() {
         final IqlParseResult result = IqlParser.tryParse("SET BUS 'Ore in' PRIORITY 5");
 

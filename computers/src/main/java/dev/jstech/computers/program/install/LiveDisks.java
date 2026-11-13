@@ -42,6 +42,12 @@ final class LiveDisks {
     /** The places of the running medium bound into the new system before stepping into it. */
     private final Set<String> binds = new LinkedHashSet<>();
 
+    /**
+     * The disks given a GPT label, by name, partitions or none: a label written before any partition is a table
+     * the disk keeps, and one the editor finds again when it is opened on it.
+     */
+    private final Set<String> labelled = new LinkedHashSet<>();
+
     /** Where the new system's disk is mounted, which is this distribution's own choice of place. */
     private final String root;
 
@@ -75,6 +81,8 @@ final class LiveDisks {
             "mke2fs: %s is the EFI System partition.");
     private static final TextKey IS_ESP_HINT = TextKey.of("jsc.install.live_disks.is_esp_hint",
             "       (that one holds the bootloader: mkfs.fat -F 32 /dev/%s)");
+    private static final TextKey EXT4_MOUNTED = TextKey.of("jsc.install.live_disks.ext4_mounted",
+            "/dev/%s is mounted; will not make a filesystem here!");
     private static final TextKey HAS_TABLE = TextKey.of("jsc.install.live_disks.has_table",
             "/dev/%s contains a gpt partition table.");
     private static final TextKey USE_A_PARTITION = TextKey.of("jsc.install.live_disks.use_a_partition",
@@ -87,6 +95,8 @@ final class LiveDisks {
             "mkfs.fat: %s is not an EFI System partition.");
     private static final TextKey NOT_ESP_HINT = TextKey.of("jsc.install.live_disks.not_esp_hint",
             "       (set its type first: fdisk, then t)");
+    private static final TextKey FAT_MOUNTED = TextKey.of("jsc.install.live_disks.fat_mounted",
+            "mkfs.fat: /dev/%s contains a mounted filesystem.");
     private static final TextKey MOUNT_BAD_USAGE = TextKey.of("jsc.install.live_disks.mount_bad_usage",
             "mount: bad usage");
     private static final TextKey MOUNT_TRY = TextKey.of("jsc.install.live_disks.mount_try",
@@ -175,8 +185,19 @@ final class LiveDisks {
         return this.tables.getOrDefault(disk, List.of());
     }
 
-    void writeTable(final String disk, final List<Partition> table) {
+    /** Whether that disk has a GPT label written on it, with partitions or still without. */
+    boolean labelled(final String disk) {
+        return this.labelled.contains(disk) || !this.table(disk).isEmpty();
+    }
+
+    /** Writes the table onto the disk, and the label with it when {@code gpt}, though it holds no partition yet. */
+    void writeTable(final String disk, final List<Partition> table, final boolean gpt) {
         this.tables.put(disk, List.copyOf(table));
+        if (gpt) {
+            this.labelled.add(disk);
+        } else {
+            this.labelled.remove(disk);
+        }
     }
 
     /** Makes the filesystem the new system goes on, which takes the disk a while. */
@@ -192,11 +213,16 @@ final class LiveDisks {
         if (part != null && part.esp()) {
             return LiveTurn.refused(IS_ESP.with(dev), IS_ESP_HINT.with(dev));
         }
+        // The real tool will not make a filesystem under a system that is mounted and in use.
+        if (this.mounted && dev.equals(this.device)) {
+            return LiveTurn.refused(EXT4_MOUNTED.with(dev));
+        }
         /*
          * A disk somebody partitioned is not a disk to write a filesystem straight onto: the real tool refuses
-         * rather than quietly wiping the table somebody just made.
+         * rather than quietly wiping the table somebody just made. A label written with no partitions on it yet
+         * is a table all the same.
          */
-        if (part == null && !this.table(dev).isEmpty()) {
+        if (part == null && this.labelled(dev)) {
             return LiveTurn.refused(HAS_TABLE.with(dev), USE_A_PARTITION.text());
         }
         final long sizeMb = this.sizeOf(dev, env);
@@ -225,6 +251,9 @@ final class LiveDisks {
         }
         if (!part.esp()) {
             return LiveTurn.refused(NOT_ESP.with(dev), NOT_ESP_HINT.text());
+        }
+        if (!this.espMount.isEmpty() && dev.equals(this.espDevice)) {
+            return LiveTurn.refused(FAT_MOUNTED.with(dev));
         }
         return LiveTurn.running(DiskVoices.mkfsFat(Math.max(8, formatTicks(dev, env) / 8), () -> {
             this.espDevice = dev;
@@ -370,6 +399,7 @@ final class LiveDisks {
         out.put("esp_formatted", this.espFormatted);
         out.put("esp_mount", this.espMount);
         out.put("binds", String.join(" ", this.binds));
+        out.put("labelled", String.join(" ", this.labelled));
         for (final Map.Entry<String, List<Partition>> disk : this.tables.entrySet()) {
             final StringBuilder written = new StringBuilder();
             for (final Partition part : disk.getValue()) {
@@ -395,6 +425,11 @@ final class LiveDisks {
                 this.binds.add(bind);
             }
         }
+        for (final String disk : saved.value("labelled", "").split(" ")) {
+            if (!disk.isEmpty()) {
+                this.labelled.add(disk);
+            }
+        }
         for (final Map.Entry<String, String> line : saved.all().entrySet()) {
             if (line.getKey().startsWith("table:")) {
                 this.tables.put(line.getKey().substring(6), partitions(line.getValue()));
@@ -407,9 +442,18 @@ final class LiveDisks {
         if (!this.mounted) {
             return LiveTurn.refused(NO_MOUNT_POINT.with(this.root));
         }
-        for (final String word : words) {
-            if (word.equals("/proc") || word.equals("/sys") || word.equals("/dev") || word.equals("/run")) {
-                this.binds.add(word);
+        /*
+         * A place counts as bound in only when it is bound to its own place under the new system's root: the
+         * same place bound anywhere else is a mount the new system never sees.
+         */
+        if (words.size() > 1) {
+            final String place = words.get(0);
+            final String onto = words.get(1).endsWith("/") ? words.get(1).substring(0, words.get(1).length() - 1)
+                    : words.get(1);
+            final boolean ownPlace = place.equals("/proc") || place.equals("/sys") || place.equals("/dev")
+                    || place.equals("/run");
+            if (ownPlace && onto.equals(this.root + place)) {
+                this.binds.add(place);
             }
         }
         return LiveTurn.silent();

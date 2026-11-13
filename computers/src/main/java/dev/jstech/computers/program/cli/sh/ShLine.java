@@ -61,13 +61,16 @@ public record ShLine(List<Stage> stages, String from, String into, boolean appen
      *
      * <p>A pipe with no command on one side and an arrow with no name after it are mistakes, and a shell says
      * so rather than guess what was meant; the line comes back with {@link #badToken()} set to the token a shell
-     * would point at.
+     * would point at. So is an arrow on a command it cannot serve: only the first command reads from a file and
+     * only the last one writes to one, so a reading arrow after a pipe, or a writing one before it, is refused
+     * rather than quietly given to another command.
      */
     public static ShLine of(final List<ShWord> tokens) {
         final List<Stage> stages = new ArrayList<>();
         final List<String> words = new ArrayList<>();
         String from = "";
         String into = "";
+        String intoArrow = "";
         boolean append = false;
         boolean afterPipe = false;
         for (int i = 0; i < tokens.size(); i++) {
@@ -80,6 +83,10 @@ public record ShLine(List<Stage> stages, String from, String into, boolean appen
             if (token.text().equals("|")) {
                 if (words.isEmpty()) {
                     return malformed(stages, from, into, append, "|");
+                }
+                if (!into.isEmpty()) {
+                    // Only the last command's output is caught in a file; one before a pipe has none to catch.
+                    return malformed(stages, from, into, append, intoArrow);
                 }
                 addStage(stages, words);
                 afterPipe = true;
@@ -103,10 +110,19 @@ public record ShLine(List<Stage> stages, String from, String into, boolean appen
                 }
                 named = next.text();
             }
+            if (named.isEmpty()) {
+                // A name written as empty quotes names no file, and is no more an answer than no name at all.
+                return malformed(stages, from, into, append, redirection.mark());
+            }
             if (redirection.reading()) {
+                if (!stages.isEmpty()) {
+                    // Only the first command reads from a file; a later one reads what the pipe hands it.
+                    return malformed(stages, from, into, append, redirection.mark());
+                }
                 from = named;
             } else {
                 into = named;
+                intoArrow = redirection.mark();
                 append = redirection.append();
             }
         }
@@ -144,19 +160,22 @@ public record ShLine(List<Stage> stages, String from, String into, boolean appen
         }
     }
 
-    /** One arrow: which way it points, whether it adds, and the name written against it when there was one. */
-    private record Redirection(boolean reading, boolean append, String name) {
+    /**
+     * One arrow: which way it points, whether it adds, the arrow itself, and the name written against it when
+     * there was one.
+     */
+    private record Redirection(boolean reading, boolean append, String mark, String name) {
     }
 
     private static Redirection redirectionOf(final String token) {
         if (token.startsWith(">>")) {
-            return new Redirection(false, true, token.substring(2));
+            return new Redirection(false, true, ">>", token.substring(2));
         }
         if (token.startsWith(">")) {
-            return new Redirection(false, false, token.substring(1));
+            return new Redirection(false, false, ">", token.substring(1));
         }
         if (token.startsWith("<")) {
-            return new Redirection(true, false, token.substring(1));
+            return new Redirection(true, false, "<", token.substring(1));
         }
         return null;
     }

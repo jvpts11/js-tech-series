@@ -63,6 +63,13 @@ class SystemDeclarationsTest {
     }
 
     @Test
+    void compile_addsTheNumbersAWrittenPropertyStartsWithAsTheLanguageDoes() {
+        final SigmaCompiler.Result result = compile(LANTERN.replace("Version => \"1.2\"", "Version => 1 + 2 + \".0\""));
+        assertTrue(result.ok(), result.lines().toString());
+        assertEquals("3.0", result.system().version());
+    }
+
+    @Test
     void compile_startsAProgramThatDeclaresASystemAtItAsASystem() {
         final SigmaCompiler.Result result = compile(LANTERN);
         assertTrue(result.assembly().contains("system"), result.assembly());

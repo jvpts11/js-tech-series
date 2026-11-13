@@ -212,6 +212,9 @@ public final class MsdKeys implements TtyEditor.IKeys {
             this.ports = MsdScreen.portsSaid(screen);
             if (readPicked && this.state.ports()) {
                 this.state = this.state.picking(MsdScreen.pickedSaid(screen));
+            } else if (this.state.ports()) {
+                // A glass that shrank draws fewer ports; the pick comes back onto the last one drawn.
+                this.state = this.state.picking(Math.min(this.state.picked(), Math.max(0, this.ports - 1)));
             }
             caretOnThePicked(editor);
         });

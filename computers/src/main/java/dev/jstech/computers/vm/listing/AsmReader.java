@@ -177,9 +177,22 @@ public final class AsmReader {
                 this.type = this.readDelegate(rest, line);
                 program.addType(this.type);
             }
-            case "field" -> this.readField(rest, line);
-            case "event" -> this.readEvent(rest, line);
-            case "value" -> this.readValue(rest, line);
+            /*
+             * A line that belongs to the type ends the method being read: an instruction after it is outside any
+             * method, and said to be, rather than joining the method before it.
+             */
+            case "field" -> {
+                this.closeMethod();
+                this.readField(rest, line);
+            }
+            case "event" -> {
+                this.closeMethod();
+                this.readEvent(rest, line);
+            }
+            case "value" -> {
+                this.closeMethod();
+                this.readValue(rest, line);
+            }
             case "method" -> this.readMethodHead(rest, line);
             case "source", "try", "line", "local" -> this.readNewerDirective(program, word, rest, line);
             default -> this.report(line, ListingError.UNKNOWN_DIRECTIVE, "." + word);
@@ -198,6 +211,7 @@ public final class AsmReader {
             return;
         }
         if ("source".equals(word)) {
+            this.closeMethod();
             if (!this.outsideType(".source", line)) {
                 this.type.setSource(rest);
             }

@@ -18,6 +18,7 @@ import dev.jstech.core.time.GameCalendar;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,11 +31,14 @@ public final class TeracoinService {
 
     private final IOsHost machine;
     private final ServerLevel level;
+    /** Where the machine stands, which tells its miner from another off any network. */
+    private final BlockPos at;
     private final FileService files;
 
-    TeracoinService(final IOsHost machine, final ServerLevel level, final FileService files) {
+    TeracoinService(final IOsHost machine, final ServerLevel level, final BlockPos at, final FileService files) {
         this.machine = machine;
         this.level = level;
+        this.at = at;
         this.files = files;
     }
 
@@ -78,7 +82,7 @@ public final class TeracoinService {
     /** The machine's miner, or null when it has no console to keep one in. */
     @Nullable
     public MinerConsole miner() {
-        return this.machine.console() == null ? null : new MinerConsole(this.machine, this.level);
+        return this.machine.console() == null ? null : new MinerConsole(this.machine, this.level, this.at);
     }
 
     /** The names of the Mining Pools on the machine's network, in the order their servers are found. */

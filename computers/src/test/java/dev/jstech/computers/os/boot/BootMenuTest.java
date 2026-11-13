@@ -56,6 +56,19 @@ class BootMenuTest {
     }
 
     @Test
+    void constructor_cutsSystemsToKeepTheWayIntoTheSetupAndTheChosenEntry() {
+        final BootMenu.Builder out = new BootMenu.Builder(BootManager.GRUB);
+        for (int i = 0; i < BootMenu.MOST_ENTRIES + 4; i++) {
+            out.entry(Text.literal("System " + i), i, "jsc:system_" + i);
+        }
+        final BootMenu menu = out.firmware(Text.literal("Firmware Settings")).build(0);
+        assertEquals(BootMenu.MOST_ENTRIES, menu.entries().size());
+        assertTrue(menu.entries().getLast().isFirmware(), "the setup stays, last");
+        final BootMenu chosen = new BootMenu(BootManager.GRUB, Text.EMPTY, menu.entries(), 3, 0);
+        assertEquals(3, chosen.defaultIndex(), "a chosen entry kept stays chosen");
+    }
+
+    @Test
     void constructor_readsAMissingManagerAsNone() {
         assertEquals(BootManager.NONE, new BootMenu(null, Text.EMPTY, null, 0, 0).manager());
         assertTrue(BootMenu.NONE.isEmpty());

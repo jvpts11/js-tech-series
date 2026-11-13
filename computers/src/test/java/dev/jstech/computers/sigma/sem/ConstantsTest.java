@@ -128,6 +128,19 @@ class ConstantsTest {
     }
 
     @Test
+    void const_sayingCircularOnlyOfTheOnesRoundTheLoop() {
+        final List<String> said = errors("""
+                class Tool {
+                    const int A = B;
+                    const int B = B + 1;
+                    static void Main() { }
+                }
+                """);
+        assertEquals(1, said.stream().filter(line -> line.contains("S3068")).count(), said::toString);
+        assertTrue(said.stream().anyMatch(line -> line.contains("S3068") && line.contains("'B'")), said::toString);
+    }
+
+    @Test
     void const_refusesOneWithoutAValueOrOfAnotherKind() {
         final List<String> said = errors("""
                 class Tool {

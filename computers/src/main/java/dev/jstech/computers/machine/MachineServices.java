@@ -498,7 +498,7 @@ public final class MachineServices implements IHost {
             this.settings = new ProgramSettingsService(this.machine, this.files);
             this.messaging = new NetworkMessagingService(this.machine, this.block, server);
             this.navigation = new NavigationService(this.block, server);
-            this.teracoin = new TeracoinService(this.machine, server, this.files);
+            this.teracoin = new TeracoinService(this.machine, server, this.block.getBlockPos(), this.files);
             // Operations first: the network hands their rows back when a query asks for them.
             this.operations = new OperationsService(terminal, server, this.shell);
             this.network = new NetworkReadService(terminal, server, this.shell, this.operations);

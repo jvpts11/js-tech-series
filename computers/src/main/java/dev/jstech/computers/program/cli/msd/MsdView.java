@@ -67,7 +67,9 @@ public final class MsdView {
         }
         final int wanted = LPT.equals(state.action()) ? firstPortOf(slots, "LPT")
                 : COM.equals(state.action()) ? firstPortOf(slots, "COM") : state.picked();
-        final int last = state.ports() ? Math.max(0, ports.size() - 1) : MsdScreen.BUTTONS.length - 1;
+        // The pick stays on a row the dialog draws: a glass that shrank under it, or a kind of port opened on
+        // past the last row drawn, would leave E and D acting on a port nobody can see.
+        final int last = state.ports() ? MsdScreen.portsShown(state, ports.size()) - 1 : MsdScreen.BUTTONS.length - 1;
         final MsdState shown = state.done().picking(Math.min(wanted, last));
         return MsdScreen.render(shown, new MsdScreen.Data(found(computer, map), ports));
     }
@@ -78,7 +80,9 @@ public final class MsdView {
             return;
         }
         final List<Slot> slots = slots(computer.devices());
-        if (state.picked() < slots.size() && slots.get(state.picked()).device() != null) {
+        // Only a port drawn on the glass is acted on, so the device changed is the one the player is looking at.
+        final boolean drawn = state.picked() < Math.min(slots.size(), MsdScreen.portsShown(state, slots.size()));
+        if (drawn && slots.get(state.picked()).device() != null) {
             computer.setDeviceDisabled(slots.get(state.picked()).device().pos(), DISABLE.equals(state.action()));
         }
     }

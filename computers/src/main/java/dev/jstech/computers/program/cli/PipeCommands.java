@@ -62,7 +62,7 @@ final class PipeCommands {
             ctx.out().error(read.message());
             return List.of();
         }
-        return List.of(read.message().english().split("\r?\n", -1));
+        return TextFilters.linesOf(read.message().english());
     }
 
     static void print(final CliContext ctx, final List<String> lines) {

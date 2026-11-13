@@ -141,9 +141,20 @@ public final class CalcEngine {
             skipWs();
             if (peek() == '^') {
                 pos++;
-                return Math.pow(base, parseUnary());
+                return real(Math.pow(base, parseUnary()));
             }
             return base;
+        }
+
+        /* A result that is a real number, as the other functions' are: none, or one too large, is an error. */
+        private static double real(final double result) {
+            if (Double.isNaN(result)) {
+                throw new CalcException("Result is not a real number");
+            }
+            if (Double.isInfinite(result)) {
+                throw new CalcException("Result too large");
+            }
+            return result;
         }
 
         // postfix := primary ('!')*
@@ -246,7 +257,7 @@ public final class CalcEngine {
                     }
                     return Math.log10(x);
                 case "exp":
-                    return Math.exp(x);
+                    return real(Math.exp(x));
                 case "abs":
                     return Math.abs(x);
                 default:
@@ -277,7 +288,8 @@ public final class CalcEngine {
                 }
             }
             final String num = s.substring(start, pos);
-            if (num.isEmpty() || ".".equals(num)) {
+            // A second point, as in 1.2.3 or 1..2, is no number rather than one number times another.
+            if (num.isEmpty() || ".".equals(num) || peek() == '.') {
                 throw new CalcException("Bad number");
             }
             return Double.parseDouble(num);

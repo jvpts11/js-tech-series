@@ -53,6 +53,11 @@ class CompletionContextTest {
     }
 
     @Test
+    void at_aFinishedUsingIsNoLongerAskingForANamespace() {
+        assertNull(at("using System;|"), "after its semicolon there is nothing left to name");
+    }
+
+    @Test
     void at_offersNothingOnAnEmptyLine() {
         assertNull(at("|"));
         assertNull(at("        |"));

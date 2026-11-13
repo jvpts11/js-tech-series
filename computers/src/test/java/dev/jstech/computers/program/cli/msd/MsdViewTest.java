@@ -91,6 +91,17 @@ class MsdViewTest {
     }
 
     @Test
+    void screen_actsOnlyOnAPortTheGlassDrawsAndKeepsThePickOnOne() {
+        final MsdState shortGlass = MsdState.OPENING.on(80, MsdScreen.PORTS_TOP + 5).openingPorts(1);
+
+        final List<String> screen = MsdView.screen(this.machine, shortGlass.asking(MsdView.DISABLE));
+
+        assertEquals(1, MsdScreen.portsSaid(screen), "a glass that short draws one port");
+        assertTrue(this.machine.disabled.isEmpty(), "so the floppy on the port it does not draw is left alone");
+        assertTrue(screen.get(MsdScreen.PORTS_TOP).contains(">"), "and the pick is back on the port it draws");
+    }
+
+    @Test
     void memory_countsWhatLiesAboveTheFirstMegabyteAsExtended() {
         assertEquals("640K, 15360K Ext", MsdView.memory(16));
         assertEquals("640K, 3072K Ext", MsdView.memory(4));

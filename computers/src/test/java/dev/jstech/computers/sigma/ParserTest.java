@@ -64,6 +64,9 @@ class ParserTest {
             // A chain of conditionals or of assignments nests to the right without a bracket.
             "class C { int M(bool b) { return " + "b ? 1 : ".repeat(deep) + "0; } }",
             "class C { void M() { int x = 0; " + "x = ".repeat(deep) + "1; } }",
+            // And a run of operators, or of calls, nests to the left the same way.
+            "class C { int M(int a) { return a" + " + a".repeat(deep) + "; } }",
+            "class C { C M() { return this" + ".M()".repeat(deep) + "; } }",
         };
         for (final String source : sources) {
             final SigmaFrontEnd.Result result = parse(source);
@@ -115,6 +118,14 @@ class ParserTest {
         assertInstanceOf(IDecl.EventDecl.class, type.members().get(3));
         assertInstanceOf(IDecl.ConstructorDecl.class, type.members().get(4));
         assertInstanceOf(IDecl.MethodDecl.class, type.members().get(5));
+    }
+
+    @Test
+    void parse_readsTheSmallestIntAndLongOnlyWithTheMinusBeforeThem() {
+        final SigmaFrontEnd.Result smallest = parse(
+                "class C { int M() { return -2147483648; } long N() { return -9223372036854775808L; } }");
+        assertTrue(smallest.ok(), () -> String.join("\n", smallest.lines()));
+        assertFalse(parse("class C { int M() { return 2147483648; } }").ok(), "alone its digits fit no int");
     }
 
     @Test

@@ -17,8 +17,10 @@ import dev.jstech.computers.program.cli.Stamps;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import net.minecraft.resources.ResourceLocation;
 
@@ -32,8 +34,9 @@ public final class MenuShellView {
     /** The most folders a tree is built of, and how deep it goes, so a disk full of folders answers quickly. */
     private static final int MOST_FOLDERS = 256;
     private static final int MOST_DEPTH = 8;
-    /** The most a search reports. */
+    /** The most a search reports, and the most folders it reads to find them. */
     private static final int MOST_RESULTS = 128;
+    private static final int MOST_SEARCHED = 1024;
 
     private MenuShellView() {
     }
@@ -68,25 +71,28 @@ public final class MenuShellView {
         }
         final String written = written(shell, asked, dos);
         return new MenuShellListing(written, listed.ok(), !shell.printers().isEmpty(), drives,
-                dos ? tree(shell, written.substring(0, Math.min(3, written.length()))) : List.of(), entries,
+                dos ? tree(shell, written, listed.ok(), entries) : List.of(), entries,
                 programs(shell), List.of());
     }
 
     /**
-     * Every file on the system disk whose name is like {@code pattern}, written whole: DOS's wildcards, a star for any
-     * run of letters and a question mark for one, matched without regard to case.
+     * The files on the system disk whose names are like {@code pattern}, written whole: DOS's wildcards, a star for
+     * any run of letters and a question mark for one, matched without regard to case. A search reads at most
+     * MOST_SEARCHED folders, nearest first, and reports at most MOST_RESULTS files, so on a disk past either it
+     * finds what is nearest the root.
      */
     static MenuShellListing search(final ServerCliComputer shell, final String pattern) {
         final boolean dos = shell.shellFamily() == ShellFamily.DOS;
         final String root = dos ? "C:\\" : "/";
         final String like = pattern.isBlank() ? "*" : pattern.trim();
         final List<String> results = new ArrayList<>();
-        walk(shell, root, dos, Integer.MAX_VALUE, () -> results.size() >= MOST_RESULTS, (whole, entry) -> {
+        final EntryVisitor matching = (whole, entry) -> {
             if (!entry.isDir() && Wildcards.matches(like, entry.name()) && results.size() < MOST_RESULTS) {
                 results.add(whole);
             }
             return entry.isDir();
-        });
+        };
+        walk(shell, root, dos, Integer.MAX_VALUE, MOST_SEARCHED, () -> results.size() >= MOST_RESULTS, matching);
         return new MenuShellListing(root, true, false, List.of(), List.of(), List.of(), List.of(), results);
     }
 
@@ -104,18 +110,49 @@ public final class MenuShellView {
                 entry.isDir(), entry.readOnly());
     }
 
-    /* Every folder of the drive under {@code root} ({@code C:\}), each written whole, as far as the limits go. */
-    private static List<String> tree(final ServerCliComputer shell, final String root) {
+    /*
+     * Every folder of the drive {@code looked} is on, each written whole, as far as the limits go, and past them
+     * the way down to {@code looked}, when it was {@code found}, and the folders in it ({@code entries}): a disk
+     * deeper or fuller than the walk reads still shows, where the player is, every folder there is to open.
+     */
+    private static List<String> tree(final ServerCliComputer shell, final String looked, final boolean found,
+                                     final List<MenuShellListing.Entry> entries) {
+        final String root = looked.substring(0, Math.min(3, looked.length()));
         final List<String> out = new ArrayList<>();
-        walk(shell, root, true, MOST_DEPTH, () -> out.size() >= MOST_FOLDERS, (whole, entry) -> {
+        walk(shell, root, true, MOST_DEPTH, MOST_FOLDERS, () -> out.size() >= MOST_FOLDERS, (whole, entry) -> {
             if (entry.isDir() && out.size() < MOST_FOLDERS) {
                 out.add(whole);
                 return true;
             }
             return false;
         });
+        final Set<String> known = new HashSet<>();
+        for (final String folder : out) {
+            known.add(folder.toUpperCase(Locale.ROOT));
+        }
+        if (found) {
+            String way = root;
+            for (final String part : looked.substring(root.length()).split("\\\\")) {
+                if (!part.isEmpty()) {
+                    way = join(way, part, true);
+                    kept(out, known, way);
+                }
+            }
+            for (final MenuShellListing.Entry entry : entries) {
+                if (entry.folder()) {
+                    kept(out, known, join(looked, entry.fullName(), true));
+                }
+            }
+        }
         out.sort(String.CASE_INSENSITIVE_ORDER);
         return out;
+    }
+
+    /* Adds {@code folder} to the tree unless it is there already, without regard to case. */
+    private static void kept(final List<String> out, final Set<String> known, final String folder) {
+        if (known.add(folder.toUpperCase(Locale.ROOT))) {
+            out.add(folder);
+        }
     }
 
     /** What a walk of the disk does with each thing it meets; true for a folder it wants the walk to go into. */
@@ -124,18 +161,18 @@ public final class MenuShellView {
     }
 
     /*
-     * Goes over the disk folder by folder, nearest first, from {@code root}. It stops after MOST_FOLDERS folders
-     * have been read or as soon as {@code done} says so, never goes {@code deepest} levels down, and passes over a
-     * folder that cannot be read. One walk serves the tree and the search, so a limit means the same in both.
+     * Goes over the disk folder by folder, nearest first, from {@code root}. It stops after {@code mostRead}
+     * folders have been read or as soon as {@code done} says so, never goes {@code deepest} levels down, and
+     * passes over a folder that cannot be read.
      */
     private static void walk(final ServerCliComputer shell, final String root, final boolean dos, final int deepest,
-                             final BooleanSupplier done, final EntryVisitor visitor) {
+                             final int mostRead, final BooleanSupplier done, final EntryVisitor visitor) {
         final Deque<String> folders = new ArrayDeque<>();
         final Deque<Integer> depths = new ArrayDeque<>();
         folders.add(root);
         depths.add(0);
         int read = 0;
-        while (!folders.isEmpty() && read++ < MOST_FOLDERS && !done.getAsBoolean()) {
+        while (!folders.isEmpty() && read++ < mostRead && !done.getAsBoolean()) {
             final String folder = folders.poll();
             final int depth = depths.poll();
             final ICliComputer.FsResult listed = shell.listDisk(folder);

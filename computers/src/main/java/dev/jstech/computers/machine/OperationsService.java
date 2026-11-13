@@ -466,7 +466,8 @@ public final class OperationsService {
         }
         final List<ICliComputer.StoredItem> rows = new ArrayList<>();
         mainframe.lockedTypes().forEach((key, amount) ->
-                rows.add(new ICliComputer.StoredItem(GameText.of(key.displayName()), amount)));
+                rows.add(new ICliComputer.StoredItem(GameText.of(key.displayName()), amount, Text.EMPTY,
+                        key.registryId().toString())));
         return rows;
     }
 

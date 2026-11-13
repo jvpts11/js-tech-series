@@ -54,7 +54,9 @@ public final class DiskTrash {
         /** It is the trash, or a folder the trash is in, which cannot go into itself. */
         HOLDS_TRASH(TextKey.of("jsc.trash.holds_trash", "%s holds the %s itself.")),
         /** The disk has no room left to write down where it came from, so it stayed where it was. */
-        NO_ROOM(TextKey.of("jsc.trash.no_room", "There is no room left on the disk to keep %s."));
+        NO_ROOM(TextKey.of("jsc.trash.no_room", "There is no room left on the disk to keep %s.")),
+        /** The trash's index of where things came from is as long as a file may be, so it stayed where it was. */
+        INDEX_FULL(TextKey.of("jsc.trash.index_full", "%s cannot go in: the %s keeps no more until it is emptied."));
 
         private final @Nullable TextKey refusal;
 
@@ -70,7 +72,7 @@ public final class DiskTrash {
             if (this.refusal == null) {
                 return Text.EMPTY;
             }
-            return this == HOLDS_TRASH ? this.refusal.with(name, trash) : this.refusal.with(name);
+            return this == HOLDS_TRASH || this == INDEX_FULL ? this.refusal.with(name, trash) : this.refusal.with(name);
         }
     }
 
@@ -100,12 +102,13 @@ public final class DiskTrash {
         if (!DiskFilesystem.rename(disk, path, trash.storedPath(stored), TREE)) {
             return Outcome.MISSING;
         }
-        if (record(disk, trash, stored, path, freeWeight, now)) {
+        final DiskFilesystem.WriteResult written = record(disk, trash, stored, path, freeWeight, now);
+        if (written == DiskFilesystem.WriteResult.OK) {
             return Outcome.DONE;
         }
         // No room to write down where it came from: it goes back, so nothing sits in the trash with no way home.
         DiskFilesystem.rename(disk, trash.storedPath(stored), path, TREE);
-        return Outcome.NO_ROOM;
+        return written == DiskFilesystem.WriteResult.TOO_LARGE ? Outcome.INDEX_FULL : Outcome.NO_ROOM;
     }
 
     /** What is in the trash, in the order it went in; a thing without a record, or a record without it, is left out. */
@@ -201,15 +204,14 @@ public final class DiskTrash {
         return out;
     }
 
-    /** Writes down that {@code stored} came from {@code original}: a line on the index, or a note of its own. */
-    private static boolean record(final ItemStack disk, final TrashFolder trash, final String stored,
-                                  final String original, final long freeWeight, final long now) {
-        final DiskFilesystem.WriteResult written = trash.indexed()
+    /* Writes down that {@code stored} came from {@code original}: a line on the index, or a note of its own. */
+    private static DiskFilesystem.WriteResult record(final ItemStack disk, final TrashFolder trash, final String stored,
+                                                     final String original, final long freeWeight, final long now) {
+        return trash.indexed()
                 ? DiskFilesystem.append(disk, trash.recordPath(stored), FileType.OTHER,
                         TrashFolder.indexLine(stored, original), freeWeight, TREE, now)
                 : DiskFilesystem.write(disk, trash.recordPath(stored), FileType.OTHER, TrashFolder.note(original),
                         freeWeight, TREE, now);
-        return written == DiskFilesystem.WriteResult.OK;
     }
 
     /** Takes out the record of {@code stored}; an index left with nothing on it goes too. */

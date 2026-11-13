@@ -129,7 +129,11 @@ public record Packed(Manifest manifest, Map<String, String> files) {
                 if (name != null && !finished(files, name, body, noFinalNewline)) {
                     return null;
                 }
-                String header = line.substring(MARK.length());
+                /*
+                 * A package pasted from another system may end its lines with a carriage return as well. The
+                 * package's own lines are read without it; what a file holds is kept as it came.
+                 */
+                String header = withoutReturn(line).substring(MARK.length());
                 noFinalNewline = header.endsWith(NO_FINAL_NEWLINE);
                 if (noFinalNewline) {
                     header = header.substring(0, header.length() - NO_FINAL_NEWLINE.length());
@@ -139,7 +143,7 @@ public record Packed(Manifest manifest, Map<String, String> files) {
                 continue;
             }
             if (name == null) {
-                head.append(line).append('\n');
+                head.append(withoutReturn(line)).append('\n');
             } else {
                 body.append(line.startsWith(ESCAPE) ? line.substring(ESCAPE.length()) : line).append('\n');
             }
@@ -217,5 +221,9 @@ public record Packed(Manifest manifest, Map<String, String> files) {
         }
         final String text = noFinalNewline ? body.substring(0, body.length() - 1) : body.toString();
         return files.putIfAbsent(name, text) == null;
+    }
+
+    private static String withoutReturn(final String line) {
+        return line.endsWith("\r") ? line.substring(0, line.length() - 1) : line;
     }
 }

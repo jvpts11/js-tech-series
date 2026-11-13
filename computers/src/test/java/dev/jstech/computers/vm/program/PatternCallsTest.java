@@ -61,6 +61,16 @@ class PatternCallsTest {
         assertEquals(Process.State.HALTED, process.state());
     }
 
+    @Test
+    void regex_haltsOnANullPatternRatherThanMatchingTheWordNull() {
+        final Process process = ran("""
+                string pattern = null;
+                Console.PrintLine(Regex.IsMatch("null and void", pattern) ? "y" : "n");
+                """);
+        assertEquals(Process.State.HALTED, process.state());
+        assertFalse(process.console().contains("y"), "nothing was matched against the word null");
+    }
+
     /** A program run to its end or its halt. */
     private static Process ran(final String body) {
         final SigmaCompiler.Result built = SigmaCompiler.compile(List.of(new SourceFile("Says.sgs", PRELUDE

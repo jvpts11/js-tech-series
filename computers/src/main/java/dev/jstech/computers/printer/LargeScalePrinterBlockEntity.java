@@ -334,9 +334,13 @@ public final class LargeScalePrinterBlockEntity extends ChainMachineBlockEntity 
                 }
                 final IItemHandler chest = level.getCapability(Capabilities.ItemHandler.BLOCK, beside,
                         side.getOpposite());
+                // A container that takes none, full or refusing books, leaves the others beside the outlets to try.
                 if (chest != null) {
                     final ItemStack left = ItemHandlerHelper.insertItemStacked(chest, book.copy(), false);
-                    return book.getCount() - left.getCount();
+                    final int put = book.getCount() - left.getCount();
+                    if (put > 0) {
+                        return put;
+                    }
                 }
             }
         }

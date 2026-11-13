@@ -25,6 +25,13 @@ class CrashPagesTest {
     private static final long RAM = 512L * 1_048_576L;
 
     @Test
+    void of_aPlayersVeryLongRebootStandsTheLongest() {
+        final CrashPage page = CrashPage.of(new PlayerPanic("Os", "me", "down", List.of(), 1, 64, "", "", "",
+                200_000_000));
+        assertEquals(Integer.MAX_VALUE, page.totalTicks());
+    }
+
+    @Test
     void styleFor_givesEachFramesEditionItsOwnPage() {
         assertEquals(CrashStyle.FRAMES_95, CrashPages.styleFor(Platform.FRAMES, 1));
         assertEquals(CrashStyle.FRAMES_XP, CrashPages.styleFor(Platform.FRAMES, 2));

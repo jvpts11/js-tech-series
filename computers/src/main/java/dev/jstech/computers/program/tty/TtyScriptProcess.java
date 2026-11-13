@@ -34,6 +34,13 @@ public final class TtyScriptProcess implements ITtyProcess {
     /** How much of the step in front has been printed: a flood's lines, or whether a bar has been drawn at all. */
     private int printed;
 
+    /**
+     * The last drawing of a bar a glass saw part of and that ended while nobody watched, owed to the next glass
+     * that looks before anything else is printed under it; null when nothing is owed.
+     */
+    @Nullable
+    private CliLine owedFinish;
+
     /** What the tool said when it was stopped from outside, which the real ones print as they go. */
     private static final CliLine INTERRUPTED = new CliLine("^C", CliStyle.DIM);
 
@@ -48,6 +55,7 @@ public final class TtyScriptProcess implements ITtyProcess {
 
     @Override
     public void advance(final long now, @Nullable final ITtySink out) {
+        this.settle(out);
         while (!this.steps.isEmpty()) {
             final TtyScript.IStep step = this.steps.peekFirst();
             final boolean done = switch (step) {
@@ -83,6 +91,7 @@ public final class TtyScriptProcess implements ITtyProcess {
             return;
         }
         this.steps.removeFirst();
+        this.settle(out);
         if (out != null) {
             /*
              * The question stays on the glass with what was typed after it, the way it does at a real
@@ -110,6 +119,7 @@ public final class TtyScriptProcess implements ITtyProcess {
             return;
         }
         this.steps.clear();
+        this.settle(out);
         if (out != null) {
             out.line(INTERRUPTED);
         }
@@ -153,11 +163,22 @@ public final class TtyScriptProcess implements ITtyProcess {
             }
             /* Only a drawing that reached the glass counts, or the first one seen would overwrite a line. */
             this.printed = 1;
+        } else if (done && this.printed == 1) {
+            // A glass that saw part of it keeps it until it is shown finished, before anything below it.
+            this.owedFinish = redraw.drawing().at(1.0);
         }
         if (done) {
             this.cursor += redraw.ticks();
         }
         return done;
+    }
+
+    /** Shows a glass that is looking again the finished bar it last saw half drawn, when one is owed. */
+    private void settle(@Nullable final ITtySink out) {
+        if (out != null && this.owedFinish != null) {
+            out.redraw(this.owedFinish);
+            this.owedFinish = null;
+        }
     }
 
     /** As many of a flood's lines as are due by now, and no line of it twice. */

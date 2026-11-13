@@ -35,6 +35,14 @@ public final class Lexer {
     /** Whether something other than spaces came on this line yet: a directive is the first thing on its line. */
     private boolean lineStarted;
 
+    /*
+     * The digits of the smallest int and long without their minus, one past the largest of each. Read alone they
+     * fit no type; the parser takes them only straight after a minus, as -2147483648, and refuses them anywhere
+     * else, which is the one way to write those two numbers.
+     */
+    private static final String INT_MIN_DIGITS = "2147483648";
+    private static final String LONG_MIN_DIGITS = "9223372036854775808";
+
     public Lexer(final SourceFile source, final DiagnosticBag diagnostics) {
         this(source, diagnostics, 1, 1);
     }
@@ -179,7 +187,8 @@ public final class Lexer {
         if (Character.isLetter(c) || c == '_') {
             return this.scanWord(startIndex, startLine, startColumn);
         }
-        if (Character.isDigit(c)) {
+        // A real may start at its point, as .5 does in C#.
+        if (Character.isDigit(c) || (c == '.' && Character.isDigit(this.peek(1)))) {
             return this.scanNumber(startIndex, startLine, startColumn);
         }
         if (c == '"') {
@@ -324,9 +333,15 @@ public final class Lexer {
             suffix = this.peek();
             this.advance();
         }
-        if (Character.isLetterOrDigit(this.peek()) || this.peek() == '_' || (this.peek() == '.' && !real)) {
+        /*
+         * A point after a whole number is a mistake only when no member's name follows it: 10.ToString() is a
+         * call on the number, and 1.2.3 is a number nobody can read.
+         */
+        if (Character.isLetterOrDigit(this.peek()) || this.peek() == '_'
+                || (this.peek() == '.' && !real && !startsAName(this.peek(1)))) {
             while (this.index < this.source.length()
-                    && (Character.isLetterOrDigit(this.peek()) || this.peek() == '_' || this.peek() == '.')) {
+                    && (Character.isLetterOrDigit(this.peek()) || this.peek() == '_'
+                    || (this.peek() == '.' && !startsAName(this.peek(1))))) {
                 this.advance();
             }
             this.diagnostics.error(startLine, startColumn, SigmaError.MALFORMED_NUMBER, this.textFrom(startIndex));
@@ -351,8 +366,14 @@ public final class Lexer {
                     if (real) {
                         break;
                     }
+                    if (digits.equals(LONG_MIN_DIGITS)) {
+                        return new Token(TokenKind.LONG_LITERAL, text, Long.MIN_VALUE, startLine, startColumn);
+                    }
                     return new Token(TokenKind.LONG_LITERAL, text, Long.parseLong(digits), startLine, startColumn);
                 case '\0':
+                    if (!real && digits.equals(INT_MIN_DIGITS)) {
+                        return new Token(TokenKind.INT_LITERAL, text, Integer.MIN_VALUE, startLine, startColumn);
+                    }
                     return real
                             ? new Token(TokenKind.DOUBLE_LITERAL, text, doubleOf(digits), startLine, startColumn)
                             : new Token(TokenKind.INT_LITERAL, text, Integer.parseInt(digits),
@@ -388,7 +409,16 @@ public final class Lexer {
         return digits.chars().anyMatch(digit -> digit >= '1' && digit <= '9');
     }
 
+    private static boolean startsAName(final char c) {
+        return Character.isLetter(c) || c == '_';
+    }
+
+    /*
+     * A string's token holds what it means and, as its text, what was typed, quotes and escapes and all, which is
+     * what a mistake quotes back and what an editor paints the width of.
+     */
     private Token scanString(final int startLine, final int startColumn) {
+        final int startIndex = this.index;
         this.advance();
         final StringBuilder value = new StringBuilder();
         while (true) {
@@ -403,18 +433,19 @@ public final class Lexer {
             }
             value.append(c == '\\' ? this.scanEscape() : this.advance());
         }
-        final String text = value.toString();
-        return new Token(TokenKind.STRING_LITERAL, text, text, startLine, startColumn);
+        return new Token(TokenKind.STRING_LITERAL, this.textFrom(startIndex), value.toString(), startLine,
+                startColumn);
     }
 
     private Token scanChar(final int startLine, final int startColumn) {
+        final int startIndex = this.index;
         this.advance();
         if (this.index >= this.source.length() || this.peek() == '\'' || this.peek() == '\n') {
             if (this.peek() == '\'') {
                 this.advance();
             }
             this.diagnostics.error(startLine, startColumn, SigmaError.INVALID_CHARACTER_LITERAL);
-            return new Token(TokenKind.CHAR_LITERAL, "", '\0', startLine, startColumn);
+            return new Token(TokenKind.CHAR_LITERAL, this.textFrom(startIndex), '\0', startLine, startColumn);
         }
         final char value = this.peek() == '\\' ? this.scanEscape() : this.advance();
         if (this.peek() == '\'') {
@@ -428,7 +459,7 @@ public final class Lexer {
             }
             this.diagnostics.error(startLine, startColumn, SigmaError.INVALID_CHARACTER_LITERAL);
         }
-        return new Token(TokenKind.CHAR_LITERAL, String.valueOf(value), value, startLine, startColumn);
+        return new Token(TokenKind.CHAR_LITERAL, this.textFrom(startIndex), value, startLine, startColumn);
     }
 
     private char scanEscape() {
@@ -438,6 +469,10 @@ public final class Lexer {
         // A backslash that is the last thing in the file escapes nothing; reading on would step past the text's end.
         if (this.index >= this.source.length()) {
             this.diagnostics.error(escapeLine, escapeColumn, SigmaError.UNTERMINATED_STRING);
+            return '\0';
+        }
+        // Nor does one at the end of a line: the line still ends there, and the string with it, unclosed.
+        if (this.peek() == '\n') {
             return '\0';
         }
         final char c = this.advance();

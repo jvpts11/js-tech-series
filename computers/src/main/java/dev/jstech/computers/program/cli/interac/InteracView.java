@@ -66,10 +66,10 @@ public final class InteracView {
     /** How many rows a tab gathers before it stops, which is far more than a glass holds. */
     private static final int MOST_ROWS = 256;
 
-    /** How wide the name column of the panel beside the list is. */
+    /** How wide the name column of the panel beside the list is at most. */
     private static final int ASIDE_NAME_W = 15;
 
-    /** How wide the number column of that panel is. */
+    /** How wide the number column of that panel is at least; the rest of a wide panel goes to it too. */
     private static final int ASIDE_COUNT_W = 10;
 
     private InteracView() {
@@ -133,7 +133,8 @@ public final class InteracView {
                                                  final String search) {
         final List<InteracScreen.Row> rows = new ArrayList<>();
         for (final ICliComputer.StoredItem row : InteracRows.filtered(stock, search, "count")) {
-            rows.add(new InteracScreen.Row(english(row.name()), CliText.group(row.quantity()), english(row.detail())));
+            rows.add(new InteracScreen.Row(english(row.name()), CliText.group(row.quantity()), english(row.detail()),
+                    row.id()));
         }
         return rows;
     }
@@ -177,7 +178,8 @@ public final class InteracView {
                 continue;
             }
             rows.add(new InteracScreen.Row(name,
-                    found.isEmpty() ? "-" : CliText.group(found.get(0).quantity()), english(STARRED.text())));
+                    found.isEmpty() ? "-" : CliText.group(found.get(0).quantity()), english(STARRED.text()),
+                    found.isEmpty() ? "" : found.get(0).id()));
         }
         return rows;
     }
@@ -199,31 +201,29 @@ public final class InteracView {
             return List.of(english(NOTHING_HERE.text()));
         }
         final InteracScreen.Row row = rows.get(picked);
+        final int wide = state.columns();
         if (state.tab() == InteracState.TAB_SERVERS) {
-            return List.of(row.name(), "", CliText.pad(english(HOLDING.text()), ASIDE_NAME_W)
-                    + CliText.padLeft(row.count(), ASIDE_COUNT_W), CliText.pad(english(FILLED.text()), ASIDE_NAME_W)
-                    + CliText.padLeft(row.detail(), ASIDE_COUNT_W));
+            return List.of(row.name(), "", panelRow(wide, english(HOLDING.text()), row.count()),
+                    panelRow(wide, english(FILLED.text()), row.detail()));
         }
         final String named = state.tab() == InteracState.TAB_OPS
                 ? row.name().substring(row.name().indexOf(' ') + 1) : row.name();
-        final List<ICliComputer.ItemMatch> found = computer.matching(named);
-        if (found.isEmpty()) {
+        final String id = idOf(computer, row, named);
+        if (id.isEmpty()) {
             return List.of(named, "", row.detail());
         }
-        return detail(computer.itemDetail(found.get(0).id()), named);
+        return detail(computer.itemDetail(id), named, wide);
     }
 
     /** One item written out for the panel: what it is, who holds it, what makes it and what it goes into. */
-    private static List<String> detail(final ICliComputer.ItemDetail detail, final String named) {
+    private static List<String> detail(final ICliComputer.ItemDetail detail, final String named, final int wide) {
         final List<String> out = new ArrayList<>();
         out.add(detail.name().isEmpty() ? named : detail.name());
         out.add(detail.id());
         out.add("");
-        out.add(CliText.pad(english(HELD_BY.text()), ASIDE_NAME_W)
-                + CliText.padLeft(CliText.group(detail.stored()), ASIDE_COUNT_W));
+        out.add(panelRow(wide, english(HELD_BY.text()), CliText.group(detail.stored())));
         for (final ICliComputer.Holding holding : detail.where()) {
-            out.add(CliText.pad("  " + holding.server(), ASIDE_NAME_W)
-                    + CliText.padLeft(CliText.group(holding.quantity()), ASIDE_COUNT_W));
+            out.add(panelRow(wide, "  " + holding.server(), CliText.group(holding.quantity())));
         }
         added(out, InteracCommand.MADE_FROM, detail.madeBy());
         added(out, InteracCommand.USED_IN, detail.usedIn());
@@ -279,12 +279,11 @@ public final class InteracView {
         if ("stop".equals(what)) {
             return stop(computer, state, rows.size());
         }
-        final String name = rows.get(Math.min(state.selected(), rows.size() - 1)).name();
-        final List<ICliComputer.ItemMatch> found = computer.matching(name);
-        if (found.isEmpty()) {
-            return english(CliTexts.SAID_BY.with("interac", NOT_CALLED.with(name)));
+        final InteracScreen.Row row = rows.get(Math.min(state.selected(), rows.size() - 1));
+        final String id = idOf(computer, row, row.name());
+        if (id.isEmpty()) {
+            return english(CliTexts.SAID_BY.with("interac", NOT_CALLED.with(row.name())));
         }
-        final String id = found.get(0).id();
         final long many = Math.max(1L, state.amount());
         return switch (what) {
             case "get" -> computer.takeToHand(id, many).message().english();
@@ -316,6 +315,31 @@ public final class InteracView {
             return english(NOTHING_IN_FLIGHT.text());
         }
         return computer.cancelOperation(kept.get(picked).id()).message().english();
+    }
+
+    /**
+     * The registry id of what a row is: the one it carries, or else the first thing answering to its name,
+     * or empty when nothing does. A row of the network's own listing always carries one, so two things sharing
+     * a name are never mistaken for each other.
+     */
+    private static String idOf(final ICliComputer computer, final InteracScreen.Row row, final String named) {
+        if (!row.id().isEmpty()) {
+            return row.id();
+        }
+        final List<ICliComputer.ItemMatch> found = computer.matching(named);
+        return found.isEmpty() ? "" : found.get(0).id();
+    }
+
+    /**
+     * One row of the panel: a label and its number, fitted to the panel the glass has room for.
+     *
+     * <p>A narrow panel cuts the label rather than the number, because the number is what the row is there
+     * to say. The panel's first column is the space after the rule beside the list.
+     */
+    private static String panelRow(final int columns, final String label, final String value) {
+        final int room = InteracScreen.asideWidth(columns) - 1;
+        final int labelW = Math.max(1, Math.min(ASIDE_NAME_W, room - ASIDE_COUNT_W));
+        return CliText.pad(label, labelW) + CliText.padLeft(value, Math.max(1, room - labelW));
     }
 
     private static boolean matches(final String text, final String search) {

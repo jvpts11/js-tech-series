@@ -213,7 +213,8 @@ public final class Portables {
                     PortableNetwork.giveBack(player, level, device, state, key, amount);
                 }
             }
-            case DEPOSIT -> PortableNetwork.deposit(player, level, device, state, (int) amount);
+            // A slot and a picture are places on a list: one past an int's range is none, not one it wraps round to.
+            case DEPOSIT -> PortableNetwork.deposit(player, level, device, state, place(amount));
             case DEPOSIT_ALL -> PortableNetwork.depositAll(player, level, device, state);
             case CRAFT -> {
                 if (key != null) {
@@ -226,8 +227,8 @@ public final class Portables {
                 }
             }
             case GALLERY -> PortableGallery.view(player, level, device, state, Text.EMPTY);
-            case SEND_PICTURE -> PortableGallery.send(player, level, device, state, (int) amount, payload.named());
-            case DELETE_PICTURE -> PortableGallery.delete(player, level, device, (int) amount);
+            case SEND_PICTURE -> PortableGallery.send(player, level, device, state, place(amount), payload.named());
+            case DELETE_PICTURE -> PortableGallery.delete(player, level, device, place(amount));
             case MESSENGER -> PortableMessenger.talk(player, level, device, MessengerActionPayload.LOOK,
                     payload.named(), "");
             case SAY -> PortableMessenger.talk(player, level, device, MessengerActionPayload.SAY, payload.named(),
@@ -292,6 +293,11 @@ public final class Portables {
                 new WirelessLink(point.getBlockPos(), point.nodeUuid(), model.wifi(), point.standard()),
                 onSince(stack), now));
         return network;
+    }
+
+    /* A place on a list as the player's game sent it, or -1, which names none, for one past an int's range. */
+    private static int place(final long sent) {
+        return sent < 0L || sent > Integer.MAX_VALUE ? -1 : (int) sent;
     }
 
     /* The app an action is the work of, or null for the system's own. */

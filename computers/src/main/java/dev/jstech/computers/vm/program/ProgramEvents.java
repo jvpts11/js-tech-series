@@ -9,9 +9,10 @@ package dev.jstech.computers.vm.program;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Supplier;
 
 /**
@@ -51,8 +52,12 @@ final class ProgramEvents {
     private final ProgramWindows windows;
     private final ProgramWatches watches;
     private final ProgramIdentity identity;
-    /** The tick each box was last typed into, so a box tells its handler once a tick however fast it is typed in. */
-    private final Map<Long, Long> typedAt = new HashMap<>();
+    /**
+     * The boxes typed into this tick, so a box tells its handler once a tick however fast it is typed in. Only this
+     * tick's matter, so the set is emptied as the tick moves on, and a box closed by any means is soon forgotten.
+     */
+    private final Set<Long> typedThisTick = new HashSet<>();
+    private long typedTick = -1L;
 
     ProgramEvents(final Process process) {
         this.process = process;
@@ -184,10 +189,6 @@ final class ProgramEvents {
             return false;
         }
         if ("close".equals(kind)) {
-            // The throttle only matters while a box can be typed into, so a closed window's boxes are forgotten.
-            for (final Values.Obj gone : UiWidgets.inside(open)) {
-                this.typedAt.remove(Numbers.toLong(gone.get(UiWidgets.ID)));
-            }
             this.windows.close(open);
             this.ahead(handlerOf(open, "OnClose"));
             /*
@@ -218,8 +219,11 @@ final class ProgramEvents {
          */
         if ("text".equals(kind)) {
             final long tick = this.process.host().tick();
-            final Long last = this.typedAt.put(widget, tick);
-            if (last != null && last == tick) {
+            if (tick != this.typedTick) {
+                this.typedTick = tick;
+                this.typedThisTick.clear();
+            }
+            if (!this.typedThisTick.add(widget)) {
                 return true;
             }
         }
@@ -268,8 +272,11 @@ final class ProgramEvents {
 
     private void fired(final ProgramWatches.Watch watch, final long before, final long now, final boolean first) {
         final String item = watch.item();
-        if (!this.offer(watch.handler(), EVENT_BYTES, () -> List.of(item.startsWith(Process.WATCHED_FILE)
-                ? this.fileEvent(item.substring(Process.WATCHED_FILE.length()), before, now, first)
+        final boolean file = item.startsWith(Process.WATCHED_FILE);
+        final String path = file ? item.substring(Process.WATCHED_FILE.length()) : "";
+        // A file's event holds its path as a text of its own, which the room asked for has to count too.
+        final long bytes = file ? EVENT_BYTES + Heap.sizeOfText(path) : EVENT_BYTES;
+        if (!this.offer(watch.handler(), bytes, () -> List.of(file ? this.fileEvent(path, before, now, first)
                 : this.stockEvent(item, before, now, first)))) {
             this.callbacks.drop();
         } else {
