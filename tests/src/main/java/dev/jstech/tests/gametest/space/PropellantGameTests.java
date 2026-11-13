@@ -12,6 +12,7 @@ import dev.jstech.core.jstechseries.Elements;
 import dev.jstech.core.jstechseries.SharedCatalogue;
 import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.material.MatterState;
+import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.moving.StructureYard;
@@ -20,7 +21,9 @@ import dev.jstech.space.api.Propellant;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.RocketBoilOff;
+import dev.jstech.space.rocket.RocketBurns;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.Rockets;
@@ -167,6 +170,50 @@ public final class PropellantGameTests {
             }
             helper.succeed();
         });
+    }
+
+    /**
+     * A stage's boosters burn their own propellant down: their burn takes from the core's tank only what its engine
+     * burns beside them, leaves the boosters spent, and a rocket reckoned after it has the core's burn alone.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void boosters_burnTheirOwnAndTakeOnlyTheCoresShareOfItsTank(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final Propellant methalox = Propellants.get(level, SkeletonPropellants.METHALOX).orElseThrow();
+        final BlockPos at = new BlockPos(2, 2, 2);
+        helper.setBlock(at, Blocks.IRON_BLOCK);
+        final StructureResult made = MovingStructures.assembleFor(level, helper.absolutePos(at),
+                helper.absolutePos(at), UUID.randomUUID());
+        helper.assertTrue(made.ok(), "the rocket's blocks are a moving structure");
+        final MovingStructure body = made.structure();
+        final List<RocketStack.Part> booster = List.of(part("sea_level_engine_3", 1), part("tank_3", 4));
+        final RocketStack stack = new RocketStack(List.of(
+                new RocketStack.Section(part("sea_level_engine_3", 1), List.of(booster, booster)),
+                new RocketStack.Section(part("tank_3", LAYERS), List.of())));
+        try {
+            Rockets.register(level.getServer(), body.id(), stack, UUID.randomUUID());
+            final TankLoad full = TankLoad.filled(SkeletonPropellants.METHALOX, methalox, 5_800.0 * LAYERS);
+            helper.assertTrue(Rockets.load(level.getServer(), body.id(), 1, full), "its core's tank fills");
+            final List<StageMath.Burn> before = RocketAscent.burns(level, body);
+            helper.assertTrue(before.size() == 2 && before.get(0).boosters(), "its boosters burn first: " + before);
+            final double coreShare = before.get(0).coreShare();
+            helper.assertTrue(coreShare > 0 && coreShare < 1, "beside them the core burns some of its tank: "
+                    + coreShare);
+            helper.assertTrue(RocketBurns.burn(level, body, 0, before.get(0).vacuumDeltaV()),
+                    "the boosters' burn is there to burn");
+            final Rockets.Rocket after = Rockets.get(level.getServer(), body.id()).orElseThrow();
+            helper.assertTrue(after.boosters(0) == 0, "the boosters are spent: " + after.boosters(0));
+            final double kept = after.tanks().get(1).total() / full.total();
+            helper.assertTrue(Math.abs(kept - (1 - coreShare)) < 1.0E-9,
+                    "the core's tank keeps all it did not burn beside them: " + kept + " of it");
+            final List<StageMath.Burn> now = RocketAscent.burns(level, body);
+            helper.assertTrue(now.size() == 1 && !now.get(0).boosters(),
+                    "reckoned again, it has the core's burn alone: " + now);
+        } finally {
+            Rockets.forget(level.getServer(), body.id());
+            MovingStructures.takeAway(body);
+        }
+        helper.succeed();
     }
 
     /* The share of a full tank of {@code material} lost in an hour at the Overworld's warmth. */

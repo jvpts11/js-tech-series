@@ -50,7 +50,13 @@ public final class OxygenPanelBlock extends ShipFixtureBlock {
             return 0;
         }
         final double moles = SealedRooms.take(level, pos, AirMix.OXYGEN, missing * RoomLiving.PLAYER_BREATH);
-        return SuitAir.refill(level, chest, (int) Math.floor(moles / RoomLiving.PLAYER_BREATH));
+        // Whole seconds of breathing go into the suit; what is left of the oxygen taken goes back into the room.
+        final int filled = SuitAir.refill(level, chest, (int) Math.floor(moles / RoomLiving.PLAYER_BREATH + 1e-9));
+        final double left = moles - filled * RoomLiving.PLAYER_BREATH;
+        if (left > 1e-12) {
+            SealedRooms.give(level, pos, AirMix.OXYGEN, left);
+        }
+        return filled;
     }
 
     @Override

@@ -38,10 +38,11 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The rockets of a world, each a moving structure of J's Core's whose parts are a rocket's: its stack of parts from the
- * bottom up, whose it is, what its tanks hold and where each of its stages is set to go. A rocket belongs to whoever
- * built it and is used by their team, by J's Core's kit of ownership, as a starship is; it keeps its record as it goes
- * from one dimension to another, its structure's id the same. What its tanks hold boils off as the time goes by,
- * reckoned whenever it is asked for rather than every tick. Kept with the world.
+ * bottom up, whose it is, what its tanks and its boosters hold and where each of its stages is set to go. A rocket
+ * belongs to whoever built it and is used by their team, by J's Core's kit of ownership, as a starship is; it keeps
+ * its record as it goes from one dimension to another, its structure's id the same. What its tanks hold boils off as
+ * the time goes by, reckoned whenever it is asked for rather than every tick; a booster's solid propellant does not.
+ * Kept with the world.
  */
 public final class Rockets extends SavedData {
 
@@ -65,7 +66,7 @@ public final class Rockets extends SavedData {
     public static Rocket register(final MinecraftServer server, final StructureUuid structure, final RocketStack stack,
                                   final UUID builder) {
         final Rocket rocket = new Rocket(stack, Ownership.of(builder).withAccess(Access.TEAM), Map.of(), Map.of(),
-                server.overworld().getGameTime(), Map.of());
+                server.overworld().getGameTime(), Map.of(), Map.of());
         put(server, structure, rocket);
         return rocket;
     }
@@ -89,7 +90,7 @@ public final class Rockets extends SavedData {
     public static boolean own(final MinecraftServer server, final StructureUuid structure,
                               final Ownership ownership) {
         return change(server, structure, rocket -> new Rocket(rocket.stack(), ownership, rocket.tanks(),
-                rocket.fates(), rocket.settled(), rocket.lost()));
+                rocket.fates(), rocket.settled(), rocket.lost(), rocket.boosters()));
     }
 
     /**
@@ -100,7 +101,7 @@ public final class Rockets extends SavedData {
                                final Map<Integer, Integer> lost) {
         settle(server, structure);
         return change(server, structure, rocket -> new Rocket(rocket.stack(), rocket.ownership(), rocket.tanks(),
-                rocket.fates(), rocket.settled(), lost));
+                rocket.fates(), rocket.settled(), lost, rocket.boosters()));
     }
 
     /**
@@ -117,8 +118,26 @@ public final class Rockets extends SavedData {
             final Map<Integer, TankLoad> tanks = new LinkedHashMap<>(rocket.tanks());
             tanks.put(section, load);
             return new Rocket(rocket.stack(), rocket.ownership(), tanks, rocket.fates(), rocket.settled(),
-                    rocket.lost());
+                    rocket.lost(), rocket.boosters());
         }) && get(server, structure).map(rocket -> load.equals(rocket.tanks().get(section))).orElse(false);
+    }
+
+    /**
+     * Keeps {@code left}, from nought to 1, as the share of their propellant the boosters hung at the place
+     * {@code section} of {@code structure}'s rocket still hold; whether it is a rocket and boosters hang there.
+     */
+    public static boolean boosters(final MinecraftServer server, final StructureUuid structure, final int section,
+                                   final double left) {
+        return change(server, structure, rocket -> {
+            if (section < 0 || section >= rocket.stack().sections().size()
+                    || rocket.stack().sections().get(section).boosters().isEmpty()) {
+                return rocket;
+            }
+            final Map<Integer, Double> boosters = new LinkedHashMap<>(rocket.boosters());
+            boosters.put(section, Math.clamp(left, 0, 1));
+            return new Rocket(rocket.stack(), rocket.ownership(), rocket.tanks(), rocket.fates(), rocket.settled(),
+                    rocket.lost(), boosters);
+        }) && get(server, structure).map(rocket -> rocket.boosters().containsKey(section)).orElse(false);
     }
 
     /** Sets where the stage {@code stage} of {@code structure}'s rocket goes, or that it goes nowhere set. */
@@ -132,7 +151,7 @@ public final class Rockets extends SavedData {
                 fates.put(stage, fate);
             }
             return new Rocket(rocket.stack(), rocket.ownership(), rocket.tanks(), fates, rocket.settled(),
-                    rocket.lost());
+                    rocket.lost(), rocket.boosters());
         });
     }
 
@@ -213,9 +232,12 @@ public final class Rockets extends SavedData {
      * @param settled   the game's time its tanks were last reckoned at, in ticks
      * @param lost      how many blocks each of its parts has lost and not had put back, by the part's place in its
      *                  stack from the bottom; a part not named has lost none
+     * @param boosters  the share of their propellant the boosters hung at each place still hold, from nought to 1, by
+     *                  the place in its stack from the bottom; boosters at a place not named are full
      */
     public record Rocket(RocketStack stack, Ownership ownership, Map<Integer, TankLoad> tanks,
-                         Map<Integer, StageFate> fates, long settled, Map<Integer, Integer> lost) {
+                         Map<Integer, StageFate> fates, long settled, Map<Integer, Integer> lost,
+                         Map<Integer, Double> boosters) {
 
         private static final Codec<Integer> INDEX = Codec.STRING.comapFlatMap(text -> {
             try {
@@ -231,13 +253,21 @@ public final class Rockets extends SavedData {
                 Codec.unboundedMap(INDEX, StageFate.CODEC).optionalFieldOf("fates", Map.of())
                         .forGetter(Rocket::fates),
                 Codec.LONG.optionalFieldOf("settled", 0L).forGetter(Rocket::settled),
-                Codec.unboundedMap(INDEX, Codec.INT).optionalFieldOf("lost", Map.of()).forGetter(Rocket::lost)
+                Codec.unboundedMap(INDEX, Codec.INT).optionalFieldOf("lost", Map.of()).forGetter(Rocket::lost),
+                Codec.unboundedMap(INDEX, Codec.DOUBLE).optionalFieldOf("boosters", Map.of())
+                        .forGetter(Rocket::boosters)
         ).apply(instance, Rocket::new));
 
         public Rocket {
             tanks = Map.copyOf(tanks);
             fates = Map.copyOf(fates);
             lost = Map.copyOf(lost);
+            boosters = Map.copyOf(boosters);
+        }
+
+        /** The share of their propellant the boosters hung at {@code section} still hold, from nought to 1. */
+        public double boosters(final int section) {
+            return this.boosters.getOrDefault(section, 1.0);
         }
 
         /** How many blocks its part at {@code section} has lost. */
@@ -270,7 +300,7 @@ public final class Rockets extends SavedData {
                 left.put(section, lost(section) == 0 ? boiled
                         : boiled.scaled(Math.pow(1 - LEAK_EACH_SECOND, lost(section) * seconds)));
             }
-            return new Rocket(this.stack, this.ownership, left, this.fates, now, this.lost);
+            return new Rocket(this.stack, this.ownership, left, this.fates, now, this.lost, this.boosters);
         }
     }
 }

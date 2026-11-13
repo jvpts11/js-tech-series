@@ -114,7 +114,7 @@ public final class StageMath {
         }
         final double start = above + dry + propellant + boosterDry + boosterPropellant;
         if (boosters.thrust <= 0 || boosterPropellant <= 0) {
-            return List.of(burn(number, false, start, propellant, core));
+            return List.of(burn(number, false, start, propellant, core, 1));
         }
         // The boosters' burn: they and the core burn together until the boosters are empty.
         final double boosterTime = boosterPropellant / boosters.flow(false);
@@ -122,20 +122,21 @@ public final class StageMath {
         final Engines both = new Engines();
         both.merge(core);
         both.merge(boosters);
-        final Burn first = burn(number, true, start, boosterPropellant + coreBurned, both);
+        final Burn first = burn(number, true, start, boosterPropellant + coreBurned, both,
+                propellant <= 0 ? 0 : coreBurned / propellant);
         final double afterDrop = start - boosterPropellant - coreBurned - boosterDry;
-        final Burn second = burn(number, false, afterDrop, propellant - coreBurned, core);
+        final Burn second = burn(number, false, afterDrop, propellant - coreBurned, core, 1);
         return List.of(first, second);
     }
 
     private static Burn burn(final int number, final boolean boosters, final double start, final double burned,
-                             final Engines engines) {
+                             final Engines engines, final double coreShare) {
         final double end = start - burned;
         final boolean burns = engines.thrust > 0 && burned > 0 && end > 0;
         final double ratio = burns ? Math.log(start / end) : 0;
         return new Burn(number, boosters, start, end, engines.thrust, engines.seaLevelThrust(),
                 engines.isp(false) * OrbitScale.STANDARD_GRAVITY * ratio,
-                engines.isp(true) * OrbitScale.STANDARD_GRAVITY * ratio);
+                engines.isp(true) * OrbitScale.STANDARD_GRAVITY * ratio, coreShare);
     }
 
     private static double wet(final List<Piece> pieces) {
@@ -184,9 +185,11 @@ public final class StageMath {
      * @param seaLevelThrust the thrust of what burns at sea level
      * @param vacuumDeltaV   the speed it gives in a vacuum, in metres a second
      * @param seaLevelDeltaV the speed it gives at sea level
+     * @param coreShare      the share of what its stage's own tanks hold as it starts that it burns: all of it, but
+     *                       for the boosters' burn, which burns only what the core's engines burn beside them
      */
     public record Burn(int stage, boolean boosters, double startMass, double endMass, double thrust,
-                       double seaLevelThrust, double vacuumDeltaV, double seaLevelDeltaV) {
+                       double seaLevelThrust, double vacuumDeltaV, double seaLevelDeltaV, double coreShare) {
     }
 
     /* Engines burning together: their thrust, and their mass flows in a vacuum and at sea level. */

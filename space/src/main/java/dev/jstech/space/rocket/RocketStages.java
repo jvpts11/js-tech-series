@@ -22,7 +22,7 @@ import net.minecraft.resources.ResourceLocation;
  * one diameter fit together and an adapter joins two. Its burns come from its tanks full, as its design shows them, or
  * from what its tanks hold: an engine burns only the propellant it was made for, and lights only where its stage's
  * tanks hold some of it; a propellant its engines do not burn is carried as dead weight. Boosters come full, as solid
- * ones are cast.
+ * ones are cast, and hold what the rocket's record says is left of them once they have burnt.
  */
 public final class RocketStages {
 
@@ -32,7 +32,7 @@ public final class RocketStages {
     /** The burns of {@code stack} with its tanks full, from the bottom up; none while a part is unknown. */
     public static Optional<List<StageMath.Burn>> burns(final Map<ResourceLocation, RocketPart> parts,
                                                       final RocketStack stack) {
-        return staged(parts, stack, null, Map.of(), Set.of());
+        return staged(parts, stack, null, Map.of(), Set.of(), Map.of());
     }
 
     /**
@@ -43,18 +43,21 @@ public final class RocketStages {
                                                       final RocketStack stack,
                                                       final Map<ResourceLocation, Propellant> propellants,
                                                       final Map<Integer, TankLoad> tanks) {
-        return staged(parts, stack, Map.copyOf(propellants), Map.copyOf(tanks), Set.of());
+        return staged(parts, stack, Map.copyOf(propellants), Map.copyOf(tanks), Set.of(), Map.of());
     }
 
     /**
      * The burns of {@code stack} as {@link #burns(Map, RocketStack, Map, Map)} gives them, the engines of the parts at
-     * {@code dead} giving no thrust: parts that lost blocks, holed engines that do not light.
+     * {@code dead} giving no thrust: parts that lost blocks, holed engines that do not light; the boosters hung at
+     * each place holding the share {@code boosters} gives of their propellant, full where it gives none.
      */
     public static Optional<List<StageMath.Burn>> burns(final Map<ResourceLocation, RocketPart> parts,
                                                       final RocketStack stack,
                                                       final Map<ResourceLocation, Propellant> propellants,
-                                                      final Map<Integer, TankLoad> tanks, final Set<Integer> dead) {
-        return staged(parts, stack, Map.copyOf(propellants), Map.copyOf(tanks), Set.copyOf(dead));
+                                                      final Map<Integer, TankLoad> tanks, final Set<Integer> dead,
+                                                      final Map<Integer, Double> boosters) {
+        return staged(parts, stack, Map.copyOf(propellants), Map.copyOf(tanks), Set.copyOf(dead),
+                Map.copyOf(boosters));
     }
 
     /** How tall {@code stack} stands, in blocks; 0 while a part is unknown. */
@@ -159,11 +162,12 @@ public final class RocketStages {
         return mass;
     }
 
-    /* The burns, the tanks full where {@code propellants} is none. */
+    /* The burns, the tanks full where {@code propellants} is none; each place's boosters as {@code boosters} says. */
     private static Optional<List<StageMath.Burn>> staged(final Map<ResourceLocation, RocketPart> parts,
                                                         final RocketStack stack,
                                                         final Map<ResourceLocation, Propellant> propellants,
-                                                        final Map<Integer, TankLoad> tanks, final Set<Integer> dead) {
+                                                        final Map<Integer, TankLoad> tanks, final Set<Integer> dead,
+                                                        final Map<Integer, Double> boosters) {
         final List<StageMath.Piece> pieces = new ArrayList<>();
         for (final List<Integer> stage : stages(parts, stack)) {
             final ResourceLocation burnt = propellants == null ? null : burnt(parts, stack, stage);
@@ -176,20 +180,23 @@ public final class RocketStages {
                 if (core.isEmpty()) {
                     return Optional.empty();
                 }
-                final List<StageMath.Piece> boosters = new ArrayList<>();
+                final List<StageMath.Piece> hung = new ArrayList<>();
+                final double left = Math.clamp(boosters.getOrDefault(place, 1.0), 0, 1);
                 for (final List<RocketStack.Part> booster : section.boosters()) {
                     final Optional<StageMath.Piece> summed = summed(parts, booster);
                     if (summed.isEmpty()) {
                         return Optional.empty();
                     }
-                    boosters.add(summed.get());
+                    final StageMath.Piece full = summed.get();
+                    hung.add(new StageMath.Piece(full.dry(), full.propellant() * left, full.thrust(),
+                            full.seaLevelIsp(), full.vacuumIsp(), full.endsStage(), full.boosters()));
                 }
                 final StageMath.Piece piece = core.get();
                 // A holed part's engine does not light: no thrust, nothing gained from what it would burn.
                 final boolean lights = !dead.contains(place);
                 pieces.add(new StageMath.Piece(piece.dry(), piece.propellant(), lights ? piece.thrust() : 0,
                         lights ? piece.seaLevelIsp() : 0, lights ? piece.vacuumIsp() : 0, piece.endsStage(),
-                        boosters));
+                        hung));
             }
         }
         return Optional.of(StageMath.burns(pieces));

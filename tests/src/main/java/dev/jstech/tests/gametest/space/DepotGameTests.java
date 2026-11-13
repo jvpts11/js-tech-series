@@ -7,8 +7,12 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.air.AirMix;
+import dev.jstech.core.material.Material;
+import dev.jstech.core.material.Materials;
 import dev.jstech.core.matter.IMatterHandler;
 import dev.jstech.core.matter.MatterCapabilities;
+import dev.jstech.core.matter.MatterStack;
 import dev.jstech.space.depot.DepotBlocks;
 import dev.jstech.space.depot.DepotPieceBlock;
 import dev.jstech.space.depot.TransferPumpBlockEntity;
@@ -27,10 +31,12 @@ import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.tests.JsTests;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
@@ -112,6 +118,55 @@ public final class DepotGameTests {
                     helper.assertTrue(pump(level, pump).amount() < OXYGEN, "boiling off some of its liquid oxygen");
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * Oxygen taken a millibucket of gas at a time boils a whole millibucket of liquid only once: what it boils over is
+     * kept for the next takings, so many small takings use no more liquid than one large one.
+     */
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 200)
+    public static void depot_takenALittleAtATimeKeepsWhatItBoiledOver(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        depot(helper);
+        final BlockPos pump = helper.absolutePos(PUMP);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(pump(level, pump).depot().isPresent(), "the depot forms"))
+                .thenExecute(() -> {
+                    pump(level, pump).liquid().fill(new FluidStack(SkeletonPropellants.LIQUID_OXYGEN.get(), OXYGEN),
+                            IFluidHandler.FluidAction.EXECUTE);
+                    final IMatterHandler gas = level.getCapability(MatterCapabilities.GAS, pump, Direction.UP);
+                    final Material oxygen = Materials.byId(AirMix.OXYGEN).orElseThrow();
+                    final long before = gas.stack(0).map(MatterStack::amount).orElse(0L);
+                    long given = 0;
+                    for (int i = 0; i < 100; i++) {
+                        given += gas.extract(oxygen, 1, false);
+                    }
+                    final long after = gas.stack(0).map(MatterStack::amount).orElse(0L);
+                    helper.assertTrue(given == 100, "each small taking is given: " + given);
+                    helper.assertTrue(pump(level, pump).amount() == OXYGEN - 1,
+                            "a hundred millibuckets of gas boil a single millibucket of liquid: "
+                                    + pump(level, pump).amount());
+                    // The sphere's gas is its liquid's rounded down, so the fall may be one off what was given.
+                    helper.assertTrue(Math.abs(before - after - given) <= 1,
+                            "and what it holds falls by what it gave: " + before + " to " + after);
+                })
+                .thenSucceed();
+    }
+
+    /** A flight computer handed a new rocket keeps nothing of the last one's tanks or flight. */
+    @GameTest(template = TALL, batch = BATCH)
+    public static void computer_handedANewRocketStartsAfresh(final GameTestHelper helper) {
+        helper.setBlock(COMPUTER, RocketKitBlocks.FLIGHT_COMPUTER.get());
+        final FlightComputerBlockEntity rocket =
+                (FlightComputerBlockEntity) helper.getLevel().getBlockEntity(helper.absolutePos(COMPUTER));
+        final RocketStack stack = RocketStack.of(part("sea_level_engine_3"), part("tank_3"), part("capsule_3"));
+        rocket.carry(new RocketDesign("FIRST", stack), new BlockPos(0, -4, 0), List.of());
+        rocket.load(1, new TankLoad(ResourceLocation.withDefaultNamespace("first_rockets_load"), Map.of()));
+        helper.assertTrue(!rocket.tanks().isEmpty(), "the first rocket's tank is loaded");
+        rocket.carry(new RocketDesign("SECOND", stack), new BlockPos(0, -4, 0), List.of());
+        helper.assertTrue(rocket.tanks().isEmpty() && rocket.landing().isEmpty(),
+                "the second keeps none of it: " + rocket.tanks());
+        helper.succeed();
     }
 
     @GameTest(template = TALL, batch = BATCH, timeoutTicks = 300)

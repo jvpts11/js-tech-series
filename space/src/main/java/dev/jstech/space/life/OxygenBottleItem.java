@@ -85,6 +85,11 @@ public final class OxygenBottleItem extends Item {
         final double moles = SealedRooms.take(level, pos, AirMix.OXYGEN, (FULL - air(bottle)) * MOLES_A_SECOND);
         final int seconds = (int) Math.floor(moles / MOLES_A_SECOND + 1e-9);
         setAir(bottle, air(bottle) + seconds);
+        // What is left of the oxygen taken, less than a second's, goes back into the room rather than nowhere.
+        final double left = moles - seconds * MOLES_A_SECOND;
+        if (left > 1e-12) {
+            SealedRooms.give(level, pos, AirMix.OXYGEN, left);
+        }
         return seconds;
     }
 

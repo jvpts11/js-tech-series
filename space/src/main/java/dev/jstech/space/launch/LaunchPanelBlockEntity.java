@@ -285,6 +285,12 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
         }
         final Phase now = this.phase.get();
         if (now == Phase.RELEASED) {
+            // Once its rocket is off and no more in this world, landed or gone on, the panel is free for the next.
+            if (this.lifted.get() && (this.flight.get() == null
+                    || MovingStructures.byId(server, this.flight.get()) == null)) {
+                standDown();
+                return;
+            }
             this.met.set(this.met.get() + 1);
             climb(server);
             return;
@@ -381,6 +387,19 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
         this.phase.set(Phase.SCRUBBED);
         this.left.set(START * SECOND);
         this.launched.set(false);
+        setChanged();
+    }
+
+    /* After a launch: safe again, its count back at the start, its key and its ignition to be armed anew. */
+    private void standDown() {
+        this.phase.set(Phase.SAFE);
+        this.flight.set(null);
+        this.lifted.set(false);
+        this.launched.set(false);
+        this.met.set(0);
+        this.left.set(START * SECOND);
+        this.master.set(false);
+        this.ignition.set(false);
         setChanged();
     }
 

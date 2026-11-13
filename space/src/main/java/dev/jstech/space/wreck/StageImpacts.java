@@ -32,6 +32,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
@@ -185,12 +186,34 @@ public final class StageImpacts {
         for (int k = 0; k < salvage.size(); k++) {
             shares.get(k % pieces).add(salvage.get(k));
         }
+        RocketWreckageBlockEntity landed = null;
+        final List<ItemStack> unplaced = new ArrayList<>();
         for (final List<ItemStack> share : shares) {
             final double angle = random.nextDouble() * Math.PI * 2;
             final double far = Math.sqrt(random.nextDouble()) * radius;
             final int x = (int) Math.floor(at.x + Math.cos(angle) * far);
             final int z = (int) Math.floor(at.z + Math.sin(angle) * far);
-            place(level, x, (int) Math.floor(at.y), z).ifPresent(wreck -> wreck.hold(share));
+            final Optional<RocketWreckageBlockEntity> wreck = place(level, x, (int) Math.floor(at.y), z);
+            if (wreck.isPresent()) {
+                wreck.get().hold(share);
+                landed = wreck.get();
+            } else {
+                unplaced.addAll(share);
+            }
+        }
+        /*
+         * A share whose column lies in a chunk not loaded goes with a piece that landed, or with one at the strike
+         * itself, so none of the salvage is lost; what a piece has no room for falls out beside it.
+         */
+        if (!unplaced.isEmpty()) {
+            if (landed == null) {
+                landed = place(level, (int) Math.floor(at.x), (int) Math.floor(at.y), (int) Math.floor(at.z))
+                        .orElse(null);
+            }
+            if (landed != null) {
+                final BlockPos beside = landed.getBlockPos();
+                landed.hold(unplaced).forEach(stack -> Block.popResource(level, beside, stack));
+            }
         }
     }
 

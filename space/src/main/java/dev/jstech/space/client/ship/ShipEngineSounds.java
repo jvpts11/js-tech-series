@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.WeakHashMap;
 import net.minecraft.client.Minecraft;
@@ -176,7 +177,8 @@ public final class ShipEngineSounds {
                 if (now.gearDown() != this.last.gearDown()) {
                     once(level, ShipSounds.GEAR, middle());
                 }
-                if (now.gearDown() != this.last.gearDown() || now.pilot() != this.last.pilot()) {
+                // Compared by what they say: each update of the readings is a new pilot, the same one or not.
+                if (now.gearDown() != this.last.gearDown() || !Objects.equals(now.pilot(), this.last.pilot())) {
                     once(level, ShipSounds.CONSOLE_SWITCH, Vec3.atCenterOf(this.console.getBlockPos()));
                 }
             }

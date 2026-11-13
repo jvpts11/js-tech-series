@@ -81,7 +81,7 @@ public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarT
         poses.pushPose();
         poses.translate(foot.getX() + 0.5 - from.getX(), foot.getY() - from.getY(), foot.getZ() + 0.5 - from.getZ());
         final int lit = LevelRenderer.getLightColor(level, foot.above());
-        RocketPartsRenderer.draw(terminal, placed, CabinReadings.AT_REST, poses, buffers, lit, overlay);
+        RocketPartsRenderer.draw(terminal, foot, placed, CabinReadings.AT_REST, poses, buffers, lit, overlay);
         poses.popPose();
     }
 

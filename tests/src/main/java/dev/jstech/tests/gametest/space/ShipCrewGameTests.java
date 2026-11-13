@@ -189,6 +189,13 @@ public final class ShipCrewGameTests {
                     menu.add(owner, rider.getScoreboardName());
                     helper.assertTrue(console.crew().orElseThrow().roleOf(rider) == CrewRole.PASSENGER, "its owner"
                             + " names a player by name, aboard as a passenger: " + console.crew());
+                    menu.set(owner, new ShipConsole.RoleSet(ShipConsole.RoleSet.NAMED, rider.getUUID(),
+                            CrewRole.CREW));
+                    menu.add(owner, rider.getScoreboardName());
+                    helper.assertTrue(console.crew().orElseThrow().roleOf(rider) == CrewRole.CREW, "named again, a"
+                            + " member keeps the role they were given: " + console.crew());
+                    menu.set(owner, new ShipConsole.RoleSet(ShipConsole.RoleSet.NAMED, rider.getUUID(),
+                            CrewRole.PASSENGER));
                     menu.set(owner, new ShipConsole.RoleSet(ShipConsole.RoleSet.TEAM, new UUID(0, 0),
                             CrewRole.PASSENGER));
                     helper.assertTrue(console.crew().orElseThrow().team() == CrewRole.PASSENGER, "and sets the"

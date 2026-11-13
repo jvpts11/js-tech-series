@@ -41,6 +41,8 @@ public final class ItemPortScreen extends AbstractContainerScreen<ItemPortMenu> 
             "textures/gui/item_port.png");
     private static final int SHEET = 256;
     private static final float SMALL = 0.75F;
+    /* The space kept between a name cut short and what stands right of it. */
+    private static final int GAP = 4;
 
     public ItemPortScreen(final ItemPortMenu menu, final Inventory inventory, final Component title) {
         super(menu, inventory, title);
@@ -102,9 +104,10 @@ public final class ItemPortScreen extends AbstractContainerScreen<ItemPortMenu> 
             small(graphics, GameText.component(HangarTexts.PORT_IDLE).getString(), x0 + m, y0 + m, c.greenDim());
             return;
         }
-        small(graphics, view.ship(), x0 + m, y0 + m, c.green());
-        smallRight(graphics, GameText.component(HangarTexts.PORT_BLOCKS.with(view.laid(), view.blocks()))
-                .getString(), x0 + w - m, y0 + m, c.green());
+        // A long name is cut short of what stands right of it, so the two never run into each other.
+        final String laid = GameText.component(HangarTexts.PORT_BLOCKS.with(view.laid(), view.blocks())).getString();
+        small(graphics, fitted(view.ship(), w - 2 * m - smallWidth(laid) - GAP), x0 + m, y0 + m, c.green());
+        smallRight(graphics, laid, x0 + w - m, y0 + m, c.green());
         bar(graphics, x0 + m, y0 + ItemPortLayout.BAR_Y, w - 2 * m, share(view.laid(), view.blocks()), c.green(),
                 c.track());
         final List<ItemPortView.Row> rows = view.rows();
@@ -114,12 +117,13 @@ public final class ItemPortScreen extends AbstractContainerScreen<ItemPortMenu> 
             final int y = y0 + ItemPortLayout.LIST_Y + k * ItemPortLayout.ROW;
             final boolean done = row.enough();
             graphics.renderItem(new ItemStack(row.item()), x0 + m, y);
-            small(graphics, row.item().getDescription().getString(), x0 + ItemPortLayout.NAME_X, y + 1,
-                    done ? c.greenDim() : c.green());
             String count = GameText.component(HangarTexts.PORT_ROW.with(row.have(), row.lacking())).getString();
             if (done) {
                 count += "  " + GameText.component(HangarTexts.PORT_OK).getString();
             }
+            final int room = w - 9 - ItemPortLayout.NAME_X - smallWidth(count) - GAP;
+            small(graphics, fitted(row.item().getDescription().getString(), room), x0 + ItemPortLayout.NAME_X, y + 1,
+                    done ? c.greenDim() : c.green());
             smallRight(graphics, count, x0 + w - 9, y + 1, c.greenDim());
             bar(graphics, x0 + ItemPortLayout.NAME_X, y + ItemPortLayout.ROW_BAR_Y, w - ItemPortLayout.NAME_X - 12,
                     share(row.have(), row.lacking()), done ? c.greenDim() : c.green(), c.track());
@@ -157,6 +161,16 @@ public final class ItemPortScreen extends AbstractContainerScreen<ItemPortMenu> 
     /* The small text, ending at {@code right}. */
     private void smallRight(final GuiGraphics graphics, final String text, final int right, final int y,
                             final int colour) {
-        small(graphics, text, right - Math.round(this.font.width(text) * SMALL), y, colour);
+        small(graphics, text, right - smallWidth(text), y, colour);
+    }
+
+    /* How wide {@code text} is in the small text, in the screen's pixels. */
+    private int smallWidth(final String text) {
+        return Math.round(this.font.width(text) * SMALL);
+    }
+
+    /* As much of {@code text} as fits {@code room} of the screen's pixels in the small text. */
+    private String fitted(final String text, final int room) {
+        return this.font.plainSubstrByWidth(text, Math.max(0, (int) (room / SMALL)));
     }
 }

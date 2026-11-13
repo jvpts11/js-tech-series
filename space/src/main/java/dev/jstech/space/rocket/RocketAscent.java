@@ -113,6 +113,8 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
         if (now.y() <= this.from && climb < 0) {
             climb = 0;
             if (lit >= burns.size()) {
+                // Burnt out on the pad: what it burnt there is gone from its tanks, as on a climb into space.
+                RocketBurns.climbed(level, context.structure(), lit, mass);
                 return new Step(now, null);
             }
         }
@@ -186,7 +188,7 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
             return List.of();
         }
         return RocketStages.burns(RocketParts.all(level), rocket.get().stack(), Propellants.all(level),
-                rocket.get().tanks(), rocket.get().lost().keySet()).orElse(List.of());
+                rocket.get().tanks(), rocket.get().lost().keySet(), rocket.get().boosters()).orElse(List.of());
     }
 
     /*

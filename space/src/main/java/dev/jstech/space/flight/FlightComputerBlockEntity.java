@@ -93,6 +93,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<BlockPos> foot;
     private final ValueField<List<Integer>> formed;
     private final ValueField<Map<Integer, TankLoad>> tanks;
+    private final ValueField<Map<Integer, Double>> boosters;
     private final IntField clock;
     private final LongField liftOff;
     private final ValueField<CabinReadings> readings;
@@ -187,6 +188,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         // What its rocket's tanks hold while it stands on the ground, by their places in its stack, from the bottom.
         this.tanks = fields().value("Tanks", Codec.unboundedMap(SECTION, TankLoad.CODEC), Map.<Integer, TankLoad>of())
                 .save().toClient();
+        // What its rocket's boosters still hold, a share of their propellant by their places; full where not named.
+        this.boosters = fields().value("Boosters", Codec.unboundedMap(SECTION, Codec.DOUBLE),
+                Map.<Integer, Double>of()).save().toClient();
         // The mission's clock as the launch panel counts it, in seconds: below nought, counting down to lift-off.
         this.clock = fields().integer("Clock", 0).save().toClient();
         // When its rocket left the ground, the game's tick; and what its cabins read of the flight since.
@@ -310,6 +314,15 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return held == null ? Map.of() : held;
     }
 
+    /**
+     * What its rocket's boosters still hold, the share of their propellant by their places in its stack from the
+     * bottom; boosters at a place not named are full.
+     */
+    public Map<Integer, Double> boosters() {
+        final Map<Integer, Double> held = this.boosters.get();
+        return held == null ? Map.of() : held;
+    }
+
     /** Keeps {@code load} as what its rocket's tank at {@code section} holds. */
     public void load(final int section, final TankLoad load) {
         final Map<Integer, TankLoad> held = new TreeMap<>(tanks());
@@ -330,6 +343,18 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         this.choices.set(Map.of());
         this.shown.set(Map.of());
         this.separated.set(0);
+        // A new rocket starts its flight afresh: nothing of the last one's tanks, losses, plans or count stays.
+        this.tanks.set(Map.of());
+        this.boosters.set(Map.of());
+        this.lost.set(Map.of());
+        this.mark.set(null);
+        this.executed.set(null);
+        this.landing.set(null);
+        this.cruising.set(false);
+        this.guidance.set(COMPUTER_GUIDANCE);
+        this.descent.set(DescentPhase.NONE);
+        this.clock.set(0);
+        this.liftOff.set(NOT_LIFTED);
         setChanged();
     }
 
@@ -602,7 +627,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         }
         final Map<Integer, Integer> holed = this.lost.get();
         final Optional<List<StageMath.Burn>> burns = RocketStages.burns(RocketParts.all(this.level),
-                design.get().stack(), Propellants.all(this.level), tanks(), holed == null ? Set.of() : holed.keySet());
+                design.get().stack(), Propellants.all(this.level), tanks(), holed == null ? Set.of() : holed.keySet(),
+                boosters());
         if (burns.isEmpty()) {
             return OptionalDouble.empty();
         }
@@ -760,9 +786,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         }
         final int wide = RocketStages.diameter(parts, design.get().stack(), stageNumber);
         final List<UUID> fit = new ArrayList<>();
-        for (final Map.Entry<UUID, LandingPlatforms.Entry> platform : numbered(server)) {
-            if (platform.getValue().takes(wide) && (by == null || platform.getValue().ownership().mayUse(by))) {
-                fit.add(platform.getKey());
+        for (final Numbered platform : numbered(server)) {
+            if (platform.platform().takes(wide) && (by == null || platform.platform().ownership().mayUse(by))) {
+                fit.add(platform.id());
             }
         }
         if (fit.isEmpty()) {
@@ -853,11 +879,18 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         }
     }
 
-    /* Keeps what its rocket's tanks hold in flight as its record reckons it, for its pages to read. */
+    /*
+     * Keeps what its rocket's tanks and boosters hold in flight as its record reckons it, for its pages to read and
+     * for the rocket's next launch to start from.
+     */
     private void followTanks(final ServerLevel server, final MovingStructure body) {
         Rockets.settle(server.getServer(), body.id()).ifPresent(record -> {
             if (!record.tanks().equals(tanks())) {
                 this.tanks.set(record.tanks());
+                setChanged();
+            }
+            if (!record.boosters().equals(boosters())) {
+                this.boosters.set(record.boosters());
                 setChanged();
             }
         });
@@ -866,13 +899,13 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     /* Shows its players the platforms its stages are set to: each one's number, width, distance and whether free. */
     private void showPlatforms(final ServerLevel server) {
         final Map<Integer, ShownPlatform> out = new TreeMap<>();
-        final List<Map.Entry<UUID, LandingPlatforms.Entry>> all = numbered(server);
+        final List<Numbered> all = numbered(server);
         choices().forEach((stageNumber, choice) -> choice.platform().ifPresent(id -> {
             for (int k = 0; k < all.size(); k++) {
-                final LandingPlatforms.Entry platform = all.get(k).getValue();
-                if (all.get(k).getKey().equals(id)) {
-                    out.put(stageNumber, new ShownPlatform(k + 1, platform.side(), (int) Math.round(Math.sqrt(
-                            platform.terminal().distSqr(this.worldPosition))), platform.free()));
+                final LandingPlatforms.Entry platform = all.get(k).platform();
+                if (all.get(k).id().equals(id)) {
+                    out.put(stageNumber, new ShownPlatform(k + 1, platform.side(),
+                            (int) Math.round(all.get(k).distance()), platform.free()));
                 }
             }
         }));
@@ -882,14 +915,21 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         }
     }
 
-    /* The platforms of the world it stands in, the nearest first, numbered so from one. */
-    private List<Map.Entry<UUID, LandingPlatforms.Entry>> numbered(final ServerLevel server) {
-        final List<Map.Entry<UUID, LandingPlatforms.Entry>> out = new ArrayList<>();
+    /*
+     * The platforms of the world it stands in, the nearest first, numbered so from one. Both ends are measured where
+     * they are in the world: a platform afloat on a moving structure, or this computer aboard its rocket, keeps its
+     * blocks in the far yard, which is no measure of where it is.
+     */
+    private List<Numbered> numbered(final ServerLevel server) {
+        final Vec3 here = MovingStructures.inWorld(server, Vec3.atCenterOf(this.worldPosition));
+        final List<Numbered> out = new ArrayList<>();
         for (final UUID id : LandingPlatforms.all(server.getServer())) {
             LandingPlatforms.get(server.getServer(), id).filter(platform -> platform.dimension()
-                    .equals(server.dimension())).ifPresent(platform -> out.add(Map.entry(id, platform)));
+                    .equals(server.dimension())).ifPresent(platform -> out.add(new Numbered(id, platform,
+                    LandingPlatforms.landingSpot(server.getServer(), platform).map(spot -> spot.distanceTo(here))
+                            .orElse(Double.MAX_VALUE))));
         }
-        out.sort(Comparator.comparingDouble(platform -> platform.getValue().terminal().distSqr(this.worldPosition)));
+        out.sort(Comparator.comparingDouble(Numbered::distance));
         return out;
     }
 
@@ -909,5 +949,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                 Codec.INT.fieldOf("distance").forGetter(ShownPlatform::distance),
                 Codec.BOOL.fieldOf("free").forGetter(ShownPlatform::free)
         ).apply(instance, ShownPlatform::new));
+    }
+
+    /* A platform of its world with its id and how far its landing spot is from this computer, in blocks. */
+    private record Numbered(UUID id, LandingPlatforms.Entry platform, double distance) {
     }
 }

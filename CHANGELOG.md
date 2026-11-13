@@ -3041,12 +3041,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   light's button lights the face. The pressure's figure is written the way the game's language writes numbers.
 - (Space) Rockets of parts and stages: a rocket is a moving structure whose blocks are its parts stacked from the
   bottom up, and its stages are split at its separation rings, each carrying what is above it; boosters strapped on
-  burn beside the core and drop first. Its delta-v is summed from its parts by Tsiolkovsky's equation and its
-  thrust-to-weight from its engines' thrust at sea level, so a rocket that lifts off the Moon may not lift off the
-  Overworld. A tank is built in layers, as tall as it is wanted. The parts come in diameters of 3 and 5 blocks, all
-  burning methalox: the sea-level and vacuum engines, the tank, the separation and instrument rings, the capsule, the
-  landing legs and the two stages of the lunar lander; a part fits only on one of its own diameter. A rocket belongs
-  to whoever built it and is flown by their team.
+  burn their own propellant beside the core and drop first, and once burnt stay spent. Its delta-v is summed from its
+  parts by Tsiolkovsky's equation and its thrust-to-weight from its engines' thrust at sea level, so a rocket that
+  lifts off the Moon may not lift off the Overworld. A tank is built in layers, as tall as it is wanted. The parts
+  come in diameters of 3 and 5 blocks, all burning methalox: the sea-level and vacuum engines, the tank, the
+  separation and instrument rings, the capsule, the landing legs and the two stages of the lunar lander; a part fits
+  only on one of its own diameter. A rocket belongs to whoever built it and is flown by their team.
 - (Space) Propellants and where spent stages go: the skeleton's rockets burn methalox, liquid methane and liquid
   oxygen in Raptor's mixture, and a rocket's delta-v comes from what its tanks really hold; an engine lights only on
   its own propellant, and what it does not burn is carried as dead weight. An engine's thrust and impulse fall from

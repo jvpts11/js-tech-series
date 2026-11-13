@@ -73,6 +73,9 @@ class StageMathTest {
         assertEquals(start - 8_000 - coreBurned - 1_000, burns.get(1).startMass(), CLOSE);
         assertEquals(1_500, burns.get(1).endMass(), CLOSE);
         assertEquals(3 * THRUST, burns.get(0).thrust(), CLOSE);
+        // The boosters' burn takes only what the core burns beside them from its tanks; the core's burn the rest.
+        assertEquals(coreBurned / 9_000, burns.get(0).coreShare(), CLOSE);
+        assertEquals(1, burns.get(1).coreShare(), CLOSE);
     }
 
     @Test

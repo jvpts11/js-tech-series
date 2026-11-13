@@ -28,6 +28,7 @@ import java.util.Optional;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.player.Player;
@@ -37,6 +38,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.ItemStackedOnOtherEvent;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Life support: a pressure suit worn whole lets its wearer breathe where there is no air for as long as its tanks
@@ -201,12 +204,22 @@ public final class LifeSupport {
         }
         double share = 0;
         for (final ResourceLocation id : fittedIds(stack)) {
-            final SuitModule module = SuitModules.declared().get(id);
+            final SuitModule module = moduleOf(id);
             if (module != null && module.kind() == SuitModule.Kind.RADIATION) {
                 share += module.amount();
             }
         }
         return share;
+    }
+
+    /*
+     * A suit module by its id with no level to ask, as the running server's data packs have it, their own modules and
+     * their overrides of the mod's included; the declared one when no server runs.
+     */
+    private static @Nullable SuitModule moduleOf(final ResourceLocation id) {
+        final MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        return server == null ? SuitModules.declared().get(id)
+                : SuitModules.get(server.overworld(), id).orElse(null);
     }
 
     /* Whether {@code piece} is some suit's piece worn in {@code slot}. */

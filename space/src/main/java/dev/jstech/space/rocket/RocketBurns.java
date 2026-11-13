@@ -17,9 +17,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 
 /**
- * What a rocket's burns take from its tanks, written into its record: the climb, once it is over, and a burn of so
- * much delta-v in a vacuum, as its transfer burn. A stage's tanks are emptied in the order its stages burn, the last
- * one burning taking its share of what it burnt.
+ * What a rocket's burns take from its tanks and its boosters, written into its record: the climb, once it is over, and
+ * a burn of so much delta-v in a vacuum, as its transfer burn. A stage's tanks are emptied in the order its stages
+ * burn, the last one burning taking its share of what it burnt. The boosters' burn takes from the stage's tanks only
+ * what its core burns beside them, and burns its boosters down.
  */
 public final class RocketBurns {
 
@@ -36,7 +37,7 @@ public final class RocketBurns {
             final StageMath.Burn burn = burns.get(i);
             final double held = burn.startMass() - burn.endMass();
             final double used = i < lit ? held : Math.clamp(burn.startMass() - mass, 0, held);
-            take(level, body, burn.stage(), held <= 0 ? 0 : used / held);
+            take(level, body, burn, held <= 0 ? 0 : used / held);
         }
     }
 
@@ -52,31 +53,40 @@ public final class RocketBurns {
                 continue;
             }
             if (left >= burn.vacuumDeltaV()) {
-                take(level, body, burn.stage(), 1);
+                take(level, body, burn, 1);
                 left -= burn.vacuumDeltaV();
                 continue;
             }
             // The rocket's equation: the mass left after burning {@code left} of what the burn could give.
             final double exhaust = burn.vacuumDeltaV() / Math.log(burn.startMass() / burn.endMass());
             final double used = burn.startMass() * (1 - Math.exp(-left / exhaust));
-            take(level, body, burn.stage(), used / (burn.startMass() - burn.endMass()));
+            take(level, body, burn, used / (burn.startMass() - burn.endMass()));
             left = 0;
         }
         return left <= 0;
     }
 
-    /* Takes {@code share} of what the tanks of the stage {@code stage} of {@code body}'s rocket hold. */
-    private static void take(final ServerLevel level, final MovingStructure body, final int stage,
+    /*
+     * Takes what {@code share} of {@code burn} burns from {@code body}'s rocket: that much of the share of its stage's
+     * tanks the burn burns, and, in the boosters' burn, that much of what its boosters still hold.
+     */
+    private static void take(final ServerLevel level, final MovingStructure body, final StageMath.Burn burn,
                              final double share) {
         final Optional<Rockets.Rocket> rocket = Rockets.settle(level.getServer(), body.id());
         if (rocket.isEmpty() || share <= 0) {
             return;
         }
+        final double burnt = Math.clamp(share, 0, 1);
+        final double core = burnt * Math.clamp(burn.coreShare(), 0, 1);
         final Map<ResourceLocation, RocketPart> parts = RocketParts.all(level);
-        for (final int section : RocketStages.stage(parts, rocket.get().stack(), stage)) {
+        for (final int section : RocketStages.stage(parts, rocket.get().stack(), burn.stage())) {
             final TankLoad load = rocket.get().tanks().get(section);
-            if (load != null) {
-                Rockets.load(level.getServer(), body.id(), section, load.scaled(1 - Math.clamp(share, 0, 1)));
+            if (load != null && core > 0) {
+                Rockets.load(level.getServer(), body.id(), section, load.scaled(1 - core));
+            }
+            if (burn.boosters() && !rocket.get().stack().sections().get(section).boosters().isEmpty()) {
+                Rockets.boosters(level.getServer(), body.id(), section,
+                        rocket.get().boosters(section) * (1 - burnt));
             }
         }
     }

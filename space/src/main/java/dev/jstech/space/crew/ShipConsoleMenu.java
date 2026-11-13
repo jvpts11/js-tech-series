@@ -15,6 +15,7 @@ import dev.jstech.core.menu.MenuValidity;
 import dev.jstech.core.text.GameText;
 import dev.jstech.space.ship.AirReserveEntity;
 import java.util.Optional;
+import java.util.UUID;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
@@ -103,7 +104,12 @@ public final class ShipConsoleMenu extends CoreMenu {
             player.displayClientMessage(GameText.component(CrewTexts.UNKNOWN_PLAYER), true);
             return;
         }
-        this.console.crew(crew.get().withNamed(found.get().getId(), found.get().getName(), CrewRole.PASSENGER));
+        // One already named keeps the role they have: adding names a player, and setting a role is another call.
+        final UUID id = found.get().getId();
+        if (crew.get().named().stream().anyMatch(member -> member.id().equals(id))) {
+            return;
+        }
+        this.console.crew(crew.get().withNamed(id, found.get().getName(), CrewRole.PASSENGER));
     }
 
     /* The console's crew, when {@code player} may set its roles; else they are told whose it is to do. */

@@ -23,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.phys.Vec3;
 
@@ -41,8 +42,11 @@ public final class RocketPartsRenderer {
     private RocketPartsRenderer() {
     }
 
-    /** Draws {@code placed}, the models of a rocket's parts, for {@code owner}, its cabins showing {@code readings}. */
-    public static void draw(final BlockEntity owner, final List<RocketPartModels.Placed> placed,
+    /**
+     * Draws {@code placed}, the models of a rocket's parts, for {@code owner}, its cabins showing {@code readings}; the
+     * rocket stands on {@code foot}, which is where how far each cabin is from the eye is measured from.
+     */
+    public static void draw(final BlockEntity owner, final BlockPos foot, final List<RocketPartModels.Placed> placed,
                             final CabinReadings readings, final PoseStack poses, final MultiBufferSource buffers,
                             final int light, final int overlay) {
         final Vec3 eye = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
@@ -62,7 +66,8 @@ public final class RocketPartsRenderer {
             KitRenderer.draw(instance, ModelDefinition.Variant.NONE, owner, poses, buffers, light, overlay, null,
                     owner.getLevel(), true);
             if (cabin.isPresent()) {
-                final double distance = eye.distanceToSqr(Vec3.atCenterOf(owner.getBlockPos()).add(0, part.y(), 0));
+                // The cabin stands on the rocket's foot, wherever the block that draws it is.
+                final double distance = eye.distanceToSqr(Vec3.atBottomCenterOf(foot).add(0, part.y(), 0));
                 RocketCabinRenderer.draw(owner, name, instance, cabin.get(), readings, poses, buffers, light,
                         distance);
             }

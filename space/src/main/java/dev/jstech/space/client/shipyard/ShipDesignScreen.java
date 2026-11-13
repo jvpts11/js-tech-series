@@ -867,8 +867,13 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
 
     /* Flips the section at {@code index} left for right; a cockpit and a hung part never. */
     private void flip(final boolean hung, final int index) {
-        final ShipPart part = this.parts.get(this.design.spine().get(hung ? 0 : index));
-        if (hung || part == null || part.place() == ShipPlace.NOSE) {
+        // A hung part is refused before the spine is read: a design may hang parts on a spine with no section yet.
+        if (hung) {
+            say(ShipDesignTexts.NO_FLIP.text());
+            return;
+        }
+        final ShipPart part = this.parts.get(this.design.spine().get(index));
+        if (part == null || part.place() == ShipPlace.NOSE) {
             say(ShipDesignTexts.NO_FLIP.text());
             return;
         }

@@ -113,9 +113,14 @@ public final class FlightConsoleBlock extends ShipFixtureBlock implements Entity
             return ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
         }
         if (!level.isClientSide() && level.getBlockEntity(pos) instanceof AirReserveEntity reserve) {
-            final double went = reserve.pour(OxygenBottleItem.air(stack) * RoomLiving.PLAYER_BREATH);
-            OxygenBottleItem.setAir(stack, OxygenBottleItem.air(stack)
-                    - (int) Math.round(went / RoomLiving.PLAYER_BREATH));
+            // Whole seconds of the bottle go in, as many as the reserve has room for, and the bottle pays just those.
+            final int room = (int) Math.floor((AirReserveEntity.OXYGEN - reserve.oxygen()) / RoomLiving.PLAYER_BREATH
+                    + 1e-9);
+            final int seconds = Math.max(0, Math.min(OxygenBottleItem.air(stack), room));
+            if (seconds > 0) {
+                reserve.pour(seconds * RoomLiving.PLAYER_BREATH);
+                OxygenBottleItem.setAir(stack, OxygenBottleItem.air(stack) - seconds);
+            }
         }
         return ItemInteractionResult.sidedSuccess(level.isClientSide());
     }

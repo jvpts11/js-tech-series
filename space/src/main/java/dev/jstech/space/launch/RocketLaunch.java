@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -70,7 +71,8 @@ public final class RocketLaunch {
             return true;
         }
         return RocketStages.burns(RocketParts.all(level), rocket.rocket().get().stack(), Propellants.all(level),
-                rocket.tanks()).map(burns -> RocketAscent.liftsOff(level, burns)).orElse(true);
+                rocket.tanks(), Set.of(), rocket.boosters()).map(burns -> RocketAscent.liftsOff(level, burns))
+                .orElse(true);
     }
 
     /**
@@ -107,6 +109,8 @@ public final class RocketLaunch {
         final MovingStructure body = made.structure();
         Rockets.register(level.getServer(), body.id(), design.stack(), by == null ? NOBODY : by);
         tanks.forEach((section, load) -> Rockets.load(level.getServer(), body.id(), section, load));
+        // Boosters burnt on an earlier flight are not cast again by a new launch.
+        rocket.boosters().forEach((section, left) -> Rockets.boosters(level.getServer(), body.id(), section, left));
         fates.forEach((stage, fate) -> Rockets.fate(level.getServer(), body.id(), stage, fate));
         return Optional.of(body);
     }
@@ -114,7 +118,8 @@ public final class RocketLaunch {
     /** Sets the released rocket {@code body} climbing from where it stands, once it is ready, its plume after it. */
     public static void lift(final ServerLevel level, final MovingStructure body) {
         final double mass = Rockets.get(level.getServer(), body.id()).flatMap(rocket -> RocketStages.burns(
-                RocketParts.all(level), rocket.stack(), Propellants.all(level), rocket.tanks()))
+                RocketParts.all(level), rocket.stack(), Propellants.all(level), rocket.tanks(), Set.of(),
+                rocket.boosters()))
                 .filter(burns -> !burns.isEmpty()).map(burns -> burns.get(0).startMass()).orElse(0.0);
         body.move(RocketAscent.lift(mass, body.pose().y()));
         if (body.entity() != null) {

@@ -7,6 +7,7 @@
  */
 package dev.jstech.space.depot;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.core.air.AirMix;
 import dev.jstech.core.blockentity.FieldFluidTank;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
@@ -40,6 +41,12 @@ public final class TransferPumpBlockEntity extends SyncedBlockEntity {
 
     private final ValueField<DepotLayout.Depot> depot;
     private final FieldFluidTank tank;
+    /*
+     * Oxygen already boiled off and not yet given, in millibuckets of gas: liquid is drained a whole millibucket at
+     * a time, which boils to some hundreds of millibuckets of gas, so what a small taking leaves over is kept for the
+     * next.
+     */
+    private final ValueField<Long> boiled;
     private final Gas gas = new Gas();
     private int wait;
 
@@ -52,6 +59,7 @@ public final class TransferPumpBlockEntity extends SyncedBlockEntity {
         // Its depot as it found it, its places counted from the pump.
         this.depot = fields().nullable("Depot", DepotLayout.Depot.CODEC).save().toClient();
         this.tank = fields().fluid("Propellant", 0).save().toClient().exposed();
+        this.boiled = fields().value("Boiled", Codec.LONG, 0L).save();
         this.tank.setValidator(stack -> this.depot.get() != null
                 && (stack.getFluid() == SkeletonPropellants.LIQUID_OXYGEN.get()
                 || stack.getFluid() == SkeletonPropellants.LIQUID_METHANE.get()));
@@ -103,6 +111,7 @@ public final class TransferPumpBlockEntity extends SyncedBlockEntity {
         this.tank.setCapacity(capacity());
         if (now == null) {
             this.tank.setFluid(FluidStack.EMPTY);
+            this.boiled.set(0L);
         } else if (this.tank.getFluidAmount() > this.tank.getCapacity()) {
             this.tank.drain(this.tank.getFluidAmount() - this.tank.getCapacity(), IFluidHandler.FluidAction.EXECUTE);
         }
@@ -154,8 +163,12 @@ public final class TransferPumpBlockEntity extends SyncedBlockEntity {
         public Optional<MatterStack> stack(final int tank) {
             final Optional<Material> material = Materials.byId(AirMix.OXYGEN);
             final OptionalDouble litre = oxygen();
-            return litre.isEmpty() ? Optional.empty()
-                    : material.map(found -> new MatterStack(found, gasOf(amount(), litre.getAsDouble())));
+            final long held = TransferPumpBlockEntity.this.boiled.get();
+            if (litre.isEmpty() && held <= 0) {
+                return Optional.empty();
+            }
+            final long sphere = litre.isEmpty() ? 0 : gasOf(amount(), litre.getAsDouble());
+            return material.map(found -> new MatterStack(found, sphere + held));
         }
 
         @Override
@@ -171,17 +184,28 @@ public final class TransferPumpBlockEntity extends SyncedBlockEntity {
 
         @Override
         public long extract(final Material material, final long amount, final boolean simulate) {
-            final OptionalDouble litre = oxygen();
-            if (litre.isEmpty() || !material.id().equals(AirMix.OXYGEN) || amount <= 0) {
+            if (!material.id().equals(AirMix.OXYGEN) || amount <= 0) {
                 return 0;
             }
-            final double kilograms = amount / RoomVent.MILLIBUCKETS_PER_MOLE * OXYGEN_KILOGRAMS_A_MOLE;
-            final int liquid = (int) Math.min(amount(), Math.ceil(kilograms / litre.getAsDouble()));
-            if (!simulate && liquid > 0) {
-                TransferPumpBlockEntity.this.tank.drain(liquid, IFluidHandler.FluidAction.EXECUTE);
+            // What was boiled off before is given first; only the rest is boiled from the sphere's liquid.
+            final long held = TransferPumpBlockEntity.this.boiled.get();
+            final OptionalDouble litre = oxygen();
+            int liquid = 0;
+            long fresh = 0;
+            if (amount > held && litre.isPresent()) {
+                final double kilograms = (amount - held) / RoomVent.MILLIBUCKETS_PER_MOLE * OXYGEN_KILOGRAMS_A_MOLE;
+                liquid = (int) Math.min(amount(), Math.ceil(kilograms / litre.getAsDouble()));
+                fresh = gasOf(liquid, litre.getAsDouble());
+            }
+            final long given = Math.min(amount, held + fresh);
+            if (!simulate && given > 0) {
+                if (liquid > 0) {
+                    TransferPumpBlockEntity.this.tank.drain(liquid, IFluidHandler.FluidAction.EXECUTE);
+                }
+                TransferPumpBlockEntity.this.boiled.set(held + fresh - given);
                 setChanged();
             }
-            return Math.min(amount, gasOf(liquid, litre.getAsDouble()));
+            return given;
         }
 
         @Override

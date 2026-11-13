@@ -251,7 +251,7 @@ public final class LaunchPanelFace {
         }
     }
 
-    /* The tanks on a small screen: a bar each, its load and its pressure; and the loading's state under it. */
+    /* The tanks on a small screen: a bar each and its load; and the loading's state under it. */
     private static void tanks(final GuiGraphics g, final Font font, final Colours c,
                               final LaunchPanelBlockEntity panel) {
         engrave(g, font, LaunchTexts.TANKS, 322, 98, c);
@@ -259,7 +259,6 @@ public final class LaunchPanelFace {
         final int[] full = {panel.oxidiser(), panel.fuel()};
         final TextKey[] names = {LaunchTexts.OXIDISER, LaunchTexts.FUEL};
         final int[] bars = {c.lox(), c.methane()};
-        final String[] pressures = {"2.1", "1.9"};
         for (int i = 0; i < 2; i++) {
             final int bx = 334 + i * 30;
             text(g, font, word(names[i]), bx + 5, 115, c.cyan(), true);
@@ -271,7 +270,6 @@ public final class LaunchPanelFace {
                 hline(g, bx + 11, bx + 13, 126 + k * 9, c.greenMid());
             }
             text(g, font, full[i] + "%", bx + 5, 167, c.ink(), true);
-            text(g, font, full[i] > 0 ? pressures[i] : "0.0", bx + 5, 176, c.green(), true);
         }
         final boolean loaded = full[0] >= LaunchPanelBlockEntity.FULL && full[1] >= LaunchPanelBlockEntity.FULL;
         annunciator(g, font, 324, 196, 64, 12, List.of(word(loaded ? LaunchTexts.LOADED : LaunchTexts.TOPPING_OFF)),
