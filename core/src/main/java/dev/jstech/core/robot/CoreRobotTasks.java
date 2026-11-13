@@ -114,6 +114,24 @@ public final class CoreRobotTasks {
         // Loading the class declares them.
     }
 
+    /*
+     * Whether {@code task}, as it stands, goes to a charging station: a Recharge, or a Repeat or an If whose step at
+     * hand is one; an If not begun yet is asked of the branch its condition would choose now.
+     */
+    static boolean recharging(final IRobotTask task, final RobotEntity robot) {
+        if (task instanceof Recharge) {
+            return true;
+        }
+        if (task instanceof Repeat repeat) {
+            return repeat.steps.recharging(robot);
+        }
+        if (task instanceof If branch) {
+            return branch.chosen != null ? branch.chosen.recharging(robot)
+                    : new Steps(branch.condition.test(robot) ? branch.then : branch.otherwise).recharging(robot);
+        }
+        return false;
+    }
+
     private static ResourceLocation id(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsCore.MODID, path);
     }
@@ -645,6 +663,11 @@ public final class CoreRobotTasks {
         private void restart() {
             at = 0;
             current = null;
+        }
+
+        /* Whether the step at hand goes to a charging station. */
+        private boolean recharging(final RobotEntity robot) {
+            return at < tasks.size() && CoreRobotTasks.recharging(current != null ? current : tasks.get(at), robot);
         }
     }
 }

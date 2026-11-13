@@ -67,7 +67,8 @@ import org.slf4j.Logger;
  * <p>A mod's robot walks, flies or swims ({@link #movement()}), carries as much as its size lets it ({@link
  * #inventorySize()}), digs with whatever tool it carries ({@link RobotTools}), and runs on a battery when it has one
  * ({@link #batteryCapacity()}): working spends it, and a robot with an empty battery stands still until it is charged,
- * at a charging station ({@link RobotCharger}) or through the game's energy capability.
+ * at a charging station ({@link RobotCharger}) or through the game's energy capability. The one thing it still does
+ * empty is go to a station when told to recharge ({@link CoreRobotTasks.Recharge}), or it could never get there.
  */
 public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwned, IEnergyHolder {
 
@@ -392,15 +393,16 @@ public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwn
 
     /*
      * One tick of the task at hand; a task done or given up makes way for the next at once, and is told on the Core's
-     * events. Getting about spends its battery; with it empty, it stands still.
+     * events. Getting about spends its battery; with it empty, it stands still, unless it is on its way to be charged:
+     * a robot that ran low on the way to its charging station would never get there.
      */
     private void work() {
         final boolean onBattery = batteryCapacity() > 0;
-        if (onBattery && !getNavigation().isDone() && !spend(movingCost())) {
+        final IRobotTask task = tasks.peekFirst();
+        if (onBattery && !getNavigation().isDone() && !spend(movingCost()) && !recharging(task)) {
             getNavigation().stop();
         }
-        final IRobotTask task = tasks.peekFirst();
-        if (task == null || onBattery && charge <= 0) {
+        if (task == null || onBattery && charge <= 0 && !recharging(task)) {
             return;
         }
         final IRobotTask.Status status = task.tick(this);
@@ -408,6 +410,11 @@ public abstract class RobotEntity extends PathfinderMob implements IDriver, IOwn
             tasks.pollFirst();
             JsCore.events().post(new RobotTaskEvent(this, task, status));
         }
+    }
+
+    /* Whether {@code task} is taking it to a charging station. */
+    private boolean recharging(@Nullable final IRobotTask task) {
+        return task != null && CoreRobotTasks.recharging(task, this);
     }
 
     /* Its battery, as chargers and cables reach it: it takes charge, and gives none but to its own work. */

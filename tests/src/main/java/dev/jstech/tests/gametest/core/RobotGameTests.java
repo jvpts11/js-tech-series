@@ -135,6 +135,28 @@ public final class RobotGameTests {
                 .thenSucceed();
     }
 
+    /** A robot with its battery empty still goes to a station when told to recharge, and only then: it fills up. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 800)
+    public static void worker_emptyStillGoesToItsStationToRecharge(final GameTestHelper helper) {
+        helper.setBlock(new BlockPos(6, 2, 6), TestModules.CHARGER.get());
+        final IEnergyStorage station = helper.getLevel().getCapability(Capabilities.EnergyStorage.BLOCK,
+                helper.absolutePos(new BlockPos(6, 2, 6)), null);
+        helper.assertTrue(station != null, "the station takes charge from cables");
+        station.receiveEnergy(TestModules.CHARGER_ENERGY, false);
+        final TestEntities.Worker worker = helper.spawn(TestEntities.WORKER.get(), new BlockPos(1, 2, 1));
+        helper.assertTrue(worker.charge() == 0, "its battery is empty: " + worker.charge() + " J");
+        helper.startSequence()
+                // The station tells where it is as it works, every half second.
+                .thenExecuteAfter(12, () -> worker.queue(new CoreRobotTasks.If(
+                        new CoreRobotConditions.ChargeBelow(0.5), List.of(new CoreRobotTasks.Recharge(16)),
+                        List.of())))
+                .thenWaitUntil(() -> helper.assertTrue(worker.tasks().isEmpty() && worker.chargeShare() >= 0.99F,
+                        "empty, it still goes to the station and fills up: " + worker.charge() + " J, at "
+                                + worker.position()))
+                .thenExecute(worker::discard)
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
     public static void robot_digsFasterWithAToolThatWears(final GameTestHelper helper) {
         helper.setBlock(new BlockPos(2, 2, 3), Blocks.STONE);

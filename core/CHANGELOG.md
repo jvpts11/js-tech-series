@@ -1432,11 +1432,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - Robots that fly, swim and think: a mod's robot walks, flies in three dimensions or swims, carries as much as
   its size lets it, and digs with whatever tool it carries, of any mod, at a player's pace, the tool wearing and its
   enchantments working on what drops. One with a battery spends it getting about and digging, stands still when it is
-  empty, and recharges at a charging station (`RobotCharger`, for a mod's block). Its tasks repeat, choose by a
-  condition, wait for one or for a time of day, and find the nearest block of a kind to go to or break; its conditions
-  sense what it carries, blocks, items and creatures near, the time and its charge. `Robots` finds robots by their id
-  and their owner, gives them a program written as data and says how they stand, and the end of each task is told on
-  the Core's events, for J's Computers to program them.
+  empty, and recharges at a charging station (`RobotCharger`, for a mod's block), which it still walks to when empty.
+  Its tasks repeat, choose by a condition, wait for one or for a time of day, and find the nearest block of a kind to
+  go to or break; its conditions sense what it carries, blocks, items and creatures near, the time and its charge.
+  `Robots` finds robots by their id and their owner, gives them a program written as data and says how they stand,
+  and the end of each task is told on the Core's events, for J's Computers to program them.
 - Creatures as data: a mod's `CreatureEntity` lives as its data says, its health, speed and attack, what it
   does in order of what matters most (wandering, panicking, avoiding, following food, fighting), where it appears by
   biome, dimension and placement, and the air it breathes: it appears only where that air suits it, and chokes out
