@@ -1899,7 +1899,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   world (giving items, setting blocks, saving and opening the world again, running GameTests by name, playing a
   client test kept as a file with its pictures compared); waiting for ticks or until a screen, a block, a component's
   words or a line of chat; and recording what the agent did as a client test. A tool that acts over many ticks stops
-  when the player presses a key.
+  when the player presses a key. Every click, drag, turn of the wheel, character and key goes through the screen's
+  events as the hand's does, so what a mod does round a screen answers it too.
 - (Core) CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - (Core) FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,
@@ -2450,7 +2451,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its maker's mark, its system's start and its lock, shows the world's time and the day, keeps the network's alerts in
   its own place (a balloon and the Today, the lock and the Notification Center, the lock and the shade) with a badge on
   the Alerts icon, shows its hardware, Wi-Fi and battery in its settings, and installs its apps from its store (the
-  Frames Marketplace, the Quince Store, the Droidix Store), served by the network's Mirror, all free.
+  Frames Marketplace, the Quince Store, the Droidix Store), served by the network's Mirror, all free. A swipe up from
+  the foot of the glass goes home on a device with no home button, as the qPhone X; one with its button keeps the
+  button for that.
 - (Computers) A portable runs on its battery, the bar under its icon (about two game days, a day and a half on a PDA),
   and switches off flat. A Mobile Device Charging Dock for each era from the Legacy on (the PDA's cradle, a white base,
   an aluminium stand, a wireless stand) holds a portable of its era by a right click, charges it from the energy behind
@@ -3761,7 +3764,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the background, alone or for a pool), the Mining Pool, a service on a rack server that shares each block's reward by
   the work its miners gave less its owner's fee, with its card on the rack's window, and the Mining Panel, which shows
   a network's pools, their miners and blocks, and their settings at the pool's own server. A portable carries a wallet
-  of its own in its Wallet app.
+  of its own in its Wallet app: its balance whole on its card however many coins it holds, the warning before one is
+  made on as many lines as it takes, and its newest moves, which the wheel scrolls.
 - (Computers) The Mining Computer, a mining rig of each era from the Transition: an open frame with its mining board,
   processor, memory, one supply, one disk and up to 4, 6 or 8 graphics cards on risers. The risers go in at its
   assembly window; the cards are seated on them in the world, the rig switched off, and come out sneaking with an empty
@@ -4734,6 +4738,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   it leaves beside the generator instead of losing it.
 - (Computers) Frames 10: the taskbar's search box shows what is typed into it, its end in sight when it is long, rather
   than the line it waits with.
+- (Computers) File explorers: the count of what a folder holds counts the stored items' folder with the rest, as every
+  icon the window shows.
+- (Computers) MC-NET Setup: its first page says it makes the machine the network's MC-NET server, with no wrong article.
+- (Computers) Mainframe Console: a program installed at its prompt shows its bar to the end and says it is in, as at a
+  Command Prompt, rather than stopping at "Setting up".
 
 ## [0.5.3a] - 2026-11-04
 

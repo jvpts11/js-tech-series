@@ -264,7 +264,8 @@ public final class PortableScreen extends Screen {
             session.tap(MobileTap.ALERTS, PacketDistributor::sendToServer);
         } else if (session.page() == MobilePage.ALERTS && dy < -tall * PULL) {
             session.tap(MobileTap.BACK, PacketDistributor::sendToServer);
-        } else if (pressY > tall - EDGE && dy < -tall * PULL) {
+        } else if (!face.hasHomeButton() && pressY > tall - EDGE && dy < -tall * PULL) {
+            // A swipe up from the foot is the way home of a device with no home button, as the qPhone X's.
             session.tap(MobileTap.HOME, PacketDistributor::sendToServer);
         }
     }

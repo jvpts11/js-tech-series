@@ -472,6 +472,20 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         return out;
     }
 
+    /**
+     * How many things the window's figures say it shows, as a real one counts every icon in it, the stored items'
+     * folder among them; only the way back up is left out.
+     */
+    public int counted() {
+        int items = 0;
+        for (final Row r : rows) {
+            if (r.kind() != Kind.UP) {
+                items++;
+            }
+        }
+        return items;
+    }
+
     /** Re-requests this explorer's current listing, so a file moved in from outside shows up at once. */
     public void refresh() {
         request(dir);
@@ -1711,14 +1725,9 @@ public final class FilesApp implements IDesktopApp, CodeFileReplies.IReader {
         }
     }
 
-    /** How many files and folders are listed, the way back up and the stored items' folder left out: "6 items". */
+    /** How many things the window shows, in words: "6 items". */
     private Text itemsText() {
-        int items = 0;
-        for (final Row r : rows) {
-            if (r.kind() == Kind.FILE || r.kind() == Kind.DIR) {
-                items++;
-            }
-        }
+        final int items = counted();
         return (items == 1 ? FileDialogTexts.ONE_ITEM : FileDialogTexts.ITEMS).with(items);
     }
 

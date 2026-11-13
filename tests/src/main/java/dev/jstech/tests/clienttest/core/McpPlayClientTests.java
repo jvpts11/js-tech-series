@@ -50,6 +50,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.ScreenEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -182,7 +184,12 @@ public final class McpPlayClientTests {
         final AudioPrefs prefs = AudioPrefsStore.prefs();
         final Map<String, Float> volumes = prefs.volumes();
         final BlockPos wall = ctx.abs(WALL);
+        // What the screen's own events hear of the agent's hand, as a mod listening round a screen hears the player's.
+        final int[] pressed = new int[1];
+        final Consumer<ScreenEvent.MouseButtonPressed.Pre> hearing = event -> pressed[0]++;
+        NeoForge.EVENT_BUS.addListener(ScreenEvent.MouseButtonPressed.Pre.class, hearing);
         ctx.afterTest(() -> {
+            NeoForge.EVENT_BUS.unregister(hearing);
             McpGame.turn(false);
             TestRecorder.stop();
             prefs.setVolumes(volumes);
@@ -211,6 +218,8 @@ public final class McpPlayClientTests {
                 result.has("dragged"), "the drag is made: " + result)));
         ctx.thenAssert(1, () -> Math.abs(prefs.volume(MACHINES) - QUARTER) < CLOSE, "dragged a quarter of the way "
                 + "along its track, the machines' slider sets them to a quarter")
+                .thenAssert(0, () -> pressed[0] == 1, "the drag's press goes through the screen's events once, as "
+                        + "the hand's does: heard " + pressed[0])
                 .then(0, () -> ctx.screen(SoundMixerScreen.class).selectTab(1))
                 .then(SETTLE, () -> {
                     final AbstractSelectionList<?> sounds = first(ctx.screen(SoundMixerScreen.class),
@@ -224,9 +233,10 @@ public final class McpPlayClientTests {
         ctx.thenAssert(1, () -> first(ctx.screen(SoundMixerScreen.class), AbstractSelectionList.class)
                 .getScrollAmount() > 0, "turned down over the list of sounds, the wheel scrolls it")
                 .then(0, TestRecorder::stop)
-                .thenAssert(0, () -> TestRecorder.steps().stream().anyMatch(RecordedTest.Drag.class::isInstance)
-                        && TestRecorder.steps().stream().anyMatch(RecordedTest.Scroll.class::isInstance),
-                        "the recording keeps the drag and the turn of the wheel as steps")
+                .thenAssert(0, () -> count(RecordedTest.Drag.class) == 1 && count(RecordedTest.Scroll.class) == 1
+                        && count(RecordedTest.ClickAt.class) == 0, "the recording keeps the drag and the turn of the "
+                        + "wheel as one step each, never again from the events they went through: "
+                        + TestRecorder.steps())
                 .then(0, () -> ctx.mc().setScreen(null));
         run(ctx, sent, key, port, new Step("world_set_block", "{\"place\":" + place(wall)
                 + ",\"block\":\"minecraft:stone\"}", result -> { }));
@@ -301,6 +311,11 @@ public final class McpPlayClientTests {
                     step.check().accept(result.has("structuredContent") ? result.getAsJsonObject(
                             "structuredContent") : new JsonObject());
                 });
+    }
+
+    /* How many steps of {@code kind} the recording keeps. */
+    private static long count(final Class<? extends RecordedTest.Step> kind) {
+        return TestRecorder.steps().stream().filter(kind::isInstance).count();
     }
 
     /* The first of the screen's parts of {@code type}. */

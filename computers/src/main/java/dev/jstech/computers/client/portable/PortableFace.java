@@ -55,6 +55,11 @@ public record PortableFace(int width, int height, int screenX, int screenY, int 
         return null;
     }
 
+    /** Whether a button of the face goes home, as the first qPhones' and the PDAs' do, so no swipe has to. */
+    public boolean hasHomeButton() {
+        return buttons.stream().anyMatch(button -> MobileTap.HOME.equals(button.tap()));
+    }
+
     /*
      * A PDA's four program buttons, as a Pocket PC's launched its own programs: the Today, the network, the alerts and
      * the settings; and its pad, whose press goes to the Today.

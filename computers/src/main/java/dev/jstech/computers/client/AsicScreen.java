@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.client;
 
+import static dev.jstech.computers.client.AsicTexts.ADDRESS;
 import static dev.jstech.computers.client.AsicTexts.ADDRESS_HINT;
 import static dev.jstech.computers.client.AsicTexts.BLOCKS;
 import static dev.jstech.computers.client.AsicTexts.BOARD;
@@ -87,6 +88,8 @@ public class AsicScreen extends AbstractAssemblyScreen<AsicMenu> {
         setupNameBox(AsicLayout.ADDRESS_X + FIELD_INSET, AsicLayout.ADDRESS_Y + FIELD_INSET,
                 AsicLayout.ADDRESS_W - 2 * FIELD_INSET, TeracoinAddress.LENGTH, GameText.component(ADDRESS_HINT),
                 menu.asic().address(), typed -> { });
+        // The field is the payout address, not a name, and a narrator says so.
+        nameBox.setMessage(GameText.component(ADDRESS));
     }
 
     @Override

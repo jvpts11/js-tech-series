@@ -130,7 +130,7 @@ public enum InstallerStyle implements IStableName {
     private static final TextKey DOS_DONE = TextKey.of("jsc.install.installer_style.dos_done",
             "%s Setup is complete.");
     private static final TextKey NET_WELCOME = TextKey.of("jsc.install.installer_style.net_welcome",
-            "This will make this machine a %s server.");
+            "This will make this machine the network's %s server.");
     private static final TextKey NET_COPY = TextKey.of("jsc.install.installer_style.net_copy",
             "Setting up this server.");
     private static final TextKey NET_DONE = TextKey.of("jsc.install.installer_style.net_done",

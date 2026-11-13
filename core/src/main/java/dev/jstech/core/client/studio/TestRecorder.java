@@ -8,6 +8,7 @@
 package dev.jstech.core.client.studio;
 
 import com.google.gson.GsonBuilder;
+import dev.jstech.core.client.developer.ScreenGestures;
 import dev.jstech.core.client.developer.ScreenPoints;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.gui.data.IDataScreen;
@@ -180,7 +181,8 @@ public final class TestRecorder {
     }
 
     private static void onClick(final ScreenEvent.MouseButtonPressed.Pre event) {
-        if (!recording || event.getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+        // A gesture an agent or a replay makes is kept, if at all, by what made it.
+        if (!recording || ScreenGestures.making() || event.getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT) {
             return;
         }
         final Screen screen = event.getScreen();
@@ -212,6 +214,9 @@ public final class TestRecorder {
 
     /* The left button let go away from where it was pressed: the click kept for the press was a drag. */
     private static void onRelease(final ScreenEvent.MouseButtonReleased.Pre event) {
+        if (ScreenGestures.making()) {
+            return;
+        }
         final int pressed = pressStep;
         pressStep = -1;
         if (!recording || event.getButton() != GLFW.GLFW_MOUSE_BUTTON_LEFT || pressed != STEPS.size() - 1
@@ -228,7 +233,7 @@ public final class TestRecorder {
 
     /* A turn of the wheel, kept by the notch; turns at the same point one after another are kept as one. */
     private static void onScroll(final ScreenEvent.MouseScrolled.Pre event) {
-        if (!recording || event.getScreen() instanceof StudioScreen) {
+        if (!recording || ScreenGestures.making() || event.getScreen() instanceof StudioScreen) {
             return;
         }
         final int notches = (int) Math.round(event.getScrollDeltaY());
@@ -252,7 +257,7 @@ public final class TestRecorder {
     }
 
     private static void onType(final ScreenEvent.CharacterTyped.Pre event) {
-        if (!recording || event.getScreen() instanceof StudioScreen) {
+        if (!recording || ScreenGestures.making() || event.getScreen() instanceof StudioScreen) {
             return;
         }
         final String typed = String.valueOf(event.getCodePoint());
@@ -264,7 +269,7 @@ public final class TestRecorder {
     }
 
     private static void onKey(final ScreenEvent.KeyPressed.Pre event) {
-        if (!recording || event.getScreen() instanceof StudioScreen) {
+        if (!recording || ScreenGestures.making() || event.getScreen() instanceof StudioScreen) {
             return;
         }
         if (event.getKeyCode() == GLFW.GLFW_KEY_ESCAPE) {

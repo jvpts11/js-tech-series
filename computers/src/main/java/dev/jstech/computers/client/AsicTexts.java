@@ -23,6 +23,8 @@ final class AsicTexts {
     static final TextKey IDLE = TextKey.of("jsc.asic.idle", "IDLE");
     static final TextKey PAYS_TO = TextKey.of("jsc.asic.pays_to", "PAYS TO");
     static final TextKey ADDRESS_HINT = TextKey.of("jsc.asic.address_hint", "trc1q... the address it pays");
+    /** What the address field is called, as a narrator reads it. */
+    static final TextKey ADDRESS = TextKey.of("jsc.asic.address", "Payout address");
     static final TextKey POOL = TextKey.of("jsc.asic.pool", "POOL");
     static final TextKey POOL_ON = TextKey.of("jsc.asic.pool_on", "%s, %s");
     static final TextKey FIRST_POOL = TextKey.of("jsc.asic.first_pool", "The network's pool");

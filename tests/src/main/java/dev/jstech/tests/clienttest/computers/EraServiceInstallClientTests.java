@@ -55,6 +55,9 @@ public final class EraServiceInstallClientTests {
     private static final int WAIT = 80;
     /** What a setup may run over the time it is given. */
     private static final int SETUP_SLACK = 100;
+    /* How long the Console may take to show a setup's last lines, and the end of the bar it draws. */
+    private static final int CONSOLE_WAIT = 40;
+    private static final String FULL_BAR = "100%";
     private static final ResourceLocation SERVER_SYSTEM = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID,
             "debian");
 
@@ -176,7 +179,10 @@ public final class EraServiceInstallClientTests {
         } else {
             ctx.thenAwaitScreen(CommandPromptScreen.class, EraJourney.BOOT_WAIT);
         }
-        ctx.then(EraJourney.SETTLE, () -> {
+        // Whether the machine came with it, when no setup runs and none shows.
+        final boolean[] carried = new boolean[1];
+        ctx.thenServer(0, level -> carried[0] = has(ctx, level, machine, program))
+                .then(EraJourney.SETTLE, () -> {
                     ctx.type("install " + program.id().getPath());
                     ctx.key(GLFW.GLFW_KEY_ENTER);
                 })
@@ -186,6 +192,11 @@ public final class EraServiceInstallClientTests {
                                 + " on the " + kit + (machine.mainframe() ? " Mainframe" : " server"),
                         level -> "installed=" + console(ctx, level, machine).installed() + " screen="
                                 + lastLine(ctx));
+        if (machine.mainframe()) {
+            // The Console it was typed at sees the setup through: its bar at its end, then what was put in.
+            ctx.thenWaitUntil(() -> carried[0] || lastLine(ctx).contains(FULL_BAR), CONSOLE_WAIT,
+                    "the Mainframe's Console to show " + program.displayName() + "'s setup at its end");
+        }
     }
 
     /* The end of what the prompt shows, for a failure to name what the machine answered. */

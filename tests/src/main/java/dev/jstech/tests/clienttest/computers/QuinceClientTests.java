@@ -113,6 +113,9 @@ public final class QuinceClientTests {
     public static void quinceOs9_showsItsDesktop(final ClientTestContext ctx) {
         atDesktop(ctx, ComputingModule.QRUSSET_G3.getFirst().get(), QuinceItems.BOARD_QRUSSET_G3.get(), "quince_os_9")
                 .thenWaitUntil(() -> seekerOnTheDisk(ctx), WINDOW_WAIT, "the Seeker on Quince HD")
+                // Its figures count every icon it shows, the stored items' folder beside the disk's own.
+                .thenAssert(SETTLE, () -> seeker(ctx).counted() == seeker(ctx).names().size() + 1,
+                        "the Seeker's figures count the disk's folders and the stored items' folder")
                 .thenScreenshot(SETTLE, "os9-desktop");
     }
 

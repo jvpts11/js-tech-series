@@ -14,7 +14,6 @@ import dev.jstech.computers.operation.payload.portable.PortableActionPayload;
 import dev.jstech.computers.operation.payload.portable.PortableActionPayload.Action;
 import dev.jstech.computers.portable.MobileApp;
 import dev.jstech.computers.program.MessengerLog;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -123,7 +122,7 @@ final class MessengerAppView implements IMobileAppView {
             final String said = line.nudge() ? MobileTexts.say(AppTexts.NUDGED.with(line.from()))
                     : mine || MessengerLog.isPrivate(state.room()) ? line.text()
                     : MobileTexts.say(AppTexts.SAID_BY.with(line.from(), line.text()));
-            final List<String> wrapped = wrap(c, said, w * 0.7F);
+            final List<String> wrapped = c.wrap(said, w * 0.7F, MobileCanvas.SMALL);
             float wide = 0;
             for (final String part : wrapped) {
                 wide = Math.max(wide, c.width(part, MobileCanvas.SMALL));
@@ -141,25 +140,6 @@ final class MessengerAppView implements IMobileAppView {
             }
             y -= 5;
         }
-    }
-
-    /* {@code text} broken into lines no wider than {@code most}, at its spaces where it can be. */
-    private static List<String> wrap(final MobileCanvas c, final String text, final float most) {
-        final List<String> lines = new ArrayList<>();
-        String line = "";
-        for (final String word : text.split(" ")) {
-            final String longer = line.isEmpty() ? word : line + " " + word;
-            if (c.width(longer, MobileCanvas.SMALL) <= most || line.isEmpty()) {
-                line = c.fit(longer, most, MobileCanvas.SMALL);
-            } else {
-                lines.add(line);
-                line = c.fit(word, most, MobileCanvas.SMALL);
-            }
-        }
-        if (!line.isEmpty()) {
-            lines.add(line);
-        }
-        return lines;
     }
 
     /* What a room is called: the lobby, or the other person a private one is with. */

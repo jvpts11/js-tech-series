@@ -9,6 +9,7 @@ package dev.jstech.testkit.client;
 
 import com.google.gson.JsonParser;
 import com.mojang.logging.LogUtils;
+import dev.jstech.core.client.developer.ScreenGestures;
 import dev.jstech.core.client.gui.data.IDataScreen;
 import dev.jstech.core.developer.studio.RecordedTest;
 import java.io.IOException;
@@ -93,11 +94,11 @@ public final class RecordedClientTests {
                     }
                     final int[] at = data.find(click.component()).orElseThrow(() -> new ClientTestFailure(
                             "the screen has no " + click.component())).component().center();
-                    helper.click(at[0], at[1]);
+                    ScreenGestures.click(game.screen, at[0], at[1], 0);
                 });
                 case RecordedTest.ClickAt at -> helper.then(SETTLE, () -> {
                     final Screen screen = shown(game);
-                    helper.click(screen.width / 2.0 + at.dx(), screen.height / 2.0 + at.dy());
+                    ScreenGestures.click(screen, screen.width / 2.0 + at.dx(), screen.height / 2.0 + at.dy(), 0);
                 });
                 case RecordedTest.Drag drag -> helper.then(SETTLE, () -> {
                     final Screen screen = shown(game);
@@ -109,8 +110,10 @@ public final class RecordedClientTests {
                     helper.scroll(screen.width / 2.0 + scroll.dx(), screen.height / 2.0 + scroll.dy(),
                             scroll.notches());
                 });
-                case RecordedTest.Type type -> helper.then(SETTLE, () -> helper.type(type.text()));
-                case RecordedTest.Key key -> helper.then(SETTLE, () -> helper.key(key.key()));
+                // Played through the screen's events, as the agent's tools play them and as the hand made them.
+                case RecordedTest.Type type -> helper.then(SETTLE, () -> type.text().chars()
+                        .forEach(c -> ScreenGestures.type(shown(game), (char) c)));
+                case RecordedTest.Key key -> helper.then(SETTLE, () -> ScreenGestures.key(shown(game), key.key()));
                 // A wait only waits: a step after a screen closed may be one that opens the next, which asks for none.
                 case RecordedTest.Wait wait -> helper.then(wait.ticks(), () -> { });
                 case RecordedTest.Picture picture -> helper.then(SETTLE, () -> {

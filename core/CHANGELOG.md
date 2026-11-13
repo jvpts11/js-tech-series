@@ -1705,7 +1705,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   world (giving items, setting blocks, saving and opening the world again, running GameTests by name, playing a
   client test kept as a file with its pictures compared); waiting for ticks or until a screen, a block, a component's
   words or a line of chat; and recording what the agent did as a client test. A tool that acts over many ticks stops
-  when the player presses a key.
+  when the player presses a key. Every click, drag, turn of the wheel, character and key goes through the screen's
+  events as the hand's does, so what a mod does round a screen answers it too.
 - CraftTweaker: `mods.jscore.Processing` adds a recipe of any processing machine, `mods.jscore.Core` reaches
   the same as KubeJS's `JsCore`, and the Core's events are heard under `mods.jscore.event`.
 - FTB Quests: quests have the Core's tasks `jscore:knowledge`, filled as a team learns a piece of knowledge,

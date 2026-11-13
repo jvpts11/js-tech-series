@@ -223,6 +223,28 @@ public final class MobileCanvas {
         return font.width(text) * size / HALF;
     }
 
+    /**
+     * {@code text} broken into lines no wider than {@code most} at {@code size}, at its spaces where it can be; a word
+     * longer than a line is cut as {@link #fit} cuts it.
+     */
+    public List<String> wrap(final String text, final float most, final float size) {
+        final List<String> lines = new ArrayList<>();
+        String line = "";
+        for (final String word : text.split(" ")) {
+            final String longer = line.isEmpty() ? word : line + " " + word;
+            if (width(longer, size) <= most || line.isEmpty()) {
+                line = fit(longer, most, size);
+            } else {
+                lines.add(line);
+                line = fit(word, most, size);
+            }
+        }
+        if (!line.isEmpty()) {
+            lines.add(line);
+        }
+        return lines;
+    }
+
     /** {@code text} cut to {@code wide}, an ellipsis at its end, as the systems cut a long name. */
     public String fit(final String text, final float wide, final float size) {
         if (width(text, size) <= wide) {

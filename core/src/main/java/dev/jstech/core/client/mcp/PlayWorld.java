@@ -269,8 +269,7 @@ public final class PlayWorld {
                     return Optional.of(false);
                 }
                 final int[] center = node.get().component().center();
-                game.screen.mouseClicked(center[0], center[1], 0);
-                game.screen.mouseReleased(center[0], center[1], 0);
+                ScreenGestures.click(game.screen, center[0], center[1], 0);
                 return Optional.of(true);
             }
             case RecordedTest.ClickAt clickAt -> {
@@ -278,8 +277,7 @@ public final class PlayWorld {
                 if (screen == null) {
                     return Optional.of(false);
                 }
-                screen.mouseClicked(screen.width / 2.0 + clickAt.dx(), screen.height / 2.0 + clickAt.dy(), 0);
-                screen.mouseReleased(screen.width / 2.0 + clickAt.dx(), screen.height / 2.0 + clickAt.dy(), 0);
+                ScreenGestures.click(screen, screen.width / 2.0 + clickAt.dx(), screen.height / 2.0 + clickAt.dy(), 0);
                 return Optional.of(true);
             }
             case RecordedTest.Drag drag -> {
@@ -305,7 +303,7 @@ public final class PlayWorld {
                     return Optional.of(false);
                 }
                 for (final char c : type.text().toCharArray()) {
-                    game.screen.charTyped(c, 0);
+                    ScreenGestures.type(game.screen, c);
                 }
                 return Optional.of(true);
             }
@@ -313,7 +311,7 @@ public final class PlayWorld {
                 if (game.screen == null) {
                     return Optional.of(false);
                 }
-                game.screen.keyPressed(key.key(), 0, 0);
+                ScreenGestures.key(game.screen, key.key());
                 return Optional.of(true);
             }
             case RecordedTest.Wait wait -> {

@@ -390,8 +390,7 @@ public final class PlayActing {
             x = atX.get();
             y = atY.get();
         }
-        screen.mouseClicked(x, y, button);
-        screen.mouseReleased(x, y, button);
+        ScreenGestures.click(screen, x, y, button);
         final Optional<String> named = name.isPresent() ? name : screen instanceof IDataScreen data
                 ? ScreenPoints.nameAt(data, x, y) : Optional.empty();
         TestRecorder.agentDid(named.<RecordedTest.Step>map(RecordedTest.Click::new).orElseGet(() ->
@@ -438,7 +437,7 @@ public final class PlayActing {
     private static McpResult type(final Screen screen, final McpCall call) {
         final String text = call.text("text").orElse("");
         for (final char c : text.toCharArray()) {
-            screen.charTyped(c, 0);
+            ScreenGestures.type(screen, c);
         }
         TestRecorder.agentDid(new RecordedTest.Type(text));
         return done("typed", true);
@@ -458,9 +457,9 @@ public final class PlayActing {
         final Minecraft game = Minecraft.getInstance();
         return game.submit(() -> {
             if (game.screen != null) {
-                game.screen.keyPressed(key.getValue(), 0, 0);
+                ScreenGestures.key(game.screen, key.getValue());
                 if (game.screen != null) {
-                    game.screen.keyReleased(key.getValue(), 0, 0);
+                    ScreenGestures.keyUp(game.screen, key.getValue());
                 }
             } else {
                 KeyMapping.click(key);

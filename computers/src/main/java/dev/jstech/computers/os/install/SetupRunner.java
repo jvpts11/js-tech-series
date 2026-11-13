@@ -12,6 +12,7 @@ import dev.jstech.computers.audio.SystemSound;
 import dev.jstech.computers.blockentity.IMainframeService;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
 import dev.jstech.computers.menu.CommandPromptMenu;
+import dev.jstech.computers.menu.ComputerTerminalMenu;
 import dev.jstech.computers.menu.DesktopMenu;
 import dev.jstech.computers.operation.payload.CommandOutputPayload;
 import dev.jstech.computers.operation.payload.DesktopShellOutputPayload;
@@ -411,15 +412,17 @@ public final class SetupRunner {
     }
 
     /**
-     * Every prompt and every terminal window on that machine gets the lines, over the last line printed
-     * when {@code replaceLast} says so, which is how a bar grows in place.
+     * Every prompt and every terminal window on that machine gets the lines, the Console of a Mainframe's terminal
+     * among them, over the last line printed when {@code replaceLast} says so, which is how a bar grows in place.
      */
     private static void promptLines(final ServerLevel level, final BlockPos pos,
                                     final List<WireLine> lines, final boolean replaceLast) {
         for (final ServerPlayer player : level.players()) {
             if (player.containerMenu instanceof CommandPromptMenu prompt && pos.equals(prompt.hostPos())) {
                 PacketDistributor.sendToPlayer(player, new CommandOutputPayload(false, "", lines, "", "", replaceLast));
-            } else if (player.containerMenu instanceof DesktopMenu desk && pos.equals(desk.hostPos())) {
+            } else if ((player.containerMenu instanceof DesktopMenu desk && pos.equals(desk.hostPos()))
+                    || (player.containerMenu instanceof ComputerTerminalMenu terminal
+                    && pos.equals(terminal.hostPos()))) {
                 PacketDistributor.sendToPlayer(player, DesktopShellOutputPayload.informational(lines, replaceLast));
             }
         }

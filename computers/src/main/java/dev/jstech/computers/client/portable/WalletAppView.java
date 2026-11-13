@@ -24,6 +24,7 @@ import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.UUID;
@@ -45,6 +46,8 @@ final class WalletAppView implements IMobileAppView {
             new Colours(0xFFF0B23A, 0xFFFF9F0A, 0xFF000000, 0xFFFFFFFF, 0xFF2C2C2E));
     private static final int PLACES = 4;
     private static final float ROW = 21.0F;
+    /* The pitch of the lines of a note broken over several. */
+    private static final float LINE = 9.0F;
 
     @Override
     public int askEvery() {
@@ -81,12 +84,16 @@ final class WalletAppView implements IMobileAppView {
         }
     }
 
-    /* No wallet yet: what one is, and the button that makes it. */
+    /* No wallet yet: what one is, the warning whole on as many lines as it takes, and the button that makes it. */
     private static void first(final AppPage page, final float top) {
         final MobileCanvas c = page.c();
         page.kit().note(c, top + 16, say(WalletAppTexts.NO_WALLET), IAppKit.Tone.TEXT);
-        page.kit().note(c, top + 28, say(WalletAppTexts.KEPT_HERE), IAppKit.Tone.DIM);
-        page.kit().button(c, 6, top + 44, c.width() - 12, say(WalletAppTexts.MAKE), true,
+        float y = top + 28;
+        for (final String line : c.wrap(say(WalletAppTexts.KEPT_HERE), c.width() - 8, MobileCanvas.SMALL)) {
+            page.kit().note(c, y, line, IAppKit.Tone.DIM);
+            y += LINE;
+        }
+        page.kit().button(c, 6, y + 7, c.width() - 12, say(WalletAppTexts.MAKE), true,
                 MobileTap.run(() -> page.send(PortableActionPayload.of(page.device(), Action.WALLET_CREATE))));
     }
 
@@ -98,8 +105,12 @@ final class WalletAppView implements IMobileAppView {
         kit.card(c, 6, top + 2, w - 12, 56);
         c.text(say(WalletAppTexts.BALANCE), 12, top + 8, kit.ink(IAppKit.Tone.DIM), MobileCanvas.SMALL);
         final String amount = Trc.format(wallet.balance(), PLACES);
-        final float amountW = c.text(amount, 12, top + 18, kit.ink(IAppKit.Tone.TEXT), MobileCanvas.BIG);
-        c.text(say(WalletAppTexts.TRC), 12 + amountW + 3, top + 26, COLOURS.get().gold(), MobileCanvas.SMALL);
+        final String unit = say(WalletAppTexts.TRC);
+        // A balance too long for the card at its big size, past a thousand coins, comes at the normal one.
+        final boolean fits = c.width(amount, MobileCanvas.BIG) + 3 + c.width(unit, MobileCanvas.SMALL) <= w - 24;
+        final float amountW = c.text(amount, 12, fits ? top + 18 : top + 24, kit.ink(IAppKit.Tone.TEXT),
+                fits ? MobileCanvas.BIG : MobileCanvas.NORMAL);
+        c.text(unit, 12 + amountW + 3, top + 26, COLOURS.get().gold(), MobileCanvas.SMALL);
         c.text(TeracoinAddress.shortForm(wallet.address()), 12, top + 44, kit.ink(IAppKit.Tone.DIM),
                 MobileCanvas.SMALL);
         final float half = w / 2 - 3;
@@ -119,10 +130,12 @@ final class WalletAppView implements IMobileAppView {
             c.text(say(WalletAppTexts.NOTHING_YET), 8, y, kit.ink(IAppKit.Tone.DIM), MobileCanvas.SMALL);
             return;
         }
-        for (final WalletStatePayload.Move move : wallet.moves()) {
-            if (y + ROW > page.bottom()) {
-                break;
-            }
+        // As many moves as the page holds, from where the wheel has scrolled the history to.
+        final List<WalletStatePayload.Move> moves = wallet.moves();
+        final int rows = Math.max(1, (int) ((page.bottom() - y) / ROW));
+        final int from = Math.min(page.frame().scroll(), Math.max(0, moves.size() - rows));
+        for (int n = from; n < moves.size() && n < from + rows; n++) {
+            final WalletStatePayload.Move move = moves.get(n);
             c.text(who(move), 8, y, kit.ink(IAppKit.Tone.TEXT), MobileCanvas.SMALL);
             c.text(when(move), 8, y + 9, kit.ink(IAppKit.Tone.DIM), MobileCanvas.SMALL);
             final int colour = move.waiting() && move.amount() < 0L ? COLOURS.get().pending()
