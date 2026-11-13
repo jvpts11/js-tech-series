@@ -170,12 +170,15 @@ public final class DiscCopies {
             return Text.EMPTY;
         }
         if (job.vinyl) {
-            if (Loaded.blockEntity(level, BlockPos.of(job.target)) instanceof VinylDriveBlockEntity drive
-                    && drive.cut(level, ResourceLocation.tryParse(job.song))) {
+            if (!(Loaded.blockEntity(level, BlockPos.of(job.target)) instanceof VinylDriveBlockEntity drive)) {
+                return LOST.text();
+            }
+            if (drive.cut(level, ResourceLocation.tryParse(job.song))) {
                 job.phase = Phase.CUTTING;
                 return Text.EMPTY;
             }
-            return VinylDiscs.blank(drivePlatter(level, job.target)) ? LOST.text()
+            // With a blank in, the drive says itself why it would not cut, at work or not given a disc's song.
+            return VinylDiscs.blank(drive.onPlatter()) ? drive.problem().words()
                     : NO_BLANK_VINYL.with(Character.toString(job.targetLetter));
         }
         final Place to = find(places(level, host), job.target);
@@ -310,8 +313,15 @@ public final class DiscCopies {
         }
     }
 
-    /* One tick of a copy made at the computer at {@code host}; whether it is over and goes. */
+    /*
+     * One tick of a copy made at the computer at {@code host}; whether it is over and goes: it goes once its computer
+     * is gone from where it stood, as nobody is left to read how it went. A finished one stays to be read, until the
+     * computer starts another.
+     */
     private static boolean step(final ServerLevel level, final BlockPos host, final Job job) {
+        if (Loaded.at(level, host) && !(level.getBlockEntity(host) instanceof IOsHost)) {
+            return true;
+        }
         if (job.vinyl) {
             return stepVinyl(level, job);
         }
@@ -405,11 +415,6 @@ public final class DiscCopies {
             }
         }
         return List.of();
-    }
-
-    private static ItemStack drivePlatter(final ServerLevel level, final long at) {
-        return Loaded.blockEntity(level, BlockPos.of(at)) instanceof VinylDriveBlockEntity drive ? drive.onPlatter()
-                : ItemStack.EMPTY;
     }
 
     @Nullable

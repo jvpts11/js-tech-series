@@ -346,6 +346,7 @@ public abstract sealed class AbstractBusPart implements IFacePart
             filter.setStackInSlot(slot, ItemStack.EMPTY);
         }
         filter.setStackInSlot(0, stack.isEmpty() ? ItemStack.EMPTY : stack.copyWithCount(1));
+        filterChanged();
         markHostChanged();
     }
 
@@ -390,9 +391,18 @@ public abstract sealed class AbstractBusPart implements IFacePart
         if (!can(BusFeature.ITEM_QUANTITIES) || slot < 0 || slot >= itemKeep.length) {
             return false;
         }
-        itemKeep[slot] = Math.max(0, keepCount);
-        itemMax[slot] = Math.max(0, maxCount);
-        return changed(BusSettings.KEEP, by);
+        final int newKeep = Math.max(0, keepCount);
+        final int newMax = Math.max(0, maxCount);
+        // Each is marked as set by whoever changed it, so the window says who set which.
+        if (newKeep != itemKeep[slot]) {
+            itemKeep[slot] = newKeep;
+            changed(BusSettings.KEEP, by);
+        }
+        if (newMax != itemMax[slot]) {
+            itemMax[slot] = newMax;
+            changed(BusSettings.MAX, by);
+        }
+        return true;
     }
 
     public boolean setPriority(final int value, final String by) {
@@ -735,8 +745,15 @@ public abstract sealed class AbstractBusPart implements IFacePart
         } else {
             setBy.put(setting, Utf8Text.field(by, MAX_NAME_LENGTH));
         }
+        if (BusSettings.FILTER.equals(setting) || BusSettings.MATCH.equals(setting)) {
+            filterChanged();
+        }
         markHostChanged();
         return true;
+    }
+
+    /* Told when what the bus lets through has changed, so a bus that keeps a list of what it lets through drops it. */
+    protected void filterChanged() {
     }
 
     /**

@@ -449,6 +449,8 @@ public final class IsmsProfilerApp implements IDesktopApp, CodeFileReplies.IRead
         while (rows.size() > MOST_ROWS) {
             rows.remove(0);
             selected--;
+            // The rows being read stay in place while the oldest drop off the top.
+            scroll = Math.max(0, scroll - 1);
         }
         // The grid follows the newest row while the player is looking at the bottom of it.
         if (scroll + gridFit() >= rows.size() - 1) {

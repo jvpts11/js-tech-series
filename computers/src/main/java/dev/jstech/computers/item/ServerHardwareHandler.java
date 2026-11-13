@@ -215,7 +215,8 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
 
     @Override
     public ItemStack insertItem(final int slot, final ItemStack stack, final boolean simulate) {
-        if (stack.isEmpty() || !isItemValid(slot, stack) || !getStackInSlot(slot).isEmpty()) {
+        // A Server gone from the hand keeps nothing, so nothing is taken to be kept.
+        if (!writable() || stack.isEmpty() || !isItemValid(slot, stack) || !getStackInSlot(slot).isEmpty()) {
             return stack;
         }
         if (!simulate) {
@@ -227,7 +228,8 @@ public final class ServerHardwareHandler implements IItemHandlerModifiable {
     @Override
     public ItemStack extractItem(final int slot, final int amount, final boolean simulate) {
         final ItemStack existing = getStackInSlot(slot);
-        if (existing.isEmpty() || amount <= 0) {
+        // Nor is a part handed out of one, as it could not be taken off it.
+        if (!writable() || existing.isEmpty() || amount <= 0) {
             return ItemStack.EMPTY;
         }
         if (!simulate) {

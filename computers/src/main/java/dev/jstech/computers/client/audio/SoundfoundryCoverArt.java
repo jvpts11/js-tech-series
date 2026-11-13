@@ -71,15 +71,19 @@ public final class SoundfoundryCoverArt {
         expire();
         if (!ASKED.containsKey(key) && !WAITING.containsKey(key)) {
             WAITING.put(key, host);
-            ask();
         }
+        // Asked on every draw, so the covers waiting behind requests that were never answered get their turn.
+        ask();
         return null;
     }
 
     /** The server sent a cover, or said it has none. */
     public static void accept(final SoundfoundryCoverPayload payload) {
         ASKED.remove(payload.key());
-        KNOWN.put(payload.key(), payload.image().length == 0 ? NONE : texture(payload.image()));
+        // A cover asked for twice, the first answer slow, is answered twice: the second is not made again.
+        if (!KNOWN.containsKey(payload.key())) {
+            KNOWN.put(payload.key(), payload.image().length == 0 ? NONE : texture(payload.image()));
+        }
         ask();
     }
 

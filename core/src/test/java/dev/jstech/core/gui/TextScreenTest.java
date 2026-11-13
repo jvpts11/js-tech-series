@@ -15,6 +15,8 @@ class TextScreenTest {
 
     private static final int INK = TextScreen.cga(TextScreen.GREY);
     private static final int GROUND = TextScreen.cga(TextScreen.BLACK);
+    /* A smiling face, a letter past the sixteen-bit ones. */
+    private static final int FACE = 0x1F600;
 
     @Test
     void cga_isTheAdaptersSixteenOpaque() {
@@ -40,6 +42,16 @@ class TextScreenTest {
         screen.put(0, 5, "off the screen", INK, GROUND);
         assertEquals("cdefg", screen.text(0));
         assertEquals("     ", screen.text(1));
+    }
+
+    @Test
+    void put_writesALetterPastSixteenBitsAsMarksInItsTwoCells() {
+        final TextScreen screen = new TextScreen(6, 2, INK, GROUND);
+        final String face = new String(Character.toChars(FACE));
+        screen.put(0, 0, "a" + face + "b", INK, GROUND);
+        screen.put(0, 1, "a" + face + "b", INK);
+        assertEquals("a??b  ", screen.text(0));
+        assertEquals("a??b  ", screen.text(1));
     }
 
     @Test

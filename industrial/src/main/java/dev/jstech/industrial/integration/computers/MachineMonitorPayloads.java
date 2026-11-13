@@ -19,8 +19,6 @@ import dev.jstech.industrial.JsIndustrial;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -51,8 +49,11 @@ public final class MachineMonitorPayloads {
     /* The longest name and card a row carries; longer ones are cut, as the wire refuses them. */
     private static final int MOST_LETTERS = 64;
     private static final StableNames<AlertKind> KINDS = StableNames.of(AlertKind.class);
-    /* The latest answer for each computer, by where it stands; the window of that computer reads it. */
-    private static final Map<BlockPos, Answer> LATEST = new ConcurrentHashMap<>();
+    /*
+     * The latest answer, of the one computer whose screen the player is at: only it asks, so one is kept, never the
+     * answers of every computer the player ever stood at, nor of a world left since for long.
+     */
+    private static volatile @Nullable Answer latest;
 
     private MachineMonitorPayloads() {
     }
@@ -70,7 +71,8 @@ public final class MachineMonitorPayloads {
 
     /** The latest answer for the computer at {@code host}, or null before any. */
     public static @Nullable Answer latest(final BlockPos host) {
-        return LATEST.get(host);
+        final Answer last = latest;
+        return last != null && last.host().equals(host) ? last : null;
     }
 
     /**
@@ -127,7 +129,7 @@ public final class MachineMonitorPayloads {
     }
 
     private static void received(final Answer answer, final Player player) {
-        LATEST.put(answer.host(), answer);
+        latest = answer;
     }
 
     private static ResourceLocation payloadId(final String path) {

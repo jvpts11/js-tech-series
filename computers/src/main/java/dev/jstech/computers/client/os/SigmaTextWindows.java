@@ -42,8 +42,12 @@ public final class SigmaTextWindows {
     private final SigmaUiState ui = new SigmaUiState();
     /** Where each widget of the window in front was drawn, in cells, at the last frame. */
     private final Map<Long, UiLayout.Rect> where = new HashMap<>();
-    /** The dialog the window in front has up, typed into on the terminal, and what is typed in it. */
+    /**
+     * The dialog a window has up, typed into on the terminal, the window that has it, by program and window, and what
+     * is typed in it. The window need not be in front: its program still hears the answer.
+     */
     private long dialog;
+    private String dialogOf = "";
     private String dialogPath = "";
     private UiLayout.Rect menuRect;
     /* The first entry the open popup shows, which rolls to keep the one picked in view. */
@@ -123,6 +127,7 @@ public final class SigmaTextWindows {
             if (fileDialog && widget.epoch() != this.ui.dialogsShown.getOrDefault(widget.id(), 0)) {
                 this.ui.dialogsShown.put(widget.id(), widget.epoch());
                 this.dialog = widget.id();
+                this.dialogOf = key;
                 final String start = widget.row(0);
                 final String name = widget.row(2);
                 this.dialogPath = name.isEmpty() ? start : start.isEmpty() || start.endsWith("\\")
@@ -192,7 +197,7 @@ public final class SigmaTextWindows {
         }
         this.popup(screen, window);
         if (this.dialog != 0) {
-            this.fileDialog(screen, window);
+            this.fileDialog(screen, this.open.get(this.dialogOf));
         }
     }
 
@@ -578,8 +583,9 @@ public final class SigmaTextWindows {
     }
 
     /* A file dialog on a terminal is the line its path is typed on, with its two answers under it. */
-    private void fileDialog(final TextScreen s, final UiWindowPayload window) {
-        final UiWindowPayload.Widget shown = this.widget(window, this.dialog);
+    private void fileDialog(final TextScreen s, @Nullable final UiWindowPayload window) {
+        // Looked for in the window that has it, in front or not; gone with its window, nobody waits for its answer.
+        final UiWindowPayload.Widget shown = window == null ? null : this.widget(window, this.dialog);
         if (shown == null) {
             this.dialog = 0;
             return;
@@ -896,7 +902,11 @@ public final class SigmaTextWindows {
     }
 
     private boolean dialogKey(final int key) {
-        final UiWindowPayload window = this.front();
+        final UiWindowPayload window = this.open.get(this.dialogOf);
+        if (window == null) {
+            this.dialog = 0;
+            return true;
+        }
         switch (key) {
             case GLFW.GLFW_KEY_ESCAPE -> {
                 this.send(window, "cancel", this.dialog, "", 0);

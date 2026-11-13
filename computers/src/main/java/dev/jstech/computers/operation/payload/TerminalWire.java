@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.operation.payload;
 
+import dev.jstech.core.text.TextBounds;
 import io.netty.buffer.ByteBuf;
 import java.util.List;
 import java.util.function.Function;
@@ -44,7 +45,7 @@ final class TerminalWire {
     }
 
     private static StreamCodec<ByteBuf, String> clipped(final int most) {
-        return ByteBufCodecs.stringUtf8(most).map(Function.identity(),
-                text -> text.length() > most ? text.substring(0, most) : text);
+        // Cut never between the two halves of an emoji, which would reach the other side as a question mark.
+        return ByteBufCodecs.stringUtf8(most).map(Function.identity(), text -> TextBounds.clip(text, most));
     }
 }

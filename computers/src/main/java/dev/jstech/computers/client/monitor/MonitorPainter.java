@@ -39,8 +39,10 @@ import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
@@ -65,17 +67,19 @@ public final class MonitorPainter {
     private static final int GLASS_SIDES = MonitorGlass.BESIDE;
     private static final int GLASS_ENDS = MonitorGlass.ABOVE_AND_BELOW;
     /*
-     * The desktops drawn for faces, by the monitor showing them, the least recently seen let go: as many as a room of
-     * screens shows at once, since a face let go while still in sight was built again at every picture, asking its
-     * machine what its desktop holds each time.
+     * A desktop drawn for a face goes once it has not been drawn for this many ticks: out of sight, not merely waiting
+     * its turn, since a face let go while still in sight was built again at every picture, its windows lost and its
+     * machine asked what its desktop holds each time.
      */
-    private static final int DESKTOPS_KEPT = 48;
+    private static final long UNSEEN_TICKS = 100L;
+    /* The desktops drawn for faces at once, past which the first made go: far past what a room of screens shows. */
+    private static final int MOST_KEPT = 512;
     /* How often a face asks again what its desktop holds, in ticks: every five seconds. */
     private static final long LISTING_EVERY = 100L;
-    private static final Map<BlockPos, Shown> DESKTOPS = new LinkedHashMap<>(16, 0.75F, true) {
+    private static final Map<BlockPos, Shown> DESKTOPS = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry<BlockPos, Shown> eldest) {
-            return size() > DESKTOPS_KEPT;
+            return size() > MOST_KEPT;
         }
     };
 
@@ -147,10 +151,20 @@ public final class MonitorPainter {
     /** Hands the game's bus what this answers, once, from the mod's client constructor. */
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, MonitorPainter::onLeave);
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, MonitorPainter::onClientTick);
     }
 
     public static void onLeave(final ClientPlayerNetworkEvent.LoggingOut event) {
         DESKTOPS.clear();
+    }
+
+    /* Lets go of the desktops of faces out of sight; a clock that went back, on another world, lets go of them too. */
+    public static void onClientTick(final ClientTickEvent.Post event) {
+        final ClientLevel level = Minecraft.getInstance().level;
+        if (level != null && !DESKTOPS.isEmpty()) {
+            final long now = level.getGameTime();
+            DESKTOPS.values().removeIf(shown -> now - shown.paintedAt > UNSEEN_TICKS || now < shown.paintedAt);
+        }
     }
 
     /**
@@ -202,6 +216,7 @@ public final class MonitorPainter {
          * machine changes them) and every few seconds while it is drawn, for a folder made or a program pinned there.
          */
         final long now = Minecraft.getInstance().level == null ? 0L : Minecraft.getInstance().level.getGameTime();
+        shown.paintedAt = now;
         if (windowsMoved || now - shown.askedAt >= LISTING_EVERY) {
             shown.askedAt = now;
             PacketDistributor.sendToServer(new RequestFaceListingPayload(monitor.immutable()));
@@ -239,6 +254,8 @@ public final class MonitorPainter {
         private int programs = -1;
         /** The game time what the desktop holds was last asked for; long ago for a face just made. */
         private long askedAt = Long.MIN_VALUE / 2;
+        /** The game time the face was last drawn at. */
+        private long paintedAt;
 
         private Shown(final IMonitorPicture.Desktop made, final OffscreenDesktop desktop) {
             this.made = made;

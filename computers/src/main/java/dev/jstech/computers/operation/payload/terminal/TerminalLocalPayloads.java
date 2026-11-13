@@ -29,6 +29,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 
@@ -95,7 +96,14 @@ public final class TerminalLocalPayloads {
         }
         op.onSettle(() -> {
             final long leftover = op.leftover();
-            if (leftover > 0L) {
+            if (leftover > 0L && host instanceof BlockEntity block && block.isRemoved() && key.isItem()) {
+                // The machine was broken while its items were on their way: what came back goes to who sent them.
+                for (long left = leftover; left > 0L; ) {
+                    final int count = (int) Math.min(left, key.item().getDefaultMaxStackSize());
+                    player.getInventory().placeItemBackInInventory(key.stack(count));
+                    left -= count;
+                }
+            } else if (leftover > 0L) {
                 host.localStore().insert(key, leftover);
             }
             dispatchLocalSnapshot(player, host);

@@ -162,7 +162,9 @@ public final class ProphetConsoleLayout {
 
     /** What the top of a graph stands for: a little above the highest of the band and the levels shown. */
     public static long graphTop(final long lower, final long upper, final long highest) {
-        final long ceiling = upper == Long.MAX_VALUE ? lower + lower / 2 : upper;
+        // Half again past a lower bound near the largest long would wrap round, so it stops there too.
+        final long ceiling = upper != Long.MAX_VALUE ? upper
+                : lower > Long.MAX_VALUE - lower / 2 ? Long.MAX_VALUE : lower + lower / 2;
         final long most = Math.max(ceiling, highest);
         // A tenth more would pass the largest long for the biggest bounds a statement can set, so it stops there.
         return Math.max(1L, most > Long.MAX_VALUE - most / 10 ? Long.MAX_VALUE : most + most / 10);

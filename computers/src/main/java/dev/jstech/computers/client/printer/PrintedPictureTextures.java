@@ -183,8 +183,12 @@ public final class PrintedPictureTextures {
                             final float bottom) {
         final int x0 = (int) left;
         final int y0 = (int) top;
-        final int x1 = Math.max(x0 + 1, (int) Math.ceil(right));
-        final int y1 = Math.max(y0 + 1, (int) Math.ceil(bottom));
+        // Held to the raster: past its edge is no pixel, and counting one there would thin the edge's ink.
+        final int x1 = Math.min(raster.width(), Math.max(x0 + 1, (int) Math.ceil(right)));
+        final int y1 = Math.min(raster.height(), Math.max(y0 + 1, (int) Math.ceil(bottom)));
+        if (x0 >= x1 || y0 >= y1) {
+            return 0;
+        }
         long alpha = 0;
         long red = 0;
         long green = 0;

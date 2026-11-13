@@ -187,8 +187,13 @@ public final class FileTransferPayloads {
             final String realDir = destDir.startsWith("media:") ? mediaSubPath(destDir) : destDir;
             final String target = joined(realDir, realSrc.substring(realSrc.lastIndexOf('/') + 1));
             // A file put back where it already is takes nothing's place, least of all its own.
+            Displaced displaced = null;
             if (replace && !target.equals(realSrc)) {
-                DiskFilesystem.delete(srcVol, target);
+                // A file giving way is set aside and put back if the move does not go through; a folder just goes.
+                displaced = displace(level, computer, src, destDir);
+                if (displaced == null) {
+                    DiskFilesystem.delete(srcVol, target);
+                }
             }
             if (DiskFilesystem.move(srcVol, realSrc, realDir, kindOf(computer, src))) {
                 if (srcMedia) {
@@ -196,6 +201,8 @@ public final class FileTransferPayloads {
                 } else {
                     computer.setChanged();
                 }
+            } else if (displaced != null) {
+                displaced.restore(level, computer, destDir);
             }
             return;
         }

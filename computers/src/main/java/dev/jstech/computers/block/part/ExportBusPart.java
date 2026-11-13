@@ -132,6 +132,12 @@ public non-sealed class ExportBusPart extends AbstractBusPart {
         return ComputingParts.exportBusItem(era());
     }
 
+    /* A filter just changed sends what it now lets through from the next send, not a second later. */
+    @Override
+    protected void filterChanged() {
+        candidatesAt = Long.MIN_VALUE;
+    }
+
     /* A finished send, written to the activity as the move it made. */
     private void settle(final ServerLevel level) {
         final long moved = activeOp.moved();

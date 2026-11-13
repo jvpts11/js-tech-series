@@ -152,6 +152,12 @@ final class NetworkEventLogView {
             machines = payload.machines();
             body.remove(machineFilter);
             machineFilter = body.add(machineDropdown());
+            // A machine the log names no more is no filter: the list goes back to every machine, as it reads.
+            if (!machine.equals(RequestNetworkEventsPayload.ANY_MACHINE)
+                    && !machine.equals(RequestNetworkEventsPayload.WHOLE_NETWORK) && machineIndex() == 0) {
+                machine = RequestNetworkEventsPayload.ANY_MACHINE;
+                refilter();
+            }
         }
     }
 

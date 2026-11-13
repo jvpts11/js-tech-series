@@ -157,7 +157,9 @@ final class QTunesApp implements IDesktopApp {
     @Override
     public void mouseClicked(final DesktopWindow window, final double mouseX, final double mouseY, final int button) {
         if (mouseY >= this.controlsY && mouseY < this.controlsY + BUTTON) {
-            final int k = (int) ((mouseX - this.controlsX) / (BUTTON + 4));
+            // On a button only: the room left of the first and the gaps between them press nothing.
+            final double off = mouseX - this.controlsX;
+            final int k = off < 0 || off % (BUTTON + 4) >= BUTTON ? -1 : (int) (off / (BUTTON + 4));
             if (k == 0) {
                 send(SoundfoundryActionPayload.PREVIOUS, 0);
             } else if (k == 1) {

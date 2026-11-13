@@ -71,7 +71,8 @@ public final class SystemMonitorApp implements IDesktopApp {
     private int lastMouseX;
     private int lastMouseY;
 
-    private static SystemMonitorApp active;
+    /* The monitors open, each told what its machine holds: two on one machine both stay up to date. */
+    private static final List<SystemMonitorApp> OPEN = new ArrayList<>();
 
     private final Panel root = new Panel();
     private final Label loadingLabel;
@@ -144,7 +145,7 @@ public final class SystemMonitorApp implements IDesktopApp {
         temperatureHeader = root.add(new Label(GameText.resolve(TaskManagerTexts.TEMPERATURE_SECTION), Label.Tone.DIM));
         cpuLabel = root.add(new Label(GameText.resolve(TaskManagerTexts.CPU)));
         temperatureValue = root.add(new Label(this::temperatureText).setAlign(Label.Align.RIGHT));
-        active = this;
+        OPEN.add(this);
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
     }
 
@@ -197,8 +198,10 @@ public final class SystemMonitorApp implements IDesktopApp {
 
     /** Routes a settings snapshot to the open System Monitor window (shared with the Settings app). */
     public static void accept(final SettingsSnapshotPayload payload) {
-        if (active != null && active.host.equals(payload.hostPos())) {
-            active.data = payload;
+        for (final SystemMonitorApp monitor : OPEN) {
+            if (monitor.host.equals(payload.hostPos())) {
+                monitor.data = payload;
+            }
         }
     }
 
@@ -230,7 +233,15 @@ public final class SystemMonitorApp implements IDesktopApp {
     @Override
     public void applySkin(final OsSkin osSkin) {
         this.skin = osSkin;
-        active = this;
+        // A window brought back with the machine's layout is told again what its machine holds.
+        if (!OPEN.contains(this)) {
+            OPEN.add(this);
+        }
+    }
+
+    @Override
+    public void onClosed() {
+        OPEN.remove(this);
     }
 
     @Override

@@ -141,7 +141,11 @@ public final class SoundfoundryCatalog {
                 })
                 .thenAcceptAsync(read -> {
                     if (reading != READING.get()) {
-                        // A later reading took over, so these counts are of a catalogue nobody will see.
+                        // A later reading took over, so these counts are of a catalogue nobody will see; whoever
+                        // asked for this one is still answered, with the catalogue as it stands.
+                        if (done != null) {
+                            done.accept(current);
+                        }
                         return;
                     }
                     if (read != null) {
@@ -227,7 +231,10 @@ public final class SoundfoundryCatalog {
                 location -> wanted(location.getPath())).entrySet()) {
             final String rest = entry.getKey().getPath().substring(prefix.length());
             final int slash = rest.indexOf('/');
-            if (slash > 0 && rest.indexOf('/', slash + 1) < 0) {
+            if (entry.getKey().getNamespace().equals(FROM_CONFIG)) {
+                // The server folder's albums go by this name, so a pack's album under it would take one's place.
+                reading.passOver(entry.getKey().toString(), "its namespace is the one of the server's own albums");
+            } else if (slash > 0 && rest.indexOf('/', slash + 1) < 0) {
                 byAlbum.computeIfAbsent(entry.getKey().getNamespace() + "/" + rest.substring(0, slash),
                         album -> new ArrayList<>()).add(entry);
             }

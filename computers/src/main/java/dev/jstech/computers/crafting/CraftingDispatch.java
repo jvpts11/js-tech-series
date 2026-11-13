@@ -39,10 +39,11 @@ import org.jetbrains.annotations.Nullable;
  * idle and owes nothing. A job keeps the interface it has; a new one goes to the least busy that takes it.
  *
  * <p>A Receiving Bus credits the interfaces it is tied to. When they go to work it notes what its machine holds, which
- * stays where it is; after that, what rises above it is paid out in the order the jobs were fed: first to what settled
- * jobs are still owed (their late outputs, which go where those jobs' outputs go), then to the live jobs, never more
- * than each fed for. An item no job is owed, and that is not an input seen at the output, goes to the network as
- * unexpected; a fluid or chemical no pattern lists stays, as the machine's own buffer.
+ * stays where it is; after that, what rises above it is paid out in the order the jobs were fed, as a machine gives
+ * back in the order it was fed: to what settled jobs are still owed (their late outputs, which go where those jobs'
+ * outputs go) and to the live jobs alike, never more than each fed for. An item no job is owed, and that is not an
+ * input seen at the output, goes to the network as unexpected; a fluid or chemical no pattern lists stays, as the
+ * machine's own buffer.
  */
 public final class CraftingDispatch {
 
@@ -271,7 +272,10 @@ public final class CraftingDispatch {
         }
     }
 
-    /* Pays out what rose of {@code key} at the bus: owed first, then the live jobs, the rest unexpected. */
+    /*
+     * Pays out what rose of {@code key} at the bus to the jobs owed it, settled or live, in the order they were fed;
+     * the rest is unexpected.
+     */
     private static void creditKey(final ServerLevel level, final long now, final ReceivingBusPart bus,
                                   final IDataPort port, final StorageKey key,
                                   final List<NetworkProcessingOperation> live, final List<CraftingInterfacePart> parts,

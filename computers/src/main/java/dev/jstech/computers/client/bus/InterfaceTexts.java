@@ -71,6 +71,10 @@ final class InterfaceTexts {
     static final TextKey SIGMA = TextKey.of("jsc.interface.screen.sigma", "SIGMA");
     static final TextKey SET_BY_PROGRAMS = TextKey.of("jsc.interface.screen.set_by_programs", "SET BY PROGRAMS");
     static final TextKey SET_BY_LINE = TextKey.of("jsc.interface.screen.set_by_line", "%s set by %s");
+    // The settings a program's mark names, at the start of that line.
+    static final TextKey SETTING_MODE = TextKey.of("jsc.interface.screen.setting_mode", "Mode");
+    static final TextKey SETTING_STATE = TextKey.of("jsc.interface.screen.setting_state", "State");
+    static final TextKey SETTING_JOBS = TextKey.of("jsc.interface.screen.setting_jobs", "Most jobs");
     static final TextKey SOFTWARE_NOTE = TextKey.of("jsc.interface.screen.software_note",
             "Everything here can also be set in CONFIGURE, and what a program set is marked there.");
     static final TextKey UNNAMED = TextKey.of("jsc.interface.screen.unnamed",

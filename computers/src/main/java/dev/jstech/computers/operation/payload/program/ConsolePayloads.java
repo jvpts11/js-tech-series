@@ -117,7 +117,7 @@ public final class ConsolePayloads {
                     TerminalTools.settled(turn.keyboard(), here, here)));
             return;
         }
-        // "run/open <program>" launches another installed program from the prompt.
+        // "run/open <program>" checks another program can run here, and says it opens from the desktop.
         final String[] parts = payload.line().trim().split("\\s+", 2);
         if (parts.length == 2 && (parts[0].equalsIgnoreCase("run") || parts[0].equalsIgnoreCase("open"))) {
             if (host.console() != null && !payload.line().isBlank()) {
@@ -240,7 +240,8 @@ public final class ConsolePayloads {
             sendConsoleLine(player, ConsoleTexts.ISMS_FROM_ICON.text(), -1);
             player.displayClientMessage(GameText.component(ConsoleTexts.ISMS_FROM_ICON_MESSAGE), false);
         } else {
-            sendConsoleLine(player, ConsoleTexts.ALREADY_OPEN.with(program.commandName()), -1);
+            // A program's window opens on the desktop; the prompt says where, rather than that it is open.
+            sendConsoleLine(player, ConsoleTexts.FROM_DESKTOP.with(program.commandName()), -1);
         }
     }
 

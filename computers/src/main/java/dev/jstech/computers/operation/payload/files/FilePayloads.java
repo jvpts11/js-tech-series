@@ -53,6 +53,7 @@ import dev.jstech.computers.terminal.IComputerTerminalHost;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import io.netty.buffer.ByteBufUtil;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -288,6 +289,7 @@ public final class FilePayloads {
     private static void handleRequestFolderContent(final RequestFolderContentPayload payload, final ServerPlayer player,
                                                    final ServerLevel level) {
         final List<FolderContentPayload.WireFile> files = new ArrayList<>();
+        long bytes = 0L;
         if (level.getBlockEntity(payload.hostPos()) instanceof IOsHost computer) {
             final ItemStack disk = computer.systemDisk();
             final FilesystemKind kind = filesystemKindOf(computer);
@@ -307,8 +309,14 @@ public final class FilePayloads {
                      * A file too long for one reply is left out rather than cut: half a program
                      * would compile to complaints that are the payload's fault, not the player's.
                      */
+                    // The reply stops before it would pass what one packet may carry, however wide its letters.
+                    final int size = ByteBufUtil.utf8Bytes(text) + ByteBufUtil.utf8Bytes(entry.path());
+                    if (bytes + size > FolderContentPayload.MOST_BYTES) {
+                        break;
+                    }
                     if (text.length() <= FolderContentPayload.MAX_TEXT) {
                         files.add(new FolderContentPayload.WireFile(entry.path(), text));
+                        bytes += size;
                     }
                 }
             }

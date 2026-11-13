@@ -43,6 +43,8 @@ class DiskSpecTest {
         assertEquals("500 GB", DiskSpec.sizeLabel(512_000));
         assertEquals("1 TB", DiskSpec.sizeLabel(1_048_576));
         assertEquals("8 TB", DiskSpec.sizeLabel(8L * 1_048_576L));
+        // Just under a terabyte rounds to it, rather than read 1024.0 GB.
+        assertEquals("1.0 TB", DiskSpec.sizeLabel(1_048_550L));
     }
 
     @Test

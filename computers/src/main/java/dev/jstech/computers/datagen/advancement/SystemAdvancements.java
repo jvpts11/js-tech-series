@@ -31,11 +31,12 @@ public final class SystemAdvancements extends JscAdvancementTab {
     private static final List<String> FRAMES_EDITIONS = List.of("frames_95", "frames_xp", "frames_7", "frames_10",
             "frames_11");
     /*
-     * Where screenfetch installs: every distribution, FreeBSD and the five Frames. UNIX has no package for it. Built
-     * from the lists above so a distribution or an edition added to one cannot be left out of the challenge.
+     * Where screenfetch installs: every distribution, Linux Mint, FreeBSD, OpenBSD and the five Frames. UNIX has no
+     * package for it. Built from the lists above so a distribution or an edition added to one cannot be left out of
+     * the challenge.
      */
-    private static final List<String> SCREENFETCH_SYSTEMS = Stream.of(DISTRIBUTIONS, List.of("freebsd"),
-            FRAMES_EDITIONS).flatMap(List::stream).toList();
+    private static final List<String> SCREENFETCH_SYSTEMS = Stream.of(DISTRIBUTIONS,
+            List.of("linux_mint", "freebsd", "openbsd"), FRAMES_EDITIONS).flatMap(List::stream).toList();
 
     public SystemAdvancements() {
         super("systems", ResourceLocation.withDefaultNamespace("textures/block/deepslate_tiles.png"));

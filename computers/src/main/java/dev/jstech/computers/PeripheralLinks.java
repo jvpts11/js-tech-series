@@ -211,20 +211,27 @@ public final class PeripheralLinks {
                                              final List<Long> seeds) {
         final PortKind kind = endpointAt(level, endpointPos).map(IPeripheralEndpoint::portKind)
                 .orElse(PortKind.DEVICE);
-        final Set<Long> visited = new HashSet<>();
+        // The cables entered, and the places looked at for a computer and found none: a cable seen beside one it does
+        // not plug into is not entered there, and may still be entered from one it does.
+        final Set<Long> entered = new HashSet<>();
+        final Set<Long> ownerless = new HashSet<>();
         // Each queued cable: its position, how many cables from the peripheral, and the shortest reach on the way.
         final Deque<long[]> queue = new ArrayDeque<>();
-        visited.add(endpointPos);
+        entered.add(endpointPos);
+        ownerless.add(endpointPos);
         for (final long neighbor : seeds) {
-            if (!visited.add(neighbor)) {
+            if (entered.contains(neighbor)) {
                 continue;
             }
-            final OptionalLong owner = ownerAtOrBehind(level, neighbor, kind);
-            if (owner.isPresent()) {
-                return owner;
+            if (ownerless.add(neighbor)) {
+                final OptionalLong owner = ownerAtOrBehind(level, neighbor, kind);
+                if (owner.isPresent()) {
+                    return owner;
+                }
             }
             final int reach = reachAt(level, neighbor);
             if (reach > 0 && neighbors(level, neighbor).contains(endpointPos)) {
+                entered.add(neighbor);
                 queue.addLast(new long[]{neighbor, 1L, reach});
             }
         }
@@ -233,15 +240,18 @@ public final class PeripheralLinks {
             final int distance = (int) current[1];
             final int limit = (int) current[2];
             for (final long neighbor : neighbors(level, current[0])) {
-                if (!visited.add(neighbor)) {
+                if (entered.contains(neighbor)) {
                     continue;
                 }
-                final OptionalLong owner = ownerAtOrBehind(level, neighbor, kind);
-                if (owner.isPresent()) {
-                    return owner;
+                if (ownerless.add(neighbor)) {
+                    final OptionalLong owner = ownerAtOrBehind(level, neighbor, kind);
+                    if (owner.isPresent()) {
+                        return owner;
+                    }
                 }
                 final int reach = reachAt(level, neighbor);
                 if (distance < limit && reach > 0 && neighbors(level, neighbor).contains(current[0])) {
+                    entered.add(neighbor);
                     queue.addLast(new long[]{neighbor, distance + 1L, Math.min(limit, reach)});
                 }
             }

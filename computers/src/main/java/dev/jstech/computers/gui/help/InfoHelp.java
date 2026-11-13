@@ -208,7 +208,8 @@ public final class InfoHelp {
     public void follow() {
         final List<Found> links = this.links();
         if (this.focus >= 0 && this.focus < links.size()) {
-            HelpTarget.read(links.get(this.focus).span().link()).ifPresent(this::go);
+            HelpTarget.read(links.get(this.focus).span().link())
+                    .map(target -> target.heldIn(this.source.manuals())).ifPresent(this::go);
         }
     }
 
@@ -374,7 +375,8 @@ public final class InfoHelp {
         for (final Found link : this.links()) {
             final String text = link.span().text().toLowerCase(Locale.ROOT);
             if (text.startsWith(wanted) || text.contains(" " + wanted)) {
-                HelpTarget.read(link.span().link()).ifPresent(this::go);
+                HelpTarget.read(link.span().link()).map(target -> target.heldIn(this.source.manuals()))
+                        .ifPresent(this::go);
                 return;
             }
         }
@@ -399,8 +401,8 @@ public final class InfoHelp {
             return;
         }
         final List<String> order = reader.get().entries();
-        final String pick = HelpSearch.nextHit(order, found,
-                this.shown.kind() == HelpTarget.Kind.NODE ? this.shown.id() : null);
+        final String pick = HelpSearch.nextAfter(order, found,
+                this.shown.kind() == HelpTarget.Kind.NODE ? HelpSearch.placeOf(reader.get(), this.shown.id()) : -1);
         this.go(HelpTarget.node(reader.get().manualId(), pick));
     }
 

@@ -68,5 +68,7 @@ class ProphetConsoleLayoutTest {
         assertEquals(Long.MAX_VALUE, ProphetConsoleLayout.graphTop(0, Long.MAX_VALUE - 1, 0));
         assertEquals(1_000_000_000_000_000_000L + 100_000_000_000_000_000L,
                 ProphetConsoleLayout.graphTop(0, 1_000_000_000_000_000_000L, 0));
+        // A lower bound only, near the largest long: half again past it would wrap round to below it.
+        assertEquals(Long.MAX_VALUE, ProphetConsoleLayout.graphTop(7_000_000_000_000_000_000L, Long.MAX_VALUE, 0));
     }
 }

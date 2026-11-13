@@ -300,6 +300,18 @@ public final class ProphetEngine implements INetworkEngine {
         return false;
     }
 
+    /* How much of {@code key} the crafts it asked for and still running have yet to bring. */
+    private static long onItsWay(final MainframeBlockEntity core, final StorageKey key) {
+        long coming = 0L;
+        for (final INetworkOperation operation : core.liveOperations()) {
+            if (operation instanceof NetworkCraftOperation craft && ASKER.equals(craft.requesterLabel())
+                    && !operation.isDone() && key.equals(operation.liveRecord().key())) {
+                coming += Math.max(0L, operation.liveRecord().requested() - craft.delivered());
+            }
+        }
+        return coming;
+    }
+
     /* Runs what a watch says: CRAFT item TO n makes up to that level; anything else is a statement. */
     private void fire(final MainframeBlockEntity core, final ServerLevel level, final ProphetMind mind,
                       final ProphetStates.Reaction reaction, final long now) {
@@ -308,8 +320,9 @@ public final class ProphetEngine implements INetworkEngine {
         if (words.length == 4 && words[0].equalsIgnoreCase("CRAFT") && words[2].equalsIgnoreCase("TO")) {
             final StorageKey key = StorageKey.byName(words[1]);
             final long target = digits(words[3]);
+            // What its own crafts still have on the way counts as there, or a watch fired again overshoots the level.
             final long lacking = key == null || target < 0 ? 0L
-                    : target - core.networkIndex().grossAvailable(key, null);
+                    : target - core.networkIndex().grossAvailable(key, null) - onItsWay(core, key);
             if (lacking <= 0) {
                 mind.reacted(now, "", ProphetTexts.NOTHING_TO_DO.with(number));
                 return;

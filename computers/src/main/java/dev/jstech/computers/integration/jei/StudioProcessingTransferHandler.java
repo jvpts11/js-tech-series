@@ -81,13 +81,16 @@ public final class StudioProcessingTransferHandler implements IUniversalRecipeTr
         return null;
     }
 
-    /** One cell per slot with the given role, in display order; slots showing nothing are skipped. */
+    /**
+     * One cell per slot with the given role, in display order, as many as the Studio's grid holds; slots showing
+     * nothing are skipped. A recipe of more slots than that brings its first ones, as the grid could not take more.
+     */
     private static List<PatternWorkbench.DataCell> cells(final IRecipeSlotsView view, final RecipeIngredientRole role,
                                                          final boolean perTick) {
         final List<PatternWorkbench.DataCell> cells = new ArrayList<>();
         for (final IRecipeSlotView slot : view.getSlotViews(role)) {
             final PatternWorkbench.DataCell cell = cellOf(slot, perTick);
-            if (cell != null) {
+            if (cell != null && cells.size() < PatternWorkbench.PROC_GRID) {
                 cells.add(cell);
             }
         }

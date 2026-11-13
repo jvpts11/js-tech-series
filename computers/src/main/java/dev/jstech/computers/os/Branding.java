@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.os;
 
+import dev.jstech.computers.os.player.PlayerSystems;
 import dev.jstech.core.jstechseries.tier.Era;
 import dev.jstech.core.jstechseries.tier.EraTable;
 import dev.jstech.core.jstechseries.tier.HardwareEra;
@@ -110,6 +111,12 @@ public final class Branding {
     public static SoftwareHouse houseOf(final String osName) {
         final String wanted = osName == null ? "" : osName.trim();
         for (final OsDef os : OsRegistry.oses()) {
+            if (os.displayName().equals(wanted)) {
+                return os.house();
+            }
+        }
+        // A system a player wrote names its own house, its author's.
+        for (final OsDef os : PlayerSystems.oses()) {
             if (os.displayName().equals(wanted)) {
                 return os.house();
             }

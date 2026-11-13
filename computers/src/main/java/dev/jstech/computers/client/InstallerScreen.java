@@ -1188,7 +1188,8 @@ public final class InstallerScreen extends AbstractComputerScreen<MonitorSession
             return;
         }
         final InstallerFlow.Disk now = this.flow.target();
-        int at = 0;
+        // With no disk chosen yet, the next is the first.
+        int at = -1;
         for (int i = 0; i < disks.size(); i++) {
             if (now != null && disks.get(i).slot() == now.slot()) {
                 at = i;

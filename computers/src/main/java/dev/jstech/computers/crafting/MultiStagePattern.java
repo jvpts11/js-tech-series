@@ -100,6 +100,27 @@ public record MultiStagePattern(List<Stage> stages, String name, String note) {
         return key == null ? RecipeTexts.UNNAMED_PIPELINE.text() : GameText.of(key.displayName());
     }
 
+    /**
+     * Whether {@code other} is the same pipeline: the same stages in the same order, each the same recipe, whatever
+     * each is called. Two pipelines that end in the same thing by different ways are two recipes.
+     */
+    public boolean sameRecipe(final MultiStagePattern other) {
+        if (stages.size() != other.stages.size()) {
+            return false;
+        }
+        for (int i = 0; i < stages.size(); i++) {
+            final Stage mine = stages.get(i);
+            final Stage theirs = other.stages.get(i);
+            final boolean same = mine.bench().isPresent()
+                    ? theirs.bench().isPresent() && mine.bench().get().sameRecipe(theirs.bench().get())
+                    : theirs.proc().isPresent() && mine.proc().orElseThrow().sameRecipe(theirs.proc().get());
+            if (!same) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /** The same pipeline under a new name and note. */
     public MultiStagePattern withName(final String newName, final String newNote) {
         return new MultiStagePattern(stages, newName, newNote);

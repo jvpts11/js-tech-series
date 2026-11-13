@@ -21,8 +21,9 @@ import net.minecraft.resources.ResourceLocation;
  * @param action  what changes: {@link #NAME}, {@link #ROUTE}, {@link #MODE}, {@link #STATE} or {@link #JOBS}
  * @param pattern for a route, the pattern's place in the interface
  * @param input   for a route, the input's place in the pattern
- * @param value   the router's place in the routers' list for a route (-1 back to the default), 1 or 0 for the mode
- *                (exclusive) and the state (paused), the most jobs (0 for as many as come)
+ * @param value   the router's place in the routers' list for a route (-1 back to the default, {@link #NEXT_ROUTER}
+ *                the one after the router it goes through now), 1 or 0 for the mode (exclusive) and the state
+ *                (paused), the step the most jobs goes up or down by (0 jobs for as many as come)
  * @param text    for the name, the new name
  */
 public record CraftingInterfaceEditPayload(int action, int pattern, int input, int value, String text)
@@ -33,6 +34,10 @@ public record CraftingInterfaceEditPayload(int action, int pattern, int input, i
     public static final int MODE = 2;
     public static final int STATE = 3;
     public static final int JOBS = 4;
+    /** A route's value for the router after the one the input goes through now, round to the first. */
+    public static final int NEXT_ROUTER = -2;
+    /** The largest step the most jobs is moved by at once, which is all of its range. */
+    public static final int MOST_JOBS_STEP = 64;
     private static final int MOST_TEXT = 64;
 
     public static final CustomPacketPayload.Type<CraftingInterfaceEditPayload> TYPE =

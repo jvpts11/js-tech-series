@@ -49,20 +49,25 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class SessionFaces {
 
-    /**
-     * The faces drawn by screens at once, the least recently seen let go past that: as many as a room of screens shows,
-     * since a face let go while still in sight was built anew at every picture.
+    /*
+     * A face goes once it has not been drawn for this many ticks: out of sight, not merely waiting its turn, since a
+     * face let go while still in sight would be built anew at every picture, its moving parts back at their start.
      */
-    private static final int KEPT = 48;
+    private static final int UNSEEN_TICKS = 100;
+    /* The faces drawn by screens at once, past which the first built go: far past what a room of screens shows. */
+    private static final int MOST_KEPT = 512;
     /* What a monitor's glass keeps clear round itself, which a screen drawing a face is laid out with. */
     private static final int AROUND_X = MonitorGlass.BESIDE;
     private static final int AROUND_Y = MonitorGlass.ABOVE_AND_BELOW;
-    private static final Map<BlockPos, Shown> SHOWN = new LinkedHashMap<>(16, 0.75F, true) {
+    private static final Map<BlockPos, Shown> SHOWN = new LinkedHashMap<>() {
         @Override
         protected boolean removeEldestEntry(final Map.Entry<BlockPos, Shown> eldest) {
-            return size() > KEPT;
+            return size() > MOST_KEPT;
         }
     };
+
+    /* The game's ticks counted while it runs, which the faces' last drawing is told by. */
+    private static long ticks;
 
     private SessionFaces() {
     }
@@ -85,6 +90,7 @@ public final class SessionFaces {
             shown = new Shown(picture, screen);
             SHOWN.put(monitor.immutable(), shown);
         }
+        shown.paintedAt = ticks;
         // The screen lays itself out round the glass, as on a game window; the glass falls on the picture.
         if (g instanceof LiveGraphics live) {
             live.shift(-AROUND_X / 2, -AROUND_Y / 2);
@@ -108,6 +114,8 @@ public final class SessionFaces {
         if (SHOWN.isEmpty() || Minecraft.getInstance().isPaused()) {
             return;
         }
+        ticks++;
+        SHOWN.values().removeIf(shown -> ticks - shown.paintedAt > UNSEEN_TICKS);
         for (final Shown shown : SHOWN.values()) {
             shown.screen().tickFace();
         }
@@ -192,7 +200,24 @@ public final class SessionFaces {
         return new MonitorSessionMenu(0, inventory, monitor, host, picture.era(), phase);
     }
 
-    /** One face drawn by a screen: the session it was built for, and the screen. */
-    private record Shown(IMonitorPicture.Session picture, AbstractComputerScreen<?> screen) {
+    /** One face drawn by a screen: the session it was built for, the screen, and the tick it was last drawn at. */
+    private static final class Shown {
+
+        private final IMonitorPicture.Session picture;
+        private final AbstractComputerScreen<?> screen;
+        private long paintedAt;
+
+        Shown(final IMonitorPicture.Session picture, final AbstractComputerScreen<?> screen) {
+            this.picture = picture;
+            this.screen = screen;
+        }
+
+        IMonitorPicture.Session picture() {
+            return picture;
+        }
+
+        AbstractComputerScreen<?> screen() {
+            return screen;
+        }
     }
 }

@@ -84,7 +84,10 @@ final class NetBootMenu {
     /** A fresh answer for the same menu, keeping the row the player is on. */
     void update(final NetBootPayloads.Menu answer) {
         this.menu = answer;
-        this.selected = Math.min(this.selected, rows() - 1);
+        // A shorter answer than the last would leave the list scrolled past its end, showing nothing.
+        final int listed = this.agent ? offers().size() : rows();
+        this.top = Math.max(0, Math.min(this.top, listed - 1));
+        move(0);
     }
 
     /** Moves the choice up or down by {@code step}, within the list. */

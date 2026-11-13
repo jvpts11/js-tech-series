@@ -576,6 +576,13 @@ public class NetworkGatewayBlockEntity extends SyncedBlockEntity implements IPer
         if (now != tickSeen) {
             spent[spentAt] = spentThisTick;
             spentAt = (spentAt + 1) % BUDGET_TICKS;
+            // Ticks the gateway did not see, its chunk resting, spent nothing: the ring rolls over them too.
+            final long missed = tickSeen == Long.MIN_VALUE || now < tickSeen ? 0L
+                    : Math.min(now - tickSeen - 1L, BUDGET_TICKS);
+            for (long tick = 0; tick < missed; tick++) {
+                spent[spentAt] = 0;
+                spentAt = (spentAt + 1) % BUDGET_TICKS;
+            }
             spentThisTick = 0;
             callsThisTick = 0;
             tickSeen = now;

@@ -1009,10 +1009,22 @@ public final class SettingsApp implements IDesktopApp {
         final DesktopState shown = DesktopScreen.current();
         final int fallback = shown == null ? ComputerSettings.DEFAULT_SCALE : shown.view().defaultScale();
         final int scale = d.guiScale() <= 0 ? fallback : d.guiScale();
-        final int at = Math.max(0, SCALES.indexOf(scale));
+        // The sizes next to it by value, so a size set elsewhere that the list does not hold steps the right way.
+        int smaller = SCALES.getLast();
+        int larger = SCALES.getFirst();
+        for (final int size : SCALES) {
+            if (size < scale && size > smaller) {
+                smaller = size;
+            }
+            if (size > scale && size < larger) {
+                larger = size;
+            }
+        }
+        final int down = smaller;
+        final int up = larger;
         stepper(x, y, font, GameText.resolve(SettingsTexts.PERCENT.with(scale)),
-                () -> set("guiscale", Integer.toString(SCALES.get(Math.min(SCALES.size() - 1, at + 1)))),
-                () -> set("guiscale", Integer.toString(SCALES.get(Math.max(0, at - 1)))));
+                () -> set("guiscale", Integer.toString(down)),
+                () -> set("guiscale", Integer.toString(up)));
         y += 20;
         caption(SettingsTexts.MONITOR, x, y, w);
     }

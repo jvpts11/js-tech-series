@@ -236,7 +236,8 @@ public final class CraftManagerPayloads {
         if (!(level.getBlockEntity(payload.hostPos()) instanceof CraftingComputerBlockEntity cc)) {
             return;
         }
-        final List<Integer> refs = new ArrayList<>(payload.romIndices());
+        // Each once: a recipe named twice would take off the one that moved into its place after the first.
+        final List<Integer> refs = new ArrayList<>(new HashSet<>(payload.romIndices()));
         refs.sort(Comparator.reverseOrder());
         final CraftPlaces places = CraftPlaces.of(cc, level);
         for (final int ref : refs) {
@@ -265,9 +266,14 @@ public final class CraftManagerPayloads {
             final NetworkRecipe recipe = from.recipes().get(entry);
             final boolean fits = to.isCard() == recipe.bench().isPresent() && to.used() < to.capacity()
                     && to.recipes().stream().noneMatch(held -> held.sameRecipe(recipe));
-            if (fits && from.take(entry) != null && to.put(recipe)) {
+            final boolean taken = fits && from.take(entry) != null;
+            if (taken && to.put(recipe)) {
                 status = CraftTexts.MOVED.with(recipe.displayText(), placeTitle(to));
             } else {
+                // A place that would not take it, holding it on another card already, leaves it where it was.
+                if (taken) {
+                    from.put(recipe);
+                }
                 status = CraftTexts.NOT_MOVED.with(placeTitle(to));
             }
         }

@@ -179,6 +179,27 @@ public final class MachineCraftDataGameTests {
         helper.succeed();
     }
 
+    /** Two pipelines that end in the same thing by different ways are two recipes; one renamed is still one. */
+    @GameTest(template = ARENA)
+    public static void networkRecipe_pipelinesAreTheSameOnlyStageForStage(final GameTestHelper helper) {
+        final ProcessingPattern smelt = new ProcessingPattern(List.of(in(Items.RAW_IRON, 1)),
+                List.of(out(Items.IRON_INGOT, 1, 100)), 200);
+        final ProcessingPattern melt = new ProcessingPattern(List.of(in(Items.IRON_NUGGET, 9)),
+                List.of(out(Items.IRON_INGOT, 1, 100)), 200);
+        final CraftingPattern block = new CraftingPattern(grid(new ItemStack(Items.IRON_INGOT)),
+                new ItemStack(Items.IRON_BLOCK));
+        final MultiStagePattern fromOre = new MultiStagePattern(
+                List.of(MultiStagePattern.Stage.proc(smelt), MultiStagePattern.Stage.bench(block)));
+        final MultiStagePattern fromNuggets = new MultiStagePattern(
+                List.of(MultiStagePattern.Stage.proc(melt), MultiStagePattern.Stage.bench(block)));
+        final NetworkRecipe recipe = NetworkRecipe.ofMultiStage(fromOre);
+        helper.assertTrue(recipe.sameRecipe(NetworkRecipe.ofMultiStage(fromOre.withName("Blocks", "a note"))),
+                "the same pipeline renamed is the same recipe");
+        helper.assertFalse(recipe.sameRecipe(NetworkRecipe.ofMultiStage(fromNuggets)),
+                "one ending in the same block another way is another recipe");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void storageKey_itemAndFluidIdentity(final GameTestHelper helper) {
         final StorageKey iron = StorageKey.of(Items.IRON_INGOT);

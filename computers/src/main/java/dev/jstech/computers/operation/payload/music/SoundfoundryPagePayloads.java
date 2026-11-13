@@ -234,10 +234,11 @@ public final class SoundfoundryPagePayloads {
                 refs.add(row.ref());
             }
         }
-        final int at = (int) payload.value();
-        if (at < 0 || at >= refs.size()) {
+        // Checked as sent, before it is narrowed: a number past an int's range would wrap round to a song.
+        if (payload.value() < 0 || payload.value() >= refs.size()) {
             return Text.EMPTY;
         }
+        final int at = (int) payload.value();
         computer.musicPlayer().stop(level);
         computer.console().soundfoundry().replace(refs, at);
         computer.musicPlayer().play(level, at);

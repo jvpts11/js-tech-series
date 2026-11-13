@@ -101,7 +101,7 @@ public record NetworkRecipe(Optional<CraftingPattern> bench, Optional<Processing
         return RecipeTexts.UNNAMED_RECIPE.text();
     }
 
-    /** Same recipe = same kind producing the same result, used to dedupe loads into the ROM. */
+    /** Same recipe = same kind made the same way, whatever it is called; used to dedupe loads into the ROM. */
     public boolean sameRecipe(final NetworkRecipe other) {
         if (bench.isPresent() && other.bench.isPresent()) {
             return bench.get().sameRecipe(other.bench.get());
@@ -110,9 +110,7 @@ public record NetworkRecipe(Optional<CraftingPattern> bench, Optional<Processing
             return proc.get().sameRecipe(other.proc.get());
         }
         if (multi.isPresent() && other.multi.isPresent()) {
-            final StorageKey a = resultKey();
-            final StorageKey b = other.resultKey();
-            return a != null && a.equals(b);
+            return multi.get().sameRecipe(other.multi.get());
         }
         return false;
     }

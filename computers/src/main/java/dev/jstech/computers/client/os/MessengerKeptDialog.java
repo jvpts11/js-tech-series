@@ -79,6 +79,11 @@ public final class MessengerKeptDialog implements IDesktopApp {
 
     /** Opens the list over {@code owner}, the Messenger at the service's server, or brings the open one up to date. */
     public static void openFor(final IDesktopApp owner, final BlockPos host, final BlockPos monitorPos) {
+        if (open != null && (!open.host.equals(host) || !open.monitorPos.equals(monitorPos))) {
+            // A list open for another server or monitor is closed: this one asks its own, over its own Messenger.
+            ActiveDesktop.closeDialog(open);
+            open = null;
+        }
         if (open == null) {
             open = new MessengerKeptDialog(host, monitorPos);
             ActiveDesktop.openDialogFor(owner, open);

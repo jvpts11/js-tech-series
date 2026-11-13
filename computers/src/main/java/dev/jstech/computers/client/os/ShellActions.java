@@ -102,6 +102,10 @@ final class ShellActions implements ShellViews.IListener {
     }
 
     private void next() {
+        // One at a time: a command the last one's callback queued may have started already.
+        if (this.running != null) {
+            return;
+        }
         final Pending pending = this.queue.poll();
         if (pending == null) {
             return;

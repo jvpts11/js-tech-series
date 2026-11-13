@@ -556,6 +556,9 @@ public final class ProphetConsoleApp implements IDesktopApp {
                     y + 4, skin.dim(), skin.fieldBg());
             return;
         }
+        // Scrolled no further than the last page, so the list never runs out from under the wheel.
+        final int fit = Math.max(1, (h - 3) / ProphetConsoleLayout.ROW_H);
+        listScroll = Math.max(0, Math.min(listScroll, data.watches().size() - fit));
         int ry = y + 3;
         for (int i = listScroll; i < data.watches().size() && ry + ProphetConsoleLayout.ROW_H <= y + h; i++) {
             final ProphetEngine.WatchRow row = data.watches().get(i);
@@ -592,6 +595,9 @@ public final class ProphetConsoleApp implements IDesktopApp {
             return;
         }
         final int agoW = 52;
+        // Scrolled no further than the last page, so the list never runs out from under the wheel.
+        final int fit = Math.max(1, (h - 3) / 10);
+        listScroll = Math.max(0, Math.min(listScroll, data.reactions().size() - fit));
         int ry = y + 3;
         for (int i = listScroll; i < data.reactions().size() && ry + 10 <= y + h; i++) {
             final ProphetEngine.ReactionRow row = data.reactions().get(i);

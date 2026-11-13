@@ -63,7 +63,6 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
     private int softwareContent;
 
     private static final TextKey[] TAB_WORDS = {BusTexts.TAB_CONFIGURE, BusTexts.TAB_ACTIVITY, BusTexts.TAB_SOFTWARE};
-    private static final int MOST_JOBS = 64;
     /* What a line of code broken in two goes in by on the next, as the bus's Software tab breaks them. */
     private static final String CONTINUED = "  ";
 
@@ -476,14 +475,12 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
                     final int step = hasShiftDown() ? 8 : 1;
                     if (over(x, ry, CraftingInterfaceLayout.MINUS_X, 0, CraftingInterfaceLayout.STEP_W,
                             CraftingInterfaceLayout.CONTROL_H)) {
-                        send(CraftingInterfaceEditPayload.of(CraftingInterfaceEditPayload.JOBS,
-                                Math.max(0, s.maxJobs() - step)));
+                        send(CraftingInterfaceEditPayload.of(CraftingInterfaceEditPayload.JOBS, -step));
                         return true;
                     }
                     if (over(x, ry, CraftingInterfaceLayout.PLUS_X, 0, CraftingInterfaceLayout.STEP_W,
                             CraftingInterfaceLayout.CONTROL_H)) {
-                        send(CraftingInterfaceEditPayload.of(CraftingInterfaceEditPayload.JOBS,
-                                Math.min(MOST_JOBS, s.maxJobs() + step)));
+                        send(CraftingInterfaceEditPayload.of(CraftingInterfaceEditPayload.JOBS, step));
                         return true;
                     }
                 }
@@ -502,8 +499,7 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
         if (pattern == null || input >= pattern.inputs().size() || s.routers().isEmpty()) {
             return false;
         }
-        final int current = pattern.inputs().get(input).router();
-        final int next = button == 1 ? -1 : (current + 1) % s.routers().size();
+        final int next = button == 1 ? -1 : CraftingInterfaceEditPayload.NEXT_ROUTER;
         send(new CraftingInterfaceEditPayload(CraftingInterfaceEditPayload.ROUTE, picked, input, next, ""));
         return true;
     }
@@ -667,7 +663,7 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
         if (!s.marks().isEmpty()) {
             final List<String> marks = new ArrayList<>();
             s.marks().forEach((setting, program) -> marks.add(GameText.resolve(InterfaceTexts.SET_BY_LINE.with(
-                    setting, program))));
+                    GameText.resolve(settingWord(setting)), program))));
             sections.add(new Section(GameText.resolve(InterfaceTexts.SET_BY_PROGRAMS), wrapAll(marks), false));
         }
         sections.add(new Section("", BusDraw.lines(font, GameText.resolve(InterfaceTexts.SOFTWARE_NOTE),
@@ -676,6 +672,15 @@ public class CraftingInterfaceScreen extends AbstractComputerScreen<CraftingInte
     }
 
     /* Each line broken where it runs past its box, the rest going in a little on the next, never cut short. */
+    /* The word for a setting a program's mark is kept under, in the player's language. */
+    private static TextKey settingWord(final String setting) {
+        return switch (setting) {
+            case CraftingInterfacePart.MODE -> InterfaceTexts.SETTING_MODE;
+            case CraftingInterfacePart.STATE -> InterfaceTexts.SETTING_STATE;
+            default -> InterfaceTexts.SETTING_JOBS;
+        };
+    }
+
     private List<String> wrapAll(final List<String> code) {
         final List<String> lines = new ArrayList<>();
         for (final String line : code) {

@@ -77,7 +77,11 @@ public final class MediaPayloads {
         }
         final List<MediaLibrary.Sequence> sequences = new ArrayList<>();
         for (final MediaLibrary.Sequence sequence : MediaLibrary.sequences(level, computer)) {
-            sequences.add(travelling(sequence));
+            // One whose folder's path is too long to travel goes as nothing, so it is not listed nameless.
+            final MediaLibrary.Sequence travelled = travelling(sequence);
+            if (!travelled.frames().isEmpty()) {
+                sequences.add(travelled);
+            }
         }
         final MediaLibrary.Sequence asked = payload.path().isEmpty() ? MediaLibrary.Sequence.NONE
                 : travelling(MediaLibrary.sequence(level, computer, payload.path()));

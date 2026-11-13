@@ -279,10 +279,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
      */
     private final ValueField<String> clientOs = fields().value("ClientOs", Codec.STRING, "").toClient();
     /*
-     * What it runs for the devices linked to it (a Lithography Station's exposure), by the process's name: the
-     * megabytes it holds and the tick it holds them until, unless the device asks again before.
+     * What it runs for the devices linked to it (a Lithography Station's exposure), by the process's name and the
+     * device's position: the megabytes it holds and the tick it holds them until, unless the device asks again before.
      */
-    private final Map<String, long[]> hosted = new HashMap<>();
+    private final Map<Hosted, long[]> hosted = new HashMap<>();
     /* What its power draws, shown on its assembly screen while that is open: its parts, its supply, the line. */
     private final DerivedInt partsWattsShown = fields().derived("PartsWatts", this::partsWatts).toMenu();
     private final DerivedInt psuWattsShown = fields().derived("PsuWatts", this::psuWatts).toMenu();
@@ -1251,24 +1251,24 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
     }
 
     /**
-     * Runs {@code process} for a device linked to it, holding {@code mb} megabytes, until the tick {@code until}
-     * unless the device asks again before.
+     * Runs {@code process} for the device linked to it at {@code device}, holding {@code mb} megabytes, until the
+     * tick {@code until} unless the device asks again before.
      */
-    public void host(final String process, final int mb, final long until) {
-        hosted.put(process, new long[] {mb, until});
+    public void host(final String process, final long device, final int mb, final long until) {
+        hosted.put(new Hosted(process, device), new long[] {mb, until});
     }
 
-    /** Whether it runs {@code process} for a linked device at the tick {@code now}. */
-    public boolean hosts(final String process, final long now) {
-        final long[] held = hosted.get(process);
-        return held != null && held[1] >= now;
+    /** The megabytes it holds for {@code process} for the device at {@code device} at the tick {@code now}, or 0. */
+    public int hostedMb(final String process, final long device, final long now) {
+        final long[] held = hosted.get(new Hosted(process, device));
+        return held == null || held[1] < now ? 0 : (int) held[0];
     }
 
     @Override
     public List<RamLedger.Entry> hostedWork(final long now) {
         hosted.values().removeIf(held -> held[1] < now);
         final List<RamLedger.Entry> out = new ArrayList<>();
-        hosted.forEach((process, held) -> out.add(new RamLedger.Entry(process, (int) held[0],
+        hosted.forEach((key, held) -> out.add(new RamLedger.Entry(key.process(), (int) held[0],
                 RamLedger.Kind.PROCESS)));
         return out;
     }
@@ -2664,6 +2664,10 @@ public abstract class AbstractComputerBlockEntity extends SyncedBlockEntity
         if (tag.contains("Studio")) {
             studio.load(tag.getCompound("Studio"), registries);
         }
+    }
+
+    /* A process run for one linked device: two devices of a kind each hold their own memory. */
+    private record Hosted(String process, long device) {
     }
 
     /** Where the machine stands on the network: saved whole, and whether it is on one sent to the players. */

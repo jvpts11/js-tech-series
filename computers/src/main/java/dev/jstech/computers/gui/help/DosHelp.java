@@ -201,7 +201,8 @@ public final class DosHelp {
         }
         final List<Found> links = this.links();
         if (this.focus - BUTTONS < links.size()) {
-            HelpTarget.read(links.get(this.focus - BUTTONS).span().link()).ifPresent(this::go);
+            HelpTarget.read(links.get(this.focus - BUTTONS).span().link())
+                    .map(target -> target.heldIn(this.source.manuals())).ifPresent(this::go);
         }
     }
 
@@ -327,8 +328,8 @@ public final class DosHelp {
             return;
         }
         final List<String> order = reader.get().entries();
-        final String pick = HelpSearch.nextHit(order, found,
-                this.shown.kind() == HelpTarget.Kind.NODE ? this.shown.id() : null);
+        final String pick = HelpSearch.nextAfter(order, found,
+                this.shown.kind() == HelpTarget.Kind.NODE ? HelpSearch.placeOf(reader.get(), this.shown.id()) : -1);
         this.go(HelpTarget.node(reader.get().manualId(), pick));
     }
 

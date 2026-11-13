@@ -64,8 +64,10 @@ public final class PictureScaling {
         final BufferedImage small = new BufferedImage(outW, outH, BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < outH; y++) {
             for (int x = 0; x < outW; x++) {
-                small.setRGB(x, y, average(image, left + x * w / outW, top + y * h / outH,
-                        left + (x + 1) * w / outW, top + (y + 1) * h / outH));
+                // In longs, as a part millions of pixels wide would go round an int.
+                small.setRGB(x, y, average(image, left + (int) ((long) x * w / outW),
+                        top + (int) ((long) y * h / outH), left + (int) ((long) (x + 1) * w / outW),
+                        top + (int) ((long) (y + 1) * h / outH)));
             }
         }
         return small;

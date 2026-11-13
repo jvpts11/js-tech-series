@@ -171,6 +171,8 @@ public final class CraftingPayloads {
         // "Any" cells are judged against what the network holds, the way a craft would resolve them.
         final var patterns = AnyTagResolver
                 .resolveAll(mainframe.networkPatterns(), stock);
+        // The machines' recipes too, as the plan the dot promises makes what the bench cannot with them.
+        final var machines = mainframe.networkProcessingPatterns();
         final Map<StorageKey, CraftCatalogPayload.Entry> entries = new LinkedHashMap<>();
         for (final var pattern : patterns) {
             final StorageKey key = StorageKey.of(pattern.result());
@@ -178,7 +180,7 @@ public final class CraftingPayloads {
                 continue;
             }
             final byte dot;
-            if (planner.plan(key, 1, patterns, stock).feasible()) {
+            if (planner.plan(key, 1, patterns, machines, stock).feasible()) {
                 dot = CraftCatalogPayload.DOT_GREEN;
             } else {
                 boolean any = false;

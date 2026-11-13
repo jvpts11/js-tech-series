@@ -115,4 +115,15 @@ class SectionDiagnosticsTest {
         assertEquals(5L, back.since("budget"));
         assertEquals(Map.of("budget", 5L), back.saved().since());
     }
+
+    @Test
+    void restore_aSpikeARestartCutsThroughIsCountedWhole() {
+        diagnostics.second(100L, new RackTraffic.Sample(10L, 200L, 10), BASE);
+        final SectionDiagnostics back = new SectionDiagnostics();
+        back.restore(diagnostics.saved());
+        for (int i = 1; i <= SectionDiagnostics.SECONDS; i++) {
+            back.second(100L + 20L * i, new RackTraffic.Sample(10L, 10L, 10), BASE);
+        }
+        assertEquals(back.lastOverEnded() - 100L, back.lastOverTicks());
+    }
 }

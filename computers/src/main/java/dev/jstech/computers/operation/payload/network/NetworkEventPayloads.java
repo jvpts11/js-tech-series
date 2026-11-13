@@ -51,7 +51,7 @@ public final class NetworkEventPayloads {
     public static NetworkEventsPayload collect(final NetworkEventLog log, final BlockPos hostPos,
                                                final NetworkUuid network, final RequestNetworkEventsPayload request,
                                                final long now) {
-        final long revision = log.revision(network);
+        final long revision = log.revision(network, now);
         if (request.known() == revision) {
             return NetworkEventsPayload.unchanged(hostPos, revision);
         }

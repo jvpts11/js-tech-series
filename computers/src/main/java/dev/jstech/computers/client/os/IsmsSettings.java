@@ -73,8 +73,14 @@ final class IsmsSettings {
         return out.toString();
     }
 
-    /** Puts {@code path} at the top of Recent Files, once, dropping the oldest past the most it lists. */
+    /**
+     * Puts {@code path} at the top of Recent Files, once, dropping the oldest past the most it lists. A path with the
+     * list's separator or a line break in it is not listed: the file would read it back as two, or as another setting.
+     */
     void opened(final String path) {
+        if (path.contains(RECENT_SEPARATOR) || path.indexOf('\n') >= 0 || path.indexOf('\r') >= 0) {
+            return;
+        }
         recent.remove(path);
         recent.add(0, path);
         while (recent.size() > MOST_RECENT) {

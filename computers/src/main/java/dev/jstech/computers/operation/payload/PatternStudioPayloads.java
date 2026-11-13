@@ -194,8 +194,10 @@ public final class PatternStudioPayloads {
                     studio.setProcAmount(false, payload.index(), payload.value());
             case PatternStudioEditPayload.PROC_SET_OUTPUT_AMOUNT ->
                     studio.setProcAmount(true, payload.index(), payload.value());
-            case PatternStudioEditPayload.PROC_SET_CHANCE -> studio.setOutputChance(payload.index(), (int) payload.value());
-            case PatternStudioEditPayload.PROC_SET_TIMEOUT -> studio.setProcTimeout((int) payload.value());
+            // Held to an int's range before narrowing, so a number past it does not wrap round to another.
+            case PatternStudioEditPayload.PROC_SET_CHANCE ->
+                    studio.setOutputChance(payload.index(), asInt(payload.value()));
+            case PatternStudioEditPayload.PROC_SET_TIMEOUT -> studio.setProcTimeout(asInt(payload.value()));
             case PatternStudioEditPayload.PROC_SET_NAME -> studio.setProcName(payload.text(), payload.text2());
             case PatternStudioEditPayload.PROC_CLEAR -> studio.clearMachine();
             case PatternStudioEditPayload.PIPE_ADD_BENCH -> {
@@ -295,6 +297,11 @@ public final class PatternStudioPayloads {
         studio.applyProcessingCells(inputs, outputs);
         studio.forget(PatternWorkbench.Kind.MACHINE);
         host.setChanged();
+    }
+
+    /* A number the window sent, held to an int's range: the one the workbench then holds to its own. */
+    private static int asInt(final long value) {
+        return (int) Math.max(Integer.MIN_VALUE, Math.min(Integer.MAX_VALUE, value));
     }
 
     // files

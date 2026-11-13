@@ -423,21 +423,22 @@ public final class CodeWorkspace implements CodeFileReplies.IReader {
             this.status = GameText.resolve(FileSaves.tooLong(text));
             return;
         }
+        if (!FileSaves.send(this.host, doc.path, text)) {
+            // A path longer than a disk's paths go: nothing was sent, so no answer is waited for.
+            this.status = GameText.resolve(FileSaves.tooLong(doc.path, text));
+            return;
+        }
         this.status = GameText.resolve(EditorTexts.SAVING);
         this.pendingSaves.add(new PendingSave(doc, text, closeAfter));
         CodeFileReplies.expectSaved(this);
-        FileSaves.send(this.host, doc.path, text);
         FilesApps.diskChanged();
     }
 
     @Override
     public void onSaved(final boolean ok, final Text message) {
         this.status = GameText.resolve(message);
+        // Each save waits for its own answer, so the saves after this one are still waited for.
         final PendingSave pending = this.pendingSaves.poll();
-        if (!this.pendingSaves.isEmpty()) {
-            // A reply hands over the waiter, so the next one has to be waited for again.
-            CodeFileReplies.expectSaved(this);
-        }
         if (ok && pending != null) {
             final Doc doc = pending.doc();
             // Text edited after the save was sent is not on the disk, so the tab stays marked as changed.

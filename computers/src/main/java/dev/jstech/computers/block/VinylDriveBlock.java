@@ -112,6 +112,10 @@ public class VinylDriveBlock extends DeviceBlock implements IFaceConnector, IEra
     @Override
     protected InteractionResult useWithoutItem(final BlockState state, final Level level, final BlockPos pos,
                                                final Player player, final BlockHitResult hit) {
+        // Asked too when the hand holds what the platter does not take, which goes on to its own use instead.
+        if (!player.getMainHandItem().isEmpty()) {
+            return InteractionResult.PASS;
+        }
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         }

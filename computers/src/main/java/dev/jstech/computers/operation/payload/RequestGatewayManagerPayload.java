@@ -19,7 +19,7 @@ import net.minecraft.resources.ResourceLocation;
  * pane shows (by position), so the answer carries that one in detail.
  *
  * @param hostPos  the computer running the manager
- * @param selected the selected Gateway's position as a long, or 0 for none
+ * @param selected the selected Gateway's position as a long, or {@link GatewayManagerStatePayload#NONE} for none
  */
 public record RequestGatewayManagerPayload(BlockPos hostPos, long selected) implements CustomPacketPayload {
 

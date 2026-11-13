@@ -38,6 +38,9 @@ public final class PortableScreen extends Screen {
     private final PortableModel model;
     private final PortableFace face;
     private final IMobileLook look;
+    /* The device the screen was opened with, or null for one that had no id yet. */
+    @Nullable
+    private final UUID device;
     private int left;
     private int top;
     private float scale = 1.0F;
@@ -64,6 +67,7 @@ public final class PortableScreen extends Screen {
         this.face = PortableFace.of(model);
         this.look = IMobileLook.of(model.system());
         final UUID id = Portables.id(held());
+        this.device = id;
         if (id != null) {
             final PortableViewPayload view = PortableViews.of(id);
             PortableViews.session(id).raised(view == null ? List.of() : view.alerts());
@@ -124,12 +128,14 @@ public final class PortableScreen extends Screen {
         }
     }
 
-    /* Put down with an app open, the Messenger is told the player has gone. */
+    /*
+     * Put down with an app open, the Messenger is told the player has gone: by the device the screen was opened with,
+     * as one that left the hand is no longer there to ask.
+     */
     @Override
     public void removed() {
-        final MobileSession session = session(held());
-        if (session != null) {
-            session.putDown(PacketDistributor::sendToServer);
+        if (device != null) {
+            PortableViews.session(device).putDown(PacketDistributor::sendToServer);
         }
         super.removed();
     }

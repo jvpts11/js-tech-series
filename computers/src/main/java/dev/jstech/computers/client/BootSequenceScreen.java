@@ -440,6 +440,8 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         if (count == 0) {
             return;
         }
+        // A volume taken out while the chooser is open shortens its row, so the pick is kept on it.
+        menuAt = Math.min(menuAt, count - 1);
         switch (keyCode) {
             case InputConstants.KEY_LEFT, InputConstants.KEY_UP -> menuAt = Math.floorMod(menuAt - 1, count);
             case InputConstants.KEY_RIGHT, InputConstants.KEY_DOWN -> menuAt = Math.floorMod(menuAt + 1, count);
@@ -579,7 +581,8 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
             if (start == QuinceStart.CHIP) {
                 names.add(QuinceFirmwareTexts.of(QuinceFirmwareTexts.OPTIONS));
             }
-            QuinceFirmwarePages.chooser(g, font, x, y, start, bezelEra(), names, start == QuinceStart.CHIP, menuAt);
+            QuinceFirmwarePages.chooser(g, font, x, y, start, bezelEra(), names, start == QuinceStart.CHIP,
+                    Math.min(menuAt, Math.max(0, names.size() - 1)));
         } else if (completed && bootingFrom().isEmpty()) {
             QuinceFirmwarePages.noBoot(g, font, x, y, start, bezelEra(), noBootLines());
         } else {
@@ -691,7 +694,8 @@ public final class BootSequenceScreen extends AbstractComputerScreen<MonitorSess
         final int bx = x + BootSequenceLayout.barX();
         final int by = y + BootSequenceLayout.barY();
         g.fill(bx, by, bx + barW, by + BootSequenceLayout.BAR_H, post().track());
-        final int fill = Math.min(barW, barW * ticks / postTicks);
+        // In a long, as a screen left open for days counts past what an int times the bar holds.
+        final int fill = (int) Math.min(barW, (long) barW * ticks / postTicks);
         g.fill(bx, by, bx + fill, by + BootSequenceLayout.BAR_H, accent);
         final List<PostWarnings.Warning> warnings = state == null ? List.of() : PostWarnings.of(state);
         if (!warnings.isEmpty()) {

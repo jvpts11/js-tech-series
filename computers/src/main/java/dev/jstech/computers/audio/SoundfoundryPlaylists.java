@@ -97,6 +97,11 @@ public final class SoundfoundryPlaylists {
         }
         final List<Line> lines = new ArrayList<>(refs.size());
         for (final String ref : refs) {
+            // A song is one line of the file: a reference that breaks a line would be two, and as many as it holds
+            // are kept, as the file reads back.
+            if (ref.indexOf('\n') >= 0 || ref.indexOf('\r') >= 0 || lines.size() >= SoundfoundryState.MAX_SONGS) {
+                continue;
+            }
             final SongSources.Described song = SongSources.describe(level, computer, ref);
             lines.add(song == null ? new Line(ref, 0L, SongFiles.nameOf(ref))
                     : new Line(ref, song.info().millis() / 1000L, shownAs(song.title(), song.artist())));

@@ -71,6 +71,20 @@
       },
       "trigger": "jscore:event"
     },
+    "linux_mint": {
+      "conditions": {
+        "detail": "linux_mint",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
+    "openbsd": {
+      "conditions": {
+        "detail": "openbsd",
+        "event": "jsc:screenfetch"
+      },
+      "trigger": "jscore:event"
+    },
     "ubuntu": {
       "conditions": {
         "detail": "ubuntu",
@@ -109,7 +123,13 @@
       "gentoo"
     ],
     [
+      "linux_mint"
+    ],
+    [
       "freebsd"
+    ],
+    [
+      "openbsd"
     ],
     [
       "frames_95"

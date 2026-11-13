@@ -12,6 +12,7 @@ import dev.jstech.computers.bus.BusCondition;
 import dev.jstech.computers.operation.payload.BusEditPayload;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.core.id.StableIds;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -57,12 +58,14 @@ public final class BusEdits {
                 final ResourceLocation id = tag(edit.text());
                 yield id != null && bus.addTag(id, "");
             }
-            case BusEditPayload.REMOVE_TAG -> bus.removeTag(slot, "");
+            case BusEditPayload.REMOVE_TAG -> slot >= 0 && slot < bus.tags().size()
+                    && bus.tags().get(slot).toString().equals(edit.text()) && bus.removeTag(slot, "");
             case BusEditPayload.ADD_CONDITION -> {
                 final BusCondition condition = condition(edit);
                 yield condition != null && bus.addCondition(condition, "");
             }
-            case BusEditPayload.REMOVE_CONDITION -> bus.removeCondition(slot, "");
+            case BusEditPayload.REMOVE_CONDITION -> named(bus.conditions(), slot, edit)
+                    && bus.removeCondition(slot, "");
             case BusEditPayload.ACCESS -> bus instanceof ExternalStorageBusPart external
                     && external.setAccess((int) value, "");
             default -> false;
@@ -108,6 +111,15 @@ public final class BusEdits {
     private static ResourceLocation tag(final String typed) {
         final String bare = typed.trim().startsWith("#") ? typed.trim().substring(1) : typed.trim();
         return bare.isEmpty() ? null : ResourceLocation.tryParse(bare);
+    }
+
+    /*
+     * Whether the condition at {@code slot} is the one the window took off, of the kind and on the subject it named: a
+     * second click sent before the window heard of the first names the one that has moved up into that row since.
+     */
+    private static boolean named(final List<BusCondition> conditions, final int slot, final BusEditPayload edit) {
+        return slot >= 0 && slot < conditions.size() && conditions.get(slot).kind().id() == edit.value()
+                && conditions.get(slot).subject().equals(edit.text());
     }
 
     private static boolean inFilter(final int slot) {

@@ -54,13 +54,14 @@ import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
-import java.util.HashMap;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.world.entity.player.Inventory;
@@ -99,15 +100,22 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
      */
     private static final int MOST_PASTED_LINES = 16;
     private static final int MOST_PASTED_LETTERS = 512;
+    private static final int MOST_KEPT = 64;
 
     /**
      * What each machine's prompt has printed, kept while the game runs.
      *
      * <p>A terminal's screen belongs to the machine, not to the window that happens to be showing it:
      * walking away from a TTY and coming back finds what was there, the way a real one does. The lines
-     * are kept here by machine, so opening the prompt again picks up where it was.
+     * are kept here by machine, so opening the prompt again picks up where it was. The machines last opened are
+     * kept, as many as {@link #MOST_KEPT}, so a game that visits many machines does not keep every one's lines.
      */
-    private static final Map<BlockPos, Kept> KEPT = new HashMap<>();
+    private static final Map<BlockPos, Kept> KEPT = new LinkedHashMap<>(16, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(final Map.Entry<BlockPos, Kept> eldest) {
+            return size() > MOST_KEPT;
+        }
+    };
 
     /**
      * What one machine's terminal has printed, and which run of that machine printed it.
@@ -156,7 +164,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
     /** The last press of Tab found nothing to fill in, so a second one in a row lists what there is instead. */
     private boolean tabFoundNothing;
 
-    private EditBox input;
+    private AnchoredBox input;
 
     /** The DOS prompt, synced from the server after each command so it tracks the current directory. */
     private String dosPrompt = "C:\\>";
@@ -230,7 +238,7 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
          * as everything above it, so it is laid out and painted with the rest. It sits well off the window so
          * that a click on the glass cannot land in it and move a cursor nobody can see it moving.
          */
-        input = new EditBox(font, -4000, -4000, 40, 11, GameText.component(CommandPromptTexts.COMMAND));
+        input = new AnchoredBox(font, -4000, -4000, 40, 11, GameText.component(CommandPromptTexts.COMMAND));
         input.setBordered(false);
         input.setTextShadow(false);
         input.setMaxLength(RunCommandPayload.MAX_LEN);
@@ -590,21 +598,8 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
         final boolean unseen = keyboard.asking() && keyboard.unseen();
         final boolean shown = input != null && !unseen;
         return TermInput.lay(before(), shown ? input.getValue() : "", CliStyle.PROMPT,
-                shown ? input.getCursorPosition() : 0, shown ? markOf(input) : 0,
+                shown ? input.getCursorPosition() : 0, shown ? input.anchor() : 0,
                 scrollback.columns(), GameText.LOADED);
-    }
-
-    /**
-     * Where the far end of what Shift and the arrows have picked out sits in the line being typed.
-     *
-     * <p>The box keeps that end to itself and hands over only the letters between the two, so it is worked out
-     * from them: if the letters are the ones after the cursor the far end is to its right, and otherwise to its
-     * left. With nothing picked out there are no letters and both ends are the cursor.
-     */
-    private static int markOf(final EditBox box) {
-        final String picked = box.getHighlighted();
-        final int cursor = box.getCursorPosition();
-        return box.getValue().startsWith(picked, cursor) ? cursor + picked.length() : cursor - picked.length();
     }
 
     /**
@@ -1168,5 +1163,29 @@ public class CommandPromptScreen<M extends CommandPromptMenu> extends AbstractCo
 
     /** The console panel's own ground, under a windowed prompt (a bare terminal uses the glass's own instead). */
     private record Colours(int ground) {
+    }
+
+    /*
+     * The box the line is typed in, saying where the far end of what Shift and the arrows picked out sits: the box
+     * keeps it to itself, and the letters picked out cannot tell which way a run of the same text was picked.
+     */
+    private static final class AnchoredBox extends EditBox {
+
+        private int anchor;
+
+        AnchoredBox(final Font font, final int x, final int y, final int width, final int height,
+                    final Component message) {
+            super(font, x, y, width, height, message);
+        }
+
+        @Override
+        public void setHighlightPos(final int position) {
+            super.setHighlightPos(position);
+            anchor = Mth.clamp(position, 0, getValue().length());
+        }
+
+        int anchor() {
+            return anchor;
+        }
     }
 }

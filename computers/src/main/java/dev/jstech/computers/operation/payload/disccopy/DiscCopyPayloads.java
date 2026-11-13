@@ -17,6 +17,7 @@ import dev.jstech.computers.operation.payload.DiscCopyStatePayload;
 import dev.jstech.computers.os.IOsHost;
 import dev.jstech.computers.os.media.MediaItem;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.text.TextBounds;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
@@ -98,8 +99,8 @@ public final class DiscCopyPayloads {
                 DiscCopies.bytesOf(medium), cut(songId), song == null ? 0 : (int) song.value().lengthInSeconds());
     }
 
+    /* Cut to the most a name travels as, never between the two halves of an emoji. */
     private static String cut(final String words) {
-        return words.length() <= DiscCopyStatePayload.Place.MOST_NAME ? words
-                : words.substring(0, DiscCopyStatePayload.Place.MOST_NAME);
+        return TextBounds.clip(words, DiscCopyStatePayload.Place.MOST_NAME);
     }
 }

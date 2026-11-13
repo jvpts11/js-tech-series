@@ -84,6 +84,8 @@ public final class GatewayService {
     private static final String FLUID_PREFIX = "fluid/";
     private static final String CHEMICAL_PREFIX = "chemical/";
     private static final int WHAT_LENGTH = GatewayLog.TEXT_LENGTH;
+    /* An hour of the world's clock, in ticks: how long a settled operation is still looked up by its id. */
+    private static final long HOUR_TICKS = 72_000L;
     /* How many names one computer watches at most. */
     private static final int MOST_WATCHES = 32;
 
@@ -415,8 +417,10 @@ public final class GatewayService {
         final MainframeBlockEntity mainframe = mainframe();
         final List<INetworkOperation> lives = liveMatching(mainframe, id);
         final List<OperationRecord> records = new ArrayList<>();
+        final long now = mainframe.getLevel() == null ? 0L : mainframe.getLevel().getGameTime();
         for (final OperationRecord record : mainframe.recentOperations()) {
-            if (matches(record.id(), id)) {
+            // Settled this past hour only: the log keeps its last few however long ago they settled.
+            if (matches(record.id(), id) && now - record.settledAt() <= HOUR_TICKS) {
                 records.add(record);
             }
         }

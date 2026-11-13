@@ -257,8 +257,9 @@ public final class MediaLibrary {
         if (longer <= FRAME_SIDE) {
             return image;
         }
-        final int w = Math.max(1, image.getWidth() * FRAME_SIDE / longer);
-        final int h = Math.max(1, image.getHeight() * FRAME_SIDE / longer);
+        // Worked out in longs: a picture millions of pixels wide would go round an int.
+        final int w = (int) Math.max(1, (long) image.getWidth() * FRAME_SIDE / longer);
+        final int h = (int) Math.max(1, (long) image.getHeight() * FRAME_SIDE / longer);
         return PictureScaling.scale(image, 0, 0, image.getWidth(), image.getHeight(), w, h);
     }
 }

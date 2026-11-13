@@ -9,13 +9,15 @@ package dev.jstech.computers.operation;
 
 import dev.jstech.computers.block.part.ExternalStorageBusPart;
 import dev.jstech.computers.storage.StorageKey;
+import dev.jstech.core.util.Sizes;
 import net.minecraft.world.item.Item;
 
 import java.util.Map;
 
 /**
  * An {@link INodeStore} over the inventory an External Storage Bus faces: what its filter lets through, read and
- * written as its access allows. Its megabytes are counted as the network counts an item, four to one.
+ * written as its access allows. Its megabytes are counted as the network counts an item, four to one, a bucket of a
+ * liquid or a gas weighing what an item does.
  */
 final class ExternalNodeStore implements INodeStore {
 
@@ -58,13 +60,14 @@ final class ExternalNodeStore implements INodeStore {
         return used() + bus.room() / StorageKey.MB_EQ_PER_ITEM;
     }
 
+    /* In items' worth: an item is one, a liquid or a gas a bucket's worth to one, as the room the bus has is told. */
     @Override
     public long used() {
-        long sum = 0L;
-        for (final long held : bus.visible().values()) {
-            sum += held;
+        long weight = 0L;
+        for (final Map.Entry<StorageKey, Long> held : bus.visible().entrySet()) {
+            weight = Sizes.plus(weight, held.getKey().weight(held.getValue()));
         }
-        return sum;
+        return Math.ceilDiv(Math.max(0L, weight), StorageKey.MB_EQ_PER_ITEM);
     }
 
     @Override

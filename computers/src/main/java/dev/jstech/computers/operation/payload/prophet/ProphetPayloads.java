@@ -135,8 +135,11 @@ public final class ProphetPayloads {
     /* Settings written as interval;batch;reacting, any part that does not read left at its default. */
     private static ProphetEngine.Settings settings(final String written) {
         final String[] parts = written.split(SEPARATOR, -1);
-        return new ProphetEngine.Settings(parts.length > 0 ? (int) number(parts[0]) : 0,
-                parts.length > 1 ? number(parts[1]) : 0L, parts.length < 3 || Boolean.parseBoolean(parts[2].strip()));
+        // An interval past an int's range would wrap round to one on the list, so it reads as none, the default.
+        final long interval = parts.length > 0 ? number(parts[0]) : 0L;
+        return new ProphetEngine.Settings(interval < Integer.MIN_VALUE || interval > Integer.MAX_VALUE ? 0
+                : (int) interval, parts.length > 1 ? number(parts[1]) : 0L,
+                parts.length < 3 || !"false".equalsIgnoreCase(parts[2].strip()));
     }
 
     private static long number(final String text) {

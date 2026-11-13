@@ -126,9 +126,31 @@ public final class BusWindowGameTests {
         helper.assertFalse(BusEdits.apply(bus, new BusEditPayload(BusEditPayload.ADD_CONDITION,
                 BusCondition.Kind.STOCK.id(), 10L, "no_such_item_at_all"), ItemStack.EMPTY),
                 "an item that is not there is no condition");
-        apply(bus, BusEditPayload.REMOVE_CONDITION, 1, 0L);
-        apply(bus, BusEditPayload.REMOVE_TAG, 0, 0L);
+        apply(bus, new BusEditPayload(BusEditPayload.REMOVE_CONDITION, 1, BusCondition.Kind.HOURS.id(), ""));
+        apply(bus, new BusEditPayload(BusEditPayload.REMOVE_TAG, 0, 0L, "c:ores"));
         helper.assertTrue(bus.conditions().size() == 2 && bus.tags().isEmpty(), "taken off");
+        helper.succeed();
+    }
+
+    /** A second click on a row, sent before the window heard of the first, leaves the entry moved up into it. */
+    @GameTest(template = ARENA)
+    public static void edits_aSecondRemoveOnTheSameRowTakesNothingElse(final GameTestHelper helper) {
+        final ImportBusPart bus = ComputingParts.ADVANCED_IMPORT.get().create();
+        bus.addCondition(BusCondition.hours(18, 6), "");
+        bus.addCondition(BusCondition.after("Coal in"), "");
+        bus.addTag(ResourceLocation.parse("c:ores"), "");
+        bus.addTag(ResourceLocation.parse("c:ingots"), "");
+        final BusEditPayload condition = new BusEditPayload(BusEditPayload.REMOVE_CONDITION, 0,
+                BusCondition.Kind.HOURS.id(), "");
+        final BusEditPayload tag = new BusEditPayload(BusEditPayload.REMOVE_TAG, 0, 0L, "c:ores");
+        helper.assertTrue(BusEdits.apply(bus, condition, ItemStack.EMPTY), "the first click on the condition");
+        helper.assertTrue(BusEdits.apply(bus, tag, ItemStack.EMPTY), "and on the tag take theirs off");
+        helper.assertFalse(BusEdits.apply(bus, condition, ItemStack.EMPTY), "the second click on the condition");
+        helper.assertFalse(BusEdits.apply(bus, tag, ItemStack.EMPTY), "and on the tag take nothing off");
+        helper.assertTrue(bus.conditions().equals(List.of(BusCondition.after("Coal in"))),
+                "the condition that moved up stays; got " + bus.conditions());
+        helper.assertTrue(bus.tags().equals(List.of(ResourceLocation.parse("c:ingots"))),
+                "and so does the tag; got " + bus.tags());
         helper.succeed();
     }
 

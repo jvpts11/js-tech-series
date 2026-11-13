@@ -39,6 +39,8 @@ class SoundfoundryShareLayoutTest {
                 "the fastest cable lights them all");
         assertEquals(1, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.ACCESS, HardwareEra.VINTAGE)),
                 "a cable far slower than the Ethernet lights one");
+        assertEquals(2, SoundfoundryShareLayout.signalOf(new DataLink(DataLine.HPC, HardwareEra.VINTAGE)),
+                "a cable with no speed of its own goes at the Ethernet's");
     }
 
     @Test

@@ -115,6 +115,8 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     private OsSkin skin = OsSkin.fallback();
     private PixImage image = new PixImage(64, 48);
     private final Deque<PixImage> undo = new ArrayDeque<>();
+    /* The pictures sent to be saved and not yet answered, the oldest first, as they were written. */
+    private final Deque<String> saving = new ArrayDeque<>();
     private String path = "";
     private Text status = PaintTexts.NEW_PICTURE.text();
     private boolean dirty;
@@ -288,6 +290,7 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
             return;
         }
         this.path = target;
+        this.saving.addLast(written);
         CodeFileReplies.expectSaved(this);
         PacketDistributor.sendToServer(new SaveFilePayload(host, target, written));
         FilesApps.diskChanged();
@@ -302,7 +305,9 @@ public final class PaintApp implements IDesktopApp, CodeFileReplies.IReader {
     @Override
     public void onSaved(final boolean ok, final Text message) {
         this.status = message;
-        if (ok) {
+        final String written = saving.pollFirst();
+        // Strokes drawn after the save was sent are not in the file, so a picture changed since stays unsaved.
+        if (ok && written != null && image.encode().equals(written)) {
             this.dirty = false;
         }
     }

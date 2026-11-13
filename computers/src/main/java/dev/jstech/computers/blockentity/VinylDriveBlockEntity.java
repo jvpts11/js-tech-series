@@ -77,6 +77,8 @@ public class VinylDriveBlockEntity extends SyncedBlockEntity implements IPeriphe
     /** The folder under the system's music folder that recordings from a disc go into. */
     public static final String FOLDER = "Vinyl";
     private static final int TICKS_A_DAY = 24_000;
+    /* How long past the song's end a recording waits for its sound before it is let go: half a minute. */
+    private static final int LATE_SOUND_TICKS = 600;
 
     public VinylDriveBlockEntity(final BlockPos pos, final BlockState state) {
         super(MediaDevices.VINYL_DRIVE_BE.get(), pos, state);
@@ -257,8 +259,13 @@ public class VinylDriveBlockEntity extends SyncedBlockEntity implements IPeriphe
             song.set("");
         } else if (brought != null) {
             finishRecording(server);
+        } else if (server.getGameTime() >= started.get() + length.get() + LATE_SOUND_TICKS) {
+            // The sound never came, as when the world stopped mid-song and it was lost: the recording is let go.
+            work.set(Work.NONE);
+            song.set("");
+            problem.set(Problem.NOT_SAVED);
         }
-        // A recording whose sound has not come yet waits for it; Stop lets it go.
+        // A recording whose sound has not come yet waits for it a while, as a slow game sends it; Stop lets it go.
     }
 
     /* Keeps the brought sound in the linked computer's Music/Vinyl folder, noted as recorded from the disc. */
@@ -275,14 +282,14 @@ public class VinylDriveBlockEntity extends SyncedBlockEntity implements IPeriphe
             return;
         }
         final String folder = MusicImports.musicFolderOf(computer) + "/" + FOLDER;
-        final MediaReceipt receipt = MusicImports.keep(server, computer, folder, false, kept.name(), kept.media(),
-                kept.info());
-        if (!receipt.accepted()) {
+        final MusicImports.Kept landed = MusicImports.keepAt(server, computer, folder, false, kept.name(),
+                kept.media(), kept.info());
+        if (!landed.receipt().accepted()) {
             problem.set(Problem.NOT_SAVED);
             return;
         }
         VinylRecordings.of(server).recorded(kept.media(), id, server.getDayTime() / TICKS_A_DAY + 1);
-        lastSaved.set(folder + "/" + kept.name());
+        lastSaved.set(landed.path());
     }
 
     /** What the drive is doing. */

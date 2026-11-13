@@ -7,6 +7,7 @@
  */
 package dev.jstech.computers.chain.machine;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.computers.advancement.JscEvents;
 import dev.jstech.computers.chain.machine.ChainMachines.Worked;
 import dev.jstech.computers.config.ComputersServerConfig;
@@ -49,8 +50,9 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     private final ValueField<List<ResourceLocation>> takes;
     private final ValueField<List<ResourceLocation>> makes;
     private final ValueField<List<ResourceLocation>> flows;
-    /* The entries it told to draw nothing while its shape stands. */
-    private final List<BlockPos> flagged = new ArrayList<>();
+    /* The entries it told to draw nothing while its shape stands, by position; kept with it, so a shape that came
+     * apart while it was away still lets them draw again. */
+    private final ValueField<List<Long>> flagged;
     private final LithoLink link;
     /* Whether its shape stood at the last check, so its forming is told the advancements once. */
     private boolean stood;
@@ -66,6 +68,7 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
         this.takes = fields().value("Takes", ResourceLocation.CODEC.listOf(), List.<ResourceLocation>of()).toClient();
         this.makes = fields().value("Makes", ResourceLocation.CODEC.listOf(), List.<ResourceLocation>of()).toClient();
         this.flows = fields().value("Flows", ResourceLocation.CODEC.listOf(), List.<ResourceLocation>of()).toClient();
+        this.flagged = fields().value("Flagged", Codec.LONG.listOf(), List.<Long>of()).save();
         this.link = new LithoLink(machine);
         fields().mirror(ChainFormedBlock.FORMED, this::formed);
         fields().whenBroken((level, at) -> unflag(level));
@@ -134,17 +137,18 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
             stood = true;
             JscEvents.awardOperator(this, JscEvents.CHAIN_FORMED, ChainMachines.familyOf(machine));
         }
-        flagged.clear();
+        final List<Long> told = new ArrayList<>();
         for (final long at : formed.get().parts()) {
             final BlockPos pos = BlockPos.of(at);
             final BlockState state = level.getBlockState(pos);
             if (state.getBlock() instanceof ChainFormedBlock) {
-                flagged.add(pos);
+                told.add(at);
                 if (!state.getValue(ChainFormedBlock.FORMED)) {
                     level.setBlock(pos, state.setValue(ChainFormedBlock.FORMED, true), Block.UPDATE_ALL);
                 }
             }
         }
+        flagged.set(List.copyOf(told));
     }
 
     /* What it made is told the advancements, which count each machine's first. */
@@ -212,12 +216,13 @@ public class ChainMachineBlockEntity extends ProcessingMachineBlockEntity {
     }
 
     private void unflag(final Level level) {
-        for (final BlockPos pos : flagged) {
+        for (final long at : flagged.get()) {
+            final BlockPos pos = BlockPos.of(at);
             final BlockState state = level.getBlockState(pos);
             if (state.getBlock() instanceof ChainFormedBlock && state.getValue(ChainFormedBlock.FORMED)) {
                 level.setBlock(pos, state.setValue(ChainFormedBlock.FORMED, false), Block.UPDATE_ALL);
             }
         }
-        flagged.clear();
+        flagged.set(List.of());
     }
 }

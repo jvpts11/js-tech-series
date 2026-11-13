@@ -150,15 +150,16 @@ public final class GatewayManager {
         int reachable = 0;
         NetworkGatewayBlockEntity chosen = null;
         for (final NetworkGatewayBlockEntity g : gateways) {
-            if (rail.size() >= GatewayManagerStatePayload.MAX_GATEWAYS) {
-                break;
-            }
-            rail.add(new WireGateway(g.getBlockPos().asLong(), g.name(), place(g), g.linkKind(), g.online(),
-                    g.ccOnline()));
+            // The totals count every Gateway; the rail lists as many as it holds.
             calls += g.stats().lastMinute(GatewayStats.Kind.CALL, now);
             if (g.ccOnline()) {
                 reachable++;
             }
+            if (rail.size() >= GatewayManagerStatePayload.MAX_GATEWAYS) {
+                continue;
+            }
+            rail.add(new WireGateway(g.getBlockPos().asLong(), g.name(), place(g), g.linkKind(), g.online(),
+                    g.ccOnline()));
             if (g.getBlockPos().asLong() == selected) {
                 chosen = g;
             }

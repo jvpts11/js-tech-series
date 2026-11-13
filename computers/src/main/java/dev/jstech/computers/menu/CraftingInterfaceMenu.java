@@ -145,7 +145,10 @@ public class CraftingInterfaceMenu extends CoreMenu {
             }
             case CraftingInterfaceEditPayload.MODE -> part.setExclusive(edit.value() != 0, "");
             case CraftingInterfaceEditPayload.STATE -> part.setPaused(edit.value() != 0, "");
-            case CraftingInterfaceEditPayload.JOBS -> part.setMaxJobs(edit.value(), "");
+            // A step from what the interface holds, so clicks sent before the window heard of the last all count.
+            case CraftingInterfaceEditPayload.JOBS -> part.setMaxJobs(part.maxJobs()
+                    + Math.max(-CraftingInterfaceEditPayload.MOST_JOBS_STEP,
+                    Math.min(CraftingInterfaceEditPayload.MOST_JOBS_STEP, edit.value())), "");
             case CraftingInterfaceEditPayload.ROUTE -> route(player.serverLevel(), edit);
             default -> false;
         };
@@ -181,9 +184,11 @@ public class CraftingInterfaceMenu extends CoreMenu {
         }
         final CraftingFloor.Reach reach = CraftingFloor.through(level, cablePos)
                 .reach(new CraftingFloor.Site(cablePos, face));
+        final int choice = edit.value() == CraftingInterfaceEditPayload.NEXT_ROUTER
+                ? nextRouter(level, reach, held.routes().get(inputs.get(edit.input()).id())) : edit.value();
         UUID router = null;
-        if (edit.value() >= 0 && edit.value() < reach.routers().size()) {
-            final CraftingRouterPart routerPart = reach.routers().get(edit.value()).part(level,
+        if (choice >= 0 && choice < reach.routers().size()) {
+            final CraftingRouterPart routerPart = reach.routers().get(choice).part(level,
                     CraftingRouterPart.class);
             if (routerPart == null) {
                 return false;
@@ -191,6 +196,25 @@ public class CraftingInterfaceMenu extends CoreMenu {
             router = routerPart.id();
         }
         return part.route(edit.pattern(), inputs.get(edit.input()), router, "");
+    }
+
+    /*
+     * The place of the router after {@code now} in the cable's list, the first after the default: worked out from the
+     * route the interface holds, so a second click sent before the window heard of the first goes one router on.
+     */
+    private static int nextRouter(final ServerLevel level, final CraftingFloor.Reach reach,
+                                  @Nullable final UUID now) {
+        if (reach.routers().isEmpty()) {
+            return -1;
+        }
+        int at = -1;
+        for (int i = 0; i < reach.routers().size() && now != null; i++) {
+            final CraftingRouterPart one = reach.routers().get(i).part(level, CraftingRouterPart.class);
+            if (one != null && now.equals(one.id())) {
+                at = i;
+            }
+        }
+        return (at + 1) % reach.routers().size();
     }
 
     private static void addInputs(final ProcessingPattern pattern, final List<StorageKey> into) {

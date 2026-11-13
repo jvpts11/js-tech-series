@@ -110,6 +110,9 @@ final class ProgramOpener {
                 final IDesktopApp app = AddonDesktopApp.byHand(() -> factoryFor(key));
                 if (app != null && desktop.memory().allowOpen(key)) {
                     desktop.wm().open(key, app);
+                } else if (app != null) {
+                    // Made and refused: closed at once, so what it said it was waiting for forgets it.
+                    app.onClosed();
                 }
             }
         }
@@ -225,6 +228,9 @@ final class ProgramOpener {
         if (app != null && desktop.memory().allowOpen(key)) {
             app.applySkin(desktop.prefs().skin());
             desktop.wm().open(key, app);
+        } else if (app != null) {
+            // Made and refused: closed at once, so what it said it was waiting for forgets it.
+            app.onClosed();
         }
     }
 
@@ -395,6 +401,10 @@ final class ProgramOpener {
         if (made instanceof ShellApp shell && desktop.memory().allowOpen(key)) {
             desktop.wm().open(key, shell);
             return shell;
+        }
+        if (made != null) {
+            // Made and refused: closed at once, so what it said it was waiting for forgets it.
+            made.onClosed();
         }
         return null;
     }

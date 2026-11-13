@@ -155,7 +155,8 @@ public final class ClusterManagerPayloads {
             return;
         }
         final var ref = clusterRef(cmc, payload.kind(), payload.index());
-        Text status = ClusterManagerStateBuilder.SELECT_FIRST.text();
+        // Nothing chosen is said; a cluster chosen whose router or hub is gone just keeps its name.
+        Text status = ref == null ? ClusterManagerStateBuilder.SELECT_FIRST.text() : Text.EMPTY;
         if (ref != null) {
             final String typed = payload.name().strip().replaceAll("\\p{Cntrl}", "");
             final String name = TextBounds.clip(typed, ClusterRenamePayload.MAX_NAME);
@@ -204,8 +205,10 @@ public final class ClusterManagerPayloads {
             op.onSettle(() -> PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level,
                     ClusterManagerStatePayload.KIND_DATACENTER, payload.index(), Text.EMPTY)));
         }
+        // Moving is said only of a move that started.
         PacketDistributor.sendToPlayer(player, buildClusterManagerState(cmc, level,
-                ClusterManagerStatePayload.KIND_DATACENTER, payload.index(), ClusterManagerStateBuilder.MOVING.text()));
+                ClusterManagerStatePayload.KIND_DATACENTER, payload.index(),
+                op != null ? ClusterManagerStateBuilder.MOVING.text() : Text.EMPTY));
     }
 
     /** The cluster a (kind, index) pair names in the state's own order, or null. */

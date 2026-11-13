@@ -31,6 +31,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.block.Blocks;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -144,6 +145,25 @@ public final class NetworkEventLogGameTests {
                 "what is past seven days is let go when it is read");
         log.add(network, event(100L + NetworkEventLog.KEPT_TICKS + 2, EventLevel.WARN, null, "Late"));
         helper.assertTrue(log.size(network) == 1, "and when a new one comes: " + log.size(network));
+        helper.succeed();
+    }
+
+    /** A log gone quiet still lets its old events go, its number moving for a screen, and leaves the save empty. */
+    @GameTest(template = ARENA)
+    public static void aQuietLog_agesAndLeavesTheSaveOnceEmpty(final GameTestHelper helper) {
+        final NetworkEventLog log = new NetworkEventLog();
+        final NetworkUuid quiet = NetworkUuid.random();
+        final NetworkUuid busy = NetworkUuid.random();
+        log.add(quiet, event(100L, EventLevel.INFO, null, "Turned on"));
+        log.add(quiet, event(200L, EventLevel.INFO, null, "Turned off"));
+        final long before = log.revision(quiet, 300L);
+        helper.assertTrue(log.revision(quiet, 100L + NetworkEventLog.KEPT_TICKS + 1) != before,
+                "an event let go moves the number a screen asks by");
+        log.add(busy, event(200L + NetworkEventLog.KEPT_TICKS + 1, EventLevel.INFO, null, "Turned on"));
+        helper.assertTrue(log.size(quiet) == 0, "another network's event ages the quiet log too: " + log.size(quiet));
+        final CompoundTag saved = log.save(new CompoundTag(), helper.getLevel().registryAccess());
+        helper.assertTrue(saved.getList("networks", Tag.TAG_COMPOUND).size() == 1,
+                "and the empty log is not saved: " + saved);
         helper.succeed();
     }
 

@@ -14,6 +14,7 @@ import dev.jstech.computers.gui.layout.UiLayout;
 import dev.jstech.computers.operation.payload.UiWindowPayload;
 import dev.jstech.computers.vm.program.ComponentValues;
 import dev.jstech.computers.vm.program.UiWidgets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import net.minecraft.client.Minecraft;
@@ -36,6 +37,9 @@ final class SigmaInput {
 
     /** What a click on the inside of these does nothing, since they only hold other widgets. */
     private static final Set<String> HOLDERS = Set.of("Row", "Column");
+    /** The widgets that take the keyboard, which Tab goes round. */
+    private static final Set<String> KEYED = Set.of("TextBox", "TextArea", "NumberBox", "ItemPicker",
+            "GenericComponent");
     /** The longest a component's action may be on its way to the program, its name and value together. */
     private static final int MOST_ACTION = UiWidgets.MOST_AREA;
 
@@ -184,13 +188,13 @@ final class SigmaInput {
             this.ui.closePopup();
             return true;
         }
+        if (key == GLFW.GLFW_KEY_TAB) {
+            // On to the next widget that takes the keyboard, back with Shift, as the windows of letters do.
+            return this.moveFocus((modifiers & GLFW.GLFW_MOD_SHIFT) != 0 ? -1 : 1);
+        }
         final UiWindowPayload.Widget focused = this.app.widgetOf(this.ui.focused);
         if (focused == null) {
             return false;
-        }
-        if (key == GLFW.GLFW_KEY_TAB) {
-            this.focus(0);
-            return true;
         }
         final boolean enter = key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER;
         switch (focused.kind()) {
@@ -231,6 +235,26 @@ final class SigmaInput {
                 return false;
             }
         }
+        return true;
+    }
+
+    /* Gives the keyboard to the next widget that takes it, {@code by} one way or the other; whether there was one. */
+    private boolean moveFocus(final int by) {
+        if (this.app.state() == null) {
+            return false;
+        }
+        final List<Long> order = new ArrayList<>();
+        for (final UiWindowPayload.Widget widget : this.app.state().widgets()) {
+            if (KEYED.contains(widget.kind()) && widget.answers() && widget.shows()
+                    && this.app.rectOf(widget.id()) != null) {
+                order.add(widget.id());
+            }
+        }
+        if (order.isEmpty()) {
+            return false;
+        }
+        final int at = order.indexOf(this.ui.focused);
+        this.focus(order.get(Math.floorMod(at < 0 ? (by > 0 ? -1 : 0) + by : at + by, order.size())));
         return true;
     }
 

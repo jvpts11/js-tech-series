@@ -31,7 +31,7 @@ final class ConsoleTexts {
             TextKey.of("jsc.console.isms_from_icon", "open the ISMS from its desktop icon");
     static final TextKey ISMS_FROM_ICON_MESSAGE =
             TextKey.of("jsc.console.isms_from_icon_message", "Open the ISMS from its desktop icon.");
-    static final TextKey ALREADY_OPEN = TextKey.of("jsc.console.already_open", "the %s is already open");
+    static final TextKey FROM_DESKTOP = TextKey.of("jsc.console.from_desktop", "open the %s from the desktop");
     // How far a program's setup has got, on the line that stands in for the prompt while it runs.
     static final TextKey SETTING_UP =
             TextKey.of("jsc.console.setting_up", "Setting up %s  %s%%  (Ctrl+C to cancel)");

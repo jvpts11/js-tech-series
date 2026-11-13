@@ -604,6 +604,11 @@ public final class NetworkManagerApp implements IDesktopApp {
             logAskers = List.copyOf(askers);
             root.remove(logByFilter);
             logByFilter = root.add(askerDropdown());
+            // An asker gone from the log is no filter: the list goes back to everyone, as its label reads.
+            if (!logBy.isEmpty() && !logAskers.contains(logBy)) {
+                logBy = "";
+                logList.setScroll(0);
+            }
         }
     }
 

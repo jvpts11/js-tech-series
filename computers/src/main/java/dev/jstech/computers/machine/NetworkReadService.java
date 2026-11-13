@@ -418,6 +418,10 @@ public final class NetworkReadService {
     /** The computer that name picks out, by its host name or by the name its owner gave it, or null. */
     @Nullable
     public ICliComputer.RemoteHost computer(final String name) {
+        // No name picks out none, not the first computer its owner left unnamed.
+        if (name == null || name.isBlank()) {
+            return null;
+        }
         for (final ICliComputer.RemoteHost host : this.remote.reachableHosts()) {
             if (host.hostname().equalsIgnoreCase(name) || host.name().equalsIgnoreCase(name)) {
                 return host;

@@ -160,9 +160,12 @@ public final class SectionDiagnostics {
         return lastOverTicks;
     }
 
-    /** What is kept of it across a restart: the hour, the alerts' times and the last time the latency went over. */
+    /**
+     * What is kept of it across a restart: the hour, the alerts' times, the last time the latency went over and since
+     * when it is over now, so a time over that a restart cuts through is counted whole.
+     */
     public Saved saved() {
-        return new Saved(hourLatency(), hourThroughput(), Map.copyOf(since), lastOverEnded, lastOverTicks);
+        return new Saved(hourLatency(), hourThroughput(), Map.copyOf(since), lastOverEnded, lastOverTicks, overSince);
     }
 
     /** Takes back what {@link #saved()} kept; the last minute starts empty. */
@@ -180,6 +183,7 @@ public final class SectionDiagnostics {
         since.putAll(saved.since());
         lastOverEnded = saved.lastOverEnded();
         lastOverTicks = saved.lastOverTicks();
+        overSince = saved.overSince();
     }
 
     /* The minutes of {@code ring} gathered so far, the oldest first. */
@@ -205,9 +209,10 @@ public final class SectionDiagnostics {
      * @param since         since when each standing alert has stood, by its key
      * @param lastOverEnded when the latency last stopped being over twice its base, or NONE
      * @param lastOverTicks how long it was over then
+     * @param overSince     since when the latency has been over twice its base, or NONE when it is not
      */
     public record Saved(List<Integer> latency, List<Integer> throughput, Map<String, Long> since, long lastOverEnded,
-                        long lastOverTicks) {
+                        long lastOverTicks, long overSince) {
 
         public Saved {
             latency = List.copyOf(latency);

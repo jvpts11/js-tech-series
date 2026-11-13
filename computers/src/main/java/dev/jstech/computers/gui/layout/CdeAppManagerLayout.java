@@ -63,15 +63,25 @@ public final class CdeAppManagerLayout {
         return new Rect(cell.x() + (CELL_W - ICON) / 2, cell.y(), ICON, ICON);
     }
 
-    /** The icon under that point out of {@code count}, or -1 when the point is on none of them. */
+    /**
+     * The icon under that point out of {@code count}, or -1 when the point is on none of them; an icon the well has no
+     * room for is not drawn, so it is not there to click either.
+     */
     public static int indexAt(final double px, final double py, final int count, final boolean headed,
                               final int width, final int height) {
         for (int i = 0; i < count; i++) {
-            if (cell(i, headed, width, height).holds(px, py)) {
+            if (shown(i, headed, width, height) && cell(i, headed, width, height).holds(px, py)) {
                 return i;
             }
         }
         return -1;
+    }
+
+    /** Whether icon {@code index} stands wholly inside the well: one that would run over its rim is not drawn. */
+    public static boolean shown(final int index, final boolean headed, final int width, final int height) {
+        final Rect cell = cell(index, headed, width, height);
+        final Rect well = well(headed, width, height);
+        return cell.y() + cell.h() <= well.y() + well.h();
     }
 
     /** The window's content with that many icons, as solids that may not overlap. */

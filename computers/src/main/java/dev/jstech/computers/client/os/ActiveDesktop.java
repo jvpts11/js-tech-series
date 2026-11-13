@@ -65,7 +65,11 @@ public final class ActiveDesktop {
      * newline in it is typed as the lines it holds.
      */
     public static void requestTypeAtTerminal(final List<String> lines) {
-        DesktopRequests.open(new OpenRequest.TypeAtTerminal(List.of(String.join("\n", lines).split("\n"))));
+        if (lines.isEmpty()) {
+            return;
+        }
+        // Every line is typed, a blank one at the end too, as Enter alone.
+        DesktopRequests.open(new OpenRequest.TypeAtTerminal(List.of(String.join("\n", lines).split("\n", -1))));
     }
 
     /** Asks for the Properties window of a file on the desktop, which the explorer knows how to show. */

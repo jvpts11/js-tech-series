@@ -269,7 +269,9 @@ public final class MusicPlayer {
                 : level.getGameTime() + Math.max(1L, (millis - Math.max(0L, from)) / TICK_MILLIS);
         computer.voices().take(level, false, key(), stereo ? 2 : 1, endsAt, stopped -> {
             MediaSessions.stop(stopped, key());
-            trouble = SoundfoundryTexts.VOICES_TAKEN.text();
+            leaveServer(stopped);
+            // Silenced because its machine went off, the song had no voices taken: there is nothing to say.
+            trouble = computer.isRunning() ? SoundfoundryTexts.VOICES_TAKEN.text() : Text.EMPTY;
         });
     }
 

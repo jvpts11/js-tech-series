@@ -103,6 +103,8 @@ public final class ClusterManagerApp implements IDesktopApp {
     private int selIndex = -1;
     private int subTab;       // supercomputers: 0 nodes, 1 map, 2 queue; datacenters: 0 servers, 1 inventory
     private long lastRequestMillis;
+    /* The asks sent and not yet answered: while a newer one is on its way, an answer's selection is an older one's. */
+    private int unanswered;
     private int lastX;
     private int lastY;
     private int lastW;
@@ -306,7 +308,9 @@ public final class ClusterManagerApp implements IDesktopApp {
     public static void accept(final ClusterManagerStatePayload payload) {
         if (active != null) {
             active.state = payload;
-            if (payload.detail().kind() >= 0) {
+            active.unanswered = Math.max(0, active.unanswered - 1);
+            // A click made while this answer was on its way is not undone by it: the click's own answer follows.
+            if (payload.detail().kind() >= 0 && active.unanswered == 0) {
                 active.tab = payload.detail().kind();
                 active.selIndex = payload.detail().index();
                 active.tabs.setSelected(active.tab);
@@ -316,12 +320,15 @@ public final class ClusterManagerApp implements IDesktopApp {
 
     private void request() {
         lastRequestMillis = Util.getMillis();
+        unanswered++;
         PacketDistributor.sendToServer(new RequestClusterManagerPayload(host, tab, selIndex));
     }
 
     @Override
     public void onRestored() {
         active = this;
+        // An ask left unanswered while the window was away is not waited for.
+        unanswered = 0;
         request();
     }
 

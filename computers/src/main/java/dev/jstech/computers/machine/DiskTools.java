@@ -15,6 +15,7 @@ import dev.jstech.computers.os.MachineSwap;
 import dev.jstech.computers.os.OsDef;
 import dev.jstech.computers.os.OsDisks;
 import dev.jstech.computers.os.OsRegistry;
+import dev.jstech.computers.os.VolumeLabel;
 import dev.jstech.computers.os.disk.DiskCommand;
 import dev.jstech.computers.os.disk.DiskLayout;
 import dev.jstech.computers.os.disk.DiskPartitions;
@@ -332,11 +333,8 @@ public final class DiskTools {
         if (volume.isEmpty()) {
             return DiskReport.Refusal.NO_SUCH_PARTITION;
         }
-        if (label.isBlank()) {
-            volume.remove(ComputingComponents.VOLUME_LABEL.get());
-        } else {
-            volume.set(ComputingComponents.VOLUME_LABEL.get(), label.strip());
-        }
+        // As every label is set: cut to the longest a label is, and cleared when blank.
+        VolumeLabel.set(volume, label);
         DiskPartitions.commit(disk, volume);
         return null;
     }

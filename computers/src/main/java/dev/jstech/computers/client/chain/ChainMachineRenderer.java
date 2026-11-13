@@ -18,9 +18,9 @@ import dev.jstech.core.model.ModelAnimator;
 import dev.jstech.core.model.ModelPose;
 import dev.jstech.core.multiblock.Orientation;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.WeakHashMap;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
@@ -38,8 +38,10 @@ public final class ChainMachineRenderer implements IKitDriver<ChainMachineBlockE
 
     private final ChainMachine machine;
 
-    /* The machines giving off their particles now, each with the holder of each emitter it holds. */
-    private static final Map<ChainMachineBlockEntity, Held> HELD = new WeakHashMap<>();
+    /* The machines giving off their particles now, each with the holder of each emitter it holds. Held strongly: a
+     * machine let go of without its emitters released would leave them giving off where it stood; each tick lets go
+     * of the removed ones. */
+    private static final Map<ChainMachineBlockEntity, Held> HELD = new HashMap<>();
     private static final String MODE = "mode_";
     private static final String TINT = "_tint_";
     private static final String GLOW = "_glow";

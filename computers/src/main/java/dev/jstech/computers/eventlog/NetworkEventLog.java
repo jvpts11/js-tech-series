@@ -69,7 +69,12 @@ public final class NetworkEventLog extends SavedData {
         final Feed feed = this.feeds.computeIfAbsent(network, any -> new Feed());
         feed.events.addLast(event);
         feed.revision++;
-        trim(feed, event.time());
+        // Every log ages by the same clock, so the logs of networks gone quiet let their old events go too, and a
+        // log left with none goes from the save.
+        this.feeds.values().removeIf(any -> {
+            trim(any, event.time());
+            return any.events.isEmpty();
+        });
         setDirty();
     }
 
@@ -121,9 +126,12 @@ public final class NetworkEventLog extends SavedData {
         return feed == null ? 0 : feed.events.size();
     }
 
-    /** A number that changes whenever {@code network}'s log gains an event; zero for a network with none yet. */
-    public long revision(final NetworkUuid network) {
-        final Feed feed = this.feeds.get(network);
+    /**
+     * A number that changes whenever {@code network}'s log gains an event or lets old ones go at {@code now}; zero for
+     * a network with none.
+     */
+    public long revision(final NetworkUuid network, final long now) {
+        final Feed feed = feed(network, now);
         return feed == null ? 0L : feed.revision;
     }
 
@@ -149,6 +157,8 @@ public final class NetworkEventLog extends SavedData {
     private Feed feed(final NetworkUuid network, final long now) {
         final Feed feed = this.feeds.get(network);
         if (feed != null && trim(feed, now)) {
+            // A screen holding the log asks by its number, so events let go change it as an event added does.
+            feed.revision++;
             setDirty();
         }
         return feed;

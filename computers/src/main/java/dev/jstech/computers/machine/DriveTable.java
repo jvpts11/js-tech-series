@@ -89,12 +89,12 @@ public final class DriveTable {
         final List<Drive> table = new ArrayList<>();
         final ItemStack system = computer.systemDisk();
         final OsDef os = computer.installedOs();
-        char letter = 'C';
+        // C: is the system's, with a system disk or without: a data disk is never read as the system.
+        char letter = 'D';
         if (!system.isEmpty()) {
             final KernelDef kernel = os != null ? OsRegistry.kernelOf(os) : null;
             final FilesystemKind kind = kernel != null ? kernel.filesystem() : FilesystemKind.NONE;
             table.add(new Drive('C', system, kind, computer::setChanged));
-            letter = 'D';
         }
         // Then every other volume the running system reads: the system disk's other partitions, then the other disks'.
         for (int i = 0; i < computer.diskSlots() && letter <= 'Z'; i++) {

@@ -109,7 +109,7 @@ public final class GatewayManagerApp implements IDesktopApp {
     private OsSkin skin = OsSkin.fallback();
     @Nullable
     private GatewayManagerStatePayload state;
-    private long selected;
+    private long selected = GatewayManagerStatePayload.NONE;
     private int tab;
     private long lastRequestMillis;
     private int lastX;
@@ -318,7 +318,6 @@ public final class GatewayManagerApp implements IDesktopApp {
                 .setPrimary(true));
         renameCancel = renamePopup.add(new Button(GameText.resolve(GatewayManagerTexts.CANCEL), renamePopup::close));
 
-        active = this;
         request();
     }
 
@@ -338,19 +337,27 @@ public final class GatewayManagerApp implements IDesktopApp {
             active.selected = payload.gateways().get(0).pos();
             active.request();
         } else {
-            active.selected = 0L;
+            active.selected = GatewayManagerStatePayload.NONE;
         }
     }
 
+    /* Asks how the gateways stand; the window that asked last is the one the answer goes to, of however many open. */
     private void request() {
         lastRequestMillis = Util.getMillis();
+        active = this;
         PacketDistributor.sendToServer(new RequestGatewayManagerPayload(host, selected));
     }
 
     @Override
     public void onRestored() {
-        active = this;
         request();
+    }
+
+    @Override
+    public void onClosed() {
+        if (active == this) {
+            active = null;
+        }
     }
 
     private void act(final int action) {
@@ -358,7 +365,7 @@ public final class GatewayManagerApp implements IDesktopApp {
     }
 
     private void act(final int action, final int value) {
-        if (selected != 0L) {
+        if (selected != GatewayManagerStatePayload.NONE) {
             PacketDistributor.sendToServer(GatewayManagerActionPayload.valued(host, selected, action, value));
         }
     }
@@ -503,7 +510,7 @@ public final class GatewayManagerApp implements IDesktopApp {
     }
 
     private void applyRename() {
-        if (selected != 0L) {
+        if (selected != GatewayManagerStatePayload.NONE) {
             String typed = renameField.edit().strip();
             if (typed.length() > GatewayManagerActionPayload.MAX_TEXT) {
                 typed = typed.substring(0, GatewayManagerActionPayload.MAX_TEXT);

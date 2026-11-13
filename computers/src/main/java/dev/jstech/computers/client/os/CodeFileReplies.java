@@ -10,6 +10,8 @@ package dev.jstech.computers.client.os;
 import dev.jstech.computers.operation.payload.DiskFilesPayload;
 import dev.jstech.computers.operation.payload.FolderContentPayload;
 import dev.jstech.core.text.Text;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Where a file the server sent back belongs, when more than one window could have asked for it.
@@ -62,10 +64,21 @@ public final class CodeFileReplies {
     private record Waiting(IReader reader, String about) {
     }
 
+    /** A window waiting to hear how its save went, and when it asked. */
+    private record Saving(IReader reader, long askedAt) {
+    }
+
+    /* Who stands in for a window that closed while its save was on its way: its answer still has to be taken. */
+    private static final IReader GONE = new IReader() {
+    };
+    /* How long a save is waited for before it is taken as never to be answered, in milliseconds. */
+    private static final long SAVE_WAIT_MS = 30_000L;
+    /* The saves asked for, the oldest first: the server answers them in the order they were asked. */
+    private static final List<Saving> SAVES = new ArrayList<>();
+
     private static Waiting content;
     private static Waiting listing;
     private static Waiting folder;
-    private static IReader saved;
 
     private CodeFileReplies() {
     }
@@ -88,11 +101,12 @@ public final class CodeFileReplies {
     /**
      * Says a window is about to ask for a file to be saved.
      *
-     * <p>The reply says only whether it worked, so there is nothing to match it against; a window that
-     * asked most recently is the one that gets told, which is the whole of what a save reply is for.
+     * <p>The reply says only whether it worked, so there is nothing to match it against; the server answers
+     * the saves in the order they were asked, so each answer goes to the window that asked first and has not
+     * heard yet. Two windows saving at once, a code editor and the desktop packing a file, each hear their own.
      */
     public static void expectSaved(final IReader reader) {
-        saved = reader;
+        SAVES.add(new Saving(reader, System.currentTimeMillis()));
     }
 
     /** Stops a window that is closing from being handed anything it asked for. */
@@ -106,9 +120,8 @@ public final class CodeFileReplies {
         if (folder != null && folder.reader() == reader) {
             folder = null;
         }
-        if (saved == reader) {
-            saved = null;
-        }
+        // Its saves on their way keep their places, so the answers after theirs still reach whoever asked.
+        SAVES.replaceAll(saving -> saving.reader() == reader ? new Saving(GONE, saving.askedAt()) : saving);
     }
 
     /** Delivers a file's content, and says whether it was the one somebody was waiting for. */
@@ -156,9 +169,14 @@ public final class CodeFileReplies {
 
     /** Delivers the result of a save, and says whether anyone was waiting for it. */
     public static boolean saved(final boolean ok, final Text message) {
-        final IReader reader = saved;
-        saved = null;
-        if (reader == null) {
+        // A save the server never answered, its window gone from the machine's screen, holds no place for long.
+        final long now = System.currentTimeMillis();
+        SAVES.removeIf(saving -> now - saving.askedAt() > SAVE_WAIT_MS);
+        if (SAVES.isEmpty()) {
+            return false;
+        }
+        final IReader reader = SAVES.removeFirst().reader();
+        if (reader == GONE) {
             return false;
         }
         reader.onSaved(ok, message);

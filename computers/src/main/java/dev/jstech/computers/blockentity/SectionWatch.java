@@ -101,6 +101,7 @@ final class SectionWatch {
             one.put("Since", since);
             one.putLong("LastOverEnded", saved.lastOverEnded());
             one.putLong("LastOverTicks", saved.lastOverTicks());
+            one.putLong("OverSince", saved.overSince());
             all.put(face.getName(), one);
         });
         if (!all.isEmpty()) {
@@ -125,7 +126,8 @@ final class SectionWatch {
             final SectionDiagnostics diag = new SectionDiagnostics();
             diag.restore(new SectionDiagnostics.Saved(ints(one.getIntArray("Latency")),
                     ints(one.getIntArray("Throughput")), since, one.getLong("LastOverEnded"),
-                    one.getLong("LastOverTicks")));
+                    one.getLong("LastOverTicks"),
+                    one.contains("OverSince") ? one.getLong("OverSince") : SectionDiagnostics.NONE));
             diagnostics.put(face, diag);
         }
     }

@@ -115,13 +115,14 @@ public final class TaskManagerApp implements IDesktopApp {
     /* Where Frames 11's period buttons were drawn, for the clicks on them: x, y, width of each, and their height. */
     private final int[][] periodButtons = new int[3][4];
 
-    private static TaskManagerApp active;
+    /* The Task Managers open, each told what its machine holds: two on one machine both stay up to date. */
+    private static final List<TaskManagerApp> OPEN = new ArrayList<>();
 
     public TaskManagerApp(final BlockPos host, final ResourceLocation desktopId) {
         this.host = host;
         this.form = formOf(desktopId);
         this.readings = new MachineReadingsView(host);
-        active = this;
+        OPEN.add(this);
         PacketDistributor.sendToServer(new RequestSettingsPayload(host));
     }
 
@@ -144,8 +145,10 @@ public final class TaskManagerApp implements IDesktopApp {
 
     /** Routes a settings snapshot to the open Task Manager (shared with Settings and the System Monitor). */
     public static void accept(final SettingsSnapshotPayload payload) {
-        if (active != null && active.host.equals(payload.hostPos())) {
-            active.data = payload;
+        for (final TaskManagerApp manager : OPEN) {
+            if (manager.host.equals(payload.hostPos())) {
+                manager.data = payload;
+            }
         }
     }
 
@@ -429,7 +432,15 @@ public final class TaskManagerApp implements IDesktopApp {
     @Override
     public void applySkin(final OsSkin osSkin) {
         this.skin = osSkin;
-        active = this;
+        // A window brought back with the machine's layout is told again what its machine holds.
+        if (!OPEN.contains(this)) {
+            OPEN.add(this);
+        }
+    }
+
+    @Override
+    public void onClosed() {
+        OPEN.remove(this);
     }
 
     /** The page names of the rail or the tab strip this form carries, in the player's language. */

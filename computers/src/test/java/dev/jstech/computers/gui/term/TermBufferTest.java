@@ -24,6 +24,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TermBufferTest {
 
     private static final int COLUMNS = 20;
+    /* A smiling face, a letter past the sixteen-bit ones. */
+    private static final int FACE = 0x1F600;
 
     private TermBuffer glass;
 
@@ -49,6 +51,12 @@ class TermBufferTest {
     }
 
     /** A path is one word, so it is cut where the row ends: there is nowhere better to cut it. */
+    @Test
+    void push_aLetterPastSixteenBits_isMarksInItsTwoCellsAndNeverSplit() {
+        this.glass.push(CliLine.plain("x".repeat(COLUMNS - 1) + new String(Character.toChars(FACE)) + "y"));
+        assertEquals(List.of("x".repeat(COLUMNS - 1) + "?", "?y"), shown());
+    }
+
     @Test
     void push_oneLongWord_isCutWhereTheRowEnds() {
         this.glass.push(CliLine.plain("/var/tmp/portage/sys-kernel/gentoo-sources"));

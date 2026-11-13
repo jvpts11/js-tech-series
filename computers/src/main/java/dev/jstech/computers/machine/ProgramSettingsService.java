@@ -38,6 +38,8 @@ public final class ProgramSettingsService {
     private static final String UNNAMED = "Sigma";
     /** The letters of a name DOS keeps, before its ending. */
     private static final int DOS_NAME_MOST = 8;
+    /* The letters and digits a cut name's own two marks are made of. */
+    private static final int SHORT_MARKS = 36;
     private static final String SYSTEM_DISK = "C:/";
     /**
      * The registry's file under Frames' own folder: the SOFTWARE hive, which holds HKEY_LOCAL_MACHINE\SOFTWARE and has
@@ -146,10 +148,19 @@ public final class ProgramSettingsService {
         return true;
     }
 
-    /* The program's name as DOS keeps a file name: eight letters at most, in capitals. */
+    /*
+     * The program's name as DOS keeps a file name: eight letters at most, in capitals. A longer one is cut as the
+     * systems of the time cut names, its first letters, a tilde and two of its own, so two programs whose names begin
+     * alike never share a file.
+     */
     private static String dosName(final String program) {
         final String letters = program.replaceAll("[^A-Za-z0-9]", "").toUpperCase(Locale.ROOT);
         final String name = letters.isEmpty() ? UNNAMED.toUpperCase(Locale.ROOT) : letters;
-        return name.substring(0, Math.min(DOS_NAME_MOST, name.length()));
+        if (name.length() <= DOS_NAME_MOST) {
+            return name;
+        }
+        final String own = Integer.toString(Math.floorMod(program.hashCode(), SHORT_MARKS * SHORT_MARKS),
+                SHORT_MARKS).toUpperCase(Locale.ROOT);
+        return name.substring(0, DOS_NAME_MOST - 3) + "~" + (own.length() < 2 ? "0" + own : own);
     }
 }

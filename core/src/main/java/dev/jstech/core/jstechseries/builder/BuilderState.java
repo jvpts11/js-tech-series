@@ -53,9 +53,14 @@ public record BuilderState(Page page, int row, boolean show, boolean light, bool
 
     public static final StreamCodec<ByteBuf, BuilderState> STREAM_CODEC = ByteBufCodecs.fromCodec(CODEC);
 
+    /* The most places it remembers a choice for, and the longest a key or a choice is: far past any plan's, so what a
+     * player's game sends cannot swell the item the builder is. */
+    private static final int MOST_CHOSEN = 64;
+    private static final int LONGEST_WORD = 1024;
+
     public BuilderState {
         row = Math.max(0, row);
-        chosen = Map.copyOf(chosen);
+        chosen = bounded(chosen);
     }
 
     /** The same, on {@code to}, its first row chosen. */
@@ -94,6 +99,20 @@ public record BuilderState(Page page, int row, boolean show, boolean light, bool
     /** The same, taking the blocks from {@code to}. */
     public BuilderState from(final ResourceLocation to) {
         return new BuilderState(this.page, this.row, this.show, this.light, this.on, this.chosen, to);
+    }
+
+    /* The choices kept: as many as it remembers, each of a length a key or a block's id could be. */
+    private static Map<String, String> bounded(final Map<String, String> chosen) {
+        final Map<String, String> kept = new HashMap<>();
+        for (final Map.Entry<String, String> one : chosen.entrySet()) {
+            if (kept.size() >= MOST_CHOSEN) {
+                break;
+            }
+            if (one.getKey().length() <= LONGEST_WORD && one.getValue().length() <= LONGEST_WORD) {
+                kept.put(one.getKey(), one.getValue());
+            }
+        }
+        return Map.copyOf(kept);
     }
 
     /** A page of the display. */

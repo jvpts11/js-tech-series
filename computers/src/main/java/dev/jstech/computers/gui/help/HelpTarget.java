@@ -7,6 +7,8 @@
  */
 package dev.jstech.computers.gui.help;
 
+import dev.jstech.core.guide.ManualReader;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -64,6 +66,27 @@ public record HelpTarget(Kind kind, String manual, String id) {
     /** The target written into a link. */
     public String written() {
         return this.kind.word() + JOINT + this.manual + JOINT + this.id;
+    }
+
+    /**
+     * The same page in whichever of {@code manuals} holds it: a link to a page of another book is written with the
+     * book it stands in, which does not hold it. As it is when the book named holds it, or none does.
+     */
+    public HelpTarget heldIn(final List<ManualReader> manuals) {
+        if (this.kind != Kind.NODE) {
+            return this;
+        }
+        for (final ManualReader reader : manuals) {
+            if (reader.manualId().equals(this.manual) && reader.node(this.id).isPresent()) {
+                return this;
+            }
+        }
+        for (final ManualReader reader : manuals) {
+            if (reader.node(this.id).isPresent()) {
+                return node(reader.manualId(), this.id);
+            }
+        }
+        return this;
     }
 
     /** What kind of page a target is. */

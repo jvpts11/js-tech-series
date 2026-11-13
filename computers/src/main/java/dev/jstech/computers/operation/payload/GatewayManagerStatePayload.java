@@ -30,6 +30,11 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath("jsc", "gateway_manager_state"));
 
     public static final int MAX_GATEWAYS = 16;
+    /**
+     * The position that stands for no Gateway: past the edge of every world, so a Gateway at the world's origin, whose
+     * position written as a number is 0, is still one.
+     */
+    public static final long NONE = Long.MIN_VALUE;
     public static final int MAX_ROWS = 64;
     public static final int BUFFER_SLOTS = 9;
 
@@ -141,7 +146,7 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
 
         /** No Gateway selected. */
         public static Detail none() {
-            return new Detail(0L, "", Text.EMPTY, false, 0, 0, false, 0, false, 0, 0, 0, 0, "", -1, emptyBuffer(),
+            return new Detail(NONE, "", Text.EMPTY, false, 0, 0, false, 0, false, 0, 0, 0, 0, "", -1, emptyBuffer(),
                     List.of(), true, true, 1, 1, List.of(), List.of());
         }
 
@@ -154,7 +159,7 @@ public record GatewayManagerStatePayload(Head head, List<WireGateway> gateways, 
         }
 
         public boolean present() {
-            return pos != 0L;
+            return pos != NONE;
         }
 
         private static List<ItemStack> emptyBuffer() {

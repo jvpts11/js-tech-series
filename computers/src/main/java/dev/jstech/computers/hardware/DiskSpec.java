@@ -43,7 +43,8 @@ public record DiskSpec(StorageTier tier, Era era, long capacityItems, int tdpWat
             return mb + " MB";
         }
         final double gb = mb / 1024.0;
-        if (gb < 1024.0) {
+        // Told by what is written, a tenth at a time: just under a terabyte would read 1024.0 GB.
+        if (Math.round(gb * 10.0) < 10_240L) {
             return trim(gb) + " GB";
         }
         return trim(gb / 1024.0) + " TB";

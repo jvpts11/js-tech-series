@@ -116,7 +116,11 @@ public final class CraftFilesOnDisk {
         if (findMirror(cc, base, content) != null) {
             return;
         }
-        DiskFilesystem.write(disk, firstFreeMirror(cc, base), FileType.CRAFT, content, cc.systemDiskFreeWeight(),
+        final String free = firstFreeMirror(cc, base);
+        if (free == null) {
+            return;
+        }
+        DiskFilesystem.write(disk, free, FileType.CRAFT, content, cc.systemDiskFreeWeight(),
                 kind, cc.getLevel() == null ? 0L : cc.getLevel().getGameTime());
     }
 
@@ -132,13 +136,19 @@ public final class CraftFilesOnDisk {
         return null;
     }
 
-    /* The first mirror path under the base name or its numbered variants that no file occupies. */
+    /*
+     * The first mirror path under the base name or its numbered variants that no file occupies, or null when every
+     * one holds another recipe: the last of them is not written over.
+     */
+    @Nullable
     private static String firstFreeMirror(final CraftingComputerBlockEntity cc, final String base) {
-        String path = mirrorPath(cc, variantName(base, 1));
-        for (int n = 2; n <= MAX_MIRROR_VARIANTS && DiskFilesystem.exists(cc.systemDisk(), path); n++) {
-            path = mirrorPath(cc, variantName(base, n));
+        for (int n = 1; n <= MAX_MIRROR_VARIANTS; n++) {
+            final String path = mirrorPath(cc, variantName(base, n));
+            if (path != null && !DiskFilesystem.exists(cc.systemDisk(), path)) {
+                return path;
+            }
         }
-        return path;
+        return null;
     }
 
     private static String variantName(final String base, final int n) {

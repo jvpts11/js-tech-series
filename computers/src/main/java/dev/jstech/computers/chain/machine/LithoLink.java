@@ -66,10 +66,14 @@ public final class LithoLink {
         }
         final AbstractComputerBlockEntity running = computer.get();
         final int mb = memoryMb(era);
-        if (!running.hosts(PROCESS, server.getGameTime()) && !running.ramLedger().fits(mb)) {
+        final long self = station.getBlockPos().asLong();
+        final long now = server.getGameTime();
+        // Each station holds its own memory; what it holds already is counted in, so only more must fit.
+        final int held = running.hostedMb(PROCESS, self, now);
+        if (mb > held && !running.ramLedger().fits(mb - held)) {
             return Optional.empty();
         }
-        running.host(PROCESS, mb, server.getGameTime() + HELD_TICKS);
+        running.host(PROCESS, self, mb, now + HELD_TICKS);
         final int newer = HardwareEra.SERIES.indexOf(running.displayEra()) - HardwareEra.SERIES.indexOf(asked);
         return Optional.of(newer >= TWO_ERAS ? work.withTicks(Math.max(1, work.ticks() / 2)) : work);
     }

@@ -92,9 +92,11 @@ final class TrashFramesLook implements ITrashLook {
         if (rx < TrashLayout.PANE_W || ry < TrashLayout.rowY(0)) {
             return;
         }
-        final int index = this.app.scroll() + (int) ((ry - TrashLayout.rowY(0)) / TrashLayout.ROW_H);
+        final int row = (int) ((ry - TrashLayout.rowY(0)) / TrashLayout.ROW_H);
+        final int index = this.app.scroll() + row;
         final List<TrashItem> items = this.app.items();
-        if (index < 0 || index >= items.size()) {
+        // The strip under the last row drawn holds no row: an item scrolled out of sight is not picked there.
+        if (row >= TrashLayout.rowsShown(this.height) || index < 0 || index >= items.size()) {
             this.app.clearSelection();
             return;
         }

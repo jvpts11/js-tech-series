@@ -110,6 +110,10 @@ final class TerminalCraftPopup {
     void typed(final long value) {
         this.amount = Math.max(1, Math.min(MOST, value));
         this.planCountdown = PLAN_DELAY;
+        // Too many is shown as the most there may be, which is what is planned; an empty field is left to be typed.
+        if (value > MOST) {
+            this.qty.set(this.amount);
+        }
     }
 
     void render(final GuiGraphics g, final int mouseX, final int mouseY) {

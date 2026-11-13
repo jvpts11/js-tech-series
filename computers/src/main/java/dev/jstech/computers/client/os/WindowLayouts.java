@@ -52,13 +52,17 @@ final class WindowLayouts {
     /*
      * The live programs kept per machine while its monitor is left, so going back restores each program's session
      * instead of a fresh window. Access-ordered and bounded, so a long session that visits many machines does not
-     * grow it without limit.
+     * grow it without limit. A program let go is closed, so it waits on no answer and listens for nothing.
      */
     private static final Map<BlockPos, Map<String, List<IDesktopApp>>> SAVED_APPS =
             new LinkedHashMap<>(16, 0.75f, true) {
                 @Override
                 protected boolean removeEldestEntry(final Map.Entry<BlockPos, Map<String, List<IDesktopApp>>> eldest) {
-                    return size() > MAX_SAVED_DESKTOPS;
+                    if (size() <= MAX_SAVED_DESKTOPS) {
+                        return false;
+                    }
+                    eldest.getValue().values().forEach(apps -> apps.forEach(IDesktopApp::onClosed));
+                    return true;
                 }
             };
     /*

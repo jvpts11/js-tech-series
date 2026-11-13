@@ -70,8 +70,9 @@ public final class MusicImporter {
             List<Path> picked;
             try {
                 picked = openDialog(title, filter);
-            } catch (final RuntimeException failed) {
-                // A dialog that cannot open still has to end the import so the caller's state is released.
+            } catch (final RuntimeException | LinkageError failed) {
+                // A dialog that cannot open, its native part missing too, still has to end the import so the
+                // caller's state is released.
                 picked = List.of();
             }
             final List<Path> chosen = picked;

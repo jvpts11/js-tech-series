@@ -4633,6 +4633,66 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   to read; and renaming a program over and over keeps only its last name in its memory.
 - (Computers) The anvil card names an item put on it after another as itself, where it renamed it to the name typed
   for the one before and charged for it.
+- (Computers) Music: a song brought again to a nearly full disk lands on its own file; a computer switched off while
+  it played no longer says its voices were taken; a playlist keeps a song a line, and as many as it holds; an
+  operator's catalogue reload is always answered; and a data pack's albums under the namespace "config" no longer
+  take the place of the server folder's own.
+- (Computers) Buses: the per-item max is marked as set by whoever set it, apart from the keep; an Export Bus whose
+  filter or tags change sends by them from its next send; a second click on a condition's or a tag's remove takes
+  off nothing more; and the Crafting Interface's most jobs and routes go a step from what the interface holds, so
+  quick clicks all count, its Software tab naming each setting in the player's language.
+- (Computers) Gateways: the budget shown counts the ticks a gateway rested as spent on nothing; the header counts
+  every Gateway, not the sixteen the rail lists; an operation is looked up by its id for an hour after it settles,
+  as documented; a Gateway at the world's origin shows its detail; and a second Gateway Manager window is kept up
+  to date.
+- (Computers) Peripheral links: a cable beside a device is passed through only once it is known to lead on, so a
+  link along it is found.
+- (Computers) Start-up and terminals: the start-up chooser keeps its pick on its row when a volume goes; the
+  self-test bar of a screen left open for days stays whole; the Command Prompt keeps the lines of the last 64
+  machines, where it kept every one visited, and shows a selection made forwards over repeated text from its real
+  end; the installer's Switch Disk goes to the first disk when none was chosen; and text past sixteen bits, an emoji,
+  keeps the letters after it in their cells.
+- (Computers) Programs' saves: two windows saving at once each hear how their own save went; the Editor and Paint
+  keep a page changed after its save was sent marked unsaved; the Archiver opens only an archive it wrote; and a
+  Code editor's file with a path too long for a disk says so instead of waiting.
+- (Computers) Desktop programs: two System Monitors or Task Managers of one machine both stay up to date; a program
+  refused for memory is closed at once; a program opened again with its machine's layout is listed once, and one let
+  go with an old layout is closed; the Trash picks no hidden row; the Application Manager opens no icon it did not
+  draw; the Settings scale steps the right way from a size it does not list; a command a finished one queues waits
+  its turn; and Tab moves between the fields of a program's window.
+- (Computers) More desktop programs: Exposure's outline is read again for a file opened again and goes to the
+  declaration it names; the Help viewer's Home opens the book it opened on, a link to another book's page opens it
+  there, and find-next from a chapter starts inside it; the profiler keeps the rows being read in place; Recent
+  Files lists no path that would read back as two; the Network Interactor keeps a search with a ; in it; the
+  Network Manager and the Cluster Manager drop a filter or a selection for what is gone, or keep a click made
+  while an answer was on its way; Prophet's console never scrolls past its lists; and a program's file dialog
+  opened in a window behind another is answered.
+- (Computers) Monitors in the world: up to 512 faces are kept while in sight, where past 48 they were built again
+  at every picture, losing their windows and their moving parts.
+- (Computers) Recipes: two pipelines that end in the same thing by different ways are two recipes; the catalogue's
+  dots plan with the machines' recipes too, as the plan does; a recipe's mirror never writes over another's; a
+  recipe moved to a card that will not take it stays where it was; and a recipe named twice in one removal is taken
+  off once.
+- (Computers) Prophet: a watch that crafts to a level counts what its own crafts still bring, so it no longer asks
+  twice for the same gap; and an interval past the numbers a console sends falls back to the default.
+- (Computers) Storage: an External Storage Bus counts a bucket of a liquid or a gas as an item's room, as its free
+  room is counted; a disk's drive letters start at D: with no system disk, C: staying the system's; and a computer
+  broken while its upload was on its way hands what came back to the player.
+- (Computers) Files: a copy between two other machines goes at the slower of their cables; a move that replaces a
+  file on the same disk puts it back if the move does not go through; and a folder read for a code editor stops
+  short of what one reply can carry.
+- (Computers) Installers and automation: an installer restarts only from its last page; a copy begun from a found
+  installer still counts as found once it is re-timed; a job made again under its name starts afresh; and an IQL
+  script job takes IQL files only.
+- (Computers) Messenger, clusters and more: a Messenger window whose service has gone is told so; the Cluster
+  Manager says moving only of a move that started, and keeps the Mainframe in a long list of destinations; a
+  printed picture's last row and column keep their ink; a disk's size just under a terabyte reads 1.0 TB; the
+  Soundfoundry share shows two bars for a cable of no speed of its own; a playlist's song chosen past the numbers
+  plays nothing; Professional Larper also asks for screenfetch on Linux Mint and OpenBSD; Network.Computer("") finds
+  none; a player-written system's banners credit its author; run or open at the prompt says a program opens from
+  the desktop; and a Server's parts are not taken in or out of one no longer held.
+- (Computers) Recipe viewers: a recipe of more slots than the Pattern Studio holds, or with a very long id, comes
+  over instead of failing to send.
 
 ## [0.5.3a] - 2026-11-04
 

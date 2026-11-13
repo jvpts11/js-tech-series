@@ -88,8 +88,7 @@ final class InstallerOpenBsd implements IOwnInstallerPage {
         g.fill(x, y, x + InstallerLayout.WIDTH, y + InstallerLayout.HEIGHT, c.ground());
         final List<OpenBsdInstall.Line> lines = OpenBsdInstall.lines(this.flow, this.answers, this.echoes, ticksDone,
                 this.memoryMb.getAsInt());
-        final int rows = (InstallerLayout.HEIGHT - 2 * CrashLayout.CONSOLE_MARGIN) / TextWall.ROW;
-        final int first = Math.max(0, lines.size() - rows);
+        final int first = Math.max(0, lines.size() - rows());
         int top = y + CrashLayout.CONSOLE_MARGIN;
         final int left = x + CrashLayout.CONSOLE_MARGIN;
         for (int i = first; i < lines.size(); i++) {
@@ -127,6 +126,10 @@ final class InstallerOpenBsd implements IOwnInstallerPage {
             this.echoes.add(OpenBsdInstall.refused(this.flow, this.answers, this.typing));
             if (!step.said().isEmpty()) {
                 this.echoes.add(OpenBsdInstall.said(step.said()));
+            }
+            // Only the last screenful can be seen, so no more than that is kept, however often Enter is refused.
+            while (this.echoes.size() > rows()) {
+                this.echoes.removeFirst();
             }
         }
         this.answers = step.answers();
@@ -186,6 +189,11 @@ final class InstallerOpenBsd implements IOwnInstallerPage {
             final int stop = stops[i];
             TextWall.draw(g, font, cell, left + (stop < 0 ? -stop - TextWall.width(font, cell) : stop), top, colour);
         }
+    }
+
+    /* How many lines the terminal shows at once. */
+    private static int rows() {
+        return (InstallerLayout.HEIGHT - 2 * CrashLayout.CONSOLE_MARGIN) / TextWall.ROW;
     }
 
     /** The terminal's colours, as the palette above names them. */

@@ -152,8 +152,11 @@ public final class AutomationPayloads {
         }
         final var def = compileJob(player, mf, payload);
         if (def != null) {
-            mf.iqlCatalog().put(
-                    IqlSavedObject.from(def));
+            // A job made again under a name it had starts afresh, as one deleted and made would: not paused, its
+            // trigger armed from now.
+            if (mf.iqlCatalog().put(IqlSavedObject.from(def))) {
+                mf.restartJob(def.name());
+            }
             mf.markIqlCatalogChanged();
             PacketDistributor.sendToPlayer(player, buildAutomation(mf));
         }
@@ -207,8 +210,10 @@ public final class AutomationPayloads {
                     return null;
                 }
                 final ItemStack sysDisk = mf.systemDisk();
+                // An IQL file only: any other file named there, a book or a backup, is no script.
                 final var content = sysDisk.isEmpty() ? Optional.<String>empty()
-                        : DiskFilesystem.read(sysDisk, item);
+                        : DiskFilesystem.stored(sysDisk, item).filter(file -> file.type() == FileType.IQL)
+                                .map(StoredFile::content);
                 if (content.isEmpty() || content.get().isBlank()) {
                     jobError(player, CreateAutomationJobPayload.SCRIPT_NOT_FOUND.with(item));
                     return null;

@@ -86,7 +86,7 @@ public final class TextScreen {
             final int c = column + i;
             if (c >= 0 && c < columns) {
                 final int at = row * columns + c;
-                glyphs[at] = text.charAt(i);
+                glyphs[at] = cellOf(text.charAt(i));
                 inks[at] = ink;
                 grounds[at] = ground;
             }
@@ -103,7 +103,7 @@ public final class TextScreen {
             final int c = column + i;
             if (c >= 0 && c < columns) {
                 final int at = row * columns + c;
-                glyphs[at] = text.charAt(i);
+                glyphs[at] = cellOf(text.charAt(i));
                 inks[at] = ink;
             }
         }
@@ -200,6 +200,14 @@ public final class TextScreen {
 
     private boolean inside(final int column, final int row) {
         return column >= 0 && column < columns && row >= 0 && row < rows;
+    }
+
+    /*
+     * What a cell holds of a letter: itself, or a question mark for half of a letter past the sixteen-bit ones (an
+     * emoji), which a cell of one letter cannot hold. The pair keeps its two cells, so what follows stays in its own.
+     */
+    private static char cellOf(final char letter) {
+        return Character.isSurrogate(letter) ? '?' : letter;
     }
 
     private static int[] sixteen() {

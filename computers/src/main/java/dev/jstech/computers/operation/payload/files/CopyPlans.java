@@ -57,9 +57,12 @@ final class CopyPlans {
         final Text to = folderName(level, computer, destDir, pathPart(destDir));
         final long size = sizeOf(level, computer, src);
         double rate = CopyTiming.slowest(rateOf(level, computer, src), rateOf(level, computer, destDir));
-        if (src.startsWith(NET_ROOT) || destDir.startsWith(NET_ROOT)) {
-            final double cable = cableRate(level, computer, src.startsWith(NET_ROOT) ? src : destDir);
-            rate = CopyTiming.slowest(rate, cable);
+        // Each end on another machine has its own cable on the way, and the slower of them sets the pace.
+        if (src.startsWith(NET_ROOT)) {
+            rate = CopyTiming.slowest(rate, cableRate(level, computer, src));
+        }
+        if (destDir.startsWith(NET_ROOT)) {
+            rate = CopyTiming.slowest(rate, cableRate(level, computer, destDir));
         }
         return new FileCopyJobs.Copy(kind, name, from, to, size, rate);
     }

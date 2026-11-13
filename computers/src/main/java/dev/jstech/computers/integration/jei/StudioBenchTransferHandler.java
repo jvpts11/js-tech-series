@@ -77,8 +77,10 @@ public final class StudioBenchTransferHandler
                 .map(slot -> slot.getItemStacks().filter(s -> !s.isEmpty()).findFirst().orElse(ItemStack.EMPTY))
                 .toList();
         final List<ItemStack> grid = PatternGridFiller.fillGrid(ingredients, ItemStack.EMPTY);
+        // An id past what the payload carries goes as none: the cells still come over, only the tags are not marked.
+        final String id = recipe.id().toString();
         PacketDistributor.sendToServer(new SetPatternPayload(studio.host(), studio.monitorPos(), grid,
-                recipe.id().toString()));
+                id.length() > SetPatternPayload.MAX_ID ? "" : id));
         studio.showTab(PatternStudioApp.TAB_BENCH);
         return null;
     }

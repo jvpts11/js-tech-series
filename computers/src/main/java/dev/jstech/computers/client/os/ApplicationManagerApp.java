@@ -165,8 +165,7 @@ final class ApplicationManagerApp implements IDesktopApp {
         final List<String> names = names();
         for (int i = 0; i < names.size(); i++) {
             // An icon the well has no room for waits until the window is made larger, rather than run over its rim.
-            final Rect cell = CdeAppManagerLayout.cell(i, headed, w, h);
-            if (cell.y() + cell.h() <= well.y() + well.h()) {
+            if (CdeAppManagerLayout.shown(i, headed, w, h)) {
                 drawIcon(g, font, i, names.get(i), headed);
             }
         }

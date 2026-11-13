@@ -172,9 +172,9 @@ final class HelpSession {
         }
     }
 
-    /** The first manual's top page. */
+    /** The top page of the book the window opened on: the one written for the machine's system. */
     void home() {
-        final List<ManualReader> manuals = HelpBooks.all();
+        final List<ManualReader> manuals = this.source.manuals();
         if (!manuals.isEmpty()) {
             this.go(HelpTarget.contents(manuals.getFirst().manualId()));
         }
@@ -198,8 +198,14 @@ final class HelpSession {
         }
     }
 
-    /** The entry of a manual that prints a command's page on the machine's system, or the target as it is. */
+    /**
+     * The entry of a manual that prints a command's page on the machine's system, a page in the book that holds it,
+     * or the target as it is.
+     */
     private HelpTarget pageOf(final HelpTarget target) {
+        if (target.kind() == HelpTarget.Kind.NODE) {
+            return target.heldIn(HelpBooks.all());
+        }
         if (target.kind() != HelpTarget.Kind.COMMAND || target.id().isEmpty()) {
             return target;
         }

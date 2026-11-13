@@ -111,8 +111,8 @@ public final class SoundfoundryShareLayout {
          * A song comes as much faster than over the Ethernet as the cable carries more: half its speed or less lights
          * one bar, its speed two, and each doubling one more, up to all five at eight times its speed, in every era.
          */
-        final long speed = link.throughput();
         final long ethernet = ETHERNET.throughput();
+        final long speed = link.throughput() > 0 ? link.throughput() : ethernet;
         if (speed * 2 <= ethernet) {
             return 1;
         }

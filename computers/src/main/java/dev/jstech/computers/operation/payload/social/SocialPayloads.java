@@ -93,7 +93,7 @@ public final class SocialPayloads {
             }
             return;
         }
-        talk(player, level, host, payload.action(), payload.room(), payload.text(), atServer);
+        talk(player, level, host, payload.action(), payload.room(), payload.text(), atServer, false);
     }
 
     /*
@@ -105,6 +105,8 @@ public final class SocialPayloads {
                              final int action, final String room) {
         final KeptConversations kept = KeptConversations.at(level, host);
         if (kept == null) {
+            // The service went from under the list: it is told there is nothing kept, rather than left waiting.
+            PacketDistributor.sendToPlayer(player, new MessengerKeptPayload(List.of(), 0L));
             return;
         }
         if (action == MessengerActionPayload.DELETE) {
@@ -133,25 +135,27 @@ public final class SocialPayloads {
     public static void talk(final ServerPlayer player, final ServerLevel level,
                             @Nullable final ServerServices.Host host, final int action, final String asked,
                             final String text) {
-        talk(player, level, host, action, asked, text, false);
+        talk(player, level, host, action, asked, text, false, true);
     }
 
+    /*
+     * The same, {@code atServer} whether the window is at the service's own server; a portable is at none, and keeps
+     * what a computer window of the same player said of it, so a pocket Messenger does not take the Kept button away.
+     */
     private static void talk(final ServerPlayer player, final ServerLevel level,
                              @Nullable final ServerServices.Host host, final int action, final String asked,
-                             final String text, final boolean atServer) {
-        if (host == null) {
+                             final String text, final boolean atServer, final boolean portable) {
+        final MessengerLog log = host == null ? null : host.rack().messengerAt(host.slot());
+        if (log == null) {
             /*
-             * No server on this network is running it. The window is told so rather than left waiting, and
-             * it puts its own compose box beyond use: a message typed into a service that does not exist
-             * has nowhere at all to go, and letting it look sent would be the worst of the answers.
+             * No server on this network is running it, or the one that was has stopped. The window is told so
+             * rather than left waiting, and it puts its own compose box beyond use: a message typed into a service
+             * that does not exist has nowhere at all to go, and letting it look sent would be the worst of the
+             * answers.
              */
             PacketDistributor.sendToPlayer(player, new MessengerStatePayload(
                     new MessengerStatePayload.Service(false, "", 0L, 0, false),
                     List.of(), List.of(MessengerLog.LOBBY), MessengerLog.LOBBY, List.of()));
-            return;
-        }
-        final MessengerLog log = host.rack().messengerAt(host.slot());
-        if (log == null) {
             return;
         }
         final String who = player.getGameProfile().getName();
@@ -165,7 +169,7 @@ public final class SocialPayloads {
             log.disconnect(who);
             return; // nothing to draw for a window that is closing
         }
-        log.connect(who, room, now, atServer);
+        log.connect(who, room, now, portable ? log.atServer(who) : atServer);
         final boolean spoke = switch (action) {
             case MessengerActionPayload.SAY -> log.say(room, who, text, now, false) != null;
             case MessengerActionPayload.NUDGE -> log.say(room, who, "", now, true) != null;

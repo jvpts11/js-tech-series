@@ -242,6 +242,10 @@ public final class TermBuffer {
                     do {
                         cells.add(new Cell(' ', run.style()));
                     } while (cells.size() % TAB != 0);
+                } else if (Character.isSurrogate(ch)) {
+                    // Half of a letter past the sixteen-bit ones (an emoji): a cell holds one letter, so each half is
+                    // a mark, the pair keeping its two cells and never split into halves the font cannot draw.
+                    cells.add(new Cell('?', run.style()));
                 } else if (ch != '\r' && ch != '\n') {
                     cells.add(new Cell(ch, run.style()));
                 }

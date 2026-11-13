@@ -265,6 +265,8 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     }
 
     private void send(final String entry, final String dir) {
+        // Taking out is no archive being written, so its answer opens nothing.
+        this.pendingArchive = "";
         CodeFileReplies.expectSaved(this);
         PacketDistributor.sendToServer(new ExtractArchivePayload(host, archivePath, entry,
                 dir == null ? "" : dir));
@@ -282,10 +284,11 @@ public final class ArchiverApp implements IDesktopApp, CodeFileReplies.IReader {
     public void onSaved(final boolean ok, final Text message) {
         this.status = message;
         this.statusGood = ok;
-        if (ok && !pendingArchive.isEmpty()) {
+        // Answered either way, the archive waited for is waited for no longer, so a later answer is not taken as its.
+        final String written = pendingArchive;
+        this.pendingArchive = "";
+        if (ok && !written.isEmpty()) {
             // The archive that was just written becomes the one being looked at, which is what a player expects.
-            final String written = pendingArchive;
-            this.pendingArchive = "";
             this.chosen.clear();
             openFile(written);
         }

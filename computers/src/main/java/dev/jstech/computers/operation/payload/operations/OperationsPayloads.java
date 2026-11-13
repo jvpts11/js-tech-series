@@ -70,6 +70,12 @@ public final class OperationsPayloads {
         }
         mainframe.setOperationPriority(payload.operationId(), payload.priority());
         dispatchActiveOperations(player, host.networkUuid(), level);
+        /*
+         * The queue's slots are given out again in the Mainframe's tick, after the work put off to it, so the slot the
+         * new priority wins shows in a view sent the tick after the next.
+         */
+        mainframe.runNextTick(() -> mainframe.runNextTick(
+                () -> dispatchActiveOperations(player, host.networkUuid(), level)));
     }
 
     private static void handleCancelOperation(final CancelOperationPayload payload, final ServerPlayer player,

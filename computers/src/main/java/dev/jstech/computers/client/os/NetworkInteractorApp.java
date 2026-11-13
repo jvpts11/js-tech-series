@@ -530,7 +530,16 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
 
     @Override
     public void restoreState(final String state) {
-        for (final String part : state.split(";")) {
+        // The search is written last and may hold any letter, a ; too: all after its key is the search.
+        String settings = state;
+        if (state.startsWith("q=")) {
+            search.set(state.substring(2));
+            settings = "";
+        } else if (state.contains(";q=")) {
+            search.set(state.substring(state.indexOf(";q=") + 3));
+            settings = state.substring(0, state.indexOf(";q="));
+        }
+        for (final String part : settings.split(";")) {
             final int eq = part.indexOf('=');
             if (eq <= 0) {
                 continue;
@@ -544,7 +553,6 @@ public final class NetworkInteractorApp implements IInventoryBandApp {
                 case "rows" -> invRows = Math.max(1, Math.min(INV_ROWS, parseInt(value, invRows)));
                 case "mod" -> modFilter = value;
                 case "cat" -> categoryFilter = value;
-                case "q" -> search.set(value);
                 default -> { }
             }
         }

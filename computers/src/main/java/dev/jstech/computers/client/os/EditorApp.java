@@ -27,7 +27,9 @@ import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.List;
 import java.util.Locale;
 
@@ -70,6 +72,10 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
         }
     }
 
+    /** A save on its way: the page it is of and the text that was sent. */
+    private record Saving(Tab tab, String text) {
+    }
+
     private final BlockPos host;
     private final FileDialog dialog;
     private final Panel root = new Panel();
@@ -87,10 +93,12 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     private final EditorFindBar find;
 
     private final List<Tab> tabs = new ArrayList<>();
+    /**
+     * The pages the machine is writing, the oldest first, each with the text that was sent: its answer marks the
+     * right one saved, and only while that page still holds what was written.
+     */
+    private final Deque<Saving> saving = new ArrayDeque<>();
     private int active;
-    /** The page the machine is writing right now, so its answer marks the right one saved. */
-    @Nullable
-    private Tab saving;
     /** A page whose close was asked for while it had unsaved changes, and is waiting to be asked again. */
     @Nullable
     private Tab closing;
@@ -306,7 +314,7 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
          * moves to another tab while the machine is writing would otherwise have that one marked saved and
          * the one that really was written left showing unsaved changes.
          */
-        this.saving = tab;
+        this.saving.addLast(new Saving(tab, text));
         CodeFileReplies.expectSaved(this);
         PacketDistributor.sendToServer(new SaveFilePayload(host, target, text));
         FilesApps.diskChanged();
@@ -326,10 +334,16 @@ public final class EditorApp implements IDesktopApp, CodeFileReplies.IReader {
     @Override
     public void onSaved(final boolean ok, final Text message) {
         this.status = GameText.resolve(message);
-        if (ok && saving != null && tabs.contains(saving)) {
-            saving.dirty = false;
+        final Saving saved = saving.pollFirst();
+        // Typing after the save was sent is not on the disk, so a page changed since stays marked changed.
+        if (ok && saved != null && tabs.contains(saved.tab()) && textOf(saved.tab()).equals(saved.text())) {
+            saved.tab().dirty = false;
         }
-        this.saving = null;
+    }
+
+    /* What a page holds now: the area's text for the page in front, its kept text for the others. */
+    private String textOf(final Tab tab) {
+        return tab == current() ? body.text() : tab.text;
     }
 
     @Override

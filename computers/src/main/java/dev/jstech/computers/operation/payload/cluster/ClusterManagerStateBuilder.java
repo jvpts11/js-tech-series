@@ -275,21 +275,24 @@ public final class ClusterManagerStateBuilder {
     private static void destinations(final ServerLevel level, final NetworkUuid net,
                                      final List<ClusterManagerStatePayload.WireDest> dests) {
         final NetworkSystem system = NetworkSystem.get(level);
+        // The Mainframe keeps its place at the end of the list however many computers come before it.
+        final ClusterManagerStatePayload.WireDest mainframe = system.mainframePositionOf(net)
+                .filter(mfPos -> Loaded.blockEntity(level, BlockPos.of(mfPos)) instanceof IComputerTerminalHost host
+                        && host.localStorageCapacity() > 0L)
+                .map(mfPos -> new ClusterManagerStatePayload.WireDest(mfPos, MAINFRAME.text())).orElse(null);
+        final int most = ClusterManagerStatePayload.MAX_DESTS - (mainframe == null ? 0 : 1);
         for (final var pc : system.personalComputersOf(net)) {
             final BlockEntity be = Loaded.blockEntity(level, BlockPos.of(pc.pos()));
-            if (be instanceof IComputerTerminalHost pcHost
-                    && pcHost.localStorageCapacity() > 0L && dests.size() < ClusterManagerStatePayload.MAX_DESTS) {
+            if (be instanceof IComputerTerminalHost pcHost && pcHost.localStorageCapacity() > 0L
+                    && dests.size() < most) {
                 final String name = be instanceof IOsHost os && !os.customName().isEmpty()
                         ? os.customName() : "PC-" + pc.nodeUuid().asString().substring(0, 4);
                 dests.add(new ClusterManagerStatePayload.WireDest(pc.pos(), Text.literal(name)));
             }
         }
-        system.mainframePositionOf(net).ifPresent(mfPos -> {
-            if (Loaded.blockEntity(level, BlockPos.of(mfPos)) instanceof IComputerTerminalHost host
-                    && host.localStorageCapacity() > 0L) {
-                dests.add(new ClusterManagerStatePayload.WireDest(mfPos, MAINFRAME.text()));
-            }
-        });
+        if (mainframe != null) {
+            dests.add(mainframe);
+        }
     }
 
     /* The job in flight, or the idle one carrying the last summary. */

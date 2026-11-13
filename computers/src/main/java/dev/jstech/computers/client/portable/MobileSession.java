@@ -146,14 +146,15 @@ public final class MobileSession {
                     tap.run().run();
                 }
             }
+            // Each of these leaves the app open, as the home does: the Messenger hears the player has gone.
             case ALERTS -> {
-                go(MobilePage.ALERTS);
+                leaveTo(MobilePage.ALERTS, send);
                 send.accept(action(PortableActionPayload.Action.SEE_ALERTS, ""));
             }
-            case STORE -> go(MobilePage.STORE);
-            case SETTINGS -> go(MobilePage.SETTINGS);
-            case START -> go(page == MobilePage.START ? MobilePage.HOME : MobilePage.START);
-            case PROGRAMS -> go(MobilePage.PROGRAMS);
+            case STORE -> leaveTo(MobilePage.STORE, send);
+            case SETTINGS -> leaveTo(MobilePage.SETTINGS, send);
+            case START -> leaveTo(page == MobilePage.START ? MobilePage.HOME : MobilePage.START, send);
+            case PROGRAMS -> leaveTo(MobilePage.PROGRAMS, send);
             case INSTALL -> {
                 if (tap.app() != null) {
                     send.accept(action(PortableActionPayload.Action.INSTALL, tap.app().serializedName()));
@@ -182,6 +183,14 @@ public final class MobileSession {
             send.accept(action(PortableActionPayload.Action.LEAVE, ""));
         }
         apps.typeInto(MobileAppState.Field.NONE);
+        // A Menu left open is shut with the app, so the next one does not open on it and lose a Back to it.
+        apps.closeMenu();
+    }
+
+    /* Leaves the app open, if any, for the page {@code to}. */
+    private void leaveTo(final MobilePage to, final Consumer<PortableActionPayload> send) {
+        leaveApp(send);
+        go(to);
     }
 
     /* Goes to {@code to}, at the top of it. */

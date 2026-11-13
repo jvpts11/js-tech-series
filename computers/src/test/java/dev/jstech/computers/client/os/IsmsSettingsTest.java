@@ -58,6 +58,16 @@ class IsmsSettingsTest {
     }
 
     @Test
+    void opened_leavesOutAPathTheFileWouldReadBackAsAnother() {
+        final IsmsSettings settings = new IsmsSettings();
+        settings.opened("stock.iql");
+        settings.opened("a|b.iql");
+        settings.opened("two\nlines.iql");
+        final IsmsSettings back = IsmsSettings.read(settings.write());
+        assertEquals(List.of("stock.iql"), back.recent);
+    }
+
+    @Test
     void next_stepsThroughTheThreeAndRoundAgain() {
         assertEquals(IsmsSettings.Results.TEXT, IsmsSettings.Results.GRID.next());
         assertEquals(IsmsSettings.Results.GRID, IsmsSettings.Results.FILE.next());

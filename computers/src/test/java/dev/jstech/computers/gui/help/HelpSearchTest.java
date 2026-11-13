@@ -30,4 +30,10 @@ class HelpSearchTest {
     void nextHit_startsFromTheTopWhenThePageIsNotAnEntry() {
         assertEquals("b", HelpSearch.nextHit(ORDER, List.of("b", "c"), null));
     }
+
+    @Test
+    void nextAfter_takesTheFirstHitPastAPlaceJustBeforeASectionsFirstEntry() {
+        // A section whose first entry is "c" stands at "b"'s place, so a hit in it comes before the book's first.
+        assertEquals("c", HelpSearch.nextAfter(ORDER, List.of("a", "c"), 1));
+    }
 }

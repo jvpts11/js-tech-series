@@ -27,6 +27,7 @@ import dev.jstech.core.client.gui.component.TabStrip;
 import dev.jstech.core.client.gui.component.TextField;
 import dev.jstech.core.client.gui.component.UiComponent;
 import dev.jstech.core.client.gui.component.UiContext;
+import dev.jstech.core.client.gui.logic.TextDocument;
 import dev.jstech.core.palette.Palette;
 import dev.jstech.core.palette.PaletteHolder;
 import dev.jstech.core.palette.Palettes;
@@ -35,10 +36,12 @@ import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -79,6 +82,15 @@ public final class ExposureApp implements IDesktopApp {
     /** What the program is called, and the key its window goes by, which is its id. */
     private static final String NAME = "Exposure";
     private static final String KEY = "jsc:exposure";
+    /* What stands just before a type's name where it is declared: one of the words that make a type. */
+    private static final Pattern TYPE_KEYWORD =
+            Pattern.compile("(?:^|\\s)(?:class|struct|interface|enum|record|delegate)$");
+    /*
+     * What stands just before a member's name where it is declared: its type, or a modifier before a constructor;
+     * not a word that only uses a name, nor a dot or an operator.
+     */
+    private static final Pattern MEMBER_TYPE = Pattern.compile(
+            "(?:^|\\s)(?!(?:return|new|throw|await|case|else|in|is|as|out|ref|var)$)[\\w<>\\[\\],?]*[\\w>\\]?]$");
 
     /** One line of the outline: how deep it sits, what it says, and the line it stands on. */
     private record Outline(int depth, String label, int line) {
@@ -114,7 +126,10 @@ public final class ExposureApp implements IDesktopApp {
 
     /** The outline of the open file, read again only when its text changes. */
     private List<Outline> outlineRows = List.of();
-    private String outlineOf = "";
+    /* The text the outline was read from, and at which of its edits: a file opened again is a new text. */
+    @Nullable
+    private TextDocument outlineOf;
+    private long outlineRevision;
     /** The size the code is drawn at, shared by every open file. */
     private float editorScale = 1.0f;
 
@@ -496,8 +511,8 @@ public final class ExposureApp implements IDesktopApp {
             return List.of();
         }
         // The revision moves with every edit, so the text is not copied and hashed on every frame.
-        final String key = doc.path() + ":" + doc.area().document().revision();
-        if (key.equals(this.outlineOf)) {
+        final TextDocument document = doc.area().document();
+        if (document == this.outlineOf && document.revision() == this.outlineRevision) {
             return this.outlineRows;
         }
         final String text = doc.area().text();
@@ -512,7 +527,8 @@ public final class ExposureApp implements IDesktopApp {
             }
         }
         this.outlineRows = rows;
-        this.outlineOf = key;
+        this.outlineOf = document;
+        this.outlineRevision = document.revision();
         return rows;
     }
 
@@ -541,8 +557,9 @@ public final class ExposureApp implements IDesktopApp {
      * Clicking an outline row goes to what it names.
      *
      * <p>The checker records where a name was written for its own complaints, not for a panel to jump
-     * by, so the line is found by looking for the declaration in the text. It is the file's own text and
-     * the name is the one the checker read out of it, so what is found is the thing that was clicked.
+     * by, so the line is found by looking for the declaration in the text: the whole name, outside a
+     * comment, after a type's keyword for a type and after its type for a member, a member looked for
+     * after the type it belongs to. Where no line reads as its declaration, the first whole name is gone to.
      */
     private void onOutlinePicked(final int index, final int button, final double mx, final double my) {
         final CodeWorkspace.Doc doc = this.workspace.current();
@@ -550,14 +567,54 @@ public final class ExposureApp implements IDesktopApp {
         if (doc == null || index < 0 || index >= rows.size()) {
             return;
         }
-        final String wanted = rows.get(index).label().split("[ (:]", 2)[0];
-        for (int line = 0; line < doc.area().document().lineCount(); line++) {
-            final int at = doc.area().document().line(line).indexOf(wanted);
-            if (at >= 0) {
-                doc.area().document().setCursor(line, at);
-                return;
+        final TextDocument text = doc.area().document();
+        int from = 0;
+        for (int row = index - 1; row >= 0 && rows.get(index).depth() > 0; row--) {
+            if (rows.get(row).depth() == 0) {
+                from = Math.max(0, declaredAt(text, nameOf(rows.get(row)), 0, true)[0]);
+                break;
             }
         }
+        final int[] at = declaredAt(text, nameOf(rows.get(index)), from, rows.get(index).depth() == 0);
+        if (at[0] >= 0) {
+            text.setCursor(at[0], at[1]);
+        }
+    }
+
+    private static String nameOf(final Outline row) {
+        return row.label().split("[ (:]", 2)[0];
+    }
+
+    /* Where {@code name} is declared from line {@code from} on, as its line and column; the line -1 for nowhere. */
+    private static int[] declaredAt(final TextDocument text, final String name, final int from, final boolean type) {
+        int[] first = {-1, 0};
+        for (int line = from; line < text.lineCount(); line++) {
+            final String written = text.line(line);
+            final String trimmed = written.strip();
+            if (trimmed.startsWith("//") || trimmed.startsWith("/*") || trimmed.startsWith("*")) {
+                continue;
+            }
+            for (int at = written.indexOf(name); at >= 0; at = written.indexOf(name, at + 1)) {
+                if (!wholeName(written, at, name.length())) {
+                    continue;
+                }
+                if (first[0] < 0) {
+                    first = new int[] {line, at};
+                }
+                final String before = written.substring(0, at).stripTrailing();
+                if (type ? TYPE_KEYWORD.matcher(before).find() : MEMBER_TYPE.matcher(before).find()) {
+                    return new int[] {line, at};
+                }
+            }
+        }
+        return first;
+    }
+
+    /* Whether the letters at {@code at} are a whole name, not part of a longer one. */
+    private static boolean wholeName(final String line, final int at, final int length) {
+        final int end = at + length;
+        return (at == 0 || !Character.isJavaIdentifierPart(line.charAt(at - 1)))
+                && (end >= line.length() || !Character.isJavaIdentifierPart(line.charAt(end)));
     }
 
     /**

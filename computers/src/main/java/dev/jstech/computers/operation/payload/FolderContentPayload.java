@@ -28,6 +28,8 @@ public record FolderContentPayload(String dir, List<WireFile> files) implements 
     public static final int MAX_FILES = 64;
     /** How long one of them may be. */
     public static final int MAX_TEXT = 16_384;
+    /** How many bytes of text one reply carries in all, well under what one packet to a player may. */
+    public static final int MOST_BYTES = 512 * 1024;
 
     /** One file: where it is, and what is in it. */
     public record WireFile(String path, String text) {

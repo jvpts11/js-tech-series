@@ -143,7 +143,10 @@ public final class WelcomeApp implements IDesktopApp {
 
     @Override
     public void onRestored() {
-        OPEN.add(this);
+        // Kept with the machine's layout without being closed, it may be listed already.
+        if (!OPEN.contains(this)) {
+            OPEN.add(this);
+        }
         PacketDistributor.sendToServer(new RequestWelcomePayload(this.host));
     }
 

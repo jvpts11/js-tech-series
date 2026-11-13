@@ -217,8 +217,13 @@ public final class InstallerPayloads {
         if (newTotal == job.ticksTotal() && flow.targetSlot() == job.targetSlot()) {
             return;
         }
-        machine.setInstalling(new OsInstallJob(job.osId(), flow.targetSlot(), job.readerPos(), job.readerBay(),
-                newTotal, Math.max(0, newTotal - done)));
+        final OsInstallJob resized = new OsInstallJob(job.osId(), flow.targetSlot(), job.readerPos(),
+                job.readerBay(), newTotal, Math.max(0, newTotal - done));
+        // A copy begun from an installer found in the world is still that copy, re-timed.
+        if (job.found()) {
+            resized.markFound();
+        }
+        machine.setInstalling(resized);
     }
 
     /** Leaving with nothing written, which the pages before the work allow and the work itself does not. */
@@ -281,6 +286,10 @@ public final class InstallerPayloads {
     private static void reboot(final IOsHost machine, final ServerPlayer player,
                                final ServerLevel level, final InstallerActionPayload payload,
                                final InstallerFlow flow) {
+        // Only from the last page, as halting: mid-copy it would boot a disk written half way.
+        if (flow.page() != InstallerPage.DONE) {
+            return;
+        }
         finishOn(machine, flow);
         machine.setNeedsPost(true);
         /*

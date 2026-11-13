@@ -102,20 +102,8 @@ public final class MusicImports implements IMediaUploadHandler {
     /** The same, for a machine already in hand, such as one server of a rack. */
     @Nullable
     public static Text whyNot(final IOsHost computer, final String name, final MediaId media) {
-        final ItemStack disk = computer.systemDisk();
-        if (disk.isEmpty()) {
-            return NO_DISK.text();
-        }
-        if (FileAccess.filesystemKindOf(computer) != FilesystemKind.HIERARCHICAL) {
-            return NO_FOLDERS.text();
-        }
-        if (FileType.forRecording(media.format()).isEmpty()) {
-            return NOT_MUSIC.text();
-        }
-        if (FsPaths.sizeMbEq(media.bytes(), DiskFilesystem.eraOf(disk)) > computer.systemDiskFreeWeight()) {
-            return NO_ROOM.with(name);
-        }
-        return null;
+        final Text refused = refusal(computer, media);
+        return refused != null ? refused : room(computer, name, media, 0L);
     }
 
     /**
@@ -142,23 +130,38 @@ public final class MusicImports implements IMediaUploadHandler {
     public static MediaReceipt keep(final ServerLevel level, final IOsHost computer, final String folder,
                                     final boolean playlist, final String name, final MediaId media,
                                     final MediaInfo info) {
-        final Text why = whyNot(computer, name, media);
-        if (why != null) {
-            return MediaReceipt.refused(why);
+        return keepAt(level, computer, folder, playlist, name, media, info).receipt();
+    }
+
+    /**
+     * The same, saying the file the song landed in as well: the name it was brought with can come out another, made
+     * a file's name or numbered beside a file already of it.
+     */
+    public static Kept keepAt(final ServerLevel level, final IOsHost computer, final String folder,
+                              final boolean playlist, final String name, final MediaId media, final MediaInfo info) {
+        final Text refused = refusal(computer, media);
+        if (refused != null) {
+            return new Kept(MediaReceipt.refused(refused), "");
         }
         final ItemStack disk = computer.systemDisk();
         final FilesystemKind kind = FileAccess.filesystemKindOf(computer);
         final FileType type = FileType.forRecording(media.format()).orElseThrow();
         final String dir = folder.isEmpty() ? musicFolderOf(computer) : folder;
-        if (!DiskFilesystem.mkdirs(disk, dir, kind)) {
-            return MediaReceipt.refused(NOT_WRITTEN.with(name, dir));
-        }
         final String content = new RecordingFile(media, info).write();
         final String path = DiskFilesystem.uniquePath(disk,
                 FsPaths.join(dir, RecordingFile.stemOf(name, FALLBACK_NAME)), "." + type.extension(), content);
-        // The same song brought again to the same folder lands on itself, so what it held is room it hands back.
+        // The same song brought again to the same folder lands on itself, so what it held is room it hands back,
+        // on a disk too full for it otherwise too.
+        final long handedBack = DiskFilesystem.weightOf(disk, path);
+        final Text full = room(computer, name, media, handedBack);
+        if (full != null) {
+            return new Kept(MediaReceipt.refused(full), "");
+        }
+        if (!DiskFilesystem.mkdirs(disk, dir, kind)) {
+            return new Kept(MediaReceipt.refused(NOT_WRITTEN.with(name, dir)), "");
+        }
         final DiskFilesystem.WriteResult result = DiskFilesystem.write(disk, path, type, content,
-                computer.systemDiskFreeWeight() + DiskFilesystem.weightOf(disk, path), kind, level.getGameTime());
+                computer.systemDiskFreeWeight() + handedBack, kind, level.getGameTime());
         if (result == DiskFilesystem.WriteResult.OK) {
             MediaStore.current().ifPresent(store -> store.used(media));
         }
@@ -168,9 +171,9 @@ public final class MusicImports implements IMediaUploadHandler {
         }
         computer.setChanged();
         return switch (result) {
-            case OK -> MediaReceipt.accepted(KEPT.with(FsPaths.fileName(path), dir));
-            case DISK_FULL -> MediaReceipt.refused(NO_ROOM.with(name));
-            case INVALID_PATH, READ_ONLY, TOO_LARGE -> MediaReceipt.refused(NOT_WRITTEN.with(name, dir));
+            case OK -> new Kept(MediaReceipt.accepted(KEPT.with(FsPaths.fileName(path), dir)), path);
+            case DISK_FULL -> new Kept(MediaReceipt.refused(NO_ROOM.with(name)), "");
+            case INVALID_PATH, READ_ONLY, TOO_LARGE -> new Kept(MediaReceipt.refused(NOT_WRITTEN.with(name, dir)), "");
         };
     }
 
@@ -201,6 +204,37 @@ public final class MusicImports implements IMediaUploadHandler {
                 .map(target -> keep(player.serverLevel(), target.host(), target.folder(), target.playlist(), name,
                         media, info))
                 .orElseGet(() -> MediaReceipt.refused(NO_COMPUTER.text()));
+    }
+
+    /* Why the computer can keep no song at all: no disk, no folders, not a recording; none when it can. */
+    private static @Nullable Text refusal(final IOsHost computer, final MediaId media) {
+        final ItemStack disk = computer.systemDisk();
+        if (disk.isEmpty()) {
+            return NO_DISK.text();
+        }
+        if (FileAccess.filesystemKindOf(computer) != FilesystemKind.HIERARCHICAL) {
+            return NO_FOLDERS.text();
+        }
+        if (FileType.forRecording(media.format()).isEmpty()) {
+            return NOT_MUSIC.text();
+        }
+        return null;
+    }
+
+    /* Why there is no room for the song, {@code handedBack} of the disk freed by what it lands on; none if there is. */
+    private static @Nullable Text room(final IOsHost computer, final String name, final MediaId media,
+                                       final long handedBack) {
+        final long weight = FsPaths.sizeMbEq(media.bytes(), DiskFilesystem.eraOf(computer.systemDisk()));
+        return weight > computer.systemDiskFreeWeight() + handedBack ? NO_ROOM.with(name) : null;
+    }
+
+    /**
+     * A song brought to a computer: what the player is told, and the file it is in, empty when it was refused.
+     *
+     * @param receipt whether the song is on the disk, and what the player is told
+     * @param path    the file the song is in
+     */
+    public record Kept(MediaReceipt receipt, String path) {
     }
 
     /** The computer a song is for, whether the playlist takes it, and the folder it goes in, as a program wrote them. */

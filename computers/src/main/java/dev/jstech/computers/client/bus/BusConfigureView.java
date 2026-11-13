@@ -682,8 +682,13 @@ final class BusConfigureView {
                 return clickStepper(x, y, BusEditPayload.PRIORITY, STEP);
             }
             case CONDITION -> {
-                if (over(x, y, BusLayout.REMOVE_X, 1, BusLayout.REMOVE_W, BusLayout.REMOVE_W)) {
-                    edit(BusEditPayload.REMOVE_CONDITION, row.index(), 0L);
+                if (over(x, y, BusLayout.REMOVE_X, 1, BusLayout.REMOVE_W, BusLayout.REMOVE_W)
+                        && row.index() < s.conditions().size()) {
+                    // Named as well as its row, so a second click before the window hears back does not take off
+                    // the condition that moved up into the row.
+                    final BusCondition removed = s.conditions().get(row.index());
+                    send.accept(new BusEditPayload(BusEditPayload.REMOVE_CONDITION, row.index(),
+                            removed.kind().id(), removed.subject()));
                     return true;
                 }
             }
@@ -734,7 +739,7 @@ final class BusConfigureView {
             if (over(x, y, at.get(i)[0], at.get(i)[1] * BusLayout.ROW, BusDraw.optionWidth(font, words.get(i)),
                     BusLayout.CONTROL_H)) {
                 if (i < s.tags().size()) {
-                    edit(BusEditPayload.REMOVE_TAG, i, 0L);
+                    send.accept(new BusEditPayload(BusEditPayload.REMOVE_TAG, i, 0L, s.tags().get(i)));
                 } else {
                     editingTag = true;
                     tagField.setValue("");
