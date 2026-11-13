@@ -140,7 +140,7 @@ public final class ProphetEngine implements INetworkEngine {
         if (mind.retryDue(now, RETRY_TICKS)) {
             mind.states().retry();
         }
-        landResumed(core, mind);
+        final boolean landed = landResumed(core, mind);
         final List<ProphetStates.Reaction> reactions = mind.states().evaluate(core.networkIndex().version(), now,
                 item -> held(core, mind, item));
         for (final ProphetStates.Reaction reaction : reactions) {
@@ -150,7 +150,7 @@ public final class ProphetEngine implements INetworkEngine {
                 fire(core, level, mind, reaction, now);
             }
         }
-        if (!reactions.isEmpty()) {
+        if (landed || !reactions.isEmpty()) {
             save(core, mind);
         }
     }
@@ -216,9 +216,12 @@ public final class ProphetEngine implements INetworkEngine {
         final StorageKey key = mind.key(item);
         final long amount = Math.min(lacking, mind.maxBatch());
         final AtomicReference<INetworkOperation> started = new AtomicReference<>();
+        // Settled, the craft leaves what the Mainframe saves too, or a reload would take it for one still on its way.
         final INetworkOperation operation = key == null || amount <= 0 ? null
-                : core.networkOperations().craft(CraftRequest.of(key, amount, true, ASKER,
-                        () -> settled(core, mind, item, amount, started.get())));
+                : core.networkOperations().craft(CraftRequest.of(key, amount, true, ASKER, () -> {
+                    settled(core, mind, item, amount, started.get());
+                    save(core, mind);
+                }));
         started.set(operation);
         if (operation == null) {
             mind.states().cannotHold(item);
@@ -262,8 +265,10 @@ public final class ProphetEngine implements INetworkEngine {
     /*
      * Settles the crafts read back from the save that are done or gone: a craft resumed after a reload no longer calls
      * back. One gone was finished as it was resumed, or could not be, and what it made is in the count already.
+     * Whether it settled any.
      */
-    private static void landResumed(final MainframeBlockEntity core, final ProphetMind mind) {
+    private static boolean landResumed(final MainframeBlockEntity core, final ProphetMind mind) {
+        boolean landed = false;
         for (final Map.Entry<UUID, ProphetMind.Flying> entry : mind.resumed().entrySet()) {
             final INetworkOperation operation = core.findOperation(entry.getKey());
             if (operation != null && !operation.isDone()
@@ -274,7 +279,9 @@ public final class ProphetEngine implements INetworkEngine {
             mind.states().settled(entry.getValue().item(), entry.getValue().asked(), made,
                     core.networkIndex().version());
             mind.landed(entry.getKey());
+            landed = true;
         }
+        return landed;
     }
 
     /*

@@ -16,12 +16,14 @@ import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.CraftingFixtures.Network;
 import dev.jstech.tests.testkit.computers.CraftingRig;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.jetbrains.annotations.Nullable;
 
 import static dev.jstech.tests.testkit.computers.CraftingFixtures.buildCraftingNetwork;
 import static dev.jstech.tests.testkit.computers.CraftingFixtures.cobblePattern;
@@ -124,6 +126,48 @@ public final class MultiStageCraftGameTests {
                             "the bench stage crafts the button from the processing stage's output; got " + buttons);
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void multiStage_stoppedStageFailsThePipeline(final GameTestHelper helper) {
+        /*
+         * Stage 1 is stopped while its kiln works, which settles it DISCARDED. The pipeline fails with it: stage 2,
+         * which the stone already in the network would let run, never does.
+         */
+        final Network net = buildCraftingNetwork(helper);
+        final CraftingRig rig = kilnRig(helper, net);
+        final AtomicReference<NetworkMultiStageOperation> opHolder = new AtomicReference<>();
+        final MultiStagePattern multi = new MultiStagePattern(List.of(
+                MultiStagePattern.Stage.proc(cobblePattern(200)),
+                MultiStagePattern.Stage.bench(stoneButtonPattern())));
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.seed(Items.COBBLESTONE, 16);
+                    net.seed(Items.STONE, 4);
+                    rig.hold(NetworkRecipe.ofMultiStage(multi));
+                })
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    opHolder.set(net.mainframe().submitNetworkMultiStage(multi, 1, "test"));
+                    helper.assertTrue(opHolder.get() != null, "the operation is accepted");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(stage(net, opHolder.get()) != null, "its first stage runs"))
+                .thenExecute(() -> helper.assertTrue(net.mainframe().cancelOperation(stage(net, opHolder.get())),
+                        "the running stage is stopped"))
+                .thenWaitUntil(() -> helper.assertTrue(opHolder.get().isDone(), "the pipeline settles"))
+                .thenExecute(() -> {
+                    helper.assertTrue(opHolder.get().toRecord().status() == OperationRecord.STATUS_FAILED,
+                            "a stopped stage fails the whole pipeline; status=" + opHolder.get().toRecord().status());
+                    helper.assertTrue(net.storage(helper).count(storageKey(Items.STONE_BUTTON)) == 0,
+                            "the bench stage after the stopped stage never runs");
+                })
+                .thenSucceed();
+    }
+
+    /* The id of an Operation other than {@code pipeline} running on the network, its stage; null while none is. */
+    @Nullable
+    private static UUID stage(final Network net, final NetworkMultiStageOperation pipeline) {
+        return net.mainframe().activeOperationRecords().stream().map(OperationRecord::id)
+                .filter(id -> !id.equals(pipeline.operationId())).findFirst().orElse(null);
     }
 
     @GameTest(template = ARENA, timeoutTicks = 200)

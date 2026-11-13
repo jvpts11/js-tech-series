@@ -597,6 +597,42 @@ public final class ProcessingCraftGameTests {
                 .thenSucceed();
     }
 
+    /**
+     * Stone the kiln held when the job began, taken out of it before it makes any, no longer stands in the way: all
+     * it then makes reaches the network.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 300)
+    public static void processing_creditsWhatItMakesOnceWhatItHeldIsTakenOut(final GameTestHelper helper) {
+        final Network net = buildCraftingNetwork(helper);
+        final CraftingRig rig = kilnRig(helper, net);
+        final NetworkProcessingOperation[] job = new NetworkProcessingOperation[1];
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    net.seed(Items.COBBLESTONE, 64);
+                    kiln(rig).preload(new ItemStack(Items.STONE, 16));
+                    kiln(rig).setHeld(true);
+                    rig.hold(cobblePattern(200));
+                })
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    job[0] = net.mainframe().submitNetworkProcessing(cobblePattern(200), 8, "taken out");
+                    helper.assertTrue(job[0] != null, "the processing operation is accepted");
+                })
+                .thenExecuteAfter(8, () -> {
+                    // The job is watching the kiln with its sixteen stone in it; a player takes them out.
+                    kiln(rig).output().shrink(16);
+                    kiln(rig).setHeld(false);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(job[0].isDone(), "the job settles"))
+                .thenExecute(() -> {
+                    helper.assertTrue(net.storage(helper).count(storageKey(Items.STONE)) == 8,
+                            "all eight stone it made reached the network; got "
+                                    + net.storage(helper).count(storageKey(Items.STONE)));
+                    helper.assertTrue(job[0].toRecord().status() == OperationRecord.STATUS_COMPLETED,
+                            "and the job completes; status=" + job[0].toRecord().status());
+                })
+                .thenSucceed();
+    }
+
     /** One feed moves as many lots as the machine takes and the job needs, not one lot every few ticks. */
     @GameTest(template = ARENA, timeoutTicks = 200)
     public static void processing_feedsManyLotsPerCycle(final GameTestHelper helper) {

@@ -25,11 +25,13 @@ import dev.jstech.core.text.Text;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.CraftFiles;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
@@ -107,6 +109,37 @@ public final class ProphetGameTests {
                             "and made no more than the level; held " + held(helper, net, Items.OAK_PLANKS));
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * A craft asked for to keep a state goes in the Mainframe's save while it is on its way, so a reload neither
+     * forgets it nor asks for it again, and leaves the save once it has landed.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 900)
+    public static void keep_savesTheCraftOnItsWayTillItLands(final GameTestHelper helper) {
+        final TestWorldBuilder.CraftingNetwork net = planksNetwork(helper);
+        helper.startSequence()
+                .thenWaitUntil(() -> ready(helper, net))
+                .thenExecute(() -> helper.assertTrue(query(helper, net, "KEEP oak_planks >= 16").ok(), "kept"))
+                .thenWaitUntil(() -> helper.assertTrue(flying(helper, net).stream().anyMatch(row ->
+                                row.getString("Item").contains("oak_planks") && row.getLong("Asked") > 0),
+                        "the craft on its way is in the save; " + flying(helper, net)))
+                .thenWaitUntil(() -> helper.assertTrue(held(helper, net, Items.OAK_PLANKS) >= 16,
+                        "the planks are made up to the level; held " + held(helper, net, Items.OAK_PLANKS)))
+                .thenWaitUntil(() -> helper.assertTrue(flying(helper, net).isEmpty(),
+                        "landed, it leaves the save; " + flying(helper, net)))
+                .thenSucceed();
+    }
+
+    /* The crafts on their way that the Mainframe's save keeps for Prophet, a row each. */
+    private static List<CompoundTag> flying(final GameTestHelper helper, final TestWorldBuilder.CraftingNetwork net) {
+        final ListTag rows = net.mainframe().saveWithoutMetadata(helper.getLevel().registryAccess())
+                .getCompound("EngineData").getCompound(PROPHET.toString()).getList("Flying", Tag.TAG_COMPOUND);
+        final List<CompoundTag> out = new ArrayList<>();
+        for (int i = 0; i < rows.size(); i++) {
+            out.add(rows.getCompound(i));
+        }
+        return out;
     }
 
     /** A state nothing on the network can make says it cannot hold, and why. */
