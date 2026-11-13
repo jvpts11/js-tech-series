@@ -155,9 +155,13 @@ public final class LaunchPanelFace {
             g.fill(at[0] + 1, at[1] + 1, at[0] + 2, at[1] + 2, c.screwLit());
             g.fill(at[0] + 2, at[1] + 2, at[0] + 3, at[1] + 3, c.key());
         }
-        text(g, font, word(LaunchTexts.TITLE), WIDTH / 2, 7, c.engrave(), true);
-        final String pad = GameText.resolve(LaunchTexts.PAD.with("1")) + "  " + (panel.rocketName().isEmpty()
+        final String title = word(LaunchTexts.TITLE);
+        text(g, font, title, WIDTH / 2, 7, c.engrave(), true);
+        final String named = GameText.resolve(LaunchTexts.PAD.with("1")) + "  " + (panel.rocketName().isEmpty()
                 ? word(LaunchTexts.NO_ROCKET) : panel.rocketName().toUpperCase(Locale.ROOT));
+        // A long name is cut where its plate would reach the title, which stands centred on the same line.
+        final int room = WIDTH - 20 - (WIDTH / 2 + font.width(title) / 2) - 4 - 6;
+        final String pad = font.plainSubstrByWidth(named, Math.max(0, room));
         final int w = font.width(pad) + 6;
         g.fill(WIDTH - 20 - w, 6, WIDTH - 20, 17, c.plate());
         text(g, font, pad, WIDTH - 17 - w, 7, c.plateInk(), false);

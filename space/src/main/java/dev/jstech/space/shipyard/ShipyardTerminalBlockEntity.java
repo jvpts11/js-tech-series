@@ -95,6 +95,8 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     /* The plan being built, on the server, while its chunks are loaded; and whether it is to start. */
     private @Nullable PlannedBuild build;
     private boolean pending;
+    /* The ticks before a plan waiting for its chunks looks again. */
+    private int pendingWait;
     /* Its dock's Item Ports as they tick, forgotten as they go; on the server. */
     private final Set<ItemPortBlockEntity> ports = Collections.newSetFromMap(new WeakHashMap<>());
 
@@ -105,6 +107,8 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     private static final double HALF = 0.5;
     /* How near two points are to be the same, in blocks. */
     private static final double CLOSE = 1.0e-6;
+    /* How often a plan waiting for its chunks looks again: a second. */
+    private static final int PENDING_RETRY = 20;
 
     /* The terminals loaded on a player's game, and on the server, forgotten as they go. */
     private static final Set<ShipyardTerminalBlockEntity> LOADED_ON_CLIENT = Collections.newSetFromMap(
@@ -145,7 +149,9 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
                                   final ShipyardTerminalBlockEntity terminal) {
         MachineBlockEntity.serverTick(level, pos, state, terminal);
-        if (terminal.pending) {
+        // A plan waiting for its chunks is laid out again once a second, not every tick: laying a ship out costs.
+        if (terminal.pending && --terminal.pendingWait <= 0) {
+            terminal.pendingWait = PENDING_RETRY;
             terminal.startBuild();
         }
         if (terminal.build != null && level instanceof ServerLevel server) {

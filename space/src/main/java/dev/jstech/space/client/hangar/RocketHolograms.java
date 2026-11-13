@@ -187,7 +187,9 @@ public final class RocketHolograms {
                 continue;
             }
             final int tall = (int) Math.round(box.getYsize());
-            final Text state = formed.contains(part) ? FORMED.text() : placed[part] == 0 ? TO_BUILD.text()
+            // A part with every block placed reads as formed while the server has still to say it is.
+            final boolean whole = lowestMissing[part] == Integer.MAX_VALUE;
+            final Text state = formed.contains(part) || whole ? FORMED.text() : placed[part] == 0 ? TO_BUILD.text()
                     : LAYER.with(lowestMissing[part] - (int) box.minY + 1, tall);
             shownParts.add(new PlanHologram.Part(name.get(), SIZE.with((int) Math.round(box.getXsize()),
                     (int) Math.round(box.getZsize()), tall, state), colour(kinds, kept.pieces(), part), box));

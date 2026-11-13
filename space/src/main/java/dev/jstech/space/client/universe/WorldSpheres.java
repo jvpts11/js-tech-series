@@ -15,9 +15,11 @@ import dev.jstech.space.universe.SolarBody;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.EnumMap;
+import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import net.minecraft.Util;
@@ -46,6 +48,11 @@ final class WorldSpheres {
     private static final int CLOUD_TILE = 256;
     private static final int FULL = 255;
     private static final Map<SolarBody, Maps> MAPS = new EnumMap<>(SolarBody.class);
+    /*
+     * The worlds whose maps could not be read or drawn, so they are not tried on every frame; cleared as the player
+     * leaves. One world's failing leaves the others to be read.
+     */
+    private static final Set<SolarBody> FAILED = EnumSet.noneOf(SolarBody.class);
 
     private static boolean seeded;
     private static long mapSeed;
@@ -53,8 +60,6 @@ final class WorldSpheres {
     private static CompletableFuture<Overworld> overworldJob;
     @Nullable
     private static Cover clouds;
-    /* Set when a map could not be read or drawn, so it is not tried on every frame; cleared as the player leaves. */
-    private static boolean failed;
 
     private WorldSpheres() {
     }
@@ -75,7 +80,7 @@ final class WorldSpheres {
         dropOverworld();
         WorldThumbnails.clear();
         seeded = false;
-        failed = false;
+        FAILED.clear();
         MAPS.values().forEach(Maps::release);
         MAPS.clear();
     }
@@ -85,7 +90,7 @@ final class WorldSpheres {
      * drawn from its number, which starts on the first call after it came.
      */
     static @Nullable Maps of(final SolarBody body) {
-        if (failed) {
+        if (FAILED.contains(body)) {
             return MAPS.get(body);
         }
         if (body == SolarBody.OVERWORLD) {
@@ -154,7 +159,7 @@ final class WorldSpheres {
             return job.join();
         } catch (final CompletionException broken) {
             LOGGER.error("J's Space could not draw the Overworld's maps", broken.getCause());
-            failed = true;
+            FAILED.add(SolarBody.OVERWORLD);
             return null;
         }
     }
@@ -184,13 +189,20 @@ final class WorldSpheres {
     /* The Moon's or Mars' maps, read from the mod's textures. */
     private static void read(final SolarBody body) {
         final String name = body.name().toLowerCase(Locale.ROOT);
+        NativeImage colour = null;
         try {
-            MAPS.put(body, new Maps(new SphereTexture(SphereTexture.chain(image(name))),
-                    new SphereTexture(SphereTexture.chain(image(name + "_height")))));
+            // Both are read before either goes to the card, so a missing second map leaves nothing behind there.
+            colour = image(name);
+            final NativeImage height = image(name + "_height");
+            MAPS.put(body, new Maps(new SphereTexture(SphereTexture.chain(colour)),
+                    new SphereTexture(SphereTexture.chain(height))));
         } catch (final IOException missing) {
+            if (colour != null) {
+                colour.close();
+            }
             // Without its maps a world is not drawn, rather than drawn wrong.
             LOGGER.error("J's Space could not read the maps of {}", name, missing);
-            failed = true;
+            FAILED.add(body);
         }
     }
 

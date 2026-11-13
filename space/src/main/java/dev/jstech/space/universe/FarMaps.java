@@ -34,6 +34,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.world.level.levelgen.RandomState;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.tick.PlayerTickEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 
@@ -71,6 +72,9 @@ public final class FarMaps {
                 look(player);
             }
         });
+        // A player who leaves has their rings drawn afresh when they come back, so where the last ones stood goes.
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class,
+                event -> SENT.remove(event.getEntity().getUUID()));
     }
 
     /** Draws ring {@code ring} of the far map round ({@code x}, {@code z}) of {@code level}, on its pixels' grid. */
@@ -95,7 +99,14 @@ public final class FarMaps {
                 final int y = QuartPos.fromBlock((int) Math.max(ground, sea));
                 final Holder<Biome> biome = source.getNoiseBiome(QuartPos.fromBlock(bx), y, QuartPos.fromBlock(bz),
                         sampler);
+                /*
+                 * A ring names at most as many biomes as its pixels' byte and its payload hold; one past them is drawn
+                 * as the first, rather than the whole ring failing to send.
+                 */
                 final int index = indices.computeIfAbsent(biome, unused -> {
+                    if (biomes.size() >= FarMapPayload.MAX_BIOMES) {
+                        return 0;
+                    }
                     biomes.add(biome.unwrapKey().map(ResourceKey::location).orElse(Biomes.PLAINS.location()));
                     return biomes.size() - 1;
                 });

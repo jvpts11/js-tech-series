@@ -192,9 +192,12 @@ public final class PadServicePortBlockEntity extends SyncedBlockEntity {
         if (millibuckets <= 0) {
             return 0;
         }
-        line.drain(millibuckets, IFluidHandler.FluidAction.EXECUTE);
         final double kilograms = millibuckets * litre;
-        this.energy.consume((int) Math.ceil(kilograms * JOULES_A_KILOGRAM));
+        // Paid for first: a pump with a joule too few by rounding pumps nothing this tick rather than for free.
+        if (!this.energy.consume((int) Math.ceil(kilograms * JOULES_A_KILOGRAM))) {
+            return 0;
+        }
+        line.drain(millibuckets, IFluidHandler.FluidAction.EXECUTE);
         setChanged();
         return kilograms;
     }

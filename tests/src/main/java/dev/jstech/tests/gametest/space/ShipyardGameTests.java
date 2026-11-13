@@ -608,6 +608,11 @@ public final class ShipyardGameTests {
         final int pace = BuildBalance.blocksPerSecond();
         BuildBalance.setBlocksPerSecond(DOCK_PACE);
         BuildJobs.start(player, helper.absolutePos(at), BuilderState.DEFAULT);
+        // Should it never form, the pace and the job are let go just before the test runs out, not left to the next.
+        helper.runAfterDelay(BUILD_TIME - 5, () -> {
+            BuildBalance.setBlocksPerSecond(pace);
+            BuildJobs.stop(player);
+        });
         final int[] back = Orientation.turns().get(turn).apply(1, 0, 0);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock the builder built forms"))

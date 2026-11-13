@@ -7,6 +7,7 @@
  */
 package dev.jstech.space.platform;
 
+import com.mojang.logging.LogUtils;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.moving.MovingStructure;
@@ -26,7 +27,7 @@ import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -35,6 +36,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 /**
  * The landing platforms of a world, each where its terminal stands, how wide it was built, whose it is and the stage it
@@ -52,6 +54,7 @@ public final class LandingPlatforms extends SavedData {
     private static final String FILE = "jsspace_landing_platforms";
     private static final String PLATFORMS = "Platforms";
     private static final Codec<Map<UUID, Entry>> MAP = Codec.unboundedMap(UUIDUtil.STRING_CODEC, Entry.CODEC);
+    private static final Logger LOGGER = LogUtils.getLogger();
 
     private LandingPlatforms() {
     }
@@ -175,9 +178,21 @@ public final class LandingPlatforms extends SavedData {
 
     private static LandingPlatforms load(final CompoundTag tag, final HolderLookup.Provider registries) {
         final LandingPlatforms loaded = new LandingPlatforms();
-        final Tag saved = tag.get(PLATFORMS);
-        if (saved != null) {
-            MAP.parse(NbtOps.INSTANCE, saved).result().ifPresent(loaded.platforms::putAll);
+        /*
+         * Read platform by platform: one that no longer reads, its world gone or its format newer, is the one left
+         * out, said once in the log, and every other platform and the stage it holds is kept.
+         */
+        if (tag.get(PLATFORMS) instanceof CompoundTag saved) {
+            for (final String key : saved.getAllKeys()) {
+                final Optional<UUID> id = UUIDUtil.STRING_CODEC.parse(NbtOps.INSTANCE, StringTag.valueOf(key))
+                        .result();
+                final Optional<Entry> entry = Entry.CODEC.parse(NbtOps.INSTANCE, saved.get(key)).result();
+                if (id.isPresent() && entry.isPresent()) {
+                    loaded.platforms.put(id.get(), entry.get());
+                } else {
+                    LOGGER.warn("J's Space left out the landing platform {}, which no longer reads", key);
+                }
+            }
         }
         return loaded;
     }

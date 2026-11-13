@@ -129,9 +129,9 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
             return Optional.of(CrawlerTexts.BLOCKED.with(at.getX(), at.getY(), at.getZ()));
         }
         if (carried.isPresent()) {
-            final Optional<Text> handed = handOver(server, carried.get());
-            if (handed.isPresent()) {
-                return handed;
+            final Optional<Text> refused = handOverRefused(server, carried.get());
+            if (refused.isPresent()) {
+                return refused;
             }
         }
         // A door it passes through opens whole, as a real bay door rolls back.
@@ -186,25 +186,51 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
     }
 
     /*
-     * The hangar terminal that built the rocket hands its plan to the rocket's flight computer, which draws its formed
-     * parts from then on, aboard; refused while the rocket is unfinished, or has no flight computer to take it.
+     * Why the hangar terminal that built the rocket cannot hand its plan over: the rocket unfinished, or with no flight
+     * computer to take it. None when it can, or when no terminal holds a plan for it.
      */
-    private static Optional<Text> handOver(final ServerLevel server, final CrawlerWay.Load launcher) {
-        if (launcher.terminal().isEmpty()
-                || !(server.getBlockEntity(launcher.terminal().get()) instanceof HangarTerminalBlockEntity terminal)
-                || terminal.plan().isEmpty()) {
+    private static Optional<Text> handOverRefused(final ServerLevel server, final CrawlerWay.Load launcher) {
+        final HangarTerminalBlockEntity terminal = terminalOf(server, launcher);
+        if (terminal == null) {
             return Optional.empty();
         }
         if (!terminal.finished()) {
             return Optional.of(CrawlerTexts.NOT_BUILT.text());
         }
         if (launcher.computer().isEmpty()
-                || !(server.getBlockEntity(launcher.computer().get()) instanceof FlightComputerBlockEntity computer)) {
+                || !(server.getBlockEntity(launcher.computer().get()) instanceof FlightComputerBlockEntity)) {
             return Optional.of(CrawlerTexts.NO_COMPUTER.text());
         }
-        terminal.release().ifPresent(plan -> computer.carry(plan.design(),
-                plan.foot().subtract(computer.getBlockPos()), plan.formed()));
         return Optional.empty();
+    }
+
+    /*
+     * The hangar terminal hands its plan to the rocket's flight computer, which draws its formed parts from then on,
+     * aboard. Done once the trip can no longer be refused, so a trip turned away leaves the terminal its plan. The
+     * computer went aboard {@code carried}: it stands where it stood while its blocks wait for their plot, and in the
+     * yard once they are there.
+     */
+    private static void handOver(final ServerLevel server, final CrawlerWay.Load launcher,
+                                 @Nullable final MovingStructure carried) {
+        final HangarTerminalBlockEntity terminal = terminalOf(server, launcher);
+        if (terminal == null || launcher.computer().isEmpty()) {
+            return;
+        }
+        final BlockPos stood = launcher.computer().get();
+        final BlockPos now = carried == null || carried.arriving() ? stood
+                : BlockPos.containing(MovingStructures.toYard(carried, Vec3.atCenterOf(stood)));
+        if (server.getBlockEntity(now) instanceof FlightComputerBlockEntity computer) {
+            terminal.release().ifPresent(plan -> computer.carry(plan.design(), plan.foot().subtract(stood),
+                    plan.formed()));
+        }
+    }
+
+    /* The hangar terminal that holds the plan of the rocket on {@code launcher}, or null when none does. */
+    @Nullable
+    private static HangarTerminalBlockEntity terminalOf(final ServerLevel server, final CrawlerWay.Load launcher) {
+        return launcher.terminal().isPresent()
+                && server.getBlockEntity(launcher.terminal().get()) instanceof HangarTerminalBlockEntity terminal
+                && terminal.plan().isPresent() ? terminal : null;
     }
 
     /* Makes the crawler, and the launcher on it, moving structures, opens the doors on the way and sets off. */
@@ -249,6 +275,9 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
             keeper.crawler.set(body.id());
             keeper.setChanged();
         }
+        if (carried.isPresent()) {
+            handOver(server, carried.get(), MovingStructures.byId(server, launcher));
+        }
         doors(server, opened, true);
         return Optional.empty();
     }
@@ -259,7 +288,7 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
         final StructureUuid carried = this.load.get();
         final MovingStructure launcher = carried == null ? null : structure(server, carried);
         if (body == null || carried != null && launcher == null) {
-            stranded();
+            stranded(server);
             return;
         }
         if (!body.ready() || launcher != null && !launcher.ready()) {
@@ -279,7 +308,7 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
         final MovingStructure body = body(server);
         final MovingStructure launcher = structure(server, this.load.get());
         if (body == null || launcher == null) {
-            stranded();
+            stranded(server);
             return;
         }
         if (!launcher.resting()) {
@@ -293,7 +322,7 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
     private void driven(final ServerLevel server) {
         final MovingStructure body = body(server);
         if (body == null) {
-            stranded();
+            stranded(server);
             return;
         }
         if (!body.resting()) {
@@ -315,7 +344,7 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
         final MovingStructure body = body(server);
         final MovingStructure launcher = structure(server, this.load.get());
         if (body == null) {
-            stranded();
+            stranded(server);
             return;
         }
         if (launcher != null) {
@@ -339,7 +368,7 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
     private void returned(final ServerLevel server) {
         final MovingStructure body = body(server);
         if (body == null) {
-            stranded();
+            stranded(server);
             return;
         }
         if (body.resting()) {
@@ -379,12 +408,17 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
         setChanged();
     }
 
-    /* Its structure lost from under it, which only a command does: it forgets the trip. */
-    private void stranded() {
+    /*
+     * Its structure lost from under it, which only a command does: it forgets the trip and shuts the doors it opened.
+     */
+    private void stranded(final ServerLevel server) {
+        final List<BlockPos> opened = this.doors.get();
         this.phase.set(Phase.IDLE);
         this.crawler.set(null);
         this.load.set(null);
+        this.doors.set(List.of());
         setChanged();
+        doors(server, new HashSet<>(opened), false);
     }
 
     /* The crawler's moving structure, while it is on its trip. */

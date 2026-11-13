@@ -38,6 +38,14 @@ public final class SpaceWorlds {
         return WORLDS.get(level, id);
     }
 
+    /**
+     * The world of {@code id} wherever it is known, for what has no level to ask by, as a manual's figures: the
+     * server's data packs, else those the player's game was sent, else the declared.
+     */
+    public static Optional<SpaceWorld> anywhere(final ResourceLocation id) {
+        return WORLDS.anywhere(id);
+    }
+
     /** The world {@code dimension} is, on the side {@code level} is on, or none. */
     public static Optional<SpaceWorld> ofDimension(final Level level, final ResourceKey<Level> dimension) {
         return WORLDS.all(level).values().stream().filter(world -> world.dimension().equals(dimension)).findFirst();

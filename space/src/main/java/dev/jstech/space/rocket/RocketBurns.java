@@ -8,6 +8,8 @@
 package dev.jstech.space.rocket;
 
 import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.space.api.Propellant;
+import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
 import java.util.List;
@@ -79,10 +81,16 @@ public final class RocketBurns {
         final double burnt = Math.clamp(share, 0, 1);
         final double core = burnt * Math.clamp(burn.coreShare(), 0, 1);
         final Map<ResourceLocation, RocketPart> parts = RocketParts.all(level);
+        final Map<ResourceLocation, Propellant> propellants = Propellants.all(level);
         for (final int section : RocketStages.stage(parts, rocket.get().stack(), burn.stage())) {
             final TankLoad load = rocket.get().tanks().get(section);
-            if (load != null && core > 0) {
-                Rockets.load(level.getServer(), body.id(), section, load.scaled(1 - core));
+            /*
+             * The burn is reckoned in what the engine can burn, so that is what goes: each material by its share, and
+             * what is left over of one, which was never burnt, stays in the tank.
+             */
+            final Propellant propellant = load == null ? null : propellants.get(load.propellant());
+            if (load != null && propellant != null && core > 0) {
+                Rockets.load(level.getServer(), body.id(), section, load.burned(load.propellant(), propellant, core));
             }
             if (burn.boosters() && !rocket.get().stack().sections().get(section).boosters().isEmpty()) {
                 Rockets.boosters(level.getServer(), body.id(), section,

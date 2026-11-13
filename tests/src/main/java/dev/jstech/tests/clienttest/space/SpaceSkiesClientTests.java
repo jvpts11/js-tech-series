@@ -9,16 +9,15 @@ package dev.jstech.tests.clienttest.space;
 
 import dev.jstech.core.client.sky.SkyMeteors;
 import dev.jstech.core.client.weather.WeatherClient;
-import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.world.event.WorldEvents;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.universe.MarsWeather;
 import dev.jstech.space.universe.SolarSystemWorlds;
-import dev.jstech.tests.TestWorldGen;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.testkit.client.ClientTestHelper;
+import java.util.Objects;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -213,20 +212,14 @@ public final class SpaceSkiesClientTests {
         player.onUpdateAbilities();
         final BlockPos origin = ctx.origin().above(2);
         player.teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0F, 0F);
-        forget(ctx, SolarSystemWorlds.MOON);
-        forget(ctx, SolarSystemWorlds.MARS);
     }
 
-    /* The world, made as a flat land under its own sky, so the sky is all that is looked at. */
+    /*
+     * The world {@code id} itself, its own generated land under its sky, as the Space mod declares it: the sky is read
+     * high over the middle of its map, above whatever ground is there.
+     */
     private static ServerLevel world(final ClientTestContext ctx, final ResourceLocation id) {
-        return RuntimeDimensions.getOrCreate(ctx.server(), key(ctx, id), TestWorldGen.SKY_LAND.id());
-    }
-
-    private static void forget(final ClientTestContext ctx, final ResourceLocation id) {
-        final ResourceKey<Level> key = key(ctx, id);
-        if (RuntimeDimensions.templateOf(key.location()).isPresent()) {
-            RuntimeDimensions.remove(ctx.server(), key);
-        }
+        return Objects.requireNonNull(ctx.server().getLevel(key(ctx, id)), "no dimension for " + id);
     }
 
     private static ResourceKey<Level> key(final ClientTestContext ctx, final ResourceLocation id) {

@@ -8,6 +8,7 @@
 package dev.jstech.space.client.ship;
 
 import dev.jstech.core.client.effect.ClientEffects;
+import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.StructureFrame;
@@ -24,6 +25,7 @@ import dev.jstech.space.ship.ShipAboard;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipLayout;
 import dev.jstech.space.shipyard.ShipyardLayout;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -58,6 +60,9 @@ public final class ShipExhaust {
     /* The consoles drawn and what they blow; the nozzles of each design, in the ship's places. */
     private static final Map<AirReserveEntity, Blown> SEEN = new WeakHashMap<>();
     private static final Map<ShipDesign, List<ShipLayout.Cell>> NOZZLES = new HashMap<>();
+    /* The world and the resources the nozzles were found with. */
+    private static WeakReference<ClientLevel> readIn = new WeakReference<>(null);
+    private static long readAt = -1;
 
     private ShipExhaust() {
     }
@@ -148,6 +153,12 @@ public final class ShipExhaust {
 
     /* The nozzles of the air engines of a ship of {@code design}, in the ship's places, read once. */
     private static List<ShipLayout.Cell> nozzles(final ClientLevel level, final ShipDesign design) {
+        // The parts a design is read with are the world's and the resources', so another of either reads it again.
+        if (readIn.get() != level || readAt != KitModels.reloadedAt()) {
+            NOZZLES.clear();
+            readIn = new WeakReference<>(level);
+            readAt = KitModels.reloadedAt();
+        }
         return NOZZLES.computeIfAbsent(design, key -> {
             final Map<ResourceLocation, ShipPart> parts = ShipParts.all(level);
             final List<ResourceLocation> all = new ArrayList<>(design.spine());

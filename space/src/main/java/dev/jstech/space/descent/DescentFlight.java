@@ -169,8 +169,10 @@ public final class DescentFlight {
         final DescentPhase was = computer.descent();
         final DescentPhase now = descent.phase();
         final Vec3 foot = new Vec3(body.pose().x(), body.pose().y(), body.pose().z());
-        if (was == DescentPhase.DEORBIT && now == DescentPhase.ENTRY && descent.air() != RocketDescent.NO_AIR
-                && !computer.shield()) {
+        // Leaving its orbit into the air burns it up, whichever phase the first tick in the sky already finds it in.
+        final boolean inTheSky = now == DescentPhase.ENTRY || now == DescentPhase.BRAKING
+                || now == DescentPhase.PARACHUTES;
+        if (was == DescentPhase.DEORBIT && inTheSky && descent.air() != RocketDescent.NO_AIR && !computer.shield()) {
             burnUp(level, body, computer, descent.world());
         }
         computer.descent(now);
@@ -258,7 +260,8 @@ public final class DescentFlight {
                                       final double width) {
         final double reach = Math.sqrt(random.nextDouble());
         final double turn = random.nextDouble() * 2 * Math.PI;
-        final double half = width / 2 - 1;
+        // A world under two blocks wide has only its middle to come down on.
+        final double half = Math.max(0, width / 2 - 1);
         final double x = landing.x() + reach * Math.cos(turn) * FlightComputerBlockEntity.ellipseLength(guidance) / 2;
         final double z = landing.z() + reach * Math.sin(turn) * FlightComputerBlockEntity.ellipseWidth(guidance) / 2;
         return new double[] {Math.clamp(x, -half, half), Math.clamp(z, -half / 2, half / 2)};

@@ -103,9 +103,15 @@ public final class SystemSpaceRenderer {
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, SystemSpaceRenderer::onStage);
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, GroundSkyRenderer::onStage);
         ClimbRenderer.listen();
+        // Everything the last server said or the last world drew goes with it, so the next one starts afresh.
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
             WorldSpheres.clear();
             FarGround.clear();
+            ClimbRenderer.clear();
+            WORLDS_BELOW.clear();
+            orbiting = null;
+            orbitingSince = 0;
+            slidWhenLeft = Double.NaN;
         });
     }
 

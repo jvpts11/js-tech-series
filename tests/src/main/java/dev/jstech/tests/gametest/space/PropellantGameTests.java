@@ -120,6 +120,12 @@ public final class PropellantGameTests {
         final TankLoad lopsided = filled.get(1).with(METHANE, 1_000);
         helper.assertTrue(Math.abs(lopsided.usable(SkeletonPropellants.METHALOX, methalox)
                 - 1_000 / methalox.share(METHANE)) < 1e-6, "the scarcer material sets what burns");
+        final TankLoad spent = lopsided.burned(SkeletonPropellants.METHALOX, methalox, 1);
+        final double oxygenLeft = lopsided.kilograms().get(OXYGEN)
+                - 1_000 / methalox.share(METHANE) * methalox.share(OXYGEN);
+        helper.assertTrue(spent.kilograms().get(METHANE) < 1e-6
+                        && Math.abs(spent.kilograms().get(OXYGEN) - oxygenLeft) < 1e-6,
+                "a whole burn takes all it can burn and leaves the oxygen left over: " + spent);
         helper.succeed();
     }
 

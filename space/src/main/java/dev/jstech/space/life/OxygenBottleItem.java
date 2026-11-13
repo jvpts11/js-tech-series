@@ -100,9 +100,16 @@ public final class OxygenBottleItem extends Item {
             return 0;
         }
         final long wanted = (long) Math.ceil((FULL - air(bottle)) * MOLES_A_SECOND * RoomVent.MILLIBUCKETS_PER_MOLE);
-        final long taken = gas.extract(oxygen.get(), wanted, false);
+        // Only whole seconds go in, so only their oxygen comes out: what is short of a second stays in the gas.
+        final long there = gas.extract(oxygen.get(), wanted, true);
         final int seconds = (int) Math.min(FULL - air(bottle),
-                Math.floor(taken / RoomVent.MILLIBUCKETS_PER_MOLE / MOLES_A_SECOND + 1e-9));
+                Math.floor(there / RoomVent.MILLIBUCKETS_PER_MOLE / MOLES_A_SECOND + 1e-9));
+        if (seconds <= 0) {
+            return 0;
+        }
+        final long needed = Math.min(there,
+                (long) Math.ceil(seconds * MOLES_A_SECOND * RoomVent.MILLIBUCKETS_PER_MOLE - 1e-9));
+        gas.extract(oxygen.get(), needed, false);
         setAir(bottle, air(bottle) + seconds);
         return seconds;
     }

@@ -106,7 +106,8 @@ public final class ShipPartModels {
     /**
      * The models a ship of the spine {@code spine} and the hung parts {@code hung} is drawn with, painted in the
      * finish {@code finish}, each where its piece's anchor stands along the spine from the nose; a part or a model not
-     * known is left out, a section's length kept.
+     * known is left out. A part no longer known has no length to keep either, so the sections after it stand that
+     * much nearer the nose.
      */
     public static List<Placed> of(final Map<ResourceLocation, ShipPart> parts,
                                   final Map<ResourceLocation, ShipKit> kits, final List<ResourceLocation> spine,

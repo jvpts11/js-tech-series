@@ -9,6 +9,7 @@ package dev.jstech.space.ship;
 
 import com.mojang.serialization.Codec;
 import dev.jstech.core.air.AirMix;
+import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.moving.BlockMove;
@@ -59,7 +60,7 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
     private final FixturePlace place;
     /* The ship's plan, watched aboard once the ship is a structure; on the server. */
     private @Nullable PlannedBuild aboard;
-    /* What its reactor has burnt since its load was last told, on the server: told a thousandth at a time. */
+    /* What its reactor has burnt since its load was last told, on the server: told a thousandth at a time; saved. */
     private double burnt;
     /* What its ship weighs and pushes with the holes in its parts, on the server; none while it is whole. */
     private ShipFlightModel.@Nullable Performance holed;
@@ -91,6 +92,9 @@ public final class AirReserveEntity extends SyncedBlockEntity implements IFixtur
         this.deuterium = fields().value("Deuterium", Codec.DOUBLE, 1.0).save().toClient();
         // Who may do what aboard its ship, kept with the ship through docks and restarts.
         this.crew = fields().nullable("Crew", ShipCrew.CODEC).save().toClient();
+        // What it burnt since its load was last told goes with its save, so a restart does not refill that much.
+        fields().part("Burnt", IFieldPart.of((tag, registries) -> tag.putDouble("Burnt", this.burnt),
+                (tag, registries) -> this.burnt = tag.getDouble("Burnt"))).save();
         this.place = new FixturePlace(this);
     }
 

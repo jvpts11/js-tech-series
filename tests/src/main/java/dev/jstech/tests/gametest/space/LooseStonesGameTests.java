@@ -122,6 +122,9 @@ public final class LooseStonesGameTests {
                 "stones lie on stone");
         helper.setBlock(STONES, stones);
         helper.assertFalse(stones.canSurvive(helper.getLevel(), helper.absolutePos(STONES.above())),
+                "nor on other loose stones");
+        // Two up, the place under it is the air over the stones.
+        helper.assertFalse(stones.canSurvive(helper.getLevel(), helper.absolutePos(STONES.above(2))),
                 "and not on air");
         helper.setBlock(GROUND, Blocks.AIR);
         helper.succeedWhen(() -> helper.assertBlockNotPresent(LooseStones.MARE_BASALT_STONES.get(), STONES));

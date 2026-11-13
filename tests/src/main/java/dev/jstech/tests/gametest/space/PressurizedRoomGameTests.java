@@ -194,13 +194,14 @@ public final class PressurizedRoomGameTests {
         final ResourceKey<Level> key = key("rooms_flames_off");
         final ServerLevel moon = moon(helper, key);
         final BlockPos open = new BlockPos(8, HIGH_UP + 1, 8);
+        final boolean needAir = SpaceServerConfig.FILE.get(SpaceServerConfig.FLAMES_NEED_AIR);
         SpaceServerConfig.FILE.set(SpaceServerConfig.FLAMES_NEED_AIR, false);
         moon.setBlockAndUpdate(open.below(), Blocks.STONE.defaultBlockState());
         moon.setBlockAndUpdate(open, Blocks.TORCH.defaultBlockState());
         helper.startSequence()
                 .thenExecuteAfter(40, () -> {
                     final BlockState left = moon.getBlockState(open);
-                    SpaceServerConfig.FILE.set(SpaceServerConfig.FLAMES_NEED_AIR, true);
+                    SpaceServerConfig.FILE.set(SpaceServerConfig.FLAMES_NEED_AIR, needAir);
                     RuntimeDimensions.remove(helper.getLevel().getServer(), key);
                     helper.assertTrue(left.is(Blocks.TORCH), "with flames needing no air the torch burns in the "
                             + "Moon's vacuum; " + left);

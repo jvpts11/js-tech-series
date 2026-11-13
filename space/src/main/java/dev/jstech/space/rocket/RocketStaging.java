@@ -90,6 +90,24 @@ public final class RocketStaging {
         }
         final Map<ResourceLocation, RocketPart> parts = RocketParts.all(level);
         final RocketStack stack = design.get().stack();
+        final int last = lastHolding(level, computer, kind);
+        for (int stage = computer.separated() + 1; stage <= last; stage++) {
+            separate(level, body, computer, parts, stack, computer.getBlockPos().offset(foot.get()), stage, true);
+        }
+    }
+
+    /**
+     * The highest stage not let go yet holding a part of the kind {@code kind}, which {@link #leave} leaves with those
+     * under it; nought when none does.
+     */
+    public static int lastHolding(final ServerLevel level, final FlightComputerBlockEntity computer,
+                                  final RocketPart.Kind kind) {
+        final Optional<RocketDesign> design = computer.rocket();
+        if (design.isEmpty()) {
+            return 0;
+        }
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(level);
+        final RocketStack stack = design.get().stack();
         final int count = RocketStages.stages(parts, stack).size();
         int last = 0;
         for (int stage = computer.separated() + 1; stage <= count; stage++) {
@@ -100,9 +118,7 @@ public final class RocketStaging {
                 }
             }
         }
-        for (int stage = computer.separated() + 1; stage <= last; stage++) {
-            separate(level, body, computer, parts, stack, computer.getBlockPos().offset(foot.get()), stage, true);
-        }
+        return last;
     }
 
     /*

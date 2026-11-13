@@ -23,6 +23,8 @@ public final class CrewTexts {
             "Only this ship's owner sets its roles");
     public static final TextKey UNKNOWN_PLAYER = TextKey.of("jsspace.crew.unknown_player",
             "No player of that name has played here");
+    public static final TextKey CREW_FULL = TextKey.of("jsspace.crew.crew_full",
+            "The crew list holds %s players; take one off to name another");
     /* The console's crew page. */
     public static final TextKey MAKER = TextKey.of("jsspace.ship_console.maker", "SCC-1  SHIP CONSOLE");
     public static final TextKey PAGE_CREW = TextKey.of("jsspace.ship_console.page.crew", "CREW");

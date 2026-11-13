@@ -978,6 +978,7 @@
   "jsspace.crew.crew_only": "Só a tripulação desta nave mexe nela",
   "jsspace.crew.owner_only": "Só o dono desta nave define os papéis",
   "jsspace.crew.unknown_player": "Nenhum jogador com esse nome jogou aqui",
+  "jsspace.crew.crew_full": "A lista da tripulação tem %s jogadores; tire um para nomear outro",
   "jsspace.ship_console.maker": "SCC-1  CONSOLE DA NAVE",
   "jsspace.ship_console.page.crew": "TRIPULAÇÃO",
   "jsspace.ship_console.previous": "ANT",

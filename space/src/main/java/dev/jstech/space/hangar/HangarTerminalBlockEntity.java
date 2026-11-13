@@ -76,11 +76,15 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity {
     /* The plan being built, on the server, while its chunk is loaded; and whether it is to start. */
     private @Nullable PlannedBuild build;
     private boolean pending;
+    /* The ticks before a plan waiting for its chunks looks again. */
+    private int pendingWait;
 
     /** The most plans a hangar keeps. */
     public static final int MOST_PLANS = 16;
     /* Not shaped as any way the building stands. */
     private static final int UNSHAPED = -1;
+    /* How often a plan waiting for its chunks looks again: a second. */
+    private static final int PENDING_RETRY = 20;
 
     /* The terminals loaded on a player's game, and on the server, forgotten as they go. */
     private static final Set<HangarTerminalBlockEntity> LOADED_ON_CLIENT = Collections.newSetFromMap(
@@ -125,7 +129,9 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity {
     public static void serverTick(final Level level, final BlockPos pos, final BlockState state,
                                   final HangarTerminalBlockEntity terminal) {
         MachineBlockEntity.serverTick(level, pos, state, terminal);
-        if (terminal.pending) {
+        // A plan waiting for its chunks is laid out again once a second, not every tick: laying a rocket out costs.
+        if (terminal.pending && --terminal.pendingWait <= 0) {
+            terminal.pendingWait = PENDING_RETRY;
             terminal.startBuild();
         }
         if (terminal.build != null && level instanceof ServerLevel server) {

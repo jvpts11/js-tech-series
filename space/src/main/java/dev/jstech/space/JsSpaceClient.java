@@ -43,6 +43,7 @@ import dev.jstech.space.client.shipyard.ItemPortScreen;
 import dev.jstech.space.client.shipyard.ShipDesignScreen;
 import dev.jstech.space.client.shipyard.ShipHolograms;
 import dev.jstech.space.client.shipyard.ShipyardRenderer;
+import dev.jstech.space.client.skin.SkinAtlas;
 import dev.jstech.space.client.universe.SystemSpaceRenderer;
 import dev.jstech.space.crew.ShipConsole;
 import dev.jstech.space.flight.FlightComputer;
@@ -93,6 +94,7 @@ public final class JsSpaceClient {
         ShipBoostClient.listen();
         ShipAutopilotClient.listen();
         ShipExhaust.listen();
+        SkinAtlas.listen();
         // Its engines, gear and console heard, wherever it is.
         ShipEngineSounds.listen();
         // The HUD on its canopy, for the pilot at its helm, and the camera behind it in the third person.

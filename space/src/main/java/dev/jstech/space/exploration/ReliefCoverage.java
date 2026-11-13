@@ -45,7 +45,7 @@ public record ReliefCoverage(List<Double> strips, Set<Long> visited) {
     private static final double SAME_PASS = 0.5;
     /* The most passes kept, past which the oldest go, and the most cells kept, past which no more are. */
     private static final int MOST_STRIPS = 64;
-    private static final int MOST_VISITED = 8_192;
+    static final int MOST_VISITED = 8_192;
     /* How fine the grid the share seen is reckoned on is, in degrees. */
     private static final double SHARE_STEP = 2;
     private static final int LOW_BITS = 32;
@@ -81,20 +81,30 @@ public record ReliefCoverage(List<Double> strips, Set<Long> visited) {
      * fewer than the most kept are.
      */
     public ReliefCoverage visitedAt(final double x, final double z) {
+        // The cell stood on first, then those round it, so the last room kept goes to where the player is.
         final List<Long> fresh = new ArrayList<>();
+        final long stood = cell(x, z);
+        if (!this.visited.contains(stood)) {
+            fresh.add(stood);
+        }
         for (int dx = -1; dx <= 1; dx++) {
             for (int dz = -1; dz <= 1; dz++) {
                 final long round = cell(x + dx * VISIT_CELL, z + dz * VISIT_CELL);
-                if (!this.visited.contains(round)) {
+                if ((dx != 0 || dz != 0) && !this.visited.contains(round)) {
                     fresh.add(round);
                 }
             }
         }
-        if (fresh.isEmpty() || this.visited.size() + fresh.size() > MOST_VISITED) {
+        if (fresh.isEmpty() || this.visited.size() >= MOST_VISITED) {
             return this;
         }
         final Set<Long> next = new HashSet<>(this.visited);
-        next.addAll(fresh);
+        for (final long one : fresh) {
+            if (next.size() >= MOST_VISITED) {
+                break;
+            }
+            next.add(one);
+        }
         return new ReliefCoverage(this.strips, next);
     }
 

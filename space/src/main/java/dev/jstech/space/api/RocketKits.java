@@ -28,8 +28,16 @@ public final class RocketKits {
     private RocketKits() {
     }
 
-    /** Declares the kit of the part {@code part}, as it is while no data pack says otherwise. */
+    /**
+     * Declares the kit of the part {@code part}, as it is while no data pack says otherwise.
+     *
+     * @throws IllegalArgumentException when the kit is one a data pack's file would be refused for
+     */
     public static RocketKit declare(final ResourceLocation part, final RocketKit kit) {
+        final String problem = RocketKit.problemOf(kit);
+        if (problem != null) {
+            throw new IllegalArgumentException("the kit of " + part + " is refused: " + problem);
+        }
         return KITS.declare(part, kit);
     }
 

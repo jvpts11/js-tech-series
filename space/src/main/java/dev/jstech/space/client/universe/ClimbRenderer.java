@@ -98,6 +98,11 @@ final class ClimbRenderer {
         GroundCovers.reachDown(() -> frame != null || overTheSight());
     }
 
+    /** Forgets the climb last drawn, as the player leaves the world: the menus behind it are no climb. */
+    static void clear() {
+        frame = null;
+    }
+
     /* Whether the eye stands over a world of the system higher above its ground than the game's sight reaches down. */
     private static boolean overTheSight() {
         final Minecraft minecraft = Minecraft.getInstance();

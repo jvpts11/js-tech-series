@@ -145,7 +145,6 @@ public final class SuitControlsClientTests {
                 .then(SETTLE, () -> ctx.assertTrue(!ctx.mc().options.hideGui, "put down, the HUD comes back"));
     }
 
-    /* The colour of the place {@code at} of the controls' case as the HUD shows it, at a unit of 1. */
     /*
      * On a small window, the GUI's scale making it too narrow for the controls beside the hotbar, as a window of 854 by
      * 480 is, the controls stand over the hotbar and its bars, never on them.
@@ -154,10 +153,13 @@ public final class SuitControlsClientTests {
     public static void controls_onASmallWindowStandOverTheHotbar(final ClientTestContext ctx) {
         final int[] window = new int[2];
         ctx.afterTest(() -> {
-            ctx.mc().execute(() -> {
-                ctx.mc().getWindow().setWindowed(window[0], window[1]);
-                ctx.mc().resizeDisplay();
-            });
+            // Put back only once it was read: a test failing before then never made the window small.
+            if (window[0] > 0 && window[1] > 0) {
+                ctx.mc().execute(() -> {
+                    ctx.mc().getWindow().setWindowed(window[0], window[1]);
+                    ctx.mc().resizeDisplay();
+                });
+            }
             ctx.server().execute(() -> ctx.serverPlayer().setItemSlot(EquipmentSlot.CHEST, ItemStack.EMPTY));
         });
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
@@ -187,6 +189,7 @@ public final class SuitControlsClientTests {
                 .thenScreenshot(0, "suit-controls-small-window");
     }
 
+    /* The colour of the place {@code at} of the controls' case as the HUD shows it, at a unit of 1. */
     private static int[] onCase(final ClientTestContext ctx, final int[] at) {
         final int width = ctx.mc().getWindow().getGuiScaledWidth();
         final int height = ctx.mc().getWindow().getGuiScaledHeight();

@@ -426,7 +426,8 @@ public final class ClimbClientTests {
                         off += Math.abs(before[row * width + x] - after[row * width + x + dx]);
                     }
                 }
-                if (off < bestOff) {
+                // A tie goes to the smaller shift, so a flat band, which lays on itself at every shift, reads as still.
+                if (off < bestOff || off == bestOff && Math.abs(dx) < Math.abs(best)) {
                     bestOff = off;
                     best = dx;
                 }

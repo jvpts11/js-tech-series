@@ -20,7 +20,6 @@ import dev.jstech.space.orbit.Rocketry;
 import dev.jstech.space.orbit.SolarSystemOrbits;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import java.math.BigDecimal;
-import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -57,8 +56,8 @@ public final class WorldFacts {
 
     /* The figures of the world {@code world}, under {@code name}: its diameter, gravity, air, cold and day. */
     private static void world(final String name, final ResourceLocation world) {
-        GuideFacts.value(id(name + "_diameter"), () -> amount(Math.round(Optional.ofNullable(SpaceWorlds.declared()
-                .get(world)).map(SpaceWorld::diameter).orElse(0.0)), "km"));
+        GuideFacts.value(id(name + "_diameter"), () -> amount(Math.round(SpaceWorlds.anywhere(world)
+                .map(SpaceWorld::diameter).orElse(0.0)), "km"));
         GuideFacts.value(id(name + "_gravity"), () -> new GuideBlock.GuideValue.Literal(
                 BigDecimal.valueOf(rules(world).gravity()).stripTrailingZeros().toPlainString() + " g"));
         GuideFacts.value(id(name + "_pressure"), () -> amount(Math.round(rules(world).pressure() * PASCALS), "Pa"));
@@ -78,17 +77,19 @@ public final class WorldFacts {
         return amount(Math.round(rules(world).air().map(air -> air.share(gas)).orElse(0.0) * PERCENT), "%");
     }
 
-    /* The rules of the world {@code world}'s dimension, as this game knows them. */
+    /* The rules of the world {@code world}'s dimension as this game knows them, a pack's world over the declared. */
     private static DimensionRules rules(final ResourceLocation world) {
-        return Optional.ofNullable(SpaceWorlds.declared().get(world))
-                .map(found -> DimensionRulesData.known(found.dimension())).orElse(DimensionRules.OVERWORLD);
+        return SpaceWorlds.anywhere(world).map(found -> DimensionRulesData.known(found.dimension()))
+                .orElse(DimensionRules.OVERWORLD);
     }
 
     /* {@code ticks} of play, as hours and minutes, or minutes and seconds under an hour. */
-    private static String played(final long ticks) {
+    static String played(final long ticks) {
         final long seconds = ticks / TICKS;
         if (seconds >= HOUR) {
-            return seconds / HOUR + " h " + (seconds % HOUR + MINUTE / 2) / MINUTE + " min";
+            // Rounded whole first, so a day of 1 h 59 min 40 s reads 2 h 0 min, never 1 h 60 min.
+            final long minutes = (seconds + MINUTE / 2) / MINUTE;
+            return minutes / MINUTE + " h " + minutes % MINUTE + " min";
         }
         return seconds / MINUTE + " min " + seconds % MINUTE + " s";
     }

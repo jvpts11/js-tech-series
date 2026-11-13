@@ -9,7 +9,6 @@ package dev.jstech.tests.clienttest.space;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import dev.jstech.core.client.sky.SkyPlace;
-import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.sky.Skies;
 import dev.jstech.core.sky.SkyMath;
 import dev.jstech.core.sky.SkySpec;
@@ -17,11 +16,11 @@ import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.SystemLayout;
-import dev.jstech.tests.TestWorldGen;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.testkit.client.ClientTestHelper;
 import java.util.ArrayDeque;
+import java.util.Objects;
 import net.minecraft.client.Screenshot;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -185,8 +184,6 @@ public final class GroundSkyClientTests {
         player.onUpdateAbilities();
         final BlockPos origin = ctx.origin().above(2);
         player.teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(), origin.getZ() + 0.5, 0F, 0F);
-        forget(ctx, SolarSystemWorlds.MOON);
-        forget(ctx, SolarSystemWorlds.MARS);
     }
 
     /* Puts the player flying over the middle of {@code world}'s map, looking straight along {@code direction}. */
@@ -334,20 +331,9 @@ public final class GroundSkyClientTests {
         throw new IllegalStateException("the moon never stands high at night in " + SEARCH_DAYS + " days");
     }
 
-    /*
-     * The dimension of the world {@code id}: until its generator shapes it, a copy of the test land made under its
-     * name, which takes the world's own sky, rules and size by that name.
-     */
+    /* The world {@code id} itself, its own generated land under its sky, as the Space mod declares it. */
     private static ServerLevel world(final ClientTestContext ctx, final ResourceLocation id) {
-        return RuntimeDimensions.getOrCreate(ctx.server(), key(ctx, id), TestWorldGen.SKY_LAND.id());
-    }
-
-    /* Lets go of the copy {@code id}'s dimension is, if it is one this test made. */
-    private static void forget(final ClientTestContext ctx, final ResourceLocation id) {
-        final ResourceKey<Level> key = key(ctx, id);
-        if (RuntimeDimensions.templateOf(key.location()).isPresent()) {
-            RuntimeDimensions.remove(ctx.server(), key);
-        }
+        return Objects.requireNonNull(ctx.server().getLevel(key(ctx, id)), "no dimension for " + id);
     }
 
     private static ResourceKey<Level> key(final ClientTestContext ctx, final ResourceLocation id) {

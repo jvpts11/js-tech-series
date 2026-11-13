@@ -79,6 +79,11 @@ public final class StageImpacts {
                 tick(level);
             }
         });
+        /*
+         * A fall whose blast is still going out as its world closes is let go, its wreckage with it: laying it then
+         * would load the land of a world shutting down. The blast lasts seconds, so only a world closed in them loses
+         * one.
+         */
         NeoForge.EVENT_BUS.addListener(LevelEvent.Unload.class, event -> {
             if (event.getLevel() instanceof ServerLevel level) {
                 PENDING.remove(level.dimension());

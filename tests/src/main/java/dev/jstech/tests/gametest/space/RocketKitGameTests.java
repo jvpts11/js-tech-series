@@ -21,6 +21,7 @@ import dev.jstech.tests.JsTests;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
@@ -117,6 +118,25 @@ public final class RocketKitGameTests {
                 && count(first, RocketKitBlocks.TANK_SKIRT) == 8, "over an engine it stands on its skirt");
         helper.assertTrue(count(tank.counts(1, true), RocketKitBlocks.TANK_SKIRT) == 0,
                 "a single layer has no room for one");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void kit_declaredInCodeIsHeldToWhatAFileIsAndBuiltAtLeastOneLayerTall(final GameTestHelper helper) {
+        final ResourceLocation wall = RocketKitBlocks.TANK_WALL.getId();
+        final RocketKit ragged = RocketKit.of(List.of(List.of("TT", "T")), Map.of("T", wall));
+        boolean refused = false;
+        try {
+            RocketKits.declare(SkeletonRocketParts.id("ragged_test_kit"), ragged);
+        } catch (final IllegalArgumentException expected) {
+            refused = expected.getMessage().contains("ragged_test_kit");
+        }
+        helper.assertTrue(refused, "a ragged kit declared in code is refused, as a file's would be");
+        final RocketKit one = new RocketKit(List.of(List.of("TT", "TT")), Map.of("T", wall), Optional.of(0),
+                Optional.empty(), Optional.empty());
+        helper.assertTrue(one.least() == 1 && one.built(1, false).orElseThrow().size() == 1,
+                "a one-layer kit that stretches is at least one layer tall");
+        helper.assertTrue(one.built(0, false).isEmpty(), "and is no kit at no height");
         helper.succeed();
     }
 

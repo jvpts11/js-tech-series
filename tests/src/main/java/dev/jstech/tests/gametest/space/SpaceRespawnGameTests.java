@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.space;
 
 import dev.jstech.core.dimension.DimensionRespawns;
 import dev.jstech.core.dimension.RuntimeDimensions;
+import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.universe.LandingCabins;
 import dev.jstech.testkit.gametest.GameTestPlayers;
@@ -25,6 +26,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.portal.DimensionTransition;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -43,6 +45,7 @@ public final class SpaceRespawnGameTests {
     /* High in the copied land, which is 128 blocks tall, above its ground. */
     private static final BlockPos CABIN = new BlockPos(0, 120, 0);
     private static final Vec3 BED_IN_THE_OPEN = new Vec3(40.5, 120, 40.5);
+    private static final int AIRLESS_TIME = 200;
 
     private SpaceRespawnGameTests() {
     }
@@ -55,6 +58,8 @@ public final class SpaceRespawnGameTests {
         final ServerLevel haven = RuntimeDimensions.getOrCreate(server, key, TestWorldGen.TEST_LAND.id());
         final ServerPlayer player = GameTestPlayers.connected(helper, "spacefarer");
         try {
+            // In the open, whatever an earlier run left there: a cabin is a block, its room the world's air.
+            unbuilt(haven, CABIN);
             player.teleportTo(haven, CABIN.getX() + 0.5, CABIN.getY() + 1, CABIN.getZ() + 0.5, 0, 0);
             haven.setBlockAndUpdate(CABIN, Blocks.IRON_BLOCK.defaultBlockState());
             LandingCabins.mark(player, haven, CABIN);
@@ -62,7 +67,13 @@ public final class SpaceRespawnGameTests {
                     DimensionTransition.DO_NOTHING);
             final DimensionTransition back = DimensionRespawns.respawn(player, bedOutside);
             helper.assertTrue(back.newLevel() == haven && BlockPos.containing(back.pos()).equals(CABIN.above()),
-                    "a bed in the open counts for nothing, and the cabin landed in takes the player back");
+                    "a bed in the open counts for nothing, and the cabin landed in takes the player back; sent to "
+                            + back.newLevel().dimension().location() + " at " + back.pos() + ", the cabin "
+                            + LandingCabins.of(player, haven).map(cabin -> cabin.pos() + " whole "
+                            + cabin.whole(haven)).orElse("unknown") + ", air over it "
+                            + SealedRooms.breathableAt(haven, CABIN.above()) + " (a room there "
+                            + SealedRooms.roomAt(haven, CABIN.above()).isPresent() + ", the place's own "
+                            + SealedRooms.placeClimate(haven, Vec3.atCenterOf(CABIN.above())) + ")");
             haven.setBlockAndUpdate(CABIN, Blocks.AIR.defaultBlockState());
             final DimensionTransition home = DimensionRespawns.respawn(player, bedOutside);
             helper.assertTrue(home.newLevel() == server.overworld(),
@@ -72,6 +83,49 @@ public final class SpaceRespawnGameTests {
             RuntimeDimensions.remove(server, key);
         }
         helper.succeed();
+    }
+
+    /*
+     * The cabin landed in, still whole but its room emptied of air, takes no one back: the player goes home. In a batch
+     * of its own, as the world with air is made and taken away by the test before it too.
+     */
+    @GameTest(template = ARENA, batch = "jsspace_respawn_airless", timeoutTicks = AIRLESS_TIME)
+    public static void death_besideACabinWithNoAirGoesHome(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final ResourceKey<Level> key = SpaceWorlds.get(helper.getLevel(), TestSpaceWorlds.HAVEN).orElseThrow()
+                .dimension();
+        final ServerLevel haven = RuntimeDimensions.getOrCreate(server, key, TestWorldGen.TEST_LAND.id());
+        final ServerPlayer player = GameTestPlayers.connected(helper, "airless");
+        final BlockPos inside = CABIN.above();
+        hut(haven, CABIN);
+        player.teleportTo(haven, inside.getX() + 0.5, inside.getY(), inside.getZ() + 0.5, 0, 0);
+        LandingCabins.mark(player, haven, CABIN);
+        SealedRooms.track(haven, inside);
+        // The world keeps its land and its rooms when it is taken away and made again, so the hut and its emptied room
+        // go first, or the next test that makes the world would find them round its own cabin.
+        final Runnable away = () -> {
+            SealedRooms.untrack(haven, inside);
+            unbuilt(haven, CABIN);
+            GameTestPlayers.leave(player);
+            RuntimeDimensions.remove(server, key);
+        };
+        // Should the room never form, what the test made goes just before it runs out.
+        helper.runAfterDelay(AIRLESS_TIME - 5, away);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(SealedRooms.roomAt(haven, inside).isPresent(),
+                        "the cabin is a sealed room"))
+                .thenExecute(() -> {
+                    SealedRooms.roomAt(haven, inside).orElseThrow().empty();
+                    final boolean airless = !SealedRooms.breathableAt(haven, inside);
+                    final DimensionTransition bedOutside = new DimensionTransition(haven, BED_IN_THE_OPEN, Vec3.ZERO,
+                            0, 0, DimensionTransition.DO_NOTHING);
+                    final DimensionTransition home = DimensionRespawns.respawn(player, bedOutside);
+                    away.run();
+                    helper.assertTrue(airless, "emptied, the cabin holds no air to breathe");
+                    helper.assertTrue(home.newLevel() == server.overworld(),
+                            "a cabin whole but with no air takes no one back: home to the Overworld");
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA)
@@ -86,5 +140,33 @@ public final class SpaceRespawnGameTests {
             GameTestPlayers.leave(player);
         }
         helper.succeed();
+    }
+
+    /* A closed box of iron round the two places over {@code cabin}, the cabin the middle of its floor. */
+    private static void hut(final ServerLevel level, final BlockPos cabin) {
+        for (int x = -1; x <= 1; x++) {
+            for (int y = 0; y <= 3; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    final boolean room = x == 0 && z == 0 && (y == 1 || y == 2);
+                    level.setBlockAndUpdate(cabin.offset(x, y, z), room ? Blocks.AIR.defaultBlockState()
+                            : Blocks.IRON_BLOCK.defaultBlockState());
+                }
+            }
+        }
+    }
+
+    /*
+     * Takes the hut round {@code cabin} away, its cabin and any room found in it with them, back to the open air it was
+     * built in.
+     */
+    private static void unbuilt(final ServerLevel level, final BlockPos cabin) {
+        SealedRooms.forget(level, new AABB(cabin).inflate(2));
+        for (int x = -1; x <= 1; x++) {
+            for (int y = 0; y <= 3; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    level.setBlockAndUpdate(cabin.offset(x, y, z), Blocks.AIR.defaultBlockState());
+                }
+            }
+        }
     }
 }

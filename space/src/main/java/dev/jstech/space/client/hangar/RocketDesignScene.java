@@ -248,7 +248,8 @@ public final class RocketDesignScene {
         final PoseStack.Pose pose = poses.last();
         for (double a = -outer; a < outer - 1e-6; a += STRIPE) {
             for (double b = -outer; b < outer - 1e-6; b += STRIPE) {
-                final boolean ring = a < -inner + 1e-6 || a >= inner - 1e-6 || b < -inner + 1e-6
+                // A tile is the ring's when it lies wholly past the clearance, on either side alike.
+                final boolean ring = a < -inner - 1e-6 || a >= inner - 1e-6 || b < -inner - 1e-6
                         || b >= inner - 1e-6;
                 if (!ring) {
                     continue;

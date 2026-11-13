@@ -11,6 +11,7 @@ import dev.jstech.core.audio.IAudible;
 import dev.jstech.core.audio.LoopRequest;
 import dev.jstech.core.audio.SoundKey;
 import dev.jstech.core.client.audio.SoundDirector;
+import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.MovingStructures;
@@ -27,6 +28,7 @@ import dev.jstech.space.ship.ShipLayout;
 import dev.jstech.space.ship.ShipReadings;
 import dev.jstech.space.ship.ShipSounds;
 import dev.jstech.space.shipyard.ShipyardLayout;
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -62,6 +64,9 @@ public final class ShipEngineSounds {
     private static final float THRUST_LEAST = 0.4F;
     private static final float PERCENT = 100;
     private static final double HALF = 0.5;
+    /* The world and the resources the engines were found with. */
+    private static WeakReference<ClientLevel> readIn = new WeakReference<>(null);
+    private static long readAt = -1;
 
     private ShipEngineSounds() {
     }
@@ -109,6 +114,12 @@ public final class ShipEngineSounds {
 
     /* The blocks of the main engines of a ship of {@code design}, in the ship's places; none for a ship with none. */
     private static List<ShipLayout.Cell> engines(final ClientLevel level, final ShipDesign design) {
+        // The parts a design is read with are the world's and the resources', so another of either reads it again.
+        if (readIn.get() != level || readAt != KitModels.reloadedAt()) {
+            ENGINES.clear();
+            readIn = new WeakReference<>(level);
+            readAt = KitModels.reloadedAt();
+        }
         return ENGINES.computeIfAbsent(design, key -> {
             final Map<ResourceLocation, ShipPart> parts = ShipParts.all(level);
             final List<ResourceLocation> all = new ArrayList<>(design.spine());

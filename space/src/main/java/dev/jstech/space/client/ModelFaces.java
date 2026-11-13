@@ -287,6 +287,13 @@ public final class ModelFaces {
                     final long key = key(t[at], t[at + 1], t[at + 2]);
                     id[k] = corners.computeIfAbsent(key, any -> corners.size());
                 }
+                /*
+                 * A triangle with two corners in one place has no area: a mesh's triangle made a quad repeats its last
+                 * corner, and that second half would take the real triangle's edge as its neighbour and hide it.
+                 */
+                if (id[0] == id[1] || id[1] == id[2] || id[0] == id[2]) {
+                    continue;
+                }
                 for (int k = 0; k < 3; k++) {
                     final int p = id[k];
                     final int q = id[(k + 1) % 3];

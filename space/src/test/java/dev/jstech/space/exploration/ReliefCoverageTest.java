@@ -12,6 +12,9 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class ReliefCoverageTest {
@@ -42,6 +45,17 @@ class ReliefCoverageTest {
         assertTrue(seen.known(0, 0, 60, 1_000 + ReliefCoverage.VISIT_CELL, 1_000), "the cell beside");
         assertFalse(seen.known(0, 0, 60, 1_000 + 3 * ReliefCoverage.VISIT_CELL, 1_000), "not two cells off");
         assertSame(seen, seen.visitedAt(1_010, 1_010), "standing in the same cell sees nothing new");
+    }
+
+    @Test
+    void visitedAt_keepsTheCellStoodOnWhenTheLastRoomIsLessThanTheNine() {
+        final Set<Long> nearlyFull = new HashSet<>();
+        for (long i = 0; i < ReliefCoverage.MOST_VISITED - 1; i++) {
+            nearlyFull.add(Long.MAX_VALUE - i);
+        }
+        final ReliefCoverage seen = new ReliefCoverage(List.of(), nearlyFull).visitedAt(1_000, 1_000);
+        assertTrue(seen.known(0, 0, 60, 1_000, 1_000), "the cell stood on takes the last room");
+        assertEquals(ReliefCoverage.MOST_VISITED, seen.visited().size());
     }
 
     @Test

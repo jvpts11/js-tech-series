@@ -39,8 +39,8 @@ public record FarMapPayload(int ring, int centreX, int centreZ, int blocks, int 
     /** The lowest ground a pixel can hold, and the blocks each step of its height is. */
     public static final int LOWEST = -64;
     public static final int HEIGHT_STEP = 2;
-    /* The most biomes a ring holds. */
-    private static final int MAX_BIOMES = 256;
+    /** The most biomes a ring holds, as many as a pixel's byte can name. */
+    public static final int MAX_BIOMES = 256;
     public static final StreamCodec<RegistryFriendlyByteBuf, FarMapPayload> STREAM_CODEC = StreamCodec.of(
             (buffer, map) -> map.write(buffer), FarMapPayload::read);
 

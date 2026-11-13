@@ -99,6 +99,10 @@ public final class TransferPumpBlockEntity extends SyncedBlockEntity {
         final DepotLayout.Depot now = DepotLayout.find(level, getBlockPos()).orElse(null);
         final DepotLayout.Depot was = this.depot.get() == null ? null : at(this.depot.get());
         if (now == null ? was == null : now.equals(was)) {
+            // A piece broken and put back between two looks is the same depot with a new piece, which forms with it.
+            if (now != null) {
+                form(level, now, true);
+            }
             return;
         }
         if (was != null) {

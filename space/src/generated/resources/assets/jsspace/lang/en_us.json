@@ -300,6 +300,7 @@
   "jsspace.crawler.not_built": "The rocket on the launcher is not finished yet.",
   "jsspace.crawler.not_whole": "The crawler is not whole: every track, jack, deck plate and cab must be in its place round the engine.",
   "jsspace.crawler.too_big": "The launcher and its rocket are more than the crawler can carry.",
+  "jsspace.crew.crew_full": "The crew list holds %s players; take one off to name another",
   "jsspace.crew.crew_only": "Only this ship's crew works it",
   "jsspace.crew.not_aboard": "This ship is %s's: you are not of its crew",
   "jsspace.crew.owner_only": "Only this ship's owner sets its roles",

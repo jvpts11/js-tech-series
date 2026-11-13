@@ -8,6 +8,7 @@
 package dev.jstech.space.spacecraft;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.id.IStableName;
 import dev.jstech.core.id.StableCodecs;
@@ -15,8 +16,10 @@ import dev.jstech.space.api.SpacecraftSize;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
@@ -35,7 +38,8 @@ public record SpacecraftBuild(SpacecraftSize size, Set<Component> components, Op
 
     public static final Codec<SpacecraftBuild> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             SpacecraftSize.CODEC.fieldOf("size").forGetter(SpacecraftBuild::size),
-            Component.CODEC.listOf().<Set<Component>>xmap(SpacecraftBuild::set, List::copyOf)
+            Component.CODEC.listOf().validate(SpacecraftBuild::oneASlot)
+                    .<Set<Component>>xmap(SpacecraftBuild::set, List::copyOf)
                     .optionalFieldOf("components", Set.of()).forGetter(SpacecraftBuild::components),
             Mission.CODEC.optionalFieldOf("mission").forGetter(SpacecraftBuild::mission)
     ).apply(instance, SpacecraftBuild::new));
@@ -77,6 +81,19 @@ public record SpacecraftBuild(SpacecraftSize size, Set<Component> components, Op
     /** Whether it has one of each component and its mission module, ready to go up. */
     public boolean whole() {
         return missing().isEmpty() && this.mission.isPresent();
+    }
+
+    /* Components as a save writes them: one of each kind, as fitting one takes out the other of its kind. */
+    private static DataResult<List<Component>> oneASlot(final List<Component> fitted) {
+        final Map<Slot, Component> bySlot = new EnumMap<>(Slot.class);
+        for (final Component component : fitted) {
+            final Component other = bySlot.putIfAbsent(component.slot(), component);
+            if (other != null && other != component) {
+                return DataResult.error(() -> "a spacecraft holds one component of each kind, not " + other + " and "
+                        + component);
+            }
+        }
+        return DataResult.success(fitted);
     }
 
     private static Set<Component> set(final Collection<Component> components) {

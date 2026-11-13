@@ -70,6 +70,20 @@ public record TankLoad(ResourceLocation propellant, Map<ResourceLocation, Double
         return Double.isFinite(most) ? most : 0;
     }
 
+    /**
+     * The same tank once {@code share} of what an engine can burn of it of {@code burnt}, the propellant of id
+     * {@code id}, is burnt: each material by its share of the propellant, so what is left over of one stays.
+     */
+    public TankLoad burned(final ResourceLocation id, final Propellant burnt, final double share) {
+        final double kilograms = usable(id, burnt) * Math.clamp(share, 0, 1);
+        final Map<ResourceLocation, Double> each = new LinkedHashMap<>(this.kilograms);
+        for (final Propellant.Component component : burnt.components()) {
+            each.computeIfPresent(component.material(),
+                    (material, held) -> Math.max(0, held - kilograms * component.share()));
+        }
+        return new TankLoad(this.propellant, each);
+    }
+
     /** The same tank, holding {@code share} of all it holds, each material alike, as a holed tank leaks. */
     public TankLoad scaled(final double share) {
         final Map<ResourceLocation, Double> each = new LinkedHashMap<>();

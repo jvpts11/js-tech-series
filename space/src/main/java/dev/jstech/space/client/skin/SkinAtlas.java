@@ -18,6 +18,8 @@ import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * The skins of one formed structure of one size, painted once and kept together on the graphics card as one picture,
@@ -55,6 +57,22 @@ public final class SkinAtlas {
      */
     public static SkinAtlas of(final Object size, final Supplier<Map<String, Picture>> paint) {
         return MADE.computeIfAbsent(size, any -> pack(paint.get()));
+    }
+
+    /**
+     * Hands the game's bus what this answers, once, from the mod's client: the pictures are let go as the player
+     * leaves the world, each size built in it being one picture kept on the graphics card until then.
+     */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> releaseAll());
+    }
+
+    /** Lets every picture go from the graphics card; the next structure drawn paints its own again. */
+    public static void releaseAll() {
+        for (final SkinAtlas atlas : MADE.values()) {
+            Minecraft.getInstance().getTextureManager().release(atlas.texture);
+        }
+        MADE.clear();
     }
 
     public ResourceLocation texture() {

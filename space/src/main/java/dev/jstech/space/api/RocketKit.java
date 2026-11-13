@@ -71,12 +71,15 @@ public record RocketKit(List<List<String>> layers, Map<String, ResourceLocation>
         return this.layers.getFirst().size();
     }
 
-    /** The fewest layers it may be built of. */
+    /**
+     * The fewest layers it may be built of, standing on the ground; on an engine, a kit with a foot takes one layer
+     * more, its foot.
+     */
     public int least() {
         if (this.stretch.isEmpty()) {
             return this.layers.size();
         }
-        return this.alone.isPresent() ? 1 : this.layers.size() - 1;
+        return this.alone.isPresent() ? 1 : Math.max(1, this.layers.size() - 1);
     }
 
     /**
@@ -86,6 +89,9 @@ public record RocketKit(List<List<String>> layers, Map<String, ResourceLocation>
     public Optional<List<List<String>>> built(final int count, final boolean onEngine) {
         if (this.stretch.isEmpty()) {
             return Optional.of(this.layers);
+        }
+        if (count < 1) {
+            return Optional.empty();
         }
         final List<List<String>> out = new ArrayList<>();
         int body = count;
@@ -129,31 +135,40 @@ public record RocketKit(List<List<String>> layers, Map<String, ResourceLocation>
         return counted;
     }
 
-    /* Every layer square and as wide as the first, every letter in the key. */
-    private static DataResult<RocketKit> checked(final RocketKit kit) {
+    /*
+     * What is wrong with a kit, or null when nothing is: every layer square and as wide as the first, every letter in
+     * the key, and the layer it stretches one of its own. A data pack's file is held to it as it is read, and a kit
+     * declared in code as it is declared.
+     */
+    static String problemOf(final RocketKit kit) {
         final int width = kit.width();
         final List<List<String>> all = new ArrayList<>(kit.layers());
         kit.alone().ifPresent(all::add);
         kit.foot().ifPresent(all::add);
         for (final List<String> layer : all) {
             if (layer.size() != width) {
-                return DataResult.error(() -> "a kit's layers are all " + width + " rows");
+                return "a kit's layers are all " + width + " rows";
             }
             for (final String row : layer) {
                 if (row.length() != width) {
-                    return DataResult.error(() -> "a kit's rows are all " + width + " letters");
+                    return "a kit's rows are all " + width + " letters";
                 }
                 for (int x = 0; x < row.length(); x++) {
                     final char letter = row.charAt(x);
                     if (letter != ' ' && !kit.key().containsKey(String.valueOf(letter))) {
-                        return DataResult.error(() -> "the letter " + letter + " is in no kit's key");
+                        return "the letter " + letter + " is in no kit's key";
                     }
                 }
             }
         }
         if (kit.stretch().isPresent() && kit.stretch().get() >= kit.layers().size()) {
-            return DataResult.error(() -> "a kit stretches one of its own layers");
+            return "a kit stretches one of its own layers";
         }
-        return DataResult.success(kit);
+        return null;
+    }
+
+    private static DataResult<RocketKit> checked(final RocketKit kit) {
+        final String problem = problemOf(kit);
+        return problem == null ? DataResult.success(kit) : DataResult.error(() -> problem);
     }
 }

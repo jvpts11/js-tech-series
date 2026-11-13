@@ -78,6 +78,8 @@ public final class SpaceBuilderGameTests {
     private static final int PACE = 1_000;
     private static final int BUILD_TIME = 1_200;
     private static final int PAD_TIME = 3_600;
+    /* How many ticks before a build test runs out a build that never formed is let go of. */
+    private static final int LET_GO_BEFORE = 5;
     /* How many blocks of the crawlerway lie before the pad's lanes, the crawler standing on them at first. */
     private static final int RUN_UP = 11;
     /*
@@ -139,7 +141,7 @@ public final class SpaceBuilderGameTests {
     public static void builder_buildsTheLaunchPadAndACrawlerSetsALauncherDownOverItsTrench(
             final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
-        final Build build = build(helper, LaunchPadStructure.ID, 0, PAD_PROJECTOR, PAD_WIDE, "launch-pad");
+        final Build build = build(helper, LaunchPadStructure.ID, 0, PAD_PROJECTOR, PAD_WIDE, "launch-pad", PAD_TIME);
         final BlockPos middle = build.terminal().offset(-LaunchPadStructure.PORT_X, 0, -LaunchPadStructure.PORT_Z);
         final BlockPos engine = middle.offset(LaunchPadStructure.LANES_FROM - RUN_UP + CrawlerLayout.HALF_LENGTH,
                 CrawlerLayout.TRACKS, 0);
@@ -185,7 +187,7 @@ public final class SpaceBuilderGameTests {
      */
     private static void buildsAndForms(final GameTestHelper helper, final ResourceLocation id, final int turn,
                                        final String who, final Predicate<BlockEntity> formed) {
-        final Build build = build(helper, id, turn, PROJECTOR, WIDE, who);
+        final Build build = build(helper, id, turn, PROJECTOR, WIDE, who, BUILD_TIME);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(formed.test(helper.getLevel().getBlockEntity(build.terminal())),
                         "the " + id.getPath() + " the builder built forms"))
@@ -197,10 +199,10 @@ public final class SpaceBuilderGameTests {
      * Lays a ground of earth over the arena's floor {@code wide} blocks across, a projector on it at {@code at} facing
      * south and showing {@code id} turned {@code turn} quarters, and a player in creative, {@code who}, beside it with
      * the Multiblock Builder aimed at the projector, building at the tests' pace: its terminal is the last block it
-     * places.
+     * places. The test runs out at {@code runsOut} ticks.
      */
     private static Build build(final GameTestHelper helper, final ResourceLocation id, final int turn,
-                               final BlockPos at, final int wide, final String who) {
+                               final BlockPos at, final int wide, final String who, final int runsOut) {
         final ServerLevel level = helper.getLevel();
         for (int x = 0; x < wide; x++) {
             for (int z = 0; z < DEEP; z++) {
@@ -230,6 +232,11 @@ public final class SpaceBuilderGameTests {
         final int pace = BuildBalance.blocksPerSecond();
         BuildBalance.setBlocksPerSecond(PACE);
         BuildJobs.start(player, helper.absolutePos(at), BuilderState.DEFAULT);
+        // Should it never form, the pace and the job are let go just before the test runs out, not left to the next.
+        helper.runAfterDelay(runsOut - LET_GO_BEFORE, () -> {
+            BuildBalance.setBlocksPerSecond(pace);
+            BuildJobs.stop(player);
+        });
         return new Build(terminal, player, projector, pace);
     }
 

@@ -27,6 +27,8 @@ import dev.jstech.tests.JsTests;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.gametest.framework.AfterBatch;
+import net.minecraft.gametest.framework.BeforeBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -60,8 +62,22 @@ public final class LaunchPanelGameTests {
     private static final int HEAVY_LAYERS = 40;
     /* Of what a tank held at LAUNCH, the least it holds a few ticks on with nothing burnt, its boil-off aside. */
     private static final double KEPT = 0.999;
+    /* The batch whose test keeps a too heavy rocket's engines off, a server setting put back after it. */
+    private static final String HEAVY = BATCH + "_heavy";
+    /* Whether the server kept a too heavy rocket's engines off before that batch began. */
+    private static volatile boolean tooHeavyToLift = true;
 
     private LaunchPanelGameTests() {
+    }
+
+    @BeforeBatch(batch = HEAVY)
+    public static void heavyStart(final ServerLevel level) {
+        tooHeavyToLift = SpaceServerConfig.FILE.get(SpaceServerConfig.TOO_HEAVY_TO_LIFT);
+    }
+
+    @AfterBatch(batch = HEAVY)
+    public static void heavyEnd(final ServerLevel level) {
+        SpaceServerConfig.FILE.set(SpaceServerConfig.TOO_HEAVY_TO_LIFT, tooHeavyToLift);
     }
 
     @GameTest(template = WIDE, batch = BATCH + "_safe", timeoutTicks = 200)
@@ -151,7 +167,7 @@ public final class LaunchPanelGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = WIDE, batch = BATCH + "_heavy", timeoutTicks = 1700)
+    @GameTest(template = WIDE, batch = HEAVY, timeoutTicks = 1700)
     public static void panel_scrubsATooHeavyRocketUnlitWhenTheServerKeepsItsEnginesOff(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         level.setWeatherParameters(6000, 0, false, false);
@@ -179,7 +195,7 @@ public final class LaunchPanelGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(panel(level, panel).phase()
                         == LaunchPanelBlockEntity.Phase.SCRUBBED, "too heavy to lift, the launch is scrubbed"))
                 .thenExecute(() -> {
-                    SpaceServerConfig.FILE.set(SpaceServerConfig.TOO_HEAVY_TO_LIFT, true);
+                    SpaceServerConfig.FILE.set(SpaceServerConfig.TOO_HEAVY_TO_LIFT, tooHeavyToLift);
                     final double left = tank(level, computer);
                     helper.assertTrue(left >= held[0] * KEPT, "its engines never lit: the rocket stands on the pad "
                             + "and its tank holds what it held, but for what boils off: " + left + " of " + held[0]);

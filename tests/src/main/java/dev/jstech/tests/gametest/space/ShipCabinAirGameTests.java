@@ -49,7 +49,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
  * The small ship's pressurised cabin: a hull of its kit is a sealed room, and stays one when its blocks merge into
  * formed parts; with no life support section, its flight console's small air reserve tops the cabin back up to the
  * sea's air as the crew breathe and the hull leaks, paying for it out of the reserve; and a suited crew member inside
- * breathes the cabin's air, the helmet off, the suit's tanks spared.
+ * breathes the cabin's air, the suit's tanks spared.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -99,7 +99,7 @@ public final class ShipCabinAirGameTests {
     }
 
     @GameTest(template = ARENA, timeoutTicks = 400)
-    public static void cabin_isSealedToppedUpFromItsReserveAndBreathedWithTheHelmetOff(final GameTestHelper helper) {
+    public static void cabin_isSealedToppedUpFromItsReserveAndBreathedSparingTheSuit(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         hull(helper);
         helper.setBlock(CONSOLE, ShipKitBlocks.FLIGHT_CONSOLE.get());
@@ -147,8 +147,8 @@ public final class ShipCabinAirGameTests {
                     final int air = LifeSupport.air(level, crew[0].getItemBySlot(EquipmentSlot.CHEST), suit);
                     GameTestPlayers.leave(crew[0]);
                     SealedRooms.untrack(level, helper.absolutePos(INSIDE));
-                    helper.assertTrue(air == SUIT_AIR, "inside, the crew breathe the cabin's air with the helmet "
-                            + "off, the suit's tanks spared: " + air);
+                    helper.assertTrue(air == SUIT_AIR, "inside, the suited crew breathe the cabin's air, the suit's "
+                            + "tanks spared: " + air);
                 })
                 .thenSucceed();
     }

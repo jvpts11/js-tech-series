@@ -109,6 +109,10 @@ public final class ShipConsoleMenu extends CoreMenu {
         if (crew.get().named().stream().anyMatch(member -> member.id().equals(id))) {
             return;
         }
+        if (crew.get().named().size() >= ShipCrew.MOST_NAMED) {
+            player.displayClientMessage(GameText.component(CrewTexts.CREW_FULL.with(ShipCrew.MOST_NAMED)), true);
+            return;
+        }
         this.console.crew(crew.get().withNamed(id, found.get().getName(), CrewRole.PASSENGER));
     }
 
