@@ -1688,7 +1688,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   Protocol, at `http://127.0.0.1:25599/mcp`. Its key, "MCP server", is never in a file: the player turns it on from
   the game, in the studio's new Agents tab or with `/jstech mcp on`, for that run only. It listens on this computer
   alone and refuses any request a web page sends or one that names another host; turned off, it lets go of every
-  connection a client kept open, so nothing is answered by a server that is off; every client is let in by the
+  connection a client kept open, so nothing is answered by a server that is off, and its port is free to be taken
+  again the moment it is off; every client is let in by the
   player, who is asked on the screen whether it may read, or read and act, and is given a key of its own that dies
   with the game; reading and acting are apart; files are read and written only in the mods' and the pack's folders,
   and never code; commands come from a safe list, only in a test world or for an operator; what players wrote comes

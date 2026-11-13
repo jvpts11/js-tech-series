@@ -38,10 +38,14 @@ public final class McpServer {
     private final AtomicBoolean running = new AtomicBoolean(true);
     /* The connections kept open between requests, waiting for the next one. */
     private final Set<Socket> waiting = ConcurrentHashMap.newKeySet();
+    /* The threads taking connections, one a socket. */
+    private final List<Thread> acceptors = new ArrayList<>();
 
     /** How many connections are served at once, and how long one may stay silent, in milliseconds. */
     private static final int CONNECTIONS = 16;
     private static final int SILENCE = 30_000;
+    /* How long stopping waits for a thread taking connections to let its port go, in milliseconds. */
+    private static final long LET_GO = 2_000;
     private static final byte[] LOOPBACK_V4 = {127, 0, 0, 1};
     private static final byte[] LOOPBACK_V6 = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1};
 
@@ -68,6 +72,7 @@ public final class McpServer {
         for (final ServerSocket socket : server.sockets) {
             final Thread acceptor = new Thread(() -> server.accept(socket), "J's Core MCP server");
             acceptor.setDaemon(true);
+            server.acceptors.add(acceptor);
             acceptor.start();
         }
         server.logger.info("The MCP server listens at http://127.0.0.1:" + server.port() + McpGuard.PATH);
@@ -91,7 +96,8 @@ public final class McpServer {
 
     /**
      * Stops listening, closes the connections waiting for a request, and closes the others as their requests end; so a
-     * client's next request, on a server turned on again, never reaches the one turned off.
+     * client's next request, on a server turned on again, never reaches the one turned off. It returns once its port is
+     * free to be taken again.
      */
     public void stop() {
         if (this.running.compareAndSet(true, false)) {
@@ -103,6 +109,16 @@ public final class McpServer {
                 }
             }
             this.waiting.forEach(McpServer::close);
+            // A socket closed while a thread waits in it to take a connection holds its port till that thread
+            // wakes and leaves: a server started at once on the same port would find it taken.
+            for (final Thread acceptor : this.acceptors) {
+                try {
+                    acceptor.join(LET_GO);
+                } catch (final InterruptedException interrupted) {
+                    Thread.currentThread().interrupt();
+                    break;
+                }
+            }
             this.logger.info("The MCP server stopped");
         }
     }

@@ -440,8 +440,11 @@ public final class LaunchCount {
             this.panel.set(null);
         }
         if (found != null) {
-            found.standsOn(this.owner.getBlockPos());
             final Phase now = this.phase.get();
+            // A rocket released stands here only while its body is being made: it has left the pad, not come back.
+            if (now != Phase.RELEASED) {
+                found.standsOn(this.owner.getBlockPos());
+            }
             found.clock(now == Phase.RELEASED ? this.met.get() / SECOND : -(left() + SECOND - 1) / SECOND);
         }
     }

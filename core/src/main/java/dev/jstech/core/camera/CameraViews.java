@@ -38,6 +38,12 @@ public final class CameraViews {
     /* The view each player sees now, and the number of the last view started for each. */
     private static final Map<ServerPlayer, CameraView> SHOWING = new WeakHashMap<>();
     private static final Map<ServerPlayer, Integer> NUMBERS = new WeakHashMap<>();
+    /*
+     * The fewest and the most chunks the server sends round a player, as its chunk map holds the view distance it is
+     * set: a server set to less, or to none, as a game test server is, still sends two.
+     */
+    private static final int LEAST_VIEW = 2;
+    private static final int MOST_VIEW = 32;
 
     private CameraViews() {
     }
@@ -141,7 +147,8 @@ public final class CameraViews {
      */
     private static boolean tracked(final ServerPlayer player, final Entity entity) {
         final double range = Math.min(entity.getType().clientTrackingRange(),
-                player.server.getPlayerList().getViewDistance()) * SectionPos.SECTION_SIZE;
+                Math.clamp(player.server.getPlayerList().getViewDistance(), LEAST_VIEW, MOST_VIEW))
+                * SectionPos.SECTION_SIZE;
         final double dx = entity.getX() - player.getX();
         final double dz = entity.getZ() - player.getZ();
         return dx * dx + dz * dz <= range * range;
