@@ -23,6 +23,7 @@ From the creative menu, J's Space tab.
 1. On the Rocket Design screen, set the capsule at the top of the rocket; the screen counts its seats.
 2. Turn it with Rotate until its hatch faces the [launcher's](jsspace:launcher) tower, where the crew access arm meets the rocket.
 3. Have the hangar build it. Its Flight Computer goes with the rocket and flies it.
+4. On the pad, use a Crew Seat to sit on it; the crew stay in their seats as the rocket lifts off. Sitting is the crew's own choice: the count does not wait for it.
 
 ## What can go wrong
 

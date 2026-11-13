@@ -17,6 +17,7 @@ import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialLiquids;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.core.uuid.StructureUuid;
 import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.Propellant;
@@ -26,6 +27,8 @@ import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.cruise.CruiseFlight;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.launcher.ArmBlock;
+import dev.jstech.space.launcher.ArmBlockEntity;
 import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.space.pad.LaunchPads;
 import dev.jstech.space.pad.PadServicePortBlockEntity;
@@ -84,6 +87,9 @@ public final class LaunchCount {
     private final ValueField<UUID> pilot;
     private final ValueField<StructureUuid> flight;
     private final BoolField lifted;
+    private final IntField arms;
+    private final IntField armsOut;
+    private final IntField jawsOpen;
     private @Nullable LaunchPads.Stand stand;
     /* Where its pad's service port stood at the last look, which keeps the pad's number and name. */
     private @Nullable BlockPos port;
@@ -114,6 +120,9 @@ public final class LaunchCount {
     public static final int SWITCH = 10;
     /** Ticks in a second. */
     public static final int SECOND = 20;
+    /** The ticks the tower's arms take to swing away, from T-42 to T-10, and back; and the hold-down jaws to open. */
+    public static final int SWING = (ARMS - COVER) * SECOND;
+    public static final int JAWS = SECOND / 2;
     private static final int HUNDRED = 100;
 
     /** The count of the launcher {@code owner}, its state kept and told to the players who see it, as its own. */
@@ -146,12 +155,10 @@ public final class LaunchCount {
         this.pilot = owner.fields().nullable("Pilot", UUIDUtil.CODEC).save();
         this.flight = owner.fields().nullable("Flight", StructureUuid.CODEC).save();
         this.lifted = owner.fields().flag("Lifted", false).save();
-    }
-
-    /** Whether a count may run: the vehicle there, its propellant loaded, no storm holding it, the clamps on. */
-    public static boolean go(final boolean vehicle, final int oxidiser, final int fuel, final boolean storm,
-                             final boolean clamps) {
-        return vehicle && oxidiser >= FULL && fuel >= FULL && !storm && clamps;
+        // How many arms its tower reaches the rocket with; how far they are swung away and the jaws open, in ticks.
+        this.arms = owner.fields().integer("Arms", 0).toClient();
+        this.armsOut = owner.fields().integer("ArmsOut", 0).save().toClient();
+        this.jawsOpen = owner.fields().integer("JawsOpen", 0).save().toClient();
     }
 
     /** Whether the LAUNCH button's cover is up: from T-10 on, while a count runs or holds. */
@@ -175,7 +182,18 @@ public final class LaunchCount {
                 this.ignition.get(), this.guard.get(), this.master.get(), this.launched.get(), this.vehicle.get(),
                 this.oxidiser.get(), this.fuel.get(), this.delugeReady.get(), this.storm.get(),
                 Objects.requireNonNullElse(this.name.get(), ""), this.padNumber.get(),
-                Objects.requireNonNullElse(this.padName.get(), ""), this.panel.get() != null);
+                Objects.requireNonNullElse(this.padName.get(), ""), this.panel.get() != null, this.arms.get(),
+                this.armsOut.get());
+    }
+
+    /** How far the tower's arms are swung away from the rocket, from nought, against it, to one, turned clear. */
+    public float armsAway() {
+        return this.armsOut.get() / (float) SWING;
+    }
+
+    /** How far the hold-down arms' jaws are open, from nought, holding the rocket down, to one, let go. */
+    public float jawsOpen() {
+        return this.jawsOpen.get() / (float) JAWS;
     }
 
     /** The rocket it released, while that rocket is still in this world. */
@@ -276,12 +294,16 @@ public final class LaunchCount {
         this.panel.set(at.immutable());
     }
 
-    /** Counts on, a tick at a time; looks at its pad and its rocket every second. */
+    /**
+     * Counts on, a tick at a time, the tower's arms and the hold-down jaws moving as it has them; looks at its pad and
+     * its rocket every second.
+     */
     public void tick(final ServerLevel server) {
         if (--this.wait <= 0) {
             this.wait = SECOND;
             look(server);
         }
+        move(server);
         final Phase now = this.phase.get();
         if (now == Phase.RELEASED) {
             // Once its rocket is off and no more in this world, landed or gone on, the count is free for the next.
@@ -327,7 +349,47 @@ public final class LaunchCount {
 
     /* Whether everything a count needs is go. */
     private boolean go() {
-        return go(this.vehicle.get(), this.oxidiser.get(), this.fuel.get(), this.storm.get(), this.clamps.get());
+        return shown().go();
+    }
+
+    /*
+     * The tower's arms and the hold-down jaws a tick nearer where the count has them: the arms away from T-42 to
+     * T-10, held where they are in a hold, away while the rocket climbs off, and back as the count is called off or
+     * the pad stands free; the jaws open from release. The arms' blocks give way as they leave and stand again once
+     * they are back.
+     */
+    private void move(final ServerLevel server) {
+        final Phase now = this.phase.get();
+        final int out = this.armsOut.get();
+        final int away = now == Phase.RELEASED ? SWING : now == Phase.COUNTING || now == Phase.HOLDING
+                ? Math.clamp(ARMS * SECOND - left(), 0, SWING) : 0;
+        if (out != away) {
+            final int next = out + Integer.signum(away - out);
+            this.armsOut.set(next);
+            if (out == 0 || next == 0) {
+                swing(server, next > 0);
+            }
+            this.owner.setChanged();
+        }
+        final int jaws = this.jawsOpen.get();
+        final int open = now == Phase.RELEASED ? JAWS : 0;
+        if (jaws != open) {
+            this.jawsOpen.set(jaws + Integer.signum(open - jaws));
+            this.owner.setChanged();
+        }
+    }
+
+    /* Each arm of the tower swung away, or back: its blocks give way while it is away, and it knows this count. */
+    private void swing(final ServerLevel server, final boolean away) {
+        if (this.stand == null) {
+            return;
+        }
+        for (final BlockPos end : this.stand.arms()) {
+            if (server.getBlockEntity(end) instanceof ArmBlockEntity arm) {
+                arm.swungBy(this.owner.getBlockPos());
+                ArmBlock.swing(server, end, away);
+            }
+        }
     }
 
     /* T-0: the rocket on the pad becomes one body and is let go; where it cannot be, the launch is scrubbed. */
@@ -422,6 +484,7 @@ public final class LaunchCount {
                 .map(FlightComputerBlockEntity.class::cast).orElse(null);
         this.rocket.set(found == null ? null : found.getBlockPos().immutable());
         this.vehicle.set(found != null);
+        this.arms.set(this.stand == null ? 0 : this.stand.arms().size());
         this.storm.set(LaunchPads.stormHolds(server));
         // The pad's port, read once: its deluge, and who the pad is.
         final PadServicePortBlockEntity pad = this.stand == null ? null
@@ -536,24 +599,52 @@ public final class LaunchCount {
      * @param padNumber   the pad's number in its world, from 1; 0 where no service port stands by the pad
      * @param padName     the name the pad was given, or empty
      * @param panel       whether a Launch Panel by the pad works the count too
+     * @param arms        how many arms the launcher's tower reaches the rocket with
+     * @param armsOut     how far they are swung away, in ticks of their swing ({@link #SWING})
      */
     public record Shown(Phase phase, int left, int met, int holds, boolean deluge, boolean clamps, boolean ignition,
                         boolean guard, boolean master, boolean launched, boolean vehicle, int oxidiser, int fuel,
                         boolean delugeReady, boolean storm, String rocketName, int padNumber, String padName,
-                        boolean panel) {
+                        boolean panel, int arms, int armsOut) {
 
         /** No launcher in reach: safe, nothing on the pad. */
         public static final Shown NONE = new Shown(Phase.SAFE, START * SECOND, 0, 0, true, true, false, false, false,
-                false, false, 0, 0, false, false, "", 0, "", false);
+                false, false, 0, 0, false, false, "", 0, "", false, 0, 0);
 
         /** Whether the LAUNCH button's cover is up. */
         public boolean coverUp() {
             return LaunchCount.coverUp(this.phase, this.left);
         }
 
-        /** Whether everything a count needs is go. */
+        /**
+         * Whether everything a count needs is go: what is no-go on the board holds it, the vehicle, its propellant,
+         * the weather, the clamps and the deluge; what is off by the player's own choice, or that the pad has none
+         * of, holds nothing; the crew and the range are the player's own to see to.
+         */
         public boolean go() {
-            return LaunchCount.go(this.vehicle, this.oxidiser, this.fuel, this.storm, this.clamps);
+            return this.vehicle && loaded() && !this.storm && this.clamps && delugeState() != LaunchTexts.NO_GO;
+        }
+
+        /** The tower's state on the board: none with no arms, then go, moving as they swing, clear once away. */
+        public TextKey towerState() {
+            if (this.arms == 0) {
+                return LaunchTexts.NONE;
+            }
+            if (this.armsOut == 0) {
+                return LaunchTexts.GO;
+            }
+            return this.armsOut >= SWING ? LaunchTexts.CLEAR : LaunchTexts.MOVING;
+        }
+
+        /**
+         * The deluge's state on the board: none with no service port by the pad; off where the player turned it off;
+         * go when the port holds a whole deluge, else no-go.
+         */
+        public TextKey delugeState() {
+            if (!port()) {
+                return LaunchTexts.NONE;
+            }
+            return !this.deluge ? LaunchTexts.OFF : this.delugeReady ? LaunchTexts.GO : LaunchTexts.NO_GO;
         }
 
         /** Whether the rocket's oxidiser and fuel are both loaded. */

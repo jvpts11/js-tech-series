@@ -86,7 +86,9 @@ harvest, ploughs, placers. A combine harvester drives and harvests at once.
   the ground. This is the hardest part, and the one that matters most.
 - **Shots and thrown items carry the structure's speed.**
 - **Seats and controls**: a helm or a cockpit maps the player's controls to what moves the structure; an **autopilot
-  API** goes to a point, holds an altitude, follows a route and docks.
+  API** goes to a point, holds an altitude, follows a route and docks. A seat of a multiblock formed is usable whether
+  its structure moves or stands still in the world: a rocket's Crew Seat is sat on on the pad,
+  and its sitter stays sat as the blocks become a moving structure at release, and as a structure is set down again.
 
 ### Building
 

@@ -116,6 +116,8 @@ public final class StructureDisassembly {
         structure.move(null);
         StructureSync.landing(structure, level, grid, moves.values());
         BlockMover.move(level, level, moves, rotation, false, true);
+        // Whoever sat aboard sits on the same seat set down in the world.
+        StructureSeatEntity.moved(level, moves, null);
         MovingStructures.remove(structure, false);
         return StructureResult.done(null, moves.size());
     }

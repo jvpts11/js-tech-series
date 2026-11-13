@@ -81,6 +81,8 @@ public final class RocketHangarGameTests {
     private static final int LIGHT = 2;
     private static final int[][] DARKEST = {{0, 0, 0}, {0, 90, 0}, {-5, 0, 5}};
     private static final int LIT = 7;
+    /* How far apart the bay's lights stand, each way, as the hangar lays them. */
+    private static final int GRID = 5;
     /* Where on a console's block its screen is pressed: over its middle opens the door, under it shuts it. */
     private static final double UPPER = 1.2;
     private static final double LOWER = 0.9;
@@ -119,9 +121,10 @@ public final class RocketHangarGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(hangar(level, terminal).formed(), "the building forms"))
                 .thenWaitUntil(() -> {
                     for (final int[] spot : DARKEST) {
-                        final int lit = level.getBrightness(LightLayer.BLOCK, place(terminal, turn, spot));
+                        final BlockPos at = place(terminal, turn, spot);
+                        final int lit = level.getBrightness(LightLayer.BLOCK, at);
                         helper.assertTrue(lit >= LIT, "its bay is lit through, " + lit + " at " + spot[0] + ", "
-                                + spot[1] + ", " + spot[2] + " of it");
+                                + spot[1] + ", " + spot[2] + " of it; " + lightsNear(level, terminal, at));
                     }
                     light[0] = hangar(level, terminal).bay().orElseThrow().low().offset(LIGHT, LIGHT, LIGHT);
                     helper.assertTrue(level.getBlockState(light[0]).is(Blocks.LIGHT), "a light stands in its grid");
@@ -257,6 +260,38 @@ public final class RocketHangarGameTests {
 
     private static BlockPos place(final BlockPos terminal, final Orientation turn, final int[] at) {
         return TestHangars.at(terminal, turn, at[0], at[1], at[2]);
+    }
+
+    /*
+     * What stands at the places of the bay's grid of lights round {@code at}: how many hold their light, and what
+     * stands where one does not; so a place left dark tells a light missing from a light not yet spread.
+     */
+    private static String lightsNear(final ServerLevel level, final BlockPos terminal, final BlockPos at) {
+        final HangarBay bay = hangar(level, terminal).bay().orElse(null);
+        if (bay == null) {
+            return "no bay";
+        }
+        int places = 0;
+        int lit = 0;
+        final StringBuilder dark = new StringBuilder();
+        for (final BlockPos place : BlockPos.betweenClosed(at.offset(-GRID, -GRID, -GRID), at.offset(GRID, GRID,
+                GRID))) {
+            final boolean onGrid = Math.floorMod(place.getX() - bay.low().getX() - LIGHT, GRID) == 0
+                    && Math.floorMod(place.getY() - bay.low().getY() - LIGHT, GRID) == 0
+                    && Math.floorMod(place.getZ() - bay.low().getZ() - LIGHT, GRID) == 0;
+            if (!onGrid || !bay.holds(place)) {
+                continue;
+            }
+            places++;
+            final BlockState there = level.getBlockState(place);
+            if (there.is(Blocks.LIGHT)) {
+                lit++;
+            } else {
+                dark.append(' ').append(place.subtract(at).toShortString()).append('=').append(there.getBlock());
+            }
+        }
+        return lit + " of " + places + " lights near it in their places, the light engine "
+                + (level.getLightEngine().hasLightWork() ? "still spreading" : "at rest") + dark;
     }
 
     private static Direction facing(final ServerLevel level, final BlockPos terminal, final Orientation turn,

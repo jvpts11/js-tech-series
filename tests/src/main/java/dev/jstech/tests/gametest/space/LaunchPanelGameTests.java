@@ -19,7 +19,11 @@ import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.launch.LaunchCount;
 import dev.jstech.space.launch.LaunchPanel;
 import dev.jstech.space.launch.LaunchPanelBlockEntity;
+import dev.jstech.space.launch.LaunchTexts;
+import dev.jstech.space.launcher.ArmBlock;
+import dev.jstech.space.launcher.ArmBlockEntity;
 import dev.jstech.space.launcher.LauncherBlocks;
+import dev.jstech.space.launcher.LauncherPieceBlock;
 import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.space.launcher.LauncherLayout;
 import dev.jstech.space.pad.LaunchPads;
@@ -43,6 +47,8 @@ import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -67,6 +73,8 @@ public final class LaunchPanelGameTests {
     /* The launcher's measuring arm, clear of the rocket's foot, which its axis meets three blocks on each way. */
     private static final BlockPos ARM = new BlockPos(25, 3, 25);
     private static final BlockPos TO_AXIS = new BlockPos(3, 0, 3);
+    /* The end of a tower's arm against the rocket's side, two blocks east of its axis, the tower farther east. */
+    private static final BlockPos ARM_END = new BlockPos(30, 6, 28);
     private static final BlockPos COMPUTER = new BlockPos(28, 7, 28);
     private static final int SECOND = LaunchCount.SECOND;
     /* The flight computer's keys: down the left from the top, then down the right; and its launch page's key. */
@@ -234,6 +242,8 @@ public final class LaunchPanelGameTests {
                 })
                 .thenWaitUntil(() -> helper.assertTrue(shown(level, panel).phase() == LaunchCount.Phase.RELEASED,
                         "and at T-0 the rocket is released"))
+                .thenWaitUntil(() -> helper.assertTrue(launcherCount(helper).jawsOpen() == 1
+                        && launcherCount(helper).armsAway() == 1, "the hold-down jaws let go, the tower's arms away"))
                 // Once the rocket has climbed off and is gone from this world, the count is free for the next launch.
                 .thenIdle(2 * SECOND)
                 .thenExecute(() -> takeAway(helper))
@@ -331,6 +341,79 @@ public final class LaunchPanelGameTests {
                     rocket.press(L5);
                     helper.assertTrue(console.shown().phase() == LaunchCount.Phase.HOLDING
                             && console.shown().holds() == 2, "HOLD inside holds it too, each hold counted once");
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * The tower's arm stands against the rocket till T-42, swings away from it then, its blocks giving way, and comes
+     * back when the count is scrubbed, its blocks standing again; the board says GO, MOVING and GO.
+     */
+    @GameTest(template = WIDE, batch = BATCH + "_count", timeoutTicks = 1000)
+    public static void arms_swingAwayFromT42AndBackWhenScrubbed(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        fairWeather(level);
+        rocket(helper);
+        final BlockPos end = helper.absolutePos(ARM_END);
+        final BlockPos behind = end.relative(Direction.EAST);
+        helper.setBlock(ARM_END, armPiece(LauncherPieceBlock.Role.END));
+        helper.setBlock(ARM_END.east(), armPiece(LauncherPieceBlock.Role.BODY));
+        if (level.getBlockEntity(end) instanceof ArmBlockEntity arm) {
+            arm.arm(new ArmBlockEntity.Arm(Direction.WEST, 2));
+        }
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(launcherCount(helper).shown().go()
+                        && launcherCount(helper).shown().arms() == 1, "all go, the tower's one arm found"))
+                .thenExecute(() -> {
+                    final LaunchCount count = launcherCount(helper);
+                    helper.assertTrue(count.shown().towerState() == LaunchTexts.GO && !away(level, end)
+                            && !away(level, behind), "against the rocket, its blocks standing, the tower is go");
+                    count.press(LaunchCount.MASTER);
+                    count.press(LaunchCount.SWITCH);
+                    count.press(LaunchCount.RUN);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(launcherCount(helper).armsAway() > 0,
+                        "past T-42 the arm swings"))
+                .thenExecute(() -> helper.assertTrue(away(level, end) && away(level, behind)
+                        && launcherCount(helper).shown().towerState() == LaunchTexts.MOVING,
+                        "its blocks give way as it swings, the tower moving on the board"))
+                .thenExecute(() -> launcherCount(helper).press(LaunchCount.SCRUB))
+                .thenWaitUntil(() -> helper.assertTrue(launcherCount(helper).armsAway() == 0,
+                        "scrubbed, the arm swings back"))
+                .thenExecute(() -> helper.assertTrue(!away(level, end) && !away(level, behind)
+                        && launcherCount(helper).shown().towerState() == LaunchTexts.GO,
+                        "back against the rocket, its blocks stand again"))
+                .thenSucceed();
+    }
+
+    /**
+     * A pad's service port whose deluge is not whole holds the count while the deluge is on automatic; turned off by
+     * the player, it holds nothing, and the count runs.
+     */
+    @GameTest(template = WIDE, batch = BATCH + "_safe", timeoutTicks = 200)
+    public static void deluge_notWholeHoldsTheCountTillTurnedOff(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        fairWeather(level);
+        rocket(helper);
+        final BlockPos axis = helper.absolutePos(ARM).offset(TO_AXIS);
+        level.setBlockAndUpdate(axis.below(LauncherLayout.RAISE).offset(3, 0, 3),
+                PadBlocks.PAD_SERVICE_PORT.get().defaultBlockState());
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(launcherCount(helper).shown().port()
+                        && launcherCount(helper).shown().vehicle(), "the count reads its pad's port and its rocket"))
+                .thenExecute(() -> {
+                    final LaunchCount count = launcherCount(helper);
+                    helper.assertTrue(count.shown().delugeState() == LaunchTexts.NO_GO && !count.shown().go(),
+                            "an empty deluge on automatic is no-go");
+                    count.press(LaunchCount.MASTER);
+                    count.press(LaunchCount.SWITCH);
+                    count.press(LaunchCount.RUN);
+                    helper.assertTrue(count.phase() == LaunchCount.Phase.SAFE, "and the count will not start");
+                    count.press(LaunchCount.DELUGE);
+                    helper.assertTrue(count.shown().delugeState() == LaunchTexts.OFF && count.shown().go(),
+                            "turned off by the player, it holds nothing");
+                    count.press(LaunchCount.RUN);
+                    helper.assertTrue(count.phase() == LaunchCount.Phase.COUNTING, "and the count runs");
                 })
                 .thenSucceed();
     }
@@ -461,6 +544,24 @@ public final class LaunchPanelGameTests {
             return rocket;
         }
         throw new GameTestAssertException("No flight computer at " + at);
+    }
+
+    /* The count of the launcher whose measuring arm the test set; a failed check where none stands formed. */
+    private static LaunchCount launcherCount(final GameTestHelper helper) {
+        return LauncherDeckBlockEntity.countAt(helper.getLevel(), helper.absolutePos(ARM)).orElseThrow(() ->
+                new GameTestAssertException("No launcher at " + helper.absolutePos(ARM)));
+    }
+
+    /* A swing arm's piece, formed, in its {@code role}, the arm running west out of a tower to the east. */
+    private static BlockState armPiece(final LauncherPieceBlock.Role role) {
+        return LauncherBlocks.SWING_ARM.get().defaultBlockState().setValue(LauncherPieceBlock.FORMED, true)
+                .setValue(LauncherPieceBlock.ROLE, role).setValue(HorizontalDirectionalBlock.FACING, Direction.WEST);
+    }
+
+    /* Whether the arm's block at {@code at} gives way, swung away. */
+    private static boolean away(final ServerLevel level, final BlockPos at) {
+        final BlockState state = level.getBlockState(at);
+        return state.getBlock() instanceof ArmBlock && state.getValue(ArmBlock.AWAY);
     }
 
     /* Where the count its launch page works is, or null off a launcher. */

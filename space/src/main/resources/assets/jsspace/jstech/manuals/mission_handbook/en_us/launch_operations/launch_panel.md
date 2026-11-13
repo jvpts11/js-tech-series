@@ -12,7 +12,7 @@ The LCC-1 console by the pad, where a launch is counted down and given its go. I
 
 ## What it is for
 
-Launching. The count runs from T-60: the tower arms swing back from T-42, the LAUNCH button's cover lifts at T-10, the engines light at T-6 and the rocket goes at T-0. The count runs on the rocket's [flight computer](jsspace:flight_computer) too, and whoever presses LAUNCH owns the rocket in flight, for their team to use.
+Launching. The count runs from T-60: the tower arms swing back from T-42, turning on their hinges till they are clear of the rocket at T-10, the LAUNCH button's cover lifts at T-10, the engines light at T-6 and the hold-down arms let the rocket go at T-0. A scrub swings the arms back to the rocket. The count runs on the rocket's [flight computer](jsspace:flight_computer) too, and whoever presses LAUNCH owns the rocket in flight, for their team to use.
 
 The count is the [launcher](jsspace:launcher)'s, one for its pad, not the panel's. The panel and the launch page of the rocket's flight computer both show it and work it: what is done on one shows on the other, and either holds it. A pad needs no panel; a crew can count down from the capsule alone.
 
@@ -65,7 +65,7 @@ title: Leaving a world 4/4
 ## What can go wrong
 
 > [!PROBLEM] COUNT RUNNING does nothing.
-> MASTER or IGNITION is not armed, or the vehicle, the propellant, the weather or the clamps is no-go.
+> MASTER or IGNITION is not armed, or the vehicle, the propellant, the weather, the clamps or the deluge is no-go. The deluge is no-go while the pad's service port holds less than a whole deluge on AUTO: fill it, or turn DELUGE off and trust the flame trench. A pad with no service port shows its deluge as NONE, which holds nothing. CREW and RANGE never hold the count: seeing the crew seated and the pad clear is the player's own job.
 
 > [!PROBLEM] The count holds at T-6.
 > LAUNCH was not pressed by ignition. Press it: the count runs on while all is go.

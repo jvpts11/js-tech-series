@@ -8,6 +8,7 @@
 package dev.jstech.core.moving;
 
 import java.lang.ref.WeakReference;
+import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -32,7 +33,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Where someone sits on a seat of a moving structure ({@link BlockAboard.Seat}): unseen, it stands on its seat block
  * wherever the structure carries it, on the server and on each player's game alike from the structure each has, so
- * the sitter rides as steady as the deck. It goes when its sitter gets up, or its seat is gone; it is never saved, so
+ * the sitter rides as steady as the deck. A seat of a multiblock formed standing still in the world is sat on the same
+ * way, the seat standing on its block; when its blocks become a structure, as a rocket's do at release, or a structure
+ * is set down into the world, its sitter stays sat, the seat moving with its block. It goes when its sitter gets up,
+ * or its seat is gone or may no longer be sat on; it is never saved, so
  * a sitter left in it when the world closes stands up as it opens. A seat that is a helm hands its sitter's controls
  * to the structure ({@link StructureControls}). On a seat its sitter lies on, they lie as a sleeper does, their eyes
  * low over it towards their head, the camera there, looking round as they like.
@@ -71,17 +75,36 @@ public final class StructureSeatEntity extends Entity {
         made.entityData.set(DATA_HEIGHT, (float) kind.height());
         made.entityData.set(DATA_HELM, kind.helm());
         if (kind.lying()) {
-            // Their feet the way the seat looks, their head the other; a seat looking up or down is sat upright.
-            final Direction feet = BlockAboard.wayAt(level, seat);
-            if (feet.getAxis().isHorizontal()) {
-                made.entityData.set(DATA_HEAD, feet.getOpposite().get2DDataValue());
-            }
+            made.lie(level);
         }
         final IStructureBody body = MovingStructures.at(level, seat);
         if (body != null) {
             made.follow(body, true);
+        } else {
+            made.stand();
         }
         return made;
+    }
+
+    /**
+     * The seats whose blocks {@code moves} moved, from each place to the next, into a structure's plot or back into
+     * the world: each keeps its sitter, on its seat's new place, aboard {@code body}, or standing in the world for
+     * none.
+     */
+    static void moved(final ServerLevel level, final Map<BlockPos, BlockPos> moves,
+                      final @Nullable IStructureBody body) {
+        for (final StructureSeatEntity seat : level.getEntities(MovingStructures.SEAT.get(),
+                each -> moves.containsKey(each.seat()))) {
+            seat.entityData.set(DATA_SEAT, moves.get(seat.seat()).immutable());
+            if (seat.lyingHead() != null) {
+                seat.lie(level);
+            }
+            if (body != null) {
+                seat.follow(body, true);
+            } else {
+                seat.stand();
+            }
+        }
     }
 
     /** The seat block, a place of the yard. */
@@ -111,7 +134,7 @@ public final class StructureSeatEntity extends Entity {
         super.tick();
         final IStructureBody body = structure();
         if (!level().isClientSide()) {
-            if (getPassengers().isEmpty() || body == null || BlockAboard.at(level(), seat()).seat().isEmpty()) {
+            if (getPassengers().isEmpty() || !StructureSeating.usable(level(), seat())) {
                 ejectPassengers();
                 discard();
                 return;
@@ -131,6 +154,10 @@ public final class StructureSeatEntity extends Entity {
     @Override
     public Vec3 getDismountLocationForPassenger(final LivingEntity passenger) {
         final IStructureBody body = structure();
+        if (body == null && !YardLayout.isYardBlock(seat().getX())) {
+            // A seat standing in the world: its sitter gets up as from any seat of the game.
+            return super.getDismountLocationForPassenger(passenger);
+        }
         final StructureDismount.Place place = body == null ? null : gettingUp(passenger);
         if (place == null) {
             return new Vec3(getX(), getY() + 1 - entityData.get(DATA_HEIGHT) + ABOVE, getZ());
@@ -348,6 +375,24 @@ public final class StructureSeatEntity extends Entity {
      * Stands on its seat block where the structure has it now, as it was the tick before, so it is drawn going
      * between the two; its sitter turned as the structure turned.
      */
+    /* Its sitter's feet the way the seat looks, their head the other; a seat looking up or down is sat upright. */
+    private void lie(final Level level) {
+        final Direction feet = BlockAboard.wayAt(level, seat());
+        entityData.set(DATA_HEAD, feet.getAxis().isHorizontal() ? feet.getOpposite().get2DDataValue() : UPRIGHT);
+    }
+
+    /* On a seat standing in the world: set on its block, where it stays. */
+    private void stand() {
+        final BlockPos at = seat();
+        setPos(at.getX() + HALF, at.getY() + entityData.get(DATA_HEIGHT), at.getZ() + HALF);
+        xo = getX();
+        yo = getY();
+        zo = getZ();
+        xOld = xo;
+        yOld = yo;
+        zOld = zo;
+    }
+
     private void follow(final IStructureBody body, final boolean first) {
         final BlockPos at = seat();
         final double x = at.getX() + HALF;

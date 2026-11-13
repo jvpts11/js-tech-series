@@ -1570,7 +1570,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   whole, sugar cane, cactus and bamboo above their foot), a plough tills and a placer sets the blocks it carries,
   each as the structure passes, into and out of the containers aboard. Seats, helms, clamps, decouplers and tools are
   the data map `jscore:block_aboard`.
-- (Core) Living aboard: a player sits on a seat aboard and is carried with it, steady in their seat; at a helm they
+- (Core) Living aboard: a player sits on a seat aboard and is carried with it, steady in their seat; a seat of a
+  multiblock formed is sat on as well while it stands still in the world, a rocket's capsule on its pad, and its
+  sitter stays sat as its blocks become a moving structure, and as a structure is set down again; at a helm they
   steer the structure with the keys they walk with, its engines and wheels answering by the way each looks; an
   autopilot flies a structure to a place, at a height, along a route or to a docking clamp, any structure alike, by
   how fast its engines can speed it up; an arrow loosed from a moving deck flies on with it; a bed aboard is slept
@@ -3282,7 +3284,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Launch Panel and the launch page of the rocket's Flight Computer both show and work it, what is done on either shows
   on both, either holds it, and a pad needs no panel, its crew counting from the capsule alone; whoever presses
   LAUNCH, at the panel or inside, owns the rocket in flight. A pad with no service port shows its deluge dark, as NONE.
-  New block: the Launch Panel.
+  The count moves the launcher: the tower's arms, its swing arms and its crew access arm, turn on their hinges away
+  from the rocket from T-42 to T-10, their blocks giving way while they are away, and swing back when the count is
+  scrubbed or the pad stands free; the hold-down arms' jaws open at T-0 and close again once the pad stands free. What
+  is no-go on the board holds the count, the deluge too where a service port's deluge is on automatic and not whole;
+  what the player turned off, or that the pad has none of, holds nothing; the crew and the range are the player's own
+  to see to. New block: the Launch Panel.
 - (Space) The launch. On the pad, the loaded tanks' cold propellant boils off their sides as white vapour. At
   ignition the screen shakes for everyone near, the pad steams and smoke rolls out of the trench. At T-0 the rocket
   becomes one moving structure by the exact places of its plan, each block as it is, its parts still formed and nothing

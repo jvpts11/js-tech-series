@@ -10,6 +10,7 @@ package dev.jstech.core.moving;
 import dev.jstech.core.moving.joint.JointKind;
 import dev.jstech.core.moving.joint.StructureJoint;
 import dev.jstech.core.moving.joint.StructureJoints;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Optional;
@@ -32,9 +33,10 @@ import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * Sitting aboard: a player using a seat of a moving structure ({@link BlockAboard.Seat}), not crouching, sits on it,
- * as long as no one else does ({@link StructureSeatEntity}); one sitting at a helm steers the structure, the controls
- * they hold told to it each tick they change ({@link StructureHelmPayload}).
+ * Sitting aboard: a player using a seat ({@link BlockAboard.Seat}) of a moving structure, or of a multiblock formed
+ * standing still in the world, not crouching, sits on it, as long as no one else does ({@link StructureSeatEntity});
+ * one sitting at a helm of a moving structure steers it, the controls they hold told to it each tick they change
+ * ({@link StructureHelmPayload}).
  */
 final class StructureSeating {
 
@@ -111,20 +113,33 @@ final class StructureSeating {
     }
 
     /**
-     * {@code sitter} sits on the seat at the yard's block {@code pos} of a structure, as using it does, unless they
-     * ride something, or someone sits there already; whether they sit.
+     * {@code sitter} sits on the seat at {@code pos}, as using it does, unless they ride something, the seat may not
+     * be sat on ({@link #usable}), or someone sits there already; whether they sit.
      */
     static boolean sit(final Entity sitter, final BlockPos pos) {
-        if (sitter.isPassenger() || !(sitter.level() instanceof ServerLevel level)) {
+        if (sitter.isPassenger() || !(sitter.level() instanceof ServerLevel level) || !usable(level, pos)
+                || taken(level, pos) != null) {
             return false;
         }
         final Optional<BlockAboard.Seat> seat = BlockAboard.at(level, pos).seat();
-        if (seat.isEmpty() || MovingStructures.at(level, pos) == null || taken(level, pos) != null) {
+        if (seat.isEmpty()) {
             return false;
         }
         final StructureSeatEntity sitting = StructureSeatEntity.made(level, pos, seat.get());
         level.addFreshEntity(sitting);
         return sitter.startRiding(sitting, true);
+    }
+
+    /**
+     * Whether the seat at {@code pos} may be sat on: a seat of a structure, in its yard; or a seat standing in the
+     * world in a multiblock formed, as a rocket's capsule on its pad is before it flies, the same seat either way.
+     */
+    static boolean usable(final Level level, final BlockPos pos) {
+        if (BlockAboard.at(level, pos).seat().isEmpty()) {
+            return false;
+        }
+        return YardLayout.isYardBlock(pos.getX()) ? MovingStructures.at(level, pos) != null
+                : level.getBlockState(pos).getBlock() instanceof FormedPartBlock;
     }
 
     /*
@@ -135,18 +150,16 @@ final class StructureSeating {
     private static void onUse(final PlayerInteractEvent.RightClickBlock event) {
         final BlockPos pos = event.getPos();
         final Player player = event.getEntity();
-        if (!YardLayout.isYardBlock(pos.getX()) || player.isSecondaryUseActive() || player.isPassenger()) {
-            return;
-        }
         final Level level = event.getLevel();
-        final IStructureBody body = MovingStructures.at(level, pos);
-        if (BlockAboard.at(level, pos).seat().isEmpty() || body == null) {
+        if (player.isSecondaryUseActive() || player.isPassenger() || !usable(level, pos)) {
             return;
         }
         event.setCanceled(true);
         event.setCancellationResult(InteractionResult.SUCCESS);
-        if (player instanceof ServerPlayer sitter && inSight(level, sitter, body.frame(), pos,
-                event.getHitVec().getLocation())) {
+        // A seat standing in the world is in sight as any block used is; one aboard is looked at through its structure.
+        final IStructureBody body = MovingStructures.at(level, pos);
+        if (player instanceof ServerPlayer sitter && (body == null || inSight(level, sitter, body.frame(), pos,
+                event.getHitVec().getLocation()))) {
             sit(sitter, pos);
         }
     }
@@ -172,16 +185,18 @@ final class StructureSeating {
         return hit.getType() == HitResult.Type.MISS || hit.getBlockPos().equals(seat);
     }
 
-    /* The seat entity someone sits in on the yard's block {@code pos}, or null for a seat free. */
+    /* The seat entity someone sits in on the seat at {@code pos}, aboard or in the world, or null for a seat free. */
     private static @Nullable StructureSeatEntity taken(final ServerLevel level, final BlockPos pos) {
         final IStructureBody body = MovingStructures.at(level, pos);
+        final Vec3 at;
         if (body == null) {
-            return null;
+            at = Vec3.atCenterOf(pos);
+        } else {
+            final StructureFrame frame = body.frame();
+            at = new Vec3(frame.worldX(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5),
+                    frame.worldY(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5),
+                    frame.worldZ(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
         }
-        final StructureFrame frame = body.frame();
-        final Vec3 at = new Vec3(frame.worldX(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5),
-                frame.worldY(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5),
-                frame.worldZ(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5));
         for (final Entity near : level.getEntities((Entity) null, new AABB(at, at).inflate(1),
                 any -> any instanceof StructureSeatEntity)) {
             if (near instanceof StructureSeatEntity seat && seat.seat().equals(pos) && !seat.getPassengers()

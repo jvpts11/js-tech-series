@@ -8,6 +8,7 @@
 package dev.jstech.space.client.launcher;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.space.client.skin.Picture;
 import dev.jstech.space.client.skin.SkinAtlas;
@@ -34,7 +35,8 @@ import org.joml.Vector3f;
  * swing arm's grey beam with its stiffeners and the hazard band by the tower, the hinge's column at the tower's face,
  * its blue and orange lines along its top (and the white one to an Umbilical Plate) and the round plug that meets the
  * rocket, its face yellow; the crew access arm's grated walkway with its yellow rails and posts, and the white room
- * at its end by the hatch. It is drawn in the arm's own space: back along it to the tower, up, and across it.
+ * at its end by the hatch. It is drawn in the arm's own space: back along it to the tower, up, and across it; turned
+ * on its hinge at the tower's face as far as the launch count has swung it away from the rocket.
  */
 public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
 
@@ -70,6 +72,8 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
     private static final int PLUG_ROUND = 16;
     /* How far the dropped lines hang below the arm. */
     private static final float HANG = 1.2F;
+    /* How far an arm turns on its hinge, swung away from the rocket. */
+    private static final float SWING_DEGREES = 90.0F;
     /* The crew access arm: its walkway, its rails and posts, and the white room at its end. */
     private static final float WALK_FROM = 1.0F;
     private static final float WALK_DEEP = 0.25F;
@@ -107,6 +111,16 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
         final ArmBlockEntity.Arm arm = found.get();
         final float face = arm.length() - FACE_PAST;
         final Direction back = arm.out().getOpposite();
+        // Swung away by the launch count, it turns on its hinge at the tower's face, clear of the rocket.
+        pose.pushPose();
+        final float swung = end.swung();
+        if (swung > 0) {
+            final float hingeX = MIDDLE + back.getStepX() * face;
+            final float hingeZ = MIDDLE + back.getStepZ() * face;
+            pose.translate(hingeX, 0, hingeZ);
+            pose.mulPose(Axis.YP.rotationDegrees(SWING_DEGREES * swung));
+            pose.translate(-hingeX, 0, -hingeZ);
+        }
         if (end.getBlockState().is(LauncherBlocks.CREW_ACCESS_ARM.get())) {
             final float walkFrom = TIP + WALK_FROM;
             final float walkTo = face + BEAM_PAST;
@@ -126,6 +140,7 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
             swing(drawing, face, lines, level.getBlockState(tip).isAir());
         }
         pose.popPose();
+        pose.popPose();
     }
 
     @Override
@@ -135,8 +150,10 @@ public final class ArmRenderer implements BlockEntityRenderer<ArmBlockEntity> {
             return new AABB(end.getBlockPos());
         }
         final BlockPos tower = end.getBlockPos().relative(found.get().out().getOpposite(), found.get().length());
-        // Two blocks down, for the lines hanging once the rocket has gone.
-        return new AABB(end.getBlockPos()).minmax(new AABB(tower)).inflate(1, 2, 1);
+        // Two blocks down, for the lines hanging once the rocket has gone; and as long as it is round its hinge, at
+        // the tower, for the arm swung away.
+        final int length = found.get().length();
+        return new AABB(end.getBlockPos()).minmax(new AABB(tower).inflate(length, 0, length)).inflate(1, 2, 1);
     }
 
     @Override

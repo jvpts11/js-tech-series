@@ -231,8 +231,10 @@ public final class MovingStructures {
     }
 
     /**
-     * Sits {@code player} on the seat at the yard's block {@code seat} of a structure, as using it does: refused
-     * while they ride something or someone sits there already; whether they sit.
+     * Sits {@code player} on the seat at {@code seat}, a yard's block of a structure or a block of a multiblock formed
+     * standing in the world, as using it does: refused while they ride something or someone sits there already;
+     * whether they sit. Sat on in the world, its sitter stays sat on it as its blocks become a structure, and as a
+     * structure is set down into the world again.
      */
     public static boolean sit(final ServerPlayer player, final BlockPos seat) {
         return StructureSeating.sit(player, seat);

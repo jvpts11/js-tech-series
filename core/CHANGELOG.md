@@ -1376,7 +1376,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   whole, sugar cane, cactus and bamboo above their foot), a plough tills and a placer sets the blocks it carries,
   each as the structure passes, into and out of the containers aboard. Seats, helms, clamps, decouplers and tools are
   the data map `jscore:block_aboard`.
-- Living aboard: a player sits on a seat aboard and is carried with it, steady in their seat; at a helm they
+- Living aboard: a player sits on a seat aboard and is carried with it, steady in their seat; a seat of a
+  multiblock formed is sat on as well while it stands still in the world, a rocket's capsule on its pad, and its
+  sitter stays sat as its blocks become a moving structure, and as a structure is set down again; at a helm they
   steer the structure with the keys they walk with, its engines and wheels answering by the way each looks; an
   autopilot flies a structure to a place, at a height, along a route or to a docking clamp, any structure alike, by
   how fast its engines can speed it up; an arrow loosed from a moving deck flies on with it; a bed aboard is slept

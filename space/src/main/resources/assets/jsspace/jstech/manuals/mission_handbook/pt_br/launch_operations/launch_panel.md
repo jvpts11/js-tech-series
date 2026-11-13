@@ -12,7 +12,7 @@ O console LCC-1 junto à base, onde um lançamento é contado e recebe o seu GO.
 
 ## Para que serve
 
-Lançar. A contagem corre a partir de T-60: os braços da torre recuam a partir de T-42, a tampa do botão LANÇAR sobe em T-10, os motores acendem em T-6 e o foguete parte em T-0. A contagem corre também no [computador de voo](jsspace:flight_computer) do foguete, e quem aperta LANÇAR fica dono do foguete em voo, para a sua equipe usar.
+Lançar. A contagem corre a partir de T-60: os braços da torre recuam a partir de T-42, girando nas dobradiças até ficarem livres do foguete em T-10, a tampa do botão LANÇAR sobe em T-10, os motores acendem em T-6 e as garras soltam o foguete em T-0. Um cancelamento traz os braços de volta ao foguete. A contagem corre também no [computador de voo](jsspace:flight_computer) do foguete, e quem aperta LANÇAR fica dono do foguete em voo, para a sua equipe usar.
 
 A contagem é da [plataforma móvel](jsspace:launcher), uma só para a sua base, não do painel. O painel e a página de lançamento do computador de voo do foguete mostram-na e mexem nela: o que se faz num aparece no outro, e qualquer um a põe em espera. A base não precisa de painel; a tripulação pode fazer a contagem sozinha, de dentro da cápsula.
 
@@ -65,7 +65,7 @@ title: Deixar um mundo 4/4
 ## O que pode dar errado
 
 > [!PROBLEM] CONTAGEM CORRENDO não faz nada.
-> MESTRE ou IGNIÇÃO não estão armados, ou o veículo, o propelente, o tempo ou as garras estão NO-GO.
+> MESTRE ou IGNIÇÃO não estão armados, ou o veículo, o propelente, o tempo, as garras ou o dilúvio estão NO-GO. O dilúvio fica NO-GO enquanto a porta de serviço da base tiver menos do que um dilúvio inteiro em AUTO: encha-a, ou desligue o DILÚVIO e confie na vala das chamas. Uma base sem porta de serviço mostra o dilúvio como NENHUM, que não suspende nada. TRIPULAÇÃO e ALCANCE nunca suspendem a contagem: ver a tripulação sentada e a base livre é trabalho do próprio jogador.
 
 > [!PROBLEM] A contagem fica em ESPERA em T-6.
 > LANÇAR não foi apertado até a ignição. Aperte-o: a contagem segue enquanto tudo estiver GO.

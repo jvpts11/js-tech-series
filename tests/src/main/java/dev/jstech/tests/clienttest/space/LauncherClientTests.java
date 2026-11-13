@@ -10,16 +10,26 @@ package dev.jstech.tests.clienttest.space;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.space.api.Propellants;
+import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.launch.LaunchCount;
+import dev.jstech.space.launch.LaunchPanelBlockEntity;
 import dev.jstech.space.launcher.LauncherBlocks;
+import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.space.launcher.LauncherPieceBlock;
+import dev.jstech.space.pad.LaunchPads;
+import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
+import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketParts;
+import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.TestHangars;
 import java.util.Comparator;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -66,22 +76,31 @@ public final class LauncherClientTests {
     private static final int YELLOWER = 70;
     private static final int DARK = 60;
     private static final double ENOUGH_STRIPES = 0.08;
+    /*
+     * The count: its rocket's two layers of tank full, in kilograms; how long it may take to reach T-10 from its start,
+     * in ticks; and the tower's arms half swung away.
+     */
+    private static final double TANK_LOAD = 11_600.0;
+    private static final int TO_T10 = (LaunchCount.START - LaunchCount.COVER) * LaunchCount.SECOND + 200;
+    private static final float HALF_SWUNG = 0.5F;
 
     private LauncherClientTests() {
     }
 
-    @ClientTest(timeoutTicks = 2400)
+    @ClientTest(timeoutTicks = 4200)
     public static void launcher_isDrawnAsTheApprovedOneOnceItForms(final ClientTestContext ctx) {
         final BlockPos[] tower = new BlockPos[1];
         final BlockPos[] eye = new BlockPos[1];
         final Vec3[] deck = new Vec3[4];
+        // The rocket's foot, then the launcher's measuring arm found by it; and the rocket's flight computer.
+        final BlockPos[] launch = new BlockPos[2];
         ctx.afterTest(() -> ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), ctx.abs(TERMINAL),
                 TURN)));
         ctx.thenServer(0, level -> build(ctx, level))
                 .thenWaitUntilServer(level -> level.getBlockEntity(ctx.abs(TERMINAL))
                         instanceof HangarTerminalBlockEntity terminal && terminal.formed(), ARRIVE,
                         "the hangar to form", level -> "it stands unformed")
-                .thenServer(0, level -> lay(ctx, level, tower, eye, deck))
+                .thenServer(0, level -> lay(ctx, level, tower, eye, deck, launch))
                 .thenWaitUntil(() -> eye[0] != null, SETTLE, "the launcher to be laid")
                 .thenServer(0, level -> {
                     // On a block no one sees, level with the deck, so the deck is not in the way.
@@ -123,7 +142,55 @@ public final class LauncherClientTests {
                 // And up at the crane on the tower's top, its boom over the rocket.
                 .then(SETTLE, () -> ctx.lookAt(deck[3]))
                 .then(SETTLE, () -> { })
-                .thenScreenshot(0, "launcher-crane");
+                .thenScreenshot(0, "launcher-crane")
+                // The count run: the tower's arms swing away from the rocket from T-42, clear of it by T-10.
+                .thenServer(0, level -> count(ctx, level, launch))
+                .then(SETTLE, () -> ctx.lookAt(deck[1].add(0, 2, 0)))
+                .thenWaitUntilServer(level -> swung(ctx, level, launch) >= HALF_SWUNG, TO_T10, "the arms half away",
+                        level -> "swung " + swung(ctx, level, launch))
+                .then(SETTLE, () -> { })
+                .thenScreenshot(0, "launcher-arms-swinging")
+                .thenWaitUntilServer(level -> swung(ctx, level, launch) >= 1, TO_T10, "the arms clear of the rocket",
+                        level -> "swung " + swung(ctx, level, launch))
+                .then(SETTLE, () -> { })
+                .thenScreenshot(0, "launcher-arms-away")
+                .thenServer(0, level -> LauncherDeckBlockEntity.countAt(level, launch[0])
+                        .ifPresent(count -> count.press(LaunchCount.SCRUB)));
+    }
+
+    /*
+     * Its rocket's tank filled and its count's MASTER and IGNITION armed, the launcher's measuring arm found by its
+     * rocket's foot.
+     */
+    private static void count(final ClientTestContext ctx, final ServerLevel level, final BlockPos[] launch) {
+        level.setWeatherParameters(6000, 0, false, false);
+        level.setThunderLevel(0.0F);
+        level.setRainLevel(0.0F);
+        if (level.getBlockEntity(launch[1]) instanceof FlightComputerBlockEntity rocket) {
+            // Its plan, as it takes it rolled out of its hangar, for the count to find it.
+            rocket.carry(new RocketDesign("LAUNCHER", stack()), BlockPos.ZERO, List.of());
+            Propellants.get(level, SkeletonPropellants.METHALOX).ifPresent(methalox -> rocket.load(1,
+                    TankLoad.filled(SkeletonPropellants.METHALOX, methalox, TANK_LOAD)));
+        }
+        launch[0] = LaunchPads.launcherBy(level, launch[0], LaunchPanelBlockEntity.REACH,
+                LaunchPanelBlockEntity.BELOW, LaunchPanelBlockEntity.ABOVE).map(LauncherDeckBlockEntity::getBlockPos)
+                .orElse(launch[0]);
+        final LaunchCount count = LauncherDeckBlockEntity.countAt(level, launch[0]).orElse(null);
+        ctx.assertTrue(count != null, "the launcher keeps its count");
+        count.press(LaunchCount.MASTER);
+        count.press(LaunchCount.SWITCH);
+    }
+
+    /* How far the launcher's count has its tower's arms swung, the count started once it is all go. */
+    private static float swung(final ClientTestContext ctx, final ServerLevel level, final BlockPos[] launch) {
+        final LaunchCount count = LauncherDeckBlockEntity.countAt(level, launch[0]).orElse(null);
+        if (count == null) {
+            return 0;
+        }
+        if (count.phase() != LaunchCount.Phase.COUNTING && count.shown().go()) {
+            count.press(LaunchCount.RUN);
+        }
+        return count.armsAway();
     }
 
     /*
@@ -147,10 +214,9 @@ public final class LauncherClientTests {
      * the hazard band round it; then high in the bay's corner over the deck's left, looking at it whole.
      */
     private static void lay(final ClientTestContext ctx, final ServerLevel level, final BlockPos[] tower,
-                            final BlockPos[] eye, final Vec3[] deck) {
+                            final BlockPos[] eye, final Vec3[] deck, final BlockPos[] launch) {
         final HangarTerminalBlockEntity terminal = (HangarTerminalBlockEntity) level.getBlockEntity(ctx.abs(TERMINAL));
-        terminal.design(new RocketDesign("LAUNCHER", RocketStack.of(part("sea_level_engine_3", 1),
-                part("tank_3", 2), part("capsule_3", 1))));
+        terminal.design(new RocketDesign("LAUNCHER", stack()));
         terminal.confirm();
         final Direction side = terminal.launcherSide().orElseThrow();
         final PlannedBuild plan = terminal.build().orElseThrow();
@@ -176,6 +242,14 @@ public final class LauncherClientTests {
                 .getId())).mapToInt(spot -> spot.at().getY()).max().orElseThrow();
         deck[3] = foot.add(along.scale(HIGH_ALONG / 2)).add(0, boom, 0);
         eye[0] = tower[0].relative(across, AWAY).atY(plan.origin().getY());
+        launch[0] = plan.origin();
+        launch[1] = plan.plan().spots().stream().filter(spot -> spot.block().equals(RocketKitBlocks.FLIGHT_COMPUTER
+                .getId())).map(plan::where).findFirst().orElse(plan.origin());
+    }
+
+    /* The rocket on the launcher: an engine, two layers of tank and a capsule. */
+    private static RocketStack stack() {
+        return RocketStack.of(part("sea_level_engine_3", 1), part("tank_3", 2), part("capsule_3", 1));
     }
 
     private static RocketStack.Part part(final String path, final int layers) {

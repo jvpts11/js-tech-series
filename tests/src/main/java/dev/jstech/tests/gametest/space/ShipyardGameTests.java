@@ -386,7 +386,11 @@ public final class ShipyardGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
+    /*
+     * In a batch of its own: the tick its ship's blocks come in is timed whole, so no other test may run in it and be
+     * charged to the ship, as on a slower machine it was.
+     */
+    @GameTest(template = ARENA, batch = BATCH + "_timed", timeoutTicks = 400)
     public static void shipyard_letsTheBuiltShipGoAsOneStructureOfItsPlansBlocks(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));

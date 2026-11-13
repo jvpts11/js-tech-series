@@ -23,6 +23,7 @@ No menu criativo, aba J's Space.
 1. Na tela Projeto de Foguete, ponha a cápsula no topo do foguete; a tela conta os assentos.
 2. Gire-a com Girar até a escotilha ficar virada para a torre da [plataforma móvel](jsspace:launcher), onde o braço de acesso da tripulação encontra o foguete.
 3. Mande o hangar construí-la. O Computador de Voo dela vai com o foguete e o pilota.
+4. Na base, use um Assento da Tripulação para se sentar; a tripulação fica sentada quando o foguete decola. Sentar-se é escolha da tripulação: a contagem não espera por isso.
 
 ## O que pode dar errado
 

@@ -9,13 +9,17 @@ package dev.jstech.space.pad;
 
 import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
+import dev.jstech.space.launcher.ArmBlockEntity;
 import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.space.launcher.LauncherLayout;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -109,7 +113,7 @@ public final class LaunchPads {
     public static Optional<Stand> stand(final ServerLevel level, final LauncherDeckBlockEntity arm) {
         return arm.deck().map(deck -> {
             final BlockPos axis = arm.getBlockPos().offset(deck.axis());
-            return new Stand(axis, deck.side(), computerOver(level, axis));
+            return over(level, axis, deck.side());
         });
     }
 
@@ -168,21 +172,30 @@ public final class LaunchPads {
         return false;
     }
 
-    /* The flight computer keeping a rocket's plan round the axis rising from {@code axis}. */
-    private static Optional<BlockPos> computerOver(final ServerLevel level, final BlockPos axis) {
+    /*
+     * The launcher standing with its rocket's axis rising from {@code axis}, its deck running {@code side}, as one look
+     * up that axis finds it: the flight computer keeping a rocket's plan, the lowest, and the ends of its tower's arms
+     * reaching the rocket.
+     */
+    private static Stand over(final ServerLevel level, final BlockPos axis, final Direction side) {
+        BlockPos computer = null;
+        final List<BlockPos> arms = new ArrayList<>();
         final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int dy = 0; dy <= TALLEST_ROCKET; dy++) {
             for (int dx = -AXIS_ROUND; dx <= AXIS_ROUND; dx++) {
                 for (int dz = -AXIS_ROUND; dz <= AXIS_ROUND; dz++) {
                     at.set(axis.getX() + dx, axis.getY() + dy, axis.getZ() + dz);
-                    if (level.getBlockEntity(at) instanceof FlightComputerBlockEntity rocket
+                    final BlockEntity there = level.getBlockEntity(at);
+                    if (computer == null && there instanceof FlightComputerBlockEntity rocket
                             && rocket.rocket().isPresent()) {
-                        return Optional.of(at.immutable());
+                        computer = at.immutable();
+                    } else if (there instanceof ArmBlockEntity arm && arm.arm().isPresent()) {
+                        arms.add(at.immutable());
                     }
                 }
             }
         }
-        return Optional.empty();
+        return new Stand(axis, side, Optional.ofNullable(computer), List.copyOf(arms));
     }
 
     /**
@@ -191,8 +204,13 @@ public final class LaunchPads {
      * @param axis     where its rocket's axis meets its deck's top
      * @param side     the way its deck runs, toward its tower
      * @param computer its rocket's flight computer, if one keeps the rocket's plan
+     * @param arms     the ends of its tower's arms reaching its rocket, each a block of an arm formed
      */
-    public record Stand(BlockPos axis, Direction side, Optional<BlockPos> computer) {
+    public record Stand(BlockPos axis, Direction side, Optional<BlockPos> computer, List<BlockPos> arms) {
+
+        public Stand {
+            arms = List.copyOf(arms);
+        }
     }
 
     /**

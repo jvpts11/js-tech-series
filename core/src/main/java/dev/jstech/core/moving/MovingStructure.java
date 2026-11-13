@@ -795,6 +795,8 @@ public final class MovingStructure implements IStructureBody {
         if (!moves.isEmpty()) {
             StructureSync.arriving(this, level, moves.keySet());
             BlockMover.move(level, level, moves, Rotation.NONE, true, false);
+            // Whoever sat on a seat of its blocks in the world sits on it aboard now.
+            StructureSeatEntity.moved(level, moves, this);
         }
         // Counted after: each block laid in its plot was also heard of as a block set on the structure.
         blocks = moves.size();

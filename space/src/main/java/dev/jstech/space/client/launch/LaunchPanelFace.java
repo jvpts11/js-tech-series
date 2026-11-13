@@ -263,20 +263,11 @@ public final class LaunchPanelFace {
     private static void board(final GuiGraphics g, final Font font, final Colours c,
                               final LaunchCount.Shown panel) {
         engrave(g, font, LaunchTexts.GO_NO_GO, 16, 98, c);
-        final double seconds = panel.left() / (double) SECOND;
-        final boolean counting = panel.phase() == LaunchCount.Phase.COUNTING
-                || panel.phase() == LaunchCount.Phase.HOLDING;
-        final TextKey arms = counting && seconds <= LaunchCount.COVER
-                || panel.phase() == LaunchCount.Phase.RELEASED ? LaunchTexts.CLEAR
-                : counting && seconds <= LaunchCount.ARMS ? LaunchTexts.MOVING : LaunchTexts.GO;
-        final boolean propellant = panel.oxidiser() >= LaunchCount.FULL
-                && panel.fuel() >= LaunchCount.FULL;
         final Object[][] systems = {
             {LaunchTexts.VEHICLE, panel.vehicle() ? LaunchTexts.GO : LaunchTexts.NO_GO},
-            {LaunchTexts.PROPELLANT, propellant ? LaunchTexts.GO : LaunchTexts.NO_GO},
-            {LaunchTexts.TOWER_ARMS, arms},
-            {LaunchTexts.DELUGE, !panel.port() ? LaunchTexts.NONE : !panel.deluge() ? LaunchTexts.OFF
-                : panel.delugeReady() ? LaunchTexts.GO : LaunchTexts.NO_GO},
+            {LaunchTexts.PROPELLANT, panel.loaded() ? LaunchTexts.GO : LaunchTexts.NO_GO},
+            {LaunchTexts.TOWER_ARMS, panel.towerState()},
+            {LaunchTexts.DELUGE, panel.delugeState()},
             {LaunchTexts.WEATHER, panel.storm() ? LaunchTexts.NO_GO : LaunchTexts.GO},
             {LaunchTexts.CREW, LaunchTexts.GO},
             {LaunchTexts.RANGE, LaunchTexts.GO},

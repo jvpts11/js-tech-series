@@ -32,7 +32,8 @@ import org.joml.Vector3f;
  * Draws a formed mobile launcher's deck from the hold-down arm that measured it, as the approved launcher draws it:
  * the deck round its exhaust opening, its top and its sides each one picture over the whole of it, the opening's
  * scorched lining, the trim lip round its top edge, the grating across the opening's foot; at each corner of the
- * opening a hold-down arm's housing, its jaw reaching in to the engine's foot and its chrome cylinder; and the tail
+ * opening a hold-down arm's housing, its jaw reaching in to the engine's foot, drawn back out of the opening as the
+ * launch count lets the rocket go, and its chrome cylinder; and the tail
  * service masts round it, each a column with its hood leaning in over the rocket's tail and its blue, orange and white
  * lines. It is drawn in the deck's own space: along it toward the tower, up, and across it to the tower's right.
  */
@@ -69,6 +70,8 @@ public final class LauncherDeckRenderer implements BlockEntityRenderer<LauncherD
     private static final float HOUSING_HALF = 0.45F;
     private static final float HOUSING_HIGH = 0.7F;
     private static final float JAW_IN = 0.8F;
+    /* How far past the opening's edge a jaw drawn back stands, clear of the rocket's foot. */
+    private static final float JAW_CLEAR = 0.2F;
     private static final float JAW_FROM = 0.45F;
     private static final float JAW_AT = 0.35F;
     private static final float JAW_WIDE = 0.26F;
@@ -118,7 +121,7 @@ public final class LauncherDeckRenderer implements BlockEntityRenderer<LauncherD
                 arm.getBlockPos().offset(deck.axis()), deck.side());
         final LauncherSkins.Colours c = LauncherSkins.PALETTE.get();
         deck(drawing, deck, c);
-        holdDowns(drawing, deck.open() + HALF, c);
+        holdDowns(drawing, deck.open() + HALF, arm.count().jawsOpen(), c);
         masts(drawing, deck.open(), c);
         pose.popPose();
     }
@@ -209,8 +212,12 @@ public final class LauncherDeckRenderer implements BlockEntityRenderer<LauncherD
                 face -> face == SkinDrawing.Face.PLUS_Y ? grating : frame);
     }
 
-    /* A hold-down arm at each corner of the opening, whose half-width is {@code h}. */
-    private static void holdDowns(final SkinDrawing drawing, final float h, final LauncherSkins.Colours c) {
+    /*
+     * A hold-down arm at each corner of the opening, whose half-width is {@code h}, its jaw {@code open} of the way
+     * drawn back out of the opening, from nought, holding the rocket's foot, to one, clear of it.
+     */
+    private static void holdDowns(final SkinDrawing drawing, final float h, final float open,
+                                  final LauncherSkins.Colours c) {
         final SkinDrawing.Paint top = SkinDrawing.Paint.skin(HOUSING_TOP);
         final SkinDrawing.Paint side = SkinDrawing.Paint.skin(HOUSING_SIDE);
         for (final int sx : new int[] {-1, 1}) {
@@ -220,7 +227,8 @@ public final class LauncherDeckRenderer implements BlockEntityRenderer<LauncherD
                 drawing.box(new float[] {cx - HOUSING_HALF, 0, cz - HOUSING_HALF},
                         new float[] {cx + HOUSING_HALF, HOUSING_HIGH, cz + HOUSING_HALF},
                         face -> face == SkinDrawing.Face.PLUS_Y ? top : side);
-                final Vector3f jaw = new Vector3f(sx * (h - JAW_IN), JAW_AT, sz * (h - JAW_IN));
+                final float reach = h - JAW_IN + (JAW_IN + JAW_CLEAR) * open;
+                final Vector3f jaw = new Vector3f(sx * reach, JAW_AT, sz * reach);
                 drawing.member(new Vector3f(cx, JAW_FROM, cz), jaw, JAW_WIDE, JAW_WIDE, c.jaw());
                 drawing.rod(new Vector3f(cx, CYLINDER_FROM, cz), new Vector3f(jaw).add(0, CYLINDER_OVER, 0), CYLINDER,
                         ROUND, c.chrome());

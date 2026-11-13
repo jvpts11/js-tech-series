@@ -205,17 +205,11 @@ public final class FlightLaunchPage {
     /* The go and no-go board, two to a row: each system's name and its state, in the panel's colours. */
     private static void board(final GuiGraphics g, final Font font, final LaunchCount.Shown count,
                               final FlightComputerFace.Colours c, final Colours own) {
-        final double seconds = count.left() / (double) SECOND;
-        final boolean counting = count.phase() == LaunchCount.Phase.COUNTING
-                || count.phase() == LaunchCount.Phase.HOLDING;
-        final TextKey arms = counting && seconds <= LaunchCount.COVER || count.phase() == LaunchCount.Phase.RELEASED
-                ? LaunchTexts.CLEAR : counting && seconds <= LaunchCount.ARMS ? LaunchTexts.MOVING : LaunchTexts.GO;
         final TextKey[][] systems = {
             {VEHICLE, count.vehicle() ? LaunchTexts.GO : LaunchTexts.NO_GO},
             {PROPELLANT, count.loaded() ? LaunchTexts.GO : LaunchTexts.NO_GO},
-            {TOWER, arms},
-            {LaunchTexts.DELUGE, !count.port() ? LaunchTexts.NONE : !count.deluge() ? LaunchTexts.OFF
-                : count.delugeReady() ? LaunchTexts.GO : LaunchTexts.NO_GO},
+            {TOWER, count.towerState()},
+            {LaunchTexts.DELUGE, count.delugeState()},
             {WEATHER, count.storm() ? LaunchTexts.NO_GO : LaunchTexts.GO},
             {LaunchTexts.CREW, LaunchTexts.GO},
             {LaunchTexts.RANGE, LaunchTexts.GO},
