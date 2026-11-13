@@ -56,6 +56,11 @@ public final class RocketHangarGameTests {
     private static final int ALONG = 37;
     private static final int HIGH = 108;
     private static final int FORM_TIME = 400;
+    /*
+     * The ticks a test may wait for its bay's light: light spreads on a thread of its own, in real time, and the test
+     * server runs its ticks as fast as it can, so on a slow machine many ticks pass before the light has spread.
+     */
+    private static final int LIGHT_TIME = 4000;
     /* Places of the building, as its pattern draws them. */
     private static final int[] FIRST_CONSOLE = {17, 0, -3};
     private static final int[] THIRD_CONSOLE = {17, 0, -1};
@@ -110,7 +115,7 @@ public final class RocketHangarGameTests {
         formsTurned(helper, Orientation.WEST);
     }
 
-    @GameTest(template = ARENA, batch = BATCH + "_apart", timeoutTicks = FORM_TIME)
+    @GameTest(template = ARENA, batch = BATCH + "_apart", timeoutTicks = LIGHT_TIME)
     public static void hangar_comesApartWithoutAPanelAndItsFittingsGoDark(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final Orientation turn = Orientation.NORTH;

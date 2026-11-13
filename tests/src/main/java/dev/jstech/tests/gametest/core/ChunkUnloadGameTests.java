@@ -41,11 +41,16 @@ public final class ChunkUnloadGameTests {
     private static final int FAR = 200_000;
     private static final int SPREAD = 600_000;
     private static final int SETTLE = 20;
+    /*
+     * The ticks it may wait for its chunks to generate: they generate on threads of their own, in real time, and the
+     * test server runs its ticks as fast as it can, so on a slow machine many ticks pass before a chunk is made.
+     */
+    private static final int GENERATE_TIME = 12_000;
 
     private ChunkUnloadGameTests() {
     }
 
-    @GameTest(template = ARENA, batch = "jscore_chunk_unload", timeoutTicks = 1200)
+    @GameTest(template = ARENA, batch = "jscore_chunk_unload", timeoutTicks = GENERATE_TIME)
     public static void unload_ofAChunkWantedAgainWhileItWaitedEndsAtOnce(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final ServerChunkCache chunks = level.getChunkSource();
