@@ -1,0 +1,19 @@
+{
+  "width": 120,
+  "root": {
+    "type": "column",
+    "gap": 4,
+    "children": [
+      {"type": "title", "id": "title"},
+      {
+        "type": "row",
+        "id": "section",
+        "visible_if": "shown",
+        "children": [
+          {"type": "label", "text": "jstests.screen.ready", "id": "steady"}
+        ]
+      },
+      {"type": "label", "text": "jstests.screen.press", "id": "below"}
+    ]
+  }
+}

@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest.core;
 
+import dev.jstech.core.client.effect.EffectEngine;
 import dev.jstech.core.client.sky.SkySight;
 import dev.jstech.core.client.weather.WeatherClient;
 import dev.jstech.core.dimension.RuntimeDimensions;
@@ -17,6 +18,7 @@ import dev.jstech.tests.TestSkies;
 import dev.jstech.tests.TestWorldGen;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -33,12 +35,15 @@ import net.minecraft.world.phys.AABB;
  * The sky kit on a player's game, to look at: the test sky land in the morning (its two suns, its ringed planet, its
  * clouds and haze), at noon under its moon's eclipse (the day darkened), and at night (the stars, the galaxy, the
  * nebulae and the aurora over the north); then under the green acid rain, its fog closing in; and under a storm of
- * lightning, which strikes near the player.
+ * lightning, which strikes near the player. A weather also falls again over a player gone to another land under it.
  */
 public final class SkyClientTests {
 
     private static final ResourceKey<Level> LAND = ResourceKey.create(Registries.DIMENSION,
             ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "sky_view"));
+    /* A second land like it, under the same weather, to go to. */
+    private static final ResourceKey<Level> OTHER_LAND = ResourceKey.create(Registries.DIMENSION,
+            ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "sky_view_other"));
     private static final int ARRIVE = 600;
     private static final int WAIT = 200;
     private static final int SHOOT = 10;
@@ -113,6 +118,42 @@ public final class SkyClientTests {
                                 new AABB(ctx.serverPlayer().blockPosition()).inflate(32)).isEmpty(), WAIT,
                         "the storm's lightning to strike near the player", level -> "no strike yet")
                 .thenServer(0, level -> WorldEvents.stop(land(ctx), TestSkies.SPARK_STORM));
+    }
+
+    /**
+     * A weather falls again over a player who goes to another world under the same weather: the new world's game has
+     * none of the old one's effects, and the rain is held there anew.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void weather_fallsAgainInAnotherWorldOfTheSameWeather(final ClientTestContext ctx) {
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            final ServerPlayer player = ctx.serverPlayer();
+            final BlockPos home = ctx.origin().above(2);
+            player.teleportTo(ctx.server().overworld(), home.getX() + 0.5, home.getY(), home.getZ() + 0.5, 0F, 0F);
+            RuntimeDimensions.remove(ctx.server(), LAND);
+            RuntimeDimensions.remove(ctx.server(), OTHER_LAND);
+        }));
+        ctx.thenServer(0, level -> {
+            for (final ResourceKey<Level> each : List.of(LAND, OTHER_LAND)) {
+                final ServerLevel land = RuntimeDimensions.getOrCreate(level.getServer(), each,
+                        TestWorldGen.SKY_LAND.id());
+                WorldEvents.start(land, TestSkies.ACID_RAIN, 2_000, Optional.of(new BlockPos(0, (int) HIGH, 0)));
+            }
+            look(ctx, land(ctx), EAST, -10F);
+        })
+                .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(LAND), ARRIVE,
+                        "the player's game to reach the sky land")
+                .thenWaitUntil(() -> !WeatherClient.around().isEmpty() && EffectEngine.playing() > 0, WAIT,
+                        "the acid rain to fall over the player")
+                .thenServer(0, level -> look(ctx, ctx.server().getLevel(OTHER_LAND), EAST, -10F))
+                .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(OTHER_LAND), ARRIVE,
+                        "the player's game to reach the other land")
+                .thenWaitUntil(() -> !WeatherClient.around().isEmpty() && EffectEngine.playing() > 0, WAIT,
+                        "the acid rain to fall again over the player in the other land")
+                .thenServer(0, level -> {
+                    WorldEvents.stop(land(ctx), TestSkies.ACID_RAIN);
+                    WorldEvents.stop(ctx.server().getLevel(OTHER_LAND), TestSkies.ACID_RAIN);
+                });
     }
 
     /* Puts the player high over the land, looking {@code yaw} and {@code pitch}. */

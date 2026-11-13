@@ -105,6 +105,7 @@ import dev.jstech.tests.clienttest.computers.NetworkSharesClientTests;
 import dev.jstech.tests.clienttest.computers.NextgreClientTests;
 import dev.jstech.tests.clienttest.computers.OffscreenDesktopClientTests;
 import dev.jstech.tests.clienttest.computers.OpenWithClientTests;
+import dev.jstech.tests.clienttest.computers.OperationsLogClientTests;
 import dev.jstech.tests.clienttest.computers.OutOfMemoryClientTests;
 import dev.jstech.tests.clienttest.computers.PanelStylesClientTests;
 import dev.jstech.tests.clienttest.computers.PatternEncoderClientTests;
@@ -527,6 +528,7 @@ public final class ClientTestSuite {
             SystemMotionClientTests.class,
             VintageShellsClientTests.class,
             OpenWithClientTests.class,
+            OperationsLogClientTests.class,
             PanelStylesClientTests.class,
             PatternEncoderClientTests.class,
             PrinterClientTests.class,

@@ -525,6 +525,27 @@ public class ComputerTerminalScreen extends AbstractComputerScreen<ComputerTermi
                 ? console.editorScreen() : null;
     }
 
+    /** The ids of the operations the Operations heading lists, the live ones first, for a test to read. */
+    public List<UUID> listedOperations() {
+        return listedOps().stream().map(OperationRecord::id).toList();
+    }
+
+    /** The operation picked in the Operations heading, for a test to read; null when none is. */
+    @Nullable
+    public UUID selectedOperation() {
+        return selectedOp;
+    }
+
+    /** Where to click the {@code index}-th operation listed, relative to the glass; null when it is not shown. */
+    @Nullable
+    public int[] operationRowPoint(final int index) {
+        final int row = index - opScroll;
+        if (row < 0 || row >= OPS_ROWS) {
+            return null;
+        }
+        return new int[]{CONTENT_X + 10, 32 + row * 12 + 5};
+    }
+
     /** Where the glass starts, for a heading that draws in world coordinates of its own. */
     int left() {
         return leftPos;
