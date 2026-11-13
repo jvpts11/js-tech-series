@@ -12,9 +12,10 @@ import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.bigblock.AbstractBigBlock;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.WeakHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Vec3i;
@@ -68,8 +69,12 @@ public final class ChosenElement extends StructurePoolElement {
                     .forGetter(ChosenElement::templates),
             StructureProcessorType.LIST_CODEC.fieldOf("processors").forGetter(ChosenElement::processors),
             projectionCodec()).apply(instance, ChosenElement::new));
-    /* The big blocks each template holds, read once from its palette. */
-    private static final Map<ResourceLocation, List<Block>> BIG_BLOCKS = new ConcurrentHashMap<>();
+    /*
+     * The big blocks each template holds, read once from its palette: by the template itself, so a template read
+     * again on a reload, a new one, is read again too.
+     */
+    private static final Map<StructureTemplate, List<Block>> BIG_BLOCKS =
+            Collections.synchronizedMap(new WeakHashMap<>());
 
     public ChosenElement(final ResourceLocation chooser, final List<ResourceLocation> templates,
                          final Holder<StructureProcessorList> processors,
@@ -143,7 +148,7 @@ public final class ChosenElement extends StructurePoolElement {
         }
         final BoundingBox box = settings.getBoundingBox() != null ? settings.getBoundingBox()
                 : template.getBoundingBox(settings, offset);
-        for (final Block block : bigBlocks(id, template)) {
+        for (final Block block : bigBlocks(template)) {
             for (final StructureTemplate.StructureBlockInfo origin : template.filterBlocks(offset, settings, block)) {
                 // The template keeps a block as it was saved: turned as the piece is, the origin faces its way.
                 final BlockState turned = origin.state().mirror(settings.getMirror()).rotate(settings.getRotation());
@@ -164,8 +169,8 @@ public final class ChosenElement extends StructurePoolElement {
     }
 
     /* The big blocks {@code template} holds, by its palette. */
-    private static List<Block> bigBlocks(final ResourceLocation id, final StructureTemplate template) {
-        return BIG_BLOCKS.computeIfAbsent(id, key -> {
+    private static List<Block> bigBlocks(final StructureTemplate template) {
+        return BIG_BLOCKS.computeIfAbsent(template, key -> {
             final List<Block> out = new ArrayList<>();
             final CompoundTag saved = template.save(new CompoundTag());
             for (final Tag entry : saved.getList("palette", Tag.TAG_COMPOUND)) {

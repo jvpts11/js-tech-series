@@ -39,6 +39,8 @@ public record CtmLogic(Map<String, Region> cells, Map<String, Region> faceCells,
     private static final int SHEET_WIDTH = 12;
     private static final int SHEET_HEIGHT = 4;
     private static final float PIXELS = 16.0F;
+    /* The most cells a grid of a pack's file is cut in: far more than any layout, far fewer than fill the memory. */
+    private static final int MOST_GRID_CELLS = 64 * 64;
     private static final int EDGES = ConnectedQuadrants.UP | ConnectedQuadrants.RIGHT | ConnectedQuadrants.DOWN
             | ConnectedQuadrants.LEFT;
     private static final Map<String, Integer> DIRECTIONS = Map.of("up", ConnectedQuadrants.UP, "down",
@@ -114,6 +116,16 @@ public record CtmLogic(Map<String, Region> cells, Map<String, Region> faceCells,
                     rule.has("at") ? rule.get("at").getAsString() : WHOLE, bits(rule, "connected", positions),
                     bits(rule, "unconnected", positions)));
         }
+        // A rule naming a cell or a part of the face the file never declares would leave that part undrawn unsaid.
+        for (final Rule rule : rules) {
+            if (!cells.containsKey(rule.output())) {
+                throw new IllegalArgumentException("a rule draws a cell the logic does not declare: " + rule.output());
+            }
+            if (faces.isEmpty() ? !WHOLE.equals(rule.at()) : !faces.containsKey(rule.at())) {
+                throw new IllegalArgumentException("a rule is for a part of the face the logic does not declare: "
+                        + rule.at());
+            }
+        }
         return new CtmLogic(cells, faces, rules);
     }
 
@@ -170,8 +182,15 @@ public record CtmLogic(Map<String, Region> cells, Map<String, Region> faceCells,
             final JsonObject submap = entry.getValue().getAsJsonObject();
             final String type = submap.has("type") ? submap.get("type").getAsString() : "unit";
             switch (type) {
-                case "grid" -> out.putAll(grid(entry.getKey(), submap.get("width").getAsInt(),
-                        submap.get("height").getAsInt()));
+                case "grid" -> {
+                    final int width = submap.get("width").getAsInt();
+                    final int height = submap.get("height").getAsInt();
+                    if (width <= 0 || height <= 0 || (long) width * height > MOST_GRID_CELLS) {
+                        throw new IllegalArgumentException("a grid of cells is from 1 to " + MOST_GRID_CELLS
+                                + " cells; got " + width + " by " + height);
+                    }
+                    out.putAll(grid(entry.getKey(), width, height));
+                }
                 case "unit", "pixel" -> {
                     final float scale = "pixel".equals(type) ? 1.0F / PIXELS : 1.0F;
                     out.put(entry.getKey(), new Region(submap.get("x_offset").getAsFloat() * scale,

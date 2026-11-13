@@ -9,6 +9,8 @@ package dev.jstech.core.worldgen.terrain;
 
 import dev.jstech.core.log.CoreLogs;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.IndexColorModel;
 import java.awt.image.Raster;
 import java.io.IOException;
 import java.io.InputStream;
@@ -64,9 +66,15 @@ public final class RoundMaps {
         final int width = image.getWidth();
         final int height = image.getHeight();
         final float[] values = new float[width * height];
+        // A picture of a palette holds the palette's places, read through it; one of more than 8 bits, by its own top.
+        final ColorModel model = image.getColorModel();
+        final IndexColorModel palette = model instanceof IndexColorModel indexed ? indexed : null;
+        final float top = palette != null ? WHITE : (1 << model.getComponentSize(0)) - 1;
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
-                values[y * width + x] = raster.getSample(x, y, 0) / WHITE;
+                final int sample = raster.getSample(x, y, 0);
+                final float value = palette != null ? palette.getRed(sample) / top : sample / top;
+                values[y * width + x] = Math.clamp(value, 0F, 1F);
             }
         }
         return new RoundMap(width, height, values);

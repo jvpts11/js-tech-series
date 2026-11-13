@@ -13,6 +13,7 @@ import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.damage.CellMark;
+import dev.jstech.core.multiblock.damage.DamageMark;
 import dev.jstech.core.multiblock.damage.DamageStamps;
 import dev.jstech.core.multiblock.damage.FormedDamage;
 import dev.jstech.core.multiblock.plan.BuildPlan;
@@ -63,6 +64,9 @@ public final class FormedDamageGameTests {
     private static final int WAIT = 200;
     private static final double SIZE = 0.8;
     private static final long SEED = 7;
+    /* More blocks lost than the most strikes a model keeps, which is 32. */
+    private static final int LOSSES = 40;
+    private static final double FAR = 100;
     /* How much lower than where it struck a ray must now stop to have gone into the hole, in blocks. */
     private static final double INTO = 1.0 / 16;
     /*
@@ -117,6 +121,36 @@ public final class FormedDamageGameTests {
                             "it stands as the model has it again");
                     helper.assertTrue(Math.abs(down(level, pos).getLocation().y - top.getLocation().y) < CLOSE,
                             "and a ray meets its top where it did");
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A model that has lost more blocks than the most strikes it keeps is struck still: its most counts only the
+     * strikes that lost no block.
+     */
+    @GameTest(template = ARENA, timeoutTicks = WAIT)
+    public static void strike_landsOnAModelThatLostManyBlocks(final GameTestHelper helper) {
+        build(helper);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(structure(helper).merged(), "the turbine forms and merges"))
+                .thenExecute(() -> {
+                    final ServerLevel level = helper.getLevel();
+                    final BlockPos pos = helper.absolutePos(STRUCK);
+                    final Vec3 top = down(level, pos).getLocation();
+                    FormedDamage.strike(level, pos, DamageStamps.IMPACT, top, new Vec3(0, 1, 0), SIZE, SEED);
+                    final FormedPartBlockEntity part = (FormedPartBlockEntity) level.getBlockEntity(pos);
+                    final CellMark struck = part.damage().getFirst();
+                    FormedDamage.erase(level, pos);
+                    // Each loss kept far from the model's blocks, so none of them changes its shape.
+                    for (int lost = 0; lost < LOSSES; lost++) {
+                        part.mark(new CellMark(struck.model(), struck.x(), struck.y(), struck.z(), new DamageMark(
+                                DamageStamps.IMPACT, -FAR, -FAR, -FAR, 0, 1, 0, (float) SIZE, lost,
+                                Optional.of(Blocks.IRON_BLOCK.defaultBlockState()))));
+                    }
+                    helper.assertTrue(FormedDamage.strike(level, pos, DamageStamps.IMPACT, top, new Vec3(0, 1, 0),
+                            SIZE, SEED + 1) > 0, LOSSES + " blocks lost, a strike still lands");
+                    FormedDamage.erase(level, pos);
                 })
                 .thenSucceed();
     }
@@ -221,6 +255,16 @@ public final class FormedDamageGameTests {
         helper.succeed();
     }
 
+    /* A mark of a size past every number, or of a way that is no number, is not whole: it gives no strike. */
+    @GameTest(template = ARENA)
+    public static void mark_ofNoNumberGivesNoStrikeRatherThanFailing(final GameTestHelper helper) {
+        helper.assertTrue(mark(1, 0, 1, 0).strike().isPresent(), "a whole mark gives its strike");
+        helper.assertTrue(mark(Float.POSITIVE_INFINITY, 0, 1, 0).strike().isEmpty(), "one of an endless size, none");
+        helper.assertTrue(mark(1, Float.NaN, 1, 0).strike().isEmpty(), "one of a way that is no number, none");
+        helper.assertTrue(mark(1, 0, Float.POSITIVE_INFINITY, 0).strike().isEmpty(), "one of an endless way, none");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void strike_onAPlainBlockLaysNothing(final GameTestHelper helper) {
         helper.setBlock(STRUCK, Blocks.IRON_BLOCK);
@@ -278,5 +322,10 @@ public final class FormedDamageGameTests {
     private static MachineStructure structure(final GameTestHelper helper) {
         final TestModels.TurbineEntity turbine = helper.getBlockEntity(TERMINAL);
         return turbine.structure();
+    }
+
+    /* A mark of an impact at the model's middle, of {@code size} and the way {@code (nx, ny, nz)}. */
+    private static DamageMark mark(final float size, final float nx, final float ny, final float nz) {
+        return new DamageMark(DamageStamps.IMPACT, 0.5, 0.5, 0.5, nx, ny, nz, size, SEED, Optional.empty());
     }
 }

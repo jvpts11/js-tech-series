@@ -128,8 +128,10 @@ public final class MachineFill {
         int sets = Integer.MAX_VALUE;
         for (int i = 0; i < inputs; i++) {
             final SizedIngredient each = wanted.get(i);
-            final ItemStack held = machine.getInventory().getStackInSlot(machine.layout().laneInput(0, i));
-            int had = held.getCount();
+            final ItemStack inSlot = machine.getInventory().getStackInSlot(machine.layout().laneInput(0, i));
+            // One kind fills a slot: the one in it, or the one the player has most of, never two counted as one.
+            final ItemStack held = inSlot.isEmpty() ? mostHeld(inventory, each) : inSlot;
+            int had = inSlot.getCount();
             int most = held.isEmpty() ? Item.DEFAULT_MAX_STACK_SIZE : held.getMaxStackSize();
             for (final ItemStack stack : inventory.items) {
                 if (!stack.isEmpty() && each.ingredient().test(stack) && (held.isEmpty()
@@ -147,11 +149,13 @@ public final class MachineFill {
     private static void moveIn(final Inventory inventory, final IItemHandlerModifiable slots, final int slot,
                                final SizedIngredient each, final int count) {
         int left = count;
+        // An empty slot takes the kind the player has most of, as many sets were counted of.
+        final ItemStack kind = slots.getStackInSlot(slot).isEmpty() ? mostHeld(inventory, each)
+                : slots.getStackInSlot(slot).copy();
         for (int i = 0; i < inventory.items.size() && left > 0; i++) {
             final ItemStack stack = inventory.items.get(i);
-            final ItemStack held = slots.getStackInSlot(slot);
             if (stack.isEmpty() || !each.ingredient().test(stack)
-                    || !held.isEmpty() && !ItemStack.isSameItemSameComponents(stack, held)) {
+                    || !kind.isEmpty() && !ItemStack.isSameItemSameComponents(stack, kind)) {
                 continue;
             }
             final ItemStack moving = stack.copyWithCount(Math.min(left, stack.getCount()));
@@ -164,6 +168,31 @@ public final class MachineFill {
             }
         }
         inventory.setChanged();
+    }
+
+    /*
+     * Of the kinds of stack {@code each} takes, items alike to their components, the one the inventory holds most of;
+     * nothing when it holds none.
+     */
+    private static ItemStack mostHeld(final Inventory inventory, final SizedIngredient each) {
+        ItemStack best = ItemStack.EMPTY;
+        int bestCount = 0;
+        for (final ItemStack kind : inventory.items) {
+            if (kind.isEmpty() || !each.ingredient().test(kind)) {
+                continue;
+            }
+            int count = 0;
+            for (final ItemStack stack : inventory.items) {
+                if (ItemStack.isSameItemSameComponents(stack, kind)) {
+                    count += stack.getCount();
+                }
+            }
+            if (count > bestCount) {
+                best = kind;
+                bestCount = count;
+            }
+        }
+        return best.copyWithCount(1);
     }
 
     /* Takes up to {@code count} of what {@code each} takes from {@code pool}; how much it took. */

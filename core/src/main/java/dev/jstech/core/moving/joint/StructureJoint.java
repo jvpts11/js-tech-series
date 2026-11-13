@@ -35,6 +35,14 @@ public record StructureJoint(UUID id, JointEnd a, JointEnd b, JointKind kind, Op
             Codec.doubleRange(0, Double.MAX_VALUE).optionalFieldOf("breaks_at").forGetter(StructureJoint::breaksAt)
     ).apply(instance, StructureJoint::new));
 
+    public StructureJoint {
+        if (breaksAt.isPresent() && breaksAt.get() < 0) {
+            throw new IllegalArgumentException("a joint cannot break at a load below none: " + breaksAt.get());
+        }
+        // A load past every number is a joint that never breaks, as none is: its save holds only a finite one.
+        breaksAt = breaksAt.filter(Double::isFinite);
+    }
+
     /** Whether either end is on the structure {@code id}. */
     public boolean touches(final StructureUuid id) {
         return a.on(id) || b.on(id);

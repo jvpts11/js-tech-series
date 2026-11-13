@@ -82,11 +82,17 @@ public final class CableRuns {
         BlockPos stopped = null;
         TextKey why = null;
         for (final BlockPos pos : path) {
+            // Looked at only where loaded: reading a block entity loads the chunk it stands in.
+            if (!level.isLoaded(pos)) {
+                stopped = pos;
+                why = PROTECTED;
+                break;
+            }
             if (level.getBlockEntity(pos) instanceof CableBlockEntity cable && cable.holds(type)) {
                 done++;
                 continue;
             }
-            if (!level.isLoaded(pos) || !Protection.may(Actor.of(player), ProtectedAction.PLACE, level, pos)
+            if (!Protection.may(Actor.of(player), ProtectedAction.PLACE, level, pos)
                     || !level.mayInteract(player, pos)) {
                 stopped = pos;
                 why = PROTECTED;

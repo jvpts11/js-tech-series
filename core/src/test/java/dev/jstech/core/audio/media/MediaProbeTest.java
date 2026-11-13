@@ -38,6 +38,16 @@ class MediaProbeTest {
     }
 
     @Test
+    void probe_oggWithAHugeGranuleReadsALengthThatDidNotWrapAround() throws IOException {
+        final long granule = Long.MAX_VALUE / 100;
+        final byte[] file = concat(page(0, id(2, RATE, 192_000)), page(0, comments(List.of())),
+                page(granule, new byte[] {1}));
+        final MediaInfo info = MediaProbe.probe("ogg", file);
+        assertEquals(granule / RATE * 1000L + granule % RATE * 1000L / RATE, info.millis(),
+                "the length is the granule over the rate, never a product that ran over");
+    }
+
+    @Test
     void probe_oggReadsACommentPacketThatRunsOverTwoPages() throws IOException {
         final byte[] comments = comments(List.of("TITLE=" + "x".repeat(300)));
         final byte[] first = Arrays.copyOfRange(comments, 0, 255);

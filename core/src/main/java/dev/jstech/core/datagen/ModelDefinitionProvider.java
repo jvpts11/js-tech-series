@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -97,27 +98,40 @@ public final class ModelDefinitionProvider implements DataProvider {
                         + ", which is not there", "put the file there, or name the one that is");
             }
         }
-        final Set<String> bones = new HashSet<>();
         final List<ModelData> drawn = read(model, definition.model(), files);
+        final Set<String> bones = bonesOf(drawn);
+        budget(model, definition.model(), drawn.getFirst());
+        requireBones(model, definition.model(), definition.glow(), bones);
+        // A variant drawn from a file of its own hides and shows the bones of that file, as it is drawn from it.
+        for (final ModelDefinition.Variant variant : definition.variants()) {
+            final Set<String> wanted = new HashSet<>(variant.hidden());
+            wanted.addAll(variant.shown());
+            if (variant.model().isEmpty()) {
+                requireBones(model, definition.model(), wanted, bones);
+            } else {
+                final List<ModelData> own = read(model, variant.model(), files);
+                budget(model, variant.model(), own.getFirst());
+                requireBones(model, variant.model(), wanted, bonesOf(own));
+            }
+        }
+    }
+
+    private static Set<String> bonesOf(final List<ModelData> drawn) {
+        final Set<String> bones = new HashSet<>();
         for (final ModelData data : drawn) {
             data.bones().forEach(bone -> bones.add(bone.name()));
         }
-        budget(model, definition.model(), drawn.getFirst());
-        for (final ModelDefinition.Variant variant : definition.variants()) {
-            if (!variant.model().isEmpty()) {
-                budget(model, variant.model(), read(model, variant.model(), files).getFirst());
-            }
-        }
-        final Set<String> wanted = new HashSet<>(definition.glow());
-        definition.variants().forEach(variant -> {
-            wanted.addAll(variant.hidden());
-            wanted.addAll(variant.shown());
-        });
-        wanted.removeAll(bones);
-        if (!wanted.isEmpty()) {
+        return bones;
+    }
+
+    /* The bones a model names are those of the file it is drawn from, or the generation stops saying which are not. */
+    private static void requireBones(final DeclaredModel model, final String file, final Collection<String> named,
+                                     final Set<String> bones) {
+        final Set<String> missing = new HashSet<>(named);
+        missing.removeAll(bones);
+        if (!missing.isEmpty()) {
             throw DeclarationError.of(model.id().getNamespace(), "the model " + model.id(), "names the bones "
-                    + wanted + ", which its file " + definition.model() + " has none of", "name bones it has: "
-                    + bones);
+                    + missing + ", which its file " + file + " has none of", "name bones it has: " + bones);
         }
     }
 

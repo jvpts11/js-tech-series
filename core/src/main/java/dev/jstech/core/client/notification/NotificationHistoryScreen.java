@@ -315,8 +315,7 @@ public final class NotificationHistoryScreen extends Screen {
         final int[] rect = this.list.rowRect(index);
         final NotificationHistoryLayout.Row row = NotificationHistoryLayout.row(rect[0], rect[2]);
         if (mx >= row.crossX() && mx < row.crossX() + NotificationHistoryLayout.CROSS) {
-            NotificationsClient.board().forget(entry.id());
-            this.list.setSelected(-1);
+            forget(entry);
             return;
         }
         NotificationsClient.act(entry.item(), this);
@@ -335,9 +334,17 @@ public final class NotificationHistoryScreen extends Screen {
                         : NotificationTexts.SILENCE_MOD).with(modName)), true,
                         () -> NotificationsClient.toggleMod(entry.mod())),
                 ContextMenu.Item.separator(),
-                new ContextMenu.Item(GameText.resolve(NotificationTexts.FORGET), true,
-                        () -> NotificationsClient.board().forget(entry.id())));
+                new ContextMenu.Item(GameText.resolve(NotificationTexts.FORGET), true, () -> forget(entry)));
         this.menu.open(items, x, y, 0, 0, this.width, this.height);
+    }
+
+    /* Forgets {@code entry}; the mod shown goes back to all of them once none of its own is left. */
+    private void forget(final NotificationBoard.Entry<Notification> entry) {
+        NotificationsClient.board().forget(entry.id());
+        this.list.setSelected(-1);
+        if (!this.mod.isEmpty() && !presentMods().contains(this.mod)) {
+            this.mod = "";
+        }
     }
 
     /* The mods whose notifications are in the history, by name. */

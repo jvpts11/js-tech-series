@@ -253,6 +253,30 @@ public final class EnergyKitGameTests {
         helper.succeed();
     }
 
+    @GameTest(template = ARENA)
+    public static void battery_neitherChargesFromNorPowersABurntOrFuseCutStore(final GameTestHelper helper) {
+        // Burnt: an arc jumped the fuse of one class.
+        final EnergyProtection burnt = new EnergyProtection(() -> { });
+        final EnergyStore damaged = guarded(burnt, TestFuses.ONE_CLASS.get());
+        damaged.meetWrongClass(WrongClass.ARC_FLASH, TestEnergies.HIGH, 0L);
+        // Cut: a fuse that breaks anything broke.
+        final EnergyProtection cut = new EnergyProtection(() -> { });
+        final EnergyStore open = guarded(cut, TestFuses.ANY_CLASS.get());
+        open.meetWrongClass(WrongClass.ARC_FLASH, TestEnergies.EXTRA, 0L);
+        helper.assertTrue(damaged.damaged() && open.cutByFuse(), "one store burnt and one cut off by its fuse");
+        for (final EnergyProtection protection : List.of(burnt, cut)) {
+            protection.slots().setStackInSlot(EnergyProtection.BATTERY, new ItemStack(TestItems.FULL.get()));
+        }
+        damaged.setStored(1_000L);
+        open.setStored(0L);
+        burnt.tick(damaged);
+        cut.tick(open);
+        helper.assertTrue(damaged.stored() == 1_000L && open.stored() == 0L,
+                "the battery took nothing from the full burnt store, and gave nothing to the empty cut one: "
+                        + damaged.stored() + ", " + open.stored());
+        helper.succeed();
+    }
+
     /* A giving end, a taking end and a run of {@code line} between them, every store empty. */
     private static void ends(final GameTestHelper helper, final Block source, final Block sink,
                              final Supplier<CableType> line) {

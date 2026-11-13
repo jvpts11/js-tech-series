@@ -971,6 +971,10 @@ public final class GuideLayout {
         final int frame = SESSION_HEAD + 2 * CODE_PAD;
         if (frame + rows.size() * CODE_PITCH <= this.bottom() - this.top) {
             this.ensure(frame + rows.size() * CODE_PITCH);
+        } else if (this.y > this.top
+                && (this.bottom() - this.y - frame) / CODE_PITCH < Math.min(MIN_PART_ROWS, rows.size())) {
+            // A longer one starts where a few rows of it fit, as a listing does, never over the page's foot.
+            this.nextColumn();
         }
         int at = 0;
         while (at < rows.size() || at == 0) {

@@ -289,8 +289,8 @@ public final class Physics {
      * The areas of a dimension.
      *
      * @param byId   each area, by its id
-     * @param sorted every area, the lowest ranked first, so the highest's laws are laid over the rest; worked out
-     *               once, as it is read for every entity every tick
+     * @param sorted every area, the lowest ranked first and those ranked alike by their ids, so the highest's laws
+     *               are laid over the rest; worked out once, as it is read for every entity every tick
      */
     public record Areas(Map<String, PhysicsArea> byId, List<PhysicsArea> sorted) {
 
@@ -323,7 +323,8 @@ public final class Physics {
 
         private static List<PhysicsArea> rank(final Map<String, PhysicsArea> byId) {
             final List<PhysicsArea> all = new ArrayList<>(byId.values());
-            all.sort(Comparator.comparingInt(PhysicsArea::priority));
+            // Areas ranked alike by their ids, so the server, each player's game and a world read again agree.
+            all.sort(Comparator.comparingInt(PhysicsArea::priority).thenComparing(PhysicsArea::id));
             return all;
         }
     }

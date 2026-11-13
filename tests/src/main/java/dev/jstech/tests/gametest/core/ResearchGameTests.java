@@ -71,6 +71,23 @@ public final class ResearchGameTests {
         helper.succeed();
     }
 
+    /* With its mod's research turned off, a discovery is worked on by none: nothing is spent and nothing granted. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void work_grantsNothingWhileTheModsResearchIsOff(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final String team = CoreTeams.teamOf(server, UUID.randomUUID());
+        final Store store = new Store(4);
+        TestResearch.require(false);
+        try {
+            helper.assertTrue(Research.work(server, team, TestResearch.FIRST, 1_000, store) == Research.Outcome.ABSENT
+                    && !Research.made(server, team, TestResearch.FIRST) && store.held == 4,
+                    "nothing worked, made or spent; held " + store.held);
+        } finally {
+            TestResearch.require(true);
+        }
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA, batch = BATCH)
     public static void work_waitsForWhatItComesAfter(final GameTestHelper helper) {
         final MinecraftServer server = helper.getLevel().getServer();

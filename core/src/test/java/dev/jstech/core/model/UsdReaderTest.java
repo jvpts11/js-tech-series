@@ -273,6 +273,37 @@ class UsdReaderTest {
     }
 
     @Test
+    void text_paintsEachFaceItsOwnDisplayColour() {
+        final String twoColours = """
+                #usda 1.0
+                (
+                    defaultPrim = "Pump"
+                    metersPerUnit = 0.01
+                    upAxis = "Z"
+                )
+
+                def Xform "Pump"
+                {
+                    def Mesh "Housing"
+                    {
+                        point3f[] points = [(0, 0, 0), (20, 0, 0), (20, 10, 0), (0, 10, 0), (40, 0, 0), (40, 10, 0)]
+                        int[] faceVertexCounts = [4, 4]
+                        int[] faceVertexIndices = [0, 1, 2, 3, 1, 4, 5, 2]
+                        color3f[] primvars:displayColor = [(1, 0, 0), (0, 0, 1)] (
+                            interpolation = "uniform"
+                        )
+                    }
+                }
+                """;
+        final ModelData pump = read("pump.usda", twoColours.getBytes(StandardCharsets.UTF_8));
+        final List<String> painted = pump.bone("Housing").orElseThrow().meshes().stream()
+                .map(mesh -> pump.textures().get(mesh.texture()).name()).toList();
+        assertEquals(2, painted.size(), "a mesh for each colour: " + painted);
+        assertTrue(painted.stream().anyMatch(name -> name.contains("ffff0000"))
+                && painted.stream().anyMatch(name -> name.contains("ff0000ff")), "the red face and the blue");
+    }
+
+    @Test
     void text_paintsAMeshWithItsMaterialsPictureOrItsDisplayColour() {
         final ModelData pump = read("pump.usda", PUMP.getBytes(StandardCharsets.UTF_8));
         final ModelMesh blade = pump.bone("Blade").orElseThrow().meshes().getFirst();

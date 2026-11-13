@@ -55,9 +55,11 @@ public final class StylePainter {
                 s.height()) / 2)));
         final int midW = w - 2 * b;
         final int midH = h - 2 * b;
-        final int srcMidW = s.width() - 2 * s.border();
-        final int srcMidH = s.height() - 2 * s.border();
-        final int sb = s.border();
+        // The source's edges cut at the border the corners are drawn with, so a region narrower than twice its border
+        // still gives edges that meet its corners and a middle of no less than nothing.
+        final int srcMidW = s.width() - 2 * b;
+        final int srcMidH = s.height() - 2 * b;
+        final int sb = b;
         final ResourceLocation t = s.texture();
         final int tw = s.textureWidth();
         final int th = s.textureHeight();

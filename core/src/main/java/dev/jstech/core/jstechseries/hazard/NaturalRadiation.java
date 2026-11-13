@@ -115,6 +115,10 @@ public final class NaturalRadiation {
             return kept;
         }
         final Counted counted = count(level, x, y, z, now);
+        // A chunk not loaded yet is counted as nothing for now only: it is counted again as soon as it is there.
+        if (level.getChunkSource().getChunkNow(x, z) == null) {
+            return counted;
+        }
         // Counts outlive the places walked away from; past so many, they all go and are counted again as needed.
         if (sections.size() > MOST_KEPT) {
             sections.clear();

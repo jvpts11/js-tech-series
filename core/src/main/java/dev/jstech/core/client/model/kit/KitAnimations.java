@@ -14,6 +14,7 @@ import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.model.network.ModelTarget;
 import java.util.EnumMap;
 import java.util.HashMap;
+import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -27,6 +28,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
 
 /**
  * The things drawn with the Core's models on the player's game, each with what moves it: block entities, entities and
@@ -50,7 +52,8 @@ public final class KitAnimations {
             return size() > ITEMS_KEPT;
         }
     };
-    private static final Map<Item, Map<ItemDisplayContext, KitInstance>> ITEM_KINDS = new HashMap<>();
+    private static final Map<Item, Map<KitModel, Map<ItemDisplayContext, KitInstance>>> ITEM_KINDS =
+            new HashMap<>();
     private static final Map<ModelTarget, Map<String, ModelAnimationPayload>> WAITING = new LinkedHashMap<>(16,
             0.75F, true) {
         @Override
@@ -74,6 +77,12 @@ public final class KitAnimations {
     /** Forgets the entities and the items of a world the player leaves, once, from the client setup. */
     public static void listen() {
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> forgetAll());
+        // An entity's number is never given to another, so what moved one that left the player's world goes with it.
+        NeoForge.EVENT_BUS.addListener(EntityLeaveLevelEvent.class, event -> {
+            if (event.getLevel().isClientSide()) {
+                ENTITIES.remove(event.getEntity().getId());
+            }
+        });
     }
 
     /** What moves the model of a block entity, made the first time it is drawn with {@code model}. */
@@ -137,15 +146,11 @@ public final class KitAnimations {
             waiting(ModelTarget.item(id), made);
             return made;
         }
-        final Map<ItemDisplayContext, KitInstance> byPlace = ITEM_KINDS.computeIfAbsent(stack.getItem(),
-                item -> new EnumMap<>(ItemDisplayContext.class));
-        final KitInstance kept = byPlace.get(context);
-        if (kept != null && kept.model() == model) {
-            return kept;
-        }
-        final KitInstance made = new KitInstance(model);
-        byPlace.put(context, made);
-        return made;
+        // By model too: one item may be drawn with many, as the vehicle item is with each kind's own.
+        final Map<ItemDisplayContext, KitInstance> byPlace = ITEM_KINDS
+                .computeIfAbsent(stack.getItem(), item -> new IdentityHashMap<>())
+                .computeIfAbsent(model, drawn -> new EnumMap<>(ItemDisplayContext.class));
+        return byPlace.computeIfAbsent(context, place -> new KitInstance(model));
     }
 
     /** What moves the model of a block entity, if it has been drawn: for the code that asks what it plays. */

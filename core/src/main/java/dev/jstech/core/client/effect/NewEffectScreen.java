@@ -87,8 +87,11 @@ public final class NewEffectScreen extends Screen {
         final String name = this.file.getValue().endsWith(ENDING)
                 ? this.file.getValue().substring(0, this.file.getValue().length() - ENDING.length())
                 : this.file.getValue();
-        final ResourceLocation id = ResourceLocation.tryBuild(this.blockId.getNamespace(), name);
+        // Words in lower case parted by slashes: nothing that climbs out of the effects folder, nor a bare file.
+        final ResourceLocation id = name.matches("[a-z0-9_-]+(/[a-z0-9_-]+)*")
+                ? ResourceLocation.tryBuild(this.blockId.getNamespace(), name) : null;
         if (id == null) {
+            this.status = EffectTexts.NOT_SAVED.with(name);
             return false;
         }
         final Optional<Path> target = EffectFileWriter.fileOf(id);

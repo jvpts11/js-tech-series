@@ -80,7 +80,8 @@ final class GuideGlossary {
                 continue;
             }
             final String text = run.text();
-            final String lower = text.toLowerCase(Locale.ROOT);
+            // Lowered a letter for a letter, so a place found in it is the same place in the text.
+            final String lower = lowered(text);
             int written = 0;
             int from = 0;
             while (true) {
@@ -88,8 +89,7 @@ final class GuideGlossary {
                 Item best = null;
                 int bestAt = -1;
                 for (final Item item : this.longestFirst) {
-                    final int at = item.entry().equals(entry) ? -1
-                            : wordAt(lower, item.term().toLowerCase(Locale.ROOT), from);
+                    final int at = item.entry().equals(entry) ? -1 : wordAt(lower, lowered(item.term()), from);
                     if (at >= 0 && (bestAt < 0 || at < bestAt)) {
                         best = item;
                         bestAt = at;
@@ -98,7 +98,7 @@ final class GuideGlossary {
                 if (best == null) {
                     break;
                 }
-                final String key = best.term().toLowerCase(Locale.ROOT);
+                final String key = lowered(best.term());
                 final int end = bestAt + key.length();
                 /*
                  * A word that is part of a name, as "Task" is of "Task Manager", or of a path or a name in code, as
@@ -179,6 +179,18 @@ final class GuideGlossary {
             at = lower.indexOf(word, at + 1);
         }
         return -1;
+    }
+
+    /*
+     * {@code text} in lower case, each letter lowered on its own: as long as the text, which the language's own
+     * lowering is not (a dotted capital I lowers to two), so where a word is found in it is where it is in the text.
+     */
+    static String lowered(final String text) {
+        final char[] letters = text.toCharArray();
+        for (int i = 0; i < letters.length; i++) {
+            letters[i] = Character.toLowerCase(letters[i]);
+        }
+        return new String(letters);
     }
 
     /**

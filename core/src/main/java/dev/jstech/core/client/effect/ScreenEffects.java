@@ -162,6 +162,9 @@ public final class ScreenEffects {
         if (Minecraft.getInstance().level == null) {
             return;
         }
+        // Shockwaves gone out are let go each frame, drawn or not: with the bending off they would pile up.
+        final long now = now();
+        SHOCKS.removeIf(shock -> (now - shock.born()) / shock.ticks() >= 1);
         bend(graphics);
         vignettes(graphics);
         final double flash = strongest(FLASHES) * EffectSettings.flash();

@@ -7,6 +7,8 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import com.google.gson.JsonPrimitive;
+import com.mojang.serialization.JsonOps;
 import dev.jstech.core.light.BeamLights;
 import dev.jstech.core.light.Beams;
 import dev.jstech.core.light.CoreLights;
@@ -90,6 +92,17 @@ public final class LightingGameTests {
             helper.assertTrue(emission(helper, LAMP) == 0, "and its light gone");
             helper.succeed();
         });
+    }
+
+    @GameTest(template = ARENA)
+    public static void colour_isRefusedWithASignWhereADigitShouldBe(final GameTestHelper helper) {
+        helper.assertTrue(LightColours.COLOUR.parse(JsonOps.INSTANCE, new JsonPrimitive("#FF8000")).result()
+                .orElse(0) == 0xFF8000, "six hex digits are a colour");
+        for (final String written : new String[] {"#-FFFFF", "+FFFFF"}) {
+            helper.assertTrue(LightColours.COLOUR.parse(JsonOps.INSTANCE, new JsonPrimitive(written)).error()
+                    .isPresent(), written + " is none");
+        }
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, timeoutTicks = 60)

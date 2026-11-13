@@ -36,13 +36,16 @@ public record FrontMatter(Map<String, String> fields, String body, int bodyLine)
     private static final String FENCE = "---";
     private static final char QUOTE = '"';
     private static final char APOSTROPHE = '\'';
+    private static final String BYTE_ORDER_MARK = "﻿";
 
     public FrontMatter {
         fields = Map.copyOf(fields);
     }
 
     /** The header and the body of {@code text}; a header left open is read as all body. */
-    public static FrontMatter of(final String text) {
+    public static FrontMatter of(final String written) {
+        // A file some editors save starts with a mark of its encoding, which is no letter of its header.
+        final String text = written.startsWith(BYTE_ORDER_MARK) ? written.substring(1) : written;
         final List<String> lines = text.lines().toList();
         if (lines.isEmpty() || !lines.get(0).strip().equals(FENCE)) {
             return new FrontMatter(Map.of(), text, 1);

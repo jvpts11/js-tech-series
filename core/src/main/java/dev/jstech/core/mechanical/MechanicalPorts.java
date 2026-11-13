@@ -23,9 +23,11 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +60,11 @@ public final class MechanicalPorts {
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, event -> {
             if (event.getLevel() instanceof ServerLevel level) {
                 SECTION.run(() -> LevelMechanics.of(level).tick(level));
+            }
+        });
+        NeoForge.EVENT_BUS.addListener(ChunkEvent.Unload.class, event -> {
+            if (event.getLevel() instanceof ServerLevel level && event.getChunk() instanceof LevelChunk chunk) {
+                LevelMechanics.chunkUnloaded(level, chunk);
             }
         });
         // Parts moved away with a structure leave the networks they turned in where they stood.

@@ -235,7 +235,8 @@ public final class JsTechTheme {
         if (n < 10_000L) {
             return String.format(GameLocale.locale(), "%,d", n);
         }
-        if (n < 1_000_000L) {
+        // Below what rounds up to a thousand thousands, which reads as a million rather than as 1000.0k.
+        if (n < 999_950L) {
             return String.format(GameLocale.locale(), "%.1fk", n / 1_000.0);
         }
         return String.format(GameLocale.locale(), "%.1fM", n / 1_000_000.0);

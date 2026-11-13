@@ -81,8 +81,10 @@ public final class NewScreenScreen extends Screen {
 
     /** The template chosen, by its row; for a test. */
     public void startFrom(final int row) {
+        // The copy row shows the copy it starts from: the first click takes that one, a click on it again the next.
+        final boolean wasCopy = start == COPY;
         start = Math.max(MACHINE, Math.min(COPY, row));
-        if (start == COPY && !copies.isEmpty()) {
+        if (start == COPY && wasCopy && !copies.isEmpty()) {
             copied = (copied + 1) % copies.size();
         }
         rebuildPreview();
@@ -125,6 +127,12 @@ public final class NewScreenScreen extends Screen {
             return Optional.empty();
         }
         final String name = path.substring(folder.length(), path.length() - ".json".length());
+        // A name that climbs out of the screens folder, or names nothing, is no screen's file.
+        for (final String part : name.split("/", -1)) {
+            if (part.isEmpty() || ".".equals(part) || "..".equals(part)) {
+                return Optional.empty();
+            }
+        }
         return Optional.ofNullable(ResourceLocation.tryBuild(typed.getNamespace(), name));
     }
 

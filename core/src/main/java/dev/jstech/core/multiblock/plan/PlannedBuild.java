@@ -146,7 +146,11 @@ public final class PlannedBuild implements IStructureWatcher {
             if (this.missing[part] == 0) {
                 form(part);
             } else if (this.holed.test(part) && standsFormed(part)) {
+                // Its blocks stand merged already. The shapes reaching between it and the parts looked at before it
+                // are taken again, as they would have been had it been looked at first.
                 this.formed[part] = true;
+                reachAgain(part);
+                reshape(part);
             } else {
                 this.formed[part] = true;
                 comeApart(part);
@@ -450,6 +454,21 @@ public final class PlannedBuild implements IStructureWatcher {
             }
         }
         reshape(part);
+    }
+
+    /* The merged blocks of the part {@code part} take the shapes of the formed parts reaching into them now. */
+    private void reachAgain(final int part) {
+        final ServerLevel in = this.level;
+        if (in == null) {
+            return;
+        }
+        for (final int index : this.spotsOf.get(part)) {
+            final PlanSpot spot = this.plan.spots().get(index);
+            final BlockPos at = where(spot);
+            if (this.present[index] && in.getBlockState(at).getBlock() instanceof FormedPartBlock) {
+                FormedParts.reach(in, at, reaching(spot));
+            }
+        }
     }
 
     /* The formed parts {@code part} reaches into take its shape, or lose it, as it stands now. */

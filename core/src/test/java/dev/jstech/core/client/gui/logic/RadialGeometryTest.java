@@ -20,6 +20,11 @@ class RadialGeometryTest {
     private static final double EPS = 1e-9;
 
     @Test
+    void segmentAt_theVeryCentreIsOnNoSegment() {
+        assertTrue(RadialGeometry.segmentAt(0, 0, 4, 0, 50).isEmpty());
+    }
+
+    @Test
     void segmentAtAngle_topIsZero() {
         assertEquals(0, RadialGeometry.segmentAtAngle(0.0, 4));
     }

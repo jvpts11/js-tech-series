@@ -858,6 +858,11 @@ public final class ColouredLights {
 
         private static final Map<BlockPos, Cached> CACHE = new ConcurrentHashMap<>();
         private static final long KEEP_TICKS = 20;
+        /* How long what a lamp lights is kept once it no longer lights, in ticks. */
+        private static final long FORGET_TICKS = 200;
+
+        /* When what the lamps no longer lighting lit was last let go of. */
+        private static volatile long swept;
 
         static Map<BlockPos, BeamLights.Lit> cells(final ClientLevel level, final LampBlockEntity lamp,
                                                    final LightKind kind) {
@@ -871,6 +876,12 @@ public final class ColouredLights {
             final Map<BlockPos, BeamLights.Lit> cells = Beams.lamp(level, lamp.getBlockPos(), lamp.facing(), kind,
                     kind.intensity());
             CACHE.put(lamp.getBlockPos(), new Cached(now, cells));
+            // A lamp that lights has what it lights worked out again every second, so one not worked out for long
+            // is gone, out or broken, or of another world.
+            if (now - swept >= KEEP_TICKS || now < swept) {
+                swept = now;
+                CACHE.values().removeIf(old -> now - old.at() > FORGET_TICKS || now < old.at());
+            }
             return cells;
         }
 

@@ -35,8 +35,9 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 public final class CameraViews {
 
     private static final String VERSION = "1";
-    /* The view each player sees now. */
+    /* The view each player sees now, and the number of the last view started for each. */
     private static final Map<ServerPlayer, CameraView> SHOWING = new WeakHashMap<>();
+    private static final Map<ServerPlayer, Integer> NUMBERS = new WeakHashMap<>();
 
     private CameraViews() {
     }
@@ -62,10 +63,10 @@ public final class CameraViews {
 
     /**
      * Shows {@code player} what {@code entity} sees, from its eyes; whether it could, the entity being in the
-     * player's world, in a chunk the server sends them.
+     * player's world, in a chunk the server sends them and near enough for the server to send them the entity too.
      */
     public static boolean watch(final ServerPlayer player, final Entity entity) {
-        if (entity.level() != player.level() || !inView(player, entity.position())) {
+        if (entity.level() != player.level() || !inView(player, entity.position()) || !tracked(player, entity)) {
             return false;
         }
         show(player, new CameraView.Watch(entity.getId()));
@@ -89,7 +90,7 @@ public final class CameraViews {
     public static void end(final ServerPlayer player) {
         final CameraView was = SHOWING.remove(player);
         if (was != null) {
-            PacketDistributor.sendToPlayer(player, new CameraViewPayload(Optional.empty()));
+            PacketDistributor.sendToPlayer(player, new CameraViewPayload(Optional.empty(), 0));
             JsCore.events().post(new CameraViewEvent(player, was, CameraViewEvent.Ending.STOPPED));
         }
     }
@@ -107,13 +108,25 @@ public final class CameraViews {
         }
     }
 
+    /**
+     * What the player's game said of the view the server numbered {@code number}, the views started for a player
+     * counted from one: it ended as {@code ending} says. Only the view showing now ends: the word about one the server
+     * has since replaced comes too late, and ends nothing.
+     */
+    public static void ended(final ServerPlayer player, final CameraViewEvent.Ending ending, final int number) {
+        if (NUMBERS.getOrDefault(player, 0) == number) {
+            ended(player, ending);
+        }
+    }
+
     /* Starts {@code view} for {@code player}, ending the one before. */
     private static void show(final ServerPlayer player, final CameraView view) {
         final CameraView was = SHOWING.put(player, view);
         if (was != null) {
             JsCore.events().post(new CameraViewEvent(player, was, CameraViewEvent.Ending.STOPPED));
         }
-        PacketDistributor.sendToPlayer(player, new CameraViewPayload(Optional.of(view)));
+        final int number = NUMBERS.merge(player, 1, Integer::sum);
+        PacketDistributor.sendToPlayer(player, new CameraViewPayload(Optional.of(view), number));
     }
 
     /* Whether {@code place} is in a chunk the server sends {@code player}'s game, which it has to draw. */
@@ -122,16 +135,29 @@ public final class CameraViews {
                 SectionPos.blockToSectionCoord(place.z));
     }
 
+    /*
+     * Whether the server sends {@code player}'s game the entity itself: it does only within the entity's own tracking
+     * range, shorter than the view for most, and the player's game cannot watch what it was never sent.
+     */
+    private static boolean tracked(final ServerPlayer player, final Entity entity) {
+        final double range = Math.min(entity.getType().clientTrackingRange(),
+                player.server.getPlayerList().getViewDistance()) * SectionPos.SECTION_SIZE;
+        final double dx = entity.getX() - player.getX();
+        final double dz = entity.getZ() - player.getZ();
+        return dx * dx + dz * dz <= range * range;
+    }
+
     /* Runs on a client only: the payload is only ever sent to one. */
     private static void onView(final CameraViewPayload payload, final IPayloadContext context) {
-        context.enqueueWork(() -> CameraClientHooks.get().view(payload.view()));
+        context.enqueueWork(() -> CameraClientHooks.get().view(payload.view(), payload.number()));
     }
 
     /* Runs on the server: a view ended on the player's game. */
     private static void onEnded(final CameraViewEndedPayload payload, final IPayloadContext context) {
         context.enqueueWork(() -> {
             if (context.player() instanceof ServerPlayer player) {
-                ended(player, CameraViewEvent.Ending.byCode(payload.ending()).orElse(CameraViewEvent.Ending.STOPPED));
+                ended(player, CameraViewEvent.Ending.byCode(payload.ending()).orElse(CameraViewEvent.Ending.STOPPED),
+                        payload.number());
             }
         });
     }

@@ -103,9 +103,10 @@ public final class GraphEditor extends UiComponent {
         pointerY = (int) my;
         final Optional<GraphModel.PortRef> port = model.portAt(gx, gy, REACH);
         if (button == RIGHT_BUTTON) {
+            // The right button frees an input, or asks for a node on empty ground; an output's port is neither.
             if (port.isPresent() && !port.get().output()) {
                 model.disconnect(port.get());
-            } else if (model.nodeAt(gx, gy).isEmpty()) {
+            } else if (port.isEmpty() && model.nodeAt(gx, gy).isEmpty()) {
                 onAddNode.accept(gx, gy);
             }
             return true;

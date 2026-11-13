@@ -17,6 +17,7 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.items.IItemHandler;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The steps of a {@link Batch} over the game's stores: putting items into an item handler and taking them out,
@@ -57,9 +58,13 @@ public final class HandlerSteps {
                 moved -> handler.fill(wanted.copyWithAmount((int) moved), IFluidHandler.FluidAction.EXECUTE));
     }
 
-    /** Gives {@code storage} {@code amount} FE. */
+    /**
+     * Gives {@code storage} {@code amount} FE. Undone by taking it back out: a store that gives none out, as a
+     * machine's input, keeps it, and {@link Recoverable#unreturnedEnergy} says how much, for the caller to take from
+     * where it came, so a batch stuck makes no energy.
+     */
     public static Recoverable receive(final IEnergyStorage storage, final int amount) {
-        return new AmountStep(amount,
+        return new EnergyStep(amount,
                 () -> storage.receiveEnergy(amount, true),
                 () -> storage.receiveEnergy(amount, false),
                 moved -> storage.extractEnergy((int) moved, false));
@@ -67,7 +72,7 @@ public final class HandlerSteps {
 
     /** Takes {@code amount} FE out of {@code storage}. */
     public static Recoverable extract(final IEnergyStorage storage, final int amount) {
-        return new AmountStep(amount,
+        return new EnergyStep(amount,
                 () -> storage.extractEnergy(amount, true),
                 () -> storage.extractEnergy(amount, false),
                 moved -> storage.receiveEnergy((int) moved, false));
@@ -87,6 +92,12 @@ public final class HandlerSteps {
         /** The fluid the last undo could not give back to where it came from; empty when it all went back. */
         default FluidStack unreturnedFluid() {
             return FluidStack.EMPTY;
+        }
+
+        /** The FE the last undo could not give back to where it came from; 0 when it all went back. */
+        @ApiStatus.Experimental
+        default long unreturnedEnergy() {
+            return 0;
         }
     }
 
@@ -266,6 +277,20 @@ public final class HandlerSteps {
 
         protected long unreturned() {
             return this.unreturned;
+        }
+    }
+
+    /* A step over energy, which can say how much of it the last undo left unreturned. */
+    private static final class EnergyStep extends AmountStep {
+
+        private EnergyStep(final long wanted, final LongSupplier simulate, final LongSupplier execute,
+                           final LongUnaryOperator giveBack) {
+            super(wanted, simulate, execute, giveBack);
+        }
+
+        @Override
+        public long unreturnedEnergy() {
+            return unreturned();
         }
     }
 

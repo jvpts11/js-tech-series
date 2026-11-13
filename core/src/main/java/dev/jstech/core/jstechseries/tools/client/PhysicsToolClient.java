@@ -141,12 +141,17 @@ public final class PhysicsToolClient {
         if (game.player == null || game.options.hideGui) {
             return;
         }
+        final PhysicsToolPalette.Colours colours = PhysicsToolPalette.get();
+        final Font font = game.font;
+        // The label goes by what the tool holds, in either hand; the panel only with it in the main hand.
+        final PhysicsTool.Grab grab = held(game.player);
+        if (grab != null && grab.body() instanceof ClientStructure structure) {
+            label(g, font, colours, structure, grab);
+        }
         final ItemStack stack = game.player.getMainHandItem();
         if (!stack.is(PhysicsTool.ITEM.get())) {
             return;
         }
-        final PhysicsToolPalette.Colours colours = PhysicsToolPalette.get();
-        final Font font = game.font;
         final int x = PhysicsToolLayout.LEFT;
         final int y = PhysicsToolLayout.top(g.guiHeight());
         g.fill(x, y, x + PhysicsToolLayout.WIDTH, y + PhysicsToolLayout.HEIGHT, colours.panel());
@@ -179,10 +184,6 @@ public final class PhysicsToolClient {
         for (int line = 0; line < hints.length; line++) {
             Draw.textScaled(g, font, hints[line], x + PhysicsToolLayout.HINT_X, y + PhysicsToolLayout.HINT_Y
                     + line * PhysicsToolLayout.HINT_PITCH, colours.hint(), PhysicsToolLayout.SMALL);
-        }
-        final PhysicsTool.Grab grab = held(game.player);
-        if (grab != null && grab.body() instanceof ClientStructure structure) {
-            label(g, font, colours, structure, grab);
         }
     }
 

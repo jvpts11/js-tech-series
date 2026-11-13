@@ -532,9 +532,15 @@ public final class MultiblockBuilderScreen extends Screen {
         return known == null ? Text.literal(block) : GameText.of(known.getName());
     }
 
-    /* A count as the display shows it: a player in creative has every block there is. */
-    private static Text count(final int count) {
-        return Text.literal(count >= Integer.MAX_VALUE / 4 ? "-" : String.valueOf(count));
+    /*
+     * A count as the display shows it: a player in creative taking from what they carry has every block there is; a
+     * store, however full, its number.
+     */
+    private Text count(final int count) {
+        final LocalPlayer player = player();
+        final boolean endless = player != null && player.getAbilities().instabuild
+                && BuildSources.INVENTORY.equals(this.state.source());
+        return Text.literal(endless ? "-" : String.valueOf(count));
     }
 
     private static LocalPlayer player() {

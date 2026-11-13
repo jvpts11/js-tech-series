@@ -19,10 +19,12 @@ import dev.jstech.core.text.TextKey;
 import dev.jstech.core.worldgen.place.Landmark;
 import dev.jstech.core.worldgen.place.Landmarks;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -31,6 +33,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * The markers on the maps: each player's own, and their team's, which every member sees; kept with the world and sent
@@ -112,6 +115,34 @@ public final class MapMarkers {
         OURS.update(server, CoreTeams.teamOf(server, player), markers -> without(markers, id));
     }
 
+    /**
+     * Shows each of {@code shown} to {@code player} alone, in place of their markers of the same ids, sent to them at
+     * once rather than a list a marker.
+     */
+    @ApiStatus.Experimental
+    public static void showAll(final ServerPlayer player, final Collection<Marker> shown) {
+        final MinecraftServer server = player.getServer();
+        if (server != null && !shown.isEmpty()) {
+            MINE.update(server, player.getUUID(), markers -> {
+                List<Marker> next = markers;
+                for (final Marker marker : shown) {
+                    next = with(next, marker);
+                }
+                return next;
+            });
+        }
+    }
+
+    /** Takes each marker of {@code ids} off the maps of {@code player} and of their team, at once. */
+    @ApiStatus.Experimental
+    public static void hideAll(final MinecraftServer server, final UUID player, final Collection<String> ids) {
+        if (ids.isEmpty()) {
+            return;
+        }
+        MINE.update(server, player, markers -> withoutAll(markers, ids));
+        OURS.update(server, CoreTeams.teamOf(server, player), markers -> withoutAll(markers, ids));
+    }
+
     /** The markers {@code player} sees: their own, then their team's. */
     public static List<Marker> of(final MinecraftServer server, final UUID player) {
         final Map<String, Marker> seen = new LinkedHashMap<>();
@@ -157,6 +188,13 @@ public final class MapMarkers {
     private static List<Marker> without(final List<Marker> markers, final String id) {
         final List<Marker> next = new ArrayList<>(markers);
         next.removeIf(marker -> marker.id().equals(id));
+        return next.size() == markers.size() ? markers : List.copyOf(next);
+    }
+
+    private static List<Marker> withoutAll(final List<Marker> markers, final Collection<String> ids) {
+        final Set<String> gone = Set.copyOf(ids);
+        final List<Marker> next = new ArrayList<>(markers);
+        next.removeIf(marker -> gone.contains(marker.id()));
         return next.size() == markers.size() ? markers : List.copyOf(next);
     }
 }

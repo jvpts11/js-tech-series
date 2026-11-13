@@ -88,8 +88,11 @@ final class JointWork {
             }
             final JointKind.Winch winch = rope.winch().get();
             final double reeling = signal(level, joint, winch.out()) - signal(level, joint, winch.in());
-            final double length = Math.max(winch.least(), Math.min(winch.most(),
-                    rope.length() + winch.speed() * reeling / StructurePhysics.TICKS));
+            final double wanted = rope.length() + winch.speed() * reeling / StructurePhysics.TICKS;
+            // Reeled towards its band only: a rope made longer or shorter than its winch reels is never pulled into
+            // the band at once, which would yank what it holds with no signal at all.
+            final double length = reeling > 0 ? Math.max(rope.length(), Math.min(winch.most(), wanted))
+                    : Math.min(rope.length(), Math.max(winch.least(), wanted));
             if (Math.abs(length - rope.length()) < REELED) {
                 continue;
             }
@@ -222,12 +225,12 @@ final class JointWork {
         return scratch.lengthSquared() < 1.0e-12 ? scratch.set(way) : scratch.normalize();
     }
 
-    /* How fast a motor drives now: its speed, as strong as its signal says, less its reverse's. */
+    /*
+     * How fast a motor drives now: its speed, as strong as its signal says, or full with none, less its reverse's.
+     */
     private static double speedOf(final ServerLevel level, final StructureJoint joint, final JointKind.Drive drive) {
-        if (drive.signal().isEmpty() && drive.reverse().isEmpty()) {
-            return drive.speed();
-        }
-        return drive.speed() * (signal(level, joint, drive.signal()) - signal(level, joint, drive.reverse()));
+        final double forward = drive.signal().isEmpty() ? 1.0 : signal(level, joint, drive.signal());
+        return drive.speed() * (forward - signal(level, joint, drive.reverse()));
     }
 
     /* How strong a joint's signal is now, from 0 to 1; none read as 0. */

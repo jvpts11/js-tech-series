@@ -86,8 +86,9 @@ public final class PlayWorld {
                         McpPermission.ACT, PlayWorld::gameTests),
                 new McpTool("client_test_run", "Plays a client test kept as a file (as the studio's Record a test "
                         + "keeps them) in the world open, step by step, and answers with each picture compared with "
-                        + "its reference.", McpSchema.object().words("mod", "The test's mod.", true).words("name",
-                        "The test's name.", true).build(), McpPermission.ACT, PlayWorld::clientTest));
+                        + "its reference; one that compares no picture has not passed.", McpSchema.object()
+                        .words("mod", "The test's mod.", true).words("name", "The test's name.", true).build(),
+                        McpPermission.ACT, PlayWorld::clientTest));
     }
 
     private static CompletableFuture<McpResult> give(final McpCall call) {
@@ -201,8 +202,10 @@ public final class PlayWorld {
                 final JsonObject out = new JsonObject();
                 out.addProperty("steps", steps.size());
                 out.add("pictures", pictures);
-                out.addProperty("passed", pictures.asList().stream().allMatch(picture -> picture.getAsJsonObject()
-                        .get("passed").getAsBoolean()));
+                // A test that compared no picture checked nothing, so it has not passed.
+                out.addProperty("compared", pictures.size());
+                out.addProperty("passed", !pictures.isEmpty() && pictures.asList().stream().allMatch(picture ->
+                        picture.getAsJsonObject().get("passed").getAsBoolean()));
                 return Optional.of(McpResult.json(out));
             }
             if (++at[1] < SETTLE) {

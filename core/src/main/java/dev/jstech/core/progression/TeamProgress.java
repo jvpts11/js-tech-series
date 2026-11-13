@@ -133,11 +133,15 @@ public final class TeamProgress {
     /**
      * Has {@code team} know {@code share} of {@code knowledge}, from 0 to 1, if that is more than it knew; knowledge
      * that comes whole is known whole by any share. Posts a {@link TeamProgressEvent.KnowledgeGained} when it is more.
+     * A share that is not a number grants nothing.
      *
      * @return whether the team knows more now
      */
     public static boolean grant(final MinecraftServer server, final String team, final Knowledge knowledge,
                                 final double share) {
+        if (Double.isNaN(share)) {
+            return false;
+        }
         final double before = share(server, team, knowledge.id());
         final double now = knowledge.partial() ? Math.clamp(share, 0.0, WHOLE) : WHOLE;
         if (now <= before) {

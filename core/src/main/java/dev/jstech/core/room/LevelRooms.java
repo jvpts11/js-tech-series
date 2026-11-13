@@ -395,8 +395,13 @@ final class LevelRooms {
         final long now = this.level.getGameTime();
         while (!this.seedsDue.isEmpty()) {
             final long seed = this.seedsDue.removeFirstLong();
-            if (!rooms.seeds().contains(seed) || rooms.roomAt(seed) != null
-                    || now < this.seedNext.getOrDefault(seed, 0L)) {
+            if (!rooms.seeds().contains(seed)) {
+                // A place that no longer asks for its room takes its waits with it.
+                this.seedNext.remove(seed);
+                this.seedWait.remove(seed);
+                continue;
+            }
+            if (rooms.roomAt(seed) != null || now < this.seedNext.getOrDefault(seed, 0L)) {
                 continue;
             }
             // Looked for again no sooner than its wait, which doubles each time it finds open air.

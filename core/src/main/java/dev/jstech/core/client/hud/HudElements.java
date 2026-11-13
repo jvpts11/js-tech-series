@@ -196,11 +196,14 @@ public final class HudElements {
         }
     }
 
-    /* An element the player placed: at its place, as big as they made it. */
+    /*
+     * An element the player placed: at its place, as big as they made it. The place is its box's, as the editor laid it
+     * out, and it is drawn at that box's top left, as the editor shows it, whatever its size this frame.
+     */
     private static void drawPlaced(final GuiGraphics graphics, final DeltaTracker delta, final Minecraft minecraft,
                                    final IHudElement element, final HudPlacement placed) {
-        final HudStack.Size size = placed.scaled(element.size(minecraft));
-        final HudStack.Point at = placed.topLeft(graphics.guiWidth(), graphics.guiHeight(), size);
+        final HudStack.Size box = placed.scaled(boxSize(minecraft, element));
+        final HudStack.Point at = placed.topLeft(graphics.guiWidth(), graphics.guiHeight(), box);
         // Scaled about its own top left and drawn there, so an element that keeps where it drew (for a click) keeps
         // the true place at its own size.
         graphics.pose().pushPose();

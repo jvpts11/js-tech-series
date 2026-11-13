@@ -69,12 +69,11 @@ public final class WorldCalendar {
 
     /**
      * Where {@code level}'s world stands on its orbit round its star: 0 as its year begins, a half halfway round, by
-     * its own year when its clock has one, else by the year of four seasons the world's balance sets. Pure arithmetic
-     * on the clock, so every side reads the same.
+     * the year of its calendar ({@link #calendarOf}), so its orbit comes round as its calendar's year does. Pure
+     * arithmetic on the clock, so every side reads the same.
      */
     public static double orbit(final Level level) {
-        final int year = yearOf(level);
-        final long days = year > 0 ? year : (long) calendar().daysPerSeason() * Season.perYear();
+        final long days = (long) calendarOf(level).daysPerSeason() * Season.perYear();
         final long ticks = days * GameCalendar.DAY_TICKS;
         return Math.floorMod(level.getDayTime(), ticks) / (double) ticks;
     }

@@ -26,7 +26,8 @@ public record DamageStamp(double hole, double rough, Push push, double depth, bo
     public DamageStamp {
         Objects.requireNonNull(push, "push");
         Objects.requireNonNull(edge, "edge");
-        if (hole < 0 || hole > 1 || rough < 0 || rough > 1 || depth < 0 || depth > 1) {
+        // Written so a share that is not a number fails as one out of range does.
+        if (!(hole >= 0 && hole <= 1) || !(rough >= 0 && rough <= 1) || !(depth >= 0 && depth <= 1)) {
             throw new IllegalArgumentException("a stamp's hole, roughness and depth are shares from 0 to 1, not "
                     + hole + ", " + rough + " and " + depth);
         }

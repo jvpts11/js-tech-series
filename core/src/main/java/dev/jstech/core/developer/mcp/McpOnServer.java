@@ -341,6 +341,10 @@ public final class McpOnServer {
         public CompletableFuture<Pairing> pair(final String name, final String version) {
             final CompletableFuture<Pairing> answer = new CompletableFuture<>();
             this.server.execute(() -> {
+                // The server came to it only after the question timed out: no operator is asked it late.
+                if (answer.isDone()) {
+                    return;
+                }
                 final List<ServerPlayer> operators = this.server.getPlayerList().getPlayers().stream()
                         .filter(DeveloperMode::mayUseWorldTools).toList();
                 if (operators.isEmpty()) {
@@ -349,6 +353,10 @@ public final class McpOnServer {
                 }
                 final int id = NEXT.incrementAndGet();
                 WAITING.put(id, answer);
+                if (answer.isDone()) {
+                    WAITING.remove(id);
+                    return;
+                }
                 operators.forEach(operator -> PacketDistributor.sendToPlayer(operator, new McpPairAskPayload(id, name,
                         version)));
             });

@@ -118,7 +118,12 @@ public final class HandUse {
             if (there.isEmpty()) {
                 return false;
             }
-            player.setItemInHand(InteractionHand.MAIN_HAND, inventory.extractItem(slot, there.getCount(), false));
+            // A slot held by its machine while it works gives nothing, and nothing moved.
+            final ItemStack taken = inventory.extractItem(slot, there.getCount(), false);
+            if (taken.isEmpty()) {
+                return false;
+            }
+            player.setItemInHand(InteractionHand.MAIN_HAND, taken);
             return true;
         }
         if (!there.isEmpty() || !inventory.isItemValid(slot, hand)) {

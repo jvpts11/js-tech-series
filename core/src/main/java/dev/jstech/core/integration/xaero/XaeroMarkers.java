@@ -46,7 +46,9 @@ public final class XaeroMarkers implements IMapAdapter {
         ours.clear();
         for (final Marker marker : markers) {
             final String name = marker.label().getString();
-            final String initials = name.isEmpty() ? "J" : name.substring(0, Math.min(INITIALS, name.length()));
+            // The first two letters whole, a letter of two halves as one.
+            final String initials = name.isEmpty() ? "J" : name.substring(0, name.offsetByCodePoints(0,
+                    Math.min(INITIALS, name.codePointCount(0, name.length()))));
             ours.add(marker.id(), new Waypoint(marker.pos().getX(), marker.pos().getY(), marker.pos().getZ(), name,
                     initials, nearest(marker.colourIn(MapMarkers.layerOf(marker.layer())))));
         }

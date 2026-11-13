@@ -33,15 +33,14 @@ final class DeclaredReiDisplay<T> implements Display {
 
     private final RecipeViewKind<T> kind;
     private final T recipe;
-    private final RecipeView page;
     private final List<EntryIngredient> inputs = new ArrayList<>();
     private final List<EntryIngredient> outputs = new ArrayList<>();
 
     DeclaredReiDisplay(final RecipeViewKind<T> kind, final T recipe) {
         this.kind = kind;
         this.recipe = recipe;
-        this.page = kind.view(recipe);
-        for (final RecipeView.Slot slot : this.page.slots()) {
+        // What goes in and comes out is the recipe's own, the same however much the player knows.
+        for (final RecipeView.Slot slot : kind.view(recipe).slots()) {
             (slot.role() == RecipeView.Role.OUTPUT ? this.outputs : this.inputs).add(ingredientOf(slot));
         }
     }
@@ -56,9 +55,9 @@ final class DeclaredReiDisplay<T> implements Display {
         return this.recipe;
     }
 
-    /** Its page, as the kind laid it. */
+    /** Its page, as the kind lays it now: a padlock goes as soon as the knowledge it waits on is learnt. */
     RecipeView page() {
-        return this.page;
+        return this.kind.view(this.recipe);
     }
 
     @Override

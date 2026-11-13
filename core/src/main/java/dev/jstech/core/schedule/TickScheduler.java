@@ -101,14 +101,14 @@ public final class TickScheduler {
              * other round; a tick of one round leaves it the odd credits.
              */
             final int slice = Math.max(1, Math.min(quantum, left / remaining));
-            boolean any = false;
+            // A round of none but low ones still runs them, so it is never spent on nothing.
+            final boolean lowSitOut = round % 2 == 1 && othersRun(tasks, done, busy);
             for (int k = 0; k < count && left > 0; k++) {
                 final int at = (first + k) % count;
                 final ITask task = tasks.get(at);
-                if (done[at] || (round % 2 == 1 && task.low() && any) || (task.idle() && busy > 0)) {
+                if (done[at] || (lowSitOut && task.low()) || (task.idle() && busy > 0)) {
                     continue;
                 }
-                any = true;
                 final int offered = Math.min(slice * Math.max(1, task.weight()), left);
                 final int used = task.step(offered);
                 spent += used;
@@ -251,6 +251,17 @@ public final class TickScheduler {
         }
         this.start = next;
         return new Outcome(spent, false);
+    }
+
+    /* Whether a task that is not low is still to be offered work this round. */
+    private static boolean othersRun(final List<? extends ITask> tasks, final boolean[] done, final int busy) {
+        for (int k = 0; k < tasks.size(); k++) {
+            final ITask task = tasks.get(k);
+            if (!done[k] && !task.low() && !(task.idle() && busy > 0)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /** What chooses which task has the next slice, when the block chooses for itself. */

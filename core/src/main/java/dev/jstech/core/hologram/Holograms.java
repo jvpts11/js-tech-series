@@ -25,7 +25,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 /**
  * Words floating in the world, facing whoever reads them: a machine's state over it, a warning over a reactor, a
  * name over a waypoint. The server puts one up with {@link #show} and the players whose games hold that chunk draw it,
- * each line turned towards them, until it is taken down, its time runs out, or they go too far.
+ * each line turned towards them, until it is taken down, its time runs out, or their game lets that chunk go.
  *
  * <p>A hologram is the server's word only; nothing of it is saved, so a mod that wants one standing after a restart
  * shows it again when its machine loads.

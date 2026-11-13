@@ -438,11 +438,11 @@ final class CamerasPage extends StudioPage {
                 game.player == null ? Vec3.ZERO : Vec3.atBottomCenterOf(game.player.blockPosition()));
     }
 
-    /* The id the path is saved as: its own, or the name written for a new one. */
+    /* The id the path is saved as: its own, or the name written for a new one, a file in the paths' folder. */
     private Optional<ResourceLocation> savedAs() {
         final Optional<ResourceLocation> named = this.named();
         return named.isPresent() ? named : Optional.ofNullable(ResourceLocation.tryParse(this.name.edit().trim()))
-                .filter(id -> !id.getPath().isEmpty() && this.name.edit().contains(":"));
+                .filter(id -> this.name.edit().contains(":") && StudioFiles.staysInItsFolder(id.getPath()));
     }
 
     private Optional<ResourceLocation> named() {

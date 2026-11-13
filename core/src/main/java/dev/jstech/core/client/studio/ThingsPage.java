@@ -16,8 +16,8 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import java.util.ArrayList;
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -179,12 +179,13 @@ final class ThingsPage extends StudioPage {
 
     /** Reads every thing, and what each is made of, keeping the thing chosen and the words searched. */
     void read(final String searched) {
-        final Optional<ResourceLocation> was = this.tree.chosen().map(StudioThing::id);
+        final Optional<StudioThing> was = this.tree.chosen();
         final long started = System.nanoTime();
         final StudioContext context = new StudioContext(Minecraft.getInstance().getResourceManager());
         final List<StudioThing> things = StudioThings.all();
         final Map<StudioThing, String> names = new IdentityHashMap<>();
-        final Map<StudioThing, StudioSheet> read = new HashMap<>();
+        // In the order the things come, by mod and kind, so a choice by id alone always finds the same one.
+        final Map<StudioThing, StudioSheet> read = new LinkedHashMap<>();
         int found = 0;
         for (final StudioThing thing : things) {
             names.put(thing, thing.name().getString());
@@ -199,7 +200,9 @@ final class ThingsPage extends StudioPage {
         this.tree = new StudioTree(things, names, read);
         this.tree.search(searched);
         this.bench.show(null);
-        was.ifPresent(this::choose);
+        // The same thing read again: of the same kind as well as the same id, as two kinds may share an id.
+        was.flatMap(chosen -> things.stream().filter(thing -> thing.kind() == chosen.kind()
+                && thing.id().equals(chosen.id())).findFirst()).ifPresent(this::choose);
     }
 
     /** Shows only the things whose name or id holds {@code word}. */

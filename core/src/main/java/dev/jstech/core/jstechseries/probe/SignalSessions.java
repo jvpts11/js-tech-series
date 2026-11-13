@@ -53,8 +53,9 @@ public final class SignalSessions {
         }
         final GlobalPos link = stack.get(SignalProbe.LINK.get());
         final long now = player.serverLevel().getGameTime();
+        // Read on only while held without a break: a probe put down and taken up again starts again.
         final Session session = SESSIONS.compute(player.getUUID(), (id, known) -> known != null
-                && Objects.equals(known.link, link) ? known : new Session(link));
+                && Objects.equals(known.link, link) && known.lastTick >= now - 1 ? known : new Session(link));
         if (session.lastTick == now) {
             return;
         }

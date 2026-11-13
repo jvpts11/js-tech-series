@@ -305,8 +305,12 @@ public final class WorldEvents {
             }
             if (type.everyDays() > 0) {
                 if (day % type.everyDays() == 0) {
-                    plan(level, kind.getKey(), (int) Math.max(type.warning(), untilHour(level, type.atHour())),
-                            Optional.empty());
+                    // At its hour, the first far enough off for its whole warning: never at another time of day.
+                    long until = untilHour(level, type.atHour());
+                    if (until < type.warning()) {
+                        until += Math.ceilDiv(type.warning() - until, DAY) * DAY;
+                    }
+                    plan(level, kind.getKey(), (int) Math.min(Integer.MAX_VALUE, until), Optional.empty());
                 }
             } else if (random.nextDouble() < type.chancePerDay() * WorldEventBalance.frequency(kind.getKey())) {
                 plan(level, kind.getKey(), type.warning() + random.nextInt((int) (DAY / 2)), Optional.empty());

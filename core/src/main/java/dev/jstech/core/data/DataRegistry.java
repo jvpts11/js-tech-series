@@ -12,6 +12,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.text.LongText;
@@ -142,7 +143,7 @@ public final class DataRegistry<T> {
         final RegistryOps<JsonElement> ops = RegistryOps.create(JsonOps.INSTANCE, registries);
         final Map<ResourceLocation, T> read = new TreeMap<>();
         for (final Map.Entry<ResourceLocation, JsonElement> file : files.entrySet()) {
-            final DataResult<T> value = this.codec.parse(ops, file.getValue());
+            final DataResult<T> value = parsed(ops, file.getValue());
             // Only a file that reads whole is kept: a partial value would hide that part of the file was dropped.
             value.result().ifPresentOrElse(parsed -> read.put(file.getKey(), parsed),
                     () -> JsCore.LOGGER.warn("The {} file {} does not read and is left out: {}", this.id,
@@ -186,7 +187,7 @@ public final class DataRegistry<T> {
             if (file == null) {
                 continue;
             }
-            final DataResult<T> value = this.codec.parse(ops, entries.get(key));
+            final DataResult<T> value = parsed(ops, entries.get(key));
             value.result().ifPresentOrElse(parsed -> read.put(file, parsed),
                     () -> JsCore.LOGGER.warn("The {} value {} from the server does not read: {}", this.id, file,
                             value.error().map(DataResult.Error::message).orElse("no value")));
@@ -197,6 +198,19 @@ public final class DataRegistry<T> {
     /* The player left the server: what it sent goes with it. */
     void forgetClientValues() {
         this.clientValues = Map.of();
+    }
+
+    /*
+     * A value read by the codec. One whose own type refuses it as it is made, which its codec's checks let by,
+     * throws rather than failing: it is told as a value that does not read, so it alone is left out, not every
+     * value after it.
+     */
+    private <F> DataResult<T> parsed(final DynamicOps<F> ops, final F input) {
+        try {
+            return this.codec.parse(ops, input);
+        } catch (final IllegalArgumentException | IllegalStateException refused) {
+            return DataResult.error(() -> String.valueOf(refused.getMessage()));
+        }
     }
 
     /** Declares a registry of datapack files one property at a time. */

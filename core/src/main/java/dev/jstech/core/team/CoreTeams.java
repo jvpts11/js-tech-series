@@ -8,14 +8,23 @@
 package dev.jstech.core.team;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.serialization.Codec;
+import dev.jstech.core.JsCore;
 import dev.jstech.core.log.CoreLogs;
+import dev.jstech.core.state.CoreState;
+import dev.jstech.core.state.CoreStates;
+import dev.jstech.core.state.PlayerState;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.GameProfileCache;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import org.jetbrains.annotations.ApiStatus;
 import org.slf4j.Logger;
 
 /**
@@ -29,10 +38,27 @@ public final class CoreTeams {
     private static final Logger LOGGER = CoreLogs.TEAMS.logger();
     /** What the id of a player's team of their own starts with. */
     private static final String SOLO = "player:";
+    /*
+     * The name each player was last known by as they joined, kept with the world: the game's own cache of names lets
+     * the oldest go once it is full, and a team found by name would be lost with it while its player is away.
+     */
+    private static final PlayerState<String> KNOWN_NAMES = CoreState.builder(
+            ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "known_names"), Codec.STRING, "").player();
 
     private static volatile ITeamSource source = ScoreboardTeams.INSTANCE;
 
     private CoreTeams() {
+    }
+
+    /** Keeps the names of the players who join, once, from the Core's constructor. */
+    @ApiStatus.Internal
+    public static void listen() {
+        CoreStates.register(KNOWN_NAMES);
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedInEvent.class, event -> {
+            if (event.getEntity() instanceof ServerPlayer player) {
+                KNOWN_NAMES.set(player.server, player.getUUID(), player.getScoreboardName());
+            }
+        });
     }
 
     /** The source in use. */
@@ -92,6 +118,12 @@ public final class CoreTeams {
             return Optional.of(online.getScoreboardName());
         }
         final GameProfileCache profiles = server.getProfileCache();
-        return profiles == null ? Optional.empty() : profiles.get(player).map(GameProfile::getName);
+        final Optional<String> cached = profiles == null ? Optional.empty() : profiles.get(player)
+                .map(GameProfile::getName);
+        if (cached.isPresent()) {
+            return cached;
+        }
+        final String known = KNOWN_NAMES.get(server, player);
+        return known.isEmpty() ? Optional.empty() : Optional.of(known);
     }
 }

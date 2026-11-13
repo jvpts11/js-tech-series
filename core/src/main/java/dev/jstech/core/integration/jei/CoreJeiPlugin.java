@@ -147,6 +147,7 @@ public final class CoreJeiPlugin implements IModPlugin {
     @Override
     public void onRuntimeUnavailable() {
         runtime = null;
+        RecipeViewers.remove(VIEWER);
     }
 
     /** How many recipes JEI shows under that kind of machine, or nothing while JEI is not running. */

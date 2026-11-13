@@ -20,11 +20,14 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.UUIDUtil;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Whose a thing is and who else may do what with it: a machine its placer owns, shared with nobody, with the owner's
@@ -98,10 +101,20 @@ public record Ownership(UUID owner, Access access, Map<UUID, Trust> trusted) {
         return Optional.ofNullable(trusted.get(player));
     }
 
-    /** Whether {@code player} may use the thing: its owner, whoever its access or its trust lets in, an operator. */
+    /**
+     * Whether {@code player} may use the thing: its owner, whoever its access or its trust lets in, an operator. A
+     * permission over others' things is asked where the player stands; {@link #mayUse(ServerPlayer, ServerLevel,
+     * BlockPos)} asks it where the thing is.
+     */
     public boolean mayUse(final ServerPlayer player) {
+        return mayUse(player, player.serverLevel(), player.blockPosition());
+    }
+
+    /** Whether {@code player} may use the thing at {@code pos} of {@code level}, its permissions asked there. */
+    @ApiStatus.Experimental
+    public boolean mayUse(final ServerPlayer player, final ServerLevel level, final BlockPos pos) {
         if (player.getUUID().equals(owner) || trusted(player.getUUID(), Trust.USE)
-                || CorePermissions.has(player, CorePermissions.USE_OTHERS)) {
+                || CorePermissions.has(player, CorePermissions.USE_OTHERS, level, pos)) {
             return true;
         }
         return switch (access) {
@@ -113,19 +126,37 @@ public record Ownership(UUID owner, Access access, Map<UUID, Trust> trusted) {
 
     /** Whether {@code player} may open the thing's screen: whoever may use it, and whoever may open others'. */
     public boolean mayOpen(final ServerPlayer player) {
-        return mayUse(player) || CorePermissions.has(player, CorePermissions.OPEN_OTHERS);
+        return mayOpen(player, player.serverLevel(), player.blockPosition());
+    }
+
+    /** Whether {@code player} may open the screen of the thing at {@code pos} of {@code level}. */
+    @ApiStatus.Experimental
+    public boolean mayOpen(final ServerPlayer player, final ServerLevel level, final BlockPos pos) {
+        return mayUse(player, level, pos) || CorePermissions.has(player, CorePermissions.OPEN_OTHERS, level, pos);
     }
 
     /** Whether {@code player} may change how the thing is set up: its owner and whom the owner trusts to. */
     public boolean maySetUp(final ServerPlayer player) {
+        return maySetUp(player, player.serverLevel(), player.blockPosition());
+    }
+
+    /** Whether {@code player} may change how the thing at {@code pos} of {@code level} is set up. */
+    @ApiStatus.Experimental
+    public boolean maySetUp(final ServerPlayer player, final ServerLevel level, final BlockPos pos) {
         return player.getUUID().equals(owner) || trusted(player.getUUID(), Trust.SET_UP)
-                || CorePermissions.has(player, CorePermissions.SET_UP_OTHERS);
+                || CorePermissions.has(player, CorePermissions.SET_UP_OTHERS, level, pos);
     }
 
     /** Whether {@code player} may break the thing: its owner and whom the owner trusts to. */
     public boolean mayBreak(final ServerPlayer player) {
+        return mayBreak(player, player.serverLevel(), player.blockPosition());
+    }
+
+    /** Whether {@code player} may break the thing at {@code pos} of {@code level}. */
+    @ApiStatus.Experimental
+    public boolean mayBreak(final ServerPlayer player, final ServerLevel level, final BlockPos pos) {
         return player.getUUID().equals(owner) || trusted(player.getUUID(), Trust.BREAK)
-                || CorePermissions.has(player, CorePermissions.BREAK_OTHERS);
+                || CorePermissions.has(player, CorePermissions.BREAK_OTHERS, level, pos);
     }
 
     /** Whether {@code player}, online or not, is on the owner's team: the owner always is. */

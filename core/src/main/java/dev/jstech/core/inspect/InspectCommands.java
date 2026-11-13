@@ -15,6 +15,7 @@ import dev.jstech.core.diagnostic.DiagnosticBalance;
 import dev.jstech.core.diagnostic.DiagnosticCommands;
 import dev.jstech.core.diagnostic.TickLedger;
 import dev.jstech.core.text.GameText;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.ChatFormatting;
@@ -144,9 +145,12 @@ public final class InspectCommands {
             say(source, GameText.component(InspectTexts.PAYLOADS_NONE).withStyle(ChatFormatting.GRAY));
             return 0;
         }
-        final TickLedger.Tick last = ticks.getFirst();
+        // The last tick ended, as the inspector's screen shows it: the one under way is not all sent yet.
+        final long ended = Bandwidth.tick() - 1;
+        final TickLedger.Tick last = ledger.tick(ended).orElse(new TickLedger.Tick(ended, List.of()));
         tell(source, last);
-        final TickLedger.Tick busiest = ledger.busiest().orElse(last);
+        final TickLedger.Tick busiest = ticks.stream().filter(tick -> tick.tick() <= ended)
+                .max(Comparator.comparingLong(TickLedger.Tick::bytes)).orElse(last);
         if (busiest.tick() != last.tick()) {
             say(source, GameText.component(InspectTexts.PAYLOADS_BUSIEST));
             tell(source, busiest);

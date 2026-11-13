@@ -64,6 +64,8 @@ public final class BigPayloads {
     private static final AtomicInteger TRANSFERS = new AtomicInteger();
     /* Whose pieces came from the server, on a player's game. */
     private static final UUID SERVER = new UUID(0L, 0L);
+    /* How many times a player's game has left a server, so a piece of the one left that comes late is let go. */
+    private static final AtomicInteger LEFT_SERVERS = new AtomicInteger();
 
     private BigPayloads() {
     }
@@ -147,6 +149,7 @@ public final class BigPayloads {
 
     /** The player's game left the server: what it was sent and had not put together is forgotten. */
     public static void forgetServer() {
+        LEFT_SERVERS.incrementAndGet();
         INCOMING.remove(SERVER);
     }
 
@@ -177,6 +180,7 @@ public final class BigPayloads {
 
     /* A piece came, on either side; it is put with the others on the main thread. */
     private static void onPiece(final BigPiecePayload piece, final IPayloadContext context) {
+        final int left = LEFT_SERVERS.get();
         context.enqueueWork(() -> {
             final BigPayload<?> kind = KINDS.get(piece.kind());
             if (kind == null) {
@@ -184,6 +188,10 @@ public final class BigPayloads {
             }
             final Player player = context.player();
             final UUID sender = player instanceof ServerPlayer ? player.getUUID() : SERVER;
+            if (sender == SERVER && LEFT_SERVERS.get() != left) {
+                // It came from a server since left, its sending forgotten with it: it must not begin another.
+                return;
+            }
             final Map<String, Assembly> open = INCOMING.computeIfAbsent(sender, key -> new LinkedHashMap<>());
             final String key = piece.kind() + "#" + piece.transfer();
             final long now = System.nanoTime();
@@ -192,9 +200,13 @@ public final class BigPayloads {
             try {
                 Assembly assembly = open.get(key);
                 if (assembly == null) {
-                    if (open.size() >= MOST_OPEN || piece.index() != 0) {
-                        JsCore.LOGGER.warn("Refused a {} from {}: too many open, or it began in the middle",
-                                piece.kind(), sender);
+                    // A piece past the first of no open sending is the rest of one refused or dropped already: it
+                    // goes unsaid, so a sending refused fills the log with one line, not one a piece.
+                    if (piece.index() != 0) {
+                        return;
+                    }
+                    if (open.size() >= MOST_OPEN) {
+                        JsCore.LOGGER.warn("Refused a {} from {}: too many open", piece.kind(), sender);
                         return;
                     }
                     assembly = new Assembly(piece.count());

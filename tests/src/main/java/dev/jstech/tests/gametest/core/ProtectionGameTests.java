@@ -245,6 +245,10 @@ public final class ProtectionGameTests {
                     "what a visitor does is written down");
             helper.assertTrue(log.newest(entry -> entry.actor().equals(owner), 0, 5).isEmpty(),
                     "what an owner does to their own is not");
+            AuditLog.record(level, pos, visitor, AuditLog.Kind.BREAK, thing, owner);
+            AuditLog.record(level, pos, visitor, AuditLog.Kind.BREAK, thing, owner);
+            helper.assertTrue(log.newest(entry -> entry.actor().equals(visitor), 0, 5).size() == 1,
+                    "the same blow struck again at once is the same entry");
         } finally {
             ProtectionBalance.setAudit(before);
         }

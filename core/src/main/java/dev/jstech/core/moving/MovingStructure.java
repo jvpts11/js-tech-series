@@ -330,7 +330,8 @@ public final class MovingStructure implements IStructureBody {
 
     /**
      * Sets the rule that moves it from the next tick, or null to bring it to rest where it is. Held by another, a rule
-     * moves it on its parent, in the parent's yard; let go by its physics, it is let go by its parent first.
+     * moves it on its parent, in the parent's yard; let go by its physics, it is let go by its parent first. One that
+     * moves by its physics already goes on at the speed and the spin the new {@link PhysicsMotion} gives.
      */
     public void move(@Nullable final IStructureMotion next) {
         if (next instanceof PhysicsMotion && mount != null) {
@@ -338,10 +339,13 @@ public final class MovingStructure implements IStructureBody {
         }
         this.motion = next;
         this.pending = null;
-        if (!(next instanceof PhysicsMotion)) {
+        if (!(next instanceof PhysicsMotion given)) {
             physics = null;
             StructureSync.stopShowing(this);
         } else if (physics != null) {
+            // Thrown anew rather than only woken: its body took its speed from the rule only when it was first filled.
+            physics.body().velocity().set(given.vx(), given.vy(), given.vz());
+            physics.body().spin().set(given.sx(), given.sy(), given.sz());
             physics.wake();
         }
         if (next == null) {
@@ -383,6 +387,8 @@ public final class MovingStructure implements IStructureBody {
 
     /** Puts it at {@code pose} at once, carrying what stands on it there with it. */
     public void teleport(final StructurePose pose) {
+        // A step worked out before the jump starts from where it was, and would take it back there.
+        pending = null;
         advance(pose);
         settle();
     }
@@ -402,7 +408,6 @@ public final class MovingStructure implements IStructureBody {
         }
         final MovingStructure root = StructureMounts.rootOf(this);
         final StructurePose now = root.frame.pose();
-        root.pending = null;
         root.teleport(now.movedTo(now.x(), now.y() + under, now.z()));
         final StructurePhysics falling = root.physics();
         if (falling != null && falling.body().velocity().y < 0) {

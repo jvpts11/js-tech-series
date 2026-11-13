@@ -621,6 +621,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A face that gives out its block's pressure: J's Core's API is at version 57.
   `FaceMatterHandler.pressureNow(tank)` is the pressure of the store behind the face, which a line it gives out to has
   to hold. Experimental.
+- (Core) Markers shown together, and owned things asked where they stand: J's Core's API is at version 58.
+  `MapMarkers.showAll` and `MapMarkers.hideAll` show or take away many markers of a player at once, as one change.
+  `Ownership.mayUse`, `mayOpen`, `maySetUp` and `mayBreak` take the level and the place of the owned thing, so a
+  permission given in one claim is asked in the claim the thing stands in, not the one its player stands in.
+  `ModalDialog` draws its own background, the screen it was opened from under a veil. Experimental.
 - (Computers) The Mining Computer: J's Computers' API is at version 21. `HostScope.MINING_COMPUTER` is the Mining
   Computer's own scope, for a program or a command that runs only on a mining rig. Experimental.
 - (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of
@@ -4137,6 +4142,69 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- (Core) Sound: a room split in two by the first pass that groups its places is joined again, so its ambient bed
+  forms; a loop the budget dropped and chose again soon after fades out in place, where a second copy began over the
+  first; and the Sound Mixer keeps the tab the player chose when its window is resized, and one Done button.
+- (Core) Recordings: one broken picture in an Ogg file's comments no longer stops the search for its cover; a very
+  long Ogg recording's length is read whole, where it could go round; a recording the server keeps already is
+  charged to nobody's upload quota, and two offers at once are counted together against it; a download a crash left
+  half written is swept away, and a recording larger than the cache stays until it is played.
+- (Core) Cables: a cable in a lane is at most four pixels thick, where six let wires in lanes side by side overlap;
+  and a cable whose links settle tells the blocks beside it, which drew it as it was.
+- (Core) Standing parts: aiming finds one clipped at a corner of its block, and says the face that was hit, not the
+  way the player looks.
+- (Core) Screens: a command line measures its text by the letters the grid lays out, so a letter of two halves no
+  longer misplaces the cursor; a text area tells of an edit only when its text changed; the very middle of a radial
+  menu is on none of its segments; a text box given a text longer than it holds keeps only what it holds; a modal
+  dialog draws the screen it was opened from under its veil; a graph leaves a gap for a sample that is not a number,
+  where it drew a spike to its top; and the manual opened at an entry it does not have opens at the last page read.
+- (Core) Holograms: one the server took down while its player was out of reach is gone when they come back, and the
+  ones never hidden are forgotten as their chunks go, where the list grew; a timed hologram goes on its last tick.
+- (Core) Keys held: a key held as the player sat at a helm does not count as held once they stand up, where the action
+  fired early on the next press.
+- (Core) Live screens: a painter that throws takes its half-drawn quads with it, where they stayed queued in the
+  game's shared buffers.
+- (Core) Cable models: the window of a cable is drawn from what flows in it, so a change of only its rate no longer
+  makes a new model each time.
+- (Core) Big sendings: pieces still on their way as a player leaves a server do not begin a sending to the next one;
+  and a sending refused says so once, not once for each of its pieces.
+- (Core) Settings: a player's game no longer counts the server's own changes as asking for a restart; a settings file
+  that cannot be read for an error of the disk is not written over by the next save.
+- (Core) Declaring content: a block with no item may still declare a loot table of its own, which was refused; and an
+  advancement that hangs from one shown only with another mod is refused unless it is shown only with it too.
+- (Core) Dimensions: the air under a dimension's lowest band is the dimension's own, as said, where it was the band's;
+  and a runtime dimension made again no longer leaves a listener on the overworld's border each time.
+- (Core) Energy: a grid joined to another through FE shares its round whole, where rounding made or lost energy; and
+  a network's unmet demand counts only consumers, not the room in its stores.
+- (Core) Events: a listener taken off while another is taken off at once leaves the right one, where it could take
+  the wrong one or keep it.
+- (Core) Fluids: undoing a draw from a valve's front gives the fluid back, where it was lost.
+- (Core) Fonts: a font whose cell or glyph has no size, or less than none, is refused with a message saying so,
+  where it failed with an error of its own.
+- (Core) Grids: a cable taken out no longer stays in the grid's bridges, where the grid still walked through it.
+- (Core) The manual: a glossary word after a letter the language lowers to two is found where it is; and a long
+  session runs on to the next page rather than past the page's foot.
+- (Core) Curios and Accessories: Curios is left aside only when Accessories set itself up, not merely because it is
+  installed; and JEI's viewer goes with its runtime, so the Core no longer thinks one is open.
+- (Core) Item filters: a filter by mod naming no mod's id is refused as a file that does not read, where it failed.
+- (Core) Motion: a damped spring meets its end smoothly, where it jumped on its last step; and a motion slowed past
+  the longest time held is held there, where it went round to none.
+- (Core) Saves: a file read only in part is copied aside before it is saved over, as one not read at all is.
+- (Core) Projectiles: one saved while inside a block it got through goes on through it when read back, where it paid
+  for that block again.
+- (Core) Chunk loading: a source that keeps its chunks for a new reason shows the new reason on its team's map at
+  once.
+- (Core) Scheduling: a task of low priority sits out every other round even when it comes first.
+- (Core) Teams: an owner away so long that the game's cache of names forgot them still counts as on their team, the
+  Core keeping the name each player was last known by.
+- (Core) Permissions: those over others' things are asked where the thing stands, so a permission given in one claim
+  holds there, not wherever its player stands.
+- (Core) Text: a sentence a save holds with a broken key reads as its words, where it failed the whole save; and a
+  message counting fewer arguments than none is read as none.
+- (Core) The calendar: a world's orbit comes round with its calendar's year, where the two rolled over days apart.
+- (Core) Moving energy in a batch: a store that takes energy and gives none out says how much it kept when the batch
+  is undone, so it is not made twice.
+- (Core) Sizes: none less the smallest number there is is the largest, where it was the smallest.
 - (Core) A machine gives back none of the liquids it was given: a pipe or a bucket drawing from it takes what it
   made, where it drew the liquid the machine was waiting to spend first and left the product in its tank.
 - (Computers) Disks: a partition asked for with a size past what a number holds is refused, where its size wrapped

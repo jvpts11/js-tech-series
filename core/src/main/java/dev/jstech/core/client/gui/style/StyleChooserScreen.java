@@ -21,6 +21,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.I18n;
@@ -212,11 +213,22 @@ public final class StyleChooserScreen extends Screen {
         skin.separator(g, x + pad, y + pad + 78 + bh + box, w - 2 * pad);
     }
 
-    /* The style the open scope wears now, with the changes not yet kept. */
+    /*
+     * The style the open scope wears now, with the changes not yet kept, found as the screens find theirs: a mod's own
+     * choice, else the choice for everything, else the mod's default, else the game's.
+     */
     private Style current() {
-        final String id = chosenId();
-        final ResourceLocation parsed = id.isEmpty() ? null : ResourceLocation.tryParse(id);
-        return parsed == null ? Styles.game() : Styles.get(parsed).orElseGet(Styles::game);
+        final Scope open = scopes.get(scope);
+        final List<String> choices = open.modid() == null ? List.of(chosenId())
+                : List.of(chosenId(), draft.value(StyleSettings.EVERYTHING));
+        for (final String id : choices) {
+            final ResourceLocation parsed = id.isEmpty() ? null : ResourceLocation.tryParse(id);
+            final Optional<Style> style = parsed == null ? Optional.empty() : Styles.get(parsed);
+            if (style.isPresent()) {
+                return style.get();
+            }
+        }
+        return open.modid() == null ? Styles.game() : Styles.modDefault(open.modid()).orElseGet(Styles::game);
     }
 
     private String chosenId() {

@@ -18,6 +18,7 @@ import dev.jstech.core.tool.MiningShape;
 import dev.jstech.core.tool.Tools;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -127,11 +128,17 @@ final class ToolPreviews {
         draw(event.getPoseStack(), event.getCamera(), minecraft.renderBuffers().bufferSource());
     }
 
-    /* Where the ghosts go and what they are, as many of each block as the inventory holds. */
+    /*
+     * Where the ghosts go and what they are, as many of each block as the inventory holds. Only the inventory: the
+     * server may take from other places too, a linked network's store, which only it can count, so a tool can place
+     * more than its picture shows, never fewer.
+     */
     private static Map<BlockPos, BlockState> ghosts(final Level level, final LocalPlayer player, final ItemStack tool,
                                                      final BlockPos clicked, final Direction face,
                                                      final BuildMode mode) {
-        final Map<BlockPos, BlockState> wanted = new HashMap<>();
+        // In the order the server places them, nearest first or the lowest layer first, so the blocks held are spent
+        // on the same places in the picture as in the world.
+        final Map<BlockPos, BlockState> wanted = new LinkedHashMap<>();
         if (mode instanceof BuildMode.Paste) {
             final CopiedRegion copy = tool.get(BuildingTools.COPY.get());
             if (copy == null) {
@@ -150,7 +157,7 @@ final class ToolPreviews {
             }
         }
         final Map<Item, Integer> left = new HashMap<>();
-        final Map<BlockPos, BlockState> shown = new HashMap<>();
+        final Map<BlockPos, BlockState> shown = new LinkedHashMap<>();
         for (final Map.Entry<BlockPos, BlockState> block : wanted.entrySet()) {
             final Item item = block.getValue().getBlock().asItem();
             final int has = left.computeIfAbsent(item, counted -> held(player, counted));

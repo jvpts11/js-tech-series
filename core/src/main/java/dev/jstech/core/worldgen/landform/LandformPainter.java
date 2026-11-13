@@ -256,8 +256,9 @@ public final class LandformPainter {
                     if (d < r) {
                         final int bottom = ground - (int) Math.round(tall * 2 * (1 - FADING * d / r));
                         lower(x, z, ground, bottom, this.config.surface());
-                        if (!this.config.special().isAir()) {
-                            fill(x, z, bottom + 1, bottom + 2, this.config.special());
+                        // Only within the shaft: one too shallow to hold it leaves the ground above it bare.
+                        if (!this.config.special().isAir() && bottom + 1 <= ground - 1) {
+                            fill(x, z, bottom + 1, Math.min(bottom + 2, ground - 1), this.config.special());
                         }
                     }
                 }

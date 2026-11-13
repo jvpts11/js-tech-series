@@ -28,9 +28,9 @@ public abstract class BigBlockPartBlockEntity extends SyncedBlockEntity {
 
     /*
      * From this part to its origin. A plain Vec3i, never a BlockPos: a place a field holds follows the block it names
-     * when blocks move, and this is no place.
+     * when blocks move, and this is no place. The player's game has it too, where picking a part gives its big block.
      */
-    private final ValueField<Vec3i> toOrigin = fields().nullable("ToOrigin", Vec3i.CODEC).save();
+    private final ValueField<Vec3i> toOrigin = fields().nullable("ToOrigin", Vec3i.CODEC).save().toClient();
 
     protected BigBlockPartBlockEntity(final BlockEntityType<?> type, final BlockPos pos, final BlockState state) {
         super(type, pos, state);

@@ -34,10 +34,13 @@ public final class TextEditState {
         return maxLength;
     }
 
-    /** Adopts a value as both the committed text and the edit, with the caret after it. */
+    /**
+     * Adopts a value as both the committed text and the edit, with the caret after it; the edit held to the most it
+     * takes, so a longer value comes in cut.
+     */
     public void sync(final String value) {
         committed = value == null ? "" : value;
-        edit = committed;
+        edit = capped(committed);
         caret = edit.length();
         anchor = -1;
     }
@@ -243,9 +246,14 @@ public final class TextEditState {
     }
 
     public void revert() {
-        edit = committed;
+        edit = capped(committed);
         caret = edit.length();
         anchor = -1;
+    }
+
+    /* {@code text} held to the most the edit takes. */
+    private String capped(final String text) {
+        return text.length() > maxLength ? text.substring(0, maxLength) : text;
     }
 
     private int clamp(final int index) {

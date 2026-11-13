@@ -18,17 +18,21 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 
 /**
  * The holograms this player's game was told of, drawn in the world each frame: every line turned to face the camera,
- * on a dim ground, the way a name over a player's head is drawn. A hologram goes when the server takes it down, when
- * its time runs out, when the player goes further than {@link #RANGE}, or when the player leaves the world.
+ * on a dim ground, the way a name over a player's head is drawn. A hologram is not drawn further than {@link #RANGE},
+ * and goes when the server takes it down, when its time runs out, when its chunk leaves the player's game, or when the
+ * player leaves the world.
  */
 public final class HologramView {
 
@@ -66,6 +70,7 @@ public final class HologramView {
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, HologramView::onRender);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, HologramView::onLoggingOut);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.Clone.class, HologramView::onPlayerReplaced);
+        NeoForge.EVENT_BUS.addListener(ChunkEvent.Unload.class, HologramView::onChunkUnload);
     }
 
     public static void onRender(final RenderLevelStageEvent event) {
@@ -77,8 +82,8 @@ public final class HologramView {
             return;
         }
         final long now = minecraft.level.getGameTime();
-        SHOWN.values().removeIf(shown -> shown.until() < now);
         final Camera camera = event.getCamera();
+        SHOWN.values().removeIf(shown -> shown.until() <= now);
         final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
         final HologramPalette.Colours colours = HologramPalette.get();
         for (final Shown shown : SHOWN.values()) {
@@ -87,6 +92,15 @@ public final class HologramView {
             }
         }
         buffers.endBatch();
+    }
+
+    /* A hide sent while the player's game no longer holds the chunk never reaches it, so the words go with the chunk:
+       back near, the player sees them again when their mod shows them, as a player arriving does. */
+    public static void onChunkUnload(final ChunkEvent.Unload event) {
+        if (event.getLevel() instanceof ClientLevel && !SHOWN.isEmpty()) {
+            final ChunkPos chunk = event.getChunk().getPos();
+            SHOWN.values().removeIf(shown -> new ChunkPos(BlockPos.containing(shown.at())).equals(chunk));
+        }
     }
 
     public static void onLoggingOut(final ClientPlayerNetworkEvent.LoggingOut event) {

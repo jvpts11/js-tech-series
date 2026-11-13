@@ -22,6 +22,7 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.text.TextLists;
 import java.util.Collection;
 import java.util.List;
 import net.minecraft.commands.CommandSourceStack;
@@ -29,8 +30,6 @@ import net.minecraft.commands.Commands;
 import net.minecraft.commands.SharedSuggestionProvider;
 import net.minecraft.commands.arguments.EntityArgument;
 import net.minecraft.commands.arguments.ResourceLocationArgument;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.ComponentUtils;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -49,13 +48,19 @@ public final class TeamProgressCommands {
             "%s's team knows nothing yet");
     public static final TextKey GRANTED = TextKey.of("jscore.command.knowledge.granted", "%s's team now knows %s");
     public static final TextKey FORGOTTEN = TextKey.of("jscore.command.knowledge.forgotten", "%s's team forgot %s");
+    /* What a command changed nothing of: a team that knew as much already, or knew nothing to forget. */
+    public static final TextKey KNEW_ALREADY = TextKey.of("jscore.command.knowledge.knew_already",
+            "%s's team knew as much of %s already");
+    public static final TextKey NEVER_KNEW = TextKey.of("jscore.command.knowledge.never_knew",
+            "%s's team did not know %s");
+    public static final TextKey REACHED_ALREADY = TextKey.of("jscore.command.milestone.reached_already",
+            "%s's team had reached %s already");
     public static final TextKey MILESTONE_REACHED = TextKey.of("jscore.command.milestone.reached",
             "%s's team reached %s");
     public static final TextKey UNKNOWN_KNOWLEDGE = TextKey.of("jscore.command.knowledge.unknown",
             "There is no knowledge %s");
     public static final TextKey UNKNOWN_MILESTONE = TextKey.of("jscore.command.milestone.unknown",
             "There is no milestone %s");
-
     private static final String PLAYERS = "players";
     private static final String ID = "id";
     private static final String SHARE = "share";
@@ -103,9 +108,7 @@ public final class TeamProgressCommands {
                         player.getScoreboardName())), false);
             } else {
                 // Each name in the language of whoever reads the answer.
-                final Text names = GameText.of(ComponentUtils.formatList(known.stream()
-                        .map(TeamProgressCommands::nameOf).map(GameText::component).toList(),
-                        Component.literal(LIST)));
+                final Text names = TextLists.join(LIST, known.stream().map(TeamProgressCommands::nameOf).toList());
                 context.getSource().sendSuccess(() -> GameText.component(KNOWS.with(player.getScoreboardName(),
                         names)), false);
             }
@@ -119,12 +122,18 @@ public final class TeamProgressCommands {
         final Knowledge knowledge = Knowledges.byId(id).orElseThrow(() -> NO_KNOWLEDGE.create(id));
         final MinecraftServer server = context.getSource().getServer();
         final Collection<ServerPlayer> players = EntityArgument.getPlayers(context, PLAYERS);
+        int changed = 0;
         for (final ServerPlayer player : players) {
-            TeamProgress.grant(server, CoreTeams.teamOf(server, player.getUUID()), knowledge, share);
-            context.getSource().sendSuccess(() -> GameText.component(GRANTED.with(player.getScoreboardName(),
-                    knowledge.name())), true);
+            if (TeamProgress.grant(server, CoreTeams.teamOf(server, player.getUUID()), knowledge, share)) {
+                changed++;
+                context.getSource().sendSuccess(() -> GameText.component(GRANTED.with(player.getScoreboardName(),
+                        knowledge.name())), true);
+            } else {
+                context.getSource().sendSuccess(() -> GameText.component(KNEW_ALREADY.with(
+                        player.getScoreboardName(), knowledge.name())), false);
+            }
         }
-        return players.size();
+        return changed;
     }
 
     private static int forget(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -132,12 +141,20 @@ public final class TeamProgressCommands {
         final Knowledge knowledge = Knowledges.byId(id).orElseThrow(() -> NO_KNOWLEDGE.create(id));
         final MinecraftServer server = context.getSource().getServer();
         final Collection<ServerPlayer> players = EntityArgument.getPlayers(context, PLAYERS);
+        int changed = 0;
         for (final ServerPlayer player : players) {
-            TeamProgress.forget(server, CoreTeams.teamOf(server, player.getUUID()), id);
-            context.getSource().sendSuccess(() -> GameText.component(FORGOTTEN.with(player.getScoreboardName(),
-                    knowledge.name())), true);
+            final String team = CoreTeams.teamOf(server, player.getUUID());
+            if (TeamProgress.share(server, team, id) > 0) {
+                TeamProgress.forget(server, team, id);
+                changed++;
+                context.getSource().sendSuccess(() -> GameText.component(FORGOTTEN.with(player.getScoreboardName(),
+                        knowledge.name())), true);
+            } else {
+                context.getSource().sendSuccess(() -> GameText.component(NEVER_KNEW.with(
+                        player.getScoreboardName(), knowledge.name())), false);
+            }
         }
-        return players.size();
+        return changed;
     }
 
     private static int reach(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
@@ -145,12 +162,18 @@ public final class TeamProgressCommands {
         final Milestone milestone = Milestones.byId(id).orElseThrow(() -> NO_MILESTONE.create(id));
         final MinecraftServer server = context.getSource().getServer();
         final Collection<ServerPlayer> players = EntityArgument.getPlayers(context, PLAYERS);
+        int changed = 0;
         for (final ServerPlayer player : players) {
-            TeamProgress.reach(server, CoreTeams.teamOf(server, player.getUUID()), milestone);
-            context.getSource().sendSuccess(() -> GameText.component(MILESTONE_REACHED.with(
-                    player.getScoreboardName(), milestone.name())), true);
+            if (TeamProgress.reach(server, CoreTeams.teamOf(server, player.getUUID()), milestone)) {
+                changed++;
+                context.getSource().sendSuccess(() -> GameText.component(MILESTONE_REACHED.with(
+                        player.getScoreboardName(), milestone.name())), true);
+            } else {
+                context.getSource().sendSuccess(() -> GameText.component(REACHED_ALREADY.with(
+                        player.getScoreboardName(), milestone.name())), false);
+            }
         }
-        return players.size();
+        return changed;
     }
 
     /* The name of the knowledge {@code id}, or its id for one no longer declared. */

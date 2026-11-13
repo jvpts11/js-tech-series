@@ -36,6 +36,9 @@ public final class JadeStyles {
     /** The Core's theme of Jade, which wears the player's style. */
     public static final ResourceLocation THEME = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "player_style");
 
+    /* The theme Jade ships as its own, worn when the one it wore before is not known. */
+    private static final ResourceLocation JADE_DARK = ResourceLocation.fromNamespaceAndPath("jade", "dark");
+
     private static volatile boolean repaint = true;
     /* The theme Jade wore before it wore the player's style, to give back. */
     private static @Nullable ResourceLocation before;
@@ -78,8 +81,9 @@ public final class JadeStyles {
         final Optional<Style> chosen = Optional.ofNullable(ResourceLocation.tryParse(StyleSettings.everything()))
                 .filter(id -> !StyleSettings.everything().isBlank()).flatMap(Styles::get);
         if (chosen.isEmpty()) {
-            if (THEME.equals(wearing) && before != null) {
-                overlay.applyTheme(before);
+            // Jade keeps the theme it wore over a restart, which the one worn before it is not: then its own dark one.
+            if (THEME.equals(wearing)) {
+                overlay.applyTheme(before != null ? before : JADE_DARK);
             }
             return;
         }

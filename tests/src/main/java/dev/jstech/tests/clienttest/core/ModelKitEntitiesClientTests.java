@@ -15,6 +15,7 @@ import dev.jstech.core.client.model.kit.KitEntityModels;
 import dev.jstech.core.client.model.kit.KitFirstPerson;
 import dev.jstech.core.client.model.kit.KitInstance;
 import dev.jstech.core.client.model.kit.KitLayers;
+import dev.jstech.core.client.model.kit.KitModel;
 import dev.jstech.core.client.model.kit.KitModels;
 import dev.jstech.core.client.model.kit.KitTextures;
 import dev.jstech.core.model.ExpressionContext;
@@ -158,6 +159,19 @@ public final class ModelKitEntitiesClientTests {
                             + ")");
                 })
                 .thenScreenshot(0, "kit-mooshroom");
+    }
+
+    @ClientTest(timeoutTicks = 100)
+    public static void itemKinds_oneItemDrawnWithTwoModelsKeepsEachItsOwn(final ClientTestContext ctx) {
+        ctx.thenAssert(0, () -> {
+            final ItemStack stack = new ItemStack(TestModels.HELMET_ITEM.get());
+            final KitModel helmet = KitModels.get(TestModels.HELMET.id()).orElseThrow();
+            final KitModel arms = KitModels.get(TestModels.ARMS.id()).orElseThrow();
+            final KitInstance first = KitAnimations.of(stack, ItemDisplayContext.GUI, helmet);
+            final KitInstance other = KitAnimations.of(stack, ItemDisplayContext.GUI, arms);
+            return first != other && KitAnimations.of(stack, ItemDisplayContext.GUI, helmet) == first
+                    && KitAnimations.of(stack, ItemDisplayContext.GUI, arms) == other;
+        }, "one item drawn in one place with two models, as the vehicle item is with each kind's, keeps each its own");
     }
 
     @ClientTest(timeoutTicks = 200)

@@ -40,6 +40,8 @@ final class BeamVisuals {
 
     private static final Map<BlockPos, Cached> RAYS = new ConcurrentHashMap<>();
     private static final long KEEP_TICKS = 20;
+    /* How long a lamp's rays are kept once it is no longer drawn, in ticks. */
+    private static final long FORGET_TICKS = 200;
     /* How strong the shaft is at the lamp at its brightest, and at its far end. */
     private static final double AT_LAMP = 0.18;
     private static final double FAR_SHARE = 0.25;
@@ -47,6 +49,9 @@ final class BeamVisuals {
     private static final int RED_SHIFT = 16;
     private static final int GREEN_SHIFT = 8;
     private static final int WARM_WHITE = 0xFFF2DC;
+
+    /* When the rays of the lamps no longer drawn were last let go of. */
+    private static long swept;
 
     private BeamVisuals() {
     }
@@ -95,6 +100,12 @@ final class BeamVisuals {
         }
         final List<Beams.Ray> rays = Beams.lampRays(level, lamp.getBlockPos(), lamp.facing(), kind);
         RAYS.put(lamp.getBlockPos(), new Cached(now, rays));
+        // A lamp drawn has its rays worked out again every second, so one not worked out for long is gone, out or
+        // broken, or of another world.
+        if (now - swept >= KEEP_TICKS || now < swept) {
+            swept = now;
+            RAYS.values().removeIf(old -> now - old.at() > FORGET_TICKS || now < old.at());
+        }
         return rays;
     }
 

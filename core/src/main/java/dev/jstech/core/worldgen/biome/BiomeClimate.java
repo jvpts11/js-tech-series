@@ -38,6 +38,12 @@ public record BiomeClimate(double temperature, double seasons, double rain) {
             Codec.doubleRange(0.0, MOST_RAIN).optionalFieldOf("rain", TEMPERATE_RAIN).forGetter(BiomeClimate::rain))
             .apply(instance, BiomeClimate::new));
 
+    /* Whether a climate of these holds as its file would be read: each within what the file may say, and a number. */
+    static boolean holds(final double temperature, final double seasons, final double rain) {
+        return temperature >= ABSOLUTE_ZERO && temperature <= HOTTEST && seasons >= 0.0 && seasons <= WIDEST_SWING
+                && rain >= 0.0 && rain <= MOST_RAIN;
+    }
+
     /** The climate the game's own {@code temperature} and {@code downfall} for a biome give it. */
     public static BiomeClimate fromGame(final double temperature, final double downfall) {
         return new BiomeClimate(ClimateMath.celsius(temperature), ClimateMath.seasons(temperature, downfall),

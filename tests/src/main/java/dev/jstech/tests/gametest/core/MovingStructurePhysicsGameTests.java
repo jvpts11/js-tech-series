@@ -94,6 +94,12 @@ public final class MovingStructurePhysicsGameTests {
     /* The hydrogen balloon: the side of its shell, and the room inside it, a cube two blocks smaller. */
     private static final int BALLOON_SIDE = 7;
     private static final int BALLOON_INSIDE = (BALLOON_SIDE - 2) * (BALLOON_SIDE - 2) * (BALLOON_SIDE - 2);
+    /* A block thrown up at 6 metres a second is well off the floor a quarter of a second later, past 1.2 metres. */
+    private static final double THROWN_UP = 6.0;
+    private static final int THROWN_TICKS = 5;
+    private static final double THROWN_RISE = 0.5;
+    /* How much a block of hay drags, as the test mod's data says: a fifth of a plain block. */
+    private static final double HAY_DRAG = 0.2;
     /* The arenas whose air is still, sheltered from the wind. */
     private static final Set<AABB> SHELTERED = ConcurrentHashMap.newKeySet();
     private static boolean shelterDeclared;
@@ -115,6 +121,45 @@ public final class MovingStructurePhysicsGameTests {
                     helper.assertTrue(Math.abs(box.minX - startX) < RESTS, "where it fell, not slid: " + box);
                     helper.assertTrue(block.pose().angleTo(StructurePose.at(0, 0, 0)) < 0.01,
                             "lying as it was: " + block.pose());
+                    MovingStructures.takeAway(block);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * Two blocks of hay side by side, which drag a fifth of what a plain block does and give no force: the face where
+     * they meet is closed by the drag it was opened with, so only the outer face of the east one drags that way.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
+    public static void physics_aBlockOfItsOwnDragClosesTheFacesItOpened(final GameTestHelper helper) {
+        final MovingStructure bale = made(helper, List.of(new BlockPos(4, 2, 4), new BlockPos(5, 2, 4)),
+                Blocks.HAY_BLOCK);
+        bale.move(PhysicsMotion.AT_REST);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(bale.physics() != null && bale.physics().active(),
+                        "it moves by its physics"))
+                .thenExecute(() -> {
+                    final double east = bale.physics().parts().faceArea(Direction.EAST);
+                    helper.assertTrue(Math.abs(east - HAY_DRAG) < 1.0e-9, "one face of hay looks east: " + east);
+                    final double up = bale.physics().parts().faceArea(Direction.UP);
+                    helper.assertTrue(Math.abs(up - 2 * HAY_DRAG) < 1.0e-9, "and two look up: " + up);
+                    MovingStructures.takeAway(bale);
+                })
+                .thenSucceed();
+    }
+
+    /* A block at rest by its physics, thrown up by a new rule of its physics: it goes up at the speed it gives. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void physics_thrownAgainWhileMovingByItsPhysicsTakesTheNewSpeed(final GameTestHelper helper) {
+        final MovingStructure block = made(helper, List.of(new BlockPos(4, 3, 4)), Blocks.STONE);
+        block.move(PhysicsMotion.AT_REST);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(asleep(block), "it comes to rest"))
+                .thenExecute(() -> block.move(PhysicsMotion.going(0, THROWN_UP, 0)))
+                .thenIdle(THROWN_TICKS)
+                .thenExecute(() -> {
+                    final double rose = block.worldBox().minY - y(helper, FLOOR);
+                    helper.assertTrue(rose > THROWN_RISE, "thrown up, it is off the floor: " + rose);
                     MovingStructures.takeAway(block);
                 })
                 .thenSucceed();

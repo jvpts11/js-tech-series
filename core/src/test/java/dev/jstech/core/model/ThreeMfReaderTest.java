@@ -213,6 +213,15 @@ class ThreeMfReaderTest {
     }
 
     @Test
+    void read_takesAPartNamedByAPathThatClimbsAFolder() {
+        // The part's file named from the gearbox's own folder, by way of the one above it.
+        final ModelData read = ThreeMfReader.read("gearbox", zip(Map.of("_rels/.rels", RELATIONS, "3D/pump.model",
+                GEARBOX.replace("/3D/Objects/gear.model", "../3D/./Objects/gear.model"), "3D/Objects/gear.model",
+                GEAR)));
+        assertEquals(1, read.bone("gear").orElseThrow().meshes().size(), "the gear's mesh, found all the same");
+    }
+
+    @Test
     void read_laysAPictureByTheFilesOwnCoordinates() {
         final ModelData read = ThreeMfReader.read("sign", zip(Map.of("_rels/.rels", RELATIONS, "3D/pump.model",
                 SIGN, "3D/Textures/sign.png", "picture")));

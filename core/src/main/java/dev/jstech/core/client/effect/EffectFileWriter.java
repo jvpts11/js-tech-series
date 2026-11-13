@@ -46,8 +46,12 @@ public final class EffectFileWriter {
     public static Optional<Path> fileOf(final ResourceLocation id) {
         final Path root = into;
         final Optional<Path> resources = root != null ? Optional.of(root) : DevSources.resourcesOf(id.getNamespace());
-        return resources.map(folder -> folder.resolve(ASSETS).resolve(id.getNamespace())
-                .resolve(EffectFiles.path(id)));
+        // Never a file outside the mod's own assets, whatever the name climbs to.
+        return resources.flatMap(folder -> {
+            final Path assets = folder.resolve(ASSETS).resolve(id.getNamespace()).normalize();
+            final Path file = assets.resolve(EffectFiles.path(id)).normalize();
+            return file.startsWith(assets) ? Optional.of(file) : Optional.empty();
+        });
     }
 
     /** Writes {@code definition} as the effect {@code id}'s file; where it was written. */

@@ -33,6 +33,19 @@ public final class StudioFiles {
         return new StudioSheet.File(file.getNamespace(), ASSETS + file.getNamespace() + "/" + file.getPath());
     }
 
+    /*
+     * Whether {@code path}, as a player wrote it, names a file in its folder and nowhere else: no empty part, and no
+     * part that is the folder itself or the one above it.
+     */
+    static boolean staysInItsFolder(final String path) {
+        for (final String part : path.split("/", -1)) {
+            if (part.isEmpty() || ".".equals(part) || "..".equals(part)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     /** The file of {@code file}'s mod that the server loads it from: {@code data/<mod>/<path>}. */
     public static StudioSheet.File data(final ResourceLocation file) {
         return new StudioSheet.File(file.getNamespace(), DATA + file.getNamespace() + "/" + file.getPath());

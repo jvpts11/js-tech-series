@@ -47,6 +47,8 @@ public final class CameraViewsClient implements CameraClientHooks.IHooks {
             "studio_rehearsal");
     private static @Nullable CameraPath rehearsed;
     private static @Nullable CameraView showing;
+    /* The server's number of the view showing, said back when it ends. */
+    private static int shownNumber;
     private static @Nullable CameraPath path;
     private static @Nullable Entity stand;
     private static long startTick;
@@ -67,18 +69,20 @@ public final class CameraViewsClient implements CameraClientHooks.IHooks {
      * it is saved: sneaking skips it as any scene, and the server, which did not start it, is told nothing of it.
      */
     public static void rehearse(final CameraPath scene, final Vec3 origin, final float yaw) {
+        // A view the server started is ended as one skipped, so the server hears of it; a rehearsal just stops.
         if (showing != null) {
-            restore();
+            end(CameraViewEvent.Ending.SKIPPED);
         }
         rehearsed = scene;
         start(new CameraView.Scene(REHEARSAL, origin, yaw));
     }
 
     @Override
-    public void view(final Optional<CameraView> view) {
+    public void view(final Optional<CameraView> view, final int number) {
         if (showing != null) {
             restore();
         }
+        shownNumber = number;
         view.ifPresent(CameraViewsClient::start);
     }
 
@@ -184,6 +188,19 @@ public final class CameraViewsClient implements CameraClientHooks.IHooks {
         }
     }
 
+    /** Forgets the view, as the player leaves a world, with nothing sent: the next world starts with no view. */
+    static void forget() {
+        showing = null;
+        path = null;
+        stand = null;
+        rehearsed = null;
+        sneaking = false;
+        fov = 0;
+        roll = 0;
+        startTick = 0;
+        shownNumber = 0;
+    }
+
     private static void start(final CameraView view) {
         final Minecraft minecraft = Minecraft.getInstance();
         final ClientLevel level = minecraft.level;
@@ -232,7 +249,7 @@ public final class CameraViewsClient implements CameraClientHooks.IHooks {
         final boolean started = rehearsed == null;
         restore();
         if (started) {
-            PacketDistributor.sendToServer(CameraViewEndedPayload.of(ending));
+            PacketDistributor.sendToServer(CameraViewEndedPayload.of(ending, shownNumber));
         }
     }
 

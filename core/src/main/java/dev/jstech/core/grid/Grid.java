@@ -186,6 +186,17 @@ public final class Grid {
         }
         this.adjacency.remove(pos);
         this.members.remove(pos);
+        // A device that touched it touches it no more: a way through the device no longer runs through it.
+        for (final long device : this.bridgedBy.getOrDefault(pos, Set.of())) {
+            final Set<Long> left = new HashSet<>(this.bridges.getOrDefault(device, Set.of()));
+            left.remove(pos);
+            if (left.isEmpty()) {
+                this.bridges.remove(device);
+            } else {
+                this.bridges.put(device, Set.copyOf(left));
+            }
+        }
+        this.bridgedBy.remove(pos);
         final Set<Long> survivors = new LinkedHashSet<>(this.posToId.keySet());
         survivors.remove(pos);
         rebuild(survivors);

@@ -42,8 +42,12 @@ public final class MediaCache {
     /** The most the cache holds before the recordings heard longest ago are thrown away. */
     private static final long LIMIT_BYTES = 512L * 1024 * 1024;
     private static final String FOLDER = "media-cache";
+    /* How a recording still on its way is named on the disk. */
+    private static final String PART = ".part";
 
     private static final Map<String, Incoming> INCOMING = new HashMap<>();
+    /* Whether this run has cleared away the downloads a run before it left unfinished. */
+    private static boolean swept;
 
     private MediaCache() {
     }
@@ -66,7 +70,10 @@ public final class MediaCache {
         }
         try {
             Files.createDirectories(root());
-            final Path part = Files.createTempFile(root(), media.hash(), ".part");
+            if (INCOMING.isEmpty()) {
+                sweepParts();
+            }
+            final Path part = Files.createTempFile(root(), media.hash(), PART);
             final OutputStream out = Files.newOutputStream(part);
             final Incoming incoming = new Incoming(media, part, out,
                     new MediaReceiver(media, MediaPiecePayload.piecesFor(media.bytes()), out));
@@ -116,7 +123,7 @@ public final class MediaCache {
             final Path kept = path(incoming.media);
             Files.move(incoming.part, kept, StandardCopyOption.REPLACE_EXISTING);
             incoming.ready.forEach(waiter -> waiter.accept(kept));
-            keepToLimit();
+            keepToLimit(kept);
         } catch (final IOException cannotKeep) {
             LOGGER.warn("Recording {} could not be kept: {}", incoming.media.fileName(), cannotKeep.getMessage());
             discard(incoming);
@@ -155,12 +162,15 @@ public final class MediaCache {
         }
     }
 
-    /* Throws away the recordings heard longest ago until the cache is inside its size again. */
-    private static void keepToLimit() {
+    /*
+     * Throws away the recordings heard longest ago until the cache is inside its size again, never {@code arrived},
+     * which its listeners are about to play however big it is.
+     */
+    private static void keepToLimit(final Path arrived) {
         final List<Cached> kept = new ArrayList<>();
         long total = 0L;
         try (Stream<Path> files = Files.list(root())) {
-            for (final Path file : files.filter(f -> !f.getFileName().toString().endsWith(".part")).toList()) {
+            for (final Path file : files.filter(f -> !f.getFileName().toString().endsWith(PART)).toList()) {
                 // Size and time are read once per file, so sorting does not go back to the disk on every comparison.
                 final Cached cached = describe(file);
                 if (cached != null) {
@@ -176,6 +186,9 @@ public final class MediaCache {
         for (final Cached oldest : kept) {
             if (total <= LIMIT_BYTES) {
                 break;
+            }
+            if (oldest.file().equals(arrived)) {
+                continue;
             }
             try {
                 Files.deleteIfExists(oldest.file());
@@ -202,7 +215,27 @@ public final class MediaCache {
             incoming.out.close();
             Files.deleteIfExists(incoming.part);
         } catch (final IOException ignored) {
-            // A part file left behind is only a few bytes of a cache folder the player may clear.
+            // A part file left behind is cleared away the next time the game starts fetching.
+        }
+    }
+
+    /* Clears away the part files a game that stopped mid-download left, once, before the first fetch of a run. */
+    private static void sweepParts() {
+        if (swept) {
+            return;
+        }
+        swept = true;
+        try (Stream<Path> files = Files.list(root())) {
+            for (final Path part : files.filter(f -> f.getFileName().toString().endsWith(PART)).toList()) {
+                try {
+                    Files.deleteIfExists(part);
+                } catch (final IOException cannotDelete) {
+                    LOGGER.warn("Could not remove a left-over download {}: {}", part.getFileName(),
+                            cannotDelete.getMessage());
+                }
+            }
+        } catch (final IOException cannotList) {
+            LOGGER.warn("Could not look for left-over downloads: {}", cannotList.getMessage());
         }
     }
 

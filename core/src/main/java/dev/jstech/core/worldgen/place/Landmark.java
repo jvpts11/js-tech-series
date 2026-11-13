@@ -55,6 +55,10 @@ public record Landmark(String name, String english, ResourceKey<Level> dimension
     public Landmark {
         Objects.requireNonNull(name, "name");
         Objects.requireNonNull(dimension, "dimension");
+        // As a file may say it: a radius below a block would be found from as far as its size the other way.
+        if (radius < 1 || radius > WIDEST) {
+            throw new IllegalArgumentException("a landmark is found within 1 to " + WIDEST + " blocks, not " + radius);
+        }
         pos = pos.immutable();
     }
 

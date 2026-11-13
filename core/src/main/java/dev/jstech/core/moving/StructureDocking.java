@@ -19,6 +19,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix3d;
 import org.joml.Quaterniond;
 import org.joml.Vector3d;
@@ -141,7 +142,8 @@ public final class StructureDocking {
     }
 
     /* A clamp of {@code structure} at {@code pos}, its signal gone off: what it holds is let go, pushed away. */
-    static void openClamp(final MovingStructure structure, final BlockPos pos, final BlockState state) {
+    static void openClamp(final ServerLevel level, final MovingStructure structure, final BlockPos pos,
+                          final BlockState state) {
         final Vec3 away = turned(structure.frame(), BlockPhysics.wayOf(state));
         for (final MovingStructure child : StructureMounts.children(structure)) {
             final StructureMount mount = child.mount();
@@ -149,11 +151,13 @@ public final class StructureDocking {
                 undock(child, away);
             }
         }
-        // A visitor whose own clamp lets go is let go too.
+        // A visitor whose own clamp lets go is let go too: the clamp that holds it, not another of its clamps.
         final StructureMount mount = structure.mount();
         if (mount != null && mount.anchor().isPresent()) {
             final MovingStructure parent = StructureMounts.parentOf(structure);
-            if (parent != null && parent.aboard().blocks().containsKey(mount.anchor().get())) {
+            final BlockPos hostClamp = mount.anchor().get();
+            if (parent != null && parent.aboard().blocks().containsKey(hostClamp)
+                    && pos.equals(clampMeeting(level, structure, parent, hostClamp))) {
                 undock(structure, away.scale(-1));
             }
         }
@@ -219,6 +223,30 @@ public final class StructureDocking {
     }
 
     /* The world's place of the middle of the face of the yard's block {@code pos} looking {@code way}. */
+    /*
+     * The clamp of {@code visitor} that meets {@code host}'s clamp at {@code hostClamp}: of its clamps, the one whose
+     * face is nearest that clamp's face, as the one that held it is drawn in face on face. Null for one of no clamps.
+     */
+    private static @Nullable BlockPos clampMeeting(final ServerLevel level, final MovingStructure visitor,
+                                                   final MovingStructure host, final BlockPos hostClamp) {
+        final Vec3 hostFace = faceOf(host.frame(), hostClamp, BlockPhysics.wayOf(level.getBlockState(hostClamp)));
+        BlockPos nearest = null;
+        double best = Double.MAX_VALUE;
+        for (final Map.Entry<BlockPos, BlockAboard> each : visitor.aboard().blocks().entrySet()) {
+            if (each.getValue().clamp().isEmpty()) {
+                continue;
+            }
+            final BlockPos clamp = each.getKey();
+            final double away = faceOf(visitor.frame(), clamp, BlockPhysics.wayOf(level.getBlockState(clamp)))
+                    .distanceToSqr(hostFace);
+            if (away < best) {
+                best = away;
+                nearest = clamp;
+            }
+        }
+        return nearest;
+    }
+
     private static Vec3 faceOf(final StructureFrame frame, final BlockPos pos, final Direction way) {
         final double x = pos.getX() + HALF + HALF * way.getStepX();
         final double y = pos.getY() + HALF + HALF * way.getStepY();

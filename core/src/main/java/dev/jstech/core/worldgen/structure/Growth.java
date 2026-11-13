@@ -33,6 +33,15 @@ public record Growth(int stages, int built, int days) {
             Codec.intRange(1, LONGEST).optionalFieldOf("days", 1).forGetter(Growth::days))
             .apply(instance, Growth::new));
 
+    public Growth {
+        // As a file may say it, so one declared in code grows too, rather than failing each time it is looked at.
+        if (stages < 1 || days < 1) {
+            throw new IllegalArgumentException("a growth takes a stage at least, each a day at least, not " + stages
+                    + " stages of " + days + " days");
+        }
+        built = Math.clamp(built, 1, stages);
+    }
+
     /**
      * The stage, from 1, of the {@code index}th of {@code count} pieces as the layout laid them out, from its middle
      * out: the first in the first stage, the rest shared out evenly over the stages.

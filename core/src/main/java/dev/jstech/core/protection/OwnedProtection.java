@@ -57,7 +57,8 @@ public final class OwnedProtection {
         }
         if (block instanceof IOwned owned && owned.ownership() != null) {
             final Ownership ownership = owned.ownership();
-            if (!ownership.mayBreak(player)) {
+            // Asked where the block is, so a permission given in one claim holds there and not beside it.
+            if (!ownership.mayBreak(player, level, event.getPos())) {
                 event.setCanceled(true);
                 player.displayClientMessage(GameText.component(Ownership.BREAK_DENIED.with(
                         ownership.ownerName(level.getServer()))), true);
@@ -83,7 +84,7 @@ public final class OwnedProtection {
         }
         if (block instanceof IOwned owned && owned.ownership() != null) {
             final Ownership ownership = owned.ownership();
-            if (!ownership.mayOpen(player)) {
+            if (!ownership.mayOpen(player, level, pos)) {
                 event.setCanceled(true);
                 player.displayClientMessage(GameText.component(ownership.denial(level.getServer())), true);
                 return;
@@ -114,7 +115,8 @@ public final class OwnedProtection {
             return true;
         }
         final Ownership ownership = owned.ownership();
-        if (attack ? !ownership.mayBreak(player) : !ownership.mayOpen(player)) {
+        final BlockPos at = target.blockPosition();
+        if (attack ? !ownership.mayBreak(player, level, at) : !ownership.mayOpen(player, level, at)) {
             player.displayClientMessage(GameText.component(attack ? Ownership.BREAK_DENIED.with(
                     ownership.ownerName(level.getServer())) : ownership.denial(level.getServer())), true);
             return false;

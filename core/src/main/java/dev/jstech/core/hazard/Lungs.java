@@ -21,8 +21,10 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.level.BlockEvent;
 
 /**
@@ -77,6 +79,8 @@ public final class Lungs {
 
     /** Hands the game's bus what breathes the dust of broken blocks, once, from the Core's constructor. */
     public static void listen() {
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class,
+                event -> BREATHED.remove(event.getEntity().getUUID()));
         NeoForge.EVENT_BUS.addListener(BlockEvent.BreakEvent.class, event -> {
             if (event.getLevel().isClientSide() || !HazardBalance.lungs()) {
                 return;
@@ -98,6 +102,10 @@ public final class Lungs {
      * them: taken in at their next second, what they wear for what is breathed taking its share off.
      */
     public static void breathe(final LivingEntity body, final HazardKind disease, final double percent) {
+        // Dust only a body the disease harms takes in, while it harms anyone: else it would wait to be taken for good.
+        if (!disease.enabled() || !(body instanceof Player) && !disease.affectsMobs()) {
+            return;
+        }
         final int index = disease == BLACK_LUNG ? COAL : disease == SILICOSIS ? SILICA : ASBESTOS;
         BREATHED.computeIfAbsent(body.getUUID(), id -> new double[3])[index] += percent;
     }
@@ -133,6 +141,9 @@ public final class Lungs {
             }
             final double taken = breathed[index];
             breathed[index] = 0;
+            if (breathed[COAL] <= 0 && breathed[SILICA] <= 0 && breathed[ASBESTOS] <= 0) {
+                BREATHED.remove(body.getUUID());
+            }
             return taken;
         });
         return kind;

@@ -75,6 +75,9 @@ public final class ScreenEditor {
     private static final Set<String> NOT_A_FIELD = Set.of("type", "id", "bind", "children", "margin", "width",
             "height", "min_width", "min_height", "max_width", "max_height", "grow", "shrink", "align_self", "span",
             "visible_if", "enabled_if", "gap", "padding", "align", "justify", "wrap", "columns");
+    /* The keys whose values are always words, whatever they look like. */
+    private static final Set<String> WORD_KEYS = Set.of("id", "bind", "text", "format", "tooltip", "narration",
+            "placeholder", "action", "visible_if", "enabled_if");
 
     private static @Nullable Editing open;
 
@@ -340,7 +343,9 @@ public final class ScreenEditor {
                 return;
             }
             if (onAdder(x, y)) {
-                final int row = (int) ((y - addRowsTop()) / ScreenEditorLayout.ADD_ROW);
+                // A click in the gap above the list is on no kind: a cast would round it to the first.
+                final double below = y - addRowsTop();
+                final int row = below < 0 ? -1 : (int) (below / ScreenEditorLayout.ADD_ROW);
                 final List<String> kinds = kinds();
                 if (row >= 0 && row < kinds.size()) {
                     addAtPointer(kinds.get(row));
@@ -659,7 +664,8 @@ public final class ScreenEditor {
                 if (value.isBlank()) {
                     component.remove(key);
                 } else {
-                    component.add(key, typed(value));
+                    // A key that holds words keeps them as words, an id of 2024 or a text of true as typed.
+                    component.add(key, WORD_KEYS.contains(key) ? new JsonPrimitive(value) : typed(value));
                 }
             });
             record(json);

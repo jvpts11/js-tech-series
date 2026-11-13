@@ -37,6 +37,18 @@ class BuildOrderTest {
     }
 
     @Test
+    void plan_keepsWhatItUsesAndLacksInTheOrderFirstMet() {
+        final List<String> met = List.of(LINK, GLASS, POWER, BRICK, BARS);
+        final List<BuildOrder.Want> wants = List.of(want(0, LINK), want(1, GLASS), want(2, POWER), want(3, BRICK),
+                want(4, BARS));
+
+        final BuildOrder order = BuildOrder.plan(wants, Map.of(), block -> 0);
+
+        assertEquals(met, List.copyOf(order.uses().keySet()));
+        assertEquals(met, List.copyOf(order.lacks().keySet()));
+    }
+
+    @Test
     void plan_turnsToAnotherBlockThatFitsWhenTheChosenRunsOut() {
         final List<BuildOrder.Want> wants = List.of(want(0, GLASS, BARS), want(1, GLASS, BARS));
 

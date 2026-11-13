@@ -37,6 +37,8 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.animal.Pig;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
@@ -94,6 +96,22 @@ public final class MicroblockGameTests {
         helper.assertTrue(parts.microblock(DOWN) != null && parts.microblock(UP) != null, "both slabs stand");
         helper.assertTrue(!parts.add(new Microblock(piece(MicroShape.POST, MicroShape.PANEL, Blocks.OAK_PLANKS),
                 SpaceSlots.CENTRE, SpaceSlots.Y)), "no post through two slabs");
+        helper.succeed();
+    }
+
+    /* A device is never mounted where a mob stands, as a piece is never placed there; with the mob gone, it is. */
+    @GameTest(template = ARENA)
+    public static void mounting_aDeviceWhereAMobStandsIsRefused(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(GROUND, Blocks.STONE);
+        final BlockPos pos = helper.absolutePos(ABOVE);
+        final Pig pig = helper.spawnWithNoFreeWill(EntityType.PIG, Vec3.atBottomCenterOf(ABOVE));
+        helper.assertTrue(!SpacePlacement.mount(level, pos, Direction.DOWN, TestToolkit.LAMP_PART.get().create()),
+                "a lamp on the floor where a pig stands is refused");
+        helper.assertBlockPresent(Blocks.AIR, ABOVE);
+        pig.discard();
+        helper.assertTrue(SpacePlacement.mount(level, pos, Direction.DOWN, TestToolkit.LAMP_PART.get().create()),
+                "the pig gone, it is mounted");
         helper.succeed();
     }
 

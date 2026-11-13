@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.resources.ResourceLocation;
 
 /**
@@ -20,15 +21,16 @@ import net.minecraft.resources.ResourceLocation;
  */
 public final class KitLayers {
 
+    /* Each list copied as it changes, so a layer may take itself off while the layers are drawn. */
     private static final Map<ResourceLocation, List<IKitLayer>> BY_MODEL = new HashMap<>();
-    private static final List<IKitLayer> EVERYWHERE = new ArrayList<>();
+    private static final List<IKitLayer> EVERYWHERE = new CopyOnWriteArrayList<>();
 
     private KitLayers() {
     }
 
     /** Lays {@code layer} over the model {@code model}, wherever it is drawn. */
     public static void add(final ResourceLocation model, final IKitLayer layer) {
-        BY_MODEL.computeIfAbsent(Objects.requireNonNull(model, "model"), id -> new ArrayList<>())
+        BY_MODEL.computeIfAbsent(Objects.requireNonNull(model, "model"), id -> new CopyOnWriteArrayList<>())
                 .add(Objects.requireNonNull(layer, "layer"));
     }
 
@@ -38,8 +40,9 @@ public final class KitLayers {
     }
 
     /**
-     * Takes {@code layer} off again, from every model or from the models it was laid over. A model with a layer is
-     * drawn alone, never together with others like it, so a layer laid for a while is best taken off after it.
+     * Takes {@code layer} off again, from every model or from the models it was laid over, even from inside its own
+     * draw. A model with a layer is drawn alone, never together with others like it, so a layer laid for a while is
+     * best taken off after it.
      */
     public static void remove(final IKitLayer layer) {
         EVERYWHERE.remove(layer);

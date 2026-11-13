@@ -229,6 +229,7 @@ public final class ConfigSync {
             }
             try {
                 file.get().read(ConfigFormats.JSON.read(payload.values()));
+                file.get().forgetRestartDue();
                 RECEIVED.put(file.get(), payload.editable());
             } catch (final ConfigFormatException e) {
                 ConfigFiles.LOGGER.warn("the server's values of {} could not be read", payload.file(), e);

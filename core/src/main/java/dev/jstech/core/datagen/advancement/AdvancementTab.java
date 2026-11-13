@@ -173,7 +173,7 @@ public abstract class AdvancementTab implements AdvancementProvider.AdvancementG
     protected final void challengeOfAll(final String name, final String parent, final ItemLike icon,
                                         final String title, final String description,
                                         final Map<String, Supplier<Criterion<?>>> criteria) {
-        this.requireParent(name, parent);
+        this.requireParent(name, parent, null);
         this.specs.add(new AdvancementSpec(name, parent, stackOf(icon), AdvancementType.CHALLENGE, false, title,
                 description, new LinkedHashMap<>(criteria), null));
     }
@@ -181,17 +181,27 @@ public abstract class AdvancementTab implements AdvancementProvider.AdvancementG
     private void one(final String name, final String parent, final Supplier<ItemStack> icon,
                      final AdvancementType frame, final boolean hidden, final String title, final String description,
                      final Supplier<Criterion<?>> criterion, final String requiredMod) {
-        this.requireParent(name, parent);
+        this.requireParent(name, parent, requiredMod);
         this.specs.add(new AdvancementSpec(name, parent, icon, frame, hidden, title, description,
                 Map.of(DONE, criterion), requiredMod));
     }
 
-    /* A parent that was not written down earlier in this tab would be written out and then skipped by the game. */
-    private void requireParent(final String name, final String parent) {
-        if (parent != null && this.specs.stream().noneMatch(spec -> spec.name().equals(parent))) {
+    /*
+     * A parent that was not written down earlier in this tab would be written out and then skipped by the game; so
+     * would one that exists only beside another mod, under a child that does not.
+     */
+    private void requireParent(final String name, final String parent, final String requiredMod) {
+        if (parent == null) {
+            return;
+        }
+        final AdvancementSpec found = this.specs.stream().filter(spec -> spec.name().equals(parent)).findFirst()
+                .orElseThrow(() -> DeclarationError.of(null, "the advancement " + name + " of the tab " + this.tab,
+                        "names the parent " + parent + ", which is not an earlier advancement of the tab",
+                        "write the parent before it in the tab, or name one written earlier"));
+        if (found.requiredMod() != null && !found.requiredMod().equals(requiredMod)) {
             throw DeclarationError.of(null, "the advancement " + name + " of the tab " + this.tab,
-                    "names the parent " + parent + ", which is not an earlier advancement of the tab",
-                    "write the parent before it in the tab, or name one written earlier");
+                    "hangs from " + parent + ", which exists only beside " + found.requiredMod(),
+                    "declare it beside " + found.requiredMod() + " too, with goalWith(...), or hang it elsewhere");
         }
     }
 

@@ -101,8 +101,9 @@ public final class RoomViewClient {
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableCull();
         marks(pose, view.leaks(), c);
-        outline(pose, view.outline(), c, level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(
-                false));
+        // Added as a double: as a float, past some months of a world's time, the part of a tick is lost.
+        outline(pose, view.outline(), c, level.getGameTime()
+                + (double) event.getPartialTick().getGameTimeDeltaPartialTick(false));
         RenderSystem.enableCull();
         RenderSystem.enableDepthTest();
         pose.popPose();

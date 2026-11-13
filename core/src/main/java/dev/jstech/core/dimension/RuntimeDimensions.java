@@ -65,6 +65,8 @@ public final class RuntimeDimensions {
 
     /** The template of each dimension made while this server runs, for the rules a copy takes from it. */
     private static final Map<ResourceLocation, ResourceLocation> TEMPLATES = new ConcurrentHashMap<>();
+    /* What has each dimension made follow the overworld's border, to be let go as the dimension is taken away. */
+    private static final Map<ResourceLocation, BorderChangeListener> BORDERS = new ConcurrentHashMap<>();
 
     /* A dimension made while the game runs is not shown being prepared, as the world's own are when it starts. */
     private static final ChunkProgressListener QUIET = new ChunkProgressListener() {
@@ -133,6 +135,11 @@ public final class RuntimeDimensions {
             return true;
         }
         final ServerLevel overworld = server.overworld();
+        // The overworld's border stops being followed by one closed, which would else stay held for good.
+        final BorderChangeListener follows = BORDERS.remove(key.location());
+        if (follows != null) {
+            overworld.getWorldBorder().removeListener(follows);
+        }
         final BlockPos spawn = overworld.getSharedSpawnPos();
         for (final ServerPlayer player : List.copyOf(level.players())) {
             player.teleportTo(overworld, spawn.getX() + 0.5, spawn.getY(), spawn.getZ() + 0.5, player.getYRot(),
@@ -198,6 +205,7 @@ public final class RuntimeDimensions {
     public static void onServerStarted(final ServerStartedEvent event) {
         final MinecraftServer server = event.getServer();
         TEMPLATES.clear();
+        BORDERS.clear();
         for (final Map.Entry<ResourceLocation, ResourceLocation> made : ledger(server).made.entrySet()) {
             final ResourceKey<Level> key = ResourceKey.create(Registries.DIMENSION, made.getKey());
             final Optional<LevelStem> stem = stemOf(server, made.getValue());
@@ -226,8 +234,10 @@ public final class RuntimeDimensions {
         final ServerLevel level = new ServerLevel(server, executor, storage, new RuledLevelData(world, key), key,
                 stem, QUIET, world.isDebugWorld(), BiomeManager.obfuscateSeed(world.worldGenOptions().seed()),
                 List.of(), false, overworld.getRandomSequences());
-        overworld.getWorldBorder().addListener(new BorderChangeListener.DelegateBorderChangeListener(
-                level.getWorldBorder()));
+        final BorderChangeListener follows = new BorderChangeListener.DelegateBorderChangeListener(
+                level.getWorldBorder());
+        overworld.getWorldBorder().addListener(follows);
+        BORDERS.put(key.location(), follows);
         server.forgeGetWorldMap().put(key, level);
         server.markWorldsDirty();
         NeoForge.EVENT_BUS.post(new LevelEvent.Load(level));

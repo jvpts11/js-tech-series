@@ -54,6 +54,19 @@ class OptionalDependencyCheckTest {
         assertTrue(found.getFirst().startsWith("mymod.integration.jei.JeiGuard"), found.toString());
     }
 
+    @Test
+    void violations_aGuardNamingTheOptionalModReachedByAStaticOrNestedImport() throws IOException {
+        write("mymod/Main.java", "import static mymod.integration.jei.JeiGuard.start;");
+        write("mymod/Other.java", "import mymod.integration.jei.JeiGuard.Inner;");
+        write("mymod/integration/jei/JeiGuard.java", "import mezz.jei.api.IModPlugin;");
+
+        final List<String> found = CHECK.violations(List.of(root));
+
+        assertEquals(2, found.size(), found.toString());
+        assertTrue(found.stream().allMatch(line -> line.startsWith("mymod.integration.jei.JeiGuard,")),
+                found.toString());
+    }
+
     private void write(final String path, final String imports) throws IOException {
         final Path file = root.resolve(path);
         Files.createDirectories(file.getParent());

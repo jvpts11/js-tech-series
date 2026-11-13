@@ -105,6 +105,8 @@ public final class StructureProjectorGameTests {
                         + view.missing());
         helper.assertTrue(view.missingByBlock().getOrDefault("jstests:test_furnace_part", 0) == 4,
                 "four furnace parts still to place; got " + view.missingByBlock());
+        helper.assertTrue(view.missingByBlock().values().stream().mapToInt(Integer::intValue).sum()
+                == view.missing(), "and the terminal among what is listed missing; got " + view.missingByBlock());
         helper.assertTrue(view.upTo(1).size() == 9, "its one layer is all of it");
         helper.succeed();
     }

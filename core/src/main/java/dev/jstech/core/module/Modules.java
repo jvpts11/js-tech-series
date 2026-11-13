@@ -164,7 +164,7 @@ public final class Modules {
                 return false;
             }
         }
-        host.set(INSTALLED.get(), now.with(socket, module.copyWithCount(1), true));
+        host.set(INSTALLED.get(), kept(host, kinds.size()).with(socket, module.copyWithCount(1), true));
         module.shrink(1);
         return true;
     }
@@ -176,7 +176,7 @@ public final class Modules {
             return ItemStack.EMPTY;
         }
         final ItemStack taken = now.sockets().get(socket).module().copy();
-        host.set(INSTALLED.get(), now.with(socket, ItemStack.EMPTY, false));
+        host.set(INSTALLED.get(), kept(host, now.sockets().size()).with(socket, ItemStack.EMPTY, false));
         return taken;
     }
 
@@ -186,7 +186,8 @@ public final class Modules {
         if (socket < 0 || socket >= now.sockets().size() || now.sockets().get(socket).module().isEmpty()) {
             return false;
         }
-        host.set(INSTALLED.get(), now.with(socket, now.sockets().get(socket).module(), on));
+        host.set(INSTALLED.get(), kept(host, now.sockets().size()).with(socket, now.sockets().get(socket).module(),
+                on));
         return true;
     }
 
@@ -318,5 +319,14 @@ public final class Modules {
 
     private static ResourceLocation id(final String path) {
         return ResourceLocation.fromNamespaceAndPath(JsCore.MODID, path);
+    }
+
+    /*
+     * What {@code host} keeps, written back as it is: grown to {@code count} sockets, never cut to them, so a module in
+     * a socket its host no longer has stays in the item rather than going with the next change.
+     */
+    private static InstalledModules kept(final ItemStack host, final int count) {
+        final InstalledModules stored = host.getOrDefault(INSTALLED.get(), InstalledModules.NONE);
+        return stored.sockets().size() >= count ? stored : stored.sized(count);
     }
 }

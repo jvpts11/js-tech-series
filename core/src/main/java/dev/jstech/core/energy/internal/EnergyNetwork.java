@@ -93,8 +93,8 @@ public final class EnergyNetwork {
         }
         final EnergyFlowGraph.FlowResult flow = graph.distribute(watched);
 
-        final long unsatisfiedDemand = Math.max(
-                0L, flow.totalDemand() - flow.totalDelivered());
+        // Only the consumers' demand goes unmet: a store's room left to fill is none.
+        final long unsatisfiedDemand = flow.consumersUnmet();
         return new EnergyDistributionResult(
                 flow.totalSupply(),
                 flow.totalDemand(),

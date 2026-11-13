@@ -19,10 +19,13 @@ public enum LandformKind implements IStableName {
     CRATER("crater", 2.0),
     /** Ridges of the fill blown across the land, the windward side gentle and the lee steep. */
     DUNES("dunes", 1.0),
-    /** A long winding cut with steep walls; its floor the surface, the special lying in its bottom if it says one. */
-    CANYON("canyon", 1.0),
+    /**
+     * A long winding cut with steep walls; its floor the surface, the special lying in its bottom if it says one. Its
+     * walls wind out past its radius, a small one's by half again and more at its turns, so it reaches further.
+     */
+    CANYON("canyon", 1.6),
     /** A narrow channel winding tightly, a smooth trough as a lava channel whose roof fell; its floor the surface. */
-    RILLE("rille", 1.0),
+    RILLE("rille", 1.5),
     /** A tunnel under the ground along a line, walled all round in the special, skylights open to the sky here. */
     LAVA_TUBE("lava_tube", 1.05),
     /** A sheet of the special (ice) over the land, its top the surface (snow). */

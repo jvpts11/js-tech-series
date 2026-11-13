@@ -10,6 +10,7 @@ package dev.jstech.core.client.hazard;
 import dev.jstech.core.hazard.HazardMap;
 import dev.jstech.core.hazard.HazardMapPayload;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
@@ -39,9 +40,15 @@ public final class HazardMapsClient {
             READINGS.clear();
             dimension = payload.dimension();
         }
+        // Kept to as many chunks a kind as the server keeps, the one read longest ago let go first, as there.
         for (final HazardMapPayload.Entry entry : payload.readings()) {
-            READINGS.computeIfAbsent(entry.kind(), kind -> new HashMap<>()).put(entry.chunk(),
-                    new HazardMap.Reading(entry.value(), entry.time()));
+            final Map<Long, HazardMap.Reading> chunks = READINGS.computeIfAbsent(entry.kind(),
+                    kind -> new LinkedHashMap<>());
+            chunks.remove(entry.chunk());
+            chunks.put(entry.chunk(), new HazardMap.Reading(entry.value(), entry.time()));
+            if (chunks.size() > HazardMap.KEPT) {
+                chunks.remove(chunks.keySet().iterator().next());
+            }
         }
     }
 

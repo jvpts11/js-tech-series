@@ -33,11 +33,37 @@ public final class NbtLines {
     private NbtLines() {
     }
 
-    /** {@code tag}'s values by their paths, in the order it holds them, {@link #MOST} at most. */
+    /**
+     * {@code tag}'s values by their paths, in the order it holds them, {@link #MOST} at most: when it holds more, the
+     * last line, a path of three dots, says the rest were left out.
+     */
     public static Map<String, String> of(final CompoundTag tag) {
+        final Map<String, String> read = new LinkedHashMap<>();
+        walk("", tag, read, MOST + 1, LONGEST);
+        if (read.size() <= MOST) {
+            return read;
+        }
         final Map<String, String> out = new LinkedHashMap<>();
-        walk("", tag, out);
+        for (final Map.Entry<String, String> line : read.entrySet()) {
+            if (out.size() == MOST - 1) {
+                break;
+            }
+            out.put(line.getKey(), line.getValue());
+        }
+        out.put(CUT, CUT);
         return out;
+    }
+
+    /* Every one of {@code tag}'s values whole, by their paths: what a comparison reads, which must miss none. */
+    static Map<String, String> whole(final CompoundTag tag) {
+        final Map<String, String> out = new LinkedHashMap<>();
+        walk("", tag, out, Integer.MAX_VALUE, Integer.MAX_VALUE);
+        return out;
+    }
+
+    /* A value as a line shows it: cut short past the longest one is written. */
+    static String cut(final String value) {
+        return value.length() > LONGEST ? value.substring(0, LONGEST - CUT.length()) + CUT : value;
     }
 
     /** The lines as a list of their own, each a compound of its path and value, to travel. */
@@ -62,27 +88,28 @@ public final class NbtLines {
         return out;
     }
 
-    private static void walk(final String prefix, final Tag tag, final Map<String, String> out) {
-        if (out.size() >= MOST) {
+    private static void walk(final String prefix, final Tag tag, final Map<String, String> out, final int most,
+                             final int longest) {
+        if (out.size() >= most) {
             return;
         }
         if (tag instanceof CompoundTag compound) {
             for (final String key : compound.getAllKeys()) {
-                walk(prefix.isEmpty() ? key : prefix + "." + key, compound.get(key), out);
+                walk(prefix.isEmpty() ? key : prefix + "." + key, compound.get(key), out, most, longest);
             }
             if (compound.isEmpty() && !prefix.isEmpty()) {
                 out.put(prefix, "{}");
             }
         } else if (tag instanceof ListTag list) {
             for (int i = 0; i < list.size(); i++) {
-                walk(prefix + "." + i, list.get(i), out);
+                walk(prefix + "." + i, list.get(i), out, most, longest);
             }
             if (list.isEmpty()) {
                 out.put(prefix, "[]");
             }
         } else {
             final String value = tag instanceof StringTag string ? string.getAsString() : tag.toString();
-            out.put(prefix, value.length() > LONGEST ? value.substring(0, LONGEST - CUT.length()) + CUT : value);
+            out.put(prefix, value.length() > longest ? cut(value) : value);
         }
     }
 }

@@ -325,13 +325,16 @@ public final class ProtectionTab implements IMachineFace {
         return top.ratingKey().map(TextKey::text).orElse(top.name().text());
     }
 
-    /* What a battery holds and the most it holds, in the machine's energy: {stored, capacity}. */
+    /*
+     * What a battery holds and the most it holds, in the machine's energy: {stored, capacity}. Read as the machine
+     * works it, so a battery of another energy it neither charges nor draws from shows nothing to give.
+     */
     private static long[] charge(final ItemStack battery, final Energy energy) {
         if (battery.isEmpty()) {
             return new long[] {0L, 0L};
         }
         final IEnergyPort own = battery.getCapability(EnergyPorts.ITEM);
-        if (own != null) {
+        if (own != null && own.energy() == energy) {
             return new long[] {own.stored(), own.capacity()};
         }
         final IEnergyStorage fe = battery.getCapability(Capabilities.EnergyStorage.ITEM);

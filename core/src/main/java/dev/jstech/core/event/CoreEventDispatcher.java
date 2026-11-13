@@ -33,9 +33,13 @@ public class CoreEventDispatcher {
             final Consumer<E> listener) {
         Objects.requireNonNull(eventClass, "eventClass must not be null");
         Objects.requireNonNull(listener, "listener must not be null");
-        listenersByClass
-                .computeIfAbsent(eventClass, k -> new CopyOnWriteArrayList<>())
-                .add(listener);
+        // Added within the map's own step, so one taken away at the same time never leaves it in a list let go of.
+        listenersByClass.compute(eventClass, (k, listeners) -> {
+            final List<Consumer<? extends ICoreEvent>> kept = listeners == null ? new CopyOnWriteArrayList<>()
+                    : listeners;
+            kept.add(listener);
+            return kept;
+        });
     }
 
     /**
@@ -47,20 +51,17 @@ public class CoreEventDispatcher {
             final Consumer<E> listener) {
         Objects.requireNonNull(eventClass, "eventClass must not be null");
         Objects.requireNonNull(listener, "listener must not be null");
-        final List<Consumer<? extends ICoreEvent>> listeners = listenersByClass.get(eventClass);
-        if (listeners == null) {
-            return;
-        }
-        // One call takes away one registration: a listener subscribed twice keeps the other.
-        for (int i = 0; i < listeners.size(); i++) {
-            if (listeners.get(i) == listener) {
-                listeners.remove(i);
-                break;
+        // One call takes away one registration: a listener subscribed twice keeps the other. All in the map's own step,
+        // so two at once never take the wrong one, nor drop a list another just added to.
+        listenersByClass.computeIfPresent(eventClass, (k, listeners) -> {
+            for (int i = 0; i < listeners.size(); i++) {
+                if (listeners.get(i) == listener) {
+                    listeners.remove(i);
+                    break;
+                }
             }
-        }
-        if (listeners.isEmpty()) {
-            listenersByClass.remove(eventClass);
-        }
+            return listeners.isEmpty() ? null : listeners;
+        });
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})

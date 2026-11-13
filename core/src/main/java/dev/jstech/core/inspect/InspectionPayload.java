@@ -73,7 +73,12 @@ public record InspectionPayload(BlockPos pos, List<Line> lines, List<Line> sent)
                 Line::new);
 
         public Line {
-            value = value.length() > LONGEST_VALUE ? value.substring(0, LONGEST_VALUE) : value;
+            if (value.length() > LONGEST_VALUE) {
+                // Never between the two halves of one letter, which would be no letter at all.
+                final int end = Character.isHighSurrogate(value.charAt(LONGEST_VALUE - 1)) ? LONGEST_VALUE - 1
+                        : LONGEST_VALUE;
+                value = value.substring(0, end);
+            }
         }
     }
 }

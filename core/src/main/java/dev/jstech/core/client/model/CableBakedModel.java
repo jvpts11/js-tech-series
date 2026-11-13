@@ -13,6 +13,7 @@ import dev.jstech.core.cable.CableDrawing;
 import dev.jstech.core.cable.CableFlowView;
 import dev.jstech.core.cable.CablePlugs;
 import dev.jstech.core.cable.Wire;
+import dev.jstech.core.cable.WireFlow;
 import dev.jstech.core.connect.ConnectedFaces;
 import java.util.ArrayList;
 import java.util.List;
@@ -99,7 +100,7 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
             final CableFlowView view = data.get(CableFlowView.PROPERTY);
             final List<BakedQuad> out = new ArrayList<>(own);
             out.addAll(WINDOWS.computeIfAbsent(new CableWindows.Key(drawing, view == null ? CableFlowView.NONE
-                    : view), CableWindows::make));
+                    : drawn(view)), CableWindows::make));
             return out;
         }
         if (renderType != null && renderType != RenderType.cutout()) {
@@ -133,6 +134,18 @@ public final class CableBakedModel extends BakedModelWrapper<BakedModel> {
             }
         }
         return false;
+    }
+
+    /*
+     * The flows as the windows draw them: what flows and how full, not how fast nor which way, so a flow that only
+     * runs faster or slower keeps the quads made for it rather than making and keeping more.
+     */
+    private static CableFlowView drawn(final CableFlowView view) {
+        final List<WireFlow> out = new ArrayList<>(view.flows().size());
+        for (final WireFlow flow : view.flows()) {
+            out.add(flow.isEmpty() ? WireFlow.EMPTY : new WireFlow(flow.what(), Direction.NORTH, 1L, flow.level()));
+        }
+        return new CableFlowView(out);
     }
 
     /* Every box of the wires, the junction box and the rings, each face a quad. */

@@ -52,6 +52,8 @@ public final class NetworkMemberGameTests {
     private static final double EPSILON = 1.0e-9;
     /** What every member joining or leaving a network told the game, heard by the test that listens. */
     private static final List<NetworkMemberEvent> HEARD = new CopyOnWriteArrayList<>();
+    /* The members told of joining whom their network's members already held as the game was told. */
+    private static final List<BlockPos> HELD_AS_TOLD = new CopyOnWriteArrayList<>();
     private static final AtomicBoolean LISTENING = new AtomicBoolean();
 
     private NetworkMemberGameTests() {
@@ -86,6 +88,8 @@ public final class NetworkMemberGameTests {
         helper.startSequence().thenWaitUntil(() -> carries(helper, network))
                 .thenWaitUntil(() -> helper.assertTrue(heard(at, NetworkMemberEvent.Joined.class, network),
                         "the game is told the reactor joined the network"))
+                .thenExecute(() -> helper.assertTrue(HELD_AS_TOLD.contains(at),
+                        "and as it is told, the network's members already hold it"))
                 .thenExecute(() -> helper.setBlock(CABLE, Blocks.AIR))
                 .thenWaitUntil(() -> helper.assertTrue(heard(at, NetworkMemberEvent.Left.class, network),
                         "and that it left once its cable went"))
@@ -189,6 +193,12 @@ public final class NetworkMemberGameTests {
         if (LISTENING.compareAndSet(false, true)) {
             NeoForge.EVENT_BUS.addListener(NetworkMemberEvent.Joined.class, HEARD::add);
             NeoForge.EVENT_BUS.addListener(NetworkMemberEvent.Left.class, HEARD::add);
+            NeoForge.EVENT_BUS.addListener(NetworkMemberEvent.Joined.class, event -> {
+                if (NetworkSystem.get(event.level()).membersOf(event.network()).stream()
+                        .anyMatch(member -> member.pos() == event.pos().asLong())) {
+                    HELD_AS_TOLD.add(event.pos());
+                }
+            });
         }
     }
 

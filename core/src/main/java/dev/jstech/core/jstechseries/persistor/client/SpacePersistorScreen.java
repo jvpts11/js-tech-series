@@ -177,7 +177,11 @@ public final class SpacePersistorScreen extends CoreContainerScreen<MachineMenu>
             }
             return super.mouseClicked(mouseX, mouseY, button);
         }
-        if (this.naming != null && !this.naming.isMouseOver(mouseX, mouseY)) {
+        if (this.naming != null) {
+            // A click in the box being written in is the box's: it places the caret or picks letters.
+            if (this.naming.isMouseOver(mouseX, mouseY)) {
+                return super.mouseClicked(mouseX, mouseY, button);
+            }
             finishNaming(true);
         }
         if (button == InputConstants.MOUSE_BUTTON_LEFT && clickedFace(x - FACE_X, y - FACE_Y)) {
@@ -347,7 +351,8 @@ public final class SpacePersistorScreen extends CoreContainerScreen<MachineMenu>
     }
 
     private void turnRadius(final int by) {
-        SpacePersistor.SET_RADIUS.send(Math.clamp(this.persistor.area().radius() + by, 0, PersistorArea.MOST_RADIUS));
+        // The step goes, not the radius it would give: the server adds each to what it holds, so none is lost.
+        SpacePersistor.TURN_RADIUS.send(by);
     }
 
     private void startNaming() {

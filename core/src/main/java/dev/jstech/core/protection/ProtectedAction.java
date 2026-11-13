@@ -18,7 +18,7 @@ public enum ProtectedAction {
     PLACE,
     /** Use a block or open what is there: a door, a chest, a machine. */
     USE,
-    /** Hurt an entity standing there. */
+    /** Hurt a player standing there: what a claim's PvP setting governs; a creature's hurt asks nothing. */
     HURT,
     /** Blow it up. */
     EXPLODE,

@@ -213,13 +213,20 @@ public final class TextArea extends UiComponent {
                 doc.newline();
                 onEdit.run();
             }
+            // Told as an edit only when the text changed: a backspace at the very start changes nothing.
             case GLFW.GLFW_KEY_BACKSPACE -> {
+                final String before = doc.text();
                 doc.backspace();
-                onEdit.run();
+                if (!doc.text().equals(before)) {
+                    onEdit.run();
+                }
             }
             case GLFW.GLFW_KEY_DELETE -> {
+                final String before = doc.text();
                 doc.delete();
-                onEdit.run();
+                if (!doc.text().equals(before)) {
+                    onEdit.run();
+                }
             }
             case GLFW.GLFW_KEY_LEFT -> doc.left();
             case GLFW.GLFW_KEY_RIGHT -> doc.right();

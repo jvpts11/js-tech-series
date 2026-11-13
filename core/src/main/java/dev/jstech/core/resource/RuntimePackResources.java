@@ -126,8 +126,10 @@ final class RuntimePackResources implements PackResources {
         try {
             return this.files.get(path).get();
         } catch (final RuntimeException failed) {
-            // One file that cannot be made leaves only that file out; the rest of the pack still loads.
-            JsCore.LOGGER.warn("The generated file {} of {} could not be made", path, this.location.id(), failed);
+            // One file that cannot be made is shipped empty, so the game reads it as a broken file and says so,
+            // while the rest of the pack still loads. It is listed before it is made, so it cannot be left out.
+            JsCore.LOGGER.warn("The generated file {} of {} could not be made and is empty", path, this.location.id(),
+                    failed);
             return new byte[0];
         }
     }

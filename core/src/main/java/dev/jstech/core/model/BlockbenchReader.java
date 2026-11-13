@@ -205,6 +205,12 @@ public final class BlockbenchReader {
                 final int texture = Math.max(0, reading.texture(face.get("texture")));
                 final MeshParts parts = byTexture.computeIfAbsent(texture, key -> new MeshParts());
                 final List<String> keys = sorted(face.getAsJsonArray("vertices"), corners);
+                for (final String key : keys) {
+                    if (!corners.containsKey(key)) {
+                        throw new IllegalArgumentException("a face of a mesh names the corner " + key
+                                + ", which its mesh does not have");
+                    }
+                }
                 final JsonObject faceUv = face.has("uv") ? face.getAsJsonObject("uv") : new JsonObject();
                 final int first = parts.positions.size() / 3;
                 for (final String key : keys) {

@@ -32,7 +32,7 @@ public static final Connection STEAM_LINE = Connection.of(rl("steam"));        /
 public static final CableEntry STEAM_PIPE = CONTENT.cable("steam_pipe", CableType.builder(STEAM_LINE)
                 .grid(GridKind.FLUID)                 // which grid moves what it carries
                 .lane(Lane.BOTTOM_RIGHT)              // its lane, the same for every generation of the line
-                .thickness(4)                         // pixels: up to 6 in a lane, 12 alone
+                .thickness(4)                         // pixels: up to 4 in a lane, 12 alone
                 .carries(500, 64)                     // 500 a tick, 64 blocks a run (0: any length)
                 .loses(0)                             // millionths lost each block
                 .withstands(273, 900)                 // pipes: the coldest and hottest fluid, in kelvin
@@ -303,7 +303,7 @@ comparator reading, a tick only when it needs one, a room of its own shape, is t
 
 - **"two lines in one lane".** Your line took a lane another line owns. Pick a free one.
 - **The cable is refused as declared.** It has neither a lane nor `alone()`, or no jacket or plug, or a thickness
-  over 6 in a lane or over 12 alone.
+  over 4 in a lane or over 12 alone.
 - **Two tanks on one pipe never share.** Both take and give, so neither is an output: set the end of the one to empty
   to pull.
 - **Two of your cables side by side join when they should not.** Same line, same generation, colours agree: dye

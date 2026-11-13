@@ -71,8 +71,7 @@ public record MotionSpec(String style, int duration, int delay, IEasing easing, 
      */
     public MotionSpec slowed(final int percent) {
         final int at = Math.max(0, percent);
-        return new MotionSpec(style, (int) ((long) duration * at / 100), (int) ((long) delay * at / 100), easing,
-                group, params);
+        return new MotionSpec(style, scaled(duration, at), scaled(delay, at), easing, group, params);
     }
 
     /** The switches that turn it off, in the order they are written. */
@@ -95,5 +94,10 @@ public record MotionSpec(String style, int duration, int delay, IEasing easing, 
     /** Whether anything moves at all. */
     public boolean moves() {
         return !MotionStyles.NONE.equals(style) && duration > 0;
+    }
+
+    /* That share of a time, held at the longest an int keeps rather than wrapping round to a negative one. */
+    private static int scaled(final int ms, final int percent) {
+        return (int) Math.min(Integer.MAX_VALUE, (long) ms * percent / 100);
     }
 }

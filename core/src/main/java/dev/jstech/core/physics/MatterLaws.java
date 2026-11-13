@@ -8,6 +8,7 @@
 package dev.jstech.core.physics;
 
 import dev.jstech.core.explosion.Explosions;
+import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -23,6 +24,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.level.ExplosionEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 /**
@@ -38,6 +40,9 @@ public final class MatterLaws {
     private static final long LARGEST_RISING = 32_768;
     private static final int MOST_BROKEN = 256;
     private static final double TICKS_A_SECOND = 20.0;
+    /* A block due where its chunk is gone is looked at again a second later, for five minutes at most. */
+    private static final long LOOK_AGAIN = 20;
+    private static final long WAITS_FOR_ITS_CHUNK = 6_000;
     private static final Map<ResourceKey<Level>, PriorityQueue<Due>> PENDING = new HashMap<>();
 
     private MatterLaws() {
@@ -45,6 +50,8 @@ public final class MatterLaws {
 
     static void listen() {
         NeoForge.EVENT_BUS.addListener(ExplosionEvent.Detonate.class, MatterLaws::onDetonate);
+        // Kept by the dimension's name, which the next world opened in the same game shares: it goes with its server.
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> PENDING.clear());
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, event -> {
             if (event.getLevel() instanceof ServerLevel level) {
                 tick(level);
@@ -76,7 +83,8 @@ public final class MatterLaws {
         final long now = level.getGameTime();
         for (final BlockPos pos : event.getAffectedBlocks()) {
             final double away = Math.sqrt(pos.distToCenterSqr(centre));
-            queue.add(new Due(pos.immutable(), now + (long) Math.ceil(away / speed * TICKS_A_SECOND)));
+            final long at = now + (long) Math.ceil(away / speed * TICKS_A_SECOND);
+            queue.add(new Due(pos.immutable(), at, at + WAITS_FOR_ITS_CHUNK));
         }
         event.getAffectedBlocks().clear();
     }
@@ -85,12 +93,23 @@ public final class MatterLaws {
         final PriorityQueue<Due> queue = PENDING.get(level.dimension());
         final long now = level.getGameTime();
         int broken = 0;
+        final List<Due> later = new ArrayList<>();
         while (queue != null && !queue.isEmpty() && queue.peek().at() <= now && broken < MOST_BROKEN) {
-            final BlockPos pos = queue.poll().pos();
-            if (level.isLoaded(pos) && !level.getBlockState(pos).isAir()) {
-                level.destroyBlock(pos, true);
+            final Due due = queue.poll();
+            if (!Loaded.at(level, due.pos())) {
+                // Its chunk gone, the explosion's own list cleared: it waits a while for the chunk, not for ever.
+                if (now < due.waitTo()) {
+                    later.add(new Due(due.pos(), now + LOOK_AGAIN, due.waitTo()));
+                }
+                continue;
+            }
+            if (!level.getBlockState(due.pos()).isAir()) {
+                level.destroyBlock(due.pos(), true);
             }
             broken++;
+        }
+        if (queue != null) {
+            queue.addAll(later);
         }
         if (now % RISE_EVERY != 0) {
             return;
@@ -136,9 +155,10 @@ public final class MatterLaws {
     /**
      * A block an explosion breaks when it reaches it.
      *
-     * @param pos where it is
-     * @param at  the game tick it breaks at
+     * @param pos    where it is
+     * @param at     the game tick it breaks at
+     * @param waitTo the last game tick it waits for its chunk to load, should that chunk be gone when it is due
      */
-    private record Due(BlockPos pos, long at) {
+    private record Due(BlockPos pos, long at, long waitTo) {
     }
 }

@@ -168,8 +168,13 @@ final class ScreenJson {
 
     /* Where the screen {@code id}'s file is in its mod's source, or none when this run has no source for the mod. */
     private static Optional<Path> sourceOf(final ResourceLocation id) {
-        return DevSources.resourcesOf(id.getNamespace()).map(resources -> resources.resolve(ASSETS)
-                .resolve(id.getNamespace()).resolve(ScreenFile.FOLDER).resolve(id.getPath() + JSON));
+        // Never a file outside the screens folder, whatever the name climbs to.
+        return DevSources.resourcesOf(id.getNamespace()).flatMap(resources -> {
+            final Path folder = resources.resolve(ASSETS).resolve(id.getNamespace()).resolve(ScreenFile.FOLDER)
+                    .normalize();
+            final Path file = folder.resolve(id.getPath() + JSON).normalize();
+            return file.startsWith(folder) ? Optional.of(file) : Optional.empty();
+        });
     }
 
     private static Optional<JsonObject> object(final JsonElement read) {

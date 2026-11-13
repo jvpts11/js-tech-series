@@ -234,6 +234,80 @@ public final class MovingStructureJointGameTests {
                 .thenSucceed();
     }
 
+    /* A rope made longer than its winch lets out, with no signal: the winch leaves it as long as it is. */
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 100)
+    public static void joints_aWinchWithNoSignalLeavesARopeLongerThanItReelsAsItIs(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure crate = made(helper, List.of(new BlockPos(4, 6, 4)), Blocks.OAK_PLANKS);
+        final Vec3 top = topOf(crate);
+        final JointKind.Winch winch = new JointKind.Winch(1.0, 0.5, 2, Optional.of(new JointSignal(
+                JointSignal.Side.B, helper.absolutePos(new BlockPos(6, 2, 6)), BlockPhysics.SignalSide.ANY)),
+                Optional.empty());
+        final StructureJoint rope = StructureJoints.join(level, new JointKind.Rope(4, JointKind.RopeLook.CHAIN,
+                        Optional.of(winch)), StructureJoints.Anchor.on(crate, top, new Vec3(0, 1, 0)),
+                StructureJoints.Anchor.world(top.add(0, 4, 0), new Vec3(0, 1, 0)), Optional.empty());
+        crate.move(PhysicsMotion.AT_REST);
+        final double start = crate.worldBox().minY;
+        helper.startSequence()
+                .thenExecuteAfter(10, () -> {
+                    final StructureJoint now = StructureJoints.byId(level, rope.id());
+                    helper.assertTrue(now != null && now.kind() instanceof JointKind.Rope kept
+                            && Math.abs(kept.length() - 4) < 1.0e-6, "the rope is as long as it was made: " + now);
+                    helper.assertTrue(Math.abs(crate.worldBox().minY - start) < HOLDS,
+                            "and the crate hangs where it did: " + crate.worldBox());
+                    MovingStructures.takeAway(crate);
+                })
+                .thenSucceed();
+    }
+
+    /* A joint's load past every number is one it never breaks at, as none is, and it saves with the world. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void joints_aLoadPastEveryNumberIsOneItNeverBreaksAt(final GameTestHelper helper) {
+        final MovingStructure crate = made(helper, List.of(new BlockPos(4, 3, 4)), Blocks.OAK_PLANKS);
+        final Vec3 top = topOf(crate);
+        final StructureJoint rope = StructureJoints.join(helper.getLevel(), new JointKind.Rope(3,
+                        JointKind.RopeLook.ROPE, Optional.empty()),
+                StructureJoints.Anchor.on(crate, top, new Vec3(0, 1, 0)),
+                StructureJoints.Anchor.world(top.add(0, 3, 0), new Vec3(0, 1, 0)),
+                Optional.of(Double.POSITIVE_INFINITY));
+        helper.assertTrue(rope.breaksAt().isEmpty(), "it never breaks: " + rope.breaksAt());
+        helper.assertTrue(JointBook.CODEC.encodeStart(NbtOps.INSTANCE, new JointBook(List.of(rope))).isSuccess(),
+                "and is written with the world");
+        boolean refused = false;
+        try {
+            new StructureJoint(rope.id(), rope.a(), rope.b(), rope.kind(), Optional.of(-1.0));
+        } catch (final IllegalArgumentException below) {
+            refused = true;
+        }
+        helper.assertTrue(refused, "a load below none is refused");
+        MovingStructures.takeAway(crate);
+        helper.succeed();
+    }
+
+    /*
+     * A crate asleep on the floor, on a slack rope from a structure above it: that structure taken away, the crate
+     * wakes at once, so whatever it hung by is felt gone now, not at its next look about.
+     */
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 200)
+    public static void joints_whatHangsFromAStructureTakenAwayWakesAtOnce(final GameTestHelper helper) {
+        final MovingStructure crate = made(helper, List.of(new BlockPos(4, 2, 4)), Blocks.OAK_PLANKS);
+        final MovingStructure holder = made(helper, List.of(new BlockPos(4, 8, 4)), Blocks.STONE);
+        final Vec3 top = topOf(crate);
+        final Vec3 under = new Vec3(middleOf(holder).x, holder.worldBox().minY, middleOf(holder).z);
+        StructureJoints.join(helper.getLevel(), new JointKind.Rope(top.distanceTo(under) + 1, JointKind.RopeLook.ROPE,
+                Optional.empty()), StructureJoints.Anchor.on(crate, top, new Vec3(0, 1, 0)),
+                StructureJoints.Anchor.on(holder, under, new Vec3(0, 1, 0)), Optional.empty());
+        crate.move(PhysicsMotion.AT_REST);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(asleep(crate), "the crate rests asleep on the floor"))
+                .thenExecute(() -> {
+                    MovingStructures.takeAway(holder);
+                    helper.assertTrue(!asleep(crate), "the structure it hung from gone, it wakes at once");
+                    MovingStructures.takeAway(crate);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = TALL, batch = BATCH, timeoutTicks = 200)
     public static void joints_aDrivenSliderLiftsItsLoadAlongItsLine(final GameTestHelper helper) {
         final MovingStructure lift = made(helper, List.of(new BlockPos(4, 3, 4)), Blocks.STONE);
@@ -249,6 +323,26 @@ public final class MovingStructureJointGameTests {
             helper.assertTrue(Math.abs(now.x - base.x) < HOLDS && Math.abs(now.z - base.z) < HOLDS,
                     "along its line: " + now + " from " + base);
             helper.assertTrue(lift.pose().angleTo(StructurePose.at(0, 0, 0)) < 0.01, "not turning: " + lift.pose());
+            MovingStructures.takeAway(lift);
+            helper.succeed();
+        });
+    }
+
+    /* A motor of a reverse signal only, its reverse off: it drives forward at full speed, as one of no signal does. */
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 200)
+    public static void joints_aMotorOfOnlyAReverseSignalDrivesForwardWhileItIsOff(final GameTestHelper helper) {
+        final MovingStructure lift = made(helper, List.of(new BlockPos(4, 3, 4)), Blocks.STONE);
+        final Vec3 base = middleOf(lift);
+        final JointKind.Drive drive = new JointKind.Drive(0.5, 1.0e6, Optional.empty(), Optional.of(new JointSignal(
+                JointSignal.Side.A, helper.absolutePos(new BlockPos(6, 2, 6)), BlockPhysics.SignalSide.ANY)));
+        StructureJoints.join(helper.getLevel(), new JointKind.Slider(Optional.empty(), Optional.of(drive)),
+                StructureJoints.Anchor.world(base, new Vec3(0, 1, 0)), StructureJoints.Anchor.on(lift, base,
+                        new Vec3(0, 1, 0)), Optional.empty());
+        lift.move(PhysicsMotion.AT_REST);
+        helper.runAfterDelay(40, () -> {
+            final double rose = middleOf(lift).y - base.y;
+            helper.assertTrue(Math.abs(rose - 1.0) < 0.1, "two seconds at half a metre a second lift it a metre: "
+                    + rose);
             MovingStructures.takeAway(lift);
             helper.succeed();
         });

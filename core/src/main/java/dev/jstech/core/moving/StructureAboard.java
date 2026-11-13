@@ -167,7 +167,7 @@ public final class StructureAboard {
         if (signal > 0 && (before == 0 || level.getGameTime() % CLAMP_LOOK == 0)) {
             StructureDocking.closeClamp(level, structure, pos, state, clamp);
         } else if (signal == 0 && before > 0) {
-            StructureDocking.openClamp(structure, pos, state);
+            StructureDocking.openClamp(level, structure, pos, state);
         }
     }
 

@@ -27,6 +27,7 @@ import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.protection.PlayerLimits;
 import dev.jstech.core.protection.ProtectionBalance;
 import dev.jstech.core.region.Box;
+import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.stream.StreamSupport;
 import net.minecraft.core.BlockPos;
@@ -93,6 +95,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.CollisionContext;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import net.neoforged.neoforge.network.registration.NetworkRegistry;
@@ -115,6 +120,8 @@ public final class MovingStructureGameTests {
     /* How far a walker goes a tick through the doorway, and for how many ticks: from before it to past it. */
     private static final double DOORWAY_STRIDE = 0.15;
     private static final int DOORWAY_STRIDES = 20;
+    /* How far up a structure is put at once, in blocks. */
+    private static final double RAISED = 2.0;
     private static final TextKey LOADER_ABOARD = TextKey.of("jstests.moving.loader_aboard",
             "A loader aboard keeps the world under it loaded");
 
@@ -477,6 +484,37 @@ public final class MovingStructureGameTests {
                     final AABB box = floor.worldBox();
                     helper.assertTrue(Math.abs(box.getYsize() - 3) < 0.01 && Math.abs(box.getXsize() - 1) < 0.01,
                             "the floor stands up on its hinge: " + box);
+                    MovingStructures.takeAway(floor);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * Put somewhere else after its next step was worked out at the start of the tick, as a mod's own tick can: it goes
+     * on from where it was put, not from the step worked out from where it was.
+     */
+    @GameTest(template = ARENA, batch = "jscore_moving_motion", timeoutTicks = 100)
+    public static void teleport_afterItsStepWasWorkedOutGoesOnFromWhereItWasPut(final GameTestHelper helper) {
+        final MovingStructure floor = floor(helper);
+        final StructurePose start = floor.pose();
+        final double raised = start.y() + RAISED;
+        floor.move(new TowardMotion(start.movedTo(start.x() + 3, start.y(), start.z()), 1, 0));
+        final boolean[] done = {false};
+        final Consumer<LevelTickEvent.Pre> jump = event -> {
+            if (event.getLevel() == helper.getLevel() && !done[0]) {
+                done[0] = true;
+                floor.teleport(floor.pose().movedTo(floor.pose().x(), raised, floor.pose().z()));
+            }
+        };
+        helper.startSequence()
+                .thenIdle(2)
+                .thenExecute(() -> NeoForge.EVENT_BUS.addListener(EventPriority.LOWEST, LevelTickEvent.Pre.class,
+                        jump))
+                .thenWaitUntil(() -> helper.assertTrue(done[0], "it is put higher up during a tick"))
+                .thenExecute(() -> {
+                    NeoForge.EVENT_BUS.unregister(jump);
+                    helper.assertTrue(floor.pose().y() > raised - 1, "and stays up there: " + floor.pose().y()
+                            + " for " + raised);
                     MovingStructures.takeAway(floor);
                 })
                 .thenSucceed();
@@ -885,6 +923,35 @@ public final class MovingStructureGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(deck.resting(), "the deck arrives"))
                 .thenExecuteAfter(5, () -> helper.assertTrue(Math.abs(player.getY() - (top + 3)) < 0.01,
                         "the player rose with the deck: " + player.getY() + " for " + (top + 3)))
+                .thenExecute(() -> {
+                    level.getServer().getPlayerList().remove(player);
+                    MovingStructures.takeAway(deck);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A player's game says they stand on the deck, then that they stand at a place far off it, which the server
+     * refuses: they stand on it no more, and their save no longer brings them back to it after a restart.
+     */
+    @GameTest(template = ARENA, batch = "jscore_moving_deck")
+    public static void deck_aRefusedPlaceLetsGoTheDeckTheirSaveWouldBringThemBackTo(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure deck = floor(helper);
+        final ServerPlayer player = player(helper, new Vec3(4.5, 4, 4.5), null);
+        final Vec3 stood = player.position();
+        final double[] place = {deck.frame().yardX(stood.x, stood.y, stood.z),
+                deck.frame().yardY(stood.x, stood.y, stood.z), deck.frame().yardZ(stood.x, stood.y, stood.z)};
+        final double[] farOff = {place[0] + 100, place[1], place[2]};
+        helper.startSequence()
+                .thenExecute(() -> player.connection.handleCustomPayload(new ServerboundCustomPayloadPacket(
+                        new StructureFootingPayload(deck.entity().getId(), place, false))))
+                .thenExecuteAfter(1, () -> helper.assertTrue(player.getData(CoreAttachments.FOOTING.get()).structure()
+                        .isPresent(), "standing on the deck, their save keeps it"))
+                .thenExecute(() -> player.connection.handleCustomPayload(new ServerboundCustomPayloadPacket(
+                        new StructureFootingPayload(deck.entity().getId(), farOff, false))))
+                .thenExecuteAfter(1, () -> helper.assertTrue(player.getData(CoreAttachments.FOOTING.get()).structure()
+                        .isEmpty(), "a place far off refused, their save keeps no deck"))
                 .thenExecute(() -> {
                     level.getServer().getPlayerList().remove(player);
                     MovingStructures.takeAway(deck);

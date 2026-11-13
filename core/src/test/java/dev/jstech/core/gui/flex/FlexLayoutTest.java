@@ -163,6 +163,18 @@ class FlexLayoutTest {
     }
 
     @Test
+    void layout_gridCellNarrowerThanItsChildsMarginsLeavesItNoSizeAndSaysItOverflows() {
+        final FlexBox grid = FlexBox.grid("grid", List.of(Track.fixed(10))).align(Align.START)
+                .add(leaf("tight", 4, 4).margin(new Insets(6, 6, 6, 6)));
+
+        final Placed placed = FlexLayout.layout(grid, 10, 30);
+
+        assertTrue(at(placed, "tight").width() >= 0 && at(placed, "tight").height() >= 0,
+                "no size below none: " + at(placed, "tight"));
+        assertTrue(placed.overflowing(), "and the cell is said to be too small for it");
+    }
+
+    @Test
     void layout_stackLaysBoxesOverEachOther() {
         final FlexBox stack = FlexBox.stack("stack").add(block("ground", 0, 0)).add(leaf("mark", 4, 4)
                 .alignSelf(Align.CENTER));

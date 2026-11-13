@@ -13,6 +13,7 @@ import dev.jstech.core.protection.Protection;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
+import dev.jstech.core.util.Loaded;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -247,6 +248,11 @@ public final class BuildingTools {
             tell(player, ToolTexts.TOO_BIG.with(ToolBalance.mostCopied(), volume));
             return;
         }
+        // Read only where the world is loaded: a region reaching into land not loaded would load it all at once.
+        if (!Loaded.area(level, low.getX(), low.getZ(), high.getX(), high.getZ())) {
+            tell(player, ToolTexts.NOT_LOADED.text());
+            return;
+        }
         final List<BlockState> palette = new ArrayList<>(List.of(CopiedRegion.air()));
         final Map<BlockState, Integer> known = new HashMap<>(Map.of(CopiedRegion.air(), 0));
         final int[] blocks = new int[(int) volume];
@@ -295,7 +301,8 @@ public final class BuildingTools {
             return Placed.STOPPED;
         }
         final Item item = state.getBlock().asItem();
-        if (item == Items.AIR || level.isOutsideBuildHeight(pos) || !level.getBlockState(pos).canBeReplaced()
+        if (item == Items.AIR || level.isOutsideBuildHeight(pos) || !Loaded.at(level, pos)
+                || !level.getBlockState(pos).canBeReplaced()
                 || !state.canSurvive(level, pos) || !level.isUnobstructed(state, pos, CollisionContext.empty())
                 || !Protection.may(Actor.of(player), ProtectedAction.PLACE, level, pos)) {
             return Placed.SKIPPED;

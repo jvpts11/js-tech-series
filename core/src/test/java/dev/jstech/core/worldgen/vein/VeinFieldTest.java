@@ -130,6 +130,12 @@ class VeinFieldTest {
     }
 
     @Test
+    void share_ofAVeinOfNoSizeIsNoneEvenAtItsMiddle() {
+        final VeinField.Vein none = new VeinField.Vein(0, 0, 10, 0, 0, 0, 1L);
+        assertEquals(0.0, none.share(0, 10, 0), "a vein a spread of none makes holds nothing");
+    }
+
+    @Test
     void blocks_countsTwoFifthsOfTheBallAtItsDensity() {
         final VeinField.Vein vein = new VeinField.Vein(0, 0, 0, 0, 10, 10, 1L);
         assertEquals(Math.round(4.0 / 3.0 * Math.PI * 1000 * 0.5 * 0.4), vein.blocks(0.5));

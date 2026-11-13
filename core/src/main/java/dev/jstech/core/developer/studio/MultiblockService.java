@@ -20,6 +20,7 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -30,6 +31,7 @@ import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.levelgen.structure.BoundingBox;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.Logger;
 
@@ -57,6 +59,15 @@ final class MultiblockService implements IStudioService {
             "%s is not a name a pattern can have");
     private static final TextKey TERMINAL_OUTSIDE = TextKey.of("gui.jscore.studio.structures.terminal_outside",
             "The terminal must be a block between the corners");
+    private static final TextKey TOO_MANY_KINDS = TextKey.of("gui.jscore.studio.structures.too_many_kinds",
+            "The structure holds more kinds of block than a pattern has letters");
+    private static final TextKey TOO_BIG = TextKey.of("gui.jscore.studio.structures.too_big",
+            "A pattern is recorded of at most %s blocks; choose nearer corners");
+    private static final TextKey TOO_BIG_TO_SHOW = TextKey.of("gui.jscore.studio.structures.too_big_to_show",
+            "The pattern is too big to show here; save it to read it in its file");
+    /* The most blocks a pattern is recorded of, and the most of its words sent to be shown, under a word's limit. */
+    private static final long MOST_BLOCKS = 32_768L;
+    private static final int MOST_SENT_BYTES = 60_000;
     private static final TextKey PACK_DESCRIPTION = TextKey.of("gui.jscore.studio.structures.pack",
             "The multiblocks written by J's Core's studio");
 
@@ -68,21 +79,43 @@ final class MultiblockService implements IStudioService {
             reply.accept(refused(GameText.resolve(NOT_A_NAME.with(args.getString(StudioKeys.NAME)))));
             return;
         }
+        final BlockPos from = BlockPos.of(args.getLong(StudioKeys.FROM));
+        final BlockPos to = BlockPos.of(args.getLong(StudioKeys.TO));
+        final BlockPos terminal = BlockPos.of(args.getLong(StudioKeys.TERMINAL));
+        // Each way the recording can be refused says its own reason: the box, the terminal, the kinds of block.
+        final BoundingBox box = BoundingBox.fromCorners(from, to);
+        if ((long) box.getXSpan() * box.getYSpan() * box.getZSpan() > MOST_BLOCKS) {
+            reply.accept(refused(GameText.resolve(TOO_BIG.with(MOST_BLOCKS))));
+            return;
+        }
+        StudioServices.requireLoaded(level, from, to);
+        if (!box.isInside(terminal) || level.getBlockState(terminal).isAir()) {
+            reply.accept(refused(GameText.resolve(TERMINAL_OUTSIDE)));
+            return;
+        }
         final MultiblockRecorder.Recording recording;
         try {
-            recording = MultiblockRecorder.record(level, BlockPos.of(args.getLong(StudioKeys.FROM)),
-                    BlockPos.of(args.getLong(StudioKeys.TO)), BlockPos.of(args.getLong(StudioKeys.TERMINAL)),
-                    name.toString(), args.getBoolean(StudioKeys.MIRRORS), args.getBoolean(StudioKeys.LIES_DOWN));
+            recording = MultiblockRecorder.record(level, from, to, terminal, name.toString(),
+                    args.getBoolean(StudioKeys.MIRRORS), args.getBoolean(StudioKeys.LIES_DOWN));
         } catch (final IllegalArgumentException wrong) {
-            reply.accept(refused(GameText.resolve(TERMINAL_OUTSIDE)));
+            reply.accept(refused(GameText.resolve(TOO_MANY_KINDS)));
             return;
         }
         final JsonElement json = MultiblockPatterns.CODEC.encodeStart(JsonOps.INSTANCE, recording.pattern())
                 .getOrThrow();
+        final String words = json.toString();
+        // A word sent whole has a most it can be; past it the pattern is only written, never shown.
+        final boolean shown = words.getBytes(StandardCharsets.UTF_8).length <= MOST_SENT_BYTES;
+        if (!shown && !args.getBoolean(StudioKeys.SAVE)) {
+            reply.accept(refused(GameText.resolve(TOO_BIG_TO_SHOW)));
+            return;
+        }
         final CompoundTag out = new CompoundTag();
         out.putIntArray(StudioKeys.SIZE, new int[] {recording.sizeX(), recording.sizeY(), recording.sizeZ()});
         out.putInt(StudioKeys.BLOCKS, recording.blocks());
-        out.putString(StudioKeys.PATTERN, json.toString());
+        if (shown) {
+            out.putString(StudioKeys.PATTERN, words);
+        }
         final ListTag letters = new ListTag();
         for (final MultiblockRecorder.Letter letter : recording.letters()) {
             final CompoundTag each = new CompoundTag();
@@ -119,8 +152,8 @@ final class MultiblockService implements IStudioService {
                     Files.writeString(meta, GSON.toJson(packMeta()));
                 }
             }
-            final Path file = root.resolve("data").resolve(name.getNamespace()).resolve(FOLDER)
-                    .resolve(name.getPath() + JSON);
+            final Path file = StudioServices.fileIn(root.resolve("data"), name.getNamespace() + "/" + FOLDER + "/"
+                    + name.getPath() + JSON);
             Files.createDirectories(file.getParent());
             Files.writeString(file, json);
             return Optional.of(file);

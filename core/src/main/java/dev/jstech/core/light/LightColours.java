@@ -134,7 +134,8 @@ public final class LightColours {
 
     private static DataResult<Integer> read(final String text) {
         final String digits = text.startsWith("#") ? text.substring(1) : text;
-        if (digits.length() != DIGITS) {
+        // Hex digits only: a sign the number reader would take otherwise makes a wrong colour, not an error.
+        if (digits.length() != DIGITS || !digits.chars().allMatch(c -> Character.digit(c, HEX) >= 0)) {
             return DataResult.error(() -> "a colour of light is written #RRGGBB, not " + text);
         }
         try {

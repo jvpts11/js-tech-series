@@ -21,6 +21,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The check that keeps an optional mod from becoming a required one by accident, run from a mod's own unit tests over
@@ -72,13 +73,13 @@ public final class OptionalDependencyCheck {
                     found.add(source.getKey() + " names " + imported + " outside an integration package");
                     continue;
                 }
-                final String entry = byClass.get(imported);
-                if (entry == null || !underIntegration(imported.replace('.', '/'))) {
+                final String reached = sourceOf(imported, byClass);
+                if (reached == null || !underIntegration(reached.replace('.', '/'))) {
                     continue;
                 }
-                for (final String named : imports(entry)) {
+                for (final String named : imports(byClass.get(reached))) {
                     if (isOptional(named)) {
-                        found.add(imported + ", reached from " + source.getKey() + ", names " + named
+                        found.add(reached + ", reached from " + source.getKey() + ", names " + named
                                 + " where its guard has not looked yet");
                     }
                 }
@@ -94,6 +95,22 @@ public final class OptionalDependencyCheck {
             }
         }
         return false;
+    }
+
+    /*
+     * The class among the sources whose file holds {@code imported}: the class itself, or the one a static member or
+     * a nested class is imported from, its last names taken off until a source's is left; null for none.
+     */
+    private static @Nullable String sourceOf(final String imported, final Map<String, String> byClass) {
+        String name = imported;
+        while (!byClass.containsKey(name)) {
+            final int dot = name.lastIndexOf('.');
+            if (dot < 0) {
+                return null;
+            }
+            name = name.substring(0, dot);
+        }
+        return name;
     }
 
     private static boolean underIntegration(final String path) {

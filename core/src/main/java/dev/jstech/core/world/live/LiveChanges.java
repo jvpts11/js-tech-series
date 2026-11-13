@@ -113,7 +113,9 @@ public final class LiveChanges {
      */
     public static boolean column(final ServerLevel level, final int x, final int z, final RandomSource random) {
         final BlockPos top = new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z) - 1, z);
-        double kelvin = Double.NaN;
+        // The air read once at each of the two places a change looks, which may stand in different rooms.
+        double kelvinTop = Double.NaN;
+        double kelvinAbove = Double.NaN;
         Season season = null;
         for (final LiveChange change : all(level).values()) {
             if (!change.dimensions().isEmpty() && !change.dimensions().contains(level.dimension())) {
@@ -128,7 +130,14 @@ public final class LiveChanges {
                 continue;
             }
             if (change.minKelvin().isPresent() || change.maxKelvin().isPresent()) {
-                kelvin = Double.isNaN(kelvin) ? HeatClimate.ambient(level, at) : kelvin;
+                final double kelvin;
+                if (change.at() == LiveChange.Where.TOP) {
+                    kelvinTop = Double.isNaN(kelvinTop) ? HeatClimate.ambient(level, at) : kelvinTop;
+                    kelvin = kelvinTop;
+                } else {
+                    kelvinAbove = Double.isNaN(kelvinAbove) ? HeatClimate.ambient(level, at) : kelvinAbove;
+                    kelvin = kelvinAbove;
+                }
                 if (change.minKelvin().isPresent() && kelvin < change.minKelvin().get()
                         || change.maxKelvin().isPresent() && kelvin > change.maxKelvin().get()) {
                     continue;

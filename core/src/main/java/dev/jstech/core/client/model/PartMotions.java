@@ -45,6 +45,8 @@ public final class PartMotions {
     private static final Map<PartType<?>, IPartMotion> MOTIONS = new ConcurrentHashMap<>();
     private static final double BLOCKS_A_CHUNK = 16.0;
     private static final float MIDDLE = 0.5F;
+    /* The game's time a motion is handed starts again after a day, which any motion's turn divides evenly. */
+    private static final long TIME_WRAPS = 24_000L;
 
     private PartMotions() {
     }
@@ -83,7 +85,8 @@ public final class PartMotions {
         final Frustum frustum = event.getFrustum();
         final PoseStack pose = event.getPoseStack();
         final MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();
-        final float time = level.getGameTime() + event.getPartialTick().getGameTimeDeltaPartialTick(false);
+        // Wrapped before it is a float, which past some months of a world's time holds no part of a tick.
+        final float time = level.getGameTime() % TIME_WRAPS + event.getPartialTick().getGameTimeDeltaPartialTick(false);
         final double reach = minecraft.options.getEffectiveRenderDistance() * BLOCKS_A_CHUNK;
         final boolean[] drew = {false};
         MovingParts.visit(pos -> {

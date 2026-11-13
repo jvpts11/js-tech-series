@@ -7,6 +7,9 @@
  */
 package dev.jstech.tests.gametest.core;
 
+import com.google.gson.JsonParser;
+import com.mojang.serialization.JsonOps;
+import dev.jstech.core.air.AirMix;
 import dev.jstech.core.dimension.DimensionEffects;
 import dev.jstech.core.dimension.DimensionHazardEvent;
 import dev.jstech.core.dimension.DimensionRules;
@@ -58,6 +61,21 @@ public final class DimensionGameTests {
     private static final double MOON_SHARE = 0.16;
 
     private DimensionGameTests() {
+    }
+
+    @GameTest(template = ARENA)
+    public static void rules_underTheLowestBandBreatheTheDimensionsOwnAir(final GameTestHelper helper) {
+        final DimensionRules rules = DimensionRules.CODEC.parse(JsonOps.INSTANCE, JsonParser.parseString(
+                "{\"air\": {\"jscore:carbon_dioxide\": 1.0}, \"bands\": [{\"at\": 100, \"air\":"
+                        + " {\"jscore:nitrogen\": 0.78, \"jscore:oxygen\": 0.21, \"jscore:argon\": 0.01}}]}"))
+                .getOrThrow();
+        final AirMix own = rules.at(0).air().orElseThrow();
+        helper.assertTrue(own.shares().containsKey(ResourceLocation.fromNamespaceAndPath("jscore", "carbon_dioxide"))
+                && !own.shares().containsKey(ResourceLocation.fromNamespaceAndPath("jscore", "oxygen")),
+                "under the band at 100 the dimension's own air: " + own);
+        helper.assertTrue(rules.at(150).air().orElseThrow().shares().containsKey(
+                ResourceLocation.fromNamespaceAndPath("jscore", "oxygen")), "and the band's from it up");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)

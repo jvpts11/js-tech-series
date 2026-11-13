@@ -9,6 +9,7 @@ package dev.jstech.core.developer.mcp;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonPrimitive;
 import com.mojang.serialization.JsonOps;
 import dev.jstech.core.developer.studio.NbtLines;
 import dev.jstech.core.developer.studio.StudioKeys;
@@ -142,11 +143,10 @@ public final class WorldTools {
                         corners(true), McpPermission.ACT, call -> structure(call, ask, true)));
     }
 
-    /** A place given as {@code {x, y, z}}. */
+    /** A place given as {@code {x, y, z}}, each a whole number a block's place holds; none for any other. */
     public static Optional<BlockPos> placeOf(final JsonObject place) {
         try {
-            return Optional.of(new BlockPos(place.get("x").getAsInt(), place.get("y").getAsInt(),
-                    place.get("z").getAsInt()));
+            return Optional.of(new BlockPos(axis(place, "x"), axis(place, "y"), axis(place, "z")));
         } catch (final RuntimeException wrong) {
             return Optional.empty();
         }
@@ -165,6 +165,14 @@ public final class WorldTools {
     /** A result there at once. */
     public static CompletableFuture<McpResult> done(final McpResult result) {
         return CompletableFuture.completedFuture(result);
+    }
+
+    /* One axis of a place, exactly as written: a half or a number past an int is no place, rather than a near one. */
+    private static int axis(final JsonObject place, final String name) {
+        if (!(place.get(name) instanceof JsonPrimitive number) || !number.isNumber()) {
+            throw new IllegalArgumentException("no number " + name);
+        }
+        return number.getAsBigDecimal().intValueExact();
     }
 
     private static CompletableFuture<McpResult> placed(final McpCall call, final ILookedAt looked,

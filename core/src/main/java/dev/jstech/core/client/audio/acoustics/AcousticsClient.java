@@ -50,13 +50,17 @@ public final class AcousticsClient {
         });
         modBus.addListener(FMLClientSetupEvent.class,
                 event -> KeyActionsClient.onPress(CoreKeys.SHOW_SOUND_DEBUG, AcousticsDebug::toggle));
-        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> second());
+        NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> {
+            second();
+            VoiceAcoustics.tick();
+        });
         NeoForge.EVENT_BUS.addListener(SelectMusicEvent.class, LayeredMusic::onSelectMusic);
         NeoForge.EVENT_BUS.addListener(TagsUpdatedEvent.class, event -> BlockAcoustics.forgetBlocks());
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, AcousticsDebug::render);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
             Soundscapes.stop();
             LayeredMusic.stop();
+            VoiceAcoustics.reset();
         });
     }
 

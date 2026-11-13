@@ -93,7 +93,9 @@ final class ForeignConfigs {
             return Optional.empty();
         }
         final String name = config.getFileName().replace('\\', '/');
-        final ConfigFile.Builder builder = ConfigFile.builder(stem(name), sideOf(config.getType()), ConfigFormats.TOML);
+        // Named by its mod and its whole path, so two mods' files of one name keep their presets apart.
+        final ConfigFile.Builder builder = ConfigFile.builder(config.getModId() + "-" + withoutExtension(name)
+                .replace('/', '-').replace('.', '-'), sideOf(config.getType()), ConfigFormats.TOML);
         for (final Setting setting : settings) {
             setting.declare(builder);
         }
@@ -133,9 +135,13 @@ final class ForeignConfigs {
 
     /** A file's name with neither its folder nor its extension: {@code mekanism/general.toml} is {@code general}. */
     static String stem(final String file) {
-        final String name = file.substring(file.lastIndexOf('/') + 1);
-        final int dot = name.lastIndexOf('.');
-        return dot > 0 ? name.substring(0, dot) : name;
+        return withoutExtension(file.substring(file.lastIndexOf('/') + 1));
+    }
+
+    /* A file's path without the extension of its name: {@code mekanism/general.toml} is {@code mekanism/general}. */
+    private static String withoutExtension(final String file) {
+        final int dot = file.lastIndexOf('.');
+        return dot > file.lastIndexOf('/') + 1 ? file.substring(0, dot) : file;
     }
 
     /* A name written in camel case or with underscores, as words: "transporterSpeed" is "Transporter speed". */

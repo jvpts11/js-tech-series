@@ -71,8 +71,9 @@ public final class TableView<R> extends UiComponent {
             return true;
         }
         final List<R> rows = model.shown();
-        final int index = scroll + (int) ((my - y() - HEAD - 2) / ROW);
-        if (index >= 0 && index < rows.size()) {
+        // The band under the header is above the first row, not on it: floored, it is no row at all.
+        final int index = scroll + (int) Math.floor((my - y() - HEAD - 2) / ROW);
+        if (index >= scroll && index < rows.size()) {
             onSelect.accept(rows.get(index));
             return true;
         }

@@ -183,8 +183,9 @@ public final class NetworkProbeScreen extends Screen {
             case UP -> set(this.state.rowMoved(-1, rows.size()));
             case DOWN -> set(this.state.rowMoved(1, rows.size()));
             case OK -> {
-                if (this.state.page() == ProbeState.Page.MEMBERS && this.state.row() < rows.size()) {
-                    final ProbeReading.Group group = rows.get(this.state.row()).group();
+                // The row lit, as the page draws it: a list that shrank since lights its last.
+                if (this.state.page() == ProbeState.Page.MEMBERS && !rows.isEmpty()) {
+                    final ProbeReading.Group group = rows.get(Math.min(this.state.row(), rows.size() - 1)).group();
                     ProbeMarks.show(group.places(), roleColour(PALETTE.get(), group.role()));
                     onClose();
                 }

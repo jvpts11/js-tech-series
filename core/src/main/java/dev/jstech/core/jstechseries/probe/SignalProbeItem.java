@@ -46,6 +46,7 @@ public final class SignalProbeItem extends Item {
         }
         final BlockPos pos = context.getClickedPos().immutable();
         context.getItemInHand().set(SignalProbe.LINK.get(), GlobalPos.of(server.dimension(), pos));
+        SignalSessions.forget(player.getUUID());
         player.displayClientMessage(GameText.component(SignalProbe.LINKED_TO.with(GameText.of(
                 level.getBlockState(pos).getBlock().getName()), Text.literal(pos.getX() + ", " + pos.getY() + ", "
                 + pos.getZ()))), true);

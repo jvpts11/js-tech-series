@@ -81,6 +81,10 @@ public final class GraphPanelWidget extends AbstractWidget {
         // Connect consecutive points. X spreads samples across the width.
         final double stepX = (double) width / (count - 1);
         for (int i = 0; i < count - 1; i++) {
+            // A sample that is no number leaves a gap, as the scale passed it over, never a spike to an edge.
+            if (!Double.isFinite(snapshot[i]) || !Double.isFinite(snapshot[i + 1])) {
+                continue;
+            }
             final int x1 = getX() + (int) Math.round(i * stepX);
             final int x2 = getX() + (int) Math.round((i + 1) * stepX);
             final int y1 = getY() + (int) Math.round(scale.valueToY(snapshot[i], height));

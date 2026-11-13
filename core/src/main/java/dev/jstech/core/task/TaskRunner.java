@@ -57,6 +57,8 @@ public final class TaskRunner {
                               final Consumer<? super Throwable> onFailure) {
         final Task<T> task = new Task<>();
         live.add(task);
+        // Cancelled before its thread starts, its work never runs to take it out of the live ones: the cancel does.
+        task.whenCancelled(() -> live.remove(task));
         task.runningAs(workers.submit(() -> {
             if (task.cancelled()) {
                 live.remove(task);

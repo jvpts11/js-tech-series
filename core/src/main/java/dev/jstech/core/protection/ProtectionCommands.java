@@ -67,6 +67,8 @@ public final class ProtectionCommands {
     private static final String PLAYERS_GROUP = "jstech-players";
     private static final String ADMINS_GROUP = "jstech-admins";
     private static final int PAGE = 10;
+    /* The last page asked for, so the entries skipped before it are counted in an int without going round. */
+    private static final int LAST_PAGE = 1_000_000;
     private static final String PAGE_ARGUMENT = "page";
     private static final String PLAYER_ARGUMENT = "player";
     private static final String POS_ARGUMENT = "pos";
@@ -81,16 +83,16 @@ public final class ProtectionCommands {
     public static void declare() {
         CommandRoot.CORE.declare("audit", CommandRoot.ADMINS, (node, context) -> node
                 .executes(source -> audit(source, entry -> true, 1))
-                .then(Commands.argument(PAGE_ARGUMENT, IntegerArgumentType.integer(1))
+                .then(Commands.argument(PAGE_ARGUMENT, IntegerArgumentType.integer(1, LAST_PAGE))
                         .executes(source -> audit(source, entry -> true, page(source))))
                 .then(Commands.literal(PLAYER_ARGUMENT).then(Commands.argument(PLAYER_ARGUMENT,
                                 StringArgumentType.word())
                         .executes(source -> audit(source, byPlayer(source), 1))
-                        .then(Commands.argument(PAGE_ARGUMENT, IntegerArgumentType.integer(1))
+                        .then(Commands.argument(PAGE_ARGUMENT, IntegerArgumentType.integer(1, LAST_PAGE))
                                 .executes(source -> audit(source, byPlayer(source), page(source))))))
                 .then(Commands.literal("at").then(Commands.argument(POS_ARGUMENT, BlockPosArgument.blockPos())
                         .executes(source -> audit(source, atPlace(source), 1))
-                        .then(Commands.argument(PAGE_ARGUMENT, IntegerArgumentType.integer(1))
+                        .then(Commands.argument(PAGE_ARGUMENT, IntegerArgumentType.integer(1, LAST_PAGE))
                                 .executes(source -> audit(source, atPlace(source), page(source)))))));
     }
 

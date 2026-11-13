@@ -34,6 +34,9 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
@@ -74,6 +77,15 @@ public final class RoomViews {
         modBus.addListener(RegisterPayloadHandlersEvent.class, event -> event.registrar(VERSION)
                 .playToClient(ViewPayload.TYPE, ViewPayload.STREAM_CODEC, RoomViews::onView)
                 .playToClient(HerePayload.TYPE, HerePayload.STREAM_CODEC, RoomViews::onHere));
+        // A player gone is shown nothing more: one back is shown a detector's room only once they ask again.
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class, event -> {
+            SHOWN.remove(event.getEntity().getUUID());
+            SEEING.remove(event.getEntity().getUUID());
+        });
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> {
+            SHOWN.clear();
+            SEEING.clear();
+        });
     }
 
     /** Whether {@code player} sees rooms: an item of the tag in a hand or on the head. */
@@ -99,7 +111,8 @@ public final class RoomViews {
 
     /** The room a player's game shows now, as last sent; none once it is two seconds old. */
     public static RoomView seen(final long gameTime) {
-        return gameTime - seenAt > FRESH ? RoomView.NONE : seenOnClient;
+        // One sent at a time to come was sent by a world left since, whose clock ran further.
+        return gameTime - seenAt > FRESH || gameTime < seenAt ? RoomView.NONE : seenOnClient;
     }
 
     /** The air the player breathes now, on their game, as last sent. */

@@ -65,11 +65,15 @@ public final class RecipeChanges {
             }
             return taken;
         });
+        final List<String> replaced = new ArrayList<>();
         edits.replaced().forEach((id, recipe) -> {
             final ResourceLocation key = ResourceLocation.tryParse(id);
-            if (key != null) {
-                recipes.put(key, recipe.deepCopy());
+            if (key == null) {
+                LOGGER.warn("The recipe change {} is not a recipe's id and is passed over", id);
+                return;
             }
+            recipes.put(key, recipe.deepCopy());
+            replaced.add(id);
         });
         final List<String> swapped = new ArrayList<>();
         if (!edits.swaps().isEmpty()) {
@@ -79,9 +83,9 @@ public final class RecipeChanges {
                 }
             }
         }
-        applied = new Applied(removed, List.copyOf(edits.replaced().keySet()), swapped);
+        applied = new Applied(removed, replaced, swapped);
         LOGGER.info("Recipe changes: {} recipes taken away, {} put in place, {} given other items", removed.size(),
-                edits.replaced().size(), swapped.size());
+                replaced.size(), swapped.size());
     }
 
     /** What the files changed as the recipes last loaded, for the studio's recipe bench. */

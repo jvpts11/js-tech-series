@@ -59,6 +59,7 @@ class SizesTest {
     void minus_stopsAtTheEndsRatherThanGoingRound() {
         assertEquals(Long.MAX_VALUE, Sizes.minus(Long.MAX_VALUE, -1L));
         assertEquals(Long.MIN_VALUE, Sizes.minus(Long.MIN_VALUE, 1L));
+        assertEquals(Long.MAX_VALUE, Sizes.minus(0L, Long.MIN_VALUE), "nothing less the smallest goes up");
     }
 
     @Test

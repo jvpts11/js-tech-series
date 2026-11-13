@@ -10,7 +10,9 @@ package dev.jstech.core.model;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -91,8 +93,24 @@ final class PackageFiles {
         return (slash < 0 ? "" : from.substring(0, slash + 1)) + relative;
     }
 
+    /*
+     * A path as the package keeps it: slashes forward, none first, small letters, and its "." and ".." walked as a
+     * folder's are, never above the package's root.
+     */
     private static String key(final String path) {
-        final String plain = path.replace('\\', '/');
-        return (plain.startsWith("/") ? plain.substring(1) : plain).toLowerCase(Locale.ROOT);
+        final List<String> walked = new ArrayList<>();
+        for (final String part : path.replace('\\', '/').split("/")) {
+            if (part.isEmpty() || ".".equals(part)) {
+                continue;
+            }
+            if ("..".equals(part)) {
+                if (!walked.isEmpty()) {
+                    walked.removeLast();
+                }
+                continue;
+            }
+            walked.add(part);
+        }
+        return String.join("/", walked).toLowerCase(Locale.ROOT);
     }
 }

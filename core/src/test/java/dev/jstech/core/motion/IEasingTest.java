@@ -133,6 +133,15 @@ class IEasingTest {
     }
 
     @Test
+    void spring_meetsItsEndWithoutAJumpOnItsLastStep() {
+        for (final double damping : new double[] {0.5, 1.0, 2.0}) {
+            final IEasing spring = new IEasing.Spring(damping);
+            assertEquals(1.0, spring.apply(1.0 - 1e-9), 1e-6, "damped by " + damping + ", it is at its end already");
+            assertEquals(0.0, spring.apply(0.0), 1e-12, "and starts at its start");
+        }
+    }
+
+    @Test
     void spring_refusesNoDamping() {
         assertThrows(IllegalArgumentException.class, () -> new IEasing.Spring(0.0));
         assertThrows(IllegalArgumentException.class, () -> IEasing.named("spring(soft)"));

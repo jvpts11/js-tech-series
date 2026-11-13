@@ -90,6 +90,16 @@ class BdfReaderTest {
     }
 
     @Test
+    void read_refusesAFontCellOfNoSizeAndAGlyphOfLessThanNone() {
+        final BdfFormatException cell = assertThrows(BdfFormatException.class,
+                () -> BdfReader.read(small().replace("FONTBOUNDINGBOX 6 10 0 -2", "FONTBOUNDINGBOX 0 0 0 0")));
+        assertEquals(5, cell.line(), "named at the line of the box: " + cell.getMessage());
+        final BdfFormatException glyph = assertThrows(BdfFormatException.class,
+                () -> BdfReader.read(small().replace("BBX 6 10 0 -2", "BBX -2 3 0 0")));
+        assertEquals(15, glyph.line(), "and at the line of the glyph's: " + glyph.getMessage());
+    }
+
+    @Test
     void read_refusesAFontThatNeverEnds() {
         final String broken = small().replace("ENDFONT\n", "");
         final IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,

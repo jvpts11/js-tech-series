@@ -35,7 +35,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 public final class CableFlowRenderer implements BlockEntityRenderer<CableBlockEntity> {
 
     /* How many ticks an item takes to cross a block. */
-    private static final float CROSSING = 20F;
+    private static final int CROSSING = 20;
     private static final float SCALE = 0.3F;
     private static final float MIDDLE = 0.5F;
 
@@ -66,7 +66,8 @@ public final class CableFlowRenderer implements BlockEntityRenderer<CableBlockEn
                 continue;
             }
             final ItemStack stack = new ItemStack(item);
-            final float time = (cable.getLevel().getGameTime() + partialTick) / CROSSING;
+            // Brought into a crossing in whole ticks first: a world's age as a float loses the tick's fraction.
+            final float time = (cable.getLevel().getGameTime() % CROSSING + partialTick) / CROSSING;
             final Direction toward = flow.toward();
             final int shown = Math.max(1, flow.level());
             for (int k = 0; k < shown; k++) {

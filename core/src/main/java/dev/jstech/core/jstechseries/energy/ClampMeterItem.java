@@ -53,7 +53,13 @@ public final class ClampMeterItem extends Item {
         if (clamp.isEmpty()) {
             return InteractionResult.PASS;
         }
+        // Clamped again, it starts again: what it counted and a reading it held were of where it was before.
         context.getItemInHand().set(ClampMeter.CLAMP.get(), clamp.get());
+        final MeterState state = ClampMeter.state(context.getItemInHand());
+        if (state.hold()) {
+            context.getItemInHand().set(ClampMeter.STATE.get(), state.toggleHold());
+        }
+        MeterSessions.forget(player.getUUID());
         final Component name = clamp.get().cable().flatMap(CoreCables.REGISTRY::getOptional)
                 .map(type -> type.stack().getHoverName())
                 .orElseGet(() -> level.getBlockState(pos).getBlock().getName());
@@ -72,7 +78,9 @@ public final class ClampMeterItem extends Item {
     @Override
     public void inventoryTick(final ItemStack stack, final Level level, final Entity entity, final int slot,
                               final boolean selected) {
-        if (entity instanceof ServerPlayer player && (selected || player.getOffhandItem() == stack)) {
+        // One meter reads for a player at a time: the one in hand, or the off hand's while the hand holds none.
+        if (entity instanceof ServerPlayer player && (selected || player.getOffhandItem() == stack
+                && !(player.getMainHandItem().getItem() instanceof ClampMeterItem))) {
             MeterSessions.tick(player, stack);
         }
     }

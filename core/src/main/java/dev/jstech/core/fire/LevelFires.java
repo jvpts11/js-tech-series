@@ -30,6 +30,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.phys.Vec3;
 
 /*
@@ -78,6 +80,31 @@ final class LevelFires {
             remove(pos.asLong());
             if (this.remains.containsKey(pos.asLong())) {
                 this.due.add(pos.asLong());
+            }
+        }
+    }
+
+    /*
+     * A chunk came back: the fires in it are tracked again. Only the sections whose blocks may hold a fire are read,
+     * so a chunk with none costs a look at each section's palette.
+     */
+    void chunkLoaded(final LevelChunk chunk) {
+        final LevelChunkSection[] sections = chunk.getSections();
+        for (int index = 0; index < sections.length; index++) {
+            final LevelChunkSection section = sections[index];
+            if (section.hasOnlyAir() || !section.maybeHas(state -> state.getBlock() instanceof BaseFireBlock)) {
+                continue;
+            }
+            final int bottom = SectionPos.sectionToBlockCoord(chunk.getSectionYFromSectionIndex(index));
+            for (int y = 0; y < SectionPos.SECTION_SIZE; y++) {
+                for (int z = 0; z < SectionPos.SECTION_SIZE; z++) {
+                    for (int x = 0; x < SectionPos.SECTION_SIZE; x++) {
+                        if (section.getBlockState(x, y, z).getBlock() instanceof BaseFireBlock) {
+                            add(BlockPos.asLong(chunk.getPos().getMinBlockX() + x, bottom + y,
+                                    chunk.getPos().getMinBlockZ() + z));
+                        }
+                    }
+                }
             }
         }
     }
@@ -176,8 +203,9 @@ final class LevelFires {
         for (int i = 0; i < ready.size(); i++) {
             this.rekindles.remove(ready.getLong(i));
             final BlockPos pos = BlockPos.of(ready.getLong(i));
+            // Lit again only where the world may still set it alight: a claim made meanwhile keeps it out.
             if (Loaded.at(this.level, pos) && this.level.getBlockState(pos).isAir() && feeds(pos) > 0) {
-                this.level.setBlockAndUpdate(pos, BaseFireBlock.getState(this.level, pos));
+                light(pos, pos);
             }
         }
     }
@@ -190,6 +218,7 @@ final class LevelFires {
         final boolean spreads = this.level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK);
         for (int index = this.cursor; index < end; index++) {
             final BlockPos pos = BlockPos.of(this.thisSecond.getLong(index));
+            // A fire whose chunk is away is let go of, and found again as the chunk comes back (chunkLoaded).
             if (!Loaded.at(this.level, pos) || !(this.level.getBlockState(pos).getBlock() instanceof BaseFireBlock)) {
                 remove(pos.asLong());
                 continue;

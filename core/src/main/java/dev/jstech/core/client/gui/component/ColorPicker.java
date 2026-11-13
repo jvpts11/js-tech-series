@@ -219,7 +219,9 @@ public final class ColorPicker extends UiComponent {
         if (dragging == HUE_DRAG) {
             hue = Math.min(down, 0.999);
             final double[] hsv = ColorMath.toHsv(colour.getAsInt());
-            onChange.accept(ColorMath.hsv(hue, hsv[1], hsv[2]));
+            // Black and greys have no hue to turn: choosing one on the bar gives that hue at its fullest.
+            final boolean hueless = hsv[1] <= 0 || hsv[2] <= 0;
+            onChange.accept(ColorMath.hsv(hue, hueless ? 1 : hsv[1], hueless ? 1 : hsv[2]));
         } else {
             final double along = Math.max(0, Math.min(1, (mx - sx) / (SQUARE - 1)));
             onChange.accept(ColorMath.hsv(hue, along, 1 - down));

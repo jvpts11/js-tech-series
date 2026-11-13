@@ -235,16 +235,18 @@ public final class WorldBiomes {
         /**
          * Declares the biome.
          *
-         * @throws IllegalStateException when its climate is colder than anything can be, or it rains less than nothing
+         * @throws IllegalStateException when its climate is one no biome's file could say: colder than anything can be,
+         *                               hotter than 10,000 °C, rain below none or past 20,000 mm, seasons swinging
+         *                               past 200 °C, or any of them not a number
          */
         public BiomeSpec declare() {
-            if (temperature < -273.15 || rain < 0) {
-                throw new IllegalStateException("the biome " + id + " has a climate that can be: not "
-                        + temperature + " °C and " + rain + " mm of rain");
-            }
             final double game = ClimateMath.gameTemperature(temperature);
             final double swing = Double.isNaN(seasons) ? ClimateMath.seasons(game, ClimateMath.downfall(rain))
                     : seasons;
+            if (!BiomeClimate.holds(temperature, swing, rain)) {
+                throw new IllegalStateException("the biome " + id + " has a climate that can be: not "
+                        + temperature + " °C, seasons of " + swing + " and " + rain + " mm of rain");
+            }
             final BiomeSpec spec = new BiomeSpec(id, name, new BiomeClimate(temperature, swing, rain), precipitation,
                     sky, fog, water, waterFog, grass, foliage, features, carvers, spawns);
             BIOMES.add(spec);

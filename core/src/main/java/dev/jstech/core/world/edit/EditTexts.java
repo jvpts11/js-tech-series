@@ -20,6 +20,9 @@ public final class EditTexts {
     public static final TextKey NOT_EXPORTED = TextKey.of("jscore.command.edit.not_exported",
             "The structure file %s could not be written");
     public static final TextKey NO_FILE = TextKey.of("jscore.command.edit.no_file", "No structure file is called %s");
+    /** The most blocks, then how many the box or the file holds. */
+    static final TextKey TOO_BIG = TextKey.of("jscore.command.edit.too_big",
+            "An edit moves at most %s blocks at once; this one holds %s");
     /** How many blocks, then the file's id. */
     public static final TextKey IMPORTING = TextKey.of("jscore.command.edit.importing",
             "Setting the %s blocks of %s; /jstech edit undo puts back what they replace");

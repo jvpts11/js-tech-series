@@ -13,6 +13,7 @@ import dev.jstech.core.mixin.AbstractFurnaceMenuAccessor;
 import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.stepaside.StepAside;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -307,7 +308,8 @@ public final class RecipeChoices {
         while (kept.size() > MOST_KEPT) {
             kept.remove(kept.keySet().iterator().next());
         }
-        player.setData(CoreAttachments.RECIPE_CHOICES, Map.copyOf(kept));
+        // Kept in the order made, the newest last, which the attachment's save keeps too.
+        player.setData(CoreAttachments.RECIPE_CHOICES, Collections.unmodifiableMap(kept));
     }
 
     private static void tell(final ServerPlayer player, final Offer offer, final RecipeChoicesPayload payload) {

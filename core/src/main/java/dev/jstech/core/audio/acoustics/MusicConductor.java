@@ -33,6 +33,12 @@ public final class MusicConductor {
         return Optional.ofNullable(this.playing);
     }
 
+    /** Lets the set playing go and starts afresh, as the listener leaves a world: nothing of it plays in the next. */
+    public void reset() {
+        this.playing = null;
+        this.failingSeconds = 0;
+    }
+
     /** A second at {@code place}, with {@code sets} to choose from: the set to play, and each layer's volume. */
     public Plan second(final List<MusicSet> sets, final ListeningPlace place) {
         final Optional<MusicSet> best = sets.stream().filter(set -> set.conditions().matches(place))

@@ -12,8 +12,10 @@ import dev.jstech.core.state.CoreState;
 import dev.jstech.core.state.DimensionState;
 import dev.jstech.core.task.Task;
 import dev.jstech.core.task.Tasks;
+import it.unimi.dsi.fastutil.floats.FloatArrayList;
 import it.unimi.dsi.fastutil.longs.Long2FloatMap;
 import it.unimi.dsi.fastutil.longs.Long2FloatOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +42,8 @@ public final class ChunkField {
     private final boolean synced;
     private final DimensionState<Map<String, Float>> state;
     private final Map<ResourceKey<Level>, Long2FloatOpenHashMap> live = new ConcurrentHashMap<>();
-    private final Map<ResourceKey<Level>, Long2FloatOpenHashMap> addedMeanwhile = new ConcurrentHashMap<>();
+    /* What was added while a step was under way, in order: each held to nothing as it came, it is played again so. */
+    private final Map<ResourceKey<Level>, Meanwhile> addedMeanwhile = new ConcurrentHashMap<>();
     private final Map<ResourceKey<Level>, Task<Long2FloatOpenHashMap>> stepping = new ConcurrentHashMap<>();
 
     private static final Codec<Map<String, Float>> VALUES = Codec.unboundedMap(Codec.STRING, Codec.FLOAT);
@@ -89,9 +92,10 @@ public final class ChunkField {
     /** Adds {@code amount} at {@code chunk} of {@code level}; a negative amount takes away, never below nothing. */
     public void add(final ServerLevel level, final ChunkPos chunk, final float amount) {
         addTo(values(level), chunk.toLong(), amount);
-        final Long2FloatOpenHashMap meanwhile = this.addedMeanwhile.get(level.dimension());
+        final Meanwhile meanwhile = this.addedMeanwhile.get(level.dimension());
         if (meanwhile != null) {
-            meanwhile.addTo(chunk.toLong(), amount);
+            meanwhile.chunks.add(chunk.toLong());
+            meanwhile.amounts.add(amount);
         }
     }
 
@@ -147,13 +151,13 @@ public final class ChunkField {
             return;
         }
         final Long2FloatOpenHashMap snapshot = values(level).clone();
-        this.addedMeanwhile.put(level.dimension(), new Long2FloatOpenHashMap());
+        this.addedMeanwhile.put(level.dimension(), new Meanwhile());
         this.stepping.put(level.dimension(), Tasks.onServer(() -> stepped(snapshot), next -> {
                     this.stepping.remove(level.dimension());
-                    final Long2FloatOpenHashMap meanwhile = this.addedMeanwhile.remove(level.dimension());
+                    final Meanwhile meanwhile = this.addedMeanwhile.remove(level.dimension());
                     if (meanwhile != null) {
-                        for (final Long2FloatMap.Entry added : meanwhile.long2FloatEntrySet()) {
-                            addTo(next, added.getLongKey(), added.getFloatValue());
+                        for (int i = 0; i < meanwhile.chunks.size(); i++) {
+                            addTo(next, meanwhile.chunks.getLong(i), meanwhile.amounts.getFloat(i));
                         }
                     }
                     this.live.put(level.dimension(), next);
@@ -229,5 +233,12 @@ public final class ChunkField {
         } catch (final NumberFormatException wrong) {
             return null;
         }
+    }
+
+    /* Each chunk added to while a step is under way, and by how much, in the order they came. */
+    private static final class Meanwhile {
+
+        private final LongArrayList chunks = new LongArrayList();
+        private final FloatArrayList amounts = new FloatArrayList();
     }
 }

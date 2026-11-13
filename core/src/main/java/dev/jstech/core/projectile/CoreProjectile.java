@@ -60,6 +60,7 @@ public abstract class CoreProjectile extends ThrowableProjectile {
     private static final String SAVED_AGE = "Age";
     private static final String SAVED_PIERCED = "Pierced";
     private static final String SAVED_PENETRATION = "PenetrationLeft";
+    private static final String SAVED_BLOCKS_THROUGH = "BlocksThrough";
     private static final double TICKS = 20.0;
     /* What the game's thrown things keep of their speed each tick, in the air and in water. */
     private static final double AIR_KEPT = 0.99;
@@ -171,6 +172,9 @@ public abstract class CoreProjectile extends ThrowableProjectile {
         tag.putInt(SAVED_AGE, age);
         tag.putInt(SAVED_PIERCED, pierced);
         tag.putFloat(SAVED_PENETRATION, penetrationLeft);
+        // Kept so one read back still inside a block it got through goes on, not paying for that block again. The
+        // things it passed through are not kept, their ids lasting one session: one may be hit again after a read.
+        tag.putLongArray(SAVED_BLOCKS_THROUGH, blocksThrough.toLongArray());
     }
 
     @Override
@@ -179,6 +183,10 @@ public abstract class CoreProjectile extends ThrowableProjectile {
         age = tag.getInt(SAVED_AGE);
         pierced = tag.getInt(SAVED_PIERCED);
         penetrationLeft = tag.contains(SAVED_PENETRATION) ? tag.getFloat(SAVED_PENETRATION) : -1.0F;
+        blocksThrough.clear();
+        for (final long block : tag.getLongArray(SAVED_BLOCKS_THROUGH)) {
+            blocksThrough.add(block);
+        }
     }
 
     /* Whether it gets through the block at {@code pos}, slowed by what that used up of what it gets through. */

@@ -239,6 +239,23 @@ public final class CrcGameTests {
                 .thenSucceed();
     }
 
+    /* A door shut again halfway through opening swings back from halfway, not from wide open. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void hands_aDoorTurnedBackMidSwingGoesBackFromWhereItStands(final GameTestHelper helper) {
+        final StructureHands hands = new StructureHands(CrcContent.HANDS);
+        final int ticks = CrcContent.HANDS.parts().stream().filter(part -> part instanceof IHandPart.Door)
+                .map(part -> ((IHandPart.Door) part).hinge().ticks()).findFirst().orElseThrow();
+        helper.assertTrue(ticks >= 2, "the CRC's first door takes a while to swing: " + ticks);
+        final long half = ticks / 2;
+        hands.setOpen(0, true, 0);
+        final float opened = hands.openness(half)[0];
+        hands.setOpen(0, false, half);
+        helper.assertTrue(Math.abs(hands.openness(half)[0] - opened) <= 1.0F / ticks,
+                "turned back, it stands where it was: " + hands.openness(half)[0] + " for " + opened);
+        helper.assertTrue(hands.openness(half + ticks)[0] == 0, "and shuts in the end");
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
     public static void builder_putsInTheEntryTheCrcMustHaveSoItForms(final GameTestHelper helper) {
         helper.setBlock(TERMINAL, CrcContent.TERMINAL.get().defaultBlockState()

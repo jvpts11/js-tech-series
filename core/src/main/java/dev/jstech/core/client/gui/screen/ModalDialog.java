@@ -67,15 +67,25 @@ public final class ModalDialog extends Screen {
             final int mouseX,
             final int mouseY,
             final float partialTick) {
-        this.renderBackground(graphics, mouseX, mouseY, partialTick);
-        // Dim the parent further with a translucent overlay.
+        // The ground, the parent dimmed, is drawn once, by the game's own render.
+        super.render(graphics, mouseX, mouseY, partialTick);
         final ScreenPalette.Colours colours = ScreenPalette.get();
-        Grounds.fill(graphics, 0, 0, this.width, this.height, colours.dialogDim());
         Draw.textCentered(graphics, this.font, this.title, this.width / 2, this.height / 2 - 30,
                 colours.dialogTitle());
         Draw.textCentered(graphics, this.font, this.message, this.width / 2, this.height / 2 - 10,
                 colours.dialogMessage());
-        super.render(graphics, mouseX, mouseY, partialTick);
+    }
+
+    /* The screen it was opened from, still, its pointer nowhere, under a translucent veil. */
+    @Override
+    public void renderBackground(final GuiGraphics graphics, final int mouseX, final int mouseY,
+                                 final float partialTick) {
+        if (this.parent != null) {
+            this.parent.render(graphics, -1, -1, partialTick);
+        } else {
+            super.renderBackground(graphics, mouseX, mouseY, partialTick);
+        }
+        Grounds.fill(graphics, 0, 0, this.width, this.height, ScreenPalette.get().dialogDim());
     }
 
     @Override

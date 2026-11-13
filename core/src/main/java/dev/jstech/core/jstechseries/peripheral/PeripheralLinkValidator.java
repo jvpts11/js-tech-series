@@ -204,9 +204,10 @@ public final class PeripheralLinkValidator {
     }
 
     /*
-     * Breadth first from the owner to the target, the first arrival a way filter takes winning. A run ends at a hub,
-     * the cable after it counting afresh; an arrival past its run's reach, or by a way not taken, is kept to say why
-     * there was no link, the refused way before the too long one.
+     * From the owner to the target in order of cables crossed, a hub crossing none, so the first arrival a way filter
+     * takes is the one of fewest cables. A run ends at a hub, the cable after it counting afresh; an arrival past its
+     * run's reach, or by a way not taken, is kept to say why there was no link, the refused way before the too long
+     * one.
      */
     private IPathSearchResult findPath(
             final long source,
@@ -257,7 +258,8 @@ public final class PeripheralLinkValidator {
                     }
                 } else if (at.run() <= at.limit() && passesThrough(neighbor, at.pos(), source, target, kind)
                         && arrives(seen, neighbor, neighbor, 0, Integer.MAX_VALUE)) {
-                    queue.addLast(new Step(neighbor, 0, Integer.MAX_VALUE, at.cables(), neighbor));
+                    // A hub adds no cable, so it is walked before the cables queued: ways come in order of cables.
+                    queue.addFirst(new Step(neighbor, 0, Integer.MAX_VALUE, at.cables(), neighbor));
                 }
             }
         }

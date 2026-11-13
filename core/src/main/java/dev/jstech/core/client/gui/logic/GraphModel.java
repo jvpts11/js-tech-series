@@ -31,9 +31,16 @@ public final class GraphModel {
     public static final int TITLE = 16;
     public static final int PORT_PITCH = 12;
 
-    /** Adds {@code node}, or puts it in the place of the node of its id. */
+    /**
+     * Adds {@code node}, or puts it in the place of the node of its id: the wires of a node replaced keep only the
+     * ports it still has, of the kinds they join.
+     */
     public GraphModel put(final Node node) {
-        nodes.put(node.id(), node);
+        final boolean replaced = nodes.put(node.id(), node) != null;
+        if (replaced) {
+            wires.removeIf(wire -> (wire.fromNode().equals(node.id()) || wire.toNode().equals(node.id()))
+                    && !canConnect(wire.from(), wire.to()));
+        }
         changed();
         return this;
     }

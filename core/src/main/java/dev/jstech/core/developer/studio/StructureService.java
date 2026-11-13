@@ -9,6 +9,9 @@ package dev.jstech.core.developer.studio;
 
 import dev.jstech.core.developer.DevSources;
 import dev.jstech.core.log.CoreLogs;
+import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextHolder;
+import dev.jstech.core.text.TextKey;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +35,7 @@ import org.slf4j.Logger;
  * block entities kept with what they hold. Asked to save it, the file is written to the mod's own source in this run,
  * {@code data/<mod>/structure/<name>.nbt}, or, with no source here, where the world keeps the structures it makes.
  */
+@TextHolder
 final class StructureService implements IStudioService {
 
     static final String NAME = "structure";
@@ -39,6 +43,10 @@ final class StructureService implements IStudioService {
     private static final String NBT = ".nbt";
     /** Where a structure file keeps its size, as the game writes it. */
     private static final String SIZE_KEY = "size";
+    /* The most blocks a box caught holds: far beyond any structure file, far below a stall of the server. */
+    private static final long MOST_BLOCKS = 1_000_000L;
+    private static final TextKey TOO_BIG = TextKey.of("gui.jscore.studio.structures.too_big_to_catch",
+            "A structure is caught of at most %s blocks; choose nearer corners");
 
     @Override
     public void answer(final ServerPlayer player, final CompoundTag args, final Consumer<CompoundTag> reply) {
@@ -67,8 +75,15 @@ final class StructureService implements IStudioService {
     static CompoundTag capture(final ServerLevel level, final BlockPos from, final BlockPos to) {
         final BlockPos min = new BlockPos(Math.min(from.getX(), to.getX()), Math.min(from.getY(), to.getY()),
                 Math.min(from.getZ(), to.getZ()));
-        final Vec3i size = new Vec3i(Math.abs(from.getX() - to.getX()) + 1, Math.abs(from.getY() - to.getY()) + 1,
-                Math.abs(from.getZ() - to.getZ()) + 1);
+        // Read whole on the server's thread, a box is held to what a structure file is ever made of.
+        final long across = Math.abs((long) from.getX() - to.getX()) + 1;
+        final long up = Math.abs((long) from.getY() - to.getY()) + 1;
+        final long along = Math.abs((long) from.getZ() - to.getZ()) + 1;
+        if (across * up * along > MOST_BLOCKS) {
+            throw new IllegalArgumentException(GameText.resolve(TOO_BIG.with(MOST_BLOCKS)));
+        }
+        StudioServices.requireLoaded(level, from, to);
+        final Vec3i size = new Vec3i((int) across, (int) up, (int) along);
         final StructureTemplate template = new StructureTemplate();
         template.fillFromWorld(level, min, size, false, Blocks.AIR);
         return template.save(new CompoundTag());
@@ -78,8 +93,8 @@ final class StructureService implements IStudioService {
     private static Optional<Path> write(final ServerLevel level, final ResourceLocation name, final CompoundTag saved) {
         final Optional<Path> source = DevSources.resourcesOf(name.getNamespace());
         try {
-            final Path file = source.isPresent() ? source.get().resolve("data").resolve(name.getNamespace())
-                    .resolve("structure").resolve(name.getPath() + NBT)
+            final Path file = source.isPresent() ? StudioServices.fileIn(source.get().resolve("data"),
+                    name.getNamespace() + "/structure/" + name.getPath() + NBT)
                     : level.getStructureManager().createAndValidatePathToGeneratedStructure(name, NBT);
             Files.createDirectories(file.getParent());
             NbtIo.writeCompressed(saved, file);

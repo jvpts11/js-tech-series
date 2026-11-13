@@ -14,6 +14,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
@@ -41,6 +43,9 @@ public final class Inspectors {
 
     private static final Logger LOGGER = CoreLogs.DIAGNOSTICS.logger();
     private static final List<Provider> PROVIDERS = new CopyOnWriteArrayList<>();
+    /* The failures said in full already, by system and what failed, and the most of them kept. */
+    private static final Set<String> TOLD = ConcurrentHashMap.newKeySet();
+    private static final int MOST_TOLD = 256;
     /** The longest a value is written, so a long string in a block's fields does not swamp the rest. */
     private static final int LONGEST_VALUE = 120;
     private static final String CUT = "...";
@@ -70,7 +75,12 @@ public final class Inspectors {
             try {
                 provider.inspector().inspect(level, pos, report);
             } catch (final RuntimeException failed) {
-                LOGGER.warn("What {} holds at {} could not be read", provider.system(), pos, failed);
+                // Watched, a place is read every second: each way a system fails is said whole once, then in brief.
+                if (TOLD.size() < MOST_TOLD && TOLD.add(provider.system() + " " + failed)) {
+                    LOGGER.warn("What {} holds at {} could not be read", provider.system(), pos, failed);
+                } else {
+                    LOGGER.debug("What {} holds at {} could not be read again: {}", provider.system(), pos, failed);
+                }
                 report.line(InspectTexts.FAILED.text(), String.valueOf(failed));
             }
             if (report.lines.isEmpty()) {

@@ -15,6 +15,9 @@ import dev.jstech.core.network.payload.IPayloadGate;
 import dev.jstech.core.registry.CoreItems;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -24,6 +27,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 
@@ -50,6 +55,9 @@ public final class TornSheets {
     public static final TextKey TORN_FROM = TextKey.of("jscore.guide.torn_from", "From the %s, page %s");
     public static final TextKey A_COPY = TextKey.of("jscore.guide.torn_copy", "A copy: the manual keeps its page");
     private static final String NETWORK_VERSION = "1";
+    /* The fewest ticks between two pages one player tears, and when each last tore one, until they leave. */
+    private static final long TEAR_EVERY = 5L;
+    private static final Map<UUID, Long> LAST_TORN = new ConcurrentHashMap<>();
 
     private TornSheets() {
     }
@@ -66,6 +74,8 @@ public final class TornSheets {
         modBus.addListener(RegisterPayloadHandlersEvent.class, event -> ClientPayloads.accept(
                 event.registrar(NETWORK_VERSION), TearPayload.TYPE, TearPayload.STREAM_CODEC, playing,
                 TornSheets::tear));
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class,
+                event -> LAST_TORN.remove(event.getEntity().getUUID()));
     }
 
     /** A sheet holding a copy of that page. */
@@ -75,8 +85,18 @@ public final class TornSheets {
         return stack;
     }
 
-    /* A page torn out of a manual on a player's screen: the copy goes into their inventory, or at their feet. */
+    /*
+     * A page torn out of a manual on a player's screen: the copy goes into their inventory, or at their feet. The
+     * manuals are the players' games' own, which the server cannot read, so it takes a sheet as it is said, but no
+     * faster than a hand tears pages and never a page before the first.
+     */
     private static void tear(final TearPayload payload, final ServerPlayer player, final ServerLevel level) {
+        final long now = level.getGameTime();
+        final Long last = LAST_TORN.get(player.getUUID());
+        if (payload.sheet().pagesIn() < 0 || last != null && now >= last && now - last < TEAR_EVERY) {
+            return;
+        }
+        LAST_TORN.put(player.getUUID(), now);
         final ItemStack sheet = of(payload.sheet());
         if (!player.getInventory().add(sheet)) {
             player.drop(sheet, false);

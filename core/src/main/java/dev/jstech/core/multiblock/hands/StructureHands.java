@@ -57,8 +57,11 @@ public final class StructureHands implements IFieldPart {
         if (this.open[door] == to) {
             return;
         }
+        final float was = openness(now)[door];
         this.open[door] = to;
-        this.moved[door] = now;
+        // A door turned back in the middle of its swing goes back from where it stands, not from its far end.
+        final float done = to ? was : 1 - was;
+        this.moved[door] = now - Math.round(this.hinges.get(door).ticks() * done);
         if (this.synced != null) {
             this.synced.run();
         }

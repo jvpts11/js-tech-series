@@ -500,6 +500,9 @@ public final class LevelEnergy implements IGridMover {
         private final BlockCapabilityCache<IEnergyStorage, @Nullable Direction> fe;
         private final Energy energy;
         private final EnergyClass lineClass;
+        /* Of what a block at its worth in FE was to give and take, the part of an FE not moved yet. */
+        private long owedOut;
+        private long owedIn;
 
         private PortNode(final BlockCapabilityCache<IEnergyPort, @Nullable Direction> cache,
                          final BlockCapabilityCache<IEnergyStorage, @Nullable Direction> fe, final Energy energy,
@@ -537,17 +540,35 @@ public final class LevelEnergy implements IGridMover {
         @Override
         public void onSupplied(final long amount) {
             final IEnergyPort port = working();
-            if (port != null && amount > 0) {
-                port.extract(amount, false);
+            if (port == null || amount <= 0) {
+                return;
             }
+            if (!bridged()) {
+                port.extract(amount, false);
+                return;
+            }
+            // A block at its worth in FE moves whole FE: the part of one its share leaves is moved with the next.
+            this.owedOut = this.owedOut + amount - port.extract(this.owedOut + amount, false);
+            this.owedOut = Math.max(0L, Math.min(this.owedOut, this.energy.fromFe(1)));
         }
 
         @Override
         public void onConsumed(final long amount) {
             final IEnergyPort port = working();
-            if (port != null && amount > 0) {
-                port.receive(amount, false);
+            if (port == null || amount <= 0) {
+                return;
             }
+            if (!bridged()) {
+                port.receive(amount, false);
+                return;
+            }
+            this.owedIn = this.owedIn + amount - port.receive(this.owedIn + amount, false);
+            this.owedIn = Math.max(0L, Math.min(this.owedIn, this.energy.fromFe(1)));
+        }
+
+        /* Whether the block is reached through the game's energy, at its worth in FE, having no port of its own. */
+        private boolean bridged() {
+            return this.cache.getCapability() == null;
         }
 
         /* A lightning surge reaches the port: it burns, unless its fuse blows first. */

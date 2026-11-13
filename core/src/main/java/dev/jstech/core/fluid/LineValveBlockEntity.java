@@ -289,8 +289,12 @@ public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOu
             return 0;
         }
 
+        /* Shut, it lets nothing out either: what it held as it closed waits in it for it to open. */
         @Override
         public FluidStack drain(final FluidStack resource, final FluidAction action) {
+            if (!openNow) {
+                return FluidStack.EMPTY;
+            }
             final FluidStack out = liquid.drain(resource, action);
             if (action.execute()) {
                 counted(out.getAmount());
@@ -300,6 +304,9 @@ public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOu
 
         @Override
         public FluidStack drain(final int maxDrain, final FluidAction action) {
+            if (!openNow) {
+                return FluidStack.EMPTY;
+            }
             final FluidStack out = liquid.drain(maxDrain, action);
             if (action.execute()) {
                 counted(out.getAmount());
@@ -386,8 +393,12 @@ public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOu
             return 0L;
         }
 
+        /* Shut, it lets nothing out either, as its liquid front does. */
         @Override
         public long extract(final Material material, final long amount, final boolean simulate) {
+            if (!openNow) {
+                return 0L;
+            }
             final long out = gas.extract(material, amount, simulate);
             if (!simulate) {
                 counted(out);
@@ -397,6 +408,9 @@ public class LineValveBlockEntity extends SyncedBlockEntity implements ISignalOu
 
         @Override
         public Optional<MatterStack> extractAny(final long amount, final boolean simulate) {
+            if (!openNow) {
+                return Optional.empty();
+            }
             final Optional<MatterStack> out = gas.extractAny(amount, simulate);
             if (!simulate) {
                 out.ifPresent(taken -> counted(taken.amount()));

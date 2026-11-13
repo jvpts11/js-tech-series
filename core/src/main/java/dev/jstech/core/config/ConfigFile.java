@@ -203,6 +203,11 @@ public final class ConfigFile implements IConfigValues {
         return Set.copyOf(this.restartDue);
     }
 
+    /* Values a server pushed to a player's game take hold there at once: nothing waits for its restart. */
+    void forgetRestartDue() {
+        this.restartDue.clear();
+    }
+
     /** The setting at {@code dottedPath}, or none. */
     public Optional<ConfigKey<?>> key(final String dottedPath) {
         return Optional.ofNullable(this.keys.get(dottedPath));

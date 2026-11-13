@@ -62,6 +62,8 @@ public final class DimensionTravel {
      * so, unless the mod making it names another screen for it.
      */
     public static final ResourceLocation STILL = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "still");
+    /* What a withdrawn announcement is sent as: the passage expected is not coming. */
+    private static final ResourceLocation NONE = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "none");
     private static final String VERSION = "1";
 
     /*
@@ -86,6 +88,15 @@ public final class DimensionTravel {
     public static void announce(final ServerPlayer player, final ResourceLocation screen) {
         ANNOUNCED.put(player, player.server.getTickCount());
         PacketDistributor.sendToPlayer(player, new TravelScreenPayload(screen));
+    }
+
+    /**
+     * Takes back what {@link #announce} told {@code player}'s game, for a passage that is not made after all: no
+     * loading screen of another passage within the ten seconds is taken for it.
+     */
+    public static void withdraw(final ServerPlayer player) {
+        ANNOUNCED.remove(player);
+        PacketDistributor.sendToPlayer(player, new TravelScreenPayload(NONE));
     }
 
     /**
@@ -202,6 +213,10 @@ public final class DimensionTravel {
      * came, so it is noted at once: put off to later, it would be noted after the passage it announces had opened.
      */
     private static void onScreen(final TravelScreenPayload payload, final IPayloadContext context) {
-        TravelScreens.expect(payload.screen());
+        if (NONE.equals(payload.screen())) {
+            TravelScreens.expectNothing();
+        } else {
+            TravelScreens.expect(payload.screen());
+        }
     }
 }

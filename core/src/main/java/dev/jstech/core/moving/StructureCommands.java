@@ -170,7 +170,11 @@ public final class StructureCommands {
     }
 
     private static int physics(final CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        structure(context).move(PhysicsMotion.AT_REST);
+        final MovingStructure structure = structure(context);
+        // One moving by its physics already goes on as it goes, rather than being stopped dead.
+        if (!(structure.motion() instanceof PhysicsMotion)) {
+            structure.move(PhysicsMotion.AT_REST);
+        }
         return said(context, StructureTexts.PHYSICAL.text());
     }
 

@@ -299,15 +299,19 @@ public final class CableLineGameTests {
         final ResourceLocation jacket = ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/hbw");
         final ResourceLocation plug = ResourceLocation.fromNamespaceAndPath("jsc", "block/cable/plug/hbw");
         final Connection line = Connection.of(ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "thick"));
-        boolean refused = false;
-        try {
-            CableType.builder(line).lane(Lane.TOP).thickness(8).jacket(jacket).plug(plug).build(() -> Items.STRING);
-        } catch (final IllegalStateException expected) {
-            refused = true;
+        for (final int thick : new int[] {5, 6, 8}) {
+            boolean refused = false;
+            try {
+                CableType.builder(line).lane(Lane.TOP).thickness(thick).jacket(jacket).plug(plug)
+                        .build(() -> Items.STRING);
+            } catch (final IllegalStateException expected) {
+                refused = true;
+            }
+            // Lanes stand five pixels apart: from five pixels thick, wires side by side would touch.
+            helper.assertTrue(refused, "a " + thick + " pixel cable in a lane is refused");
         }
-        helper.assertTrue(refused, "an 8 pixel cable in a lane is refused");
-        helper.assertTrue(CableType.builder(line).lane(Lane.TOP).thickness(6).jacket(jacket).plug(plug)
-                .build(() -> Items.STRING).thickness() == 6, "a 6 pixel cable fits a lane");
+        helper.assertTrue(CableType.builder(line).lane(Lane.TOP).thickness(4).jacket(jacket).plug(plug)
+                .build(() -> Items.STRING).thickness() == 4, "a 4 pixel cable fits a lane");
         helper.assertTrue(CableType.builder(line).alone().thickness(8).jacket(jacket).plug(plug)
                 .build(() -> Items.STRING).thickness() == 8, "a cable alone may be 8 pixels");
         helper.succeed();

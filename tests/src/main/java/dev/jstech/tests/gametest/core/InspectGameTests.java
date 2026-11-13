@@ -72,6 +72,8 @@ public final class InspectGameTests {
     private static final String ARENA = "empty";
     private static final BlockPos AT = new BlockPos(2, 2, 2);
     private static final double HOT = 600.0;
+    /* A letter written as two halves in Java's strings, past the first plane of letters. */
+    private static final int TWO_HALVES = 0x1F600;
 
     private InspectGameTests() {
     }
@@ -196,6 +198,12 @@ public final class InspectGameTests {
         helper.assertTrue(payload.lines().size() == InspectionPayload.MOST_LINES, "at most so many lines");
         helper.assertTrue(payload.lines().getFirst().value().length() == InspectionPayload.LONGEST_VALUE,
                 "each value cut to its longest");
+        // A letter of two halves where the cut falls goes whole, never by half.
+        final String value = new InspectionPayload.Line(0, Component.literal("two halves"),
+                "x".repeat(InspectionPayload.LONGEST_VALUE - 1) + new String(Character.toChars(TWO_HALVES)) + "x")
+                .value();
+        helper.assertTrue(value.length() == InspectionPayload.LONGEST_VALUE - 1
+                && !Character.isHighSurrogate(value.charAt(value.length() - 1)), "no letter is cut in two");
         final List<InspectionPayload.Line> sent = InspectWatch.linesOf(new TickLedger.Tick(42L, List.of(
                 new TickLedger.Sent("jscore:hazards", 2L, 300L, 200L), new TickLedger.Sent("minecraft:move_entity",
                         5L, 100L, 20L))));

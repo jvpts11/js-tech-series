@@ -71,8 +71,9 @@ final class KnowledgeTask extends Task {
         if (teamData.isCompleted(this) || !checkTaskSequence(teamData) || player.getServer() == null) {
             return;
         }
-        final long known = Math.round(QuestGoals.knowledge(player.getServer(), player.getUUID(), this.knowledge)
-                * WHOLE);
+        // Done only once the team knows it whole: a share a hair short of it is short of done, never rounded up to it.
+        final double share = QuestGoals.knowledge(player.getServer(), player.getUUID(), this.knowledge);
+        final long known = share >= 1.0 ? WHOLE : (long) Math.floor(share * WHOLE);
         if (known > teamData.getProgress(this)) {
             teamData.setProgress(this, known);
         }

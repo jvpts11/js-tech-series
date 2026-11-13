@@ -297,7 +297,9 @@ public final class PlanAssembler implements IFieldPart {
             return has;
         }
         final ResourceLocation id = BuiltInRegistries.BLOCK.getKey(Block.byItem(item));
-        return Math.max(0, has + carried(id) - now.wanted(id));
+        // What its arms carry goes to places still wanted; a place a player filled meanwhile no longer takes from the
+        // hold, but what the hold gives back is never more than it holds.
+        return Math.max(0, has - Math.max(0, now.wanted(id) - carried(id)));
     }
 
     /* Whether it can lay the block wanted at {@code spot} now: it holds one, and nothing keeps it from going there. */

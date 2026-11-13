@@ -18,18 +18,19 @@ import net.minecraft.resources.ResourceLocation;
  * Client to server: the view the server started has ended on the player's game, and how.
  *
  * @param ending how it ended, by its place among {@link CameraViewEvent.Ending}'s, as it is sent
+ * @param number which view ended, as the server numbered it, so a late word never ends a newer one
  */
-public record CameraViewEndedPayload(int ending) implements CustomPacketPayload {
+public record CameraViewEndedPayload(int ending, int number) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<CameraViewEndedPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "camera_view_ended"));
     public static final StreamCodec<RegistryFriendlyByteBuf, CameraViewEndedPayload> STREAM_CODEC =
-            ByteBufCodecs.VAR_INT.<RegistryFriendlyByteBuf>cast().map(CameraViewEndedPayload::new,
-                    CameraViewEndedPayload::ending);
+            StreamCodec.composite(ByteBufCodecs.VAR_INT.cast(), CameraViewEndedPayload::ending,
+                    ByteBufCodecs.VAR_INT.cast(), CameraViewEndedPayload::number, CameraViewEndedPayload::new);
 
-    /** The payload saying the view ended as {@code ending} says. */
-    public static CameraViewEndedPayload of(final CameraViewEvent.Ending ending) {
-        return new CameraViewEndedPayload(ending.code());
+    /** The payload saying the view {@code number} ended as {@code ending} says. */
+    public static CameraViewEndedPayload of(final CameraViewEvent.Ending ending, final int number) {
+        return new CameraViewEndedPayload(ending.code(), number);
     }
 
     @Override

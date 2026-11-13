@@ -51,7 +51,7 @@ public final class GasLimits {
             .declare();
     /** A toxic gas's concentration immediately dangerous to life and health, in parts per million of the air. */
     public static final MaterialProperty<Double> IDLH = MaterialProperties.property(id("idlh"),
-            Codec.doubleRange(0, 1_000_000), IDLH_NAME).shown(MaterialProperty.Shown.SHIFT)
+            Codec.doubleRange(Double.MIN_NORMAL, 1_000_000), IDLH_NAME).shown(MaterialProperty.Shown.SHIFT)
             .format(ppm -> PARTS_PER_MILLION.with(number(ppm))).declare();
     /**
      * What a toxic gas with no data of its own is taken to be dangerous from, in parts per million: the order of the
@@ -77,9 +77,13 @@ public final class GasLimits {
         return value(gas, UPPER_EXPLOSIVE);
     }
 
-    /** The parts per million of {@code gas} immediately dangerous: its own, or {@link #UNKNOWN_IDLH}. */
+    /**
+     * The parts per million of {@code gas} immediately dangerous: its own, or {@link #UNKNOWN_IDLH} where it says none,
+     * or none above nothing, as a material made in code without its file can.
+     */
     public static double idlh(final Material gas) {
-        return value(gas, IDLH).orElse(UNKNOWN_IDLH);
+        final double own = value(gas, IDLH).orElse(UNKNOWN_IDLH);
+        return own > 0 ? own : UNKNOWN_IDLH;
     }
 
     private static OptionalDouble value(final Material gas, final MaterialProperty<Double> property) {

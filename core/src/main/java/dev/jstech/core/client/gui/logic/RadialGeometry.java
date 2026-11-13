@@ -59,7 +59,8 @@ public final class RadialGeometry {
             final double innerRadius,
             final double outerRadius) {
         final double dist = distanceFromCenter(dx, dy);
-        if (dist < innerRadius || dist > outerRadius) {
+        // The very centre points nowhere, so it is on no segment.
+        if (dist == 0 || dist < innerRadius || dist > outerRadius) {
             return OptionalInt.empty();
         }
         return OptionalInt.of(segmentAtAngle(angleFromCenter(dx, dy), segmentCount));

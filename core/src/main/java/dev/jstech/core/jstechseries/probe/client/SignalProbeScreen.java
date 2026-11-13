@@ -181,8 +181,9 @@ public final class SignalProbeScreen extends Screen {
             case UP -> set(this.state.rowMoved(-1, rows.size()));
             case DOWN -> set(this.state.rowMoved(1, rows.size()));
             case OK -> {
-                if (this.state.page() == SignalProbeState.Page.RADIO && this.state.row() < rows.size()) {
-                    final SignalReading.Row row = rows.get(this.state.row());
+                // The row lit, as the page draws it: a list that shrank since lights its last.
+                if (this.state.page() == SignalProbeState.Page.RADIO && !rows.isEmpty()) {
+                    final SignalReading.Row row = rows.get(Math.min(this.state.row(), rows.size() - 1));
                     if (row.dimension().isEmpty() || row.relayed()) {
                         ProbeMarks.show(List.of(row.from()), row.clash() ? PALETTE.get().red()
                                 : NetworkProbeScreen.PALETTE.get().cyan());

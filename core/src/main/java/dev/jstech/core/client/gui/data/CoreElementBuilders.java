@@ -323,6 +323,10 @@ public final class CoreElementBuilders {
             return OptionalInt.empty();
         }
         final String digits = said.substring(1);
+        // #RRGGBB or #AARRGGBB only: any other count of digits is no colour, and the tone stands.
+        if (digits.length() != RGB_DIGITS && digits.length() != RGB_DIGITS + 2) {
+            return OptionalInt.empty();
+        }
         try {
             final int read = Integer.parseUnsignedInt(digits, HEX);
             return OptionalInt.of(digits.length() == RGB_DIGITS ? OPAQUE | read : read);

@@ -107,10 +107,13 @@ public final class StructureJoints {
 
     /** Takes away every joint touching the structure {@code id}, as it goes for good. */
     public static void forget(final ServerLevel level, final StructureUuid id) {
-        if (of(level, id).isEmpty()) {
+        final List<StructureJoint> gone = List.copyOf(of(level, id));
+        if (gone.isEmpty()) {
             return;
         }
         BOOK.update(level, book -> book.changed(joint -> joint.touches(id) ? null : joint));
+        // What hung asleep from a joint that went falls now, not at its next look about.
+        gone.forEach(joint -> wake(level, joint));
     }
 
     /** Every joint of {@code level}. */

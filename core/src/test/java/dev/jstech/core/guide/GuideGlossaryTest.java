@@ -48,6 +48,16 @@ class GuideGlossaryTest {
     }
 
     @Test
+    void linked_findsAWordAfterALetterTheLanguageLowersToTwo() {
+        // A dotted capital I, which the language's own lowering makes two letters.
+        final List<GuideLinks.Run> runs = glossary().linked(List.of(new GuideLinks.Run(
+                "İzmir runs a Mainframe.", "")), "mod:other", new HashSet<>());
+
+        assertEquals(new GuideLinks.Run("Mainframe", "mod:mainframes"), runs.get(1),
+                "the word led from is the word, not a letter off: " + runs);
+    }
+
+    @Test
     void linked_leavesAWordThatIsPartOfAName() {
         final List<GuideLinks.Run> runs = glossary().linked(List.of(new GuideLinks.Run(
                 "Open the Network Manager on a Mainframe.", "")), "mod:other", new HashSet<>());

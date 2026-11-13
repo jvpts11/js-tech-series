@@ -556,6 +556,8 @@ final class MainframeNetworking {
         }
         unregister(system);
         stopLending(system);
+        // Broken, it anchors its network to its cables no more: none of them reaches an owner through it.
+        system.connectivity().unanchor(this.mainframe.getBlockPos().asLong());
     }
 
     private void orphanOwnedNetwork(final ServerLevel level) {

@@ -31,6 +31,7 @@ import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.util.Loaded;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -162,7 +163,12 @@ public final class OverheadLines {
         final Player player = context.getPlayer();
         final ItemStack stack = context.getItemInHand();
         final WireEnd here = new WireEnd(pos, nearest(anchors, pos, context.getClickLocation()));
-        final HangStart start = stack.get(START_AT.get());
+        HangStart start = stack.get(START_AT.get());
+        if (start != null && start.dimension().equals(server.dimension()) && gone(server, start.end())) {
+            // The insulator it began at is gone: this click begins a new line, rather than one hung from nothing.
+            stack.remove(START_AT.get());
+            start = null;
+        }
         final Text said;
         if (start == null || !start.dimension().equals(server.dimension())) {
             final Optional<TextKey> refused = refusal(server, here, anchors, type);
@@ -527,6 +533,15 @@ public final class OverheadLines {
 
     private static @Nullable IWireAnchors loadedAnchors(final ServerLevel level, final BlockPos pos) {
         return level.isLoaded(pos) ? level.getCapability(ANCHORS, pos, null) : null;
+    }
+
+    /* Whether the insulator {@code end} is gone from a place of the world that is loaded; one far off may yet be. */
+    private static boolean gone(final ServerLevel level, final WireEnd end) {
+        if (!Loaded.at(level, end.pos())) {
+            return false;
+        }
+        final IWireAnchors anchors = level.getCapability(ANCHORS, end.pos(), null);
+        return anchors == null || end.anchor() >= anchors.anchors().size();
     }
 
     private static Set<Long> inGrid(final ServerLevel level) {

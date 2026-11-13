@@ -91,6 +91,28 @@ public final class BeamLights {
         }
     }
 
+    /**
+     * Lets go of the light {@code owner} laid without touching a block: its lamp's chunk went away, and the light
+     * blocks it held each go at their next look, as they find nothing holds them.
+     */
+    public static synchronized void forget(final ServerLevel level, final long owner) {
+        final Map<Long, Set<Long>> owners = BY_OWNER.get(level.dimension());
+        final Set<Long> places = owners == null ? null : owners.remove(owner);
+        final Map<Long, Map<Long, Lit>> held = HELD.get(level.dimension());
+        if (places == null || held == null) {
+            return;
+        }
+        for (final long place : places) {
+            final Map<Long, Lit> lights = held.get(place);
+            if (lights != null) {
+                lights.remove(owner);
+                if (lights.isEmpty()) {
+                    held.remove(place);
+                }
+            }
+        }
+    }
+
     /** Whether any light holds the place {@code pos}. */
     public static synchronized boolean holds(final ServerLevel level, final BlockPos pos) {
         final Map<Long, Map<Long, Lit>> held = HELD.get(level.dimension());

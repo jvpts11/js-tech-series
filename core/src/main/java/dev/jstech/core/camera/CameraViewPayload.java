@@ -18,15 +18,17 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * Server to client: the view the player is to see from now on, or none to go back to their own eyes.
  *
- * @param view the view, or none
+ * @param view   the view, or none
+ * @param number which of the views the server started for the player this is, said back when it ends
  */
-public record CameraViewPayload(Optional<CameraView> view) implements CustomPacketPayload {
+public record CameraViewPayload(Optional<CameraView> view, int number) implements CustomPacketPayload {
 
     public static final CustomPacketPayload.Type<CameraViewPayload> TYPE =
             new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "camera_view"));
-    public static final StreamCodec<RegistryFriendlyByteBuf, CameraViewPayload> STREAM_CODEC =
-            ByteBufCodecs.optional(CameraView.STREAM_CODEC).<RegistryFriendlyByteBuf>cast()
-                    .map(CameraViewPayload::new, CameraViewPayload::view);
+    public static final StreamCodec<RegistryFriendlyByteBuf, CameraViewPayload> STREAM_CODEC = StreamCodec.composite(
+            ByteBufCodecs.optional(CameraView.STREAM_CODEC).cast(), CameraViewPayload::view,
+            ByteBufCodecs.VAR_INT.cast(), CameraViewPayload::number,
+            CameraViewPayload::new);
 
     @Override
     public CustomPacketPayload.Type<CameraViewPayload> type() {

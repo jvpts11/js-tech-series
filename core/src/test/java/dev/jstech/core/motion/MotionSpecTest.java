@@ -64,6 +64,14 @@ class MotionSpecTest {
     }
 
     @Test
+    void slowed_holdsAVeryLongTimeAtTheLongestRatherThanWrappingIt() {
+        final MotionSpec slow = MotionSpec.of(MotionStyles.SCALE, 1_200_000_000, IEasing.LINEAR, "")
+                .after(1_500_000_000).slowed(200);
+        assertEquals(Integer.MAX_VALUE, slow.duration());
+        assertEquals(Integer.MAX_VALUE, slow.delay());
+    }
+
+    @Test
     void slowed_toNothingStopsItMoving() {
         assertFalse(MotionSpec.of(MotionStyles.SCALE, 200, IEasing.LINEAR, "").slowed(0).moves());
         assertFalse(MotionSpec.of(MotionStyles.SCALE, 200, IEasing.LINEAR, "").slowed(-20).moves());

@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 
 /**
@@ -85,8 +86,20 @@ public final class Styles {
 
     /** The style the player chose for {@code modid}'s screens, for that mod or for everything, or none. */
     public static Optional<Style> chosenFor(final String modid) {
-        return StyleSettings.chosenFor(modid).map(ResourceLocation::tryParse).flatMap(id -> Optional.ofNullable(id)
-                .flatMap(Styles::get));
+        // A choice for the mod naming a style no pack gives any more falls back to the choice for everything.
+        final Optional<Style> forMod = loaded(StyleSettings.byMod().get(modid));
+        return forMod.isPresent() ? forMod : loaded(StyleSettings.everything());
+    }
+
+    /* The style {@code modid}'s screens wear when nothing is chosen for them, or none: the game's then. */
+    static Optional<Style> modDefault(final String modid) {
+        return Optional.ofNullable(MOD_DEFAULTS.get(modid)).flatMap(Styles::get);
+    }
+
+    /* The style a choice names, when it names one loaded. */
+    private static Optional<Style> loaded(@Nullable final String chosen) {
+        final ResourceLocation id = chosen == null || chosen.isBlank() ? null : ResourceLocation.tryParse(chosen);
+        return id == null ? Optional.empty() : get(id);
     }
 
     /** The skin a component draws through in {@code style}. */

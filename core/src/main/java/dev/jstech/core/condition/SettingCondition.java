@@ -96,7 +96,16 @@ public record SettingCondition(String file, String setting, JsonElement value) i
             }
             return false;
         }
-        return matches(plainOf(key.get(), found.get()), this.value);
+        final Object plain = plainOf(key.get(), found.get());
+        // A value of another kind than the setting's is a slip in the data file, said once, not a setting that differs.
+        if (!kindOf(this.value).equals(kindOf(plain))) {
+            if (firstTime()) {
+                LOGGER.warn("A data file's condition on {} of {} fails: it asks for {} where the setting is {}",
+                        this.setting, this.file, kindOf(this.value), kindOf(plain));
+            }
+            return false;
+        }
+        return matches(plain, this.value);
     }
 
     @Override
@@ -131,6 +140,31 @@ public record SettingCondition(String file, String setting, JsonElement value) i
             return plain instanceof Number number && Double.compare(number.doubleValue(), primitive.getAsDouble()) == 0;
         }
         return plain instanceof String word && word.equalsIgnoreCase(primitive.getAsString());
+    }
+
+    /* What kind of value a setting holds, for the log: a switch, a number, words or a list. */
+    private static String kindOf(final Object plain) {
+        if (plain instanceof Boolean) {
+            return "a switch";
+        }
+        if (plain instanceof Number) {
+            return "a number";
+        }
+        return plain instanceof List<?> ? "a list" : "words";
+    }
+
+    /* What kind of value a data file asks for, as {@link #kindOf(Object)} names it; nothing a setting holds else. */
+    private static String kindOf(final JsonElement wanted) {
+        if (wanted instanceof JsonArray) {
+            return "a list";
+        }
+        if (!(wanted instanceof JsonPrimitive primitive)) {
+            return "nothing";
+        }
+        if (primitive.isBoolean()) {
+            return "a switch";
+        }
+        return primitive.isNumber() ? "a number" : "words";
     }
 
     /** Whether the log has not yet said why this condition fails. */

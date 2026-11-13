@@ -147,6 +147,10 @@ public final class VeinField {
          * edge.
          */
         public double share(final double px, final double py, final double pz) {
+            // A vein of no size, as a spread of none makes, holds nothing anywhere, its middle too.
+            if (!(this.radius > 0) || !(this.thickness > 0)) {
+                return 0;
+            }
             final double dx = (px - this.x) / this.radius;
             final double dy = (py - this.y) / this.thickness;
             final double dz = (pz - this.z) / this.radius;

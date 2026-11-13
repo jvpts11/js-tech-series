@@ -66,6 +66,12 @@ public final class ProcessingZen {
                                  @ZenCodeType.OptionalInt final int energyPerTick,
                                  @ZenCodeType.OptionalString final String knowledge) {
         final ProcessingKind found = kindOf(kind);
+        // Held to what a recipe's file is held to: something taken, something made, a tick of work at least.
+        if (inputs.length == 0 || outputs.length == 0 || ticks < 1 || energyPerTick < 0) {
+            throw new IllegalArgumentException("the " + kind + " recipe " + name + " takes something and makes "
+                    + "something, over a tick or more, for no energy or some; got " + inputs.length + " taken, "
+                    + outputs.length + " made, " + ticks + " ticks and " + energyPerTick + " a tick");
+        }
         final List<ItemStack> made = new ArrayList<>(outputs.length);
         for (final IItemStack output : outputs) {
             made.add(output.getInternal().copy());

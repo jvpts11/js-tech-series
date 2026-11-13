@@ -252,6 +252,7 @@ import dev.jstech.core.state.StateNetwork;
 import dev.jstech.core.stepaside.StepAside;
 import dev.jstech.core.task.Tasks;
 import dev.jstech.core.team.CorePermissions;
+import dev.jstech.core.team.CoreTeams;
 import dev.jstech.core.vehicle.VehicleControlKeys;
 import dev.jstech.core.vehicle.Vehicles;
 import dev.jstech.core.world.edit.EditCommands;
@@ -501,12 +502,13 @@ public final class JsCore {
         CraftTweakerIntegration.bootstrap();
         FtbChunksIntegration.bootstrap();
         OpacIntegration.bootstrap();
-        AccessoriesIntegration.bootstrap();
-        CuriosIntegration.bootstrap();
+        CuriosIntegration.bootstrap(AccessoriesIntegration.bootstrap());
         CreateIntegration.bootstrap();
         SableIntegration.bootstrap();
         // The series' permissions, asked of the server's permission system, and what each player may have.
         CorePermissions.listen();
+        // The name each player was last known by, so a team found by name keeps an owner gone a long while.
+        CoreTeams.listen();
         PlayerLimits.register();
         // The balance of the Core's systems in the world, and the series' Operations engine's own settings.
         ConfigFiles.register(CoreConfigKeys.FILE, modEventBus, modContainer);

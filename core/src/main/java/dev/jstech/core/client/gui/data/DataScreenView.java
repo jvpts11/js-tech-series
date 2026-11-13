@@ -105,6 +105,7 @@ public final class DataScreenView {
         nodes.clear();
         specs.clear();
         stillOnes.clear();
+        unwired = Set.of();
         revision++;
         final Optional<ScreenFile> read = ScreenFiles.get(file);
         style = styleOf(read.orElse(null));

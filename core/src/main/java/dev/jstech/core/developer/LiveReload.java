@@ -74,8 +74,10 @@ public final class LiveReload {
             return;
         }
         final List<Path> roots = ModFolders.ofThisRun().values().stream().flatMap(List::stream).toList();
+        WatchService opened = null;
         try {
             final WatchService service = FileSystems.getDefault().newWatchService();
+            opened = service;
             for (final Path root : roots) {
                 register(service, root.resolve(ASSETS_FOLDER), true);
                 register(service, root.resolve("data"), false);
@@ -90,6 +92,15 @@ public final class LiveReload {
             watching = true;
             NeoForge.EVENT_BUS.addListener(ServerTickEvent.Post.class, LiveReload::afterServerTick);
         } catch (final IOException unwatchable) {
+            // Watched halfway is not watched: what was opened for it is let go of.
+            HOLDS_ASSETS.clear();
+            if (opened != null) {
+                try {
+                    opened.close();
+                } catch (final IOException alsoUnclosed) {
+                    unwatchable.addSuppressed(alsoUnclosed);
+                }
+            }
             LOGGER.warn("the mods' folders cannot be watched; reload by hand", unwatchable);
         }
     }

@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.multipart;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
@@ -80,7 +81,7 @@ public final class SpacePlacement {
     public static boolean place(final Level level, final Placement placement) {
         final BlockPos pos = placement.pos();
         final Microblock block = placement.block();
-        if (!level.isUnobstructed(null, voxels(block).move(pos.getX(), pos.getY(), pos.getZ()))) {
+        if (!clear(level, pos, block.boxes())) {
             return false;
         }
         return into(level, pos, parts -> parts.add(block));
@@ -88,11 +89,14 @@ public final class SpacePlacement {
 
     /**
      * Mounts {@code device} on {@code face} of the space at {@code pos}, a cable's or a space of parts alone, making
-     * a space where nothing stands; on the server.
+     * a space where nothing stands, and never where a player or a mob stands; on the server.
      *
      * @return whether it is mounted there now
      */
     public static boolean mount(final Level level, final BlockPos pos, final Direction face, final IFacePart device) {
+        if (!clear(level, pos, device.type().boxesOn(face.get3DDataValue()))) {
+            return false;
+        }
         return into(level, pos, parts -> parts.add(face, device));
     }
 
@@ -104,6 +108,11 @@ public final class SpacePlacement {
      */
     public static boolean hang(final Level level, final BlockPos pos, final BlockState state) {
         return into(level, pos, parts -> parts.addSmall(state));
+    }
+
+    /* Whether no player, mob or other thing that collides stands in {@code boxes} of the block at {@code pos}. */
+    static boolean clear(final Level level, final BlockPos pos, final List<PartBox> boxes) {
+        return level.isUnobstructed(null, voxels(boxes).move(pos.getX(), pos.getY(), pos.getZ()));
     }
 
     /* Puts a part into the space at {@code pos}, or into a new one where nothing stands, which goes if it fails. */
@@ -166,9 +175,9 @@ public final class SpacePlacement {
         };
     }
 
-    private static VoxelShape voxels(final Microblock block) {
+    private static VoxelShape voxels(final List<PartBox> boxes) {
         VoxelShape made = Shapes.empty();
-        for (final PartBox box : block.boxes()) {
+        for (final PartBox box : boxes) {
             made = Shapes.or(made, Shapes.box(box.x0() / PIXELS, box.y0() / PIXELS, box.z0() / PIXELS,
                     box.x1() / PIXELS, box.y1() / PIXELS, box.z1() / PIXELS));
         }

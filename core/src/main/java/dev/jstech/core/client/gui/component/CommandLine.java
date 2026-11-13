@@ -289,9 +289,12 @@ public final class CommandLine extends UiComponent {
         }
     }
 
-    /** How wide text comes out in the line's font: in whole cells when it has one. */
+    /**
+     * How wide text comes out in the line's font: in whole cells when it has one, a cell a character as the grid lays
+     * it out, an emoji of two halves one cell.
+     */
     private int width(final Font font, final String text) {
-        return grid == null ? font.width(text) : text.length() * grid.cellWidth();
+        return grid == null ? font.width(text) : text.codePointCount(0, text.length()) * grid.cellWidth();
     }
 
     /** The end of a text that fits that room, which is the part a line scrolled to its caret shows. */
@@ -300,7 +303,8 @@ public final class CommandLine extends UiComponent {
             return Texts.tail(font, text, room);
         }
         final int fits = Math.max(1, room / grid.cellWidth());
-        return text.length() <= fits ? text : text.substring(text.length() - fits);
+        final int count = text.codePointCount(0, text.length());
+        return count <= fits ? text : text.substring(text.offsetByCodePoints(0, count - fits));
     }
 
     /** The start of a text that fits that room. */
@@ -309,6 +313,7 @@ public final class CommandLine extends UiComponent {
             return Texts.trim(font, text, room);
         }
         final int fits = Math.max(1, room / grid.cellWidth());
-        return text.length() <= fits ? text : text.substring(0, fits);
+        return text.codePointCount(0, text.length()) <= fits ? text
+                : text.substring(0, text.offsetByCodePoints(0, fits));
     }
 }

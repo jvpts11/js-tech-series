@@ -133,7 +133,7 @@ public final class Dropdown extends UiComponent {
             return true;
         }
         open = !open;
-        scroll = Math.max(0, Math.min(chosen.getAsInt(), options.size() - shownRows()));
+        followChosen();
         return true;
     }
 
@@ -154,15 +154,26 @@ public final class Dropdown extends UiComponent {
             case GLFW.GLFW_KEY_UP -> choose(Math.max(0, now - 1));
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_SPACE -> {
                 open = !open;
+                followChosen();
                 yield true;
             }
             default -> false;
         };
     }
 
+    /* Chooses {@code index}, the open list scrolled to keep what is chosen in sight. */
     private boolean choose(final int index) {
         onChoose.accept(index);
+        final int now = chosen.getAsInt();
+        if (now < scroll || now >= scroll + shownRows()) {
+            followChosen();
+        }
         return true;
+    }
+
+    /* Scrolls the list to what is chosen, as far as it goes. */
+    private void followChosen() {
+        scroll = Math.max(0, Math.min(chosen.getAsInt(), options.size() - shownRows()));
     }
 
     private int listTop() {

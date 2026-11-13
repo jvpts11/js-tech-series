@@ -159,12 +159,15 @@ public final class SoundDirector {
         for (final VoiceBudget.Candidate candidate : BUDGET.choose(candidates)) {
             chosen.add(candidate.id());
         }
+        /*
+         * One no longer chosen fades out where it is and is let go once it has: chosen again while it fades, it fades
+         * back up rather than a second copy starting beside it.
+         */
         PLAYING.entrySet().removeIf(entry -> {
-            final boolean gone = !chosen.contains(entry.getKey()) || entry.getValue().finished();
-            if (gone) {
+            if (!chosen.contains(entry.getKey())) {
                 entry.getValue().leave();
             }
-            return gone;
+            return entry.getValue().finished();
         });
         final boolean muffle = AudioPrefsStore.prefs().occlusion();
         for (final String id : chosen) {

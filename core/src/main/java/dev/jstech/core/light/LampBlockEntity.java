@@ -38,6 +38,8 @@ public class LampBlockEntity extends SyncedBlockEntity {
     private final IntField shining;
     private final FieldEnergyStorage energy;
     private int lastLevel = -1;
+    /* The part of an FE its rating asks and it has not drawn yet. */
+    private double carried;
 
     /* How much a lamp powered by energy holds, in seconds of what it draws, and how often a beam looks again. */
     private static final int BUFFER_SECONDS = 10;
@@ -128,6 +130,10 @@ public class LampBlockEntity extends SyncedBlockEntity {
     public void setRemoved() {
         super.setRemoved();
         SEEN.remove(this);
+        // Gone with its chunk, or broken: its beam holds nothing lit any more; its light blocks go as they look.
+        if (this.level instanceof ServerLevel server) {
+            BeamLights.forget(server, this.worldPosition.asLong());
+        }
     }
 
     /* Moved with a moving structure: the light its beam laid where it stood goes out; it lays it again from here. */
@@ -196,11 +202,24 @@ public class LampBlockEntity extends SyncedBlockEntity {
         }
     }
 
-    /* Draws what it draws a tick from its energy, a joule an FE; whether it had it. */
+    /*
+     * Draws what it draws a tick from its energy, a joule an FE; whether it had it. A rating that is no whole number of
+     * FE a tick is drawn as it is, the part of an FE carried on to the next tick, never rounded up each tick.
+     */
     private boolean draw(final LightKind kind) {
-        final int tick = (int) Math.ceil(kind.watts() / TICKS_A_SECOND);
-        this.energy.setCapacity(Math.max(1, Math.min(MOST_STORED, tick * TICKS_A_SECOND * BUFFER_SECONDS)));
-        return tick <= 0 || this.energy.consume(tick);
+        final double perTick = kind.watts() / TICKS_A_SECOND;
+        this.energy.setCapacity((int) Math.max(1, Math.min(MOST_STORED,
+                Math.ceil(kind.watts() * BUFFER_SECONDS))));
+        if (perTick <= 0) {
+            return true;
+        }
+        final double owed = this.carried + perTick;
+        final int whole = (int) Math.min(Integer.MAX_VALUE, Math.floor(owed));
+        if (whole > 0 && !this.energy.consume(whole)) {
+            return false;
+        }
+        this.carried = owed - whole;
+        return true;
     }
 
     private void light(final Level level, final int brightness) {

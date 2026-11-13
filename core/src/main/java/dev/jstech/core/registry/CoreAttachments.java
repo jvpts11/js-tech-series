@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.registry;
 
+import com.mojang.datafixers.util.Pair;
 import com.mojang.serialization.Codec;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.grid.LevelGrids;
@@ -30,6 +31,8 @@ import net.neoforged.neoforge.attachment.AttachmentType;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -50,6 +53,15 @@ public final class CoreAttachments {
             NETWORK_UUID_CODEC.listOf().xmap(
                     list -> CoreChunkData.of(new LinkedHashSet<>(list)),
                     data -> List.copyOf(data.networks()));
+
+    /*
+     * A player's recipe choices in the order they were made, so the oldest goes first past the most kept; a save of
+     * before, a map of no order, is read too.
+     */
+    private static final Codec<Map<String, ResourceLocation>> RECIPE_CHOICES_CODEC = Codec.withAlternative(
+            Codec.mapPair(Codec.STRING.fieldOf("key"), ResourceLocation.CODEC.fieldOf("recipe")).codec().listOf()
+                    .xmap(CoreAttachments::inOrder, CoreAttachments::pairs),
+            Codec.unboundedMap(Codec.STRING, ResourceLocation.CODEC));
 
     public static final DeferredRegister<AttachmentType<?>> ATTACHMENT_TYPES =
             DeferredRegister.create(NeoForgeRegistries.ATTACHMENT_TYPES, JsCore.MODID);
@@ -134,7 +146,7 @@ public final class CoreAttachments {
     public static final Supplier<AttachmentType<Map<String, ResourceLocation>>> RECIPE_CHOICES =
             ATTACHMENT_TYPES.register("recipe_choices", () -> AttachmentType.<Map<String, ResourceLocation>>builder(
                             () -> Map.of())
-                    .serialize(Codec.unboundedMap(Codec.STRING, ResourceLocation.CODEC)).copyOnDeath().build());
+                    .serialize(RECIPE_CHOICES_CODEC).copyOnDeath().build());
 
     /** The recipe a furnace was set to smelt each item by, among those that fit it, by the item's id. */
     public static final Supplier<AttachmentType<Map<ResourceLocation, ResourceLocation>>> FURNACE_CHOICES =
@@ -153,5 +165,15 @@ public final class CoreAttachments {
 
     public static void register(final IEventBus modEventBus) {
         ATTACHMENT_TYPES.register(modEventBus);
+    }
+
+    private static Map<String, ResourceLocation> inOrder(final List<Pair<String, ResourceLocation>> pairs) {
+        final Map<String, ResourceLocation> kept = new LinkedHashMap<>();
+        pairs.forEach(pair -> kept.put(pair.getFirst(), pair.getSecond()));
+        return Collections.unmodifiableMap(kept);
+    }
+
+    private static List<Pair<String, ResourceLocation>> pairs(final Map<String, ResourceLocation> kept) {
+        return kept.entrySet().stream().map(entry -> Pair.of(entry.getKey(), entry.getValue())).toList();
     }
 }

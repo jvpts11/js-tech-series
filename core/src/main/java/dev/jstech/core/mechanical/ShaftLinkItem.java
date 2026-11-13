@@ -16,6 +16,8 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
@@ -55,6 +57,10 @@ public class ShaftLinkItem extends Item {
     /** The place of the first pulley, while a link is being made. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<BlockPos>> START =
             CoreItems.CONTENT.component("shaft_link_start", BlockPos.CODEC, BlockPos.STREAM_CODEC);
+    /* The world of the first pulley, so one marked in another is never joined to one here at the same place. */
+    private static final DeferredHolder<DataComponentType<?>, DataComponentType<ResourceKey<Level>>> START_WORLD =
+            CoreItems.CONTENT.component("shaft_link_start_world", Level.RESOURCE_KEY_CODEC,
+                    ResourceKey.streamCodec(Registries.DIMENSION));
 
     /** A belt, or a chain when {@code isChain}, that reaches {@code blocks} from pulley to pulley. */
     public ShaftLinkItem(final Properties properties, final boolean isChain, final int blocks) {
@@ -87,11 +93,14 @@ public class ShaftLinkItem extends Item {
             return told(player, TAKEN.with(), InteractionResult.FAIL);
         }
         final BlockPos start = stack.get(START.get());
-        if (start == null || start.equals(pos)) {
+        final boolean elsewhere = !level.dimension().equals(stack.get(START_WORLD.get()));
+        if (start == null || start.equals(pos) || elsewhere) {
             stack.set(START.get(), pos.immutable());
+            stack.set(START_WORLD.get(), level.dimension());
             return told(player, STARTED.with(), InteractionResult.CONSUME);
         }
         stack.remove(START.get());
+        stack.remove(START_WORLD.get());
         if (!(level.getBlockEntity(start) instanceof MechanicalPartBlockEntity first) || !pulley(first)
                 || first.linked() != null) {
             return told(player, GONE.with(), InteractionResult.FAIL);

@@ -92,6 +92,12 @@ public final class SpacePersistor {
     /** Its radius' thumbwheel. */
     public static final MenuCall<MachineMenu, Integer> SET_RADIUS = call("persistor_radius", ByteBufCodecs.VAR_INT,
             SpacePersistorBlockEntity::setRadius);
+    /**
+     * A step of its radius, out or in, as the screen's wheel and drum turn it: steps sent close together add up, as
+     * the server reads the radius each takes from.
+     */
+    public static final MenuCall<MachineMenu, Integer> TURN_RADIUS = call("persistor_radius_by",
+            ByteBufCodecs.VAR_INT, SpacePersistorBlockEntity::turnRadius);
     /** A click on its map: the chunk's offset from its own, packed as {@link PersistorShapes#pack} packs it. */
     public static final MenuCall<MachineMenu, Long> CLICK = call("persistor_click", ByteBufCodecs.VAR_LONG,
             (persistor, packed) -> persistor.click(PersistorShapes.dx(packed), PersistorShapes.dz(packed)));

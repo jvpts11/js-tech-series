@@ -533,9 +533,12 @@ public final class CableBlockEntity extends SyncedBlockEntity implements IPartHo
      * saved with its wires and parts only, joins its neighbours on its first tick.
      */
     public void settleLinks() {
+        // Faces it gained are told to its neighbours, as any other change of its faces is.
         if (this.linksUnknown) {
             this.linksUnknown = false;
-            refreshLinks(true);
+            if (refreshLinks(true) && this.level != null) {
+                Neighbours.portsChanged(this.level, this.worldPosition);
+            }
         }
     }
 

@@ -102,6 +102,14 @@ public final class CameraViewGameTests {
                     && heard.get(2).ending() == CameraViewEvent.Ending.STOPPED, "and the server ends the point's");
             CameraViews.ended(player, CameraViewEvent.Ending.FINISHED);
             helper.assertTrue(heard.size() == 3, "an end told for no view says nothing");
+            // The player's game says the third view ended only after the server started a fourth: too late.
+            CameraViews.lookFrom(player, player.position().add(0, 3, 0), 0, 30, true);
+            CameraViews.ended(player, CameraViewEvent.Ending.SKIPPED, 3);
+            helper.assertTrue(heard.size() == 3 && CameraViews.showing(player).isPresent(),
+                    "a word about a view since replaced ends nothing");
+            CameraViews.ended(player, CameraViewEvent.Ending.SKIPPED, 4);
+            helper.assertTrue(heard.size() == 4 && CameraViews.showing(player).isEmpty(),
+                    "while the word about the view showing ends it");
         } finally {
             JsCore.events().unsubscribe(CameraViewEvent.class, listener);
         }

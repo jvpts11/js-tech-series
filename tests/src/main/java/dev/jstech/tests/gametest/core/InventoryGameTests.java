@@ -23,6 +23,7 @@ import net.minecraft.core.component.DataComponents;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.RegistryOps;
@@ -93,6 +94,15 @@ public final class InventoryGameTests {
         helper.assertTrue(loaded.amountFor(StackSubject.of(worn)) == 2
                         && !ItemFilters.allows(loaded, worn) && ItemFilters.allows(loaded, sword),
                 "the exact rule came back with its components and its amount");
+        // A save written by hand with a mod's id no mod can have reads as an error, never as a throw.
+        final CompoundTag badMod = new CompoundTag();
+        badMod.putString("kind", "mod");
+        badMod.putString("mod", "Bad Mod");
+        final ListTag rules = new ListTag();
+        rules.add(badMod);
+        final CompoundTag broken = ((CompoundTag) saved).copy();
+        broken.put("rules", rules);
+        helper.assertTrue(ItemFilters.CODEC.parse(ops, broken).error().isPresent(), "a bad mod id is an error");
         helper.succeed();
     }
 

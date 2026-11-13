@@ -328,12 +328,13 @@ public final class ElementNaming {
             out.add(element.nameKey().english().toLowerCase(Locale.ROOT));
         }
         for (final Material beyond : Superheavies.all().values()) {
+            // Its own names, the series' among them, are the naming element's to keep: none is another's.
             if (beyond != naming) {
                 out.add(beyond.declaredName().english().toLowerCase(Locale.ROOT));
                 out.add(beyond.name().english().toLowerCase(Locale.ROOT));
+                Superheavies.number(beyond).flatMap(Superheavies::seriesName)
+                        .ifPresent(key -> out.add(key.english().toLowerCase(Locale.ROOT)));
             }
-            Superheavies.number(beyond).flatMap(Superheavies::seriesName)
-                    .ifPresent(key -> out.add(key.english().toLowerCase(Locale.ROOT)));
         }
         MaterialNames.all(server).values().forEach(given -> out.add(given.name().toLowerCase(Locale.ROOT)));
         return out;
@@ -346,8 +347,10 @@ public final class ElementNaming {
             out.add(element.symbol().toLowerCase(Locale.ROOT));
         }
         for (final Material beyond : Superheavies.all().values()) {
-            Superheavies.number(beyond).flatMap(Superheavies::seriesSymbol)
-                    .ifPresent(symbol -> out.add(symbol.toLowerCase(Locale.ROOT)));
+            if (beyond != naming) {
+                Superheavies.number(beyond).flatMap(Superheavies::seriesSymbol)
+                        .ifPresent(symbol -> out.add(symbol.toLowerCase(Locale.ROOT)));
+            }
         }
         MaterialNames.all(server).forEach((id, given) -> {
             if (!id.equals(naming.id())) {

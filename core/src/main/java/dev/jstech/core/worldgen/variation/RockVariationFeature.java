@@ -60,7 +60,7 @@ public final class RockVariationFeature extends Feature<RockVariationConfig> {
                 final int top = level.getHeight(ground, x, z) - 1;
                 final int slope = slope(level, ground, x, z, top);
                 final Holder<Biome> biome = level.getBiome(at.set(x, top, z));
-                for (int y = top; y > level.getMinBuildHeight() && (long) top - y <= deepest; y--) {
+                for (int y = top; y >= level.getMinBuildHeight() && (long) top - y <= deepest; y--) {
                     at.set(x, y, z);
                     if (!level.getBlockState(at).is(config.rock())) {
                         continue;

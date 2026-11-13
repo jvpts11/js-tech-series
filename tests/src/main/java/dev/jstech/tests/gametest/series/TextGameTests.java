@@ -23,6 +23,10 @@ import java.util.Collection;
 import java.util.List;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtOps;
+import net.minecraft.network.Utf8String;
+import net.minecraft.network.VarInt;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -106,6 +110,29 @@ public final class TextGameTests {
             final int kept = data.resolve(ITextLanguage.ENGLISH).length();
             helper.assertTrue(kept > 0 && kept < 20_000, "data too long for the wire is cut, never refused; kept "
                     + kept);
+        } finally {
+            buf.release();
+        }
+        helper.succeed();
+    }
+
+    /* A save of a sentence another hand broke is read as its words; a message counting fewer than no args, as none. */
+    @GameTest(template = ARENA)
+    public static void codec_readsABrokenSentenceAsItsWordsAndANegativeCountAsNone(final GameTestHelper helper) {
+        final CompoundTag broken = new CompoundTag();
+        broken.putString("key", "not a key");
+        broken.putString("english", "Kept words");
+        final Text read = TextCodecs.CODEC.parse(NbtOps.INSTANCE, broken).getOrThrow();
+        helper.assertTrue(read.english().equals("Kept words") && !(read instanceof Text.Translated),
+                "a sentence of a broken key is read as its words: " + read);
+        final ByteBuf buf = Unpooled.buffer();
+        try {
+            buf.writeByte(1);
+            Utf8String.write(buf, CRASHED, CRASHED.length());
+            VarInt.write(buf, -1);
+            final Text got = TextCodecs.STREAM_CODEC.decode(buf);
+            helper.assertTrue(got instanceof Text.Translated translated && translated.args().isEmpty(),
+                    "a negative count of args is read as none: " + got);
         } finally {
             buf.release();
         }

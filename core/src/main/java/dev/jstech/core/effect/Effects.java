@@ -152,7 +152,11 @@ public final class Effects {
             return this;
         }
 
-        /** It is sent to the players within {@code blocks}; 64 if it says none. */
+        /**
+         * It is sent to the players within {@code blocks}; 64 if it says none. The server never reads the effect's
+         * file, which the players' games hold, so an effect whose file is seen further than 64 blocks is sent with
+         * that reach here, or players beyond 64 never see it.
+         */
         public Fire reach(final int blocks) {
             this.reach = blocks;
             return this;

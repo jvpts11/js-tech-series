@@ -91,6 +91,8 @@ public final class ProjectorClient {
             "structure_projector");
     /* What is seen of the world is read again this often, in ticks: the counts need not follow every block. */
     private static final int READ_EVERY = 10;
+    /* How long what was read of a projector is kept once no one reads it again, in ticks. */
+    private static final int FORGET_SEEN = 20 * READ_EVERY;
     /** The colours of the words above a structure and of its marks. */
     public static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "structure_projector", new Colours(
             0xFF << 24 | 0xFFFFFF, 0xFF << 24 | 0xB4BCC6, 0xFF << 24 | 0x5FE6F0, 0xFF << 24 | 0xF0564A,
@@ -203,6 +205,9 @@ public final class ProjectorClient {
             entry.getValue().close();
             return true;
         });
+        // What was read of a projector no longer looked at, broken or left behind, goes once it is long stale.
+        final long tick = minecraft.level.getGameTime();
+        SEEN.values().removeIf(seen -> tick - seen.at() > FORGET_SEEN || tick < seen.at());
         final Looked now = looked;
         if (now != null) {
             outlineLooked(pose, eye, buffers.getBuffer(SeenThrough.LINES), minecraft.level, now);

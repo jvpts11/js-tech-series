@@ -107,6 +107,25 @@ class LightFloodTest {
         assertNotEquals(one, LightFlood.spread(0, 0, 0, 12, GREEN, walled), "a wall put up changes the light");
     }
 
+    @Test
+    void equals_isTheSameTintedLightWhateverWasWorkedOutBeforeIt() {
+        // Red glass on one side and a wall on the other, which the light does not pass.
+        final World walled = new World();
+        // Blue glass where the first is walled off, so another flood lights there in its own colour.
+        final World open = new World();
+        for (int y = -20; y <= 20; y++) {
+            for (int z = -20; z <= 20; z++) {
+                walled.tint(2, y, z, RED_GLASS);
+                walled.wall(-1, y, z);
+                open.tint(-2, y, z, BLUE_GLASS);
+            }
+        }
+        final LightFlood first = LightFlood.spread(0, 0, 0, 15, LightMath.WHITE, walled);
+        LightFlood.spread(0, 0, 0, 15, LightMath.WHITE, open);
+        final LightFlood again = LightFlood.spread(0, 0, 0, 15, LightMath.WHITE, walled);
+        assertEquals(first, again, "the same light, whatever another flood left where this one does not reach");
+    }
+
     /* Open air, with walls, tints and dimming blocks where a test puts them. */
     private static final class World implements LightFlood.IPassage {
 

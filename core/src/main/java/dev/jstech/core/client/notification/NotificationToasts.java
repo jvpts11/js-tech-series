@@ -42,8 +42,15 @@ import net.minecraft.resources.ResourceLocation;
 final class NotificationToasts implements IHudElement {
 
     private final NotificationBoard<Notification> board;
-    /* Where each notification was drawn last, for a click to find. */
+    /*
+     * Where each notification was drawn last, for a click to find, and when, by the game's clock; and the corner they
+     * were drawn from and how big, as the player placed the toasts at their own size, which a click is turned back by.
+     */
     private final List<Placed> placed = new ArrayList<>();
+    private long drawnAt;
+    private int originX;
+    private int originY;
+    private float scale = 1.0F;
 
     /** How wide a notification is at the normal text size. */
     static final int WIDTH = 200;
@@ -64,6 +71,8 @@ final class NotificationToasts implements IHudElement {
     /* The time line is the title's colour, a little see-through. */
     private static final int RGB = 0xFFFFFF;
     private static final int BAR_ALPHA = 200 << 24;
+    /* How long after it was last drawn a notification can still be clicked, a few frames, in milliseconds. */
+    private static final long FRESH_MILLIS = 250L;
 
     NotificationToasts(final NotificationBoard<Notification> board) {
         this.board = board;
@@ -106,6 +115,10 @@ final class NotificationToasts implements IHudElement {
         // The newest goes nearest the corner: at the top of a top corner's stack, at the foot of a bottom one's.
         final boolean bottom = NotificationsClient.corner().bottom();
         this.placed.clear();
+        this.drawnAt = now;
+        this.originX = x;
+        this.originY = y;
+        this.scale = g.pose().last().pose().m00();
         int top = y;
         for (int i = 0; i < shown.size(); i++) {
             final NotificationBoard.Entry<Notification> entry = shown.get(bottom ? shown.size() - 1 - i : i);
@@ -116,10 +129,22 @@ final class NotificationToasts implements IHudElement {
         }
     }
 
-    /** The notification drawn under the point, if any. */
+    /**
+     * The notification drawn under the point, if any. Only one drawn a moment ago that still shows: one whose time ran
+     * out, or hidden with the HUD or under a screen, is not there to click.
+     */
     Optional<NotificationBoard.Entry<Notification>> at(final double mx, final double my) {
+        final long now = Util.getMillis();
+        if (now - this.drawnAt > FRESH_MILLIS) {
+            return Optional.empty();
+        }
+        final List<NotificationBoard.Entry<Notification>> showing = this.board.showing(now);
+        // Drawn scaled about where they start, so the point is taken back to their own size first.
+        final double x = this.scale > 0 ? this.originX + (mx - this.originX) / this.scale : mx;
+        final double y = this.scale > 0 ? this.originY + (my - this.originY) / this.scale : my;
         for (final Placed one : this.placed) {
-            if (mx >= one.x() && mx < one.x() + one.w() && my >= one.y() && my < one.y() + one.h()) {
+            if (x >= one.x() && x < one.x() + one.w() && y >= one.y() && y < one.y() + one.h()
+                    && showing.stream().anyMatch(entry -> entry.id() == one.entry().id())) {
                 return Optional.of(one.entry());
             }
         }

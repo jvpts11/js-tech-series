@@ -10,11 +10,13 @@ package dev.jstech.core.util;
 import dev.jstech.core.content.DeclaredModel;
 import dev.jstech.core.content.ModContent;
 import dev.jstech.core.model.ModelData;
+import dev.jstech.core.model.ModelFormatException;
 import dev.jstech.core.model.ModelReaders;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.ModList;
@@ -54,8 +56,19 @@ public final class ShippedModels {
         final byte[] bytes = bytes(file).orElseThrow(() -> DeclarationError.of(model.id().getNamespace(),
                 "the model " + model.id(), "has no file " + file + " in any mod", "ship the model's file under "
                         + "assets/" + file.getNamespace() + "/" + file.getPath()));
-        return ModelReaders.read(file.getPath(), bytes, beside -> bytes(ResourceLocation.fromNamespaceAndPath(
-                file.getNamespace(), folder + beside)).orElse(null)).getFirst();
+        final List<ModelData> read;
+        try {
+            read = ModelReaders.read(file.getPath(), bytes, beside -> bytes(ResourceLocation.fromNamespaceAndPath(
+                    file.getNamespace(), folder + beside)).orElse(null));
+        } catch (final ModelFormatException broken) {
+            throw DeclarationError.of(model.id().getNamespace(), "the model " + model.id(), "has a file " + file
+                    + " that does not read (" + broken.getMessage() + ")", "export the model's file again");
+        }
+        if (read.isEmpty()) {
+            throw DeclarationError.of(model.id().getNamespace(), "the model " + model.id(), "has a file " + file
+                    + " that holds no model", "export the model's file again");
+        }
+        return read.getFirst();
     }
 
     /* The bytes of {@code file} under some mod's assets, or none. */

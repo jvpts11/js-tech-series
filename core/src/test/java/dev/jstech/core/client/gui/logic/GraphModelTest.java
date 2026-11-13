@@ -51,6 +51,18 @@ class GraphModelTest {
         assertEquals(2, changes[0]);
     }
 
+    @Test
+    void put_inThePlaceOfANodeKeepsOnlyTheWiresItsPortsStillTake() {
+        final GraphModel graph = graph();
+        graph.connect(ORES, IN);
+        graph.put(new GraphModel.Node("crusher", "Crusher", 100, 0, 60,
+                List.of(new GraphModel.Port("in", "Ores", "energy")), List.of()));
+        assertTrue(graph.wires().isEmpty(), "an input now of another kind keeps no wire of items");
+        graph.put(new GraphModel.Node("crusher", "Crusher", 100, 0, 60,
+                List.of(new GraphModel.Port("in", "Ores", "items")), List.of()));
+        assertTrue(graph.wires().isEmpty(), "and the wire does not come back with the port");
+    }
+
     private static GraphModel graph() {
         return new GraphModel()
                 .put(new GraphModel.Node("store", "Storage", 0, 0, 60, List.of(),

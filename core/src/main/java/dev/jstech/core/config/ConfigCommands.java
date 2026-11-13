@@ -59,6 +59,9 @@ public final class ConfigCommands {
     /* The value written, and why it was not taken. */
     public static final TextKey NOT_TAKEN = TextKey.of("jscore.command.config.not_taken",
             "%s cannot be that setting's value: %s");
+    /* The file, written by a newer version of its mod, which this one never writes over. */
+    private static final TextKey NOT_WRITTEN = TextKey.of("jscore.command.config.not_written",
+            "Held until the game stops, never written: %s comes from a newer version of its mod");
 
     private static final String FILE = "file";
     private static final String SETTING = "setting";
@@ -160,6 +163,7 @@ public final class ConfigCommands {
         final TextKey said = key.traits().applies() == ConfigApply.RESTART ? SET_ON_RESTART : SET;
         context.getSource().sendSuccess(() -> GameText.component(said.with(key.dottedPath(), file.fileName(),
                 shown)), true);
+        sayIfNotWritten(context, file);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -170,6 +174,7 @@ public final class ConfigCommands {
         final String shown = show(plainOf(file, key));
         context.getSource().sendSuccess(() -> GameText.component(RESET.with(key.dottedPath(), file.fileName(),
                 shown)), true);
+        sayIfNotWritten(context, file);
         return Command.SINGLE_SUCCESS;
     }
 
@@ -182,7 +187,15 @@ public final class ConfigCommands {
         final int taken = draft.takePlain(values);
         draft.apply();
         context.getSource().sendSuccess(() -> GameText.component(PRESET.with(name, file.fileName(), taken)), true);
+        sayIfNotWritten(context, file);
         return taken;
+    }
+
+    /* A change to a file of a newer version is held but never written, which whoever made it is told. */
+    private static void sayIfNotWritten(final CommandContext<CommandSourceStack> context, final ConfigFile file) {
+        if (file.newer()) {
+            context.getSource().sendSuccess(() -> GameText.component(NOT_WRITTEN.with(file.fileName())), false);
+        }
     }
 
     /* The files a command reaches here: a world's, and those of every game, as this side keeps them. */

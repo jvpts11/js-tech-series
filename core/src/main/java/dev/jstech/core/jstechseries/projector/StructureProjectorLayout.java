@@ -68,9 +68,10 @@ public final class StructureProjectorLayout {
     public static final int LAYER_LABEL_Y = 131;
     public static final int WHEEL_X = 263;
     public static final int WHEEL_Y = 141;
-    public static final int WHEEL_WIDTH = 9;
+    /* Two digits wide, as a multiblock of ten layers and more needs. */
+    public static final int WHEEL_WIDTH = 16;
     public static final int WHEEL_HEIGHT = 13;
-    public static final int OF_X = 277;
+    public static final int OF_X = 284;
     public static final int OF_Y = 144;
     public static final int ROCKER_X = 286;
     public static final int ROCKER_Y = 160;

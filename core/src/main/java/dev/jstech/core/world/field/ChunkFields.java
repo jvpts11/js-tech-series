@@ -24,6 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.ChunkPos;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
@@ -59,6 +60,8 @@ public final class ChunkFields {
     /* What each player was last sent of each field, so only a change is sent again. */
     private static final Map<UUID, Map<ResourceLocation, Integer>> SENT = new ConcurrentHashMap<>();
     private static final int SYNC_EVERY = 20;
+    /* When each field's step and sending were last done, by dimension and field. */
+    private static final Map<String, Long> LAST_DONE = new ConcurrentHashMap<>();
     private static final String VERSION = "1";
 
     private ChunkFields() {
@@ -68,8 +71,10 @@ public final class ChunkFields {
     public static void listen(final IEventBus modBus) {
         modBus.addListener(RegisterPayloadHandlersEvent.class, event -> event.registrar(VERSION)
                 .playToClient(ChunkFieldPayload.TYPE, ChunkFieldPayload.STREAM_CODEC, ChunkFields::onPayload));
+        // Slowed by its budget, the work comes every few ticks, and each field steps once its time since the last ends.
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, event -> {
-            if (event.getLevel() instanceof ServerLevel level && !FIELDS.isEmpty()) {
+            if (event.getLevel() instanceof ServerLevel level && !FIELDS.isEmpty()
+                    && SECTION.due(level.getGameTime())) {
                 SECTION.run(() -> tick(level));
             }
         });
@@ -79,15 +84,23 @@ public final class ChunkFields {
                     field.keep(level);
                     field.forget(level.dimension());
                 }
+                final String gone = level.dimension().location() + "|";
+                LAST_DONE.keySet().removeIf(key -> key.startsWith(gone));
             }
         });
         NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> {
             FIELDS.forEach(field -> event.getServer().getAllLevels().forEach(level -> field.forget(
                     level.dimension())));
             SENT.clear();
+            LAST_DONE.clear();
         });
         NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerLoggedOutEvent.class,
                 event -> SENT.remove(event.getEntity().getUUID()));
+        // A player come into another dimension, or back to life, is told the fields there at once: their game still
+        // holds the last dimension's till then.
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerChangedDimensionEvent.class,
+                event -> sendAll(event.getEntity()));
+        NeoForge.EVENT_BUS.addListener(PlayerEvent.PlayerRespawnEvent.class, event -> sendAll(event.getEntity()));
     }
 
     /** Starts declaring the field {@code id}. */
@@ -108,14 +121,38 @@ public final class ChunkFields {
     /* Moves each field due a step on, away from the thread, and sends the synced ones to the players. */
     private static void tick(final ServerLevel level) {
         final long now = level.getGameTime();
+        final String dimension = level.dimension().location() + "|";
         for (final ChunkField field : FIELDS) {
-            if (field.every() > 0 && now % field.every() == 0) {
+            if (field.every() > 0 && dueAgain(dimension + field.id() + "|step", now, field.every())) {
                 field.stepAway(level);
             }
-            if (field.synced() && now % SYNC_EVERY == 0) {
+            if (field.synced() && dueAgain(dimension + field.id() + "|sync", now, SYNC_EVERY)) {
                 for (final ServerPlayer player : level.players()) {
                     send(level, field, player);
                 }
+            }
+        }
+    }
+
+    /* Whether the work {@code key} is due, {@code every} ticks after it was last done: marked done now when it is. */
+    private static boolean dueAgain(final String key, final long now, final int every) {
+        final Long last = LAST_DONE.get(key);
+        if (last != null && now >= last && now - last < every) {
+            return false;
+        }
+        LAST_DONE.put(key, now);
+        return true;
+    }
+
+    /* Every synced field round {@code player}, sent afresh. */
+    private static void sendAll(final Player player) {
+        if (!(player instanceof ServerPlayer server)) {
+            return;
+        }
+        SENT.remove(server.getUUID());
+        for (final ChunkField field : FIELDS) {
+            if (field.synced()) {
+                send(server.serverLevel(), field, server);
             }
         }
     }

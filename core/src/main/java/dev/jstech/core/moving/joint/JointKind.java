@@ -76,7 +76,8 @@ public sealed interface JointKind permits JointKind.Hinge, JointKind.Slider, Joi
      * @param speed   its speed at a full signal
      * @param force   the most it drives with
      * @param signal  the signal that drives it forward, or none to drive always at full speed
-     * @param reverse the signal that drives it back, or none
+     * @param reverse the signal that drives it back, or none; it takes away from the forward signal, so with no
+     *                forward signal a full reverse stops it
      */
     record Drive(double speed, double force, Optional<JointSignal> signal, Optional<JointSignal> reverse) {
 

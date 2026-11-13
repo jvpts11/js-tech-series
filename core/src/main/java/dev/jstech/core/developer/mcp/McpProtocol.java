@@ -15,6 +15,7 @@ import dev.jstech.core.text.Text;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -248,9 +249,13 @@ public final class McpProtocol {
         if (acts) {
             this.host.began(running);
         }
+        CompletableFuture<McpResult> handled = null;
         try {
-            result = tool.handler().run(running).get(CALL_SECONDS, TimeUnit.SECONDS);
+            handled = tool.handler().run(running);
+            result = handled.get(CALL_SECONDS, TimeUnit.SECONDS);
         } catch (final TimeoutException late) {
+            // Called off, so a tool working over the player's ticks stops rather than going on unshown.
+            handled.cancel(false);
             result = McpResult.failed(McpWords.TOOK_TOO_LONG.with(CALL_SECONDS));
         } catch (final ExecutionException | InterruptedException | RuntimeException failed) {
             final Throwable cause = failed instanceof ExecutionException ? failed.getCause() : failed;

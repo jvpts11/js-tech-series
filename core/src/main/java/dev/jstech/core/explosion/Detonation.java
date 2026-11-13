@@ -90,7 +90,11 @@ public final class Detonation {
     private int lightable;
     private boolean finished;
 
-    /* How many lines go out for each square metre of the sphere they reach to, and the fewest and most of them. */
+    /*
+     * How many lines go out for each square metre of the sphere they reach to, and the fewest and most of them. The
+     * most is met by a sphere some 36 blocks out, so a larger blast's far reach is walked by lines blocks apart: there
+     * a single weak block, a pane or a leaf, breaks only where a line meets it.
+     */
     private static final double RAYS_PER_SQUARE_METRE = 1;
     private static final int FEWEST_RAYS = 64;
     private static final int MOST_RAYS = 16_384;
@@ -297,13 +301,15 @@ public final class Detonation {
         return this.opened.contains(pos);
     }
 
-    /* Whether it may hurt {@code body}, as the server, the claims and the teams allow. */
+    /*
+     * Whether it may hurt {@code body}: a player as the server, the claims and the teams allow; anything else always,
+     * as the game's own blasts do, since what a claim keeps from hurt is its players (PvP), not its creatures.
+     */
     boolean mayHurt(final Entity body) {
         if (!this.consequence.hurts()) {
             return false;
         }
-        return body instanceof ServerPlayer player ? Protection.mayHurt(this.actor, player)
-                : Protection.may(this.actor, ProtectedAction.HURT, this.level, body.blockPosition());
+        return !(body instanceof ServerPlayer player) || Protection.mayHurt(this.actor, player);
     }
 
     /* Whether its fireball sets fires: it was made to and there is air to burn. */

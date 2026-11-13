@@ -204,8 +204,14 @@ public final class HazardMapScreen extends Screen {
         this.mapY = TOP;
         this.mapWidth = this.width - LEGEND_WIDTH - 3 * MARGIN;
         this.mapHeight = this.height - TOP - MARGIN;
+        // Made again larger when the window grows past it, never smaller: one too big only draws more.
+        final int needed = Math.max(this.mapWidth, this.mapHeight) / CELL + SPARE_CHUNKS;
+        if (this.picture != null && this.picture.chunks() < needed) {
+            this.picture.close();
+            this.picture = null;
+        }
         if (this.picture == null) {
-            this.picture = new TerrainPicture(Math.max(this.mapWidth, this.mapHeight) / CELL + SPARE_CHUNKS, CELL);
+            this.picture = new TerrainPicture(needed, CELL);
         }
         final List<HazardKind> kinds = DeviceHud.mapped();
         final Optional<HazardKind> shown = shownKind();

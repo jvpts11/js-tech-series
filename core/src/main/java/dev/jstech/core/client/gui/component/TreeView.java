@@ -70,9 +70,10 @@ public final class TreeView extends UiComponent {
 
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
-        final int index = scroll + (int) ((my - y() - 2) / ROW);
+        // The frame above the first row is no row: floored, a click on it falls short of the list.
+        final int index = scroll + (int) Math.floor((my - y() - 2) / ROW);
         final List<TreeModel.Row> rows = model.rows();
-        if (button != 0 || index < 0 || index >= rows.size()) {
+        if (button != 0 || index < scroll || index >= rows.size()) {
             return false;
         }
         final TreeModel.Row row = rows.get(index);

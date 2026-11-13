@@ -55,6 +55,8 @@ public final class StructureProjectorScreen extends CoreContainerScreen<Structur
     private static final int ITEM_INSET = 6;
     private static final int WORDS_INSET = 4;
     private static final int MOST_NAMED = 3;
+    /* The most its two-digit wheel reads. */
+    private static final int MOST_ON_WHEEL = 99;
     /* The room left between the line along the face's foot and the lamp. */
     private static final int STATUS_GAP = 4;
     private static final double SHADE_HI = 0.3;
@@ -277,7 +279,7 @@ public final class StructureProjectorScreen extends CoreContainerScreen<Structur
         final int layers = preview.map(ShapePreview::layers).orElse(0);
         final int shown = settings.layer() == 0 ? layers : settings.layer();
         MachineArt.thumbwheel(g, this.font, x0 + StructureProjectorLayout.WHEEL_X,
-                y0 + StructureProjectorLayout.WHEEL_Y, Integer.toString(Math.min(9, shown)));
+                y0 + StructureProjectorLayout.WHEEL_Y, Integer.toString(Math.min(MOST_ON_WHEEL, shown)));
         MachineArt.engrave(g, this.font, upper(ProjectorTexts.OF.with(layers)), x0 + StructureProjectorLayout.OF_X,
                 y0 + StructureProjectorLayout.OF_Y, false);
         MachineArt.engrave(g, this.font, upper(ProjectorTexts.ON.text()), x0 + StructureProjectorLayout.ON_WORD_X,

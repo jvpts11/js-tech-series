@@ -121,7 +121,7 @@ public final class FormedDamage {
                              final Vec3 facing, final double size, final long seed) {
         final Struck struck = struck(level, pos);
         if (struck == null || DamageStamps.get(stamp).isEmpty() || !(size > 0) || facing.lengthSqr() == 0
-                || marks(level, pos, struck.place()).size() >= MOST_MARKS) {
+                || keptStrikes(level, pos, struck.place()) >= MOST_MARKS) {
             return 0;
         }
         final FormedPlace place = struck.place();
@@ -318,6 +318,11 @@ public final class FormedDamage {
             }
         }
         return ordered(found);
+    }
+
+    /* How many of the model's marks are strikes that lost no block, the ones its most is kept to. */
+    private static long keptStrikes(final Level level, final BlockPos pos, final FormedPlace place) {
+        return marks(level, pos, place).stream().filter(mark -> mark.lost().isEmpty()).count();
     }
 
     /** The strikes of {@link #marks}, those whose stamps are declared. */

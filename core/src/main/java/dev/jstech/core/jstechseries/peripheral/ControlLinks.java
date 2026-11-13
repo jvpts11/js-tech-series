@@ -98,6 +98,10 @@ public final class ControlLinks {
             if (!reachable.contains(linked) || !controller.holdsPort(linked)) {
                 controller.onEndpointUnlinked(linked);
                 claims.release(linked, self);
+            } else if (heldByAnother(level, claims, linked, self)) {
+                // Another controller took it first after a load, while this one's save still listed it: it stays
+                // that one's, one controller to a machine.
+                controller.onEndpointUnlinked(linked);
             } else {
                 // A controller loaded from its save claims its machines again.
                 claims.claim(linked, self);

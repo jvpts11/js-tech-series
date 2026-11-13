@@ -12,6 +12,7 @@ import dev.jstech.core.persistence.SaveFiles;
 import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.state.CoreState;
 import dev.jstech.core.state.CoreStates;
+import dev.jstech.core.state.PlayerState;
 import dev.jstech.core.state.ServerState;
 import dev.jstech.core.state.StateSave;
 import dev.jstech.core.team.CoreTeams;
@@ -19,6 +20,7 @@ import dev.jstech.core.team.ITeamSource;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestStates;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -42,14 +44,17 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
 /**
  * A state of each scope saved with the world and read back from its file as a restart reads it; a team's value found
- * through whichever source says who is on which team; a file a newer mod saved read as it is and copied aside once;
- * and a state used before it is registered, or registered twice, refused.
+ * through whichever source says who is on which team; a file a newer mod saved read as it is and copied aside once,
+ * and one read only in part kept in part and copied aside too; and a state used before it is registered, or
+ * registered twice, refused.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
 public final class CoreStateGameTests {
 
     private static final String ARENA = "empty";
+    /* The value a file read only in part keeps. */
+    private static final int PARTLY_KEPT = 5;
 
     private CoreStateGameTests() {
     }
@@ -156,6 +161,37 @@ public final class CoreStateGameTests {
 
         same(helper, 7, state.get(overworld.getServer()), "the value of the newer file, read as it is");
         helper.assertTrue(Files.isRegularFile(copy), "the newer file, copied aside as " + copy.getFileName());
+        helper.succeed();
+    }
+
+    /* A file of which one value reads and one does not: the one that reads is kept, and the file is copied aside. */
+    @GameTest(template = ARENA)
+    public static void state_keepsACopyOfAFileReadOnlyInPart(final GameTestHelper helper) {
+        final ServerLevel overworld = helper.getLevel().getServer().overworld();
+        final PlayerState<Integer> state = TestStates.PARTLY;
+        final Path file = SaveFiles.file(overworld, state.fileName());
+        final Path copy = SaveFiles.unreadableCopy(overworld, state.fileName());
+        final UUID known = UUID.nameUUIDFromBytes("partly".getBytes(StandardCharsets.UTF_8));
+        try {
+            Files.deleteIfExists(copy);
+            final CompoundTag values = new CompoundTag();
+            values.putInt(known.toString(), PARTLY_KEPT);
+            values.putInt("no player at all", 1);
+            final CompoundTag data = new CompoundTag();
+            data.putInt(SaveLayout.VERSION_KEY, state.layout().version());
+            data.put(SaveLayout.VALUE_KEY, values);
+            final CompoundTag root = new CompoundTag();
+            root.put("data", data);
+            NbtUtils.addCurrentDataVersion(root);
+            Files.createDirectories(file.getParent());
+            NbtIo.writeCompressed(root, file);
+        } catch (final IOException cannotWrite) {
+            helper.fail("the file read in part could not be written: " + cannotWrite.getMessage());
+            return;
+        }
+
+        same(helper, PARTLY_KEPT, state.get(overworld.getServer(), known), "the value that reads, kept");
+        helper.assertTrue(Files.isRegularFile(copy), "the file as it was, copied aside as " + copy.getFileName());
         helper.succeed();
     }
 

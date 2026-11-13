@@ -80,5 +80,13 @@ class ChemicalFormulaTest {
     void subscripted_writesTheCountsSmallButAHydratesWaterLarge() {
         assertEquals("Cu₂CO₃(OH)₂", ChemicalFormula.parse("Cu2CO3(OH)2").subscripted());
         assertEquals("CuSO₄·5H₂O", ChemicalFormula.parse("CuSO4.5H2O").subscripted());
+        assertEquals("CuSO₄ · 5H₂O", ChemicalFormula.parse("CuSO4 · 5H2O").subscripted(),
+                "spaces round the dot leave the hydrate's count large");
+    }
+
+    @Test
+    void parse_refusesCountsPastWhatANumberHolds() {
+        assertThrows(IllegalArgumentException.class, () -> ChemicalFormula.parse("H2147483647H1"));
+        assertThrows(IllegalArgumentException.class, () -> ChemicalFormula.parse("(H2147483647)2"));
     }
 }

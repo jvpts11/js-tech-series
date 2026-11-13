@@ -36,6 +36,17 @@ class MarkdownBlocksTest {
     }
 
     @Test
+    void parse_takesAHeadingOfNoWordsForNone() {
+        final MarkdownBlocks.Parsed parsed = parse("""
+                #\s
+
+                # Kiln
+                """);
+        assertEquals(Optional.of("Kiln"), parsed.title(), "the first heading with words is the title");
+        assertTrue(parse("# \n\nNo title here.\n").title().isEmpty(), "and a file with none has none");
+    }
+
+    @Test
     void parse_readsNumberedStepsAndBulletsEachTheirOwnWay() {
         final List<GuideBlock> blocks = parse("""
                 1. Place it.

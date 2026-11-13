@@ -99,7 +99,7 @@ final class TagsPage extends StudioPage {
                     left.y() + StudioDraw.HEAD + 4, left.width() - 2 * StudioDraw.INSET, colours.dim());
         }
         int y = left.y() + StudioDraw.HEAD + 4;
-        for (int i = 0; i < this.tags.size() && y + ROW < left.y() + left.height() / 2; i++) {
+        for (int i = 0; i < shownRows(left); i++) {
             final boolean on = i == this.chosen;
             if (on) {
                 g.fill(left.x() + 3, y - 2, left.right() - 3, y + ROW - 3, colours.selected());
@@ -120,12 +120,22 @@ final class TagsPage extends StudioPage {
         if (!left.contains(mouseX, mouseY)) {
             return false;
         }
-        final int row = (int) ((mouseY - left.y() - StudioDraw.HEAD - 2) / ROW);
-        if (row >= 0 && row < this.tags.size()) {
-            this.chosen = row;
-            this.ask();
+        // Only a row drawn: under them the registries are written, whose click picks no tag.
+        final double top = left.y() + StudioDraw.HEAD + 2;
+        final int row = (int) Math.floor((mouseY - top) / ROW);
+        if (mouseY < top || row >= shownRows(left)) {
+            return false;
         }
+        this.chosen = row;
+        this.ask();
         return true;
+    }
+
+    /* How many of the tags the list draws: as many as fit above the registries, in the top half. */
+    private int shownRows(final StudioLayout.Rect left) {
+        final int first = left.y() + StudioDraw.HEAD + 4;
+        final int fit = Math.max(0, (left.y() + left.height() / 2 - first - 1) / ROW);
+        return Math.min(this.tags.size(), fit);
     }
 
     /* Where the item is registered: its id, its mod, how many make a stack, and its components. */

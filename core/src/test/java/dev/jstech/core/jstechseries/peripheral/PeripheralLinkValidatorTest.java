@@ -439,6 +439,28 @@ class PeripheralLinkValidatorTest {
     }
 
     @Test
+    void path_ofFewestCablesWinsEvenThroughAHub() {
+        // Straight on, two cables (C1, C2); round by the hub, one (C3), the hub crossing none.
+        TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
+        TestHub hub = linkedHub(owner, 4);
+        TestEndpoint device = new TestEndpoint(PeripheralCableType.COMPUTING);
+        Map<Long, List<Long>> adj = Map.of(
+                OWNER_POS, List.of(C1, C3),
+                C1, List.of(OWNER_POS, C2),
+                C2, List.of(C1, ENDPOINT_POS),
+                C3, List.of(OWNER_POS, HUB_POS),
+                HUB_POS, List.of(C3, ENDPOINT_POS),
+                ENDPOINT_POS, List.of(C2, HUB_POS));
+
+        ILinkResult result = build(adj, owner, Map.of(HUB_POS, hub, ENDPOINT_POS, device),
+                Map.of(C1, PeripheralCableType.COMPUTING, C2, PeripheralCableType.COMPUTING,
+                        C3, PeripheralCableType.COMPUTING), pos -> 0).tryEstablishLink(OWNER_POS, ENDPOINT_POS);
+
+        assertEquals(1, assertInstanceOf(ILinkResult.Established.class, result).pathLength());
+        assertEquals(OptionalLong.of(HUB_POS), owner.hubOf(ENDPOINT_POS));
+    }
+
+    @Test
     void hubNotLinked_passesNothing() {
         TestOwner owner = new TestOwner(PeripheralCableType.COMPUTING, 8);
         TestHub hub = new TestHub(4);

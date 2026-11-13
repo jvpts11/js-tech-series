@@ -22,6 +22,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -59,6 +60,19 @@ public final class LevelMechanics {
     public static void changed(@Nullable final Level level, final BlockPos pos) {
         if (level instanceof ServerLevel server) {
             of(server).changed.add(pos.asLong());
+        }
+    }
+
+    /*
+     * The chunk {@code chunk} of {@code level} went away: each network a part of it turned in is worked out again from
+     * the parts still loaded, so none turns or breaks a part no longer there.
+     */
+    static void chunkUnloaded(final ServerLevel level, final LevelChunk chunk) {
+        final LevelMechanics mechanics = of(level);
+        for (final BlockPos pos : chunk.getBlockEntitiesPos()) {
+            if (mechanics.networkAt.containsKey(pos.asLong())) {
+                mechanics.changed.add(pos.asLong());
+            }
         }
     }
 

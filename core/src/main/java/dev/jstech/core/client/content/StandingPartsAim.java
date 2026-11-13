@@ -9,7 +9,7 @@ package dev.jstech.core.client.content;
 
 import dev.jstech.core.content.IStandingParts;
 import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import java.util.Optional;
+import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -55,11 +55,16 @@ public final class StandingPartsAim {
         final LongOpenHashSet looked = new LongOpenHashSet();
         final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         final BlockPos.MutableBlockPos near = new BlockPos.MutableBlockPos();
+        // Every block round each step, edges and corners too: a look that grazes a cell's corner may meet a part of a
+        // block that only touches that cell along an edge.
         for (double t = 0; t <= reach; t += STEP) {
             at.set(eye.x + view.x * t, eye.y + view.y * t, eye.z + view.z * t);
-            consider(level, at, look, looked);
-            for (final Direction side : Direction.values()) {
-                consider(level, near.setWithOffset(at, side), look, looked);
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    for (int dz = -1; dz <= 1; dz++) {
+                        consider(level, near.setWithOffset(at, dx, dy, dz), look, looked);
+                    }
+                }
             }
         }
         if (look.part != null) {
@@ -79,10 +84,13 @@ public final class StandingPartsAim {
             return;
         }
         for (final AABB box : parts.standingParts(state, level, pos)) {
-            final Optional<Vec3> hit = box.move(pos).clip(look.eye, look.end);
-            if (hit.isPresent() && hit.get().distanceToSqr(look.eye) < look.nearest) {
-                look.nearest = hit.get().distanceToSqr(look.eye);
-                look.part = new BlockHitResult(hit.get(), look.facing, pos.immutable(), false);
+            // The face the look meets, which a use sends on; from inside the part, the way the look comes from.
+            final BlockHitResult met = AABB.clip(List.of(box), look.eye, look.end, pos);
+            final BlockHitResult hit = met != null ? met : box.move(pos).contains(look.eye)
+                    ? new BlockHitResult(look.eye, look.facing, pos.immutable(), true) : null;
+            if (hit != null && hit.getLocation().distanceToSqr(look.eye) < look.nearest) {
+                look.nearest = hit.getLocation().distanceToSqr(look.eye);
+                look.part = new BlockHitResult(hit.getLocation(), hit.getDirection(), pos.immutable(), false);
             }
         }
     }

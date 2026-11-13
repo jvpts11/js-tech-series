@@ -199,6 +199,39 @@ public final class MovingStructurePartingGameTests {
                 .thenSucceed();
     }
 
+    /* A visitor of two clamps, held by one: its other clamp letting go leaves it held. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
+    public static void docking_aVisitorsOtherClampLettingGoLeavesItHeld(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(new BlockPos(0, 3, 4), Blocks.STONE);
+        helper.setBlock(new BlockPos(0, 3, 5), Blocks.STONE);
+        helper.setBlock(new BlockPos(1, 3, 5), Blocks.STONE);
+        helper.setBlock(new BlockPos(1, 3, 4), Blocks.REDSTONE_BLOCK);
+        helper.setBlock(new BlockPos(2, 3, 4), TestAboard.CLAMP.get().defaultBlockState()
+                .setValue(DirectionalBlock.FACING, Direction.EAST));
+        final MovingStructure host = assembled(helper, new BlockPos(0, 3, 4), new BlockPos(2, 3, 5));
+        helper.setBlock(new BlockPos(4, 3, 4), TestAboard.CLAMP.get().defaultBlockState()
+                .setValue(DirectionalBlock.FACING, Direction.WEST));
+        helper.setBlock(new BlockPos(5, 3, 4), Blocks.STONE);
+        helper.setBlock(new BlockPos(6, 3, 4), TestAboard.CLAMP.get().defaultBlockState()
+                .setValue(DirectionalBlock.FACING, Direction.EAST));
+        helper.setBlock(new BlockPos(6, 3, 5), Blocks.REDSTONE_BLOCK);
+        final MovingStructure visitor = assembled(helper, new BlockPos(4, 3, 4), new BlockPos(6, 3, 5));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(visitor.mount() != null, "the host's clamp holds the visitor"))
+                .thenExecute(() -> {
+                    final BlockPos power = find(level, visitor, state -> state.is(Blocks.REDSTONE_BLOCK));
+                    level.setBlock(power, Blocks.STONE.defaultBlockState(), 3);
+                })
+                .thenIdle(10)
+                .thenExecute(() -> {
+                    helper.assertTrue(visitor.mount() != null, "its other clamp's signal off, it is still held");
+                    MovingStructures.takeAway(visitor);
+                    MovingStructures.takeAway(host);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 100)
     public static void tools_aDrillMinesTheBlockBeforeItIntoAChestAboard(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();

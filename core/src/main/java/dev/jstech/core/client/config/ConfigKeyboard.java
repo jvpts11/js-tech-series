@@ -75,7 +75,8 @@ final class ConfigKeyboard {
             return;
         }
         final UiComponent now = railFocus().map(entry -> (UiComponent) entry).orElseGet(this::focused);
-        int at = -1;
+        // With nothing focused, forward starts at the first control and back at the last.
+        int at = direction > 0 ? -1 : stops.size();
         for (int i = 0; i < stops.size(); i++) {
             if (stops.get(i).component() == now) {
                 at = i;

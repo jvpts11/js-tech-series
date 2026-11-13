@@ -9,6 +9,7 @@ package dev.jstech.core.state;
 
 import dev.jstech.core.log.CoreLogs;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
 import dev.jstech.core.persistence.SaveLayout;
 import dev.jstech.core.persistence.SavedValue;
@@ -28,9 +29,10 @@ import org.slf4j.Logger;
  * The file a {@link CoreState} is kept in: its value, written by the state's codec beside the version of its layout,
  * and read back through the layout's steps.
  *
- * <p>A value that cannot be read whole keeps what can be read of it, and the log says what could not. A value that
- * cannot be written keeps the last that could, so a save never empties the file. A file in an older layout is written
- * again in today's at the next save; one a newer mod wrote is read as it is, and its state keeps a copy of it.
+ * <p>A value that cannot be read whole keeps what can be read of it, the log says what could not, and the file as it
+ * was is copied aside before it is saved over. A value that cannot be written keeps the last that could, so a save
+ * never empties the file. A file in an older layout is written again in today's at the next save; one a newer mod
+ * wrote is read as it is, and its state keeps a copy of it.
  *
  * @param <V> the value the file holds: a state's value, or each player's or team's values by their key
  */
@@ -42,7 +44,7 @@ public final class StateSave<V> extends SavedData {
     private V value;
     /** The version a newer mod wrote the file in, until its state has kept the copy; 0 when none did. */
     private int newer;
-    /** Whether the value in the file could not be read at all, until its state has kept a copy of the file. */
+    /** Whether the value in the file could not be read whole, until its state has kept a copy of the file. */
     private boolean unreadable;
     /** The value as last written or read, written again should the value ever fail to encode. */
     private @Nullable Tag lastWritten;
@@ -89,7 +91,7 @@ public final class StateSave<V> extends SavedData {
         return this.layout.wrap(written);
     }
 
-    /** Whether the file held a value that could not be read at all, once; false when it was already asked. */
+    /** Whether the file held a value that could not be read whole, once; false when it was already asked. */
     boolean takeUnreadable() {
         final boolean found = this.unreadable;
         this.unreadable = false;
@@ -122,8 +124,10 @@ public final class StateSave<V> extends SavedData {
         boolean unreadable = false;
         if (found.value() != null) {
             final DynamicOps<Tag> ops = RegistryOps.create(NbtOps.INSTANCE, registries);
-            final Optional<V> read = SavedValue.read(codec.parse(ops, found.value()), LOGGER, name).map(adopt);
-            unreadable = read.isEmpty() && !layout.isNewer(found.version());
+            final DataResult<V> parsed = codec.parse(ops, found.value());
+            final Optional<V> read = SavedValue.read(parsed, LOGGER, name).map(adopt);
+            // A file read only in part is copied aside too: the next save writes only the part it read.
+            unreadable = parsed.error().isPresent() && !layout.isNewer(found.version());
             value = read.orElse(value);
         }
         final StateSave<V> save = new StateSave<>(name, codec, layout, value);

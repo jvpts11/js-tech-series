@@ -28,6 +28,8 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
@@ -48,6 +50,7 @@ import net.neoforged.neoforge.common.util.FakePlayer;
 import net.neoforged.neoforge.common.util.FakePlayerFactory;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The game's small blocks in a block space: a torch hung beside a cable lights the cable's block and falls off with
@@ -64,6 +67,8 @@ public final class SmallBlockGameTests {
     private static final BlockPos SPACE = GROUND.above();
     private static final BlockPos CABLE = new BlockPos(5, 3, 5);
     private static final int TORCH_LIGHT = 14;
+    /* Where a space's save keeps its microblocks. */
+    private static final String MICRO = "Micro";
 
     private SmallBlockGameTests() {
     }
@@ -96,6 +101,19 @@ public final class SmallBlockGameTests {
         helper.assertTrue(parts.small(Direction.DOWN).getValue(LeverBlock.POWERED), "and stands on");
         same(helper, 15, helper.getLevel().getSignal(helper.absolutePos(SPACE), Direction.EAST),
                 "the space gives the lamp east of it a full signal");
+        helper.succeedWhen(() -> helper.assertBlockProperty(SPACE.east(), RedstoneLampBlock.LIT, true));
+    }
+
+    /* A lever hung on already on lights the lamp beside the space at once, as a lever placed in the world does. */
+    @GameTest(template = ARENA)
+    public static void levers_hungOnAlreadyOnPowerWhatIsBesideTheSpace(final GameTestHelper helper) {
+        final SpaceParts parts = space(helper);
+        helper.setBlock(SPACE.east(), Blocks.REDSTONE_LAMP);
+        final BlockState lever = Blocks.LEVER.defaultBlockState()
+                .setValue(FaceAttachedHorizontalDirectionalBlock.FACE, AttachFace.FLOOR)
+                .setValue(FaceAttachedHorizontalDirectionalBlock.FACING, Direction.NORTH)
+                .setValue(LeverBlock.POWERED, true);
+        helper.assertTrue(parts.addSmall(lever), "a lever, on, hung on the floor of the space");
         helper.succeedWhen(() -> helper.assertBlockProperty(SPACE.east(), RedstoneLampBlock.LIT, true));
     }
 
@@ -158,6 +176,40 @@ public final class SmallBlockGameTests {
         read.loadWithComponents(saved, registries);
         same(helper, lever, read.parts().small(Direction.DOWN), "the lever read back as it stood");
         helper.succeed();
+    }
+
+    /* A save holding a microblock that no longer fits its place, beside the space's cover: the cover is read alone. */
+    @GameTest(template = ARENA)
+    public static void microblocks_oneThatNoLongerFitsIsLeftOutAndTheOthersRead(final GameTestHelper helper) {
+        final HolderLookup.Provider registries = helper.getLevel().registryAccess();
+        space(helper);
+        final SpaceBlockEntity space = entity(helper);
+        final CompoundTag saved = space.saveWithoutMetadata(registries);
+        final ListTag micro = microOf(saved);
+        helper.assertTrue(micro != null && micro.size() == 1, "the save holds the cover: " + saved);
+        final CompoundTag misplaced = micro.getCompound(0).copy();
+        misplaced.putInt("slot", SpaceSlots.CENTRE);
+        micro.add(misplaced);
+        final SpaceBlockEntity read = new SpaceBlockEntity(space.getBlockPos(), space.getBlockState());
+        read.loadWithComponents(saved, registries);
+        same(helper, space.parts().microblocks(), read.parts().microblocks(), "only the cover is read back");
+        helper.succeed();
+    }
+
+    /* The list of microblocks a save of a space holds, however deep, or null. */
+    private static @Nullable ListTag microOf(final CompoundTag tag) {
+        if (tag.contains(MICRO, Tag.TAG_LIST)) {
+            return tag.getList(MICRO, Tag.TAG_COMPOUND);
+        }
+        for (final String key : tag.getAllKeys()) {
+            if (tag.get(key) instanceof CompoundTag inner) {
+                final ListTag found = microOf(inner);
+                if (found != null) {
+                    return found;
+                }
+            }
+        }
+        return null;
     }
 
     /* A space of parts above stone, made by a cover on its ceiling, with its floor free for a small block. */

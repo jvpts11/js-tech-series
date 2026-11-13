@@ -65,8 +65,9 @@ public final class PeripheralReconciler {
             if (owner.kindOf(pos) == PortKind.CONTROL || !level.isLoaded(at)) {
                 continue;
             }
+            // Linked back to this owner: one put in its place and linked to another is that one's, not this one's.
             final boolean linkedBack = level.getBlockEntity(at) instanceof IPeripheralEndpoint endpoint
-                    && endpoint.linkedOwner().isPresent();
+                    && endpoint.linkedOwner().map(linked -> linked == ownerPos).orElse(false);
             if (!linkedBack) {
                 owner.onEndpointUnlinked(pos);
             }

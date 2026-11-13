@@ -300,6 +300,17 @@ public final class ManualScreen extends Screen {
         return laid;
     }
 
+    /**
+     * Lets go of what a page laid apart holds on the graphics card, its scenes' pictures, as it is thrown away: never
+     * shown as a screen, it is never closed as one, and leaves no place or sound behind.
+     */
+    void discard() {
+        if (this.scenes != null) {
+            this.scenes.close();
+            this.scenes = null;
+        }
+    }
+
     @Override
     public void onClose() {
         if (this.minecraft != null) {
@@ -380,10 +391,12 @@ public final class ManualScreen extends Screen {
         this.searchField.setValue(typed);
         this.searchField.setVisible(this.searching);
         this.addRenderableWidget(this.searchField);
+        // Opened at an entry the book has, or else where it was last closed: an entry not in it is as none asked.
+        final OptionalInt asked = this.openAt.isEmpty() ? OptionalInt.empty() : this.book.pageOf(this.openAt);
         if (this.placed) {
             this.spread = Math.min(keep, this.lastSpread());
-        } else if (!this.openAt.isEmpty()) {
-            this.book.pageOf(this.openAt).ifPresent(this::goToPage);
+        } else if (asked.isPresent()) {
+            this.goToPage(asked.getAsInt());
         } else {
             ManualPlaces.of(this.manual.id()).filter(place -> !place.cover())
                     .ifPresent(place -> this.book.pageOf(place.target())

@@ -56,7 +56,8 @@ public final class Sizes {
         try {
             return Math.subtractExact(a, b);
         } catch (final ArithmeticException pastTheEnd) {
-            return a > 0L ? Long.MAX_VALUE : Long.MIN_VALUE;
+            // Taking away less than nothing goes up: 0 less the smallest there is is past the largest.
+            return b < 0L ? Long.MAX_VALUE : Long.MIN_VALUE;
         }
     }
 

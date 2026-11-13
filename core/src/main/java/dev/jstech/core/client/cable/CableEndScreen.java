@@ -79,6 +79,12 @@ public final class CableEndScreen extends CoreContainerScreen<CableEndMenu> {
     private EditBox rateField;
     private boolean priorityWasFocused;
     private boolean rateWasFocused;
+    /*
+     * The number last sent from each field, priority then rate, and how many more ticks the field keeps it before
+     * the server's word may write over it: the server's answer takes a few ticks to come back.
+     */
+    private final long[] sent = new long[2];
+    private final int[] keeping = new int[2];
 
     /** The screen's colours, the game's own. */
     public static final Palette<Colours> PALETTE = Palettes.declare(JsCore.MODID, "cable_end", new Colours(
@@ -86,6 +92,8 @@ public final class CableEndScreen extends CoreContainerScreen<CableEndMenu> {
             0xFF << 24 | 0x404040, 0xFF << 24 | 0x646464, 0xFF << 24 | 0xFFFFA0, 0xFF << 24 | 0x8B8B8B,
             0xFF << 24 | 0x373737, 0xFF << 24 | 0xFFFFFF, 0x80 << 24 | 0x8B8B8B));
     private static final int FIELD_MAX_LENGTH = 10;
+    /* The longest a field keeps the number sent from it waiting for the server's answer, in ticks. */
+    private static final int KEEP_SENT = 20;
     private static final int ITEM_SIZE = 16;
     private static final int OVER_ITEMS = 200;
     private static final int OVER_VEIL = 300;
@@ -315,10 +323,10 @@ public final class CableEndScreen extends CoreContainerScreen<CableEndMenu> {
 
     /* The end as the server last said it, in the fields no one is typing in and on the filter's key. */
     private void showEnd(final CableEnd end) {
-        if (!this.priorityField.isFocused()) {
+        if (!this.priorityField.isFocused() && answered(0, end.priority())) {
             setIfChanged(this.priorityField, String.valueOf(end.priority()));
         }
-        if (!this.rateField.isFocused()) {
+        if (!this.rateField.isFocused() && answered(1, end.rate())) {
             setIfChanged(this.rateField, String.valueOf(end.rate()));
         }
         final Component word = filterWord(end);
@@ -346,10 +354,26 @@ public final class CableEndScreen extends CoreContainerScreen<CableEndMenu> {
             return;
         }
         try {
-            PacketDistributor.sendToServer(new EndNumberPayload(this.menu.pos(), rate, Long.parseLong(value)));
+            final long number = Long.parseLong(value);
+            PacketDistributor.sendToServer(new EndNumberPayload(this.menu.pos(), rate, number));
+            this.sent[rate ? 1 : 0] = number;
+            this.keeping[rate ? 1 : 0] = KEEP_SENT;
         } catch (final NumberFormatException tooLong) {
             // The field holds ten characters, so only a number past a long's reach is left unread.
         }
+    }
+
+    /*
+     * Whether the server's {@code value} may show in field {@code which}: once it answered the number sent from the
+     * field, or once the field has waited long enough, so a number the server changed (held to its bounds) shows too.
+     */
+    private boolean answered(final int which, final long value) {
+        if (this.keeping[which] <= 0 || value == this.sent[which]) {
+            this.keeping[which] = 0;
+            return true;
+        }
+        this.keeping[which]--;
+        return false;
     }
 
     private static Component filterWord(final CableEnd end) {

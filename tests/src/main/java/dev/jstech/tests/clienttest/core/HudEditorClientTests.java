@@ -33,6 +33,10 @@ public final class HudEditorClientTests {
     /* Where the tall bar is dragged to, on a line of the grid across and down. */
     private static final int TO_X = 96;
     private static final int TO_Y = 96;
+    /* How far in from the bottom right the short bar is placed, and its own size, as the test HUD declares it. */
+    private static final int PLACED_IN = 20;
+    private static final int SHORT_WIDTH = 40;
+    private static final int SHORT_HEIGHT = 10;
 
     private HudEditorClientTests() {
     }
@@ -86,6 +90,31 @@ public final class HudEditorClientTests {
                         && !HudElements.placedIn(HudStack.Corner.TOP_RIGHT).containsKey(TestHud.SHORT),
                         "neither stays in its corner's stack")
                 .thenScreenshot(SETTLE, "hud-after-editing");
+    }
+
+    @ClientTest(timeoutTicks = 200)
+    public static void placed_smallerThanItsBoxStandsInTheBoxTheEditorShowed(final ClientTestContext ctx) {
+        final HudPlacement placed = new HudPlacement(HudStack.Corner.BOTTOM_RIGHT, PLACED_IN, PLACED_IN, 1.0F, false);
+        ctx.afterTest(() -> {
+            TestHud.show(false);
+            HudElements.preview(null);
+        });
+        ctx.then(0, () -> {
+            TestHud.show(true);
+            HudElements.preview(Map.of(TestHud.SHORT.toString(), placed));
+        }).thenWaitUntil(() -> TestHud.drawnAt(TestHud.SHORT).isPresent(), WAIT, "the placed short bar drawn")
+                .thenAssert(SETTLE, () -> drawnInItsBox(ctx, placed),
+                        "the short bar is drawn at the top left of the box the editor showed, not off to its right");
+    }
+
+    /* The short bar is smaller than the least box the editor draws, the case where the box and the bar could part. */
+    private static boolean drawnInItsBox(final ClientTestContext ctx, final HudPlacement placed) {
+        final HudStack.Size box = HudElements.boxSize(ctx.mc(), HudElements.editable().stream()
+                .filter(element -> element.id().equals(TestHud.SHORT)).findFirst().orElseThrow().element());
+        final HudStack.Point expected = placed.topLeft(ctx.mc().getWindow().getGuiScaledWidth(),
+                ctx.mc().getWindow().getGuiScaledHeight(), box);
+        return box.width() > SHORT_WIDTH && box.height() > SHORT_HEIGHT
+                && TestHud.drawnAt(TestHud.SHORT).map(expected::equals).orElse(false);
     }
 
     private static void drag(final Screen screen, final double fromX, final double fromY, final double toX,

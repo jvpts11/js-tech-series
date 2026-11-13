@@ -148,6 +148,11 @@ public final class MarkdownBlocks {
         final Matcher heading = HEADING.matcher(line);
         heading.matches();
         final String text = MarkdownText.of(heading.group(2));
+        // A heading of no words is none: a file whose first is such has no title yet, which is said.
+        if (text.isBlank()) {
+            this.at++;
+            return;
+        }
         if (heading.group(1).length() == TITLE_LEVEL && this.title == null) {
             this.title = text;
         } else {

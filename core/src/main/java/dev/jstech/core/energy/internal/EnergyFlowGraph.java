@@ -68,7 +68,8 @@ public final class EnergyFlowGraph {
             Map<Long, Long> cableUsage,
             long totalLost,
             Map<Long, Long> supplierSent,
-            Map<Long, Map<Long, Long>> watchedFlows) {
+            Map<Long, Map<Long, Long>> watchedFlows,
+            long consumersUnmet) {
     }
 
     /** The way from a supplier to a receiver: its cables in order, what it loses, and whether any cable limits it. */
@@ -86,6 +87,8 @@ public final class EnergyFlowGraph {
     public FlowResult distribute(final Set<Long> watched) {
         final Map<Long, Long> supplyLeft = new LinkedHashMap<>();
         final Map<Long, Long> demandLeft = new LinkedHashMap<>();
+        // What the consumers alone asked for: a store's room to fill is no demand going unmet.
+        final Map<Long, Long> consumersAsked = new LinkedHashMap<>();
         long totalSupply = 0L;
         long totalDemand = 0L;
         for (final Map.Entry<Long, IEnergyNode> entry : this.nodes.entrySet()) {
@@ -103,11 +106,15 @@ public final class EnergyFlowGraph {
                 if (demand > 0) {
                     demandLeft.put(entry.getKey(), demand);
                     totalDemand = saturatingAdd(totalDemand, demand);
+                    if (role == EnergyNodeRole.CONSUMER) {
+                        consumersAsked.put(entry.getKey(), demand);
+                    }
                 }
             }
         }
         if (totalSupply == 0L || totalDemand == 0L) {
-            return new FlowResult(totalSupply, totalDemand, 0L, Map.of(), Map.of(), 0L, Map.of(), Map.of());
+            return new FlowResult(totalSupply, totalDemand, 0L, Map.of(), Map.of(), 0L, Map.of(), Map.of(),
+                    unmet(consumersAsked, Map.of()));
         }
 
         final Tally tally = new Tally(supplyLeft, demandLeft, watched);
@@ -123,7 +130,16 @@ public final class EnergyFlowGraph {
         }
         return new FlowResult(totalSupply, totalDemand, tally.totalDelivered,
                 Map.copyOf(tally.delivered), Map.copyOf(tally.cableUsage), tally.totalLost, Map.copyOf(tally.sent),
-                Map.copyOf(tally.watchedFlows));
+                Map.copyOf(tally.watchedFlows), unmet(consumersAsked, tally.delivered));
+    }
+
+    /* What the consumers asked for and were not given, each counted by what it alone was short. */
+    private static long unmet(final Map<Long, Long> asked, final Map<Long, Long> delivered) {
+        long missing = 0L;
+        for (final Map.Entry<Long, Long> one : asked.entrySet()) {
+            missing = saturatingAdd(missing, Math.max(0L, one.getValue() - delivered.getOrDefault(one.getKey(), 0L)));
+        }
+        return missing;
     }
 
     /* The ways from source to every node it reaches, worked out once while the shape lasts. */

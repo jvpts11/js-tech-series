@@ -26,6 +26,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.SpawnPlacements;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 import net.minecraft.world.entity.ai.goal.PanicGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
 import net.minecraft.world.level.biome.MobSpawnSettings;
@@ -141,6 +142,16 @@ public final class CreatureGameTests {
                     helper.assertTrue(critter.getMaxHealth() == 30.0F, "the file wins: " + critter.getMaxHealth());
                     helper.assertTrue(critter.goalSelector.getAvailableGoals().stream()
                             .noneMatch(goal -> goal.getGoal() instanceof PanicGoal), "and it no longer panics");
+                    // The pack's file again, now saying nothing of its health.
+                    filesOfCreatures(Map.of(id, CreatureDef.builder()
+                            .behaviour(new CoreCreatureBehaviours.Wander(1.0)).build()));
+                })
+                .thenExecuteAfter(2, () -> {
+                    final double declared = DefaultAttributes.getSupplier(TestEntities.CRITTER.get())
+                            .getBaseValue(Attributes.MAX_HEALTH);
+                    helper.assertTrue(declared != 30.0 && critter.getMaxHealth() == (float) declared,
+                            "a health the file no longer gives is its kind's own again, " + declared + ": "
+                                    + critter.getMaxHealth());
                     filesOfCreatures(Map.of());
                     critter.discard();
                 })

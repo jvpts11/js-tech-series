@@ -10,6 +10,7 @@ package dev.jstech.core.client.map;
 import dev.jstech.core.client.gui.component.MapView;
 import dev.jstech.core.integration.ftbchunks.FtbChunksIntegration;
 import dev.jstech.core.integration.xaero.XaeroIntegration;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.map.MapMarkers;
 import dev.jstech.core.map.Marker;
 import java.util.ArrayList;
@@ -20,6 +21,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import org.slf4j.Logger;
 
 /**
  * The map markers on the player's game: handed to every map mod installed, through its adapter, whenever they change
@@ -28,6 +30,7 @@ import net.neoforged.neoforge.common.NeoForge;
  */
 public final class ClientMarkers {
 
+    private static final Logger LOG = CoreLogs.INTEGRATIONS.logger();
     private static final List<IMapAdapter> ADAPTERS = new CopyOnWriteArrayList<>();
     /* How often the markers are looked at for a change, in ticks. */
     private static final int EVERY = 20;
@@ -55,7 +58,7 @@ public final class ClientMarkers {
     public static void add(final IMapAdapter adapter) {
         ADAPTERS.add(Objects.requireNonNull(adapter, "adapter"));
         final ClientLevel level = Minecraft.getInstance().level;
-        if (level != null && !adapter.show(level, shown)) {
+        if (level != null && !handed(adapter, level, shown)) {
             undelivered = true;
         }
     }
@@ -79,6 +82,9 @@ public final class ClientMarkers {
     private static void refresh() {
         final ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
+            // Out of the world, nothing is shown: the next world's markers are handed over even if they are the same.
+            shown = List.of();
+            shownIn = null;
             return;
         }
         final List<Marker> now = MapMarkers.sentIn(level);
@@ -89,10 +95,27 @@ public final class ClientMarkers {
         shownIn = level.dimension();
         undelivered = false;
         for (final IMapAdapter adapter : ADAPTERS) {
-            if (!adapter.show(level, now)) {
+            if (!handed(adapter, level, now)) {
                 undelivered = true;
             }
         }
-        FtbChunksIntegration.refresh();
+        try {
+            FtbChunksIntegration.refresh();
+        } catch (final RuntimeException | LinkageError e) {
+            LOG.warn("FTB Chunks could not take the markers", e);
+        }
+    }
+
+    /*
+     * Hands {@code adapter} the markers; false when it asks to be handed them again. One that fails is said once and
+     * not tried again until the markers change: a map mod's failure is its own, and the others still get theirs.
+     */
+    private static boolean handed(final IMapAdapter adapter, final ClientLevel level, final List<Marker> markers) {
+        try {
+            return adapter.show(level, markers);
+        } catch (final RuntimeException | LinkageError e) {
+            LOG.warn("The map adapter {} could not take the markers", adapter.getClass().getName(), e);
+            return true;
+        }
     }
 }

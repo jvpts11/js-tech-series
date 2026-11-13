@@ -31,6 +31,8 @@ public final class ToolTexts {
     public static final TextKey COPIED = TextKey.of("jscore.tool.copied", "Copied %s blocks");
     public static final TextKey TOO_BIG = TextKey.of("jscore.tool.too_big",
             "A copy holds at most %s blocks; this region has %s");
+    static final TextKey NOT_LOADED = TextKey.of("jscore.tool.not_loaded",
+            "Part of this region is not loaded: come nearer, or copy less");
     public static final TextKey OTHER_WORLD = TextKey.of("jscore.tool.other_world",
             "The first corner is in another world; marked this one instead");
     public static final TextKey CLEARED = TextKey.of("jscore.tool.cleared", "Copy cleared");

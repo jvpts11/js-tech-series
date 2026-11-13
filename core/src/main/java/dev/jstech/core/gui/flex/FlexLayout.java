@@ -209,13 +209,16 @@ public final class FlexLayout {
             for (int c = 0; c < cell[1]; c++) {
                 cx += widths[c] + box.gap();
             }
-            final int cw = cellWidth(widths, cell[1], cell[2], box.gap()) - m.horizontal();
-            final int chRoom = heights[cell[0]] - m.vertical();
+            // A cell narrower or lower than its child's margins leaves no room, never a room less than none.
+            final int cellWide = cellWidth(widths, cell[1], cell[2], box.gap());
+            final int cw = Math.max(0, cellWide - m.horizontal());
+            final int chRoom = Math.max(0, heights[cell[0]] - m.vertical());
+            overflowing |= m.horizontal() > cellWide || m.vertical() > heights[cell[0]];
             final Align align = alignOf(box, kid);
-            final int kw = align == Align.STRETCH && kid.width() == FlexBox.UNSET
-                    ? clamp(cw, kid.minWidth(), kid.maxWidth()) : Math.min(cw, preferred(kid, cw).width());
-            final int kh = align == Align.STRETCH && kid.height() == FlexBox.UNSET
-                    ? clamp(chRoom, kid.minHeight(), kid.maxHeight()) : preferred(kid, kw).height();
+            final int kw = Math.max(0, align == Align.STRETCH && kid.width() == FlexBox.UNSET
+                    ? clamp(cw, kid.minWidth(), kid.maxWidth()) : Math.min(cw, preferred(kid, cw).width()));
+            final int kh = Math.max(0, align == Align.STRETCH && kid.height() == FlexBox.UNSET
+                    ? clamp(chRoom, kid.minHeight(), kid.maxHeight()) : preferred(kid, kw).height());
             out.add(place(kid, cx + m.left() + offset(align, cw, kw), rowTop[cell[0]] + m.top()
                     + offset(align, chRoom, kh), kw, kh));
         }
@@ -422,7 +425,10 @@ public final class FlexLayout {
         return tall;
     }
 
-    /* A box's own width along a row before any growing or shrinking. */
+    /*
+     * A box's own width along a row before any growing or shrinking. Measured afresh each time, so rows of no set
+     * width nested in rows many deep are measured many times over: a screen that deep gives its rows a width.
+     */
     private static int basisWidth(final FlexBox kid, final int room) {
         if (kid.width() != FlexBox.UNSET) {
             return clamp(kid.width(), kid.minWidth(), kid.maxWidth());

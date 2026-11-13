@@ -46,6 +46,12 @@ public final class PlayTasks {
 
     private static void tick(final Minecraft game) {
         for (final Running running : RUNNING) {
+            if (running.done().isCancelled()) {
+                // Called off by the call it ran for, which timed out: it stops here, its result no one's.
+                running.task().release(game);
+                RUNNING.remove(running);
+                continue;
+            }
             final Optional<McpResult> ended;
             if (running.call().takenBack()) {
                 ended = Optional.of(McpResult.failed(McpWords.TAKEN_BY_PLAYER.text()));

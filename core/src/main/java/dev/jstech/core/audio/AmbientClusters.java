@@ -59,6 +59,7 @@ public final class AmbientClusters {
             }
             home.add(source);
         }
+        byField.forEach((field, clusters) -> join(clusters, rules.get(field).radius()));
         final List<Bed> beds = new ArrayList<>();
         final Set<String> absorbed = new HashSet<>();
         byField.forEach((field, clusters) -> {
@@ -76,6 +77,28 @@ public final class AmbientClusters {
     /** How loud a bed of that many members is, when {@code threshold} make the smallest one. */
     public static double bedVolume(final int members, final int threshold) {
         return Math.min(1.0, BED_FLOOR + BED_STEP * Math.max(0, members - threshold));
+    }
+
+    /*
+     * Joins the groups the first pass left apart though they stand together: a group's middle moves as it gathers, so
+     * sources taken one by one may each have stood too far from a lone first one. Two join when every member of both
+     * stands within {@code radius} of their shared middle, till no two can.
+     */
+    private static void join(final List<Cluster> clusters, final double radius) {
+        boolean joined = true;
+        while (joined) {
+            joined = false;
+            for (int i = 0; i < clusters.size() && !joined; i++) {
+                for (int j = i + 1; j < clusters.size() && !joined; j++) {
+                    final Cluster both = clusters.get(i).with(clusters.get(j));
+                    if (both.holdsWithin(radius)) {
+                        clusters.set(i, both);
+                        clusters.remove(j);
+                        joined = true;
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -131,6 +154,19 @@ public final class AmbientClusters {
             sumX += source.x();
             sumY += source.y();
             sumZ += source.z();
+        }
+
+        /* This group and {@code other} as one. */
+        Cluster with(final Cluster other) {
+            final Cluster both = new Cluster();
+            members.forEach(both::add);
+            other.members.forEach(both::add);
+            return both;
+        }
+
+        /* Whether every member stands within {@code radius} of the group's middle. */
+        boolean holdsWithin(final double radius) {
+            return members.stream().allMatch(member -> reaches(member, radius));
         }
 
         Bed bed(final String field, final int threshold) {

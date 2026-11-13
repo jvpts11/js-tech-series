@@ -11,6 +11,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import dev.jstech.core.material.MaterialKind;
 import dev.jstech.core.util.DeclarationError;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -98,6 +99,29 @@ class PackReaderTest {
                 "{\"type\": \"block\", \"id\": \"mypack:lamp\", \"name\": \"Lamp\", \"light\": 16}"));
         assertThrows(DeclarationError.class, () -> PackReader.read(FILE,
                 "{\"type\": \"item\", \"id\": \"mypack:token\", \"name\": \"Token\", \"stack\": 100}"));
+    }
+
+    @Test
+    void read_takesEveryKindOfMaterialTheCoreHas() {
+        for (final MaterialKind kind : MaterialKind.values()) {
+            final PackDeclaration.Material read = (PackDeclaration.Material) PackReader.read(FILE,
+                    "{\"type\": \"material\", \"id\": \"mypack:stuff\", \"name\": \"Stuff\", \"kind\": \""
+                            + kind.serializedName() + "\"}").getFirst();
+            assertEquals(kind.serializedName(), read.kind());
+        }
+    }
+
+    @Test
+    void read_tellsAValueThatIsNoNumberOrNoSwitchAsADeclarationError() {
+        for (final String wrong : List.of("\"strength\": \"hard\"", "\"strength\": null", "\"light\": 1.5",
+                "\"light\": null", "\"item\": null", "\"item\": \"yes\"")) {
+            assertThrows(DeclarationError.class, () -> PackReader.read(FILE,
+                    "{\"type\": \"block\", \"id\": \"mypack:lamp\", \"name\": \"Lamp\", " + wrong + "}"), wrong);
+        }
+        assertThrows(DeclarationError.class, () -> PackReader.read(FILE,
+                "{\"type\": \"material\", \"id\": \"mypack:mythril\", \"name\": \"Mythril\", \"forms\": [{}]}"));
+        assertThrows(DeclarationError.class, () -> PackReader.read(FILE,
+                "{\"type\": \"material\", \"id\": \"mypack:mythril\", \"name\": \"Mythril\", \"liquid\": 1}"));
     }
 
     @Test

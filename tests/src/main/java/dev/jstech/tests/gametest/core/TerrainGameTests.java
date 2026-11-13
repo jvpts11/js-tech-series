@@ -22,14 +22,22 @@ import dev.jstech.core.worldgen.landform.LandformField;
 import dev.jstech.core.worldgen.landform.LandformKind;
 import dev.jstech.core.worldgen.landform.SeaConfig;
 import dev.jstech.core.worldgen.strata.StrataConfig;
+import dev.jstech.core.worldgen.terrain.RoundMap;
+import dev.jstech.core.worldgen.terrain.RoundMaps;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestWorldGen;
 import dev.jstech.tests.testkit.LandSurvey;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.UUID;
+import javax.imageio.ImageIO;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
@@ -73,6 +81,24 @@ public final class TerrainGameTests {
     private static final int CELLS_SEARCHED = 64;
 
     private TerrainGameTests() {
+    }
+
+    /* A map saved with a palette, or with 16 bits a grey, reads white as 1 as one of 8 bits a grey does. */
+    @GameTest(template = ARENA)
+    public static void roundMap_readsAPaletteOrSixteenBitsAsGreysFromNoughtToOne(final GameTestHelper helper)
+            throws IOException {
+        final BufferedImage indexed = new BufferedImage(2, 1, BufferedImage.TYPE_BYTE_BINARY);
+        indexed.setRGB(0, 0, 0xFF000000);
+        indexed.setRGB(1, 0, 0xFFFFFFFF);
+        // Each texel read at its middle: the west one at 90 degrees west, the east one at 90 east.
+        final RoundMap fromPalette = RoundMaps.read(png(indexed));
+        helper.assertTrue(fromPalette.at(90, 0) > 0.99 && fromPalette.at(-90, 0) < 0.01,
+                "a palette's white reads 1, its black 0: " + fromPalette.at(90, 0));
+        final BufferedImage deep = new BufferedImage(1, 1, BufferedImage.TYPE_USHORT_GRAY);
+        deep.getRaster().setSample(0, 0, 0, 65_535);
+        final RoundMap fromDeep = RoundMaps.read(png(deep));
+        helper.assertTrue(Math.abs(fromDeep.at(0, 0) - 1) < 0.01, "16 bits of white read 1: " + fromDeep.at(0, 0));
+        helper.succeed();
     }
 
     @GameTest(template = ARENA)
@@ -236,6 +262,13 @@ public final class TerrainGameTests {
             RuntimeDimensions.remove(server, copy);
         }
         helper.succeed();
+    }
+
+    /* {@code image} written as a PNG, to be read back as a map file is. */
+    private static InputStream png(final BufferedImage image) throws IOException {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", out);
+        return new ByteArrayInputStream(out.toByteArray());
     }
 
     private static <T> T roundTrip(final Codec<T> codec, final T value) {

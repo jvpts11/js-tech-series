@@ -151,6 +151,21 @@ public final class DiagnosticsGameTests {
     }
 
     @GameTest(template = ARENA)
+    public static void ledger_countsOfTheLastMinuteOnlyTheSecondsTheWindowStillHolds(final GameTestHelper helper) {
+        final long[] now = {1_000L};
+        final BandwidthLedger ledger = new BandwidthLedger(() -> now[0]);
+        ledger.count("jstests:probe", null, 6_000L);
+        now[0] += 60L;
+        // The sixty seconds now are this one and fifty-nine of the minute before, not all sixty of it.
+        helper.assertTrue(ledger.kinds().getFirst().bytesPerSecond() == 6_000L * 59 / 60 / 60,
+                "as the next minute begins: " + ledger.kinds());
+        now[0] += 59L;
+        helper.assertTrue(ledger.kinds().getFirst().bytesPerSecond() == 0L,
+                "and at its last second none of the minute before: " + ledger.kinds());
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA)
     public static void bandwidth_countsWhatAConnectionSendsEitherSideOfItsEncoder(final GameTestHelper helper) {
         final BlockPos pos = helper.absolutePos(new BlockPos(1, 1, 1));
         helper.setBlock(new BlockPos(1, 1, 1), Blocks.CHEST);

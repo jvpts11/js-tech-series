@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -55,6 +56,12 @@ final class StructureDebugClient {
         KeyActionsClient.onPress(CoreKeys.SHOW_STRUCTURE_DEBUG, StructureDebugClient::toggle);
         NeoForge.EVENT_BUS.addListener(ClientTickEvent.Post.class, event -> tick());
         NeoForge.EVENT_BUS.addListener(RenderLevelStageEvent.class, StructureDebugClient::render);
+        // The numbers of a world left are given again in the next one, to other structures.
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
+            WATCHED.clear();
+            shown = false;
+            ticks = 0;
+        });
     }
 
     /** Whether the overlay is on. */

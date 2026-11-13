@@ -50,9 +50,15 @@ public final class BiomeSearch {
         final WorldSearch.IProbe probe = (x, z) -> biome.test(source.getNoiseBiome(QuartPos.fromBlock(x), quartY,
                 QuartPos.fromBlock(z), sampler));
         final DimensionBorders.Bounds inside = bounds.get();
-        return WorldSearch.nearest(probe, from.getX(), from.getZ(), (int) Math.ceil(inside.minX()),
-                        (int) Math.floor(inside.maxX()) - 1, (int) Math.ceil(inside.minZ()),
-                        (int) Math.floor(inside.maxZ()) - 1)
+        final int minX = (int) Math.ceil(inside.minX());
+        final int maxX = (int) Math.floor(inside.maxX()) - 1;
+        final int minZ = (int) Math.ceil(inside.minZ());
+        final int maxZ = (int) Math.floor(inside.maxZ()) - 1;
+        // Bounds narrower than a whole block hold no place to stand.
+        if (maxX < minX || maxZ < minZ) {
+            return null;
+        }
+        return WorldSearch.nearest(probe, from.getX(), from.getZ(), minX, maxX, minZ, maxZ)
                 .map(found -> Pair.of(new BlockPos(found.x(), from.getY(), found.z()), source.getNoiseBiome(
                         QuartPos.fromBlock(found.x()), quartY, QuartPos.fromBlock(found.z()), sampler)))
                 .orElse(null);

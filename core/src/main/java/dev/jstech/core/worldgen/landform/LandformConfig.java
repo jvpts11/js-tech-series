@@ -8,6 +8,7 @@
 package dev.jstech.core.worldgen.landform;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.dimension.DimensionBorders;
 import dev.jstech.core.id.StableCodecs;
@@ -68,7 +69,8 @@ public record LandformConfig(LandformKind kind, int cell, double chance, int sma
     private static final double HOTTEST = 100_000;
     /* How white a region's map must read where a landform's middle lies. */
     private static final double HALF = 0.5;
-    public static final Codec<LandformConfig> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+    public static final Codec<LandformConfig> CODEC = RecordCodecBuilder.<LandformConfig>create(instance -> instance
+            .group(
             StableCodecs.byName(LandformKind.class).fieldOf("kind").forGetter(LandformConfig::kind),
             Codec.intRange(16, MOST_CELL).fieldOf("cell").forGetter(LandformConfig::cell),
             Codec.doubleRange(0, 1).fieldOf("chance").forGetter(LandformConfig::chance),
@@ -89,7 +91,11 @@ public record LandformConfig(LandformKind kind, int cell, double chance, int sma
             RegistryCodecs.homogeneousList(Registries.BIOME).optionalFieldOf("biomes")
                     .forGetter(LandformConfig::biomes),
             Region.CODEC.optionalFieldOf("within").forGetter(LandformConfig::within))
-            .apply(instance, LandformConfig::new));
+            .apply(instance, LandformConfig::new))
+            // A file whose largest is below its smallest is told so, not made the smallest without a word.
+            .validate(config -> config.largest() >= config.smallest() ? DataResult.success(config)
+                    : DataResult.error(() -> "a landform's largest, " + config.largest() + ", is below its smallest, "
+                            + config.smallest()));
 
     public LandformConfig {
         Objects.requireNonNull(kind, "kind");

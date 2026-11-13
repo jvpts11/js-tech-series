@@ -52,7 +52,7 @@ public sealed interface PackDeclaration {
      * A material of the shared catalogue, which the Core gives its things.
      *
      * @param kind       what it is, by its kind's name: metal, crystal, gem, nonmetal_solid, mineral, liquid, gas,
-     *                   exotic
+     *                   exotic, polymer
      * @param colour     its colour, as {@code 0xRRGGBB}, which its things are drawn in
      * @param liquid     whether it also melts, so it has a liquid
      * @param forms      the forms it is used in, by their ids ({@code ingot} or {@code jscore:ingot})

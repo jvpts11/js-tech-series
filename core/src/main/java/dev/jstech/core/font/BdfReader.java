@@ -76,7 +76,7 @@ public final class BdfReader {
                 final String[] words = text.trim().split("\\s+");
                 switch (words[0]) {
                     case "FONT" -> name = text.trim().substring(4).trim();
-                    case "FONTBOUNDINGBOX" -> box = numbers(words, 4);
+                    case "FONTBOUNDINGBOX" -> box = sized(numbers(words, 4), false);
                     case "DWIDTH" -> fontAdvance = numbers(words, 2)[0];
                     case "STARTPROPERTIES" -> properties();
                     case "STARTCHAR" -> glyph();
@@ -120,7 +120,7 @@ public final class BdfReader {
                 switch (words[0]) {
                     case "ENCODING" -> codePoint = numbers(words, 1)[0];
                     case "DWIDTH" -> advance = numbers(words, 2)[0];
-                    case "BBX" -> glyphBox = numbers(words, 4);
+                    case "BBX" -> glyphBox = sized(numbers(words, 4), true);
                     case "BITMAP" -> {
                         if (glyphBox == null) {
                             throw new BdfFormatException(line, "a glyph's BITMAP comes before its BBX");
@@ -142,6 +142,19 @@ public final class BdfReader {
                 }
             }
             throw new BdfFormatException(line, "the font ends inside a glyph");
+        }
+
+        /*
+         * A box as its line says it, its width and height first: some of each for the font's cell, none or some for a
+         * glyph's, as a space's is; refused at its line otherwise.
+         */
+        private int[] sized(final int[] box, final boolean mayBeEmpty) {
+            final int least = mayBeEmpty ? 0 : 1;
+            if (box[0] < least || box[1] < least) {
+                throw new BdfFormatException(line, "a box is " + (mayBeEmpty ? "no" : "a") + " size or more across "
+                        + "and down, not " + box[0] + " by " + box[1]);
+            }
+            return box;
         }
 
         /** The rows after BITMAP up to ENDCHAR, which must be exactly as many as the glyph is tall. */

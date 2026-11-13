@@ -144,6 +144,21 @@ class GridTest {
     }
 
     @Test
+    void devicesMet_neverWalksThroughACableTakenOut() {
+        // Two devices sharing the cable 1, each with a cable of its own beside it.
+        grid.place(1, ACCESS, List.of());
+        grid.place(2, ACCESS, List.of());
+        grid.place(3, ACCESS, List.of());
+        grid.bridge(100, List.of(1L, 2L));
+        grid.bridge(200, List.of(1L, 3L));
+        grid.remove(1);
+
+        assertEquals(Set.of(100L), grid.devicesMet(List.of(2L), pos -> false),
+                "with the cable they shared gone, the second is met no more");
+        assertEquals(Set.of(2L), grid.bridgedBy(100), "and the first touches only what is left of it");
+    }
+
+    @Test
     void forgetBridge_splitsTheRunsTheDeviceJoined() {
         grid.place(1, ACCESS, List.of());
         grid.place(2, BACKBONE, List.of());

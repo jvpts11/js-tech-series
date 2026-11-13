@@ -11,6 +11,7 @@ import com.mojang.authlib.GameProfile;
 import dev.jstech.core.energy.EnergyLoss;
 import dev.jstech.core.grid.CoreGrids;
 import dev.jstech.core.grid.LineSurvey;
+import dev.jstech.core.overhead.HangStart;
 import dev.jstech.core.overhead.HungWire;
 import dev.jstech.core.overhead.OverheadLines;
 import dev.jstech.core.overhead.WireEnd;
@@ -148,6 +149,22 @@ public final class OverheadLinesGameTests {
         helper.assertTrue(player.getMainHandItem().getCount() == COIL - 6
                 && player.getMainHandItem().get(OverheadLines.START_AT.get()) == null,
                 "six blocks of wire are taken, and the hand is free to hang the next");
+        helper.succeed();
+    }
+
+    /* The insulator a wire was begun at broken before its other end is chosen: the next click begins anew there. */
+    @GameTest(template = ARENA)
+    public static void item_whoseFirstInsulatorIsGoneBeginsAgainAtTheNext(final GameTestHelper helper) {
+        ends(helper, SOURCE, SINK);
+        final FakePlayer player = FakePlayerFactory.get(helper.getLevel(), new GameProfile(UUID.nameUUIDFromBytes(
+                "overhead_again".getBytes(StandardCharsets.UTF_8)), "overhead_again"));
+        player.setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.STRING, COIL));
+        use(helper, player, SOURCE);
+        helper.setBlock(SOURCE, Blocks.AIR);
+        use(helper, player, SINK);
+        final HangStart start = player.getMainHandItem().get(OverheadLines.START_AT.get());
+        helper.assertTrue(start != null && start.end().equals(new WireEnd(helper.absolutePos(SINK), 0)),
+                "the wire is begun again at the insulator still standing: " + start);
         helper.succeed();
     }
 

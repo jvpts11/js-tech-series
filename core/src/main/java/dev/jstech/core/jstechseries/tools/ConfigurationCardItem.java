@@ -15,6 +15,7 @@ import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
@@ -143,14 +144,15 @@ public final class ConfigurationCardItem extends Item {
             say(player, EMPTY.text());
             return;
         }
-        final BlockPos first = card.get(SharedTools.CORNER.get());
-        if (first == null) {
-            card.set(SharedTools.CORNER.get(), pos.immutable());
+        final GlobalPos first = card.get(SharedTools.CORNER.get());
+        // A corner marked in another world starts the box again here: a box lies in one world.
+        if (first == null || !first.dimension().equals(level.dimension())) {
+            card.set(SharedTools.CORNER.get(), GlobalPos.of(level.dimension(), pos.immutable()));
             say(player, CORNER.text());
             return;
         }
         card.remove(SharedTools.CORNER.get());
-        final int pasted = MachineSetup.pasteOver(level, player, held, first, pos);
+        final int pasted = MachineSetup.pasteOver(level, player, held, first.pos(), pos);
         say(player, pasted < 0 ? TOO_BIG.with(MachineSetup.AREA_MOST) : PASTED_OVER.with(pasted));
     }
 

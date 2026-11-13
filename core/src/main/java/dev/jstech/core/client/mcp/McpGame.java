@@ -238,8 +238,10 @@ public final class McpGame {
         }
         final int agents = server.protocol().clients().all().size();
         String acting = null;
-        if (!ACTING.isEmpty()) {
-            final McpCall call = ACTING.getFirst();
+        // One look at the calls: one may end on the server's own thread between a look and a second one.
+        final Optional<McpCall> first = ACTING.stream().findFirst();
+        if (first.isPresent()) {
+            final McpCall call = first.get();
             acting = GameText.resolve(McpTexts.ACTING.with(call.client().name(), call.tool().name() + " "
                     + McpCallLog.summary(call.args())));
         }

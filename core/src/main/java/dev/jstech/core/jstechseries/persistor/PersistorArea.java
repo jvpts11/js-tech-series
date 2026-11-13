@@ -65,6 +65,10 @@ public record PersistorArea(PersistorShape shape, int radius, List<Long> added, 
     public PersistorArea clicked(final int dx, final int dz, final boolean alongX) {
         final PersistorShapes.Clicks clicks = PersistorShapes.click(this.shape, this.radius, alongX,
                 Set.copyOf(this.added), Set.copyOf(this.removed), dx, dz);
+        // A click past as many as it keeps is no click, rather than one dropped as it is kept; undoing one still is.
+        if (clicks.added().size() > MOST_CLICKS || clicks.removed().size() > MOST_CLICKS) {
+            return this;
+        }
         return new PersistorArea(this.shape, this.radius, List.copyOf(new LinkedHashSet<>(clicks.added())),
                 List.copyOf(new LinkedHashSet<>(clicks.removed())));
     }

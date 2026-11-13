@@ -77,8 +77,9 @@ public final class AtmosphereDetectorBlockEntity extends SyncedBlockEntity {
                 gases.add(new AtmosphereReadings.Gas(gas, air.share(gas)));
             }
             final Set<BlockPos> leaking = new LinkedHashSet<>();
+            // Leaks to the outside only: a door into another room, or a crack within this one, lets nothing out.
             for (final RoomFace face : room.leaks()) {
-                if (face.area() >= GasMath.NOTICEABLE) {
+                if (face.area() >= GasMath.NOTICEABLE && SealedRooms.roomAt(level, face.beyond()).isEmpty()) {
                     leaking.add(face.block());
                 }
             }

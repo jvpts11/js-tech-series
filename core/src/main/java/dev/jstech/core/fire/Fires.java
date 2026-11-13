@@ -29,9 +29,11 @@ import net.minecraft.world.level.block.BaseFireBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.Property;
+import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import net.neoforged.neoforge.registries.datamaps.DataMapType;
@@ -87,6 +89,12 @@ public final class Fires {
         NeoForge.EVENT_BUS.addListener(LevelEvent.Unload.class, event -> {
             if (event.getLevel() instanceof ServerLevel level) {
                 LEVELS.remove(level.dimension());
+            }
+        });
+        // The fires of a chunk that went away were let go of; as it comes back they burn on, found again.
+        NeoForge.EVENT_BUS.addListener(ChunkEvent.Load.class, event -> {
+            if (event.getLevel() instanceof ServerLevel level && event.getChunk() instanceof LevelChunk chunk) {
+                of(level).chunkLoaded(chunk);
             }
         });
     }

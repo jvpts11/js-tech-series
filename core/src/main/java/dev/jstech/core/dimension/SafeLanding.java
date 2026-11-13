@@ -37,7 +37,15 @@ public final class SafeLanding {
      */
     public static BlockPos find(final ServerLevel level, final BlockPos near, final double height) {
         final int tall = Math.max(1, (int) Math.ceil(height));
-        final int y = Math.clamp(near.getY(), level.getMinBuildHeight() + 1, level.getMaxBuildHeight() - tall - 1);
+        final int bottom = level.getMinBuildHeight() + 1;
+        final int top = level.getMaxBuildHeight() - tall - 1;
+        // A traveller taller than the world stands on the platform at its foot: no column could hold them.
+        if (top < bottom) {
+            final BlockPos feet = new BlockPos(near.getX(), bottom, near.getZ());
+            platform(level, feet.below());
+            return feet;
+        }
+        final int y = Math.clamp(near.getY(), bottom, top);
         for (int ring = 0; ring <= MOST_AROUND; ring++) {
             for (int dx = -ring; dx <= ring; dx++) {
                 for (int dz = -ring; dz <= ring; dz++) {

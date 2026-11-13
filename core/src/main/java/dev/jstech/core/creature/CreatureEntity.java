@@ -8,6 +8,7 @@
 package dev.jstech.core.creature;
 
 import dev.jstech.core.hazard.Lungs;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Holder;
@@ -15,6 +16,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MobSpawnType;
 import net.minecraft.world.entity.PathfinderMob;
@@ -23,6 +25,7 @@ import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
+import net.minecraft.world.entity.ai.attributes.DefaultAttributes;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.ServerLevelAccessor;
 import org.jetbrains.annotations.Nullable;
@@ -96,25 +99,25 @@ public class CreatureEntity extends PathfinderMob {
         builtFrom = reading;
         goalSelector.removeAllGoals(goal -> true);
         targetSelector.removeAllGoals(goal -> true);
-        final CreatureDef def = def().orElse(null);
-        if (def == null) {
-            return;
-        }
+        // A number its data no longer gives, or data gone, is the one its kind is declared with again.
+        final Optional<CreatureDef> def = def();
         int priority = 0;
-        for (final ICreatureBehaviour behaviour : def.behaviours()) {
+        for (final ICreatureBehaviour behaviour : def.map(CreatureDef::behaviours).orElse(List.of())) {
             (behaviour.targets() ? targetSelector : goalSelector).addGoal(priority++, behaviour.goal(this));
         }
-        base(Attributes.MAX_HEALTH, def.health());
-        base(Attributes.MOVEMENT_SPEED, def.speed());
-        base(Attributes.ATTACK_DAMAGE, def.attackDamage());
-        base(Attributes.FOLLOW_RANGE, def.followRange());
+        base(Attributes.MAX_HEALTH, def.flatMap(CreatureDef::health));
+        base(Attributes.MOVEMENT_SPEED, def.flatMap(CreatureDef::speed));
+        base(Attributes.ATTACK_DAMAGE, def.flatMap(CreatureDef::attackDamage));
+        base(Attributes.FOLLOW_RANGE, def.flatMap(CreatureDef::followRange));
         setHealth(Math.min(getHealth(), getMaxHealth()));
     }
 
+    @SuppressWarnings("unchecked")
     private void base(final Holder<Attribute> attribute, final Optional<Double> value) {
         final AttributeInstance instance = getAttribute(attribute);
-        if (instance != null && value.isPresent()) {
-            instance.setBaseValue(value.get());
+        if (instance != null) {
+            instance.setBaseValue(value.orElseGet(() -> DefaultAttributes.getSupplier(
+                    (EntityType<? extends LivingEntity>) getType()).getBaseValue(attribute)));
         }
     }
 

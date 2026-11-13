@@ -121,7 +121,9 @@ public final class Research {
     /* Why {@code discovery} cannot be worked on for {@code team} whatever data it holds; none when it can. */
     private static @Nullable Outcome blocked(final MinecraftServer server, final String team,
                                              final Discovery discovery) {
-        if (!Discoveries.exists(server.overworld(), discovery)) {
+        // With its mod's research turned off, a discovery is granted to none, as it locks nothing.
+        if (!Discoveries.exists(server.overworld(), discovery)
+                || !Discoveries.required(server, discovery.id().getNamespace())) {
             return Outcome.ABSENT;
         }
         if (made(server, team, discovery)) {
@@ -170,7 +172,7 @@ public final class Research {
         LOCKED(2),
         /** The team has made the whole of it: now, or before. */
         MADE(3),
-        /** It is not there to research: something it asks for is not installed. */
+        /** It is not there to research: something it asks for is not installed, or its mod's research is off. */
         ABSENT(4);
 
         private final int id;

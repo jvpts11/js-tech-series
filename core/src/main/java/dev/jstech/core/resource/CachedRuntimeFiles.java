@@ -40,6 +40,8 @@ public final class CachedRuntimeFiles implements IRuntimeFiles {
     private final Path folder;
     private final IRuntimeFiles made;
     private final Supplier<String> fingerprint;
+    /* Whether the kept files could not all be wiped as they went stale: then none is read this load. */
+    private volatile boolean passKept;
 
     private static final Logger LOGGER = CoreLogs.CONTENT.logger();
     /** The folder in the game's folder the kept files go in. */
@@ -87,7 +89,7 @@ public final class CachedRuntimeFiles implements IRuntimeFiles {
     /* The file at {@code path}: as it was kept, or made now and kept. */
     private byte[] read(final String path, final Supplier<byte[]> make) {
         final Path file = this.folder.resolve(path).normalize();
-        if (!file.startsWith(this.folder)) {
+        if (!file.startsWith(this.folder) || this.passKept) {
             return make.get();
         }
         try {
@@ -115,7 +117,10 @@ public final class CachedRuntimeFiles implements IRuntimeFiles {
         }
     }
 
-    /* What was kept no longer holds: the folder is emptied and the new fingerprint written down. */
+    /*
+     * What was kept no longer holds: the folder is emptied and the new fingerprint written down. A file that will not
+     * go leaves every kept file unread this load, and the fingerprint unwritten, so the next load tries again.
+     */
     private void startAgain(final String print) {
         try {
             if (Files.isDirectory(this.folder)) {
@@ -130,9 +135,11 @@ public final class CachedRuntimeFiles implements IRuntimeFiles {
                 }
             }
             writeWhole(this.folder.resolve(FINGERPRINT), print.getBytes(StandardCharsets.UTF_8));
+            this.passKept = false;
         } catch (final IOException unwritable) {
-            LOGGER.warn("the files kept in {} could not be made anew; they are made again every load", this.folder,
-                    unwritable);
+            this.passKept = true;
+            LOGGER.warn("the files kept in {} could not be made anew; this load makes them all again, and the next"
+                    + " tries once more", this.folder, unwritable);
         }
     }
 

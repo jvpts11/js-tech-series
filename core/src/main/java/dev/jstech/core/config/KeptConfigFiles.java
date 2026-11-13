@@ -78,13 +78,18 @@ final class KeptConfigFiles {
             try {
                 Files.move(path, kept);
             } catch (final IOException e) {
-                JsCore.LOGGER.warn("{} could not be kept aside", path, e);
+                JsCore.LOGGER.warn("{} could not be kept aside; it is left as it is and nothing is saved over it",
+                        path, e);
+                file.onSave(() -> { });
                 return;
             }
             file.reset();
             write(file, path);
         } catch (final IOException e) {
-            JsCore.LOGGER.warn("{} could not be read; the defaults are used", path, e);
+            // A file that could not be read is not written over with the defaults either: it may be read next time.
+            JsCore.LOGGER.warn("{} could not be read; the defaults are used and nothing is saved over it until the "
+                    + "game starts again", path, e);
+            file.onSave(() -> { });
         }
     }
 

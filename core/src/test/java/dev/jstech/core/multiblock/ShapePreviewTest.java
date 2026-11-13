@@ -42,6 +42,19 @@ class ShapePreviewTest {
     }
 
     @Test
+    void pattern_showsAndCountsTheBlockOfAPlaceThatTakesAirFirstNeverTheAir() {
+        final MultiblockPattern pattern = MultiblockPattern.builder("vent")
+                .layer("C#V")
+                .where('C', BlockMatch.blocks(CASING))
+                .where('V', BlockMatch.blocks("minecraft:air", GLASS))
+                .build();
+        final ShapePreview preview = ShapePreviews.pattern(pattern, Orientation.NORTH, 0);
+        assertEquals(Map.of(CASING, 1, GLASS, 1), preview.materials());
+        assertTrue(preview.ghosts().stream().noneMatch(ghost -> "minecraft:air".equals(ghost.first())),
+                "no place is shown as air");
+    }
+
+    @Test
     void pattern_showsTheTerminalItNamesAndListsItApart() {
         final MultiblockPattern pattern = MultiblockPattern.builder("smelter")
                 .layer("C#C")
@@ -116,6 +129,18 @@ class ShapePreviewTest {
         final ShapePreview preview = ShapePreviews.walls(smeltery, 0);
         assertEquals(3, preview.layers());
         assertFormsAsShown(smeltery, preview);
+    }
+
+    @Test
+    void walls_ofAnAreaNoSquareFitsShowAFloorWithinItAndFormWhereShown() {
+        final WallsShape kiln = WallsShape.of(Place.of(BlockMatch.blocks(CASING)),
+                Place.of(BlockMatch.blocks(CASING)), InsideRule.empty(), new Limit(10, 12), new Limit(2, 8));
+        for (final int grow : new int[] {0, 3}) {
+            final ShapePreview preview = ShapePreviews.walls(kiln, grow);
+            final long floor = preview.ghosts().stream().filter(ghost -> ghost.y() == -1).count();
+            assertTrue(floor >= 10 && floor <= 12, "grown by " + grow + ", a floor of " + floor + " places");
+            assertFormsAsShown(kiln, preview);
+        }
     }
 
     @Test

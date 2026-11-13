@@ -214,6 +214,16 @@ class MeshDamageTest {
                 DamageStamp.Edge.TORN));
     }
 
+    @Test
+    void stamp_refusesAShareThatIsNotANumber() {
+        assertThrows(IllegalArgumentException.class, () -> new DamageStamp(Double.NaN, 0, DamageStamp.Push.DENT, 0.1,
+                false, DamageStamp.Edge.TORN));
+        assertThrows(IllegalArgumentException.class, () -> new DamageStamp(0.5, Double.NaN, DamageStamp.Push.DENT,
+                0.1, false, DamageStamp.Edge.TORN));
+        assertThrows(IllegalArgumentException.class, () -> new DamageStamp(0.5, 0, DamageStamp.Push.DENT, Double.NaN,
+                false, DamageStamp.Edge.TORN));
+    }
+
     private static Strike impact() {
         return new Strike(IMPACT, 0, 0, 0, 0, 0, 1, 1, 11);
     }

@@ -117,12 +117,15 @@ public final class SpaceClimbs {
                 space = space != null ? space : SystemSpaces.spaceOf(level.getServer(), world.system());
                 final double[] spot = SystemLayout.orbitSpot(body, SphereMap.longitude(structure.pose().x(), width),
                         SphereMap.latitude(structure.pose().z(), width));
-                announceAboard(entity);
+                final List<ServerPlayer> told = announceAboard(entity);
                 level.getEntitiesOfClass(ServerPlayer.class, structure.worldBox().inflate(ABOARD))
                         .forEach(SpaceFirsts::inOrbit);
                 // Told as a thing in the world's orbit, its blocks still here to be looked over.
                 OrbitObjects.arrived(level, structure, body);
-                MovingStructures.travel(structure, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]));
+                if (!MovingStructures.travel(structure, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]))
+                        .ok()) {
+                    told.forEach(DimensionTravel::withdraw);
+                }
                 PASSED.put(entity, level.getGameTime());
             }
         }
@@ -147,9 +150,11 @@ public final class SpaceClimbs {
             }
             final Below below = below(space, structure.pose().x(), structure.pose().z());
             if (below != null) {
-                announceAboard(entity);
+                final List<ServerPlayer> told = announceAboard(entity);
                 OrbitObjects.forget(space.getServer(), structure.id().value());
-                MovingStructures.travel(structure, below.level(), below.at());
+                if (!MovingStructures.travel(structure, below.level(), below.at()).ok()) {
+                    told.forEach(DimensionTravel::withdraw);
+                }
                 PASSED.put(entity, space.getGameTime());
             }
         }
@@ -193,17 +198,22 @@ public final class SpaceClimbs {
         PASSED.put(player, to.getGameTime());
     }
 
-    /* The players on or in a structure about to cross see it through no screen as they go with it. */
-    private static void announceAboard(final MovingStructureEntity entity) {
+    /*
+     * The players on or in a structure about to cross see it through no screen as they go with it; the players told,
+     * to take it back from should the structure not go after all.
+     */
+    private static List<ServerPlayer> announceAboard(final MovingStructureEntity entity) {
         final MovingStructure structure = entity.structure();
         if (structure == null || !(entity.level() instanceof ServerLevel level)) {
-            return;
+            return List.of();
         }
-        for (final ServerPlayer player : level.getEntitiesOfClass(ServerPlayer.class,
-                structure.worldBox().inflate(ABOARD))) {
+        final List<ServerPlayer> told = level.getEntitiesOfClass(ServerPlayer.class,
+                structure.worldBox().inflate(ABOARD));
+        for (final ServerPlayer player : told) {
             DimensionTravel.announce(player, DimensionTravel.SEAMLESS);
             PASSED.put(player, level.getGameTime());
         }
+        return told;
     }
 
     /* Whether a player rides, sits in or stands on a structure, which takes them across with it. */

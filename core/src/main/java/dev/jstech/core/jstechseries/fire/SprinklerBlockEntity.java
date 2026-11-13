@@ -7,11 +7,13 @@
  */
 package dev.jstech.core.jstechseries.fire;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.core.audio.Audio;
 import dev.jstech.core.audio.SoundContext;
 import dev.jstech.core.blockentity.FieldFluidTank;
 import dev.jstech.core.blockentity.IFaceGate;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.effect.Effects;
 import dev.jstech.core.fire.ExtinguishingAgent;
 import dev.jstech.core.fire.Extinguishing;
@@ -41,7 +43,8 @@ import org.jetbrains.annotations.Nullable;
 public final class SprinklerBlockEntity extends SyncedBlockEntity implements IFaceGate {
 
     private final FieldFluidTank water = fields().fluid("water", HOLDS).save().exposed();
-    private int coolFor;
+    /* How many works it has gone without heat, kept so a reload does not start its half minute again. */
+    private final ValueField<Integer> coolFor = fields().value("CoolFor", Codec.INT, 0).save();
 
     /** How much water it holds from its pipe, in millibuckets. */
     public static final int HOLDS = 1_000;
@@ -89,10 +92,14 @@ public final class SprinklerBlockEntity extends SyncedBlockEntity implements IFa
             return;
         }
         final boolean hot = FireSenses.heatAt(server, this.worldPosition) >= BURSTS_AT;
-        this.coolFor = hot ? 0 : this.coolFor + 1;
+        // Counted only up to when it shuts, so a head left cold does not write anew every second.
+        final int cool = hot ? 0 : Math.min(this.coolFor.get() + 1, SHUTS_AFTER);
+        if (cool != this.coolFor.get()) {
+            this.coolFor.set(cool);
+        }
         if (hot && !open()) {
             server.setBlockAndUpdate(this.worldPosition, getBlockState().setValue(SprinklerBlock.OPEN, true));
-        } else if (open() && this.coolFor >= SHUTS_AFTER) {
+        } else if (open() && cool >= SHUTS_AFTER) {
             server.setBlockAndUpdate(this.worldPosition, getBlockState().setValue(SprinklerBlock.OPEN, false));
         }
         if (open() && this.water.getFluidAmount() >= SHOWERS) {

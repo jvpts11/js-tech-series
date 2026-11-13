@@ -106,8 +106,20 @@ public final class LightFlood {
             }
         }
         // Light that kept its colour all the way keeps no colours of its own: each place is lit in the source's.
-        return new LightFlood(x, y, z, strength, colour, reach, levels,
-                tinted ? Arrays.copyOf(colours, levels.length) : null, tinted);
+        return new LightFlood(x, y, z, strength, colour, reach, levels, tinted ? litColours(colours, levels) : null,
+                tinted);
+    }
+
+    /*
+     * The colours of the places lit, none where it does not reach: the array the flood ran in is used again and again,
+     * and a place dark now may hold the colour of another flood's.
+     */
+    private static int[] litColours(final int[] colours, final byte[] levels) {
+        final int[] out = new int[levels.length];
+        for (int i = 0; i < levels.length; i++) {
+            out[i] = levels[i] == 0 ? 0 : colours[i];
+        }
+        return out;
     }
 
     /** The level the place {@code x, y, z} is lit to, 0 where the light does not reach. */

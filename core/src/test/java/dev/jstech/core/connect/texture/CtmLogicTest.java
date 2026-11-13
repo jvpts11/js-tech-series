@@ -71,6 +71,29 @@ class CtmLogicTest {
     }
 
     @Test
+    void parse_refusesARuleForACellOrAPartOfTheFaceItDoesNotDeclare() {
+        assertThrows(IllegalArgumentException.class, () -> CtmLogic.parse(json("{\"positions\": [],"
+                + " \"submaps\": {\"\": {\"type\": \"grid\", \"width\": 1, \"height\": 1}},"
+                + " \"rules\": [{\"output\": \"3,3\"}]}")), "a cell the grid does not have");
+        assertThrows(IllegalArgumentException.class, () -> CtmLogic.parse(json("{\"positions\": [],"
+                + " \"submaps\": {\"\": {\"type\": \"grid\", \"width\": 1, \"height\": 1}},"
+                + " \"rules\": [{\"output\": \"0,0\", \"at\": \"0,1\"}]}")), "a part of a face never cut");
+        assertThrows(IllegalArgumentException.class, () -> CtmLogic.parse(json("{\"positions\": [],"
+                + " \"submaps\": {\"\": {\"type\": \"grid\", \"width\": 1, \"height\": 1}},"
+                + " \"faces\": {\"\": {\"type\": \"grid\", \"width\": 1, \"height\": 2}},"
+                + " \"rules\": [{\"output\": \"0,0\"}]}")), "the whole face, where the face is cut in parts");
+    }
+
+    @Test
+    void parse_refusesAGridOfNoCellsOrOfTooMany() {
+        assertThrows(IllegalArgumentException.class, () -> CtmLogic.parse(json("{\"positions\": [],"
+                + " \"submaps\": {\"\": {\"type\": \"grid\", \"width\": 0, \"height\": 4}}, \"rules\": []}")));
+        assertThrows(IllegalArgumentException.class, () -> CtmLogic.parse(json("{\"positions\": [],"
+                + " \"submaps\": {\"\": {\"type\": \"grid\", \"width\": 50000, \"height\": 50000}},"
+                + " \"rules\": []}")));
+    }
+
+    @Test
     void ctmTextures_readATypeByIdAsALogic() {
         final CtmTexture texture = CtmTextures.of(json("{\"type\": \"ctm:optifine_full\"}"));
         assertEquals(CtmTexture.Type.LOGIC, texture.type());

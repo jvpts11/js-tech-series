@@ -23,7 +23,8 @@ public interface IPartMotion {
      * @param pose    at the block's least corner, turned about its middle so the part faces north, as its model does
      * @param buffers what to draw into
      * @param busy    whether the part is at work
-     * @param time    the game's time, in ticks and the part of a tick this frame is at
+     * @param time    the game's time, in ticks and the part of a tick this frame is at, starting again from 0 every
+     *                24000 ticks, a day, so a motion's cycle should divide a day evenly to stay seamless
      * @param light   the light at the block
      */
     void draw(PoseStack pose, MultiBufferSource buffers, boolean busy, float time, int light);

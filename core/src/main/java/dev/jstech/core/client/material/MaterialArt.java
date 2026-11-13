@@ -9,6 +9,7 @@ package dev.jstech.core.client.material;
 
 import com.google.gson.JsonObject;
 import dev.jstech.core.JsCore;
+import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.material.CatalogueItems;
 import dev.jstech.core.material.Form;
 import dev.jstech.core.material.FormArt;
@@ -28,13 +29,16 @@ import dev.jstech.core.resource.RuntimePacks;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.PackType;
+import org.slf4j.Logger;
 
 /**
  * How the things of the materials' uses look, made as the player's game loads its resources: every texture drawn in
@@ -48,6 +52,7 @@ public final class MaterialArt implements IRuntimeFiles {
 
     public static final TextKey TITLE = TextKey.of("jscore.pack.material_art", "J's Core: the materials' art");
 
+    private static final Logger LOG = CoreLogs.CONTENT.logger();
     private static final int SIZE = FormArt.SIZE;
     /** The way the art is drawn, raised whenever it changes, so what was kept on disk is drawn again. */
     private static final int DRAWING = 1;
@@ -169,7 +174,7 @@ public final class MaterialArt implements IRuntimeFiles {
                 "textures/" + look.pattern().texture(deepslate) + ".png"), read);
         final GameTexture gameRock = picture(ResourceLocation.withDefaultNamespace(
                 "textures/" + look.pattern().rock(deepslate) + ".png"), read);
-        final GameTexture host = picture(texture(rockTexture(rock, read)), read);
+        final GameTexture host = host(rock, gameRock, read);
         final int[] specks = FormArt.specks(ore.texels(), ore.width(), gameRock.texels(), gameRock.width());
         return FormArt.ore(host.texels(), host.width(), specks, look.speckColour(material.colour()), look.sheen(),
                 look.second(), look.lowHue(), look.highHue());
@@ -177,14 +182,27 @@ public final class MaterialArt implements IRuntimeFiles {
 
     /*
      * The texture an ore in {@code rock} is drawn on: the rock's own as declared, or, for a rock of another mod found
-     * by its tags whose texture is elsewhere, the one its block's own files draw it with.
+     * by its tags whose texture is elsewhere, the one its block's own files draw it with. Where neither can be read
+     * whole, a full block's face of it at least, the game's own rock of the ore's pattern, {@code gameRock}, rather
+     * than no ore drawn at all.
      */
-    private static ResourceLocation rockTexture(final HostRock rock,
-                                                final Map<ResourceLocation, Optional<GameTexture>> read) {
-        if (!rock.found() || read.computeIfAbsent(texture(rock.texture()), GameTexture::read).isPresent()) {
-            return rock.texture();
+    private static GameTexture host(final HostRock rock, final GameTexture gameRock,
+                                    final Map<ResourceLocation, Optional<GameTexture>> read) {
+        final List<ResourceLocation> tried = new ArrayList<>();
+        tried.add(rock.texture());
+        if (rock.found()) {
+            BlockTextures.of(rock.rock()).ifPresent(tried::add);
         }
-        return BlockTextures.of(rock.rock()).orElse(rock.texture());
+        for (final ResourceLocation candidate : tried) {
+            final Optional<GameTexture> found = read.computeIfAbsent(texture(candidate), GameTexture::read);
+            if (found.isPresent() && found.get().width() >= SIZE
+                    && found.get().texels().length >= SIZE * found.get().width()) {
+                return found.get();
+            }
+        }
+        LOG.warn("No texture of {} could be read whole ({}); its ores are drawn on the game's own rock",
+                rock.rock(), tried);
+        return gameRock;
     }
 
     private static ResourceLocation texture(final ResourceLocation id) {

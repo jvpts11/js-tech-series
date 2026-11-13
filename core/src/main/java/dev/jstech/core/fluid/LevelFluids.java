@@ -57,6 +57,7 @@ import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
 
 /**
  * The fluid grid of one dimension as it moves fluids: each connected part of the grid with the ends its pipes plug
@@ -86,6 +87,8 @@ public final class LevelFluids implements IGridMover {
     public static final ResourceLocation TIMING = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "fluid_grid");
     /** The work of moving a tick's fluids, timed, named in profilers and watched for stalls. */
     public static final Section SECTION = Section.builder(TIMING, CoreLogs.FLUIDS).declare();
+
+    private static final Logger LOGGER = CoreLogs.FLUIDS.logger();
 
     /** The work that moves fluids along the grid of {@code kind}, one for each dimension. */
     public LevelFluids(final GridKind kind) {
@@ -288,10 +291,27 @@ public final class LevelFluids implements IGridMover {
             return 0L;
         }
         final FluidStack moving = fluid.copyWithAmount((int) Math.min(Integer.MAX_VALUE, amount));
-        final Batch.Outcome outcome = new Batch().add(HandlerSteps.drain(drained, moving))
-                .add(HandlerSteps.fill(filled, moving)).commit();
+        final HandlerSteps.Recoverable drain = HandlerSteps.drain(drained, moving);
+        final Batch.Outcome outcome = new Batch().add(drain).add(HandlerSteps.fill(filled, moving)).commit();
         if (!outcome.done()) {
-            return 0L;
+            /*
+             * Undone, what was drained goes back; a source that takes nothing back, as a line valve's front, leaves it
+             * to go on to the target as far as it takes it, never to vanish.
+             */
+            final FluidStack left = drain.unreturnedFluid();
+            if (left.isEmpty()) {
+                return 0L;
+            }
+            final int took = filled.fill(left.copy(), IFluidHandler.FluidAction.EXECUTE);
+            if (took < left.getAmount()) {
+                LOGGER.warn("{} mB of {} could go neither back nor on, and was lost", left.getAmount() - took,
+                        BuiltInRegistries.FLUID.getKey(left.getFluid()));
+            }
+            if (took > 0) {
+                trace.moved(source.wire(), target.wire(), target.into(),
+                        BuiltInRegistries.FLUID.getKey(fluid.getFluid()).toString(), took);
+            }
+            return took;
         }
         trace.moved(source.wire(), target.wire(), target.into(),
                 BuiltInRegistries.FLUID.getKey(fluid.getFluid()).toString(), moving.getAmount());

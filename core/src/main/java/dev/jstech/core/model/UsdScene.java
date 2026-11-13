@@ -472,6 +472,7 @@ final class UsdScene {
                 }
             }
         }
+        paintByColours(prim, colours, counts, corners, lookOfFace, looks);
         final Skin skin = skin(prim, bone);
         final List<Builder> builders = new ArrayList<>();
         for (final Look look : looks) {
@@ -511,6 +512,30 @@ final class UsdScene {
             }
         }
         return out;
+    }
+
+    /*
+     * Where the mesh's own look is its display colours, several of them, each face of that look is painted its own:
+     * the colour at its first corner, one look for each colour.
+     */
+    private void paintByColours(final UsdPrim prim, final Spread colours, final double[] counts,
+                                final double[] corners, final int[] lookOfFace, final List<Look> looks) {
+        if (colours.values().length < 2 || materialLook(material(prim)) != null) {
+            return;
+        }
+        final Map<Integer, Integer> lookOfColour = new HashMap<>();
+        int corner = 0;
+        for (int face = 0; face < counts.length; face++) {
+            final double[] rgb = corner < corners.length ? colours.at(face, (int) corners[corner], corner) : null;
+            if (lookOfFace[face] == 0 && rgb != null && rgb.length >= 3) {
+                final int texture = colour(rgb);
+                lookOfFace[face] = lookOfColour.computeIfAbsent(texture, made -> {
+                    looks.add(new Look(made, false));
+                    return looks.size() - 1;
+                });
+            }
+            corner += (int) counts[face];
+        }
     }
 
     /* The name of the primvar a mesh's pictures are laid by: st, or the first of two numbers a corner. */
@@ -555,24 +580,34 @@ final class UsdScene {
      * else the mesh's display colour; else steel.
      */
     private Look look(@Nullable final UsdPrim material, final Spread colours, final int face) {
-        final UsdPrim surface = material == null ? null : surface(material);
-        if (surface != null) {
-            final UsdPrim.Property diffuse = surface.properties.get("inputs:diffuseColor");
-            if (diffuse != null && !diffuse.targets.isEmpty()) {
-                final UsdPrim reader = this.root.find(diffuse.targets.getFirst().split("\\.")[0]);
-                if (reader != null && reader.value("inputs:file") instanceof UsdPrim.Asset asset) {
-                    return new Look(picture(asset.path()), true);
-                }
-            }
-            if (diffuse != null && at(diffuse, Double.NaN) instanceof double[] colour && colour.length >= 3) {
-                return new Look(colour(colour), false);
-            }
+        final Look own = materialLook(material);
+        if (own != null) {
+            return own;
         }
         final double[][] values = colours.values();
         if (values.length > 0 && values[Math.min(face, values.length - 1)].length >= 3) {
-            return new Look(colour(values[0]), false);
+            return new Look(colour(values[Math.min(face, values.length - 1)]), false);
         }
         return new Look(colour(CadLook.STEEL), false);
+    }
+
+    /* The look a material gives of its own: its surface's texture or diffuse colour; none when it gives neither. */
+    private @Nullable Look materialLook(@Nullable final UsdPrim material) {
+        final UsdPrim surface = material == null ? null : surface(material);
+        if (surface == null) {
+            return null;
+        }
+        final UsdPrim.Property diffuse = surface.properties.get("inputs:diffuseColor");
+        if (diffuse != null && !diffuse.targets.isEmpty()) {
+            final UsdPrim reader = this.root.find(diffuse.targets.getFirst().split("\\.")[0]);
+            if (reader != null && reader.value("inputs:file") instanceof UsdPrim.Asset asset) {
+                return new Look(picture(asset.path()), true);
+            }
+        }
+        if (diffuse != null && at(diffuse, Double.NaN) instanceof double[] colour && colour.length >= 3) {
+            return new Look(colour(colour), false);
+        }
+        return null;
     }
 
     /* The shader a material's surface is connected to. */

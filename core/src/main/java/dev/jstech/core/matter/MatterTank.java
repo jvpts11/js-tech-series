@@ -138,6 +138,11 @@ public class MatterTank implements IMatterHandler {
      * @return this tank
      */
     public MatterTank relief(final long pressure, final long perTick) {
+        // What a valve lets out into the air: never exotic matter, nor what the game drops or spills itself.
+        if (this.state == MatterState.EXOTIC || this.state == MatterState.SOLID || this.state == MatterState.LIQUID) {
+            throw new IllegalStateException("a relief valve lets out a gas, a supercritical fluid, a slurry or a "
+                    + "plasma, not " + this.state.serializedName());
+        }
         if (pressure <= this.pressure || this.burstsAt > 0 && pressure >= this.burstsAt || perTick <= 0) {
             throw new IllegalArgumentException("a relief valve opens between the pressure a tank holds and the one it "
                     + "bursts at, letting something out a tick, not at " + pressure + " letting out " + perTick);

@@ -35,6 +35,14 @@ class MediaPictureTest {
     }
 
     @Test
+    void find_passesOverABrokenPictureToTheFrontCoverAfterIt() {
+        final byte[] ogg = ogg(List.of("METADATA_BLOCK_PICTURE=%%%not base64%%%", "METADATA_BLOCK_PICTURE=AAAA",
+                picture(3, FRONT)));
+        assertArrayEquals(FRONT, MediaPicture.find("ogg", ogg).orElseThrow(),
+                "a broken picture is passed over, not the end of the search");
+    }
+
+    @Test
     void find_isEmptyForAnOggWithNoPicture() {
         assertTrue(MediaPicture.find("ogg", ogg(List.of("TITLE=Pain"))).isEmpty());
     }

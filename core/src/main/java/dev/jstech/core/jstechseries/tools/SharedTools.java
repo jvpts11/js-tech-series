@@ -18,7 +18,7 @@ import dev.jstech.core.multipart.CoreSpaces;
 import dev.jstech.core.multipart.MicroShape;
 import dev.jstech.core.multipart.Microblock;
 import dev.jstech.core.registry.CoreItems;
-import net.minecraft.core.BlockPos;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
@@ -49,9 +49,9 @@ public final class SharedTools {
     /** The setup a Configuration Card holds, copied from a machine. */
     public static final DeferredHolder<DataComponentType<?>, DataComponentType<MachineSetup.Copied>> SETUP =
             CoreItems.CONTENT.component("machine_setup", MachineSetup.CODEC, MachineSetup.STREAM_CODEC);
-    /** The first corner of a box a Configuration Card pastes over. */
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<BlockPos>> CORNER =
-            CoreItems.CONTENT.component("card_corner", BlockPos.CODEC, BlockPos.STREAM_CODEC);
+    /** The first corner of a box a Configuration Card pastes over, with the world it is in. */
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<GlobalPos>> CORNER =
+            CoreItems.CONTENT.component("card_corner", GlobalPos.CODEC, GlobalPos.STREAM_CODEC);
     /** The Configuration Card. */
     public static final ItemEntry<ConfigurationCardItem> CARD = CoreItems.CONTENT.item("configuration_card",
                     properties -> new ConfigurationCardItem(properties.stacksTo(1))).named("Configuration Card")

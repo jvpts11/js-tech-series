@@ -32,6 +32,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.resources.language.LanguageInfo;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.ScreenEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import org.jetbrains.annotations.ApiStatus;
@@ -69,7 +72,10 @@ public final class ScreenInspector {
 
     /** Listens for the screens' keys, clicks and frames, once, from the Core's client. */
     @ApiStatus.Internal
-    public static void listen() {
+    public static void listen(final IEventBus modBus) {
+        // Every reload, live, F3+T or the studio's, reads the texts afresh, so a key just added is no longer missing.
+        modBus.addListener(RegisterClientReloadListenersEvent.class, event -> event.registerReloadListener(
+                (ResourceManagerReloadListener) resources -> InspectorModel.forgetLanguages()));
         NeoForge.EVENT_BUS.addListener(ScreenEvent.KeyPressed.Pre.class, ScreenInspector::onKey);
         NeoForge.EVENT_BUS.addListener(ScreenEvent.MouseButtonPressed.Pre.class, ScreenInspector::onClick);
         NeoForge.EVENT_BUS.addListener(ScreenEvent.Render.Post.class, ScreenInspector::onRender);

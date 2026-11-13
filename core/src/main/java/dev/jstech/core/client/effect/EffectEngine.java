@@ -258,7 +258,8 @@ public final class EffectEngine {
                 count += (int) Math.ceil(emission.bursts().get(run.nextBurst).count() * thinned);
                 run.nextBurst++;
             }
-            final boolean flowing = effect.held() || effect.elapsed < emission.duration();
+            // A held effect flows while it is held and no longer once let go; one fired once flows for its duration.
+            final boolean flowing = effect.held() || effect.holder == null && effect.elapsed < emission.duration();
             if (flowing) {
                 run.carry += emission.rate() * TICK * thinned;
                 count += (int) run.carry;

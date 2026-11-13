@@ -76,6 +76,26 @@ public final class BatchGameTests {
         helper.succeed();
     }
 
+    /*
+     * Energy given to a store that gives none out, the batch coming short after: the store keeps it, the batch is
+     * stuck, and the step says how much it could not take back, so the caller makes no energy of it.
+     */
+    @GameTest(template = ARENA)
+    public static void batch_saysWhatEnergyAStoreOfNoOutputKept(final GameTestHelper helper) {
+        final EnergyStorage intake = new EnergyStorage(600, 1_000, 0);
+        final HandlerSteps.Recoverable first = HandlerSteps.receive(intake, 400);
+        final Batch.Outcome outcome = new Batch()
+                .add(first)
+                .add(HandlerSteps.receive(intake, 400))
+                .commit();
+
+        helper.assertTrue(outcome == Batch.Outcome.STUCK, "the store will not give the energy back: " + outcome);
+        helper.assertTrue(first.unreturnedEnergy() == 400 && intake.getEnergyStored() == 600,
+                "the first step says the 400 it could not take back; " + first.unreturnedEnergy() + ", stored "
+                        + intake.getEnergyStored());
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void batch_undoesAPartialAcceptance(final GameTestHelper helper) {
         final IItemHandler from = chest(helper, FROM);

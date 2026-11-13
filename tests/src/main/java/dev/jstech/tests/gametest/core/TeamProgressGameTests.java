@@ -99,6 +99,8 @@ public final class TeamProgressGameTests {
             helper.assertTrue(TeamProgress.grant(server, team, TestProgression.COMPREHENSION, 0.4), "some");
             helper.assertTrue(!TeamProgress.grant(server, team, TestProgression.COMPREHENSION, 0.3),
                     "less than it knows changes nothing");
+            helper.assertTrue(!TeamProgress.grant(server, team, TestProgression.COMPREHENSION, Double.NaN),
+                    "nor does a share that is no number");
             helper.assertTrue(Math.abs(TeamProgress.share(server, team, comprehension) - 0.4) < EPSILON,
                     "it knows the share given");
             helper.assertTrue(!TeamProgress.knows(server, team, comprehension), "and not the whole");

@@ -7,7 +7,6 @@
  */
 package dev.jstech.core.integration.curios;
 
-import dev.jstech.core.integration.accessories.AccessoriesIntegration;
 import dev.jstech.core.optional.OptionalMod;
 import dev.jstech.core.worn.WornItems;
 
@@ -30,9 +29,12 @@ public final class CuriosIntegration {
         return MOD.isLoaded();
     }
 
-    /** Hands the Core Curios as a source of worn things; a no-op when Curios is absent or Accessories present. */
-    public static void bootstrap() {
-        if (!AccessoriesIntegration.isLoaded()) {
+    /**
+     * Hands the Core Curios as a source of worn things; a no-op when Curios is absent, or when Accessories, which
+     * carries Curios' slots, started: {@code accessories} says whether its source was handed over.
+     */
+    public static void bootstrap(final boolean accessories) {
+        if (!accessories) {
             MOD.ifLoaded(() -> CuriosIntegration::useCurios);
         }
     }

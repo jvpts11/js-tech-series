@@ -236,6 +236,12 @@ public sealed interface IEasing permits IEasing.Linear, IEasing.CubicBezier, IEa
             if (t >= 1.0) {
                 return 1.0;
             }
+            // Each curve taken over by where it stands at the end, so it meets its rest there rather than jumps to it.
+            return curve(t) / curve(1.0);
+        }
+
+        /* The spring's way from 0 towards 1, before it is made to end at 1. */
+        private double curve(final double t) {
             final double decay = SETTLED * t;
             if (damping >= 1.0) {
                 // Damped so it comes to rest without swinging past: its fastest way there.

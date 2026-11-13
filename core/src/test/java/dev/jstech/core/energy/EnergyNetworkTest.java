@@ -499,6 +499,23 @@ class EnergyNetworkTest {
     }
 
     @Test
+    void unsatisfiedDemand_countsNoStoreRoomBesideAConsumerFullyServed() {
+        EnergyNetwork net = new EnergyNetwork();
+        net.addNode(GEN_A, TestNode.generator(100L));
+        net.addCable(CABLE_1, new TestCable(UNLIMITED));
+        net.addNode(CONS_A, TestNode.consumer(100L));
+        net.addNode(CONS_B, TestNode.storage(0L, 50L));
+        net.connect(GEN_A, CABLE_1);
+        net.connect(CABLE_1, CONS_A);
+        net.connect(CABLE_1, CONS_B);
+
+        EnergyDistributionResult result = net.tickDistribute();
+
+        assertEquals(150L, result.totalDemand(), "the store's room is still demand");
+        assertEquals(0L, result.unsatisfiedDemand(), "but none that goes unmet: the consumer has all it asked for");
+    }
+
+    @Test
     void storage_feedsWhatConsumersStillWant() {
         EnergyNetwork net = new EnergyNetwork();
         TestNode gen = TestNode.generator(30L);

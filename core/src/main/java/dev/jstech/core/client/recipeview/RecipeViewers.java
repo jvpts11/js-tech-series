@@ -46,6 +46,11 @@ public final class RecipeViewers {
         VIEWERS.addIfAbsent(viewer);
     }
 
+    /** Takes a viewer away while its bridge is down, so nothing offers a click it cannot answer. */
+    public static void remove(final IRecipeViewer viewer) {
+        VIEWERS.remove(viewer);
+    }
+
     /** Whether a viewer runs on this game, so a click on a recipe has somewhere to open it. */
     public static boolean any() {
         return !VIEWERS.isEmpty();

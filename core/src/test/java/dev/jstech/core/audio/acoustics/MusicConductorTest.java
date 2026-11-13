@@ -54,6 +54,15 @@ class MusicConductorTest {
     }
 
     @Test
+    void reset_letsTheLastWorldsSetGoAtOnce() {
+        conductor.second(List.of(MARS, EXPLORING), place("jsspace:mars", 6_000));
+        conductor.reset();
+        assertTrue(conductor.playing().isEmpty(), "nothing of the last world plays");
+        assertEquals("exploring", conductor.second(List.of(MARS, EXPLORING), place("minecraft:overworld", 6_000))
+                .set(), "and the next world's set plays from its first second");
+    }
+
+    @Test
     void second_keepsASetThroughAShortStepOutside() {
         conductor.second(List.of(MARS), place("jsspace:mars", 6_000));
         for (int second = 1; second < MusicConductor.LETS_GO_AFTER; second++) {

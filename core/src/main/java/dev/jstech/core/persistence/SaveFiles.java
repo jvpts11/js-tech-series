@@ -45,14 +45,15 @@ public final class SaveFiles {
         return dataFolder(level).resolve(name + ".newer-v" + version + EXTENSION);
     }
 
-    /** Where the copy of {@code name} that could not be read at all is kept. */
+    /** Where the copy of {@code name} that could not be read whole is kept. */
     public static Path unreadableCopy(final ServerLevel level, final String name) {
         return dataFolder(level).resolve(name + ".unreadable" + EXTENSION);
     }
 
     /**
-     * Keeps a copy of {@code name}, whose value could not be read at all in this version's layout, before it is saved
-     * over with a fresh one. A copy already there is the one to keep, as the first is the closest to what was lost.
+     * Keeps a copy of {@code name}, whose value could not be read whole in this version's layout, before it is saved
+     * over with what of it could be read, or with a fresh one. A copy already there is the one to keep, as the first is
+     * the closest to what was lost.
      */
     public static void keepUnreadableCopy(final ServerLevel level, final String name) {
         final Path saved = file(level, name);
@@ -62,8 +63,8 @@ public final class SaveFiles {
         }
         try {
             Files.copy(saved, copy);
-            LOGGER.warn("{} could not be read and is saved again from a fresh value; the file as it was is kept as {}",
-                    saved.getFileName(), copy.getFileName());
+            LOGGER.warn("{} could not be read whole and is saved again from what could be; the file as it was is kept"
+                    + " as {}", saved.getFileName(), copy.getFileName());
         } catch (final IOException cannotCopy) {
             LOGGER.error("{} could not be read and could not be copied aside before it is saved again: {}",
                     saved.getFileName(), cannotCopy.getMessage());

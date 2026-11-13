@@ -75,8 +75,11 @@ public final class ModelView extends UiComponent {
     @Override
     public boolean mouseClicked(final double mx, final double my, final int button) {
         final int bx = right() - 3 * (BUTTON + 2) - 2;
-        if (my >= y() + 2 && my < y() + 2 + BUTTON && mx >= bx) {
-            final int which = (int) ((mx - bx) / (BUTTON + 2));
+        final int along = (int) Math.floor(mx - bx);
+        // Only on a button as drawn: the gaps between them and the margin after the last are the view's, for a drag.
+        if (my >= y() + 2 && my < y() + 2 + BUTTON && along >= 0 && along / (BUTTON + 2) < 3
+                && along % (BUTTON + 2) < BUTTON) {
+            final int which = along / (BUTTON + 2);
             switch (which) {
                 case 0 -> turning = !turning;
                 case 1 -> layers = layers == Integer.MAX_VALUE ? 1 : layers + 1 > height(subject.get())

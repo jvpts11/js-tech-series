@@ -30,6 +30,7 @@ public final class DataRegistryGameTests {
     private static final ResourceLocation FIRST = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "first");
     private static final ResourceLocation SECOND = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "second");
     private static final ResourceLocation BROKEN = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "broken");
+    private static final ResourceLocation REFUSED = ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "refused");
 
     private DataRegistryGameTests() {
     }
@@ -40,6 +41,7 @@ public final class DataRegistryGameTests {
                 "the first note was read: " + TestData.NOTES.entries());
         helper.assertTrue(TestData.NOTES.get(SECOND).isPresent(), "and the second");
         helper.assertTrue(TestData.NOTES.get(BROKEN).isEmpty(), "a file that does not read is left out");
+        helper.assertTrue(TestData.NOTES.get(REFUSED).isEmpty(), "and one whose value refuses itself as it is made");
         helper.assertTrue(DataRegistries.all().contains(TestData.NOTES), "the notes are among the declared registries");
         helper.succeed();
     }

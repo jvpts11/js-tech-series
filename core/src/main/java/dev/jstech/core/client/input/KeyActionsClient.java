@@ -127,8 +127,13 @@ public final class KeyActionsClient {
         final Set<InputConstants.Key> helm = helmKeys();
         for (final Map.Entry<KeyAction, KeyMapping> entry : MAPPINGS.entrySet()) {
             if (!entry.getKey().atTheHelm() && helm.contains(entry.getValue().getKey())) {
-                // At a helm its key steers: a press of it here does nothing.
+                // At a helm its key steers: a press of it here does nothing, nor does a hold begun here once the
+                // player stands up.
                 drop(entry.getValue());
+                final Hold held = HOLDS.get(entry.getKey());
+                if (held != null) {
+                    held.swallow();
+                }
                 continue;
             }
             final Hold hold = HOLDS.get(entry.getKey());
@@ -203,6 +208,12 @@ public final class KeyActionsClient {
             this.down = 0;
             this.done = false;
             return pressed;
+        }
+
+        /* The key is another's for now: what it does until it is next let go is nothing, a press or a hold. */
+        void swallow() {
+            this.down = 0;
+            this.done = true;
         }
     }
 }

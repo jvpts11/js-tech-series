@@ -84,9 +84,16 @@ public final class MediaPicture {
             if (length > PICTURE_TAG.length() && startsWithIgnoringCase(comments, at, PICTURE_TAG)) {
                 final String encoded = new String(comments, at + PICTURE_TAG.length(),
                         length - PICTURE_TAG.length(), StandardCharsets.US_ASCII);
-                final byte[] block = Base64.getMimeDecoder().decode(encoded);
-                final int type = (int) be32(block, 0);
-                final byte[] picture = flacPicture(block);
+                final int type;
+                final byte[] picture;
+                try {
+                    final byte[] block = Base64.getMimeDecoder().decode(encoded);
+                    type = (int) be32(block, 0);
+                    picture = flacPicture(block);
+                } catch (final IllegalArgumentException | IndexOutOfBoundsException malformed) {
+                    // One broken picture is passed over: a good cover after it is still found.
+                    continue;
+                }
                 if (picture != null && (found == null || type == FRONT_COVER)) {
                     found = picture;
                     if (type == FRONT_COVER) {

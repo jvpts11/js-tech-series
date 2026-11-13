@@ -19,8 +19,8 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 
 /**
- * A state of every scope for the tests to keep values in, each synced, and one that is not, kept for the test of a
- * file a newer mod saved. Registered on both sides, as every state is.
+ * A state of every scope for the tests to keep values in, each synced, and two that are not, kept for the tests of a
+ * file a newer mod saved and of one read only in part. Registered on both sides, as every state is.
  */
 public final class TestStates {
 
@@ -37,6 +37,7 @@ public final class TestStates {
             .synced(ByteBufCodecs.VAR_INT)
             .team();
     public static final ServerState<Integer> NEWER = CoreState.builder(id("newer"), Codec.INT, 0).server();
+    public static final PlayerState<Integer> PARTLY = CoreState.builder(id("partly"), Codec.INT, 0).player();
 
     private TestStates() {
     }
@@ -47,6 +48,7 @@ public final class TestStates {
         CoreStates.register(SCORE);
         CoreStates.register(FUNDS);
         CoreStates.register(NEWER);
+        CoreStates.register(PARTLY);
     }
 
     private static ResourceLocation id(final String path) {

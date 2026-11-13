@@ -12,8 +12,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
+import dev.jstech.core.material.MaterialKind;
 import dev.jstech.core.util.DeclarationError;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -56,9 +58,9 @@ public final class PackReader {
     /** The tools that break a block fast, and the tiers a block may need to drop anything. */
     public static final Set<String> TOOLS = Set.of("pickaxe", "axe", "shovel", "hoe");
     public static final Set<String> TIERS = Set.of("wood", "stone", "iron", "diamond");
-    /** The kinds a material may be, as the Core names them. */
-    public static final Set<String> KINDS = Set.of("metal", "crystal", "gem", "nonmetal_solid", "mineral", "liquid",
-            "gas", "exotic");
+    /** The kinds a material may be, as the Core names them: every {@link MaterialKind}, so the two never drift. */
+    public static final Set<String> KINDS = Set.copyOf(Arrays.stream(MaterialKind.values())
+            .map(MaterialKind::serializedName).toList());
 
     private static final float STONE_STRENGTH = 1.5f;
     private static final float STONE_RESISTANCE = 6.0f;
@@ -135,7 +137,7 @@ public final class PackReader {
         return new PackDeclaration.Block(id, name, strength, resistance,
                 oneOf(json, "sound", "stone", SOUNDS, what), whole(json, "light", 0, 0, BRIGHTEST, what),
                 oneOf(json, "tool", "", TOOLS, what), oneOf(json, "needs", "", TIERS, what),
-                !json.has("item") || json.get("item").getAsBoolean());
+                flag(json, "item", true, what));
     }
 
     private static PackDeclaration material(final String what, final String id, final String name,
@@ -156,7 +158,7 @@ public final class PackReader {
                     each.getValue()));
         }
         return new PackDeclaration.Material(id, name, kind, Integer.parseInt(colour.substring(1), HEX),
-                json.has("liquid") && json.get("liquid").getAsBoolean(), strings(json, "forms", what),
+                flag(json, "liquid", false, what), strings(json, "forms", what),
                 strings(json, "ores", what), properties);
     }
 
@@ -185,7 +187,7 @@ public final class PackReader {
 
     private static float decimal(final JsonObject json, final String key, final float otherwise,
                                  final String what) {
-        final float value = json.has(key) ? json.get(key).getAsFloat() : otherwise;
+        final float value = json.has(key) ? number(json, key, what).floatValue() : otherwise;
         if (value < 0 || value > MOST_STRENGTH || Float.isNaN(value)) {
             throw DeclarationError.of(null, what, "has the " + key + " " + value + ", outside 0 to " + MOST_STRENGTH,
                     "give it a number in between: stone is 1.5, iron 5");
@@ -195,12 +197,38 @@ public final class PackReader {
 
     private static int whole(final JsonObject json, final String key, final int otherwise, final int least,
                              final int most, final String what) {
-        final int value = json.has(key) ? json.get(key).getAsInt() : otherwise;
-        if (value < least || value > most) {
-            throw DeclarationError.of(null, what, "has the " + key + " " + value + ", outside " + least + " to "
-                    + most, "give it a whole number in between");
+        if (!json.has(key)) {
+            return otherwise;
         }
-        return value;
+        final double value = number(json, key, what).doubleValue();
+        if (value != Math.floor(value) || value < least || value > most) {
+            throw DeclarationError.of(null, what, "has the " + key + " " + json.get(key) + ", not a whole number"
+                    + " from " + least + " to " + most, "give it a whole number in between");
+        }
+        return (int) value;
+    }
+
+    /* The number {@code key} holds; a value that is no number is told as such, naming where it is written. */
+    private static Number number(final JsonObject json, final String key, final String what) {
+        final JsonElement value = json.get(key);
+        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) {
+            throw DeclarationError.of(null, what, "has the " + key + " " + value + ", which is not a number",
+                    "give it a number, such as 1.5");
+        }
+        return value.getAsNumber();
+    }
+
+    /* Whether {@code key} says so, {@code otherwise} when it is not written; one that is neither is told as such. */
+    private static boolean flag(final JsonObject json, final String key, final boolean otherwise, final String what) {
+        if (!json.has(key)) {
+            return otherwise;
+        }
+        final JsonElement value = json.get(key);
+        if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean()) {
+            throw DeclarationError.of(null, what, "has the " + key + " " + value + ", which is neither true nor false",
+                    "write it as true or false");
+        }
+        return value.getAsBoolean();
     }
 
     private static List<String> strings(final JsonObject json, final String key, final String what) {
@@ -213,7 +241,13 @@ public final class PackReader {
         }
         final List<String> out = new ArrayList<>();
         final JsonArray array = json.getAsJsonArray(key);
-        array.forEach(each -> out.add(each.getAsString()));
+        for (final JsonElement each : array) {
+            if (!each.isJsonPrimitive() || !each.getAsJsonPrimitive().isString()) {
+                throw DeclarationError.of(null, what, "has " + key + " holding " + each + ", which is not a name",
+                        "write each as a name in quotes, [\"ingot\", \"dust\"]");
+            }
+            out.add(each.getAsString());
+        }
         return out;
     }
 }

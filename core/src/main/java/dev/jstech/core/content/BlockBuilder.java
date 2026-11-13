@@ -129,10 +129,13 @@ public final class BlockBuilder<B extends Block> {
                     "say how it is drawn with look(...) before register()");
         }
         final Drops dropped = drops != null ? drops : itemFactory != null ? Drops.SELF : Drops.NONE;
-        if (itemFactory == null && (dropped != Drops.NONE || section != null || itemLook != null)) {
+        // A table written by hand may give anything, the block's own item or not, so only dropping itself needs one.
+        final boolean dropsItself = dropped == Drops.SELF || dropped == Drops.SELF_WITH_CONTENTS;
+        if (itemFactory == null && (dropsItself || section != null || itemLook != null)) {
             throw DeclarationError.of(content.modid(), "the block " + content.modid() + ":" + id,
                     "drops itself, sits in a creative tab or has an item look, but has no item",
-                    "give it one with item(), or take away its drops(...), tab(...) and itemLook(...)");
+                    "give it one with item(), or have it drop nothing or by a table of its own (Drops.NONE or "
+                            + "Drops.HANDMADE) and take away its tab(...) and itemLook(...)");
         }
         final BlockBehaviour.Properties madeWith = properties;
         final DeferredBlock<B> block = content.blockRegister().register(id, () -> factory.apply(madeWith));

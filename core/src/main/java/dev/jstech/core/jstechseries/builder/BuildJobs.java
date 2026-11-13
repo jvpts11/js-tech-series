@@ -10,6 +10,7 @@ package dev.jstech.core.jstechseries.builder;
 import dev.jstech.core.jstechseries.projector.ProjectorView;
 import dev.jstech.core.multiblock.BuildBalance;
 import dev.jstech.core.multiblock.BuildOrder;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.MultiblockBlocks;
 import dev.jstech.core.protection.Actor;
 import dev.jstech.core.protection.ProtectedAction;
@@ -216,6 +217,8 @@ public final class BuildJobs {
     private static BuildStatus takeOut(final ServerPlayer player, final Job job, final BlockPos at) {
         final Level level = player.level();
         final BlockState state = level.getBlockState(at);
+        // A part of a formed machine is the block it stands for: that block is what is given back, read before it goes.
+        final BlockState original = FormedPartBlock.originalAt(level, at, state);
         if (state.getDestroySpeed(level, at) < 0) {
             return job.status(BuildStatus.Phase.STOPPED, BuildStatus.Reason.BLOCKED, "");
         }
@@ -229,7 +232,7 @@ public final class BuildJobs {
             // A fluid, or a block's water, which breaking leaves behind.
             level.setBlock(at, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
         }
-        final Item item = state.getBlock().asItem();
+        final Item item = original.getBlock().asItem();
         if (item != Items.AIR) {
             BuildSources.get(job.state.source()).giveBack(player, new ItemStack(item));
         }

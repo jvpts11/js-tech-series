@@ -51,7 +51,7 @@ public final class ReservoirPainter {
                 final int bottom = (int) Math.ceil(body.y() - half);
                 final int top = (int) Math.floor(body.y() + half);
                 for (int y = bottom; y <= top + type.capping(); y++) {
-                    if (y <= level.getMinBuildHeight() || y >= level.getMaxBuildHeight()) {
+                    if (y < level.getMinBuildHeight() || y >= level.getMaxBuildHeight()) {
                         continue;
                     }
                     final boolean lens = y <= top && body.share(x, y, z) > 0;

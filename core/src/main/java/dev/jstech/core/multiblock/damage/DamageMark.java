@@ -57,7 +57,10 @@ public record DamageMark(ResourceLocation stamp, double x, double y, double z, f
     /** The strike it records, if its stamp is declared and it is whole; none for one that is not. */
     public Optional<Strike> strike() {
         final Optional<DamageStamp> declared = DamageStamps.get(this.stamp);
-        if (declared.isEmpty() || !(this.size > 0) || this.nx == 0 && this.ny == 0 && this.nz == 0) {
+        // A size past every number, or a way that is not a number, is a mark not whole, as a strike would refuse it.
+        if (declared.isEmpty() || !(this.size > 0) || !Float.isFinite(this.size) || !Float.isFinite(this.nx)
+                || !Float.isFinite(this.ny) || !Float.isFinite(this.nz) || this.nx == 0 && this.ny == 0 && this.nz == 0
+                || !Double.isFinite(this.x) || !Double.isFinite(this.y) || !Double.isFinite(this.z)) {
             return Optional.empty();
         }
         return Optional.of(new Strike(declared.get(), this.x, this.y, this.z, this.nx, this.ny, this.nz, this.size,

@@ -50,6 +50,8 @@ public final class StructureParts {
     private final Long2ObjectMap<AABB[]> shapes = new Long2ObjectOpenHashMap<>();
     private final Long2DoubleMap grips = new Long2DoubleOpenHashMap();
     private final Long2ObjectMap<Part> parts = new Long2ObjectOpenHashMap<>();
+    /* How much each block that drags other than a plain block does, so its faces close by what they opened with. */
+    private final Long2DoubleMap drags = new Long2DoubleOpenHashMap();
     /* The faces meeting the air, by the way they look: their area, and the sums of their middles times their area. */
     private final Map<Direction, double[]> faces = facesNone();
     /* The air its hull holds, worked out again a while after its blocks change, and when it last was. */
@@ -209,6 +211,9 @@ public final class StructureParts {
         }
         final BlockPhysics physics = BlockPhysics.of(was);
         final double drag = physics.drag().orElse(1.0);
+        if (drag != 1.0) {
+            drags.put(key, drag);
+        }
         for (final Direction way : Direction.values()) {
             final long beside = BlockPos.offset(key, way);
             if (filled.contains(beside)) {
@@ -240,8 +245,8 @@ public final class StructureParts {
         final double kilograms = masses.remove(key);
         mass.remove(pos.getX() + HALF, pos.getY() + HALF, pos.getZ() + HALF, kilograms, SIDE);
         displaced.remove(key);
-        final Part part = parts.remove(key);
-        final double drag = part != null ? part.physics().drag().orElse(1.0) : dragOf(key);
+        parts.remove(key);
+        final double drag = drags.containsKey(key) ? drags.remove(key) : 1.0;
         for (final Direction way : Direction.values()) {
             final long beside = BlockPos.offset(key, way);
             if (filled.contains(beside)) {
@@ -327,8 +332,7 @@ public final class StructureParts {
     }
 
     private double dragOf(final long key) {
-        final Part part = parts.get(key);
-        return part != null ? part.physics().drag().orElse(1.0) : 1.0;
+        return drags.containsKey(key) ? drags.get(key) : 1.0;
     }
 
     private void openFace(final long key, final Direction way, final double drag) {

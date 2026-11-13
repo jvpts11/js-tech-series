@@ -53,8 +53,11 @@ public final class CableType {
 
     /** The thickest a cable is, in pixels: three quarters of a block, a pipe alone in its block. */
     public static final int THICKEST = 12;
-    /* The widest a wire in an outer lane can be and still stay inside the block, half a block less the lane pitch. */
-    private static final int MOST_PIXELS_IN_A_LANE = 2 * (8 - Lane.PITCH);
+    /*
+     * The widest a wire in a lane can be: one pixel less than the lane pitch, so wires in lanes side by side keep a
+     * pixel between them, which also keeps a wire in an outer lane inside the block.
+     */
+    private static final int MOST_PIXELS_IN_A_LANE = Math.min(2 * (8 - Lane.PITCH), Lane.PITCH - 1);
 
     private final Connection line;
     private final GridKind grid;
@@ -88,7 +91,7 @@ public final class CableType {
             throw new IllegalStateException("a cable that shares blocks takes a lane: " + this.line.line());
         }
         if (!builder.alone && builder.thickness > MOST_PIXELS_IN_A_LANE) {
-            // Past this a wire in an outer lane would stick out of the block, and wires in lanes side by side overlap.
+            // Past this wires in lanes side by side would touch, and further on stick out of the block.
             throw new IllegalStateException("a cable that takes a lane is at most " + MOST_PIXELS_IN_A_LANE
                     + " pixels thick, not " + builder.thickness + ": " + this.line.line());
         }
@@ -356,8 +359,8 @@ public final class CableType {
         }
 
         /**
-         * How thick it is, in pixels; four unless said. A cable that takes a lane is at most six, so wires side by side
-         * never meet; one alone in its block, as a pipe, at most twelve.
+         * How thick it is, in pixels; four unless said. A cable that takes a lane is at most four, so wires side by
+         * side keep a pixel between them; one alone in its block, as a pipe, at most twelve.
          */
         public Builder thickness(final int pixels) {
             if (pixels <= 0 || pixels > MOST_PIXELS) {

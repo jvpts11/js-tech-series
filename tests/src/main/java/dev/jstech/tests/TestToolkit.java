@@ -142,6 +142,8 @@ public final class TestToolkit {
         private @Nullable IPartHost host;
         private Direction face = Direction.NORTH;
         private boolean lit;
+        /* The quarter turns it was last told it stands at, which it keeps in no save of its own. */
+        private int turns;
 
         private static final String LIT = "Lit";
         private static final int FULL = 15;
@@ -175,6 +177,16 @@ public final class TestToolkit {
         @Override
         public int comparator() {
             return this.lit ? LAMP_READING : 0;
+        }
+
+        @Override
+        public void turned(final int quarterTurns) {
+            this.turns = quarterTurns;
+        }
+
+        /** The quarter turns it was last told it stands at. */
+        public int turns() {
+            return this.turns;
         }
 
         /** Lights or puts out the lamp, and tells its block. */

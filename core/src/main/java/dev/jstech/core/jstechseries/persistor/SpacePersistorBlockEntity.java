@@ -132,15 +132,29 @@ public final class SpacePersistorBlockEntity extends MachineBlockEntity {
         changeArea(area().reaching(radius));
     }
 
+    /** Turns its radius {@code by} out, or in when less than none, held between none and the most. */
+    public void turnRadius(final int by) {
+        // Clamped before it is added, so no step a changed game sends can wrap the radius round.
+        final int step = Math.clamp(by, -PersistorArea.MOST_RADIUS, PersistorArea.MOST_RADIUS);
+        changeArea(area().reaching(area().radius() + step));
+    }
+
     /** Adds the chunk {@code dx, dz} from its own to its area, or takes it off, as a click on its map does. */
     public void click(final int dx, final int dz) {
+        // A chunk its map can show, never one far off that a click from a changed game would have it keep loaded.
+        final int reach = Math.max(NEAR, PersistorArea.MOST_RADIUS);
+        if (Math.abs(dx) > reach || Math.abs(dz) > reach) {
+            return;
+        }
         changeArea(area().clicked(dx, dz, alongX()));
     }
 
     /** Names it {@code given}, cut to {@link #LONGEST_NAME}; an empty name takes its name away. */
     public void rename(final String given) {
         final String trimmed = given.strip();
-        this.name.set(trimmed.length() > LONGEST_NAME ? trimmed.substring(0, LONGEST_NAME) : trimmed);
+        // Cut by letters, so a letter of two halves is kept whole or left out, never halved.
+        this.name.set(trimmed.codePointCount(0, trimmed.length()) > LONGEST_NAME
+                ? trimmed.substring(0, trimmed.offsetByCodePoints(0, LONGEST_NAME)) : trimmed);
         setChanged();
     }
 

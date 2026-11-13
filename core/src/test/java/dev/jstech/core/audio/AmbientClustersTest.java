@@ -37,6 +37,18 @@ class AmbientClustersTest {
     }
 
     @Test
+    void group_joinsAGroupItsFirstPassLeftApart() {
+        // Four racks at the corners of a square, each 2.83 blocks from its middle but 4 from one another.
+        final List<Source> racks = List.of(new Source("a", "jsc:datacenter", 0, 64, 0),
+                new Source("b", "jsc:datacenter", 4, 64, 0), new Source("c", "jsc:datacenter", 0, 64, 4),
+                new Source("d", "jsc:datacenter", 4, 64, 4));
+        final Result result = AmbientClusters.group(racks, Map.of("jsc:datacenter", new Rule(4, 3.0)));
+        assertEquals(1, result.beds().size());
+        assertEquals(4, result.beds().getFirst().members().size());
+        assertEquals(2.0, result.beds().getFirst().z(), 0.001);
+    }
+
+    @Test
     void group_leavesAFewMachinesToBeHeardOnTheirOwn() {
         final List<Source> racks = List.of(new Source("a", "jsc:datacenter", 0, 64, 0),
                 new Source("b", "jsc:datacenter", 1, 64, 0), new Source("c", "jsc:datacenter", 2, 64, 0));

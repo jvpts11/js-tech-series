@@ -160,7 +160,8 @@ public record ShapePreview(List<Ghost> ghosts, List<Ghost> clears, int minX, int
     public Map<String, Integer> materials() {
         final Map<String, Integer> counts = new LinkedHashMap<>();
         for (final Ghost ghost : this.ghosts) {
-            if (!ghost.terminal() && ghost.first() != null) {
+            // Air is no material: a place left empty takes nothing to build.
+            if (!ghost.terminal() && ghost.first() != null && !Cells.AIR.equals(ghost.first())) {
                 counts.merge(ghost.first(), 1, Integer::sum);
             }
         }
@@ -237,13 +238,21 @@ public record ShapePreview(List<Ghost> ghosts, List<Ghost> clears, int minX, int
             return new Ghost(x, y, z, 0, List.of(), List.of(), true);
         }
 
-        /** What is shown there: its first block, else its first tag as {@code #namespace:path}; none for neither. */
+        /**
+         * What is shown there: its first block that is not air, else its first tag as {@code #namespace:path}, else
+         * air for a place left empty; none for a place that names nothing.
+         */
         @Nullable
         public String first() {
-            if (!this.blocks.isEmpty()) {
-                return this.blocks.getFirst();
+            for (final String block : this.blocks) {
+                if (!Cells.AIR.equals(block)) {
+                    return block;
+                }
             }
-            return this.tags.isEmpty() ? null : "#" + this.tags.getFirst();
+            if (!this.tags.isEmpty()) {
+                return "#" + this.tags.getFirst();
+            }
+            return this.blocks.isEmpty() ? null : this.blocks.getFirst();
         }
 
         /**

@@ -121,6 +121,7 @@ final class LayeredMusic extends SimpleJsonResourceReloadListener {
         LAYERS.clear();
         playing = "";
         plan = MusicConductor.Plan.SILENT;
+        CONDUCTOR.reset();
     }
 
     @Override

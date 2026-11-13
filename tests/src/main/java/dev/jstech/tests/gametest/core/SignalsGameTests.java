@@ -19,6 +19,7 @@ import dev.jstech.core.signal.SignalRadio;
 import dev.jstech.core.signal.Signals;
 import dev.jstech.core.signal.Tuning;
 import dev.jstech.core.team.CoreTeams;
+import dev.jstech.core.team.ITeamSource;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestRadios;
@@ -340,6 +341,28 @@ public final class SignalsGameTests {
                     77);
             helper.assertTrue(SignalRadio.frequencyAt(helper.getLevel(), heard.getBlockPos()).equals(Optional.of(
                     team)), "the transmitter is on its owner's team's frequency 77");
+            helper.succeed();
+        });
+    }
+
+    /* A teammate's private frequency, lost where a probe stands, is not told to the probe: it stays the teammate's. */
+    @GameTest(template = WIDE)
+    public static void air_neverTellsAProbeOfATeammatesPrivateFrequency(final GameTestHelper helper) {
+        final UUID listener = owner("probe-listener");
+        final UUID mate = owner("probe-mate");
+        final RadioBlockEntity hidden = radio(helper, new BlockPos(46, 2, 46), TestRadios.TRANSMITTER.get(), mate,
+                Tuning.on(Band.PRIVATE, 79));
+        sendSoon(helper, hidden, 3);
+        helper.runAfterDelay(12, () -> {
+            final ITeamSource before = CoreTeams.source();
+            CoreTeams.use((server, player) -> "jstests:crew");
+            try {
+                helper.assertTrue(SignalRadio.heardAt(helper.getLevel(), helper.absolutePos(new BlockPos(6, 2, 2)),
+                        listener).stream().noneMatch(row -> mate.equals(row.owner())),
+                        "a teammate's private frequency is not listed as the team's");
+            } finally {
+                CoreTeams.use(before);
+            }
             helper.succeed();
         });
     }

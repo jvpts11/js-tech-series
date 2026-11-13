@@ -22,6 +22,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.FluidTags;
+import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
@@ -174,7 +175,9 @@ public final class ExtinguisherItem extends Item {
                              final boolean shown, final boolean heard) {
         final Vec3 eyes = sprayer.getEyePosition();
         final Vec3 ahead = sprayer.getLookAngle();
-        final Vec3 side = ahead.cross(new Vec3(0, 1, 0)).normalize();
+        // Square to the way the sprayer faces, which stays a way even looking straight up or down.
+        final float yaw = sprayer.getYRot() * Mth.DEG_TO_RAD;
+        final Vec3 side = new Vec3(-Mth.cos(yaw), 0, -Mth.sin(yaw));
         final Vec3 up = side.cross(ahead).normalize();
         final double reach = reach(agent);
         for (final double[] off : CONE) {
@@ -182,8 +185,13 @@ public final class ExtinguisherItem extends Item {
             follow(level, sprayer, agent, eyes, way, reach);
         }
         final AABB cone = new AABB(eyes, eyes.add(ahead.scale(reach))).inflate(1);
+        // Only a body the spray reaches: none behind a wall, as no fire behind one is put out.
         for (final Entity body : level.getEntities(sprayer, cone, Entity::isOnFire)) {
-            body.clearFire();
+            final Vec3 middle = body.getBoundingBox().getCenter();
+            if (level.clip(new ClipContext(eyes, middle, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE,
+                    sprayer)).getType() == HitResult.Type.MISS) {
+                body.clearFire();
+            }
         }
         if (shown) {
             Effects.at(level, FireSafety.spray(agent), eyes.add(ahead.scale(SPRAY_AHEAD))).facing(ahead)

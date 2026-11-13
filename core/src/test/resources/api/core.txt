@@ -2273,6 +2273,7 @@ stable 4
 10 dev.jstech.core.client.gui.screen.ModalDialog  new(Screen, Component, Component, Consumer<Boolean>)
 10 dev.jstech.core.client.gui.screen.ModalDialog  void onClose()
 10 dev.jstech.core.client.gui.screen.ModalDialog  void render(GuiGraphics, int, int, float)
+58 dev.jstech.core.client.gui.screen.ModalDialog  void renderBackground(GuiGraphics, int, int, float)
 10 dev.jstech.core.client.gui.screen.TabbedScreen  type abstract class extends CoreScreen
 10 dev.jstech.core.client.gui.screen.TabbedScreen  boolean mouseClicked(double, double, int)
 10 dev.jstech.core.client.gui.screen.TabbedScreen  int activeTabIndex()
@@ -8534,9 +8535,11 @@ stable 4
 10 dev.jstech.core.map.MapMarkers  static final TextKey FOUND_NAME
 10 dev.jstech.core.map.MapMarkers  static final TextKey LANDMARKS_NAME
 10 dev.jstech.core.map.MapMarkers  static void hide(MinecraftServer, UUID, String)
+58 dev.jstech.core.map.MapMarkers  static void hideAll(MinecraftServer, UUID, Collection<String>)
 10 dev.jstech.core.map.MapMarkers  static void register()
 10 dev.jstech.core.map.MapMarkers  static void share(MinecraftServer, UUID, Marker)
 10 dev.jstech.core.map.MapMarkers  static void show(ServerPlayer, Marker)
+58 dev.jstech.core.map.MapMarkers  static void showAll(ServerPlayer, Collection<Marker>)
 10 dev.jstech.core.map.Marker  type record(String id, ResourceLocation layer, ResourceKey<Level> dimension, BlockPos pos, List<ChunkPos> area, Component label, int colour)
 10 dev.jstech.core.map.Marker  Marker coloured(int)
 10 dev.jstech.core.map.Marker  boolean isArea()
@@ -12740,9 +12743,13 @@ stable 4
 10 dev.jstech.core.team.Ownership  String ownerName(MinecraftServer)
 10 dev.jstech.core.team.Ownership  Text denial(MinecraftServer)
 10 dev.jstech.core.team.Ownership  boolean mayBreak(ServerPlayer)
+58 dev.jstech.core.team.Ownership  boolean mayBreak(ServerPlayer, ServerLevel, BlockPos)
 10 dev.jstech.core.team.Ownership  boolean mayOpen(ServerPlayer)
+58 dev.jstech.core.team.Ownership  boolean mayOpen(ServerPlayer, ServerLevel, BlockPos)
 10 dev.jstech.core.team.Ownership  boolean maySetUp(ServerPlayer)
+58 dev.jstech.core.team.Ownership  boolean maySetUp(ServerPlayer, ServerLevel, BlockPos)
 10 dev.jstech.core.team.Ownership  boolean mayUse(ServerPlayer)
+58 dev.jstech.core.team.Ownership  boolean mayUse(ServerPlayer, ServerLevel, BlockPos)
 10 dev.jstech.core.team.Ownership  boolean sameTeam(MinecraftServer, UUID)
 10 dev.jstech.core.team.Ownership  static Ownership of(UUID)
 10 dev.jstech.core.team.Ownership  static final Codec<Ownership> CODEC

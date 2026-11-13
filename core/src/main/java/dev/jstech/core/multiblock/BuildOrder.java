@@ -8,6 +8,7 @@
 package dev.jstech.core.multiblock;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,8 +30,9 @@ public record BuildOrder(List<Step> steps, Map<String, Integer> uses, Map<String
 
     public BuildOrder {
         steps = List.copyOf(steps);
-        uses = Map.copyOf(uses);
-        lacks = Map.copyOf(lacks);
+        // Kept in the order given, which is the order first met; a plain copy would lose it.
+        uses = Collections.unmodifiableMap(new LinkedHashMap<>(uses));
+        lacks = Collections.unmodifiableMap(new LinkedHashMap<>(lacks));
     }
 
     /**

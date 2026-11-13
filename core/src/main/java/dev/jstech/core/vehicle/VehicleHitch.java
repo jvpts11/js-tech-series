@@ -28,6 +28,8 @@ final class VehicleHitch {
     private static final double LOOK = 6;
     /* What the overworld pulls a vehicle down by each tick, as it pulls a falling block. */
     private static final double PULL = 0.04;
+    /* The longest train looked along for a ring, so a ring already made never holds the look up for ever. */
+    private static final int LONGEST_TRAIN = 64;
 
     private VehicleHitch() {
     }
@@ -42,7 +44,7 @@ final class VehicleHitch {
         VehicleEntity nearest = null;
         double best = REACH;
         for (final VehicleEntity other : trailer.level().getEntitiesOfClass(VehicleEntity.class,
-                new AABB(at, at).inflate(LOOK), other -> other != trailer && other.towedBy() != trailer)) {
+                new AABB(at, at).inflate(LOOK), other -> other != trailer && !towedThrough(other, trailer))) {
             final VehicleDef kind = other.def();
             if (kind == null || kind.hitching().tow().isEmpty()) {
                 continue;
@@ -104,5 +106,20 @@ final class VehicleHitch {
         if (!trailer.level().isClientSide()) {
             trailer.hitchTo(null);
         }
+    }
+
+    /*
+     * Whether {@code leader} is towed, through however many between, by {@code trailer}: hitched to it, the train
+     * would close on itself in a ring.
+     */
+    private static boolean towedThrough(final VehicleEntity leader, final VehicleEntity trailer) {
+        VehicleEntity ahead = leader.towedBy();
+        for (int seen = 0; ahead != null && seen < LONGEST_TRAIN; seen++) {
+            if (ahead == trailer) {
+                return true;
+            }
+            ahead = ahead.towedBy();
+        }
+        return false;
     }
 }

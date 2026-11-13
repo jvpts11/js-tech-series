@@ -15,6 +15,7 @@ import dev.jstech.core.map.MapMarkers;
 import dev.jstech.core.map.Marker;
 import dev.jstech.core.progression.TeamProgress;
 import dev.jstech.core.team.CoreTeams;
+import dev.jstech.core.team.ITeamSource;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.worldgen.place.Finding;
 import dev.jstech.core.worldgen.place.Landmark;
@@ -113,6 +114,30 @@ public final class PlaceGameTests {
         } finally {
             NeoForge.EVENT_BUS.unregister(listener);
         }
+        helper.succeed();
+    }
+
+    /* A landmark a teammate found is kept as the player's own once they come near, unsaid, so leaving keeps it. */
+    @GameTest(template = ARENA)
+    public static void landmark_foundByATeammateIsKeptByThePlayerWhoComesNear(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MinecraftServer server = level.getServer();
+        final ServerPlayer finder = FakePlayerFactory.get(level, new GameProfile(UUID.randomUUID(), "Pathfinder"));
+        final ServerPlayer mate = FakePlayerFactory.get(level, new GameProfile(UUID.randomUUID(), "Follower"));
+        final ITeamSource before = CoreTeams.source();
+        CoreTeams.use((on, player) -> "jstests:surveyors");
+        try {
+            // The team's own finds forgotten first: a world kept from a run before remembers them.
+            Landmarks.forget(server, finder.getUUID(), TestPlaces.SPIRE);
+            helper.assertTrue(Landmarks.discover(finder, TestPlaces.SPIRE), "the first of the team finds it");
+            helper.assertTrue(!Landmarks.discover(mate, TestPlaces.SPIRE), "the second is told nothing new");
+        } finally {
+            CoreTeams.use(before);
+        }
+        helper.assertTrue(Landmarks.discovered(server, mate.getUUID()).contains(TestPlaces.SPIRE),
+                "and keeps it, the team gone");
+        Landmarks.forget(server, finder.getUUID(), TestPlaces.SPIRE);
+        Landmarks.forget(server, mate.getUUID(), TestPlaces.SPIRE);
         helper.succeed();
     }
 

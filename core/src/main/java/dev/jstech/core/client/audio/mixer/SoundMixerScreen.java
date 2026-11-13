@@ -12,6 +12,7 @@ import dev.jstech.core.audio.SoundMixerTexts;
 import dev.jstech.core.client.audio.AudioPrefsStore;
 import dev.jstech.core.gui.layout.SoundMixerLayout;
 import dev.jstech.core.text.GameText;
+import java.util.Arrays;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.tabs.Tab;
@@ -31,10 +32,11 @@ import org.jetbrains.annotations.Nullable;
 public final class SoundMixerScreen extends Screen {
 
     private final Screen parent;
-    private final HeaderAndFooterLayout layout =
-            new HeaderAndFooterLayout(this, SoundMixerLayout.TAB_BAR_HEIGHT, SoundMixerLayout.FOOTER);
     private final TabManager tabs = new TabManager(this::addRenderableWidget, this::removeWidget);
+    /* Laid out afresh each time the screen is built, so its footer never holds a second Done. */
+    private HeaderAndFooterLayout layout = newLayout();
     private @Nullable TabNavigationBar bar;
+    private Tab[] shown = {};
     private int selected;
 
     public SoundMixerScreen(final Screen parent) {
@@ -58,9 +60,15 @@ public final class SoundMixerScreen extends Screen {
 
     @Override
     protected void init() {
-        final Tab[] all = {new ChannelsTab(font), new SoundsTab(minecraft, font), new AudioOptionsTab(this, font)};
-        bar = TabNavigationBar.builder(tabs, width).addTabs(all).build();
+        // Built again as the window is resized: it comes back on the tab the player had chosen.
+        final int showing = Arrays.asList(shown).indexOf(tabs.getCurrentTab());
+        if (showing >= 0) {
+            selected = showing;
+        }
+        shown = new Tab[] {new ChannelsTab(font), new SoundsTab(minecraft, font), new AudioOptionsTab(this, font)};
+        bar = TabNavigationBar.builder(tabs, width).addTabs(shown).build();
         addRenderableWidget(bar);
+        layout = newLayout();
         layout.addToFooter(Button.builder(CommonComponents.GUI_DONE, button -> onClose())
                 .width(SoundMixerLayout.DONE_WIDTH).build());
         layout.visitWidgets(this::addRenderableWidget);
@@ -107,5 +115,9 @@ public final class SoundMixerScreen extends Screen {
     /** Remembers which tab to come back to when a screen this one opens returns to it. */
     void rememberTab(final int index) {
         selected = index;
+    }
+
+    private HeaderAndFooterLayout newLayout() {
+        return new HeaderAndFooterLayout(this, SoundMixerLayout.TAB_BAR_HEIGHT, SoundMixerLayout.FOOTER);
     }
 }

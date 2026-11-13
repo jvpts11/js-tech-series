@@ -238,7 +238,7 @@ public final class JsCoreClient {
         // While developer mode is on, the mods' assets reloaded as they change, the tools for screens (the inspector
         // on F12, the editor on the screen from it, the new screen on /jstech screen new) and the studio.
         LiveReloadClient.listen();
-        ScreenInspector.listen();
+        ScreenInspector.listen(modEventBus);
         ScreenEditor.listen();
         ScreenDevCommands.listen();
         StudioClient.listen();

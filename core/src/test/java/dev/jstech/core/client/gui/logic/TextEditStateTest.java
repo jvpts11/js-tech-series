@@ -127,6 +127,16 @@ public class TextEditStateTest {
     }
 
     @Test
+    public void sync_longerThanTheMaximumComesInCut() {
+        final TextEditState state = new TextEditState(3);
+        state.sync("abcdef");
+        assertEquals("abc", state.edit(), "the edit holds no more than it takes");
+        assertEquals("abcdef", state.value(), "while the value adopted stays as it was");
+        state.revert();
+        assertEquals("abc", state.edit(), "and a revert cuts it the same");
+    }
+
+    @Test
     public void type_appendsUntilTheMaximumLength() {
         final TextEditState state = new TextEditState(3);
         state.type('a');

@@ -51,6 +51,8 @@ public final class PortalViews {
     /* How near a portal must be for its far side to show, in blocks, and how finely its faces are cut. */
     private static final double REACH = 48.0;
     private static final int CUTS = 8;
+    /* How far before the eye a corner must stand, in the view's depth, to fall on the screen. */
+    private static final float IN_FRONT = 1e-4F;
     private static @Nullable TextureTarget feed;
     private static @Nullable PhysicsArea shown;
     /* The projection the game drew the last frame with: its field of view as the player has it, bobbing and all. */
@@ -171,9 +173,19 @@ public final class PortalViews {
             for (int j = 0; j < CUTS; j++) {
                 final Vec3[] corners = {corner(box, face, i, j), corner(box, face, i + 1, j),
                     corner(box, face, i + 1, j + 1), corner(box, face, i, j + 1)};
-                for (final Vec3 at : corners) {
-                    final float[] uv = onScreen(at, eye, view, projection);
-                    builder.addVertex(matrix, (float) at.x, (float) at.y, (float) at.z).setUv(uv[0], uv[1]);
+                final float[][] uvs = new float[corners.length][];
+                boolean behind = false;
+                for (int k = 0; k < corners.length; k++) {
+                    uvs[k] = onScreen(corners[k], eye, view, projection);
+                    behind |= uvs[k] == null;
+                }
+                // A cell reaching behind the eye has no place on the screen to take the picture from: left out.
+                if (behind) {
+                    continue;
+                }
+                for (int k = 0; k < corners.length; k++) {
+                    builder.addVertex(matrix, (float) corners[k].x, (float) corners[k].y, (float) corners[k].z)
+                            .setUv(uvs[k][0], uvs[k][1]);
                 }
             }
         }
@@ -193,14 +205,20 @@ public final class PortalViews {
         };
     }
 
-    /* Where {@code at} falls on the screen, from 0 to 1 across and up, as the picture is laid. */
-    private static float[] onScreen(final Vec3 at, final Vec3 eye, final Matrix4f view, final Matrix4f projection) {
+    /*
+     * Where {@code at} falls on the screen, from 0 to 1 across and up, as the picture is laid; null for a point at the
+     * eye or behind it, which falls nowhere on it.
+     */
+    private static float @Nullable [] onScreen(final Vec3 at, final Vec3 eye, final Matrix4f view,
+                                               final Matrix4f projection) {
         final Vector4f clip = new Vector4f((float) (at.x - eye.x), (float) (at.y - eye.y), (float) (at.z - eye.z),
                 1.0F);
         view.transform(clip);
         projection.transform(clip);
-        final float w = Math.max(clip.w, 1e-4F);
-        return new float[] {clip.x / w * 0.5F + 0.5F, clip.y / w * 0.5F + 0.5F};
+        if (clip.w <= IN_FRONT) {
+            return null;
+        }
+        return new float[] {clip.x / clip.w * 0.5F + 0.5F, clip.y / clip.w * 0.5F + 0.5F};
     }
 
     /* The seamless portal nearest the eye within reach, leading elsewhere in this dimension. */

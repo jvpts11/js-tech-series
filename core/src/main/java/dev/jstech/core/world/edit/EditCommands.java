@@ -40,6 +40,8 @@ public final class EditCommands {
     private static final String TO = "to";
     private static final String AT = "at";
     private static final String ROTATION = "rotation";
+    /* The most blocks one export or import holds, read or planned whole in one tick. */
+    private static final long MOST_BLOCKS = 1_000_000;
 
     private EditCommands() {
     }
@@ -66,10 +68,14 @@ public final class EditCommands {
         final ResourceLocation id = ResourceLocationArgument.getId(context, NAME);
         final BoundingBox box = BoundingBox.fromCorners(BlockPosArgument.getLoadedBlockPos(context, FROM),
                 BlockPosArgument.getLoadedBlockPos(context, TO));
+        final long blocks = (long) box.getXSpan() * box.getYSpan() * box.getZSpan();
+        // Read whole in this tick, as the game's own structure block does, so its size is held to a most.
+        if (blocks > MOST_BLOCKS) {
+            return fail(context, EditTexts.TOO_BIG.with(MOST_BLOCKS, blocks));
+        }
         if (!WorldEdits.export(context.getSource().getLevel(), box, id)) {
             return fail(context, EditTexts.NOT_EXPORTED.with(id));
         }
-        final long blocks = (long) box.getXSpan() * box.getYSpan() * box.getZSpan();
         return answer(context, EditTexts.EXPORTED.with(blocks, id));
     }
 
@@ -78,6 +84,12 @@ public final class EditCommands {
         final ResourceLocation id = ResourceLocationArgument.getId(context, NAME);
         final ServerLevel level = context.getSource().getLevel();
         final BlockPos at = BlockPosArgument.getLoadedBlockPos(context, AT);
+        // A file is planned whole in this tick before its blocks are set a few a tick, so it too is held to a most.
+        final long size = level.getStructureManager().get(id).map(template -> (long) template.getSize().getX()
+                * template.getSize().getY() * template.getSize().getZ()).orElse(0L);
+        if (size > MOST_BLOCKS) {
+            return fail(context, EditTexts.TOO_BIG.with(MOST_BLOCKS, size));
+        }
         final Optional<EditPlan.Builder> plan = WorldEdits.planFrom(level, id, at, rotation);
         if (plan.isEmpty()) {
             return fail(context, EditTexts.NO_FILE.with(id));

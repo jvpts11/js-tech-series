@@ -45,8 +45,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class DynamicLightsClient {
 
-    /* What stood where each light is laid, to put it back. */
-    private static final Map<BlockPos, BlockState> LAID = new HashMap<>();
+    /* What stood where each light is laid, to put it back, and the light laid there. */
+    private static final Map<BlockPos, Laid> LAID = new HashMap<>();
     private static final List<IDynamicLightSource> SOURCES = new CopyOnWriteArrayList<>();
     /* Changes on this game only: the neighbours left alone, the mesh built again. */
     private static final int FLAGS = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE;
@@ -71,12 +71,11 @@ public final class DynamicLightsClient {
         final ClientLevel level = laidIn;
         final Map<BlockPos, Integer> out = new HashMap<>();
         if (level != null) {
-            for (final BlockPos pos : LAID.keySet()) {
-                final BlockState state = level.getBlockState(pos);
-                if (state.getBlock() instanceof LightBlock) {
-                    out.put(pos, state.getValue(LightBlock.LEVEL));
+            LAID.forEach((pos, laid) -> {
+                if (level.getBlockState(pos) == laid.placed()) {
+                    out.put(pos, laid.placed().getValue(LightBlock.LEVEL));
                 }
-            }
+            });
         }
         return Map.copyOf(out);
     }
@@ -102,12 +101,13 @@ public final class DynamicLightsClient {
             return;
         }
         final Map<BlockPos, Lit> wanted = on() ? wanted(level, player) : Map.of();
-        final Iterator<Map.Entry<BlockPos, BlockState>> laid = LAID.entrySet().iterator();
+        final Iterator<Map.Entry<BlockPos, Laid>> laid = LAID.entrySet().iterator();
         while (laid.hasNext()) {
-            final Map.Entry<BlockPos, BlockState> entry = laid.next();
+            final Map.Entry<BlockPos, Laid> entry = laid.next();
             if (!wanted.containsKey(entry.getKey())) {
-                if (level.getBlockState(entry.getKey()).getBlock() instanceof LightBlock) {
-                    level.setBlock(entry.getKey(), entry.getValue(), FLAGS);
+                // Put back only over the light laid here: one the server has put in its place since stays.
+                if (level.getBlockState(entry.getKey()) == entry.getValue().placed()) {
+                    level.setBlock(entry.getKey(), entry.getValue().original(), FLAGS);
                 }
                 laid.remove();
             }
@@ -128,14 +128,18 @@ public final class DynamicLightsClient {
     /* Lays light of {@code light} at {@code pos}, unless something stands there; whether it is laid. */
     private static boolean lay(final ClientLevel level, final BlockPos pos, final int light) {
         final BlockState state = level.getBlockState(pos);
-        final boolean ours = LAID.containsKey(pos);
+        final Laid laid = LAID.get(pos);
         if (state.getBlock() instanceof LightBlock) {
-            if (!ours) {
-                // The world's own light stands there, a spotlight's: left as it is.
+            if (laid == null || state != laid.placed()) {
+                // The world's own light stands there, a spotlight's, even where this one was laid before: left as
+                // it is, and what stood there before it the server's to put back.
+                LAID.remove(pos);
                 return false;
             }
             if (state.getValue(LightBlock.LEVEL) != light) {
-                level.setBlock(pos, CoreLights.LIGHT.get().at(light, state.getValue(LightBlock.WATERLOGGED)), FLAGS);
+                final BlockState placed = CoreLights.LIGHT.get().at(light, state.getValue(LightBlock.WATERLOGGED));
+                level.setBlock(pos, placed, FLAGS);
+                LAID.put(pos, new Laid(laid.original(), placed));
             }
             return true;
         }
@@ -143,8 +147,9 @@ public final class DynamicLightsClient {
             LAID.remove(pos);
             return false;
         }
-        LAID.put(pos, state);
-        level.setBlock(pos, CoreLights.LIGHT.get().at(light, state.is(Blocks.WATER)), FLAGS);
+        final BlockState placed = CoreLights.LIGHT.get().at(light, state.is(Blocks.WATER));
+        level.setBlock(pos, placed, FLAGS);
+        LAID.put(pos, new Laid(state, placed));
         return true;
     }
 
@@ -215,5 +220,9 @@ public final class DynamicLightsClient {
 
     /* The light wanted at a place. */
     private record Lit(int level, int colour) {
+    }
+
+    /* What stood at a place before light was laid there, and the light laid. */
+    private record Laid(BlockState original, BlockState placed) {
     }
 }

@@ -92,7 +92,10 @@ public final class OverheadWireRenderer {
             final Catenary.Point middle = new Catenary.Point((wire.a().x + wire.b().x) / 2,
                     (wire.a().y + wire.b().y) / 2, (wire.a().z + wire.b().z) / 2);
             final Catenary.Point seen = world(aboard, middle);
-            if (camera.distanceToSqr(seen.x(), seen.y(), seen.z()) > RANGE * RANGE) {
+            // Drawn while any of it is within reach: the middle no further than reach and half the span.
+            final double half = Math.sqrt(Math.pow(wire.b().x - wire.a().x, 2) + Math.pow(wire.b().y - wire.a().y, 2)
+                    + Math.pow(wire.b().z - wire.a().z, 2)) / 2;
+            if (camera.distanceToSqr(seen.x(), seen.y(), seen.z()) > (RANGE + half) * (RANGE + half)) {
                 continue;
             }
             final List<Catenary.Point> points = Catenary.points(wire.start(), wire.end());

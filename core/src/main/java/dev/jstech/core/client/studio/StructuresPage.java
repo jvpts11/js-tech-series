@@ -15,6 +15,7 @@ import dev.jstech.core.developer.studio.StudioAnswers;
 import dev.jstech.core.developer.studio.StudioKeys;
 import dev.jstech.core.developer.studio.StudioServices;
 import dev.jstech.core.gui.layout.StudioLayout;
+import dev.jstech.core.guide.GuideBlock;
 import dev.jstech.core.multiblock.ShapePreview;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
@@ -347,12 +348,17 @@ final class StructuresPage extends StudioPage {
                 at.getY(), at.getZ()));
     }
 
-    /* The blocks between the corners as a multiblock's shape: each block its own place, its lowest corner first. */
+    /*
+     * The blocks between the corners as a multiblock's shape: each block its own place, its lowest corner first. As
+     * much of it as the page's scene shows, read here on the game's thread; the server counts the whole of it.
+     */
     private static ShapePreview shapeOf(final Minecraft game, final BlockPos from, final BlockPos to) {
         final BlockPos min = new BlockPos(Math.min(from.getX(), to.getX()), Math.min(from.getY(), to.getY()),
                 Math.min(from.getZ(), to.getZ()));
-        final BlockPos max = new BlockPos(Math.max(from.getX(), to.getX()), Math.max(from.getY(), to.getY()),
-                Math.max(from.getZ(), to.getZ()));
+        final int most = GuideBlock.Scene.GRID - 1;
+        final BlockPos max = new BlockPos(Math.min(Math.max(from.getX(), to.getX()), min.getX() + most),
+                Math.min(Math.max(from.getY(), to.getY()), min.getY() + most),
+                Math.min(Math.max(from.getZ(), to.getZ()), min.getZ() + most));
         final List<ShapePreview.Ghost> ghosts = new ArrayList<>();
         for (final BlockPos at : BlockPos.betweenClosed(min, max)) {
             final BlockState state = game.level.getBlockState(at);

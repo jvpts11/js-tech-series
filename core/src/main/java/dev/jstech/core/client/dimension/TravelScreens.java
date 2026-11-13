@@ -97,6 +97,11 @@ public final class TravelScreens {
         expectedAt = Util.getMillis();
     }
 
+    /** The server took back the passage it announced: no loading screen to come is taken for it. */
+    public static void expectNothing() {
+        expected = null;
+    }
+
     /** The screen the coming passage is shown through, if one is expected, for a test. */
     public static @Nullable ResourceLocation expected() {
         return expected;

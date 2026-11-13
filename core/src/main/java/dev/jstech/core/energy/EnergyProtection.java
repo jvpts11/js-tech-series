@@ -103,7 +103,8 @@ public final class EnergyProtection implements IFieldPart {
      */
     public void tick(final EnergyStore store) {
         final ItemStack held = this.slots.getStackInSlot(BATTERY);
-        if (held.isEmpty()) {
+        // A burnt store, or one its fuse cut, takes and gives nothing, the battery's either, until it is mended.
+        if (held.isEmpty() || store.damaged() || store.cutByFuse()) {
             return;
         }
         final IEnergyPort own = held.getCapability(EnergyPorts.ITEM);

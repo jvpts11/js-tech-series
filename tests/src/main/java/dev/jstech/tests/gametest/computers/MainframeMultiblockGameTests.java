@@ -33,6 +33,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -94,6 +95,11 @@ public final class MainframeMultiblockGameTests {
                     helper.assertTrue(count == MainframeStructure.BLOCK_COUNT,
                             "the 3x2x2 footprint should hold " + MainframeStructure.BLOCK_COUNT
                                     + " blocks, found " + count);
+                    // What the player's game is told of a part names its origin, which picking a part reads.
+                    final BlockEntity part = helper.getBlockEntity(MainframeStructure.partPositions(origin, facing)
+                            .get(0));
+                    helper.assertTrue(part != null && part.getUpdateTag(helper.getLevel().registryAccess())
+                            .contains("ToOrigin"), "a part tells the player's game where its origin is");
                 })
                 .thenExecute(() -> helper.setBlock(
                         MainframeStructure.partPositions(origin, facing).get(0), Blocks.AIR))

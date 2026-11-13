@@ -28,9 +28,13 @@ public final class AccessoriesIntegration {
         return MOD.isLoaded();
     }
 
-    /** Hands the Core Accessories as a source of worn things; a no-op when Accessories is absent. */
-    public static void bootstrap() {
-        MOD.ifLoaded(() -> AccessoriesIntegration::useAccessories);
+    /**
+     * Hands the Core Accessories as a source of worn things; a no-op when Accessories is absent.
+     *
+     * @return whether its source was handed over: false when it is absent or its adapter did not start
+     */
+    public static boolean bootstrap() {
+        return MOD.ifLoaded(() -> AccessoriesIntegration::useAccessories);
     }
 
     // Kept in its own method so the source class (and the Accessories API behind it) is only loaded here.

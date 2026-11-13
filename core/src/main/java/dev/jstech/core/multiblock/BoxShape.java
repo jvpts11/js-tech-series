@@ -58,16 +58,23 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
     @Override
     public ShapeMatch check(final IBlockProvider provider, final long terminal) {
         final Cells.Best best = new Cells.Best();
+        // A box one block thick the way it was tried may be the terminal's wall alone, which a shape whose sides may be
+        // a block matches too: the other ways are tried then, and of all that form, the one of the most blocks is
+        // taken, the box behind the wall over the wall, the whole of a flat shape over a part of it.
+        ShapeMatch.Formed most = null;
         for (final int[] inward : INWARD) {
             final ShapeTally tally = new ShapeTally();
             final ShapeMatch result = attempt(provider, terminal, inward, tally);
             if (result instanceof ShapeMatch.Failure failure) {
                 best.offer(failure, tally.matched());
-            } else {
+            } else if (!(result instanceof ShapeMatch.Formed formed)
+                    || most == null && thickness(formed, inward) > 1) {
                 return result;
+            } else if (most == null || volume(formed) > volume(most)) {
+                most = formed;
             }
         }
-        return best.failure();
+        return most != null ? most : best.failure();
     }
 
     /** As far as its walks read: its most side or height from the terminal, and one beyond. */
@@ -173,6 +180,15 @@ public record BoxShape(Place frame, Place face, InsideRule inside, Limit sides, 
         }
         return new ShapeMatch.Formed(Orientation.NORTH, terminal, parts, Map.of(), within, hi[0] - lo[0] + 1,
                 hi[1] - lo[1] + 1, hi[2] - lo[2] + 1, 1, tally.counts(), tally.values());
+    }
+
+    /* How thick a box formed is the way {@code inward} looks from its terminal. */
+    private static int thickness(final ShapeMatch.Formed formed, final int[] inward) {
+        return inward[0] != 0 ? formed.sizeX() : inward[1] != 0 ? formed.sizeY() : formed.sizeZ();
+    }
+
+    private static long volume(final ShapeMatch.Formed formed) {
+        return (long) formed.sizeX() * formed.sizeY() * formed.sizeZ();
     }
 
     /* Widens the box along an axis to as far as the shell runs both ways from a place. */

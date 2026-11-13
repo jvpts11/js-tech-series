@@ -20,8 +20,11 @@ import net.minecraft.world.phys.Vec3;
  */
 public final class Walls {
 
-    /** The longest line walked, in blocks; a sound farther than this is too faint for walls to matter. */
-    private static final int MOST_STEPS = 48;
+    /*
+     * The most half-block steps walked from the listener, 128 blocks: walls farther along the line than that are not
+     * counted, the sound there too faint for them to matter. The steps stay half a block however long the line.
+     */
+    private static final int MOST_STEPS = 256;
 
     private Walls() {
     }
@@ -35,10 +38,10 @@ public final class Walls {
         if (length < 1.0) {
             return 1.0F;
         }
-        final int steps = Math.min(MOST_STEPS, (int) Math.ceil(length * 2));
+        final int steps = (int) Math.ceil(length * 2);
         double letThrough = 1.0;
         BlockPos last = from;
-        for (int i = 1; i < steps; i++) {
+        for (int i = 1; i < Math.min(steps, MOST_STEPS); i++) {
             final BlockPos at = BlockPos.containing(listener.add(step.scale((double) i / steps)));
             if (at.equals(last) || at.equals(from) || at.equals(to)) {
                 continue;

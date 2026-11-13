@@ -111,6 +111,17 @@ class TaskRunnerTest {
     }
 
     @Test
+    void cancel_ofATaskWhoseResultWasHandedBackLeavesItOverNotCancelled() {
+        final Task<Integer> task = runner.submit(() -> 1, result -> { }, failure -> { });
+        waitUntilWaiting(1);
+        runner.drain(Long.MAX_VALUE);
+
+        task.cancel();
+
+        assertTrue(task.over() && !task.cancelled(), "its result was handed back, so it was not cancelled");
+    }
+
+    @Test
     void cancel_interruptsWorkStillRunning() throws InterruptedException {
         final CountDownLatch started = new CountDownLatch(1);
         final CountDownLatch interrupted = new CountDownLatch(1);

@@ -42,7 +42,9 @@ public final class EffectCodecs {
 
     private static DataResult<Integer> readColour(final String text) {
         final String digits = text.startsWith("#") ? text.substring(1) : text;
-        if (digits.length() != RGB_DIGITS && digits.length() != RGBA_DIGITS) {
+        // Hex digits only: a sign the number reader would take otherwise makes a wrong colour, not an error.
+        if (digits.length() != RGB_DIGITS && digits.length() != RGBA_DIGITS
+                || !digits.chars().allMatch(c -> Character.digit(c, HEX) >= 0)) {
             return DataResult.error(() -> "an effect's colour is written #RRGGBB or #RRGGBBAA, not " + text);
         }
         try {

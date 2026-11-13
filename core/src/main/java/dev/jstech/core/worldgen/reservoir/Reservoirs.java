@@ -89,7 +89,11 @@ public final class Reservoirs {
         return Map.copyOf(DECLARED);
     }
 
-    /** Every kind of reservoir the server lays, by id in order: the files', then the declared ones no file replaces. */
+    /**
+     * Every kind of reservoir the server lays, by id in order: the files', then the declared ones no file replaces.
+     * Each zone picks its kind along this order, as the ores' veins do, so a kind added before another, or a frequency
+     * changed, picks again in a world made before: the blocks laid there stay, read by the kinds of now.
+     */
     public static List<Kind> all() {
         final Known now = known;
         final long files = FILES.version();
@@ -99,6 +103,19 @@ public final class Reservoirs {
         final Map<ResourceLocation, Kind> byId = new TreeMap<>();
         DECLARED.forEach((id, type) -> byId.put(id, new Kind(id, type)));
         FILES.entries().forEach((id, type) -> byId.put(id, new Kind(id, type)));
+        // A kind naming a block or a fluid no mod installed would lay air where its rock should be: it is left out.
+        byId.values().removeIf(kind -> {
+            final ReservoirType type = kind.type();
+            final boolean missing = !BuiltInRegistries.BLOCK.containsKey(type.soaked())
+                    || !BuiltInRegistries.BLOCK.containsKey(type.drained())
+                    || !BuiltInRegistries.BLOCK.containsKey(type.cap())
+                    || !BuiltInRegistries.FLUID.containsKey(type.fluid());
+            if (missing) {
+                JsCore.LOGGER.warn("The reservoir {} names a block or a fluid the game has not, and is left out",
+                        kind.id());
+            }
+            return missing;
+        });
         final List<Kind> kinds = List.copyOf(byId.values());
         known = new Known(files, DECLARED.size(), kinds);
         return kinds;
@@ -206,7 +223,10 @@ public final class Reservoirs {
         return Optional.ofNullable(best);
     }
 
-    /** About how much is left in {@code reservoir}, in millibuckets: what its lens held, less what was drawn. */
+    /**
+     * About how much is left in {@code reservoir}, in millibuckets: what its lens held, less what was drawn. The most
+     * there can be: the lens is counted whole, and rock it never soaks (a cave, an ore) holds none of it.
+     */
     public static long left(final ServerLevel level, final Reservoir reservoir) {
         final SpatialIndex.Entry<String, Drawn> drawn = DRAWN.get(level, reservoir.key());
         return Math.max(0, reservoir.held() - (drawn == null ? 0 : drawn.value().total()));
@@ -413,7 +433,11 @@ public final class Reservoirs {
             if (fluid == null || soaked == null || drained == null || cap == null) {
                 throw new IllegalStateException("the reservoir " + id + " names its fluid and its rocks");
             }
-            if (perBlock < 1 || frequency < 0 || frequency > 1 || radius < 2 || thickness < 1 || capping < 0) {
+            // Held to what a reservoir's file may say, so one declared in code is no larger than one written.
+            if (perBlock < 1 || perBlock > ReservoirType.MOST_PER_BLOCK || frequency < 0 || frequency > 1
+                    || radius < 2 || radius > ReservoirType.WIDEST || thickness < 1
+                    || thickness > ReservoirType.WIDEST || capping < 0 || capping > ReservoirType.THICKEST_CAP
+                    || minY > maxY) {
                 throw new IllegalStateException("the reservoir " + id + " has an amount, a frequency and a size");
             }
             DECLARED.put(id, new ReservoirType(fluid, soaked, drained, cap, perBlock, minY, maxY, frequency, radius,

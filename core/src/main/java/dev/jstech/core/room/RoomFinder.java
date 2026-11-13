@@ -251,6 +251,10 @@ final class RoomFinder {
                 }
                 read++;
                 final RoomFace face = bound(rules, cell, side, BlockPos.of(next), bounding);
+                if (face == null) {
+                    this.stage = Stage.WAITING;
+                    return read;
+                }
                 this.faces.add(face);
                 // Leaves are whole blocks, so they bound a room's air rather than fill it; they still breathe for it.
                 if (face.kind() != RoomFace.Kind.HOLE && RoomLiving.plant(bounding)) {
@@ -268,9 +272,12 @@ final class RoomFinder {
         return Math.max(read, 1);
     }
 
-    /* The face of {@code cell} towards {@code block}, of {@code state}: what bounds it there, and what lies beyond. */
-    private RoomFace bound(final DimensionRules rules, final long cell, final Direction side, final BlockPos block,
-                           final BlockState state) {
+    /*
+     * The face of {@code cell} towards {@code block}, of {@code state}: what bounds it there, and what lies beyond;
+     * none while what lies beyond is in a chunk not loaded yet, which the search then waits for.
+     */
+    private @Nullable RoomFace bound(final DimensionRules rules, final long cell, final Direction side,
+                                     final BlockPos block, final BlockState state) {
         final Seal seal = Seals.of(this.here, this.level, block, state);
         final RoomFace.Kind kind;
         final BlockPos beyond;
@@ -283,14 +290,20 @@ final class RoomFinder {
         }
         final double rating = seal.wall() ? Seals.rating(seal, state) : 0;
         final BlockState past = stateAt(beyond.asLong());
+        if (past == null) {
+            return null;
+        }
         // A door or a crack opening onto a wall lets nothing through, as a door into a machine's solid casing.
-        final boolean ontoWall = seal.wall() && past != null && Seals.of(this.here, this.level, beyond, past).wall();
+        final boolean ontoWall = seal.wall() && Seals.of(this.here, this.level, beyond, past).wall();
         final double area = ontoWall ? 0 : Seals.leak(seal, this.level, block, state);
-        final boolean water = past != null && past.getFluidState().is(FluidTags.WATER);
+        final boolean water = past.getFluidState().is(FluidTags.WATER);
         final double outside;
         final AirMix air;
         if (water) {
             final int depth = depth(beyond);
+            if (depth < 0) {
+                return null;
+            }
             outside = GasMath.underWater(rules.at(height(this.level, beyond) + depth).pressure(), depth);
             air = AirMix.VACUUM;
         } else {
@@ -302,14 +315,20 @@ final class RoomFinder {
                 beyond, outside, air, water);
     }
 
-    /* How deep {@code pos} lies under water: the water above it, up to its top, in the same column. */
+    /*
+     * How deep {@code pos} lies under water: the water above it, up to its top, in the same column; -1 while the
+     * column runs into a chunk not loaded yet.
+     */
     private int depth(final BlockPos pos) {
         int depth = 0;
         long up = pos.asLong();
         while (depth < DEEPEST) {
             up = BlockPos.offset(up, Direction.UP);
             final BlockState state = stateAt(up);
-            if (state == null || !state.getFluidState().is(FluidTags.WATER)) {
+            if (state == null) {
+                return -1;
+            }
+            if (!state.getFluidState().is(FluidTags.WATER)) {
                 break;
             }
             depth++;

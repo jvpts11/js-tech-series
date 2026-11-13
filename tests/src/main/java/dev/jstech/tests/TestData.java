@@ -18,7 +18,7 @@ import net.minecraft.resources.ResourceLocation;
 /**
  * Content the tests read from the test mod's own datapack: a registry of shades filled by datapacks, sent to every
  * player as they join, and notes read from JSON files again on every reload and sent to every player, one of whose
- * files does not read.
+ * files does not read and one whose value refuses itself.
  */
 public final class TestData {
 
@@ -29,6 +29,13 @@ public final class TestData {
                 Codec.STRING.fieldOf("name").forGetter(Shade::name),
                 Codec.INT.fieldOf("colour").forGetter(Shade::colour)
         ).apply(instance, Shade::new));
+
+        public Shade {
+            // Refused as it is made, past what its codec checks, as many of a mod's own values are.
+            if (colour < 0) {
+                throw new IllegalArgumentException("a shade's colour is a number from 0, not " + colour);
+            }
+        }
     }
 
     /** How many times the notes were read. */

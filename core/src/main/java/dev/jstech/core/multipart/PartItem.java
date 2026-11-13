@@ -61,10 +61,16 @@ public final class PartItem extends Item {
         return InteractionResult.CONSUME;
     }
 
-    /* Whether the part fits on {@code face} of the space at {@code pos}, or of one that would be made there. */
+    /*
+     * Whether the part fits on {@code face} of the space at {@code pos}, or of one that would be made there, with no
+     * player or mob standing where it would: asked alike on both sides, so they agree.
+     */
     private boolean fits(final Level level, final BlockPos pos, final Direction face) {
+        final int index = face.get3DDataValue();
+        if (!SpacePlacement.clear(level, pos, partType().boxesOn(index))) {
+            return false;
+        }
         if (level.getBlockEntity(pos) instanceof ISpaceHolder holder) {
-            final int index = face.get3DDataValue();
             return holder.parts().fits(SpaceFit.Piece.device(SpaceSlots.face(index), partType().boxesOn(index)));
         }
         final BlockState there = level.getBlockState(pos);

@@ -253,9 +253,11 @@ public final class AtmosphereDetectorScreen extends CoreContainerScreen<Atmosphe
         MachineArt.fill(g, bx - 1, by - 1, bx + bw + 1, by + AtmosphereDetectorLayout.BAR_HEIGHT + 1, c.barGround());
         int at = 0;
         final List<int[]> words = new ArrayList<>();
-        for (final AtmosphereReadings.Gas gas : gases) {
-            final int width = Math.max(1, (int) Math.round(bw * gas.share()));
-            if (at + width > bw) {
+        final int[] widths = widths(gases, bw);
+        for (int i = 0; i < gases.size(); i++) {
+            final AtmosphereReadings.Gas gas = gases.get(i);
+            final int width = widths[i];
+            if (width <= 0 || at + width > bw) {
                 break;
             }
             MachineArt.fill(g, bx + at, by, bx + at + width, by + AtmosphereDetectorLayout.BAR_HEIGHT,
@@ -269,6 +271,31 @@ public final class AtmosphereDetectorScreen extends CoreContainerScreen<Atmosphe
             MachineArt.engrave(g, this.font, AtmosphereDetector.gasLabel(gases.get(word[1]).id()), bx + word[0],
                     this.topPos + AtmosphereDetectorLayout.BAR_WORDS_Y, false);
         }
+    }
+
+    /*
+     * Each gas's width of a bar {@code bar} wide, a pixel at least: what rounding gives over the bar is taken from the
+     * widest, so the smallest gas still shows rather than falling off its end.
+     */
+    private static int[] widths(final List<AtmosphereReadings.Gas> gases, final int bar) {
+        final int[] widths = new int[gases.size()];
+        int sum = 0;
+        for (int i = 0; i < widths.length; i++) {
+            widths[i] = Math.max(1, (int) Math.round(bar * gases.get(i).share()));
+            sum += widths[i];
+        }
+        while (sum > bar) {
+            int widest = 0;
+            for (int i = 1; i < widths.length; i++) {
+                widest = widths[i] > widths[widest] ? i : widest;
+            }
+            if (widths[widest] <= 1) {
+                break;
+            }
+            widths[widest]--;
+            sum--;
+        }
+        return widths;
     }
 
     /* What the air does, on the display's last line. */

@@ -45,16 +45,18 @@ final class SaveService implements IStudioService {
         final BlockState state = level.getBlockState(pos);
         final BlockEntity read = BlockEntity.loadStatic(pos, state, before.copy(), level.registryAccess());
         final CompoundTag after = read == null ? new CompoundTag() : read.saveWithFullMetadata(level.registryAccess());
-        return FieldDiff.of(NbtLines.of(before), NbtLines.of(after));
+        // Every field whole: a loss past the lines the inspector shows, or late in a long value, is a loss too.
+        return FieldDiff.of(NbtLines.whole(before), NbtLines.whole(after));
     }
 
     private static ListTag listed(final List<FieldDiff.Change> changes) {
         final ListTag out = new ListTag();
         for (final FieldDiff.Change change : changes) {
             final CompoundTag line = new CompoundTag();
-            line.putString(StudioKeys.FIELD, change.field());
-            line.putString(StudioKeys.BEFORE, change.before());
-            line.putString(StudioKeys.AFTER, change.after());
+            // Compared whole, shown cut as the inspector shows them, so no value is too long to send.
+            line.putString(StudioKeys.FIELD, NbtLines.cut(change.field()));
+            line.putString(StudioKeys.BEFORE, NbtLines.cut(change.before()));
+            line.putString(StudioKeys.AFTER, NbtLines.cut(change.after()));
             line.putBoolean(StudioKeys.CHANGED, change.changed());
             out.add(line);
         }

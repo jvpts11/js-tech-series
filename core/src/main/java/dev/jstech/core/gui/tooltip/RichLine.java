@@ -9,6 +9,7 @@ package dev.jstech.core.gui.tooltip;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.inventory.tooltip.TooltipComponent;
@@ -74,8 +75,17 @@ public record RichLine(List<Piece> pieces) implements TooltipComponent {
          * @param sprite the sprite
          * @param width  how wide it is drawn
          * @param height how tall it is drawn
+         * @throws IllegalArgumentException when it is drawn less than a pixel either way, as no picture of a tooltip is
          */
         record Image(ResourceLocation sprite, int width, int height) implements Piece {
+
+            public Image {
+                Objects.requireNonNull(sprite, "sprite");
+                if (width < 1 || height < 1) {
+                    throw new IllegalArgumentException("A line's picture is a pixel or more a side, not " + width
+                            + " by " + height);
+                }
+            }
         }
     }
 

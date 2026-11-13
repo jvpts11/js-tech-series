@@ -13,11 +13,15 @@ import dev.jstech.core.log.CoreLogs;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextHolder;
 import dev.jstech.core.text.TextKey;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -51,6 +55,10 @@ public final class StudioServices {
 
     private static final TextKey NO_SERVICE = TextKey.of("commands.jscore.developer.no_service",
             "The server has no tool of the studio's called %s; is the same J's Core on both sides?");
+    private static final TextKey NOT_LOADED = TextKey.of("commands.jscore.developer.not_loaded",
+            "The corners reach chunks the server does not hold now; go near them first");
+    private static final TextKey LEADS_OUT = TextKey.of("commands.jscore.developer.leads_out",
+            "The name %s leads out of its folder");
     private static final String VERSION = "1";
     private static final Logger LOGGER = CoreLogs.DEVELOPER.logger();
     private static final Map<String, IStudioService> SERVICES = new ConcurrentHashMap<>();
@@ -106,6 +114,35 @@ public final class StudioServices {
             LOGGER.warn("The studio's service {} failed for {}", service, player.getGameProfile().getName(), failed);
             reply.accept(refused(String.valueOf(failed.getMessage())));
         }
+    }
+
+    /*
+     * Refuses a box between {@code from} and {@code to} that reaches a chunk the server does not hold: read on its
+     * thread, the box would load or make each such chunk first.
+     */
+    static void requireLoaded(final ServerLevel level, final BlockPos from, final BlockPos to) {
+        for (int x = SectionPos.blockToSectionCoord(Math.min(from.getX(), to.getX()));
+             x <= SectionPos.blockToSectionCoord(Math.max(from.getX(), to.getX())); x++) {
+            for (int z = SectionPos.blockToSectionCoord(Math.min(from.getZ(), to.getZ()));
+                 z <= SectionPos.blockToSectionCoord(Math.max(from.getZ(), to.getZ())); z++) {
+                if (!level.hasChunk(x, z)) {
+                    throw new IllegalArgumentException(GameText.resolve(NOT_LOADED));
+                }
+            }
+        }
+    }
+
+    /*
+     * The file {@code path} names in {@code folder}, a name a player wrote made a path; refused when a part of it
+     * would lead out of the folder, as a ".." does.
+     */
+    static Path fileIn(final Path folder, final String path) {
+        final Path base = folder.normalize();
+        final Path file = base.resolve(path).normalize();
+        if (!file.startsWith(base) || file.equals(base)) {
+            throw new IllegalArgumentException(GameText.resolve(LEADS_OUT.with(path)));
+        }
+        return file;
     }
 
     private static CompoundTag refused(final String why) {

@@ -660,6 +660,35 @@ class GuideLayoutTest {
     }
 
     @Test
+    void lay_runsALongSessionOnWithNoPartOverThePagesFoot() {
+        final List<GuideBlock.SessionLine> session = new ArrayList<>();
+        for (int i = 0; i < 80; i++) {
+            session.add(new GuideBlock.SessionLine("$ ", "echo " + i, true));
+        }
+        final int bottom = STYLE.pageHeight() - GuideLayout.FOOTER_ROOM;
+        // Whatever stands before it, the session's first part starts where some of its rows fit.
+        for (int filler = 1; filler <= 30; filler++) {
+            final List<String> lines = new ArrayList<>();
+            for (int i = 0; i < filler; i++) {
+                lines.add("line " + i + ";");
+            }
+            final GuideBook book = lay(new GuideContents(List.of(chapter("alpha", entry("alpha:t",
+                    new GuideBlock.Listing("Fill.sgs", "", lines),
+                    new GuideBlock.Session("mymod:guide/terminal/dos", "Shell", session))))));
+            for (final GuideBook.Page page : book.pages()) {
+                for (final GuidePiece piece : page.pieces()) {
+                    if (piece instanceof GuidePiece.Session part) {
+                        final int before = filler;
+                        assertTrue(part.y() + part.height() <= bottom, () -> "after " + before + " lines, "
+                                + page.folio() + " has a part of the session down to " + (part.y() + part.height())
+                                + ", below " + bottom);
+                    }
+                }
+            }
+        }
+    }
+
+    @Test
     void lay_drawsAKeyInASentenceAsOnePieceNeverBroken() {
         final FixedText text = new FixedText(Map.of("first.text", "to scroll, press [[Page Up]] or [[Page Down]] now"));
         final GuideBook book = lay(contents(), text);

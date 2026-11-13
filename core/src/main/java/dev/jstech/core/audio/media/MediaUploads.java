@@ -62,9 +62,10 @@ public final class MediaUploads {
         final MediaStore store = MediaStore.current().orElseThrow();
         final IMediaUploadHandler handler = HANDLERS.get(offer.purpose());
         if (store.has(offer.media())) {
-            // Somebody brought this very recording before: it is taken without a byte of it being sent again.
+            // Somebody brought this very recording before: it is taken without a byte of it being sent again, and
+            // charged to nobody, as the quota let it in without counting it.
             try {
-                store.broughtBy(offer.media(), player.getUUID());
+                store.used(offer.media());
                 final MediaReceipt done = handler.received(player, offer.context(), offer.name(), offer.media(),
                         store.info(offer.media()));
                 reply(player, offer.token(),
@@ -115,6 +116,14 @@ public final class MediaUploads {
             return;
         }
         final MediaOfferPayload offer = incoming.offer;
+        // Counted again as it is kept: two offers sent at once each passed the quota without the other.
+        final long quota = MediaBalance.playerQuotaBytes();
+        if (quota > 0 && !store.get().has(offer.media())
+                && store.get().broughtBytes(player.getUUID()) + offer.media().bytes() > quota) {
+            end(player, theirs, incoming, false, MediaTexts.QUOTA_FULL.with(
+                    megabytes(store.get().broughtBytes(player.getUUID())), MediaBalance.playerQuotaMegabytes()));
+            return;
+        }
         try {
             final MediaId kept = store.get().adopt(incoming.file, offer.media());
             store.get().broughtBy(kept, player.getUUID());

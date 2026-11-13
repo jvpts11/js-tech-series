@@ -50,7 +50,8 @@ public record CreatureDef(Optional<Double> health, Optional<Double> speed, Optio
                           Optional<Air> air) {
 
     public static final Codec<CreatureDef> CODEC = RecordCodecBuilder.create(instance -> instance.group(
-            Codec.doubleRange(1, 4096).optionalFieldOf("health").forGetter(CreatureDef::health),
+            // As much as the game's own most health, which any more is cut back to.
+            Codec.doubleRange(1, 1024).optionalFieldOf("health").forGetter(CreatureDef::health),
             Codec.doubleRange(0, 4).optionalFieldOf("speed").forGetter(CreatureDef::speed),
             Codec.doubleRange(0, 2048).optionalFieldOf("attack_damage").forGetter(CreatureDef::attackDamage),
             Codec.doubleRange(1, 256).optionalFieldOf("follow_range").forGetter(CreatureDef::followRange),

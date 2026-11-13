@@ -39,11 +39,22 @@ public final class ExoticContainment extends ContainmentTank {
 
     @Override
     public long insert(final MatterStack stack, final boolean simulate) {
-        return Antimatter.is(stack.material()) == this.antimatter ? super.insert(stack, simulate) : 0L;
+        return accepts(stack) ? super.insert(stack, simulate) : 0L;
+    }
+
+    /* Pushed in past its pressure, as a pump does, it still takes only its own kind of matter. */
+    @Override
+    public long push(final MatterStack stack, final long pressure, final boolean simulate) {
+        return accepts(stack) ? super.push(stack, pressure, simulate) : 0L;
     }
 
     @Override
     public boolean set(final @Nullable MatterStack stack) {
-        return (stack == null || Antimatter.is(stack.material()) == this.antimatter) && super.set(stack);
+        return (stack == null || accepts(stack)) && super.set(stack);
+    }
+
+    /* Whether {@code stack} is the kind it keeps: antimatter in a Penning trap, the other exotic forms elsewhere. */
+    private boolean accepts(final MatterStack stack) {
+        return Antimatter.is(stack.material()) == this.antimatter;
     }
 }

@@ -275,7 +275,10 @@ public final class VehicleHolds {
         return level != null && Fuels.liquidAmong(level, fuels, stack.getFluid()).isPresent();
     }
 
-    /* The fuel tank and the cargo tanks, one after another. */
+    /*
+     * The fuel tank and the cargo tanks, one after another. Fuel goes in, never out: a pipe draining the vehicle
+     * empties its cargo, and never the fuel it runs on.
+     */
     private final class Fluids implements IFluidHandler {
 
         @Override

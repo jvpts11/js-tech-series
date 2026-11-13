@@ -123,8 +123,8 @@ public record DimensionRules(double gravity, boolean breathable, double temperat
         }
         final double kpa = between(y, low, high, AltitudeBand::pressure, this.pressure);
         final double celsius = between(y, low, high, AltitudeBand::temperature, this.temperature);
-        final AltitudeBand below = low != null ? low : high;
-        final Optional<AirMix> mix = below == null ? this.air : below.air().or(() -> this.air);
+        // A band's air holds from it up to the next, so under the lowest band the dimension's own air is breathed.
+        final Optional<AirMix> mix = low == null ? this.air : low.air().or(() -> this.air);
         return new Climate(kpa, celsius, mix, mix.map(made -> made.breathable(kpa)).orElse(this.breathable));
     }
 

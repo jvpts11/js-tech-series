@@ -47,8 +47,9 @@ public final class MeterSessions {
             return;
         }
         final long now = player.serverLevel().getGameTime();
+        // Read on only while held without a break: a meter put down and taken up again starts again.
         final Session session = SESSIONS.compute(player.getUUID(), (id, known) -> known != null
-                && known.clamp.equals(clamp) ? known : new Session(clamp, now));
+                && known.clamp.equals(clamp) && known.lastTick >= now - 1 ? known : new Session(clamp, now));
         if (session.lastTick == now) {
             return;
         }

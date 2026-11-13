@@ -53,8 +53,9 @@ public record VehicleBuild(double mass, Optional<PartAt<VehiclePartDef.Engine>> 
         final List<PartAt<VehiclePartDef.Wheel>> wheels = new ArrayList<>();
         final List<PartAt<VehiclePartDef.Light>> lights = new ArrayList<>();
         PartAt<VehiclePartDef.Horn> horn = null;
-        int tank = 0;
-        int battery = 0;
+        // Summed long and held to an int after, so parts of great capacity never wrap round to none.
+        long tank = 0;
+        long battery = 0;
         double lift = 0;
         double push = 0;
         for (final VehicleDef.Place place : def.places()) {
@@ -86,7 +87,8 @@ public record VehicleBuild(double mass, Optional<PartAt<VehiclePartDef.Engine>> 
             }
         }
         return new VehicleBuild(mass, Optional.ofNullable(engine),
-                gearbox != null ? gearbox : VehicleDrive.Gearbox.SINGLE, wheels, tank, battery, lights,
+                gearbox != null ? gearbox : VehicleDrive.Gearbox.SINGLE, wheels,
+                (int) Math.min(Integer.MAX_VALUE, tank), (int) Math.min(Integer.MAX_VALUE, battery), lights,
                 Optional.ofNullable(horn), lift, push, wheelbase(wheels), track(wheels));
     }
 

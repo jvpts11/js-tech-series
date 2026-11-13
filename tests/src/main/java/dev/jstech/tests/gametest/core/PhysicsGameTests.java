@@ -24,6 +24,8 @@ import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestKitMachine;
 import dev.jstech.tests.TestKitMachine.KitMachineBlockEntity;
 import dev.jstech.tests.TestWorldGen;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -32,6 +34,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -99,6 +102,25 @@ public final class PhysicsGameTests {
             GameTestPlayers.leave(player);
             RuntimeDimensions.remove(server, key);
         }
+        helper.succeed();
+    }
+
+    /* Areas ranked alike stand in the order of their ids, however they came and as a player's game reads them. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void areas_rankedAlikeStandInTheOrderOfTheirIdsWhateverTheirOrder(final GameTestHelper helper) {
+        final Box box = Box.around(0, 0, 0, 1);
+        final List<PhysicsArea> areas = List.of(new PhysicsArea("c", box, Laws.NONE, 1),
+                new PhysicsArea("a", box, Laws.NONE, 1), new PhysicsArea("b", box, Laws.NONE, 1));
+        final Map<String, PhysicsArea> given = new LinkedHashMap<>();
+        areas.forEach(area -> given.put(area.id(), area));
+        final Map<String, PhysicsArea> backwards = new LinkedHashMap<>();
+        areas.reversed().forEach(area -> backwards.put(area.id(), area));
+        final List<String> ranked = List.of("a", "b", "c");
+        helper.assertTrue(ids(new Physics.Areas(given)).equals(ranked), "in the order of their ids");
+        helper.assertTrue(ids(new Physics.Areas(backwards)).equals(ranked), "whatever order they came in");
+        final Physics.Areas read = Physics.Areas.CODEC.parse(NbtOps.INSTANCE, Physics.Areas.CODEC.encodeStart(
+                NbtOps.INSTANCE, new Physics.Areas(given)).getOrThrow()).getOrThrow();
+        helper.assertTrue(ids(read).equals(ranked), "and as a player's game reads them: " + ids(read));
         helper.succeed();
     }
 
@@ -379,6 +401,10 @@ public final class PhysicsGameTests {
                     helper.setBlock(new BlockPos(2, 6, 2), Blocks.AIR);
                 })
                 .thenSucceed();
+    }
+
+    private static List<String> ids(final Physics.Areas areas) {
+        return areas.sorted().stream().map(PhysicsArea::id).toList();
     }
 
     private static Laws gravity(final Pull pull) {

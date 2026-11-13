@@ -21,6 +21,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.material.MapColor;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The land round a chunk as the game's maps draw it, a square of chunks wide, for a map of hazards to lay its readings
@@ -40,6 +41,8 @@ public final class TerrainPicture implements AutoCloseable {
     private int originX = Integer.MIN_VALUE;
     private int originZ = Integer.MIN_VALUE;
     private int next;
+    /* The world the chunks drawn are of. */
+    private @Nullable ClientLevel drawnOf;
 
     /** Grey, where this game has no chunk to draw: the colour as the game's textures keep it, its red last. */
     private static final int UNKNOWN = 0xFF << 24 | 0x505050;
@@ -79,6 +82,13 @@ public final class TerrainPicture implements AutoCloseable {
         final ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return false;
+        }
+        // Another world, another dimension's even at the same place: nothing drawn of the last stands.
+        if (level != this.drawnOf) {
+            this.drawnOf = level;
+            Arrays.fill(this.drawn, false);
+            this.originX = Integer.MIN_VALUE;
+            this.originZ = Integer.MIN_VALUE;
         }
         recentre(centre.x - this.chunks / 2, centre.z - this.chunks / 2);
         int left = budget;

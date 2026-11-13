@@ -49,6 +49,8 @@ public final class AuditLog extends SavedData {
     private static final String THING = "thing";
     private static final String DIMENSION = "dimension";
     private static final String POS = "pos";
+    /* Within this long of the last entry, the same thing done again is the same doing, in milliseconds. */
+    private static final long SAME_DOING_MILLIS = 10_000;
 
     /** What was done. */
     public enum Kind {
@@ -147,8 +149,19 @@ public final class AuditLog extends SavedData {
                 ProtectionBalance.auditEntries());
     }
 
-    /** Writes {@code entry} down, the oldest entries making way past {@code most}. */
+    /**
+     * Writes {@code entry} down, the oldest entries making way past {@code most}. The same thing done again by the
+     * same player at the same place within a few seconds, as swings at one thing or clicks on it, is one entry, of
+     * its last time, so it does not push out what others did.
+     */
     public void add(final Entry entry, final int most) {
+        final Entry last = entries.peekLast();
+        if (last != null && entry.time() - last.time() < SAME_DOING_MILLIS && last.actor().equals(entry.actor())
+                && last.owner().equals(entry.owner()) && last.kind() == entry.kind()
+                && last.thing().equals(entry.thing()) && last.dimension().equals(entry.dimension())
+                && last.pos().equals(entry.pos())) {
+            entries.removeLast();
+        }
         entries.addLast(entry);
         while (entries.size() > Math.max(1, most)) {
             entries.removeFirst();

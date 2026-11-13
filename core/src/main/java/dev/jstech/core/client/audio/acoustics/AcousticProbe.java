@@ -40,6 +40,8 @@ final class AcousticProbe {
     private static AcousticSpace space = AcousticSpace.OPEN;
     private static List<Ray> rays = List.of();
     private static BlockPos origin = BlockPos.ZERO;
+    /* The block the round under way began in, which it is kept for. */
+    private static BlockPos roundFrom = BlockPos.ZERO;
     private static int next;
     private static int hits;
     private static double distances;
@@ -54,11 +56,15 @@ final class AcousticProbe {
         final BlockPos at = BlockPos.containing(eye);
         if (!at.equals(origin)) {
             origin = at;
-            restart();
+            // A place heard lately answers at once; the round under way goes on, so a listener moving a block a tick
+            // still has every round finish, where starting over at each block never let one.
             final Heard kept = HEARD.get(at);
             if (kept != null && now - kept.when() < KEPT_TICKS) {
                 space = kept.space();
             }
+        }
+        if (next == 0) {
+            roundFrom = at;
         }
         for (int i = 0; i < RAYS_A_TICK && next < RAYS; i++, next++) {
             cast(level, eye, DIRECTIONS[next]);
@@ -67,7 +73,7 @@ final class AcousticProbe {
             space = new AcousticSpace(hits == 0 ? 0 : distances / hits, (double) hits / RAYS,
                     hits == 0 ? 0 : drunk / hits, 0, 0);
             rays = List.copyOf(casting);
-            HEARD.put(at, new Heard(space, now));
+            HEARD.put(roundFrom, new Heard(space, now));
             if (HEARD.size() > KEPT) {
                 HEARD.remove(HEARD.keySet().iterator().next());
             }
@@ -91,6 +97,7 @@ final class AcousticProbe {
         space = AcousticSpace.OPEN;
         rays = List.of();
         origin = BlockPos.ZERO;
+        roundFrom = BlockPos.ZERO;
         restart();
     }
 

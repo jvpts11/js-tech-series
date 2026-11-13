@@ -63,7 +63,9 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
     private static final KitModels INSTANCE = new KitModels();
     private static final String TEXTURES = "textures/";
     private static final String PNG = ".png";
+    /* The models of loose files as a family lays them out, and apart, as the files declare themselves alone. */
     private static final Map<ResourceLocation, KitModel> LOOSE = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, KitModel> BARE = new ConcurrentHashMap<>();
     private static final Set<ResourceLocation> BROKEN_LOOKS = ConcurrentHashMap.newKeySet();
     /* The textures made from pictures the files carry, on the render thread, kept to be let go at the next load. */
     private static final List<ResourceLocation> MADE = new ArrayList<>();
@@ -102,7 +104,7 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
                 return model;
             }
         }
-        final KitModel cached = LOOSE.get(file);
+        final KitModel cached = BARE.get(file);
         if (cached != null) {
             return cached;
         }
@@ -110,7 +112,7 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
         final KitModel read = read(Minecraft.getInstance().getResourceManager(), file,
                 ModelDefinition.of(file.toString(), List.of()), images);
         upload(images);
-        LOOSE.put(file, read);
+        BARE.put(file, read);
         return read;
     }
 
@@ -192,6 +194,7 @@ public final class KitModels extends SimplePreparableReloadListener<KitModels.Lo
         }
         MADE.clear();
         LOOSE.clear();
+        BARE.clear();
         BROKEN_LOOKS.clear();
         upload(loaded.images);
         models = Map.copyOf(loaded.models);

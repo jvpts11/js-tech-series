@@ -138,6 +138,32 @@ class BoxShapeTest {
     }
 
     @Test
+    void check_takesTheBoxBehindAWallRatherThanTheWallAloneWhenASideMayBeABlock() {
+        final BoxShape thin = BoxShape.of(Place.of(BlockMatch.blocks(CASING)), Place.of(BlockMatch.blocks(GLASS)),
+                InsideRule.empty(), new Limit(1, 9), new Limit(1, 9));
+        final Map<Long, String> world = new HashMap<>();
+        box(world, 0, 0, 0, 2, 2, 2, GLASS);
+        // On the north wall, the first way tried looks out of the box, where only the wall itself stands.
+        final ShapeMatch.Formed formed = assertInstanceOf(ShapeMatch.Formed.class,
+                thin.check(provider(world), pos(1, 1, 2)));
+        assertEquals(3, formed.sizeZ());
+        assertEquals(1, formed.inside().size());
+    }
+
+    @Test
+    void check_takesAWallAloneWhereNoBoxStandsBehindIt() {
+        final BoxShape thin = BoxShape.of(Place.of(BlockMatch.blocks(CASING)), Place.of(BlockMatch.blocks(GLASS)),
+                InsideRule.empty(), new Limit(1, 9), new Limit(1, 9));
+        final Map<Long, String> world = new HashMap<>();
+        box(world, 0, 0, 0, 2, 2, 0, GLASS);
+        final ShapeMatch.Formed formed = assertInstanceOf(ShapeMatch.Formed.class,
+                thin.check(provider(world), pos(1, 1, 0)));
+        assertEquals(3, formed.sizeX());
+        assertEquals(3, formed.sizeY());
+        assertEquals(1, formed.sizeZ());
+    }
+
+    @Test
     void constructor_refusesASideBeyondTheMostAShapeMayBe() {
         assertThrows(IllegalArgumentException.class, () -> BoxShape.of(Place.of(BlockMatch.blocks(CASING)),
                 Place.of(BlockMatch.blocks(CASING)), InsideRule.empty(), new Limit(3, RuleShape.MOST_SIDE + 1),

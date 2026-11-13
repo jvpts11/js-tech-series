@@ -111,6 +111,7 @@ public final class LiveScreen {
         final VertexSorting sorting = RenderSystem.getVertexSorting();
         final Matrix4fStack view = RenderSystem.getModelViewStack();
         view.pushMatrix();
+        LiveGraphics graphics = null;
         try {
             picture.setClearColor(0.0F, 0.0F, 0.0F, 1.0F);
             picture.clear(Minecraft.ON_OSX);
@@ -120,8 +121,7 @@ public final class LiveScreen {
             view.translation(0.0F, 0.0F, GUI_DEPTH);
             RenderSystem.applyModelViewMatrix();
             Lighting.setupFor3DItems();
-            final LiveGraphics graphics = new LiveGraphics(minecraft, minecraft.renderBuffers().bufferSource(), width,
-                    height, scale);
+            graphics = new LiveGraphics(minecraft, minecraft.renderBuffers().bufferSource(), width, height, scale);
             by.paint(graphics, width, height, partialTick);
             graphics.flush();
             RenderSystem.disableScissor();
@@ -132,6 +132,9 @@ public final class LiveScreen {
             if (!failed) {
                 LOG.warn("A picture shown in the world could not be drawn", e);
                 failed = true;
+            }
+            if (graphics != null) {
+                endQueued(graphics);
             }
             RenderSystem.disableScissor();
         } finally {
@@ -184,6 +187,19 @@ public final class LiveScreen {
         final TextureTarget made = RenderTargets.make(pw, ph);
         made.setFilterMode(GL11.GL_LINEAR);
         return made;
+    }
+
+    /*
+     * What a painter that failed had queued is drawn into its own picture, still bound, so the game's next batch never
+     * draws it in the world under the game's own view. Should that fail as well, it is let go of: the first failure
+     * was said already.
+     */
+    private static void endQueued(final LiveGraphics graphics) {
+        try {
+            graphics.flush();
+        } catch (final RuntimeException again) {
+            // Nothing more to say or do: the picture keeps the last one it had.
+        }
     }
 
     /** The texture the world draws: the copy through the tube, or the picture itself until the shader is there. */

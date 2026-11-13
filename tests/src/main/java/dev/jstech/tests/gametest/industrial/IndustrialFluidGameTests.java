@@ -226,6 +226,34 @@ public final class IndustrialFluidGameTests {
     }
 
     @GameTest(template = ARENA, timeoutTicks = 100)
+    public static void handValve_shutKeepsWhatItHeldTillItOpens(final GameTestHelper helper) {
+        helper.setBlock(VALVE, TestFluidMachines.HAND_VALVE.get().defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST));
+        final LineValveBlockEntity valve = helper.getBlockEntity(VALVE);
+        // As much as it holds, a tick's flow.
+        final int full = (int) TestFluidMachines.VALVE_RATE;
+        final FluidStack held = new FluidStack(Fluids.WATER, full);
+        helper.startSequence()
+                .thenExecute(valve::turn)
+                .thenWaitUntil(() -> helper.assertTrue(valve.open(), "opened by hand"))
+                .thenExecute(() -> helper.assertTrue(valve.fluid(valve.front().getOpposite())
+                        .fill(held.copy(), IFluidHandler.FluidAction.EXECUTE) == full, "it takes water in behind"))
+                .thenExecute(valve::turn)
+                .thenWaitUntil(() -> helper.assertTrue(!valve.open(), "shut again"))
+                .thenExecute(() -> {
+                    final IFluidHandler front = valve.fluid(valve.front());
+                    helper.assertTrue(front.drain(1_000, IFluidHandler.FluidAction.EXECUTE).isEmpty(),
+                            "shut, nothing comes out of its front");
+                    helper.assertTrue(front.getFluidInTank(0).getAmount() == full, "what it held waits in it");
+                })
+                .thenExecute(valve::turn)
+                .thenWaitUntil(() -> helper.assertTrue(valve.open(), "opened once more"))
+                .thenExecute(() -> helper.assertTrue(valve.fluid(valve.front())
+                        .drain(1_000, IFluidHandler.FluidAction.EXECUTE).getAmount() == full, "and out it comes"))
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, timeoutTicks = 100)
     public static void signalValve_opensWithRedstone(final GameTestHelper helper) {
         valveLine(helper, TestFluidMachines.SIGNAL_VALVE.get(), Direction.EAST);
         helper.startSequence()

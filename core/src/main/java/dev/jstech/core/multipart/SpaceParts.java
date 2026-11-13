@@ -310,10 +310,13 @@ public final class SpaceParts implements IFieldPart {
         if (!fitsSmall(state)) {
             return false;
         }
-        final int index = SmallBlocks.faceOf(state).get3DDataValue();
+        final Direction face = SmallBlocks.faceOf(state);
+        final int index = face.get3DDataValue();
         this.small[index] = state;
         this.smallDue[index] = 0L;
         changed();
+        // Wire beside it joins a lever or a plate as it is hung, as it does one set by a pull.
+        this.host.partSignalChanged(face);
         return true;
     }
 
@@ -660,6 +663,10 @@ public final class SpaceParts implements IFieldPart {
             this.devices[index] = device;
             this.kinds[index] = CoreParts.REGISTRY.getId(type);
             this.turns[index] = Math.floorMod(entry.getByte(TURNS), QUARTERS);
+            // Told its turn again, as it was told when turned, after its own save so that one keeping it wins.
+            if (this.turns[index] != 0) {
+                device.turned(this.turns[index]);
+            }
         }
         readMicro(tag);
         readSmall(tag, registries);
@@ -830,18 +837,29 @@ public final class SpaceParts implements IFieldPart {
         }
     }
 
-    /* A microblock of a block that is gone, or one that no longer fits, is not kept. */
+    /*
+     * A microblock of a block that is gone, or one that no longer fits, is not kept. Each is read on its own, so one
+     * such is dropped alone and the others stand.
+     */
     private void readMicro(final CompoundTag tag) {
         Arrays.fill(this.micro, null);
-        if (!tag.contains(MICRO)) {
-            return;
+        for (final Tag element : tag.getList(MICRO, Tag.TAG_COMPOUND)) {
+            final Microblock block = microblockOf(element);
+            if (block != null) {
+                this.micro[block.slot()] = block;
+            }
         }
-        MICROBLOCKS.parse(NbtOps.INSTANCE, tag.get(MICRO)).resultOrPartial(problem ->
-                JsCore.LOGGER.warn("Dropping microblocks that cannot be read: {}", problem)).ifPresent(read -> {
-                    for (final Microblock block : read) {
-                        this.micro[block.slot()] = block;
-                    }
-                });
+    }
+
+    /* The microblock saved as {@code element}, or null for one that cannot be read or no longer fits its place. */
+    private static @Nullable Microblock microblockOf(final Tag element) {
+        try {
+            return Microblock.CODEC.parse(NbtOps.INSTANCE, element).resultOrPartial(problem ->
+                    JsCore.LOGGER.warn("Dropping a microblock that cannot be read: {}", problem)).orElse(null);
+        } catch (final IllegalArgumentException noLongerFits) {
+            JsCore.LOGGER.warn("Dropping a microblock that no longer fits: {}", noLongerFits.getMessage());
+            return null;
+        }
     }
 
     /* The faces whose devices are at work, a bit a face: asked of the devices on the server, as last sent on a game. */

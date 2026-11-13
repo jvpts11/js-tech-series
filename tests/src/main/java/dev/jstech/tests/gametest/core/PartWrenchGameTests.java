@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Objects;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -97,6 +98,20 @@ public final class PartWrenchGameTests {
                 .mapToInt(PlacedModel::turns).allMatch(turns -> turns == 1), "its model turned with it");
         helper.assertTrue(!cable.parts().canTurn(SpaceSlots.face(Direction.NORTH.get3DDataValue())),
                 "a probe, of a kind that does not turn, is never turned");
+        helper.succeed();
+    }
+
+    /* A lamp turned, its block saved and read back: the lamp read is told the turn it stands at. */
+    @GameTest(template = ARENA)
+    public static void devicesTurned_areToldTheirTurnAgainWhenTheirBlockIsRead(final GameTestHelper helper) {
+        final CableBlockEntity cable = TestCables.lay(helper, CABLE, SharedEnergy.INSULATED_COPPER_CABLE);
+        cable.addPart(Direction.UP, TestToolkit.LAMP_PART.get().create());
+        helper.assertTrue(cable.parts().turn(SpaceSlots.face(Direction.UP.get3DDataValue())), "the lamp turns");
+        final HolderLookup.Provider registries = helper.getLevel().registryAccess();
+        final CableBlockEntity read = new CableBlockEntity(cable.getBlockPos(), cable.getBlockState());
+        read.loadWithComponents(cable.saveWithoutMetadata(registries), registries);
+        helper.assertTrue(read.parts().get(Direction.UP) instanceof TestToolkit.LampPart lamp && lamp.turns() == 1,
+                "read back, the lamp is told it stands a quarter turned: " + read.parts().get(Direction.UP));
         helper.succeed();
     }
 

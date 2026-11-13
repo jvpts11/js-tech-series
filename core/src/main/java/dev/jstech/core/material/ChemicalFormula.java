@@ -55,15 +55,21 @@ public final class ChemicalFormula {
             throw new IllegalArgumentException("a formula holds at least one element");
         }
         final Map<String, Integer> atoms = new LinkedHashMap<>();
-        for (final String part : split(plain)) {
-            final Reader reader = new Reader(part);
-            final int times = reader.number(1);
-            final Map<String, Integer> group = reader.group(')');
-            if (!reader.done()) {
-                throw new IllegalArgumentException("the formula " + written + " has " + reader.rest()
-                        + " where it should end");
+        try {
+            for (final String part : split(plain)) {
+                final Reader reader = new Reader(part);
+                final int times = reader.number(1);
+                final Map<String, Integer> group = reader.group(')');
+                if (!reader.done()) {
+                    throw new IllegalArgumentException("the formula " + written + " has " + reader.rest()
+                            + " where it should end");
+                }
+                group.forEach((symbol, count) -> atoms.merge(symbol, Math.multiplyExact(count, times),
+                        Math::addExact));
             }
-            group.forEach((symbol, count) -> atoms.merge(symbol, Math.multiplyExact(count, times), Math::addExact));
+        } catch (final ArithmeticException tooMany) {
+            // Counts past what a number holds are no formula either, said as every other way it is none.
+            throw new IllegalArgumentException("the formula " + written + " counts too many atoms", tooMany);
         }
         return new ChemicalFormula(written.strip(), atoms);
     }
@@ -125,7 +131,10 @@ public final class ChemicalFormula {
         boolean leading = true;
         for (int i = 0; i < this.written.length(); i++) {
             final char c = this.written.charAt(i);
-            if (HYDRATE_DOTS.indexOf(c) >= 0) {
+            // A space, as round a hydrate's dot, is passed by: the count after the dot stays large.
+            if (Character.isWhitespace(c)) {
+                out.append(c);
+            } else if (HYDRATE_DOTS.indexOf(c) >= 0) {
                 out.append('·');
                 leading = true;
             } else if (Character.isDigit(c) && c <= '9' && !leading) {

@@ -34,9 +34,11 @@ import java.util.UUID;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.GlobalPos;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.PacketFlow;
 import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
@@ -80,6 +82,9 @@ public final class ToolGameTests {
     private static final String BALANCE_BATCH = "jscore_tools_balance";
     /* Long enough for a player's held items to count among their attributes. */
     private static final int EQUIPMENT_TICKS = 3;
+    /* How far off a corner is marked, in blocks: a row that long is within a copy's most, and runs into land no one
+       has loaded. */
+    private static final int FAR_AWAY = 4_000;
 
     private ToolGameTests() {
     }
@@ -241,6 +246,21 @@ public final class ToolGameTests {
     }
 
     @GameTest(template = ARENA, batch = BATCH)
+    public static void airShovel_whoseGasIsNoLongerInTheGameLoadsEmptyNotLost(final GameTestHelper helper) {
+        final ItemStack shovel = new ItemStack(TestTools.AIR_SHOVEL.get());
+        shovel.getCapability(MatterCapabilities.GAS_ITEM).insert(new MatterStack(TestMaterials.TESTOGEN, 100), false);
+        final CompoundTag saved = (CompoundTag) shovel.save(helper.getLevel().registryAccess());
+        // As a save from a game where a mod gave a gas this game no longer has.
+        final CompoundTag gas = saved.getCompound("components").getCompound("jscore:gas");
+        gas.putString("material", "jstests:gone_gas");
+        final Optional<ItemStack> loaded = ItemStack.parse(helper.getLevel().registryAccess(), saved);
+        helper.assertTrue(loaded.isPresent() && loaded.get().is(TestTools.AIR_SHOVEL.get()),
+                "the shovel itself still loads: " + loaded);
+        helper.assertTrue(loaded.get().get(ItemStates.GAS.get()) == null, "only its gas is gone");
+        helper.succeed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
     public static void airShovel_spendsItsGasAndHoldsItInItsTank(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final ServerPlayer player = player(helper, "air-shovel");
@@ -343,6 +363,22 @@ public final class ToolGameTests {
         helper.assertTrue(player.getInventory().getItem(1).getCount() == 3
                         && player.getInventory().getItem(2).getCount() == 3,
                 "pasted turned a quarter as the player turned, from the inventory");
+        leave(helper, player);
+        helper.succeed();
+    }
+
+    /* A region reaching into land not loaded is not copied, so copying it never loads that land at once. */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void wand_copiesNothingOfARegionReachingIntoLandNotLoaded(final GameTestHelper helper) {
+        final ServerPlayer player = player(helper, "wand-far");
+        final ItemStack wand = new ItemStack(TestTools.WAND.get());
+        ItemStates.setMode(wand, TestTools.COPY);
+        player.setItemInHand(InteractionHand.MAIN_HAND, wand);
+        final BlockPos here = helper.absolutePos(new BlockPos(2, 2, 2));
+        wand.set(BuildingTools.CORNER.get(), GlobalPos.of(helper.getLevel().dimension(), here.offset(FAR_AWAY, 0,
+                0)));
+        use(helper, player, wand, new BlockPos(2, 2, 2), Direction.UP);
+        helper.assertTrue(wand.get(BuildingTools.COPY.get()) == null, "nothing is copied of land not loaded");
         leave(helper, player);
         helper.succeed();
     }

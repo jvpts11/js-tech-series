@@ -27,6 +27,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
+import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,6 +50,11 @@ public final class StructureForcesClient {
     /** Hands the key its press, once, from the Core's client. */
     public static void listen() {
         KeyActionsClient.onPress(CoreKeys.STRUCTURE_FORCES, StructureForcesClient::open);
+        // The numbers of a world left are given again in the next one, to other structures.
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, event -> {
+            TOLD.clear();
+            LOOKED.clear();
+        });
     }
 
     /** The forces last told of the structure of {@code entity}, or null while none came. */

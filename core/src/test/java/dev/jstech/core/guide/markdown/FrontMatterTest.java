@@ -10,6 +10,7 @@ package dev.jstech.core.guide.markdown;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 class FrontMatterTest {
@@ -31,5 +32,13 @@ class FrontMatterTest {
         final FrontMatter head = FrontMatter.of("---\nkind: manual\ncover: [\"Sigma, the language\", Book]\n---\n# T");
 
         assertEquals(List.of("Sigma, the language", "Book"), head.list("cover"));
+    }
+
+    @Test
+    void of_readsTheHeaderOfAFileSavedWithAByteOrderMark() {
+        final FrontMatter head = FrontMatter.of("﻿---\nkind: manual\n---\n# T");
+
+        assertEquals(Map.of("kind", "manual"), head.fields());
+        assertEquals("# T", head.body());
     }
 }

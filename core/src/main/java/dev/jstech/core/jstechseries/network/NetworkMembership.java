@@ -92,13 +92,14 @@ public final class NetworkMembership {
         }
         final @Nullable NetworkUuid before = this.network;
         this.network = beside(level, system);
-        tellOfChange(level, before);
+        // The network's members are put right first and told after, as when it goes: a listener sees them as they are.
         if (this.network == null) {
             system.unregisterMemberAt(pos);
-            return;
+        } else {
+            system.registerMember(new NetworkSystem.MemberNode(node(), this.network, pos, this.member.category(),
+                    this.operations, this.tables));
         }
-        system.registerMember(new NetworkSystem.MemberNode(node(), this.network, pos, this.member.category(),
-                this.operations, this.tables));
+        tellOfChange(level, before);
     }
 
     /* It is gone: off its network, and no longer kept. */

@@ -37,8 +37,11 @@ public final class ItemFilters {
             ResourceLocation.CODEC.fieldOf("tag").forGetter(rule -> ResourceLocation.parse(rule.tag())),
             AMOUNT.optionalFieldOf("amount", 0L).forGetter(ItemFilter.Tag::amount)
     ).apply(instance, (tag, amount) -> new ItemFilter.Tag(tag.toString(), amount)));
+    // A mod's id is said wrong as a reading's error, as the other rules' ids are, never thrown out of the reading.
     private static final MapCodec<ItemFilter.Mod> MOD = RecordCodecBuilder.mapCodec(instance -> instance.group(
-            Codec.STRING.fieldOf("mod").forGetter(ItemFilter.Mod::mod),
+            Codec.STRING.validate(mod -> !mod.isEmpty() && ResourceLocation.isValidNamespace(mod)
+                    ? DataResult.success(mod) : DataResult.error(() -> "not a valid mod id: " + mod))
+                    .fieldOf("mod").forGetter(ItemFilter.Mod::mod),
             AMOUNT.optionalFieldOf("amount", 0L).forGetter(ItemFilter.Mod::amount)
     ).apply(instance, ItemFilter.Mod::new));
     private static final Codec<ItemFilter.Rule> RULE = Codec.STRING.partialDispatch("kind",

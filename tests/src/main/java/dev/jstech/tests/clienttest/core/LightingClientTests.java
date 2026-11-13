@@ -11,6 +11,7 @@ import com.mojang.logging.LogUtils;
 import dev.jstech.core.client.light.ColouredLights;
 import dev.jstech.core.client.instancing.Instancing;
 import dev.jstech.core.client.light.DynamicLightsClient;
+import dev.jstech.core.light.CoreLights;
 import dev.jstech.core.light.LampBlockEntity;
 import dev.jstech.core.light.LightBlock;
 import dev.jstech.core.light.LightingSettings;
@@ -66,6 +67,8 @@ public final class LightingClientTests {
     private static final BlockPos BESIDE_BLUE = new BlockPos(3, 1, 5);
     /* The fragile lamp's level, as its kind declares it. */
     private static final int FRAGILE_LEVEL = 12;
+    /* The level of the light the server lays where a torch's is, a beam's, unlike the torch's own. */
+    private static final int SERVER_LIGHT = 7;
     private static final int SETTLE = 5;
     private static final long NIGHT = 18_000L;
     private static final long DAY = 6_000L;
@@ -351,6 +354,42 @@ public final class LightingClientTests {
     }
 
     @ClientTest(timeoutTicks = 900)
+    public static void dynamicLight_leavesTheServersLightWhereItsOwnWas(final ClientTestContext ctx) {
+        final BlockPos[] at = new BlockPos[1];
+        ctx.afterTest(() -> {
+            ctx.serverPlayer().setItemInHand(InteractionHand.MAIN_HAND, ItemStack.EMPTY);
+            if (at[0] != null) {
+                ctx.server().execute(() -> ctx.serverPlayer().serverLevel().setBlockAndUpdate(at[0],
+                        Blocks.AIR.defaultBlockState()));
+            }
+        });
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> {
+                    clear(ctx, level);
+                    level.setDayTime(NIGHT);
+                    ctx.serverPlayer().setItemInHand(InteractionHand.MAIN_HAND, new ItemStack(Items.TORCH));
+                })
+                .thenWaitUntil(() -> !DynamicLightsClient.laid().isEmpty(), WAIT,
+                        "the torch's light laid on the player's game")
+                .then(0, () -> at[0] = DynamicLightsClient.laid().keySet().iterator().next())
+                // A beam's light, which the server lays in its world and so on every game, where the torch's stands.
+                .thenServer(0, level -> level.setBlockAndUpdate(at[0],
+                        CoreLights.LIGHT.get().at(SERVER_LIGHT, false)))
+                .thenWaitUntil(() -> lightBlockLevel(ctx, at[0]) == SERVER_LIGHT, WAIT,
+                        "the server's light on the player's game, not laid over again by the torch's")
+                .thenServer(SETTLE, level -> ctx.serverPlayer().setItemInHand(InteractionHand.MAIN_HAND,
+                        ItemStack.EMPTY))
+                .thenWaitUntil(() -> DynamicLightsClient.laid().isEmpty(), WAIT, "the torch's light gone")
+                .thenAssert(SETTLE, () -> lightBlockLevel(ctx, at[0]) == SERVER_LIGHT,
+                        "the server's light stays where the torch's was, not put back to the air under it")
+                .thenServer(0, level -> {
+                    level.setBlockAndUpdate(at[0], Blocks.AIR.defaultBlockState());
+                    level.setDayTime(DAY);
+                    clear(ctx, level);
+                });
+    }
+
+    @ClientTest(timeoutTicks = 900)
     public static void floodlight_shaftLightsAWallFarOff(final ClientTestContext ctx) {
         final BlockPos lit = new BlockPos(WALL_X - 1, FLOOD.getY(), FLOOD.getZ());
         ctx.thenTeleport(0, FLOOD_STAND, Direction.SOUTH)
@@ -625,6 +664,13 @@ public final class LightingClientTests {
         final ClientLevel level = ctx.mc().level;
         return level == null || ctx.mc().player == null ? 0 : level.getBrightness(LightLayer.BLOCK,
                 BlockPos.containing(ctx.mc().player.getEyePosition()));
+    }
+
+    /* The level of the block of light standing at {@code at} on the player's game, 0 where none stands. */
+    private static int lightBlockLevel(final ClientTestContext ctx, final BlockPos at) {
+        final ClientLevel level = ctx.mc().level;
+        final BlockState state = level == null ? Blocks.AIR.defaultBlockState() : level.getBlockState(at);
+        return state.getBlock() instanceof LightBlock ? state.getValue(LightBlock.LEVEL) : 0;
     }
 
     private static BlockPos eye(final ClientTestContext ctx) {

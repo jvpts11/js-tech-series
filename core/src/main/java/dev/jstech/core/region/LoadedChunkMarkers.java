@@ -60,7 +60,8 @@ public final class LoadedChunkMarkers {
             return 0;
         }
         hideAll(operator);
-        int shown = 0;
+        // Gathered, then shown at once: the map's list is sent once, not once a source.
+        final List<Marker> shown = new ArrayList<>();
         for (final ServerLevel level : server.getAllLevels()) {
             final Map<BlockPos, UUID> owners = ChunkLoaders.sources(level);
             final Map<BlockPos, TextKey> reasons = ChunkLoaders.reasons(level);
@@ -68,13 +69,12 @@ public final class LoadedChunkMarkers {
                 final UUID owner = owners.get(source.getKey());
                 final String name = owner == null ? "" : CoreTeams.nameOf(server, owner).orElse(owner.toString());
                 final TextKey reason = reasons.getOrDefault(source.getKey(), ChunkLoaders.UNSAID);
-                MapMarkers.show(operator, Marker.area(id(EVERY, level, source.getKey()), LAYER.id(),
-                        level.dimension(), List.copyOf(source.getValue()),
-                        GameText.component(KEPT_BY.with(name, reason))));
-                shown++;
+                shown.add(Marker.area(id(EVERY, level, source.getKey()), LAYER.id(), level.dimension(),
+                        List.copyOf(source.getValue()), GameText.component(KEPT_BY.with(name, reason))));
             }
         }
-        return shown;
+        MapMarkers.showAll(operator, shown);
+        return shown.size();
     }
 
     /** Takes what {@link #showAll} showed off {@code operator}'s maps; how many markers it took off. */
@@ -83,14 +83,14 @@ public final class LoadedChunkMarkers {
         if (server == null) {
             return 0;
         }
-        int hidden = 0;
+        final List<String> hidden = new ArrayList<>();
         for (final Marker marker : MapMarkers.of(server, operator.getUUID())) {
             if (marker.id().startsWith(EVERY)) {
-                MapMarkers.hide(server, operator.getUUID(), marker.id());
-                hidden++;
+                hidden.add(marker.id());
             }
         }
-        return hidden;
+        MapMarkers.hideAll(server, operator.getUUID(), hidden);
+        return hidden.size();
     }
 
     /** The id of the marker of the source at {@code source} of {@code level} on its owner's team's maps. */

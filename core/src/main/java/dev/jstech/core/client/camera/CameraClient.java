@@ -70,6 +70,8 @@ public final class CameraClient {
         NeoForge.EVENT_BUS.addListener(RenderHandEvent.class, CameraViewsClient::onHand);
         NeoForge.EVENT_BUS.addListener(RenderNameTagEvent.class, CameraViewsClient::onNameTag);
         NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class, CameraFeeds::onLeave);
+        NeoForge.EVENT_BUS.addListener(ClientPlayerNetworkEvent.LoggingOut.class,
+                event -> CameraViewsClient.forget());
         OrbitView.listen();
     }
 }

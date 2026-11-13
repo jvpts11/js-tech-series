@@ -115,6 +115,40 @@ public final class BuildPlanGameTests {
         helper.succeed();
     }
 
+    /*
+     * A holed part reaching into a part looked at before it, started again standing formed with a block gone: the
+     * block it reaches into keeps its shape, whatever the order the parts are looked at in.
+     */
+    @GameTest(template = ARENA)
+    public static void plan_startedAgainKeepsTheShapeAHoledPartReachesIntoAPartBeforeIt(final GameTestHelper helper) {
+        final ResourceLocation model = TestModels.TURBINE.id();
+        final int north = FormedShapes.ORIENTATIONS.indexOf(Orientation.NORTH);
+        final FormedPlace reaching = new FormedPlace(model, north, 0, 1, -2);
+        final BuildPlan plan = new BuildPlan(2, List.of(
+                new PlanSpot(BlockPos.ZERO, IRON, 0, Optional.of(new FormedPlace(model, north, 0, 0, -2)),
+                        List.of(new PlanReach(1, reaching))),
+                new PlanSpot(new BlockPos(0, 1, 0), GOLD, 1, Optional.of(new FormedPlace(model, north, 0, 1, 0)),
+                        List.of()),
+                new PlanSpot(new BlockPos(1, 1, 0), GOLD, 1, Optional.of(new FormedPlace(model, north, 1, 1, 0)),
+                        List.of())));
+        final PlannedBuild first = new PlannedBuild(plan, helper.absolutePos(ORIGIN)).holed();
+        first.start(helper.getLevel(), helper.absolutePos(OWNER), () -> { });
+        place(helper, 0, 0, Blocks.IRON_BLOCK);
+        place(helper, 0, 1, Blocks.GOLD_BLOCK);
+        place(helper, 1, 1, Blocks.GOLD_BLOCK);
+        helper.assertTrue(first.formed(0) && first.formed(1), "both parts form");
+        first.stop(false);
+        helper.setBlock(ORIGIN.offset(1, 1, 0), Blocks.AIR);
+        final PlannedBuild again = new PlannedBuild(plan, helper.absolutePos(ORIGIN)).holed();
+        again.start(helper.getLevel(), helper.absolutePos(OWNER), () -> { });
+        final FormedPartBlockEntity iron = helper.getBlockEntity(ORIGIN);
+        helper.assertTrue(again.formed(1) && iron.also().equals(List.of(reaching)),
+                "the gold part stands formed with a hole, and the iron keeps the shape it reaches in: "
+                        + iron.also());
+        again.stop(true);
+        helper.succeed();
+    }
+
     @GameTest(template = ARENA)
     public static void plan_startedAgainFindsItBuiltAndHandedOnGoesOnCounting(final GameTestHelper helper) {
         for (int x = 0; x < 3; x++) {

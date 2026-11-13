@@ -95,13 +95,14 @@ public final class TornSheetClient {
         if (page.isEmpty()) {
             return;
         }
-        event.setCanceled(true);
+        // Too far off for the page to be drawn, the frame shows the paper item as the game draws it.
         final ItemFrame frame = event.getItemFrameEntity();
         final double distance = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition()
                 .distanceToSqr(frame.position());
         if (!LiveRate.shows(distance)) {
             return;
         }
+        event.setCanceled(true);
         final GuideStyle style = page.get().style();
         final int width = style.pageWidth();
         final int height = style.pageHeight();
@@ -130,6 +131,8 @@ public final class TornSheetClient {
     private static Optional<ManualScreen> pageOf(final TornSheets.Sheet sheet) {
         final GuideLibrary library = GuideLibrary.loaded();
         if (library != laidFor) {
+            // The pages laid for the manuals as they were let go of what they hold on the graphics card first.
+            PAGES.values().forEach(ManualScreen::discard);
             PAGES.clear();
             laidFor = library;
         }

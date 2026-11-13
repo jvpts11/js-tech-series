@@ -97,7 +97,8 @@ public record ProjectorView(ShapePreview preview, BlockPos terminal, List<Place>
     public Map<String, Integer> missingByBlock() {
         final Map<String, Integer> counts = new LinkedHashMap<>();
         for (final Place place : this.places) {
-            if (place.state() == State.MISSING && !place.ghost().terminal() && place.ghost().first() != null) {
+            // The terminal too: a machine whose terminal alone is missing says which block that is.
+            if (place.state() == State.MISSING && place.ghost().first() != null) {
                 counts.merge(place.ghost().first(), 1, Integer::sum);
             }
         }

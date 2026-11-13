@@ -81,21 +81,24 @@ final class ShapePreviews {
     }
 
     /**
-     * {@code walls} round a square floor of at least its least area, {@code grow} wider, its walls at their least
-     * height, the corners left out, and its terminal amid the north wall's bottom row.
+     * {@code walls} round a floor as near a square as its area lets, of at least its least area, {@code grow} wider,
+     * and never more than its most; its walls at their least height, the corners left out, and its terminal amid the
+     * north wall's bottom row.
      */
     static ShapePreview walls(final WallsShape walls, final int grow) {
         int side = 1;
         while (side * side < walls.area().least()) {
             side++;
         }
-        side = Math.min(side + grow, RuleShape.MOST_SIDE - 2);
+        final int[] floor = floorOf(Math.min(side + grow, RuleShape.MOST_SIDE - 2), walls.area());
+        final int wide = floor[0];
+        final int deep = floor[1];
         final int high = walls.height().least();
-        final int cx = side / 2;
+        final int cx = wide / 2;
         final List<ShapePreview.Ghost> ghosts = new ArrayList<>();
         final List<ShapePreview.Ghost> clears = new ArrayList<>();
-        for (int z = 0; z < side; z++) {
-            for (int x = 0; x < side; x++) {
+        for (int z = 0; z < deep; z++) {
+            for (int x = 0; x < wide; x++) {
                 ghosts.add(ShapePreview.Ghost.of(x - cx, -1, z + 1, walls.floor().fits()));
                 for (int y = 0; y < high; y++) {
                     keep(ShapePreview.Ghost.of(x - cx, y, z + 1, walls.inside().allows()), ghosts, clears);
@@ -103,13 +106,15 @@ final class ShapePreviews {
             }
         }
         for (int y = 0; y < high; y++) {
-            for (int along = 0; along < side; along++) {
+            for (int along = 0; along < wide; along++) {
                 if (along != cx || y != 0) {
                     ghosts.add(ShapePreview.Ghost.of(along - cx, y, 0, walls.wall().fits()));
                 }
-                ghosts.add(ShapePreview.Ghost.of(along - cx, y, side + 1, walls.wall().fits()));
+                ghosts.add(ShapePreview.Ghost.of(along - cx, y, deep + 1, walls.wall().fits()));
+            }
+            for (int along = 0; along < deep; along++) {
                 ghosts.add(ShapePreview.Ghost.of(-cx - 1, y, along + 1, walls.wall().fits()));
-                ghosts.add(ShapePreview.Ghost.of(side - cx, y, along + 1, walls.wall().fits()));
+                ghosts.add(ShapePreview.Ghost.of(wide - cx, y, along + 1, walls.wall().fits()));
             }
         }
         ghosts.add(ShapePreview.Ghost.terminalAt(0, 0, 0));
@@ -139,6 +144,21 @@ final class ShapePreviews {
         } else if (!ghost.empty()) {
             ghosts.add(ghost);
         }
+    }
+
+    /*
+     * A floor's width and depth for walls of {@code area}: the widest no wider than {@code wide}, and of it the
+     * deepest no deeper than it is wide, whose places are within the area; a square of {@code wide} when none is.
+     */
+    private static int[] floorOf(final int wide, final Limit area) {
+        for (int w = wide; w >= 1; w--) {
+            for (int d = w; d >= 1; d--) {
+                if (area.contains(w * d)) {
+                    return new int[] {w, d};
+                }
+            }
+        }
+        return new int[] {wide, wide};
     }
 
     private static int clamp(final int value, final Limit limit) {

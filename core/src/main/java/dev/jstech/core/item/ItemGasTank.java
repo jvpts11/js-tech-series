@@ -31,7 +31,8 @@ public final class ItemGasTank implements IMatterHandler {
 
     /**
      * How a gas is kept in an item: its material's id and its amount. A material no longer in the game reads as an
-     * error, so the item loads empty instead of failing to load.
+     * error of this component alone, which the game's reading of a stack lets go of, so the item loads without its
+     * gas instead of failing to load.
      */
     static final Codec<MatterStack> CODEC = RecordCodecBuilder.<Held>create(held -> held.group(
             ResourceLocation.CODEC.fieldOf("material").forGetter(Held::material),

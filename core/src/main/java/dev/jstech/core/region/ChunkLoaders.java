@@ -99,6 +99,8 @@ public final class ChunkLoaders {
             held = new Source(owner, reason, ticking, held.chunks);
             ledger.sources.put(source.immutable(), held);
             ledger.setDirty();
+            // The team's marker says the new reason too, whatever this ask comes to.
+            LoadedChunkMarkers.changed(level, source, owner, held.reason, held.chunks);
         }
         if (held != null && held.chunks.contains(chunk.toLong())) {
             return LoadOutcome.ALREADY;

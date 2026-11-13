@@ -44,6 +44,7 @@ public final class NetworkProbeItem extends Item {
             if (level instanceof ServerLevel server) {
                 context.getItemInHand().set(NetworkProbe.LINK.get(), new ProbeLink(server.dimension(),
                         context.getClickedPos().immutable(), NetworkProbe.MECHANICAL));
+                ProbeSessions.forget(player.getUUID());
                 player.displayClientMessage(GameText.component(NetworkProbe.LINKED_TO.with(
                         NetworkProbe.SHAFTS.text())), true);
             }
@@ -63,6 +64,8 @@ public final class NetworkProbeItem extends Item {
         }
         context.getItemInHand().set(NetworkProbe.LINK.get(), new ProbeLink(server.dimension(),
                 context.getClickedPos().immutable(), wire.type().id()));
+        // Linked again, even to the same wire, it starts again: the minute it held was of the link before.
+        ProbeSessions.forget(player.getUUID());
         player.displayClientMessage(GameText.component(NetworkProbe.LINKED_TO.with(GameText.of(
                 wire.type().stack().getHoverName()))), true);
         return InteractionResult.CONSUME;

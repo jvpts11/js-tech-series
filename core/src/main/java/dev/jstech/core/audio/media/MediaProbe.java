@@ -7,6 +7,7 @@
  */
 package dev.jstech.core.audio.media;
 
+import dev.jstech.core.util.Sizes;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -125,7 +126,9 @@ public final class MediaProbe {
             throw new IOException("not an Ogg Vorbis recording");
         }
         final long lastGranule = pages.lastGranule();
-        final long millis = lastGranule <= 0 ? 0L : lastGranule * 1000L / rate;
+        // In two parts, so a granule from a broken or forged file cannot overflow into a wrong length.
+        final long millis = lastGranule <= 0 ? 0L
+                : Sizes.plus(Sizes.times(lastGranule / rate, 1000L), lastGranule % rate * 1000L / rate);
         final int kbps = nominal > 0 ? nominal / 1000 : kbpsOf(content.length, millis);
         return new MediaInfo(millis, rate, channels, kbps, tags);
     }

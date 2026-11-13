@@ -91,8 +91,12 @@ public final class ConfigPresets {
 
     /** The values the preset {@code name} of {@code file} holds, as a file holds them, or none when it has none. */
     public static Optional<Map<String, Object>> load(final ConfigFile file, final String name) {
+        // The name is looked at before it is made a path, which some names cannot be.
+        if (!validName(name)) {
+            return Optional.empty();
+        }
         final Path path = pathOf(file, name);
-        if (!validName(name) || !Files.isRegularFile(path)) {
+        if (!Files.isRegularFile(path)) {
             return Optional.empty();
         }
         try {

@@ -133,7 +133,8 @@ public final class SignalRadio {
     /**
      * Every frequency heard at {@code pos} in {@code level}, whoever's it is, as a signal probe shows them: by band and
      * number, each from where it is heard best; a clash once for each of its transmitters heard. With them, for a
-     * {@code listener}, the frequencies of their team not heard there, with no bars.
+     * {@code listener}, their team's frequencies and their own not heard there, with no bars; never a teammate's
+     * private or paired one.
      */
     public static List<Heard> heardAt(final ServerLevel level, final BlockPos pos, @Nullable final UUID listener) {
         final MinecraftServer server = level.getServer();
@@ -157,7 +158,8 @@ public final class SignalRadio {
                 if (emission != null) {
                     heard.add(new Heard(entry.getKey(), sender.radio.owner(), emission.at, origin, emission.relayed,
                             bestBars.get(origin), channel.clash ? 0 : channel.value, channel.clash));
-                } else if (team != null && CoreTeams.teamOf(server, ownerOf(sender.radio)).equals(team)) {
+                } else if (team != null && unheardShown(server, entry.getKey(), ownerOf(sender.radio), listener,
+                        team)) {
                     heard.add(new Heard(entry.getKey(), sender.radio.owner(), origin, origin, false, 0,
                             channel.clash ? 0 : channel.value, channel.clash));
                 }
@@ -166,6 +168,18 @@ public final class SignalRadio {
         heard.sort(Comparator.comparing((Heard one) -> one.frequency().band().serializedName()).thenComparingInt(one ->
                 one.frequency().number()).thenComparing(one -> one.frequency().whose()));
         return heard;
+    }
+
+    /*
+     * Whether {@code listener}, of {@code team}, is shown a frequency of {@code owner}'s not heard where they stand:
+     * one of their team's band, or one of their own; another's private or paired one stays theirs.
+     */
+    private static boolean unheardShown(final MinecraftServer server, final Frequency frequency, final UUID owner,
+                                        final UUID listener, final String team) {
+        if (owner.equals(listener)) {
+            return true;
+        }
+        return frequency.band() == Band.TEAM && CoreTeams.teamOf(server, owner).equals(team);
     }
 
     /* Whose a radio is on the air, nobody's when nobody placed it. */

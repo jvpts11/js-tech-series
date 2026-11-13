@@ -33,14 +33,14 @@ public final class TextCodecs {
      * its key, its English and what goes into it, so a player reads it in their own language.
      */
     public static final Codec<Text> CODEC = Codec.recursive("text", self -> Codec.either(Codec.STRING,
-                    RecordCodecBuilder.<Text.Translated>create(instance -> instance.group(
-                            Codec.STRING.fieldOf("key").forGetter(text -> text.key().key()),
-                            Codec.STRING.fieldOf("english").forGetter(text -> text.key().english()),
-                            self.listOf().optionalFieldOf("args", List.of()).forGetter(Text.Translated::args))
-                            .apply(instance, (key, english, args) -> new Text.Translated(new TextKey(key, english),
-                                    args))))
-            .xmap(either -> either.map(Text::literal, translated -> translated),
-                    text -> text instanceof Text.Translated translated ? Either.right(translated)
+                    RecordCodecBuilder.<Written>create(instance -> instance.group(
+                            Codec.STRING.fieldOf("key").forGetter(Written::key),
+                            Codec.STRING.fieldOf("english").forGetter(Written::english),
+                            self.listOf().optionalFieldOf("args", List.of()).forGetter(Written::args))
+                            .apply(instance, Written::new)))
+            .xmap(either -> either.map(Text::literal, Written::text),
+                    text -> text instanceof Text.Translated translated ? Either.right(new Written(
+                            translated.key().key(), translated.key().english(), translated.args()))
                             : Either.left(text.english())));
 
     /** The longest words of data that travel, and the longest key; a save holds text to the same lengths. */
@@ -88,7 +88,8 @@ public final class TextCodecs {
             return Text.literal(Utf8String.read(buf, MOST_LETTERS));
         }
         final String key = Utf8String.read(buf, MOST_KEY_LETTERS);
-        final int count = Math.min(VarInt.read(buf), MOST_ARGS);
+        // A count no sender writes, below none, is read as none rather than failing the whole message.
+        final int count = Math.clamp(VarInt.read(buf), 0, MOST_ARGS);
         final List<Text> args = new ArrayList<>(count);
         for (int i = 0; i < count; i++) {
             args.add(read(buf, depth + 1));
@@ -98,6 +99,21 @@ public final class TextCodecs {
             return new Text.Translated(new TextKey(key, key), args);
         } catch (final IllegalArgumentException notAKey) {
             return Text.literal(key);
+        }
+    }
+
+    /*
+     * A sentence as a save writes it, read as it stands: one whose key or English a save of another hand broke is
+     * read as its words, as the wire reads one, rather than failing the whole save it is in.
+     */
+    private record Written(String key, String english, List<Text> args) {
+
+        Text text() {
+            try {
+                return new Text.Translated(new TextKey(key, english), args);
+            } catch (final IllegalArgumentException broken) {
+                return Text.literal(english.isBlank() ? key : english);
+            }
         }
     }
 }

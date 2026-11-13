@@ -137,7 +137,12 @@ public final class Landmarks {
      */
     public static boolean discover(final ServerPlayer player, final ResourceLocation id) {
         final MinecraftServer server = player.getServer();
-        if (server == null || discovered(server, player.getUUID()).contains(id)) {
+        if (server == null || MINE.get(server, player.getUUID()).contains(id)) {
+            return false;
+        }
+        if (OURS.ofPlayer(server, player.getUUID()).contains(id)) {
+            // Found by their team before them: kept as theirs too, unsaid, so leaving the team never finds it anew.
+            MINE.update(server, player.getUUID(), found -> plus(found, id));
             return false;
         }
         final Optional<Landmark> landmark = get(player.serverLevel(), id);

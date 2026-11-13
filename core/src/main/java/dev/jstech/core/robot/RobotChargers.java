@@ -23,6 +23,8 @@ public final class RobotChargers {
 
     /* Each level's stations, by place, with the tick each last told it is there. */
     private static final Map<Level, Long2LongMap> HEARD = new WeakHashMap<>();
+    /* The tick each level's stations were last swept of those long gone. */
+    private static final Map<Level, long[]> SWEPT = new WeakHashMap<>();
     /* A station unheard of for this long, in ticks, is gone. */
     private static final long FORGOTTEN_AFTER = 40;
 
@@ -31,7 +33,15 @@ public final class RobotChargers {
 
     /** The station at {@code pos} is there and working, told each time it charges. */
     public static void heard(final Level level, final BlockPos pos) {
-        HEARD.computeIfAbsent(level, any -> new Long2LongOpenHashMap()).put(pos.asLong(), level.getGameTime());
+        final Long2LongMap stations = HEARD.computeIfAbsent(level, any -> new Long2LongOpenHashMap());
+        final long now = level.getGameTime();
+        // Swept here too, once in a while, so stations long gone go though no robot asks for one.
+        final long[] swept = SWEPT.computeIfAbsent(level, any -> new long[] {now});
+        if (now - swept[0] >= FORGOTTEN_AFTER || now < swept[0]) {
+            swept[0] = now;
+            forget(stations, now);
+        }
+        stations.put(pos.asLong(), now);
     }
 
     /** The station nearest {@code from} within {@code radius} blocks, or none. */
@@ -40,8 +50,7 @@ public final class RobotChargers {
         if (stations == null || stations.isEmpty()) {
             return Optional.empty();
         }
-        final long now = level.getGameTime();
-        stations.long2LongEntrySet().removeIf(entry -> now - entry.getLongValue() > FORGOTTEN_AFTER);
+        forget(stations, level.getGameTime());
         BlockPos best = null;
         double bestDistance = (double) radius * radius;
         for (final long each : stations.keySet()) {
@@ -53,5 +62,9 @@ public final class RobotChargers {
             }
         }
         return Optional.ofNullable(best);
+    }
+
+    private static void forget(final Long2LongMap stations, final long now) {
+        stations.long2LongEntrySet().removeIf(entry -> now - entry.getLongValue() > FORGOTTEN_AFTER);
     }
 }

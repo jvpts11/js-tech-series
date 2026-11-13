@@ -192,6 +192,12 @@ public final class SpacePersistorGameTests {
             SpacePersistor.RENAME_TO.receive(stranger, "Mine now");
             helper.assertTrue(persistor.area().radius() == 4 && "North quarry".equals(persistor.name()),
                     "a stranger's calls change nothing");
+            // Two steps of the wheel sent before either came back both count.
+            SpacePersistor.TURN_RADIUS.receive(owner, 1);
+            SpacePersistor.TURN_RADIUS.receive(owner, 1);
+            SpacePersistor.TURN_RADIUS.receive(stranger, 10);
+            helper.assertTrue(persistor.area().radius() == 6, "its owner's steps add up, a stranger's do not: "
+                    + persistor.area().radius());
         } finally {
             owner.containerMenu = owner.inventoryMenu;
             stranger.containerMenu = stranger.inventoryMenu;

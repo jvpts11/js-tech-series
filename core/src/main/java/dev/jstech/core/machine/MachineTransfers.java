@@ -47,6 +47,7 @@ public final class MachineTransfers {
     /** One round of {@code machine}'s pushing and pulling, in {@code level}. */
     public static void run(final ServerLevel level, final MachineBlockEntity machine) {
         final MachineSides sides = machine.sides();
+        final long round = level.getGameTime() / EVERY;
         for (final MachineResource resource : sides.resources()) {
             final MachineSides.Automation auto = sides.automation(resource);
             if (!auto.push() && !auto.pull()) {
@@ -56,25 +57,32 @@ public final class MachineTransfers {
                 final FaceMode mode = sides.mode(resource, machine.getBlockState(), side);
                 final BlockPos beside = machine.getBlockPos().relative(side);
                 if (auto.push() && mode.givesOut()) {
-                    move(level, machine, resource, beside, side.getOpposite(), true, share(auto.pushRate()),
+                    move(level, machine, resource, beside, side.getOpposite(), true, share(auto.pushRate(), round),
                             auto.filter());
                 }
                 if (auto.pull() && mode.takesIn()) {
-                    move(level, machine, resource, beside, side.getOpposite(), false, share(auto.pullRate()),
+                    move(level, machine, resource, beside, side.getOpposite(), false, share(auto.pullRate(), round),
                             auto.filter());
                 }
             }
         }
     }
 
-    /* What a rate a second comes to in one round. */
-    private static int share(final int perSecond) {
-        return Math.max(1, perSecond * EVERY / TICKS_A_SECOND);
+    /*
+     * What a rate a second comes to in the round {@code round}: what the rounds up to its end come to, less what those
+     * before it did, so an odd rate is met over a second, as one a second moves one in every other round.
+     */
+    private static int share(final int perSecond, final long round) {
+        final long each = (long) perSecond * EVERY;
+        return (int) (each * (round + 1) / TICKS_A_SECOND - each * round / TICKS_A_SECOND);
     }
 
     private static void move(final ServerLevel level, final MachineBlockEntity machine,
                              final MachineResource resource, final BlockPos beside, final Direction face,
                              final boolean out, final int most, final ItemFilter filter) {
+        if (most <= 0) {
+            return;
+        }
         switch (resource) {
             case ITEMS -> {
                 final IItemHandler there = level.getCapability(Capabilities.ItemHandler.BLOCK, beside, face);

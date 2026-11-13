@@ -36,8 +36,8 @@ public final class CameraClientHooks {
     /** What a player's game answers. */
     public interface IHooks {
 
-        /** The server started {@code view}, or ended the one showing when it is empty. */
-        default void view(final Optional<CameraView> view) {
+        /** The server started {@code view}, the {@code number}th for this player, or ended the one showing. */
+        default void view(final Optional<CameraView> view, final int number) {
         }
     }
 }

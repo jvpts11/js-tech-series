@@ -164,10 +164,13 @@ public final class BandwidthLedger {
         return now;
     }
 
-    /* The bytes a second over the last sixty seconds: this minute's, and the share of the last still inside them. */
+    /*
+     * The bytes a second over the last sixty seconds: this minute's, and the share of the last still inside them. The
+     * sixty hold this second, so the seconds before it in this minute and this one; the last minute's are the rest.
+     */
     private long rate(final long[] minutes, final long now) {
-        final long into = Math.min(WINDOW_SECONDS, Math.max(0L, now - this.minuteStart));
-        return (minutes[LAST_MINUTE] * (WINDOW_SECONDS - into) / WINDOW_SECONDS + minutes[THIS_MINUTE])
+        final long into = Math.min(WINDOW_SECONDS - 1, Math.max(0L, now - this.minuteStart));
+        return (minutes[LAST_MINUTE] * (WINDOW_SECONDS - 1 - into) / WINDOW_SECONDS + minutes[THIS_MINUTE])
                 / WINDOW_SECONDS;
     }
 

@@ -8,6 +8,7 @@
 package dev.jstech.core.worldgen.structure;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import java.util.Optional;
@@ -40,7 +41,8 @@ public final class SpreadPlacement extends RandomSpreadStructurePlacement {
     private static final int FARTHEST = 30_000_000;
     private static final int WIDEST_CLEARANCE = 64;
     /* The game's placement fields, then a spread's, then the Core's own, ten in all: more than its codec joins. */
-    public static final MapCodec<SpreadPlacement> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
+    public static final MapCodec<SpreadPlacement> CODEC = RecordCodecBuilder.<SpreadPlacement>mapCodec(
+            instance -> instance.group(
             Vec3i.offsetCodec(16).optionalFieldOf("locate_offset", Vec3i.ZERO)
                     .forGetter(SpreadPlacement::locateOffset),
             StructurePlacement.FrequencyReductionMethod.CODEC.optionalFieldOf("frequency_reduction_method",
@@ -56,7 +58,11 @@ public final class SpreadPlacement extends RandomSpreadStructurePlacement {
                     .forGetter(SpreadPlacement::spreadType),
             Codec.intRange(0, FARTHEST).optionalFieldOf("min_distance", 0).forGetter(SpreadPlacement::minDistance),
             Codec.intRange(0, WIDEST_CLEARANCE).optionalFieldOf("clear_of", 0).forGetter(SpreadPlacement::clearOf))
-            .apply(instance, SpreadPlacement::new));
+            .apply(instance, SpreadPlacement::new))
+            // As the game's own spread asks, so a file of no spacing is told, not met as the world is made.
+            .validate(placement -> placement.spacing() >= 1 && placement.separation() < placement.spacing()
+                    ? DataResult.success(placement) : DataResult.error(() -> "a spread's spacing is 1 at least and"
+                    + " more than its separation, not " + placement.spacing() + " and " + placement.separation()));
 
     public SpreadPlacement(final Vec3i locateOffset, final StructurePlacement.FrequencyReductionMethod reduction,
                            final float frequency, final int salt,
@@ -89,8 +95,12 @@ public final class SpreadPlacement extends RandomSpreadStructurePlacement {
             return false;
         }
         if (this.clearOf > 0) {
+            boolean passedSelf = false;
             for (final Holder<StructureSet> other : state.possibleStructureSets()) {
-                if (other.value().placement() != this && near(state, other.value().placement(), x, z)) {
+                final StructurePlacement placement = other.value().placement();
+                if (placement == this) {
+                    passedSelf = true;
+                } else if (near(state, placement, x, z, !passedSelf)) {
                     return false;
                 }
             }
@@ -111,13 +121,13 @@ public final class SpreadPlacement extends RandomSpreadStructurePlacement {
     /*
      * Whether {@code other} places a structure within the clearance of {@code x, z}. Another spread of the Core's is
      * asked without its own clearance, so two never ask each other round and round; when both keep clear of others,
-     * only the one of the greater salt yields, so one of the two still stands. Any other placement is asked as the
-     * game asks it.
+     * only the one of the greater salt yields, and of two of one salt the later in the world's list, so one of the
+     * two still stands. Any other placement is asked as the game asks it.
      */
     private boolean near(final ChunkGeneratorStructureState state, final StructurePlacement other, final int x,
-                         final int z) {
+                         final int z, final boolean otherFirst) {
         final boolean yields = !(other instanceof SpreadPlacement spread) || spread.clearOf() == 0
-                || spread.salt() < salt();
+                || spread.salt() < salt() || spread.salt() == salt() && otherFirst;
         if (!yields) {
             return false;
         }

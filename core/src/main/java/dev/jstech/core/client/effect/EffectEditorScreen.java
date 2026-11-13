@@ -288,10 +288,19 @@ public final class EffectEditorScreen extends Screen {
         final boolean screen = emitter.kind() == Emitter.Kind.SCREEN;
         final double strength = screen ? extra.shake()
                 : (double) (emitter.look().colour().getFirst() >>> ALPHA_SHIFT) / FULL_ALPHA;
+        // Each drag weighs the colours as they were when the slider was laid out, so a fade the colours draw keeps
+        // its steps even through nothing, where weighing the last drag's would lose them.
+        final Emitter.Look designed = emitter.look();
         slider(3, strength, v -> EffectTexts.STRENGTH.with(number(v)),
                 v -> change(index, screen ? current(index).withExtra(current(index).extra().withShake(v))
-                        : current(index).withLook(current(index).look().withAlpha((int) Math.round(v
-                                * FULL_ALPHA)))));
+                        : current(index).withLook(withColours(current(index).look(),
+                                designed.withAlpha((int) Math.round(v * FULL_ALPHA)).colour()))));
+    }
+
+    /* {@code look} with the colour keys {@code colours}, the rest of it as it is. */
+    private static Emitter.Look withColours(final Emitter.Look look, final List<Integer> colours) {
+        return new Emitter.Look(look.sprite(), look.frames(), look.size(), colours, look.spin(), look.blend(),
+                look.light(), look.trail(), look.width(), look.stretch());
     }
 
     /* What moves the chosen emitter's particles: the place's pull, its air, its wind. */

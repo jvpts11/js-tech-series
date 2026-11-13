@@ -82,7 +82,8 @@ public interface IFacePart {
 
     /**
      * A wrench turned the part about its face, to {@code quarterTurns} quarter turns from as it was made, for a kind
-     * marked {@link PartType#turns()}; its model and its room turned with it. On the server.
+     * marked {@link PartType#turns()}; its model and its room turned with it. On the server. A part turned is told
+     * its turn again each time its block's save is read, after its own {@code load}, on whichever side reads it.
      */
     default void turned(final int quarterTurns) {
     }

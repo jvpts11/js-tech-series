@@ -43,6 +43,25 @@ class BeltLaneTest {
     }
 
     @Test
+    void put_takesBackALanePackedTightAtAnyNumberOfItemsABlock() {
+        for (final int perBlock : new int[] {3, 5, 6, 7}) {
+            final double gap = 1.0 / perBlock;
+            final BeltLane<Integer> lane = new BeltLane<>(gap);
+            // Each comes on at the start and runs up to the one before it, a gap behind it, as advance packs them.
+            for (int i = 0; i < perBlock; i++) {
+                assertTrue(lane.put(i, 0.0), "item " + i + " comes on at " + perBlock + " a block");
+                lane.advance(1.0, 1.0, NONE_HELD);
+            }
+            final BeltLane<Integer> read = new BeltLane<>(gap);
+            for (final BeltLane.Entry<Integer> entry : lane.entries()) {
+                assertTrue(read.put(entry.item(), entry.at()), "at " + perBlock + " a block, item " + entry.item()
+                        + " comes back on where it stood, " + entry.at());
+            }
+            assertEquals(lane.size(), read.size(), perBlock + " a block");
+        }
+    }
+
+    @Test
     void advance_keepsTheGapBehindAStoppedItem() {
         final BeltLane<String> lane = new BeltLane<>(QUARTER);
         lane.put("first", 1.0);

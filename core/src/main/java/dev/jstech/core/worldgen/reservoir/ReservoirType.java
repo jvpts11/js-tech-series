@@ -54,9 +54,10 @@ public record ReservoirType(ResourceLocation fluid, ResourceLocation soaked, Res
 
     private static final int LOWEST = -2048;
     private static final int HIGHEST = 2048;
-    private static final int MOST_PER_BLOCK = 1_000_000;
-    private static final double WIDEST = 128;
-    private static final int THICKEST_CAP = 16;
+    /* The most a file may say, which a reservoir declared in code is held to as well. */
+    static final int MOST_PER_BLOCK = 1_000_000;
+    static final double WIDEST = 128;
+    static final int THICKEST_CAP = 16;
     public static final Codec<ReservoirType> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             ResourceLocation.CODEC.fieldOf("fluid").forGetter(ReservoirType::fluid),
             ResourceLocation.CODEC.fieldOf("soaked").forGetter(ReservoirType::soaked),

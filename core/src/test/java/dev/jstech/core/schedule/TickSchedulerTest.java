@@ -152,6 +152,17 @@ class TickSchedulerTest {
     }
 
     @Test
+    void run_passesALowTaskOverEveryOtherRoundEvenWhenItComesFirst() {
+        final Humble one = new Humble();
+        final Greedy two = new Greedy();
+        new TickScheduler().run(List.of(one, two), 10 * TickScheduler.QUANTUM, () -> 0L, NO_DEADLINE);
+        assertEquals(10 * TickScheduler.QUANTUM, one.total + two.total, "the tick is still spent whole");
+        assertTrue(two.total >= 2 * one.total - TickScheduler.QUANTUM,
+                "first in turn, the low one still gets about half as many turns; " + one.total + " against "
+                        + two.total);
+    }
+
+    @Test
     void run_dealsQuantaOfTheSizeAsked() {
         final Greedy one = new Greedy();
         final Greedy two = new Greedy();

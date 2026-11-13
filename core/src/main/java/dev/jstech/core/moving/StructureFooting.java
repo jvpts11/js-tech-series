@@ -352,17 +352,14 @@ public final class StructureFooting {
 
     /** A player's game said which structure the player, or the vehicle they drive, stands on, and where on it. */
     static void reported(final ServerPlayer player, final StructureFootingPayload payload) {
-        final Map<ServerPlayer, Reported> kept = payload.vehicle() ? REPORTED_VEHICLES : REPORTED;
         if (payload.entity() < 0) {
-            kept.remove(player);
-            if (!payload.vehicle()) {
-                player.setData(CoreAttachments.FOOTING.get(), Footing.NONE);
-            }
+            standsOnNone(player, payload.vehicle());
             return;
         }
+        final Map<ServerPlayer, Reported> kept = payload.vehicle() ? REPORTED_VEHICLES : REPORTED;
         final Entity entity = player.level().getEntity(payload.entity());
         if (!(entity instanceof MovingStructureEntity structureEntity) || structureEntity.structure() == null) {
-            kept.remove(player);
+            standsOnNone(player, payload.vehicle());
             return;
         }
         final MovingStructure structure = structureEntity.structure();
@@ -371,7 +368,7 @@ public final class StructureFooting {
                 place[2]), structure.frame().worldY(place[0], place[1], place[2]),
                 structure.frame().worldZ(place[0], place[1], place[2]))))) {
             // A place nowhere near the structure is not standing on it, whatever the game says.
-            kept.remove(player);
+            standsOnNone(player, payload.vehicle());
             return;
         }
         kept.put(player, new Reported(structure, place));
@@ -414,6 +411,19 @@ public final class StructureFooting {
         }
         entity.setPos(frame.worldX(place.x, place.y, place.z), frame.worldY(place.x, place.y, place.z),
                 frame.worldZ(place.x, place.y, place.z));
+    }
+
+    /*
+     * {@code player}, or the vehicle they drive, stands on no structure: a player's place to come back to on a deck
+     * goes with it, so they do not come back after a restart to a deck their game said they had left.
+     */
+    private static void standsOnNone(final ServerPlayer player, final boolean vehicle) {
+        if (vehicle) {
+            REPORTED_VEHICLES.remove(player);
+            return;
+        }
+        REPORTED.remove(player);
+        player.setData(CoreAttachments.FOOTING.get(), Footing.NONE);
     }
 
     private static Map<Entity, Stand> side(final Level level) {
