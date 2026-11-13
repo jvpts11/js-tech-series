@@ -4723,6 +4723,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   script that leaves an era out is told the eras there are.
 - (Computers) The ISMS profiler: a trace started again from its own handler goes on hearing the network, and a
   completed statement shows no length rather than nought ticks.
+- (Industrial) Coal Generator: a fuel that leaves something behind, burnt from a stack still in its slot, drops what
+  it leaves beside the generator instead of losing it.
 
 ## [0.5.3a] - 2026-11-04
 

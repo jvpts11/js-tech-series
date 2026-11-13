@@ -368,19 +368,21 @@ public class IndustrialControllerBlockEntity extends PersonalComputerBlockEntity
     }
 
     /*
-     * Each machine's name: its block's and its number among the machines of that block it reads, counted in the order
-     * they stand (west to east, then down to up, then north to south), so a name holds while the machines do.
+     * Each machine's name: its block's and its number among the machines of that name it reads, counted in the order
+     * they stand (west to east, then down to up, then north to south), so a name holds while the machines do. They
+     * are counted by the name, not the block, so two blocks of two mods called alike are #1 and #2, never both #1.
      */
     private Map<Long, String> names(final ServerLevel level) {
         final List<Long> read = new ArrayList<>(machines());
         read.sort(Comparator.comparingInt((Long at) -> BlockPos.of(at).getX())
                 .thenComparingInt(at -> BlockPos.of(at).getY()).thenComparingInt(at -> BlockPos.of(at).getZ()));
-        final Map<Long, String> names = new HashMap<>();
-        final Map<Block, Integer> counted = new HashMap<>();
+        final Map<Long, String> names = new LinkedHashMap<>();
+        final Map<String, Integer> counted = new HashMap<>();
         for (final long at : read) {
             final Block block = level.getBlockState(BlockPos.of(at)).getBlock();
-            final int number = counted.merge(block, 1, Integer::sum);
-            names.put(at, NUMBERED.with(GameText.of(block.getName()).english(), number).english());
+            final String name = GameText.of(block.getName()).english();
+            final int number = counted.merge(name.toLowerCase(Locale.ROOT), 1, Integer::sum);
+            names.put(at, NUMBERED.with(name, number).english());
         }
         return names;
     }

@@ -64,8 +64,11 @@ public final class IndustrialScreensClientTests {
                             screen.getGuiTop() + MachineScreenLayout.faceY(MachineScreenLayout.laneY(0, 1)
                                     + MachineScreenLayout.LANE_PITCH / 2 - 1));
                 })
-                .thenAssert(SETTLE, () -> !RecipeViewers.any() || ctx.mc().screen != null
-                        && !(ctx.mc().screen instanceof MachineScreen), "a click on its arrow opens its recipes")
+                .thenAssert(SETTLE, () -> RecipeViewers.any()
+                                ? ctx.mc().screen != null && !(ctx.mc().screen instanceof MachineScreen)
+                                : ctx.mc().screen instanceof MachineScreen,
+                        "a click on its arrow opens its recipes in the recipe viewer, and with none running leaves "
+                                + "the machine's screen as it was")
                 .thenScreenshot(SETTLE, "compressor-recipes")
                 .then(0, () -> ctx.mc().setScreen(null))
                 .thenRightClick(SETTLE, COMPRESSOR)

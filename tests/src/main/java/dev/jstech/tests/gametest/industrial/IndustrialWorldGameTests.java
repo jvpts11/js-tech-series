@@ -168,6 +168,10 @@ public final class IndustrialWorldGameTests {
             final List<String> over = english(ProspectReport.pick(land, above));
             helper.assertTrue(over.stream().anyMatch(line -> line.contains("about 30 blocks down, right below")),
                     "above it, the pick tells it right below and about how deep: " + over);
+            final BlockPos under = new BlockPos(reservoir.body().x(), reservoir.body().y() - 30, reservoir.body().z());
+            final List<String> beneath = english(ProspectReport.pick(land, under));
+            helper.assertTrue(beneath.stream().anyMatch(line -> line.contains("about 30 blocks up, right above")),
+                    "and under it, right above and about how high: " + beneath);
         } finally {
             RuntimeDimensions.remove(server, copy);
         }

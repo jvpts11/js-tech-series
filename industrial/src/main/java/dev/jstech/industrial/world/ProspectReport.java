@@ -44,6 +44,8 @@ public final class ProspectReport {
     public static final TextKey NOTHING = TextKey.of("jsindustrial.prospect.nothing", "Nothing worth mining nearby");
     public static final TextKey RESERVOIR = TextKey.of("jsindustrial.prospect.reservoir",
             "%s about %s blocks down, %s");
+    public static final TextKey RESERVOIR_UP = TextKey.of("jsindustrial.prospect.reservoir_up",
+            "%s about %s blocks up, %s");
     public static final TextKey NORTH = TextKey.of("jsindustrial.prospect.north", "to the north");
     public static final TextKey NORTH_EAST = TextKey.of("jsindustrial.prospect.north_east", "to the north-east");
     public static final TextKey EAST = TextKey.of("jsindustrial.prospect.east", "to the east");
@@ -100,8 +102,11 @@ public final class ProspectReport {
                     reservoir.body().z() + 0.5);
             final Vec3 towards = middle.subtract(Vec3.atCenterOf(at));
             final Vec3 across = new Vec3(towards.x, 0, towards.z);
-            final TextKey way = across.length() <= reservoir.body().radius() ? BELOW : compass(across);
-            lines.add(RESERVOIR.with(fluidName(reservoir.kind().type().fluid()), depth(at.getY() - middle.y), way));
+            // A reservoir lies below as a rule, but a player in a cave under one hears it is above them.
+            final boolean up = towards.y > 0;
+            final TextKey way = across.length() <= reservoir.body().radius() ? up ? ABOVE : BELOW : compass(across);
+            lines.add((up ? RESERVOIR_UP : RESERVOIR).with(fluidName(reservoir.kind().type().fluid()),
+                    depth(up ? middle.y - at.getY() : at.getY() - middle.y), way));
         }
         if (lines.isEmpty()) {
             lines.add(NOTHING.text());

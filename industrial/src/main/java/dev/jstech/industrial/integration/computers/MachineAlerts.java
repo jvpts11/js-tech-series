@@ -116,7 +116,7 @@ final class MachineAlerts {
             }
         }
         if (!raised.isEmpty() || !after.equals(this.kept.get())) {
-            this.kept.set(List.copyOf(after.subList(0, Math.min(KEPT, after.size()))));
+            this.kept.set(trimmed(after));
         }
         return raised;
     }
@@ -138,6 +138,21 @@ final class MachineAlerts {
     /** Acknowledges every alert it keeps. */
     void acknowledgeAll() {
         this.kept.set(this.kept.get().stream().map(MachineAlert::seen).toList());
+    }
+
+    /*
+     * The latest KEPT alerts, newest first. Past that the oldest that are over go first: an alert let go while its
+     * fault still held would be raised again at the next look, and a fault that holds is one alert. Only when more
+     * than KEPT faults hold at once do the oldest of those go too.
+     */
+    private static List<MachineAlert> trimmed(final List<MachineAlert> after) {
+        final List<MachineAlert> out = new ArrayList<>(after);
+        for (int i = out.size() - 1; i >= 0 && out.size() > KEPT; i--) {
+            if (!out.get(i).active()) {
+                out.remove(i);
+            }
+        }
+        return List.copyOf(out.subList(0, Math.min(KEPT, out.size())));
     }
 
     /* What the machine at {@code at} is in now that an alert is about, with what it reads of each. */

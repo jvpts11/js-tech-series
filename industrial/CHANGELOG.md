@@ -212,6 +212,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   laid behind it runs (the side columns' stood off to the middle, the bottom row's up), and its gland, socket or pipe
   stub reaches the edge of the block. And no slit of sky shows along the CRC's foot under an entry or its terminal,
   which hid the ground's face.
+- Coal Generator: a fuel that leaves something behind, burnt from a stack still in its slot, drops what
+  it leaves beside the generator instead of losing it.
 
 ## [0.5.3a] - 2026-11-04
 

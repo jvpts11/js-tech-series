@@ -674,6 +674,7 @@
   "jsindustrial.prospect.north_west": "to the north-west",
   "jsindustrial.prospect.nothing": "Nothing worth mining nearby",
   "jsindustrial.prospect.reservoir": "%s about %s blocks down, %s",
+  "jsindustrial.prospect.reservoir_up": "%s about %s blocks up, %s",
   "jsindustrial.prospect.rich": "A rich vein of %s %s",
   "jsindustrial.prospect.south": "to the south",
   "jsindustrial.prospect.south_east": "to the south-east",

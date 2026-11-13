@@ -683,6 +683,7 @@
   "jsindustrial.prospect.north_west": "a noroeste",
   "jsindustrial.prospect.nothing": "Nada que valha minerar por perto",
   "jsindustrial.prospect.reservoir": "%s a uns %s blocos de profundidade, %s",
+  "jsindustrial.prospect.reservoir_up": "%s a uns %s blocos acima, %s",
   "jsindustrial.prospect.rich": "Um veio rico de %s %s",
   "jsindustrial.prospect.south": "ao sul",
   "jsindustrial.prospect.south_east": "a sudeste",

@@ -58,6 +58,8 @@ public abstract class IndustrialTank extends MachineBlockEntity {
     private @Nullable BoilOff boilOff;
     private final int[] sizedFor = new int[3];
     private long lastBoiled;
+    /** Whether it held a liquid when it last looked, which is what the time since then boils off. */
+    private boolean heldLiquid;
     private boolean sized;
 
     private static final double TICKS_A_SECOND = 20.0;
@@ -113,10 +115,12 @@ public abstract class IndustrialTank extends MachineBlockEntity {
         final Optional<ShapeMatch.Formed> formed = structure == null ? Optional.empty() : structure.structure();
         formed.ifPresent(found -> resize(found, structure.size()));
         final long now = level.getGameTime();
-        if (this.boilOff != null && !this.liquid.isEmpty() && now > this.lastBoiled) {
-            this.boilOff.vent(level, this.worldPosition, this.liquid, null,
-                    this.lastBoiled == 0L ? 0.0 : (now - this.lastBoiled) / TICKS_A_SECOND);
+        final boolean holds = !this.liquid.isEmpty();
+        // A liquid boils off for the time it was in the tank: one just poured into a tank that slept empty had none.
+        if (this.boilOff != null && holds && this.heldLiquid && now > this.lastBoiled) {
+            this.boilOff.vent(level, this.worldPosition, this.liquid, null, (now - this.lastBoiled) / TICKS_A_SECOND);
         }
+        this.heldLiquid = holds;
         this.lastBoiled = now;
         return MachineStatus.WAITING;
     }

@@ -318,9 +318,11 @@ final class CrcChart {
                 continue;
             }
             final String name = GameText.resolve(node.discovery().name());
-            final String label = node.state() == State.NOW || node.state() == State.STARTED
+            final String said = node.state() == State.NOW || node.state() == State.STARTED
                     ? GameText.resolve(CrcScreenTexts.NAMED_SHARE.with(name, (int) Math.floor(node.share() * 100)))
                     : name;
+            // A name longer than the chart is wide, as a data pack's or a translation's may be, is cut to it.
+            final String label = MachineArt.fit(view.font(), said, CHART_RIGHT - CHART_LEFT - 4);
             final int w = MachineArt.width(view.font(), label);
             final int x = Math.clamp(node.x() - w / 2, CHART_LEFT + 2, CHART_RIGHT - 2 - w);
             int[] box = {x, node.y() - LABEL_ABOVE, x + w, node.y() - LABEL_ABOVE + CrcLayout.SMALL_TEXT};

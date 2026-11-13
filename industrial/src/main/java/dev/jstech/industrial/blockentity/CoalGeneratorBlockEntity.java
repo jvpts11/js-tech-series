@@ -19,6 +19,7 @@ import dev.jstech.industrial.machine.MachineRating;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 
 /**
@@ -91,6 +92,9 @@ public class CoalGeneratorBlockEntity extends IndustrialGenerator {
         getInventory().extractItem(FUEL_SLOT, 1, false);
         if (!remainder.isEmpty() && getInventory().getStackInSlot(FUEL_SLOT).isEmpty()) {
             getInventory().setStackInSlot(FUEL_SLOT, remainder);
+        } else if (!remainder.isEmpty() && level != null) {
+            // A stack of fuel that leaves something behind has no room for it in its slot, so it comes out instead.
+            Block.popResource(level, worldPosition, remainder);
         }
         this.fuelLeft.set(joules);
         this.fuelOfPiece.set(joules);

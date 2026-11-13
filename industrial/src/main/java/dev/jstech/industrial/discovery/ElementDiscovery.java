@@ -102,14 +102,17 @@ public final class ElementDiscovery {
         final Material element = material.isotope().map(Material.Isotope::element).orElse(material);
         // The first on the server names an element beyond the known table, whether or not their team knew it.
         ElementNaming.discover(server, by, element);
-        if (!TeamProgress.grant(server, CoreTeams.teamOf(server, by), knowledge.get(), 1.0)) {
-            return false;
-        }
+        final String team = CoreTeams.teamOf(server, by);
+        final boolean granted = TeamProgress.grant(server, team, knowledge.get(), 1.0);
+        /*
+         * Whoever makes an element their team knows has its advancement now, though a teammate made it first: it is
+         * theirs at their next login all the same, and making it is no reason to wait for one.
+         */
         final ServerPlayer player = server.getPlayerList().getPlayer(by);
-        if (player != null) {
+        if (player != null && TeamProgress.knows(server, team, knowledge.get().id())) {
             Advancements.award(player, DISCOVERY_MADE, element.id().getPath());
         }
-        return true;
+        return granted;
     }
 
     private static void made(final MinecraftServer server, final UUID by, final ItemStack stack) {
