@@ -78,16 +78,20 @@ public final class ExampleGameTests {
         });
     }
 
-    @GameTest(template = ARENA)
+    /* In a batch of its own: the count is the whole server's, and no other generator may add to it meanwhile. */
+    @GameTest(template = ARENA, batch = "jsexample_energy_count")
     public static void generator_countsWhatItMakesForTheWholeServer(final GameTestHelper helper) {
         final long before = ExampleState.ENERGY_MADE.get(helper.getLevel().getServer());
         final GeneratorBlockEntity generator = place(helper, FIRST, ExampleContent.GENERATOR.get(),
                 GeneratorBlockEntity.class);
         generator.getInventory().setStackInSlot(GeneratorBlockEntity.FUEL, new ItemStack(Items.COAL));
 
-        helper.succeedWhen(() -> helper.assertTrue(ExampleState.ENERGY_MADE.get(helper.getLevel().getServer())
-                >= before + generator.getEnergy().getEnergyStored() && generator.getEnergy().getEnergyStored() > 0,
-                "the server's count grows by what it made"));
+        helper.succeedWhen(() -> {
+            final int stored = generator.getEnergy().getEnergyStored();
+            final long counted = ExampleState.ENERGY_MADE.get(helper.getLevel().getServer()) - before;
+            helper.assertTrue(stored > 0 && counted == stored,
+                    "the server's count grows by just what it made: counted " + counted + ", stored " + stored);
+        });
     }
 
     @GameTest(template = ARENA)

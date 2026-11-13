@@ -662,5 +662,7 @@ public final class ClientTestSuite {
         // And the test kit's own tests, written with nothing of the series', as a mod built on the Core writes them.
         ClientTests.register(JsTests.MODID, "core", List.of(TestKitClientTests.class));
         ClientTests.beforeEach(NetworkInteractorApp::forgetView);
+        // The test HUD starts hidden for every test, so one that failed while showing it leaves no bars behind.
+        ClientTests.beforeEach(() -> TestHud.show(false));
     }
 }

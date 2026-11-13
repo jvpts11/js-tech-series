@@ -543,6 +543,10 @@ public final class SigmaApiGameTests {
         final var registries = helper.getLevel().registryAccess();
         final CompoundTag saved = computer.saveWithoutMetadata(registries);
         helper.assertTrue(saved.contains("Σ#"), "the debt goes into the save although nothing is running");
+        // Owing more after the save, so only a load that reads the saved amount back comes to 5 000 again.
+        computer.programs().owe(1_000);
+        computer.loadWithComponents(saved, registries);
+        helper.assertValueEqual(computer.programs().owed(), 5_000, "the debt read back from the save");
         helper.succeed();
     }
 

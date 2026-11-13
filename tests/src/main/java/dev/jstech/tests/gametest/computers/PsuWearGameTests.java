@@ -140,12 +140,16 @@ public final class PsuWearGameTests {
                     helper.assertFalse(cc.buildValid(), "a failed supply makes no computer");
                     helper.assertTrue(logged(helper, network[0], EventLevel.ERROR, "Power supply failed"),
                             "the network it ran on says so");
+                    // Pressed from off, so the button is known to switch it on rather than off.
+                    cc.setPowered(false);
                     cc.togglePower();
-                    helper.assertFalse(cc.isRunning(), "its button brings nothing up");
+                    helper.assertTrue(cc.isManualOn() && !cc.isRunning(), "its button switches it on to nothing");
                     cc.getHardware().setStackInSlot(CraftingComputerBlockEntity.PSU_SLOT,
                             new ItemStack(ComputingModule.PSU_650G.get()));
                     helper.assertTrue(cc.buildValid(), "a new supply makes it a computer again");
                 })
+                .thenWaitUntil(() -> helper.assertTrue(cc.isRunning() && !PsuConditions.failed(cc.psuStack()),
+                        "and, still switched on, it runs on the new supply"))
                 .thenSucceed();
     }
 

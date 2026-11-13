@@ -23,6 +23,8 @@ public final class LicenceHeaders {
 
     private static final Pattern SPDX = Pattern.compile("SPDX-License-Identifier:\\s*(\\S+)");
     private static final String NEWLINE = "\n";
+    /* What a text saved with a byte order mark opens with. */
+    private static final char BYTE_ORDER_MARK = (char) 0xFEFF;
 
     private LicenceHeaders() {
     }
@@ -66,7 +68,9 @@ public final class LicenceHeaders {
         if (licenceOf(source).isPresent()) {
             return source;
         }
-        return header(licence, year, holder, work) + source.stripLeading();
+        // A byte order mark opens the file or nothing: left after the header, the compiler finds a stray character.
+        final String text = !source.isEmpty() && source.charAt(0) == BYTE_ORDER_MARK ? source.substring(1) : source;
+        return header(licence, year, holder, work) + text.stripLeading();
     }
 
     /** The header, ending with the line after its closing. */

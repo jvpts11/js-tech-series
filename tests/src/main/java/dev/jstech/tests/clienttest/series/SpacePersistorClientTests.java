@@ -47,7 +47,17 @@ public final class SpacePersistorClientTests {
     @ClientTest(timeoutTicks = 1200)
     public static void screen_showsTheLandItKeepsAndChangesIt(final ClientTestContext ctx) {
         final BlockPos[] other = new BlockPos[1];
-        ctx.afterTest(() -> ctx.mc().setScreen(null));
+        // The stranger's chunk loads are held world-wide, outside the test's area, so they go however the test ends.
+        ctx.afterTest(() -> {
+            ctx.mc().setScreen(null);
+            ctx.server().execute(() -> {
+                final ServerLevel level = ctx.serverPlayer().serverLevel();
+                if (other[0] != null) {
+                    ChunkLoaders.releaseAll(level, other[0]);
+                }
+                level.setBlockAndUpdate(ctx.abs(PERSISTOR), Blocks.AIR.defaultBlockState());
+            });
+        });
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
                 .thenServer(0, level -> other[0] = build(ctx, level))
                 .then(2, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(PERSISTOR))))
@@ -85,12 +95,7 @@ public final class SpacePersistorClientTests {
                         / 2.0, top(ctx, SpacePersistorLayout.HEIGHT) + MachineScreenLayout.TAB_HEIGHT / 2.0))
                 .thenWaitUntil(() -> persistorScreen(ctx).getMenu().tab() == MachineMenu.PROTECTION, WAIT,
                         "the Protection tab to show")
-                .thenScreenshot(5, "persistor-protection")
-                .then(0, () -> ctx.mc().setScreen(null))
-                .thenServer(0, level -> {
-                    ChunkLoaders.releaseAll(level, other[0]);
-                    level.setBlockAndUpdate(ctx.abs(PERSISTOR), Blocks.AIR.defaultBlockState());
-                });
+                .thenScreenshot(5, "persistor-protection");
     }
 
     /*

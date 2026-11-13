@@ -39,6 +39,7 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -84,6 +85,14 @@ public final class MovingStructureLayerGameTests {
     private static final double BEARING_SPIN = Math.toRadians(4.8) * 20;
 
     private MovingStructureLayerGameTests() {
+    }
+
+    /* A test failing before its clear leaves Sable's physics held; the batch's end lets it go on for the next. */
+    @AfterBatch(batch = BATCH)
+    public static void physicsGoesOn(final ServerLevel level) {
+        if (sable()) {
+            WithSable.releaseAll(level);
+        }
     }
 
     @GameTest(template = ARENA, batch = BATCH)
@@ -507,6 +516,14 @@ public final class MovingStructureLayerGameTests {
 
         static void release(final ServerLevel level) {
             if (--holding == 0) {
+                SubLevelPhysicsSystem.require(level).setPaused(false);
+            }
+        }
+
+        /* Lets Sable's physics go on whatever tests still hold it, as one that failed before its clear does. */
+        static void releaseAll(final ServerLevel level) {
+            if (holding > 0) {
+                holding = 0;
                 SubLevelPhysicsSystem.require(level).setPaused(false);
             }
         }

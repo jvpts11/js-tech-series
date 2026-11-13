@@ -38,6 +38,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.commands.arguments.EntityAnchorArgument;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.gametest.framework.AfterBatch;
+import net.minecraft.gametest.framework.BeforeBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -76,9 +78,37 @@ public final class FireGameTests {
     /* The places a strong east wind blows in, for the wind's test; absolute. */
     private static final Set<AABB> WINDY = ConcurrentHashMap.newKeySet();
     private static final Wind GALE = new Wind(40, 0);
+    /*
+     * The batches whose tests let fire tick; the game's tests run with fire still, and it goes back however they end.
+     */
+    private static final String REMAINS = "jscore_fire_remains";
+    private static final String WIND = "jscore_fire_wind";
     private static volatile boolean windDeclared;
+    /* Whether fire ticked before a batch that lets it tick began. */
+    private static volatile boolean fireTicked;
 
     private FireGameTests() {
+    }
+
+    @BeforeBatch(batch = REMAINS)
+    public static void remainsStart(final ServerLevel level) {
+        fireTicked = level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK);
+    }
+
+    @AfterBatch(batch = REMAINS)
+    public static void remainsEnd(final ServerLevel level) {
+        level.getGameRules().getRule(GameRules.RULE_DOFIRETICK).set(fireTicked, level.getServer());
+    }
+
+    @BeforeBatch(batch = WIND)
+    public static void windStart(final ServerLevel level) {
+        fireTicked = level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK);
+    }
+
+    @AfterBatch(batch = WIND)
+    public static void windEnd(final ServerLevel level) {
+        WINDY.clear();
+        level.getGameRules().getRule(GameRules.RULE_DOFIRETICK).set(fireTicked, level.getServer());
     }
 
     @GameTest(template = ARENA)
@@ -93,11 +123,10 @@ public final class FireGameTests {
         helper.succeed();
     }
 
-    @GameTest(template = ARENA, batch = "jscore_fire_remains", timeoutTicks = 1200)
+    @GameTest(template = ARENA, batch = REMAINS, timeoutTicks = 1200)
     public static void fire_spreadsByTheAirAndLeavesItsRemains(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         level.setWeatherParameters(6_000, 0, false, false);
-        final boolean fireTicked = level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK);
         level.getGameRules().getRule(GameRules.RULE_DOFIRETICK).set(true, level.getServer());
         final BlockPos wool = new BlockPos(4, 2, 4);
         helper.setBlock(wool, Blocks.WHITE_WOOL);
@@ -110,9 +139,6 @@ public final class FireGameTests {
                 && charred.getValue(RotatedPillarBlock.AXIS) == Direction.Axis.X, "a log chars along its own axis");
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertBlockPresent(CharredBlocks.ASH.get(), wool))
-                // The game's tests run with fire still; the rule goes back as it was.
-                .thenExecute(() -> level.getGameRules().getRule(GameRules.RULE_DOFIRETICK).set(fireTicked,
-                        level.getServer()))
                 .thenSucceed();
     }
 
@@ -169,11 +195,10 @@ public final class FireGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = "jscore_fire_wind", timeoutTicks = 300)
+    @GameTest(template = ARENA, batch = WIND, timeoutTicks = 300)
     public static void wind_carriesTheFireAhead(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         level.setWeatherParameters(6_000, 0, false, false);
-        final boolean fireTicked = level.getGameRules().getBoolean(GameRules.RULE_DOFIRETICK);
         level.getGameRules().getRule(GameRules.RULE_DOFIRETICK).set(true, level.getServer());
         declareWind();
         final AABB arena = new AABB(helper.absolutePos(BlockPos.ZERO)).expandTowards(9, 9, 9);

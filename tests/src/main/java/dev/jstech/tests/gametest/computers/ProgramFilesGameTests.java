@@ -106,6 +106,12 @@ public final class ProgramFilesGameTests {
                     final String deleted = run(shell, cli, "del readme.txt");
                     helper.assertFalse(deleted.contains("deleted") || deleted.contains("Deleted"),
                             "a generated file cannot be deleted; got " + deleted);
+                    // Read from inside the folder the prompt entered, so the listing proves the cd as well.
+                    final String still = run(shell, cli, "dir");
+                    helper.assertTrue(still.contains("mines.exe") && still.contains("readme.txt"),
+                            "the prompt is in the program's folder and the readme is still there; got " + still);
+                    final String again = run(shell, cli, "type readme.txt");
+                    helper.assertTrue(again.contains("Minesweeper 5.1"), "and still reads; got " + again);
                 })
                 .thenSucceed();
     }

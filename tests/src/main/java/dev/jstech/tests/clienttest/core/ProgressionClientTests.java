@@ -7,15 +7,20 @@
  */
 package dev.jstech.tests.clienttest.core;
 
+import dev.jstech.core.client.recipeview.ProcessingRecipeViews;
 import dev.jstech.core.integration.emi.CoreEmiPlugin;
 import dev.jstech.core.integration.jei.CoreJeiPlugin;
+import dev.jstech.core.machine.ProcessingRecipe;
 import dev.jstech.core.progression.TeamProgress;
 import dev.jstech.core.team.CoreTeams;
+import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestPress;
 import dev.jstech.tests.TestProgression;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.UUID;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.neoforged.fml.ModList;
 
 /**
@@ -25,6 +30,8 @@ import net.neoforged.fml.ModList;
  */
 public final class ProgressionClientTests {
 
+    private static final ResourceLocation LOCKED_RECIPE =
+            ResourceLocation.fromNamespaceAndPath(JsTests.MODID, "test_pressing/locked_gold");
     private static final int SETTLE = 4;
     private static final int WAIT = 200;
 
@@ -45,18 +52,32 @@ public final class ProgressionClientTests {
                         player[0]), TestProgression.FUSION.id()))
                 .thenWaitUntil(() -> !TeamProgress.knowsHere(TestProgression.FUSION.id()), WAIT,
                         "the team's knowledge to reach the player")
-                .then(SETTLE, () -> ctx.assertTrue(show(), "the viewer opens on the test press's recipes"))
+                .then(SETTLE, () -> {
+                    ctx.assertTrue(locked(ctx), "the recipe is drawn locked, with its padlock");
+                    ctx.assertTrue(show(), "the viewer opens on the test press's recipes");
+                })
                 .thenScreenshot(20, "recipe-locked")
                 .then(SETTLE, () -> ctx.mc().setScreen(null))
                 .thenServer(0, level -> TeamProgress.grant(level.getServer(), CoreTeams.teamOf(level.getServer(),
                         player[0]), TestProgression.FUSION, 1.0))
                 .thenWaitUntil(() -> TeamProgress.knowsHere(TestProgression.FUSION.id()), WAIT,
                         "the team's new knowledge to reach the player")
-                .then(SETTLE, () -> ctx.assertTrue(show(), "the viewer opens again"))
+                .then(SETTLE, () -> {
+                    ctx.assertTrue(!locked(ctx), "the recipe is drawn as any other once the team knows it");
+                    ctx.assertTrue(show(), "the viewer opens again");
+                })
                 .thenScreenshot(20, "recipe-unlocked")
                 .then(SETTLE, () -> ctx.mc().setScreen(null))
                 .thenServer(0, level -> TeamProgress.forget(level.getServer(), CoreTeams.teamOf(level.getServer(),
                         player[0]), TestProgression.FUSION.id()));
+    }
+
+    /* Asked of the recipe as the player's game holds it, through the same check the viewer's padlock reads. */
+    private static boolean locked(final ClientTestContext ctx) {
+        final RecipeHolder<?> holder = ctx.mc().level.getRecipeManager().byKey(LOCKED_RECIPE).orElse(null);
+        ctx.assertTrue(holder != null && holder.value() instanceof ProcessingRecipe,
+                "the player's game holds the locked test recipe");
+        return ProcessingRecipeViews.locked((ProcessingRecipe) holder.value());
     }
 
     private static boolean show() {

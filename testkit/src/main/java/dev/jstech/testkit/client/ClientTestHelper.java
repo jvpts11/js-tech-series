@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -71,6 +74,8 @@ public class ClientTestHelper {
     public static final int FRONT = 64;
 
     private static final Logger LOGGER = LogUtils.getLogger();
+    /* How long a timed-out wait waits for the server to say what it saw, in seconds. */
+    private static final int DIAGNOSTICS_SECONDS = 2;
     /* How long a peripheral may take to link before it is clicked: a few ticks alone, far more on a loaded machine. */
     private static final int PERIPHERAL_LINK_WAIT = 200;
     private static final int LEAVING_TICKS = 600;
@@ -193,9 +198,16 @@ public class ClientTestHelper {
                 if (++waited > maxTicks) {
                     String extra;
                     try {
+                        // Bounded: a stuck server, which is what times a wait out, would hang this tick for good.
                         final MinecraftServer server = server();
-                        extra = server.submit(() -> diagnostics.apply(server.overworld())).join();
-                    } catch (final RuntimeException e) {
+                        extra = server.submit(() -> diagnostics.apply(server.overworld()))
+                                .get(DIAGNOSTICS_SECONDS, TimeUnit.SECONDS);
+                    } catch (final TimeoutException e) {
+                        extra = "(diagnostics timed out: the server did not answer)";
+                    } catch (final InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        extra = "(diagnostics interrupted)";
+                    } catch (final ExecutionException | RuntimeException e) {
                         extra = "(diagnostics failed: " + e + ")";
                     }
                     throw new ClientTestFailure("timed out after " + maxTicks + " ticks waiting for " + what

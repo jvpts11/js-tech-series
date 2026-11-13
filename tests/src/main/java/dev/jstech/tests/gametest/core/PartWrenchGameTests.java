@@ -94,8 +94,10 @@ public final class PartWrenchGameTests {
         final int top = SpaceSlots.face(Direction.UP.get3DDataValue());
         helper.assertTrue(cable.parts().turn(top), "the lamp turns");
         same(helper, 1, cable.parts().turns(Direction.UP), "a quarter turn");
-        helper.assertTrue(cable.parts().layout().models().stream().filter(placed -> placed.facing() == Direction.UP)
-                .mapToInt(PlacedModel::turns).allMatch(turns -> turns == 1), "its model turned with it");
+        final List<PlacedModel> lamp = cable.parts().layout().models().stream()
+                .filter(placed -> placed.facing() == Direction.UP).toList();
+        helper.assertTrue(!lamp.isEmpty() && lamp.stream().allMatch(placed -> placed.turns() == 1),
+                "its model turned with it; got " + lamp);
         helper.assertTrue(!cable.parts().canTurn(SpaceSlots.face(Direction.NORTH.get3DDataValue())),
                 "a probe, of a kind that does not turn, is never turned");
         helper.succeed();

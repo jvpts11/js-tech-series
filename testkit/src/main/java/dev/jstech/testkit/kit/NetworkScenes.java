@@ -60,8 +60,13 @@ public final class NetworkScenes {
      * Lays a data network of its own through the arena's places {@code cables}: each the place of a data cable to the
      * Core, those side by side joined, all of it one network. Nothing is set in the world: a member placed beside one
      * of them joins the network as it loads, as beside a cable.
+     *
+     * @throws IllegalArgumentException with no cable: a network of none has no place to say a failure at
      */
     public static Network lay(final GameTestHelper helper, final BlockPos... cables) {
+        if (cables.length == 0) {
+            throw new IllegalArgumentException("a network is laid through at least one cable");
+        }
         final ServerLevel level = helper.getLevel();
         final ConnectivityIndex connectivity = NetworkSystem.get(level).connectivity();
         final NetworkUuid id = new NetworkUuid(UUID.randomUUID());
@@ -82,9 +87,7 @@ public final class NetworkScenes {
             placed.add(pos.asLong());
             laid.add(pos.asLong());
         }
-        if (!laid.isEmpty()) {
-            connectivity.assignUuid(laid.getFirst(), id);
-        }
+        connectivity.assignUuid(laid.getFirst(), id);
         return new Network(id, List.copyOf(laid), level);
     }
 

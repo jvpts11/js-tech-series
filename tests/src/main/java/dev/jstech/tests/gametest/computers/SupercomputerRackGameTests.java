@@ -9,13 +9,17 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.blockentity.ServerRackBlockEntity;
+import dev.jstech.computers.rack.RackChassis;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.ServerStacks;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -53,8 +57,7 @@ public final class SupercomputerRackGameTests {
                     final ItemStack node = ServerStacks.defaultSupercomputerNode();
                     final ItemStack plainServer = ServerStacks.defaultServer();
                     final ItemStack kvm = new ItemStack(ComputingModule.KVM_SWITCH.get());
-                    helper.assertTrue(sc.rackType()
-                                    == dev.jstech.computers.rack.RackChassis.RackType.SUPERCOMPUTER,
+                    helper.assertTrue(sc.rackType() == RackChassis.RackType.SUPERCOMPUTER,
                             "the typed cabinet reports its own kind");
                     helper.assertTrue(sc.acceptsChassis(node), "a Supercomputer Rack seats a node");
                     helper.assertTrue(!sc.acceptsChassis(plainServer), "a Supercomputer Rack refuses a server");
@@ -65,6 +68,16 @@ public final class SupercomputerRackGameTests {
                             "the slot itself must refuse the wrong chassis, not only the check");
                     helper.assertTrue(sc.getServers().insertItem(0, node, false).isEmpty(),
                             "the slot takes a node");
+                })
+                .thenExecute(() -> helper.getLevel().destroyBlock(helper.absolutePos(scRack), true))
+                .thenExecuteAfter(1, () -> {
+                    final List<ItemStack> drops = helper.getLevel().getEntitiesOfClass(ItemEntity.class,
+                            new AABB(helper.absolutePos(scRack)).inflate(3)).stream().map(ItemEntity::getItem).toList();
+                    helper.assertTrue(drops.stream().anyMatch(stack -> stack.is(
+                            ComputingModule.SUPERCOMPUTER_RACK.get().asItem())),
+                            "a dismantled Supercomputer Rack hands back its own item; dropped " + drops);
+                    helper.assertTrue(drops.stream().noneMatch(stack -> stack.is(
+                            ComputingModule.SERVER_RACK.get().asItem())), "never a Server Rack; dropped " + drops);
                 })
                 .thenSucceed();
     }

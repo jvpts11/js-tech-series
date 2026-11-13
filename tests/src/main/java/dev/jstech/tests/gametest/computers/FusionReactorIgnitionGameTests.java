@@ -180,6 +180,8 @@ public final class FusionReactorIgnitionGameTests {
         world.placeFromItem(TANK, block(MekanismRig.mek("basic_chemical_tank")));
         final ItemStack[] hohlraum = {ItemStack.EMPTY};
         final double[] plasmaBefore = {0.0};
+        // The FE the Laser has taken over the polls: fed again each poll, it takes none once its buffer is full.
+        final long[] fedLaser = {0L};
         final int[] sustained = {0};
         final long[] fedTotal = {0};
         helper.startSequence()
@@ -226,7 +228,9 @@ public final class FusionReactorIgnitionGameTests {
                 .thenExecuteAfter(SETTLE, () -> plasmaBefore[0] = number(multiblock(helper.getBlockEntity(CONTROLLER)), "getPlasmaTemp"))
                 .thenWaitUntil(() -> {
                     final IEnergyStorage fe = helper.getLevel().getCapability(Capabilities.EnergyStorage.BLOCK, helper.absolutePos(LASER), Direction.NORTH);
-                    helper.assertTrue(fe != null && fe.receiveEnergy(Integer.MAX_VALUE, false) >= 0, "the Laser must take FE on its back");
+                    helper.assertTrue(fe != null, "the Laser must expose FE on its back");
+                    fedLaser[0] += fe.receiveEnergy(Integer.MAX_VALUE, false);
+                    helper.assertTrue(fedLaser[0] > 0, "the Laser must take FE on its back");
                     final Object data = multiblock(helper.getBlockEntity(CONTROLLER));
                     helper.assertTrue(number(data, "getPlasmaTemp") > plasmaBefore[0] + 1000.0,
                             "the laser chain must heat the plasma; plasma=" + number(data, "getPlasmaTemp") + " before=" + plasmaBefore[0]);

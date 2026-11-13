@@ -16,16 +16,22 @@ import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.core.cable.CableBlockEntity;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.Container;
+import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -45,6 +51,8 @@ public final class StorageBusStressGameTests {
     private static final String ARENA = "empty";
     private static final int SETTLE = 6;
     private static final int PER_ITEM = 64;
+    /* How many unbalanced ticks are written into a failure at most; the first ones say enough. */
+    private static final int MOST_KEPT = 16;
 
     private static final Item[] ITEMS = {
             Items.COBBLESTONE, Items.DIRT, Items.STONE, Items.OAK_LOG,
@@ -71,6 +79,8 @@ public final class StorageBusStressGameTests {
             world.setBlock(new BlockPos(2 + i, 2, 2), ComputingModule.HBW_CABLE);
         }
         world.placeSeededRack(new BlockPos(2, 2, 1));
+        final List<String> unbalanced = new ArrayList<>();
+        final ImportBusPart[] imports = new ImportBusPart[ITEMS.length];
 
         helper.startSequence()
                 .thenExecuteAfter(SETTLE, () -> {
@@ -87,6 +97,7 @@ public final class StorageBusStressGameTests {
                         final ImportBusPart in = ComputingParts.IMPORT.get().create();
                         cable.addPart(Direction.UP, in);
                         in.setFilter(new ItemStack(item));
+                        imports[i] = in;
                         final ExportBusPart out = ComputingParts.EXPORT.get().create();
                         cable.addPart(Direction.DOWN, out);
                         out.setFilter(new ItemStack(item));
@@ -97,20 +108,24 @@ public final class StorageBusStressGameTests {
                 })
                 /*
                  * Let the buses churn, checking conservation the whole way: at no tick may the closed system hold
-                 * more or less of any item than was seeded.
+                 * more or less of any item than was seeded. An Import Bus carries what it took until the network has
+                 * written it, so what it would keep through a save belongs to the system too.
                  */
                 .thenWaitUntil(() -> {
                     final NetworkStorage storage = NetworkStorage.of(helper.getLevel(), mainframe.networkUuid());
+                    final HolderLookup.Provider registries = helper.getLevel().registryAccess();
                     long movedToSink = 0L;
                     for (int i = 0; i < ITEMS.length; i++) {
                         final Item item = ITEMS[i];
                         final long src = inContainer(helper, new BlockPos(2 + i, 3, 2), item);
+                        final long bus = carried(imports[i], registries);
                         final long net = storage.count(item);
                         final long snk = inContainer(helper, new BlockPos(2 + i, 1, 2), item);
-                        final long total = src + net + snk;
-                        if (total != PER_ITEM) {
-                            throw new GameTestAssertException(item + ": closed-system total is " + total
-                                    + ", seeded " + PER_ITEM + " (src=" + src + " net=" + net + " sink=" + snk + ")");
+                        final long total = src + bus + net + snk;
+                        // Kept, not thrown: a wait swallows what it throws, so a tick that later mends would pass.
+                        if (total != PER_ITEM && unbalanced.size() < MOST_KEPT) {
+                            unbalanced.add(item + " at tick " + helper.getTick() + ": " + total + " (src=" + src
+                                    + " bus=" + bus + " net=" + net + " sink=" + snk + ")");
                         }
                         movedToSink += snk;
                     }
@@ -121,11 +136,23 @@ public final class StorageBusStressGameTests {
                     }
                 })
                 .thenExecute(() -> {
-                    final int dropped = helper.getLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class,
-                            net.minecraft.world.phys.AABB.encapsulatingFullBlocks(helper.absolutePos(new BlockPos(0, 0, 0)),
+                    helper.assertTrue(unbalanced.isEmpty(), "at no tick may the closed system hold more or less than "
+                            + PER_ITEM + " of an item; it did: " + unbalanced);
+                    final int dropped = helper.getLevel().getEntitiesOfClass(ItemEntity.class,
+                            AABB.encapsulatingFullBlocks(helper.absolutePos(new BlockPos(0, 0, 0)),
                                     helper.absolutePos(new BlockPos(16, 8, 16)))).size();
                     helper.assertTrue(dropped == 0, dropped + " items leaked to the world during the bus churn");
                 })
                 .thenSucceed();
+    }
+
+    /*
+     * What an Import Bus filtered to one kind carries of it, taken from its chest and not yet written into the network,
+     * as its save keeps it: its buffer and the part of its move the network has not confirmed.
+     */
+    private static long carried(final ImportBusPart bus, final HolderLookup.Provider registries) {
+        final CompoundTag saved = new CompoundTag();
+        bus.save(saved, registries);
+        return saved.getLong("BufferAmount") + saved.getLong("FlushedAmount");
     }
 }

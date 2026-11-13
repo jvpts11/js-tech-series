@@ -118,20 +118,24 @@ public final class SoundfoundryCatalogGameTests {
     public static void load_keepsTheSongsAfterANotesFileThatIsNotUtf8(final GameTestHelper helper) {
         final MediaStore store = MediaStore.current().orElseThrow();
         final Path folder = folder();
-        final String salt = Long.toString(System.nanoTime());
-        final Path album = folder.resolve("Accents");
-        write(album.resolve("a song.wav"), TestMedia.wav(300, "Before " + salt));
-        // A Windows-1252 accent: the byte 0xE9 on its own is not valid UTF-8.
-        write(album.resolve(SoundfoundryCatalog.NOTES), new byte[]{'{', '"', 't', 'i', 't', 'l', 'e', '"', ':', '"',
-                'C', 'a', 'f', (byte) 0xE9, '"', '}'});
-        write(album.resolve("z song.wav"), TestMedia.wav(300, "After " + salt));
+        try {
+            final String salt = Long.toString(System.nanoTime());
+            final Path album = folder.resolve("Accents");
+            write(album.resolve("a song.wav"), TestMedia.wav(300, "Before " + salt));
+            // A Windows-1252 accent: the byte 0xE9 on its own is not valid UTF-8.
+            write(album.resolve(SoundfoundryCatalog.NOTES), new byte[]{'{', '"', 't', 'i', 't', 'l', 'e', '"', ':',
+                    '"', 'C', 'a', 'f', (byte) 0xE9, '"', '}'});
+            write(album.resolve("z song.wav"), TestMedia.wav(300, "After " + salt));
 
-        final SoundfoundryCatalog.Snapshot read = SoundfoundryCatalog.load(folder,
-                helper.getLevel().getServer().getResourceManager(), store);
+            final SoundfoundryCatalog.Snapshot read = SoundfoundryCatalog.load(folder,
+                    helper.getLevel().getServer().getResourceManager(), store);
 
-        final CatalogAlbum found = album(read, "config/Accents");
-        helper.assertTrue(found != null && found.tracks().size() == 2,
-                "the songs on both sides of the odd notes file are kept; got " + found);
+            final CatalogAlbum found = album(read, "config/Accents");
+            helper.assertTrue(found != null && found.tracks().size() == 2,
+                    "the songs on both sides of the odd notes file are kept; got " + found);
+        } finally {
+            delete(folder);
+        }
         helper.succeed();
     }
 

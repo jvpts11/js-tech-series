@@ -10,6 +10,7 @@ package dev.jstech.tests.clienttest.core;
 import dev.jstech.core.audio.AudioChannels;
 import dev.jstech.core.audio.AudioPrefs;
 import dev.jstech.core.audio.SoundMixerTexts;
+import dev.jstech.core.client.audio.AudioMixer;
 import dev.jstech.core.client.audio.AudioPrefsStore;
 import dev.jstech.core.client.audio.mixer.SoundMixerScreen;
 import dev.jstech.core.gui.layout.SoundMixerLayout;
@@ -18,6 +19,8 @@ import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractSelectionList;
 import net.minecraft.client.gui.components.AbstractSliderButton;
@@ -72,6 +75,7 @@ public final class SoundMixerClientTests {
     @ClientTest(timeoutTicks = 400)
     public static void channels_setTheVolumeTheirSliderShowsAndResetToWhole(final ClientTestContext ctx) {
         final AudioPrefs prefs = AudioPrefsStore.prefs();
+        restoreAfter(ctx, prefs);
         ctx.then(0, () -> ctx.mc().setScreen(new SoundMixerScreen(null)))
                 .thenAwaitScreen(SoundMixerScreen.class, 40)
                 .thenAssert(1, () -> {
@@ -106,6 +110,7 @@ public final class SoundMixerClientTests {
     @ClientTest(timeoutTicks = 400)
     public static void sounds_listEveryKnownSoundToTurnOffAndBackOn(final ClientTestContext ctx) {
         final AudioPrefs prefs = AudioPrefsStore.prefs();
+        restoreAfter(ctx, prefs);
         ctx.then(0, () -> {
                     prefs.setMuted(BELL, false);
                     ctx.mc().setScreen(new SoundMixerScreen(null));
@@ -136,6 +141,7 @@ public final class SoundMixerClientTests {
         final AudioPrefs prefs = AudioPrefsStore.prefs();
         final String muffle = GameText.component(SoundMixerTexts.MUFFLE).getString();
         final String options = GameText.component(SoundMixerTexts.TAB_OPTIONS).getString();
+        restoreAfter(ctx, prefs);
         ctx.then(0, () -> ctx.mc().setScreen(new SoundMixerScreen(null)))
                 .thenAwaitScreen(SoundMixerScreen.class, 40)
                 .then(0, () -> ctx.screen(SoundMixerScreen.class).selectTab(2))
@@ -153,6 +159,24 @@ public final class SoundMixerClientTests {
                                 .equals(options),
                         "the key opens the game's controls, which come back to the mixer's options")
                 .then(0, () -> ctx.mc().setScreen(null));
+    }
+
+    /*
+     * The player's mixer settings as the test found them, put back however it ends, so a check failing halfway leaves
+     * no channel turned down, sound off or option changed for the tests after it.
+     */
+    private static void restoreAfter(final ClientTestContext ctx, final AudioPrefs prefs) {
+        final Map<String, Float> volumes = prefs.volumes();
+        final Set<String> muted = prefs.mutedSounds();
+        final boolean occlusion = prefs.occlusion();
+        ctx.afterTest(() -> {
+            prefs.setVolumes(volumes);
+            prefs.setMutedSounds(muted);
+            prefs.setOcclusion(occlusion);
+            AudioPrefsStore.save();
+            AudioMixer.refreshVolumes();
+            ctx.mc().setScreen(null);
+        });
     }
 
     @Nullable

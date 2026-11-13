@@ -64,9 +64,11 @@ public final class GeneratorBlockEntity extends MachineBlockEntity {
             return MachineStatus.WAITING;
         }
         burning.add(-1);
-        final int made = ExampleSettings.generatorOutput();
-        energy.generate(made);
-        ExampleState.ENERGY_MADE.update(level.getServer(), total -> total + made);
+        // Only what the buffer took counts as made: near full, it takes less than a tick's worth.
+        final int stored = energy.generate(ExampleSettings.generatorOutput());
+        if (stored > 0) {
+            ExampleState.ENERGY_MADE.update(level.getServer(), total -> total + stored);
+        }
         return MachineStatus.WORKING;
     }
 

@@ -58,6 +58,7 @@ import dev.jstech.core.jstechseries.builder.SourceCountsPayload;
 import dev.jstech.core.jstechseries.operation.OperationStatus;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.tool.BuildSources;
+import dev.jstech.core.worldgen.vein.Prospecting;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestStructures;
 import dev.jstech.tests.TestTools;
@@ -343,8 +344,14 @@ public final class PortableAppsGameTests {
                             "the access point, with its reach; got " + map.points());
                     final PortableProspectPayload veins = PortableMaps.prospectOf(helper.getLevel(), id,
                             player.blockPosition());
-                    helper.assertTrue(veins.veins().size() <= PortableProspectPayload.MOST_VEINS,
-                            "prospecting lists the veins near, the strongest first");
+                    final int near = Prospecting.prospect(helper.getLevel(), player.blockPosition(),
+                            PortableMaps.PROSPECT_RADIUS).size();
+                    helper.assertTrue(veins.veins().size() == Math.min(near, PortableProspectPayload.MOST_VEINS),
+                            "prospecting lists the veins near, as many as fit, of " + near + "; got " + veins.veins());
+                    for (int i = 1; i < veins.veins().size(); i++) {
+                        helper.assertTrue(veins.veins().get(i).strength() <= veins.veins().get(i - 1).strength(),
+                                "the strongest first; got " + veins.veins());
+                    }
                 })
                 .thenSucceed();
     }

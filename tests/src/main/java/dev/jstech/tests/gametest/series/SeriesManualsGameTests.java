@@ -235,9 +235,11 @@ public final class SeriesManualsGameTests {
                 "the Core's manual, the series' chapter and the Computers' books are written in Markdown: "
                         + byFolder.keySet());
         final List<String> wrong = new ArrayList<>();
+        final Set<String> languages = new TreeSet<>();
         for (final Map.Entry<String, Map<String, Set<String>>> folder : byFolder.entrySet()) {
             final Set<String> english = folder.getValue().getOrDefault(ManualFile.ENGLISH, Set.of());
             for (final Map.Entry<String, Set<String>> language : folder.getValue().entrySet()) {
+                languages.add(language.getKey());
                 if (!language.getValue().equals(english)) {
                     final Set<String> missing = new TreeSet<>(english);
                     missing.removeAll(language.getValue());
@@ -246,8 +248,11 @@ public final class SeriesManualsGameTests {
                     wrong.add(folder.getKey() + " in " + language.getKey() + " lacks " + missing + " and has more "
                             + extra);
                 }
-                wrong.addAll(MarkdownManuals.gather(files, language.getKey(), CodecJsonBlocks.INSTANCE).problems());
             }
+        }
+        // A language's books are read all at once, every folder of them, so each is read once and not per folder.
+        for (final String language : languages) {
+            wrong.addAll(MarkdownManuals.gather(files, language, CodecJsonBlocks.INSTANCE).problems());
         }
         helper.assertTrue(wrong.isEmpty(), wrong.size() + " faults: "
                 + String.join("; ", wrong.subList(0, Math.min(FAULTS_NAMED, wrong.size()))));

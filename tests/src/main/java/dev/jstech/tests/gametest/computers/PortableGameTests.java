@@ -208,7 +208,11 @@ public final class PortableGameTests {
             devices.deliver(id, new PortableAlert(AlertKind.UPS, Text.literal("UPS on battery"),
                     Text.literal("PowerGuard 1500"), k, false));
         }
-        helper.assertValueEqual(devices.find(id).alerts().size(), PortableState.MOST_ALERTS, "the newest kept");
+        helper.assertValueEqual(devices.find(id).alerts().size(), PortableState.MOST_ALERTS, "as many as are kept");
+        // Newest first: the last delivered leads, and the three oldest are the ones gone.
+        helper.assertValueEqual(devices.find(id).alerts().getFirst().at(), (long) PortableState.MOST_ALERTS + 2,
+                "the newest leads");
+        helper.assertValueEqual(devices.find(id).alerts().getLast().at(), 3L, "the oldest kept is the fourth");
         helper.assertValueEqual(devices.find(id).unseen(), PortableState.MOST_ALERTS, "none seen yet");
         Portables.act(PortableActionPayload.of(id, PortableActionPayload.Action.SEE_ALERTS), player,
                 helper.getLevel());

@@ -62,8 +62,9 @@ public final class SwapClientTests {
                 .thenScreenshot(30, "frames-11-memory");
     }
 
+    /* The System Monitor over a machine with a swap partition, for its picture: what it shows is read off that. */
     @ClientTest(timeoutTicks = 2400)
-    public static void systemMonitor_kdeShowsTheSwapPartition(final ClientTestContext ctx) {
+    public static void systemMonitor_kdeOpensOverASwapPartitionForItsPicture(final ClientTestContext ctx) {
         desktop(ctx, "ubuntu", "jsc:kde_plasma", true)
                 .then(SETTLE, () -> DesktopScreen.requestOpen(TASK_MANAGER))
                 .thenWaitUntil(() -> taskManager(ctx) != null && taskManager(ctx).pageCentre(0) != null, SCREEN_WAIT,

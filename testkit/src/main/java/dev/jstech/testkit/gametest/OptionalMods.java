@@ -12,6 +12,8 @@ import dev.jstech.core.optional.OptionalMod;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 /**
@@ -30,16 +32,22 @@ import java.util.function.Supplier;
  */
 public final class OptionalMods {
 
+    /* How many of the calls running now see each mod as absent, so one inside another leaves it absent for the rest. */
+    private static final Map<String, Integer> HELD = new ConcurrentHashMap<>();
+
     private OptionalMods() {
     }
 
     /** What {@code work} gives with {@code modid} seen as absent by every guard, run whole now. */
     public static <T> T without(final String modid, final Supplier<T> work) {
+        HELD.merge(modid, 1, Integer::sum);
         OptionalMod.seenAbsent(modid, true);
         try {
             return work.get();
         } finally {
-            OptionalMod.seenAbsent(modid, false);
+            if (HELD.compute(modid, (mod, held) -> held == null || held <= 1 ? null : held - 1) == null) {
+                OptionalMod.seenAbsent(modid, false);
+            }
         }
     }
 

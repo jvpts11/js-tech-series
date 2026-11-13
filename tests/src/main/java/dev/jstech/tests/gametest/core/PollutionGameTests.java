@@ -199,7 +199,8 @@ public final class PollutionGameTests {
         CarbonDioxide.emit(10_000_000);
         CarbonDioxide.flush(helper.getLevel().getServer());
         try {
-            close(helper, before + 1, CarbonDioxide.ppm(helper.getLevel().getServer()),
+            // The rise itself, so the tolerance is of the one part per million and not of the whole air's.
+            close(helper, 1.0, CarbonDioxide.ppm(helper.getLevel().getServer()) - before,
                     "ten thousand tonnes raise it a part per million");
         } finally {
             CarbonDioxide.PPM.set(helper.getLevel().getServer(), before);

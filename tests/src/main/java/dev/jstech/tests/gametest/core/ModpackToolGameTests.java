@@ -13,6 +13,7 @@ import dev.jstech.core.modpack.ModpackTexts;
 import dev.jstech.core.modpack.ReferenceSite;
 import dev.jstech.core.modpack.References;
 import dev.jstech.core.modpack.ReloadReport;
+import dev.jstech.core.text.GameText;
 import dev.jstech.core.unify.UnifyPlan;
 import dev.jstech.tests.JsTests;
 import java.io.IOException;
@@ -53,8 +54,10 @@ public final class ModpackToolGameTests {
                 && line.contains("ingot")), "tin with its ingot among the materials");
         helper.assertTrue(ModpackDumps.forms().contains("| jscore:ingot | item | c:ingots/<material> |"),
                 "the ingot among the forms");
-        helper.assertTrue(ModpackDumps.recipes(server).contains("| jscore:processing") || ModpackDumps.recipes(server)
-                .contains("| minecraft:crafting |"), "the kinds of recipe the data holds");
+        final String recipes = ModpackDumps.recipes(server);
+        helper.assertTrue(recipes.contains("| minecraft:crafting |"), "the game's own kinds of recipe");
+        helper.assertTrue(recipes.contains("| jstests:test_pressing |"),
+                "and a machine's, the test press's, as its mod declared it");
         helper.assertTrue(ModpackDumps.tags().contains("| #c:ingots/tin |"), "the common tag of tin's ingots");
         helper.assertTrue(ModpackDumps.hazards().contains("## Hazards of items"), "the hazards");
         helper.assertTrue(ModpackDumps.ids().contains("- jstests:foreign_tin_ingot"),
@@ -112,7 +115,8 @@ public final class ModpackToolGameTests {
         helper.assertTrue(waiting.contains(ModpackTexts.PACKS_WAIT.english()), "content packs changed on disk wait");
         helper.assertTrue(waiting.stream().anyMatch(line -> line.contains("jstests-yaml")
                 && line.contains("boot.show_menu, speed")), "and the settings, by file; got " + waiting);
-        helper.assertTrue(waiting.stream().anyMatch(line -> line.contains("1") && line.startsWith("Unification")),
+        // One tin ingot, the Core's, stands for the one other the plan replaces.
+        helper.assertTrue(waiting.contains(GameText.component(ModpackTexts.UNIFIED.with(1, 1)).getString()),
                 "what the unification made of the data; got " + waiting);
         helper.assertFalse(waiting.contains(ModpackTexts.NOTHING_WAITS.english()), "so something waits");
         helper.assertTrue(ReloadReport.lines(helper.getLevel().getServer()).size() >= 2,

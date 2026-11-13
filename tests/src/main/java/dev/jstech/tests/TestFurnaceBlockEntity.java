@@ -29,7 +29,8 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The test furnace's terminal: an input slot and an output slot, some energy and a tank of gas, reached only through
- * the ports of its formed structure. It makes nothing; the tests only see what goes through the ports.
+ * the ports of its formed structure. It makes nothing; the tests only see what goes through the ports. It keeps all of
+ * that in memory only, formed or not, as a fixture formed and read within one test needs: nothing of it is saved.
  */
 public final class TestFurnaceBlockEntity extends BlockEntity implements IMultiblockPortHost {
 

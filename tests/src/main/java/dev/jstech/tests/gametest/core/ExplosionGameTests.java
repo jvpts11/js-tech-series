@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -59,8 +60,21 @@ public final class ExplosionGameTests {
     /* The places the fence below keeps from blasts, absolute. */
     private static final Set<BlockPos> FENCED = ConcurrentHashMap.newKeySet();
     private static final String FENCE = "jstests:blast_fence";
+    /* The batches whose tests change the blast's budgets, put back after them however they ended. */
+    private static final String PACE = "jscore_explosion_pace";
+    private static final String BUDGET = "jscore_explosion_budget";
 
     private ExplosionGameTests() {
+    }
+
+    @AfterBatch(batch = PACE)
+    public static void paceBack(final ServerLevel level) {
+        defaultBudgets();
+    }
+
+    @AfterBatch(batch = BUDGET)
+    public static void budgetBack(final ServerLevel level) {
+        defaultBudgets();
     }
 
     @GameTest(template = ARENA, batch = "jscore_explosion_strength")
@@ -97,7 +111,7 @@ public final class ExplosionGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = "jscore_explosion_pace")
+    @GameTest(template = ARENA, batch = PACE)
     public static void wave_reachesEachPlaceInItsOwnTime(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final BlastMedium here = Explosions.mediumAt(level, helper.absoluteVec(MIDDLE));
@@ -119,10 +133,7 @@ public final class ExplosionGameTests {
                     helper.assertBlockPresent(Blocks.GLASS, far);
                 })
                 .thenWaitUntil(() -> helper.assertBlockNotPresent(Blocks.GLASS, far))
-                .thenExecute(() -> {
-                    BlastBalance.setLookedAt(BlastBalance.DEFAULT_LOOKED_AT);
-                    helper.assertTrue(blast.front() >= 4.3, "it broke when the wave got there");
-                })
+                .thenExecute(() -> helper.assertTrue(blast.front() >= 4.3, "it broke when the wave got there"))
                 .thenSucceed();
     }
 
@@ -246,7 +257,7 @@ public final class ExplosionGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = "jscore_explosion_budget")
+    @GameTest(template = ARENA, batch = BUDGET)
     public static void budget_spreadsTheBreakingOverTicks(final GameTestHelper helper) {
         for (int y = 2; y <= 5; y++) {
             for (int z = 2; z <= 6; z++) {
@@ -262,11 +273,7 @@ public final class ExplosionGameTests {
                 .thenExecute(() -> helper.assertTrue(blast.brokenBlocks() <= 16 && blast.waiting() > 0,
                         "a tick breaks no more than the budget, the rest waiting"))
                 .thenWaitUntil(() -> helper.assertTrue(blast.finished(), "the rest broke over the next ticks"))
-                .thenExecute(() -> {
-                    BlastBalance.setLookedAt(BlastBalance.DEFAULT_LOOKED_AT);
-                    BlastBalance.setBroken(BlastBalance.DEFAULT_BROKEN);
-                    helper.assertTrue(blast.brokenBlocks() >= 20, "all the glass broke in the end");
-                })
+                .thenExecute(() -> helper.assertTrue(blast.brokenBlocks() >= 20, "all the glass broke in the end"))
                 .thenSucceed();
     }
 
@@ -309,6 +316,11 @@ public final class ExplosionGameTests {
     }
 
     /* Sets off {@code tnt} kilograms of TNT at the arena's {@code at}. */
+    private static void defaultBudgets() {
+        BlastBalance.setLookedAt(BlastBalance.DEFAULT_LOOKED_AT);
+        BlastBalance.setBroken(BlastBalance.DEFAULT_BROKEN);
+    }
+
     private static Detonation detonate(final GameTestHelper helper, final Vec3 at, final double tnt) {
         return Explosions.blast(helper.getLevel(), helper.absoluteVec(at), CHARGE, joules(tnt)).detonate()
                 .orElseThrow();

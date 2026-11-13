@@ -23,14 +23,17 @@ import dev.jstech.tests.TestModules;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import net.minecraft.advancements.critereon.BlockPredicate;
 import net.minecraft.advancements.critereon.ItemPredicate;
 import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.RegistryOps;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
@@ -57,8 +60,16 @@ public final class RobotGameTests {
     private static final String ARENA = "empty";
     private static final String SKY = "tall";
     private static final String BATCH = "jscore_robots";
+    /* The listeners a test put on the Core's bus, taken off after the batch should a failure have left them on. */
+    private static final List<Consumer<RobotTaskEvent>> LISTENING = new CopyOnWriteArrayList<>();
 
     private RobotGameTests() {
+    }
+
+    @AfterBatch(batch = BATCH)
+    public static void listenersOff(final ServerLevel level) {
+        LISTENING.forEach(heard -> JsCore.events().unsubscribe(RobotTaskEvent.class, heard));
+        LISTENING.clear();
     }
 
     @GameTest(template = SKY, batch = BATCH, timeoutTicks = 400)
@@ -212,6 +223,7 @@ public final class RobotGameTests {
             }
         };
         JsCore.events().subscribe(RobotTaskEvent.class, heard);
+        LISTENING.add(heard);
         robot.queue(new CoreRobotTasks.Repeat(List.of(new CoreRobotTasks.Wait(2)), 3));
         robot.queue(new CoreRobotTasks.If(new CoreRobotConditions.Holding(ItemPredicate.Builder.item().of(Items.DIRT)
                 .build(), 2), List.of(new CoreRobotTasks.MoveTo(yes)), List.of(new CoreRobotTasks.MoveTo(no))));

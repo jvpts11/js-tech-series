@@ -153,6 +153,8 @@ public final class ExtremesClientTests {
      */
     private static void live(final ClientTestContext ctx, final LiveInstallState.Distro distro) {
         final EraKit kit = EraKit.ADVANCED;
+        // The world's setting is put back however the test ends, so a test after a failed one finds it as it was.
+        ctx.afterTest(() -> ctx.server().execute(() -> handbook(distro, false)));
         EraJourney.lay(ctx, kit)
                 .thenBuild(0, world -> world.setBlock(DRIVE, ComputingModule.CD_DRIVE.get()))
                 .thenServer(SETTLE, level -> {
@@ -263,8 +265,13 @@ public final class ExtremesClientTests {
     /* The program typed at the prompt answers, rather than being a command the shell has never heard of. */
     private static void ran(final ClientTestContext ctx, final String command) {
         lines(ctx, "clear", command);
-        ctx.thenServer(SETTLE, level -> ctx.assertTrue(!glass(ctx, level).contains("not found: " + command),
-                command + " answers at the prompt: " + glass(ctx, level)));
+        ctx.thenServer(SETTLE, level -> {
+            final String seen = glass(ctx, level);
+            ctx.assertTrue(!seen.contains("not found: " + command), command + " answers at the prompt: " + seen);
+            // And it said something: a glass of only the typed line is a program that never ran, or ran silent.
+            ctx.assertTrue(seen.lines().filter(line -> !line.isBlank()).count() >= 2,
+                    command + " prints what it says: " + seen);
+        });
     }
 
     /* Whether the world asks the distribution's live install for the whole handbook. */

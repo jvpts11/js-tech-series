@@ -219,7 +219,9 @@ public final class MekanismProcessingGameTests {
      *
      * <p>It used to ask instead whether more than the nominal had been taken, which is a question about the burn
      * rate rather than about the feeding: a chamber given enough power runs fast enough to fit inside its nominal,
-     * never goes dry, and made the test fail with everything working.
+     * never goes dry, and made the test fail with everything working. The oxygen taken past the nominal is still read
+     * at the end, but only as a check that this pattern did starve the chamber: at an eighth of what a lot burns, no
+     * speed fits two lots inside 50 mB.
      */
     @GameTest(template = ARENA, timeoutTicks = 900)
     public static void purificationChamber_finishesWhenItBurnsMoreOxygenThanThePatternSays(

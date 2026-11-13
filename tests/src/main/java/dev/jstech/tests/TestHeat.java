@@ -156,7 +156,8 @@ public final class TestHeat {
      * A vessel: a cubic metre of iron for its wall, a tank for the liquid that goes in, one for the liquid that comes
      * out and one of gas. A boiler boils what goes in into the gas, the low-pressure one at its own pressure; the
      * exchanger passes what goes in through its wall into its other form; a cold tank lets the place's heat boil off
-     * what it holds into the gas, the vacuum flask hardly at all.
+     * what it holds into the gas, the vacuum flask hardly at all. A fixture built and read within one test, its tanks
+     * are kept in memory only; its boiler, pass and boil-off are saved.
      */
     public static final class VesselBlockEntity extends SyncedBlockEntity implements IHeatHolder {
 

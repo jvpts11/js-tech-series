@@ -97,7 +97,8 @@ public final class MovingStructureToolsClientTests {
                 .thenWaitUntil(() -> drawn(raft[0]), WAIT, "the raft to reach the player's game")
                 .then(0, () -> {
                     ctx.selectHotbar(0);
-                    start[0] = raft[0].worldBox().minY;
+                    // Read on the server's thread, as the later readings are, which is the one that moves it.
+                    start[0] = ctx.server().submit(() -> raft[0].worldBox().minY).join();
                     ctx.lookAt(seen(raft[0]).worldBox().getCenter());
                 })
                 .thenScreenshot(5, "physics-tool-panel")

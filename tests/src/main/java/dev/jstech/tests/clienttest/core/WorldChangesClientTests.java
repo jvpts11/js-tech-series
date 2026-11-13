@@ -60,14 +60,20 @@ public final class WorldChangesClientTests {
     @ClientTest(timeoutTicks = 800)
     public static void storm_isWarnedOfToThePlayerCarryingItsInstrument(final ClientTestContext ctx) {
         final String warning = WorldEvents.WARNING.id().toString();
+        // How many compasses the player carried before the test gave one, so only the one it gave is taken back.
+        final int[] carried = {-1};
         ctx.afterTest(() -> ctx.server().execute(() -> {
             WorldEvents.stop(ctx.serverPlayer().serverLevel(), TestWorldChanges.STORM);
-            takeCompasses(ctx.serverPlayer());
+            if (carried[0] >= 0) {
+                final Inventory inventory = ctx.serverPlayer().getInventory();
+                takeCompasses(inventory, inventory.countItem(Items.COMPASS) - carried[0]);
+            }
         }));
         ctx.then(0, () -> NotificationsClient.board().clear())
                 .thenServer(0, level -> {
                     final ServerPlayer player = ctx.serverPlayer();
                     WorldEvents.stop(player.serverLevel(), TestWorldChanges.STORM);
+                    carried[0] = player.getInventory().countItem(Items.COMPASS);
                     player.getInventory().add(new ItemStack(Items.COMPASS));
                     WorldEvents.plan(player.serverLevel(), TestWorldChanges.STORM, STORM_IN, Optional.empty());
                 })
@@ -77,12 +83,17 @@ public final class WorldChangesClientTests {
                 .thenScreenshot(4, "storm_warning");
     }
 
-    private static void takeCompasses(final ServerPlayer player) {
-        final Inventory inventory = player.getInventory();
-        for (int i = 0; i < inventory.getContainerSize(); i++) {
-            if (inventory.getItem(i).is(Items.COMPASS)) {
-                inventory.setItem(i, ItemStack.EMPTY);
+    /* Takes {@code count} compasses out of {@code inventory}, from whichever stacks hold them. */
+    private static void takeCompasses(final Inventory inventory, final int count) {
+        int left = count;
+        for (int i = 0; i < inventory.getContainerSize() && left > 0; i++) {
+            final ItemStack stack = inventory.getItem(i);
+            if (stack.is(Items.COMPASS)) {
+                final int taken = Math.min(left, stack.getCount());
+                stack.shrink(taken);
+                left -= taken;
             }
         }
+        inventory.setChanged();
     }
 }

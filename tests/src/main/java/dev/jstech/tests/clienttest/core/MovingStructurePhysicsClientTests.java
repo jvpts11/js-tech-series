@@ -36,6 +36,7 @@ import net.minecraft.world.level.block.DirectionalBlock;
 import net.minecraft.world.level.block.LeverBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.AttachFace;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.RenderFrameEvent;
 import net.neoforged.neoforge.common.NeoForge;
@@ -108,9 +109,11 @@ public final class MovingStructurePhysicsClientTests {
                         watched.get(i).assertSmooth(ctx, "crate " + i);
                         watched.get(i).assertStillAtTheEnd(ctx, "crate " + i);
                     }
-                    ctx.assertTrue(Math.abs(crates.get(1).worldBox().minY - crates.get(0).worldBox().maxY) < 0.03,
-                            "the crate that fell on the other rests on it: " + crates.get(1).worldBox() + " on "
-                                    + crates.get(0).worldBox() + "; its physics timed " + Diagnostics.timings()
+                    final AABB lower = serverBox(ctx, crates.get(0));
+                    final AABB upper = serverBox(ctx, crates.get(1));
+                    ctx.assertTrue(Math.abs(upper.minY - lower.maxY) < 0.03,
+                            "the crate that fell on the other rests on it: " + upper + " on "
+                                    + lower + "; its physics timed " + Diagnostics.timings()
                                     .summaries().stream().filter(each -> each.section()
                                             .equals(StructurePhysics.TIMED.toString())).findFirst().orElse(null));
                 })
@@ -166,9 +169,9 @@ public final class MovingStructurePhysicsClientTests {
                     same(ctx, raft[0], FOLLOWS, "the raft afloat");
                     watched[0].assertSmooth(ctx, "the raft");
                     final double surface = ctx.abs(new BlockPos(0, 4, 0)).getY() + 8.0 / 9;
-                    ctx.assertTrue(raft[0].worldBox().minY < surface && raft[0].worldBox().minY > surface - 1,
-                            "it floats in the water, partly under: " + raft[0].worldBox() + ", the surface at "
-                                    + surface);
+                    final AABB afloat = serverBox(ctx, raft[0]);
+                    ctx.assertTrue(afloat.minY < surface && afloat.minY > surface - 1,
+                            "it floats in the water, partly under: " + afloat + ", the surface at " + surface);
                 })
                 .thenScreenshot(0, "physics_raft_ridden");
     }
@@ -227,8 +230,9 @@ public final class MovingStructurePhysicsClientTests {
                 .then(0, () -> watched[0] = FrameWatch.of(cart[0]))
                 .thenScreenshot(SETTLE * 2, "physics_cart_driving")
                 .then(SETTLE, () -> {
-                    ctx.assertTrue(cart[0].worldBox().minX < parked[0] - 0.2, "driven, the cart rolls west: "
-                            + cart[0].worldBox().minX + " from " + parked[0]);
+                    final double rolled = serverBox(ctx, cart[0]).minX;
+                    ctx.assertTrue(rolled < parked[0] - 0.2, "driven, the cart rolls west: " + rolled + " from "
+                            + parked[0]);
                     same(ctx, cart[0], FOLLOWS, "the cart rolling");
                     watched[0].assertSmooth(ctx, "the cart");
                     watched[0].assertOnlyWest(ctx, "the cart");
@@ -266,6 +270,11 @@ public final class MovingStructurePhysicsClientTests {
         ctx.assertTrue(game.distanceTo(server) < close && game.angleTo(server) < Math.max(close, 1.0e-3),
                 what + " is drawn where the server has it: " + game + " on the player's game, " + server
                         + " on the server");
+    }
+
+    /* Where the server has the structure, read on the server's thread, which is the one that moves it. */
+    private static AABB serverBox(final ClientTestContext ctx, final MovingStructure structure) {
+        return ctx.server().submit(structure::worldBox).join();
     }
 
     /* Whether the structure moves by its physics and has fallen asleep. */

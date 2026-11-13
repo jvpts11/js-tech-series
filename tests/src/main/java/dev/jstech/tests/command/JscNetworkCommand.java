@@ -195,6 +195,11 @@ public final class JscNetworkCommand {
             source.sendFailure(Component.literal("Build the benchmark base first: /jsc benchmark build"));
             return 0;
         }
+        if (BenchmarkLoad.active() != null) {
+            // Starting over it would drop the running load's counts unsaid.
+            source.sendFailure(Component.literal("A benchmark load is running; stop it first: /jsc benchmark stop"));
+            return 0;
+        }
         BenchmarkLoad.start(new BenchmarkLoad.Session(built.mainframe(), built.catalog(), opsPerTick, ticks,
                 built.workload(20, 256, 64), System.nanoTime()));
         source.sendSuccess(() -> Component.literal(

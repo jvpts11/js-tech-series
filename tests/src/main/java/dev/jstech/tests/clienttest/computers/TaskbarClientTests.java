@@ -28,7 +28,8 @@ import java.util.List;
  * with nothing open, open, in front, or put away. Its entry lists its windows when it has several (the live
  * pictures on a modern panel, the titles on a period one), its menu pins it, and a pin is the machine's,
  * still there when the monitor is opened again. Frames 11 centres its entries where every other panel
- * lines them up from the left; Frames XP keeps the pinned ones on a quick launch beside Start.
+ * lines them up from the left, and Frames XP keeps the pinned ones on a quick launch beside Start: those two
+ * are seen in the tests' pictures, the quick launch's icon also clicked.
  */
 public final class TaskbarClientTests {
 

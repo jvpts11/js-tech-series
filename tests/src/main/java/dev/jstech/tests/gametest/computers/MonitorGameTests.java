@@ -367,7 +367,7 @@ public final class MonitorGameTests {
      */
     @GameTest(template = ARENA, timeoutTicks = 600)
     public static void picture_ofAMachineInItsSelfTestHoldsStill(final GameTestHelper helper) {
-        TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
+        final PersonalComputerBlockEntity pc = TestWorldBuilder.forGameTest(helper).placeRunningPersonalComputer(PC);
         helper.setBlock(PC.east(), facing(ComputingModule.MONITOR.get(), Direction.WEST));
         final IMonitorPicture[] first = new IMonitorPicture[1];
         helper.startSequence()
@@ -378,8 +378,11 @@ public final class MonitorGameTests {
                 .thenExecuteAfter(1, () -> {
                     final IMonitorPicture next = MonitorPictures.describe(helper.getLevel(),
                             entity(helper, PC.east()));
-                    // The self-test may just have ended; otherwise a tick changes nothing in the picture.
+                    // The self-test may just have ended, and then only because the machine is through it; otherwise
+                    // a tick changes nothing in the picture.
                     if (!selfTest(next)) {
+                        helper.assertTrue(!pc.needsPost(), "the picture left the self-test only as the machine "
+                                + "finished it; it shows " + next);
                         return;
                     }
                     helper.assertTrue(next.equals(first[0]),

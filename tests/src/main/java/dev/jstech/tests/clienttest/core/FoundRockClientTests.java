@@ -40,17 +40,20 @@ public final class FoundRockClientTests {
     public static void foundRocksOre_isDrawnFromItsModelAndKept(final ClientTestContext ctx) {
         ctx.then(0, () -> {
             final ResourceLocation pack = ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "material_art");
-            final PackResources art = RuntimePacks.open(pack, PackType.CLIENT_RESOURCES).orElseThrow();
-            final IoSupplier<InputStream> texture = art.getResource(PackType.CLIENT_RESOURCES,
-                    ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "textures/block/" + ORE + ".png"));
-            ctx.assertTrue(texture != null, "the ore in the marble has a texture");
-            try (InputStream in = texture.get(); NativeImage image = NativeImage.read(in)) {
-                ctx.assertTrue(image.getWidth() == WIDTH && image.getHeight() == WIDTH, "a block's square texture");
-                ctx.assertTrue((image.getPixelRGBA(0, 0) >>> 24) != 0, "drawn on the marble, whole, not left clear");
-            } catch (final IOException e) {
-                ctx.fail("the ore's texture could not be read: " + e.getMessage());
+            // Closed however the checks end, a failing one included.
+            try (PackResources art = RuntimePacks.open(pack, PackType.CLIENT_RESOURCES).orElseThrow()) {
+                final IoSupplier<InputStream> texture = art.getResource(PackType.CLIENT_RESOURCES,
+                        ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "textures/block/" + ORE + ".png"));
+                ctx.assertTrue(texture != null, "the ore in the marble has a texture");
+                try (InputStream in = texture.get(); NativeImage image = NativeImage.read(in)) {
+                    ctx.assertTrue(image.getWidth() == WIDTH && image.getHeight() == WIDTH,
+                            "a block's square texture");
+                    ctx.assertTrue((image.getPixelRGBA(0, 0) >>> 24) != 0,
+                            "drawn on the marble, whole, not left clear");
+                } catch (final IOException e) {
+                    ctx.fail("the ore's texture could not be read: " + e.getMessage());
+                }
             }
-            art.close();
             final Path kept = FMLPaths.GAMEDIR.get().resolve(CachedRuntimeFiles.FOLDER).resolve(JsCore.MODID)
                     .resolve("material_art").resolve("assets/" + JsCore.MODID + "/textures/block/" + ORE + ".png");
             ctx.assertTrue(Files.isRegularFile(kept), "and the drawing is kept on disk for the next load: " + kept);

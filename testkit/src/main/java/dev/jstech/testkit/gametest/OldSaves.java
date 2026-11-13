@@ -71,7 +71,9 @@ public final class OldSaves {
         }
         final List<Sample> out = new ArrayList<>();
         try (Stream<Path> files = Files.walk(root, 2)) {
-            files.filter(path -> path.getFileName().toString().endsWith(EXTENSION))
+            // Only a sample inside a version's folder has a version: a stray file beside them is no sample.
+            files.filter(path -> path.getFileName().toString().endsWith(EXTENSION)
+                            && root.relativize(path).getNameCount() == 2)
                     .sorted(Comparator.comparing(Path::toString))
                     .forEach(path -> out.add(new Sample(path.getParent().getFileName().toString(),
                             nameOf(path), path)));

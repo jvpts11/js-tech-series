@@ -94,8 +94,9 @@ public final class GpuClientTests {
                 .thenWaitUntil(() -> !ctx.screen(DesktopScreen.class).launcherLabels().isEmpty(), SCREEN_WAIT,
                         "the desktop to list its programs")
                 .then(SETTLE, () -> DesktopScreen.requestOpen("jsc:paint"))
-                .thenWaitUntil(() -> !ctx.screen(DesktopScreen.class).balloonTitle().isEmpty(), SCREEN_WAIT,
-                        "the notification area to say there is no video memory for it")
+                // That balloon and no other: one left from the boot would let the window check below pass unasked.
+                .thenWaitUntil(() -> ctx.screen(DesktopScreen.class).balloonTitle().contains("video memory"),
+                        SCREEN_WAIT, "the notification area to say there is no video memory for it")
                 .thenScreenshot(2, "paint-refused")
                 .thenAssert(0, () -> !ctx.screen(DesktopScreen.class).openWindowLabels().contains("Paint"),
                         "Paint did not open");

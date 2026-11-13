@@ -105,12 +105,13 @@ public final class UnificationGameTests {
                 server.registryAccess()), recipe(helper, "unify/takes_copy")).getOrThrow();
         helper.assertTrue(RecipeUnifier.replaced(written, Map.of(tin, "minecraft:stone")).equals(Set.of(tin)),
                 "a recipe the server holds, written out, names its items where unification looks: " + written);
+        final boolean enabled = UnificationSettings.FILE.get(UnificationSettings.ENABLED);
         UnificationSettings.FILE.set(UnificationSettings.ENABLED, false);
         final UnifyPreview off;
         try {
             off = Unification.preview(server);
         } finally {
-            UnificationSettings.FILE.set(UnificationSettings.ENABLED, true);
+            UnificationSettings.FILE.set(UnificationSettings.ENABLED, enabled);
         }
         helper.assertFalse(off.on(), "off, the preview is of what turning it on would do");
         helper.assertTrue(off.tags().stream().anyMatch(tag -> tag.tag().equals(TIN_TAG) && tag.kept().equals(tin)),

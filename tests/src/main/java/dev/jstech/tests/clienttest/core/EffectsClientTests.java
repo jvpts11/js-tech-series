@@ -27,7 +27,9 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -190,7 +192,10 @@ public final class EffectsClientTests {
     @ClientTest(timeoutTicks = 900)
     public static void editor_playsOnTheBlockTurnsAnEmitterOffAndSaves(final ClientTestContext ctx) {
         final Path root = temporary();
-        ctx.afterTest(() -> EffectFileWriter.writeInto(null));
+        ctx.afterTest(() -> {
+            EffectFileWriter.writeInto(null);
+            deleted(root);
+        });
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
                 .thenServer(0, level -> {
                     clear(ctx, level);
@@ -221,7 +226,10 @@ public final class EffectsClientTests {
     @ClientTest(timeoutTicks = 900)
     public static void newEffect_startsFromSmokeAndOpensInTheEditor(final ClientTestContext ctx) {
         final Path root = temporary();
-        ctx.afterTest(() -> EffectFileWriter.writeInto(null));
+        ctx.afterTest(() -> {
+            EffectFileWriter.writeInto(null);
+            deleted(root);
+        });
         ctx.thenTeleport(0, STAND, Direction.SOUTH)
                 .thenServer(0, level -> {
                     clear(ctx, level);
@@ -290,6 +298,15 @@ public final class EffectsClientTests {
             return Files.createTempDirectory("jscore-effects");
         } catch (final IOException e) {
             throw new UncheckedIOException(e);
+        }
+    }
+
+    /* Deletes {@code root} and all it holds, as a test that wrote into it is done; what will not go is left. */
+    private static void deleted(final Path root) {
+        try (Stream<Path> all = Files.walk(root)) {
+            all.sorted(Comparator.reverseOrder()).forEach(path -> path.toFile().delete());
+        } catch (final IOException | UncheckedIOException e) {
+            // Left for the system to clear, as anything in its temporary folder is.
         }
     }
 

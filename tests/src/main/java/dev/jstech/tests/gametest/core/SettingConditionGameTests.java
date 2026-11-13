@@ -15,7 +15,9 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -75,13 +77,17 @@ public final class SettingConditionGameTests {
             helper.fail("a world's folder could not be made: " + e.getMessage());
             return;
         }
-        final IConfigValues yaml = ConfigFiles.onDisk(TestSettings.YAML, world);
-        helper.assertTrue(yaml.get(TestSettings.SPEED) == SPEED_ON_DISK, "the speed the file on disk holds");
-        helper.assertFalse(yaml.get(TestSettings.MENU), "and its switch");
-        helper.assertTrue(yaml.get(TestSettings.DIALECT).equals("SIMPLE"), "a setting it lacks is its default");
-        helper.assertTrue(ConfigFiles.onDisk(TestSettings.TOML, world).get(TestSettings.SPEED) == MOST_SPEED,
-                "a value out of its range is pulled to its end, as reading pulls it");
-        helper.assertTrue(TestSettings.YAML.get(TestSettings.SPEED) == live, "the file's own value is untouched");
+        try {
+            final IConfigValues yaml = ConfigFiles.onDisk(TestSettings.YAML, world);
+            helper.assertTrue(yaml.get(TestSettings.SPEED) == SPEED_ON_DISK, "the speed the file on disk holds");
+            helper.assertFalse(yaml.get(TestSettings.MENU), "and its switch");
+            helper.assertTrue(yaml.get(TestSettings.DIALECT).equals("SIMPLE"), "a setting it lacks is its default");
+            helper.assertTrue(ConfigFiles.onDisk(TestSettings.TOML, world).get(TestSettings.SPEED) == MOST_SPEED,
+                    "a value out of its range is pulled to its end, as reading pulls it");
+            helper.assertTrue(TestSettings.YAML.get(TestSettings.SPEED) == live, "the file's own value is untouched");
+        } finally {
+            delete(world);
+        }
         helper.succeed();
     }
 
@@ -94,9 +100,25 @@ public final class SettingConditionGameTests {
             helper.fail("a world's folder could not be made: " + e.getMessage());
             return;
         }
-        helper.assertTrue(ConfigFiles.onDisk(TestSettings.YAML, world).get(TestSettings.SPEED)
-                .equals(TestSettings.SPEED.defaultValue()), "a world with no file of its own starts at the defaults");
+        try {
+            helper.assertTrue(ConfigFiles.onDisk(TestSettings.YAML, world).get(TestSettings.SPEED)
+                    .equals(TestSettings.SPEED.defaultValue()),
+                    "a world with no file of its own starts at the defaults");
+        } finally {
+            delete(world);
+        }
         helper.succeed();
+    }
+
+    /* Takes a made world's folder away with all in it, deepest first; one that cannot go is left for the system. */
+    private static void delete(final Path root) {
+        try (Stream<Path> walk = Files.walk(root)) {
+            for (final Path path : walk.sorted(Comparator.reverseOrder()).toList()) {
+                Files.deleteIfExists(path);
+            }
+        } catch (final IOException e) {
+            JsTests.LOGGER.warn("A test world's folder {} could not be deleted: {}", root, e.getMessage());
+        }
     }
 
     private static ResourceLocation id(final String name) {

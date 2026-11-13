@@ -128,7 +128,7 @@ public final class TestKitMachine {
                 .single(0, new ItemStack(Items.STONE), TICKS)) : Optional.empty();
     }
 
-    /** The machine at work. */
+    /** The machine at work; a fixture whose dial is kept in memory only, set and read within one test. */
     public static final class KitMachineBlockEntity extends ProcessingMachineBlockEntity {
 
         private double dial = 1.0;

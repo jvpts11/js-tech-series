@@ -64,6 +64,13 @@ class LicenceHeadersTest {
     }
 
     @Test
+    void withHeader_dropsAByteOrderMarkRatherThanLeavingItUnderTheHeader() {
+        final String marked = (char) 0xFEFF + BARE;
+
+        assertEquals(HEADED, LicenceHeaders.withHeader(marked, "MIT", 2026, "Jane Doe", "Demo"));
+    }
+
+    @Test
     void withHeader_leavesASourceWithAHeaderAsItIs() {
         final String other = HEADED.replace("MIT", "Apache-2.0");
 

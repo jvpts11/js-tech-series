@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
+import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -44,11 +45,22 @@ public final class WorldEventGameTests {
     private static final String ARENA = "empty";
     private static final String STORM = "jstests:test_storm";
     private static final String GALE = "jstests:test_gale";
+    /* The batch of the test that listens to the game's bus, so what it left listening goes after it. */
+    private static final String HEARD = "jscore_world_events_heard";
+    /* The listeners a test put on the game's bus, taken off after the batch should a failure have left them on. */
+    private static final List<Object> LISTENING = new CopyOnWriteArrayList<>();
 
     private WorldEventGameTests() {
     }
 
-    @GameTest(template = ARENA, timeoutTicks = 400)
+    @AfterBatch(batch = HEARD)
+    public static void listenersOff(final ServerLevel level) {
+        LISTENING.forEach(NeoForge.EVENT_BUS::unregister);
+        LISTENING.clear();
+        WorldEvents.stop(level, TestWorldChanges.STORM);
+    }
+
+    @GameTest(template = ARENA, batch = HEARD, timeoutTicks = 400)
     public static void event_isWarnedOfBeginsAndEnds(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final List<String> heard = new CopyOnWriteArrayList<>();
@@ -62,6 +74,7 @@ public final class WorldEventGameTests {
         NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, WorldEventStage.Warned.class, warned);
         NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, WorldEventStage.Started.class, started);
         NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, WorldEventStage.Ended.class, ended);
+        LISTENING.addAll(List.of(warned, started, ended));
         WorldEvents.stop(level, TestWorldChanges.STORM);
         helper.assertTrue(WorldEvents.plan(level, TestWorldChanges.STORM, 40, Optional.empty()),
                 "the storm is planned");

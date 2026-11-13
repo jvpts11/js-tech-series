@@ -15,8 +15,10 @@ import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Items;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -142,9 +144,10 @@ public final class MachineJobGameTests {
                     shell(helper, lab, "crontab 06:00 interac get 64 cobblestone --to local");
                     helper.assertTrue(lab.console().jobs().all().size() == 1, "one job is on the list");
 
-                    final net.minecraft.nbt.CompoundTag saved = new net.minecraft.nbt.CompoundTag();
-                    lab.console().save(saved);
-                    lab.console().load(saved);
+                    // Through the block entity's own save and load, as the world saves and loads it.
+                    final HolderLookup.Provider registries = helper.getLevel().registryAccess();
+                    final CompoundTag saved = lab.saveWithFullMetadata(registries);
+                    lab.loadWithComponents(saved, registries);
 
                     helper.assertTrue(lab.console().jobs().all().size() == 1,
                             "and it is still there after a save; the machine has "

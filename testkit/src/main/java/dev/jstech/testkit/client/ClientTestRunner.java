@@ -300,7 +300,11 @@ public final class ClientTestRunner {
             return;
         }
         current = tests.get(nextTest++);
-        // Areas lie along x by the test's number among every test; y keeps a GameTest's rule, y 2 on the ground.
+        /*
+         * Areas lie along x by the test's number among every test; y keeps a GameTest's rule, y 2 on the ground. The
+         * ground is the spawn's: on flat land it is the same everywhere, and on normal land, run only for the few
+         * tests about the land itself, a test that looks at the land finds its own height there.
+         */
         final BlockPos origin = new BlockPos(spawn.getX() + current.index() * AREA_SPACING, groundY - 2,
                 spawn.getZ());
         helper = current.suite().helpers().create(mc, current, origin);

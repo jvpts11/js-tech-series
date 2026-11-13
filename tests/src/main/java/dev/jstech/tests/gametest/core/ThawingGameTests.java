@@ -16,9 +16,12 @@ import dev.jstech.core.room.SealedRooms;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestWorldGen;
+import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceKey;
@@ -51,8 +54,20 @@ public final class ThawingGameTests {
     private static final BlockPos HIGH = new BlockPos(5, 11, 5);
     private static final BlockPos INSIDE = new BlockPos(4, 10, 4);
     private static final double ATMOSPHERE = 101.3;
+    /* The Moons the tests made, taken away after the batch should a failure have left one standing. */
+    private static final List<ResourceKey<Level>> MADE = new CopyOnWriteArrayList<>();
 
     private ThawingGameTests() {
+    }
+
+    @AfterBatch(batch = BATCH)
+    public static void moonsGone(final ServerLevel level) {
+        for (final ResourceKey<Level> key : MADE) {
+            if (level.getServer().getLevel(key) != null) {
+                RuntimeDimensions.remove(level.getServer(), key);
+            }
+        }
+        MADE.clear();
     }
 
     @GameTest(template = ARENA, batch = BATCH)
@@ -96,8 +111,8 @@ public final class ThawingGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(SealedRooms.roomAt(moon, INSIDE).isPresent(),
                         "the hut is a room"))
                 .thenExecute(() -> {
-                    helper.assertTrue(Thawing.warmed(moon, MOON_ICE) && !Thawing.meltsToWater(moon, MOON_ICE),
-                            "the hut keeps its warmth, but in its vacuum no water stays liquid");
+                    // Read now, said after the Moon is taken away, so a failing check leaves nothing standing.
+                    final boolean dryButWarm = Thawing.warmed(moon, MOON_ICE) && !Thawing.meltsToWater(moon, MOON_ICE);
                     final Room room = SealedRooms.roomAt(moon, INSIDE).orElseThrow();
                     room.empty();
                     room.add(AirMix.NITROGEN, GasMath.moles(ATMOSPHERE * 0.79, room.gasVolume(), GasMath.TEMPERED));
@@ -110,6 +125,7 @@ public final class ThawingGameTests {
                     final BlockState left = moon.getBlockState(MOON_ICE);
                     SealedRooms.untrack(moon, INSIDE);
                     RuntimeDimensions.remove(helper.getLevel().getServer(), key);
+                    helper.assertTrue(dryButWarm, "the hut keeps its warmth, but in its vacuum no water stays liquid");
                     helper.assertTrue(warmed && liquid, "filled with air, the room warms the ice and keeps water");
                     helper.assertTrue(left.is(Blocks.WATER), "the ice melted into water; " + left);
                 })
@@ -144,6 +160,7 @@ public final class ThawingGameTests {
     private static ServerLevel moon(final GameTestHelper helper, final ResourceKey<Level> key) {
         final ServerLevel moon = RuntimeDimensions.getOrCreate(helper.getLevel().getServer(), key,
                 TestWorldGen.MOON.id());
+        MADE.add(key);
         moon.setChunkForced(0, 0, true);
         return moon;
     }

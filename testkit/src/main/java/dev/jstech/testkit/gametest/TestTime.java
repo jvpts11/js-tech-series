@@ -47,17 +47,18 @@ public final class TestTime {
 
     /** Runs {@code entity}'s ticker {@code ticks} times, now. */
     public static <T extends BlockEntity> int advance(final ServerLevel level, final T entity, final int ticks) {
-        final BlockState state = entity.getBlockState();
-        @SuppressWarnings("unchecked")
-        final BlockEntityTicker<T> ticker = (BlockEntityTicker<T>) state.getTicker(level, entity.getType());
-        if (ticker == null) {
-            return 0;
-        }
         for (int i = 0; i < ticks; i++) {
             if (entity.isRemoved() || level.getBlockEntity(entity.getBlockPos()) != entity) {
                 return i;
             }
-            ticker.tick(level, entity.getBlockPos(), entity.getBlockState(), entity);
+            // Asked again each tick, as the level asks: a block's state may change what ticks it, or stop it.
+            final BlockState state = entity.getBlockState();
+            @SuppressWarnings("unchecked")
+            final BlockEntityTicker<T> ticker = (BlockEntityTicker<T>) state.getTicker(level, entity.getType());
+            if (ticker == null) {
+                return i;
+            }
+            ticker.tick(level, entity.getBlockPos(), state, entity);
         }
         return ticks;
     }

@@ -404,7 +404,8 @@ public final class EraNetworkClientTests {
                 .thenServer(0, level -> rack(ctx, level).consoleOf(0).install(Programs.PREDICTIVE_CACHE.toString()));
         serving(ctx, Programs.PREDICTIVE_CACHE);
         reindex(ctx);
-        ctx.thenWaitUntilServer(level -> latency(ctx, level) == cached(ctx, level), WAIT,
+        // A real row each side: with none, both read -1 and would agree without the cache doing anything.
+        ctx.thenWaitUntilServer(level -> latency(ctx, level) > 0 && latency(ctx, level) == cached(ctx, level), WAIT,
                 "the Predictive Cache to take fifteen in a hundred off the server's reads once reindexed",
                 level -> drive[0] + " ticks became " + latency(ctx, level) + "; the index has "
                         + places(ctx, level));

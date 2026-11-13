@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest.computers;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.logging.LogUtils;
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.JsComputers;
 import dev.jstech.computers.blockentity.MainframeBlockEntity;
@@ -21,6 +22,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
 
 /**
  * The cursor stays under the player's hand while the server moves a monitor on from one window to the next: a system
@@ -28,6 +30,7 @@ import org.lwjgl.glfw.GLFW;
  */
 public final class MenuSwapCursorClientTests {
 
+    private static final Logger LOGGER = LogUtils.getLogger();
     private static final int SETTLE = 4;
     private static final int BOOT_WAIT = 1_200;
     /** How far the cursor may stand from where it was put, in the window's pixels. */
@@ -85,6 +88,8 @@ public final class MenuSwapCursorClientTests {
                 }, SETTLE * 4, "the desktop to settle")
                 .then(0, () -> {
                     if (!focused[0] || !ctx.mc().isWindowActive()) {
+                        // Said in the log, so a battery whose window was behind shows the check did not run.
+                        LOGGER.warn("The cursor check was skipped: the game's window was not in front the whole way");
                         return;
                     }
                     final double[] x = new double[1];

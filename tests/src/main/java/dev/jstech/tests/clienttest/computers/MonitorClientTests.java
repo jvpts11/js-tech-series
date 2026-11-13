@@ -78,6 +78,9 @@ public final class MonitorClientTests {
     private static final int SETTLE = 4;
     private static final int BOOT_WAIT = 1_200;
     private static final int LIGHT_WAIT = 400;
+    /* Below this a pixel of the glass is dark, the glass between the letters; above, amber holds red well over blue. */
+    private static final int DARK = 48;
+    private static final int AMBER_RED_OVER_BLUE = 32;
     /* A lit desktop's pixels run well above this in their brightest channel; dark glass stays far below it. */
     private static final int LIT_LEVEL = 90;
     private static final ResourceLocation MC_DOS = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_dos");
@@ -797,12 +800,19 @@ public final class MonitorClientTests {
         return true;
     }
 
-    /* Red over green over blue, a hair of rounding allowed: the amber phosphor at any brightness. */
+    /*
+     * Red over green over blue, a hair of rounding allowed: the amber phosphor at any brightness. A dark pixel is the
+     * glass between the letters; a lit one is amber only with clearly more red than blue, which white, grey and a
+     * green or blue glass have not.
+     */
     private static boolean amber(final int rgb) {
         final int r = (rgb >> 16) & 0xFF;
         final int g = (rgb >> 8) & 0xFF;
         final int b = rgb & 0xFF;
-        return r + 2 >= g && g + 2 >= b;
+        if (Math.max(r, Math.max(g, b)) < DARK) {
+            return true;
+        }
+        return r + 2 >= g && g + 2 >= b && r - b >= AMBER_RED_OVER_BLUE;
     }
 
     private static boolean lit(final ClientTestContext ctx, final BlockPos at) {

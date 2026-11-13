@@ -186,8 +186,10 @@ public final class InteracGameTests {
                             "there is nobody to take anything from; got " + nobody);
 
                     final List<String> named = shell(helper, fleet.lab(), "interac put 8 oak log");
-                    helper.assertTrue(says(named, "holds no") || says(named, "INSERT queued"),
-                            "and naming something puts it in from the machine's own storage; got " + named);
+                    // The oak logs are the rack's; the lab's own storage, which a put takes from, holds none.
+                    helper.assertTrue(says(named, "this computer holds no") && !says(named, "INSERT queued"),
+                            "naming something puts it in from the machine's own storage, which holds none; got "
+                                    + named);
                 })
                 .thenSucceed();
     }

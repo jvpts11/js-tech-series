@@ -65,14 +65,17 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 public final class MaterialGameTests {
 
     private static final String ARENA = "empty";
+    private static final int CORE_FORMS = 23;
 
     private MaterialGameTests() {
     }
 
     @GameTest(template = ARENA)
     public static void registries_holdTheCoresDeclarations(final GameTestHelper helper) {
-        helper.assertTrue(Forms.all().size() >= 21 && Forms.all().subList(0, 21).stream()
-                .allMatch(form -> form.id().getNamespace().equals(JsCore.MODID)), "the Core's 21 forms, first");
+        // Any mod declaring a form loads the Core's forms first, so its twenty-three lead the list.
+        helper.assertTrue(Forms.all().stream().filter(form -> form.id().getNamespace().equals(JsCore.MODID))
+                .count() == CORE_FORMS && Forms.all().subList(0, CORE_FORMS).stream()
+                .allMatch(form -> form.id().getNamespace().equals(JsCore.MODID)), "the Core's 23 forms, first");
         helper.assertTrue(MaterialProperties.all().containsAll(List.of(MaterialProperties.SYMBOL,
                 MaterialProperties.ATOMIC_NUMBER, MaterialProperties.FORMULA, MaterialProperties.COLOUR,
                 MaterialProperties.ROOM_STATE)), "the Core's five properties");

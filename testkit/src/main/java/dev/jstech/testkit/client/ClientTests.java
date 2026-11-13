@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -59,11 +60,15 @@ public final class ClientTests {
         register(modid, suite, tests, ClientTestHelper::new);
     }
 
-    /** Registers {@code tests}, which a mod read itself, run with the helpers {@code helpers} makes. */
+    /**
+     * Registers {@code tests}, which a mod read itself, run with the helpers {@code helpers} makes. The suite's name is
+     * kept in lower case, as a run's list of suites is read, so it is chosen however it is written.
+     */
     public static void register(final String modid, final String suite, final List<Test> tests,
                                 final IHelperFactory helpers) {
-        SUITES.add(new Suite(Objects.requireNonNull(modid, "modid"), Objects.requireNonNull(suite, "suite"),
-                List.copyOf(tests), Objects.requireNonNull(helpers, "helpers")));
+        SUITES.add(new Suite(Objects.requireNonNull(modid, "modid"),
+                Objects.requireNonNull(suite, "suite").toLowerCase(Locale.ROOT), List.copyOf(tests),
+                Objects.requireNonNull(helpers, "helpers")));
     }
 
     /** Runs {@code reset} before every test, so what a mod keeps between tests starts as a fresh game has it. */

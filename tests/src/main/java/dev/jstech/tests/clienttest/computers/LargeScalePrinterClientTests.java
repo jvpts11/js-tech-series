@@ -83,6 +83,8 @@ public final class LargeScalePrinterClientTests {
         final ChainMachine machine = ChainMachines.byId("large_scale_printer").orElseThrow();
         final BlockPos terminal = terminalOf(machine);
         ComputersServerConfig.FILE.set(ComputersServerConfig.PRINT_ENCHANTED_BOOKS, true);
+        // The setting is put back however the test ends: it turns it off halfway, and a failure there would leave it.
+        ctx.afterTest(() -> ComputersServerConfig.FILE.set(ComputersServerConfig.PRINT_ENCHANTED_BOOKS, true));
         ctx.thenServer(0, level -> ctx.serverPlayer().getInventory().clearContent())
                 .thenBuild(0, world -> build(world::setBlock, machine))
                 .thenServer(SETTLE * 5, level -> ctx.assertTrue(ChainMachines.formAt(level, ctx.abs(terminal),

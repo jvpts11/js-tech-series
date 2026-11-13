@@ -17,6 +17,8 @@ import dev.jstech.core.uuid.NetworkUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.TestCables;
 import dev.jstech.tests.testkit.computers.TestWorldBuilder;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
@@ -51,8 +53,7 @@ public final class ServerRackGameTests {
         final MainframeBlockEntity mainframe = placeRunningMainframe(helper, m);
         TestCables.lay(helper, hbw, ComputingModule.HBW_CABLE);
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
-                .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
-                        Direction.EAST)); // cables attach through the rear (west side here)
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST)); // cables attach at the rear, west here
         if (helper.getBlockEntity(rack) instanceof ServerRackBlockEntity rackBe) {
             TestWorldBuilder.mountDefaultServer(rackBe, 0);
         } else {
@@ -80,9 +81,10 @@ public final class ServerRackGameTests {
     @GameTest(template = ARENA)
     public static void serverRack_formsCabinetAndReadsCableOnPartFace(final GameTestHelper helper) {
         final BlockPos m = new BlockPos(1, 2, 2);
-        final BlockPos rack = new BlockPos(4, 2, 2);     // origin; footprint x[4,5] y[2,4] z[2,3]
+        final BlockPos rack = new BlockPos(4, 2, 2);     // origin, facing east: the cabinet reaches back west to x 3
         final BlockPos part = new BlockPos(4, 3, 2);     // a front part, one up from the origin
-        // A cable run from the part's outward face to the mainframe, and it touches the
+        // A cable run from the rear face of the cabinet's back parts to the mainframe; it touches no origin face.
+        final List<BlockPos> parts = new ArrayList<>();
         final BlockPos[] cables = {
             new BlockPos(2, 3, 2), // against the REAR face of part (3,3,2), parts only
             new BlockPos(2, 2, 2), // claimed by the mainframe
@@ -93,8 +95,7 @@ public final class ServerRackGameTests {
         }
         // Place the origin and drive its self-assembly so all 11 parts exist.
         helper.setBlock(rack, ComputingModule.SERVER_RACK.get().defaultBlockState()
-                .setValue(net.minecraft.world.level.block.HorizontalDirectionalBlock.FACING,
-                        Direction.EAST)); // cables attach through the rear (west side here)
+                .setValue(HorizontalDirectionalBlock.FACING, Direction.EAST)); // cables attach at the rear, west here
         ((ServerRackBlock) ComputingModule.SERVER_RACK.get()).setPlacedBy(
                 helper.getLevel(), helper.absolutePos(rack), helper.getBlockState(rack), null, ItemStack.EMPTY);
         if (!(helper.getBlockEntity(rack) instanceof ServerRackBlockEntity rackBe)) {
@@ -106,6 +107,13 @@ public final class ServerRackGameTests {
                 .thenExecuteAfter(SETTLE + 2, () -> {
                     helper.assertTrue(helper.getBlockState(part).getBlock() instanceof ServerRackPartBlock,
                             "placing the rack must raise its structural parts");
+                    // Every part the cabinet raised, wherever its rotation put it, so its whole going can be checked.
+                    for (final BlockPos at : BlockPos.betweenClosed(2, 2, 0, 6, 4, 4)) {
+                        if (helper.getBlockState(at).getBlock() instanceof ServerRackPartBlock) {
+                            parts.add(at.immutable());
+                        }
+                    }
+                    helper.assertTrue(parts.size() == 11, "the cabinet raises its eleven parts; found " + parts);
                     final NetworkUuid net = mainframe.networkUuid();
                     helper.assertTrue(net != null, "mainframe owns a network");
                     // The origin touches no cable; only a part does.
@@ -118,8 +126,10 @@ public final class ServerRackGameTests {
                             "breaking a part must take the origin down too");
                     helper.assertTrue(helper.getBlockState(part).isAir(),
                             "the broken part must be gone");
-                    helper.assertTrue(helper.getBlockState(new BlockPos(5, 4, 3)).isAir(),
-                            "the whole cabinet must dissolve, including the far-top-back corner");
+                    for (final BlockPos at : parts) {
+                        helper.assertTrue(helper.getBlockState(at).isAir(),
+                                "the whole cabinet must dissolve; still standing at " + at);
+                    }
                 })
                 .thenSucceed();
     }

@@ -42,10 +42,12 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceKey;
@@ -103,8 +105,16 @@ public final class RoomGameTests {
     private static final Map<ResourceLocation, Double> OXYGEN = Map.of(AirMix.OXYGEN, 1.0);
     /* A second of the rooms and a little more, in ticks. */
     private static final int A_ROOMS_SECOND = 25;
+    /* The listeners a test put on the game's bus, taken off after the batch should a failure have left them on. */
+    private static final List<Object> LISTENING = new CopyOnWriteArrayList<>();
 
     private RoomGameTests() {
+    }
+
+    @AfterBatch(batch = BATCH)
+    public static void listenersOff(final ServerLevel level) {
+        LISTENING.forEach(NeoForge.EVENT_BUS::unregister);
+        LISTENING.clear();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
@@ -659,6 +669,7 @@ public final class RoomGameTests {
         NeoForge.EVENT_BUS.addListener(RoomEvent.Formed.class, formed);
         NeoForge.EVENT_BUS.addListener(RoomEvent.Filled.class, filled);
         NeoForge.EVENT_BUS.addListener(RoomEvent.Leaking.class, leaking);
+        LISTENING.addAll(List.of(formed, filled, leaking));
         hut(helper, LOW, HIGH, Blocks.STONE);
         track(helper, INSIDE);
         helper.startSequence()

@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.computers;
 
+import dev.jstech.computers.hardware.ComputerBuild;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.core.jstechseries.network.NetworkSystem;
 import dev.jstech.core.jstechseries.network.ServerNode;
@@ -63,13 +64,20 @@ public final class TickCostGameTests {
     public static void rackBuild_isReadOnceAndRefreshedWhenTheMachineIsSwapped(final GameTestHelper helper) {
         final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
         final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        final ComputerBuild[] read = new ComputerBuild[1];
         helper.startSequence()
                 .thenExecuteAfter(SETTLE + 2, () -> {
+                    read[0] = net.rack().buildIn(0);
+                    helper.assertTrue(read[0] != null, "the mounted machine is read into a build");
+                })
+                .thenExecuteAfter(5, () -> {
+                    // Five more ticks of the rack at work: the build is the very same object, read once and kept.
+                    helper.assertTrue(net.rack().buildIn(0) == read[0], "the build is read once and kept");
                     helper.assertTrue(net.rack().thermalLoadWatts() > 0, "a mounted, powered machine draws power");
                     // Pull the machine: the cached build must go with it.
                     net.rack().getServers().setStackInSlot(0, ItemStack.EMPTY);
-                    helper.assertTrue(net.rack().thermalLoadWatts() == 0,
-                            "an emptied slot draws nothing; got " + net.rack().thermalLoadWatts());
+                    helper.assertTrue(net.rack().buildIn(0) == null && net.rack().thermalLoadWatts() == 0,
+                            "an emptied slot holds no build and draws nothing; got " + net.rack().thermalLoadWatts());
                 })
                 .thenSucceed();
     }

@@ -79,6 +79,8 @@ public final class SystemMotionClientTests {
 
     @ClientTest(timeoutTicks = 2400)
     public static void window_growsInFadingOnFrames11(final ClientTestContext ctx) {
+        // Motion is reduced again however the test ends, so the tests after it see the desktop still, as set.
+        ctx.afterTest(() -> moving(false));
         booted(ctx, "frames_11", null)
                 .then(0, () -> moving(true))
                 .then(SETTLE, () -> DesktopScreen.requestOpen(CALCULATOR))
@@ -92,6 +94,7 @@ public final class SystemMotionClientTests {
 
     @ClientTest(timeoutTicks = 2400)
     public static void minimize_fliesTheCaptionToTheTaskbarOnFrames95(final ClientTestContext ctx) {
+        ctx.afterTest(() -> moving(false));
         booted(ctx, "frames_95", null)
                 .then(0, () -> moving(true))
                 .then(SETTLE, () -> DesktopScreen.requestOpen(CALCULATOR))
@@ -108,6 +111,7 @@ public final class SystemMotionClientTests {
     @ClientTest(timeoutTicks = 2400)
     public static void turnOff_drainsTheDesktopToGreyOnFramesXp(final ClientTestContext ctx) {
         final int[] probe = new int[2];
+        ctx.afterTest(() -> MotionClock.setReduced(true));
         booted(ctx, "frames_xp", null)
                 .then(0, () -> MotionClock.setReduced(false))
                 .then(SETTLE, () -> desktop(ctx).openPowerDialog())
@@ -133,6 +137,7 @@ public final class SystemMotionClientTests {
     @ClientTest(timeoutTicks = 3600)
     public static void busyLight_blinksWhileAProgramStartsOnCde(final ClientTestContext ctx) {
         final boolean[] seen = new boolean[2];
+        ctx.afterTest(() -> MotionClock.setReduced(true));
         atCde(ctx)
                 .then(0, () -> MotionClock.setReduced(false))
                 .thenAssert(SETTLE, () -> !desktop(ctx).busyLightLit(), "the busy light is dark with nothing starting")
@@ -153,6 +158,7 @@ public final class SystemMotionClientTests {
     public static void consoleCursor_blinksToItsConsolesOwnBeat(final ClientTestContext ctx) {
         final int[] turns = new int[1];
         final boolean[] last = new boolean[1];
+        ctx.afterTest(() -> MotionClock.setReduced(true));
         ctx.thenBuild(0, world -> {
                     final CraftingComputerBlockEntity computer = world.placeRunningCraftingComputer(COMPUTER);
                     computer.installOs(MC_DOS);

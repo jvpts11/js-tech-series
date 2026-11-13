@@ -12,6 +12,7 @@ import java.util.List;
 import net.neoforged.moddevgradle.dsl.ModDevExtension;
 import net.neoforged.moddevgradle.dsl.ModModel;
 import net.neoforged.moddevgradle.dsl.RunModel;
+import org.gradle.api.GradleException;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.tasks.SourceSet;
@@ -37,12 +38,20 @@ final class ModDevSetup {
                           final SourceSet gametest) {
         final ModDevExtension modDev = (ModDevExtension) project.getExtensions().getByName(NEOFORGE);
         // The game reaches the tests' source set once the build has set its version, below the plugins.
+        /*
+         * The mod's id is read now, as the plugin is applied, and every run uses that one id; one set later in the
+         * build's own block would name a second mod, so the build says so rather than run with two.
+         */
+        final String modId = jstech.getModId().get();
         project.afterEvaluate(evaluated -> {
             if (evaluated.getExtensions().findByName(ENABLED) != null) {
                 modDev.addModdingDependenciesTo(gametest);
             }
+            if (!modId.equals(jstech.getModId().get())) {
+                throw new GradleException("jstech.modId is read as the plugin is applied, so it was " + modId
+                        + " and cannot become " + jstech.getModId().get() + "; set it as mod_id in gradle.properties");
+            }
         });
-        final String modId = jstech.getModId().get();
         final ModModel mod = modDev.getMods().maybeCreate(modId);
         mod.sourceSet(main);
         mod.sourceSet(gametest);
@@ -55,13 +64,13 @@ final class ModDevSetup {
         made(runs, "gameTestServer", run -> {
             run.getType().set("gameTestServer");
             run.getSourceSet().set(gametest);
-            run.getSystemProperties().put("neoforge.enabledGameTestNamespaces", jstech.getModId());
+            run.getSystemProperties().put("neoforge.enabledGameTestNamespaces", modId);
         });
         made(runs, "data", run -> {
             run.data();
-            run.getProgramArguments().addAll(jstech.getModId().map(id -> List.of("--mod", id, "--all",
+            run.getProgramArguments().addAll(List.of("--mod", modId, "--all",
                     "--output", project.file("src/generated/resources").getAbsolutePath(),
-                    "--existing", project.file("src/main/resources").getAbsolutePath())));
+                    "--existing", project.file("src/main/resources").getAbsolutePath()));
         });
         made(runs, "clientTests", run -> {
             run.client();

@@ -114,9 +114,12 @@ public final class SpacePersistorGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(ChunkLoaders.loadedFrom(level, at).size() == SQUARE,
                         "with its energy turned off by the server, it keeps its square unpowered"))
                 .thenExecute(() -> {
-                    helper.assertTrue(!offersEnergy(helper, at), "and offers no port and no FE on any side");
-                    helper.assertTrue(persistor.joulesPerTick() == 0, "its area costs nothing");
+                    // Read, then the setting put back before anything is said, so a failing check cannot keep it.
+                    final boolean offers = offersEnergy(helper, at);
+                    final boolean free = persistor.joulesPerTick() == 0;
                     PersistorSettings.setWattsPerChunk(watts);
+                    helper.assertTrue(!offers, "and offers no port and no FE on any side");
+                    helper.assertTrue(free, "its area costs nothing");
                 })
                 .thenWaitUntil(() -> helper.assertTrue(ChunkLoaders.loadedFrom(level, at).isEmpty(),
                         "when power costs again, short of it, it lets them go"))

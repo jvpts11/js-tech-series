@@ -88,8 +88,8 @@ public final class NetworkFixtures {
                         1, player.getInventory(), be);
         helper.assertFalse(menu.slots.isEmpty(), "the PC menu must build its slots for " + block);
 
-        // The block's own name must resolve without throwing (useWithoutItem uses it as the title).
-        helper.assertTrue(block.getName() != null, "block name must resolve for " + block);
+        // The block's own name is the screen's title (useWithoutItem uses it): it must say something.
+        helper.assertFalse(block.getName().getString().isEmpty(), "block name must resolve for " + block);
 
         /*
          * The decisive check: the server validates the open menu against the block at the position

@@ -54,6 +54,11 @@ public final class TerminalToolGameTests {
 
     /** Long enough for a server just mounted in a rack to be a running machine. */
     private static final int SETTLE = 8;
+    /*
+     * How near its end a tool is looked at on either side, in ticks: steps count from the step before them, and the
+     * machine's tick and the test's may fall either way round within one tick.
+     */
+    private static final int EDGE = 2;
 
     private static final ResourceLocation MC_NET = ResourceLocation.fromNamespaceAndPath(JsComputers.MODID, "mc_net");
 
@@ -79,7 +84,9 @@ public final class TerminalToolGameTests {
         helper.startSequence()
                 .thenExecuteAfter(WORK / 2, () -> helper.assertFalse(TestFetchCommand.fetched(idOf(helper, computer)),
                         "half way through it has still fetched nothing"))
-                .thenExecuteAfter(WORK, () -> {
+                .thenExecuteAfter(WORK - WORK / 2 - EDGE, () -> helper.assertFalse(
+                        TestFetchCommand.fetched(idOf(helper, computer)), "just before its end, nor then"))
+                .thenExecuteAfter(2 * EDGE, () -> {
                     helper.assertTrue(TestFetchCommand.fetched(idOf(helper, computer)),
                             "the machine moved the tool along by itself, to the end");
                     helper.assertFalse(computer.console().foreground().running(), "and the prompt is back");
@@ -129,7 +136,9 @@ public final class TerminalToolGameTests {
                     helper.assertTrue(computer.console().foreground().tool() == null,
                             "though the tool itself did not survive the save");
                 })
-                .thenExecuteAfter(WORK, () -> {
+                .thenExecuteAfter(WORK - WORK / 2 - EDGE, () -> helper.assertFalse(
+                        TestFetchCommand.fetched(idOf(helper, computer)), "just before its end it has fetched nothing"))
+                .thenExecuteAfter(2 * EDGE, () -> {
                     helper.assertTrue(TestFetchCommand.fetched(idOf(helper, computer)),
                             "found again and carried on from where it was, to the end");
                     helper.assertFalse(computer.console().foreground().running(), "and the prompt is back");
@@ -156,7 +165,9 @@ public final class TerminalToolGameTests {
                 })
                 .thenExecuteAfter(WORK / 2, () -> helper.assertFalse(TestFetchCommand.fetched(idOf(helper, rack)),
                         "half way through it has fetched nothing"))
-                .thenExecuteAfter(WORK, () -> {
+                .thenExecuteAfter(WORK - WORK / 2 - EDGE, () -> helper.assertFalse(
+                        TestFetchCommand.fetched(idOf(helper, rack)), "just before its end, nor then"))
+                .thenExecuteAfter(2 * EDGE, () -> {
                     helper.assertTrue(TestFetchCommand.fetched(idOf(helper, rack)),
                             "the rack moved its server's tool along, to the end");
                     helper.assertFalse(rack.consoleOf(0).foreground().running(), "and the prompt is back");

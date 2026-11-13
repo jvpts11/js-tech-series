@@ -11,11 +11,14 @@ import dev.jstech.core.client.tool.ModeRadialScreen;
 import dev.jstech.core.client.tool.ToolClient;
 import dev.jstech.core.gui.layout.ToolHudLayout;
 import dev.jstech.core.item.ItemStates;
+import dev.jstech.core.tool.AreaMining;
+import dev.jstech.core.tool.BuildingTools;
 import dev.jstech.core.tool.ToolHeat;
 import dev.jstech.core.tool.Tools;
 import dev.jstech.tests.TestTools;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
+import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
@@ -23,6 +26,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.energy.IEnergyStorage;
@@ -39,6 +44,8 @@ public final class ToolClientTests {
     private static final BlockPos WALL = new BlockPos(0, 3, 1);
     /* The middle of a row of three stones on the floor, the wand's plane. */
     private static final BlockPos ROW = new BlockPos(0, 2, 1);
+    /* The wall's lower corner, far harder than the stone round it. */
+    private static final BlockPos OBSIDIAN = new BlockPos(-1, 2, 1);
     private static final int WAIT = 200;
     private static final int SETTLE = 5;
 
@@ -66,7 +73,7 @@ public final class ToolClientTests {
                 .thenScreenshot(0, "tools-ring")
                 .then(0, () -> ctx.screen(ModeRadialScreen.class).choose())
                 .thenAwaitNoScreen(WAIT)
-                .thenWaitUntil(() -> ItemStates.mode(ctx.serverPlayer().getMainHandItem())
+                .thenWaitUntil(() -> ItemStates.mode(ctx.player().getMainHandItem())
                         .filter(TestTools.VEIN::equals).isPresent(), WAIT, "the drill in its vein mode")
                 .thenScreenshot(SETTLE, "tools-hud");
     }
@@ -81,8 +88,7 @@ public final class ToolClientTests {
                                     Blocks.STONE.defaultBlockState());
                         }
                     }
-                    level.setBlockAndUpdate(ctx.abs(new BlockPos(-1, 2, WALL.getZ())),
-                            Blocks.OBSIDIAN.defaultBlockState());
+                    level.setBlockAndUpdate(ctx.abs(OBSIDIAN), Blocks.OBSIDIAN.defaultBlockState());
                     final ItemStack drill = charged(new ItemStack(TestTools.DRILL.get()));
                     ItemStates.setMode(drill, TestTools.AREA);
                     ctx.serverPlayer().setItemInHand(InteractionHand.MAIN_HAND, drill);
@@ -90,7 +96,13 @@ public final class ToolClientTests {
                 .thenWaitUntil(() -> ctx.player().getMainHandItem().is(TestTools.DRILL.get())
                         && ctx.mc().level.getBlockState(ctx.abs(WALL)).is(Blocks.STONE), WAIT, "the wall and drill")
                 .then(0, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(WALL))))
-                .thenScreenshot(SETTLE, "tools-outline")
+                .thenAssert(SETTLE, () -> {
+                    final List<BlockPos> outlined = outlined(ctx);
+                    return outlined.size() == 7 && !outlined.contains(ctx.abs(OBSIDIAN))
+                            && outlined.stream().allMatch(pos -> pos.getZ() == ctx.abs(WALL).getZ());
+                }, "the charged drill in its area mode outlines the seven stones round the one aimed at, and not "
+                        + "the obsidian, far harder")
+                .thenScreenshot(0, "tools-outline")
                 .thenServer(0, level -> clear(ctx, level));
     }
 
@@ -110,7 +122,12 @@ public final class ToolClientTests {
                 .thenWaitUntil(() -> ctx.player().getMainHandItem().is(TestTools.WAND.get())
                         && ctx.mc().level.getBlockState(ctx.abs(ROW)).is(Blocks.STONE), WAIT, "the row and wand")
                 .then(0, () -> ctx.lookAt(Vec3.atCenterOf(ctx.abs(ROW)).add(0, 0.5, 0)))
-                .thenScreenshot(SETTLE, "tools-ghosts")
+                .thenAssert(SETTLE, () -> {
+                    final List<BlockPos> placed = placed(ctx);
+                    final int above = ctx.abs(ROW).getY() + 1;
+                    return placed.size() == 3 && placed.stream().allMatch(pos -> pos.getY() == above);
+                }, "the wand in its plane mode lays its ghosts out over each of the three stones")
+                .thenScreenshot(0, "tools-ghosts")
                 .thenServer(0, level -> clear(ctx, level));
     }
 
@@ -127,6 +144,29 @@ public final class ToolClientTests {
                 .thenAssert(0, () -> TestTools.PICK_HEAT.heat(ctx.mc().level, ctx.player().getMainHandItem()) > 0,
                         "the pick is hot on the player's game")
                 .thenScreenshot(SETTLE, "tools-heat");
+    }
+
+    /*
+     * The blocks the drill in hand takes round the block the player aims at, worked out on the player's game as its
+     * outline works them out: nothing unless the drill works there, charged, and mines more than one block.
+     */
+    private static List<BlockPos> outlined(final ClientTestContext ctx) {
+        final ItemStack drill = ctx.player().getMainHandItem();
+        if (!(ctx.mc().hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK
+                || !Tools.works(ctx.mc().level, drill)) {
+            return List.of();
+        }
+        return Tools.mines(ctx.mc().level, drill).map(shape -> AreaMining.around(ctx.mc().level, ctx.player(), drill,
+                hit.getBlockPos(), hit.getDirection(), shape)).orElse(List.of());
+    }
+
+    /* Where the wand in hand would place blocks from the face the player aims at, as its ghosts are laid out. */
+    private static List<BlockPos> placed(final ClientTestContext ctx) {
+        if (!(ctx.mc().hitResult instanceof BlockHitResult hit) || hit.getType() != HitResult.Type.BLOCK) {
+            return List.of();
+        }
+        return Tools.builds(ctx.player().getMainHandItem()).map(mode -> BuildingTools.targets(ctx.mc().level,
+                ctx.player(), hit.getBlockPos(), hit.getDirection(), mode)).orElse(List.of());
     }
 
     private static void clear(final ClientTestContext ctx, final ServerLevel level) {

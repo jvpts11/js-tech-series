@@ -154,6 +154,8 @@ public final class MotionClientTests {
 
     @ClientTest(timeoutTicks = 2400)
     public static void pack_replacesASystemsMotionAndTheShippedFilesAreTheDeclaredOnes(final ClientTestContext ctx) {
+        // The pack's profile is taken back however the test ends, so the Frames 11 tests after it move as shipped.
+        ctx.afterTest(OsMotions.FRAMES_11::reset);
         booted(ctx, "frames_11", null, false)
                 .then(0, () -> moving(true))
                 .then(0, () -> {

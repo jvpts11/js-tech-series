@@ -69,28 +69,32 @@ public final class WorldGenBenchmarkGameTests {
                 new Square("warm_vanilla", vanilla, WARM_RADIUS, -FAR), new Square("test_land", test, RADIUS, FAR),
                 new Square("vanilla", vanilla, RADIUS, FAR)));
         helper.onEachTick(bench);
-        helper.succeedWhen(() -> {
-            helper.assertTrue(bench.done(), "the squares are still being made: " + bench.progress());
-            final BenchReport report = new BenchReport("worldgen");
-            for (final Square square : bench.squares()) {
-                report.put(square.name() + "_ms", square.millis());
-                report.put(square.name() + "_ms_a_chunk", square.millis() / square.chunks());
-                report.put(square.name() + "_longest_tick_ms", square.longestTick());
-            }
-            final Square land = bench.squares().get(2);
-            final Square game = bench.squares().get(3);
-            report.put("test_land_over_vanilla", land.millis() / game.millis());
-            LOGGER.info("[JSC-BENCH] worldgen {}", report.summary());
-            try {
-                report.write();
-            } catch (final IOException failed) {
-                LOGGER.warn("[JSC-BENCH] the worldgen numbers could not be written", failed);
-            }
-            RuntimeDimensions.remove(server, TEST);
-            RuntimeDimensions.remove(server, VANILLA);
-            helper.assertTrue(land.millis() <= game.millis() * SLACK, "the test land was made in " + land.millis()
-                    + " ms, the game's own ground in " + game.millis() + " ms");
-        });
+        // Waited for, then reported and judged once: a judgement in the wait would be asked again every tick.
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(bench.done(),
+                        "the squares are still being made: " + bench.progress()))
+                .thenExecute(() -> {
+                    final BenchReport report = new BenchReport("worldgen");
+                    for (final Square square : bench.squares()) {
+                        report.put(square.name() + "_ms", square.millis());
+                        report.put(square.name() + "_ms_a_chunk", square.millis() / square.chunks());
+                        report.put(square.name() + "_longest_tick_ms", square.longestTick());
+                    }
+                    final Square land = bench.squares().get(2);
+                    final Square game = bench.squares().get(3);
+                    report.put("test_land_over_vanilla", land.millis() / game.millis());
+                    LOGGER.info("[JSC-BENCH] worldgen {}", report.summary());
+                    try {
+                        report.write();
+                    } catch (final IOException failed) {
+                        LOGGER.warn("[JSC-BENCH] the worldgen numbers could not be written", failed);
+                    }
+                    RuntimeDimensions.remove(server, TEST);
+                    RuntimeDimensions.remove(server, VANILLA);
+                    helper.assertTrue(land.millis() <= game.millis() * SLACK, "the test land was made in "
+                            + land.millis() + " ms, the game's own ground in " + game.millis() + " ms");
+                })
+                .thenSucceed();
     }
 
     /** Makes each square in turn, a tick at a time, and keeps its numbers. */
