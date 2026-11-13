@@ -13,6 +13,7 @@ import dev.jstech.computers.bus.BusActivity;
 import dev.jstech.computers.menu.ImportBusMenu;
 import dev.jstech.computers.operation.MoveLabels;
 import dev.jstech.computers.operation.NetworkInsertOperation;
+import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
 import dev.jstech.computers.trace.TracePoints;
@@ -162,9 +163,10 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
     public void dropContents(final ServerLevel level) {
         /*
          * Drop a buffered item back into the world; a buffered fluid or chemical, which cannot lie on the ground,
-         * goes back into the block it was taken from, as far as that takes it. If an INSERT operation is in flight,
-         * the payload was already extracted from the source but not yet confirmed by the network, so give back what
-         * the network has not taken yet; the operation is stopped so it cannot also insert what was given back.
+         * goes back into the block it was taken from, as far as that takes it, and the rest into the bus's network
+         * (a tank's face that only gives takes nothing back). If an INSERT operation is in flight, the payload was
+         * already extracted from the source but not yet confirmed by the network, so give back what the network has
+         * not taken yet; the operation is stopped so it cannot also insert what was given back.
          */
         final StorageKey drop = bufferKey != null ? bufferKey : flushedKey;
         final long dropAmount = bufferKey != null ? bufferAmount : unconfirmedAmount();
@@ -180,7 +182,11 @@ public non-sealed class ImportBusPart extends AbstractBusPart {
                         host.getBlockPos().getX(), host.getBlockPos().getY(), host.getBlockPos().getZ(),
                         drop.stack((int) Math.min(dropAmount, Integer.MAX_VALUE)));
             } else {
-                neighborPort().insert(drop, dropAmount, false);
+                final long rest = dropAmount - neighborPort().insert(drop, dropAmount, false);
+                final NetworkUuid network = network();
+                if (rest > 0L && network != null) {
+                    NetworkStorage.of(level, network).insert(drop, rest);
+                }
             }
         }
         bufferKey = null;

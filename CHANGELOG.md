@@ -4526,7 +4526,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   array in use asks for Enter a second time.
 - (Computers) A Mirror shelf holding a package larger than a save's longest text is saved whole, where the world's
   save failed; a playlist deleted in one window is not made again by adding to it from another; and a broken Import
-  Bus gives a fluid or chemical it held back to its source, where the fluid was lost.
+  Bus gives a fluid or chemical it held back to its source, or to its network where the source takes nothing in on
+  that face, where the fluid was lost.
 - (Computers) A machine started again after a rebuild comes up cold, where it came back with its old desktop; a
   program's recording of unknown length keeps its voice to the end; and a monitor's Console heading shows a running
   tool's output.

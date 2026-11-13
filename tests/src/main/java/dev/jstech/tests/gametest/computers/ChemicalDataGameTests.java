@@ -9,6 +9,7 @@ package dev.jstech.tests.gametest.computers;
 
 import dev.jstech.computers.ComputingModule;
 import dev.jstech.computers.block.part.ComputingParts;
+import dev.jstech.computers.block.part.ImportBusPart;
 import dev.jstech.computers.operation.NetworkStorage;
 import dev.jstech.computers.storage.ExternalDataPort;
 import dev.jstech.computers.storage.StorageKey;
@@ -23,6 +24,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
@@ -201,6 +203,50 @@ public final class ChemicalDataGameTests {
                     helper.assertTrue(net.storage(helper.getLevel()).count(oxygen) == 500, "exactly 500 mB must be in the network");
                 })
                 .thenSucceed();
+    }
+
+    /**
+     * An Import Bus broken while it holds a gas it took, buffered or on its way into the network, gives what the
+     * network has not taken back to the tank it came from, or, where the tank's face only gives, into the network:
+     * the gas is neither lost nor counted twice.
+     */
+    @GameTest(template = ARENA, timeoutTicks = 400)
+    public static void importBus_brokenWithAGasInHandGivesItBackToItsTank(final GameTestHelper helper) {
+        final TestWorldBuilder world = TestWorldBuilder.forGameTest(helper);
+        final TestWorldBuilder.CraftingNetwork net = world.buildCraftingNetwork();
+        world.setBlock(BUS_CABLE, ComputingModule.ETHERNET_CABLE);
+        world.placeFromItem(TANK_A, BuiltInRegistries.BLOCK.get(TANK));
+        final StorageKey oxygen = StorageKey.chemical(OXYGEN);
+        final ImportBusPart bus = ComputingParts.IMPORT.get().create();
+        helper.startSequence()
+                .thenExecuteAfter(SETTLE + 2, () -> {
+                    final Optional<IChemicalPort> tank = ChemicalBridges.portFor(helper.getLevel(),
+                            world.absolute(TANK_A), Direction.UP);
+                    helper.assertTrue(tank.isPresent() && tank.get().fill(OXYGEN, 500, false) == 500,
+                            "the tank must take 500 mB of oxygen");
+                    if (world.getBlockEntity(BUS_CABLE) instanceof CableBlockEntity cable) {
+                        cable.addPart(Direction.SOUTH, bus);
+                    }
+                })
+                .thenWaitUntil(() -> helper.assertTrue(inHand(helper, bus) > 0,
+                        "the bus to hold some of the oxygen it took"))
+                .thenExecute(() -> helper.destroyBlock(BUS_CABLE))
+                .thenIdle(SETTLE * 5)
+                .thenExecute(() -> {
+                    final long inNetwork = net.storage(helper.getLevel()).count(oxygen);
+                    final long inTank = ChemicalBridges.portFor(helper.getLevel(), world.absolute(TANK_A),
+                            Direction.UP).map(port -> port.count(OXYGEN)).orElse(0L);
+                    helper.assertTrue(inNetwork + inTank == 500, "all 500 mB are in the network or back in the "
+                            + "tank: " + inNetwork + " in the network, " + inTank + " in the tank");
+                })
+                .thenSucceed();
+    }
+
+    /* How much {@code bus} holds that it took and the network has not taken yet, buffered or on its way. */
+    private static long inHand(final GameTestHelper helper, final ImportBusPart bus) {
+        final CompoundTag saved = new CompoundTag();
+        bus.save(saved, helper.getLevel().registryAccess());
+        return saved.getLong("BufferAmount") + saved.getLong("FlushedAmount");
     }
 
     @GameTest(template = ARENA, timeoutTicks = 400)
