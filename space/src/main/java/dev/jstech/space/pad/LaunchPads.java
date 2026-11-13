@@ -98,6 +98,28 @@ public final class LaunchPads {
         return level.isThundering() && SpaceServerConfig.FILE.get(SpaceServerConfig.NO_LAUNCH_IN_THUNDERSTORMS);
     }
 
+    /** The nearest Pad Service Port round the pad under {@code axis}, on the ground about it: the pad's own. */
+    public static Optional<PadServicePortBlockEntity> port(final ServerLevel level, final BlockPos axis) {
+        final int ground = axis.getY() - LauncherLayout.RAISE;
+        PadServicePortBlockEntity best = null;
+        double nearest = Double.MAX_VALUE;
+        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        for (int dx = -PORT_REACH; dx <= PORT_REACH; dx++) {
+            for (int dz = -PORT_REACH; dz <= PORT_REACH; dz++) {
+                for (int y = ground - PORT_HIGH; y <= ground + PORT_HIGH; y++) {
+                    at.set(axis.getX() + dx, y, axis.getZ() + dz);
+                    if (level.getBlockState(at).is(PadBlocks.PAD_SERVICE_PORT.get())
+                            && level.getBlockEntity(at) instanceof PadServicePortBlockEntity port
+                            && at.distSqr(axis) < nearest) {
+                        nearest = at.distSqr(axis);
+                        best = port;
+                    }
+                }
+            }
+        }
+        return Optional.ofNullable(best);
+    }
+
     /* Whether the flame trench lies under the opening: its deflector below the ground, open up to it, lined. */
     private static boolean trench(final ServerLevel level, final BlockPos axis, final Direction side) {
         final int ground = axis.getY() - LauncherLayout.RAISE;
@@ -141,28 +163,6 @@ public final class LaunchPads {
             }
         }
         return Optional.empty();
-    }
-
-    /* The nearest Pad Service Port round the pad under {@code axis}, on the ground about it. */
-    private static Optional<PadServicePortBlockEntity> port(final ServerLevel level, final BlockPos axis) {
-        final int ground = axis.getY() - LauncherLayout.RAISE;
-        PadServicePortBlockEntity best = null;
-        double nearest = Double.MAX_VALUE;
-        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
-        for (int dx = -PORT_REACH; dx <= PORT_REACH; dx++) {
-            for (int dz = -PORT_REACH; dz <= PORT_REACH; dz++) {
-                for (int y = ground - PORT_HIGH; y <= ground + PORT_HIGH; y++) {
-                    at.set(axis.getX() + dx, y, axis.getZ() + dz);
-                    if (level.getBlockState(at).is(PadBlocks.PAD_SERVICE_PORT.get())
-                            && level.getBlockEntity(at) instanceof PadServicePortBlockEntity port
-                            && at.distSqr(axis) < nearest) {
-                        nearest = at.distSqr(axis);
-                        best = port;
-                    }
-                }
-            }
-        }
-        return Optional.ofNullable(best);
     }
 
     /**

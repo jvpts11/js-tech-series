@@ -3258,7 +3258,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   clock and the holds, the sequence on its screen, the HOLD and ABORT lamps, the go and no-go board (vehicle,
   propellant, tower arms, deluge, weather, crew, range, clamps), the tanks' bars, the DELUGE and CLAMPS toggles, the
   IGNITION toggle under its red guard, the brass MASTER key, the LAUNCH button in its striped well under its cover,
-  and the HOLD COUNT, SCRUB, RECYCLE T-10 and COUNT RUNNING buttons. It finds the launcher on its pad and its rocket;
+  and the HOLD COUNT, SCRUB, RECYCLE T-10 and COUNT RUNNING buttons; shutting the guard disarms the ignition under it.
+  It finds the launcher on its pad and its rocket, and its plate shows the pad: every pad's service port is given a
+  number by its world, and a click on the plate names the pad, up to 24 characters, until it is named nothing again;
   with its key and its ignition armed and all go, COUNT RUNNING starts the count at T-60: the tower's arms swing back
   from T-42, the cover lifts at T-10, and with LAUNCH pressed the engines light at T-6, the deluge poured by the pad's
   rules, and the rocket is released at T-0; without it the count holds at T-6. It holds by itself on a no-go or in a
@@ -3345,8 +3347,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   it burnt from the rocket's tanks.
 - (Space) Arriving and choosing where to land: at the end of its cruise a rocket is captured into the other world's
   orbit by its capture burn, or by aerobraking where its plan meant to and its heat shield is still whole (one breached
-  on the way burns the capture instead); short of the delta-v it burns what it has and flies past, not captured, its
-  crew told. A transfer sets out only with the delta-v for its capture too. Arriving, and on every pass of the orbit
+  on the way burns the capture instead); short of the delta-v it burns what it has and stays in a wide orbit of the
+  world instead of a low one, its crew told. A transfer sets out only with the delta-v for its capture too. Arriving, and on every pass of the orbit
   after, the crew photographs a strip of the ground under the orbit for its team, the world turning a little under it
   each pass, and a team knows the ground round where its players have stood on a world. The landing map shows only what
   the team knows, from its instruments, those passes and its visits, the rest under the grey of the unknown; the known

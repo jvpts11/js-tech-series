@@ -18,6 +18,10 @@ import dev.jstech.space.launch.LaunchPanel;
 import dev.jstech.space.launch.LaunchPanelBlockEntity;
 import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.launcher.LauncherDeckBlockEntity;
+import dev.jstech.space.launcher.LauncherLayout;
+import dev.jstech.space.pad.LaunchPads;
+import dev.jstech.space.pad.PadBlocks;
+import dev.jstech.space.pad.PadServicePortBlockEntity;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.SkeletonPropellants;
@@ -78,6 +82,60 @@ public final class LaunchPanelGameTests {
     @AfterBatch(batch = HEAVY)
     public static void heavyEnd(final ServerLevel level) {
         SpaceServerConfig.FILE.set(SpaceServerConfig.TOO_HEAVY_TO_LIFT, tooHeavyToLift);
+    }
+
+    /**
+     * A pad goes by the number its world gave its service port, and by a name once it is given one from the panel's
+     * plate: kept on the port, spaces run into one, never longer than a plate's line; no name gives it its number back.
+     */
+    @GameTest(template = WIDE, batch = BATCH + "_safe", timeoutTicks = 200)
+    public static void pad_isNumberedByItsWorldAndNamedFromThePanel(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(PANEL, LaunchPanel.BLOCK.get());
+        rocket(helper);
+        final BlockPos panel = helper.absolutePos(PANEL);
+        final BlockPos axis = LaunchPads.standBy(level, panel, LaunchPanelBlockEntity.REACH,
+                LaunchPanelBlockEntity.BELOW, LaunchPanelBlockEntity.ABOVE).orElseThrow().axis();
+        // On the ground by the pad, as the launch pad's own port stands.
+        final BlockPos port = axis.below(LauncherLayout.RAISE).offset(3, 0, 3);
+        level.setBlockAndUpdate(port, PadBlocks.PAD_SERVICE_PORT.get().defaultBlockState());
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(panel(level, panel).padNumber() > 0,
+                        "the panel reads its pad's number"))
+                .thenExecute(() -> {
+                    final PadServicePortBlockEntity pad = (PadServicePortBlockEntity) level.getBlockEntity(port);
+                    final LaunchPanelBlockEntity console = panel(level, panel);
+                    helper.assertTrue(pad != null && console.padNumber() == pad.number()
+                            && console.padName().isEmpty(), "the number its world gave the pad's port, no name yet");
+                    helper.assertTrue(console.namePad("  Pad   39A "), "the plate names the pad");
+                    helper.assertValueEqual(pad.name(), "Pad 39A", "kept on its port, its spaces run into one");
+                    helper.assertValueEqual(console.padName(), "Pad 39A", "and shown on the plate");
+                    final String wordy = "A name far too long for any pad's plate to hold";
+                    console.namePad(wordy);
+                    helper.assertTrue(pad.name().length() <= PadServicePortBlockEntity.MOST_NAME
+                            && pad.name().length() > PadServicePortBlockEntity.MOST_NAME / 2
+                            && wordy.startsWith(pad.name()), "never longer than a plate's line, cut from its"
+                            + " end: " + pad.name());
+                    console.namePad("");
+                    helper.assertTrue(pad.name().isEmpty() && console.padName().isEmpty(),
+                            "and no name gives the pad its number back");
+                })
+                .thenSucceed();
+    }
+
+    /** The ignition is armed only under its guard lifted, and shutting the guard pushes it back down. */
+    @GameTest(template = WIDE, batch = BATCH + "_safe")
+    public static void guard_shutDisarmsTheIgnitionUnderIt(final GameTestHelper helper) {
+        helper.setBlock(PANEL, LaunchPanel.BLOCK.get());
+        final LaunchPanelBlockEntity console = panel(helper.getLevel(), helper.absolutePos(PANEL));
+        console.press(LaunchPanelBlockEntity.IGNITION);
+        helper.assertFalse(console.ignition(), "with its guard down the ignition cannot be armed");
+        console.press(LaunchPanelBlockEntity.GUARD);
+        console.press(LaunchPanelBlockEntity.IGNITION);
+        helper.assertTrue(console.guard() && console.ignition(), "the guard lifted, the ignition arms");
+        console.press(LaunchPanelBlockEntity.GUARD);
+        helper.assertTrue(!console.guard() && !console.ignition(), "shutting the guard disarms the ignition");
+        helper.succeed();
     }
 
     @GameTest(template = WIDE, batch = BATCH + "_safe", timeoutTicks = 200)

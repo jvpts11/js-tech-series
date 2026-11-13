@@ -112,7 +112,7 @@ public final class CruiseGameTests {
     }
 
     @GameTest(template = ARENA, batch = MISSED_BATCH, timeoutTicks = 1200)
-    public static void cruise_shortOfTheCaptureBurnFliesPast(final GameTestHelper helper) {
+    public static void cruise_shortOfTheCaptureBurnStaysInAWideOrbit(final GameTestHelper helper) {
         fly(helper, new Flight(LONG_WAY, true, CAPTURE, true));
     }
 
@@ -216,20 +216,19 @@ public final class CruiseGameTests {
                     helper.assertTrue(Math.abs(there.pose().x() - moon[0]) < THERE
                             && Math.abs(there.pose().z() - moon[1]) < THERE, "over the Moon's orbit spot: "
                             + there.pose());
-                    final boolean captured = OrbitObjects.around(level.getServer(), SolarSystemWorlds.MOON)
+                    final boolean inOrbit = OrbitObjects.around(level.getServer(), SolarSystemWorlds.MOON)
                             .containsKey(id.value());
                     helper.assertTrue(aboard[0].executed().isEmpty(), "its plan flown");
-                    if (flight.drained()) {
-                        helper.assertTrue(!captured, "short of its capture burn, it is not captured");
-                    } else {
-                        helper.assertTrue(captured, "told in the Moon's orbit");
-                        helper.assertTrue(flight.capture() == 0 || held(space, id) < before[1],
-                                "its capture burn burnt propellant: " + before[1] + " kg to " + held(space, id));
-                        final String team = CoreTeams.teamOf(level.getServer(), Rockets.get(level.getServer(), id)
-                                .orElseThrow().ownership().owner());
-                        helper.assertTrue(!WorldCoverage.of(level.getServer(), team, SolarSystemWorlds.MOON).strips()
-                                .isEmpty(), "the ground under its way in photographed for its team");
-                    }
+                    // Short of its capture burn it is not slowed into a low orbit, but stays in a wide one: still the
+                    // Moon's, told in its orbit, its ground photographed on the way in.
+                    helper.assertTrue(inOrbit, flight.drained() ? "short of its capture burn, it stays in a wide"
+                            + " orbit of the Moon" : "told in the Moon's orbit");
+                    helper.assertTrue(flight.drained() || flight.capture() == 0 || held(space, id) < before[1],
+                            "its capture burn burnt propellant: " + before[1] + " kg to " + held(space, id));
+                    final String team = CoreTeams.teamOf(level.getServer(), Rockets.get(level.getServer(), id)
+                            .orElseThrow().ownership().owner());
+                    helper.assertTrue(!WorldCoverage.of(level.getServer(), team, SolarSystemWorlds.MOON).strips()
+                            .isEmpty(), "the ground under its way in photographed for its team");
                     MovingStructures.takeAway(there);
                 })
                 .thenSucceed();

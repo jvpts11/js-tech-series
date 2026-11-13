@@ -128,7 +128,8 @@ public final class CruiseFlight {
     /*
      * {@code body} came to rest at the end of its cruise, its plan flown: it is captured into the other world's orbit,
      * by its capture burn or by aerobraking where its plan meant to and its heat shield is whole, photographing the
-     * ground under it on the way in; short of the delta-v, it burns what it has and is not captured.
+     * ground under it on the way in. Short of the delta-v, it burns what it has and stays in a wide orbit of the world
+     * rather than a low one, as a probe whose capture burn fell short: still the world's, its crew told so.
      */
     private static void arrive(final ServerLevel level, final MovingStructure body,
                                final FlightComputerBlockEntity computer) {
@@ -140,15 +141,16 @@ public final class CruiseFlight {
         }
         final PlannedTransfer plan = flown.get();
         final double capture = plan.captureBurn(computer.shield());
-        if (capture > 0 && !RocketBurns.burn(level, body, computer.separated(), capture)) {
-            CruiseEvents.tell(level, body, CruiseTexts.MISSED.of(CruiseTexts.MISSED_NAME.text(),
-                    CruiseTexts.NOT_CAPTURED.with(nameOf(plan.to()))));
-            return;
-        }
+        final boolean captured = capture <= 0 || RocketBurns.burn(level, body, computer.separated(), capture);
         OrbitObjects.arrived(level, body, there.get());
         aboard(level, body).forEach(player -> SpaceFirsts.arrived(player, plan.to()));
         Rockets.get(level.getServer(), body.id()).ifPresent(rocket -> WorldCoverage.photographAt(level.getServer(),
                 CoreTeams.teamOf(level.getServer(), rocket.ownership().owner()), plan.to(), level.getGameTime()));
+        if (!captured) {
+            CruiseEvents.tell(level, body, CruiseTexts.MISSED.of(CruiseTexts.MISSED_NAME.text(),
+                    CruiseTexts.NOT_CAPTURED.with(nameOf(plan.to()))));
+            return;
+        }
         CruiseEvents.tell(level, body, CruiseTexts.ARRIVAL.of(CruiseTexts.ARRIVED_NAME.text(), (capture > 0
                 ? CruiseTexts.ARRIVED : CruiseTexts.AEROBRAKED).with(nameOf(plan.to()))));
     }

@@ -18,6 +18,7 @@ import dev.jstech.core.content.IBlockModel;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.SpaceContent;
 import dev.jstech.space.pad.PadBlocks;
+import dev.jstech.space.pad.PadServicePortBlockEntity;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
@@ -33,6 +34,8 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  */
 public final class LaunchPanel {
 
+    /* The longest line a plate's name may be sent as, in characters: room for a pad's name typed in any script. */
+    private static final int SENT_NAME = 4 * PadServicePortBlockEntity.MOST_NAME;
     public static final BlockEntry<DeviceBlock> BLOCK = SpaceContent.CONTENT.block("launch_panel", properties ->
                     new DeviceBlock(properties, Device.of(() -> LaunchPanel.ENTITY.get())
                             .ticks((level, pos, state, panel) -> panel.tick()).opensMenu(LaunchPanelMenu::new)))
@@ -51,6 +54,13 @@ public final class LaunchPanel {
     public static final MenuCall<LaunchPanelMenu, Integer> PRESS = MenuCalls.declare(id("launch_panel_press"),
             LaunchPanelMenu.class, ByteBufCodecs.VAR_INT, (menu, player, control) -> menu.panel().press(control,
                     player.getUUID()));
+    /**
+     * Its pad named from its plate ({@link LaunchPanelBlockEntity#namePad}); the server keeps what a name may be, so a
+     * line longer than the plate's is cut there, never refused.
+     */
+    public static final MenuCall<LaunchPanelMenu, String> NAME_PAD = MenuCalls.declare(id("launch_panel_name_pad"),
+            LaunchPanelMenu.class, ByteBufCodecs.stringUtf8(SENT_NAME), (menu, player, name) -> menu.panel()
+                    .namePad(name));
 
     private LaunchPanel() {
     }

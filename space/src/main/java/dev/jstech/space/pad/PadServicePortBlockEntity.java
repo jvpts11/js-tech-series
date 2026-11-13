@@ -7,9 +7,12 @@
  */
 package dev.jstech.space.pad;
 
+import com.mojang.serialization.Codec;
 import dev.jstech.core.blockentity.FieldEnergyStorage;
 import dev.jstech.core.blockentity.FieldFluidTank;
+import dev.jstech.core.blockentity.IntField;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
+import dev.jstech.core.blockentity.ValueField;
 import dev.jstech.core.heat.Thermal;
 import dev.jstech.core.material.Material;
 import dev.jstech.core.material.MaterialLiquids;
@@ -40,7 +43,9 @@ import org.jetbrains.annotations.Nullable;
  * pumps feed the deluge, poured over the pad at ignition to dampen the sound and spare the concrete; without a full
  * load of both there is no deluge. Its propellant lines, piped in from the depot, fuel the rocket standing on the pad
  * over it, tank by tank, each to its propellant's mix, its pumps spending energy for every kilogram; the rocket's
- * flight computer keeps what its tanks hold till it flies. Its lines only take: nothing is drawn back out of it.
+ * flight computer keeps what its tanks hold till it flies. Its lines only take: nothing is drawn back out of it. And it
+ * is where the pad keeps who it is: the number its world gave it and the name it may be given, which its Launch Panel's
+ * plate shows.
  */
 public final class PadServicePortBlockEntity extends SyncedBlockEntity {
 
@@ -48,6 +53,8 @@ public final class PadServicePortBlockEntity extends SyncedBlockEntity {
     private final FieldFluidTank oxygen;
     private final FieldFluidTank methane;
     private final FieldEnergyStorage energy;
+    private final IntField number;
+    private final ValueField<String> name;
     private final Lines lines = new Lines();
     private @Nullable BlockPos computer;
     private int wait;
@@ -63,8 +70,12 @@ public final class PadServicePortBlockEntity extends SyncedBlockEntity {
     /** How far round it, and how far over it, a launcher's deck is looked for. */
     public static final int REACH = 16;
     public static final int OVER = 12;
+    /** The longest name a pad may be given, in characters. */
+    public static final int MOST_NAME = 24;
     /* How many ticks between looks for a rocket. */
     private static final int LOOK = 40;
+    /* The section sign, which starts the game's formatting codes: a name has no use for them. */
+    private static final char FORMATTING = (char) 0xA7;
     /* How fast its pumps' store fills, in joules a tick. */
     private static final int ENERGY_IN = 20_000;
 
@@ -77,6 +88,65 @@ public final class PadServicePortBlockEntity extends SyncedBlockEntity {
         this.methane = fields().fluid("Methane", LINE).save().toClient();
         this.methane.setValidator(stack -> stack.getFluid() == SkeletonPropellants.LIQUID_METHANE.get());
         this.energy = fields().energy("Energy", DELUGE_ENERGY, ENERGY_IN, 0).save().toClient().exposed();
+        // Its pad's number, given by its world when it first stands (0 till then), and the name its pad was given.
+        this.number = fields().integer("Number", 0).save().toClient();
+        this.name = fields().value("Name", Codec.STRING, "").save().toClient();
+    }
+
+    /** Its pad's number in its world, from 1; 0 before the port has first stood in a world. */
+    public int number() {
+        return this.number.get();
+    }
+
+    /** The name its pad was given, or empty. */
+    public String name() {
+        final String held = this.name.get();
+        return held == null ? "" : held;
+    }
+
+    /**
+     * Gives its pad {@code wanted} as its name, kept as {@link #named} keeps it; an empty one takes the name away, so
+     * the pad goes by its number again. What it was named.
+     */
+    public String name(final String wanted) {
+        final String kept = named(wanted);
+        this.name.set(kept);
+        setChanged();
+        return kept;
+    }
+
+    /** Whether {@code at} may stand in a pad's name: a character that prints, spaces included. */
+    public static boolean nameable(final char at) {
+        return !Character.isISOControl(at) && at != FORMATTING && !Character.isSurrogate(at);
+    }
+
+    /**
+     * A pad's name as it is kept: what can be printed of {@code wanted}, its spaces run into one and trimmed, and at
+     * most {@link #MOST_NAME} characters of it.
+     */
+    public static String named(final String wanted) {
+        final StringBuilder kept = new StringBuilder();
+        boolean space = false;
+        for (int i = 0; i < wanted.length() && kept.length() < MOST_NAME; i++) {
+            final char at = wanted.charAt(i);
+            if (!nameable(at)) {
+                continue;
+            }
+            if (Character.isWhitespace(at)) {
+                space = kept.length() > 0;
+                continue;
+            }
+            if (space) {
+                // A space with no room after it for the next word ends the name there.
+                if (kept.length() + 1 >= MOST_NAME) {
+                    break;
+                }
+                kept.append(' ');
+                space = false;
+            }
+            kept.append(at);
+        }
+        return kept.toString();
     }
 
     /** The water it holds for the deluge, in millibuckets. */
@@ -121,7 +191,14 @@ public final class PadServicePortBlockEntity extends SyncedBlockEntity {
 
     /** Fuels the rocket standing on the pad over it, if one does, as much as a tick allows. */
     public void tick() {
-        if (!(this.level instanceof ServerLevel server) || this.oxygen.isEmpty() && this.methane.isEmpty()) {
+        if (!(this.level instanceof ServerLevel server)) {
+            return;
+        }
+        if (this.number.get() == 0) {
+            this.number.set(PadNumbers.next(server));
+            setChanged();
+        }
+        if (this.oxygen.isEmpty() && this.methane.isEmpty()) {
             return;
         }
         if (this.computer == null || !(server.getBlockEntity(this.computer) instanceof FlightComputerBlockEntity)) {

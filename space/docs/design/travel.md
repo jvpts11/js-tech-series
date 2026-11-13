@@ -100,7 +100,7 @@ A consequence setting turns the events off; the cruise is then only the view.
 
 ### Arriving
 
-At the end of its cruise the rocket comes to rest at the spot of the other world's low orbit and a **capture burn** puts it into orbit around the destination. Where there is air and the rocket's heat shield is whole, it can **aerobrake** instead, dipping into the atmosphere to slow down and spend less, as the Mars Reconnaissance Orbiter did; a shield breached on the way burns the capture burn it meant to save. Short of the delta-v, the rocket burns what it has and flies past, not captured, and the crew is told. Then comes the destination's orbit, and choosing where to land.
+At the end of its cruise the rocket comes to rest at the spot of the other world's low orbit and a **capture burn** puts it into orbit around the destination. Where there is air and the rocket's heat shield is whole, it can **aerobrake** instead, dipping into the atmosphere to slow down and spend less, as the Mars Reconnaissance Orbiter did; a shield breached on the way burns the capture burn it meant to save. Short of the delta-v, the rocket burns what it has and stays in a wide orbit of the destination instead of a low one, and the crew is told. Then comes the destination's orbit, and choosing where to land.
 
 ### Fast travel
 

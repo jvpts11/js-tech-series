@@ -28,6 +28,7 @@ import dev.jstech.space.cruise.CruiseFlight;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.pad.LaunchPads;
+import dev.jstech.space.pad.PadServicePortBlockEntity;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.TankLoad;
@@ -73,10 +74,14 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
     private final BoolField delugeReady;
     private final BoolField storm;
     private final ValueField<String> name;
+    private final IntField padNumber;
+    private final ValueField<String> padName;
     private final ValueField<UUID> pilot;
     private final ValueField<StructureUuid> flight;
     private final BoolField lifted;
     private @Nullable LaunchPads.Stand stand;
+    /* Where its pad's service port stood at the last look, which keeps the pad's number and name. */
+    private @Nullable BlockPos port;
     private int wait;
 
     /** The count, in seconds before release: its start, the tower's arms moving, the cover lifting, ignition. */
@@ -124,6 +129,9 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
         this.delugeReady = fields().flag("DelugeReady", false).toClient();
         this.storm = fields().flag("Storm", false).toClient();
         this.name = fields().value("Name", Codec.STRING, "").toClient();
+        // Its pad's number and name, as its service port keeps them; 0 and empty where no port is by the pad.
+        this.padNumber = fields().integer("PadNumber", 0).toClient();
+        this.padName = fields().value("PadName", Codec.STRING, "").toClient();
         // Who pressed LAUNCH, whose rocket it is in flight; the rocket released, and whether it has begun to climb.
         this.pilot = fields().nullable("Pilot", UUIDUtil.CODEC).save();
         this.flight = fields().nullable("Flight", StructureUuid.CODEC).save();
@@ -211,6 +219,30 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
         return held == null ? "" : held;
     }
 
+    /** Its pad's number in its world, from 1; 0 where no service port stands by its pad. */
+    public int padNumber() {
+        return this.padNumber.get();
+    }
+
+    /** The name its pad was given, or empty. */
+    public String padName() {
+        final String held = this.padName.get();
+        return held == null ? "" : held;
+    }
+
+    /**
+     * Gives its pad {@code wanted} as its name, through its service port, as {@link PadServicePortBlockEntity#named}
+     * keeps it; empty takes the name away. False where no port stands by its pad to keep it.
+     */
+    public boolean namePad(final String wanted) {
+        if (this.port == null || this.level == null
+                || !(this.level.getBlockEntity(this.port) instanceof PadServicePortBlockEntity pad)) {
+            return false;
+        }
+        this.padName.set(pad.name(wanted));
+        return true;
+    }
+
     /** Whether everything a count needs is go: the vehicle, its propellant, the weather and the clamps. */
     public boolean go() {
         return vehicle() && oxidiser() >= FULL && fuel() >= FULL && !storm() && clamps();
@@ -230,7 +262,13 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
         switch (control) {
             case DELUGE -> this.deluge.set(!deluge());
             case CLAMPS -> this.clamps.set(!clamps());
-            case GUARD -> this.guard.set(!guard());
+            case GUARD -> {
+                // A guard shut pushes its switch down with it, as a real cover does: no ignition stays armed under it.
+                if (guard()) {
+                    this.ignition.set(false);
+                }
+                this.guard.set(!guard());
+            }
             case IGNITION -> {
                 if (guard()) {
                     this.ignition.set(!ignition());
@@ -411,8 +449,13 @@ public final class LaunchPanelBlockEntity extends SyncedBlockEntity {
                 .map(FlightComputerBlockEntity.class::cast).orElse(null);
         this.vehicle.set(rocket != null);
         this.storm.set(LaunchPads.stormHolds(server));
-        this.delugeReady.set(this.stand != null && LaunchPads.protection(server, this.stand.axis(),
-                this.stand.side()).deluge());
+        // The pad's port, read once: its deluge, and who the pad is.
+        final PadServicePortBlockEntity pad = this.stand == null ? null
+                : LaunchPads.port(server, this.stand.axis()).orElse(null);
+        this.port = pad == null ? null : pad.getBlockPos();
+        this.delugeReady.set(pad != null && pad.ready());
+        this.padNumber.set(pad == null ? 0 : pad.number());
+        this.padName.set(pad == null ? "" : pad.name());
         this.name.set(rocket == null ? "" : rocket.rocket().map(RocketDesign::name).orElse(""));
         final int[] full = rocket == null ? new int[2] : full(server, rocket);
         this.oxidiser.set(full[0]);

@@ -28,7 +28,7 @@ public final class CruiseTexts {
             "Aerobraked into the orbit of %s.");
     public static final TextKey MISSED_NAME = TextKey.of("jsspace.cruise.missed", "Not captured");
     public static final TextKey NOT_CAPTURED = TextKey.of("jsspace.cruise.missed.body",
-            "Too little delta-v to slow into the orbit of %s: the rocket flew past it.");
+            "Too little delta-v to slow into a low orbit of %s: the rocket stays in a wide orbit.");
     public static final TextKey SLEPT = TextKey.of("jsspace.cruise.slept", "You slept through the cruise.");
     public static final TextKey STORM_NAME = TextKey.of("jsspace.cruise.storm", "Solar storm");
     public static final TextKey STORM_COMING = TextKey.of("jsspace.cruise.storm.coming",

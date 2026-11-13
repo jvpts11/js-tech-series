@@ -17,6 +17,10 @@ public final class LaunchTexts {
     public static final TextKey TITLE = TextKey.of("jsspace.launch.title", "LCC-1  LAUNCH CONTROL");
     public static final TextKey PAD = TextKey.of("jsspace.launch.pad", "PAD %s");
     public static final TextKey NO_ROCKET = TextKey.of("jsspace.launch.no_rocket", "NO VEHICLE");
+    public static final TextKey NO_PAD = TextKey.of("jsspace.launch.no_pad", "NO PAD");
+    public static final TextKey NAME_PAD = TextKey.of("jsspace.launch.name_pad",
+            "Click the plate to name the pad: Enter keeps the name, Esc leaves it as it was, and no name gives it its"
+                    + " number back");
     public static final TextKey COUNTDOWN = TextKey.of("jsspace.launch.countdown", "COUNTDOWN");
     public static final TextKey SEQUENCE = TextKey.of("jsspace.launch.sequence", "SEQUENCE");
     public static final TextKey MASTER = TextKey.of("jsspace.launch.master", "MASTER");

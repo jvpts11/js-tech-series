@@ -18,8 +18,10 @@ import dev.jstech.space.launch.LaunchPanelBlockEntity;
 import dev.jstech.space.launch.LaunchTexts;
 import java.util.List;
 import java.util.Locale;
+import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Launch Panel's console, drawn flat as the approved LCC-1: the bezel with its screws, the maker's line and the
@@ -57,17 +59,25 @@ public final class LaunchPanelFace {
     private static final int BUTTON_H = 26;
     private static final int SECOND = 20;
     private static final String SEGMENTS = "abcdefg";
+    /* The pad's plate: its right edge, its top and its foot; and how long its cursor shows and hides, in ms. */
+    private static final int PLATE_RIGHT = WIDTH - 20;
+    private static final int PLATE_TOP = 6;
+    private static final int PLATE_BOTTOM = 17;
+    private static final long BLINK = 500L;
 
     private LaunchPanelFace() {
     }
 
-    /** Draws the console of {@code panel} with its top left at the pose's origin, {@code width} wide. */
+    /**
+     * Draws the console of {@code panel} with its top left at the pose's origin, {@code width} wide; its pad's plate
+     * shows {@code naming}, with its cursor, while a name for the pad is being typed on it, else null.
+     */
     public static void paint(final GuiGraphics g, final Font font, final int width,
-                             final LaunchPanelBlockEntity panel) {
+                             final LaunchPanelBlockEntity panel, final @Nullable String naming) {
         final Colours c = PALETTE.get();
         g.pose().pushPose();
         g.pose().scale(width / (float) WIDTH, width / (float) WIDTH, 1);
-        bezel(g, font, c, panel);
+        bezel(g, font, c, panel, naming);
         count(g, font, c, panel);
         sequence(g, font, c, panel);
         engrave(g, font, LaunchTexts.MASTER, 322, 22, c);
@@ -109,6 +119,11 @@ public final class LaunchPanelFace {
         g.pose().popPose();
     }
 
+    /** Whether {@code (x, y)}, in the console's own pixels, is on its pad's plate, the room right of its title. */
+    public static boolean onPlate(final Font font, final double x, final double y) {
+        return inside(x, y, plateFrom(font), PLATE_TOP, PLATE_RIGHT - plateFrom(font), PLATE_BOTTOM - PLATE_TOP);
+    }
+
     /** The control of the console under {@code (x, y)}, in its own pixels, or -1 where none is. */
     public static int controlAt(final LaunchPanelBlockEntity panel, final double x, final double y) {
         for (int i = 0; i < 2; i++) {
@@ -138,9 +153,12 @@ public final class LaunchPanelFace {
         return -1;
     }
 
-    /* The bezel, its screws, the maker's line and the pad's plate with its rocket's name. */
+    /*
+     * The bezel, its screws, the maker's line and the pad's plate: the pad by its name, else by its number, with its
+     * rocket's name; or, while the pad is being named, the line typed so far with its cursor.
+     */
     private static void bezel(final GuiGraphics g, final Font font, final Colours c,
-                              final LaunchPanelBlockEntity panel) {
+                              final LaunchPanelBlockEntity panel, final @Nullable String naming) {
         g.fill(0, 0, WIDTH, HEIGHT, c.bezel());
         hline(g, 0, WIDTH, 0, c.bezelLit());
         vline(g, 0, 0, HEIGHT, c.bezelLit());
@@ -157,14 +175,31 @@ public final class LaunchPanelFace {
         }
         final String title = word(LaunchTexts.TITLE);
         text(g, font, title, WIDTH / 2, 7, c.engrave(), true);
-        final String named = GameText.resolve(LaunchTexts.PAD.with("1")) + "  " + (panel.rocketName().isEmpty()
-                ? word(LaunchTexts.NO_ROCKET) : panel.rocketName().toUpperCase(Locale.ROOT));
-        // A long name is cut where its plate would reach the title, which stands centred on the same line.
-        final int room = WIDTH - 20 - (WIDTH / 2 + font.width(title) / 2) - 4 - 6;
-        final String pad = font.plainSubstrByWidth(named, Math.max(0, room));
+        final String named = naming != null ? naming.toUpperCase(Locale.ROOT) + (Util.getMillis() / BLINK % 2 == 0
+                ? "_" : " ") : padOf(panel) + "  " + (panel.rocketName().isEmpty() ? word(LaunchTexts.NO_ROCKET)
+                : panel.rocketName().toUpperCase(Locale.ROOT));
+        // A long name is cut where its plate would reach the title, which stands centred on the same line; a line being
+        // typed keeps its end, where its cursor is, in sight.
+        final int room = Math.max(0, PLATE_RIGHT - plateFrom(font) - 6);
+        final String pad = naming != null ? font.plainSubstrByWidth(named, room, true)
+                : font.plainSubstrByWidth(named, room);
         final int w = font.width(pad) + 6;
-        g.fill(WIDTH - 20 - w, 6, WIDTH - 20, 17, c.plate());
-        text(g, font, pad, WIDTH - 17 - w, 7, c.plateInk(), false);
+        g.fill(PLATE_RIGHT - w, PLATE_TOP, PLATE_RIGHT, PLATE_BOTTOM, c.plate());
+        text(g, font, pad, PLATE_RIGHT + 3 - w, 7, c.plateInk(), false);
+    }
+
+    /* The pad as its plate names it: by the name it was given, else by its number, or none by the panel. */
+    private static String padOf(final LaunchPanelBlockEntity panel) {
+        if (!panel.padName().isEmpty()) {
+            return panel.padName().toUpperCase(Locale.ROOT);
+        }
+        return panel.padNumber() > 0 ? GameText.resolve(LaunchTexts.PAD.with(String.valueOf(panel.padNumber())))
+                : word(LaunchTexts.NO_PAD);
+    }
+
+    /* Where the plate's room starts, clear of the title centred on the same line. */
+    private static int plateFrom(final Font font) {
+        return WIDTH / 2 + font.width(word(LaunchTexts.TITLE)) / 2 + 4;
     }
 
     /* The count in seven segments, the mission's clock and the holds. */
