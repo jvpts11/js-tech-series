@@ -12,9 +12,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +43,16 @@ public final class HoldDownArmBlock extends LauncherPieceBlock implements Entity
     @Override
     public @Nullable BlockEntity newBlockEntity(final BlockPos pos, final BlockState state) {
         return new LauncherDeckBlockEntity(pos, state);
+    }
+
+    /** On the server, the arm that draws the deck counts its pad's launch on ({@link LauncherDeckBlockEntity#tick}). */
+    @Override
+    public <T extends BlockEntity> @Nullable BlockEntityTicker<T> getTicker(final Level level, final BlockState state,
+                                                                            final BlockEntityType<T> type) {
+        if (level.isClientSide() || type != LauncherBlocks.HOLD_DOWN_ENTITY.get()) {
+            return null;
+        }
+        return (ticking, pos, at, entity) -> ((LauncherDeckBlockEntity) entity).tick();
     }
 
     /** It comes apart: what it drew goes. */

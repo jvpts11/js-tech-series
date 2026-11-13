@@ -12,6 +12,7 @@ import dev.jstech.space.client.launch.LaunchPanelScreen;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.launch.LaunchPanel;
+import dev.jstech.space.launch.LaunchCount;
 import dev.jstech.space.launch.LaunchPanelBlockEntity;
 import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.launcher.LauncherDeckBlockEntity;
@@ -40,7 +41,7 @@ public final class LaunchPanelClientTests {
     private static final int OPEN = 60;
     private static final int SETTLE = 20;
     private static final int SECOND = 20;
-    private static final int TO_T42 = (LaunchPanelBlockEntity.START - LaunchPanelBlockEntity.ARMS) * SECOND;
+    private static final int TO_T42 = (LaunchCount.START - LaunchCount.ARMS) * SECOND;
 
     private LaunchPanelClientTests() {
     }
@@ -56,13 +57,14 @@ public final class LaunchPanelClientTests {
                 .thenServer(0, level -> build(ctx, level))
                 .thenServer(2 * SECOND, level -> {
                     if (level.getBlockEntity(ctx.abs(PANEL)) instanceof LaunchPanelBlockEntity panel) {
-                        ctx.assertTrue(panel.go(), "the panel sees its fuelled rocket go: vehicle " + panel.vehicle()
-                                + ", oxidiser " + panel.oxidiser() + ", fuel " + panel.fuel() + ", storm "
-                                + panel.storm() + ", clamps " + panel.clamps());
-                        panel.press(LaunchPanelBlockEntity.MASTER);
-                        panel.press(LaunchPanelBlockEntity.GUARD);
-                        panel.press(LaunchPanelBlockEntity.IGNITION);
-                        panel.press(LaunchPanelBlockEntity.RUN);
+                        final LaunchCount.Shown shown = panel.shown();
+                        ctx.assertTrue(shown.go(), "the panel sees its fuelled rocket go: vehicle " + shown.vehicle()
+                                + ", oxidiser " + shown.oxidiser() + ", fuel " + shown.fuel() + ", storm "
+                                + shown.storm() + ", clamps " + shown.clamps());
+                        panel.press(LaunchCount.MASTER);
+                        panel.press(LaunchCount.GUARD);
+                        panel.press(LaunchCount.IGNITION);
+                        panel.press(LaunchCount.RUN);
                     }
                 })
                 .thenRightClick(SETTLE, PANEL)

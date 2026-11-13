@@ -11,24 +11,37 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.blockentity.SyncedBlockEntity;
 import dev.jstech.core.blockentity.ValueField;
+import dev.jstech.space.launch.LaunchCount;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * A hold-down arm of a mobile launcher, as its block entity: the one at the corner of the opening behind and left of
  * the tower draws its whole deck once it is formed, as the approved launcher draws it, so it keeps the deck's measure,
- * worked out as it forms and told to the players who see it; the others keep nothing.
+ * worked out as it forms and told to the players who see it; and it keeps the pad's launch count ({@link LaunchCount}),
+ * one for the launcher wherever it stands, which a Launch Panel and the rocket's flight computer both work. The others
+ * keep nothing.
  */
 public final class LauncherDeckBlockEntity extends SyncedBlockEntity {
 
     private final ValueField<Deck> deck;
+    private final LaunchCount count;
 
     public LauncherDeckBlockEntity(final BlockPos pos, final BlockState state) {
         super(LauncherBlocks.HOLD_DOWN_ENTITY.get(), pos, state);
         this.deck = fields().nullable("Deck", Deck.CODEC).save().toClient();
+        this.count = new LaunchCount(this);
+    }
+
+    /** The count kept by the launcher whose measuring arm stands at {@code at}, if one stands there formed. */
+    public static Optional<LaunchCount> countAt(final BlockGetter level, final BlockPos at) {
+        return level.getBlockEntity(at) instanceof LauncherDeckBlockEntity arm && arm.deck().isPresent()
+                ? Optional.of(arm.count) : Optional.empty();
     }
 
     /** The deck it draws, if it is the one that draws it and the deck is formed. */
@@ -40,6 +53,18 @@ public final class LauncherDeckBlockEntity extends SyncedBlockEntity {
     public void deck(final @Nullable Deck to) {
         this.deck.set(to);
         setChanged();
+    }
+
+    /** The launch count it keeps; it counts only while it draws a formed deck. */
+    public LaunchCount count() {
+        return this.count;
+    }
+
+    /** On the server, a tick at a time: the arm that draws a formed deck counts on. */
+    public void tick() {
+        if (this.level instanceof ServerLevel server && deck().isPresent()) {
+            this.count.tick(server);
+        }
     }
 
     /**

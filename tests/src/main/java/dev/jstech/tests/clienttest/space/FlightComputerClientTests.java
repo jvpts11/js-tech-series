@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest.space;
 
 import dev.jstech.core.team.CoreTeams;
+import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.client.flight.FlightComputerScreen;
 import dev.jstech.space.client.flight.LandingMapsClient;
@@ -18,9 +19,14 @@ import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.FlightPage;
 import dev.jstech.space.flight.StageChoice;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.launch.LaunchCount;
+import dev.jstech.space.launcher.LauncherBlocks;
+import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
+import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketParts;
+import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.SphereMap;
 import dev.jstech.tests.clienttest.ClientTest;
@@ -36,7 +42,8 @@ import net.minecraft.server.level.ServerPlayer;
  * in the middle of the system; its landing key, clicked, opens the landing page, and the map of Mars comes and is
  * drawn where the page was dark, under the grey of the unknown; under a pass the team photographed, in Mars' own
  * colours, how much of Mars is known written over its small map. On its stages page, the rocket's stack is drawn with
- * its separation ring in amber, and its ZONE key sets the chosen stage to fall in a zone round the pad.
+ * its separation ring in amber, and its ZONE key sets the chosen stage to fall in a zone round the pad. On a launcher
+ * it opens on its LAUNCH page, whose keys work the pad's count.
  */
 public final class FlightComputerClientTests {
 
@@ -44,7 +51,8 @@ public final class FlightComputerClientTests {
     private static final BlockPos EYE = new BlockPos(0, 2, 0);
     /* The Sun on the transfer page, the landing key's cap, and a spot of the landing map, in the face's pixels. */
     private static final int[] SUN = {FlightComputerFace.SX0 + 96, FlightComputerFace.SY0 + 86};
-    private static final int[] LANDING_KEY = {184, 21};
+    private static final int[] LANDING_KEY = {FlightComputerFace.topKeyX(FlightPage.KEYS.indexOf(FlightPage.LANDING))
+        + 12, 21};
     private static final int[] ON_MAP = {FlightComputerFace.SX0 + 70, FlightComputerFace.SY0 + 70};
     private static final int SPACE = 0x0A0F17;
     private static final int OPEN = 200;
@@ -88,6 +96,27 @@ public final class FlightComputerClientTests {
     private static final int LEAST_GREEN = 6;
     /* A pass crossing the equator going north at 90 degrees east swings furthest south at the world's middle. */
     private static final double PASS_NODE = 90;
+    /*
+     * A launcher's measuring arm beside the computer, the rocket's axis meeting its deck under the computer; a full
+     * small tank, in kilograms. The side keys' caps, x in the face's pixels; how long a count may take to reach a
+     * second it is waited for, and its T-8.
+     */
+    private static final BlockPos LAUNCHER = new BlockPos(-3, 2, -1);
+    private static final BlockPos TO_AXIS = new BlockPos(3, 0, 3);
+    private static final double FULL_TANK = 5_800.0;
+    private static final int LEFT_KEY = FlightComputerFace.SX0 - 19;
+    private static final int RIGHT_KEY = FlightComputerFace.SX1 + 19;
+    private static final int SECOND = LaunchCount.SECOND;
+    private static final int TO_COUNT = LaunchCount.START * SECOND;
+    private static final int T8 = 8 * SECOND;
+    /*
+     * Where LAUNCH is written beside its key, x0, y0, x1, y1 in the face's pixels; how red a point of it lit is, and
+     * the least of its points that are, lit.
+     */
+    private static final int[] LAUNCH_BOX = {FlightComputerFace.SX1 - 50, FlightComputerFace.sideKeyY(4),
+        FlightComputerFace.SX1 - 3, FlightComputerFace.sideKeyY(4) + 12};
+    private static final int LAUNCH_RED = 150;
+    private static final int LEAST_RED = 12;
 
     private FlightComputerClientTests() {
     }
@@ -236,6 +265,51 @@ public final class FlightComputerClientTests {
                 });
     }
 
+    /**
+     * On a launcher with no Launch Panel, the computer opens on its LAUNCH page; its keys, clicked, arm the MASTER key
+     * and the ignition and start the pad's count, seen at T-42 with the tower's arms moving; at T-8, LAUNCH lit under
+     * its lifted cover, it is pressed, and SCRUB calls the launch off.
+     */
+    @ClientTest(timeoutTicks = 1800)
+    public static void computer_launchPageWorksThePadsCount(final ClientTestContext ctx) {
+        final int[] red = new int[2];
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            ctx.serverLevel().removeBlock(ctx.abs(COMPUTER), false);
+            ctx.serverLevel().removeBlock(ctx.abs(LAUNCHER), false);
+        }));
+        ctx.thenTeleport(0, EYE, Direction.SOUTH)
+                .thenServer(0, level -> launcher(ctx, level))
+                .thenServer(2 * SECOND, level -> ctx.assertTrue(level.getBlockEntity(ctx.abs(COMPUTER))
+                        instanceof FlightComputerBlockEntity computer && computer.page() == FlightPage.LAUNCH
+                        && computer.launch().map(count -> count.shown().go()).orElse(false),
+                        "on the launcher, the computer opens on its LAUNCH page, all go"))
+                .thenRightClick(SETTLE, COMPUTER)
+                .thenAwaitScreen(FlightComputerScreen.class, OPEN)
+                .then(SETTLE, () -> clickKey(ctx, LEFT_KEY, 0))
+                .then(SETTLE, () -> clickKey(ctx, LEFT_KEY, 1))
+                .then(SETTLE, () -> clickKey(ctx, RIGHT_KEY, 0))
+                .thenWaitUntil(() -> launchPhase(ctx) == LaunchCount.Phase.COUNTING, OPEN,
+                        "MASTER, IGNITION and COUNT clicked on the page start the count")
+                .thenWaitUntil(() -> shownOf(ctx).left() <= LaunchCount.ARMS * SECOND, TO_COUNT,
+                        "the count at T-42")
+                .then(SETTLE, () -> red[0] = redIn(ctx, LAUNCH_BOX))
+                .thenScreenshot(0, "flight-computer-launch")
+                .thenWaitUntil(() -> shownOf(ctx).left() <= T8, TO_COUNT, "the count at T-8")
+                .then(1, () -> red[1] = redIn(ctx, LAUNCH_BOX))
+                .thenScreenshot(0, "flight-computer-launch-t8")
+                .then(0, () -> clickKey(ctx, RIGHT_KEY, 4))
+                .thenWaitUntil(() -> shownOf(ctx).launched(), OPEN, "LAUNCH clicked on the page")
+                .then(0, () -> clickKey(ctx, RIGHT_KEY, 2))
+                .thenWaitUntil(() -> launchPhase(ctx) == LaunchCount.Phase.SCRUBBED, OPEN,
+                        "SCRUB clicked on the page calls the launch off")
+                .then(0, () -> {
+                    ctx.assertTrue(red[0] == 0, "LAUNCH stays dim under its cover at T-42: " + red[0] + " red points");
+                    ctx.assertTrue(red[1] >= LEAST_RED, "and is lit red with its cover lifted at T-8: " + red[1]
+                            + " red points");
+                    ctx.mc().setScreen(null);
+                });
+    }
+
     /* How many points of the face's box {@code box}, x0, y0, x1, y1 in its own pixels, are the screen's green. */
     private static int greenIn(final ClientTestContext ctx, final int[] box) {
         int count = 0;
@@ -288,6 +362,23 @@ public final class FlightComputerClientTests {
         return count;
     }
 
+    /* How many points of the face's box {@code box}, x0, y0, x1, y1 in its own pixels, are a lamp's red. */
+    private static int redIn(final ClientTestContext ctx, final int[] box) {
+        int count = 0;
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int x = box[0]; x < box[2]; x++) {
+                for (int y = box[1]; y < box[3]; y++) {
+                    final int[] point = screenOf(ctx, new int[] {x, y});
+                    final int argb = frame.pixel(point[0], point[1]);
+                    if ((argb >> 16 & CHANNEL) > LAUNCH_RED && (argb >> 8 & CHANNEL) < (argb >> 16 & CHANNEL) / 2) {
+                        count++;
+                    }
+                }
+            }
+        }
+        return count;
+    }
+
     /*
      * Whether the open Flight Computer is on its landing page and the landing map last come is the one drawn for what
      * the page shows now: its world, round its marked spot or the world's middle. The maps are drawn away from the
@@ -305,6 +396,41 @@ public final class FlightComputerClientTests {
         return computer.page() == FlightPage.LANDING && map.world().equals(computer.target())
                 && map.centreX() == Math.floorDiv(centre.getX(), map.blocks()) * map.blocks()
                 && map.centreZ() == Math.floorDiv(centre.getZ(), map.blocks()) * map.blocks();
+    }
+
+    /* A launcher's measuring arm beside the computer, its axis under it, and the computer's fuelled rocket on it. */
+    private static void launcher(final ClientTestContext ctx, final ServerLevel level) {
+        level.setWeatherParameters(6000, 0, false, false);
+        level.setThunderLevel(0.0F);
+        level.setRainLevel(0.0F);
+        level.setBlockAndUpdate(ctx.abs(LAUNCHER), LauncherBlocks.HOLD_DOWN_ARM.get().defaultBlockState());
+        level.setBlockAndUpdate(ctx.abs(COMPUTER), RocketKitBlocks.FLIGHT_COMPUTER.get().defaultBlockState());
+        if (level.getBlockEntity(ctx.abs(LAUNCHER)) instanceof LauncherDeckBlockEntity arm) {
+            arm.deck(new LauncherDeckBlockEntity.Deck(Direction.EAST, 1, TO_AXIS, 6, 8, 6));
+        }
+        final RocketStack stack = RocketStack.of(part("sea_level_engine_3"), part("tank_3"), part("capsule_3"));
+        if (level.getBlockEntity(ctx.abs(COMPUTER)) instanceof FlightComputerBlockEntity rocket) {
+            rocket.carry(new RocketDesign("Orbital I", stack), new BlockPos(0, -4, 0), List.of());
+            Propellants.get(level, SkeletonPropellants.METHALOX).ifPresent(methalox -> rocket.load(1,
+                    TankLoad.filled(SkeletonPropellants.METHALOX, methalox, FULL_TANK)));
+        }
+    }
+
+    /* Clicks the {@code i}th key from the top down the left or the right of the face. */
+    private static void clickKey(final ClientTestContext ctx, final int side, final int i) {
+        final int[] at = screenOf(ctx, new int[] {side, FlightComputerFace.sideKeyY(i) + 5});
+        ctx.click(at[0], at[1]);
+    }
+
+    /* What the open screen's computer shows of its launcher's count, as the player's game has it. */
+    private static LaunchCount.Shown shownOf(final ClientTestContext ctx) {
+        final FlightComputerScreen screen = ctx.screen(FlightComputerScreen.class);
+        return screen == null ? LaunchCount.Shown.NONE : screen.getMenu().computer().launch().map(LaunchCount::shown)
+                .orElse(LaunchCount.Shown.NONE);
+    }
+
+    private static LaunchCount.Phase launchPhase(final ClientTestContext ctx) {
+        return shownOf(ctx).phase();
     }
 
     /* Where the face's pixel {@code at} is on the window, in the screen's own scaled units. */

@@ -39,6 +39,8 @@ import dev.jstech.space.descent.SurfaceLaunch;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.launch.ClimbEffects;
+import dev.jstech.space.launch.LaunchCount;
+import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.space.orbit.Rocketry;
 import dev.jstech.space.platform.LandingPlatforms;
 import dev.jstech.space.rocket.BoilOff;
@@ -109,6 +111,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<PlannedLanding> landing;
     private final IntField guidance;
     private final ValueField<DescentPhase> descent;
+    private final ValueField<BlockPos> launcher;
     private int wait;
     /* Ticks till its rocket's lost blocks are counted again, and the plan they are counted by, for its design. */
     private int countWait;
@@ -160,6 +163,14 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private static final int ASSIST = RIGHT + 2;
     private static final int AEROBRAKE = RIGHT + 3;
     private static final int EXECUTE = RIGHT + 4;
+    /*
+     * The launch page's keys, as the Launch Panel's controls they work: down the left the MASTER key, the IGNITION
+     * switch with its guard, the deluge, the clamps and HOLD; down the right COUNT, RECYCLE, SCRUB, none, and LAUNCH.
+     */
+    private static final int[] LAUNCH_LEFT = {LaunchCount.MASTER, LaunchCount.SWITCH, LaunchCount.DELUGE,
+        LaunchCount.CLAMPS, LaunchCount.HOLD};
+    private static final int[] LAUNCH_RIGHT = {LaunchCount.RUN, LaunchCount.RECYCLE, LaunchCount.SCRUB, -1,
+        LaunchCount.LAUNCH};
     /* The delta-v the climb from each world's ground to its low orbit takes, before a transfer. */
     private static final Map<SolarBody, Double> CLIMBS = Map.of(SolarBody.OVERWORLD, Rocketry.SURFACE_TO_LOW_ORBIT,
             SolarBody.MOON, Rocketry.MOON_ORBIT_TO_SURFACE, SolarBody.MARS, Rocketry.MARS_SURFACE_TO_ORBIT);
@@ -219,6 +230,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         // Where its rocket is in coming down to a world, for its crew and for its parachutes to be drawn.
         this.descent = fields().value("Descent", StableCodecs.byName(DescentPhase.class), DescentPhase.NONE).save()
                 .toClient();
+        // The launcher its rocket stands on, whose count its launch page shows and works.
+        this.launcher = fields().nullable("Launcher", BlockPos.CODEC).save().toClient();
     }
 
     /** How long the ellipse its rocket comes down in is by {@code guidance}, in blocks. */
@@ -306,6 +319,34 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             this.clock.set(seconds);
             setChanged();
         }
+    }
+
+    /** The count of the launcher its rocket stands on, which its launch page shows and works; none off a launcher. */
+    public Optional<LaunchCount> launch() {
+        final BlockPos at = this.launcher.get();
+        return at == null || this.level == null ? Optional.empty() : LauncherDeckBlockEntity.countAt(this.level, at)
+                .filter(count -> count.countsFor(this.worldPosition));
+    }
+
+    /**
+     * Its rocket stands on the launcher whose measuring arm is at {@code arm}, whose count found it: newly there, the
+     * computer opens on its launch page.
+     */
+    public void standsOn(final BlockPos arm) {
+        if (!arm.equals(this.launcher.get())) {
+            this.launcher.set(arm.immutable());
+            this.page.set(FlightPage.LAUNCH);
+            setChanged();
+        }
+    }
+
+    /** Its rocket leaves the launcher: its launch page closes, the transfer open in its place. */
+    public void offThePad() {
+        this.launcher.set(null);
+        if (page() == FlightPage.LAUNCH) {
+            this.page.set(FlightPage.TRANSFER);
+        }
+        setChanged();
     }
 
     /** What its rocket's tanks hold while it stands on the ground, by their places in its stack from the bottom. */
@@ -642,13 +683,14 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
 
     /**
      * Its key {@code key} is pressed: a page opened, a world chosen to go to, the map drawn nearer or wider, the mark
-     * set where the map is centred or cleared, the grid laid or lifted. A key with nothing to do on its page does
-     * nothing.
+     * set where the map is centred or cleared, the grid laid or lifted; on the launch page a control of the launcher's
+     * count worked. A key with nothing to do on its page does nothing.
      */
     public void press(final int key) {
-        if (key >= TOP && key < TOP + KEYS) {
+        if (key >= TOP && key < TOP + FlightPage.KEYS.size()) {
             final FlightPage opened = FlightPage.KEYS.get(key - TOP);
-            if (opened.open()) {
+            // The launch page opens only while its rocket stands on a launcher.
+            if (opened == FlightPage.LAUNCH ? launch().isPresent() : opened.open()) {
                 this.page.set(opened);
             }
         } else if (page() == FlightPage.TRANSFER && key >= LEFT && key < LEFT + KEYS) {
@@ -705,15 +747,22 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                     // A key the landing page does not use: its guidance only shows which guides the rocket.
                 }
             }
+        } else if (page() == FlightPage.LAUNCH && key >= LEFT) {
+            launchKey(key, null);
         }
         setChanged();
     }
 
     /**
      * Its key {@code key} is pressed by {@code by}: on the stages page a stage is chosen on the left and where it goes
-     * set on the right, a platform only one {@code by} may use; any other key as {@link #press(int)} has it.
+     * set on the right, a platform only one {@code by} may use; on the launch page the count worked as {@code by}
+     * works it, theirs the rocket once they press LAUNCH; any other key as {@link #press(int)} has it.
      */
     public void press(final int key, @Nullable final ServerPlayer by) {
+        if (page() == FlightPage.LAUNCH && key >= LEFT) {
+            launchKey(key, by == null ? null : by.getUUID());
+            return;
+        }
         if (page() != FlightPage.STAGES || key < LEFT || !(this.level instanceof ServerLevel server)) {
             press(key);
             return;
@@ -796,6 +845,15 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         }
         final int at = after.map(fit::indexOf).orElse(-1);
         return Optional.of(fit.get((at + 1) % fit.size()));
+    }
+
+    /* A side key of the launch page: the control of the launcher's count it works, pressed by {@code by}. */
+    private void launchKey(final int key, @Nullable final UUID by) {
+        final int control = key < LEFT + KEYS ? LAUNCH_LEFT[key - LEFT]
+                : key >= RIGHT && key < RIGHT + KEYS ? LAUNCH_RIGHT[key - RIGHT] : -1;
+        if (control >= 0) {
+            launch().ifPresent(count -> count.press(control, by));
+        }
     }
 
     /*

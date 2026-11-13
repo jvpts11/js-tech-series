@@ -13,8 +13,9 @@ import java.util.List;
 
 /**
  * The pages of the Flight Computer, one under each key along the top of its screen, as {@link #KEYS} orders them: the
- * system, the transfer, the landing, the stages and the radio. The transfer, the landing and the stages are open; the
- * others name their keys and are for the computer's later work.
+ * launch, the system, the transfer, the landing, the stages and the radio. The transfer, the landing and the stages are
+ * open; the launch opens while the rocket stands on a launcher, whose count it shows and works; the others name their
+ * keys and are for the computer's later work.
  */
 public enum FlightPage implements IStableName, IStableId {
 
@@ -22,10 +23,11 @@ public enum FlightPage implements IStableName, IStableId {
     TRANSFER("xfer", 1, true),
     LANDING("land", 2, true),
     STAGES("stg", 3, true),
-    RADIO("comm", 4, false);
+    RADIO("comm", 4, false),
+    LAUNCH("lnch", 5, true);
 
     /** The pages in the order of their keys along the top. */
-    public static final List<FlightPage> KEYS = List.of(SYSTEM, TRANSFER, LANDING, STAGES, RADIO);
+    public static final List<FlightPage> KEYS = List.of(LAUNCH, SYSTEM, TRANSFER, LANDING, STAGES, RADIO);
 
     private final String serializedName;
     private final int id;

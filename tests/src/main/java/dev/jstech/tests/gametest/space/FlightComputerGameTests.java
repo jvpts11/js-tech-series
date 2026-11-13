@@ -94,9 +94,9 @@ public final class FlightComputerGameTests {
         helper.assertTrue(computer.target().equals(SolarSystemWorlds.MOON), "the first left key chooses the Moon");
         computer.press(FlightComputerBlockEntity.LEFT + 1);
         helper.assertTrue(computer.target().equals(SolarSystemWorlds.MARS), "the second, Mars");
-        computer.press(FlightComputerBlockEntity.TOP);
+        computer.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.SYSTEM));
         helper.assertTrue(computer.page() == FlightPage.TRANSFER, "the system's page does not open yet");
-        computer.press(FlightComputerBlockEntity.TOP + 2);
+        computer.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.LANDING));
         helper.assertTrue(computer.page() == FlightPage.LANDING, "the landing's key opens it");
         computer.press(FlightComputerBlockEntity.LEFT);
         helper.assertTrue(computer.zoom() == FlightComputerBlockEntity.NEAR, "zoomed in, the map is the nearer");
@@ -110,7 +110,7 @@ public final class FlightComputerGameTests {
         helper.assertTrue(computer.grid(), "the grid is laid");
         computer.press(FlightComputerBlockEntity.LEFT + 3);
         helper.assertTrue(computer.mark() == null, "the mark is cleared");
-        computer.press(FlightComputerBlockEntity.TOP + 1);
+        computer.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.TRANSFER));
         computer.press(FlightComputerBlockEntity.LEFT);
         helper.assertTrue(computer.page() == FlightPage.TRANSFER && computer.target().equals(SolarSystemWorlds.MOON),
                 "back on the transfer, the Moon chosen");

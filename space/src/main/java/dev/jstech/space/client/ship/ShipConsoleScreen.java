@@ -66,7 +66,8 @@ public final class ShipConsoleScreen extends AbstractContainerScreen<ShipConsole
         final double x = (mouseX - this.leftPos) / this.scale;
         final double y = (mouseY - this.topPos) / this.scale;
         final ShipConsoleFace.View view = view();
-        final int key = FlightComputerFace.keyAt(this.font, List.of(), ShipConsoleFace.rightLegends(view), x, y);
+        final int key = FlightComputerFace.keyAt(this.font, List.of(), ShipConsoleFace.rightLegends(view), x, y,
+                ShipConsoleFace.TOP_KEYS);
         if (key == FlightComputerBlockEntity.TOP + ShipConsoleFace.PREVIOUS_KEY && this.page > 0) {
             this.page--;
             this.chosen = -1;

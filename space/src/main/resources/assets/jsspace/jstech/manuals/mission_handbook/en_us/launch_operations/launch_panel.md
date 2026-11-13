@@ -14,6 +14,8 @@ The LCC-1 console by the pad, where a launch is counted down and given its go. I
 
 Launching. The count runs from T-60: the tower arms swing back from T-42, the LAUNCH button's cover lifts at T-10, the engines light at T-6 and the rocket goes at T-0. The count runs on the rocket's [flight computer](jsspace:flight_computer) too, and whoever presses LAUNCH owns the rocket in flight, for their team to use.
 
+The count is the [launcher](jsspace:hold_down_arm)'s, one for its pad, not the panel's. The panel and the launch page of the rocket's flight computer both show it and work it: what is done on one shows on the other, and either holds it. A pad needs no panel; a crew can count down from the capsule alone.
+
 ## How to get it
 
 From the creative menu, J's Space tab.

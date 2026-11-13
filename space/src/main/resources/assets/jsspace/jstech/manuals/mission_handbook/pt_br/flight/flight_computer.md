@@ -20,18 +20,19 @@ No menu criativo, aba J's Space.
 
 ## Como usar
 
-Use-o com a mão vazia para abrir a tela e clique numa tecla ou nas palavras ao lado dela. As teclas do alto abrem as páginas; SIS e COM ainda não abrem nada.
+Use-o com a mão vazia para abrir a tela e clique numa tecla ou nas palavras ao lado dela. As teclas do alto abrem as páginas; SIS e COM ainda não abrem nada, e LANÇ só abre enquanto o foguete está numa plataforma móvel, onde o computador já abre nela.
 
 Table: As páginas
 
 | Página | As teclas |
 | --- | --- |
+| LANÇ | A contagem da base, a mesma que o [painel de lançamento](jsspace:launch_panel) mostra. Esquerda: MEST, a chave MESTRE; IGN, o interruptor de IGNIÇÃO, com a proteção levantada junto; DLV, o dilúvio; GARR, as garras; ESPERA. Direita: CONTAR começa a contagem ou a retoma, VOLTAR leva uma espera abaixo de T-10 de volta a T-10, CANCELAR cancela, e LANÇAR, aceso a partir de T-10, lança até T-6. |
 | TRAN | Esquerda: o mundo de destino; JAN - e JAN +, a janela de partida. Direita: DV gasta mais delta-v para uma viagem mais curta e TV gasta menos; ASSIST passa por um mundo no caminho, gastando menos e demorando mais; AERO freia no ar na chegada em vez de queimar; EXEC marca o plano. |
 | POUS | Clique no mapa para marcar um ponto. Esquerda: ZOOM +, ZOOM -, MARCA, LIMPAR. Direita: PERIGO mostra o chão íngreme demais para pousar, GRADE, e FIXAR, que fixa o pouso na marca. GUIA acende enquanto uma plataforma de guiagem guia o foguete. |
 | EST | Esquerda: o estágio. Direita: QQR, ZONA, PLAT, PLAT + e RAIO +, para onde ele vai depois de gasto. |
 
 1. No chão, defina para onde vai cada estágio gasto em EST, a transferência em TRAN com EXEC e o pouso em POUS com FIXAR.
-2. Lance pelo [painel de lançamento](jsspace:launch_panel). O computador solta cada estágio esgotado e, passado o alto do céu, o foguete fica parado na órbita baixa do mundo.
+2. Lance pelo [painel de lançamento](jsspace:launch_panel), ou por LANÇ, de dentro, sem painel nenhum. O computador solta cada estágio esgotado e, passado o alto do céu, o foguete fica parado na órbita baixa do mundo.
 3. Quando a janela chega, ele queima e parte; entre o Overworld e a Lua não há janela. Se todos a bordo dormirem, a viagem passa de uma vez.
 4. Na órbita do outro mundo, ele [desce](jsspace:coming_down).
 5. Depois do pouso, marque um novo plano com EXEC: ele decola quando a janela chegar.

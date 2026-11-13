@@ -383,7 +383,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   how long until it opens. To the Moon there is no window. Its landing page draws the map of the world it goes to as
   the game's map item draws a world, from that world's own generator: zoom in and out, mark the spot to land on by
   clicking the map, clear it, lay the grid; the ellipse the rocket comes down in is drawn round the mark, with north,
-  the scale and where the spot is.
+  the scale and where the spot is. A sixth key along its top, LNCH, opens its launch page while its rocket stands on
+  a mobile launcher, and the computer opens on it there: the pad's count from inside, the same count the Launch Panel
+  shows, with the pad and the rocket, whether a panel works the count too, the count and the holds, the sequence, the
+  go and no-go board (what the pad has none of dark, holding nothing), the tanks and what the count waits for; its
+  left keys the MASTER key, the IGNITION switch with its guard, the deluge, the clamps and HOLD, its right keys COUNT,
+  RECYCLE, SCRUB and LAUNCH, lit only under its cover lifted from T-10. Off the pad it closes for the transfer.
 - The Rocket Hangar, where a rocket is stacked standing: one building of one size, as the Vehicle Assembly
   Building's high bay, a multiblock formed from its terminal. Its bay is 29 blocks across, 37 long and 108 high, for
   the tallest rocket it builds, 96 blocks, on its mobile launcher with the tower beside it, and the widest, 17 blocks;
@@ -541,7 +546,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   with its key and its ignition armed and all go, COUNT RUNNING starts the count at T-60: the tower's arms swing back
   from T-42, the cover lifts at T-10, and with LAUNCH pressed the engines light at T-6, the deluge poured by the pad's
   rules, and the rocket is released at T-0; without it the count holds at T-6. It holds by itself on a no-go or in a
-  thunderstorm. The count runs on the rocket's flight computer too. New block: the Launch Panel.
+  thunderstorm. The count runs on the rocket's flight computer too. The count is the launcher's, one for its pad: the
+  Launch Panel and the launch page of the rocket's Flight Computer both show and work it, what is done on either shows
+  on both, either holds it, and a pad needs no panel, its crew counting from the capsule alone; whoever presses
+  LAUNCH, at the panel or inside, owns the rocket in flight. A pad with no service port shows its deluge dark, as NONE.
+  New block: the Launch Panel.
 - The launch. On the pad, the loaded tanks' cold propellant boils off their sides as white vapour. At
   ignition the screen shakes for everyone near, the pad steams and smoke rolls out of the trench. At T-0 the rocket
   becomes one moving structure by the exact places of its plan, each block as it is, its parts still formed and nothing

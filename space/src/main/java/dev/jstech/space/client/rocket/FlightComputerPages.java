@@ -17,6 +17,7 @@ import dev.jstech.space.flight.FlightPage;
 import dev.jstech.space.flight.PlannedTransfer;
 import dev.jstech.space.flight.TransferChoice;
 import dev.jstech.space.flight.TransferPlan;
+import dev.jstech.space.launch.LaunchCount;
 import dev.jstech.space.network.LandingSight;
 import dev.jstech.space.orbit.Orbit;
 import dev.jstech.space.orbit.SolarSystemOrbits;
@@ -203,13 +204,18 @@ public final class FlightComputerPages {
             left.addAll(FlightComputerStages.left(stages));
             right.addAll(FlightComputerStages.right(stages));
         }
+        final Optional<LaunchCount.Shown> launch = computer.launch().map(LaunchCount::shown);
+        if (page == FlightPage.LAUNCH) {
+            left.addAll(FlightLaunchPage.left(launch.orElse(LaunchCount.Shown.NONE)));
+            right.addAll(FlightLaunchPage.right(launch.orElse(LaunchCount.Shown.NONE)));
+        }
         final LandingMapsClient.Shown map = LandingMapsClient.shown();
         final FlightComputerFace.Plotted plotted = new FlightComputerFace.Plotted(planned, choice,
                 setFor(computer, planned), computer.shield(), computer.available());
         return new FlightComputerFace.View(page, left, right, name(computer.target()), plan, tick, computer.mark(),
                 computer.zoom(), computer.grid(), map != null && map.world().equals(computer.target()) ? map : null,
                 plotted, stages, readings, new FlightComputerFace.Landing(computer.guidance(), computer.hazards(),
-                        landingSet(computer)));
+                        landingSet(computer)), launch);
     }
 
     /**

@@ -79,12 +79,12 @@ public final class LaunchPanelScreen extends AbstractContainerScreen<LaunchPanel
             final double y = (mouseY - this.topPos) / this.scale;
             if (LaunchPanelFace.onPlate(this.font, x, y)) {
                 if (this.naming == null) {
-                    this.naming = new StringBuilder(this.menu.panel().padName());
+                    this.naming = new StringBuilder(this.menu.panel().shown().padName());
                 }
                 return true;
             }
             keepName();
-            final int control = LaunchPanelFace.controlAt(this.menu.panel(), x, y);
+            final int control = LaunchPanelFace.controlAt(this.menu.panel().shown(), x, y);
             if (control >= 0) {
                 LaunchPanel.PRESS.send(control);
                 return true;
@@ -139,7 +139,7 @@ public final class LaunchPanelScreen extends AbstractContainerScreen<LaunchPanel
                             final int mouseY) {
         graphics.pose().pushPose();
         graphics.pose().translate(this.leftPos, this.topPos, 0);
-        LaunchPanelFace.paint(graphics, this.font, this.imageWidth, this.menu.panel(), naming());
+        LaunchPanelFace.paint(graphics, this.font, this.imageWidth, this.menu.panel().shown(), naming());
         graphics.pose().popPose();
     }
 

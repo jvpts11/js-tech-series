@@ -1,0 +1,12 @@
+{
+  "dim": "#FF4A5A66",
+  "edge": "#FF1D2A33",
+  "fuel": "#FFE8A060",
+  "goGround": "#FF0C2A16",
+  "greenMid": "#FF1E9A40",
+  "noGoGround": "#FF3A0E0A",
+  "offGround": "#FF14191D",
+  "oxidiser": "#FF7AB8E8",
+  "panel": "#FF0C1418",
+  "waitGround": "#FF33240A"
+}

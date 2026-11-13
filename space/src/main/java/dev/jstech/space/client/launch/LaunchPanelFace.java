@@ -14,7 +14,7 @@ import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.core.text.TextKey;
 import dev.jstech.space.JsSpace;
-import dev.jstech.space.launch.LaunchPanelBlockEntity;
+import dev.jstech.space.launch.LaunchCount;
 import dev.jstech.space.launch.LaunchTexts;
 import java.util.List;
 import java.util.Locale;
@@ -28,8 +28,8 @@ import org.jetbrains.annotations.Nullable;
  * pad's plate; the count in seven segments with the mission's clock and the holds; the sequence on its screen; the
  * HOLD and ABORT lamps; the go and no-go board of annunciators; the tanks on a small screen of bars; the DELUGE and
  * CLAMPS toggles, the IGNITION toggle under its red guard, the brass MASTER key and the LAUNCH button in its striped
- * well under its flip cover; the lit push buttons along the foot. All of it read live from the panel, drawn
- * {@value #WIDTH} by {@value #HEIGHT}.
+ * well under its flip cover; the lit push buttons along the foot. All of it read live from the count of the launcher on
+ * its pad ({@link LaunchCount.Shown}), drawn {@value #WIDTH} by {@value #HEIGHT}.
  */
 @PaletteHolder
 public final class LaunchPanelFace {
@@ -69,11 +69,11 @@ public final class LaunchPanelFace {
     }
 
     /**
-     * Draws the console of {@code panel} with its top left at the pose's origin, {@code width} wide; its pad's plate
-     * shows {@code naming}, with its cursor, while a name for the pad is being typed on it, else null.
+     * Draws the console showing the count {@code panel}, its top left at the pose's origin, {@code width} wide; its
+     * pad's plate shows {@code naming}, with its cursor, while a name for the pad is being typed on it, else null.
      */
     public static void paint(final GuiGraphics g, final Font font, final int width,
-                             final LaunchPanelBlockEntity panel, final @Nullable String naming) {
+                             final LaunchCount.Shown panel, final @Nullable String naming) {
         final Colours c = PALETTE.get();
         g.pose().pushPose();
         g.pose().scale(width / (float) WIDTH, width / (float) WIDTH, 1);
@@ -82,9 +82,9 @@ public final class LaunchPanelFace {
         sequence(g, font, c, panel);
         engrave(g, font, LaunchTexts.MASTER, 322, 22, c);
         annunciator(g, font, 322, 36, 66, 18, List.of(word(LaunchTexts.HOLD)), c.amber(),
-                panel.phase() == LaunchPanelBlockEntity.Phase.HOLDING, c);
+                panel.phase() == LaunchCount.Phase.HOLDING, c);
         annunciator(g, font, 322, 60, 66, 18, List.of(word(LaunchTexts.ABORT)), c.red(),
-                panel.phase() == LaunchPanelBlockEntity.Phase.SCRUBBED, c);
+                panel.phase() == LaunchCount.Phase.SCRUBBED, c);
         rule(g, 12, WIDTH - 12, 90, c);
         board(g, font, c, panel);
         tanks(g, font, c, panel);
@@ -100,11 +100,11 @@ public final class LaunchPanelFace {
         launchButton(g, LAUNCH_X, LAUNCH_Y, panel.coverUp(), c);
         plate(g, font, LAUNCH_X + 14, 229, word(LaunchTexts.LAUNCH), c);
         rule(g, 12, WIDTH - 12, 245, c);
-        final LaunchPanelBlockEntity.Phase phase = panel.phase();
-        final boolean[] lit = {phase == LaunchPanelBlockEntity.Phase.HOLDING,
-            phase == LaunchPanelBlockEntity.Phase.SCRUBBED,
-            phase == LaunchPanelBlockEntity.Phase.HOLDING && panel.left() < LaunchPanelBlockEntity.COVER * SECOND,
-            phase == LaunchPanelBlockEntity.Phase.COUNTING || phase == LaunchPanelBlockEntity.Phase.RELEASED};
+        final LaunchCount.Phase phase = panel.phase();
+        final boolean[] lit = {phase == LaunchCount.Phase.HOLDING,
+            phase == LaunchCount.Phase.SCRUBBED,
+            phase == LaunchCount.Phase.HOLDING && panel.left() < LaunchCount.COVER * SECOND,
+            phase == LaunchCount.Phase.COUNTING || phase == LaunchCount.Phase.RELEASED};
         final TextKey[] names = {LaunchTexts.HOLD_COUNT, LaunchTexts.SCRUB, LaunchTexts.RECYCLE,
             LaunchTexts.COUNT_RUNNING};
         final int[] colours = {c.amber(), c.red(), c.cyan(), c.green()};
@@ -125,26 +125,26 @@ public final class LaunchPanelFace {
     }
 
     /** The control of the console under {@code (x, y)}, in its own pixels, or -1 where none is. */
-    public static int controlAt(final LaunchPanelBlockEntity panel, final double x, final double y) {
+    public static int controlAt(final LaunchCount.Shown panel, final double x, final double y) {
         for (int i = 0; i < 2; i++) {
             if (inside(x, y, TOGGLES_X[i] - 12, TOGGLES_Y - 22, 24, 34)) {
-                return i == 0 ? LaunchPanelBlockEntity.DELUGE : LaunchPanelBlockEntity.CLAMPS;
+                return i == 0 ? LaunchCount.DELUGE : LaunchCount.CLAMPS;
             }
         }
         final int ix = TOGGLES_X[2];
         if (inside(x, y, ix - 14, TOGGLES_Y - 25, 30, 38)) {
             // Closed, the guard is lifted first; open, its lid closes it again and the switch below is thrown.
-            return !panel.guard() || y < TOGGLES_Y - 18 ? LaunchPanelBlockEntity.GUARD
-                    : LaunchPanelBlockEntity.IGNITION;
+            return !panel.guard() || y < TOGGLES_Y - 18 ? LaunchCount.GUARD
+                    : LaunchCount.IGNITION;
         }
         if (inside(x, y, KEY_X - 1, KEY_Y - 1, 20, 20)) {
-            return LaunchPanelBlockEntity.MASTER;
+            return LaunchCount.MASTER;
         }
         if (inside(x, y, LAUNCH_X - 6, LAUNCH_Y - 6, 40, 40)) {
-            return LaunchPanelBlockEntity.LAUNCH;
+            return LaunchCount.LAUNCH;
         }
-        final int[] buttons = {LaunchPanelBlockEntity.HOLD, LaunchPanelBlockEntity.SCRUB,
-            LaunchPanelBlockEntity.RECYCLE, LaunchPanelBlockEntity.RUN};
+        final int[] buttons = {LaunchCount.HOLD, LaunchCount.SCRUB,
+            LaunchCount.RECYCLE, LaunchCount.RUN};
         for (int i = 0; i < buttons.length; i++) {
             if (inside(x, y, BUTTONS_X + i * BUTTONS_STEP, BUTTONS_Y, BUTTON_W, BUTTON_H)) {
                 return buttons[i];
@@ -158,7 +158,7 @@ public final class LaunchPanelFace {
      * rocket's name; or, while the pad is being named, the line typed so far with its cursor.
      */
     private static void bezel(final GuiGraphics g, final Font font, final Colours c,
-                              final LaunchPanelBlockEntity panel, final @Nullable String naming) {
+                              final LaunchCount.Shown panel, final @Nullable String naming) {
         g.fill(0, 0, WIDTH, HEIGHT, c.bezel());
         hline(g, 0, WIDTH, 0, c.bezelLit());
         vline(g, 0, 0, HEIGHT, c.bezelLit());
@@ -189,7 +189,7 @@ public final class LaunchPanelFace {
     }
 
     /* The pad as its plate names it: by the name it was given, else by its number, or none by the panel. */
-    private static String padOf(final LaunchPanelBlockEntity panel) {
+    private static String padOf(final LaunchCount.Shown panel) {
         if (!panel.padName().isEmpty()) {
             return panel.padName().toUpperCase(Locale.ROOT);
         }
@@ -204,10 +204,10 @@ public final class LaunchPanelFace {
 
     /* The count in seven segments, the mission's clock and the holds. */
     private static void count(final GuiGraphics g, final Font font, final Colours c,
-                              final LaunchPanelBlockEntity panel) {
+                              final LaunchCount.Shown panel) {
         engrave(g, font, LaunchTexts.COUNTDOWN, 16, 22, c);
         screen(g, 18, 36, 172, 80, c);
-        final boolean released = panel.phase() == LaunchPanelBlockEntity.Phase.RELEASED;
+        final boolean released = panel.phase() == LaunchCount.Phase.RELEASED;
         final int seconds = released ? 0 : (panel.left() + SECOND - 1) / SECOND;
         text(g, font, "T-", 24, 46, c.segOn(), false);
         int x = 36;
@@ -230,16 +230,16 @@ public final class LaunchPanelFace {
 
     /* The sequence on its screen: done, now and next, by where the count is. */
     private static void sequence(final GuiGraphics g, final Font font, final Colours c,
-                                 final LaunchPanelBlockEntity panel) {
+                                 final LaunchCount.Shown panel) {
         engrave(g, font, LaunchTexts.SEQUENCE, 184, 22, c);
         screen(g, 186, 36, 308, 80, c);
-        final int[] at = {LaunchPanelBlockEntity.START, LaunchPanelBlockEntity.ARMS, LaunchPanelBlockEntity.COVER,
-            LaunchPanelBlockEntity.LIGHT, 0};
+        final int[] at = {LaunchCount.START, LaunchCount.ARMS, LaunchCount.COVER,
+            LaunchCount.LIGHT, 0};
         final TextKey[] what = {LaunchTexts.ARMS_RETRACT, LaunchTexts.ARMS_MOVING, LaunchTexts.GUARD_LIFTS,
             LaunchTexts.IGNITION_EVENT, LaunchTexts.RELEASE};
-        final boolean counted = panel.phase() != LaunchPanelBlockEntity.Phase.SAFE
-                && panel.phase() != LaunchPanelBlockEntity.Phase.SCRUBBED;
-        final double seconds = panel.phase() == LaunchPanelBlockEntity.Phase.RELEASED ? -1 : panel.left()
+        final boolean counted = panel.phase() != LaunchCount.Phase.SAFE
+                && panel.phase() != LaunchCount.Phase.SCRUBBED;
+        final double seconds = panel.phase() == LaunchCount.Phase.RELEASED ? -1 : panel.left()
                 / (double) SECOND;
         int now = -1;
         for (int i = 0; i < at.length; i++) {
@@ -261,22 +261,22 @@ public final class LaunchPanelFace {
 
     /* The go and no-go board: one annunciator a system, its name and its state. */
     private static void board(final GuiGraphics g, final Font font, final Colours c,
-                              final LaunchPanelBlockEntity panel) {
+                              final LaunchCount.Shown panel) {
         engrave(g, font, LaunchTexts.GO_NO_GO, 16, 98, c);
         final double seconds = panel.left() / (double) SECOND;
-        final boolean counting = panel.phase() == LaunchPanelBlockEntity.Phase.COUNTING
-                || panel.phase() == LaunchPanelBlockEntity.Phase.HOLDING;
-        final TextKey arms = counting && seconds <= LaunchPanelBlockEntity.COVER
-                || panel.phase() == LaunchPanelBlockEntity.Phase.RELEASED ? LaunchTexts.CLEAR
-                : counting && seconds <= LaunchPanelBlockEntity.ARMS ? LaunchTexts.MOVING : LaunchTexts.GO;
-        final boolean propellant = panel.oxidiser() >= LaunchPanelBlockEntity.FULL
-                && panel.fuel() >= LaunchPanelBlockEntity.FULL;
+        final boolean counting = panel.phase() == LaunchCount.Phase.COUNTING
+                || panel.phase() == LaunchCount.Phase.HOLDING;
+        final TextKey arms = counting && seconds <= LaunchCount.COVER
+                || panel.phase() == LaunchCount.Phase.RELEASED ? LaunchTexts.CLEAR
+                : counting && seconds <= LaunchCount.ARMS ? LaunchTexts.MOVING : LaunchTexts.GO;
+        final boolean propellant = panel.oxidiser() >= LaunchCount.FULL
+                && panel.fuel() >= LaunchCount.FULL;
         final Object[][] systems = {
             {LaunchTexts.VEHICLE, panel.vehicle() ? LaunchTexts.GO : LaunchTexts.NO_GO},
             {LaunchTexts.PROPELLANT, propellant ? LaunchTexts.GO : LaunchTexts.NO_GO},
             {LaunchTexts.TOWER_ARMS, arms},
-            {LaunchTexts.DELUGE, !panel.deluge() ? LaunchTexts.OFF : panel.delugeReady() ? LaunchTexts.GO
-                : LaunchTexts.NO_GO},
+            {LaunchTexts.DELUGE, !panel.port() ? LaunchTexts.NONE : !panel.deluge() ? LaunchTexts.OFF
+                : panel.delugeReady() ? LaunchTexts.GO : LaunchTexts.NO_GO},
             {LaunchTexts.WEATHER, panel.storm() ? LaunchTexts.NO_GO : LaunchTexts.GO},
             {LaunchTexts.CREW, LaunchTexts.GO},
             {LaunchTexts.RANGE, LaunchTexts.GO},
@@ -285,14 +285,15 @@ public final class LaunchPanelFace {
             final TextKey state = (TextKey) systems[i][1];
             final int colour = state == LaunchTexts.NO_GO ? c.red() : state == LaunchTexts.MOVING
                     || state == LaunchTexts.OFF ? c.amber() : c.green();
+            // What the pad has none of stays dark: it holds nothing.
             annunciator(g, font, 18 + i % 4 * 72, 112 + i / 4 * 26, 64, 20, List.of(word((TextKey) systems[i][0]),
-                    word(state)), colour, true, c);
+                    word(state)), colour, state != LaunchTexts.NONE, c);
         }
     }
 
     /* The tanks on a small screen: a bar each and its load; and the loading's state under it. */
     private static void tanks(final GuiGraphics g, final Font font, final Colours c,
-                              final LaunchPanelBlockEntity panel) {
+                              final LaunchCount.Shown panel) {
         engrave(g, font, LaunchTexts.TANKS, 322, 98, c);
         screen(g, 324, 112, 388, 186, c);
         final int[] full = {panel.oxidiser(), panel.fuel()};
@@ -310,7 +311,7 @@ public final class LaunchPanelFace {
             }
             text(g, font, full[i] + "%", bx + 5, 167, c.ink(), true);
         }
-        final boolean loaded = full[0] >= LaunchPanelBlockEntity.FULL && full[1] >= LaunchPanelBlockEntity.FULL;
+        final boolean loaded = full[0] >= LaunchCount.FULL && full[1] >= LaunchCount.FULL;
         annunciator(g, font, 324, 196, 64, 12, List.of(word(loaded ? LaunchTexts.LOADED : LaunchTexts.TOPPING_OFF)),
                 loaded ? c.green() : c.amber(), panel.vehicle() && (loaded || full[0] + full[1] > 0), c);
     }

@@ -78,19 +78,39 @@ public final class LaunchPads {
      */
     public static Optional<Stand> standBy(final ServerLevel level, final BlockPos near, final int reach,
                                           final int below, final int above) {
+        return launcherBy(level, near, reach, below, above).flatMap(arm -> stand(level, arm));
+    }
+
+    /**
+     * The measuring hold-down arm of the launcher standing by {@code near}, within {@code reach} round it and from
+     * {@code below} under it to {@code above} over it, its deck formed; none where no launcher stands there.
+     */
+    public static Optional<LauncherDeckBlockEntity> launcherBy(final ServerLevel level, final BlockPos near,
+                                                               final int reach, final int below, final int above) {
         final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
         for (int dy = -below; dy <= above; dy++) {
             for (int dx = -reach; dx <= reach; dx++) {
                 for (int dz = -reach; dz <= reach; dz++) {
                     at.set(near.getX() + dx, near.getY() + dy, near.getZ() + dz);
                     if (level.getBlockEntity(at) instanceof LauncherDeckBlockEntity arm && arm.deck().isPresent()) {
-                        final BlockPos axis = arm.getBlockPos().offset(arm.deck().get().axis());
-                        return Optional.of(new Stand(axis, arm.deck().get().side(), computerOver(level, axis)));
+                        return Optional.of(arm);
                     }
                 }
             }
         }
         return Optional.empty();
+    }
+
+    /**
+     * The launcher whose measuring hold-down arm is {@code arm}, standing where it is: where its rocket's axis meets
+     * its deck, the way its deck runs, and its rocket's flight computer up that axis; none where its deck is not
+     * formed.
+     */
+    public static Optional<Stand> stand(final ServerLevel level, final LauncherDeckBlockEntity arm) {
+        return arm.deck().map(deck -> {
+            final BlockPos axis = arm.getBlockPos().offset(deck.axis());
+            return new Stand(axis, deck.side(), computerOver(level, axis));
+        });
     }
 
     /** Whether the launch panel holds the countdown now: a thunderstorm over {@code level}, the setting on. */

@@ -42,6 +42,8 @@ public final class ShipConsoleFace {
     /** The keys along the top that turn the pages back and on. */
     public static final int PREVIOUS_KEY = 3;
     public static final int NEXT_KEY = 4;
+    /** How many keys stand along its top. */
+    public static final int TOP_KEYS = 5;
     /** Where the rows end, on the right, in the face's pixels: clicked left of it, a row is chosen. */
     public static final int ROWS_RIGHT = FlightComputerFace.SX1 - 66;
     private static final int WHO_X = FlightComputerFace.SX0 + 8;
@@ -68,7 +70,7 @@ public final class ShipConsoleFace {
         final Colours own = PALETTE.get();
         g.pose().pushPose();
         g.pose().scale(w / (float) FlightComputerFace.WIDTH, h / (float) FlightComputerFace.HEIGHT, 1);
-        FlightComputerFace.bezel(g, font, c, CrewTexts.MAKER, false);
+        FlightComputerFace.bezel(g, font, c, CrewTexts.MAKER, false, TOP_KEYS);
         final int sx0 = FlightComputerFace.SX0;
         final int sy0 = FlightComputerFace.SY0;
         final int sx1 = FlightComputerFace.SX1;
@@ -144,15 +146,15 @@ public final class ShipConsoleFace {
     /* The page's name boxed on the first key along the top, and the pages turned on the last two. */
     private static void top(final GuiGraphics g, final Font font, final View view, final FlightComputerFace.Colours c) {
         final String page = GameText.resolve(CrewTexts.PAGE_CREW);
-        final int x = FlightComputerFace.topKeyX(0) + 12;
+        final int x = FlightComputerFace.topKeyX(0, TOP_KEYS) + 12;
         final int y = FlightComputerFace.SY0 + 2;
         FlightComputerFace.frame(g, x - font.width(page) / 2 - 2, y - 1, x + (font.width(page) + 1) / 2 + 2, y + 9,
                 c.white());
         FlightComputerFace.text(g, font, page, x, y, c.white(), true);
         FlightComputerFace.text(g, font, GameText.resolve(CrewTexts.PREVIOUS), FlightComputerFace.topKeyX(
-                PREVIOUS_KEY) + 12, y, view.pageIndex() > 0 ? c.cyan() : c.legendOff(), true);
-        FlightComputerFace.text(g, font, GameText.resolve(CrewTexts.NEXT), FlightComputerFace.topKeyX(NEXT_KEY) + 12,
-                y, view.pageIndex() + 1 < view.pages() ? c.cyan() : c.legendOff(), true);
+                PREVIOUS_KEY, TOP_KEYS) + 12, y, view.pageIndex() > 0 ? c.cyan() : c.legendOff(), true);
+        FlightComputerFace.text(g, font, GameText.resolve(CrewTexts.NEXT), FlightComputerFace.topKeyX(NEXT_KEY,
+                TOP_KEYS) + 12, y, view.pageIndex() + 1 < view.pages() ? c.cyan() : c.legendOff(), true);
     }
 
     /* Row {@code i} beside its left key: who, the name, the role in its colour; the owner's padlocked. */

@@ -42,6 +42,7 @@ public final class LaunchTexts {
     public static final TextKey MOVING = TextKey.of("jsspace.launch.moving", "MOVING");
     public static final TextKey CLEAR = TextKey.of("jsspace.launch.clear", "CLEAR");
     public static final TextKey OFF = TextKey.of("jsspace.launch.off", "OFF");
+    public static final TextKey NONE = TextKey.of("jsspace.launch.none", "NONE");
     public static final TextKey TANKS = TextKey.of("jsspace.launch.tanks", "TANKS");
     public static final TextKey OXIDISER = TextKey.of("jsspace.launch.oxidiser", "LOX");
     public static final TextKey FUEL = TextKey.of("jsspace.launch.fuel", "CH4");

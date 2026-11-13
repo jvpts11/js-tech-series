@@ -21,6 +21,7 @@ import dev.jstech.space.flight.FlightPage;
 import dev.jstech.space.flight.PlannedTransfer;
 import dev.jstech.space.flight.TransferChoice;
 import dev.jstech.space.flight.TransferPlan;
+import dev.jstech.space.launch.LaunchCount;
 import dev.jstech.space.rocket.CabinLamp;
 import dev.jstech.space.rocket.CabinReadings;
 import java.util.List;
@@ -58,14 +59,15 @@ public final class FlightComputerFace {
     public static final TextKey LEFT_KEY = TextKey.of("jsspace.flight_computer.left_key", "L%s");
     public static final TextKey RIGHT_KEY = TextKey.of("jsspace.flight_computer.right_key", "R%s");
     public static final TextKey CLOCK = TextKey.of("jsspace.flight_computer.clock", "MET");
+    public static final TextKey LAUNCH_PAGE = TextKey.of("jsspace.flight_computer.page.lnch", "LNCH");
     public static final TextKey SYSTEM_PAGE = TextKey.of("jsspace.flight_computer.page.sys", "SYS");
     public static final TextKey TRANSFER_PAGE = TextKey.of("jsspace.flight_computer.page.xfer", "XFER");
     public static final TextKey LANDING_PAGE = TextKey.of("jsspace.flight_computer.page.land", "LAND");
     public static final TextKey STAGES_PAGE = TextKey.of("jsspace.flight_computer.page.stg", "STG");
     public static final TextKey RADIO_PAGE = TextKey.of("jsspace.flight_computer.page.comm", "COMM");
     /** The pages, in the order of the keys along the top. */
-    public static final List<TextKey> PAGES = List.of(SYSTEM_PAGE, TRANSFER_PAGE, LANDING_PAGE, STAGES_PAGE,
-            RADIO_PAGE);
+    public static final List<TextKey> PAGES = List.of(LAUNCH_PAGE, SYSTEM_PAGE, TRANSFER_PAGE, LANDING_PAGE,
+            STAGES_PAGE, RADIO_PAGE);
     public static final Palette<Colours> PALETTE = Palettes.declare(JsSpace.MODID, "flight_computer", new Colours(
             0xFF030806, 0xFF38FF6A, 0xFF38E0FF, 0xFFEAF6F2, 0xFFFFB424, 0xFF2A2C30, 0xFF4A4D54, 0xFF141518,
             0xFF33363B, 0xFF3A3D43, 0xFF4F535A, 0xFF9EE8B0, 0xFF8A8D94, 0xFF5C5F66, 0xFF55585F, 0xFF6E727A,
@@ -106,9 +108,11 @@ public final class FlightComputerFace {
         g.pose().pushPose();
         g.pose().scale(w / (float) WIDTH, h / (float) HEIGHT, 1);
         final Colours c = PALETTE.get();
-        bezel(g, font, c, MAKER, view.readings().lit(CabinLamp.MASTER_ALARM));
+        bezel(g, font, c, MAKER, view.readings().lit(CabinLamp.MASTER_ALARM), PAGES.size());
         g.fill(SX0, SY0, SX1, SY1, c.screen());
-        if (view.page() == FlightPage.TRANSFER) {
+        if (view.page() == FlightPage.LAUNCH) {
+            FlightLaunchPage.launch(g, font, view.launch().orElse(LaunchCount.Shown.NONE), c);
+        } else if (view.page() == FlightPage.TRANSFER) {
             FlightComputerPages.transfer(g, font, view, c);
         } else if (view.page() == FlightPage.LANDING) {
             FlightComputerPages.landing(g, font, view, c);
@@ -128,7 +132,9 @@ public final class FlightComputerFace {
                 frame(g, x - font.width(name) / 2 - 2, SY0 + 1, x + (font.width(name) + 1) / 2 + 2, SY0 + 11,
                         c.white());
             }
-            text(g, font, name, x, SY0 + 2, open ? c.white() : page.open() ? c.cyan() : c.legendOff(), true);
+            // The launch page is there to open only while the rocket stands on a launcher.
+            final boolean opens = page == FlightPage.LAUNCH ? view.launch().isPresent() : page.open();
+            text(g, font, name, x, SY0 + 2, open ? c.white() : opens ? c.cyan() : c.legendOff(), true);
         }
         for (int i = 0; i < SIDE_KEYS; i++) {
             legend(g, font, view.left(), i, true, c);
@@ -142,19 +148,20 @@ public final class FlightComputerFace {
      * numbers {@link FlightComputerBlockEntity#press} takes.
      */
     public static int keyAt(final Font font, final View view, final double x, final double y) {
-        return keyAt(font, view.left(), view.right(), x, y);
+        return keyAt(font, view.left(), view.right(), x, y, PAGES.size());
     }
 
     /**
-     * The key at {@code (x, y)} of a face of this display, in its own pixels, or -1: a key's cap, or the legend
-     * beside it, {@code left} and {@code right} the side keys' legends; the keys along the top from
-     * {@link FlightComputerBlockEntity#TOP}, those down the left from {@link FlightComputerBlockEntity#LEFT} and those
-     * down the right from {@link FlightComputerBlockEntity#RIGHT}.
+     * The key at {@code (x, y)} of a face of this display with {@code topKeys} keys along its top, in its own pixels,
+     * or -1: a key's cap, or the legend beside it, {@code left} and {@code right} the side keys' legends; the keys
+     * along the top from {@link FlightComputerBlockEntity#TOP}, those down the left from
+     * {@link FlightComputerBlockEntity#LEFT} and those down the right from {@link FlightComputerBlockEntity#RIGHT}.
      */
     public static int keyAt(final Font font, final List<Legend> left, final List<Legend> right, final double x,
-                            final double y) {
-        for (int i = 0; i < PAGES.size(); i++) {
-            if (x >= topKeyX(i) - 1 && x < topKeyX(i) + TOP_KEY_WIDTH + 1 && y >= SY0 - 21 && y < SY0 + 12) {
+                            final double y, final int topKeys) {
+        for (int i = 0; i < topKeys; i++) {
+            if (x >= topKeyX(i, topKeys) - 1 && x < topKeyX(i, topKeys) + TOP_KEY_WIDTH + 1 && y >= SY0 - 21
+                    && y < SY0 + 12) {
                 return FlightComputerBlockEntity.TOP + i;
             }
         }
@@ -176,11 +183,12 @@ public final class FlightComputerFace {
     }
 
     /**
-     * The bezel, flat, with more of a display's parts: {@code maker}'s line along its top, and its fail lamp lit when
-     * {@code failing}; the display of every onboard computer of the mod.
+     * The bezel, flat, with more of a display's parts: {@code maker}'s line along its top, {@code topKeys} keys along
+     * the top of its screen, and its fail lamp lit when {@code failing}; the display of every onboard computer of the
+     * mod.
      */
     public static void bezel(final GuiGraphics g, final Font font, final Colours c, final TextKey maker,
-                             final boolean failing) {
+                             final boolean failing, final int topKeys) {
         g.fill(0, 0, WIDTH, HEIGHT, c.bezel());
         hline(g, 0, WIDTH, 0, c.bezelLit());
         vline(g, 0, 0, HEIGHT, c.bezelLit());
@@ -209,8 +217,8 @@ public final class FlightComputerFace {
         g.fill(SX1 - 8, 7, SX1 - 1, 14, c.bezelShade());
         g.fill(SX1 - 7, 8, SX1 - 2, 13, c.sensor());
         g.fill(SX1 - 6, 9, SX1 - 5, 10, c.sensorShine());
-        for (int i = 0; i < PAGES.size(); i++) {
-            key(g, topKeyX(i), SY0 - 20, TOP_KEY_WIDTH, c);
+        for (int i = 0; i < topKeys; i++) {
+            key(g, topKeyX(i, topKeys), SY0 - 20, TOP_KEY_WIDTH, c);
         }
         for (int i = 0; i < SIDE_KEYS; i++) {
             final int y = SY0 + 24 + i * SIDE_KEY_STEP;
@@ -235,7 +243,7 @@ public final class FlightComputerFace {
      */
     public static void legend(final GuiGraphics g, final Font font, final List<Legend> legends, final int i,
                               final boolean left, final Colours c) {
-        if (i >= legends.size() || legends.get(i).text().isEmpty()) {
+        if (i >= legends.size() || legends.get(i).text().isEmpty() || legends.get(i).state() == Legend.State.OWN) {
             return;
         }
         final Legend shown = legends.get(i);
@@ -243,7 +251,7 @@ public final class FlightComputerFace {
         final int colour = switch (shown.state()) {
             case CHOSEN -> c.white();
             case LIVE -> c.cyan();
-            case OFF -> c.legendOff();
+            case OFF, OWN -> c.legendOff();
         };
         final int width = font.width(shown.text());
         final int x = left ? SX0 + LEGEND_FROM : SX1 - LEGEND_FROM - width;
@@ -268,7 +276,12 @@ public final class FlightComputerFace {
 
     /** Where the key {@code i} along the top stands, from the left, in the face's pixels. */
     public static int topKeyX(final int i) {
-        final int step = (SX1 - SX0 - 16) / PAGES.size();
+        return topKeyX(i, PAGES.size());
+    }
+
+    /** Where the key {@code i} along the top of a face with {@code topKeys} of them stands, in the face's pixels. */
+    public static int topKeyX(final int i, final int topKeys) {
+        final int step = (SX1 - SX0 - 16) / topKeys;
         return SX0 + 8 + i * step + (step - TOP_KEY_WIDTH) / 2;
     }
 
@@ -424,9 +437,12 @@ public final class FlightComputerFace {
      */
     public record Legend(String text, State state, boolean backed) {
 
-        /** How a legend is shown: in use, chosen, or not in use. */
+        /**
+         * How a legend is shown: in use, chosen, or not in use; or drawn by its page in a way of its own (the LAUNCH
+         * button under its cover), the face only finding it under a click.
+         */
         public enum State {
-            LIVE, CHOSEN, OFF
+            LIVE, CHOSEN, OFF, OWN
         }
     }
 
@@ -446,11 +462,13 @@ public final class FlightComputerFace {
      * @param plotted     the transfer as the transfer page plans it, and what the rocket has for it
      * @param stages      the rocket's stages, where each goes and the one chosen
      * @param readings    what the cabin reads
+     * @param landing     what the landing page shows beside its map
+     * @param launch      the count of the launcher the rocket stands on, if it stands on one
      */
     public record View(@Nullable FlightPage page, List<Legend> left, List<Legend> right, String target,
                        Optional<TransferPlan> plan, long tick, @Nullable BlockPos mark, int zoom, boolean grid,
                        LandingMapsClient.@Nullable Shown map, Plotted plotted, FlightComputerStages.Shown stages,
-                       CabinReadings readings, Landing landing) {
+                       CabinReadings readings, Landing landing, Optional<LaunchCount.Shown> launch) {
 
         public View {
             left = List.copyOf(left);
@@ -461,7 +479,7 @@ public final class FlightComputerFace {
         public static View cabin(final CabinReadings readings) {
             return new View(null, List.of(), List.of(), "", Optional.empty(), 0, null,
                     FlightComputerBlockEntity.WIDE, false, null, Plotted.NONE, FlightComputerStages.Shown.NONE,
-                    readings, Landing.NONE);
+                    readings, Landing.NONE, Optional.empty());
         }
     }
 
