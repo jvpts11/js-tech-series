@@ -70,6 +70,7 @@ Every capsule and every lunar lander's cabin carries a **flight computer**: a fl
 The XFER page draws the system round the Sun with the planets moving along their orbits, the same positions they have in the Overworld's sky.
 
 - **A year of the Earth lasts seven Overworld days**, a week. The planets move at that pace, and so do the windows: a launch window to Mars comes about every 5 real hours. A launch within about ten degrees of the best angle counts as in the window. The Moon has no window: a player goes whenever they like.
+- **Home from the Moon costs little.** The way to the Moon's orbit costs 4,100 m/s; the way back from it to the Overworld about 900, the Moon's pull being weak, as Apollo's burn home was, the rocket braking in the Overworld's air at the end. A rocket on the Moon's ground goes home with some 2,600 m/s.
 - **A player can always launch, in a window or not.** The player chooses the window to leave in: now, the next, or one up to four ahead, with a tape that shows how long until it opens. Outside the window the transfer costs more delta-v, up to twice as much from the worst place; waiting for the window saves propellant.
 - **The player chooses how much delta-v to spend.** Spending more than the least, up to twice, shortens the cruise, to a quarter of the usual at the shortest.
 - **A gravity assist** spends less (about 15% less) and takes longer (about 60% longer): that is the real trade, and Cassini took seven years to reach Saturn by swinging twice past Venus, once past the Earth and once past Jupiter.

@@ -19,7 +19,7 @@ import java.util.Optional;
  * Where a rocket designed on a world can go, and the delta-v each asks for, summed from the legs of the trip as the
  * Flight Computer plans them: the climb off the world it leaves to a low orbit; for another world, the transfer to it
  * in its window; and the burn down to its ground where it has no air to brake in, as the Moon has none. From the
- * Overworld, a low orbit asks 9,400 m/s, the Moon 15,200, Mars 13,000.
+ * Overworld, a low orbit asks 9,400 m/s, the Moon 15,200, Mars 13,000; from the Moon, home asks 2,600.
  */
 public final class DesignDestinations {
 

@@ -18,8 +18,9 @@ import java.util.Optional;
  * A transfer from one world to another as the Flight Computer plans it, at a moment: between two worlds with orbits of
  * their own round the Sun, as the Overworld and Mars, the phase between them now and the one the window opens at, how
  * long until the next window, and the delta-v of the transfer now and in the window; between the Overworld and its
- * Moon, no window, a player goes when they like. With the time it takes and how the rocket arrives: braking in the air
- * where its destination has any, burning its engines where it has none.
+ * Moon, no window, a player goes when they like, the way home from the Moon costing far less than the way there. With
+ * the time it takes and how the rocket arrives: braking in the air where its destination has any, burning its engines
+ * where it has none.
  *
  * @param from          the world it leaves
  * @param to            the world it goes to
@@ -50,8 +51,9 @@ public record TransferPlan(SolarBody from, SolarBody to, boolean windowed, doubl
         final Orbit leaving = round(from);
         final Orbit reaching = round(to);
         if (leaving == reaching) {
-            // The Overworld and its Moon: no window, the same burn whenever.
-            final double burn = Rocketry.LOW_ORBIT_TO_MOON_ORBIT;
+            // The Overworld and its Moon: no window, the same burn whenever; little to go home, out of the Moon's weak pull.
+            final double burn = from == SolarBody.MOON ? Rocketry.MOON_ORBIT_TO_OVERWORLD
+                    : Rocketry.LOW_ORBIT_TO_MOON_ORBIT;
             return Optional.of(new TransferPlan(from, to, false, 0, 0, true, 0, 0, burn, burn,
                     SolarSystemOrbits.MOON_TRIP_TICKS, aero));
         }

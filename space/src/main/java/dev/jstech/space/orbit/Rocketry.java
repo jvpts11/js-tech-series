@@ -21,6 +21,11 @@ public final class Rocketry {
     public static final double SURFACE_TO_LOW_ORBIT = 9_400;
     /** From a low orbit to the Moon's orbit. */
     public static final double LOW_ORBIT_TO_MOON_ORBIT = 4_100;
+    /**
+     * From the Moon's orbit home to the Overworld, braking in its air at the end: little, the Moon's pull being weak,
+     * as Apollo's burn home from the Moon's orbit was some 900 m/s.
+     */
+    public static final double MOON_ORBIT_TO_OVERWORLD = 900;
     /** From the Moon's orbit down to its surface, and back up. */
     public static final double MOON_ORBIT_TO_SURFACE = 1_700;
     /** From a low orbit to a transfer to Mars. */

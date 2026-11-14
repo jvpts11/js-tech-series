@@ -2862,6 +2862,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   cannot start one, and one blowing ends.
 - (Space) J's Space has no recipes yet in this release: everything in it is taken from the creative menu, J's Space
   tab, so it is played in creative, as the Mission Handbook says on its first page.
+- (Space) The way home from the Moon costs little: from its orbit to the Overworld about 900 m/s, as Apollo's burn
+  home was, braking in the Overworld's air at the end, where the way there costs 4,100. A rocket on the Moon's ground
+  goes home with some 2,600 m/s.
 - (Core) The sky kit: a sky's stars may shine by day, as in a sky with no air, at a share of how bright they are at
   midnight (`"by_day": 0.75`), and a sun may light the day and tint it while the mod that declared it draws it where
   it stands (`"drawn": false`).

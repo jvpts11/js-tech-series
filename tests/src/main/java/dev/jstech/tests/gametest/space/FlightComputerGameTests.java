@@ -80,6 +80,11 @@ public final class FlightComputerGameTests {
         helper.assertTrue(!moon.windowed() && moon.inWindow() && !moon.aerobraking()
                 && Math.abs(moon.deltaVNow() - Rocketry.LOW_ORBIT_TO_MOON_ORBIT) < CLOSE,
                 "to the airless Moon, no window, the same burn, by its engines: " + moon);
+        final TransferPlan home = TransferPlan.of(SolarBody.MOON, SolarBody.OVERWORLD, shut).orElseThrow();
+        helper.assertTrue(!home.windowed() && home.aerobraking()
+                && Math.abs(home.deltaVNow() - Rocketry.MOON_ORBIT_TO_OVERWORLD) < CLOSE
+                && home.deltaVNow() < moon.deltaVNow(),
+                "home from the Moon, far less than the way there, braking in the Overworld's air: " + home);
         helper.assertTrue(TransferPlan.of(SolarBody.MARS, SolarBody.MARS, 0).isEmpty(), "no transfer to itself");
         helper.succeed();
     }

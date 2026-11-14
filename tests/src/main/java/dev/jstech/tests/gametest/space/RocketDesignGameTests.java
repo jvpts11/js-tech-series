@@ -83,8 +83,8 @@ public final class RocketDesignGameTests {
                 "from the Overworld: a low orbit 9,400 m/s, the Moon 15,200, Mars 13,000: " + overworld);
         final List<DesignDestinations.Reach> moon = DesignDestinations.from(SolarBody.MOON);
         helper.assertTrue(Math.abs(moon.get(0).need() - 1_700) < CLOSE
-                && Math.abs(need(moon, SolarBody.OVERWORLD) - 5_800) < CLOSE,
-                "from the Moon: its low orbit 1,700, home 5,800, braking in the Earth's air: " + moon);
+                && Math.abs(need(moon, SolarBody.OVERWORLD) - 2_600) < CLOSE,
+                "from the Moon: its low orbit 1,700, home 2,600, braking in the Earth's air: " + moon);
         helper.assertTrue(Math.abs(overworld.get(1).shortBy(10_000) - 5_200) < CLOSE
                 && overworld.get(0).shortBy(10_000) == 0, "short by what it lacks, nothing where it reaches");
         helper.succeed();

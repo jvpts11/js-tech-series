@@ -181,6 +181,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   cannot start one, and one blowing ends.
 - J's Space has no recipes yet in this release: everything in it is taken from the creative menu, J's Space
   tab, so it is played in creative, as the Mission Handbook says on its first page.
+- The way home from the Moon costs little: from its orbit to the Overworld about 900 m/s, as Apollo's burn
+  home was, braking in the Overworld's air at the end, where the way there costs 4,100. A rocket on the Moon's ground
+  goes home with some 2,600 m/s.
 - The Solar System's space, drawn: the Overworld, the Moon and Mars are round bodies in their places, each
   kept still so whatever is built in its orbit stays over it, drawn at the screen's own resolution with a smooth
   outline and the texels of their maps, read from a smaller copy the farther they are. The Sun lights them smoothly
