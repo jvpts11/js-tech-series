@@ -127,7 +127,7 @@ public final class ShipOrbitClientTests {
                     watching[0] = true;
                     ship[0].teleport(ship[0].pose().turnedBy(1, 0, 0, Math.toRadians(CLIMBING_PITCH)));
                     MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(
-                            CRUISE, 0, 1, 1, 0, 0)));
+                            CRUISE, 0, 1, 0, 0)));
                 })
                 .thenWaitUntil(() -> arrived(ctx, screen), ARRIVE, "the ship and its pilot to cross into space")
                 .thenServer(0, level -> plot[0] = MovingStructures.byId(space(ctx), ship[0].id()).plot())
@@ -176,7 +176,7 @@ public final class ShipOrbitClientTests {
                     arrivedAt[1] = there[0].pose().z();
                     // Flying on fast over the Moon's land, made only as it comes, as a ship come down from space does.
                     MovingStructures.move(there[0], ((ShipFlight) there[0].motion()).with(new ShipFlightModel.State(
-                            FAST, 0, 1, 1, 0, 0)));
+                            FAST, 0, 1, 0, 0)));
                 })
                 .thenWaitUntilServer(level -> Math.hypot(there[0].pose().x() - arrivedAt[0], there[0].pose().z()
                         - arrivedAt[1]) > FLIES_ON, ARRIVE, "the ship to fly on over the Moon", level -> "at "
@@ -248,7 +248,7 @@ public final class ShipOrbitClientTests {
                 .thenServer(0, level -> {
                     flying[0] = true;
                     MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(
-                            new ShipFlightModel.State(CRUISE, 0, 1, 1, 0, 0)));
+                            new ShipFlightModel.State(CRUISE, 0, 1, 0, 0)));
                 })
                 .then(SETTLE, () -> crouch.setDown(true))
                 .thenWaitUntil(() -> !(ctx.player().getVehicle() instanceof StructureSeatEntity), ARRIVE,

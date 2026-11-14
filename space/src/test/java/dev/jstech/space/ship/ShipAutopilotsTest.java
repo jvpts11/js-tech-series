@@ -17,10 +17,10 @@ class ShipAutopilotsTest {
 
     /* A ship of 40 tonnes on feet: 420 kN of air engines, 420 kN of bells, delta wings holding 400 kN. */
     private static final ShipFlightModel.Performance SHIP = new ShipFlightModel.Performance(40_000, 420_000,
-            420_000, 400_000, 4.0e6, ShipFlightModel.Gear.LEGS);
+            420_000, 400_000, 0, ShipFlightModel.Gear.LEGS);
     /* The same ship on wheels. */
     private static final ShipFlightModel.Performance WHEELED = new ShipFlightModel.Performance(40_000, 420_000,
-            420_000, 400_000, 4.0e6, ShipFlightModel.Gear.WHEELS);
+            420_000, 400_000, 0, ShipFlightModel.Gear.WHEELS);
     /* The land under a runway, and how high over it a ship flies when its autopilot is engaged. */
     private static final double GROUND = 64;
     private static final double ALOFT = 40;
@@ -29,7 +29,7 @@ class ShipAutopilotsTest {
     private static final double ON_THE_LINE = 4;
     /* How far off level its nose is, at the most, as it settles onto a runway, in degrees. */
     private static final double LEVEL = 2;
-    private static final ShipFlightModel.State CRUISING = new ShipFlightModel.State(30, 0, 0.75, 1, 0, 0);
+    private static final ShipFlightModel.State CRUISING = new ShipFlightModel.State(30, 0, 0.75, 0, 0);
     /* The height of the plane of the low orbits in a system's space. */
     private static final double PLANE = 64;
     private static final double[] UP = {0, 1, 0};
@@ -76,7 +76,7 @@ class ShipAutopilotsTest {
     @Test
     void settle_flownFromTheClimbLevelsOntoThePlaneOfTheLowOrbits() {
         // Just over the line in space, climbing at the climb's angle, at the speed it climbed at: no air, no pull.
-        final Flight flight = new Flight(new ShipFlightModel.State(190, 0, 1, 1, 0, 0), 0, 70, 0, 0,
+        final Flight flight = new Flight(new ShipFlightModel.State(190, 0, 1, 0, 0), 0, 70, 0, 0,
                 ShipAutopilots.CLIMB_PITCH, false);
         int ticks = 0;
         while (!ShipAutopilots.settled(flight.pitch, flight.y - PLANE) && ticks < 120 * TICKS_A_SECOND) {
@@ -108,7 +108,7 @@ class ShipAutopilotsTest {
 
     @Test
     void land_comesDownWhenOverTheSpot() {
-        final ShipFlightModel.State hovering = new ShipFlightModel.State(0.5, 0, 0, 1, 0, 90);
+        final ShipFlightModel.State hovering = new ShipFlightModel.State(0.5, 0, 0, 0, 90);
         final ShipFlightModel.Held over = ShipAutopilots.land(hovering, 0, 0, 0.3, -6, 0.2);
         assertEquals(1, over.down());
         assertEquals(0, over.up());
@@ -130,7 +130,7 @@ class ShipAutopilotsTest {
     @Test
     void land_flownFromHoveringHighJustOffTheSpotSetsDownOnIt() {
         // Hovering still, high over the land, a couple of metres short of the spot: it creeps over and comes down.
-        final Flight flight = new Flight(new ShipFlightModel.State(0, 0, 0, 1, 0, 66), 0, 119, 0, 0, 0, false);
+        final Flight flight = new Flight(new ShipFlightModel.State(0, 0, 0, 0, 66), 0, 119, 0, 0, 0, false);
         final double spotZ = -2.2;
         for (int tick = 0; tick < 120 * TICKS_A_SECOND && !flight.landed; tick++) {
             flight.fly(ShipAutopilots.land(flight.state, flight.heading, flight.pitch, -flight.x, 64 - flight.y,
@@ -143,11 +143,11 @@ class ShipAutopilotsTest {
     @Test
     void land_holdsItsThrottleAtTheShareItWantsToTheHundredth() {
         // Its throttle shut, a spot four metres ahead: it opens just to the creep it wants, not past it.
-        ShipFlightModel.State state = new ShipFlightModel.State(0, 0, 0, 1, 0, 66);
+        ShipFlightModel.State state = new ShipFlightModel.State(0, 0, 0, 0, 66);
         for (int tick = 0; tick < TICKS_A_SECOND; tick++) {
             final ShipFlightModel.Held held = ShipAutopilots.land(state, 0, 0, 0, -20, -4);
             state = new ShipFlightModel.State(0, 0, Math.clamp(state.throttle() + held.forward()
-                    * ShipFlightModel.OPENS - held.back() * ShipFlightModel.CLOSES, 0.0, 1.0), 1, 0, 66);
+                    * ShipFlightModel.OPENS - held.back() * ShipFlightModel.CLOSES, 0.0, 1.0), 0, 66);
         }
         assertEquals(1.0 / ShipFlightModel.CRUISE_AIR, state.throttle(), 0.002);
     }
@@ -189,7 +189,7 @@ class ShipAutopilotsTest {
 
     @Test
     void runway_rollingOutShutsItsThrottleAndKeepsItsNoseAlong() {
-        final ShipFlightModel.State rolling = new ShipFlightModel.State(8, 0, 0.4, 1, 0, 0);
+        final ShipFlightModel.State rolling = new ShipFlightModel.State(8, 0, 0.4, 0, 0);
         // On the runway 30 metres past its beacon, slow, its nose a little off the runway's way and down.
         final ShipFlightModel.Held held = ShipAutopilots.runway(rolling, 5, -3, 0, 0, 30, 0, true);
         assertTrue(held.back() > 0 && held.forward() == 0, "its throttle shuts");
@@ -201,7 +201,7 @@ class ShipAutopilotsTest {
     void runway_rollingOutSlowWithItsNoseDownStaysOnTheLand() {
         // Touched down nose down, as the glide leaves it, and slowed below the speed it hovers at, its nose still down
         // as the land holds it in the game.
-        final Flight flight = new Flight(new ShipFlightModel.State(9.7, 0, 0.2, 1, 0, 0), 0, GROUND, -40, 0, -3, true,
+        final Flight flight = new Flight(new ShipFlightModel.State(9.7, 0, 0.2, 0, 0), 0, GROUND, -40, 0, -3, true,
                 WHEELED);
         for (int tick = 0; tick < 10 * TICKS_A_SECOND; tick++) {
             flight.fly(ShipAutopilots.runway(flight.state, flight.heading, flight.pitch, -flight.x,
@@ -383,7 +383,7 @@ class ShipAutopilotsTest {
             if (this.landed) {
                 this.y = ground;
                 this.state = new ShipFlightModel.State(this.state.speed(), 0, this.state.throttle(),
-                        this.state.charge(), Math.max(0, this.state.rise()), this.state.nozzles());
+                        Math.max(0, this.state.rise()), this.state.nozzles());
             }
         }
 

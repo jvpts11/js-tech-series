@@ -76,7 +76,7 @@ public final class KeyAction {
 
     /**
      * Whether it is a key a pilot uses at the helm of a moving structure: while the player sits at a helm it wins over
-     * every other key action on the same key, which does nothing then, as a ship's boost wins over a screen's key.
+     * every other key action on the same key, which does nothing then, as a ship's controls win over a screen's key.
      */
     public boolean atTheHelm() {
         return this.helm;

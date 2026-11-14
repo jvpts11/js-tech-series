@@ -148,8 +148,7 @@ public final class ShipHoverClientTests {
                     ship[0].teleport(ship[0].pose().movedTo(ship[0].pose().x(), ship[0].pose().y() + HIGH,
                             ship[0].pose().z()));
                     final ShipFlight flight = (ShipFlight) ship[0].motion();
-                    MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(FAST, 0, FAST / 40, 1, 0,
-                            0)));
+                    MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(FAST, 0, FAST / 40, 0, 0)));
                 })
                 .thenWaitUntil(() -> !shown(ctx, ship[0]).gearDown() && !shown(ctx, ship[0]).lifting(), ARRIVE,
                         "high and fast, its gear to go up on the player's game");

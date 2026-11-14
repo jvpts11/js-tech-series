@@ -230,7 +230,7 @@ public final class ShipFlightGameTests {
             from[0] = ship[0].pose();
             aloft(ship[0], HIGH);
             // Flying at 30 m/s, half again its stall in this air, its throttle where its pilot left it.
-            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISE, 0, CRUISE / CRUISING, 1, 0,
+            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISE, 0, CRUISE / CRUISING, 0,
                     0)));
         });
         cruise(helper, sequence, ship, HELD).thenExecute(() -> {
@@ -269,18 +269,14 @@ public final class ShipFlightGameTests {
         final GameTestSequence sequence = flying(helper, ship, STRAIGHT_WEST).thenExecute(() -> {
             aloft(ship[0], HIGH);
             final ShipFlight flight = (ShipFlight) ship[0].motion();
-            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISING, 0, 1, 1, 0, 0)));
+            MovingStructures.move(ship[0], flight.with(new ShipFlightModel.State(CRUISING, 0, 1, 0, 0)));
         });
-        for (int tick = 0; tick < BOOSTED; tick++) {
-            sequence.thenExecuteAfter(1, () -> {
-                pilot(helper, ship[0], Map.of());
-                ShipBoost.hold(ship[0], helper.getLevel().getGameTime());
-            });
-        }
-        sequence.thenExecute(() -> {
+        boost(helper, sequence, ship, BOOSTED).thenExecute(() -> {
             final ShipFlightModel.State now = ((ShipFlight) ship[0].motion()).state();
-            helper.assertTrue(now.speed() > CRUISING + 1 && now.charge() < 1, "boosted over an empty stretch, it"
-                    + " goes past its cruise and spends its boost: " + now);
+            final ShipReadings shown = console(helper, ship[0]).flight();
+            helper.assertTrue(now.speed() > CRUISING + 1 && shown.boosting() && shown.boost() > 0, "boosted over an"
+                    + " empty stretch, it goes past its cruise, its console showing how far into the boost: " + now
+                    + ", " + shown);
         }).thenExecute(() -> {
             MovingStructures.takeAway(ship[0]);
             keep(helper, false, STRAIGHT_WEST);
@@ -356,7 +352,7 @@ public final class ShipFlightGameTests {
             ship[0].teleport(now.movedTo(now.x(), SpaceClimbs.ceiling(overworld) - UNDER_THE_LINE, now.z())
                     .turnedBy(1, 0, 0, Math.toRadians(CLIMBING_PITCH)));
             MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(CRUISING,
-                    0, 1, 1, 0, 0)));
+                    0, 1, 0, 0)));
             pilot[0] = GameTestPlayers.connected(helper, "pilot");
             pilot[0].setGameMode(GameType.SURVIVAL);
             helper.assertTrue(MovingStructures.sit(pilot[0], seat), "the pilot sits at its helm");
@@ -391,32 +387,29 @@ public final class ShipFlightGameTests {
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
-    public static void flight_itsReactorBurnsItsDeuteriumAndWithNoneLeftItsBoostFillsNoMore(
-            final GameTestHelper helper) {
+    public static void flight_itsReactorBurnsItsDeuteriumAndWithNoneLeftItCannotBoost(final GameTestHelper helper) {
         final MovingStructure[] ship = new MovingStructure[1];
         final GameTestSequence sequence = letGo(helper, ship).thenExecute(() -> {
-            // Taken up and hovering where it is, its boost spent, its pilot at the helm holding nothing.
+            // Taken up and hovering where it is, its pilot at the helm holding nothing.
             aloft(ship[0], HIGH);
-            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(0, 0, 0,
-                    0, 0, 0)));
+            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(ShipFlightModel.State.RESTING));
         });
         cruise(helper, sequence, ship, BURNING).thenExecute(() -> {
             final AirReserveEntity console = console(helper, ship[0]);
             helper.assertTrue(console.deuterium() < 1, "flying, its reactor burns its deuterium: "
                     + console.deuterium());
-            helper.assertTrue(((ShipFlight) ship[0].motion()).state().charge() > 0, "and its power fills its boost");
             final StructurePose at = ship[0].pose();
             final double over = ship[0].worldBox().minY - helper.getLevel().getHeight(
                     Heightmap.Types.MOTION_BLOCKING, Mth.floor(at.x()), Mth.floor(at.z()));
             helper.assertTrue(Math.abs(console.flight().altitude() - over) <= 1, "its console reads how high over"
                     + " what stands under it it flies: " + console.flight().altitude() + " for " + over);
             console.burn(1);
-            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(0, 0, 0,
-                    0, 0, 0)));
+            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(ShipFlightModel.State.RESTING));
         });
-        cruise(helper, sequence, ship, HELD).thenExecute(() -> {
-            helper.assertTrue(((ShipFlight) ship[0].motion()).state().charge() == 0, "with none left its reactor"
-                    + " makes nothing, its boost filling no more");
+        boost(helper, sequence, ship, BOOSTED).thenExecute(() -> {
+            final ShipFlightModel.State now = ((ShipFlight) ship[0].motion()).state();
+            helper.assertTrue(!console(helper, ship[0]).flight().boosting() && now.speed() < CRUISING, "with none"
+                    + " left its reactor makes nothing, and its boost held, it does not boost: " + now);
             MovingStructures.takeAway(ship[0]);
         }).thenSucceed();
     }
@@ -570,6 +563,18 @@ public final class ShipFlightGameTests {
                                            final MovingStructure[] ship, final int ticks) {
         for (int tick = 0; tick < ticks; tick++) {
             sequence.thenExecuteAfter(1, () -> pilot(helper, ship[0], Map.of()));
+        }
+        return sequence;
+    }
+
+    /* Its pilot sits at the helm {@code ticks} ticks holding its boost and nothing else. */
+    private static GameTestSequence boost(final GameTestHelper helper, final GameTestSequence sequence,
+                                          final MovingStructure[] ship, final int ticks) {
+        for (int tick = 0; tick < ticks; tick++) {
+            sequence.thenExecuteAfter(1, () -> {
+                pilot(helper, ship[0], Map.of());
+                ShipBoost.hold(ship[0], helper.getLevel().getGameTime());
+            });
         }
         return sequence;
     }

@@ -7,8 +7,10 @@
  */
 package dev.jstech.core.client.moving;
 
+import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.client.light.DynamicLightsClient;
 import dev.jstech.core.client.light.IDynamicLightSource;
+import dev.jstech.core.input.CoreKeys;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.LevelMovingStructures;
 import dev.jstech.core.moving.MovingStructureEntity;
@@ -476,7 +478,7 @@ public final class ClientMovingStructures implements StructureClientHooks.IHooks
         if (game.options.keyJump.isDown()) {
             keys |= StructureHelmPayload.bit(StructureControls.ControlAxis.UP);
         }
-        if (game.options.keySprint.isDown()) {
+        if (KeyActionsClient.mapping(CoreKeys.HELM_DOWN).isDown()) {
             keys |= StructureHelmPayload.bit(StructureControls.ControlAxis.DOWN);
         }
         if (keys != helmKeys || player.tickCount % HELM_AGAIN == 0) {

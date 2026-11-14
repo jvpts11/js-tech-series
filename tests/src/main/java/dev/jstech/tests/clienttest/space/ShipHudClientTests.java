@@ -8,9 +8,12 @@
 package dev.jstech.tests.clienttest.space;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import dev.jstech.core.client.gui.data.DataScreen;
+import dev.jstech.core.client.input.KeyActionsClient;
+import dev.jstech.core.input.CoreKeys;
+import dev.jstech.core.input.KeyAction;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureControls;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.plan.PlanSpot;
@@ -77,6 +80,8 @@ public final class ShipHudClientTests {
     private static final int[] SEAT_SPEED = {306, 182};
     private static final int[] BEHIND_SPEED = {106, 272};
     private static final int[] SEAT_HEADING = {480, 54};
+    /* Round TURN SLOW under the boost's bar seen from the seat, clear of the bar: its corners. */
+    private static final int[] SEAT_TURN_SLOW = {284, 220, 334, 231};
     /* Inside the boxes of LAND and ORBIT along the bottom seen from the seat, under their words, clear of the frame. */
     private static final int[] SEAT_LAND = {420, 322};
     private static final int[] SEAT_ORBIT = {470, 322};
@@ -92,6 +97,12 @@ public final class ShipHudClientTests {
     private static final int GREEN_AT_LEAST = 200;
     private static final int BLUE_AT_LEAST = 110;
     private static final int RED_AT_MOST = 190;
+    /* What reads as the HUD's amber: its red high, its green middling, its blue low; how much of it makes words. */
+    private static final int AMBER_RED_AT_LEAST = 210;
+    private static final int AMBER_GREEN_AT_LEAST = 150;
+    private static final int AMBER_GREEN_AT_MOST = 240;
+    private static final int AMBER_BLUE_AT_MOST = 150;
+    private static final int LEAST_AMBER = 6;
     private static final int CHANNEL = 0xFF;
     private static final ShipDesign SHIP = new ShipDesign("JS-07", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("lab"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
@@ -120,33 +131,63 @@ public final class ShipHudClientTests {
     }
 
     /*
-     * B is both the boost's key and the key of the Core's screen of the body: at the helm the boost's wins, held it
-     * boosts and no screen opens; up from the helm it opens the body's screen, which Escape closes to the game.
+     * At the helm left Ctrl, the game's sprint key too, boosts the ship, and C takes it down: Ctrl held, it boosts and
+     * the helm holds nothing down; C held, the helm holds it down and nothing boosts.
      */
     @ClientTest(timeoutTicks = 2400)
-    public static void keys_atTheHelmTheBoostWinsItsKeyAndOnFootTheBodysScreenOpens(final ClientTestContext ctx) {
+    public static void keys_atTheHelmCtrlBoostsTheShipAndCTakesItDown(final ClientTestContext ctx) {
         final MovingStructure[] ship = new MovingStructure[1];
-        final InputConstants.Key b = InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_B);
+        final InputConstants.Key ctrl = InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_LEFT_CONTROL);
+        final InputConstants.Key c = InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_C);
         final boolean[] boosted = new boolean[1];
+        final float[] down = new float[1];
         atTheHelm(ctx, ship)
                 .then(0, () -> {
-                    KeyMapping.resetMapping();
-                    KeyMapping.click(b);
-                    KeyMapping.set(b, true);
+                    ctx.assertTrue(onItsDefault(ctx, ShipBoost.KEY).equals(ctrl), "the boost starts on left Ctrl");
+                    ctx.assertTrue(onItsDefault(ctx, CoreKeys.HELM_DOWN).equals(c), "going down at a helm on C");
+                    KeyMapping.set(ctrl, true);
                 })
-                .thenServer(SETTLE, level -> boosted[0] = ShipBoost.held(ship[0], level.getGameTime()))
+                .thenServer(SETTLE, level -> {
+                    boosted[0] = ShipBoost.held(ship[0], level.getGameTime());
+                    down[0] = ship[0].controls().value(StructureControls.ControlAxis.DOWN, level.getGameTime());
+                })
                 .then(0, () -> {
-                    KeyMapping.set(b, false);
-                    ctx.assertTrue(boosted[0], "at the helm, B held boosts the ship");
-                    ctx.assertTrue(ctx.mc().screen == null, "and opens no screen: " + ctx.mc().screen);
+                    KeyMapping.set(ctrl, false);
+                    ctx.assertTrue(boosted[0] && down[0] == 0, "at the helm, left Ctrl held boosts the ship and"
+                            + " takes it down not at all: boosting " + boosted[0] + ", down " + down[0]);
+                    KeyMapping.set(c, true);
                 })
-                .thenServer(0, level -> ctx.serverPlayer().stopRiding())
-                .thenWaitUntil(() -> !(ctx.player().getVehicle() instanceof StructureSeatEntity), ARRIVE,
-                        "the player to get up from the helm on their game")
-                .then(0, () -> KeyMapping.click(b))
-                .thenAwaitScreen(DataScreen.class, ARRIVE)
-                .then(0, () -> ctx.key(GLFW.GLFW_KEY_ESCAPE))
-                .thenAwaitNoScreen(ARRIVE);
+                .thenServer(SETTLE, level -> {
+                    boosted[0] = ShipBoost.held(ship[0], level.getGameTime());
+                    down[0] = ship[0].controls().value(StructureControls.ControlAxis.DOWN, level.getGameTime());
+                })
+                .then(0, () -> {
+                    KeyMapping.set(c, false);
+                    ctx.assertTrue(!boosted[0] && down[0] > 0, "C held takes it down and boosts it not: boosting "
+                            + boosted[0] + ", down " + down[0]);
+                });
+    }
+
+    /*
+     * Boosted at the helm, left Ctrl held, the boost's bar lights amber with TURN SLOW under it, as the approved mock
+     * draws it; let go, TURN SLOW goes.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void hud_boostedItsBarLightsAmberWithTurnSlowUnderIt(final ClientTestContext ctx) {
+        final InputConstants.Key ctrl = InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_LEFT_CONTROL);
+        ctx.afterTest(() -> KeyMapping.set(ctrl, false));
+        atTheHelm(ctx, new MovingStructure[1])
+                .then(0, () -> {
+                    ctx.mc().options.setCameraType(CameraType.FIRST_PERSON);
+                    ctx.assertTrue(onItsDefault(ctx, ShipBoost.KEY).equals(ctrl), "the boost starts on left Ctrl");
+                    KeyMapping.set(ctrl, true);
+                })
+                .thenWaitUntil(() -> boosting(ctx) && amber(ctx, SEAT_TURN_SLOW) >= LEAST_AMBER, ARRIVE,
+                        "boosted, TURN SLOW in amber under the boost's bar")
+                .thenScreenshot(SETTLE, "ship-hud-boost")
+                .then(0, () -> KeyMapping.set(ctrl, false))
+                .thenWaitUntil(() -> !boosting(ctx) && amber(ctx, SEAT_TURN_SLOW) == 0, ARRIVE,
+                        "let go, TURN SLOW goes");
     }
 
     @ClientTest(timeoutTicks = 2400)
@@ -229,7 +270,7 @@ public final class ShipHudClientTests {
                     ship[0].teleport(ship[0].pose().movedTo(ship[0].pose().x(), ship[0].pose().y() + ALOFT,
                             ship[0].pose().z()));
                     MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(new ShipFlightModel.State(
-                            CRUISE, 0, CRUISE / 40, 1, 0, 0)));
+                            CRUISE, 0, CRUISE / 40, 0, 0)));
                     ctx.serverPlayer().setGameMode(GameType.SURVIVAL);
                     ctx.assertTrue(MovingStructures.sit(ctx.serverPlayer(), seat), "the player sits at its helm");
                 })
@@ -241,6 +282,28 @@ public final class ShipHudClientTests {
     private static String engaged(final ClientTestContext ctx) {
         final AirReserveEntity console = ShipHud.atTheHelm(ctx.mc());
         return console == null ? "" : console.flight().pilot().mode();
+    }
+
+    /*
+     * Puts {@code action}'s key on the key it starts on for the test, whatever a run before left it on in the game's
+     * settings, and back after; that key.
+     */
+    private static InputConstants.Key onItsDefault(final ClientTestContext ctx, final KeyAction action) {
+        final KeyMapping mapping = KeyActionsClient.mapping(action);
+        final InputConstants.Key was = mapping.getKey();
+        ctx.afterTest(() -> {
+            mapping.setKey(was);
+            KeyMapping.resetMapping();
+        });
+        mapping.setKey(mapping.getDefaultKey());
+        KeyMapping.resetMapping();
+        return mapping.getDefaultKey();
+    }
+
+    /* Whether the console of the ship whose helm the player sits at shows it boosting. */
+    private static boolean boosting(final ClientTestContext ctx) {
+        final AirReserveEntity console = ShipHud.atTheHelm(ctx.mc());
+        return console != null && console.flight().boosting();
     }
 
     /* Where the engaged autopilot's symbol stands, as the console the player sits at shows it; none away from it. */
@@ -311,6 +374,36 @@ public final class ShipHudClientTests {
             final int blue = argb & CHANNEL;
             return green >= GREEN_AT_LEAST && blue >= BLUE_AT_LEAST && red <= RED_AT_MOST;
         }
+    }
+
+    /*
+     * How many of the screen's pixels in the approved screen's box {@code box}, its corners, as the HUD is scaled, are
+     * the HUD's amber.
+     */
+    private static int amber(final ClientTestContext ctx, final int[] box) {
+        final int width = ctx.mc().getWindow().getGuiScaledWidth();
+        final int height = ctx.mc().getWindow().getGuiScaledHeight();
+        final double scale = Math.min(width / (double) SCREEN_WIDTH, height / (double) SCREEN_HEIGHT);
+        final double left = (width - SCREEN_WIDTH * scale) / 2;
+        final double top = (height - SCREEN_HEIGHT * scale) / 2;
+        final int x0 = Math.max(0, (int) Math.floor(left + box[0] * scale));
+        final int y0 = Math.max(0, (int) Math.floor(top + box[1] * scale));
+        final int x1 = Math.min(width - 1, (int) Math.ceil(left + box[2] * scale));
+        final int y1 = Math.min(height - 1, (int) Math.ceil(top + box[3] * scale));
+        int lit = 0;
+        try (ClientTestHelper.FrameSampler frame = ctx.sampleFrame()) {
+            for (int x = x0; x <= x1; x++) {
+                for (int y = y0; y <= y1; y++) {
+                    final int argb = frame.pixel(x, y);
+                    final int red = argb >> 16 & CHANNEL;
+                    final int green = argb >> 8 & CHANNEL;
+                    final int blue = argb & CHANNEL;
+                    lit += red >= AMBER_RED_AT_LEAST && green >= AMBER_GREEN_AT_LEAST && green <= AMBER_GREEN_AT_MOST
+                            && blue <= AMBER_BLUE_AT_MOST ? 1 : 0;
+                }
+            }
+        }
+        return lit;
     }
 
     /* The first place of {@code plan} that wants {@code block}. */

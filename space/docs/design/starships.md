@@ -120,12 +120,14 @@ kit for its vehicles.
 
 - **The player flies a starship in the spirit of No Man's Sky**: it goes where its nose points, with no drift and no
   orbital sums. The pilot sits in the cockpit's pilot seat, which is the helm, opens and closes the throttle (it stays
-  where it is left), turns, and pitches the nose up and down. In the air its air engines push, and in the thin air of the
+  where it is left), turns, and pitches the nose up and down (jump up, C down). In the air its air engines push, and in the thin air of the
   climb and in space its bells push. Its wings hold it up, more the faster it goes and less in thinner air, and flying too
   slowly it sinks. In space it flies free and faster. **Weight counts**: a heavier ship gathers speed more slowly and needs
   more of it to stay up; a ship too heavy for its engines only sinks.
-- **Boost.** On its own key, the boost takes the ship faster across an empty stretch, well clear of the land or in space,
-  from a store the reactor's spare power fills.
+- **Boost.** Held on left Ctrl, the boost takes the ship faster across an empty stretch, well clear of the land or in
+  space, for as long as the pilot holds it. Its one cost is the ship's agility: while it boosts, the ship turns and
+  pitches at four tenths of its usual rate, and the HUD says TURN SLOW. The reactor drives it, so a ship whose reactor has
+  no deuterium left cannot boost.
 - **Taking off and landing.** The air engines' nozzles turn down, as the Harrier's do, just far enough to hold what the
   wings do not. Where the air does not reach, on the Moon and in Mars' thin air, the **thrusters** hold the ship up with
   a force of their own, firing down jets of cold gas; **a ship with no thrusters lands only where there is air**, and
@@ -139,7 +141,8 @@ kit for its vehicles.
   ([Travel](travel.md)): over the build limit it flies on through the open sky, and over the line it crosses into the
   system's space whole, with no loading screen, its pilot still at the helm.
 - **The HUD.** Projected on the canopy, green, flat and in pixels: the heading tape, the pitch ladder with the flight path
-  marker (which stands for the crosshair), the speed with the boost's bar, the altitude and climb, the reactor's power and
+  marker (which stands for the crosshair), the speed with the boost's bar (how far into the boost's speed the ship is,
+  amber with TURN SLOW under it while it boosts), the altitude and climb, the reactor's power and
   deuterium, the nozzles' angle and the gear, and the autopilot's three modes. From behind, the camera stands back round
   the ship and the HUD spreads over the screen.
 
@@ -299,8 +302,8 @@ its share of the part's figures. A repair kit mends it. A destroyed ship becomes
 ### What a starship spends
 
 The reactor burns **deuterium** as the ship flies, a full load lasting about four hours aloft. With none left, the reactor
-makes no power and the boost fills no more; a dock fills the load again. The boost lasts about eight seconds from a store
-the reactor's spare power fills. Both are first estimates.
+makes no power and the ship cannot boost; a dock fills the load again. The boost spends nothing more: held, it lasts as
+long as the pilot holds it, its one cost the slower turning. The four hours and the four tenths are first estimates.
 
 Still to build: the main engines spending propellant, fusion fuel on the larger ships (deuterium and helium-3 for the
 short drive), the weapons spending the reactor's energy, and a gas scoop that refuels at a giant.

@@ -6434,6 +6434,7 @@ stable 4
 10 dev.jstech.core.input.CoreKeys  static final KeyAction CUT_AGENTS
 10 dev.jstech.core.input.CoreKeys  static final KeyAction EDIT_HUD
 10 dev.jstech.core.input.CoreKeys  static final KeyAction FREE_LOOK
+61 dev.jstech.core.input.CoreKeys  static final KeyAction HELM_DOWN
 12 dev.jstech.core.input.CoreKeys  static final KeyAction KEEP_KEYFRAME
 10 dev.jstech.core.input.CoreKeys  static final KeyAction NOTIFICATIONS
 10 dev.jstech.core.input.CoreKeys  static final KeyAction OPEN_IN_MANUAL
@@ -6445,6 +6446,7 @@ stable 4
 10 dev.jstech.core.input.CoreKeys  static final TextKey CATEGORY
 10 dev.jstech.core.input.CoreKeys  static final TextKey CUT_AGENTS_KEY
 10 dev.jstech.core.input.CoreKeys  static final TextKey EDIT_HUD_KEY
+61 dev.jstech.core.input.CoreKeys  static final TextKey HELM_DOWN_KEY
 10 dev.jstech.core.input.CoreKeys  static final TextKey STUDIO_KEY
 10 dev.jstech.core.input.CoreKeys  static void declare()
 10 dev.jstech.core.input.KeyAction  type final class

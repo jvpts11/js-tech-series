@@ -17,7 +17,7 @@ The blocks of a ship's engines and its fusion reactor.
 
 ## What it is for
 
-The air engines push in the air, and turn their nozzles down to lift the ship straight up and hover. The main engines push as the air thins, in the climb and in space. DOCK drifts the ship on its thrusters. The reactor powers the ship's parts, and its spare power fills the boost. It burns deuterium as the ship flies: a full load lasts four hours aloft.
+The air engines push in the air, and turn their nozzles down to lift the ship straight up and hover. The main engines push as the air thins, in the climb and in space. DOCK drifts the ship on its thrusters. The reactor powers the ship's parts and its boost. It burns deuterium as the ship flies: a full load lasts four hours aloft.
 
 ## How to get it
 
@@ -36,8 +36,8 @@ From the creative menu, J's Space tab.
 > [!PROBLEM] The ship will not lift off straight up.
 > It has no air engines, or it is too heavy for them. Where the air is thin they lift less.
 
-> [!PROBLEM] The boost fills no more.
-> The deuterium is spent, D2 at 0%, or the parts take all the reactor's power. A dock fills the reactor again as it takes the ship back.
+> [!PROBLEM] The ship will not boost.
+> The deuterium is spent, D2 at 0%. A dock fills the reactor again as it takes the ship back.
 
 > [!CAUTION]
 > No main engine goes behind a Ramp Hold at the tail: set a Magnetic Nozzle on Stub Wings instead.

@@ -661,6 +661,7 @@
   "jsspace.ship_hud.west": "O",
   "jsspace.ship_hud.speed": "VEL M/S",
   "jsspace.ship_hud.boost": "IMPULSO",
+  "jsspace.ship_hud.turn_slow": "GIRO LENTO",
   "jsspace.ship_hud.altitude": "ALT",
   "jsspace.ship_hud.climb": "VV %s",
   "jsspace.ship_hud.power": "POT %s/%s MW",

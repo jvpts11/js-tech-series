@@ -636,6 +636,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   may stand formed as, a landing pad raised on a truss or laid flat on the ground: each build is checked in order,
   the first found whole is its structure, merged into that build's own formed model, and `shape()` says which.
   Experimental.
+- (Core) A helm's own down key: J's Core's API is at version 61. `CoreKeys.HELM_DOWN`, C until the player changes
+  it, takes a moving structure down from its helm, which the sprint key did before; the sprint key is left to what a
+  mod's helm does with it, as a ship's boost. Experimental.
 - (Computers) The Mining Computer: J's Computers' API is at version 21. `HostScope.MINING_COMPUTER` is the Mining
   Computer's own scope, for a program or a command that runs only on a mining rig. Experimental.
 - (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of
@@ -3548,12 +3551,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   parked; its blocks fly as they stand, what works on the ground works aboard, and its crew walks about inside in
   flight.
 - (Space) A ship flies in the spirit of No Man's Sky: it goes where its nose points, with no drift. Its pilot opens
-  and closes its throttle, which stays where they leave it, turns it, and pitches its nose up and down with the keys
-  they jump and sprint with. In the air its air engines push, and in the thin air of the climb and in space its bells;
+  and closes its throttle, which stays where they leave it, turns it, and pitches its nose up and down with the jump
+  key and C. In the air its air engines push, and in the thin air of the climb and in space its bells;
   its wings hold it up, more the faster it goes and less in thinner air, and flying too slowly it sinks. In space it
   flies free, faster. Its weight counts: it is what its parts weigh, and a heavier ship gathers speed more slowly and
-  needs more of it to stay up. Its boost, on its own key (B until changed), takes it faster across an empty stretch,
-  well clear of the land, from a store its reactor's spare power fills. It rests on the land under it, steps up what
+  needs more of it to stay up. Its boost, held on left Ctrl until changed, takes it faster across an empty stretch,
+  well clear of the land, for as long as it is held, its one cost that the ship turns and pitches at four tenths of
+  its rate while it lasts; with no deuterium left it cannot boost. It rests on the land under it, steps up what
   is low, and is stopped by the land it would fly into or that is not loaded yet.
 - (Space) A ship takes off straight up and comes down where it means to: its air engines' nozzles turn down just as
   far as its wings leave weight to hold, so below flying speed it hovers on them, its nose kept level, and its pilot
@@ -3573,12 +3577,13 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its nose stays where its pilot points it in any air, so it climbs out of thin air on its bells; slow, it hovers.
 - (Space) A ship's HUD, projected on its canopy for the pilot at its helm, green, flat and in pixels: the heading tape
   across the top, the pitch ladder with the flight path marker in the middle, the speed and the boost's bar on the
-  left, amber while it boosts, the altitude and the climb on the right, the reactor's power and its deuterium above,
+  left, how far into the boost's speed the ship is, amber with TURN SLOW under it while it boosts, the altitude and the
+  climb on the right, the reactor's power and its deuterium above,
   the nozzles' angle and the gear below, amber with the gear down, and the autopilot's three modes along the bottom.
   The flight path marker stands for the crosshair. Seen from behind, the camera stands back round the ship, the whole
   ship in view, and the HUD spreads over the screen.
 - (Space) A ship's fusion reactor burns its deuterium as the ship flies, a full load lasting four hours aloft; with
-  none left it makes nothing, and the boost fills no more. A dock fills it again as it takes the ship back.
+  none left it makes nothing, and the ship cannot boost. A dock fills it again as it takes the ship back.
 - (Space) A small ship's cabin is a sealed room wherever it flies, in space too: its flight console asks for it, and
   the furniture standing in it, its seats, consoles, bunks, suit lockers and racks, lets its air round them, so its
   crew breathes it, kept warm, with the vacuum outside.
@@ -4475,9 +4480,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A build tagged on the screen, as a ship in a dock, names its parts and shows its line across the top only
   within 28 blocks of its middle, as a dock is worked from beside it; before, its tags covered the screen from 64
   blocks away. Its ghosts still show from as far as before.
-- (Space) At a ship's helm, B boosts the ship and J changes its autopilot, as their keys say; before, B also opened
-  the Core's screen of the body over the helm, and no boost came. Up from the helm, B opens the body's screen as
-  before.
+- (Space) At a ship's helm, the helm's keys win over any other on the same key, so the boost boosts the ship and J
+  changes its autopilot, as their keys say; before, the boost's key, then B, also opened the Core's screen of the body
+  over the helm, and no boost came. Up from the helm, B opens the body's screen as before.
 - (Space) A ship meeting the land too fast is harmed: over 5 blocks a second, the blocks it meets the land with are
   holed, one more for every 5 blocks a second past that, its feet, wheels and underside first, each a hole its part
   holds round; over 30, its crew are hurt too. Before, a ship stopped dead on the land at any speed, unharmed. The

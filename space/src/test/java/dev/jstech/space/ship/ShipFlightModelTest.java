@@ -16,9 +16,9 @@ import org.junit.jupiter.api.Test;
 class ShipFlightModelTest {
 
     private static final double CLOSE = 1e-9;
-    /* A ship of 40 tonnes: 420 kN of air engines, 420 kN of bells, delta wings holding 400 kN, 4 MW to spare. */
+    /* A ship of 40 tonnes: 420 kN of air engines, 420 kN of bells, delta wings holding 400 kN, no thrusters. */
     private static final ShipFlightModel.Performance SHIP = new ShipFlightModel.Performance(40_000, 420_000,
-            420_000, 400_000, 4.0e6, ShipFlightModel.Gear.WHEELS);
+            420_000, 400_000, 0, ShipFlightModel.Gear.WHEELS);
     /* The same with bells alone, nothing to hover on. */
     private static final ShipFlightModel.Performance BELLS = new ShipFlightModel.Performance(40_000, 0, 420_000,
             400_000, 0, ShipFlightModel.Gear.WHEELS);
@@ -38,6 +38,13 @@ class ShipFlightModelTest {
     private static final double TOP = 2000;
     private static final double CLIMBING = 60;
     private static final int SECONDS = 20;
+    /* The fastest it goes at full throttle in the overworld's air and in space, and boosted, in metres a second. */
+    private static final double CRUISE_AIR = 40;
+    private static final double CRUISE_SPACE = 120;
+    private static final double BOOSTED_AIR = 60;
+    private static final double BOOSTED_SPACE = 300;
+    /* How fast it turns and pitches while boosting, as a share of how fast it does otherwise. */
+    private static final double BOOST_TURNS = 0.4;
 
     @Test
     void step_openThrottleGathersSpeedByThrustOverMass() {
@@ -64,17 +71,17 @@ class ShipFlightModelTest {
         assertEquals(0, ShipFlightModel.push(airOnly, 0.0), CLOSE);
         assertEquals(0, ShipFlightModel.push(BELLS, 1.0), CLOSE);
         assertEquals(420_000, ShipFlightModel.push(BELLS, 0.0), CLOSE);
-        final ShipFlightModel.State fast = new ShipFlightModel.State(40, 0, 1, 1, 0, 0);
+        final ShipFlightModel.State fast = new ShipFlightModel.State(40, 0, 1, 0, 0);
         assertEquals(0.0, ShipFlightModel.step(fast, CRUISING, SEA, SHIP, 0).bells(), CLOSE);
         assertEquals(1.0, ShipFlightModel.step(fast, CRUISING, SPACE, SHIP, 0).bells(), CLOSE);
     }
 
     @Test
     void step_tooSlowInTheAirWithNothingToHoverOnItSinksAndFastEnoughItsWingsHoldIt() {
-        final ShipFlightModel.State slow = new ShipFlightModel.State(5, 0, 0.125, 1, 0, 0);
+        final ShipFlightModel.State slow = new ShipFlightModel.State(5, 0, 0.125, 0, 0);
         final ShipFlightModel.Tick sinking = ShipFlightModel.step(slow, CRUISING, SEA, BELLS, 0);
         assertTrue(sinking.stalled() && sinking.state().sink() > 0, "at 5 m/s it sinks: " + sinking);
-        final ShipFlightModel.State fast = new ShipFlightModel.State(30, 6, 0.75, 1, 0, 0);
+        final ShipFlightModel.State fast = new ShipFlightModel.State(30, 6, 0.75, 0, 0);
         final ShipFlightModel.Tick held = ShipFlightModel.step(fast, CRUISING, SEA, BELLS, 0);
         assertFalse(held.stalled(), "at 30 m/s its wings hold it");
         assertTrue(held.state().sink() < 6, "and it stops sinking: " + held.state().sink());
@@ -88,7 +95,7 @@ class ShipFlightModelTest {
         assertEquals(0, hovered.sink(), 1.0e-6, "and it stops sinking");
         final ShipFlightModel.Tick on = ShipFlightModel.step(hovered, CRUISING, SEA, SHIP, 0);
         assertTrue(on.lifting() && on.gearDown(), "it blows down, its gear down: " + on);
-        final ShipFlightModel.State faster = new ShipFlightModel.State(15, 0, 0.5, 1, 0, hovered.nozzles());
+        final ShipFlightModel.State faster = new ShipFlightModel.State(15, 0, 0.5, 0, hovered.nozzles());
         assertTrue(fly(SHIP, CRUISING, SEA, SECONDS, faster).nozzles() < hovered.nozzles(),
                 "faster, its wings holding more, its nozzles turn back");
     }
@@ -105,17 +112,17 @@ class ShipFlightModelTest {
 
     @Test
     void step_fastInThinAirItsNoseStaysWhereItsPilotPointsIt() {
-        final ShipFlightModel.Tick fast = ShipFlightModel.step(new ShipFlightModel.State(100, 0, 1, 1, 0, 0), UP,
+        final ShipFlightModel.Tick fast = ShipFlightModel.step(new ShipFlightModel.State(100, 0, 1, 0, 0), UP,
                 THIN, SHIP, 20);
         assertEquals(30.0 * ShipFlightModel.TICK, fast.pitch(), CLOSE, "held up, its nose goes up: " + fast);
-        final ShipFlightModel.Tick slow = ShipFlightModel.step(new ShipFlightModel.State(5, 0, 0, 1, 0, 0), UP, THIN,
+        final ShipFlightModel.Tick slow = ShipFlightModel.step(new ShipFlightModel.State(5, 0, 0, 0, 0), UP, THIN,
                 SHIP, 20);
         assertTrue(slow.pitch() < 0, "slow, it hovers, its nose coming back level: " + slow);
     }
 
     @Test
     void step_pitchedUpItClimbsOutOfThinningAirOnItsBellsWithoutStopping() {
-        ShipFlightModel.State now = new ShipFlightModel.State(40, 0, 1, 1, 0, 0);
+        ShipFlightModel.State now = new ShipFlightModel.State(40, 0, 1, 0, 0);
         double pitch = CLIMBING;
         double height = 0;
         for (int tick = 0; tick < 200 * SECONDS && height < TOP; tick++) {
@@ -163,7 +170,7 @@ class ShipFlightModelTest {
 
     @Test
     void step_itsGearComesDownNearTheLandAndGoesUpHigh() {
-        final ShipFlightModel.State fast = new ShipFlightModel.State(40, 0, 1, 1, 0, 0);
+        final ShipFlightModel.State fast = new ShipFlightModel.State(40, 0, 1, 0, 0);
         assertFalse(ShipFlightModel.step(fast, CRUISING, SEA, SHIP, 0).gearDown(), "high and fast, gear up");
         final ShipFlightModel.Air low = new ShipFlightModel.Air(1.0, 1.0, false, false, 4);
         assertTrue(ShipFlightModel.step(fast, CRUISING, low, SHIP, 0).gearDown(), "near the land, gear down");
@@ -195,23 +202,48 @@ class ShipFlightModelTest {
     }
 
     @Test
-    void step_theBoostTakesItFasterSpendsItsStoreAndTheReactorFillsIt() {
-        final ShipFlightModel.State cruising = new ShipFlightModel.State(40, 0, 1, 1, 0, 0);
+    void step_theBoostTakesItPastItsCruiseItsBarShowingHowFarInAndNotNearTheLand() {
+        final ShipFlightModel.State cruising = new ShipFlightModel.State(CRUISE_AIR, 0, 1, 0, 0);
         final ShipFlightModel.Tick boosted = ShipFlightModel.step(cruising, BOOSTING, SEA, SHIP, 0);
-        assertTrue(boosted.boosting() && boosted.state().speed() > 40, "boosted, it goes past its cruise");
-        assertEquals(1 - ShipFlightModel.TICK / 8.0, boosted.state().charge(), CLOSE);
+        assertTrue(boosted.boosting() && boosted.state().speed() > CRUISE_AIR, "boosted, it goes past its cruise");
+        assertEquals((boosted.state().speed() - CRUISE_AIR) / (BOOSTED_AIR - CRUISE_AIR), boosted.reached(), CLOSE,
+                "its bar shows how far into the boost's speed it is");
         final ShipFlightModel.Air crowded = new ShipFlightModel.Air(1.0, 1.0, false, false, 100);
-        assertFalse(ShipFlightModel.step(cruising, BOOSTING, crowded, SHIP, 0).boosting(), "not near the ground");
-        final ShipFlightModel.State spent = new ShipFlightModel.State(40, 0, 1, 0, 0, 0);
-        assertFalse(ShipFlightModel.step(spent, BOOSTING, SEA, SHIP, 0).boosting(), "not with its store spent");
-        assertEquals(4.0e6 * ShipFlightModel.TICK / 160.0e6, ShipFlightModel.step(spent, CRUISING, SEA, SHIP, 0)
-                .state().charge(), CLOSE);
+        assertFalse(ShipFlightModel.step(cruising, BOOSTING, crowded, SHIP, 0).boosting(), "not near the land");
+        assertEquals(0, ShipFlightModel.step(cruising, CRUISING, SEA, SHIP, 0).reached(), CLOSE,
+                "not boosting, its bar is empty");
+    }
+
+    @Test
+    void step_theBoostLastsAsLongAsItIsHeld() {
+        final ShipFlightModel.State flown = fly(SHIP, BOOSTING, SPACE, 60 * SECONDS,
+                new ShipFlightModel.State(CRUISE_SPACE, 0, 1, 0, 0));
+        assertEquals(BOOSTED_SPACE, flown.speed(), CLOSE, "held a minute, it boosts still, at the boost's speed");
+        final ShipFlightModel.Tick still = ShipFlightModel.step(flown, BOOSTING, SPACE, SHIP, 0);
+        assertTrue(still.boosting(), "and goes on boosting");
+        assertEquals(1.0, still.reached(), CLOSE, "its bar full");
+    }
+
+    @Test
+    void step_whileBoostingItTurnsAndPitchesSlowly() {
+        final ShipFlightModel.Held leftUp = new ShipFlightModel.Held(0, 0, 1, 0, 1, 0, true, true);
+        final ShipFlightModel.Tick tick = ShipFlightModel.step(new ShipFlightModel.State(CRUISE_SPACE, 0, 1, 0, 0),
+                leftUp, SPACE, SHIP, 0);
+        assertTrue(tick.boosting(), "it boosts: " + tick);
+        assertEquals(45.0 * BOOST_TURNS * ShipFlightModel.TICK, tick.turn(), CLOSE);
+        assertEquals(30.0 * BOOST_TURNS * ShipFlightModel.TICK, tick.pitch(), CLOSE);
+    }
+
+    @Test
+    void held_unboostedLetsTheBoostGoAndKeepsTheRest() {
+        final ShipFlightModel.Held held = new ShipFlightModel.Held(1, 0, 0.5, 0, 0, 1, true, true);
+        assertEquals(new ShipFlightModel.Held(1, 0, 0.5, 0, 0, 1, false, true), held.unboosted());
     }
 
     @Test
     void step_withNobodyAtTheHelmItsThrottleClosesAndItSlowsToAStop() {
         final ShipFlightModel.State flown = fly(SHIP, ShipFlightModel.Held.NOBODY, SPACE, 3 * SECONDS,
-                new ShipFlightModel.State(60, 0, 0.5, 1, 0, 0));
+                new ShipFlightModel.State(60, 0, 0.5, 0, 0));
         assertEquals(0, flown.throttle(), CLOSE);
         assertTrue(flown.speed() < 60, "it slows: " + flown.speed());
     }
@@ -230,7 +262,7 @@ class ShipFlightModelTest {
     @Test
     void step_whereThereIsNoAirItsThrustersHoldItUpAndWithoutThemItSinks() {
         final ShipFlightModel.Performance thrusters = new ShipFlightModel.Performance(40_000, 420_000, 420_000,
-                400_000, 240_000, 4.0e6, ShipFlightModel.Gear.LEGS);
+                400_000, 240_000, ShipFlightModel.Gear.LEGS);
         final ShipFlightModel.State hovered = fly(thrusters, CRUISING, MOON, 3 * SECONDS);
         assertEquals(0, hovered.sink(), 1.0e-6, "on the Moon its thrusters hold it: " + hovered);
         final ShipFlightModel.Tick on = ShipFlightModel.step(hovered, CRUISING, MOON, thrusters, 0);
@@ -243,7 +275,7 @@ class ShipFlightModelTest {
     @Test
     void step_inTheAirItsNozzlesHoldItAndItsThrustersRest() {
         final ShipFlightModel.Performance thrusters = new ShipFlightModel.Performance(40_000, 420_000, 420_000,
-                400_000, 240_000, 4.0e6, ShipFlightModel.Gear.LEGS);
+                400_000, 240_000, ShipFlightModel.Gear.LEGS);
         final ShipFlightModel.State hovered = fly(thrusters, CRUISING, SEA, 3 * SECONDS);
         final ShipFlightModel.Tick on = ShipFlightModel.step(hovered, CRUISING, SEA, thrusters, 0);
         assertTrue(on.lifting() && !on.thrusting(), "in the overworld's air its nozzles hold it alone: " + on);
@@ -252,7 +284,7 @@ class ShipFlightModelTest {
     @Test
     void hovers_whereNozzlesAndThrustersTogetherHoldItsWeight() {
         final ShipFlightModel.Performance thrusters = new ShipFlightModel.Performance(40_000, 420_000, 420_000,
-                400_000, 240_000, 4.0e6, ShipFlightModel.Gear.LEGS);
+                400_000, 240_000, ShipFlightModel.Gear.LEGS);
         final double moon = MOON.gravity() * ShipFlightModel.GRAVITY;
         final double mars = THIN.gravity() * ShipFlightModel.GRAVITY;
         assertTrue(ShipFlightModel.hovers(thrusters, 0, moon) && ShipFlightModel.hovers(thrusters, THIN.density(),

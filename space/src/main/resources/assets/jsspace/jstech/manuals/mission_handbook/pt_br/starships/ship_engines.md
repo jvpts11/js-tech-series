@@ -17,7 +17,7 @@ Os blocos dos motores de uma nave e do seu reator de fusão.
 
 ## Para que serve
 
-Os motores de ar empurram no ar e viram os bocais para baixo para erguer a nave na vertical e pairar. Os motores principais empurram conforme o ar rareia, na subida e no espaço. O ACOPLA manobra a nave com os propulsores. O reator alimenta as peças da nave, e a energia que sobra enche o impulso. Ele queima deutério enquanto a nave voa: uma carga cheia dura quatro horas no ar.
+Os motores de ar empurram no ar e viram os bocais para baixo para erguer a nave na vertical e pairar. Os motores principais empurram conforme o ar rareia, na subida e no espaço. O ACOPLA manobra a nave com os propulsores. O reator alimenta as peças da nave e o impulso. Ele queima deutério enquanto a nave voa: uma carga cheia dura quatro horas no ar.
 
 ## Como conseguir
 
@@ -36,8 +36,8 @@ No menu criativo, aba J's Space.
 > [!PROBLEM] A nave não decola na vertical.
 > Ela não tem motores de ar, ou é pesada demais para eles. Onde o ar é rarefeito, eles erguem menos.
 
-> [!PROBLEM] O impulso não enche mais.
-> O deutério acabou, D2 em 0%, ou as peças consomem toda a energia do reator. Uma doca reabastece o reator quando recebe a nave de volta.
+> [!PROBLEM] A nave não dá impulso.
+> O deutério acabou, D2 em 0%. Uma doca reabastece o reator quando recebe a nave de volta.
 
 > [!CAUTION]
 > Nenhum motor principal vai atrás de um Porão de Rampa na cauda: ponha um Bocal Magnético nas Asas Curtas.

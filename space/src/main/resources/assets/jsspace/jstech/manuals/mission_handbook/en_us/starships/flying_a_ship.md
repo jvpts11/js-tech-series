@@ -20,9 +20,9 @@ Start a ship built whole in a [shipyard](jsspace:shipyard): it is yours to fly.
 ## How to use it
 
 1. Use the Pilot Seat to sit at the helm. The HUD lights on the canopy, and over the screen in the view from behind ([[F5]]).
-2. Forward ([[W]]) opens the throttle, which stays where you leave it; back ([[S]]) closes it. [[A]] and [[D]] turn. Jump ([[Space]]) pitches the nose up, sprint ([[Left Control]]) down.
-3. Below 10 metres a second the air engines' nozzles turn down and the ship hovers, nose level: jump and sprint take it straight up and down.
-4. Faster, the wings hold it up. [[B]] boosts it across an empty stretch, well clear of the land or in space.
+2. Forward ([[W]]) opens the throttle, which stays where you leave it; back ([[S]]) closes it. [[A]] and [[D]] turn. Jump ([[Space]]) pitches the nose up, [[C]] down.
+3. Below 10 metres a second the air engines' nozzles turn down and the ship hovers, nose level: jump and [[C]] take it straight up and down.
+4. Faster, the wings hold it up. Hold [[Left Control]] to boost it across an empty stretch, well clear of the land or in space, for as long as you like; while it boosts, its nose turns slowly (`TURN SLOW`).
 5. Climb on: seven hundred blocks over the world's build limit, the ship crosses into its system's space.
 6. [[J]] changes the autopilot: LAND, ORBIT, DOCK, then off. Holding any key of the helm takes the helm back.
 7. Get up with sneak ([[Left Shift]]): the throttle closes, and the ship settles and stays parked.
@@ -33,7 +33,7 @@ Table: The HUD
 | --- | --- |
 | Top | The heading |
 | Middle | The pitch ladder, and the flight path marker in place of the crosshair |
-| Left | Speed, `SPD M/S`, and the boost's bar, amber while it boosts |
+| Left | Speed, `SPD M/S`, and the boost's bar, how far into the boost's speed the ship is, amber with `TURN SLOW` under it while it boosts |
 | Right | Altitude, `ALT`, and climb, `VS` |
 | Above | The reactor's power, `PWR`, and its deuterium, `D2` |
 | Below | The nozzles' angle, `NOZZLES`, and `GEAR UP` or `GEAR DOWN`, amber when down |
@@ -41,7 +41,7 @@ Table: The HUD
 
 LAND sets the ship down on the nearest pad you may use within 512 blocks, or, on wheels, a clear runway; its diamond marks the spot. ORBIT opens the throttle and climbs at 55 degrees, boosting where it can; in space it levels the ship out on the plane of the low orbits, then lets go. DOCK, in space, brings its docking collar to the nearest ship's within 200 blocks that would let you aboard, at least as a passenger, its cross on the other collar. Once they touch in line, the two are made one; [[J]] lets the docked ship go.
 
-The reactor's deuterium lasts four hours aloft. With none left the boost fills no more; a dock fills it again.
+The reactor's deuterium lasts four hours aloft. With none left the ship cannot boost; a dock fills it again.
 
 ```card
 title: Landing on autopilot 1/2
@@ -60,7 +60,7 @@ title: Landing on autopilot 2/2
 title: Landing by hand 1/2
 [ ] Speed: throttle back, under 10 m/s
 [ ] Hover: nozzles down, GEAR DOWN
-[ ] Descent: sprint key, straight down
+[ ] Descent: C, straight down
 ```
 
 ```card
@@ -74,11 +74,11 @@ title: Landing by hand 2/2
 > [!PROBLEM] [[J]] skips LAND.
 > No free pad you may use is within 512 blocks, and no runway is clear.
 
-> [!PROBLEM] [[B]] does nothing.
-> The ship is too near the land, or the boost's bar is empty.
+> [!PROBLEM] [[Left Control]] does nothing.
+> The ship is too near the land, or its reactor has no deuterium left.
 
 > [!CAUTION]
-> The air engines breathe air. Where it is too thin, they cannot hold the ship up and it sinks.
+> The air engines breathe air. Where it is too thin, they cannot hold the ship up: its thrusters, which need none, hold what they can, and past them it sinks.
 
 > [!WARNING]
 > Come down slowly. Faster than 5 blocks a second, the blocks the ship meets the land with are holed, one more for every 5 blocks a second past that, and faster than 30 its crew are hurt too. Mend the holes in a dock.

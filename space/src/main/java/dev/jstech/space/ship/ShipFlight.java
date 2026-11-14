@@ -57,7 +57,7 @@ import org.jetbrains.annotations.Nullable;
  * on the land under it, rolling on wheels or standing on feet, and is stopped by the land it would fly into
  * ({@link ShipGround}); the land ahead of it is loaded as it goes, as a rocket's is, so it climbs to space and crosses
  * into it without stopping. Its console shows its flight ({@link ShipReadings}) and keeps its fusion reactor's
- * deuterium, burnt as it flies: with none left, the reactor makes nothing, and its boost fills no more. Its rule goes
+ * deuterium, burnt as it flies: with none left, the reactor makes nothing, and it cannot boost. Its rule goes
  * on through a save and into another dimension, as the structure does.
  *
  * @param state    where its flight stands
@@ -78,7 +78,6 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             .group(Codec.DOUBLE.fieldOf("speed").forGetter(ShipFlightModel.State::speed),
                     Codec.DOUBLE.fieldOf("sink").forGetter(ShipFlightModel.State::sink),
                     Codec.DOUBLE.fieldOf("throttle").forGetter(ShipFlightModel.State::throttle),
-                    Codec.DOUBLE.fieldOf("charge").forGetter(ShipFlightModel.State::charge),
                     Codec.DOUBLE.optionalFieldOf("rise", 0.0).forGetter(ShipFlightModel.State::rise),
                     Codec.DOUBLE.optionalFieldOf("nozzles", 0.0).forGetter(ShipFlightModel.State::nozzles))
             .apply(instance, ShipFlightModel.State::new));
@@ -89,7 +88,6 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                     Codec.DOUBLE.fieldOf("bell_thrust").forGetter(ShipFlightModel.Performance::bellThrust),
                     Codec.DOUBLE.fieldOf("wing").forGetter(ShipFlightModel.Performance::wing),
                     Codec.DOUBLE.optionalFieldOf("thrusters", 0.0).forGetter(ShipFlightModel.Performance::thrusters),
-                    Codec.DOUBLE.fieldOf("power").forGetter(ShipFlightModel.Performance::power),
                     GEAR.optionalFieldOf("gear", ShipFlightModel.Gear.NONE)
                             .forGetter(ShipFlightModel.Performance::gear))
                     .apply(instance, ShipFlightModel.Performance::new));
@@ -149,8 +147,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
 
     /**
      * What a ship of {@code design} weighs and pushes, by its parts' figures in {@code parts}, and what it stands on:
-     * its air engines push what they lift, its reactor's power beyond what its parts take fills its boost, its gear
-     * rolls or stands.
+     * its air engines push what they lift, its thrusters hold it up where they need no air, its gear rolls or stands.
      */
     public static ShipFlightModel.Performance performance(final ShipDesign design,
                                                           final Map<ResourceLocation, ShipPart> parts) {
@@ -172,7 +169,6 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         double bells = 0;
         double wing = 0;
         double thrusters = 0;
-        double power = 0;
         ShipFlightModel.Gear gear = ShipFlightModel.Gear.NONE;
         for (int index = 0; index < all.size(); index++) {
             final ShipPart part = parts.get(all.get(index));
@@ -186,12 +182,11 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             thrusters += part.kind() == ShipPartKind.THRUSTERS ? figures.lift() * share : 0;
             bells += figures.thrust() * share;
             wing += figures.wing() * share;
-            power += figures.power() * share;
             if (part.kind() == ShipPartKind.GEAR) {
                 gear = part.rolls() ? ShipFlightModel.Gear.WHEELS : ShipFlightModel.Gear.LEGS;
             }
         }
-        return new ShipFlightModel.Performance(mass, air, bells, wing, thrusters, power, gear);
+        return new ShipFlightModel.Performance(mass, air, bells, wing, thrusters, gear);
     }
 
     /** Where the block {@code yard} of {@code body}'s yard stands from its pivot's block, as its console is kept. */
@@ -237,15 +232,12 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final double[] nose = nose(frame);
         final double pitch = Math.toDegrees(Math.asin(Math.clamp(nose[1], -1.0, 1.0)));
         final double heading = heading(nose);
-        // Its reactor burns its deuterium as it flies; with none left it makes nothing, its boost filling no more.
+        // Its reactor burns its deuterium as it flies; with none left it makes nothing, and its boost cannot be held.
         final AirReserveEntity keeper = keeper(level, body);
         final boolean fuelled = keeper == null || (this.grounded ? keeper.deuterium() > 0
                 : keeper.burn(ShipFlightModel.TICK / REACTOR_LOAD_SECONDS));
         // A part with holes in it does as much as the share of its blocks still in it, as its console counts them.
         final ShipFlightModel.Performance whole = keeper == null ? this.ship : keeper.performance().orElse(this.ship);
-        final ShipFlightModel.Performance running = fuelled ? whole : new ShipFlightModel.Performance(
-                whole.mass(), whole.airThrust(), whole.bellThrust(), whole.wing(), whole.thrusters(),
-                Math.min(0, whole.power()), whole.gear());
         // Its pilot taking the helm, holding any of its keys, lets its autopilot go; so does an autopilot done, and a
         // runway whose stretch is found not clear as the ship comes near.
         final Optional<ShipAutopilot> pilot = this.autopilot.filter(engaged -> !holding(helm)
@@ -253,7 +245,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final ShipFlight self = pilot.equals(this.autopilot) ? this : engaged(pilot);
         final int altitude = ShipAltitude.of(level, now.x(), body.worldBox().minY, now.z());
         if (pilot.isPresent() && pilot.get().mode() == ShipAutopilot.Mode.DOCK) {
-            return self.docking(level, body, now, pilot.get(), pitch, running, keeper, altitude);
+            return self.docking(level, body, now, pilot.get(), pitch, whole, keeper, altitude);
         }
         ShipFlightModel.Held held = helm;
         ShipReadings.Pilot shown = ShipReadings.Pilot.NONE;
@@ -273,8 +265,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             held = ShipAutopilots.orbit(this.state, pitch);
             shown = climbing(level, now, nose, altitude, this.state.speed() * nose[1]);
         }
-        final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, held, air(level, now, body), running,
-                pitch);
+        final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, fuelled ? held : held.unboosted(),
+                air(level, now, body), whole, pitch);
         if (keeper != null) {
             keeper.flew(ShipReadings.of(next, this.grounded, altitude, shown));
         }
@@ -339,7 +331,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
      * it lets the autopilot go.
      */
     private Step docking(final ServerLevel level, final MovingStructure body, final StructurePose now,
-                         final ShipAutopilot pilot, final double pitch, final ShipFlightModel.Performance running,
+                         final ShipAutopilot pilot, final double pitch, final ShipFlightModel.Performance whole,
                          final @Nullable AirReserveEntity keeper, final int altitude) {
         final MovingStructure other = pilot.other().map(id -> MovingStructures.byId(level, id)).orElse(null);
         final Optional<Vec3> ours = ShipCollars.mouth(level, body);
@@ -363,7 +355,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             ShipDocks.join(level, body, other);
         }
         final Vec3 drift = stopped ? new Vec3(docking.drift()[0], docking.drift()[1], docking.drift()[2]) : was;
-        final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, BRAKING, air(level, now, body), running,
+        final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, BRAKING, air(level, now, body), whole,
                 pitch);
         if (keeper != null) {
             final double closing = offset.length() < STILL ? 0 : drift.dot(offset.normalize());
@@ -527,7 +519,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         // Run into land: it stops where it was, as hard as it flew into it, only coming down onto what is under it.
         ShipImpacts.met(level, body, Math.sqrt(dx * dx + dy * dy + dz * dz) / ShipFlightModel.TICK);
         final ShipFlightModel.State stopped = new ShipFlightModel.State(0, next.sink(), next.throttle(),
-                next.charge(), next.rise(), next.nozzles());
+                next.rise(), next.nozzles());
         final StructurePose dropped = turned.movedTo(now.x(), now.y() + Math.min(0, dy), now.z());
         final ShipGround.Contact under = ShipGround.meet(level, body, frameOf(body, dropped), most);
         if (!under.blocked()) {
@@ -573,7 +565,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
 
     /* Its flight standing on the land: it sinks no more and comes down no further. */
     private static ShipFlightModel.State stood(final ShipFlightModel.State next) {
-        return new ShipFlightModel.State(next.speed(), 0, next.throttle(), next.charge(), Math.max(0, next.rise()),
+        return new ShipFlightModel.State(next.speed(), 0, next.throttle(), Math.max(0, next.rise()),
                 next.nozzles());
     }
 

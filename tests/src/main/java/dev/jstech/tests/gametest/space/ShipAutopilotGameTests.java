@@ -326,7 +326,7 @@ public final class ShipAutopilotGameTests {
                 .thenExecute(() -> {
                     aloft(ship[0], HIGH);
                     MovingStructures.move(ship[0], flight(ship[0]).with(new ShipFlightModel.State(CRUISING, 0, 0.75,
-                            1, 0, 0)).engaged(Optional.of(ShipAutopilot.orbit())));
+                            0, 0)).engaged(Optional.of(ShipAutopilot.orbit())));
                 })
                 .thenIdle(CLIMBING)
                 .thenExecute(() -> {
@@ -389,7 +389,7 @@ public final class ShipAutopilotGameTests {
             before[0] = blocksOf(level, ship[0]);
             // Off the land, falling: a flight still standing on the land would lose its fall the first tick.
             final ShipFlight flown = flight(ship[0]);
-            MovingStructures.move(ship[0], new ShipFlight(new ShipFlightModel.State(0, FALLING, 0, 1, 0, 0),
+            MovingStructures.move(ship[0], new ShipFlight(new ShipFlightModel.State(0, FALLING, 0, 0, 0),
                     flown.noseX(), flown.noseZ(), flown.ship(), false, flown.console(), flown.autopilot()));
         }).thenWaitUntil(() -> helper.assertTrue(flight(ship[0]).grounded(), "it comes down on the land"))
                 .thenExecuteAfter(2, () -> {
@@ -421,7 +421,7 @@ public final class ShipAutopilotGameTests {
             helper.assertTrue(there != null && there.ready(), "and arrives there");
             ship[0] = there;
         }).thenExecute(() -> MovingStructures.move(ship[0], flight(ship[0]).with(new ShipFlightModel.State(CRUISING,
-                0, 0.75, 1, 0, 0)).engaged(Optional.of(ShipAutopilot.orbit()))))
+                0, 0.75, 0, 0)).engaged(Optional.of(ShipAutopilot.orbit()))))
                 .thenWaitUntil(() -> helper.assertTrue(flight(ship[0]).autopilot().isEmpty(), "ORBIT lets go once "
                         + "the ship is level on the plane: at " + ship[0].pose().y()))
                 .thenExecute(() -> {

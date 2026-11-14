@@ -24,9 +24,10 @@ import org.lwjgl.glfw.GLFW;
  * The Core's own keys: turning off the last sound heard, which the player's game does alone, changing the mode of
  * the item in the main hand, which the server does, opening an item's page in the manual, opening the history of
  * notifications, opening the diagram of forces of a moving structure, showing the physics of the structures near,
- * looking about freely, opening the HUD editor, opening the studio, and cutting every agent off the MCP server. The
- * first two and the four before the last have no key until the player gives them one; the manual's is M, which every
- * manual's tooltip names, the history's N, the forces' K, and cutting the agents off End.
+ * looking about freely, opening the HUD editor, opening the studio, cutting every agent off the MCP server, and going
+ * down at a helm. The first two and the four before cutting the agents off have no key until the player gives them
+ * one; the manual's is M, which every manual's tooltip names, the history's N, the forces' K, cutting the agents off
+ * End, and going down at a helm C.
  */
 @TextHolder
 public final class CoreKeys {
@@ -115,6 +116,17 @@ public final class CoreKeys {
     public static final KeyAction CUT_AGENTS = KeyActions.declare(KeyAction.builder(
                     ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "cut_agents"), CUT_AGENTS_KEY)
             .key(GLFW.GLFW_KEY_END));
+
+    /** What the key that takes a moving structure down from its helm is called. */
+    public static final TextKey HELM_DOWN_KEY = TextKey.of("key.jscore.helm_down", "Go down at a helm");
+    /**
+     * Held at the helm of a moving structure, takes it down, as jump takes it up: it pitches a ship's nose down, or
+     * brings a hovering one lower. C, until the player changes it, which leaves the game's sprint key, beside it, free
+     * for what a mod's helm does with it.
+     */
+    public static final KeyAction HELM_DOWN = KeyActions.declare(KeyAction.builder(
+                    ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "helm_down"), HELM_DOWN_KEY)
+            .key(GLFW.GLFW_KEY_C).atTheHelm());
 
     private CoreKeys() {
     }

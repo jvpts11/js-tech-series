@@ -913,6 +913,7 @@
   "jsspace.ship_hud.range": "RANGE %s",
   "jsspace.ship_hud.south": "S",
   "jsspace.ship_hud.speed": "SPD M/S",
+  "jsspace.ship_hud.turn_slow": "TURN SLOW",
   "jsspace.ship_hud.west": "W",
   "jsspace.ship_landing.cannot_hover": "Too little air here for the nozzles, and no thrusters to hold the ship up: no landing",
   "jsspace.ship_landing.runway_blocked": "The runway past the beacon is not clear: no landing there",

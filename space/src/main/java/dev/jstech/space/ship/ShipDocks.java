@@ -103,7 +103,7 @@ public final class ShipDocks {
         final StructurePose at = ship.pose();
         ship.teleport(at.movedTo(at.x() + away.x * CLEAR, at.y() + away.y * CLEAR, at.z() + away.z * CLEAR));
         final ShipFlightModel.State was = flight.state();
-        MovingStructures.move(ship, flight.with(new ShipFlightModel.State(0, 0, 0, was.charge(), 0, was.nozzles()))
+        MovingStructures.move(ship, flight.with(new ShipFlightModel.State(0, 0, 0, 0, was.nozzles()))
                 .engaged(Optional.empty()));
         return true;
     }

@@ -19,7 +19,7 @@ import net.minecraft.world.phys.Vec3;
  * @param speed    how fast it goes along its nose, in metres a second, to a tenth
  * @param climb    how fast it rises or sinks besides where its nose takes it, in metres a second, to a tenth
  * @param throttle how far its throttle is open, in hundredths
- * @param charge   how full its boost is, in hundredths
+ * @param boost    how far into its boost's speed above its throttle's it is, in hundredths; nought while not boosting
  * @param boosting whether it boosts
  * @param nozzles  how far its nozzles are turned down, in degrees
  * @param lifting  whether its nozzles hold it up, blowing down
@@ -30,18 +30,18 @@ import net.minecraft.world.phys.Vec3;
  * @param grounded whether it stands on the land, where its wheels roll
  * @param pilot    its autopilot, as its HUD shows it
  */
-public record ShipReadings(double speed, double climb, int throttle, int charge, boolean boosting, int nozzles,
+public record ShipReadings(double speed, double climb, int throttle, int boost, boolean boosting, int nozzles,
                            boolean lifting, boolean thrusting, boolean gearDown, boolean stalled, int altitude,
                            boolean grounded, Pilot pilot) {
 
     /** A ship at rest on the land. */
-    public static final ShipReadings PARKED = new ShipReadings(0, 0, 0, 100, false, 0, false, false, true, false, 0,
+    public static final ShipReadings PARKED = new ShipReadings(0, 0, 0, 0, false, 0, false, false, true, false, 0,
             true, Pilot.NONE);
     public static final Codec<ShipReadings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.DOUBLE.fieldOf("speed").forGetter(ShipReadings::speed),
             Codec.DOUBLE.fieldOf("climb").forGetter(ShipReadings::climb),
             Codec.INT.fieldOf("throttle").forGetter(ShipReadings::throttle),
-            Codec.INT.fieldOf("charge").forGetter(ShipReadings::charge),
+            Codec.INT.optionalFieldOf("boost", 0).forGetter(ShipReadings::boost),
             Codec.BOOL.fieldOf("boosting").forGetter(ShipReadings::boosting),
             Codec.INT.fieldOf("nozzles").forGetter(ShipReadings::nozzles),
             Codec.BOOL.fieldOf("lifting").forGetter(ShipReadings::lifting),
@@ -65,7 +65,7 @@ public record ShipReadings(double speed, double climb, int throttle, int charge,
         final ShipFlightModel.State state = tick.state();
         return new ShipReadings(Math.round(state.speed() * TENTHS) / TENTHS,
                 Math.round((state.rise() - state.sink()) * TENTHS) / TENTHS,
-                (int) Math.round(state.throttle() * HUNDREDTHS), (int) Math.round(state.charge() * HUNDREDTHS),
+                (int) Math.round(state.throttle() * HUNDREDTHS), (int) Math.round(tick.reached() * HUNDREDTHS),
                 tick.boosting(), (int) Math.round(state.nozzles()), tick.lifting(), tick.thrusting(), tick.gearDown(),
                 tick.stalled(), altitude, grounded, pilot);
     }

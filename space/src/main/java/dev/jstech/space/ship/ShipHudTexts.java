@@ -20,6 +20,7 @@ public final class ShipHudTexts {
     public static final TextKey WEST = TextKey.of("jsspace.ship_hud.west", "W");
     public static final TextKey SPEED = TextKey.of("jsspace.ship_hud.speed", "SPD M/S");
     public static final TextKey BOOST = TextKey.of("jsspace.ship_hud.boost", "BOOST");
+    public static final TextKey TURN_SLOW = TextKey.of("jsspace.ship_hud.turn_slow", "TURN SLOW");
     public static final TextKey ALTITUDE = TextKey.of("jsspace.ship_hud.altitude", "ALT");
     public static final TextKey CLIMB = TextKey.of("jsspace.ship_hud.climb", "VS %s");
     public static final TextKey POWER = TextKey.of("jsspace.ship_hud.power", "PWR %s/%s MW");

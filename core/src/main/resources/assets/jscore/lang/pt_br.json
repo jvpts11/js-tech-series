@@ -1308,6 +1308,7 @@
   "jscore.variant.wood.minecraft.warped": "distorcida",
   "key.jscore.cut_agents": "Cortar todos os agentes",
   "key.jscore.edit_hud": "Editar o HUD",
+  "key.jscore.helm_down": "Descer no comando",
   "commands.jscore.screen.no_block": "Olhe para um bloco para fazer uma tela para ele",
   "commands.jscore.manual.site.written": "O manual foi gravado como site: %s",
   "commands.jscore.manual.site.no_manual": "Nenhum manual com esse nome: %s",

@@ -3335,6 +3335,7 @@
   "key.jscore.cut_agents": "Cut every agent off",
   "key.jscore.edit_hud": "Edit the HUD",
   "key.jscore.free_look": "Free Look",
+  "key.jscore.helm_down": "Go down at a helm",
   "key.jscore.item_mode": "Change Item Mode",
   "key.jscore.keep_keyframe": "Keep a camera keyframe",
   "key.jscore.notifications": "Notification history",

@@ -51,10 +51,11 @@ import org.joml.Vector4f;
 /**
  * A ship's HUD, as the approved flight draws it: green symbols projected on its canopy for the pilot at its helm, flat
  * and in pixels. The heading tape across the top; the pitch ladder with the flight path marker in the middle; the speed
- * and the boost's bar on the left, amber while it boosts; the altitude and the climb on the right; the reactor's power
- * and its deuterium above; the nozzles' angle and the gear below, amber with the gear down; and the autopilot's three
- * modes along the bottom, the one engaged lit, its own symbol standing on its target in the world. Laid out on the
- * approved screen's 960 by 540 points, scaled to the player's; seen from behind the ship it spreads over the screen.
+ * and the boost's bar on the left, amber while it boosts, TURN SLOW under it; the altitude and the climb on the right;
+ * the reactor's power and its deuterium above; the nozzles' angle and the gear below, amber with the gear down; and the
+ * autopilot's three modes along the bottom, the one engaged lit, its own symbol standing on its target in the world.
+ * Laid out on the approved screen's 960 by 540 points, scaled to the player's; seen from behind the ship it spreads
+ * over the screen.
  */
 public final class ShipHud {
 
@@ -224,9 +225,6 @@ public final class ShipHud {
             final double deuterium = console.deuterium();
             if (deuterium <= 0) {
                 made = 0;
-            } else if (readings.charge() < PERCENT) {
-                // What the parts leave over fills the boost.
-                drawn = Math.max(drawn, made);
             }
             return new Flown(heading, pitch, bank, offPath, readings, made, drawn, deuterium);
         }
@@ -369,7 +367,10 @@ public final class ShipHud {
             vline(cx, fy - 9, fy - 4, colours.symbol());
         }
 
-        /* The speed on the left, boxed, with its scale, and the boost's bar under it. */
+        /*
+         * The speed on the left, boxed, with its scale, and the boost's bar under it: how far into the boost's speed
+         * the ship is, and while it boosts, its one cost, its nose turning slowly.
+         */
         private void speed(final ShipReadings readings, final int cy) {
             final int sx = box.x0() + 6;
             frame(sx, cy - BOX_HALF, sx + BOX_WIDTH, cy + BOX_HALF, colours.symbol());
@@ -384,8 +385,11 @@ public final class ShipHud {
             small(GameText.resolve(ShipHudTexts.BOOST), sx, cy + 14, readings.boosting() ? colours.hot()
                     : colours.dim(), Align.LEFT);
             for (int k = 0; k < BOOST_CELLS; k++) {
-                final boolean on = (k + 0.5) / BOOST_CELLS <= readings.charge() / (double) PERCENT;
+                final boolean on = (k + 0.5) / BOOST_CELLS <= readings.boost() / (double) PERCENT;
                 fill(sx + k * 5, cy + 24, sx + k * 5 + 4, cy + 28, on ? boostColour : colours.unfilled());
+            }
+            if (readings.boosting()) {
+                small(GameText.resolve(ShipHudTexts.TURN_SLOW), sx, cy + 32, colours.hot(), Align.LEFT);
             }
         }
 

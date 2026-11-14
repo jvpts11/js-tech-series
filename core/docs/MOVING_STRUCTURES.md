@@ -350,7 +350,10 @@ cane, a cactus, bamboo or another of `#jscore:harvested_above` is cut above its 
 
 A player using a seat of a structure sits on it, and is carried with it, steady in their seat as it goes; crouching,
 they use the block as any other. One sitting at a **helm** steers the structure with the keys they walk with: forward
-and back, left and right, up with the jump key and down with the sprint key. The structure's engines and wheels
+and back, left and right, up with the jump key, and down with the helm's own down key (`CoreKeys.HELM_DOWN`, C until
+the player changes it), which leaves the sprint key free for what a mod's helm does with it, such as a ship's boost.
+Every key action declared `atTheHelm()` wins over any other action on its key while the player sits at a helm. The
+structure's engines and wheels
 answer by the way each looks against the helm's forward: an engine pushing forward fires on forward, one pushing up on
 up; a wheel rolling forward drives forward and back, and steers left and right. Told nothing for a second, the
 controls let go, so a pilot who left the helm leaves the structure to its signals.

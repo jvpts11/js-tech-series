@@ -503,6 +503,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   may stand formed as, a landing pad raised on a truss or laid flat on the ground: each build is checked in order,
   the first found whole is its structure, merged into that build's own formed model, and `shape()` says which.
   Experimental.
+- A helm's own down key: J's Core's API is at version 61. `CoreKeys.HELM_DOWN`, C until the player changes
+  it, takes a moving structure down from its helm, which the sprint key did before; the sprint key is left to what a
+  mod's helm does with it, as a ship's boost. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

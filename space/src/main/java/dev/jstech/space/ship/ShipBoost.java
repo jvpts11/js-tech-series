@@ -19,15 +19,16 @@ import net.minecraft.server.level.ServerPlayer;
 import org.lwjgl.glfw.GLFW;
 
 /**
- * A ship's boost, held at its helm: its key, B until the player changes it, and, on the server, when each ship's pilot
- * last held it. Told nothing for a second, it is let go, as the helm's keys are.
+ * A ship's boost, held at its helm: its key, left Ctrl until the player changes it, and, on the server, when each
+ * ship's pilot last held it. Told nothing for a second, it is let go, as the helm's keys are. The game's sprint key
+ * starts on the same key, but a pilot at a helm has nothing to sprint with.
  */
 public final class ShipBoost {
 
     /** The key that boosts the ship its player pilots. */
     public static final KeyAction KEY = KeyActions.declare(KeyAction.builder(
             ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ship_boost"), ShipFlightTexts.BOOST_KEY)
-            .key(GLFW.GLFW_KEY_B).atTheHelm());
+            .key(GLFW.GLFW_KEY_LEFT_CONTROL).atTheHelm());
     /* How long a hold lasts untold, in ticks. */
     private static final int LASTS = 20;
     /* When each ship's pilot last held its boost, by the game's tick. */
