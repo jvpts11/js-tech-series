@@ -233,6 +233,13 @@ public final class DescentGameTests {
                     forced[0] = chunk(falling.pose().x());
                     forced[1] = chunk(falling.pose().z());
                     ground.setChunkForced(forced[0], forced[1], true);
+                    // The test server runs its ticks far faster than land is made: the land it comes down on is
+                    // made now, not counted against the test's ticks.
+                    for (int dx = -1; dx <= 1; dx++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            ground.getChunk(forced[0] + dx, forced[1] + dz);
+                        }
+                    }
                 })
                 .thenWaitUntil(() -> {
                     final MovingStructure falling = body(ground, id);
