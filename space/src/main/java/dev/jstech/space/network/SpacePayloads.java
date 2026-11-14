@@ -38,6 +38,8 @@ public final class SpacePayloads {
     };
     private static volatile ILandingMapReceiver landingMapReceiver = map -> {
     };
+    private static volatile ICouchSleepReceiver couchSleepReceiver = asleep -> {
+    };
 
     private SpacePayloads() {
     }
@@ -54,6 +56,8 @@ public final class SpacePayloads {
                     (payload, context) -> context.enqueueWork(() -> climbWorldsReceiver.receive(payload)));
             registrar.playToClient(LandingMapPayload.TYPE, LandingMapPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> landingMapReceiver.receive(payload)));
+            registrar.playToClient(CouchSleepPayload.TYPE, CouchSleepPayload.STREAM_CODEC,
+                    (payload, context) -> context.enqueueWork(() -> couchSleepReceiver.receive(payload.asleep())));
             registrar.playToServer(SuitLightPayload.TYPE, SuitLightPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> SuitControls.light(context.player(),
                             payload.on())));
@@ -98,6 +102,11 @@ public final class SpacePayloads {
         climbWorldsReceiver = receiver;
     }
 
+    /** Gives what a player's game does as its player falls asleep in a crew seat or wakes, from its side's entry. */
+    public static void onCouchSleep(final ICouchSleepReceiver receiver) {
+        couchSleepReceiver = receiver;
+    }
+
     /** What a player's game does with the Overworld's map number. */
     @FunctionalInterface
     public interface IMapSeedReceiver {
@@ -124,5 +133,12 @@ public final class SpacePayloads {
     public interface ILandingMapReceiver {
 
         void receive(LandingMapPayload map);
+    }
+
+    /** What a player's game does as its player falls asleep in a crew seat, or wakes. */
+    @FunctionalInterface
+    public interface ICouchSleepReceiver {
+
+        void receive(boolean asleep);
     }
 }

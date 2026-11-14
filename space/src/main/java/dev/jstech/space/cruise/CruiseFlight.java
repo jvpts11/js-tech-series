@@ -208,6 +208,7 @@ public final class CruiseFlight {
             if (player.isSleeping()) {
                 player.stopSleepInBed(false, true);
             }
+            CouchSleep.wake(player);
         }
         CruiseEvents.tell(level, body, CruiseTexts.ARRIVAL.of(CruiseTexts.ARRIVED_NAME.text(),
                 CruiseTexts.SLEPT.text()));
@@ -272,10 +273,11 @@ public final class CruiseFlight {
                         found.ownership().owner()), found.world(), level.getGameTime()));
     }
 
-    /* Whether everyone aboard {@code body} sleeps, and anyone is aboard. */
+    /* Whether everyone aboard {@code body} sleeps, in a bed or in a crew seat, and anyone is aboard. */
     private static boolean asleep(final ServerLevel level, final MovingStructure body) {
         final List<ServerPlayer> crew = aboard(level, body);
-        return !crew.isEmpty() && crew.stream().allMatch(ServerPlayer::isSleepingLongEnough);
+        return !crew.isEmpty() && crew.stream().allMatch(player -> player.isSleepingLongEnough()
+                || CouchSleep.longEnough(player));
     }
 
 

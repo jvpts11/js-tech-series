@@ -259,6 +259,7 @@ import dev.jstech.tests.clienttest.series.ManualSiteClientTests;
 import dev.jstech.tests.clienttest.series.HeldModelsClientTests;
 import dev.jstech.tests.clienttest.series.SeriesManualsClientTests;
 import dev.jstech.tests.clienttest.space.ClimbClientTests;
+import dev.jstech.tests.clienttest.space.CouchSleepClientTests;
 import dev.jstech.tests.clienttest.space.CrawlerClientTests;
 import dev.jstech.tests.clienttest.space.DepotClientTests;
 import dev.jstech.tests.clienttest.space.DescentClientTests;
@@ -616,6 +617,7 @@ public final class ClientTestSuite {
             ShipGearClientTests.class,
             RocketCabinClientTests.class,
             FlightComputerClientTests.class,
+            CouchSleepClientTests.class,
             DescentClientTests.class,
             SpaceEffectsClientTests.class,
             LandingGroundClientTests.class,

@@ -10,6 +10,7 @@ package dev.jstech.space;
 import dev.jstech.core.client.advancement.WideBackgrounds;
 import dev.jstech.core.client.multiblock.PlanHologram;
 import dev.jstech.space.client.crawler.CrawlerRenderer;
+import dev.jstech.space.client.cruise.CouchSleepClient;
 import dev.jstech.space.client.depot.DepotRenderer;
 import dev.jstech.space.client.launch.LaunchPanelScreen;
 import dev.jstech.space.client.flight.FlightComputerScreen;
@@ -117,6 +118,8 @@ public final class JsSpaceClient {
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(FlightComputer.MENU.get(),
                 FlightComputerScreen::new));
         SpacePayloads.onLandingMap(LandingMapsClient::receive);
+        // Sleeping in a crew seat on the way: the view darkening as in a bed, and its key.
+        CouchSleepClient.listen(modEventBus);
         // The Rocket Hangar's design screen, and the rocket it draws in the hangar while it is open.
         modEventBus.addListener(RegisterMenuScreensEvent.class, event -> event.register(RocketDesigner.MENU.get(),
                 RocketDesignScreen::new));

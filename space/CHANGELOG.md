@@ -627,7 +627,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   behind shrinking in the window and the one ahead growing, and keeps the space ahead loading before it gets there;
   space not loaded yet it waits for, its cruise a little longer. It comes to rest at the spot of the other world's low
   orbit, told as a thing in that orbit, its plan flown and its crew told. When everyone aboard sleeps, the cruise
-  passes at once. With nobody aboard and no chunk loader, it freezes with its space as any moving structure does. On
+  passes at once: in a bed, or in a capsule's or lander's crew seat with the sleep key of its own (Z until changed),
+  which works seated there while the rocket is in space. Asleep in the seat, the view darkens as in a bed, a line
+  under it saying which key wakes; pressing it again, leaving the seat or the cruise passing wakes the player. With
+  nobody aboard and no chunk loader, it freezes with its space as any moving structure does. On
   the way, unless the server turns them off: a micrometeoroid holes the hull now and then, and the air of the room
   behind rushes out, a twentieth each second through each hole, till a suit patch put on the hole mends it; a solar
   storm is told twenty seconds ahead and fills the open space with radiation for half a minute, the crew sheltering

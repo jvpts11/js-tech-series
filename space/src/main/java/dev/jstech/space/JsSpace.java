@@ -37,6 +37,7 @@ import dev.jstech.space.flight.FlightComputer;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.hangar.HangarStructure;
 import dev.jstech.space.crawler.CrawlerBlocks;
+import dev.jstech.space.cruise.CouchSleep;
 import dev.jstech.space.cruise.CruiseTexts;
 import dev.jstech.space.cruise.RocketCruise;
 import dev.jstech.space.cruise.SolarStorms;
@@ -195,6 +196,8 @@ public final class JsSpace {
         // A rocket's cruise between worlds, saved with its structure; what its crew is told, and the solar storms.
         RocketCruise.declare();
         CruiseTexts.declare();
+        // Sleeping in a crew seat on the way, its own key.
+        CouchSleep.declare();
         SolarStorms.listen();
         // A rocket's coming down to a world, saved with its structure, and what its crew is told of it.
         RocketDescent.declare();

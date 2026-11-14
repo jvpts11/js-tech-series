@@ -88,7 +88,7 @@ The crew lives inside the rocket, in the capsule, which is a sealed room with ai
 | The Moon | 3 days (Apollo) | about 1 minute |
 | Mars | about 8 months | about 8 minutes |
 
-**Sleeping skips the trip** when everyone aboard sleeps, as in a bed.
+**Sleeping skips the trip** when everyone aboard sleeps, as in a bed. In a capsule or a lander there is no bed: a key of its own (Z until the player changes it) puts the player sitting in a crew seat to sleep, only while the rocket is in space. The view darkens as in a bed, a line saying which key wakes them; pressing it again, leaving the seat or the trip passing wakes them.
 
 **What happens on the way**, for whoever stays awake:
 

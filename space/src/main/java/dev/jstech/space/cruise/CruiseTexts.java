@@ -31,6 +31,11 @@ public final class CruiseTexts {
             "Too little delta-v to slow into a low orbit of %s: the rocket stays in a wide orbit. Capture it on XFER"
                     + " before landing.");
     public static final TextKey SLEPT = TextKey.of("jsspace.cruise.slept", "You slept through the cruise.");
+    /** Sleeping in a crew seat: its key's name, where it works, and how to wake. */
+    public static final TextKey SLEEP_KEY = TextKey.of("jsspace.cruise.sleep_key", "Sleep in a crew seat");
+    public static final TextKey SLEEP_WHERE = TextKey.of("jsspace.cruise.sleep_where",
+            "You can sleep in a crew seat while the rocket is in space.");
+    public static final TextKey WAKE = TextKey.of("jsspace.cruise.wake", "Asleep: press %s to wake.");
     public static final TextKey STORM_NAME = TextKey.of("jsspace.cruise.storm", "Solar storm");
     public static final TextKey STORM_COMING = TextKey.of("jsspace.cruise.storm.coming",
             "A solar storm reaches the rocket in %s seconds: shelter behind the water and the cargo.");
