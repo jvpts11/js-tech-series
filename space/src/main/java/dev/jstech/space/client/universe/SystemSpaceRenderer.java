@@ -12,6 +12,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.VertexBuffer;
+import dev.jstech.space.client.ship.ShipPulseClient;
 import dev.jstech.space.network.ClimbWorldsPayload;
 import dev.jstech.space.network.SpacePayloads;
 import dev.jstech.space.universe.ClimbView;
@@ -53,6 +54,9 @@ import org.joml.Vector3d;
  * <p>A world outside the region the eye is in, as Mars is from the Overworld, is a bright point in its colour, added
  * to what is behind as the Sun is; coming into its region it grows out of its point into its sphere
  * ({@link SystemLayout#shown}, {@link WorldPoints}).
+ *
+ * <p>In a ship's pulse jump the ship stands still and only its jump goes on: the space is drawn from as far on as the
+ * jump has gone ({@link ShipPulseClient}), so the worlds and the Sun move round the ship, the stars streaking past.
  */
 public final class SystemSpaceRenderer {
 
@@ -162,10 +166,15 @@ public final class SystemSpaceRenderer {
             return;
         }
         SphereDrawing.begin();
-        final Vec3 camera = event.getCamera().getPosition();
+        // In a ship's pulse jump the ship stands still and the space is drawn from as far on as its jump has gone.
+        final double[] jumped = ShipPulseClient.offset(event.getPartialTick().getGameTimeDeltaPartialTick(false));
+        final Vec3 camera = event.getCamera().getPosition().add(jumped[0], 0, jumped[1]);
         final double tick = SphereDrawing.time(level, event);
         drawScene(eyeOf(camera), tick, null, 1F, SphereDrawing.Veil.NONE, 1F, 1F, orbiting, orbitSlide(camera, tick),
                 event.getModelViewMatrix(), event.getProjectionMatrix());
+        if (ShipPulseClient.jumping()) {
+            PulseStreaks.draw(ShipPulseClient.way(), event.getModelViewMatrix(), event.getProjectionMatrix());
+        }
         SphereDrawing.end();
     }
 

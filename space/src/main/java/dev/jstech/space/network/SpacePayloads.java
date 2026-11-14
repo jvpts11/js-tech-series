@@ -10,6 +10,7 @@ package dev.jstech.space.network;
 import dev.jstech.space.life.SuitControls;
 import dev.jstech.space.ship.ShipAutopilotControl;
 import dev.jstech.space.ship.ShipBoost;
+import dev.jstech.space.ship.ShipPulse;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.common.NeoForge;
@@ -21,8 +22,9 @@ import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 /**
  * The payloads J's Space sends between the server and a player's game, and when: the Overworld's map number as a
  * player joins, a far map on the way up ({@code FarMaps}), and the worlds under a system's space as a player arrives in
- * it ({@code SpaceClimbs}), and a Flight Computer's landing map once drawn ({@code LandingMaps}); and from a player's
- * game, the light of their suit's controls pressed, and a ship's boost held at its helm. What a player's game
+ * it ({@code SpaceClimbs}), a Flight Computer's landing map once drawn ({@code LandingMaps}), and how far a ship's
+ * pulse jump has gone, to whoever is aboard; and from a player's game, the light of their suit's controls pressed,
+ * and a ship's boost and pulse jump held at its helm. What a player's game
  * does with each is given to it from its own side, so nothing of a player's game is loaded on a server.
  */
 public final class SpacePayloads {
@@ -39,6 +41,8 @@ public final class SpacePayloads {
     private static volatile ILandingMapReceiver landingMapReceiver = map -> {
     };
     private static volatile ICouchSleepReceiver couchSleepReceiver = asleep -> {
+    };
+    private static volatile IShipPulseReceiver shipPulseReceiver = jump -> {
     };
 
     private SpacePayloads() {
@@ -61,10 +65,13 @@ public final class SpacePayloads {
             registrar.playToServer(SuitLightPayload.TYPE, SuitLightPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> SuitControls.light(context.player(),
                             payload.on())));
-            registrar.playToServer(ShipBoostPayload.TYPE, ShipBoostPayload.STREAM_CODEC,
+            registrar.playToClient(ShipPulsePayload.TYPE, ShipPulsePayload.STREAM_CODEC,
+                    (payload, context) -> context.enqueueWork(() -> shipPulseReceiver.receive(payload)));
+            registrar.playToServer(ShipHelmKeysPayload.TYPE, ShipHelmKeysPayload.STREAM_CODEC,
                     (payload, context) -> context.enqueueWork(() -> {
                         if (context.player() instanceof ServerPlayer player) {
-                            ShipBoost.told(player, payload.held());
+                            ShipBoost.told(player, payload.boost());
+                            ShipPulse.told(player, payload.pulse());
                         }
                     }));
             registrar.playToServer(ShipAutopilotPayload.TYPE, ShipAutopilotPayload.STREAM_CODEC,
@@ -107,6 +114,11 @@ public final class SpacePayloads {
         couchSleepReceiver = receiver;
     }
 
+    /** Gives what a player's game does with how far the ship it is aboard has jumped, from its side's entry point. */
+    public static void onShipPulse(final IShipPulseReceiver receiver) {
+        shipPulseReceiver = receiver;
+    }
+
     /** What a player's game does with the Overworld's map number. */
     @FunctionalInterface
     public interface IMapSeedReceiver {
@@ -140,5 +152,12 @@ public final class SpacePayloads {
     public interface ICouchSleepReceiver {
 
         void receive(boolean asleep);
+    }
+
+    /** What a player's game does with how far the ship it is aboard has jumped. */
+    @FunctionalInterface
+    public interface IShipPulseReceiver {
+
+        void receive(ShipPulsePayload jump);
     }
 }

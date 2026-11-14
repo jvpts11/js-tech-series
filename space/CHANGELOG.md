@@ -818,7 +818,17 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   The flight path marker stands for the crosshair. Seen from behind, the camera stands back round the ship, the whole
   ship in view, and the HUD spreads over the screen.
 - A ship's fusion reactor burns its deuterium as the ship flies, a full load lasting four hours aloft; with
-  none left it makes nothing, and the ship cannot boost. A dock fills it again as it takes the ship back.
+  none left it makes nothing, and the ship can neither boost nor pulse jump. A dock fills it again as it takes the ship
+  back.
+- A ship's pulse jump, in the spirit of No Man's Sky: in the Solar System's space, over no world's low orbit
+  nor the Sun, B held at the helm spools its pulse drive a second and a half, and it jumps at 3,000 metres a second,
+  level along its nose, barely turning, its reactor burning six times as fast: the Moon a few seconds away, Mars a few
+  tens. Holding back drops it out; it drops out by itself the moment its way comes over a world's low orbit, ready to
+  go down, at the edge of the Sun, near another ship, or with its deuterium spent. The ship stands still while its jump
+  goes on, the worlds, the Sun and the streaking stars drawn moving round it, and dropping out it is set where the jump
+  took it, its flight going on as it was, the sky never jumping. Its HUD shows the drive spooling in an amber ring
+  round the flight path marker, PULSE lit with the way out and the nearest world bracketed with how far and how long,
+  and PULSE OFF a moment after, with why.
 - A small ship's cabin is a sealed room wherever it flies, in space too: its flight console asks for it, and
   the furniture standing in it, its seats, consoles, bunks, suit lockers and racks, lets its air round them, so its
   crew breathes it, kept warm, with the vacuum outside.

@@ -68,9 +68,11 @@ import org.jetbrains.annotations.Nullable;
  * @param console  where its flight console stands from its pivot's block, if it has one: so wherever a yard puts its
  *                 blocks, in this dimension or another
  * @param autopilot its autopilot engaged, if one is ({@link ShipAutopilots})
+ * @param pulse    its pulse jump under way, if one is ({@link ShipPulse})
  */
 public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, ShipFlightModel.Performance ship,
-                         boolean grounded, Optional<BlockPos> console, Optional<ShipAutopilot> autopilot)
+                         boolean grounded, Optional<BlockPos> console, Optional<ShipAutopilot> autopilot,
+                         Optional<ShipPulse.Jump> pulse)
         implements IStructureMotion {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ship_flight");
@@ -98,7 +100,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             PERFORMANCE.fieldOf("ship").forGetter(ShipFlight::ship),
             Codec.BOOL.optionalFieldOf("grounded", false).forGetter(ShipFlight::grounded),
             BlockPos.CODEC.optionalFieldOf("console").forGetter(ShipFlight::console),
-            ShipAutopilot.CODEC.optionalFieldOf("autopilot").forGetter(ShipFlight::autopilot)
+            ShipAutopilot.CODEC.optionalFieldOf("autopilot").forGetter(ShipFlight::autopilot),
+            ShipPulse.Jump.CODEC.optionalFieldOf("pulse").forGetter(ShipFlight::pulse)
     ).apply(instance, ShipFlight::new));
     /* The overworld's air at sea level, in kilopascals, what its air's thickness is told against. */
     private static final double SEA_PRESSURE = 101.3;
@@ -114,7 +117,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     /* How often along its way the land is held, in blocks: half a chunk, so no chunk the way crosses is missed. */
     private static final double HELD_EVERY = 8;
     /* How long a full load of deuterium keeps its reactor going in flight, in seconds: four hours. */
-    private static final double REACTOR_LOAD_SECONDS = 4 * 3600;
+    static final double REACTOR_LOAD_SECONDS = 4 * 3600;
     /* What the autopilot holds docking: its throttle closing. */
     private static final ShipFlightModel.Held BRAKING = new ShipFlightModel.Held(0, 1, 0, 0, 0, 0, false, true);
     /* Below this, in metres a second, a ship has set down, or stopped to dock; how near its spot LAND sets it down. */
@@ -142,7 +145,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
      */
     public static ShipFlight resting(final int noseX, final int noseZ, final ShipFlightModel.Performance ship,
                                      final Optional<BlockPos> console) {
-        return new ShipFlight(ShipFlightModel.State.RESTING, noseX, noseZ, ship, true, console, Optional.empty());
+        return new ShipFlight(ShipFlightModel.State.RESTING, noseX, noseZ, ship, true, console, Optional.empty(),
+                Optional.empty());
     }
 
     /**
@@ -196,12 +200,20 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
 
     /** Its flight as it stands, another way. */
     public ShipFlight with(final ShipFlightModel.State next) {
-        return new ShipFlight(next, this.noseX, this.noseZ, this.ship, this.grounded, this.console, this.autopilot);
+        return new ShipFlight(next, this.noseX, this.noseZ, this.ship, this.grounded, this.console, this.autopilot,
+                this.pulse);
     }
 
     /** Its flight with {@code pilot} engaged, or none. */
     public ShipFlight engaged(final Optional<ShipAutopilot> pilot) {
-        return new ShipFlight(this.state, this.noseX, this.noseZ, this.ship, this.grounded, this.console, pilot);
+        return new ShipFlight(this.state, this.noseX, this.noseZ, this.ship, this.grounded, this.console, pilot,
+                this.pulse);
+    }
+
+    /** Its flight in the pulse jump {@code jump}, or out of one with none, its autopilot let go. */
+    public ShipFlight jumping(final ShipPulse.@Nullable Jump jump) {
+        return new ShipFlight(this.state, this.noseX, this.noseZ, this.ship, this.grounded, this.console,
+                Optional.empty(), Optional.ofNullable(jump));
     }
 
     /** Where its console stands in {@code body}'s yard now, if it has one. */
@@ -238,6 +250,14 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                 : keeper.burn(ShipFlightModel.TICK / REACTOR_LOAD_SECONDS));
         // A part with holes in it does as much as the share of its blocks still in it, as its console counts them.
         final ShipFlightModel.Performance whole = keeper == null ? this.ship : keeper.performance().orElse(this.ship);
+        if (this.pulse.isPresent()) {
+            return ShipPulse.jumping(level, body, now, frame, this, helm, keeper);
+        }
+        // Its pulse jump's key held where it may jump, its drive spools, the reactor burning for it; spooled, it jumps.
+        final boolean spooling = piloted && !this.grounded && ShipPulse.held(body, tick) && fuelled
+                && ShipPulse.mayJump(level, body, now) && (keeper == null || keeper.burn(ShipFlightModel.TICK
+                / REACTOR_LOAD_SECONDS * (PulseCourse.BURNS - 1)));
+        final int spooled = ShipPulse.spool(body, spooling);
         // Its pilot taking the helm, holding any of its keys, lets its autopilot go; so does an autopilot done, and a
         // runway whose stretch is found not clear as the ship comes near.
         final Optional<ShipAutopilot> pilot = this.autopilot.filter(engaged -> !holding(helm)
@@ -268,9 +288,11 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, fuelled ? held : held.unboosted(),
                 air(level, now, body), whole, pitch);
         if (keeper != null) {
-            keeper.flew(ShipReadings.of(next, this.grounded, altitude, shown));
+            keeper.flew(ShipReadings.of(next, this.grounded, altitude, shown, ShipPulse.shown(body, spooled, tick)));
         }
-        final Step out = self.flownOn(level, body, now, frame, next);
+        final Step flown = self.flownOn(level, body, now, frame, next);
+        final Step out = spooled >= ShipPulse.SPOOL_TICKS && flown.next() instanceof ShipFlight after
+                ? new Step(flown.pose(), after.jumping(ShipPulse.Jump.begun())) : flown;
         if (out.next() instanceof ShipFlight after && after.grounded() != this.grounded) {
             // Come down onto the land or lifted off it: its boarding stair follows, where its outer door is open.
             ShipStairs.groundChanged(level, body, after.grounded());
@@ -360,7 +382,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         if (keeper != null) {
             final double closing = offset.length() < STILL ? 0 : drift.dot(offset.normalize());
             keeper.flew(ShipReadings.of(next, this.grounded, altitude, ShipReadings.Pilot.of(ShipAutopilot.Mode.DOCK,
-                    theirs.get(), offset.length(), closing, docking.aligned(), 0, 0)));
+                    theirs.get(), offset.length(), closing, docking.aligned(), 0, 0), ShipReadings.Pulse.NONE));
         }
         final StructurePose turned = off < STILL ? now
                 : StructurePose.between(now, facing, Math.min(1, Math.toRadians(DOCK_TURNS) * ShipFlightModel.TICK
@@ -540,7 +562,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
 
     /* Its flight standing as {@code next}, on the land or not. */
     private ShipFlight flying(final ShipFlightModel.State next, final boolean landed) {
-        return new ShipFlight(next, this.noseX, this.noseZ, this.ship, landed, this.console, this.autopilot);
+        return new ShipFlight(next, this.noseX, this.noseZ, this.ship, landed, this.console, this.autopilot,
+                this.pulse);
     }
 
     /* Its console, which shows its flight and keeps its reactor's deuterium, where its yard's land is loaded. */

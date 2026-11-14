@@ -15,6 +15,7 @@ import dev.jstech.core.text.TextKey;
 public final class ShipFlightTexts {
 
     public static final TextKey BOOST_KEY = TextKey.of("key.jsspace.ship_boost", "Boost the ship");
+    public static final TextKey PULSE_KEY = TextKey.of("key.jsspace.ship_pulse", "Pulse jump the ship");
     public static final TextKey AUTOPILOT_KEY = TextKey.of("key.jsspace.ship_autopilot",
             "Change the ship's autopilot");
 

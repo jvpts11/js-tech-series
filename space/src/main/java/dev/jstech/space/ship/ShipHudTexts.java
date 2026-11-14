@@ -37,6 +37,20 @@ public final class ShipHudTexts {
     public static final TextKey CLOSE = TextKey.of("jsspace.ship_hud.close", "CLOSE %s M/S");
     public static final TextKey ALIGNED = TextKey.of("jsspace.ship_hud.aligned", "ALIGNED");
     public static final TextKey APOGEE = TextKey.of("jsspace.ship_hud.apogee", "APO %s  %s");
+    public static final TextKey PULSE = TextKey.of("jsspace.ship_hud.pulse", "PULSE");
+    public static final TextKey PULSE_SPOOL = TextKey.of("jsspace.ship_hud.pulse_spool", "PULSE %s S");
+    public static final TextKey PULSE_HOLD = TextKey.of("jsspace.ship_hud.pulse_hold", "HOLD %s");
+    public static final TextKey PULSE_EXIT = TextKey.of("jsspace.ship_hud.pulse_exit", "%s TO EXIT");
+    public static final TextKey PULSE_FUEL = TextKey.of("jsspace.ship_hud.pulse_fuel", "D2 %s%%  X%s");
+    public static final TextKey PULSE_WORLD = TextKey.of("jsspace.ship_hud.pulse_world", "%s %s  %s");
+    public static final TextKey PULSE_OFF = TextKey.of("jsspace.ship_hud.pulse_off", "PULSE OFF");
+    public static final TextKey PULSE_NEAR = TextKey.of("jsspace.ship_hud.pulse_near", "NEAR %s");
+    public static final TextKey PULSE_SUN = TextKey.of("jsspace.ship_hud.pulse_sun", "NEAR THE SUN");
+    public static final TextKey PULSE_SHIP = TextKey.of("jsspace.ship_hud.pulse_ship", "SHIP NEAR");
+    public static final TextKey PULSE_SPENT = TextKey.of("jsspace.ship_hud.pulse_spent", "D2 SPENT");
+    public static final TextKey OVERWORLD = TextKey.of("jsspace.ship_hud.overworld", "OVERWORLD");
+    public static final TextKey MOON = TextKey.of("jsspace.ship_hud.moon", "MOON");
+    public static final TextKey MARS = TextKey.of("jsspace.ship_hud.mars", "MARS");
 
     private ShipHudTexts() {
     }

@@ -49,6 +49,9 @@ public final class ClientStructure implements IStructureBody {
     private AABB worldBox;
     private long clock = Long.MIN_VALUE;
     private int behind = 2;
+    /* The server's ticks its frame and the frame before it stand at; unknown till it is told a pose. */
+    private long drawnTo = Long.MIN_VALUE;
+    private long drawnFrom = Long.MIN_VALUE;
     private boolean ready;
     private boolean landed;
     /* Held by another: the parent's entity, and where it stands on the parent this tick and the last. */
@@ -171,6 +174,19 @@ public final class ClientStructure implements IStructureBody {
         return StructurePose.between(previousFrame.pose(), frame.pose(), partialTick);
     }
 
+    /**
+     * The server's tick a frame {@code partialTick} of the way through this tick draws it at, between the ticks of the
+     * two poses it is drawn between, as {@link #drawnAt} draws it: what goes with it is drawn in step with it, as a
+     * ship's sky moving round it in a jump. Not a number before it is told any pose.
+     */
+    public double drawnTick(final float partialTick) {
+        if (drawnTo == Long.MIN_VALUE) {
+            return Double.NaN;
+        }
+        final long from = drawnFrom == Long.MIN_VALUE ? drawnTo : drawnFrom;
+        return from + (drawnTo - from) * (double) partialTick;
+    }
+
     /** The structure holding it, as the player's game has it, or null. */
     public @Nullable ClientStructure parent() {
         return parentEntity < 0 ? null : ClientMovingStructures.byEntity(parentEntity);
@@ -235,6 +251,8 @@ public final class ClientStructure implements IStructureBody {
             frame = new StructureFrame(payload.pose(), pivotX, pivotY, pivotZ);
             previousFrame = frame;
             worldBox = boxOf(frame);
+            drawnTo = payload.tick();
+            drawnFrom = drawnTo;
         }
     }
 
@@ -278,11 +296,13 @@ public final class ClientStructure implements IStructureBody {
         }
         previousFrame = frame;
         previousLocal = local;
+        drawnFrom = drawnTo;
         if (landed || told.isEmpty()) {
             return;
         }
         clock++;
         final long at = clock - behind;
+        drawnTo = at;
         final StructurePosePayload newest = told.peekLast();
         parentEntity = newest.parent();
         final ClientStructure holding = parent();

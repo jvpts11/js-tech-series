@@ -1021,6 +1021,7 @@
   "jsspace.ship_fixture.respawn_set": "Você vai acordar neste beliche",
   "jsspace.ship_fixture.no_air": "Não há ar para respirar aqui: o beliche precisa de uma cabine selada",
   "key.jsspace.ship_boost": "Impulsionar a nave",
+  "key.jsspace.ship_pulse": "Dar o salto de pulso",
   "key.jsspace.ship_autopilot": "Trocar o piloto automático da nave",
   "block.jsspace.ship_pad_plate": "Placa de Plataforma de Naves",
   "block.jsspace.ship_pad_truss": "Treliça de Plataforma de Naves",
@@ -1065,5 +1066,19 @@
   "jsspace.ship_hud.range": "DIST %s",
   "jsspace.ship_hud.close": "APROX %s M/S",
   "jsspace.ship_hud.aligned": "ALINHADA",
-  "jsspace.ship_hud.apogee": "APO %s  %s"
+  "jsspace.ship_hud.apogee": "APO %s  %s",
+  "jsspace.ship_hud.pulse": "PULSO",
+  "jsspace.ship_hud.pulse_spool": "PULSO %s S",
+  "jsspace.ship_hud.pulse_hold": "SEGURE %s",
+  "jsspace.ship_hud.pulse_exit": "%s PARA SAIR",
+  "jsspace.ship_hud.pulse_fuel": "D2 %s%%  X%s",
+  "jsspace.ship_hud.pulse_world": "%s %s  %s",
+  "jsspace.ship_hud.pulse_off": "FIM DO PULSO",
+  "jsspace.ship_hud.pulse_near": "PERTO DE %s",
+  "jsspace.ship_hud.pulse_sun": "PERTO DO SOL",
+  "jsspace.ship_hud.pulse_ship": "NAVE PERTO",
+  "jsspace.ship_hud.pulse_spent": "D2 ESGOTADO",
+  "jsspace.ship_hud.overworld": "SUPERFÍCIE",
+  "jsspace.ship_hud.moon": "LUA",
+  "jsspace.ship_hud.mars": "MARTE"
 }

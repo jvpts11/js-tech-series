@@ -67,6 +67,7 @@ import dev.jstech.space.ship.ShipDocks;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipPartModels;
+import dev.jstech.space.ship.ShipPulse;
 import dev.jstech.space.ship.ShipShapes;
 import dev.jstech.space.ship.ShipSounds;
 import dev.jstech.space.ship.ShipStairs;
@@ -222,6 +223,7 @@ public final class JsSpace {
         ShipShapes.declare();
         ShipFlight.declare();
         ShipBoost.declare();
+        ShipPulse.declare();
         ShipAutopilotControl.declare();
         ShipDocks.listen();
         // Where a ship sets down: the ship landing pad, and the runway beacon a wheeled ship lines up on.

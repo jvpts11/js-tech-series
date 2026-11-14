@@ -128,6 +128,14 @@ kit for its vehicles.
   space, for as long as the pilot holds it. Its one cost is the ship's agility: while it boosts, the ship turns and
   pitches at four tenths of its usual rate, and the HUD says TURN SLOW. The reactor drives it, so a ship whose reactor has
   no deuterium left cannot boost.
+- **Pulse jump.** In the system's space, over no world's low orbit and not over the Sun, B held at the helm spools the
+  pulse drive for a second and a half, and the ship jumps at 3,000 metres a second, level along its nose's heading,
+  barely turning, its reactor burning its deuterium six times as fast: the Moon is a few seconds away, Mars a few tens.
+  It drops out when the pilot holds back, by itself the moment its way comes over a world's low orbit, so it comes out
+  ready to go down, at the edge of the Sun, near another ship, or with its deuterium spent. No deck can be walked at
+  that speed nor the space loaded under it, so the ship stands still where it began and its jump goes on: the worlds,
+  the Sun and the stars are drawn moving round it, the stars streaking, and dropping out it is set where the jump took
+  it, its flight going on as it was, the sky never jumping.
 - **Taking off and landing.** The air engines' nozzles turn down, as the Harrier's do, just far enough to hold what the
   wings do not. Where the air does not reach, on the Moon and in Mars' thin air, the **thrusters** hold the ship up with
   a force of their own, firing down jets of cold gas; **a ship with no thrusters lands only where there is air**, and
@@ -144,7 +152,10 @@ kit for its vehicles.
   marker (which stands for the crosshair), the speed with the boost's bar (how far into the boost's speed the ship is,
   amber with TURN SLOW under it while it boosts), the altitude and climb, the reactor's power and
   deuterium, the nozzles' angle and the gear, and the autopilot's three modes. From behind, the camera stands back round
-  the ship and the HUD spreads over the screen.
+  the ship and the HUD spreads over the screen. The pulse jump has its own: spooling, an amber ring round the flight path
+  marker filling, PULSE and the seconds left under the heading tape, and HOLD B; jumping, PULSE lit there, S TO EXIT,
+  the deuterium's X6, and the nearest world bracketed with how far off its low orbit is and how long away; dropped out,
+  PULSE OFF framed a moment, with why.
 
 ### Autopilots
 
@@ -261,7 +272,7 @@ without them, the free bay is always there.
 ### Flying, still to build
 
 - **Between the stars**, the interstellar drive, engaged only from orbit ([Travel](travel.md)). **Within a system,** free
-  flight with the boost across the empty stretches is built.
+  flight with the boost and the pulse jump across the empty stretches is built.
 - **Weight on other worlds**: a large ship may be unable to take off from LHS 1140 b, at 1.9 g.
 - **Docking** at a station's ports and into a carrier's bay, flying into the large ship's hangar. Collar to collar between
   ships is built.
@@ -302,8 +313,10 @@ its share of the part's figures. A repair kit mends it. A destroyed ship becomes
 ### What a starship spends
 
 The reactor burns **deuterium** as the ship flies, a full load lasting about four hours aloft. With none left, the reactor
-makes no power and the ship cannot boost; a dock fills the load again. The boost spends nothing more: held, it lasts as
-long as the pilot holds it, its one cost the slower turning. The four hours and the four tenths are first estimates.
+makes no power and the ship can neither boost nor pulse jump; a dock fills the load again. The boost spends nothing
+more: held, it lasts as long as the pilot holds it, its one cost the slower turning. The pulse jump burns the deuterium
+six times as fast while the drive spools and the ship jumps. The four hours, the four tenths, the jump's 3,000 metres
+a second and its six times are first estimates.
 
 Still to build: the main engines spending propellant, fusion fuel on the larger ships (deuterium and helium-3 for the
 short drive), the weapons spending the reactor's energy, and a gas scoop that refuels at a giant.

@@ -32,12 +32,13 @@ import dev.jstech.space.client.rocket.FlightComputerRenderer;
 import dev.jstech.space.client.ship.FlightConsoleRenderer;
 import dev.jstech.space.client.ship.ShipArt;
 import dev.jstech.space.client.ship.ShipAutopilotClient;
-import dev.jstech.space.client.ship.ShipBoostClient;
 import dev.jstech.space.client.ship.ShipChaseCamera;
 import dev.jstech.space.client.ship.ShipConsoleScreen;
 import dev.jstech.space.client.ship.ShipEngineSounds;
 import dev.jstech.space.client.ship.ShipExhaust;
+import dev.jstech.space.client.ship.ShipHelmKeysClient;
 import dev.jstech.space.client.ship.ShipHud;
+import dev.jstech.space.client.ship.ShipPulseClient;
 import dev.jstech.space.client.ship.SuitLockerRenderer;
 import dev.jstech.space.client.ship.SuitLockerScreen;
 import dev.jstech.space.client.shipyard.ItemPortScreen;
@@ -90,9 +91,11 @@ public final class JsSpaceClient {
         ShipyardRenderer.listen(modEventBus);
         // The parts' faces that show the game's own blocks, drawn from the game's files as the game loads.
         ShipArt.declare();
-        // A ship that has left its dock, drawn from its flight console wherever it goes, and its boost's key.
+        // A ship that has left its dock, drawn from its flight console wherever it goes; its boost's and pulse jump's
+        // keys, and the space moving round it in a jump.
         FlightConsoleRenderer.listen(modEventBus);
-        ShipBoostClient.listen();
+        ShipHelmKeysClient.listen();
+        ShipPulseClient.listen();
         ShipAutopilotClient.listen();
         ShipExhaust.listen();
         SkinAtlas.listen();

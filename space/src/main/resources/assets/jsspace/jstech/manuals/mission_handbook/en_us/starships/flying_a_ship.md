@@ -24,8 +24,9 @@ Start a ship built whole in a [shipyard](jsspace:shipyard): it is yours to fly.
 3. Below 10 metres a second the air engines' nozzles turn down and the ship hovers, nose level: jump and [[C]] take it straight up and down.
 4. Faster, the wings hold it up. Hold [[Left Control]] to boost it across an empty stretch, well clear of the land or in space, for as long as you like; while it boosts, its nose turns slowly (`TURN SLOW`).
 5. Climb on: seven hundred blocks over the world's build limit, the ship crosses into its system's space.
-6. [[J]] changes the autopilot: LAND, ORBIT, DOCK, then off. Holding any key of the helm takes the helm back.
-7. Get up with sneak ([[Left Shift]]): the throttle closes, and the ship settles and stays parked.
+6. In space, away from the worlds, hold [[B]] for a second and a half: the pulse drive spools and the ship jumps at 3,000 metres a second, level along its nose, barely turning. Hold back ([[S]]) to drop out; it drops out by itself over a world's low orbit, ready to go down.
+7. [[J]] changes the autopilot: LAND, ORBIT, DOCK, then off. Holding any key of the helm takes the helm back.
+8. Get up with sneak ([[Left Shift]]): the throttle closes, and the ship settles and stays parked.
 
 Table: The HUD
 
@@ -38,10 +39,11 @@ Table: The HUD
 | Above | The reactor's power, `PWR`, and its deuterium, `D2` |
 | Below | The nozzles' angle, `NOZZLES`, and `GEAR UP` or `GEAR DOWN`, amber when down |
 | Bottom | The autopilot, `AP`: `LAND`, `ORBIT`, `DOCK`, the one engaged lit |
+| Under the heading | The pulse jump: spooling, `PULSE` and the seconds left, with an amber ring filling round the middle; jumping, `PULSE` lit, `S TO EXIT`, `X6` after `D2`, and the nearest world bracketed with how far off and how long away; dropped out, `PULSE OFF` framed, and why |
 
 LAND sets the ship down on the nearest pad you may use within 512 blocks, or, on wheels, a clear runway; its diamond marks the spot. ORBIT opens the throttle and climbs at 55 degrees, boosting where it can; in space it levels the ship out on the plane of the low orbits, then lets go. DOCK, in space, brings its docking collar to the nearest ship's within 200 blocks that would let you aboard, at least as a passenger, its cross on the other collar. Once they touch in line, the two are made one; [[J]] lets the docked ship go.
 
-The reactor's deuterium lasts four hours aloft. With none left the ship cannot boost; a dock fills it again.
+The reactor's deuterium lasts four hours aloft, and burns six times as fast in a pulse jump. With none left the ship can neither boost nor jump; a dock fills it again.
 
 ```card
 title: Landing on autopilot 1/2

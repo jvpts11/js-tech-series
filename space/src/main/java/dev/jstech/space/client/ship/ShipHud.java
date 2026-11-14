@@ -8,6 +8,7 @@
 package dev.jstech.space.client.ship;
 
 import dev.jstech.core.client.gui.component.Draw;
+import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.StructureFrame;
@@ -24,14 +25,19 @@ import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipAboard;
 import dev.jstech.space.ship.ShipAltitude;
 import dev.jstech.space.ship.ShipAutopilot;
+import dev.jstech.space.ship.PulseCourse;
 import dev.jstech.space.ship.ShipHudTexts;
+import dev.jstech.space.ship.ShipPulse;
 import dev.jstech.space.ship.ShipReadings;
+import dev.jstech.space.universe.SolarBody;
+import dev.jstech.space.universe.SystemLayout;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -82,6 +88,18 @@ public final class ShipHud {
     private static final int BOX_HALF = 8;
     private static final int SCALE_STEP = 12;
     private static final int BOOST_CELLS = 10;
+    /*
+     * The pulse jump's spool ring round the middle, its radius and how far apart its dots stand, in degrees of a whole
+     * turn; how far the corners of the bracket on the nearest world stand from it, and how long their arms are.
+     */
+    private static final int SPOOL_RING = 30;
+    private static final int RING_STEP = 4;
+    private static final int FULL_TURN = 360;
+    private static final int BRACKET = 9;
+    private static final int BRACKET_ARM = 5;
+    /* How far down the box the pitch ladder's rungs begin: under the heading tape, or under the pulse's labels. */
+    private static final int UNDER_THE_TAPE = 34;
+    private static final int UNDER_THE_LABELS = 58;
     /* The autopilot's modes, and how far apart they stand. */
     private static final Map<ShipAutopilot.Mode, TextKey> MODES = new EnumMap<>(Map.of(
             ShipAutopilot.Mode.LAND, ShipHudTexts.LAND, ShipAutopilot.Mode.ORBIT, ShipHudTexts.ORBIT,
@@ -174,9 +192,25 @@ public final class ShipHud {
         final Flown flown = Flown.of(minecraft, console, ship, structure.frame());
         final ShipReadings.Pilot pilot = flown.readings().pilot();
         final Vec2 target = pilot.mode().isEmpty() ? null : onScreen(pilot.target());
+        final Vec2 world = jumpedTo(flown.readings().pulse(), delta.getGameTimeDeltaPartialTick(false));
         new Painter(g, minecraft.font, box, ShipHudArt.PALETTE.get()).paint(flown, target == null ? null
-                : new Vec2((target.x - left) / scale, (target.y - top) / scale));
+                : new Vec2((target.x - left) / scale, (target.y - top) / scale), world == null ? null
+                : new Vec2((world.x - left) / scale, (world.y - top) / scale));
         g.pose().popPose();
+    }
+
+    /*
+     * Where on the screen the world nearest a ship's pulse jump is seen, as the space is drawn from as far on as the
+     * jump has gone: none out of a jump, or behind the player.
+     */
+    private static @Nullable Vec2 jumpedTo(final ShipReadings.Pulse pulse, final float partialTick) {
+        final SolarBody body = pulse.on() ? ShipPulse.Drop.bodyOf(pulse.near()) : null;
+        if (body == null) {
+            return null;
+        }
+        final double[] middle = SystemLayout.centre(body);
+        final double[] jumped = ShipPulseClient.offset(partialTick);
+        return onScreen(new Vec3(middle[0] - jumped[0], middle[1], middle[2] - jumped[1]));
     }
 
     /* The box on the approved screen the HUD is projected in, in points. */
@@ -241,11 +275,14 @@ public final class ShipHud {
     /* Paints the HUD in its box, in the approved screen's points, as the approved flight's own drawing lays it. */
     private record Painter(GuiGraphics g, Font font, Box box, ShipHudArt.Colours colours) {
 
-        void paint(final Flown flown, final @Nullable Vec2 target) {
+        void paint(final Flown flown, final @Nullable Vec2 target, final @Nullable Vec2 world) {
             final int cx = (box.x0() + box.x1()) / 2;
             final int cy = (box.y0() + box.y1()) / 2 + 10;
             tape(flown.heading(), cx);
-            ladder(flown.pitch(), flown.bank(), cx, cy);
+            // Under the heading tape the pulse jump's labels stand, the ladder's rungs kept clear of them.
+            final ShipReadings.Pulse jump = flown.readings().pulse();
+            final boolean labelled = jump.spool() > 0 || jump.on() || !jump.dropped().isEmpty();
+            ladder(flown.pitch(), flown.bank(), cx, cy, box.y0() + (labelled ? UNDER_THE_LABELS : UNDER_THE_TAPE));
             marker(cx, cy + (int) Math.round(-flown.offPath() * LADDER_STEP));
             speed(flown.readings(), cy);
             altitude(flown, cy);
@@ -255,6 +292,95 @@ public final class ShipHud {
             if (target != null && box.holds(target)) {
                 symbol(pilot, (int) target.x, (int) target.y);
             }
+            pulse(flown.readings().pulse(), cx, cy, world);
+        }
+
+        /*
+         * The pulse jump, as the approved HUD draws it: spooling, a ring round the middle filling from the top, what
+         * spools and how long under the heading tape, and the key to hold; jumping, PULSE lit there, the way out, and
+         * the nearest world bracketed with how far off and how long away; dropped out, why, framed, a moment.
+         */
+        private void pulse(final ShipReadings.Pulse pulse, final int cx, final int cy, final @Nullable Vec2 world) {
+            final int y0 = box.y0();
+            if (pulse.spool() > 0) {
+                for (int a = 0; a < FULL_TURN; a += RING_STEP) {
+                    final boolean on = a / (double) FULL_TURN <= pulse.spool() / (double) PERCENT;
+                    final int x = (int) (cx + SPOOL_RING * Math.sin(Math.toRadians(a)));
+                    final int y = (int) (cy - SPOOL_RING * Math.cos(Math.toRadians(a)));
+                    fill(x - 1, y - 1, x + 2, y + 2, on ? colours.hot() : colours.unfilled());
+                }
+                label(GameText.resolve(ShipHudTexts.PULSE_SPOOL.with(Text.literal(String.format(Locale.ROOT, "%.1f",
+                        pulse.left() / 10.0)))), cx, y0 + 32, colours.hot());
+                small(GameText.resolve(ShipHudTexts.PULSE_HOLD.with(Text.literal(keyName(KeyActionsClient.mapping(
+                        ShipPulse.KEY))))), cx, y0 + 48, colours.dim(), Align.CENTRE);
+            } else if (pulse.on()) {
+                final String word = GameText.resolve(ShipHudTexts.PULSE);
+                final int half = (Math.round(font.width(word) * FIGURE) + 14) / 2;
+                fill(cx - half, y0 + 30, cx + half, y0 + 44, colours.hot());
+                label(word, cx, y0 + 32, colours.lit());
+                small(GameText.resolve(ShipHudTexts.PULSE_EXIT.with(Text.literal(keyName(Minecraft.getInstance()
+                        .options.keyDown)))), cx, y0 + 48, colours.dim(), Align.CENTRE);
+                final SolarBody body = ShipPulse.Drop.bodyOf(pulse.near());
+                if (world != null && body != null && box.holds(world)) {
+                    bracket((int) world.x, (int) world.y, GameText.resolve(ShipHudTexts.PULSE_WORLD.with(
+                            Text.literal(GameText.resolve(nameOf(body))), Text.literal(thousands(pulse.range())),
+                            Text.literal(clock(pulse.seconds())))));
+                }
+            } else if (!pulse.dropped().isEmpty()) {
+                final String off = GameText.resolve(ShipHudTexts.PULSE_OFF);
+                final String why = why(pulse.dropped());
+                final int lines = why.isEmpty() ? 1 : 2;
+                final int half = (Math.round(Math.max(font.width(off), font.width(why)) * FIGURE) + 20) / 2;
+                frame(cx - half, y0 + 30, cx + half, y0 + 30 + 14 * lines + 6, colours.hot());
+                label(off, cx, y0 + 34, colours.hot());
+                if (!why.isEmpty()) {
+                    label(why, cx, y0 + 48, colours.symbol());
+                }
+            }
+        }
+
+        /* The nearest world in a pulse jump bracketed where it is seen, with {@code text} beside it. */
+        private void bracket(final int tx, final int ty, final String text) {
+            final int c = colours.symbol();
+            for (final int dx : new int[] {-1, 1}) {
+                for (final int dy : new int[] {-1, 1}) {
+                    hline(tx + dx * BRACKET, tx + dx * (BRACKET - BRACKET_ARM), ty + dy * BRACKET, c);
+                    vline(tx + dx * BRACKET, ty + dy * BRACKET, ty + dy * (BRACKET - BRACKET_ARM), c);
+                }
+            }
+            small(text, tx + BRACKET + 4, ty - 4, c, Align.LEFT);
+        }
+
+        /* Why a ship dropped out of its pulse jump, as its banner's second line says it; none for its pilot. */
+        private static String why(final String dropped) {
+            final SolarBody body = ShipPulse.Drop.bodyOf(dropped);
+            if (body != null) {
+                return GameText.resolve(ShipHudTexts.PULSE_NEAR.with(Text.literal(GameText.resolve(nameOf(body)))));
+            }
+            return switch (dropped) {
+                case ShipPulse.Drop.SUN -> GameText.resolve(ShipHudTexts.PULSE_SUN);
+                case ShipPulse.Drop.SHIP -> GameText.resolve(ShipHudTexts.PULSE_SHIP);
+                case ShipPulse.Drop.FUEL -> GameText.resolve(ShipHudTexts.PULSE_SPENT);
+                default -> "";
+            };
+        }
+
+        private static TextKey nameOf(final SolarBody body) {
+            return switch (body) {
+                case OVERWORLD -> ShipHudTexts.OVERWORLD;
+                case MOON -> ShipHudTexts.MOON;
+                case MARS -> ShipHudTexts.MARS;
+            };
+        }
+
+        /* The key a key binding is on, as the HUD writes it. */
+        private static String keyName(final KeyMapping mapping) {
+            return mapping.getTranslatedKeyMessage().getString().toUpperCase(Locale.ROOT);
+        }
+
+        /* A distance in blocks, in thousands from a thousand, as the bracket reads it. */
+        private static String thousands(final int blocks) {
+            return blocks < THOUSAND ? Integer.toString(blocks) : Math.round(blocks / (double) THOUSAND) + "K";
         }
 
         /*
@@ -326,7 +452,7 @@ public final class ShipHud {
         }
 
         /* The pitch ladder, each ten degrees, solid above the horizon and broken below, turned as the ship banks. */
-        private void ladder(final double pitch, final double bank, final int cx, final int cy) {
+        private void ladder(final double pitch, final double bank, final int cx, final int cy, final int top) {
             final double ca = Math.cos(Math.toRadians(bank));
             final double sa = Math.sin(Math.toRadians(bank));
             for (int p = -90; p <= 90; p += 10) {
@@ -339,14 +465,14 @@ public final class ShipHud {
                         }
                         final double rx = cx + side * s * ca + off * sa;
                         final double ry = cy + side * s * sa - off * ca;
-                        if (rx > box.x0() + 30 && rx < box.x1() - 30 && ry > box.y0() + 34 && ry < box.y1() - 30) {
+                        if (rx > box.x0() + 30 && rx < box.x1() - 30 && ry > top && ry < box.y1() - 30) {
                             dot((int) rx, (int) ry, colours.symbol());
                         }
                     }
                     if (p != 0) {
                         final double rx = cx + side * half * ca + off * sa;
                         final double ry = cy + side * half * sa - off * ca;
-                        if (rx > box.x0() + 30 && rx < box.x1() - 40 && ry > box.y0() + 34 && ry < box.y1() - 30) {
+                        if (rx > box.x0() + 30 && rx < box.x1() - 40 && ry > top && ry < box.y1() - 30) {
                             small(Integer.toString(Math.abs(p)), (int) rx + (side > 0 ? 4 : -14), (int) ry - 3,
                                     colours.symbol(), Align.LEFT);
                         }
@@ -411,12 +537,17 @@ public final class ShipHud {
             }
         }
 
-        /* The reactor's power and its deuterium above; the nozzles' angle and the gear below. */
+        /*
+         * The reactor's power and its deuterium above, burning faster in a pulse jump; the nozzles' angle and the
+         * gear below.
+         */
         private void corners(final Flown flown) {
             small(GameText.resolve(ShipHudTexts.POWER.with(Text.literal(megawatts(flown.drawn())),
                     Text.literal(megawatts(flown.made())))), box.x0() + 6, box.y0() + 32, colours.dim(), Align.LEFT);
-            small(GameText.resolve(ShipHudTexts.FUEL.with(Text.literal(Long.toString(Math.round(flown.deuterium()
-                    * PERCENT))))), box.x0() + 6, box.y0() + 42, colours.dim(), Align.LEFT);
+            final Text left = Text.literal(Long.toString(Math.round(flown.deuterium() * PERCENT)));
+            small(GameText.resolve(flown.readings().pulse().on() ? ShipHudTexts.PULSE_FUEL.with(left,
+                    Text.literal(Long.toString(Math.round(PulseCourse.BURNS)))) : ShipHudTexts.FUEL.with(left)),
+                    box.x0() + 6, box.y0() + 42, colours.dim(), Align.LEFT);
             final int nozzles = flown.readings().nozzles();
             final int nx = box.x0() + 14;
             final int ny = box.y1() - 46;
@@ -492,6 +623,11 @@ public final class ShipHud {
                 case RIGHT -> x - width;
             };
             Draw.textScaled(g, font, text, left, y, colour, SMALL);
+        }
+
+        /* A label in the figures' size, its middle at {@code x}. */
+        private void label(final String text, final int x, final int y, final int colour) {
+            Draw.textScaled(g, font, text, x - Math.round(font.width(text) * FIGURE) / 2, y, colour, FIGURE);
         }
 
         /* A figure in a box, its right edge at {@code right}. */

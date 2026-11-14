@@ -8,6 +8,7 @@
 package dev.jstech.tests.clienttest.space;
 
 import dev.jstech.core.client.dimension.TravelScreens;
+import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.client.moving.ClientMovingStructures;
 import dev.jstech.core.client.moving.ClientStructure;
 import dev.jstech.core.moving.MovingStructure;
@@ -20,10 +21,15 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.SpaceWorlds;
+import dev.jstech.space.client.ship.ShipHud;
+import dev.jstech.space.client.ship.ShipPulseClient;
+import dev.jstech.space.ship.AirReserveEntity;
+import dev.jstech.space.ship.PulseCourse;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipKitBlocks;
+import dev.jstech.space.ship.ShipPulse;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.space.universe.SolarBody;
@@ -37,6 +43,7 @@ import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.List;
 import java.util.function.Consumer;
+import net.minecraft.client.CameraType;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.gui.screens.ReceivingLevelScreen;
 import net.minecraft.core.BlockPos;
@@ -51,6 +58,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
@@ -95,6 +103,16 @@ public final class ShipOrbitClientTests {
     /* Far out in the Solar System's space, over no world; how often a mode is switched; how still a crew stands. */
     private static final double DEEP_SPACE = 15_000;
     private static final int SWITCHES = 4;
+    /*
+     * How far its drive has spooled, in hundredths, when the HUD's ring is photographed; how long it jumps before its
+     * pilot holds back, in ticks; how much further than the jump goes in the time between the space may be drawn from
+     * one frame to the next, in blocks: two ticks of the jump, far under the thousands it would jump at its end were
+     * it drawn wrong.
+     */
+    private static final int SPOOL_SHOWN = 50;
+    private static final int JUMPING = 20;
+    private static final float NORTH = 180F;
+    private static final double MOST_A_FRAME = 2 * PulseCourse.SPEED * ShipFlightModel.TICK;
     private static final double STOOD_STILL = 0.3;
     private static final ShipDesign SHIP = new ShipDesign("JS-06", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("lab"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
@@ -319,6 +337,103 @@ public final class ShipOrbitClientTests {
                     + SWITCHES + " times, the player stands where they stood in the cockpit: " + stood[0] + " then "
                     + now);
         });
+    }
+
+    /*
+     * In deep space, its pilot at the helm holding the pulse jump's key: the HUD's ring fills as its drive spools,
+     * and it jumps, PULSE lit and the stars streaking, the space drawn moving round the ship standing still; its pilot
+     * holding back, it drops out, PULSE OFF framed, set where the jump took it, and the space drawn from as far on
+     * as before, never jumping, from the first frame of the jump to after it.
+     */
+    @ClientTest(timeoutTicks = 3600)
+    public static void pulse_itsPilotJumpsTheShipAndDropsOutTheSpaceDrawnOnWithoutAJump(final ClientTestContext ctx) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final MovingStructure[] there = new MovingStructure[1];
+        final KeyMapping pulse = KeyActionsClient.mapping(ShipPulse.KEY);
+        final KeyMapping back = ctx.mc().options.keyDown;
+        ctx.afterTest(() -> {
+            pulse.setDown(false);
+            back.setDown(false);
+        });
+        // Each frame from the jump on: where the space was drawn from and when, and the most a step from one frame to
+        // the next went past what the jump goes in the time between, a frame drawn late going on as far as it should.
+        final boolean[] watching = new boolean[1];
+        final Vec3[] seenFrom = new Vec3[1];
+        final double[] seenAt = new double[1];
+        final double[] longest = new double[1];
+        final Consumer<RenderLevelStageEvent> watch = event -> {
+            if (!watching[0] || event.getStage() != RenderLevelStageEvent.Stage.AFTER_SKY || ctx.mc().level == null) {
+                return;
+            }
+            final float partial = event.getPartialTick().getGameTimeDeltaPartialTick(false);
+            final double[] jumped = ShipPulseClient.offset(partial);
+            final Vec3 from = event.getCamera().getPosition().add(jumped[0], 0, jumped[1]);
+            final double at = ctx.mc().level.getGameTime() + partial;
+            if (seenFrom[0] != null) {
+                longest[0] = Math.max(longest[0], from.distanceTo(seenFrom[0])
+                        - (at - seenAt[0]) * PulseCourse.SPEED * ShipFlightModel.TICK);
+            }
+            seenFrom[0] = from;
+            seenAt[0] = at;
+        };
+        NeoForge.EVENT_BUS.addListener(watch);
+        ctx.afterTest(() -> NeoForge.EVENT_BUS.unregister(watch));
+        atTheHelm(ctx, ship)
+                .thenServer(0, level -> ctx.assertTrue(MovingStructures.travel(ship[0], space(ctx), new Vec3(0,
+                        SystemLayout.ORBIT_Y, DEEP_SPACE)).ok(), "the ship is sent into space, over no world"))
+                .thenWaitUntilServer(level -> {
+                    there[0] = MovingStructures.byId(space(ctx), ship[0].id());
+                    return there[0] != null && there[0].ready();
+                }, ARRIVE, "the ship to come into space", level -> "at " + ship[0].pose())
+                .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(SPACE), ARRIVE,
+                        "its pilot's game to be in space")
+                .thenServer(0, level -> MovingStructures.move(there[0], ((ShipFlight) there[0].motion()).with(
+                        new ShipFlightModel.State(CRUISE, 0, CRUISE / FAST, 0, 0))))
+                .then(SETTLE, () -> {
+                    ctx.mc().options.setCameraType(CameraType.FIRST_PERSON);
+                    // Looking out ahead along its nose, north, as a pilot at its helm does.
+                    ctx.player().setYRot(NORTH);
+                    ctx.player().setXRot(0);
+                    pulse.setDown(true);
+                })
+                .thenWaitUntil(() -> spooled(ctx) >= SPOOL_SHOWN, ARRIVE, "the HUD's ring to fill as its drive"
+                        + " spools")
+                .thenScreenshot(0, "ship-pulse-spool")
+                .thenWaitUntil(ShipPulseClient::jumping, ARRIVE, "the ship to jump")
+                .then(0, () -> {
+                    pulse.setDown(false);
+                    watching[0] = true;
+                })
+                .thenScreenshot(JUMPING, "ship-pulse-jump")
+                .then(0, () -> ctx.mc().options.setCameraType(CameraType.THIRD_PERSON_BACK))
+                .thenScreenshot(SETTLE / 2, "ship-pulse-jump-behind")
+                .then(0, () -> {
+                    ctx.mc().options.setCameraType(CameraType.FIRST_PERSON);
+                    back.setDown(true);
+                })
+                .thenWaitUntilServer(level -> ((ShipFlight) there[0].motion()).pulse().isEmpty(), ARRIVE,
+                        "its pilot holding back, the ship to drop out", level -> "jumping")
+                .then(0, () -> back.setDown(false))
+                .thenWaitUntil(() -> !ShipPulseClient.jumping() && dropped(ctx), ARRIVE, "PULSE OFF on the HUD")
+                .thenScreenshot(SETTLE, "ship-pulse-exit")
+                .then(0, () -> {
+                    watching[0] = false;
+                    ctx.assertTrue(longest[0] < MOST_A_FRAME, "the space drawn on smoothly through the jump and out of"
+                            + " it, never jumping: a step from one frame to the next went at most " + longest[0]
+                            + " blocks past the jump's own");
+                });
+    }
+
+    /* How far the drive of the ship whose helm the player sits at has spooled, in hundredths, as its console shows. */
+    private static int spooled(final ClientTestContext ctx) {
+        final AirReserveEntity console = ShipHud.atTheHelm(ctx.mc());
+        return console == null ? 0 : console.flight().pulse().spool();
+    }
+
+    /* Whether the console of the ship whose helm the player sits at shows it just dropped out of a jump. */
+    private static boolean dropped(final ClientTestContext ctx) {
+        final AirReserveEntity console = ShipHud.atTheHelm(ctx.mc());
+        return console != null && !console.flight().pulse().dropped().isEmpty();
     }
 
     /*

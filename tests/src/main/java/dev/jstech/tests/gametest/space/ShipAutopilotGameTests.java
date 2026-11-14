@@ -390,7 +390,8 @@ public final class ShipAutopilotGameTests {
             // Off the land, falling: a flight still standing on the land would lose its fall the first tick.
             final ShipFlight flown = flight(ship[0]);
             MovingStructures.move(ship[0], new ShipFlight(new ShipFlightModel.State(0, FALLING, 0, 0, 0),
-                    flown.noseX(), flown.noseZ(), flown.ship(), false, flown.console(), flown.autopilot()));
+                    flown.noseX(), flown.noseZ(), flown.ship(), false, flown.console(), flown.autopilot(),
+                    flown.pulse()));
         }).thenWaitUntil(() -> helper.assertTrue(flight(ship[0]).grounded(), "it comes down on the land"))
                 .thenExecuteAfter(2, () -> {
                     helper.assertTrue(blocksOf(level, ship[0]) < before[0], "falling fast onto the land, it is holed: "

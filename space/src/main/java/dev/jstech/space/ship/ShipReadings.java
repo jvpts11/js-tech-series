@@ -14,7 +14,7 @@ import net.minecraft.world.phys.Vec3;
 /**
  * What a flying ship's console shows of its flight, kept rounded so it changes only as much as a pilot can see: how
  * fast it goes and climbs, its throttle and its boost, its air engines' nozzles and whether they blow down, its gear,
- * whether it flies too slowly to be held up, and how high it flies.
+ * whether it flies too slowly to be held up, how high it flies, and its pulse jump.
  *
  * @param speed    how fast it goes along its nose, in metres a second, to a tenth
  * @param climb    how fast it rises or sinks besides where its nose takes it, in metres a second, to a tenth
@@ -29,14 +29,15 @@ import net.minecraft.world.phys.Vec3;
  * @param altitude how high it flies, in metres ({@link ShipAltitude}), or {@link ShipAltitude#NONE}
  * @param grounded whether it stands on the land, where its wheels roll
  * @param pilot    its autopilot, as its HUD shows it
+ * @param pulse    its pulse jump, as its HUD shows it
  */
 public record ShipReadings(double speed, double climb, int throttle, int boost, boolean boosting, int nozzles,
                            boolean lifting, boolean thrusting, boolean gearDown, boolean stalled, int altitude,
-                           boolean grounded, Pilot pilot) {
+                           boolean grounded, Pilot pilot, Pulse pulse) {
 
     /** A ship at rest on the land. */
     public static final ShipReadings PARKED = new ShipReadings(0, 0, 0, 0, false, 0, false, false, true, false, 0,
-            true, Pilot.NONE);
+            true, Pilot.NONE, Pulse.NONE);
     public static final Codec<ShipReadings> CODEC = RecordCodecBuilder.create(instance -> instance.group(
             Codec.DOUBLE.fieldOf("speed").forGetter(ShipReadings::speed),
             Codec.DOUBLE.fieldOf("climb").forGetter(ShipReadings::climb),
@@ -50,7 +51,8 @@ public record ShipReadings(double speed, double climb, int throttle, int boost, 
             Codec.BOOL.fieldOf("stalled").forGetter(ShipReadings::stalled),
             Codec.INT.optionalFieldOf("altitude", 0).forGetter(ShipReadings::altitude),
             Codec.BOOL.optionalFieldOf("grounded", false).forGetter(ShipReadings::grounded),
-            Pilot.CODEC.optionalFieldOf("pilot", Pilot.NONE).forGetter(ShipReadings::pilot)
+            Pilot.CODEC.optionalFieldOf("pilot", Pilot.NONE).forGetter(ShipReadings::pilot),
+            Pulse.CODEC.optionalFieldOf("pulse", Pulse.NONE).forGetter(ShipReadings::pulse)
     ).apply(instance, ShipReadings::new));
     /* Tenths and hundredths, as the readings are kept. */
     private static final double TENTHS = 10.0;
@@ -58,16 +60,56 @@ public record ShipReadings(double speed, double climb, int throttle, int boost, 
 
     /**
      * The readings of a tick of a ship's flight flying {@code altitude} metres high, or standing on the land
-     * ({@code grounded}), its autopilot showing {@code pilot}, rounded as they are shown.
+     * ({@code grounded}), its autopilot showing {@code pilot} and its pulse jump {@code pulse}, rounded as they are
+     * shown.
      */
     public static ShipReadings of(final ShipFlightModel.Tick tick, final boolean grounded, final int altitude,
-                                  final Pilot pilot) {
+                                  final Pilot pilot, final Pulse pulse) {
         final ShipFlightModel.State state = tick.state();
         return new ShipReadings(Math.round(state.speed() * TENTHS) / TENTHS,
                 Math.round((state.rise() - state.sink()) * TENTHS) / TENTHS,
                 (int) Math.round(state.throttle() * HUNDREDTHS), (int) Math.round(tick.reached() * HUNDREDTHS),
                 tick.boosting(), (int) Math.round(state.nozzles()), tick.lifting(), tick.thrusting(), tick.gearDown(),
-                tick.stalled(), altitude, grounded, pilot);
+                tick.stalled(), altitude, grounded, pilot, pulse);
+    }
+
+    /**
+     * The readings of a tick of a ship's pulse jump, its flight standing as {@code state} under it: going at the
+     * jump's speed, level, its gear up, high over nothing, its jump shown as {@code pulse}.
+     */
+    public static ShipReadings jumping(final ShipFlightModel.State state, final Pulse pulse) {
+        return new ShipReadings(PulseCourse.SPEED, 0, (int) Math.round(state.throttle() * HUNDREDTHS), 0, false,
+                (int) Math.round(state.nozzles()), false, false, false, false, ShipAltitude.NONE, false, Pilot.NONE,
+                pulse);
+    }
+
+    /**
+     * A ship's pulse jump as its HUD shows it: its drive spooling, how far and how long it has still to go; in the
+     * jump, the world whose low orbit is nearest, how far off and how long away at the jump's speed; and a moment
+     * after it dropped out, why.
+     *
+     * @param spool   how far its drive has spooled, in hundredths; nought while it does not
+     * @param left    how long its drive has still to spool, in tenths of a second
+     * @param on      whether it jumps
+     * @param near    the nearest world in the jump, as its body is named in lower case; empty out of it
+     * @param range   how far off that world's low orbit is, in blocks
+     * @param seconds how long away it is at the jump's speed, in seconds
+     * @param dropped why it dropped out of its jump, a moment after ({@link ShipPulse.Drop}, or a world's name);
+     *                empty otherwise
+     */
+    public record Pulse(int spool, int left, boolean on, String near, int range, int seconds, String dropped) {
+
+        /** No jump spooling, under way or just dropped out of. */
+        public static final Pulse NONE = new Pulse(0, 0, false, "", 0, 0, "");
+        public static final Codec<Pulse> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.INT.fieldOf("spool").forGetter(Pulse::spool),
+                Codec.INT.fieldOf("left").forGetter(Pulse::left),
+                Codec.BOOL.fieldOf("on").forGetter(Pulse::on),
+                Codec.STRING.fieldOf("near").forGetter(Pulse::near),
+                Codec.INT.fieldOf("range").forGetter(Pulse::range),
+                Codec.INT.fieldOf("seconds").forGetter(Pulse::seconds),
+                Codec.STRING.fieldOf("dropped").forGetter(Pulse::dropped)
+        ).apply(instance, Pulse::new));
     }
 
     /**
