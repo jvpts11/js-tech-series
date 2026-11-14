@@ -834,10 +834,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   one, the ship docking held by the other where it stands and going wherever it goes. Whoever is inside either uses
   the collar over their head and goes through it into the other ship, standing under its collar, neither cabin's air
   let out. The docking ship's autopilot key lets it go, set a block clear of the other and flying by its own flight.
-- The Ship Landing Pad, where a starship sets down at a base: an octagon of Ship Pad Plates twenty-one blocks
-  across round its terminal, the corners cut off it. Formed, it is painted with its yellow ring, its touchdown circle
-  and the chevrons of the way in, and lit round its edge by flush cyan lights. Its owner's ships and their team's find
-  it from 512 blocks away: LAND sets a ship down on the nearest, passing one another ship already stands on.
+- The Ship Landing Pad, where a starship sets down at a base, built raised (below) or flat: an octagon of Ship
+  Pad Plates on the ground twenty-one blocks across, its terminal on the plates where the raised deck has it, the same
+  terminal forming either. Formed flat, its plates merge into the octagon drawn whole: plates in rows with their seams
+  and bolts, the paint worn and sooted toward the middle, the hazard band round its edge with flush cyan lights in it,
+  the white touchdown ring with four lines out, and the yellow circle and cross in the middle. Its owner's ships and
+  their team's find it from 512 blocks away: LAND sets a ship down on the nearest, passing one another ship already
+  stands on.
 - The Runway Beacon, put down at the start of a flat stretch facing the way it runs: a yellow post with a
   green lens to the ship coming in and a white lamp on top. A ship on wheels may land on its runway: LAND flies it to a
   gate a hundred metres back along the runway's line, down a six-degree glide lined up on its middle, flares low over

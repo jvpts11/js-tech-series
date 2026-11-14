@@ -499,6 +499,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A piece on its way: J's Core's API is at version 59. `MovingStructure.parts` and `MovingStructures.coming`
   say whether a piece a structure let go still waits for its plot of the yard to load before it parts as a structure
   of its own. Experimental.
+- A second build: J's Core's API is at version 60. `MachineStructure.or` gives one terminal another build it
+  may stand formed as, a landing pad raised on a truss or laid flat on the ground: each build is checked in order,
+  the first found whole is its structure, merged into that build's own formed model, and `shape()` says which.
+  Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

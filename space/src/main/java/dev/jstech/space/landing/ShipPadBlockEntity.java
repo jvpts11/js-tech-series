@@ -44,8 +44,8 @@ public final class ShipPadBlockEntity extends MachineBlockEntity {
         super(ShipLandingBlocks.ENTITY.get(), pos, state, 0, MachineEnergy.fe(0, 0, 0));
         this.pad = fields().value("Pad", UUIDUtil.STRING_CODEC, UUID.randomUUID()).save().toClient();
         this.shown = fields().value("Formed", Codec.BOOL, false).save().toClient();
-        // Formed, its blocks merge into the pad drawn whole.
-        this.structure = MachineStructure.of(ShipLandingBlocks.PAD).merges();
+        // Raised on its truss or laid flat on the ground; formed, its blocks merge into the pad drawn whole.
+        this.structure = MachineStructure.of(ShipLandingBlocks.PAD).or(ShipLandingBlocks.FLAT).merges();
         formsWith(this.structure);
         fields().whenBroken((level, at) -> ShipLandings.dropPad(level.getServer(), id()));
     }
@@ -59,6 +59,11 @@ public final class ShipPadBlockEntity extends MachineBlockEntity {
     /** Whether it stands formed, as its players' games are told. */
     public boolean shownFormed() {
         return Boolean.TRUE.equals(this.shown.get());
+    }
+
+    /** Whether it stands as its flat build, its plates laid on the ground in an octagon, as its players' games know. */
+    public boolean flat() {
+        return this.structure.shape() == ShipLandingBlocks.FLAT;
     }
 
     /** Its deck's middle block, a ship setting down on top of it, as the pad stands formed; itself unformed. */

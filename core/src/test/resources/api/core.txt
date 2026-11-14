@@ -8198,6 +8198,7 @@ stable 4
 10 dev.jstech.core.machine.MachineStructure  MachineStructure formingSound(SoundKey)
 12 dev.jstech.core.machine.MachineStructure  MachineStructure handsOn(InteractiveModel)
 10 dev.jstech.core.machine.MachineStructure  MachineStructure merges()
+60 dev.jstech.core.machine.MachineStructure  MachineStructure or(IStructureShape)
 10 dev.jstech.core.machine.MachineStructure  MachineStructure parallel(ToIntFunction<ShapeMatch.Formed>)
 10 dev.jstech.core.machine.MachineStructure  Optional<Orientation> orientation()
 10 dev.jstech.core.machine.MachineStructure  Optional<ShapeMatch.Failure> failure()

@@ -55,6 +55,8 @@ public final class ShipLandingGameTests {
     private static final int SOUTH = 15;
     /* How many blocks of each kind the pad is: plates, truss, steps and masts. */
     private static final Map<Character, Integer> KINDS = Map.of('P', 341, 'T', 90, 'S', 15, 'M', 24);
+    /* The plates of the flat build: an octagon within ten blocks along either axis and fourteen along both. */
+    private static final int FLAT_PLATES = 357;
     /* How far along the runway a block stands in its way. */
     private static final int IN_THE_WAY = 30;
 
@@ -111,6 +113,60 @@ public final class ShipLandingGameTests {
                         "its deck's middle found from its terminal, turned as it stands: " + pad.middle() + " for "
                                 + middle.above(ShipLandingBlocks.DECK)))
                 .thenSucceed();
+    }
+
+    @GameTest(template = PAD_ARENA, timeoutTicks = 400)
+    public static void shipPad_formsFlatAsAnOctagonOfPlatesAndSetsItsShipsDownOnItsMiddle(
+            final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos middle = helper.absolutePos(MIDDLE);
+        final int laid = buildFlat(level, middle, Orientation.WEST);
+        helper.assertTrue(laid == FLAT_PLATES, "its octagon of plates on the ground: " + laid);
+        final int[] at = Orientation.WEST.apply(ShipLandingBlocks.TERMINAL_X, ShipLandingBlocks.TERMINAL_Y
+                - ShipLandingBlocks.DECK, ShipLandingBlocks.TERMINAL_Z);
+        final ShipPadBlockEntity pad = (ShipPadBlockEntity) level.getBlockEntity(middle.offset(at[0], at[1], at[2]));
+        pad.own(Ownership.of(UUID.randomUUID()));
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(pad.shownFormed() && pad.merged() && pad.flat(),
+                        "built flat and turned west, the pad forms as its flat build, its plates merged into it"))
+                .thenWaitUntil(() -> helper.assertTrue(ShipLandings.pad(level.getServer(), pad.id()).isPresent(),
+                        "and is noted"))
+                .thenExecute(() -> {
+                    final Vec3 spot = ShipLandings.padSpot(level, ShipLandings.pad(level.getServer(), pad.id())
+                            .orElseThrow());
+                    helper.assertTrue(pad.middle().equals(middle) && spot.equals(Vec3.atBottomCenterOf(middle.above())),
+                            "its ships set down on its middle plate: " + spot + " for " + middle);
+                    final int[] edge = Orientation.WEST.apply(ShipLandingBlocks.FLAT_REACH, 0, 0);
+                    level.destroyBlock(middle.offset(edge[0], edge[1], edge[2]), false);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(!pad.shownFormed()
+                        && ShipLandings.pad(level.getServer(), pad.id()).isEmpty(), "a plate broken, it is undone and"
+                        + " let go"))
+                .thenSucceed();
+    }
+
+    /*
+     * Builds the pad's flat build round {@code middle}, its middle plate, its pattern turned as {@code turned} says;
+     * how many plates it laid.
+     */
+    private static int buildFlat(final ServerLevel level, final BlockPos middle, final Orientation turned) {
+        int plates = 0;
+        for (int x = -ShipLandingBlocks.FLAT_REACH; x <= ShipLandingBlocks.FLAT_REACH; x++) {
+            for (int y = 0; y <= ShipLandingBlocks.TERMINAL_Y - ShipLandingBlocks.DECK; y++) {
+                for (int z = -ShipLandingBlocks.FLAT_REACH; z <= ShipLandingBlocks.FLAT_REACH; z++) {
+                    final char letter = ShipLandingBlocks.flatLetterAt(x, y, z);
+                    final Block block = letter == '#' ? ShipLandingBlocks.TERMINAL.get()
+                            : letter == 'P' ? ShipLandingBlocks.PLATE.get() : null;
+                    if (block == null) {
+                        continue;
+                    }
+                    final int[] at = turned.apply(x, y, z);
+                    level.setBlockAndUpdate(middle.offset(at[0], at[1], at[2]), block.defaultBlockState());
+                    plates += letter == 'P' ? 1 : 0;
+                }
+            }
+        }
+        return plates;
     }
 
     /*

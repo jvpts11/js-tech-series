@@ -61,6 +61,12 @@ public final class ShipLandingClientTests {
     private static final int ARRIVE = 400;
     private static final int SETTLE = 20;
     private static final int CHANNEL = 0xFF;
+    /*
+     * Where the player looks at the flat pad from, from its middle: south of it and up, as the approved mock does, near
+     * enough for its lights to show; how long its forming's sparks take to die away, in ticks.
+     */
+    private static final BlockPos FLAT_EYES = new BlockPos(3, 9, 16);
+    private static final int SPARKS = 60;
 
     private ShipLandingClientTests() {
     }
@@ -130,6 +136,52 @@ public final class ShipLandingClientTests {
                     ctx.assertTrue(counts[3] >= LIGHTS_SEEN, "and its cyan lights shine round its rim: " + counts[3]
                             + " cyan");
                 });
+    }
+
+    /**
+     * The pad's flat build, its octagon of plates laid on the ground, formed: drawn whole as the approved octagon, its
+     * band and its lights round its edge, seen from the south as the mock sees it.
+     */
+    @ClientTest(timeoutTicks = 1600)
+    public static void shipPad_flatIsDrawnAsTheOctagonWithItsLightsRoundItsEdge(final ClientTestContext ctx) {
+        final int[] counts = new int[1];
+        final BlockPos flatTerminal = MIDDLE.offset(ShipLandingBlocks.TERMINAL_X, ShipLandingBlocks.TERMINAL_Y
+                - ShipLandingBlocks.DECK, ShipLandingBlocks.TERMINAL_Z);
+        ctx.afterTest(() -> ctx.server().execute(() -> {
+            // The terminal first, so its merged blocks are given back, then every plate.
+            ctx.serverLevel().removeBlock(ctx.abs(flatTerminal), false);
+            for (int x = -ShipLandingBlocks.FLAT_REACH; x <= ShipLandingBlocks.FLAT_REACH; x++) {
+                for (int z = -ShipLandingBlocks.FLAT_REACH; z <= ShipLandingBlocks.FLAT_REACH; z++) {
+                    ctx.serverLevel().removeBlock(ctx.abs(MIDDLE.offset(x, 0, z)), false);
+                }
+            }
+            fly(ctx, false);
+            final BlockPos origin = ctx.origin().above(2);
+            ctx.serverPlayer().teleportTo(ctx.server().overworld(), origin.getX() + 0.5, origin.getY(),
+                    origin.getZ() + 0.5, 0F, 0F);
+        }));
+        ctx.afterTest(() -> ctx.mc().options.hideGui = false);
+        ctx.then(0, () -> ctx.mc().options.hideGui = true).thenServer(0, level -> {
+            fly(ctx, true);
+            final BlockPos from = ctx.abs(MIDDLE.offset(FLAT_EYES));
+            ctx.serverPlayer().teleportTo(level, from.getX() + 0.5, from.getY(), from.getZ() + 0.5, 0F, 0F);
+            for (int x = -ShipLandingBlocks.FLAT_REACH; x <= ShipLandingBlocks.FLAT_REACH; x++) {
+                for (int y = 0; y <= ShipLandingBlocks.TERMINAL_Y - ShipLandingBlocks.DECK; y++) {
+                    for (int z = -ShipLandingBlocks.FLAT_REACH; z <= ShipLandingBlocks.FLAT_REACH; z++) {
+                        place(level, ctx.abs(MIDDLE.offset(x, y, z)), ShipLandingBlocks.flatLetterAt(x, y, z));
+                    }
+                }
+            }
+            ((ShipPadBlockEntity) level.getBlockEntity(ctx.abs(flatTerminal))).own(Ownership.of(UUID.randomUUID())
+                    .withAccess(Access.TEAM));
+        })
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(flatTerminal)) instanceof ShipPadBlockEntity
+                        pad && pad.shownFormed() && pad.flat(), ARRIVE, "the formed flat pad to reach the player")
+                .then(SETTLE, () -> ctx.lookAt(Vec3.atBottomCenterOf(ctx.abs(MIDDLE)).add(0, 1, 0)))
+                .then(SPARKS, () -> counts[0] = countAll(ctx, ShipLandingClientTests::cyan))
+                .thenScreenshot(0, "ship-pad-flat-formed")
+                .then(0, () -> ctx.assertTrue(counts[0] >= LIGHTS_SEEN, "formed flat, its cyan lights shine round its"
+                        + " edge: " + counts[0] + " cyan"));
     }
 
     /* The pad's terminal, on its deck by the stair's head. */

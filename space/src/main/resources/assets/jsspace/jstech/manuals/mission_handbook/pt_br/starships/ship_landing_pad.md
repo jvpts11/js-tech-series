@@ -12,6 +12,8 @@ Uma plataforma redonda e elevada onde uma nave estelar pousa numa base. O piso d
 
 Formada, os blocos dela se fundem na plataforma desenhada inteira: o anel de toque, a faixa de perigo e a cruz amarela no piso, luzes cianas embutidas na borda, holofotes e lâmpadas vermelhas nos mastros, acesos no escuro.
 
+Ela tem uma segunda construção, plana no chão: um octógono de Placas de Plataforma de Naves da mesma largura, dez blocos a partir do meio em cada lado e catorze na diagonal, com o terminal sobre as placas no mesmo lugar em que fica no piso elevado. Formada, é pintada e iluminada na borda do mesmo jeito.
+
 ## Para que serve
 
 Trazer uma nave para o chão numa base com o piloto automático POUSO. Uma plataforma que o piloto pode usar é encontrada a até 512 blocos, e a nave pousa no meio do piso, seja qual for a direção em que a plataforma foi construída.
@@ -28,7 +30,7 @@ caption: A Plataforma de Pouso de Naves, construída
 height: 120
 ```
 
-1. Construa a treliça com dois blocos de altura: uma coluna sob o meio e um anel de postes contraventados em volta.
+1. Construa a treliça com dois blocos de altura: uma coluna sob o meio e um anel de postes contraventados em volta. Para a construção plana, assente o octógono de placas no chão e siga do passo 3.
 2. Assente o piso sobre ela, a escada descendo da borda e os mastros na beirada. O Projetor de Estruturas do J's Core mostra cada bloco, e um Construtor de Multiblocos usado no projetor constrói a plataforma, com o terminal por último.
 3. Coloque o terminal no piso, junto ao topo da escada. Quem o coloca é o dono da plataforma.
 4. Para compartilhar a plataforma, o dono gira a chave na aba Proteção da tela do terminal: para a sua equipe ou para todos.

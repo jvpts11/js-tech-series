@@ -12,6 +12,8 @@ A raised round pad where a starship sets down at a base. Its deck of Ship Pad Pl
 
 Formed, its blocks merge into the pad drawn whole: the touchdown ring, the hazard band and the yellow cross on the deck, flush cyan lights round the rim, floodlights and red lamps on the masts, lit in the dark.
 
+It has a second build, flat on the ground: an octagon of Ship Pad Plates as wide, ten blocks out from the middle along each side and fourteen along a diagonal, its terminal on the plates where the raised deck has it. Formed, it is painted and lit round its edge the same way.
+
 ## What it is for
 
 Bringing a ship down at a base on its LAND autopilot. A pad its pilot may use is found from 512 blocks away, and the ship sets down on the deck's middle, whichever way the pad was built.
@@ -28,7 +30,7 @@ caption: The Ship Landing Pad, built
 height: 120
 ```
 
-1. Build the truss two blocks high: a column under the middle and a ring of braced posts round it.
+1. Build the truss two blocks high: a column under the middle and a ring of braced posts round it. For the flat build, lay the octagon of plates on the ground instead and go on at step 3.
 2. Lay the deck on it, the stair down from its edge and the masts on its rim. J's Core's Structure Projector shows every block, and a Multiblock Builder used on the projector builds the pad, its terminal last.
 3. Place the terminal on the deck by the stair's head. Whoever places it owns the pad.
 4. To share it, its owner turns the key switch on the terminal's Protection tab, to their team or to everyone.

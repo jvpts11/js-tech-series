@@ -18,13 +18,15 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 
 /**
- * Draws a formed ship landing pad whole from its terminal, as the approved raised pad has it: the round deck on its
- * truss, its touchdown ring and hazard band, the stair, the light masts, the flush lights round its rim and the
- * floodlights lit. Nothing of it is drawn while it is not formed: its blocks show.
+ * Draws a formed ship landing pad whole from its terminal, as the approved pad of its build has it: raised, the round
+ * deck on its truss, its touchdown ring and hazard band, the stair, the light masts, the flush lights round its rim and
+ * the floodlights lit; flat, the octagon of plates on the ground, painted and lit round its edge. Nothing of it is
+ * drawn while it is not formed: its blocks show.
  */
 public final class ShipPadRenderer implements BlockEntityRenderer<ShipPadBlockEntity> {
 
-    private final KitBlockEntityRenderer<ShipPadBlockEntity> pad;
+    private final KitBlockEntityRenderer<ShipPadBlockEntity> raised;
+    private final KitBlockEntityRenderer<ShipPadBlockEntity> flat;
 
     /* How far it is drawn from, in blocks: as far as a ship coming down is seen. */
     private static final int SEEN_FROM = 160;
@@ -32,7 +34,10 @@ public final class ShipPadRenderer implements BlockEntityRenderer<ShipPadBlockEn
     private static final int PAD_REACH = 2 * ShipLandingBlocks.DECK_RADIUS;
 
     private ShipPadRenderer() {
-        this.pad = KitBlockEntityRenderer.<ShipPadBlockEntity>formedOnly(ShipLandingBlocks.MODEL.id())
+        this.raised = KitBlockEntityRenderer.<ShipPadBlockEntity>formedOnly(ShipLandingBlocks.MODEL.id())
+                .viewDistance(SEEN_FROM)
+                .build();
+        this.flat = KitBlockEntityRenderer.<ShipPadBlockEntity>formedOnly(ShipLandingBlocks.FLAT_MODEL.id())
                 .viewDistance(SEEN_FROM)
                 .build();
     }
@@ -46,7 +51,7 @@ public final class ShipPadRenderer implements BlockEntityRenderer<ShipPadBlockEn
     @Override
     public void render(final ShipPadBlockEntity terminal, final float partialTick, final PoseStack poses,
                        final MultiBufferSource buffers, final int light, final int overlay) {
-        this.pad.render(terminal, partialTick, poses, buffers, light, overlay);
+        (terminal.flat() ? this.flat : this.raised).render(terminal, partialTick, poses, buffers, light, overlay);
     }
 
     @Override

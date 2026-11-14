@@ -38,8 +38,10 @@ import net.neoforged.neoforge.registries.DeferredHolder;
  * dark heat-proof plates twenty-one blocks across, raised three blocks on a steel truss, a stair up to it from the
  * south and four lattice light masts on its rim, its terminal on the deck by the stair's head; formed, it is drawn as
  * the approved pad, its touchdown ring and hazard band painted, flush lights round its rim and floodlights on its
- * masts lit. And the runway beacon, a block at the start of any flat stretch, facing along it, that a wheeled ship's
- * autopilot lines up on to touch down past it and roll on along the stretch.
+ * masts lit. Its second build lays the plates flat on the ground in an octagon as wide, its terminal on them as far
+ * from the middle; formed, it is drawn as the approved octagon, painted and lit round its edge. And the runway beacon,
+ * a block at the start of any flat stretch, facing along it, that a wheeled ship's autopilot lines up on to touch down
+ * past it and roll on along the stretch.
  */
 public final class ShipLandingBlocks {
 
@@ -55,6 +57,12 @@ public final class ShipLandingBlocks {
     public static final int TERMINAL_X = 2;
     public static final int TERMINAL_Y = DECK + 1;
     public static final int TERMINAL_Z = 9;
+    /**
+     * The flat build's plates, the ground's layer, from its middle block: as far as this along either axis, and as far
+     * as {@link #FLAT_CORNER} along both together, an octagon; its terminal on them where the raised deck has it.
+     */
+    public static final int FLAT_REACH = 10;
+    public static final int FLAT_CORNER = 14;
     /* The pattern's bounds round the deck's middle: west, east, north, south and its top layer. */
     private static final int WEST = -10;
     private static final int EAST = 10;
@@ -109,6 +117,15 @@ public final class ShipLandingBlocks {
             .file("jsmodels/ship_pad/ship_pad.gltf")
             .texture("textures/models/ship_pad/ship_pad.png")
             .formedFrom(PAD_ID).register();
+    /** The pad's second build: its plates laid flat on the ground in an octagon round its terminal. */
+    public static final ResourceLocation FLAT_ID = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID,
+            "ship_pad_flat");
+    public static final MultiblockPattern FLAT = MultiblockPatterns.declare(FLAT_ID, flat());
+    /** The flat pad formed, as the approved octagon draws it; its lamps glow. */
+    public static final DeclaredModel FLAT_MODEL = SpaceContent.CONTENT.model("ship_pad/ship_pad_flat")
+            .file("jsmodels/ship_pad/ship_pad_flat.gltf")
+            .texture("textures/models/ship_pad/ship_pad_flat.png")
+            .formedFrom(FLAT_ID).register();
     /** The runway beacon, facing the way its runway runs. */
     public static final BlockEntry<RunwayBeaconBlock> BEACON = SpaceContent.CONTENT.block("runway_beacon",
                     RunwayBeaconBlock::new).named("Runway Beacon")
@@ -151,8 +168,25 @@ public final class ShipLandingBlocks {
     }
 
     /**
+     * What stands at {@code x}, {@code y}, {@code z} from the flat pad's middle plate, as the pad faces north:
+     * {@code '#'} its terminal, on the plates where the raised pad has it from its deck's middle, {@code 'P'} a plate
+     * of the ground's layer, or {@link MultiblockPattern#IGNORE_CHAR} anything.
+     */
+    public static char flatLetterAt(final int x, final int y, final int z) {
+        if (x == TERMINAL_X && y == TERMINAL_Y - DECK && z == TERMINAL_Z) {
+            return MultiblockPattern.TERMINAL_CHAR;
+        }
+        if (y == 0 && Math.abs(x) <= FLAT_REACH && Math.abs(z) <= FLAT_REACH
+                && Math.abs(x) + Math.abs(z) <= FLAT_CORNER) {
+            return 'P';
+        }
+        return MultiblockPattern.IGNORE_CHAR;
+    }
+
+    /**
      * The deck's middle block of the pad whose terminal stands at {@code terminal}, the pad formed standing as
-     * {@code orientation} says: where its ships set down, on top of it.
+     * {@code orientation} says: where its ships set down, on top of it. Either build has its terminal a block over its
+     * deck, as far from its middle.
      */
     public static BlockPos middle(final BlockPos terminal, final Orientation orientation) {
         final int[] back = orientation.apply(-TERMINAL_X, DECK - TERMINAL_Y, -TERMINAL_Z);
@@ -203,6 +237,25 @@ public final class ShipLandingBlocks {
                 .where('T', BlockMatch.blocks(TRUSS.getId().toString()))
                 .where('S', BlockMatch.blocks(STEP.getId().toString()))
                 .where('M', BlockMatch.blocks(MAST_BLOCK.getId().toString()))
+                .terminal(TERMINAL.getId().toString())
+                .build();
+    }
+
+    /* The plates laid flat on the ground in an octagon, and the terminal on them, layer by layer. */
+    private static MultiblockPattern flat() {
+        final MultiblockPattern.Builder builder = MultiblockPattern.builder("ship_pad_flat");
+        for (int y = 0; y <= TERMINAL_Y - DECK; y++) {
+            final String[] rows = new String[2 * FLAT_REACH + 1];
+            for (int z = -FLAT_REACH; z <= FLAT_REACH; z++) {
+                final StringBuilder row = new StringBuilder();
+                for (int x = -FLAT_REACH; x <= FLAT_REACH; x++) {
+                    row.append(flatLetterAt(x, y, z));
+                }
+                rows[z + FLAT_REACH] = row.toString();
+            }
+            builder.layer(rows);
+        }
+        return builder.where('P', BlockMatch.blocks(PLATE.getId().toString()))
                 .terminal(TERMINAL.getId().toString())
                 .build();
     }

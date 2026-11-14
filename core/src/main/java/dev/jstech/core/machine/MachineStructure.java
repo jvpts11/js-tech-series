@@ -73,7 +73,9 @@ import org.jetbrains.annotations.Nullable;
 @TextHolder
 public final class MachineStructure implements IFieldPart, IStructureWatcher {
 
-    private final IStructureShape shape;
+    /* Its builds, its first and each it may also stand as, and the one it stands formed as, or its first. */
+    private final List<IStructureShape> shapes = new ArrayList<>();
+    private int build;
     private ToIntFunction<ShapeMatch.Formed> parallelBy = formed -> 1;
     private boolean merges;
     private @Nullable SoundKey formingSound;
@@ -143,18 +145,29 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     private static final String PARALLEL_KEY = "Parallel";
     private static final String MERGED_KEY = "Merged";
     private static final String ORIENTATION_KEY = "Orientation";
+    private static final String BUILD_KEY = "Build";
     /** The animation controller of its model that plays the animation of its forming. */
     public static final String FORMING_CONTROLLER = "structure";
     private static final int AXES = 3;
     private static final List<Orientation> ORIENTATIONS = Orientation.lyingAndMirrors();
 
     private MachineStructure(final IStructureShape shape) {
-        this.shape = Objects.requireNonNull(shape, "shape");
+        this.shapes.add(Objects.requireNonNull(shape, "shape"));
     }
 
     /** A terminal of {@code shape}, running one recipe at a time when formed. */
     public static MachineStructure of(final IStructureShape shape) {
         return new MachineStructure(shape);
+    }
+
+    /**
+     * The same, also standing formed as {@code other}, a second build of one terminal: a landing pad raised on a truss
+     * or laid flat on the ground. Each build is checked in the order given and the first found whole is its
+     * structure, merged into that build's own formed model; while none stands, it tells what its first lacks.
+     */
+    public MachineStructure or(final IStructureShape other) {
+        this.shapes.add(Objects.requireNonNull(other, "other"));
+        return this;
     }
 
     /**
@@ -245,9 +258,9 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         return out;
     }
 
-    /** Its shape. */
+    /** Its shape: the build it stands formed as ({@link #or}), or its first while it stands as none. */
     public IStructureShape shape() {
-        return this.shape;
+        return this.shapes.get(Math.clamp(this.build, 0, this.shapes.size() - 1));
     }
 
     /** Whether its structure stands whole: as last checked, or as saved until it is checked after loading. */
@@ -330,15 +343,20 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         own.putInt(PARALLEL_KEY, this.parallel);
         own.putLongArray(MERGED_KEY, this.merged.stream().mapToLong(Long::longValue).toArray());
         own.putInt(ORIENTATION_KEY, this.orientation);
+        own.putInt(BUILD_KEY, this.build);
         tag.put(KEY, own);
     }
 
-    /* The players who see it are told whether it is formed, how it stands, and whether its blocks merged. */
+    /*
+     * The players who see it are told whether it is formed, how it stands, which build it stands as, and whether its
+     * blocks merged.
+     */
     @Override
     public void writeClient(final CompoundTag tag, final HolderLookup.Provider registries) {
         final CompoundTag own = new CompoundTag();
         own.putBoolean(FORMED_KEY, this.formed);
         own.putInt(ORIENTATION_KEY, this.orientation);
+        own.putInt(BUILD_KEY, this.build);
         own.putBoolean(MERGED_KEY, !this.merged.isEmpty());
         tag.put(KEY, own);
     }
@@ -348,6 +366,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         final CompoundTag own = tag.getCompound(KEY);
         this.formed = own.getBoolean(FORMED_KEY);
         this.orientation = own.contains(ORIENTATION_KEY) ? own.getInt(ORIENTATION_KEY) : -1;
+        this.build = own.getInt(BUILD_KEY);
         this.mergedOnClient = own.getBoolean(MERGED_KEY);
     }
 
@@ -371,6 +390,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         }
         this.merged = List.copyOf(wereMerged);
         this.orientation = own.contains(ORIENTATION_KEY) ? own.getInt(ORIENTATION_KEY) : -1;
+        this.build = own.getInt(BUILD_KEY);
         this.dirty = true;
     }
 
@@ -395,7 +415,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
             return;
         }
         // Only as far across the ground as it reaches: a tall structure needs no wider ring of chunks for its height.
-        final int reach = this.shape.reachAcross();
+        final int reach = reachAcross();
         if (!level.hasChunksAt(pos.offset(-reach, 0, -reach), pos.offset(reach, 0, reach))) {
             this.notBefore = now + LOADED_EVERY;
             return;
@@ -403,8 +423,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
         this.dirty = false;
         this.notBefore = now + SETTLE;
         this.recheckAt = now + RECHECK_EVERY;
-        apply(level, pos, this.shape.check(MultiblockPatterns.provider(level),
-                PatternMatcher.encodePosition(pos.getX(), pos.getY(), pos.getZ())));
+        apply(level, pos, check(level, pos));
     }
 
     /*
@@ -479,6 +498,37 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
             case SIZE -> WRONG_SIZE.with(wrong.found(), measure(wrong.wanted()));
             case APART -> NEEDS_TOGETHER.with(countName(wrong.wanted()), countName(wrong.found()));
         });
+    }
+
+    /*
+     * Checks its builds in their order with its terminal at {@code pos}: the first found whole, its build kept; or,
+     * none found, what its first lacks.
+     */
+    private ShapeMatch check(final ServerLevel level, final BlockPos pos) {
+        final long terminal = PatternMatcher.encodePosition(pos.getX(), pos.getY(), pos.getZ());
+        ShapeMatch first = null;
+        for (int each = 0; each < this.shapes.size(); each++) {
+            final ShapeMatch result = this.shapes.get(each).check(MultiblockPatterns.provider(level), terminal);
+            if (result instanceof ShapeMatch.Formed) {
+                this.build = each;
+                return result;
+            }
+            if (first == null) {
+                first = result;
+            }
+        }
+        this.build = 0;
+        return first;
+    }
+
+    /* The farthest from its terminal any of its builds reads the world, along any axis. */
+    private int reach() {
+        return this.shapes.stream().mapToInt(IStructureShape::reach).max().orElse(0);
+    }
+
+    /* The farthest from its terminal across the ground any of its builds reads the world. */
+    private int reachAcross() {
+        return this.shapes.stream().mapToInt(IStructureShape::reachAcross).max().orElse(0);
     }
 
     private void apply(final ServerLevel level, final BlockPos pos, final ShapeMatch result) {
@@ -611,7 +661,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
             }
         }
         // Each takes the shape of its own block of the formed model, for a structure of a declared model.
-        kept.addAll(FormedParts.merge(level, pos, fresh, at -> FormedShapes.place(this.shape, this.orientation, pos,
+        kept.addAll(FormedParts.merge(level, pos, fresh, at -> FormedShapes.place(shape(), this.orientation, pos,
                 at)));
         this.merged = List.copyOf(kept);
     }
@@ -648,7 +698,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
      * such places would reach across the world; checked again, it finds its structure where it is.
      */
     private void forgetFarPlaces(final BlockPos pos) {
-        final int reach = this.shape.reach();
+        final int reach = reach();
         for (final long place : this.places) {
             final int[] xyz = PatternMatcher.decodePosition(place);
             if (Math.abs(xyz[0] - pos.getX()) > reach || Math.abs(xyz[1] - pos.getY()) > reach
@@ -679,7 +729,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
             min = new BlockPos(lo[0] - 1, lo[1] - 1, lo[2] - 1);
             max = new BlockPos(hi[0] + 1, hi[1] + 1, hi[2] + 1);
         } else {
-            final int reach = this.shape.reach();
+            final int reach = reach();
             min = pos.offset(-reach, -reach, -reach);
             max = pos.offset(reach, reach, reach);
         }
@@ -689,7 +739,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
 
     /* What goes where a failure says, as the player is told it: a block's name, a tag, or the part of the shape. */
     private Text wanted(final String wanted) {
-        final IBlockMatcher fits = this.shape.wanted(wanted);
+        final IBlockMatcher fits = shape().wanted(wanted);
         if (fits instanceof BlockMatch match) {
             final Text first = match.blocks().isEmpty() ? Text.literal("#" + match.tags().get(0))
                     : blockName(match.blocks().get(0));
@@ -707,7 +757,7 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
     }
 
     private Text counted(final ShapeMatch.Failure wrong) {
-        final Limit limit = this.shape.limits().get(wrong.wanted());
+        final Limit limit = shape().limits().get(wrong.wanted());
         if (limit == null || limit.most() == Integer.MAX_VALUE) {
             return NEEDS_AT_LEAST.with(limit == null ? 0 : limit.least(), countName(wrong.wanted()), wrong.found());
         }
