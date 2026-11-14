@@ -332,6 +332,19 @@ public final class MovingStructures {
         return LevelMovingStructures.of(level).byId(id) instanceof MovingStructure structure ? structure : null;
     }
 
+    /**
+     * Whether a structure loaded in {@code level} let a piece named {@code piece} go that still waits for its plot to
+     * load: it becomes a structure of its own soon, however slowly the land loads.
+     */
+    public static boolean coming(final ServerLevel level, final StructureUuid piece) {
+        for (final IStructureBody body : LevelMovingStructures.of(level).all()) {
+            if (body instanceof MovingStructure structure && structure.parts(piece)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** The structure loaded in {@code level} whose blocks hold the yard's block {@code pos}, or null. */
     public static @Nullable IStructureBody at(final Level level, final BlockPos pos) {
         return LevelMovingStructures.of(level).atYard(pos.getX(), pos.getZ());

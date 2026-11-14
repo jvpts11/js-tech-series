@@ -496,6 +496,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   `Ownership.mayUse`, `mayOpen`, `maySetUp` and `mayBreak` take the level and the place of the owned thing, so a
   permission given in one claim is asked in the claim the thing stands in, not the one its player stands in.
   `ModalDialog` draws its own background, the screen it was opened from under a veil. Experimental.
+- A piece on its way: J's Core's API is at version 59. `MovingStructure.parts` and `MovingStructures.coming`
+  say whether a piece a structure let go still waits for its plot of the yard to load before it parts as a structure
+  of its own. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

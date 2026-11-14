@@ -167,7 +167,8 @@ public final class StageFlights extends SavedData {
             final MovingStructure piece = MovingStructures.byId(level, new StructureUuid(each.getKey()));
             final long age = level.getGameTime() - flight.parted();
             if (piece == null) {
-                if (age > FORGET) {
+                // A stage whose body still waits for its land to load is on its way: only one that never comes goes.
+                if (age > FORGET && !MovingStructures.coming(level, new StructureUuid(each.getKey()))) {
                     all.forget(each.getKey());
                 }
             } else if (flight.lands()) {

@@ -323,6 +323,19 @@ public final class MovingStructure implements IStructureBody {
         return departure != null;
     }
 
+    /**
+     * Whether a piece named {@code piece}, which {@link #partOff} let go, still waits for its plot of the yard to load
+     * before it parts as a structure of its own.
+     */
+    public boolean parts(final StructureUuid piece) {
+        for (final StructureSplitting.Waiting waiting : splitting) {
+            if (waiting.id().equals(piece)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /** The structure holding it and where it stands on it, or null for one held by none. */
     public @Nullable StructureMount mount() {
         return mount;

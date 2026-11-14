@@ -255,7 +255,7 @@ public final class BoosterGameTests {
      * In the climb the boosters come loose once their burn is behind and before the first stage, each a body of its
      * own pushed out from the core, falling where they were set to; the flight computer draws them no more.
      */
-    @GameTest(template = ARENA, batch = CLIMB, timeoutTicks = 2400)
+    @GameTest(template = ARENA, batch = CLIMB, timeoutTicks = 12000)
     public static void climb_letsTheBoostersGoBeforeTheFirstStage(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final List<RocketStack.Section> sections = new ArrayList<>(flying().sections());

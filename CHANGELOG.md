@@ -629,6 +629,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   `Ownership.mayUse`, `mayOpen`, `maySetUp` and `mayBreak` take the level and the place of the owned thing, so a
   permission given in one claim is asked in the claim the thing stands in, not the one its player stands in.
   `ModalDialog` draws its own background, the screen it was opened from under a veil. Experimental.
+- (Core) A piece on its way: J's Core's API is at version 59. `MovingStructure.parts` and `MovingStructures.coming`
+  say whether a piece a structure let go still waits for its plot of the yard to load before it parts as a structure
+  of its own. Experimental.
 - (Computers) The Mining Computer: J's Computers' API is at version 21. `HostScope.MINING_COMPUTER` is the Mining
   Computer's own scope, for a program or a command that runs only on a mining rig. Experimental.
 - (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of
