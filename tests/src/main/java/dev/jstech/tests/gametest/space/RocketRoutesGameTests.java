@@ -143,14 +143,15 @@ public final class RocketRoutesGameTests {
                 // Its computer reads its tanks once a second.
                 .thenWaitUntil(() -> {
                     final MovingStructure there = MovingStructures.byId(space, id);
-                    final double left = computerOf(space, there).availableToLand().orElse(-1);
+                    final FlightComputerBlockEntity aboard = computerOf(space, there);
+                    final double left = aboard.availableToLand().orElse(-1);
                     final double spent = whole[0] - left;
                     helper.assertTrue(spent >= Rocketry.SURFACE_TO_LOW_ORBIT && spent < Rocketry.SURFACE_TO_LOW_ORBIT
                                     + ABOUT && Math.abs(left - onThePad) < ABOUT,
                             "the climb to the low orbit spends what it asks, " + Rocketry.SURFACE_TO_LOW_ORBIT
                                     + " m/s, and what the pad's page said is left: the rocket had " + whole[0]
                                     + " m/s, the page said " + onThePad + " m/s for a transfer, and it has " + left
-                                    + " m/s left in orbit");
+                                    + " m/s left in orbit; " + flightOf(aboard, TWO_STAGES));
                 })
                 .thenExecute(() -> {
                     space.setChunkForced(chunkX, chunkZ, false);
@@ -307,6 +308,15 @@ public final class RocketRoutesGameTests {
             }
         }
         throw new IllegalStateException("no flight computer aboard");
+    }
+
+    /* What {@code computer} keeps of its rocket of {@code stack}, for a failure to say: stages gone, parts holed, tanks. */
+    private static String flightOf(final FlightComputerBlockEntity computer, final RocketStack stack) {
+        final StringBuilder lost = new StringBuilder();
+        for (int section = 0; section < stack.sections().size(); section++) {
+            lost.append(section).append('=').append(computer.lost(section)).append(' ');
+        }
+        return "stages let go " + computer.separated() + ", blocks lost by part " + lost + "tanks " + computer.tanks();
     }
 
     /* The structure {@code id} in {@code level}, if it is there. */
