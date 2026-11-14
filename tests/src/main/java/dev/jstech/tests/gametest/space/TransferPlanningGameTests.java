@@ -61,7 +61,7 @@ public final class TransferPlanningGameTests {
     private static final int SECOND_LAYERS = 8;
     private static final double LAYER_FULL = 16_300.0;
     private static final double DESCENT_FULL = 8_200.0;
-    private static final double ASCENT_FULL = 2_400.0;
+    private static final double ASCENT_FULL = 2_600.0;
 
     private TransferPlanningGameTests() {
     }

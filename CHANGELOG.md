@@ -2865,6 +2865,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) The way home from the Moon costs little: from its orbit to the Overworld about 900 m/s, as Apollo's burn
   home was, braking in the Overworld's air at the end, where the way there costs 4,100. A rocket on the Moon's ground
   goes home with some 2,600 m/s.
+- (Space) The lunar lander's ascent stage brings its crew home: it carries a heat shield to brake in the Overworld's
+  air and parachutes to come down under, as a capsule does, and 2,600 kg of propellant, enough to climb off the Moon
+  and burn for home. A rocket can fly from the Overworld to the Moon's ground and back in one launch.
+- (Space) A stage spent in a system's space, emptied by a transfer or a capture, comes loose with the puff of its
+  ring and is gone, having no world under it to fall to. A lander lets go every stage under its descent stage as its
+  landing begins and comes down alone on its legs, the landing burning its descent stage.
 - (Core) The sky kit: a sky's stars may shine by day, as in a sky with no air, at a share of how bright they are at
   midnight (`"by_day": 0.75`), and a sun may light the day and tint it while the mod that declared it draws it where
   it stands (`"drawn": false`).

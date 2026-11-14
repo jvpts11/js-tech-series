@@ -12,7 +12,7 @@ O que sustenta um foguete quando ele desce. As Pernas de Pouso são uma peça de
 
 ## Para que serve
 
-Pousar onde o ar é ralo demais para os paraquedas sozinhos, como na [Lua](jsspace:the_moon) e em [Marte](jsspace:mars), com propelente de sobra para frear. Um estágio gasto com pernas e um motor pode voltar a uma [plataforma de pouso](jsspace:landing_platform). No chão, o estágio de subida decola e deixa o de descida para trás como plataforma de lançamento, como fizeram os módulos lunares da Apollo.
+Pousar onde o ar é ralo demais para os paraquedas sozinhos, como na [Lua](jsspace:the_moon) e em [Marte](jsspace:mars), com propelente de sobra para frear. Um estágio gasto com pernas e um motor pode voltar a uma [plataforma de pouso](jsspace:landing_platform). No chão, o estágio de subida decola e deixa o de descida para trás como plataforma de lançamento, como fizeram os módulos lunares da Apollo. Diferente deles, ele traz a tripulação até em casa: tem escudo térmico para frear no ar do Overworld, paraquedas para descer e propelente para a subida da Lua e a queima de volta.
 
 ## Como conseguir
 
@@ -21,7 +21,7 @@ No menu criativo, aba J's Space.
 ## Como usar
 
 1. Na tela Projeto de Foguete, ponha as Pernas de Pouso sobre o motor de um estágio, embaixo dos tanques; dobradas, elas ficam ao longo do tanque.
-2. Ponha o estágio de descida do módulo sobre um Anel de Instrumentos de cinco no topo do foguete, e o estágio de subida sobre ele.
+2. Ponha o estágio de descida do módulo sobre um Anel de Instrumentos de cinco no topo do foguete, e o estágio de subida sobre ele. Quando o pouso começa, o módulo solta todos os estágios abaixo dele, que somem no espaço, e desce sozinho.
 3. Marque o pouso no [computador de voo](jsspace:flight_computer) e guarde propelente para frear.
 
 ## O que pode dar errado

@@ -12,7 +12,7 @@ What a rocket stands on when it comes down. Landing Legs is a part one layer tal
 
 ## What it is for
 
-Landing where the air is too thin for parachutes alone, as on [the Moon](jsspace:the_moon) and [Mars](jsspace:mars), with propellant left to brake. A spent stage with legs and an engine can come back to a [landing platform](jsspace:landing_platform). On the ground, the ascent stage lifts off and leaves the descent stage behind as its launch platform, as the Apollo lunar modules did.
+Landing where the air is too thin for parachutes alone, as on [the Moon](jsspace:the_moon) and [Mars](jsspace:mars), with propellant left to brake. A spent stage with legs and an engine can come back to a [landing platform](jsspace:landing_platform). On the ground, the ascent stage lifts off and leaves the descent stage behind as its launch platform, as the Apollo lunar modules did. Unlike them, it brings its crew all the way home: it carries a heat shield to brake in the Overworld's air and parachutes to come down under, and propellant enough for the climb off the Moon and the burn home.
 
 ## How to get it
 
@@ -21,7 +21,7 @@ From the creative menu, J's Space tab.
 ## How to use it
 
 1. On the Rocket Design screen, put Landing Legs over a stage's engine, under its tanks; folded, they lie along the tank.
-2. Stand the lander's descent stage on a five-block Instrument Ring at the top of the rocket, its ascent stage on that.
+2. Stand the lander's descent stage on a five-block Instrument Ring at the top of the rocket, its ascent stage on that. As the landing begins, the lander lets go every stage under it, which is gone in space, and comes down alone.
 3. Set the landing on the [flight computer](jsspace:flight_computer), and keep propellant to brake.
 
 ## What can go wrong

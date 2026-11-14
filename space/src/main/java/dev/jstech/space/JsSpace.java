@@ -57,6 +57,7 @@ import dev.jstech.space.rocket.RocketShapes;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketKits;
 import dev.jstech.space.rocket.SkeletonRocketParts;
+import dev.jstech.space.rocket.SpentStages;
 import dev.jstech.space.rocket.StageFlights;
 import dev.jstech.space.rocket.StageLanding;
 import dev.jstech.space.network.SpacePayloads;
@@ -207,6 +208,7 @@ public final class JsSpace {
         TelemetryLine.declare();
         StageLanding.declare();
         StageFlights.listen();
+        SpentStages.listen();
         // The kinds of satellite and of probe a spacecraft is built as.
         SkeletonSpacecraft.declare();
         // The small starship's makers and catalogue of parts, the blocks they are built of and where each goes, the

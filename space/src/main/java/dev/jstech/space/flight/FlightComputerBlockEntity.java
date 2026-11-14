@@ -271,6 +271,10 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             countLost(server, carried);
             followGuidance(server);
             followTanks(server, carried);
+            if (SystemSpaces.systemOf(server.dimension()).isPresent() && !(carried.motion() instanceof RocketAscent)) {
+                // A stage a transfer or a capture has emptied out here comes loose, with no world under it to fall to.
+                RocketStaging.letGoSpent(server, carried, this, false);
+            }
             CruiseEvents.leak(server, formedPlaces(server));
             CruiseFlight.second(server, carried, this);
             DescentFlight.second(server, carried, this);
@@ -672,7 +676,10 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return Optional.ofNullable(this.executed.get());
     }
 
-    /** Whether its rocket carries a heat shield, its capsule's, to aerobrake with: one not holed. */
+    /**
+     * Whether its rocket carries a heat shield to aerobrake with, and the parachutes that come with it: its capsule's,
+     * or its lunar lander's ascent stage's, which brings its crew home from the Moon; one not holed.
+     */
     public boolean shield() {
         final Optional<RocketDesign> design = rocket();
         if (this.level == null || design.isEmpty()) {
@@ -682,7 +689,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         final List<RocketStack.Section> sections = design.get().stack().sections();
         for (int section = 0; section < sections.size(); section++) {
             final RocketPart part = parts.get(sections.get(section).part().id());
-            if (part != null && part.kind() == RocketPart.Kind.CAPSULE && lost(section) == 0) {
+            if (part != null && (part.kind() == RocketPart.Kind.CAPSULE || part.kind() == RocketPart.Kind.LANDER_ASCENT)
+                    && lost(section) == 0) {
                 return true;
             }
         }

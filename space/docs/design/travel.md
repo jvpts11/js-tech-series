@@ -36,6 +36,8 @@ A stage whose engines have burnt out below the one burning is let go: its blocks
 
 A stage that lands on a platform leaves no wreckage.
 
+A stage spent in a system's space, emptied by a transfer or a capture, has no world under it to fall to: it comes loose with the puff of its ring and is gone. A lander lets go every stage under its descent stage as its landing begins and comes down alone, the landing burning its descent stage.
+
 ### In orbit
 
 Every star system has a space of its own, a dimension where its worlds are round bodies in their places, and a world's orbit is the space around its sphere ([The universe](universe.md)).

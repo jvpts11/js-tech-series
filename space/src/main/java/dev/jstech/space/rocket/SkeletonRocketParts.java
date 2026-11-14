@@ -72,7 +72,7 @@ public final class SkeletonRocketParts {
                 RocketPart.Kind.LANDER_DESCENT, 5, 5, 3, false, 2_100, 8_200, Optional.of(new RocketPart.Engine(
                 45_000, 300, 345, METHALOX)), 0, LARGE_TIER));
         RocketParts.declare(id("lunar_lander_ascent"), new RocketPart(LANDER_ASCENT.key(),
-                RocketPart.Kind.LANDER_ASCENT, 5, 5, 3, false, 2_200, 2_400, Optional.of(new RocketPart.Engine(
+                RocketPart.Kind.LANDER_ASCENT, 5, 5, 3, false, 2_200, 2_600, Optional.of(new RocketPart.Engine(
                 16_000, 290, 340, METHALOX)), 1, LARGE_TIER));
     }
 

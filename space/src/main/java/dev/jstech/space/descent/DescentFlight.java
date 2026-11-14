@@ -30,6 +30,7 @@ import dev.jstech.space.orbit.OrbitObject;
 import dev.jstech.space.orbit.OrbitObjects;
 import dev.jstech.space.orbit.Rocketry;
 import dev.jstech.space.rocket.RocketBurns;
+import dev.jstech.space.rocket.RocketStaging;
 import dev.jstech.space.universe.LandingCabins;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
@@ -138,6 +139,8 @@ public final class DescentFlight {
         if (air != RocketDescent.NO_AIR && !shield && !SpaceServerConfig.FILE.get(SpaceServerConfig.BURNING_UP)) {
             return hold(level, body, computer, DescentTexts.NO_SHIELD.with(name));
         }
+        // A lander comes down alone: the stages under its descent stage are let go here, and the landing burns it.
+        RocketStaging.letGoSpent(level, body, computer, true);
         final boolean brakes = legs(level, computer) && computer.availableToLand().orElse(0)
                 >= landingDeltaV(solar.get());
         if (air != RocketDescent.THICK_AIR && !brakes
