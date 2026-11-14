@@ -10,6 +10,9 @@ package dev.jstech.space.client.cruise;
 import dev.jstech.core.client.gui.component.Draw;
 import dev.jstech.core.client.input.KeyActionsClient;
 import dev.jstech.core.moving.StructureSeatEntity;
+import dev.jstech.core.palette.Palette;
+import dev.jstech.core.palette.PaletteHolder;
+import dev.jstech.core.palette.Palettes;
 import dev.jstech.core.text.GameText;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.cruise.CouchSleep;
@@ -30,18 +33,21 @@ import net.neoforged.neoforge.common.NeoForge;
  * dark, a line under it saying which key wakes them, and clears again as they wake. Its key is sent to the server only
  * while they sit in a structure's seat.
  */
+@PaletteHolder
 public final class CouchSleepClient {
 
+    /** Its colours: the dark over the view, the game's own over a bed, and the line saying which key wakes. */
+    public static final Palette<Colours> PALETTE = Palettes.declare(JsSpace.MODID, "couch_sleep", new Colours(
+            0xFF101020, 0xFFFFFFFF));
     private static final ResourceLocation LAYER = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "couch_sleep");
-    /* The game's own sleep overlay: its dark, coming over a bed's hundred ticks to its most, and going in ten. */
-    private static final int DARK = 0x101020;
+    /* The game's own sleep overlay: coming over a bed's hundred ticks to its most dark, and going in ten. */
     private static final float MOST = 220F;
     private static final float FALLING = 100F;
     private static final float WAKING = 10F;
     private static final int ALPHA_SHIFT = 24;
-    /* The line saying which key wakes the player: how far up from the screen's foot, where a bed's button stands. */
+    private static final int RGB = 0xFFFFFF;
+    /* How far up from the screen's foot the line saying which key wakes stands, where a bed's button stands. */
     private static final int LINE_UP = 40;
-    private static final int LINE = 0xFFFFFFFF;
     private static boolean asleep;
     /* When the player last fell asleep or woke, by their level's tick, and how dark their view was as they woke. */
     private static long since;
@@ -89,16 +95,27 @@ public final class CouchSleepClient {
         if (alpha <= 0F) {
             return;
         }
-        graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight(), Math.round(alpha) << ALPHA_SHIFT | DARK);
+        final Colours c = PALETTE.get();
+        graphics.fill(0, 0, graphics.guiWidth(), graphics.guiHeight(), Math.round(alpha) << ALPHA_SHIFT
+                | c.dark() & RGB);
         if (asleep && seated) {
             final String key = KeyActionsClient.mapping(CouchSleep.KEY).getTranslatedKeyMessage().getString();
             Draw.textCentered(graphics, minecraft.font, GameText.resolve(CruiseTexts.WAKE.with(key)),
-                    graphics.guiWidth() / 2, graphics.guiHeight() - LINE_UP, LINE);
+                    graphics.guiWidth() / 2, graphics.guiHeight() - LINE_UP, c.line());
         }
     }
 
     /* How dark the view is {@code ticks} after falling asleep, as the game's own overlay over a bed. */
     private static float dark(final float ticks) {
         return MOST * Math.min(1F, Math.max(0F, ticks) / FALLING);
+    }
+
+    /**
+     * The colours of sleeping in a crew seat.
+     *
+     * @param dark the dark laid over the view, its alpha set by how long the player has slept
+     * @param line the line saying which key wakes them
+     */
+    public record Colours(int dark, int line) {
     }
 }
