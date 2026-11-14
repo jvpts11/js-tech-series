@@ -45,6 +45,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -108,7 +109,7 @@ public final class StagingGameTests {
                 .thenExecute(() -> aboard[0] = BlockPos.containing(MovingStructures.toYard(body, Vec3.atCenterOf(
                         computer.getBlockPos()))))
                 // The rocket is back on the pad within two seconds: its computer must be reading the flight by then.
-                .thenWaitUntil(() -> helper.assertTrue(level.shouldTickBlocksAt(aboard[0]),
+                .thenWaitUntil(() -> helper.assertTrue(ticking(level, aboard[0]),
                         "its flight computer's place in the yard ticks"))
                 .thenExecute(() -> RocketLaunch.lift(level, body))
                 // Checked as the stage comes loose: its body is made once its land has loaded, maybe later.
@@ -219,7 +220,7 @@ public final class StagingGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(body.ready(), "its body stands ready"))
                 .thenExecute(() -> aboard[0] = BlockPos.containing(MovingStructures.toYard(body, Vec3.atCenterOf(
                         computer.getBlockPos()))))
-                .thenWaitUntil(() -> helper.assertTrue(level.shouldTickBlocksAt(aboard[0]),
+                .thenWaitUntil(() -> helper.assertTrue(ticking(level, aboard[0]),
                         "its flight computer's place in the yard ticks"))
                 .thenExecute(() -> RocketLaunch.lift(level, body))
                 .thenWaitUntil(() -> {
@@ -288,6 +289,14 @@ public final class StagingGameTests {
             }
         }
         return null;
+    }
+
+    /*
+     * Whether the block entity at {@code pos} ticks: the game ticks one only where its blocks tick and its chunk's
+     * entities have loaded, which may come later.
+     */
+    private static boolean ticking(final ServerLevel level, final BlockPos pos) {
+        return level.shouldTickBlocksAt(pos) && level.areEntitiesLoaded(ChunkPos.asLong(pos));
     }
 
     /* How many blocks of {@code piece} draw their part's model themselves. */

@@ -68,6 +68,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -524,7 +525,7 @@ public final class MovingStructureToolsGameTests {
                 // Arrived is its chunks loaded, and not yet ticking: its belts run once their places tick.
                 .thenWaitUntil(() -> {
                     final MovingStructure arrived = MovingStructures.byId(nether, craft.id());
-                    helper.assertTrue(belts(nether, arrived).stream().allMatch(belt -> nether.shouldTickBlocksAt(
+                    helper.assertTrue(belts(nether, arrived).stream().allMatch(belt -> ticking(nether,
                             belt.getBlockPos())), "its belts' places tick: " + carrying(nether, arrived));
                 })
                 .thenExecute(() -> {
@@ -604,6 +605,14 @@ public final class MovingStructureToolsGameTests {
     }
 
     /*
+     * Whether the block entity at {@code pos} ticks: the game ticks one only where its blocks tick and its chunk's
+     * entities have loaded, which may come later.
+     */
+    private static boolean ticking(final ServerLevel level, final BlockPos pos) {
+        return level.shouldTickBlocksAt(pos) && level.areEntitiesLoaded(ChunkPos.asLong(pos));
+    }
+
+    /*
      * What each belt aboard carries and how fast, whether its place ticks, and what the chest holds, for a test's
      * failure to tell.
      */
@@ -617,7 +626,7 @@ public final class MovingStructureToolsGameTests {
             belt.lane().entries().forEach(entry -> said.append(' ').append(entry.item().getCount()).append(' ')
                     .append(entry.item().getItem()).append(" at ").append(entry.at()));
             said.append(", moving ").append(belt.moving()).append(", ticking ")
-                    .append(level.shouldTickBlocksAt(belt.getBlockPos())).append("; ");
+                    .append(ticking(level, belt.getBlockPos())).append("; ");
         }
         return said.append("the chest holds ").append(diamonds(level, craft)).append(" diamonds; the structure ready ")
                 .append(craft.ready()).append(" at ").append(craft.pose()).toString();

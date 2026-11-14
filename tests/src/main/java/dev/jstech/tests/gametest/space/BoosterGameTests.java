@@ -59,6 +59,7 @@ import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -273,7 +274,7 @@ public final class BoosterGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(body.ready(), "its body stands ready"))
                 .thenExecute(() -> aboard[0] = BlockPos.containing(MovingStructures.toYard(body, Vec3.atCenterOf(
                         computer.getBlockPos()))))
-                .thenWaitUntil(() -> helper.assertTrue(level.shouldTickBlocksAt(aboard[0]),
+                .thenWaitUntil(() -> helper.assertTrue(ticking(level, aboard[0]),
                         "its flight computer's place in the yard ticks"))
                 // On the ground its computer looked a second apart: aboard, it reads the flight a quarter second apart.
                 .thenIdle(SETTLE)
@@ -345,6 +346,14 @@ public final class BoosterGameTests {
         Propellants.get(level, SkeletonPropellants.METHALOX).ifPresent(methalox -> computer.load(1,
                 TankLoad.filled(SkeletonPropellants.METHALOX, methalox, FIRST)));
         return computer;
+    }
+
+    /*
+     * Whether the block entity at {@code pos} ticks: the game ticks one only where its blocks tick and its chunk's
+     * entities have loaded, which may come later.
+     */
+    private static boolean ticking(final ServerLevel level, final BlockPos pos) {
+        return level.shouldTickBlocksAt(pos) && level.areEntitiesLoaded(ChunkPos.asLong(pos));
     }
 
     /* The flight computer standing at {@code at}, in the yard; the test fails where none does. */
