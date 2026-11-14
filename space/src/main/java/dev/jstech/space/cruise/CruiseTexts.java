@@ -39,6 +39,9 @@ public final class CruiseTexts {
     public static final TextKey FAILURE_NAME = TextKey.of("jsspace.cruise.failure", "Failure");
     public static final TextKey FAILURE = TextKey.of("jsspace.cruise.failure.body",
             "A part burnt through and lost a block: put it back to mend it.");
+    public static final TextKey HELD_NAME = TextKey.of("jsspace.cruise.held", "Transfer let go");
+    public static final TextKey SHORT = TextKey.of("jsspace.cruise.held.short",
+            "Too little delta-v for the transfer to %s: %s m/s of the %s it needs. Plan it again on XFER.");
     /** Setting out on a transfer, and arriving. */
     public static final NotificationKind DEPARTURE = Notifications.kind(id("departure"), NotificationLevel.INFO,
             DEPARTED_NAME).declare();
@@ -55,6 +58,9 @@ public final class CruiseTexts {
             HOLED_NAME).declare();
     public static final NotificationKind BREAKDOWN = Notifications.kind(id("failure"), NotificationLevel.WARNING,
             FAILURE_NAME).declare();
+    /** A transfer set that cannot be flown, let go. */
+    public static final NotificationKind HELD = Notifications.kind(id("held"), NotificationLevel.WARNING,
+            HELD_NAME).declare();
 
     private CruiseTexts() {
     }

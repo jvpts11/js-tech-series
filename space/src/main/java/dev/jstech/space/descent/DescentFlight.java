@@ -108,8 +108,14 @@ public final class DescentFlight {
      */
     public static boolean begin(final ServerLevel level, final MovingStructure body,
                                 final FlightComputerBlockEntity computer, final PlannedLanding landing) {
-        final Optional<OrbitObject> orbit = OrbitObjects.get(level.getServer(), body.id().value())
-                .filter(found -> found.kind() == OrbitObject.Kind.ROCKET && found.world().equals(landing.world()));
+        final Optional<OrbitObject> rocket = OrbitObjects.get(level.getServer(), body.id().value())
+                .filter(found -> found.kind() == OrbitObject.Kind.ROCKET);
+        if (rocket.isPresent() && !rocket.get().world().equals(landing.world())) {
+            // Set on another world, as before it flew: it can come down only on the world it orbits.
+            return hold(level, body, computer, DescentTexts.OTHER_WORLD.with(CruiseFlight.nameOf(landing.world()),
+                    CruiseFlight.nameOf(rocket.get().world())));
+        }
+        final Optional<OrbitObject> orbit = rocket.filter(found -> found.world().equals(landing.world()));
         final Optional<SolarBody> solar = SolarSystemWorlds.bodyOf(landing.world());
         final ServerLevel world = levelOf(level, landing.world());
         if (orbit.isEmpty() || solar.isEmpty() || world == null) {

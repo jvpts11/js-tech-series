@@ -53,12 +53,16 @@ public final class SurfaceLaunch {
     public static boolean liftOff(final ServerLevel level, final MovingStructure body,
                                   final FlightComputerBlockEntity computer) {
         /*
-         * The descent stage stays behind only for an ascent that can light: one with no burn left above it keeps its
-         * lander whole on its legs, and tries again the next second.
+         * The descent stage stays behind only for an ascent that can light: one with no stage above it with an engine
+         * and propellant to burn keeps its lander whole on its legs, its transfer let go and its crew told why, once.
          */
         final int leftBehind = Math.max(computer.separated(),
                 RocketStaging.lastHolding(level, computer, RocketPart.Kind.LANDER_DESCENT));
-        if (RocketAscent.burns(level, body).stream().noneMatch(burn -> burn.stage() > leftBehind)) {
+        if (RocketAscent.burns(level, body).stream().noneMatch(burn -> burn.stage() > leftBehind && burn.thrust() > 0
+                && burn.startMass() > burn.endMass())) {
+            computer.dropPlan();
+            CruiseEvents.tell(level, body, DescentTexts.LIFT_HELD.of(DescentTexts.LIFT_HELD_NAME.text(),
+                    DescentTexts.NO_ASCENT.with(CruiseFlight.nameOf(worldOf(level)))));
             return false;
         }
         RocketStaging.leave(level, body, computer, RocketPart.Kind.LANDER_DESCENT);

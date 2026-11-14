@@ -57,7 +57,7 @@ public final class LandingMaps {
         final BlockPos centre = marked == null ? BlockPos.ZERO : marked;
         final int ring = computer.zoom();
         final double width = world.getWorldBorder().getSize();
-        final ResourceLocation target = computer.target();
+        final ResourceLocation target = computer.landingWorld();
         final String team = CoreTeams.teamOf(player.server, player.getUUID());
         final ReliefCoverage seen = WorldCoverage.of(player.server, team, target);
         final double relief = WorldDiscovery.known(player.server, team, target, SpaceProperties.RELIEF);
@@ -70,9 +70,9 @@ public final class LandingMaps {
                 }, player.server);
     }
 
-    /** The level of the world {@code computer} goes to, on {@code player}'s server, if it is there. */
+    /** The level of the world {@code computer} would land on, on {@code player}'s server, if it is there. */
     public static @Nullable ServerLevel levelOf(final ServerPlayer player, final FlightComputerBlockEntity computer) {
-        final Optional<SpaceWorld> world = SpaceWorlds.get(player.level(), computer.target());
+        final Optional<SpaceWorld> world = SpaceWorlds.get(player.level(), computer.landingWorld());
         return world.map(going -> player.server.getLevel(going.dimension())).orElse(null);
     }
 

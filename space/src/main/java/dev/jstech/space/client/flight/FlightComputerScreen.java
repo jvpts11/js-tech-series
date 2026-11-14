@@ -88,7 +88,7 @@ public final class FlightComputerScreen extends AbstractContainerScreen<FlightCo
         if (computer.page() != FlightPage.LANDING) {
             return;
         }
-        final Object wanted = Objects.hash(computer.target(), computer.mark(), computer.zoom());
+        final Object wanted = Objects.hash(computer.landingWorld(), computer.mark(), computer.zoom());
         if (!wanted.equals(this.asked)) {
             this.asked = wanted;
             FlightComputer.MAP.send(true);

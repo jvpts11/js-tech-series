@@ -212,8 +212,11 @@ public final class FlightComputerPages {
         final LandingMapsClient.Shown map = LandingMapsClient.shown();
         final FlightComputerFace.Plotted plotted = new FlightComputerFace.Plotted(planned, choice,
                 setFor(computer, planned), computer.shield(), computer.available());
-        return new FlightComputerFace.View(page, left, right, name(computer.target()), plan, tick, computer.mark(),
-                computer.zoom(), computer.grid(), map != null && map.world().equals(computer.target()) ? map : null,
+        // The landing page maps the world it can land on, the one it orbits once it is in an orbit.
+        final ResourceLocation named = page == FlightPage.LANDING ? computer.landingWorld() : computer.target();
+        return new FlightComputerFace.View(page, left, right, name(named), plan, tick, computer.mark(),
+                computer.zoom(), computer.grid(), map != null && map.world().equals(computer.landingWorld()) ? map
+                : null,
                 plotted, stages, readings, new FlightComputerFace.Landing(computer.guidance(), computer.hazards(),
                         landingSet(computer)), launch);
     }
@@ -657,7 +660,7 @@ public final class FlightComputerPages {
     /* Whether {@code computer}'s landing is set where its spot is marked, in the world it goes to. */
     private static boolean landingSet(final FlightComputerBlockEntity computer) {
         final BlockPos marked = computer.mark();
-        return marked != null && computer.landing().filter(set -> set.world().equals(computer.target())
+        return marked != null && computer.landing().filter(set -> set.world().equals(computer.landingWorld())
                 && set.x() == marked.getX() && set.z() == marked.getZ()).isPresent();
     }
 

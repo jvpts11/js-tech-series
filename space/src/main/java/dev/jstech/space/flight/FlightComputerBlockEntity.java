@@ -57,6 +57,8 @@ import dev.jstech.space.rocket.StageMath;
 import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
+import dev.jstech.space.universe.SystemLayout;
+import dev.jstech.space.universe.SystemSpaces;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -500,6 +502,14 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return going == null ? SolarSystemWorlds.MARS : going;
     }
 
+    /**
+     * The world its landing page maps and its landing is set on: the one whose orbit its rocket is in, the only one it
+     * can come down on from there; else, before it flies, the world its transfer goes to.
+     */
+    public ResourceLocation landingWorld() {
+        return orbiting().map(SolarSystemWorlds::worldOf).orElse(target());
+    }
+
     /** The spot marked to land on in its target world, its height not used; none before one is marked. */
     public @Nullable BlockPos mark() {
         return this.mark.get();
@@ -573,7 +583,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     /** The worlds it can plan a transfer to from the world it stands in, in the order of its left keys. */
     public List<ResourceLocation> destinations() {
         final List<ResourceLocation> out = new ArrayList<>();
-        final Optional<SolarBody> here = here(this.level);
+        final Optional<SolarBody> here = from();
         for (final SolarBody body : List.of(SolarBody.OVERWORLD, SolarBody.MOON, SolarBody.MARS)) {
             if (here.isEmpty() || here.get() != body) {
                 out.add(SolarSystemWorlds.worldOf(body));
@@ -582,12 +592,33 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return List.copyOf(out);
     }
 
-    /** The transfer it plans now, from the world it stands in to its target, if it plans one. */
+    /**
+     * The world whose orbit its rocket is in, resting or passing over it in its system's space; none on a world, or
+     * between worlds.
+     */
+    public Optional<SolarBody> orbiting() {
+        if (this.level == null || SystemSpaces.systemOf(this.level.dimension()).isEmpty()) {
+            return Optional.empty();
+        }
+        final Vec3 at = MovingStructures.inWorld(this.level, Vec3.atCenterOf(this.worldPosition));
+        return Optional.ofNullable(SystemLayout.over(at.x, at.z));
+    }
+
+    /** The world its transfer is planned from: the one it stands on, or the one whose orbit it is in. */
+    public Optional<SolarBody> from() {
+        final Optional<SolarBody> ground = here(this.level);
+        return ground.isPresent() ? ground : orbiting();
+    }
+
+    /**
+     * The transfer it plans now, from the world it stands on or whose orbit it is in to its target, if it plans one;
+     * from a world's ground {@link #available()} leaves the climb to its orbit out of what it has for it.
+     */
     public Optional<TransferPlan> plan() {
         if (this.level == null) {
             return Optional.empty();
         }
-        final Optional<SolarBody> from = here(this.level);
+        final Optional<SolarBody> from = from();
         final Optional<SolarBody> to = SolarSystemWorlds.bodyOf(target());
         if (from.isEmpty() || to.isEmpty()) {
             return Optional.empty();
@@ -632,6 +663,12 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     /** Sets {@code plan} for its rocket to fly: it sets out once its window comes, in a world's orbit. */
     public void execute(final PlannedTransfer plan) {
         this.executed.set(plan);
+        setChanged();
+    }
+
+    /** Lets the transfer it was set to fly go, as one its rocket cannot fly, its crew told why. */
+    public void dropPlan() {
+        this.executed.set(null);
         setChanged();
     }
 
@@ -713,7 +750,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                 .orElse(Integer.MAX_VALUE) : Integer.MAX_VALUE;
         double left = StageMath.deltaV(burns.get().stream().filter(burn -> burn.stage() > gone
                 && burn.stage() < below).toList(), 0);
-        if (!YardLayout.isYardBlock(this.worldPosition.getX())) {
+        // On a world's ground, on its pad or landed there, the climb to its low orbit comes first.
+        if (!YardLayout.isYardBlock(this.worldPosition.getX()) || descent() == DescentPhase.LANDED) {
             left -= here(this.level).map(body -> CLIMBS.getOrDefault(body, 0.0)).orElse(0.0);
         }
         return OptionalDouble.of(Math.max(0, left));
@@ -778,7 +816,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                 case SET -> {
                     final BlockPos marked = mark();
                     if (marked != null) {
-                        this.landing.set(new PlannedLanding(target(), marked.getX(), marked.getZ()));
+                        this.landing.set(new PlannedLanding(landingWorld(), marked.getX(), marked.getZ()));
                     }
                 }
                 default -> {

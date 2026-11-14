@@ -7,6 +7,8 @@
  */
 package dev.jstech.space.cruise;
 
+import dev.jstech.core.moving.IStructureBody;
+import dev.jstech.core.moving.LevelMovingStructures;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.team.CoreTeams;
@@ -26,12 +28,14 @@ import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.SystemLayout;
 import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.space.universe.UniverseTexts;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.phys.AABB;
 
 /**
  * A rocket's flight between worlds, as its flight computer flies it a second at a time: in the orbit of a world, with
@@ -45,6 +49,13 @@ public final class CruiseFlight {
     private static final double ABOARD = 3;
     private static final int TICKS_A_SECOND = 20;
     private static final int SECONDS_A_MINUTE = 60;
+    /*
+     * How much room is kept between two rockets resting in one orbit, in blocks; how many rings of spots round a
+     * world's own spot one looks over for room, and how many spots the first ring holds.
+     */
+    private static final double APART = 8;
+    private static final int RINGS = 8;
+    private static final int FIRST_RING = 6;
 
     private CruiseFlight() {
     }
@@ -82,17 +93,74 @@ public final class CruiseFlight {
         final SolarBody here = SystemLayout.over(body.pose().x(), body.pose().z());
         final OptionalDouble available = computer.available();
         if (level.getGameTime() < plan.leaves() || body.motion() != null || there.isEmpty() || here == null
-                || here == there.get() || available.isEmpty() || available.getAsDouble() < plan.needed()) {
+                || here == there.get() || available.isEmpty()) {
+            return false;
+        }
+        if (available.getAsDouble() < plan.needed()) {
+            // Its window come and its delta-v short, the transfer is let go and its crew told, once.
+            computer.dropPlan();
+            CruiseEvents.tell(level, body, CruiseTexts.HELD.of(CruiseTexts.HELD_NAME.text(), CruiseTexts.SHORT.with(
+                    nameOf(plan.to()), Math.round(available.getAsDouble()), Math.round(plan.needed()))));
             return false;
         }
         RocketBurns.burn(level, body, computer.separated(), plan.burn());
-        final double[] spot = SystemLayout.orbitSpot(there.get(), 0, 0);
+        final double[] spot = arrivalSpot(level, body, there.get(), plan.to());
         MovingStructures.move(body, RocketCruise.of(body.pose(), new double[] {spot[0], SystemLayout.ORBIT_Y,
                 spot[1]}, level.getGameTime(), plan.travel(), plan.to()));
         OrbitObjects.forget(level.getServer(), body.id().value());
         computer.cruising(true);
         CruiseEvents.tell(level, body, CruiseTexts.DEPARTURE.of(CruiseTexts.DEPARTED_NAME.text(),
                 CruiseTexts.DEPARTED.with(nameOf(plan.to()), duration(plan.travel()))));
+        return true;
+    }
+
+    /*
+     * Where in {@code there}'s low orbit {@code body} comes to rest at the end of its cruise to {@code world}: over the
+     * world's middle, or, where rockets rest there or are bound there already, the nearest spot round it with room
+     * for it, in rings a rocket's width apart, so no two rockets come to rest one inside the other.
+     */
+    private static double[] arrivalSpot(final ServerLevel level, final MovingStructure body, final SolarBody there,
+                                        final ResourceLocation world) {
+        final double[] middle = SystemLayout.orbitSpot(there, 0, 0);
+        final double room = Math.max(body.worldBox().getXsize(), body.worldBox().getZsize()) + APART;
+        final List<double[]> taken = new ArrayList<>();
+        for (final IStructureBody other : MovingStructures.near(level, new AABB(middle[0], SystemLayout.ORBIT_Y,
+                middle[1], middle[0], SystemLayout.ORBIT_Y, middle[1]).inflate(room * (RINGS + 1)))) {
+            if (other instanceof MovingStructure resting && !resting.id().equals(body.id())) {
+                taken.add(new double[] {resting.pose().x(), resting.pose().z(),
+                        Math.max(resting.worldBox().getXsize(), resting.worldBox().getZsize())});
+            }
+        }
+        for (final IStructureBody other : LevelMovingStructures.of(level).all()) {
+            if (other instanceof MovingStructure bound && !bound.id().equals(body.id())
+                    && bound.motion() instanceof RocketCruise cruise && cruise.to().equals(world)) {
+                taken.add(new double[] {cruise.toX(), cruise.toZ(), Math.max(bound.worldBox().getXsize(),
+                        bound.worldBox().getZsize())});
+            }
+        }
+        for (int ring = 0; ring <= RINGS; ring++) {
+            final int spots = ring == 0 ? 1 : FIRST_RING * ring;
+            for (int k = 0; k < spots; k++) {
+                final double angle = 2 * Math.PI * k / spots;
+                final double[] spot = {middle[0] + ring * room * Math.cos(angle),
+                    middle[1] + ring * room * Math.sin(angle)};
+                if (free(spot, room, taken)) {
+                    return spot;
+                }
+            }
+        }
+        return middle;
+    }
+
+    /* Whether a rocket {@code room} wide, its room kept, rests at {@code spot} clear of each of {@code taken}. */
+    private static boolean free(final double[] spot, final double room, final List<double[]> taken) {
+        for (final double[] other : taken) {
+            final double apart = (room + other[2] + APART) / 2;
+            if ((spot[0] - other[0]) * (spot[0] - other[0]) + (spot[1] - other[1]) * (spot[1] - other[1])
+                    < apart * apart) {
+                return false;
+            }
+        }
         return true;
     }
 

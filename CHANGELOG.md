@@ -3345,8 +3345,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   takes longer) and aerobraking where the destination has air and the rocket a heat shield (it saves the capture
   burn); EXEC sets the plan for the rocket to fly, and choosing another destination lets it go. The page now tells
   whether the rocket carries a heat shield and what delta-v it has for the transfer, less the climb to orbit while it
-  stands on the ground, and says when that is not enough. With the server's fast travel on, the plan set skips its
-  cruise.
+  stands on the ground, on its pad or landed on another world, and says when that is not enough. It plans from a
+  world's orbit too, to the other worlds, so a rocket in the Moon's orbit goes on to Mars without landing; a transfer
+  whose window comes with too little delta-v for it is let go, its crew told by how much. With the server's fast
+  travel on, the plan set skips its cruise.
 - (Space) API 11: the kinds of satellite and of probe, by id, declared in code or by a data pack's files
   (`SatelliteTypes`, `ProbeTypes`), each with its orbits or whether it lands, and the orbits and sizes they come in
   (`OrbitKind`, `SpacecraftSize`).
@@ -3388,14 +3390,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) Arriving and choosing where to land: at the end of its cruise a rocket is captured into the other world's
   orbit by its capture burn, or by aerobraking where its plan meant to and its heat shield is still whole (one breached
   on the way burns the capture instead); short of the delta-v it burns what it has and stays in a wide orbit of the
-  world instead of a low one, its crew told. A transfer sets out only with the delta-v for its capture too. Arriving, and on every pass of the orbit
+  world instead of a low one, its crew told. A transfer sets out only with the delta-v for its capture too. A rocket
+  bound for an orbit where another rests or is bound comes to rest beside it, never inside it. Arriving, and on every
+  pass of the orbit
   after, the crew photographs a strip of the ground under the orbit for its team, the world turning a little under it
   each pass, and a team knows the ground round where its players have stood on a world. The landing map shows only what
   the team knows, from its instruments, those passes and its visits, the rest under the grey of the unknown; the known
   ground too steep to land on is marked in red (HAZARD shows or hides it), with how many such places lie in the
   ellipse; in its corner, the whole world's small map with what is known of it, and how much. The ellipse comes from
   the guidance: an instrument ring's guidance platform, formed and not let go, lands within Perseverance's 7.7 by 6.6
-  km, the flight computer alone within twice that. SET fixes the landing where the spot is marked, for the descent.
+  km, the flight computer alone within twice that. SET fixes the landing where the spot is marked, for the descent; in
+  an orbit the map is of the world the rocket orbits, and a landing set on another world before it flew is held and
+  let go, its crew told.
 - (Space) Coming down to a world: a rocket resting in the orbit of the world its landing is set on leaves its orbit
   for the spot over the landing, sinks into the world's sky and comes down somewhere in its guidance's ellipse round
   the spot marked. Where there is air it glows as it enters, its heat shield taking the heat, and opens its three
@@ -3405,7 +3411,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the air it burns up as it enters. Off, those rules hold the landing instead, the rocket staying in its orbit, and a
   crew whose team does not know what kills there may not land. Landed with a transfer set and its window come, a rocket
   lifts off from the ground with no pad; a lunar lander's ascent stage leaves its descent stage standing on the ground
-  as its launch platform. A lander's descent stage is kept for its landing: the climb off the pad, the transfer and the
+  as its launch platform, and a rocket with no stage left that has an engine and propellant stays, its transfer let
+  go and its crew told. A lander's descent stage is kept for its landing: the climb off the pad, the transfer and the
   capture burn the stages under it alone, and the transfer page plans with those, so a rocket short of what its own
   stages give is told so rather than spending its landing; a lander sent up alone climbs on its descent stage.
 - (Space) The rocket's effects as approved: its engines burn with a bright flame and pouring smoke in air, leaving a

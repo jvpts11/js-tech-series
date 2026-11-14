@@ -36,8 +36,13 @@ public final class DescentTexts {
             "No heat shield fit for the air of %s: the rocket stays in its orbit.");
     public static final TextKey NO_LEGS = TextKey.of("jsspace.descent.held.legs",
             "No legs, or no propellant to brake on them, for %s: the rocket stays in its orbit.");
+    public static final TextKey OTHER_WORLD = TextKey.of("jsspace.descent.held.other_world",
+            "The landing was set on %s, and the rocket is in the orbit of %s: set it again on LAND.");
     public static final TextKey LIFTED_NAME = TextKey.of("jsspace.descent.lifted", "Lift-off");
     public static final TextKey LIFTED = TextKey.of("jsspace.descent.lifted.body", "Leaving %s.");
+    public static final TextKey LIFT_HELD_NAME = TextKey.of("jsspace.descent.lift_held", "Lift-off held");
+    public static final TextKey NO_ASCENT = TextKey.of("jsspace.descent.lift_held.ascent",
+            "No stage with an engine and propellant to climb on: the rocket stays on %s.");
     /** Coming down, and standing on the ground. */
     public static final NotificationKind DESCENT = Notifications.kind(id("descent"), NotificationLevel.INFO,
             DESCENDING_NAME).declare();
@@ -54,6 +59,9 @@ public final class DescentTexts {
     /** Leaving a world's ground again. */
     public static final NotificationKind LIFT_OFF = Notifications.kind(id("lift_off"), NotificationLevel.INFO,
             LIFTED_NAME).declare();
+    /** A lift-off that cannot be flown. */
+    public static final NotificationKind LIFT_HELD = Notifications.kind(id("lift_held"), NotificationLevel.WARNING,
+            LIFT_HELD_NAME).declare();
 
     private DescentTexts() {
     }
