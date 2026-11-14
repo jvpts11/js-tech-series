@@ -19,6 +19,7 @@ import dev.jstech.space.descent.DescentFlight;
 import dev.jstech.space.descent.DescentPhase;
 import dev.jstech.space.descent.SurfaceLaunch;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
+import dev.jstech.space.flight.FlightPage;
 import dev.jstech.space.flight.PlannedLanding;
 import dev.jstech.space.flight.PlannedTransfer;
 import dev.jstech.space.hangar.RocketDesign;
@@ -66,6 +67,10 @@ public final class OrbitFlightGameTests {
     /* Each flight to an orbit a batch of its own, so no two rockets rest at one world's spot at once. */
     private static final String PLANS = "jsspace_orbit_plans";
     private static final String ARRIVALS = "jsspace_orbit_arrivals";
+    private static final String CAPTURES = "jsspace_orbit_captures";
+    /* The transfer page's right keys: aerobraking and EXEC, from the first. */
+    private static final int AEROBRAKE = 3;
+    private static final int EXECUTE = 4;
     private static final BlockPos FOOT = new BlockPos(8, 1, 8);
     private static final BlockPos OTHER_FOOT = new BlockPos(8, 1, 2);
     private static final BlockPos OWNER = new BlockPos(1, 1, 1);
@@ -120,6 +125,74 @@ public final class OrbitFlightGameTests {
                     helper.assertTrue(!began && computer.landing().isEmpty() && computer.descent()
                             == DescentPhase.NONE && body(space, id).motion() == null, "a landing set on the Moon,"
                             + " from the Overworld's orbit, is held and let go");
+                    forced(space, spot, false);
+                    MovingStructures.takeAway(body(space, id));
+                })
+                .thenSucceed();
+    }
+
+    /**
+     * In a wide orbit its landing waits; the capture is the transfer page's first choice, burnt at once by EXEC, let
+     * go with too little delta-v for it, saved dipping into the air with its heat shield; captured, it is in the low
+     * orbit.
+     */
+    @GameTest(template = ARENA, batch = CAPTURES, timeoutTicks = ORBIT_TIME)
+    public static void wideOrbit_waitsForTheCaptureTheTransferPageOffers(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final FlightComputerBlockEntity built = build(helper, FOOT, crewed(), TANK);
+        final MovingStructure released = RocketLaunch.release(level, built.getBlockPos(), null).orElseThrow();
+        final StructureUuid id = released.id();
+        final ServerLevel space = SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM);
+        final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, 0, 0);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
+                .thenExecute(() -> {
+                    forced(space, spot, true);
+                    MovingStructures.travel(released, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(ready(space, id), "it rests in the Overworld's orbit"))
+                .thenExecute(() -> {
+                    final FlightComputerBlockEntity computer = computerOf(space, body(space, id));
+                    OrbitObjects.arrived(space, body(space, id), SolarBody.OVERWORLD);
+                    // As one arriving short of its capture burn.
+                    computer.wideOrbit(true);
+                    helper.assertTrue(!DescentFlight.begin(space, body(space, id), computer, new PlannedLanding(
+                            SolarSystemWorlds.OVERWORLD, 0, 0)) && body(space, id).motion() == null,
+                            "from a wide orbit the landing does not begin");
+                    helper.assertTrue(computer.destinations().get(0).equals(SolarSystemWorlds.OVERWORLD),
+                            "the capture is the transfer page's first choice: " + computer.destinations());
+                    computer.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.TRANSFER));
+                    computer.press(FlightComputerBlockEntity.LEFT);
+                    // The capture burnt, not dipping into the air.
+                    if (computer.choice().aero()) {
+                        computer.press(FlightComputerBlockEntity.RIGHT + AEROBRAKE);
+                    }
+                    helper.assertTrue(computer.capturing().equals(Optional.of(SolarBody.OVERWORLD))
+                            && computer.planned().map(PlannedTransfer::capture).orElse(0.0) > computer.available()
+                            .orElse(0), "its capture burn planned, more than it has: " + computer.planned());
+                    computer.press(FlightComputerBlockEntity.RIGHT + EXECUTE);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(computerOf(space, body(space, id)).executed().isEmpty(),
+                        "short of its capture, the plan is let go"))
+                .thenExecute(() -> {
+                    final FlightComputerBlockEntity computer = computerOf(space, body(space, id));
+                    helper.assertTrue(computer.wideOrbit().isPresent(), "and it stays in its wide orbit");
+                    if (!computer.choice().aero()) {
+                        computer.press(FlightComputerBlockEntity.RIGHT + AEROBRAKE);
+                    }
+                    helper.assertTrue(computer.planned().map(PlannedTransfer::capture).orElse(-1.0) == 0,
+                            "dipping into the air with its heat shield, the capture burns nothing: shield "
+                            + computer.shield() + ", aerobraking " + computer.choice().aero() + ", "
+                            + computer.planned());
+                    computer.press(FlightComputerBlockEntity.RIGHT + EXECUTE);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(computerOf(space, body(space, id)).wideOrbit().isEmpty(),
+                        "captured into the low orbit"))
+                .thenExecute(() -> {
+                    final FlightComputerBlockEntity computer = computerOf(space, body(space, id));
+                    helper.assertTrue(computer.executed().isEmpty() && !computer.destinations().contains(
+                            SolarSystemWorlds.OVERWORLD), "the capture flown, the transfer page offers the other"
+                            + " worlds again: " + computer.destinations());
                     forced(space, spot, false);
                     MovingStructures.takeAway(body(space, id));
                 })

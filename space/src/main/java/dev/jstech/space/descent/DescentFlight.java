@@ -103,11 +103,15 @@ public final class DescentFlight {
     }
 
     /**
-     * Begins {@code body}'s coming down to the landing {@code landing}, if it rests in that world's orbit and nothing
-     * holds it; whether it began.
+     * Begins {@code body}'s coming down to the landing {@code landing}, if it rests in that world's low orbit and
+     * nothing holds it; whether it began.
      */
     public static boolean begin(final ServerLevel level, final MovingStructure body,
                                 final FlightComputerBlockEntity computer, final PlannedLanding landing) {
+        if (computer.wideOrbit().isPresent()) {
+            // From a wide orbit there is no coming down: its landing waits for the capture into the low one.
+            return false;
+        }
         final Optional<OrbitObject> rocket = OrbitObjects.get(level.getServer(), body.id().value())
                 .filter(found -> found.kind() == OrbitObject.Kind.ROCKET);
         if (rocket.isPresent() && !rocket.get().world().equals(landing.world())) {

@@ -111,6 +111,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<PlannedTransfer> executed;
     private final ValueField<Map<Integer, Integer>> lost;
     private final BoolField cruising;
+    private final BoolField wide;
     private final BoolField hazards;
     private final ValueField<PlannedLanding> landing;
     private final IntField guidance;
@@ -228,6 +229,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                 .toClient();
         // Whether its rocket is on its cruise to the world its plan goes to.
         this.cruising = fields().flag("Cruising", false).save().toClient();
+        // In a wide orbit, arrived short of its capture burn: it lands only once captured into the low one.
+        this.wide = fields().flag("WideOrbit", false).save().toClient();
         // Its landing page: whether the hazards are shown, the landing set, and the guidance its rocket comes down by.
         this.hazards = fields().flag("Hazards", true).save().toClient();
         this.landing = fields().nullable("Landing", PlannedLanding.CODEC).save().toClient();
@@ -398,6 +401,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         this.executed.set(null);
         this.landing.set(null);
         this.cruising.set(false);
+        this.wide.set(false);
         this.guidance.set(COMPUTER_GUIDANCE);
         this.descent.set(DescentPhase.NONE);
         this.clock.set(0);
@@ -583,6 +587,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     /** The worlds it can plan a transfer to from the world it stands in, in the order of its left keys. */
     public List<ResourceLocation> destinations() {
         final List<ResourceLocation> out = new ArrayList<>();
+        // In a wide orbit the capture into the low one comes first, as its own world.
+        wideOrbit().ifPresent(captured -> out.add(SolarSystemWorlds.worldOf(captured)));
         final Optional<SolarBody> here = from();
         for (final SolarBody body : List.of(SolarBody.OVERWORLD, SolarBody.MOON, SolarBody.MARS)) {
             if (here.isEmpty() || here.get() != body) {
@@ -634,8 +640,34 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
 
     /** The transfer planned now, as its transfer page plans it, if it plans one from here. */
     public Optional<PlannedTransfer> planned() {
-        return this.level == null ? Optional.empty() : plan().map(found -> PlannedTransfer.of(found, choice(),
-                shield(), this.level.getGameTime()));
+        if (this.level == null) {
+            return Optional.empty();
+        }
+        final Optional<SolarBody> capturing = capturing();
+        if (capturing.isPresent()) {
+            return Optional.of(PlannedTransfer.capture(capturing.get(), choice().aero(), shield(),
+                    this.level.getGameTime()));
+        }
+        return plan().map(found -> PlannedTransfer.of(found, choice(), shield(), this.level.getGameTime()));
+    }
+
+    /**
+     * The world whose wide orbit its rocket is in, arrived short of its capture burn: it lands there only once
+     * captured into the low one; none in a low orbit or anywhere else.
+     */
+    public Optional<SolarBody> wideOrbit() {
+        return this.wide.get() ? orbiting() : Optional.empty();
+    }
+
+    /** Its rocket is in a wide orbit of the world it orbits, or no longer is. */
+    public void wideOrbit(final boolean now) {
+        this.wide.set(now);
+        setChanged();
+    }
+
+    /** The world its transfer page plans the capture into, its target the world whose wide orbit it is in. */
+    public Optional<SolarBody> capturing() {
+        return wideOrbit().filter(world -> SolarSystemWorlds.worldOf(world).equals(target()));
     }
 
     /** The transfer it is set to fly, once its EXEC key has set one. */

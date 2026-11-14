@@ -79,7 +79,40 @@ public final class CruiseFlight {
             return;
         }
         photograph(level, body);
-        computer.executed().ifPresent(plan -> setOut(level, body, computer, plan));
+        computer.executed().ifPresent(plan -> {
+            if (computer.wideOrbit().filter(wide -> SolarSystemWorlds.worldOf(wide).equals(plan.to())).isPresent()) {
+                capture(level, body, computer, plan);
+            } else {
+                setOut(level, body, computer, plan);
+            }
+        });
+    }
+
+    /**
+     * Captures {@code body} from the wide orbit it is in into the low one, as {@code plan} says: its capture burnt, or
+     * saved dipping into the air; short of the delta-v, the plan is let go and its crew told, once; whether it was
+     * captured.
+     */
+    public static boolean capture(final ServerLevel level, final MovingStructure body,
+                                  final FlightComputerBlockEntity computer, final PlannedTransfer plan) {
+        final OptionalDouble available = computer.available();
+        if (available.isEmpty() || body.motion() != null) {
+            return false;
+        }
+        computer.dropPlan();
+        if (available.getAsDouble() < plan.capture()) {
+            CruiseEvents.tell(level, body, CruiseTexts.HELD.of(CruiseTexts.HELD_NAME.text(),
+                    CruiseTexts.SHORT_OF_CAPTURE.with(nameOf(plan.to()), Math.round(available.getAsDouble()),
+                            Math.round(plan.capture()))));
+            return false;
+        }
+        if (plan.capture() > 0) {
+            RocketBurns.burn(level, body, computer.separated(), plan.capture());
+        }
+        computer.wideOrbit(false);
+        CruiseEvents.tell(level, body, CruiseTexts.ARRIVAL.of(CruiseTexts.ARRIVED_NAME.text(), (plan.capture() > 0
+                ? CruiseTexts.ARRIVED : CruiseTexts.AEROBRAKED).with(nameOf(plan.to()))));
+        return true;
     }
 
     /**
@@ -109,6 +142,7 @@ public final class CruiseFlight {
                 spot[1]}, level.getGameTime(), plan.travel(), plan.to()));
         OrbitObjects.forget(level.getServer(), body.id().value());
         computer.cruising(true);
+        computer.wideOrbit(false);
         CruiseEvents.tell(level, body, CruiseTexts.DEPARTURE.of(CruiseTexts.DEPARTED_NAME.text(),
                 CruiseTexts.DEPARTED.with(nameOf(plan.to()), duration(plan.travel()))));
         return true;
@@ -214,6 +248,7 @@ public final class CruiseFlight {
         aboard(level, body).forEach(player -> SpaceFirsts.arrived(player, plan.to()));
         Rockets.get(level.getServer(), body.id()).ifPresent(rocket -> WorldCoverage.photographAt(level.getServer(),
                 CoreTeams.teamOf(level.getServer(), rocket.ownership().owner()), plan.to(), level.getGameTime()));
+        computer.wideOrbit(!captured);
         if (!captured) {
             CruiseEvents.tell(level, body, CruiseTexts.MISSED.of(CruiseTexts.MISSED_NAME.text(),
                     CruiseTexts.NOT_CAPTURED.with(nameOf(plan.to()))));

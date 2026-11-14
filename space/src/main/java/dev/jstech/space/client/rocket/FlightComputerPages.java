@@ -75,6 +75,19 @@ public final class FlightComputerPages {
     public static final TextKey PLAN_SET = TextKey.of("jsspace.flight_computer.plan_set", "PLAN SET");
     public static final TextKey SHORT_OF_DELTA_V = TextKey.of("jsspace.flight_computer.short_of_delta_v",
             "NOT ENOUGH DV");
+    /** The capture from a wide orbit, as the transfer page offers it, and the landing page asks for it. */
+    public static final TextKey KEY_CAPTURE = TextKey.of("jsspace.flight_computer.key_capture", "CAPT");
+    public static final TextKey ORBIT = TextKey.of("jsspace.flight_computer.orbit", "ORBIT");
+    public static final TextKey WIDE = TextKey.of("jsspace.flight_computer.wide", "WIDE");
+    public static final TextKey DELTA_V = TextKey.of("jsspace.flight_computer.delta_v", "DV");
+    public static final TextKey INTO_LOW_ORBIT = TextKey.of("jsspace.flight_computer.into_low_orbit",
+            "INTO A LOW ORBIT");
+    public static final TextKey LANDING_WAITS = TextKey.of("jsspace.flight_computer.landing_waits",
+            "LAND WAITS FOR IT");
+    public static final TextKey CAPTURE_OK = TextKey.of("jsspace.flight_computer.capture_ok", "CAPTURE OK  EXEC");
+    public static final TextKey WIDE_ORBIT = TextKey.of("jsspace.flight_computer.wide_orbit", "WIDE ORBIT");
+    public static final TextKey CAPTURE_FIRST = TextKey.of("jsspace.flight_computer.capture_first",
+            "CAPTURE ON XFER FIRST");
     public static final TextKey LEAVE_NOW = TextKey.of("jsspace.flight_computer.leave_now", "LEAVE NOW");
     public static final TextKey WINDOW_NUMBER = TextKey.of("jsspace.flight_computer.window_number", "WIN %s");
     public static final TextKey ASSIST_ON = TextKey.of("jsspace.flight_computer.assist_on", "SWING-BY");
@@ -141,6 +154,19 @@ public final class FlightComputerPages {
     private static final int TAPE_TICKS = 12;
     private static final double TAPE_NOW = 0.55;
     private static final double TAPE_SPAN = 2.2;
+    /*
+     * A wide orbit round its world on the system, a long ellipse, and the low orbit it is captured into; a line half
+     * lit, under the capture's first; the box saying the landing waits for the capture, between the keys' legends.
+     */
+    private static final int WIDE_DOTS = 120;
+    private static final double WIDE_SHIFT = 4;
+    private static final double WIDE_ACROSS = 9;
+    private static final double WIDE_UP = 5;
+    private static final int LOW_RADIUS = 4;
+    private static final double DIMMED = 0.35;
+    private static final int BANNER_IN = 50;
+    private static final int BANNER_Y = SY0 + 54;
+    private static final int BANNER_TALL = 30;
     /* The landing map's place on the screen, under the pages' names and over the two rows of figures. */
     private static final int MAP_X0 = SX0;
     private static final int MAP_Y0 = SY0 + 13;
@@ -173,19 +199,26 @@ public final class FlightComputerPages {
         final Optional<PlannedTransfer> planned = computer.planned();
         final TransferChoice choice = computer.choice();
         if (page == FlightPage.TRANSFER) {
+            // In a wide orbit the first key is the capture into the world's low orbit, named for what it does.
+            final Optional<SolarBody> wide = computer.wideOrbit();
             for (final ResourceLocation world : computer.destinations()) {
-                left.add(new FlightComputerFace.Legend(name(world), world.equals(computer.target())
-                        ? FlightComputerFace.Legend.State.CHOSEN : FlightComputerFace.Legend.State.LIVE, false));
+                final boolean capture = wide.filter(orbited -> SolarSystemWorlds.worldOf(orbited).equals(world))
+                        .isPresent();
+                left.add(new FlightComputerFace.Legend(capture ? GameText.resolve(KEY_CAPTURE) : name(world),
+                        world.equals(computer.target()) ? FlightComputerFace.Legend.State.CHOSEN
+                        : FlightComputerFace.Legend.State.LIVE, false));
             }
+            final Optional<SolarBody> capturing = computer.capturing();
             final boolean windowed = plan.map(TransferPlan::windowed).orElse(false);
-            final boolean airAhead = plan.map(TransferPlan::aerobraking).orElse(false) && computer.shield();
+            final boolean airAhead = (capturing.isPresent() ? capturing.get() != SolarBody.MOON
+                    : plan.map(TransferPlan::aerobraking).orElse(false)) && computer.shield();
             left.add(state(WINDOW_EARLIER, windowed && choice.window() > 0, false));
             left.add(state(WINDOW_LATER, windowed && choice.window() < TransferChoice.FARTHEST_WINDOW, false));
             right.add(state(KEY_DELTA_V, plan.isPresent(), false));
             right.add(state(KEY_TIME_OF_FLIGHT, plan.isPresent(), false));
             right.add(state(KEY_ASSIST, windowed, choice.assist()));
             right.add(state(KEY_AEROBRAKE, airAhead, choice.aero()));
-            right.add(state(EXECUTE, plan.isPresent(), setFor(computer, planned)));
+            right.add(state(EXECUTE, plan.isPresent() || capturing.isPresent(), setFor(computer, planned)));
         } else if (page == FlightPage.LANDING) {
             left.add(live(ZOOM_IN, computer.zoom() == FlightComputerBlockEntity.NEAR));
             left.add(live(ZOOM_OUT, computer.zoom() == FlightComputerBlockEntity.WIDE));
@@ -211,14 +244,14 @@ public final class FlightComputerPages {
         }
         final LandingMapsClient.Shown map = LandingMapsClient.shown();
         final FlightComputerFace.Plotted plotted = new FlightComputerFace.Plotted(planned, choice,
-                setFor(computer, planned), computer.shield(), computer.available());
+                setFor(computer, planned), computer.shield(), computer.available(), computer.capturing());
         // The landing page maps the world it can land on, the one it orbits once it is in an orbit.
         final ResourceLocation named = page == FlightPage.LANDING ? computer.landingWorld() : computer.target();
         return new FlightComputerFace.View(page, left, right, name(named), plan, tick, computer.mark(),
                 computer.zoom(), computer.grid(), map != null && map.world().equals(computer.landingWorld()) ? map
                 : null,
                 plotted, stages, readings, new FlightComputerFace.Landing(computer.guidance(), computer.hazards(),
-                        landingSet(computer)), launch);
+                        landingSet(computer), computer.wideOrbit().isPresent()), launch);
     }
 
     /**
@@ -281,6 +314,12 @@ public final class FlightComputerPages {
         circle(g, ox, oy, 7, mix(c.ink(), c.space(), 0.6), false);
         g.fill(ox + 5, oy - 6, ox + 7, oy - 4, c.moon());
         disc(g, mx, my, 2, c.mars(), c.white());
+        final Optional<SolarBody> capturing = view.plotted().capturing();
+        if (capturing.isPresent()) {
+            final boolean atMars = capturing.get() == SolarBody.MARS;
+            capture(g, font, view, atMars ? mx : ox, atMars ? my : oy, c);
+            return;
+        }
         if (plan.isEmpty()) {
             FlightComputerFace.text(g, font, GameText.resolve(NO_PLAN), SX1 - 8 - font.width(GameText.resolve(
                     NO_PLAN)), SY1 - 10, c.amber(), false);
@@ -299,6 +338,7 @@ public final class FlightComputerPages {
             final String coming = GameText.resolve(MAP_COMING);
             FlightComputerFace.text(g, font, coming, (MAP_X0 + MAP_X1) / 2, (MAP_Y0 + MAP_Y1) / 2 - 4, c.cyan(),
                     true);
+            waitsForCapture(g, font, view, c);
             return;
         }
         final BlockPos centre = centreOf(view);
@@ -364,6 +404,21 @@ public final class FlightComputerPages {
                 c.cyan(), false);
         final String place = GameText.resolve(PLACE.with(centre.getX(), centre.getZ()));
         FlightComputerFace.text(g, font, place, SX1 - 6 - font.width(place), rows + 11, c.white(), false);
+        waitsForCapture(g, font, view, c);
+    }
+
+    /* Over the map, in a wide orbit: no landing begins before the capture into the low one, on the transfer page. */
+    private static void waitsForCapture(final GuiGraphics g, final Font font, final FlightComputerFace.View view,
+                                        final FlightComputerFace.Colours c) {
+        if (!view.landing().wide()) {
+            return;
+        }
+        g.fill(SX0 + BANNER_IN, BANNER_Y, SX1 - BANNER_IN, BANNER_Y + BANNER_TALL, c.space());
+        FlightComputerFace.frame(g, SX0 + BANNER_IN, BANNER_Y, SX1 - BANNER_IN, BANNER_Y + BANNER_TALL, c.amber());
+        FlightComputerFace.text(g, font, GameText.resolve(WIDE_ORBIT), (SX0 + SX1) / 2, BANNER_Y + 5, c.amber(),
+                true);
+        FlightComputerFace.text(g, font, GameText.resolve(CAPTURE_FIRST), (SX0 + SX1) / 2, BANNER_Y + 17, c.white(),
+                true);
     }
 
     /* The key to the hazards, over the scale's bar: their mark and what they are. */
@@ -450,6 +505,56 @@ public final class FlightComputerPages {
                 Math.round(plotted.available().getAsDouble()))) : unknown}};
         final int[] colours = {colourOf(plan.to(), c), c.white(), c.white(), c.green(), c.white(), c.white(),
             c.white(), plotted.shield() ? c.green() : c.amber(), enough ? c.green() : c.amber()};
+        block(g, font, rows, colours, c);
+    }
+
+    /*
+     * The capture from a wide orbit, the transfer page's plan in one: the wide orbit round the world {@code (wx, wy)}
+     * and the low one it is captured into; its figures, the orbit, its burn, how it is captured, the shield and what
+     * the rocket has; and whether it has enough, EXEC burning it at once.
+     */
+    private static void capture(final GuiGraphics g, final Font font, final FlightComputerFace.View view, final int wx,
+                                final int wy, final FlightComputerFace.Colours c) {
+        for (int i = 0; i < WIDE_DOTS; i++) {
+            if ((i / 3) % 2 == 1) {
+                continue;
+            }
+            final double a = 2 * Math.PI * i / WIDE_DOTS;
+            final int x = (int) Math.round(wx + WIDE_SHIFT + WIDE_ACROSS * Math.cos(a));
+            final int y = (int) Math.round(wy + WIDE_UP * Math.sin(a));
+            if (x >= SX0 && x < SX1 && y >= SY0 + 12 && y < SY1 - 36) {
+                dot(g, x, y, c.amber());
+            }
+        }
+        circle(g, wx, wy, LOW_RADIUS, c.green(), true);
+        final FlightComputerFace.Plotted plotted = view.plotted();
+        final double needed = plotted.planned().map(PlannedTransfer::capture).orElse(0.0);
+        final boolean aerobraking = plotted.planned().map(PlannedTransfer::aerobraking).orElse(false);
+        final boolean enough = plotted.available().isPresent() && plotted.available().getAsDouble() >= needed;
+        final String[][] rows = {
+            {GameText.resolve(TARGET), view.target()},
+            {GameText.resolve(ORBIT), GameText.resolve(WIDE)},
+            {GameText.resolve(DELTA_V), GameText.resolve(SPEED.with(Math.round(needed)))},
+            {GameText.resolve(ARRIVE), GameText.resolve(aerobraking ? AEROBRAKE : BURN)},
+            {GameText.resolve(SHIELD), GameText.resolve(plotted.shield() ? SHIELD_OK : NONE)},
+            {GameText.resolve(AVAILABLE), plotted.available().isPresent() ? GameText.resolve(SPEED.with(
+                Math.round(plotted.available().getAsDouble()))) : GameText.resolve(NO_READING)}};
+        final int[] colours = {plotted.capturing().map(body -> colourOf(body, c)).orElse(c.white()), c.amber(),
+            c.white(), c.white(), plotted.shield() ? c.green() : c.amber(), enough ? c.green() : c.amber()};
+        block(g, font, rows, colours, c);
+        g.fill(SX0, TAPE_Y - 18, SX1, SY1, c.space());
+        FlightComputerFace.text(g, font, GameText.resolve(INTO_LOW_ORBIT), TAPE_X0, TAPE_Y - 14, c.cyan(), false);
+        FlightComputerFace.text(g, font, GameText.resolve(LANDING_WAITS), TAPE_X0, TAPE_Y - 3, mix(c.cyan(),
+                c.space(), DIMMED), false);
+        final String shown = GameText.resolve(!enough ? SHORT_OF_DELTA_V : plotted.executed() ? PLAN_SET
+                : CAPTURE_OK);
+        FlightComputerFace.text(g, font, shown, SX1 - 8 - font.width(shown), SY1 - 10, enough ? c.green()
+                : c.amber(), false);
+    }
+
+    /* The plan's figures, each a name and a value of its colour, in their block beside the system. */
+    private static void block(final GuiGraphics g, final Font font, final String[][] rows, final int[] colours,
+                              final FlightComputerFace.Colours c) {
         final int bottom = SY0 + 21 + rows.length * ROW;
         g.fill(DATA_X0 - 4, SY0 + 14, DATA_X1 + 3, bottom, c.space());
         FlightComputerFace.frame(g, DATA_X0 - 4, SY0 + 14, DATA_X1 + 3, bottom, c.ring());

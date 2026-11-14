@@ -24,6 +24,7 @@ import dev.jstech.space.flight.TransferPlan;
 import dev.jstech.space.launch.LaunchCount;
 import dev.jstech.space.rocket.CabinLamp;
 import dev.jstech.space.rocket.CabinReadings;
+import dev.jstech.space.universe.SolarBody;
 import java.util.List;
 import java.util.Optional;
 import java.util.OptionalDouble;
@@ -489,10 +490,12 @@ public final class FlightComputerFace {
      * @param guidance the guidance the rocket comes down by ({@link FlightComputerBlockEntity#PLATFORM_GUIDANCE})
      * @param hazards  whether the ground too steep to land on is shown
      * @param set      whether the landing is set where the spot is marked
+     * @param wide     whether the rocket is in a wide orbit, its landing waiting for the capture into the low one
      */
-    public record Landing(int guidance, boolean hazards, boolean set) {
+    public record Landing(int guidance, boolean hazards, boolean set, boolean wide) {
 
-        public static final Landing NONE = new Landing(FlightComputerBlockEntity.COMPUTER_GUIDANCE, false, false);
+        public static final Landing NONE = new Landing(FlightComputerBlockEntity.COMPUTER_GUIDANCE, false, false,
+                false);
     }
 
     /**
@@ -503,12 +506,13 @@ public final class FlightComputerFace {
      * @param executed  whether it is the one set to fly
      * @param shield    whether the rocket carries a heat shield
      * @param available the delta-v the rocket has for it, if it is known
+     * @param capturing the world whose low orbit it is planned into from a wide one, the capture chosen
      */
     public record Plotted(Optional<PlannedTransfer> planned, TransferChoice choice, boolean executed, boolean shield,
-                          OptionalDouble available) {
+                          OptionalDouble available, Optional<SolarBody> capturing) {
 
         /** Nothing planned. */
         public static final Plotted NONE = new Plotted(Optional.empty(), TransferChoice.CHEAPEST, false, false,
-                OptionalDouble.empty());
+                OptionalDouble.empty(), Optional.empty());
     }
 }

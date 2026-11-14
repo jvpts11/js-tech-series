@@ -28,7 +28,8 @@ public final class CruiseTexts {
             "Aerobraked into the orbit of %s.");
     public static final TextKey MISSED_NAME = TextKey.of("jsspace.cruise.missed", "Not captured");
     public static final TextKey NOT_CAPTURED = TextKey.of("jsspace.cruise.missed.body",
-            "Too little delta-v to slow into a low orbit of %s: the rocket stays in a wide orbit.");
+            "Too little delta-v to slow into a low orbit of %s: the rocket stays in a wide orbit. Capture it on XFER"
+                    + " before landing.");
     public static final TextKey SLEPT = TextKey.of("jsspace.cruise.slept", "You slept through the cruise.");
     public static final TextKey STORM_NAME = TextKey.of("jsspace.cruise.storm", "Solar storm");
     public static final TextKey STORM_COMING = TextKey.of("jsspace.cruise.storm.coming",
@@ -42,6 +43,8 @@ public final class CruiseTexts {
     public static final TextKey HELD_NAME = TextKey.of("jsspace.cruise.held", "Transfer let go");
     public static final TextKey SHORT = TextKey.of("jsspace.cruise.held.short",
             "Too little delta-v for the transfer to %s: %s m/s of the %s it needs. Plan it again on XFER.");
+    public static final TextKey SHORT_OF_CAPTURE = TextKey.of("jsspace.cruise.held.capture",
+            "Too little delta-v for the capture into a low orbit of %s: %s m/s of the %s it needs.");
     /** Setting out on a transfer, and arriving. */
     public static final NotificationKind DEPARTURE = Notifications.kind(id("departure"), NotificationLevel.INFO,
             DEPARTED_NAME).declare();

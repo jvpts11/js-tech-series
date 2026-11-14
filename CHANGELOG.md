@@ -3390,7 +3390,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) Arriving and choosing where to land: at the end of its cruise a rocket is captured into the other world's
   orbit by its capture burn, or by aerobraking where its plan meant to and its heat shield is still whole (one breached
   on the way burns the capture instead); short of the delta-v it burns what it has and stays in a wide orbit of the
-  world instead of a low one, its crew told. A transfer sets out only with the delta-v for its capture too. A rocket
+  world instead of a low one, its crew told. From a wide orbit no landing begins: LAND says to capture first, and the
+  XFER page offers the capture as its first key, CAPT, with its burn and what the rocket has, EXEC burning it at once
+  or dipping into the air with AERO and a whole heat shield; short of it, the capture is let go and the crew told. A
+  transfer to another world plans from the wide orbit as from the low one. A transfer sets out only with the delta-v
+  for its capture too. A rocket
   bound for an orbit where another rests or is bound comes to rest beside it, never inside it. Arriving, and on every
   pass of the orbit
   after, the crew photographs a strip of the ground under the orbit for its team, the world turning a little under it

@@ -78,6 +78,18 @@ public record PlannedTransfer(ResourceLocation to, long leaves, double burn, dou
                 assisted, aerobraking);
     }
 
+    /**
+     * The capture into {@code world}'s low orbit from a wide one, at the tick {@code tick}: no transfer and no cruise,
+     * only its capture, burnt, or saved aerobraking where {@code aero} chooses it, the world has air and the rocket a
+     * heat shield, {@code shield}.
+     */
+    public static PlannedTransfer capture(final SolarBody world, final boolean aero, final boolean shield,
+                                          final long tick) {
+        final boolean aerobraking = aero && world != SolarBody.MOON && shield;
+        return new PlannedTransfer(SolarSystemWorlds.worldOf(world), tick, 0, aerobraking ? 0 : captureAt(world), 0,
+                false, aerobraking);
+    }
+
     /** The same with no cruise, arriving at once, as the server's fast travel flies it. */
     public PlannedTransfer atOnce() {
         return new PlannedTransfer(this.to, this.leaves, this.burn, this.capture, 0, this.assisted, this.aerobraking);
