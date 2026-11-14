@@ -184,7 +184,9 @@ public final class StagingGameTests {
                 .thenSucceed();
     }
 
-    @GameTest(template = ARENA, batch = LANDS, timeoutTicks = 3000)
+    // The stage rides on with the rocket till its own land has loaded, which a test server, its ticks faster than its
+    // loading, may let climb high: long ticks for its flight back down.
+    @GameTest(template = ARENA, batch = LANDS, timeoutTicks = 12000)
     public static void stage_setToAPlatformFliesBackAndLandsOnIt(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final UUID platform = UUID.randomUUID();
@@ -221,7 +223,9 @@ public final class StagingGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(stage[0].motion() == null
                         && Math.abs(stage[0].pose().x() - spot.x) < 0.01 && Math.abs(stage[0].pose().z() - spot.z)
                         < 0.01 && Math.abs(stage[0].pose().y() - spot.y) < 0.01, "it lands on the platform's middle: "
-                        + stage[0].pose()))
+                        + stage[0].pose() + " moving by " + stage[0].motion() + ", let go " + StageFlights.get(
+                        level.getServer(), stage[0].id()).map(flight -> level.getGameTime() - flight.parted() + " ticks"
+                        + " ago").orElse("and landed")))
                 .thenExecute(() -> {
                     helper.assertTrue(LandingPlatforms.get(level.getServer(), platform).map(found -> !found.free())
                             .orElse(false), "the platform is kept for it");
