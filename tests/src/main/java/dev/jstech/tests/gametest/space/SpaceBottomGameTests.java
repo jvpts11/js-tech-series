@@ -13,6 +13,7 @@ import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureResult;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SpaceClimbs;
+import dev.jstech.space.universe.SphereMap;
 import dev.jstech.space.universe.StarSystems;
 import dev.jstech.space.universe.SystemLayout;
 import dev.jstech.space.universe.SystemSpaces;
@@ -23,6 +24,7 @@ import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
@@ -54,6 +56,8 @@ public final class SpaceBottomGameTests {
     private static final double EDGE_STEP = 16;
     private static final int EDGE_STEPS = 100_000;
     private static final double EDGE_LONGITUDE = 175;
+    /* How many chunks round the chunk a structure comes down in are made before it is sent. */
+    private static final int AROUND = 1;
 
     private SpaceBottomGameTests() {
     }
@@ -128,16 +132,8 @@ public final class SpaceBottomGameTests {
                         "the Overworld lies under the spot"))
                 .thenExecute(() -> helper.assertTrue(MovingStructures.travel(craft, space(helper), under).ok(),
                         "the craft is sent into space, under the floor"))
-                .thenWaitUntil(() -> {
-                    final MovingStructure inSpace = MovingStructures.byId(space(helper), craft.id());
-                    final MovingStructure home = MovingStructures.byId(overworld, craft.id());
-                    helper.assertTrue(home != null && home.ready() && home != craft, "under the floor over the "
-                            + "Overworld, the craft goes down into it; in space it is " + (inSpace == null ? "gone"
-                            : "at " + inSpace.pose() + (inSpace.departing() ? ", waiting to go" : ", not going"))
-                            + "; in the Overworld " + (home == null ? "it is not" : home == craft ? "it is the one sent"
-                            : home.blocks() + " blocks at " + home.pose() + (home.ready() ? ", ready" : ", not ready")
-                            + (home.departing() ? ", waiting to go" : "")));
-                })
+                .thenWaitUntil(() -> helper.assertTrue(arrived(helper, craft), "under the floor over the Overworld,"
+                        + " the craft goes down into it; " + whereItIs(helper, craft)))
                 .thenExecute(() -> MovingStructures.takeAway(MovingStructures.byId(overworld, craft.id())))
                 .thenSucceed();
     }
@@ -152,20 +148,43 @@ public final class SpaceBottomGameTests {
         final MovingStructure craft = made.structure();
         final Vec3 under = nearTheEdge();
         final double[] place = SystemLayout.placeUnder(SolarBody.OVERWORLD, under.x, under.z);
+        // The land it comes down on is made first: it lies far out, where the game has made none yet, and the test
+        // server runs its ticks faster than new land is made, while its wait counts ticks, not time.
+        final double width = Math.max(1, overworld.getWorldBorder().getSize());
+        final int landX = Mth.floor(SphereMap.x(place[0], width)) >> 4;
+        final int landZ = Mth.floor(SphereMap.z(place[1], width)) >> 4;
+        for (int dx = -AROUND; dx <= AROUND; dx++) {
+            for (int dz = -AROUND; dz <= AROUND; dz++) {
+                overworld.getChunk(landX + dx, landZ + dz);
+            }
+        }
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(craft.ready(), "the craft is ready"))
                 .thenExecute(() -> helper.assertTrue(MovingStructures.travel(craft, space(helper), under).ok(),
                         "the craft is sent into space, under the floor near the Overworld's edge, over "
                                 + place[0] + " east, " + place[1] + " north"))
-                .thenWaitUntil(() -> {
-                    final MovingStructure inSpace = MovingStructures.byId(space(helper), craft.id());
-                    final MovingStructure home = MovingStructures.byId(overworld, craft.id());
-                    helper.assertTrue(home != null && home.ready() && home != craft, "near the Overworld's edge, "
-                            + "the craft goes down into it; in space it is " + (inSpace == null ? "gone"
-                            : "at " + inSpace.pose() + (inSpace.departing() ? ", waiting to go" : ", not going")));
-                })
+                .thenWaitUntil(() -> helper.assertTrue(arrived(helper, craft), "near the Overworld's edge, the craft"
+                        + " goes down into it; " + whereItIs(helper, craft)))
                 .thenExecute(() -> MovingStructures.takeAway(MovingStructures.byId(overworld, craft.id())))
                 .thenSucceed();
+    }
+
+    /* Whether {@code craft}, sent from the Overworld into space, has come down into the Overworld again, ready. */
+    private static boolean arrived(final GameTestHelper helper, final MovingStructure craft) {
+        final MovingStructure home = MovingStructures.byId(helper.getLevel(), craft.id());
+        return home != null && home.ready() && home != craft;
+    }
+
+    /* Where {@code craft}, sent from the Overworld into space, is: in space, in the Overworld, or neither. */
+    private static String whereItIs(final GameTestHelper helper, final MovingStructure craft) {
+        final MovingStructure inSpace = MovingStructures.byId(space(helper), craft.id());
+        final MovingStructure home = MovingStructures.byId(helper.getLevel(), craft.id());
+        final String space = inSpace == null ? "gone" : "at " + inSpace.pose() + (inSpace.departing()
+                ? ", waiting to go" : ", not going");
+        final String overworld = home == null ? "it is not" : home == craft ? "it is the one sent, "
+                + (craft.departing() ? "waiting to go" : "not going") : home.blocks() + " blocks at " + home.pose()
+                + (home.ready() ? ", ready" : ", not ready") + (home.departing() ? ", waiting to go" : "");
+        return "in space it is " + space + "; in the Overworld " + overworld;
     }
 
     /* A spot under the floor over the Overworld, as near the edge of the map of it as its region reaches. */
