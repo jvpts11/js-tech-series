@@ -16,7 +16,7 @@ Consultar como lançar um foguete, pilotá-lo, viver num traje e se orientar na 
 
 ## Como conseguir
 
-No menu criativo, aba J's Space.
+No menu criativo, aba J's Space. Nesta versão o J's Space ainda não tem receitas: os seus blocos e itens, este manual entre eles, saem dessa aba, por isso ele se joga no criativo.
 
 ## Como usar
 
@@ -31,3 +31,6 @@ No menu criativo, aba J's Space.
 
 > [!PROBLEM] Uma seção não tem aba.
 > Ela ainda não tem nenhuma página: a aba aparece assim que a seção tiver uma.
+
+> [!PROBLEM] Um item do J's Space não tem receita.
+> Nenhum tem ainda nesta versão: pegue-o no menu criativo, aba J's Space.

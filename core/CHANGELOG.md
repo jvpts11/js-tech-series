@@ -1913,6 +1913,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   ends, and changes to the overworld's border no longer reach it.
 - Where the dead come back: `DimensionRespawns.add` gives a rule for a mod's dimensions, asked in order before
   the game's own choice, which stands where no rule says otherwise.
+- A world event a setting turns off: `WorldEventBuilder.onlyWhile` lets a kind happen only while its mod's
+  own setting says so: it is not planned while the setting is off, by the days or by an operator, and one under way
+  ends as it turns off.
 - The sky kit: a sky's stars may shine by day, as in a sky with no air, at a share of how bright they are at
   midnight (`"by_day": 0.75`), and a sun may light the day and tint it while the mod that declared it draws it where
   it stands (`"drawn": false`).

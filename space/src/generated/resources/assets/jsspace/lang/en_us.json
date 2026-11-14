@@ -289,7 +289,7 @@
   "jsspace.configuration.travel.tooltip": "The way between worlds, and what a crew must know before it lands.",
   "jsspace.configuration.worlds": "Worlds",
   "jsspace.configuration.worlds.dust_on_mars": "Dust on Mars",
-  "jsspace.configuration.worlds.dust_on_mars.tooltip": "Dust settles on solar panels on Mars, and now and then a dust storm covers the whole planet.\nOff, Mars has no dust on its panels and no dust storms.",
+  "jsspace.configuration.worlds.dust_on_mars.tooltip": "Now and then a dust storm blows over a stretch of Mars, and now and then one covers the whole planet.\nOff, Mars has no dust storms, and one blowing ends.",
   "jsspace.configuration.worlds.naming_hidden_worlds": "Naming hidden worlds",
   "jsspace.configuration.worlds.naming_hidden_worlds.tooltip": "The first team to find a hidden world names it.\nOff, every world keeps its default name.",
   "jsspace.configuration.worlds.tooltip": "What the worlds do, and who names the hidden ones.",

@@ -517,8 +517,9 @@ and under way is kept with each dimension, so a restart loses nothing; `WorldEve
 plan, put off and stop events with `/jstech event` ([Commands](COMMANDS.md)), and the server's settings switch them
 off, make each happen more or less often, keep some from ever happening by themselves, or make some harmless
 (`world_events` in `jstech-balance.toml`): a harmless event still comes, warns and plays its effects, and its stages
-say `consequences()` is false, so its mod leaves the world as it is. A data pack writes over or adds one under
-`data/<namespace>/jstech/world_events/`:
+say `consequences()` is false, so its mod leaves the world as it is. A mod whose own setting turns a kind off gives
+it `onlyWhile(MyConfig::stormsOn)`: while that says no, the kind is not planned, by the days or by an operator, and one
+under way ends. A data pack writes over or adds one under `data/<namespace>/jstech/world_events/`:
 
 ```json
 { "name": "mymod.event.solar_storm", "english": "Solar storm", "dimensions": ["minecraft:overworld"],
@@ -1333,8 +1334,8 @@ from its screen.
 - **The surface never changes.** No mod declares a live change, no player is near enough (six chunks), or a
   condition never holds there: the climate, the rain, the open sky, the block under it.
 - **A world event never comes.** Its chance is small, it is out of season, its dimension is not one of its, the
-  server's settings keep it off, or, for one round a place, no player stands in its biomes. Start it with
-  `/jstech event start` to see it.
+  server's settings keep it off, its mod's own setting turns it off (`onlyWhile`), or, for one round a place, no
+  player stands in its biomes. Start it with `/jstech event start` to see it.
 - **A field stops spreading.** Its `every` is 0, so only `stepNow` moves it.
 - **A machine stops when you walk away.** It did not ask for its chunk, its owner has reached the limit, or the
   server its budget (`/jstech chunks`).

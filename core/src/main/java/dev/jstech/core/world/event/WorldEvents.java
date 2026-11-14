@@ -31,6 +31,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BooleanSupplier;
 import java.util.function.UnaryOperator;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceKey;
@@ -44,6 +46,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The events the worlds go through ({@link WorldEventType}): each kind declared in code by its mod, or a file a data
@@ -51,7 +54,8 @@ import net.neoforged.neoforge.event.tick.LevelTickEvent;
  * rolled for, or found due by its schedule, and planned; those carrying its instrument are warned as it nears, it
  * begins, its effect plays round the players it covers, and it ends, each step posted on the game's bus
  * ({@link WorldEventStage}). What is planned and under way is kept with each dimension, so a restart loses nothing,
- * and any mod, or a computer of the series, reads it here.
+ * and any mod, or a computer of the series, reads it here. A kind its mod lets happen only while its own setting says
+ * so ({@link WorldEventBuilder#onlyWhile}) is not planned while it does not, and one under way ends.
  *
  * <pre>{@code
  * public static final ResourceLocation SOLAR_STORM = WorldEvents.event(rl("solar_storm"), MyTexts.SOLAR_STORM)
@@ -82,6 +86,8 @@ public final class WorldEvents {
             ResourceLocation.fromNamespaceAndPath(JsCore.MODID, "world_events"), Calendar.CODEC, Calendar.EMPTY)
             .dimension();
     private static final Map<ResourceLocation, WorldEventType> DECLARED = new LinkedHashMap<>();
+    /* What says, for a kind that asks, whether it may happen now: a mod's own setting turning it off. */
+    private static final Map<ResourceLocation, BooleanSupplier> ALLOWED = new ConcurrentHashMap<>();
     /* How often the dimensions' events are looked at, in ticks. */
     private static final int EVERY = 20;
     private static final long DAY = 24_000L;
@@ -152,13 +158,13 @@ public final class WorldEvents {
      * for one that reaches only so far (a player's place, picked as it would be, when none is given), lasting its
      * kind's time.
      *
-     * @return whether it was planned: the kind exists, happens in that dimension, and no event of it is planned or
-     *         under way there
+     * @return whether it was planned: the kind exists, happens in that dimension, may happen now, and no event of it
+     *         is planned or under way there
      */
     public static boolean plan(final ServerLevel level, final ResourceLocation id, final int inTicks,
                                final Optional<BlockPos> centre) {
         final Optional<WorldEventType> type = get(level, id);
-        if (type.isEmpty() || !type.get().happensIn(level.dimension())
+        if (type.isEmpty() || !type.get().happensIn(level.dimension()) || !allowed(id)
                 || planned(level).stream().anyMatch(event -> event.type().equals(id))) {
             return false;
         }
@@ -249,7 +255,8 @@ public final class WorldEvents {
         }
         for (final WorldEvent event : planned(level)) {
             final WorldEventType type = kinds.get(event.type());
-            if (type == null || now >= event.endsAt()) {
+            // One whose kind may happen no more, turned off by its mod's setting, ends now.
+            if (type == null || now >= event.endsAt() || !allowed(event.type())) {
                 save(level, CALENDAR.get(level).without(event.type()));
                 if (type != null && event.started()) {
                     NeoForge.EVENT_BUS.post(new WorldEventStage.Ended(level, event, type));
@@ -294,7 +301,7 @@ public final class WorldEvents {
                 continue;
             }
             save(level, calendar.rolledOn(key, day));
-            if (WorldEventBalance.disabled(kind.getKey())) {
+            if (WorldEventBalance.disabled(kind.getKey()) || !allowed(kind.getKey())) {
                 continue;
             }
             if (!type.seasons().isEmpty()) {
@@ -316,6 +323,12 @@ public final class WorldEvents {
                 plan(level, kind.getKey(), type.warning() + random.nextInt((int) (DAY / 2)), Optional.empty());
             }
         }
+    }
+
+    /* Whether the kind {@code type} may happen now, as what its mod gave it says; always when it gave nothing. */
+    private static boolean allowed(final ResourceLocation type) {
+        final BooleanSupplier allowed = ALLOWED.get(type);
+        return allowed == null || allowed.getAsBoolean();
     }
 
     /* How many ticks until the game's clock next shows {@code hour}. */
@@ -433,6 +446,7 @@ public final class WorldEvents {
         private int radius;
         private boolean announced = true;
         private Optional<ResourceLocation> effect = Optional.empty();
+        private @Nullable BooleanSupplier allowed;
 
         private WorldEventBuilder(final ResourceLocation id, final TextKey name) {
             this.id = Objects.requireNonNull(id, "id");
@@ -506,11 +520,23 @@ public final class WorldEvents {
             return this;
         }
 
+        /**
+         * It happens only while {@code allowed} says so, as a mod's own setting turns it off: it is not planned while
+         * not, and one under way ends as it turns off. Always, unless said.
+         */
+        public WorldEventBuilder onlyWhile(final BooleanSupplier allowed) {
+            this.allowed = Objects.requireNonNull(allowed, "allowed");
+            return this;
+        }
+
         /** Declares the kind, and gives its id. */
         public ResourceLocation declare() {
             synchronized (DECLARED) {
                 DECLARED.put(id, new WorldEventType(name.key(), name.english(), dimensions, biomes, seasons, chance,
                         everyDays, atHour, warning, instrument, duration, radius, announced, effect));
+            }
+            if (allowed != null) {
+                ALLOWED.put(id, allowed);
             }
             return id;
         }

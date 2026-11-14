@@ -9,6 +9,12 @@ package dev.jstech.tests.gametest.space;
 
 import dev.jstech.core.dimension.DimensionRespawns;
 import dev.jstech.core.dimension.RuntimeDimensions;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructurePose;
+import dev.jstech.core.moving.StructureResult;
+import dev.jstech.core.moving.StructureYard;
+import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.universe.LandingCabins;
@@ -46,6 +52,8 @@ public final class SpaceRespawnGameTests {
     private static final BlockPos CABIN = new BlockPos(0, 120, 0);
     private static final Vec3 BED_IN_THE_OPEN = new Vec3(40.5, 120, 40.5);
     private static final int AIRLESS_TIME = 200;
+    /* How far east the landed module is moved after its landing, in blocks. */
+    private static final int MOVED = 12;
 
     private SpaceRespawnGameTests() {
     }
@@ -128,6 +136,60 @@ public final class SpaceRespawnGameTests {
                 .thenSucceed();
     }
 
+    /*
+     * A module landed stays a structure standing on the ground: its landing marks the cabin its crew stands in, and a
+     * player who dies on that world comes back into it, wherever the module stands then. In a batch of its own, as
+     * the world is made and taken away by the tests before it too.
+     */
+    @GameTest(template = ARENA, batch = "jsspace_respawn_module", timeoutTicks = AIRLESS_TIME)
+    public static void death_onAnotherWorldGoesBackIntoTheModuleLandedWhereverItStands(final GameTestHelper helper) {
+        final MinecraftServer server = helper.getLevel().getServer();
+        final ResourceKey<Level> key = SpaceWorlds.get(helper.getLevel(), TestSpaceWorlds.HAVEN).orElseThrow()
+                .dimension();
+        final ServerLevel haven = RuntimeDimensions.getOrCreate(server, key, TestWorldGen.TEST_LAND.id());
+        final ServerPlayer player = GameTestPlayers.connected(helper, "lander");
+        final BlockPos inside = CABIN.above();
+        unbuilt(haven, CABIN);
+        hut(haven, CABIN);
+        warm(haven);
+        final StructureResult made = MovingStructures.assemble(haven, CABIN.offset(-1, 0, -1), CABIN.offset(1, 3, 1));
+        helper.assertTrue(made.ok() && made.structure() != null, "the hut is made a module: "
+                + (made.refusal() == null ? "done" : made.refusal().english()));
+        final MovingStructure module = made.structure();
+        final BlockPos aboard = BlockPos.containing(MovingStructures.toYard(module, Vec3.atCenterOf(inside)));
+        final Runnable away = () -> {
+            SealedRooms.untrack(haven, aboard);
+            MovingStructures.takeAway(module);
+            GameTestPlayers.leave(player);
+            RuntimeDimensions.remove(server, key);
+        };
+        helper.runAfterDelay(AIRLESS_TIME - 5, away);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(module.ready(), "its blocks come into the module"))
+                .thenExecute(() -> {
+                    player.teleportTo(haven, inside.getX() + 0.5, inside.getY(), inside.getZ() + 0.5, 0, 0);
+                    // Its landing marks the cabin, as a module setting down on a world does for its crew.
+                    LandingCabins.markAboard(player, haven, module);
+                    SealedRooms.track(haven, aboard);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(SealedRooms.breathableAt(haven, aboard),
+                        "its cabin is a room with air"))
+                .thenExecute(() -> {
+                    final StructurePose now = module.pose();
+                    module.teleport(now.movedTo(now.x() + MOVED, now.y(), now.z()));
+                    final DimensionTransition bedOutside = new DimensionTransition(haven, BED_IN_THE_OPEN, Vec3.ZERO,
+                            0, 0, DimensionTransition.DO_NOTHING);
+                    final DimensionTransition back = DimensionRespawns.respawn(player, bedOutside);
+                    final BlockPos expected = inside.offset(MOVED, 0, 0);
+                    away.run();
+                    helper.assertTrue(back.newLevel() == haven && BlockPos.containing(back.pos()).equals(expected),
+                            "the player comes back into the module's cabin, where it stands now: sent to "
+                                    + back.newLevel().dimension().location() + " at " + back.pos() + " for "
+                                    + expected);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA)
     public static void death_inTheOverworldIsLeftToTheGame(final GameTestHelper helper) {
         final ServerPlayer player = GameTestPlayers.connected(helper, "homebody");
@@ -151,6 +213,18 @@ public final class SpaceRespawnGameTests {
                     level.setBlockAndUpdate(cabin.offset(x, y, z), room ? Blocks.AIR.defaultBlockState()
                             : Blocks.IRON_BLOCK.defaultBlockState());
                 }
+            }
+        }
+    }
+
+    /* Loads the chunks round the yard's next plot, so a structure made comes into it at once. */
+    private static void warm(final ServerLevel level) {
+        final int plot = StructureYard.nextPlot(level);
+        final int cx = YardLayout.centreX(plot) >> 4;
+        final int cz = YardLayout.centreZ(plot) >> 4;
+        for (int dx = -2; dx <= 2; dx++) {
+            for (int dz = -2; dz <= 2; dz++) {
+                level.getChunk(cx + dx, cz + dz);
             }
         }
     }

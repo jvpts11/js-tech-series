@@ -174,8 +174,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   of its near side. Each world is the Overworld's border wide times its width over the Earth's (the Moon about 27%,
   Mars 53%), fixed as it first loads, and half as tall, its border at the middle of its far side and at its poles.
 - Where a player who dies on another world comes back, in this order: their bed there, if it stands in a
-  sealed room with air; else the cabin of the module they landed in, if it is still whole and has air, which their
-  landing marks; else home, in the Overworld.
+  sealed room with air; else the cabin of the module they landed in, if it is still whole and has air: the landing
+  marks the place in it each of its crew sat or stood as it touched down, and they come back to that place wherever
+  the module stands now; else home, in the Overworld.
+- Dust on Mars, a setting of `jsspace-server.toml`, turns Mars' dust storms off: off, none comes, an operator
+  cannot start one, and one blowing ends.
+- J's Space has no recipes yet in this release: everything in it is taken from the creative menu, J's Space
+  tab, so it is played in creative, as the Mission Handbook says on its first page.
 - The Solar System's space, drawn: the Overworld, the Moon and Mars are round bodies in their places, each
   kept still so whatever is built in its orbit stays over it, drawn at the screen's own resolution with a smooth
   outline and the texels of their maps, read from a smaller copy the farther they are. The Sun lights them smoothly

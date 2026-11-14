@@ -70,7 +70,8 @@ lava tubes, dichotomy and caps are laid by their own data.
 | Day | 29.5 Overworld days, about ten real hours | 24 h 37 min of the Overworld's day, a little over 20 real minutes |
 | Year | | 13 sols |
 
-The temperature is one mean value for now. A system's space has no gravity, no air and −270 °C. Both worlds have the
+The temperature is one mean value for now: the Moon stays at a fixed −20 °C in this release, and the heat of its noon
+and the cold of its night come later. A system's space has no gravity, no air and −270 °C. Both worlds have the
 same rules for sealed rooms (glass, doors and gates).
 
 ### The blocks of a round world

@@ -9,6 +9,8 @@ package dev.jstech.space.universe;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.state.CoreState;
 import dev.jstech.core.state.CoreStates;
 import dev.jstech.core.state.PlayerState;
@@ -25,7 +27,8 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * The cabin of the module each player last landed in, on each world: its landing marks it, so a player who dies there
  * with no bed in a room of air comes back to it, as long as it is still whole and has air. Whole means the block
- * marked is still the block that was there.
+ * marked is still the block that was there. A module landed stays a structure standing on the ground, so its cabin is
+ * marked in its yard, and found where the module stands when its crew comes back.
  */
 public final class LandingCabins {
 
@@ -53,6 +56,14 @@ public final class LandingCabins {
             next.put(level.dimension().location().toString(), cabin);
             return Map.copyOf(next);
         });
+    }
+
+    /**
+     * Marks the cabin of {@code module}, landed on {@code level}, as the one {@code player} aboard landed in there: the
+     * block of its yard under their feet, sitting or standing, so they come back where they were in it.
+     */
+    public static void markAboard(final ServerPlayer player, final ServerLevel level, final MovingStructure module) {
+        mark(player, level, BlockPos.containing(MovingStructures.toYard(module, player.position())).below());
     }
 
     /** The cabin {@code player} last landed in on {@code level}, if any. */

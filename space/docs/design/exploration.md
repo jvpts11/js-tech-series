@@ -68,7 +68,8 @@ probe; orbit it; land a lander or a rover; bring back a sample; go with people.
   **a map of its relief** for the landing ellipse; not 100%, **what it takes to survive**, as in reality: nobody walked
   on the Moon before the Surveyor probes had landed.
 - **100%** is a **milestone**, and completes the world's Atlas and its map of minerals.
-- A server rule, on by default, holds landings until the essentials are known.
+- A server rule holds landings until the essentials are known. It is off by default while nothing in the game teaches
+  a team those yet, so for now a crew may land on any world it reaches.
 
 ### Observatories on the ground
 

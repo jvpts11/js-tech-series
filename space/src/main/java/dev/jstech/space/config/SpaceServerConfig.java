@@ -93,10 +93,10 @@ public final class SpaceServerConfig {
                     + "radiation, gravity and relief.", "Off, a crew may land on any world it reaches, known or not. "
                     + "Off by default while nothing in the game teaches a team those yet.")
             .named("Landing needs the essentials");
-    /** Whether dust settles on solar panels on Mars and global dust storms come. */
+    /** Whether dust storms come on Mars, over a stretch of it or the whole planet. */
     public static final ConfigKey<Boolean> DUST_ON_MARS = ConfigKey.flag(WORLDS + ".dust_on_mars", true)
-            .comment("Dust settles on solar panels on Mars, and now and then a dust storm covers the whole planet.",
-                    "Off, Mars has no dust on its panels and no dust storms.")
+            .comment("Now and then a dust storm blows over a stretch of Mars, and now and then one covers the whole "
+                    + "planet.", "Off, Mars has no dust storms, and one blowing ends.")
             .named("Dust on Mars");
     /** Whether the first team to find a hidden world names it. */
     public static final ConfigKey<Boolean> NAMING_HIDDEN_WORLDS = ConfigKey.flag(WORLDS + ".naming_hidden_worlds",
@@ -193,5 +193,10 @@ public final class SpaceServerConfig {
     /** Whether a destroyed satellite leaves debris in orbit. */
     public static boolean debris() {
         return FILE.get(DEBRIS);
+    }
+
+    /** Whether dust storms come on Mars. */
+    public static boolean dustOnMars() {
+        return FILE.get(DUST_ON_MARS);
     }
 }

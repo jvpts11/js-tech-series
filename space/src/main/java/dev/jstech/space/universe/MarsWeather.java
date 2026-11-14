@@ -13,6 +13,7 @@ import dev.jstech.core.weather.WeatherKind;
 import dev.jstech.core.weather.Weathers;
 import dev.jstech.core.world.event.WorldEvents;
 import dev.jstech.space.JsSpace;
+import dev.jstech.space.config.SpaceServerConfig;
 import dev.jstech.space.worldgen.MarsWorld;
 import net.minecraft.resources.ResourceLocation;
 
@@ -21,7 +22,7 @@ import net.minecraft.resources.ResourceLocation;
  * hours, and now and then a global one that covers the whole planet for a day and a half, as the storm of 2018 that
  * ended Opportunity. Either fills the air with blown dust, closes the view in to a brown haze that swallows the
  * horizon and hides most of the sky, the Sun a dim disc behind it. How often and how long are estimates, to be set by
- * playing.
+ * playing. The server's "Dust on Mars" setting turned off, none comes, and one blowing ends.
  */
 @TextHolder
 public final class MarsWeather {
@@ -50,14 +51,15 @@ public final class MarsWeather {
     /** A regional dust storm, a few kilometres round its place. */
     public static final ResourceLocation DUST_STORM = WorldEvents.event(id("dust_storm"), DUST_STORM_NAME)
             .in(MarsWorld.world().dimension()).chance(REGIONAL_CHANCE).radius(REGIONAL_REACH).lasts(REGIONAL_LASTS)
-            .declare();
+            .onlyWhile(SpaceServerConfig::dustOnMars).declare();
     public static final ResourceLocation DUST_STORM_WEATHER = Weathers.weather(DUST_STORM)
             .falls(WeatherKind.Fall.DUST, DUST, DUST_THICK).fog(HAZE, REGIONAL_SIGHT).veils(REGIONAL_VEIL).wind(WIND)
             .declare();
     /** A global dust storm, over the whole planet. */
     public static final ResourceLocation GLOBAL_DUST_STORM = WorldEvents.event(id("global_dust_storm"),
                     GLOBAL_DUST_STORM_NAME)
-            .in(MarsWorld.world().dimension()).chance(GLOBAL_CHANCE).lasts(GLOBAL_LASTS).declare();
+            .in(MarsWorld.world().dimension()).chance(GLOBAL_CHANCE).lasts(GLOBAL_LASTS)
+            .onlyWhile(SpaceServerConfig::dustOnMars).declare();
     public static final ResourceLocation GLOBAL_DUST_STORM_WEATHER = Weathers.weather(GLOBAL_DUST_STORM)
             .falls(WeatherKind.Fall.DUST, DUST, DUST_THICK).fog(HAZE, GLOBAL_SIGHT).veils(GLOBAL_VEIL).wind(WIND)
             .declare();

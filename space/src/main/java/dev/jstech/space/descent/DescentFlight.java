@@ -30,6 +30,7 @@ import dev.jstech.space.orbit.OrbitObject;
 import dev.jstech.space.orbit.OrbitObjects;
 import dev.jstech.space.orbit.Rocketry;
 import dev.jstech.space.rocket.RocketBurns;
+import dev.jstech.space.universe.LandingCabins;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.SphereMap;
@@ -213,8 +214,12 @@ public final class DescentFlight {
             dust(level, solar.orElse(SolarBody.OVERWORLD), foot);
             CruiseEvents.tell(level, body, DescentTexts.LANDING.of(DescentTexts.LANDED_NAME.text(),
                     DescentTexts.LANDED.with(name)));
-            if (world != null) {
-                CruiseFlight.aboard(level, body).forEach(player -> SpaceFirsts.landed(player, world));
+            // Its crew's cabin on this world, where they come back should they die here with no bed of their own.
+            for (final ServerPlayer player : CruiseFlight.aboard(level, body)) {
+                LandingCabins.markAboard(player, level, body);
+                if (world != null) {
+                    SpaceFirsts.landed(player, world);
+                }
             }
             return;
         }

@@ -8,6 +8,7 @@
 package dev.jstech.space.universe;
 
 import dev.jstech.core.dimension.DimensionRespawns;
+import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.SpaceWorlds;
 import java.util.Optional;
@@ -44,8 +45,10 @@ public final class SpaceRespawns {
         final Optional<LandingCabins.Cabin> cabin = LandingCabins.of(player, died)
                 .filter(landed -> landed.whole(died) && SealedRooms.breathableAt(died, landed.pos().above()));
         if (cabin.isPresent()) {
-            return Optional.of(new DimensionTransition(died, Vec3.atBottomCenterOf(cabin.get().pos().above()),
-                    Vec3.ZERO, player.getYRot(), 0, DimensionTransition.DO_NOTHING));
+            // A cabin aboard a module standing on the ground is where the module stands now.
+            return Optional.of(new DimensionTransition(died, MovingStructures.inWorld(died,
+                    Vec3.atBottomCenterOf(cabin.get().pos().above())), Vec3.ZERO, player.getYRot(), 0,
+                    DimensionTransition.DO_NOTHING));
         }
         if (planned.newLevel().dimension().equals(Level.OVERWORLD)) {
             return Optional.empty();

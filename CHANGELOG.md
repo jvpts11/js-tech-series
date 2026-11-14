@@ -2852,8 +2852,16 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) Where the dead come back: `DimensionRespawns.add` gives a rule for a mod's dimensions, asked in order before
   the game's own choice, which stands where no rule says otherwise.
 - (Space) Where a player who dies on another world comes back, in this order: their bed there, if it stands in a
-  sealed room with air; else the cabin of the module they landed in, if it is still whole and has air, which their
-  landing marks; else home, in the Overworld.
+  sealed room with air; else the cabin of the module they landed in, if it is still whole and has air: the landing
+  marks the place in it each of its crew sat or stood as it touched down, and they come back to that place wherever
+  the module stands now; else home, in the Overworld.
+- (Core) A world event a setting turns off: `WorldEventBuilder.onlyWhile` lets a kind happen only while its mod's
+  own setting says so: it is not planned while the setting is off, by the days or by an operator, and one under way
+  ends as it turns off.
+- (Space) Dust on Mars, a setting of `jsspace-server.toml`, turns Mars' dust storms off: off, none comes, an operator
+  cannot start one, and one blowing ends.
+- (Space) J's Space has no recipes yet in this release: everything in it is taken from the creative menu, J's Space
+  tab, so it is played in creative, as the Mission Handbook says on its first page.
 - (Core) The sky kit: a sky's stars may shine by day, as in a sky with no air, at a share of how bright they are at
   midnight (`"by_day": 0.75`), and a sun may light the day and tint it while the mod that declared it draws it where
   it stands (`"drawn": false`).

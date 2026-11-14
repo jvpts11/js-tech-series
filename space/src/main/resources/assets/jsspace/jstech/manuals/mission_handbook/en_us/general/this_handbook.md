@@ -16,7 +16,7 @@ Looking up how to launch a rocket, fly it, live in a suit and find your way on t
 
 ## How to get it
 
-From the creative menu, J's Space tab.
+From the creative menu, J's Space tab. In this release J's Space has no recipes yet: its blocks and items, this handbook among them, are taken from that tab, so it is played in creative.
 
 ## How to use it
 
@@ -31,3 +31,6 @@ From the creative menu, J's Space tab.
 
 > [!PROBLEM] A section has no tab.
 > It has no page yet: its tab shows once the section holds one.
+
+> [!PROBLEM] An item of J's Space has no recipe.
+> None has one yet in this release: take it from the creative menu, J's Space tab.
