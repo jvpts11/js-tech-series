@@ -171,6 +171,7 @@ final class LevelRooms {
         if (rooms == null) {
             return 0;
         }
+        final RoomFinder dropped = this.search;
         this.search = null;
         int forgotten = 0;
         for (final Room room : rooms.rooms().toArray(new Room[0])) {
@@ -187,6 +188,14 @@ final class LevelRooms {
                 this.seedNext.remove(seed);
                 this.seedWait.remove(seed);
             }
+        }
+        // The search dropped was of a room or a place the area may not hold: one still there is searched again, from
+        // the start, or a room being worked out again elsewhere would keep the shape and the air it had for good.
+        if (dropped != null && dropped.room() >= 0 && rooms.room(dropped.room()) != null) {
+            dirty(dropped.room());
+        } else if (dropped != null && dropped.room() < 0 && rooms.seeds().contains(this.searchingSeed)) {
+            this.seedNext.remove(this.searchingSeed);
+            this.seedsDue.add(this.searchingSeed);
         }
         return forgotten;
     }

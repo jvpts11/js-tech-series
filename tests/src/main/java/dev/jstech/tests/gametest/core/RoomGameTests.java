@@ -50,6 +50,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.gametest.framework.AfterBatch;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.gametest.framework.GameTestSequence;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -105,6 +106,11 @@ public final class RoomGameTests {
     private static final Map<ResourceLocation, Double> OXYGEN = Map.of(AirMix.OXYGEN, 1.0);
     /* A second of the rooms and a little more, in ticks. */
     private static final int A_ROOMS_SECOND = 25;
+    /* How far off, in blocks, the rooms forgotten while the hut is worked out again lie, and for how many ticks. */
+    private static final int FAR_OFF = 10_000;
+    private static final int FORGOTTEN = 6;
+    /* How hard the hut's air is pressed before its wall is holed, in kilopascals: far over the place's. */
+    private static final double PRESSED = 400;
     /* The listeners a test put on the game's bus, taken off after the batch should a failure have left them on. */
     private static final List<Object> LISTENING = new CopyOnWriteArrayList<>();
 
@@ -273,6 +279,34 @@ public final class RoomGameTests {
                     helper.assertTrue(Math.abs(now - held[0]) < held[0] * 1e-9,
                             "the room holds all the air it held: " + now + " of " + held[0]);
                 })
+                .thenSucceed();
+    }
+
+    /*
+     * The rooms of an area far off forgotten while a room is being worked out again, as the yard forgets a plot a
+     * structure left: the room goes on being worked out, a hole in its wall found, not left as it was before.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 300)
+    public static void forget_aRoomBeingWorkedOutElsewhereIsWorkedOutStill(final GameTestHelper helper) {
+        hut(helper, LOW, HIGH, Blocks.STONE);
+        track(helper, INSIDE);
+        final ServerLevel level = helper.getLevel();
+        final BlockPos far = helper.absolutePos(LOW).offset(FAR_OFF, 0, 0);
+        final AABB elsewhere = new AABB(Vec3.atLowerCornerOf(far), Vec3.atLowerCornerOf(far.offset(4, 4, 4)));
+        final GameTestSequence sequence = helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(room(helper, INSIDE).isPresent(), "the closed hut is a room"))
+                .thenExecute(() -> {
+                    fill(room(helper, INSIDE).orElseThrow(), PRESSED, NITROGEN);
+                    helper.setBlock(EAST_WALL, Blocks.AIR);
+                });
+        for (int tick = 0; tick < FORGOTTEN; tick++) {
+            sequence.thenExecuteAfter(1, () -> helper.assertTrue(SealedRooms.forget(level, elsewhere) == 0,
+                    "the rooms far off are forgotten, none of them the hut's"));
+        }
+        sequence.thenWaitUntil(() -> helper.assertTrue(room(helper, INSIDE).map(Room::pressure).orElse(0.0)
+                        < PRESSED / 2, "its wall holed, the hut's air goes out through the hole, as it is worked out"
+                        + " again: " + room(helper, INSIDE).map(Room::pressure).orElse(0.0) + " kPa"))
+                .thenExecute(() -> untrack(helper, INSIDE))
                 .thenSucceed();
     }
 
