@@ -3612,7 +3612,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   goes on, the worlds, the Sun and the streaking stars drawn moving round it, and dropping out it is set where the jump
   took it, its flight going on as it was, the sky never jumping. Its HUD shows the drive spooling in an amber ring
   round the flight path marker, PULSE lit with the way out and the nearest world bracketed with how far and how long,
-  and PULSE OFF a moment after, with why.
+  and PULSE OFF a moment after, with why. The drive is heard spooling up like a heavy motor gathering strength,
+  roaring through the jump over the engines and falling away as the ship drops out.
 - (Space) A small ship's cabin is a sealed room wherever it flies, in space too: its flight console asks for it, and
   the furniture standing in it, its seats, consoles, bunks, suit lockers and racks, lets its air round them, so its
   crew breathes it, kept warm, with the vacuum outside.

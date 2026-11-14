@@ -77,6 +77,33 @@
     ],
     "subtitle": "subtitles.jsspace.ship.pressure_door"
   },
+  "ship/pulse_end": {
+    "sounds": [
+      {
+        "attenuation_distance": 64,
+        "name": "jsspace:ship/pulse_end"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.ship.pulse_end"
+  },
+  "ship/pulse_loop": {
+    "sounds": [
+      {
+        "attenuation_distance": 64,
+        "name": "jsspace:ship/pulse_loop"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.ship.pulse_loop"
+  },
+  "ship/pulse_spool": {
+    "sounds": [
+      {
+        "attenuation_distance": 64,
+        "name": "jsspace:ship/pulse_spool"
+      }
+    ],
+    "subtitle": "subtitles.jsspace.ship.pulse_spool"
+  },
   "ship/stair": {
     "sounds": [
       "jsspace:ship/stair"

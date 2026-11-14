@@ -27,9 +27,9 @@ import net.neoforged.neoforge.common.NeoForge;
 /**
  * The sounds of a small starship: its pressure doors and its airlock's outer door sliding, its boarding stair coming
  * down and going up, a switch of its flight console, its engines humming and roaring, heard muffled from inside its
- * hull, its boost, and its gear going up and coming down. A ship that meets the land too fast is heard as the game's
- * own explosion. Its blocks sound where the ship carries them, wherever the ship is; in a vacuum only those aboard,
- * in its air, hear them.
+ * hull, its boost, its gear going up and coming down, and its pulse drive spooling, roaring through a jump and dropping
+ * out. A ship that meets the land too fast is heard as the game's own explosion. Its blocks sound where the ship
+ * carries them, wherever the ship is; in a vacuum only those aboard, in its air, hear them.
  */
 public final class ShipSounds {
 
@@ -66,6 +66,15 @@ public final class ShipSounds {
     /** The gear going up into the floor or coming down out of it. */
     public static final SoundKey GEAR = CONTENT.sound("ship/gear")
             .subtitle("Landing gear moves").register();
+    /** The pulse drive spooling up, as long as its spool takes, a heavy motor gathering strength. */
+    public static final SoundKey PULSE_SPOOL = CONTENT.sound("ship/pulse_spool")
+            .range(64).subtitle("Pulse drive spools up").register();
+    /** The pulse drive roaring while the ship jumps. */
+    public static final SoundKey PULSE_LOOP = CONTENT.sound("ship/pulse_loop").loop()
+            .range(64).subtitle("Pulse drive roars").register();
+    /** The pulse drive dropping out of its jump. */
+    public static final SoundKey PULSE_END = CONTENT.sound("ship/pulse_end")
+            .range(64).subtitle("Pulse drive drops out").register();
     private static final double MIDDLE = 0.5;
 
     private ShipSounds() {

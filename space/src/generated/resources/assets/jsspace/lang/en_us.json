@@ -1080,5 +1080,8 @@
   "subtitles.jsspace.ship.outer_door_open": "Airlock door opens",
   "subtitles.jsspace.ship.outer_door_shut": "Airlock door shuts",
   "subtitles.jsspace.ship.pressure_door": "Pressure door slides",
+  "subtitles.jsspace.ship.pulse_end": "Pulse drive drops out",
+  "subtitles.jsspace.ship.pulse_loop": "Pulse drive roars",
+  "subtitles.jsspace.ship.pulse_spool": "Pulse drive spools up",
   "subtitles.jsspace.ship.stair": "Boarding stair moves"
 }

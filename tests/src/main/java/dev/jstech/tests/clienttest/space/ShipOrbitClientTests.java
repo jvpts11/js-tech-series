@@ -21,6 +21,7 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.room.SealedRooms;
 import dev.jstech.space.api.SpaceWorlds;
+import dev.jstech.space.client.ship.ShipEngineSounds;
 import dev.jstech.space.client.ship.ShipHud;
 import dev.jstech.space.client.ship.ShipPulseClient;
 import dev.jstech.space.ship.AirReserveEntity;
@@ -30,6 +31,7 @@ import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.ShipPulse;
+import dev.jstech.space.ship.ShipSounds;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
 import dev.jstech.space.universe.SolarBody;
@@ -405,6 +407,9 @@ public final class ShipOrbitClientTests {
                     watching[0] = true;
                 })
                 .thenScreenshot(JUMPING, "ship-pulse-jump")
+                .then(0, () -> ctx.assertTrue(ShipEngineSounds.playing(ShipHud.atTheHelm(ctx.mc())).equals(
+                        List.of(ShipSounds.PULSE_LOOP)), "in the jump its pulse drive roars over its engines: "
+                        + ShipEngineSounds.playing(ShipHud.atTheHelm(ctx.mc()))))
                 .then(0, () -> ctx.mc().options.setCameraType(CameraType.THIRD_PERSON_BACK))
                 .thenScreenshot(SETTLE / 2, "ship-pulse-jump-behind")
                 .then(0, () -> {

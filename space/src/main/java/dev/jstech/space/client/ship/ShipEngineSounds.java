@@ -46,12 +46,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.common.NeoForge;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * A small ship's engines, gear and console heard on a player's game, for every ship loaded there whether the player
  * looks at it or not. Its engines hum while it flies or holds itself up and roar with its throttle open, heard from its
- * main engines, muffled through the hull for whoever is inside it; its boost is heard as it lights, its gear as it
- * starts up or down, and a switch of its console as its pilot throws one (the gear, the autopilot). The doors, the
+ * main engines, muffled through the hull for whoever is inside it; its boost is heard as it lights, its pulse drive as
+ * it spools, roaring through a jump over the engines and dropping out, its gear as it starts up or down, and a switch
+ * of its console as its pilot throws one (the gear, the autopilot). The doors, the
  * stair and a hard landing are played by the server ({@link ShipSounds}).
  */
 public final class ShipEngineSounds {
@@ -104,12 +106,16 @@ public final class ShipEngineSounds {
         }
     }
 
-    /* Plays {@code sound} once, from the ship's place {@code place} in its yard, where the ship carries it. */
-    private static void once(final ClientLevel level, final SoundKey sound, final Vec3 place) {
+    /*
+     * Plays {@code sound} once, from the ship's place {@code place} in its yard, where the ship carries it; the sound
+     * playing, for one to stop it before its end.
+     */
+    private static SoundInstance once(final ClientLevel level, final SoundKey sound, final Vec3 place) {
         final Vec3 at = MovingStructures.inWorld(level, place);
-        Minecraft.getInstance().getSoundManager().play(new SimpleSoundInstance(sound.event().get(),
-                sound.spec().channel().source(), 1.0F, 1.0F, SoundInstance.createUnseededRandom(), at.x, at.y,
-                at.z));
+        final SoundInstance played = new SimpleSoundInstance(sound.event().get(), sound.spec().channel().source(),
+                1.0F, 1.0F, SoundInstance.createUnseededRandom(), at.x, at.y, at.z);
+        Minecraft.getInstance().getSoundManager().play(played);
+        return played;
     }
 
     /* The blocks of the main engines of a ship of {@code design}, in the ship's places; none for a ship with none. */
@@ -140,6 +146,8 @@ public final class ShipEngineSounds {
 
         private final AirReserveEntity console;
         private ShipReadings last;
+        /* Its pulse drive's spool playing, stopped should its pilot let go of it before it is done. */
+        private @Nullable SoundInstance spooling;
 
         private Engines(final AirReserveEntity console) {
             this.console = console;
@@ -151,6 +159,10 @@ public final class ShipEngineSounds {
             final ShipReadings now = this.console.flight();
             if (!running(now) || this.console.ship().isEmpty()) {
                 return List.of();
+            }
+            if (now.pulse().on()) {
+                // In a jump its pulse drive roars over its engines.
+                return List.of(new LoopRequest(ShipSounds.PULSE_LOOP, 1.0F, 1.0F, null));
             }
             final boolean inside = inside();
             if (now.throttle() > 0 || now.boosting()) {
@@ -177,7 +189,10 @@ public final class ShipEngineSounds {
             return enginesPlace().z;
         }
 
-        /* Hears what changed since the last tick: the boost lit, the gear moved, a switch thrown. */
+        /*
+         * Hears what changed since the last tick: the boost lit, the pulse drive spooling, let go of or dropping out,
+         * the gear moved, a switch thrown.
+         */
         private void heard() {
             final ShipReadings now = this.console.flight();
             final ClientLevel level = (ClientLevel) this.console.getLevel();
@@ -185,6 +200,7 @@ public final class ShipEngineSounds {
                 if (now.boosting() && !this.last.boosting()) {
                     once(level, ShipSounds.ENGINE_BOOST, enginesPlace());
                 }
+                pulse(level, now);
                 if (now.gearDown() != this.last.gearDown()) {
                     once(level, ShipSounds.GEAR, middle());
                 }
@@ -194,6 +210,27 @@ public final class ShipEngineSounds {
                 }
             }
             this.last = now;
+        }
+
+        /*
+         * Its pulse drive as the readings {@code now} tell it: its spool heard from its first hundredth, stopped if its
+         * pilot lets go before the jump; the drop out of a jump heard as it comes.
+         */
+        private void pulse(final ClientLevel level, final ShipReadings now) {
+            final ShipReadings.Pulse was = this.last.pulse();
+            final ShipReadings.Pulse is = now.pulse();
+            if (is.spool() > 0 && was.spool() == 0 && !is.on()) {
+                this.spooling = once(level, ShipSounds.PULSE_SPOOL, enginesPlace());
+            } else if (this.spooling != null && is.spool() == 0 && !is.on()) {
+                Minecraft.getInstance().getSoundManager().stop(this.spooling);
+                this.spooling = null;
+            } else if (is.on()) {
+                // The jump began as the spool ended: it plays out.
+                this.spooling = null;
+            }
+            if (was.on() && !is.on()) {
+                once(level, ShipSounds.PULSE_END, enginesPlace());
+            }
         }
 
         /* Whether its engines run: in the air, held up on its nozzles, or with its throttle open. */
