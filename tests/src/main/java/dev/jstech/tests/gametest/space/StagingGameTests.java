@@ -80,6 +80,12 @@ public final class StagingGameTests {
     private static final double FIRST = 300;
     private static final double SECOND = 2_000;
     private static final double FIRST_FALLING = 20;
+    /*
+     * The rocket whose first stage comes back holds a little in it and none in the second: it climbs some sixty
+     * blocks, so its stage, riding on with it till its own land has loaded, is let go well under the world's ceiling,
+     * past which it would go up into space.
+     */
+    private static final double FIRST_LANDING = 100;
     /* How far round the rocket its stage is looked for, across and up, and where its wreckage may lie. */
     private static final double LOOK_ACROSS = 96;
     private static final double LOOK_UP = 900;
@@ -195,7 +201,7 @@ public final class StagingGameTests {
                 Ownership.of(UUID.randomUUID()).withAccess(Access.TEAM));
         final RocketStack stack = RocketStack.of(part("sea_level_engine_3"), part("landing_legs_3"), part("tank_3"),
                 part("separation_ring_3"), part("vacuum_engine_3"), part("tank_3"), part("capsule_3"));
-        final FlightComputerBlockEntity computer = build(helper, stack, Map.of(2, FIRST, 5, SECOND));
+        final FlightComputerBlockEntity computer = build(helper, stack, Map.of(2, FIRST_LANDING));
         // On the stages page: the first stage, to come back to the nearest platform.
         computer.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.STAGES));
         computer.press(FlightComputerBlockEntity.LEFT, null);
@@ -207,9 +213,14 @@ public final class StagingGameTests {
                 .map(fate -> fate instanceof StageFate.Platform(final UUID set) && set.equals(platform))
                 .orElse(false), "the rocket keeps where its stage goes");
         final MovingStructure[] stage = new MovingStructure[1];
+        final BlockPos[] aboard = new BlockPos[1];
         final Vec3 spot = Vec3.atBottomCenterOf(terminal.above());
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(body.ready(), "its body stands ready"))
+                .thenExecute(() -> aboard[0] = BlockPos.containing(MovingStructures.toYard(body, Vec3.atCenterOf(
+                        computer.getBlockPos()))))
+                .thenWaitUntil(() -> helper.assertTrue(level.shouldTickBlocksAt(aboard[0]),
+                        "its flight computer's place in the yard ticks"))
                 .thenExecute(() -> RocketLaunch.lift(level, body))
                 .thenWaitUntil(() -> {
                     stage[0] = stageOf(level, body);
