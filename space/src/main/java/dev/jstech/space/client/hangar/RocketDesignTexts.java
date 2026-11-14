@@ -48,6 +48,10 @@ public final class RocketDesignTexts {
     public static final TextKey NAME_FIRST = TextKey.of("jsspace.design.screen.name_first", "Name it to save");
     public static final TextKey SENT = TextKey.of("jsspace.design.screen.sent", "Sent to the bay");
     public static final TextKey NOT_SENT = TextKey.of("jsspace.design.screen.not_sent", "Not ready to build");
+    public static final TextKey NO_BAY = TextKey.of("jsspace.design.screen.no_bay",
+            "The hangar is not whole: nothing to build it in");
+    public static final TextKey NOTHING_TO_SAVE = TextKey.of("jsspace.design.screen.nothing_to_save",
+            "No parts to save");
     public static final TextKey CLEARED = TextKey.of("jsspace.design.screen.cleared", "Cleared");
     public static final TextKey ONE_SIZE = TextKey.of("jsspace.design.screen.one_size", "This part has one size");
     public static final TextKey FULL = TextKey.of("jsspace.design.screen.full", "The hangar keeps %s plans");

@@ -91,11 +91,13 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
             return new Step(now, null);
         }
         final List<StageMath.Burn> burns = burns(level, context.structure());
+        // A lander's descent stage it carries is kept for its landing: the climb lights the stages under it alone.
+        final int usable = climbable(level, context.structure(), burns, this.burn);
         final double pull = rules.gravity() * OrbitScale.STANDARD_GRAVITY;
         double thrust = 0;
         double mass = this.mass;
         int lit = this.burn;
-        if (lit < burns.size()) {
+        if (lit < usable) {
             final StageMath.Burn burning = burns.get(lit);
             thrust = thrust(burning, StageMath.air(rules.pressure()));
             // Its engines burn as much a second whatever the air: their sea-level thrust over their exhaust's speed.
@@ -105,14 +107,14 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
             }
             if (mass <= burning.endMass()) {
                 lit++;
-                mass = lit < burns.size() ? burns.get(lit).startMass() : burning.endMass();
+                mass = lit < usable ? burns.get(lit).startMass() : burning.endMass();
             }
         }
         double climb = this.climb + (mass > 0 ? thrust / mass : 0) * TICK - pull * TICK;
         // On the pad it cannot sink into the launcher: it waits there till its thrust lifts it.
         if (now.y() <= this.from && climb < 0) {
             climb = 0;
-            if (lit >= burns.size()) {
+            if (lit >= usable) {
                 // Burnt out on the pad: what it burnt there is gone from its tanks, as on a climb into space.
                 RocketBurns.climbed(level, context.structure(), lit, mass);
                 return new Step(now, null);
@@ -147,7 +149,7 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
                 left += load;
             }
         }
-        final boolean burning = this.burn < burns.size();
+        final boolean burning = this.burn < climbable(level, structure, burns, this.burn);
         final EnumSet<CabinLamp> lit = EnumSet.of(CabinLamp.GUIDANCE);
         if (burning) {
             lit.add(CabinLamp.ENGINE);
@@ -189,6 +191,25 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
         }
         return RocketStages.burns(RocketParts.all(level), rocket.get().stack(), Propellants.all(level),
                 rocket.get().tanks(), rocket.get().lost().keySet(), rocket.get().boosters()).orElse(List.of());
+    }
+
+    /*
+     * How many of {@code burns} a climb lit from the burn {@code from} may light: those under a lander's descent stage
+     * the rocket carries, kept for its landing; all of them where it carries none, or climbs off the ground on it.
+     */
+    private static int climbable(final ServerLevel level, final MovingStructure structure,
+                                 final List<StageMath.Burn> burns, final int from) {
+        if (from >= burns.size()) {
+            return burns.size();
+        }
+        final int kept = Rockets.get(level.getServer(), structure.id()).map(rocket -> RocketStages.keptForLanding(
+                RocketParts.all(level), rocket.stack(), burns.get(from).stage() - 1).orElse(Integer.MAX_VALUE))
+                .orElse(Integer.MAX_VALUE);
+        int usable = from;
+        while (usable < burns.size() && burns.get(usable).stage() < kept) {
+            usable++;
+        }
+        return usable;
     }
 
     /*

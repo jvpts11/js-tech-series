@@ -67,6 +67,8 @@ public final class RocketDesignGameTests {
     private static final ResourceLocation TANK = SkeletonRocketParts.id("tank_3");
     private static final ResourceLocation RING = SkeletonRocketParts.id("separation_ring_3");
     private static final ResourceLocation CAPSULE = SkeletonRocketParts.id("capsule_3");
+    private static final ResourceLocation LANDER_DESCENT = SkeletonRocketParts.id("lunar_lander_descent");
+    private static final ResourceLocation LANDER_ASCENT = SkeletonRocketParts.id("lunar_lander_ascent");
 
     private RocketDesignGameTests() {
     }
@@ -146,8 +148,38 @@ public final class RocketDesignGameTests {
                 Optional.of(bay)), DesignTexts.TOO_TALL), "a rocket within them is not");
         final DesignReport crewless = DesignReport.of(parts, RocketStack.of(part(SEA_ENGINE),
                 new RocketStack.Part(TANK, 2)), 1, 1, Optional.of(SolarBody.OVERWORLD), Optional.empty());
-        helper.assertTrue(crewless.ready() && says(crewless, DesignTexts.NO_SEATS),
-                "no seats is worth knowing, not a fault: " + crewless.checks());
+        helper.assertTrue(!crewless.ready() && says(crewless, DesignTexts.NOTHING_FLIES_IT),
+                "with no capsule nor lander, nothing flies it: " + crewless.checks());
+        helper.succeed();
+    }
+
+    /**
+     * A stack out of order is refused, each fault with its reason: an engine not at its stage's foot; a capsule not on
+     * top; two capsules; a lander's ascent stage with no descent stage under it; while a lander standing whole, its
+     * ascent stage on its descent stage, flies as it is.
+     */
+    @GameTest(template = ARENA)
+    public static void report_refusesAStackOutOfOrderSayingWhy(final GameTestHelper helper) {
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(helper.getLevel());
+        final DesignReport tankUnder = overworld(parts, RocketStack.of(part(TANK), part(SEA_ENGINE), part(CAPSULE)));
+        helper.assertTrue(!tankUnder.ready() && says(tankUnder, DesignTexts.ENGINE_NOT_AT_FOOT),
+                "an engine over a tank of its stage: " + tankUnder.checks());
+        final DesignReport capsuleUnder = overworld(parts, RocketStack.of(part(SEA_ENGINE), part(TANK),
+                part(CAPSULE), part(TANK)));
+        helper.assertTrue(!capsuleUnder.ready() && says(capsuleUnder, DesignTexts.CAPSULE_NOT_ON_TOP),
+                "a tank over the capsule: " + capsuleUnder.checks());
+        final DesignReport twice = overworld(parts, RocketStack.of(part(SEA_ENGINE), part(TANK), part(CAPSULE),
+                part(CAPSULE)));
+        helper.assertTrue(!twice.ready() && says(twice, DesignTexts.CAPSULES), "two capsules: " + twice.checks());
+        final DesignReport ascentAlone = overworld(parts, RocketStack.of(part(LANDER_ASCENT)));
+        helper.assertTrue(!ascentAlone.ready() && says(ascentAlone, DesignTexts.ASCENT_ALONE),
+                "a lander's ascent stage with nothing under it: " + ascentAlone.checks());
+        final DesignReport lander = overworld(parts, RocketStack.of(part(LANDER_DESCENT), part(LANDER_ASCENT)));
+        helper.assertTrue(!says(lander, DesignTexts.ENGINE_NOT_AT_FOOT) && !says(lander, DesignTexts.ASCENT_ALONE)
+                && !says(lander, DesignTexts.LANDER_NOT_ON_TOP) && !says(lander, DesignTexts.NOTHING_FLIES_IT),
+                "a lander whole, its ascent stage on its descent stage, stands in order: " + lander.checks());
+        helper.assertTrue(!says(overworld(parts, two()), DesignTexts.ENGINE_NOT_AT_FOOT)
+                && overworld(parts, two()).ready(), "and two stages, each its engine at its foot, are ready");
         helper.succeed();
     }
 
@@ -248,6 +280,11 @@ public final class RocketDesignGameTests {
 
     private static RocketStack.Part part(final ResourceLocation id) {
         return new RocketStack.Part(id, 1);
+    }
+
+    /* The report of {@code stack} leaving the Overworld, in no hangar. */
+    private static DesignReport overworld(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack) {
+        return DesignReport.of(parts, stack, 1, 1, Optional.of(SolarBody.OVERWORLD), Optional.empty());
     }
 
     private static double need(final List<DesignDestinations.Reach> reaches, final SolarBody world) {

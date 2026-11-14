@@ -26,7 +26,10 @@ At the **Hangar Terminal** or the **Rocket Design Table** in the Rocket Hangar's
 - the **delta-v of each stage** and the total;
 - the **thrust-to-weight ratio on the world the rocket leaves from**: under 1, the rocket doesn't leave the ground, and a rocket that takes off from the Moon (0.17 g) may not take off from the Earth;
 - the **delta-v each destination asks for**, with a bar showing how far the rocket gets, short in red. From the Overworld, a first estimate: a low orbit 9,400 m/s, the Moon 15,200 m/s, Mars 13,000 m/s;
-- what is missing: a stage with propellant and no engine, an engine with nothing to burn, a rocket too weak to lift off, taller than 96 blocks or wider than 17, the most the hangar's bay and its door take, the crew's seats, the heat shield to come home through air, the tanks filled at the pad.
+- what is missing: a stage with propellant and no engine, an engine with nothing to burn, a rocket too weak to lift off, taller than 96 blocks or wider than 17, the most the hangar's bay and its door take, the crew's seats, the heat shield to come home through air, the tanks filled at the pad;
+- a stack out of order, refused with its reason: an engine not at the foot of its stage; a capsule not on top (only an escape tower or a docking port stands over it), or more than one capsule; with no capsule, a lander not on top; a lander's ascent stage without its descent stage under it; and a rocket with no capsule nor lander, which has nothing to fly it.
+
+**A lander's descent stage is kept for its landing.** The climb off the pad, the transfer and the capture burn only the stages under it, and the transfer is planned with those; the landing burns it, and the ascent stage counts again once the descent stage has been left on the ground. A lander sent up alone, its descent stage the rocket's first, climbs on it.
 
 The screen's sign reads READY or NOT READY. Every change is kept by the hangar; a design is named, saved as one of the hangar's **sixteen plans**, loaded from them, and sent to the bay to be built once it is ready. Each hangar takes a number of its own the first time it forms.
 

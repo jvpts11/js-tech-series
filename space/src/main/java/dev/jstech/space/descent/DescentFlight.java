@@ -127,7 +127,7 @@ public final class DescentFlight {
         if (air != RocketDescent.NO_AIR && !shield && !SpaceServerConfig.FILE.get(SpaceServerConfig.BURNING_UP)) {
             return hold(level, body, computer, DescentTexts.NO_SHIELD.with(name));
         }
-        final boolean brakes = legs(level, computer) && computer.available().orElse(0)
+        final boolean brakes = legs(level, computer) && computer.availableToLand().orElse(0)
                 >= landingDeltaV(solar.get());
         if (air != RocketDescent.THICK_AIR && !brakes
                 && !SpaceServerConfig.FILE.get(SpaceServerConfig.CRASH_LANDINGS)) {
@@ -193,7 +193,7 @@ public final class DescentFlight {
         final ResourceLocation world = worldOf(level);
         final Optional<SolarBody> solar = world == null ? Optional.empty() : SolarSystemWorlds.bodyOf(world);
         final boolean underChutes = airOf(level) == RocketDescent.THICK_AIR && computer.shield();
-        final boolean braked = !underChutes && legs(level, computer) && RocketBurns.burn(level, body,
+        final boolean braked = !underChutes && legs(level, computer) && RocketBurns.burnToLand(level, body,
                 computer.separated(), solar.map(DescentFlight::landingDeltaV).orElse(0.0));
         final Vec3 foot = new Vec3(body.pose().x(), body.pose().y(), body.pose().z());
         final Text name = world == null ? Text.literal(level.dimension().location().getPath())

@@ -45,13 +45,32 @@ public final class RocketBurns {
 
     /**
      * Burns {@code deltaV} metres a second in a vacuum from the stages of {@code body} not let go, those after the
-     * first {@code separated}; whether its stages had that much in them.
+     * first {@code separated}, as a transfer or a capture burns: never a lander's descent stage it still carries,
+     * kept for its landing, nor the stages standing on it. Whether its other stages had that much in them.
      */
     public static boolean burn(final ServerLevel level, final MovingStructure body, final int separated,
                                final double deltaV) {
+        final int kept = Rockets.get(level.getServer(), body.id()).map(rocket -> RocketStages.keptForLanding(
+                RocketParts.all(level), rocket.stack(), separated).orElse(Integer.MAX_VALUE))
+                .orElse(Integer.MAX_VALUE);
+        return burn(level, body, separated, deltaV, kept);
+    }
+
+    /**
+     * Burns {@code deltaV} metres a second in a vacuum from the stages of {@code body} not let go, a lander's descent
+     * stage too, as a landing burns; whether its stages had that much in them.
+     */
+    public static boolean burnToLand(final ServerLevel level, final MovingStructure body, final int separated,
+                                     final double deltaV) {
+        return burn(level, body, separated, deltaV, Integer.MAX_VALUE);
+    }
+
+    /* Burns from the stages not let go, below the stage {@code kept}, from the bottom up. */
+    private static boolean burn(final ServerLevel level, final MovingStructure body, final int separated,
+                                final double deltaV, final int kept) {
         double left = deltaV;
         for (final StageMath.Burn burn : RocketAscent.burns(level, body)) {
-            if (burn.stage() <= separated || left <= 0 || burn.vacuumDeltaV() <= 0) {
+            if (burn.stage() <= separated || burn.stage() >= kept || left <= 0 || burn.vacuumDeltaV() <= 0) {
                 continue;
             }
             if (left >= burn.vacuumDeltaV()) {

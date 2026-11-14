@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import net.minecraft.resources.ResourceLocation;
 
@@ -108,6 +109,26 @@ public final class RocketStages {
             stages.add(List.copyOf(current));
         }
         return List.copyOf(stages);
+    }
+
+    /**
+     * The first stage of {@code stack} a climb, a transfer or a capture may not burn, of those after the first
+     * {@code from} stages: the stage of a lander's descent stage, kept for its landing, which every stage over it
+     * stands on. None where no lander's descent stage is there, or where it is the rocket's first stage, a lander sent
+     * up alone, which burns it to leave the ground.
+     */
+    public static OptionalInt keptForLanding(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack,
+                                             final int from) {
+        final List<List<Integer>> stages = stages(parts, stack);
+        for (int s = Math.max(0, from); s < stages.size(); s++) {
+            for (final int place : stages.get(s)) {
+                final RocketPart part = parts.get(stack.sections().get(place).part().id());
+                if (part != null && part.kind() == RocketPart.Kind.LANDER_DESCENT) {
+                    return s == 0 ? OptionalInt.empty() : OptionalInt.of(s + 1);
+                }
+            }
+        }
+        return OptionalInt.empty();
     }
 
     /** The places of the stage {@code stage}, numbered from one at the bottom; none for a stage it does not have. */

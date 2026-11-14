@@ -658,23 +658,36 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
 
     /**
      * The delta-v its rocket has for a transfer, in metres a second: what the stages it has not let go can give in a
-     * vacuum with its tanks as they hold, less, on the ground, the climb to the low orbit; none before it keeps a
-     * rocket's plan.
+     * vacuum with its tanks as they hold, but for a lander's descent stage it still carries, kept for its landing, and
+     * the stages standing on it; less, on the ground, the climb to the low orbit; none before it keeps a rocket's plan.
      */
     public OptionalDouble available() {
+        return available(true);
+    }
+
+    /** The delta-v its rocket has for a landing, as {@link #available()} but with a lander's stages too. */
+    public OptionalDouble availableToLand() {
+        return available(false);
+    }
+
+    /* The delta-v of the stages not let go; below a lander's descent stage alone where that is {@code kept}. */
+    private OptionalDouble available(final boolean kept) {
         final Optional<RocketDesign> design = rocket();
         if (this.level == null || design.isEmpty()) {
             return OptionalDouble.empty();
         }
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(this.level);
         final Map<Integer, Integer> holed = this.lost.get();
-        final Optional<List<StageMath.Burn>> burns = RocketStages.burns(RocketParts.all(this.level),
-                design.get().stack(), Propellants.all(this.level), tanks(), holed == null ? Set.of() : holed.keySet(),
-                boosters());
+        final Optional<List<StageMath.Burn>> burns = RocketStages.burns(parts, design.get().stack(),
+                Propellants.all(this.level), tanks(), holed == null ? Set.of() : holed.keySet(), boosters());
         if (burns.isEmpty()) {
             return OptionalDouble.empty();
         }
         final int gone = separated();
-        double left = StageMath.deltaV(burns.get().stream().filter(burn -> burn.stage() > gone).toList(), 0);
+        final int below = kept ? RocketStages.keptForLanding(parts, design.get().stack(), gone)
+                .orElse(Integer.MAX_VALUE) : Integer.MAX_VALUE;
+        double left = StageMath.deltaV(burns.get().stream().filter(burn -> burn.stage() > gone
+                && burn.stage() < below).toList(), 0);
         if (!YardLayout.isYardBlock(this.worldPosition.getX())) {
             left -= here(this.level).map(body -> CLIMBS.getOrDefault(body, 0.0)).orElse(0.0);
         }

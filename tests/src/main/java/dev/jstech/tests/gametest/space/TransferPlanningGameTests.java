@@ -8,6 +8,8 @@
 package dev.jstech.tests.gametest.space;
 
 import dev.jstech.space.api.Propellants;
+import dev.jstech.space.api.RocketPart;
+import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.FlightPage;
 import dev.jstech.space.flight.PlannedTransfer;
@@ -17,6 +19,7 @@ import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.orbit.Rocketry;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
+import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.space.rocket.TankLoad;
@@ -24,7 +27,10 @@ import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.tests.JsTests;
 import java.util.List;
+import java.util.Map;
+import java.util.OptionalInt;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -47,6 +53,15 @@ public final class TransferPlanningGameTests {
     /* Half a turn of the Overworld's year: a moment out of the window. */
     private static final long TICK = 1_000;
     private static final double CLOSE = 1.0e-6;
+    /*
+     * A Moon-bound lander rocket: its two stages' tanks, in layers of the large tank; and its tanks full, in
+     * kilograms, a layer of the large tank, the lander's descent and ascent stages.
+     */
+    private static final int FIRST_LAYERS = 30;
+    private static final int SECOND_LAYERS = 8;
+    private static final double LAYER_FULL = 16_300.0;
+    private static final double DESCENT_FULL = 8_200.0;
+    private static final double ASCENT_FULL = 2_400.0;
 
     private TransferPlanningGameTests() {
     }
@@ -112,5 +127,46 @@ public final class TransferPlanningGameTests {
         computer.press(FlightComputerBlockEntity.LEFT);
         helper.assertTrue(computer.executed().isEmpty(), "another destination chosen, the plan set is let go");
         helper.succeed();
+    }
+
+    /**
+     * A lander's descent stage is kept for its landing: a transfer is planned with the stages under it alone, a
+     * landing with it too; once it is let go, the ascent stage over it counts again; and a lander sent up alone burns
+     * its descent stage to leave the ground.
+     */
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void transfer_keepsTheLandersDescentStageForItsLanding(final GameTestHelper helper) {
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(helper.getLevel());
+        final RocketStack stack = RocketStack.of(part("sea_level_engine_5", 1), part("tank_5", 3),
+                part("separation_ring_5", 1), part("lunar_lander_descent", 1), part("lunar_lander_ascent", 1));
+        helper.assertTrue(RocketStages.keptForLanding(parts, stack, 0).equals(OptionalInt.of(2)),
+                "the descent stage, the second, is kept, and all over it: "
+                        + RocketStages.keptForLanding(parts, stack, 0));
+        helper.assertTrue(RocketStages.keptForLanding(parts, stack, 2).isEmpty(),
+                "let go on the ground, nothing more is kept");
+        helper.assertTrue(RocketStages.keptForLanding(parts, RocketStack.of(part("lunar_lander_descent", 1),
+                part("lunar_lander_ascent", 1)), 0).isEmpty(), "a lander sent up alone climbs on its descent stage");
+        // Two large stages under the lander, enough to leave the Overworld's ground with some to spare for a transfer.
+        final RocketStack moonbound = RocketStack.of(part("sea_level_engine_5", 1), part("tank_5", FIRST_LAYERS),
+                part("separation_ring_5", 1), part("vacuum_engine_5", 1), part("tank_5", SECOND_LAYERS),
+                part("separation_ring_5", 1), part("lunar_lander_descent", 1), part("lunar_lander_ascent", 1));
+        helper.setBlock(COMPUTER, RocketKitBlocks.FLIGHT_COMPUTER.get());
+        final FlightComputerBlockEntity computer = helper.getBlockEntity(COMPUTER);
+        computer.carry(new RocketDesign("LANDER", moonbound), BlockPos.ZERO, List.of());
+        Propellants.get(helper.getLevel(), SkeletonPropellants.METHALOX).ifPresent(methalox -> {
+            computer.load(1, TankLoad.filled(SkeletonPropellants.METHALOX, methalox, FIRST_LAYERS * LAYER_FULL));
+            computer.load(4, TankLoad.filled(SkeletonPropellants.METHALOX, methalox, SECOND_LAYERS * LAYER_FULL));
+            computer.load(6, TankLoad.filled(SkeletonPropellants.METHALOX, methalox, DESCENT_FULL));
+            computer.load(7, TankLoad.filled(SkeletonPropellants.METHALOX, methalox, ASCENT_FULL));
+        });
+        final double transfer = computer.available().orElse(0);
+        final double landing = computer.availableToLand().orElse(0);
+        helper.assertTrue(transfer > 0 && landing > transfer + 1, "the transfer is planned without the lander's"
+                + " stages, the landing with them: " + transfer + " against " + landing);
+        helper.succeed();
+    }
+
+    private static RocketStack.Part part(final String id, final int layers) {
+        return new RocketStack.Part(SkeletonRocketParts.id(id), layers);
     }
 }

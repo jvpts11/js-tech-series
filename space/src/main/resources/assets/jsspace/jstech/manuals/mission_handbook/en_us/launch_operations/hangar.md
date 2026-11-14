@@ -42,6 +42,9 @@ yaw: -145
 > [!PROBLEM] The Rocket Design says the rocket is too tall or too wide.
 > The hangar builds rockets up to 96 blocks tall and 17 wide, as wide as its door's slot.
 
+> [!PROBLEM] The Rocket Design refuses the order of the stack.
+> Each stage's engine stands at its foot; one capsule at most, on top, with nothing over it but an escape tower or a docking port; with no capsule, the lander on top; a lander's ascent stage stands on its descent stage. A rocket needs a capsule or a lander: its flight computer flies it.
+
 > [!PROBLEM] The Loading Dock takes nothing.
 > It takes only the blocks the plan sent to the bay still wants, and no more of each than it wants.
 

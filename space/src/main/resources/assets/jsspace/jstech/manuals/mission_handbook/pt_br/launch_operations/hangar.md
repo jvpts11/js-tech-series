@@ -42,6 +42,9 @@ yaw: -145
 > [!PROBLEM] O Projeto de Foguete diz que o foguete é alto ou largo demais.
 > O hangar constrói foguetes de até 96 blocos de altura e 17 de largura, a largura da fenda da porta.
 
+> [!PROBLEM] O Projeto de Foguete recusa a ordem da pilha.
+> O motor de cada estágio fica no pé dele; no máximo uma cápsula, no topo, sem nada por cima além de uma torre de escape ou de uma porta de acoplagem; sem cápsula, o módulo lunar no topo; o estágio de subida do módulo fica sobre o de descida. O foguete precisa de uma cápsula ou de um módulo lunar: é o computador de voo deles que o pilota.
+
 > [!PROBLEM] A Doca de Carga não aceita nada.
 > Ela só aceita os blocos que o plano enviado à baia ainda quer, e não mais de cada um do que ele quer.
 

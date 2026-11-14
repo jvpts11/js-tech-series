@@ -3161,9 +3161,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   delta-v and its thrust against its weight on the world it leaves, the rocket's delta-v on a display, whether it
   lifts off, each destination with its globe, what it asks (from the Overworld: a low orbit 9,400 m/s, the Moon
   15,200, Mars 13,000) and a bar of how far the rocket gets, short in red; and its checks: a stage with propellant and
-  no engine or an engine with nothing to burn, too weak to lift off, taller than the 96 blocks a hangar builds or
-  wider than the 17 of its door's slot, the crew's seats, the heat shield to come home through air, the tanks filled
-  at the pad, each wrapped whole onto as many lines as it needs; its sign lit READY or NOT READY under them. Its words
+  no engine or an engine with nothing to burn, a stage's engine not at its foot, a capsule not on top or more than one,
+  a lander not on top where it flies the rocket, a lander's ascent stage with no descent stage under it, and nothing
+  to fly it, no capsule nor lander, each refusing the design with its reason; too weak to lift off, taller than the
+  96 blocks a hangar builds or wider than the 17 of its door's slot, the crew's seats, the heat shield to come home
+  through air, the tanks filled at the pad, each wrapped whole onto as many lines as it needs; its sign lit READY or
+  NOT READY under them; saving a design with no parts, or sending one with the hangar not whole, says why. Its words
   are in the game's own letters at the interface's size, never smaller: the tools as icons, the one in use named
   after them; on the spec sheet each figure on a line of its own, its name, its value and its inked bar; the view's
   keys on a strip at its foot. The part under the mouse, a tank one layer thin as readily as a tall one, is found by
@@ -3390,7 +3393,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   the air it burns up as it enters. Off, those rules hold the landing instead, the rocket staying in its orbit, and a
   crew whose team does not know what kills there may not land. Landed with a transfer set and its window come, a rocket
   lifts off from the ground with no pad; a lunar lander's ascent stage leaves its descent stage standing on the ground
-  as its launch platform.
+  as its launch platform. A lander's descent stage is kept for its landing: the climb off the pad, the transfer and the
+  capture burn the stages under it alone, and the transfer page plans with those, so a rocket short of what its own
+  stages give is told so rather than spending its landing; a lander sent up alone climbs on its descent stage.
 - (Space) The rocket's effects as approved: its engines burn with a bright flame and pouring smoke in air, leaving a
   white trail that thins as the air does on the way up; where the air is nearly gone, any engine shows the short hot
   core and the wide pale blue plume of a nozzle in a vacuum; a stage let go fires its retro rockets; the Moon's dust

@@ -1145,9 +1145,14 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
 
     /* ---------------------------------------------------------------------------------------------- the actions */
 
+    /* Sent as the server takes it, else what keeps it, so nothing is refused unsaid. */
     private void confirm() {
         if (!this.report.ready()) {
             say(RocketDesignTexts.NOT_SENT.text());
+            return;
+        }
+        if (this.terminal.bay().isEmpty()) {
+            say(RocketDesignTexts.NO_BAY.text());
             return;
         }
         RocketDesigner.CONFIRM.send(true);
@@ -1158,6 +1163,10 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         if (this.design.name().isBlank()) {
             say(RocketDesignTexts.NAME_FIRST.text());
             this.naming = new StringBuilder();
+            return;
+        }
+        if (this.design.stack().sections().isEmpty()) {
+            say(RocketDesignTexts.NOTHING_TO_SAVE.text());
             return;
         }
         final List<RocketDesign> plans = this.terminal.plans();

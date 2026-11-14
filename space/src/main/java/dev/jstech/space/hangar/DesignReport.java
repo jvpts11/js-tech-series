@@ -185,6 +185,7 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
         }
         RocketStages.misfit(parts, stack).ifPresent(place -> faults.add(new Check(Severity.FAULT,
                 DesignTexts.MISFIT.with(place + 1))));
+        order(parts, stack, faults);
         for (final Stage stage : stages) {
             if (stage.propellant() && stage.engine().isEmpty()) {
                 faults.add(new Check(Severity.FAULT, DesignTexts.NO_ENGINE.with(stage.number())));
@@ -221,6 +222,73 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
         rest.add(new Check(Severity.NOTE, DesignTexts.TANKS.text()));
         faults.addAll(rest);
         return List.copyOf(faults);
+    }
+
+    /*
+     * Whether the stack stands in an order that flies, each fault with its reason: each stage's engine at its foot,
+     * as a stage burns from its foot up and drops what is under the next; one capsule at most, with nothing over it but
+     * what belongs over a capsule; with no capsule, the lander on top, as it flies the rocket; the lander's ascent
+     * stage standing on its descent stage; and a capsule or a lander, whose flight computer flies the rocket.
+     */
+    private static void order(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack,
+                              final List<Check> faults) {
+        final List<List<Integer>> stages = RocketStages.stages(parts, stack);
+        for (int s = 0; s < stages.size(); s++) {
+            final List<Integer> stage = stages.get(s);
+            for (int i = 1; i < stage.size(); i++) {
+                final RocketPart part = parts.get(stack.sections().get(stage.get(i)).part().id());
+                if (part != null && part.engine().isPresent()) {
+                    faults.add(new Check(Severity.FAULT, DesignTexts.ENGINE_NOT_AT_FOOT.with(s + 1)));
+                    break;
+                }
+            }
+        }
+        int capsule = -1;
+        int ascent = -1;
+        int capsules = 0;
+        for (int k = 0; k < stack.sections().size(); k++) {
+            final RocketPart part = parts.get(stack.sections().get(k).part().id());
+            if (part == null) {
+                continue;
+            }
+            if (part.kind() == RocketPart.Kind.CAPSULE) {
+                capsules++;
+                capsule = k;
+            } else if (part.kind() == RocketPart.Kind.LANDER_ASCENT) {
+                ascent = k;
+                final RocketPart under = k == 0 ? null : parts.get(stack.sections().get(k - 1).part().id());
+                if (under == null || under.kind() != RocketPart.Kind.LANDER_DESCENT) {
+                    faults.add(new Check(Severity.FAULT, DesignTexts.ASCENT_ALONE.text()));
+                }
+            }
+        }
+        if (capsules > 1) {
+            faults.add(new Check(Severity.FAULT, DesignTexts.CAPSULES.text()));
+        }
+        if (capsule >= 0) {
+            if (!onlyOverACapsule(parts, stack, capsule)) {
+                faults.add(new Check(Severity.FAULT, DesignTexts.CAPSULE_NOT_ON_TOP.text()));
+            }
+        } else if (ascent >= 0) {
+            if (!onlyOverACapsule(parts, stack, ascent)) {
+                faults.add(new Check(Severity.FAULT, DesignTexts.LANDER_NOT_ON_TOP.text()));
+            }
+        } else {
+            faults.add(new Check(Severity.FAULT, DesignTexts.NOTHING_FLIES_IT.text()));
+        }
+    }
+
+    /* Whether nothing stands over the place {@code below} but what belongs over a capsule: its escape tower, a port. */
+    private static boolean onlyOverACapsule(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack,
+                                            final int below) {
+        for (int k = below + 1; k < stack.sections().size(); k++) {
+            final RocketPart part = parts.get(stack.sections().get(k).part().id());
+            if (part != null && part.kind() != RocketPart.Kind.ESCAPE_TOWER
+                    && part.kind() != RocketPart.Kind.DOCKING_PORT) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /** How a check reads: a fault keeps the design from the bay, a warning is worth knowing, the rest is so. */

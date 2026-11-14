@@ -57,8 +57,9 @@ public final class LightingGameTests {
     private static final BlockPos FAR_CORNER = new BlockPos(7, 2, 7);
     /* Long enough for a lamp to hear and turn on; for a beam to be laid; for light left to go by itself. */
     private static final int SETTLE = 5;
-    private static final int LAID = 25;
     private static final int GONE = 50;
+    /* The ticks a test waits for light to spread, on its own thread, while the test server's ticks run fast. */
+    private static final int LIGHT_TIME = 2000;
     private static final double HUE_CLOSE = 3.0;
 
     private LightingGameTests() {
@@ -148,13 +149,13 @@ public final class LightingGameTests {
         });
     }
 
-    @GameTest(template = ARENA, timeoutTicks = 140)
+    @GameTest(template = ARENA, timeoutTicks = LIGHT_TIME)
     public static void floodlight_lightsFarPastFifteenAndItsLightGoesWithIt(final GameTestHelper helper) {
         final int up = 22;
         far(helper, TestLights.FLOODLIGHT.get().defaultBlockState(), up);
     }
 
-    @GameTest(template = ARENA, timeoutTicks = 140)
+    @GameTest(template = ARENA, timeoutTicks = LIGHT_TIME)
     public static void beamLamp_lightsWhereItsNarrowBeamMeetsSomething(final GameTestHelper helper) {
         final int up = 34;
         far(helper, TestLights.BEAM_LAMP.get().defaultBlockState(), up);
@@ -272,33 +273,38 @@ public final class LightingGameTests {
      * A lamp at the floor facing up, a stone {@code up} blocks above it: the place below the stone is lit, by light
      * that counts for what spawns there, while the lamp shines; and with the lamp gone the light goes by itself.
      */
+    /*
+     * A lamp facing up {@code up} blocks under a stone: its light stands under the stone, held by the lamp, and lights
+     * it brightly; the lamp gone, the light goes. Light spreads on a thread of its own, in real time, while the test
+     * server runs its ticks as fast as it can: the light is waited for, not looked at after so many ticks.
+     */
     private static void far(final GameTestHelper helper, final BlockState lamp, final int up) {
         final BlockPos ceiling = LAMP.above(up);
         final BlockPos lit = ceiling.below();
         helper.setBlock(ceiling, Blocks.STONE);
         helper.setBlock(LAMP, lamp.setValue(DirectionalBlock.FACING, Direction.UP));
-        helper.runAfterDelay(LAID, () -> {
-            final ServerLevel level = helper.getLevel();
-            final BlockPos at = helper.absolutePos(lit);
-            final LampBlockEntity on = helper.getBlockEntity(LAMP);
-            helper.assertTrue(level.getBlockState(at).getBlock() instanceof LightBlock,
-                    "light stands under the stone, " + up + " blocks up: " + level.getBlockState(at) + ", the lamp "
-                            + (on.lit() ? "on" : "off") + " facing " + on.facing() + ", lighting "
-                            + Beams.lamp(level, helper.absolutePos(LAMP), on.facing(), on.kind(), 15).keySet()
-                            + " for " + at);
-            helper.assertTrue(BeamLights.holds(level, at), "held by the lamp's light");
-            final int brightness = level.getBrightness(LightLayer.BLOCK, at);
-            helper.assertTrue(brightness > 0, "lit, past fifteen blocks: " + brightness);
-            helper.assertTrue(brightness > level.dimensionType().monsterSpawnBlockLightLimit(),
-                    "by light too bright for a monster to spawn in");
-            helper.setBlock(LAMP, Blocks.AIR);
-        });
-        helper.runAfterDelay(LAID + GONE, () -> {
-            helper.assertFalse(helper.getLevel().getBlockState(helper.absolutePos(lit)).getBlock()
-                    instanceof LightBlock, "the light went with the lamp");
-            helper.setBlock(ceiling, Blocks.AIR);
-            helper.succeed();
-        });
+        final ServerLevel level = helper.getLevel();
+        final BlockPos at = helper.absolutePos(lit);
+        helper.startSequence()
+                .thenWaitUntil(() -> {
+                    final LampBlockEntity on = helper.getBlockEntity(LAMP);
+                    helper.assertTrue(level.getBlockState(at).getBlock() instanceof LightBlock,
+                            "light stands under the stone, " + up + " blocks up: " + level.getBlockState(at)
+                                    + ", the lamp " + (on.lit() ? "on" : "off") + " facing " + on.facing()
+                                    + ", lighting " + Beams.lamp(level, helper.absolutePos(LAMP), on.facing(),
+                                    on.kind(), 15).keySet() + " for " + at);
+                    helper.assertTrue(BeamLights.holds(level, at), "held by the lamp's light");
+                })
+                .thenWaitUntil(() -> {
+                    final int brightness = level.getBrightness(LightLayer.BLOCK, at);
+                    helper.assertTrue(brightness > level.dimensionType().monsterSpawnBlockLightLimit(),
+                            "lit past fifteen blocks, by light too bright for a monster to spawn in: " + brightness);
+                })
+                .thenExecute(() -> helper.setBlock(LAMP, Blocks.AIR))
+                .thenWaitUntil(() -> helper.assertFalse(level.getBlockState(at).getBlock() instanceof LightBlock,
+                        "the light went with the lamp"))
+                .thenExecute(() -> helper.setBlock(ceiling, Blocks.AIR))
+                .thenSucceed();
     }
 
     /* The light the block at {@code pos} gives. */

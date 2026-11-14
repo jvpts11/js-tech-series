@@ -562,7 +562,10 @@ public final class MovingStructurePhysicsGameTests {
                 })
                 .thenWaitUntil(() -> helper.assertTrue(item[0].getX() > start[0] + 0.3,
                         "the air rushing out pulls a sheet of paper east, to the hole: " + item[0].getX() + " from "
-                                + start[0]))
+                                + start[0] + "; the paper " + (item[0].isRemoved() ? "gone" : "at height "
+                                + item[0].getY()) + ", the room " + SealedRooms.roomAt(level, inside).map(room ->
+                                "at " + room.air().pressure()).orElse("lost") + ", the hole "
+                                + level.getBlockState(wall)))
                 .thenExecute(() -> {
                     item[0].discard();
                     MovingStructures.takeAway(cabin);

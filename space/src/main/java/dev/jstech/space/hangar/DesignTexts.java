@@ -22,6 +22,17 @@ public final class DesignTexts {
     public static final TextKey MISFIT = TextKey.of("jsspace.design.misfit", "Part %s does not fit");
     public static final TextKey NO_ENGINE = TextKey.of("jsspace.design.no_engine", "S%s has no engine");
     public static final TextKey NO_PROPELLANT = TextKey.of("jsspace.design.no_propellant", "S%s has no propellant");
+    public static final TextKey ENGINE_NOT_AT_FOOT = TextKey.of("jsspace.design.engine_not_at_foot",
+            "S%s: its engine must be at its foot");
+    public static final TextKey CAPSULES = TextKey.of("jsspace.design.capsules", "More than one capsule");
+    public static final TextKey CAPSULE_NOT_ON_TOP = TextKey.of("jsspace.design.capsule_not_on_top",
+            "The capsule must be on top");
+    public static final TextKey LANDER_NOT_ON_TOP = TextKey.of("jsspace.design.lander_not_on_top",
+            "The lander must be on top");
+    public static final TextKey ASCENT_ALONE = TextKey.of("jsspace.design.ascent_alone",
+            "The lander's ascent stage needs its descent stage under it");
+    public static final TextKey NOTHING_FLIES_IT = TextKey.of("jsspace.design.nothing_flies_it",
+            "No capsule or lander to fly it");
     public static final TextKey STAYS_DOWN = TextKey.of("jsspace.design.stays_down", "Too weak to lift off");
     public static final TextKey TOO_TALL = TextKey.of("jsspace.design.too_tall", "%s tall, at most %s");
     public static final TextKey TOO_WIDE = TextKey.of("jsspace.design.too_wide", "%s wide, the door %s");
