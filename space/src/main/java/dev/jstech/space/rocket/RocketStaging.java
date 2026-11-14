@@ -41,7 +41,8 @@ import net.minecraft.world.phys.Vec3;
  * is above a stage, that stage and its separation ring part off as a body of their own with a jolt, the ring's retro
  * rockets pushing it away, each of its formed parts drawing itself from one of its blocks; the flight computer draws
  * only what is left, and the stage goes where its fate says ({@link StageFlights}). The stage that holds the flight
- * computer is never let go.
+ * computer is never let go. Its boosters come loose before the first stage they hang at, once their burn is behind:
+ * each pushed out from the core the way it stands, a body of its own falling where the first stage was set to go.
  */
 public final class RocketStaging {
 
@@ -71,8 +72,13 @@ public final class RocketStaging {
         final RocketStack stack = design.get().stack();
         final int count = RocketStages.stages(parts, stack).size();
         final int spent = ascent.burn() < burns.size() ? burns.get(ascent.burn()).stage() - 1 : count - 1;
+        final BlockPos at = computer.getBlockPos().offset(foot.get());
+        // The boosters come loose once their burn is behind, before the stage they hang at goes on burning.
+        if (!computer.boostersGone() && burnt(burns, ascent.burn())) {
+            separateBoosters(level, body, computer, parts, stack, at, false);
+        }
         for (int stage = computer.separated() + 1; stage <= spent; stage++) {
-            separate(level, body, computer, parts, stack, computer.getBlockPos().offset(foot.get()), stage, false);
+            separate(level, body, computer, parts, stack, at, stage, false);
         }
     }
 
@@ -130,6 +136,10 @@ public final class RocketStaging {
                                  final FlightComputerBlockEntity computer,
                                  final Map<ResourceLocation, RocketPart> parts, final RocketStack stack,
                                  final BlockPos foot, final int stage, final boolean left) {
+        if (stage == 1 && !computer.boostersGone()) {
+            // The boosters hang at the first stage's engine: they go before it, whatever is left in them.
+            separateBoosters(level, body, computer, parts, stack, foot, left);
+        }
         final List<Integer> sections = RocketStages.stage(parts, stack, stage);
         final BuildPlan plan = RocketPlans.of(level, stack);
         for (final PlanSpot spot : plan.spots()) {
@@ -139,13 +149,108 @@ public final class RocketStaging {
                 return;
             }
         }
+        final Parting parting = parting(level, plan, foot, Set.copyOf(sections));
+        computer.letGo(stage, sections);
+        if (parting.places().isEmpty()) {
+            return;
+        }
+        final Optional<StructureUuid> piece = body.partOff(level, parting.places(), Direction.DOWN,
+                left ? 0 : parting.mass() * KICK);
+        final Vec3 ring = MovingStructures.toWorld(body, Vec3.atBottomCenterOf(foot.above(parting.top() + 1)));
+        Effects.at(level, SEPARATION, ring).reach(SEEN).send();
+        final Vec3 under = MovingStructures.toWorld(body, Vec3.atBottomCenterOf(foot.above(parting.bottom())));
+        if (piece.isPresent() && !left) {
+            StageFlights.parting(level, body, piece.get(), stage, RocketStages.dryMass(parts, stack, stage),
+                    parting.bottom(), under);
+        }
+    }
+
+    /*
+     * Lets every booster of the rocket {@code body} go, its foot at {@code foot} in the yard, each a body of its own:
+     * pushed out from the core the way it stands from it, it falls where its first stage was set to go, never to a
+     * platform; or, when {@code left} on the ground, unpushed, standing where it stands.
+     */
+    private static void separateBoosters(final ServerLevel level, final MovingStructure body,
+                                         final FlightComputerBlockEntity computer,
+                                         final Map<ResourceLocation, RocketPart> parts, final RocketStack stack,
+                                         final BlockPos foot, final boolean left) {
+        final List<Integer> numbers = RocketPieces.boosterNumbers(stack);
+        computer.letGoBoosters(numbers);
+        if (numbers.isEmpty()) {
+            return;
+        }
+        final BuildPlan plan = RocketPlans.of(level, stack);
+        final List<RocketPieces.Piece> pieces = RocketPieces.of(parts, stack);
+        int from = 0;
+        while (from < pieces.size()) {
+            final RocketPieces.Piece first = pieces.get(from);
+            int to = from + 1;
+            while (to < pieces.size() && first.inBooster() && pieces.get(to).section() == first.section()
+                    && pieces.get(to).booster() == first.booster()) {
+                to++;
+            }
+            if (first.inBooster()) {
+                final Set<Integer> mine = new HashSet<>();
+                final List<RocketStack.Part> segments = new ArrayList<>();
+                for (int k = from; k < to; k++) {
+                    mine.add(pieces.get(k).number());
+                    segments.add(pieces.get(k).part());
+                }
+                letGoBooster(level, body, foot, parting(level, plan, foot, mine), outward(first),
+                        RocketStages.boosterDryMass(parts, segments), left);
+            }
+            from = to;
+        }
+    }
+
+    /* Lets one booster go, its blocks {@code parting}, pushed {@code way}, {@code dry} kilograms empty. */
+    private static void letGoBooster(final ServerLevel level, final MovingStructure body, final BlockPos foot,
+                                     final Parting parting, final Direction way, final double dry,
+                                     final boolean left) {
+        if (parting.places().isEmpty()) {
+            return;
+        }
+        final Optional<StructureUuid> piece = body.partOff(level, parting.places(), way,
+                left ? 0 : parting.mass() * KICK);
+        final Vec3 nose = MovingStructures.toWorld(body, Vec3.atBottomCenterOf(foot.above(parting.top() + 1)));
+        Effects.at(level, SEPARATION, nose).reach(SEEN).send();
+        final Vec3 under = MovingStructures.toWorld(body, Vec3.atBottomCenterOf(foot.above(parting.bottom())));
+        if (piece.isPresent() && !left) {
+            StageFlights.parting(level, body, piece.get(), RocketStages.BOOSTERS, dry, parting.bottom(), under);
+        }
+    }
+
+    /* The way a booster standing at {@code piece}'s place is pushed off: out from the core, the side it stands on. */
+    private static Direction outward(final RocketPieces.Piece piece) {
+        if (Math.abs(piece.x()) >= Math.abs(piece.z())) {
+            return piece.x() >= 0 ? Direction.EAST : Direction.WEST;
+        }
+        return piece.z() >= 0 ? Direction.SOUTH : Direction.NORTH;
+    }
+
+    /* Whether the climb, lighting the burn {@code lit}, is past the boosters' burn: they are spent. */
+    private static boolean burnt(final List<StageMath.Burn> burns, final int lit) {
+        for (int k = 0; k < Math.min(lit, burns.size()); k++) {
+            if (burns.get(k).boosters()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /*
+     * The blocks standing at {@code foot} of the plan's parts {@code parts}, with their mass and their lowest and
+     * highest layers, one block of each formed part among them now drawing the part itself.
+     */
+    private static Parting parting(final ServerLevel level, final BuildPlan plan, final BlockPos foot,
+                                   final Set<Integer> parts) {
         final List<BlockPos> places = new ArrayList<>();
         final Set<String> drawn = new HashSet<>();
         double mass = 0;
         int bottom = Integer.MAX_VALUE;
         int top = Integer.MIN_VALUE;
         for (final PlanSpot spot : plan.spots()) {
-            if (!sections.contains(spot.part())) {
+            if (!parts.contains(spot.part())) {
                 continue;
             }
             final BlockPos at = foot.offset(spot.at());
@@ -166,17 +271,17 @@ public final class RocketStaging {
                 }
             }
         }
-        computer.letGo(stage, sections);
-        if (places.isEmpty()) {
-            return;
-        }
-        final Optional<StructureUuid> piece = body.partOff(level, places, Direction.DOWN, left ? 0 : mass * KICK);
-        final Vec3 ring = MovingStructures.toWorld(body, Vec3.atBottomCenterOf(foot.above(top + 1)));
-        Effects.at(level, SEPARATION, ring).reach(SEEN).send();
-        final Vec3 under = MovingStructures.toWorld(body, Vec3.atBottomCenterOf(foot.above(bottom)));
-        if (piece.isPresent() && !left) {
-            StageFlights.parting(level, body, piece.get(), stage, RocketStages.dryMass(parts, stack, stage), bottom,
-                    under);
-        }
+        return new Parting(List.copyOf(places), mass, bottom, top);
+    }
+
+    /**
+     * What parts off a rocket.
+     *
+     * @param places its blocks, in the yard
+     * @param mass   their mass, in kilograms
+     * @param bottom its lowest layer, in blocks over the rocket's foot
+     * @param top    its highest layer
+     */
+    private record Parting(List<BlockPos> places, double mass, int bottom, int top) {
     }
 }

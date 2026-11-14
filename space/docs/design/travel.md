@@ -28,7 +28,7 @@ On the Moon and on Mars a landed rocket lifts off from the ground with no pad, o
 
 ### Stages
 
-A stage whose engines have burnt out below the one burning is let go: its blocks and its separation ring part off with a jolt and a puff round the ring, the ring's retro rockets push it away, and it goes on as a body of its own, its parts still drawn whole. Side boosters burn with the first stage and come loose before it. The rocket climbs on as it was. Before launch, on the flight computer's STG page, the player sets where each stage goes:
+A stage whose engines have burnt out below the one burning is let go: its blocks and its separation ring part off with a jolt and a puff round the ring, the ring's retro rockets push it away, and it goes on as a body of its own, its parts still drawn whole. Side boosters burn with the first stage and come loose before it, each pushed out from the core, and fall where the first stage is set to go below, in a fall zone round the pad when that stage comes back to a platform. The rocket climbs on as it was. Before launch, on the flight computer's STG page, the player sets where each stage goes:
 
 - **a fall zone**: a circle round the pad with a radius the player chooses (64, 128, 250 or 500 blocks); the stage falls somewhere in it;
 - **a landing platform**: a stage that has landing legs and an engine can come back. It flies back over its platform, relights its engines and comes straight down on its middle, as Falcon 9 boosters have done since 2015. A platform takes one stage at a time, and a floating platform on a raft or a barge works the same way, as SpaceX's drone ships do;

@@ -52,8 +52,6 @@ public final class HangarRolloutGameTests {
     /* The tallest rocket's tank, in layers, and its boosters'. */
     private static final int TALLEST_TANK = 89;
     private static final int BOOSTER_TANK = 20;
-    /* How far into the deck's length, from the rocket's axis toward the tower, the crawler stands under its middle. */
-    private static final int UNDER_DECK = 2;
     /* How high the crawler's engine stands over the bay's floor, its tracks on the floor's gravel. */
     private static final int ENGINE_UP = 2;
     /*
@@ -95,8 +93,9 @@ public final class HangarRolloutGameTests {
                     }
                     helper.assertTrue(plan.complete(), "the tallest rocket and its launcher stand whole");
                     laid[0] = plan;
-                    // The crawler under the deck's middle; its crawlerway out of the door to the arena's edge.
-                    engine[0] = bay.pad().relative(tower, UNDER_DECK).above(ENGINE_UP);
+                    // The crawler under the deck's middle, which its boosters' feet widen; its crawlerway out of the
+                    // door to the arena's edge.
+                    engine[0] = bay.pad().relative(tower, underDeck(plan)).above(ENGINE_UP);
                     for (final CrawlerLayout.Spot spot : CrawlerLayout.spots(engine[0], Direction.SOUTH)) {
                         level.setBlockAndUpdate(spot.at(), spot.kind().block().defaultBlockState());
                     }
@@ -122,7 +121,8 @@ public final class HangarRolloutGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(level.getBlockState(top(laid[0]).relative(Direction.NORTH,
                         steps[0])).getBlock() != Blocks.AIR && level.getBlockState(deck(laid[0]).relative(
                         Direction.NORTH, steps[0])).is(LauncherBlocks.LAUNCHER_DECK.get()), "the tallest rocket is set"
-                        + " down outside on its launcher, its top block with it"))
+                        + " down outside on its launcher, its top block with it: still in the bay "
+                        + level.getBlockState(top(laid[0])) + ", " + level.getBlockState(deck(laid[0]))))
                 .thenWaitUntil(() -> helper.assertTrue(!open(level, door), "and the door shuts behind it"))
                 .thenExecute(() -> helper.assertTrue(level.getBlockState(top(laid[0])).isAir(),
                         "nothing of it is left in the bay"))
@@ -151,6 +151,22 @@ public final class HangarRolloutGameTests {
     private static BlockPos deck(final PlannedBuild plan) {
         return plan.where(plan.plan().spots().stream().filter(spot -> spot.block().equals(LauncherBlocks
                 .LAUNCHER_DECK.getId())).findFirst().orElseThrow());
+    }
+
+    /*
+     * How far from the rocket's axis toward the tower the middle of its launcher's deck is, as {@code plan} lays it:
+     * the crawler stands under it there, as a crawler carries only a launcher centred over it.
+     */
+    private static int underDeck(final PlannedBuild plan) {
+        int near = Integer.MAX_VALUE;
+        int far = Integer.MIN_VALUE;
+        for (final PlanSpot spot : plan.plan().spots()) {
+            if (spot.block().equals(LauncherBlocks.LAUNCHER_DECK.getId())) {
+                near = Math.min(near, spot.at().getZ());
+                far = Math.max(far, spot.at().getZ());
+            }
+        }
+        return (near + far) / 2;
     }
 
     private static boolean open(final ServerLevel level, final BlockPos door) {

@@ -33,6 +33,10 @@ public final class DesignTexts {
             "The lander's ascent stage needs its descent stage under it");
     public static final TextKey NOTHING_FLIES_IT = TextKey.of("jsspace.design.nothing_flies_it",
             "No capsule or lander to fly it");
+    public static final TextKey BOOSTERS_AT_ENGINE = TextKey.of("jsspace.design.boosters_at_engine",
+            "Boosters hang only beside the first stage's engine");
+    public static final TextKey BOOSTER_COLUMN = TextKey.of("jsspace.design.booster_column",
+            "A booster is an engine at its foot with tanks of its size over it");
     public static final TextKey STAYS_DOWN = TextKey.of("jsspace.design.stays_down", "Too weak to lift off");
     public static final TextKey TOO_TALL = TextKey.of("jsspace.design.too_tall", "%s tall, at most %s");
     public static final TextKey TOO_WIDE = TextKey.of("jsspace.design.too_wide", "%s wide, the door %s");

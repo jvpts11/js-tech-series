@@ -47,22 +47,22 @@ public final class RocketLayout {
         final List<Laid> out = new ArrayList<>();
         final List<RocketPartModels.Placed> placed = RocketPartModels.of(parts, kits, stack, false);
         int layerOfPart = 0;
-        int lastSection = -1;
+        int lastPart = -1;
         for (final RocketPartModels.Placed model : placed) {
-            final RocketStack.Section section = stack.sections().get(model.section());
-            final RocketPart part = parts.get(section.part().id());
-            final RocketKit kit = kits.get(section.part().id());
-            layerOfPart = model.section() == lastSection ? layerOfPart + 1 : 0;
-            lastSection = model.section();
+            final RocketStack.Part placedPart = model.piece().part();
+            final RocketPart part = parts.get(placedPart.id());
+            final RocketKit kit = kits.get(placedPart.id());
+            layerOfPart = model.part() == lastPart ? layerOfPart + 1 : 0;
+            lastPart = model.part();
             if (part == null || kit == null) {
                 continue;
             }
             final List<List<String>> layers;
             if (part.stretches()) {
-                final RocketPart below = model.section() > 0 ? parts.get(stack.sections().get(model.section() - 1)
-                        .part().id()) : null;
+                final RocketStack.Part under = model.piece().below();
+                final RocketPart below = under == null ? null : parts.get(under.id());
                 final boolean onEngine = below != null && below.kind() == RocketPart.Kind.ENGINE;
-                final Optional<List<List<String>>> built = kit.built(Math.max(1, section.part().layers()), onEngine);
+                final Optional<List<List<String>>> built = kit.built(Math.max(1, placedPart.layers()), onEngine);
                 if (built.isEmpty() || layerOfPart >= built.get().size()) {
                     continue;
                 }
@@ -105,7 +105,10 @@ public final class RocketLayout {
             cells = List.copyOf(cells);
         }
 
-        /** Where its cell {@code x, layer, z} is from the middle of the rocket's foot, turned as its part is. */
+        /**
+         * Where its cell {@code x, layer, z} is from the middle of the rocket's foot, turned as its part is about its
+         * own middle: the rocket's axis, or a booster's beside it.
+         */
         public BlockPos at(final int x, final int layer, final int z) {
             int dx = x - (this.diameter - 1) / 2;
             int dz = z - (this.diameter - 1) / 2;
@@ -114,13 +117,13 @@ public final class RocketLayout {
                 dx = -dz;
                 dz = was;
             }
-            return new BlockPos(dx, this.placed.y() + layer, dz);
+            return new BlockPos(this.placed.x() + dx, this.placed.y() + layer, this.placed.z() + dz);
         }
 
         /** The cell of it the place {@code offset} from the middle of the rocket's foot is, turned back. */
         public long cellOf(final BlockPos offset) {
-            int dx = offset.getX();
-            int dz = offset.getZ();
+            int dx = offset.getX() - this.placed.x();
+            int dz = offset.getZ() - this.placed.z();
             for (int t = 0; t < Math.floorMod(this.placed.turns(), TURNS.size()); t++) {
                 final int was = dz;
                 dz = -dx;

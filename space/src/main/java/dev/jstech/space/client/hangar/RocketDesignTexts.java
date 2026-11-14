@@ -29,7 +29,8 @@ public final class RocketDesignTexts {
     public static final TextKey OFFSET = TextKey.of("jsspace.design.screen.offset", "Offset");
     public static final TextKey ROTATE = TextKey.of("jsspace.design.screen.rotate", "Rotate");
     public static final TextKey ROOT = TextKey.of("jsspace.design.screen.root", "Root");
-    public static final TextKey MIRROR = TextKey.of("jsspace.design.screen.mirror", "Mirror x%s");
+    /* The mirror's count after the tool's name, beside its lit button, short to leave room for the counts. */
+    public static final TextKey MIRROR = TextKey.of("jsspace.design.screen.mirror", "x%s");
     public static final TextKey CRANE_READY = TextKey.of("jsspace.design.screen.crane_ready", "Crane ready");
     public static final TextKey COUNTS = TextKey.of("jsspace.design.screen.counts", "%s stages %s blk");
     public static final TextKey COUNT_ONE = TextKey.of("jsspace.design.screen.count_one", "1 stage %s blk");

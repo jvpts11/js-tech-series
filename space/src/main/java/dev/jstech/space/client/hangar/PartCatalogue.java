@@ -57,11 +57,6 @@ public final class PartCatalogue {
         };
     }
 
-    /** Whether a part of {@code kind} hangs at another's side, in a ring the mirror makes, rather than on top. */
-    public static boolean hangs(final RocketPart.Kind kind) {
-        return kind == RocketPart.Kind.SOLID_BOOSTER;
-    }
-
     /** A tab of the bins: what it holds, its icon, its name. */
     public enum Category {
         COMMAND(RocketDesignArt.CAPSULE, RocketDesignTexts.COMMAND),

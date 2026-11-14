@@ -21,6 +21,7 @@ import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.rocket.RocketAscent;
+import dev.jstech.space.rocket.RocketPieces;
 import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.Rockets;
 import dev.jstech.space.rocket.StageFate;
@@ -123,8 +124,9 @@ public final class RocketLaunch {
                 .filter(burns -> !burns.isEmpty()).map(burns -> burns.get(0).startMass()).orElse(0.0);
         body.move(RocketAscent.lift(mass, body.pose().y()));
         if (body.entity() != null) {
-            // Its plume from the first second; its flight computer keeps it burning every second after.
-            ClimbEffects.burning(level, body);
+            // Its plumes from the first second, its boosters' too; its flight computer keeps them every second after.
+            ClimbEffects.burning(level, body, Rockets.get(level.getServer(), body.id()).map(rocket ->
+                    RocketPieces.boosterFeet(RocketParts.all(level), rocket.stack())).orElse(List.of()));
         }
     }
 }

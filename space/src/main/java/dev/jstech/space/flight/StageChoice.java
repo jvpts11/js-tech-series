@@ -51,6 +51,14 @@ public record StageChoice(int radius, Optional<UUID> platform) {
         return this.platform.isPresent();
     }
 
+    /**
+     * Where the boosters of a stage set as this goes: to the same fall zone; for a stage coming back to a platform, to
+     * a zone of the first radius, as boosters have no legs to land on.
+     */
+    public StageChoice boosters() {
+        return lands() ? zone(FIRST_RADIUS) : this;
+    }
+
     /** A fall zone of the next of {@link #RADII}, the smallest after the largest. */
     public StageChoice nextRadius() {
         final int at = RADII.indexOf(this.radius);

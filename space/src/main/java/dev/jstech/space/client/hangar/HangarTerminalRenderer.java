@@ -75,7 +75,7 @@ public final class HangarTerminalRenderer implements BlockEntityRenderer<HangarT
         }
         final List<RocketPartModels.Placed> placed = RocketPartModels.of(RocketParts.all(level),
                 RocketKits.all(level), plan.get().stack(), false).stream()
-                .filter(model -> formed.contains(model.section())).toList();
+                .filter(model -> formed.contains(model.part())).toList();
         final BlockPos from = terminal.getBlockPos();
         final BlockPos foot = at.get();
         poses.pushPose();

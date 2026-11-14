@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import net.minecraft.resources.ResourceLocation;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The formed models of the skeleton's rocket parts, round as the approved parts are: each block of a part's kit is a
@@ -87,56 +88,83 @@ public final class RocketPartModels {
     }
 
     /**
-     * The models {@code stack} is drawn with, from the bottom up, each with the height its foot stands at; a part
-     * whose model is not known is left out, its height kept. {@code legsDown} spreads the legs, as for a landing.
+     * The models {@code stack} is drawn with, its core's from the bottom up and then its boosters', each with the
+     * height its foot stands at, a booster's foot level with the part it hangs at; a part whose model is not known is
+     * left out, its height kept. {@code legsDown} spreads the legs, as for a landing.
      */
     public static List<Placed> of(final Map<ResourceLocation, RocketPart> parts,
                                   final Map<ResourceLocation, RocketKit> kits, final RocketStack stack,
                                   final boolean legsDown) {
         final List<Placed> placed = new ArrayList<>();
+        final List<RocketPieces.Piece> pieces = RocketPieces.of(parts, stack);
+        final int[] feet = new int[stack.sections().size()];
         int y = 0;
-        final List<RocketStack.Section> sections = stack.sections();
-        for (int k = 0; k < sections.size(); k++) {
-            final RocketStack.Part here = sections.get(k).part();
-            final RocketPart part = parts.get(here.id());
-            if (part == null) {
-                continue;
+        for (int k = 0; k < pieces.size(); k++) {
+            final RocketPieces.Piece piece = pieces.get(k);
+            if (!piece.inBooster()) {
+                feet[piece.section()] = y;
+            } else if (k == 0 || !sameColumn(pieces.get(k - 1), piece)) {
+                y = feet[piece.section()];
             }
-            final RocketPart below = k > 0 ? parts.get(sections.get(k - 1).part().id()) : null;
-            final RocketPart above = k + 1 < sections.size() ? parts.get(sections.get(k + 1).part().id()) : null;
-            final String name = here.id().getPath();
-            if (part.stretches()) {
-                final RocketKit kit = kits.get(here.id());
-                final int count = Math.max(1, here.layers());
-                final boolean onEngine = below != null && below.kind() == RocketPart.Kind.ENGINE;
-                final boolean foot = kit != null && kit.foot().isPresent() && onEngine && count > 1;
-                final int body = count - (foot ? 1 : 0);
-                if (foot) {
-                    placed.add(new Placed(id(name + "_foot"), y++, k, here.turns()));
-                }
-                for (int layer = 0; layer < body; layer++) {
-                    final String which = body == 1 ? "_alone" : layer == 0 ? "_bottom" : layer == body - 1 ? "_top"
-                            : "_middle";
-                    placed.add(new Placed(id(name + which), y++, k, here.turns()));
-                }
-                continue;
-            }
-            String model = name;
-            if (part.kind() == RocketPart.Kind.SEPARATION_RING && vacuumEngine(above)) {
-                model = name + "_skirt";
-            } else if (part.kind() == RocketPart.Kind.INSTRUMENT_RING && above != null
-                    && above.kind() == RocketPart.Kind.LANDER_DESCENT) {
-                model = name + "_adapter";
-            } else if ((part.kind() == RocketPart.Kind.LANDING_LEGS || part.kind() == RocketPart.Kind.LANDER_DESCENT)
-                    && !legsDown) {
-                model = name + "_stowed";
-            }
-            if (MODELS.containsKey(model)) {
-                placed.add(new Placed(id(model), y, k, here.turns()));
-            }
-            y += part.height();
+            final RocketPieces.Piece over = k + 1 < pieces.size() && sameColumn(piece, pieces.get(k + 1))
+                    ? pieces.get(k + 1) : null;
+            y = place(parts, kits, piece, over == null ? null : parts.get(over.part().id()), legsDown, y, placed);
         }
         return List.copyOf(placed);
+    }
+
+    /*
+     * Adds the models of the part {@code piece}, its foot at {@code foot} and {@code above} over it in its column, to
+     * {@code placed}; gives the height its top stands at.
+     */
+    private static int place(final Map<ResourceLocation, RocketPart> parts,
+                             final Map<ResourceLocation, RocketKit> kits, final RocketPieces.Piece piece,
+                             @Nullable final RocketPart above, final boolean legsDown, final int foot,
+                             final List<Placed> placed) {
+        final RocketStack.Part here = piece.part();
+        final RocketPart part = parts.get(here.id());
+        if (part == null) {
+            return foot;
+        }
+        final RocketPart below = piece.below() == null ? null : parts.get(piece.below().id());
+        final String name = here.id().getPath();
+        int y = foot;
+        if (part.stretches()) {
+            final RocketKit kit = kits.get(here.id());
+            final int count = Math.max(1, here.layers());
+            final boolean onEngine = below != null && below.kind() == RocketPart.Kind.ENGINE;
+            final boolean withFoot = kit != null && kit.foot().isPresent() && onEngine && count > 1;
+            final int body = count - (withFoot ? 1 : 0);
+            if (withFoot) {
+                placed.add(new Placed(id(name + "_foot"), y++, piece));
+            }
+            for (int layer = 0; layer < body; layer++) {
+                final String which = body == 1 ? "_alone" : layer == 0 ? "_bottom" : layer == body - 1 ? "_top"
+                        : "_middle";
+                placed.add(new Placed(id(name + which), y++, piece));
+            }
+            return y;
+        }
+        String model = name;
+        if (part.kind() == RocketPart.Kind.SEPARATION_RING && vacuumEngine(above)) {
+            model = name + "_skirt";
+        } else if (part.kind() == RocketPart.Kind.INSTRUMENT_RING && above != null
+                && above.kind() == RocketPart.Kind.LANDER_DESCENT) {
+            model = name + "_adapter";
+        } else if ((part.kind() == RocketPart.Kind.LANDING_LEGS || part.kind() == RocketPart.Kind.LANDER_DESCENT)
+                && !legsDown) {
+            model = name + "_stowed";
+        }
+        if (MODELS.containsKey(model)) {
+            placed.add(new Placed(id(model), y, piece));
+        }
+        return y + part.height();
+    }
+
+    /* Whether {@code next} stands on {@code piece} in one column: the core's, or one booster's. */
+    private static boolean sameColumn(final RocketPieces.Piece piece, final RocketPieces.Piece next) {
+        return piece.inBooster() == next.inBooster() && (!piece.inBooster()
+                || piece.section() == next.section() && piece.booster() == next.booster());
     }
 
     private static boolean vacuumEngine(final RocketPart part) {
@@ -151,16 +179,40 @@ public final class RocketPartModels {
     /**
      * A model of a rocket's part, where it stands in the rocket.
      *
-     * @param model   the model's id
-     * @param y       the height its foot stands at, in blocks from the rocket's foot
-     * @param section the place of its part in the rocket's stack, from the bottom
-     * @param turns   the quarter turns its part was turned about the rocket's axis, clockwise seen from above
+     * @param model the model's id
+     * @param y     the height its foot stands at, in blocks from the rocket's foot
+     * @param piece the part it draws, as the rocket's plan numbers it
      */
-    public record Placed(ResourceLocation model, int y, int section, int turns) {
+    public record Placed(ResourceLocation model, int y, RocketPieces.Piece piece) {
 
-        /** A model of a part not turned. */
-        public Placed(final ResourceLocation model, final int y, final int section) {
-            this(model, y, section, 0);
+        /** The number of its part in the rocket's plan. */
+        public int part() {
+            return this.piece.number();
+        }
+
+        /** The place in the rocket's stack of its part, or of the part its booster hangs at. */
+        public int section() {
+            return this.piece.section();
+        }
+
+        /** The quarter turns its part was turned about the rocket's axis, clockwise seen from above. */
+        public int turns() {
+            return this.piece.part().turns();
+        }
+
+        /** How far its middle stands east of the rocket's axis, in blocks: a booster's, beside its part. */
+        public int x() {
+            return this.piece.x();
+        }
+
+        /** How far its middle stands south of the rocket's axis, in blocks. */
+        public int z() {
+            return this.piece.z();
+        }
+
+        /** Whether it draws a segment of a booster. */
+        public boolean booster() {
+            return this.piece.inBooster();
         }
     }
 }

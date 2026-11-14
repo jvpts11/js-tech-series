@@ -55,19 +55,21 @@ public final class RocketPartsRenderer {
             if (model.isEmpty()) {
                 continue;
             }
-            final String name = part.section() + "@" + part.y();
+            final String name = part.part() + "@" + part.y();
             final KitInstance instance = KitAnimations.part(owner, name, model.get());
             final Optional<RocketCabins.Cabin> cabin = RocketCabins.of(part.model());
             cabin.ifPresent(live -> instance.animate(KitClock.frame(), KitClock.now(),
                     RocketCabinRenderer.driver(live), readings, IAnimationListener.NONE));
             poses.pushPose();
-            poses.translate(0, part.y(), 0);
+            // A booster's parts stand beside the core, the rest on its axis.
+            poses.translate(part.x(), part.y(), part.z());
             poses.mulPose(Axis.YN.rotationDegrees(QUARTER * part.turns()));
             KitRenderer.draw(instance, ModelDefinition.Variant.NONE, owner, poses, buffers, light, overlay, null,
                     owner.getLevel(), true);
             if (cabin.isPresent()) {
                 // The cabin stands on the rocket's foot, wherever the block that draws it is.
-                final double distance = eye.distanceToSqr(Vec3.atBottomCenterOf(foot).add(0, part.y(), 0));
+                final double distance = eye.distanceToSqr(Vec3.atBottomCenterOf(foot).add(part.x(), part.y(),
+                        part.z()));
                 RocketCabinRenderer.draw(owner, name, instance, cabin.get(), readings, poses, buffers, light,
                         distance);
             }

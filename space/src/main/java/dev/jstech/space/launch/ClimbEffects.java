@@ -14,6 +14,8 @@ import dev.jstech.space.JsSpace;
 import dev.jstech.space.rocket.StageMath;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.SpaceClimbs;
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
@@ -41,13 +43,26 @@ public final class ClimbEffects {
 
     /** {@code body}'s engines burn this second at its foot: their plume, and in air their trail. */
     public static void burning(final ServerLevel level, final MovingStructure body) {
+        burning(level, body, List.of());
+    }
+
+    /**
+     * {@code body}'s engines burn this second at its foot, and its boosters' at {@code boosters}, each how far from its
+     * foot a booster's foot stands: a plume under each, and in air their trail.
+     */
+    public static void burning(final ServerLevel level, final MovingStructure body, final List<Vec3> boosters) {
         final Vec3 foot = new Vec3(body.pose().x(), body.pose().y(), body.pose().z());
         final double air = airAt(level, foot.y);
-        Effects.at(level, plumeIn(air), foot).facing(new Vec3(0, -1, 0)).following(body.entity()).reach(SEEN)
-                .send();
-        if (air > FAINTEST) {
-            Effects.at(level, TRAIL, foot).facing(new Vec3(0, -1, 0)).scale((float) Math.min(1, air)).reach(SEEN)
+        final List<Vec3> feet = new ArrayList<>();
+        feet.add(foot);
+        boosters.forEach(booster -> feet.add(foot.add(booster)));
+        for (final Vec3 under : feet) {
+            Effects.at(level, plumeIn(air), under).facing(new Vec3(0, -1, 0)).following(body.entity()).reach(SEEN)
                     .send();
+            if (air > FAINTEST) {
+                Effects.at(level, TRAIL, under).facing(new Vec3(0, -1, 0)).scale((float) Math.min(1, air))
+                        .reach(SEEN).send();
+            }
         }
     }
 

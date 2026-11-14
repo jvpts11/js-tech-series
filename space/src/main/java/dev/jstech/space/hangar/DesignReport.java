@@ -13,6 +13,7 @@ import dev.jstech.core.text.Text;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
+import dev.jstech.space.rocket.RocketPieces;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.StageMath;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 
@@ -139,24 +141,30 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
         return new Stage(number, Optional.ofNullable(engine), propellant, thrust, ratio, deltaV);
     }
 
-    /* How wide the rocket stands: its widest part, a part with boosters as wide as it and a booster each side. */
+    /*
+     * How wide the rocket stands, across whichever way it is wider: from the far side of a booster on one side to the
+     * far side of the core, or of a booster across from it; a single booster widens it on its side alone.
+     */
     private static int width(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack) {
-        int widest = 0;
-        for (final RocketStack.Section section : stack.sections()) {
-            final RocketPart part = parts.get(section.part().id());
+        int west = 0;
+        int east = 0;
+        int north = 0;
+        int south = 0;
+        boolean known = false;
+        for (final RocketPieces.Piece piece : RocketPieces.of(parts, stack)) {
+            final RocketPart part = parts.get(piece.part().id());
             if (part == null) {
                 continue;
             }
-            int across = Math.max(part.diameter(), part.topDiameter());
-            for (final List<RocketStack.Part> booster : section.boosters()) {
-                final RocketPart foot = booster.isEmpty() ? null : parts.get(booster.get(0).id());
-                if (foot != null) {
-                    across = Math.max(across, part.diameter() + 2 * foot.diameter());
-                }
-            }
-            widest = Math.max(widest, across);
+            // Its diameter is odd: it reaches half of it, rounded down, past its middle block on each side.
+            final int half = Math.max(part.diameter(), part.topDiameter()) / 2;
+            west = Math.min(west, piece.x() - half);
+            east = Math.max(east, piece.x() + half);
+            north = Math.min(north, piece.z() - half);
+            south = Math.max(south, piece.z() + half);
+            known = true;
         }
-        return widest;
+        return known ? Math.max(east - west, south - north) + 1 : 0;
     }
 
     private static int seats(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack) {
@@ -169,10 +177,10 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
     }
 
     /*
-     * What the design lacks, warns of or has: no parts; a part that does not fit; a stage with propellant and no
-     * engine, or an engine and nothing to burn; too weak to lift off; taller than the hangar builds, or too wide to
-     * roll out through its door's slot; its crew, and the heat shield a crew needs to come home through air; and the
-     * tanks, filled at the pad.
+     * What the design lacks, warns of or has: no parts; a part that does not fit; a stack out of order, or boosters
+     * where they do not fly; a stage with propellant and no engine, or an engine and nothing to burn; too weak to lift
+     * off; taller than the hangar builds, or too wide to roll out through its door's slot; its crew, and the heat
+     * shield a crew needs to come home through air; and the tanks, filled at the pad.
      */
     private static List<Check> checks(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack,
                                       final List<Stage> stages, final double liftOff, final int height,
@@ -186,6 +194,7 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
         RocketStages.misfit(parts, stack).ifPresent(place -> faults.add(new Check(Severity.FAULT,
                 DesignTexts.MISFIT.with(place + 1))));
         order(parts, stack, faults);
+        boosters(parts, stack, faults);
         for (final Stage stage : stages) {
             if (stage.propellant() && stage.engine().isEmpty()) {
                 faults.add(new Check(Severity.FAULT, DesignTexts.NO_ENGINE.with(stage.number())));
@@ -276,6 +285,48 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
         } else {
             faults.add(new Check(Severity.FAULT, DesignTexts.NOTHING_FLIES_IT.text()));
         }
+    }
+
+    /*
+     * Whether its boosters hang where boosters fly, each fault with its reason: beside the first stage's engine alone,
+     * their feet on the deck with the core's, as they burn with that stage; and each an engine at its foot with tanks
+     * of its size over it, a column of the parts a rocket is built of.
+     */
+    private static void boosters(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack,
+                                 final List<Check> faults) {
+        final OptionalInt place = RocketStages.boosterPlace(parts, stack);
+        boolean column = true;
+        for (int k = 0; k < stack.sections().size(); k++) {
+            final List<List<RocketStack.Part>> hung = stack.sections().get(k).boosters();
+            if (!hung.isEmpty() && (place.isEmpty() || place.getAsInt() != k)) {
+                faults.add(new Check(Severity.FAULT, DesignTexts.BOOSTERS_AT_ENGINE.text()));
+            }
+            for (final List<RocketStack.Part> booster : hung) {
+                column &= column(parts, booster);
+            }
+        }
+        if (!column) {
+            faults.add(new Check(Severity.FAULT, DesignTexts.BOOSTER_COLUMN.text()));
+        }
+    }
+
+    /* Whether {@code booster} is an engine at its foot with at least one tank of its diameter over it, and no more. */
+    private static boolean column(final Map<ResourceLocation, RocketPart> parts,
+                                  final List<RocketStack.Part> booster) {
+        if (booster.size() < 2) {
+            return false;
+        }
+        final RocketPart foot = parts.get(booster.get(0).id());
+        if (foot == null || foot.kind() != RocketPart.Kind.ENGINE) {
+            return false;
+        }
+        for (int s = 1; s < booster.size(); s++) {
+            final RocketPart segment = parts.get(booster.get(s).id());
+            if (segment == null || segment.kind() != RocketPart.Kind.TANK || segment.diameter() != foot.diameter()) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /* Whether nothing stands over the place {@code below} but what belongs over a capsule: its escape tower, a port. */

@@ -215,8 +215,8 @@ public final class RocketDesignGameTests {
                 && DesignEdits.stretch(stack, 1, 0).sections().get(1).part().layers() == 1
                 && DesignEdits.stretch(stack, 1, 1_000).sections().get(1).part().layers() == DesignEdits.MOST_LAYERS,
                 "a tank built 6 tall, never under one layer nor over the most");
-        final RocketStack hung = DesignEdits.hang(stack, 1, part(TANK), 3);
-        helper.assertTrue(hung.sections().get(1).boosters().size() == 3, "the mirror hangs three round it");
+        final RocketStack hung = DesignEdits.hang(stack, 1, part(TANK), 4);
+        helper.assertTrue(hung.sections().get(1).boosters().size() == 4, "the mirror hangs four round it");
         final RocketStack taller = DesignEdits.hang(hung, 1, part(SEA_ENGINE), 1);
         helper.assertTrue(taller.sections().get(1).boosters().stream().allMatch(booster -> booster.size() == 2
                 && booster.get(1).id().equals(SEA_ENGINE)), "a segment stacks on each of them");

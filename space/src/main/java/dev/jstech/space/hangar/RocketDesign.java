@@ -27,10 +27,14 @@ public record RocketDesign(String name, RocketStack stack) {
 
     /** The longest name a design takes. */
     public static final int LONGEST_NAME = 24;
-    /** The most parts a design stacks, the most boosters a part holds at its side, the most segments a booster. */
+    /** The most parts a design stacks, the most segments a booster. */
     public static final int MOST_PARTS = 64;
-    public static final int MOST_BOOSTERS = 8;
     public static final int MOST_SEGMENTS = 16;
+    /**
+     * How many boosters may hang round a part, as the mirror steps through them: one, two or four, each a quarter
+     * turn from the last, so each stands on whole blocks.
+     */
+    public static final List<Integer> BOOSTERS = List.of(1, 2, 4);
     /** A design with no parts and no name, as a hangar's screen starts. */
     public static final RocketDesign EMPTY = new RocketDesign("", new RocketStack(List.of()));
     public static final Codec<RocketDesign> CODEC = RecordCodecBuilder.create(instance -> instance.group(
@@ -60,7 +64,7 @@ public record RocketDesign(String name, RocketStack stack) {
             return false;
         }
         for (final RocketStack.Section section : this.stack.sections()) {
-            if (section.boosters().size() > MOST_BOOSTERS) {
+            if (!section.boosters().isEmpty() && !BOOSTERS.contains(section.boosters().size())) {
                 return false;
             }
             for (final List<RocketStack.Part> booster : section.boosters()) {

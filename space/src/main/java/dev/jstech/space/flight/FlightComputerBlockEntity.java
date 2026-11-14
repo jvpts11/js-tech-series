@@ -47,6 +47,7 @@ import dev.jstech.space.rocket.BoilOff;
 import dev.jstech.space.rocket.CabinReadings;
 import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.RocketKitBlocks;
+import dev.jstech.space.rocket.RocketPieces;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.RocketStaging;
@@ -103,6 +104,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     private final ValueField<Map<Integer, StageChoice>> choices;
     private final ValueField<Map<Integer, ShownPlatform>> shown;
     private final IntField separated;
+    private final BoolField boostersGone;
     private final ValueField<TransferChoice> choice;
     private final ValueField<PlannedTransfer> executed;
     private final ValueField<Map<Integer, Integer>> lost;
@@ -215,6 +217,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         this.shown = fields().value("Shown", Codec.unboundedMap(SECTION, ShownPlatform.CODEC),
                 Map.<Integer, ShownPlatform>of()).toClient();
         this.separated = fields().integer("Separated", 0).save();
+        this.boostersGone = fields().flag("BoostersGone", false).save();
         // How the transfer is planned on its transfer page, and the plan it is set to fly.
         this.choice = fields().value("Choice", TransferChoice.CODEC, TransferChoice.CHEAPEST).save().toClient();
         this.executed = fields().nullable("Executed", PlannedTransfer.CODEC).save().toClient();
@@ -270,8 +273,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             CruiseFlight.second(server, carried, this);
             DescentFlight.second(server, carried, this);
             SurfaceLaunch.second(server, carried, this);
-            if (carried.motion() instanceof RocketAscent) {
-                ClimbEffects.burning(server, carried);
+            if (carried.motion() instanceof RocketAscent ascent) {
+                ClimbEffects.burning(server, carried, boostersBurning(server, carried, ascent));
             }
         }
         if (this.liftOff.get() == NOT_LIFTED) {
@@ -384,6 +387,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         this.choices.set(Map.of());
         this.shown.set(Map.of());
         this.separated.set(0);
+        this.boostersGone.set(false);
         // A new rocket starts its flight afresh: nothing of the last one's tanks, losses, plans or count stays.
         this.tanks.set(Map.of());
         this.boosters.set(Map.of());
@@ -423,10 +427,17 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return set == null ? Map.of() : set;
     }
 
-    /** Where each stage of its rocket goes once it flies from {@code dimension}, standing at {@code at}. */
+    /**
+     * Where each stage of its rocket goes once it flies from {@code dimension}, standing at {@code at}; and its
+     * boosters, as {@link RocketStages#BOOSTERS}, where its first stage goes, never to a platform.
+     */
     public Map<Integer, StageFate> fates(final ResourceKey<Level> dimension, final BlockPos at) {
         final Map<Integer, StageFate> out = new TreeMap<>();
         choices().forEach((stageNumber, choice) -> out.put(stageNumber, choice.fate(dimension, at)));
+        final StageChoice first = choices().get(1);
+        if (first != null) {
+            out.put(RocketStages.BOOSTERS, first.boosters().fate(dimension, at));
+        }
         return Map.copyOf(out);
     }
 
@@ -444,6 +455,20 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         left.removeAll(sections);
         this.formed.set(List.copyOf(left));
         this.separated.set(Math.max(this.separated.get(), stageNumber));
+        setChanged();
+    }
+
+    /** Whether its rocket has let its boosters go. */
+    public boolean boostersGone() {
+        return this.boostersGone.get();
+    }
+
+    /** Its rocket has let its boosters go, the parts of its plan {@code parts}: it draws them no more. */
+    public void letGoBoosters(final Collection<Integer> parts) {
+        final List<Integer> left = new ArrayList<>(formed());
+        left.removeAll(parts);
+        this.formed.set(List.copyOf(left));
+        this.boostersGone.set(true);
         setChanged();
     }
 
@@ -913,7 +938,25 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         return this.counted;
     }
 
-    /* The places in its rocket's stack of the parts its stages let go carried away. */
+    /*
+     * Where the feet of its rocket's boosters stand from its foot while they burn in the climb {@code ascent}, for
+     * their plumes; none once they are spent or gone.
+     */
+    private List<Vec3> boostersBurning(final ServerLevel server, final MovingStructure body,
+                                       final RocketAscent ascent) {
+        final Optional<RocketDesign> design = rocket();
+        if (design.isEmpty() || boostersGone()) {
+            return List.of();
+        }
+        final List<StageMath.Burn> burns = RocketAscent.burns(server, body);
+        return ascent.burn() < burns.size() && burns.get(ascent.burn()).boosters()
+                ? RocketPieces.boosterFeet(RocketParts.all(server), design.get().stack()) : List.of();
+    }
+
+    /*
+     * The parts of its rocket's plan its stages let go carried away, and its boosters once they came loose, or once the
+     * first stage they hang at did.
+     */
     private Set<Integer> separatedSections(final ServerLevel server) {
         final Set<Integer> gone = new HashSet<>();
         final Optional<RocketDesign> design = rocket();
@@ -921,6 +964,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             final Map<ResourceLocation, RocketPart> parts = RocketParts.all(server);
             for (int stage = 1; stage <= separated(); stage++) {
                 gone.addAll(RocketStages.stage(parts, design.get().stack(), stage));
+            }
+            if (boostersGone() || separated() >= 1) {
+                gone.addAll(RocketPieces.boosterNumbers(design.get().stack()));
             }
         }
         return gone;

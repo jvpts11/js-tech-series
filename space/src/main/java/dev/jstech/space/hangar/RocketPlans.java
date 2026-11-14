@@ -18,6 +18,7 @@ import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.launcher.LauncherLayout;
 import dev.jstech.space.rocket.RocketLayout;
+import dev.jstech.space.rocket.RocketPieces;
 import dev.jstech.space.rocket.RocketStack;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,8 +35,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The plan a Rocket Hangar builds a rocket by, from its design: every block of every part's kit where it goes, laid
- * out from the middle of the rocket's foot, each part of the stack a part of the plan, each block merging as its cell
- * of its model, turned as its part was set; and where a part's model reaches into the blocks of the parts beside it,
+ * out from the middle of the rocket's foot, each part of the stack a part of the plan and each segment of its boosters
+ * one after them ({@link RocketPieces}), each block merging as its cell of its model, turned as its part was set; a
+ * booster beside the part it hangs at, its foot level with it; and where a part's model reaches into the blocks of the
+ * parts beside it,
  * as a separation ring's skirt rises round the engine on it, those blocks take its shape too once it is formed. Where
  * the bay has room for one, the rocket stands on a mobile launcher laid in the same plan under it.
  */
@@ -53,7 +56,7 @@ public final class RocketPlans {
             for (final RocketLayout.Cell cell : model.cells()) {
                 final BlockPos at = model.at(cell.x(), cell.layer(), cell.z());
                 byPlace.put(at, spots.size());
-                spots.add(new PlanSpot(at, cell.block(), model.placed().section(), Optional.of(model.place(
+                spots.add(new PlanSpot(at, cell.block(), model.placed().part(), Optional.of(model.place(
                         MeshCells.key(cell.x(), cell.layer(), cell.z()))), List.of()));
             }
         }
@@ -72,7 +75,7 @@ public final class RocketPlans {
                 final Integer index = byPlace.get(beside(model, cell));
                 if (index != null) {
                     reaches.computeIfAbsent(index, any -> new ArrayList<>()).add(new PlanReach(
-                            model.placed().section(), model.place(cell)));
+                            model.placed().part(), model.place(cell)));
                 }
             }
         }
@@ -80,7 +83,7 @@ public final class RocketPlans {
             final PlanSpot spot = spots.get(index);
             spots.set(index, new PlanSpot(spot.at(), spot.block(), spot.part(), spot.place(), reaching));
         });
-        return new BuildPlan(stack.sections().size(), spots);
+        return new BuildPlan(RocketPieces.count(stack), spots);
     }
 
     /**

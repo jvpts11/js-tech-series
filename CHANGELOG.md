@@ -3056,8 +3056,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   world dimmed as behind an open container and with the HUD and the hand put away until they are put down, where the
   light's button lights the face. The pressure's figure is written the way the game's language writes numbers.
 - (Space) Rockets of parts and stages: a rocket is a moving structure whose blocks are its parts stacked from the
-  bottom up, and its stages are split at its separation rings, each carrying what is above it; boosters strapped on
-  burn their own propellant beside the core and drop first, and once burnt stay spent. Its delta-v is summed from its
+  bottom up, and its stages are split at its separation rings, each carrying what is above it. Boosters, columns of an
+  engine at the foot and tanks of its size over it, hang beside the first stage's engine, one, two or four, their feet
+  on the deck with the core's; they come full, burn beside the core and come loose before the first stage, each pushed
+  out from the core as a body of its own with a puff and a jolt, a plume under each while it burns, and fall where the
+  first stage is set to go, to a fall zone round the pad when that stage comes back to a platform, having no legs; once
+  burnt they stay spent. Its delta-v is summed from its
   parts by Tsiolkovsky's equation and its thrust-to-weight from its engines' thrust at sea level, so a rocket that
   lifts off the Moon may not lift off the Overworld. A tank is built in layers, as tall as it is wanted. The parts
   come in diameters of 3 and 5 blocks, all burning methalox: the sea-level and vacuum engines, the tank, the
@@ -3153,8 +3157,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   bin showing the part's own model and its label card, to a green node of the rocket, where it snaps, as in Kerbal
   Space Program's editor; a part of the rocket is dragged off with those on its far side from the root, and dropped on
   another node or back on the bins to throw it away. The tools turn a part a quarter turn (R turns one being placed),
-  build a tank taller or shorter, and choose the root; the mirror hangs one to four boosters round a part at once, and
-  the snap sets how near a node a part must be let go. The right mouse button turns the view round the rocket, the
+  build a tank taller or shorter, and choose the root; an engine from its bin also shows a node beside the first
+  stage's engine, where it hangs one, two or four boosters at once as the mirror says, a tank dropped there stacks on
+  each, and the boosters are drawn as their parts; and the snap sets how near a node a part must be let go. The right
+  mouse button turns the view round the rocket, the
   wheel brings it nearer, the middle button raises and lowers it, never through the hangar's walls; Ctrl+Z and Ctrl+Y
   undo and redo. The bins sort the parts into six tabs, command, tanks, engines, rings, landers and recovery, each
   diameter shown or hidden, and the chosen part's spec sheet gives its figures. The right plate gives each stage's
@@ -3162,9 +3168,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   lifts off, each destination with its globe, what it asks (from the Overworld: a low orbit 9,400 m/s, the Moon
   15,200, Mars 13,000) and a bar of how far the rocket gets, short in red; and its checks: a stage with propellant and
   no engine or an engine with nothing to burn, a stage's engine not at its foot, a capsule not on top or more than one,
-  a lander not on top where it flies the rocket, a lander's ascent stage with no descent stage under it, and nothing
-  to fly it, no capsule nor lander, each refusing the design with its reason; too weak to lift off, taller than the
-  96 blocks a hangar builds or wider than the 17 of its door's slot, the crew's seats, the heat shield to come home
+  a lander not on top where it flies the rocket, a lander's ascent stage with no descent stage under it, nothing to
+  fly it, no capsule nor lander, boosters hung anywhere but beside the first stage's engine, and a booster that is not
+  an engine with tanks of its size over it, each refusing the design with its reason; too weak to lift off, taller
+  than the 96 blocks a hangar builds or wider than the 17 of its door's slot, a booster widening it on its side, the
+  crew's seats, the heat shield to come home
   through air, the tanks filled at the pad, each wrapped whole onto as many lines as it needs; its sign lit READY or
   NOT READY under them; saving a design with no parts, or sending one with the hangar not whole, says why. Its words
   are in the game's own letters at the interface's size, never smaller: the tools as icons, the one in use named
@@ -3210,7 +3218,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) The mobile launcher a rocket stands on in its hangar, Apollo's way: where the bay has room for one, the plan
   sent to it lays the launcher under the rocket, sized by it, and the crane builds them together. Its deck, three blocks
   thick, stands on six Pad Pedestals three blocks tall, in two rows along its length so the crawler can come in under
-  it; its length points at the bay's door. The exhaust opening through it is as wide as the rocket's foot, lined with
+  it; its length points at the bay's door. The exhaust opening through it is as wide as the rocket's foot, its
+  boosters' feet with it, lined with
   Exhaust Frames, a Hold-Down Arm at each corner and three Tail Service Masts round it a third of a turn apart; at the
   deck's far end from the door rises the red umbilical tower, a block past the rocket's top, the crane's house on its
   top and the boom on the house, from just past the rocket's far side to a block past the tower's back, the hook

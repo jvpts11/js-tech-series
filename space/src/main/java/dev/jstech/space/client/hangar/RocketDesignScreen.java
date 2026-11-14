@@ -46,6 +46,7 @@ import dev.jstech.space.hangar.RocketDesigner;
 import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.launcher.LauncherLayout;
 import dev.jstech.space.rocket.RocketPartModels;
+import dev.jstech.space.rocket.RocketPieces;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.RocketStages;
 import dev.jstech.space.rocket.StageMath;
@@ -58,6 +59,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.ToDoubleFunction;
@@ -912,14 +914,12 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
             return;
         }
         if (this.held != null) {
-            final List<Vec3> points = nodePoints();
-            for (int k = 0; k < points.size(); k++) {
-                final Optional<Vec2> at = seen.project(points.get(k));
+            for (final Node node : nodes()) {
+                final Optional<Vec2> at = seen.project(node.at());
                 if (at.isEmpty()) {
                     continue;
                 }
-                final boolean snapping = this.target.kind() != Target.Kind.BIN && this.target.kind()
-                        != Target.Kind.NONE && this.target.place() == k;
+                final boolean snapping = node.goes().equals(this.target);
                 g.pose().pushPose();
                 g.pose().translate(at.get().x, at.get().y, 0);
                 g.pose().scale(this.scale, this.scale, 1);
@@ -963,7 +963,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
                 if (i < Tool.ORDER.size()) {
                     this.tool = Tool.ORDER.get(i);
                 } else if (i == Tool.MIRROR_BUTTON) {
-                    this.mirror = this.mirror % DesignEdits.MOST_MIRROR + 1;
+                    this.mirror = DesignEdits.nextMirror(this.mirror);
                 } else {
                     this.snap = !this.snap;
                 }
@@ -1283,7 +1283,7 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
                 : RocketPlans.launcherSide(this.minecraft.level, stack, bay.get());
         this.onLauncher = side.isPresent();
         this.launcher = side.map(tower -> RocketPlans.of(this.minecraft.level, stack, tower).spots().stream()
-                .filter(spot -> spot.part() >= stack.sections().size()).toList()).orElse(List.of());
+                .filter(spot -> spot.part() >= RocketPieces.count(stack)).toList()).orElse(List.of());
         if (bay.isPresent() && !stack.sections().isEmpty()) {
             this.report = this.report.withLauncher(this.onLauncher);
         }
@@ -1401,65 +1401,71 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
             return Target.NONE;
         }
         final double reach = this.snap ? SNAP_REACH : FREE_REACH;
-        final List<Vec3> points = nodePoints();
-        int best = -1;
+        final List<Node> nodes = nodes();
+        Target best = Target.NONE;
         double nearest = reach * reach;
-        for (int k = 0; k < points.size(); k++) {
-            final Optional<Vec2> at = seen.project(points.get(k));
+        for (final Node node : nodes) {
+            final Optional<Vec2> at = seen.project(node.at());
             if (at.isPresent()) {
                 final double dx = at.get().x - mouseX;
                 final double dy = at.get().y - mouseY;
                 if (dx * dx + dy * dy <= nearest) {
                     nearest = dx * dx + dy * dy;
-                    best = k;
+                    best = node.goes();
                 }
             }
         }
-        if (best < 0) {
-            return Target.NONE;
-        }
-        return new Target(hangs() ? Target.Kind.SIDE : Target.Kind.NODE, best);
+        return best;
     }
 
-    /* The nodes what is held can go to: the side of each part for boosters, else under each part and on the top. */
-    private List<Vec3> nodePoints() {
+    /*
+     * The nodes what is held can go to: under each part and on the top for parts; and beside the first stage's engine,
+     * where boosters hang, for the boosters taken off, for an engine to hang as many boosters as the mirror says, and
+     * for a tank to stack on each booster hung there.
+     */
+    private List<Node> nodes() {
         final List<AABB> boxes = boxes();
-        final List<Vec3> points = new ArrayList<>();
+        final List<Node> nodes = new ArrayList<>();
         final Optional<HangarBay> bay = this.terminal.bay();
-        if (bay.isEmpty()) {
-            return points;
+        final Held now = this.held;
+        if (bay.isEmpty() || now == null) {
+            return nodes;
         }
         final Vec3 axis = Vec3.atBottomCenterOf(foot(bay.get()));
-        if (hangs()) {
+        if (now.boosters().isEmpty()) {
+            for (int k = 0; k < boxes.size(); k++) {
+                nodes.add(new Node(new Vec3(axis.x, boxes.get(k).minY, axis.z), new Target(Target.Kind.NODE, k)));
+            }
+            nodes.add(new Node(new Vec3(axis.x, boxes.isEmpty() ? axis.y : boxes.get(boxes.size() - 1).maxY,
+                    axis.z), new Target(Target.Kind.NODE, boxes.size())));
+        }
+        final OptionalInt engine = RocketStages.boosterPlace(this.parts, this.design.stack());
+        if (engine.isPresent() && engine.getAsInt() < boxes.size() && hangs(now, engine.getAsInt())) {
+            final AABB box = boxes.get(engine.getAsInt());
             final Vec3 eye = this.view == null ? axis : this.view.eye();
             final Vec3 toward = new Vec3(eye.x - axis.x, 0, eye.z - axis.z);
             final Vec3 side = toward.lengthSqr() < 1e-6 ? new Vec3(1, 0, 0) : toward.normalize();
-            for (final AABB box : boxes) {
-                points.add(box.getCenter().add(side.scale(box.getXsize() / 2 + 0.5)));
-            }
-            return points;
+            nodes.add(new Node(box.getCenter().add(side.scale(box.getXsize() / 2 + 0.5)),
+                    new Target(Target.Kind.SIDE, engine.getAsInt())));
         }
-        for (final AABB box : boxes) {
-            points.add(new Vec3(axis.x, box.minY, axis.z));
-        }
-        points.add(new Vec3(axis.x, boxes.isEmpty() ? axis.y : boxes.get(boxes.size() - 1).maxY, axis.z));
-        return points;
+        return nodes;
     }
 
-    /* Whether what is held hangs at a part's side: boosters taken off, or a booster from its bin. */
-    private boolean hangs() {
-        final Held now = this.held;
-        if (now == null) {
-            return false;
-        }
+    /*
+     * Whether {@code now} may hang at the side of the part at {@code place}: the boosters taken off; an engine alone,
+     * the foot of new boosters, where none hang yet; a tank alone, to stack on those that hang there.
+     */
+    private boolean hangs(final Held now, final int place) {
         if (!now.boosters().isEmpty()) {
             return true;
         }
-        if (now.run().size() != 1) {
+        if (now.run().size() != 1 || !now.run().get(0).boosters().isEmpty()) {
             return false;
         }
         final RocketPart part = this.parts.get(now.run().get(0).part().id());
-        return part != null && PartCatalogue.hangs(part.kind());
+        final boolean hung = !this.design.stack().sections().get(place).boosters().isEmpty();
+        return part != null && (part.kind() == RocketPart.Kind.ENGINE && !hung
+                || part.kind() == RocketPart.Kind.TANK && hung);
     }
 
     /*
@@ -1506,11 +1512,12 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
         final Set<Integer> drawn = new HashSet<>();
         for (final RocketPartModels.Placed part : placed) {
             final Optional<KitModel> model = KitModels.get(part.model());
-            if (model.isEmpty()) {
+            // A booster is picked by its box, beside the part it hangs at.
+            if (model.isEmpty() || part.booster()) {
                 continue;
             }
             // The same instance the hangar draws the model with, as it stands there, turned as it was set.
-            final KitInstance instance = KitAnimations.part(this.terminal, "design:" + part.section() + "@" + part.y()
+            final KitInstance instance = KitAnimations.part(this.terminal, "design:" + part.part() + "@" + part.y()
                     + ":" + part.model(), model.get());
             final Matrix4f place = new Matrix4f().translate((float) foot.x, (float) (foot.y + part.y()),
                     (float) foot.z).rotateY((float) Math.toRadians(-QUARTER * part.turns()));
@@ -1837,6 +1844,15 @@ public final class RocketDesignScreen extends AbstractContainerScreen<RocketDesi
             BIN,
             NONE
         }
+    }
+
+    /**
+     * A node over the view, a green dot what is held snaps to.
+     *
+     * @param at   where it stands in the hangar
+     * @param goes where what is held goes, let go there
+     */
+    private record Node(Vec3 at, Target goes) {
     }
 
     /**

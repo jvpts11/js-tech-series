@@ -19,16 +19,20 @@ import java.util.function.UnaryOperator;
  * the top one. A part picked up takes with it the parts on its far side from the root, the part the rest hangs from,
  * as a branch comes off a tree; the root picked up takes the whole rocket. A part turns a quarter turn at a time; a
  * part built in layers is built taller or shorter; boosters hang at a part's side in a ring of as many as the mirror
- * says, and stack segment on segment.
+ * says, one, two or four, and stack segment on segment.
  */
 public final class DesignEdits {
 
     /** The most layers a part built in layers takes on the screen. */
     public static final int MOST_LAYERS = 64;
-    /** The most boosters the mirror hangs at once round a part. */
-    public static final int MOST_MIRROR = 4;
 
     private DesignEdits() {
+    }
+
+    /** How many boosters the mirror hangs after {@code mirror}: one, two, four, and round again. */
+    public static int nextMirror(final int mirror) {
+        final List<Integer> counts = RocketDesign.BOOSTERS;
+        return counts.get((counts.indexOf(mirror) + 1) % counts.size());
     }
 
     /** How many nodes {@code stack} has: one under each part and one on its top. */
@@ -91,7 +95,7 @@ public final class DesignEdits {
         return replace(stack, place, section -> {
             final List<List<RocketStack.Part>> boosters = new ArrayList<>();
             if (section.boosters().isEmpty()) {
-                boosters.addAll(Collections.nCopies(Math.clamp(count, 1, RocketDesign.MOST_BOOSTERS),
+                boosters.addAll(Collections.nCopies(RocketDesign.BOOSTERS.contains(count) ? count : 1,
                         List.of(segment)));
             } else {
                 for (final List<RocketStack.Part> booster : section.boosters()) {

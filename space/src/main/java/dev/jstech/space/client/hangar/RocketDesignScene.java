@@ -22,6 +22,7 @@ import dev.jstech.space.api.RocketKit;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.hangar.HangarTerminalBlockEntity;
 import dev.jstech.space.rocket.RocketPartModels;
+import dev.jstech.space.rocket.RocketPieces;
 import dev.jstech.space.rocket.RocketStack;
 import java.util.ArrayList;
 import java.util.List;
@@ -110,23 +111,28 @@ public final class RocketDesignScene {
     }
 
     /**
-     * The boxes of the boosters round the part filling {@code core}, each a ring's place, the first to the east and
-     * the rest round from it, each as tall as its segments stacked.
+     * The boxes of the boosters round the part filling {@code core}, each where the rocket's plan lays it
+     * ({@link RocketPieces#offset}), each as tall as its segments stacked.
      */
     public static List<AABB> boosterBoxes(final Map<ResourceLocation, RocketPart> parts,
                                           final RocketStack.Section section, final AABB core) {
         final List<AABB> boxes = new ArrayList<>();
         final int count = section.boosters().size();
+        final RocketPart hungAt = parts.get(section.part().id());
+        final int across = hungAt == null ? (int) Math.round(core.getXsize()) : hungAt.diameter();
         for (int i = 0; i < count; i++) {
             final List<RocketStack.Part> booster = section.boosters().get(i);
             final RocketPart foot = booster.isEmpty() ? null : parts.get(booster.get(0).id());
-            final double half = (foot == null ? 1 : foot.diameter()) / 2.0;
+            final int wide = foot == null ? RocketPart.DIAMETERS.get(0) : foot.diameter();
+            final double half = wide / 2.0;
             double tall = 0;
             for (final RocketStack.Part segment : booster) {
                 tall += tall(parts.get(segment.id()), segment);
             }
-            final Vec3 at = boosterAt(core, half, i, count);
-            boxes.add(new AABB(at.x - half, core.minY, at.z - half, at.x + half, core.minY + tall, at.z + half));
+            final int[] at = RocketPieces.offset(i, count, across, wide);
+            final Vec3 middle = core.getCenter().add(at[0], 0, at[1]);
+            boxes.add(new AABB(middle.x - half, core.minY, middle.z - half, middle.x + half, core.minY + tall,
+                    middle.z + half));
         }
         return List.copyOf(boxes);
     }
@@ -153,13 +159,17 @@ public final class RocketDesignScene {
                 loose.foot(), Set.of(-1), "held"));
         final VertexConsumer lines = buffers.getBuffer(RenderType.lines());
         final List<AABB> boxes = boxes(scene.parts(), scene.stack(), scene.pad());
+        // A part with no model of its own is drawn as its outline, a booster as its box.
         for (int k = 0; k < boxes.size(); k++) {
             final RocketStack.Section section = scene.stack().sections().get(k);
             if (!modelled(section.part().id())) {
                 outline(poses, lines, boxes.get(k), c.stencil());
             }
-            for (final AABB booster : boosterBoxes(scene.parts(), section, boxes.get(k))) {
-                outline(poses, lines, booster, c.stencil());
+            final List<AABB> hung = boosterBoxes(scene.parts(), section, boxes.get(k));
+            for (int b = 0; b < hung.size(); b++) {
+                if (!section.boosters().get(b).stream().allMatch(segment -> modelled(segment.id()))) {
+                    outline(poses, lines, hung.get(b), c.stencil());
+                }
             }
         }
         scene.outlined().filter(k -> k >= 0 && k < boxes.size()).ifPresent(k -> outline(poses, lines,
@@ -218,12 +228,13 @@ public final class RocketDesignScene {
             if (model.isEmpty()) {
                 continue;
             }
-            final KitInstance instance = KitAnimations.part(scene.terminal(), name + ":" + part.section() + "@"
+            final KitInstance instance = KitAnimations.part(scene.terminal(), name + ":" + part.part() + "@"
                     + part.y() + ":" + part.model(), model.get());
-            final int light = LevelRenderer.getLightColor(level, BlockPos.containing(foot.x, foot.y + part.y(),
-                    foot.z));
+            final int light = LevelRenderer.getLightColor(level, BlockPos.containing(foot.x + part.x(),
+                    foot.y + part.y(), foot.z + part.z()));
             poses.pushPose();
-            poses.translate(foot.x, foot.y + part.y(), foot.z);
+            // A booster's parts stand beside the core, the rest on its axis.
+            poses.translate(foot.x + part.x(), foot.y + part.y(), foot.z + part.z());
             poses.mulPose(Axis.YN.rotationDegrees(QUARTER * part.turns()));
             if (ghosts.contains(-1) || ghosts.contains(part.section())) {
                 KitRenderer.drawTinted(instance, poses, buffers, c.holo(), light);
@@ -288,14 +299,6 @@ public final class RocketDesignScene {
             return 1;
         }
         return part.height() * (part.stretches() ? placed.layers() : 1);
-    }
-
-    /* Where the booster {@code i} of {@code count} round {@code core} stands, its middle, touching the core. */
-    private static Vec3 boosterAt(final AABB core, final double half, final int i, final int count) {
-        final double angle = 2 * Math.PI * i / Math.max(1, count);
-        final double reach = core.getXsize() / 2 + half;
-        final Vec3 middle = core.getCenter();
-        return new Vec3(middle.x + reach * Math.cos(angle), middle.y, middle.z + reach * Math.sin(angle));
     }
 
     /**

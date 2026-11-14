@@ -26,6 +26,7 @@ import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.launcher.LauncherLayout;
 import dev.jstech.space.launcher.LauncherTexts;
+import dev.jstech.space.rocket.RocketPieces;
 import dev.jstech.space.rocket.RocketStack;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -156,9 +157,10 @@ public final class RocketHolograms {
                 building = part;
             }
         }
+        // What each of the rocket's parts is, its boosters' segments after its core's, as the plan numbers them.
         final List<RocketPart> kinds = new ArrayList<>();
-        for (final RocketStack.Section section : kept.design().stack().sections()) {
-            kinds.add(parts.get(section.part().id()));
+        for (final RocketPieces.Piece piece : RocketPieces.of(parts, kept.design().stack())) {
+            kinds.add(parts.get(piece.part().id()));
         }
         final List<PlanHologram.Place> places = new ArrayList<>();
         final Map<Block, Integer> needed = new LinkedHashMap<>();

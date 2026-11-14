@@ -23,6 +23,7 @@ import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.space.api.RocketPart;
 import dev.jstech.space.api.RocketParts;
 import dev.jstech.space.launcher.LauncherLayout;
+import dev.jstech.space.rocket.RocketPieces;
 import dev.jstech.space.rocket.RocketStack;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -629,7 +630,7 @@ public final class HangarTerminalBlockEntity extends MachineBlockEntity {
         final BuildPlan laid = RocketPlans.of(server, building.stack(), this.launcher.get());
         // A rocket's formed parts hold when a block of theirs is broken, holed there, as they do in flight; its
         // launcher's, after them in the plan, come apart into their kit as ever.
-        final int rocketParts = building.stack().sections().size();
+        final int rocketParts = RocketPieces.count(building.stack());
         final PlannedBuild next = new PlannedBuild(laid, at).holed(part -> part < rocketParts);
         if (!loaded(server, next)) {
             this.pending = true;

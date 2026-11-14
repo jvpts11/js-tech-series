@@ -29,7 +29,7 @@ yaw: -145
 
 1. Build it from a Structure Projector's ghost, or use a Multiblock Builder on the projector. Its floor, with the crawler's two lanes of gravel, is laid into the ground.
 2. Set the Hangar Terminal last, in its place in the console row. The building forms: the consoles and the Status Board light up, and the crane takes its shape.
-3. Use the terminal or the Rocket Design Table to open the Rocket Design. Drag parts to the green nodes, then Confirm and build ([[E]]).
+3. Use the terminal or the Rocket Design Table to open the Rocket Design. Drag parts to the green nodes, then Confirm and build ([[E]]). For boosters, set the mirror to one, two or four and drag an engine to the node beside the first stage's engine, then a tank onto them: it stacks on each.
 4. Feed the blocks through the Loading Dock by hopper or pipe, or lay them by hand where the hologram shows.
 5. Place Work Platforms round the rocket: each has its railing on the edge you faced, where no platform follows.
 6. Press the Bay Door Console high on its screen to open the bay door, low to shut it. The door also opens by itself for a crawler going through.
@@ -43,7 +43,7 @@ yaw: -145
 > The hangar builds rockets up to 96 blocks tall and 17 wide, as wide as its door's slot.
 
 > [!PROBLEM] The Rocket Design refuses the order of the stack.
-> Each stage's engine stands at its foot; one capsule at most, on top, with nothing over it but an escape tower or a docking port; with no capsule, the lander on top; a lander's ascent stage stands on its descent stage. A rocket needs a capsule or a lander: its flight computer flies it.
+> Each stage's engine stands at its foot; one capsule at most, on top, with nothing over it but an escape tower or a docking port; with no capsule, the lander on top; a lander's ascent stage stands on its descent stage. A rocket needs a capsule or a lander: its flight computer flies it. Boosters hang only beside the first stage's engine, each an engine with tanks of its size over it.
 
 > [!PROBLEM] The Loading Dock takes nothing.
 > It takes only the blocks the plan sent to the bay still wants, and no more of each than it wants.

@@ -27,6 +27,9 @@ import net.minecraft.resources.ResourceLocation;
  */
 public final class RocketStages {
 
+    /** The number its boosters go by among a rocket's stages, for where they fall: they come loose before the first. */
+    public static final int BOOSTERS = 0;
+
     private RocketStages() {
     }
 
@@ -169,18 +172,33 @@ public final class RocketStages {
         return widest;
     }
 
-    /** The stage {@code stage}'s mass empty, its boosters' with it, in kilograms. */
+    /** The stage {@code stage}'s mass empty, in kilograms; its boosters come loose before it. */
     public static double dryMass(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack,
                                  final int stage) {
         double mass = 0;
         for (final int place : stage(parts, stack, stage)) {
-            final RocketStack.Section section = stack.sections().get(place);
-            mass += piece(parts, section.part(), null, null).map(StageMath.Piece::dry).orElse(0.0);
-            for (final List<RocketStack.Part> booster : section.boosters()) {
-                mass += summed(parts, booster).map(StageMath.Piece::dry).orElse(0.0);
-            }
+            mass += piece(parts, stack.sections().get(place).part(), null, null).map(StageMath.Piece::dry)
+                    .orElse(0.0);
         }
         return mass;
+    }
+
+    /** The mass empty of the booster {@code booster} of {@code stack}, its segments from its foot up, in kilograms. */
+    public static double boosterDryMass(final Map<ResourceLocation, RocketPart> parts,
+                                        final List<RocketStack.Part> booster) {
+        return summed(parts, booster).map(StageMath.Piece::dry).orElse(0.0);
+    }
+
+    /**
+     * The place in {@code stack} its boosters hang at: its first stage's engine, at the stage's foot, so a booster's
+     * foot stands level with the core's on the deck; none where the rocket's first part is not an engine.
+     */
+    public static OptionalInt boosterPlace(final Map<ResourceLocation, RocketPart> parts, final RocketStack stack) {
+        if (stack.sections().isEmpty()) {
+            return OptionalInt.empty();
+        }
+        final RocketPart first = parts.get(stack.sections().get(0).part().id());
+        return first != null && first.kind() == RocketPart.Kind.ENGINE ? OptionalInt.of(0) : OptionalInt.empty();
     }
 
     /* The burns, the tanks full where {@code propellants} is none; each place's boosters as {@code boosters} says. */

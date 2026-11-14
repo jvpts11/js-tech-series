@@ -29,7 +29,7 @@ yaw: -145
 
 1. Construa-o pelo fantasma de um Projetor de Estruturas, ou use um Construtor de Multiblocos no projetor. O piso, com as duas faixas de cascalho do transportador, fica assentado no chão.
 2. Ponha o Terminal do Hangar por último, no seu lugar na fileira de consoles. O prédio se forma: os consoles e o Painel de Status acendem, e a ponte rolante toma a sua forma.
-3. Use o terminal ou a Mesa do Projeto de Foguete para abrir o Projeto de Foguete. Arraste peças até os nós verdes e depois Confirmar e montar ([[E]]).
+3. Use o terminal ou a Mesa do Projeto de Foguete para abrir o Projeto de Foguete. Arraste peças até os nós verdes e depois Confirmar e montar ([[E]]). Para boosters, ponha o espelho em um, dois ou quatro e arraste um motor até o nó ao lado do motor do primeiro estágio, depois um tanque sobre eles: ele se empilha em cada um.
 4. Alimente os blocos pela Doca de Carga, com funil ou cano, ou coloque-os à mão onde o holograma mostra.
 5. Ponha Plataformas de Trabalho ao redor do foguete: cada uma tem o guarda-corpo na borda para onde você olhava, quando nenhuma plataforma vem depois.
 6. Aperte a tela do Console da Porta do Hangar no alto para abrir a porta do hangar, embaixo para fechá-la. A porta também abre sozinha para um transportador que passa por ela.
@@ -43,7 +43,7 @@ yaw: -145
 > O hangar constrói foguetes de até 96 blocos de altura e 17 de largura, a largura da fenda da porta.
 
 > [!PROBLEM] O Projeto de Foguete recusa a ordem da pilha.
-> O motor de cada estágio fica no pé dele; no máximo uma cápsula, no topo, sem nada por cima além de uma torre de escape ou de uma porta de acoplagem; sem cápsula, o módulo lunar no topo; o estágio de subida do módulo fica sobre o de descida. O foguete precisa de uma cápsula ou de um módulo lunar: é o computador de voo deles que o pilota.
+> O motor de cada estágio fica no pé dele; no máximo uma cápsula, no topo, sem nada por cima além de uma torre de escape ou de uma porta de acoplagem; sem cápsula, o módulo lunar no topo; o estágio de subida do módulo fica sobre o de descida. O foguete precisa de uma cápsula ou de um módulo lunar: é o computador de voo deles que o pilota. Os boosters só se penduram ao lado do motor do primeiro estágio, cada um um motor com tanques do mesmo tamanho por cima.
 
 > [!PROBLEM] A Doca de Carga não aceita nada.
 > Ela só aceita os blocos que o plano enviado à baia ainda quer, e não mais de cada um do que ele quer.

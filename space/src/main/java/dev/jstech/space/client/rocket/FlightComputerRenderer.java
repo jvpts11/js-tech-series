@@ -69,7 +69,7 @@ public final class FlightComputerRenderer implements BlockEntityRenderer<FlightC
         }
         final List<RocketPartModels.Placed> placed = RocketPartModels.of(RocketParts.all(level),
                 RocketKits.all(level), rocket.get().stack(), false).stream()
-                .filter(model -> formed.contains(model.section())).toList();
+                .filter(model -> formed.contains(model.part())).toList();
         poses.pushPose();
         poses.translate(foot.get().getX() + 0.5, foot.get().getY(), foot.get().getZ() + 0.5);
         // The cabin's live panels show the flight as the computer reads it, and on the ground the launch panel's count.
@@ -81,8 +81,8 @@ public final class FlightComputerRenderer implements BlockEntityRenderer<FlightC
             double top = 0;
             double width = 0;
             for (final RocketPartModels.Placed model : placed) {
-                final RocketPart part = parts.get(rocket.get().stack().sections().get(model.section()).part().id());
-                if (part != null) {
+                final RocketPart part = parts.get(model.piece().part().id());
+                if (part != null && !model.booster()) {
                     top = Math.max(top, model.y() + part.height());
                     width = Math.max(width, part.diameter());
                 }

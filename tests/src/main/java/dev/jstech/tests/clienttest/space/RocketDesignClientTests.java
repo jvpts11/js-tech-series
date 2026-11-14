@@ -71,6 +71,14 @@ public final class RocketDesignClientTests {
     private static final int OUTLINE_SEEN = 20;
     /* A point of the terminal's console, toward its chair, under its screen: over the chair's back from behind it. */
     private static final Vec3 CONSOLE_FACE = new Vec3(0.85, 0.7, 0.5);
+    /*
+     * The tabs of the engines' and the tanks' bins, the mirror's tool; the middle of the booster hung to the south
+     * of a rocket of three, beside it as the camera sees it from the control room, the bay beyond it.
+     */
+    private static final int TANKS_TAB = 1;
+    private static final int ENGINES_TAB = 2;
+    private static final int MIRROR_TOOL = 4;
+    private static final Vec3 BESIDE = new Vec3(0, 2, 3);
 
     private RocketDesignClientTests() {
     }
@@ -189,6 +197,60 @@ public final class RocketDesignClientTests {
                         + "bins it is off the rocket");
     }
 
+    /**
+     * An engine from its bin, the mirror at four, dropped on the node beside the first stage's engine hangs four
+     * boosters round it; a tank dropped there stacks on each; the boosters are drawn as their parts, where the bay
+     * showed beyond the rocket before.
+     */
+    @ClientTest(timeoutTicks = 2400)
+    public static void boosters_hangBesideTheEngineAndAreDrawnAsTheirParts(final ClientTestContext ctx) {
+        final RocketStack.Part engine = new RocketStack.Part(SkeletonRocketParts.id("sea_level_engine_3"), 1);
+        final RocketStack.Part tank = new RocketStack.Part(SkeletonRocketParts.id("tank_3"), 3);
+        final RocketStack.Part capsule = new RocketStack.Part(SkeletonRocketParts.id("capsule_3"), 1);
+        final int[][] seen = new int[2][];
+        ctx.afterTest(() -> {
+            ctx.mc().setScreen(null);
+            ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), ctx.abs(TERMINAL), TURN));
+        });
+        ctx.thenServer(0, level -> build(ctx, level))
+                .thenTeleport(SETTLE, EYE, Direction.WEST)
+                .thenWaitUntil(() -> ctx.mc().level.getBlockEntity(ctx.abs(TERMINAL))
+                        instanceof HangarTerminalBlockEntity terminal && terminal.bay().isPresent(), ARRIVE,
+                        "the formed hangar to reach the player")
+                .thenRightClick(SETTLE, TERMINAL)
+                .thenAwaitScreen(RocketDesignScreen.class, OPEN)
+                .then(SETTLE, () -> screen(ctx).edit(new RocketDesign("TEST", RocketStack.of(engine, tank, capsule))))
+                .then(SETTLE, () -> {
+                    seen[0] = mean(ctx, at(ctx, BESIDE));
+                    // The mirror from one to two to four, and an engine from the engines' bin.
+                    final int[] mirror = frame(ctx, RocketDesignLayout.toolX(MIRROR_TOOL) + 7,
+                            RocketDesignLayout.TOOLS_Y0 + 6);
+                    for (int i = 0; i < 2; i++) {
+                        screen(ctx).mouseClicked(mirror[0], mirror[1], InputConstants.MOUSE_BUTTON_LEFT);
+                        screen(ctx).mouseReleased(mirror[0], mirror[1], InputConstants.MOUSE_BUTTON_LEFT);
+                    }
+                    drag(ctx, ENGINES_TAB);
+                })
+                .then(SETTLE, () -> {
+                    final List<List<RocketStack.Part>> hung = screen(ctx).design().stack().sections().get(0)
+                            .boosters();
+                    ctx.assertTrue(hung.size() == 4 && hung.stream().allMatch(booster -> booster.size() == 1
+                            && booster.get(0).id().equals(engine.id())),
+                            "four boosters of the engine hang beside the first stage's engine: " + hung);
+                    drag(ctx, TANKS_TAB);
+                })
+                .then(SETTLE, () -> {
+                    final List<List<RocketStack.Part>> hung = screen(ctx).design().stack().sections().get(0)
+                            .boosters();
+                    ctx.assertTrue(hung.size() == 4 && hung.stream().allMatch(booster -> booster.size() == 2
+                            && booster.get(1).id().equals(tank.id())), "a tank stacks on each of them: " + hung);
+                    seen[1] = mean(ctx, at(ctx, BESIDE));
+                })
+                .thenScreenshot(0, "rocket-design-boosters")
+                .then(0, () -> ctx.assertTrue(apart(seen[0], seen[1]) > APART, "the booster beside the rocket is drawn"
+                        + " where the bay showed beyond it: " + str(seen[0]) + " then " + str(seen[1])));
+    }
+
     @ClientTest(timeoutTicks = 1200)
     public static void terminal_takesTheClickOverTheChairBeforeIt(final ClientTestContext ctx) {
         ctx.afterTest(() -> ctx.server().execute(() -> TestHangars.clear(ctx.serverLevel(), ctx.abs(TERMINAL),
@@ -207,6 +269,33 @@ public final class RocketDesignClientTests {
 
     private static RocketDesignScreen screen(final ClientTestContext ctx) {
         return ctx.screen(RocketDesignScreen.class);
+    }
+
+    /*
+     * Drags the first part of the tab {@code tab}'s bins to the node beside the rocket's first part, toward the
+     * camera, as the screen lays it.
+     */
+    private static void drag(final ClientTestContext ctx, final int tab) {
+        final RocketDesignScreen screen = screen(ctx);
+        final int[] tabAt = frame(ctx, RocketDesignLayout.TAB_X0 + tab * RocketDesignLayout.TAB_STEP + 8,
+                RocketDesignLayout.TAB_Y0 + 7);
+        screen.mouseClicked(tabAt[0], tabAt[1], InputConstants.MOUSE_BUTTON_LEFT);
+        screen.mouseReleased(tabAt[0], tabAt[1], InputConstants.MOUSE_BUTTON_LEFT);
+        final int[] card = frame(ctx, RocketDesignLayout.cardX(0) + 20, RocketDesignLayout.cardY(0) + 20);
+        screen.mouseClicked(card[0], card[1], InputConstants.MOUSE_BUTTON_LEFT);
+        final AABB first = RocketDesignScene.boxes(RocketParts.all(ctx.mc().level), screen.design().stack(),
+                BlockPos.containing(foot(ctx))).get(0);
+        final Vec3 eye = screen.view().orElseThrow().eye();
+        final Vec3 toward = new Vec3(eye.x - first.getCenter().x, 0, eye.z - first.getCenter().z).normalize();
+        final Vec2 node = screen.view().orElseThrow().project(first.getCenter().add(toward.scale(
+                first.getXsize() / 2 + 0.5))).orElseThrow();
+        screen.mouseReleased(node.x, node.y, InputConstants.MOUSE_BUTTON_LEFT);
+    }
+
+    /* Where the point {@code offset} from the rocket's foot on its launcher is, on the window. */
+    private static int[] at(final ClientTestContext ctx, final Vec3 offset) {
+        final Vec2 at = screen(ctx).view().orElseThrow().project(foot(ctx).add(offset)).orElseThrow();
+        return new int[] {Math.round(at.x), Math.round(at.y)};
     }
 
     /* The middle of the rocket's foot, on its launcher's deck over its bay's floor, in the world. */
