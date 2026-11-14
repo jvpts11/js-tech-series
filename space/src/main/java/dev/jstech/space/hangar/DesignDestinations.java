@@ -31,26 +31,17 @@ public final class DesignDestinations {
 
     /** The destinations of a rocket that leaves {@code from}: its low orbit first, then the other worlds. */
     public static List<Reach> from(final SolarBody from) {
-        final double climb = climb(from);
+        final double climb = Rocketry.climbFrom(from);
         final List<Reach> reaches = new ArrayList<>();
         reaches.add(new Reach(DesignTexts.LOW_ORBIT, Optional.empty(), climb));
         for (final SolarBody to : WORLDS) {
             final Optional<TransferPlan> plan = TransferPlan.of(from, to, 0);
             if (plan.isPresent()) {
-                final double landing = plan.get().aerobraking() ? 0 : climb(to);
+                final double landing = plan.get().aerobraking() ? 0 : Rocketry.climbFrom(to);
                 reaches.add(new Reach(name(to), Optional.of(to), climb + plan.get().deltaVWindow() + landing));
             }
         }
         return List.copyOf(reaches);
-    }
-
-    /* What it costs to climb from a world's ground to its low orbit, and to come back down where there is no air. */
-    private static double climb(final SolarBody body) {
-        return switch (body) {
-            case OVERWORLD -> Rocketry.SURFACE_TO_LOW_ORBIT;
-            case MOON -> Rocketry.MOON_ORBIT_TO_SURFACE;
-            case MARS -> Rocketry.MARS_SURFACE_TO_ORBIT;
-        };
     }
 
     private static TextKey name(final SolarBody body) {

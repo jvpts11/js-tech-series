@@ -19,7 +19,10 @@ import dev.jstech.core.moving.StructurePose;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.RocketParts;
+import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.orbit.OrbitScale;
+import dev.jstech.space.orbit.Rocketry;
+import dev.jstech.space.universe.SpaceClimbs;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
@@ -32,28 +35,38 @@ import org.joml.Quaternionf;
  * pushing it by their thrust at the air the world has, its mass falling as they burn their propellant by the rocket
  * equation, the world's pull drawing it back. A rocket with thrust to spare climbs fast, a weak one slowly, one too
  * heavy for its engines sits on the pad burning, unless the server keeps such a rocket's engines unlit
- * ({@link #liftsOff}); each stage that burns out hands the climb to the next. It goes on till
- * the rocket passes into space, which takes it there whole, or falls back to where it rose from.
+ * ({@link #liftsOff}); each stage that burns out hands the climb to the next. At the edge of space the climb to the
+ * world's low orbit is paid whole, as the hangar counts it (the Overworld's 9,400 m/s): what the engines burnt on the
+ * way up counts toward it and the rest burns there, the engines cut off after it, and the rocket passes into space
+ * whole; a rocket short of it burns all it has and falls back to where it rose from.
  *
  * @param burn    which of its rocket's burns is lit, from the first
  * @param mass    the rocket's mass now, in kilograms
  * @param climb   how fast it climbs, in metres a second; below nought, it falls
  * @param from    the height it rose from
+ * @param cutOff  whether its climb to the low orbit is paid and its engines cut off, so it coasts into space
  */
-public record RocketAscent(int burn, double mass, double climb, double from) implements IStructureMotion {
+public record RocketAscent(int burn, double mass, double climb, double from, boolean cutOff)
+        implements IStructureMotion {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ascent");
     public static final MapCodec<RocketAscent> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.INT.fieldOf("burn").forGetter(RocketAscent::burn),
             Codec.DOUBLE.fieldOf("mass").forGetter(RocketAscent::mass),
             Codec.DOUBLE.fieldOf("climb").forGetter(RocketAscent::climb),
-            Codec.DOUBLE.fieldOf("from").forGetter(RocketAscent::from)
+            Codec.DOUBLE.fieldOf("from").forGetter(RocketAscent::from),
+            Codec.BOOL.optionalFieldOf("cut_off", false).forGetter(RocketAscent::cutOff)
     ).apply(instance, RocketAscent::new));
     /* A tick, in seconds. */
     private static final double TICK = 1.0 / 20;
     /* The share of its propellant a stage has left when its low lamp lights; the cabin's air its lamp lights at. */
     private static final float LOW = 0.1F;
     private static final float BREATHABLE = 0.5F;
+
+    /** A climb lit at the burn {@code burn}, its engines burning. */
+    public RocketAscent(final int burn, final double mass, final double climb, final double from) {
+        this(burn, mass, climb, from, false);
+    }
 
     /** Declares the rule, once, from the mod's constructor, so a climb is saved and read back with its structure. */
     public static void declare() {
@@ -90,6 +103,10 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
             RocketBurns.climbed(level, context.structure(), this.burn, this.mass);
             return new Step(now, null);
         }
+        if (this.cutOff) {
+            // Its climb paid, its engines cut off: it coasts on up till the world's ceiling hands it to its space.
+            return new Step(now.movedTo(now.x(), now.y() + Math.max(1, this.climb) * TICK, now.z()), this);
+        }
         final List<StageMath.Burn> burns = burns(level, context.structure());
         // A lander's descent stage it carries is kept for its landing: the climb lights the stages under it alone.
         final int usable = climbable(level, context.structure(), burns, this.burn);
@@ -121,6 +138,17 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
             }
         }
         final StructurePose next = now.movedTo(now.x(), Math.max(this.from, now.y() + climb * TICK), now.z());
+        final int ceiling = SpaceClimbs.ceiling(level);
+        if (now.y() <= ceiling && next.y() > ceiling) {
+            // At the edge of space the climb to the low orbit is paid whole: what its engines burnt on the way up
+            // counts toward it and the rest burns now; a rocket short of it burns all it has and falls back.
+            final Reached reached = toOrbit(level, burns, usable, lit, mass);
+            if (!reached.orbit()) {
+                return new Step(now.movedTo(now.x(), ceiling, now.z()), new RocketAscent(reached.lit(),
+                        reached.mass(), 0, this.from));
+            }
+            return new Step(next, new RocketAscent(reached.lit(), reached.mass(), climb, this.from, true));
+        }
         return new Step(next, new RocketAscent(lit, mass, climb, this.from));
     }
 
@@ -149,7 +177,7 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
                 left += load;
             }
         }
-        final boolean burning = this.burn < climbable(level, structure, burns, this.burn);
+        final boolean burning = !this.cutOff && this.burn < climbable(level, structure, burns, this.burn);
         final EnumSet<CabinLamp> lit = EnumSet.of(CabinLamp.GUIDANCE);
         if (burning) {
             lit.add(CabinLamp.ENGINE);
@@ -224,5 +252,58 @@ public record RocketAscent(int burn, double mass, double climb, double from) imp
     private static double exhaust(final StageMath.Burn burn) {
         final double ratio = burn.startMass() / Math.max(1e-9, burn.endMass());
         return ratio > 1 ? burn.seaLevelDeltaV() / Math.log(ratio) : 0;
+    }
+
+    /* The speed of a burn's exhaust in a vacuum, in metres a second. */
+    private static double vacuumExhaust(final StageMath.Burn burn) {
+        final double ratio = burn.startMass() / Math.max(1e-9, burn.endMass());
+        return ratio > 1 ? burn.vacuumDeltaV() / Math.log(ratio) : 0;
+    }
+
+    /* The delta-v in a vacuum {@code burn} has left, burning at {@code mass}. */
+    private static double left(final StageMath.Burn burn, final double mass) {
+        return mass > burn.endMass() ? vacuumExhaust(burn) * Math.log(mass / burn.endMass()) : 0;
+    }
+
+    /*
+     * A climb off the ground of {@code level} come to the edge of space, its burn {@code lit} of the {@code usable}
+     * first of {@code burns} at {@code mass}: the rest of the climb to the low orbit, past what it burnt on the way up,
+     * burnt from what is left; short of it, all of that burnt, and the orbit not reached.
+     */
+    private static Reached toOrbit(final ServerLevel level, final List<StageMath.Burn> burns, final int usable,
+                                   final int lit, final double mass) {
+        double spent = 0;
+        for (int k = 0; k < Math.min(lit, usable); k++) {
+            spent += burns.get(k).vacuumDeltaV();
+        }
+        if (lit < usable) {
+            spent += burns.get(lit).vacuumDeltaV() - left(burns.get(lit), mass);
+        }
+        double rest = FlightComputerBlockEntity.here(level).map(Rocketry::climbFrom).orElse(0.0) - spent;
+        int burning = lit;
+        double now = mass;
+        while (rest > 0 && burning < usable) {
+            final StageMath.Burn burn = burns.get(burning);
+            final double held = left(burn, now);
+            if (held >= rest) {
+                now /= Math.exp(rest / vacuumExhaust(burn));
+                rest = 0;
+            } else {
+                rest -= held;
+                burning++;
+                now = burning < usable ? burns.get(burning).startMass() : burn.endMass();
+            }
+        }
+        return new Reached(rest <= 0, burning, now);
+    }
+
+    /*
+     * Where a climb stands at the edge of space.
+     *
+     * @param orbit whether it reached its low orbit
+     * @param lit   the burn lit after it
+     * @param mass  the rocket's mass after it
+     */
+    private record Reached(boolean orbit, int lit, double mass) {
     }
 }

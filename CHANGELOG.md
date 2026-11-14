@@ -3328,7 +3328,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   falling as they burn by the rocket equation, each burnt-out stage handing the climb to the next; a rocket with
   thrust to spare climbs fast, one too heavy for its engines sits on the pad burning. The climb is seen by every player
   within sight of the pad, through the clouds and as far as the game draws, its plume following it, and it passes into
-  space whole. The capsule's live panels read the flight: the mission's clock since lift-off, the burning stage's
+  space whole, having paid the climb to the world's low orbit as the hangar counts it (the Overworld's 9,400 m/s, the
+  Moon's 1,700, Mars' 4,100): what its engines burnt on the way up counts toward it, the rest burns at the edge of
+  space and the engines cut off; a rocket short of it burns all it has there and falls back. The capsule's live panels read the flight: the mission's clock since lift-off, the burning stage's
   propellant and the whole rocket's, the climb, the throttle, the attitude, the cabin's air and the lamps. The parts a
   flight computer draws are now lit as their capsule is, where before they were drawn dark.
 - (Space) Stages. As a rocket climbs, each stage whose engines have burnt out below the one burning is let go: its

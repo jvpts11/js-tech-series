@@ -176,9 +176,6 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
         LaunchCount.CLAMPS, LaunchCount.HOLD};
     private static final int[] LAUNCH_RIGHT = {LaunchCount.RUN, LaunchCount.RECYCLE, LaunchCount.SCRUB, -1,
         LaunchCount.LAUNCH};
-    /* The delta-v the climb from each world's ground to its low orbit takes, before a transfer. */
-    private static final Map<SolarBody, Double> CLIMBS = Map.of(SolarBody.OVERWORLD, Rocketry.SURFACE_TO_LOW_ORBIT,
-            SolarBody.MOON, Rocketry.MOON_ORBIT_TO_SURFACE, SolarBody.MARS, Rocketry.MARS_SURFACE_TO_ORBIT);
     /** The lift-off of a rocket that has not left the ground ({@link #liftOff}). */
     public static final long NOT_LIFTED = -1;
     /* A tank's place in the stack, written as its number. */
@@ -278,7 +275,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             CruiseFlight.second(server, carried, this);
             DescentFlight.second(server, carried, this);
             SurfaceLaunch.second(server, carried, this);
-            if (carried.motion() instanceof RocketAscent ascent) {
+            if (carried.motion() instanceof RocketAscent ascent && !ascent.cutOff()) {
                 ClimbEffects.burning(server, carried, boostersBurning(server, carried, ascent));
             }
         }
@@ -784,7 +781,7 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
                 && burn.stage() < below).toList(), 0);
         // On a world's ground, on its pad or landed there, the climb to its low orbit comes first.
         if (!YardLayout.isYardBlock(this.worldPosition.getX()) || descent() == DescentPhase.LANDED) {
-            left -= here(this.level).map(body -> CLIMBS.getOrDefault(body, 0.0)).orElse(0.0);
+            left -= here(this.level).map(Rocketry::climbFrom).orElse(0.0);
         }
         return OptionalDouble.of(Math.max(0, left));
     }

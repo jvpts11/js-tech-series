@@ -32,7 +32,7 @@ Table: Its pages
 | STG | Left: the stage. Right: ANY, ZONE, PLAT, PLAT + and RAD +, where it goes once spent. |
 
 1. On the ground, set where each spent stage goes on STG, the transfer on XFER with EXEC and the landing on LAND with SET.
-2. Launch from the [launch panel](jsspace:launch_panel), or from LNCH inside with no panel at all. The computer lets each burnt-out stage go, and past the top of the sky the rocket comes to rest in the world's low orbit.
+2. Launch from the [launch panel](jsspace:launch_panel), or from LNCH inside with no panel at all. The computer lets each burnt-out stage go, and past the top of the sky the rocket comes to rest in the world's low orbit, having spent the climb to it the hangar counts: 9,400 m/s from the Overworld, 1,700 from the Moon, 4,100 from Mars. A rocket short of it falls back.
 3. When the window comes, it burns and sets out; between the Overworld and the Moon there is no window. If everyone aboard sleeps, the cruise passes at once.
 4. In the other world's orbit, it [comes down](jsspace:coming_down).
 5. Landed, set a new plan with EXEC: it lifts off when its window comes.

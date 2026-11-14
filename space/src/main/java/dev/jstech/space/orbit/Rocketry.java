@@ -7,6 +7,8 @@
  */
 package dev.jstech.space.orbit;
 
+import dev.jstech.space.universe.SolarBody;
+
 /**
  * The sums a rocket flies by, as real rockets do. Its delta-v is Tsiolkovsky's: its engines' efficiency times the
  * logarithm of how much heavier it is full than empty. It lifts off only when its thrust beats its weight, which is its
@@ -39,6 +41,18 @@ public final class Rocketry {
     }
 
     /**
+     * What the climb from {@code body}'s ground to its low orbit costs, in metres per second, and the burn back down
+     * to the ground where there is no air to brake in: the Overworld's 9,400, the Moon's 1,700, Mars' 4,100.
+     */
+    public static double climbFrom(final SolarBody body) {
+        return switch (body) {
+            case OVERWORLD -> SURFACE_TO_LOW_ORBIT;
+            case MOON -> MOON_ORBIT_TO_SURFACE;
+            case MARS -> MARS_SURFACE_TO_ORBIT;
+        };
+    }
+
+    /**
      * What a stage can change its speed by, in metres per second: its engines' specific impulse, in seconds, times the
      * standard pull times the logarithm of its mass full over its mass empty.
      */
@@ -56,8 +70,8 @@ public final class Rocketry {
      */
     public static double thrustToWeight(final double thrust, final double mass, final double pull) {
         if (!(mass > 0) || !(pull > 0)) {
-            throw new IllegalArgumentException("a rocket weighs something on a world that pulls; got " + mass + " kg at "
-                    + pull + " g");
+            throw new IllegalArgumentException("a rocket weighs something on a world that pulls; got " + mass
+                    + " kg at " + pull + " g");
         }
         return thrust / (mass * OrbitScale.STANDARD_GRAVITY * pull);
     }
