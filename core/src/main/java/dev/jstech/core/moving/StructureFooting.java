@@ -233,6 +233,12 @@ public final class StructureFooting {
             connection.lastGoodX += dx;
             connection.lastGoodY += dy;
             connection.lastGoodZ += dz;
+            // Where the server sent them and waits for their game to answer, as a player getting up from a seat is,
+            // goes on with the deck too: the game sets them there once their game answers, and answered a tick or so
+            // late they would be set where the deck was then, behind it now, and slide back along it.
+            if (connection.awaitingPositionFromClient != null) {
+                connection.awaitingPositionFromClient = connection.awaitingPositionFromClient.add(dx, dy, dz);
+            }
             return;
         }
         final float turn = (float) Mth.wrapDegrees(now.pose().yawDegrees() - before.pose().yawDegrees());

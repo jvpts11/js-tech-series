@@ -81,8 +81,9 @@ import net.neoforged.neoforge.network.registration.NetworkRegistry;
  * taken is refused to another and gone once left; a sitter crosses with it to another dimension still sitting, the
  * pilot's hold carried too; on a seat a formed model makes a couch, they lie as a sleeper does,
  * their head to the model's head side as it is turned, and stand once up; at a helm, the controls they hold fire the
- * engines pushing the way they ask, and are let go a second after they stop; an autopilot flies a hovering craft to a place and holds it
- * there; an arrow loosed from a moving deck flies on with it; a villager sleeps in a bed aboard where the bed is in the
+ * engines pushing the way they ask, and are let go a second after they stop; got up from a seat of a craft going
+ * along, they stay where they got up on its deck, their game answering late; an autopilot flies a hovering craft to a
+ * place and holds it there; an arrow loosed from a moving deck flies on with it; a villager sleeps in a bed aboard where the bed is in the
  * world and is carried with it, and stands up beside it there; a player coming back to a bed aboard comes back where it
  * is; a rider hanging from a rope rides it down; and an engine burning is told to the players who see it, and told
  * no more once it goes out, and keeps a rocket too heavy for it awake on its pad, its flame shown.
@@ -99,6 +100,14 @@ public final class MovingStructureLifeGameTests {
     private static final double KEEPS = 0.1;
     /* The height above a bed's block a sleeper lies at, as the game's own. */
     private static final double LIES = 0.6875;
+    /*
+     * How far a craft is sent along, in blocks, and how fast, in blocks a second; how many ticks a player's game takes
+     * to answer being sent where they got up, late; the most of the server's sendings of a player to answer.
+     */
+    private static final double GOES = 30;
+    private static final double GOING = 20;
+    private static final int ANSWERS_LATE = 3;
+    private static final int SENDINGS = 32;
     /* The couch pod's terminal, in the middle of the west side of a pod built facing east, and its seat. */
     private static final BlockPos COUCH_POD = new BlockPos(4, 1, 5);
     private static final BlockPos COUCH = COUCH_POD.offset(1, 1, 0);
@@ -302,6 +311,49 @@ public final class MovingStructureLifeGameTests {
                 .thenExecuteAfter(25, () -> {
                     helper.assertTrue(!craft.controls().live(level.getGameTime()),
                             "told nothing a second, the controls let go");
+                    leave(pilot);
+                    MovingStructures.takeAway(craft);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * Got up from a seat of a craft going along, a player is sent where they stand, in the world as the craft stood
+     * then; their game answering a few ticks late, they stand where they got up on its deck still, not where the deck
+     * was when they were sent there, blocks behind it now: a pilot getting up in flight slid back along the ship.
+     */
+    @GameTest(template = TALL, batch = BATCH, timeoutTicks = 200)
+    public static void seat_gotUpGoingAlongTheyStayOnTheDeckWhenTheirGameAnswersLate(final GameTestHelper helper) {
+        calm(helper);
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure craft = hoverCraft(helper);
+        final BlockPos helm = find(level, craft, state -> state.is(TestAboard.HELM.get()));
+        final ServerPlayer pilot = rider(helper, new Vec3(4.5, 7, 7.5));
+        helper.assertTrue(MovingStructures.sit(pilot, helm), "the pilot sits at the helm");
+        final StructurePose start = craft.pose();
+        MovingStructures.move(craft, new TowardMotion(start.movedTo(start.x() + GOES, start.y(), start.z()), GOING,
+                0));
+        final Vec3[] got = new Vec3[1];
+        final StructurePose[] then = new StructurePose[1];
+        helper.startSequence()
+                .thenIdle(2)
+                .thenExecute(() -> {
+                    pilot.stopRiding();
+                    helper.assertTrue(pilot.getVehicle() == null, "the pilot gets up");
+                    got[0] = yardOf(craft, pilot.position());
+                    then[0] = craft.pose();
+                })
+                .thenIdle(ANSWERS_LATE)
+                .thenExecute(() -> {
+                    helper.assertTrue(craft.pose().distanceTo(then[0]) > 1, "the craft goes on along: "
+                            + craft.pose().distanceTo(then[0]) + " blocks");
+                    for (int id = 0; id <= SENDINGS; id++) {
+                        pilot.connection.handleAcceptTeleportPacket(new ServerboundAcceptTeleportationPacket(id));
+                    }
+                    final Vec3 now = yardOf(craft, pilot.position());
+                    helper.assertTrue(now.distanceTo(got[0]) < KEEPS, "their game answering late, they stand where"
+                            + " they got up on its deck: " + now + " for " + got[0] + ", "
+                            + now.distanceTo(got[0]) + " blocks off");
                     leave(pilot);
                     MovingStructures.takeAway(craft);
                 })
@@ -588,6 +640,12 @@ public final class MovingStructureLifeGameTests {
         final StructureFrame frame = structure.frame();
         return new Vec3(frame.worldX(place.x, place.y, place.z), frame.worldY(place.x, place.y, place.z),
                 frame.worldZ(place.x, place.y, place.z));
+    }
+
+    /* Where the world's place {@code at} is in the yard of {@code structure} now. */
+    private static Vec3 yardOf(final MovingStructure structure, final Vec3 at) {
+        final StructureFrame frame = structure.frame();
+        return new Vec3(frame.yardX(at.x, at.y, at.z), frame.yardY(at.x, at.y, at.z), frame.yardZ(at.x, at.y, at.z));
     }
 
     /* A stand-in player of its own, named {@code name}. */

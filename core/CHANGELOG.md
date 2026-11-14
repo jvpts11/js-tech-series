@@ -2311,6 +2311,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   their step again against its own deck, a moment apart from the one their game drew, could stop it short on a block,
   and sent them back to where the deck had been, so a pilot getting up from a ship's helm in flight slid along the
   ship and fell off its back.
+- A player getting up from a seat of a structure going along, as a pilot from a ship's helm in flight, stays
+  where they got up on its deck: the server sends them there and sets them there once their game answers, and that
+  place goes on with the deck now. Before, their game answering a tick or so late, they were set where the deck had
+  been when they were sent and slid back along it, two blocks for each tick late at a ship's cruise.
 - A seat aboard a moving structure goes on with it however fast it flies over land still being made: before, a
   ship come down from space onto the Moon and flying on over it could leave its pilot's seat behind in the air, the
   pilot with it, on the server, while on their game they sat on in the ship and could not get up.
