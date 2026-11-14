@@ -22,6 +22,7 @@ import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.FlightPage;
 import dev.jstech.space.flight.PlannedLanding;
 import dev.jstech.space.flight.PlannedTransfer;
+import dev.jstech.space.flight.TransferChoice;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.launch.RocketLaunch;
@@ -68,7 +69,9 @@ public final class OrbitFlightGameTests {
     private static final String PLANS = "jsspace_orbit_plans";
     private static final String ARRIVALS = "jsspace_orbit_arrivals";
     private static final String CAPTURES = "jsspace_orbit_captures";
-    /* The transfer page's right keys: aerobraking and EXEC, from the first. */
+    /* The transfer page's right keys: more delta-v, the assist, aerobraking and EXEC, from the first. */
+    private static final int MORE_DELTA_V = 0;
+    private static final int ASSIST = 2;
     private static final int AEROBRAKE = 3;
     private static final int EXECUTE = 4;
     private static final BlockPos FOOT = new BlockPos(8, 1, 8);
@@ -170,6 +173,13 @@ public final class OrbitFlightGameTests {
                     helper.assertTrue(computer.capturing().equals(Optional.of(SolarBody.OVERWORLD))
                             && computer.planned().map(PlannedTransfer::capture).orElse(0.0) > computer.available()
                             .orElse(0), "its capture burn planned, more than it has: " + computer.planned());
+                    final TransferChoice before = computer.choice();
+                    computer.press(FlightComputerBlockEntity.RIGHT + MORE_DELTA_V);
+                    computer.press(FlightComputerBlockEntity.RIGHT + ASSIST);
+                    computer.press(FlightComputerBlockEntity.LEFT + computer.destinations().size());
+                    helper.assertTrue(computer.choice().equals(before), "of a capture only its aerobraking is chosen:"
+                            + " a transfer's delta-v, assist and window keys do nothing, " + before + " became "
+                            + computer.choice());
                     computer.press(FlightComputerBlockEntity.RIGHT + EXECUTE);
                 })
                 .thenWaitUntil(() -> helper.assertTrue(computerOf(space, body(space, id)).executed().isEmpty(),

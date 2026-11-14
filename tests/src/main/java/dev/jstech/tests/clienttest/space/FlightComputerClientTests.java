@@ -7,6 +7,11 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.multiblock.plan.PlanSpot;
+import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.region.Box;
 import dev.jstech.core.team.CoreTeams;
 import dev.jstech.space.api.Propellants;
 import dev.jstech.space.api.SpaceWorlds;
@@ -16,26 +21,41 @@ import dev.jstech.space.client.rocket.FlightComputerFace;
 import dev.jstech.space.exploration.ReliefCoverage;
 import dev.jstech.space.exploration.WorldCoverage;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
+import dev.jstech.space.flight.FlightComputerMenu;
 import dev.jstech.space.flight.FlightPage;
 import dev.jstech.space.flight.StageChoice;
 import dev.jstech.space.hangar.RocketDesign;
+import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.launch.LaunchCount;
+import dev.jstech.space.launch.RocketLaunch;
 import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.launcher.LauncherDeckBlockEntity;
+import dev.jstech.space.orbit.OrbitObjects;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.space.rocket.TankLoad;
+import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.SphereMap;
+import dev.jstech.space.universe.StarSystems;
+import dev.jstech.space.universe.SystemLayout;
+import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import java.util.List;
+import java.util.stream.IntStream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.SectionPos;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleMenuProvider;
+import net.minecraft.world.phys.Vec3;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * The Flight Computer on a player's game: used, it opens its screen on the transfer page, the Sun drawn in its yellow
@@ -43,7 +63,8 @@ import net.minecraft.server.level.ServerPlayer;
  * drawn where the page was dark, under the grey of the unknown; under a pass the team photographed, in Mars' own
  * colours, how much of Mars is known written over its small map. On its stages page, the rocket's stack is drawn with
  * its separation ring in amber, and its ZONE key sets the chosen stage to fall in a zone round the pad. On a launcher
- * it opens on its LAUNCH page, whose keys work the pad's count.
+ * it opens on its LAUNCH page, whose keys work the pad's count. In a wide orbit its transfer page offers the capture
+ * first, and its landing page asks for the capture before any landing.
  */
 public final class FlightComputerClientTests {
 
@@ -117,6 +138,23 @@ public final class FlightComputerClientTests {
         FlightComputerFace.SX1 - 3, FlightComputerFace.sideKeyY(4) + 12};
     private static final int LAUNCH_RED = 150;
     private static final int LEAST_RED = 12;
+    /*
+     * A rocket in a wide orbit of Mars: where it is built, how far east of its computer the player flies in space,
+     * facing it; the transfer page's ORBIT row and the landing page's box saying to capture first, x0, y0, x1, y1 in
+     * the face's pixels; how many amber points prove each; how long the rocket's travel may take.
+     */
+    private static final BlockPos ORBITER = new BlockPos(6, 2, 6);
+    private static final double BESIDE = 2;
+    private static final float WEST = 90F;
+    private static final int[] WIDE_ROW = {FlightComputerFace.SX0 + 150, FlightComputerFace.SY0 + 29,
+        FlightComputerFace.SX1 - 46, FlightComputerFace.SY0 + 40};
+    private static final int[] CAPTURE_BOX = {FlightComputerFace.SX0 + 50, FlightComputerFace.SY0 + 54,
+        FlightComputerFace.SX1 - 50, FlightComputerFace.SY0 + 84};
+    private static final int LEAST_WIDE_AMBER = 8;
+    private static final int LEAST_BANNER_AMBER = 40;
+    private static final int TRAVEL = 1200;
+    /* The transfer page's aerobraking key, from its first right key. */
+    private static final int AEROBRAKE = 3;
 
     private FlightComputerClientTests() {
     }
@@ -310,6 +348,90 @@ public final class FlightComputerClientTests {
                 });
     }
 
+    /**
+     * A rocket in a wide orbit of Mars, arrived short of its capture burn: its transfer page's first key is CAPT,
+     * chosen, its block reading the orbit WIDE in amber, the keys of a transfer's window, delta-v and assist blank;
+     * its landing page lays a box over its map of Mars saying to capture first.
+     */
+    @ClientTest(timeoutTicks = 4000)
+    public static void computer_offersTheCaptureFromAWideOrbit(final ClientTestContext ctx) {
+        final MovingStructure[] rocket = new MovingStructure[1];
+        final FlightComputerBlockEntity[] computer = new FlightComputerBlockEntity[1];
+        final double[] mars = SystemLayout.orbitSpot(SolarBody.MARS, 0, 0);
+        final int[] seen = new int[2];
+        ctx.afterTest(() -> {
+            ctx.mc().setScreen(null);
+            ctx.server().execute(() -> {
+                final ServerLevel space = space(ctx);
+                final MovingStructure there = rocket[0] == null ? null : MovingStructures.byId(space, rocket[0].id());
+                if (there != null) {
+                    MovingStructures.takeAway(there);
+                }
+                space.setChunkForced(SectionPos.blockToSectionCoord(mars[0]), SectionPos.blockToSectionCoord(mars[1]),
+                        false);
+                final ServerPlayer player = ctx.serverPlayer();
+                player.getAbilities().flying = false;
+                player.onUpdateAbilities();
+                final BlockPos home = ctx.abs(EYE);
+                player.teleportTo(ctx.serverLevel(), home.getX() + 0.5, home.getY(), home.getZ() + 0.5, 0F, 0F);
+            });
+        });
+        ctx.thenTeleport(0, EYE, Direction.SOUTH)
+                .thenServer(0, level -> rocket[0] = orbiter(ctx, level))
+                .thenWaitUntilServer(level -> rocket[0].ready(), TRAVEL, "the rocket to stand ready",
+                        level -> "arriving " + rocket[0].arriving())
+                .thenServer(0, level -> {
+                    final ServerLevel space = space(ctx);
+                    space.setChunkForced(SectionPos.blockToSectionCoord(mars[0]), SectionPos.blockToSectionCoord(
+                            mars[1]), true);
+                    ctx.assertTrue(MovingStructures.travel(rocket[0], space, new Vec3(mars[0], SystemLayout.ORBIT_Y,
+                            mars[1])).ok(), "the rocket is sent into Mars' orbit");
+                })
+                .thenWaitUntilServer(level -> inMarsOrbit(ctx, rocket[0]) != null, TRAVEL,
+                        "the rocket to rest in Mars' orbit", level -> "departing " + rocket[0].departing())
+                .thenServer(0, level -> {
+                    final ServerLevel space = space(ctx);
+                    final MovingStructure there = inMarsOrbit(ctx, rocket[0]);
+                    computer[0] = computerOf(space, there);
+                    OrbitObjects.arrived(space, there, SolarBody.MARS);
+                    // As one arriving short of its capture burn: the capture chosen on the transfer page, burnt.
+                    computer[0].wideOrbit(true);
+                    computer[0].press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.TRANSFER));
+                    computer[0].press(FlightComputerBlockEntity.LEFT);
+                    if (computer[0].choice().aero()) {
+                        computer[0].press(FlightComputerBlockEntity.RIGHT + AEROBRAKE);
+                    }
+                    final Vec3 at = MovingStructures.inWorld(space, Vec3.atCenterOf(computer[0].getBlockPos()));
+                    final ServerPlayer player = ctx.serverPlayer();
+                    player.getAbilities().flying = true;
+                    player.onUpdateAbilities();
+                    player.teleportTo(space, at.x + BESIDE, at.y - 1, at.z, WEST, 0F);
+                })
+                .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.getBlockEntity(computer[0]
+                        .getBlockPos()) instanceof FlightComputerBlockEntity theirs && theirs.capturing().isPresent(),
+                        TRAVEL, "the computer in its wide orbit to reach the player's game")
+                .thenServer(0, level -> ctx.serverPlayer().openMenu(new SimpleMenuProvider((id, inventory, opener)
+                        -> new FlightComputerMenu(id, inventory, computer[0]), Component.empty()),
+                        buf -> buf.writeBlockPos(computer[0].getBlockPos())))
+                .thenAwaitScreen(FlightComputerScreen.class, OPEN)
+                .then(SETTLE, () -> seen[0] = amberIn(ctx, WIDE_ROW))
+                .thenScreenshot(0, "flight-computer-capture")
+                .then(0, () -> {
+                    final int[] key = screenOf(ctx, LANDING_KEY);
+                    ctx.click(key[0], key[1]);
+                })
+                .thenWaitUntil(() -> mapOfThePage(ctx), MAP_WAIT, "the landing page and its map of Mars to come")
+                .then(SETTLE, () -> seen[1] = amberIn(ctx, CAPTURE_BOX))
+                .thenScreenshot(0, "flight-computer-capture-land")
+                .then(0, () -> {
+                    ctx.assertTrue(seen[0] >= LEAST_WIDE_AMBER, "the transfer page reads the wide orbit in amber: "
+                            + seen[0] + " amber points");
+                    ctx.assertTrue(seen[1] >= LEAST_BANNER_AMBER, "the landing page's box says to capture first: "
+                            + seen[1] + " amber points");
+                    ctx.mc().setScreen(null);
+                });
+    }
+
     /* How many points of the face's box {@code box}, x0, y0, x1, y1 in its own pixels, are the screen's green. */
     private static int greenIn(final ClientTestContext ctx, final int[] box) {
         int count = 0;
@@ -455,5 +577,55 @@ public final class FlightComputerClientTests {
 
     private static RocketStack.Part part(final String path) {
         return new RocketStack.Part(SkeletonRocketParts.id(path), 1);
+    }
+
+    /*
+     * An engine, a tank full of methalox and a capsule, built whole at ORBITER, every part formed, and let go as one
+     * moving structure: its body.
+     */
+    private static MovingStructure orbiter(final ClientTestContext ctx, final ServerLevel level) {
+        final RocketStack stack = RocketStack.of(part("sea_level_engine_3"), part("tank_3"), part("capsule_3"));
+        final BlockPos at = ctx.abs(ORBITER);
+        final PlannedBuild build = new PlannedBuild(RocketPlans.of(level, stack), at);
+        build.start(level, ctx.abs(EYE), () -> { });
+        BlockPos computerAt = at;
+        for (final PlanSpot spot : build.plan().spots()) {
+            level.setBlockAndUpdate(build.where(spot), BuiltInRegistries.BLOCK.get(spot.block()).defaultBlockState());
+            if (spot.block().equals(RocketKitBlocks.FLIGHT_COMPUTER.getId())) {
+                computerAt = build.where(spot);
+            }
+        }
+        ctx.assertTrue(build.complete(), "the rocket is built whole");
+        build.stop(false);
+        if (!(level.getBlockEntity(computerAt) instanceof FlightComputerBlockEntity computer)) {
+            throw new IllegalStateException("the rocket holds no flight computer");
+        }
+        computer.carry(new RocketDesign("Orbital I", stack), at.subtract(computerAt), IntStream.range(0,
+                stack.sections().size()).boxed().toList());
+        Propellants.get(level, SkeletonPropellants.METHALOX).ifPresent(methalox -> computer.load(1,
+                TankLoad.filled(SkeletonPropellants.METHALOX, methalox, FULL_TANK)));
+        return RocketLaunch.release(level, computerAt, null).orElseThrow();
+    }
+
+    /* The body of {@code rocket} resting in Mars' orbit, in the Solar System's space; none while it is not there. */
+    private static @Nullable MovingStructure inMarsOrbit(final ClientTestContext ctx, final MovingStructure rocket) {
+        final MovingStructure there = MovingStructures.byId(space(ctx), rocket.id());
+        return there != null && there.ready() ? there : null;
+    }
+
+    /* The flight computer aboard {@code body}, in its yard. */
+    private static FlightComputerBlockEntity computerOf(final ServerLevel level, final MovingStructure body) {
+        final Box box = body.bounds();
+        for (final BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(),
+                box.maxZ())) {
+            if (level.getBlockEntity(pos) instanceof FlightComputerBlockEntity computer) {
+                return computer;
+            }
+        }
+        throw new IllegalStateException("no flight computer aboard");
+    }
+
+    private static ServerLevel space(final ClientTestContext ctx) {
+        return SystemSpaces.spaceOf(ctx.server(), StarSystems.SOLAR_SYSTEM);
     }
 }

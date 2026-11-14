@@ -167,6 +167,9 @@ public final class FlightComputerPages {
     private static final int BANNER_IN = 50;
     private static final int BANNER_Y = SY0 + 54;
     private static final int BANNER_TALL = 30;
+    /* A key the page does not use, its legend blank. */
+    private static final FlightComputerFace.Legend BLANK = new FlightComputerFace.Legend("",
+            FlightComputerFace.Legend.State.OFF, false);
     /* The landing map's place on the screen, under the pages' names and over the two rows of figures. */
     private static final int MAP_X0 = SX0;
     private static final int MAP_Y0 = SY0 + 13;
@@ -212,11 +215,15 @@ public final class FlightComputerPages {
             final boolean windowed = plan.map(TransferPlan::windowed).orElse(false);
             final boolean airAhead = (capturing.isPresent() ? capturing.get() != SolarBody.MOON
                     : plan.map(TransferPlan::aerobraking).orElse(false)) && computer.shield();
-            left.add(state(WINDOW_EARLIER, windowed && choice.window() > 0, false));
-            left.add(state(WINDOW_LATER, windowed && choice.window() < TransferChoice.FARTHEST_WINDOW, false));
-            right.add(state(KEY_DELTA_V, plan.isPresent(), false));
-            right.add(state(KEY_TIME_OF_FLIGHT, plan.isPresent(), false));
-            right.add(state(KEY_ASSIST, windowed, choice.assist()));
+            // A capture is planned by its burn alone, aerobraking or not: the keys of a transfer's window, its delta-v
+            // and its assist go blank.
+            final boolean transfer = capturing.isEmpty();
+            left.add(transfer ? state(WINDOW_EARLIER, windowed && choice.window() > 0, false) : BLANK);
+            left.add(transfer ? state(WINDOW_LATER, windowed && choice.window() < TransferChoice.FARTHEST_WINDOW,
+                    false) : BLANK);
+            right.add(transfer ? state(KEY_DELTA_V, plan.isPresent(), false) : BLANK);
+            right.add(transfer ? state(KEY_TIME_OF_FLIGHT, plan.isPresent(), false) : BLANK);
+            right.add(transfer ? state(KEY_ASSIST, windowed, choice.assist()) : BLANK);
             right.add(state(KEY_AEROBRAKE, airAhead, choice.aero()));
             right.add(state(EXECUTE, plan.isPresent() || capturing.isPresent(), setFor(computer, planned)));
         } else if (page == FlightPage.LANDING) {

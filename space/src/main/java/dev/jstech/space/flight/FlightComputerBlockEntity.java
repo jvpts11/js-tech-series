@@ -803,17 +803,21 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             }
         } else if (page() == FlightPage.TRANSFER && key >= LEFT && key < LEFT + KEYS) {
             final List<ResourceLocation> worlds = destinations();
+            // A capture is planned by its burn alone: a transfer's window keys do nothing then.
+            final boolean transfer = capturing().isEmpty();
             if (key - LEFT < worlds.size() && !worlds.get(key - LEFT).equals(target())) {
                 this.target.set(worlds.get(key - LEFT));
                 this.mark.set(null);
                 this.landing.set(null);
                 this.executed.set(null);
-            } else if (key - LEFT == worlds.size()) {
+            } else if (transfer && key - LEFT == worlds.size()) {
                 this.choice.set(choice().windowBy(-1));
-            } else if (key - LEFT == worlds.size() + 1) {
+            } else if (transfer && key - LEFT == worlds.size() + 1) {
                 this.choice.set(choice().windowBy(1));
             }
-        } else if (page() == FlightPage.TRANSFER && key >= RIGHT && key < RIGHT + KEYS) {
+        } else if (page() == FlightPage.TRANSFER && key >= RIGHT && key < RIGHT + KEYS
+                && (capturing().isEmpty() || key == AEROBRAKE || key == EXECUTE)) {
+            // Of a capture only its aerobraking and its EXEC are chosen, not a transfer's delta-v or assist.
             final TransferChoice now = choice();
             switch (key) {
                 case MORE_DELTA_V -> this.choice.set(now.spendBy(now.spend() == TransferChoice.SPENDS.length - 1
