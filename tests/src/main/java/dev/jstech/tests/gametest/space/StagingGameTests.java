@@ -99,11 +99,12 @@ public final class StagingGameTests {
         final MovingStructure[] stage = new MovingStructure[1];
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(body.ready(), "its body stands ready"))
-                .thenExecute(() -> {
-                    aboard[0] = BlockPos.containing(MovingStructures.toYard(body, Vec3.atCenterOf(
-                            computer.getBlockPos())));
-                    RocketLaunch.lift(level, body);
-                })
+                .thenExecute(() -> aboard[0] = BlockPos.containing(MovingStructures.toYard(body, Vec3.atCenterOf(
+                        computer.getBlockPos()))))
+                // The rocket is back on the pad within two seconds: its computer must be reading the flight by then.
+                .thenWaitUntil(() -> helper.assertTrue(level.shouldTickBlocksAt(aboard[0]),
+                        "its flight computer's place in the yard ticks"))
+                .thenExecute(() -> RocketLaunch.lift(level, body))
                 .thenWaitUntil(() -> {
                     stage[0] = stageOf(level, body);
                     helper.assertTrue(stage[0] != null, "its first stage burnt out, it comes loose as a body");
@@ -114,7 +115,8 @@ public final class StagingGameTests {
                     helper.assertTrue(flying != null && flying.separated() == 1
                             && flying.formed().equals(List.of(3, 4, 5)), "its computer draws only what is left");
                     helper.assertTrue(body.motion() instanceof RocketAscent && Rockets.get(level.getServer(),
-                            body.id()).isPresent(), "the rocket climbs on as it was, by its name");
+                            body.id()).isPresent(), "the rocket climbs on as it was, by its name: moving by "
+                            + body.motion());
                     helper.assertTrue(drawers(level, stage[0]) == 3, "each of the stage's three parts draws itself: "
                             + drawers(level, stage[0]));
                     helper.assertTrue(StageFlights.get(level.getServer(), stage[0].id()).map(flight -> flight.near()

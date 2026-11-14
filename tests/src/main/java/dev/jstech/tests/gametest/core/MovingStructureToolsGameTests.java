@@ -521,12 +521,19 @@ public final class MovingStructureToolsGameTests {
                     final MovingStructure arrived = MovingStructures.byId(nether, craft.id());
                     helper.assertTrue(arrived != null && arrived.ready(), "it arrives in the Nether");
                 })
+                // Arrived is its chunks loaded, and not yet ticking: its belts run once their places tick.
+                .thenWaitUntil(() -> {
+                    final MovingStructure arrived = MovingStructures.byId(nether, craft.id());
+                    helper.assertTrue(belts(nether, arrived).stream().allMatch(belt -> nether.shouldTickBlocksAt(
+                            belt.getBlockPos())), "its belts' places tick: " + carrying(nether, arrived));
+                })
                 .thenExecute(() -> {
                     final MovingStructure arrived = MovingStructures.byId(nether, craft.id());
                     helper.assertTrue(slabAboard(nether, arrived), "with its microblock");
                     helper.assertTrue(find(nether, arrived, state -> state.is(TestRadios.TRANSMITTER.get())) != null,
                             "and its radio");
-                    belts(nether, arrived).get(0).put(new ItemStack(Items.DIAMOND, 3), 0.0);
+                    helper.assertTrue(belts(nether, arrived).get(0).put(new ItemStack(Items.DIAMOND, 3), 0.0),
+                            "the diamonds go onto its first belt: " + carrying(nether, arrived));
                 })
                 .thenWaitUntil(() -> {
                     final MovingStructure arrived = MovingStructures.byId(nether, craft.id());
@@ -596,18 +603,24 @@ public final class MovingStructureToolsGameTests {
         return out;
     }
 
-    /* What each belt aboard holds, and whether its place ticks, for a test's failure to tell. */
+    /*
+     * What each belt aboard carries and how fast, whether its place ticks, and what the chest holds, for a test's
+     * failure to tell.
+     */
     private static String carrying(final ServerLevel level, final MovingStructure craft) {
         if (craft == null) {
             return "the structure is gone";
         }
         final StringBuilder said = new StringBuilder();
         for (final ConveyorBlockEntity belt : belts(level, craft)) {
-            said.append(belt.getBlockPos().toShortString()).append(" holds ").append(belt.held()).append(", ticking ")
+            said.append(belt.getBlockPos().toShortString()).append(" carries");
+            belt.lane().entries().forEach(entry -> said.append(' ').append(entry.item().getCount()).append(' ')
+                    .append(entry.item().getItem()).append(" at ").append(entry.at()));
+            said.append(", moving ").append(belt.moving()).append(", ticking ")
                     .append(level.shouldTickBlocksAt(belt.getBlockPos())).append("; ");
         }
-        return said.append("the structure ready ").append(craft.ready()).append(" at ").append(craft.pose())
-                .toString();
+        return said.append("the chest holds ").append(diamonds(level, craft)).append(" diamonds; the structure ready ")
+                .append(craft.ready()).append(" at ").append(craft.pose()).toString();
     }
 
     /* How many diamonds the chest aboard holds. */
