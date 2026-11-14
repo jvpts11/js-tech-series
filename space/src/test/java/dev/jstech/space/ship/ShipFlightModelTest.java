@@ -32,6 +32,8 @@ class ShipFlightModelTest {
     private static final ShipFlightModel.Held DOWN = new ShipFlightModel.Held(0, 0, 0, 0, 0, 1, false, true);
     /* Mars's air at its ground, as a share of the overworld's, and its pull. */
     private static final ShipFlightModel.Air THIN = new ShipFlightModel.Air(0.006, 0.38, true, false, 1000);
+    /* The Moon: no air, and its pull. */
+    private static final ShipFlightModel.Air MOON = new ShipFlightModel.Air(0.0, 0.165, true, false, 1000);
     /* How high the air of a climb thins to none, in metres, and how far its pilot holds its nose up. */
     private static final double TOP = 2000;
     private static final double CLIMBING = 60;
@@ -223,6 +225,44 @@ class ShipFlightModelTest {
         assertEquals(30.0 * ShipFlightModel.TICK, tick.pitch(), CLOSE);
         assertEquals(0.5, ShipFlightModel.step(ShipFlightModel.State.RESTING, leftUp, SPACE, SHIP, 59.5).pitch(),
                 CLOSE);
+    }
+
+    @Test
+    void step_whereThereIsNoAirItsThrustersHoldItUpAndWithoutThemItSinks() {
+        final ShipFlightModel.Performance thrusters = new ShipFlightModel.Performance(40_000, 420_000, 420_000,
+                400_000, 240_000, 4.0e6, ShipFlightModel.Gear.LEGS);
+        final ShipFlightModel.State hovered = fly(thrusters, CRUISING, MOON, 3 * SECONDS);
+        assertEquals(0, hovered.sink(), 1.0e-6, "on the Moon its thrusters hold it: " + hovered);
+        final ShipFlightModel.Tick on = ShipFlightModel.step(hovered, CRUISING, MOON, thrusters, 0);
+        assertTrue(on.thrusting() && !on.lifting() && !on.stalled(), "its thrusters fire, no air for its nozzles: "
+                + on);
+        assertTrue(fly(thrusters, UP, MOON, SECONDS, hovered).rise() > 0, "held up, it rises on them");
+        assertTrue(fly(SHIP, CRUISING, MOON, 3 * SECONDS).sink() > 0, "with no thrusters it sinks");
+    }
+
+    @Test
+    void step_inTheAirItsNozzlesHoldItAndItsThrustersRest() {
+        final ShipFlightModel.Performance thrusters = new ShipFlightModel.Performance(40_000, 420_000, 420_000,
+                400_000, 240_000, 4.0e6, ShipFlightModel.Gear.LEGS);
+        final ShipFlightModel.State hovered = fly(thrusters, CRUISING, SEA, 3 * SECONDS);
+        final ShipFlightModel.Tick on = ShipFlightModel.step(hovered, CRUISING, SEA, thrusters, 0);
+        assertTrue(on.lifting() && !on.thrusting(), "in the overworld's air its nozzles hold it alone: " + on);
+    }
+
+    @Test
+    void hovers_whereNozzlesAndThrustersTogetherHoldItsWeight() {
+        final ShipFlightModel.Performance thrusters = new ShipFlightModel.Performance(40_000, 420_000, 420_000,
+                400_000, 240_000, 4.0e6, ShipFlightModel.Gear.LEGS);
+        final double moon = MOON.gravity() * ShipFlightModel.GRAVITY;
+        final double mars = THIN.gravity() * ShipFlightModel.GRAVITY;
+        assertTrue(ShipFlightModel.hovers(thrusters, 0, moon) && ShipFlightModel.hovers(thrusters, THIN.density(),
+                mars), "with thrusters it hovers on the Moon and in Mars' thin air");
+        assertFalse(ShipFlightModel.hovers(SHIP, 0, moon) || ShipFlightModel.hovers(SHIP, THIN.density(), mars),
+                "with none it hovers on neither");
+        assertFalse(ShipFlightModel.hovers(thrusters, 0, ShipFlightModel.GRAVITY),
+                "its thrusters alone hold it under no overworld's pull");
+        assertTrue(ShipFlightModel.hovers(SHIP, 1.0, ShipFlightModel.GRAVITY), "its nozzles hold it in the air");
+        assertTrue(ShipFlightModel.hovers(SHIP, 0, 0), "in space it needs nothing");
     }
 
     private static ShipFlightModel.State fly(final ShipFlightModel.Performance ship, final ShipFlightModel.Held held,

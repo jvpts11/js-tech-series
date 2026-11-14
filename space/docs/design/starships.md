@@ -127,7 +127,9 @@ kit for its vehicles.
 - **Boost.** On its own key, the boost takes the ship faster across an empty stretch, well clear of the land or in space,
   from a store the reactor's spare power fills.
 - **Taking off and landing.** The air engines' nozzles turn down, as the Harrier's do, just far enough to hold what the
-  wings do not. Below flying speed the ship hovers with its nose level and the pilot takes it up and down. **Every small
+  wings do not. Where the air does not reach, on the Moon and in Mars' thin air, the **thrusters** hold the ship up with
+  a force of their own, firing down jets of cold gas; **a ship with no thrusters lands only where there is air**, and
+  LAND tells its pilot so there. Below flying speed the ship hovers with its nose level and the pilot takes it up and down. **Every small
   ship takes off and lands vertically**; the gear decides the rest. **Wheels** roll on the ground, on a runway, and also
   land on a pad. **Feet** stand where they come down, on rough ground. The gear is down on the land, when hovering and
   near the ground, and folds flat into the floor as the ship climbs away, struts first and bay doors shutting after,

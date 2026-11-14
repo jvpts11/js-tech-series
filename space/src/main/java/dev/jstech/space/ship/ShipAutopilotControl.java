@@ -109,7 +109,7 @@ public final class ShipAutopilotControl {
             }
         }
         if (flight.ship().gear() != ShipFlightModel.Gear.WHEELS) {
-            return best;
+            return hovering(pilot, level, flight, best);
         }
         double blocked = Double.POSITIVE_INFINITY;
         for (final ShipLandings.Beacon beacon : ShipLandings.beacons(level)) {
@@ -129,7 +129,21 @@ public final class ShipAutopilotControl {
         if (blocked < nearest) {
             pilot.displayClientMessage(GameText.component(ShipLandingTexts.RUNWAY_BLOCKED), true);
         }
-        return best;
+        return hovering(pilot, level, flight, best);
+    }
+
+    /*
+     * The landing {@code best}, where the ship hovers at its spot; none, its pilot told why, where neither the air
+     * for its nozzles nor its thrusters hold it up: a ship with no thrusters lands only where there is air.
+     */
+    private static Optional<ShipAutopilot> hovering(final ServerPlayer pilot, final ServerLevel level,
+                                                    final ShipFlight flight, final Optional<ShipAutopilot> best) {
+        final Optional<Vec3> spot = best.flatMap(ShipAutopilot::spot);
+        if (spot.isEmpty() || ShipFlight.hoversAt(level, spot.get().y, flight.ship())) {
+            return best;
+        }
+        pilot.displayClientMessage(GameText.component(ShipLandingTexts.CANNOT_HOVER), true);
+        return Optional.empty();
     }
 
     /*

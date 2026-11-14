@@ -135,10 +135,12 @@ public final class SmallShipParts {
                 figures(0.8, 0, 0, -0.2, 0, 0));
         hung("small_single_fin", SINGLE_FIN, ShipPartKind.FINS, ShipPlace.SPINE_END, false, kosmozavod,
                 figures(0.5, 0, 0, -0.1, 0, 0));
+        // The thrusters hold a small ship up where there is no air for its nozzles: on the Moon, and in Mars' thin air,
+        // a laden one; never under the overworld's pull, where its air engines must.
         hung("small_blisters", BLISTERS, ShipPartKind.THRUSTERS, ShipPlace.AROUND, false, meridian,
-                figures(0.6, 0, 0, -1.4, 0, 0));
+                figures(0.6, 0, 240, -1.4, 0, 0));
         hung("small_quads", QUADS, ShipPartKind.THRUSTERS, ShipPlace.AROUND, false, ironside,
-                figures(0.5, 0, 0, -1.2, 0, 0));
+                figures(0.5, 0, 210, -1.2, 0, 0));
         // The wheels roll, on the land and a runway; the legs' feet stand where they come down.
         ShipParts.declare(id("small_wheels"), new ShipPart(WHEELS.key(), ShipPartKind.GEAR, ShipClass.SMALL,
                 ShipPlace.UNDER, 0, 0, false, false, Optional.of(meridian), figures(1.5, 0, 0, 0, 0, 0), true));

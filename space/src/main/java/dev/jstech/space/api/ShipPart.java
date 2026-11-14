@@ -81,7 +81,8 @@ public record ShipPart(String name, ShipPartKind kind, ShipClass shipClass, Ship
      *
      * @param mass   its mass empty, in kilograms
      * @param thrust what its main engines push forward, in newtons
-     * @param lift   what its air engines lift, their nozzles turned down, in newtons; they push as hard forward
+     * @param lift   what its air engines lift, their nozzles turned down, in newtons, and they push as hard forward;
+     *               what its thrusters hold up, needing no air
      * @param power  the power it makes, in watts, or, below nought, the power it takes
      * @param seats  the crew it seats
      * @param beds   the crew it beds

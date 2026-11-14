@@ -221,8 +221,8 @@ public final class ShipGearClientTests {
                              final boolean grounded, final double speed) {
         final AirReserveEntity console = console(ctx, ship);
         ctx.assertTrue(console != null, "its console on the player's game");
-        console.flew(new ShipReadings(speed, 0, 0, 100, false, 0, false, down, false, down ? 0 : 40, grounded,
-                ShipReadings.Pilot.NONE));
+        console.flew(new ShipReadings(speed, 0, 0, 100, false, 0, false, false, down, false, down ? 0 : 40,
+                grounded, ShipReadings.Pilot.NONE));
     }
 
     /* The console of {@code ship} on the player's game, if it has arrived. */

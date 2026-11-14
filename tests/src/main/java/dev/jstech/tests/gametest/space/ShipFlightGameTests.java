@@ -8,6 +8,7 @@
 package dev.jstech.tests.gametest.space;
 
 import dev.jstech.core.dimension.DimensionEffects;
+import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.jstechseries.persistor.SpacePersistor;
 import dev.jstech.core.jstechseries.persistor.SpacePersistorBlockEntity;
 import dev.jstech.core.moving.BlockAboard;
@@ -21,7 +22,9 @@ import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.team.Ownership;
+import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipParts;
+import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipBoost;
 import dev.jstech.space.ship.ShipDesign;
@@ -34,6 +37,7 @@ import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardPlans;
 import dev.jstech.space.shipyard.ShipyardStructure;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
+import dev.jstech.space.universe.SolarSystemWorlds;
 import dev.jstech.space.universe.SpaceClimbs;
 import dev.jstech.space.universe.StarSystems;
 import dev.jstech.space.universe.SystemSpaces;
@@ -52,6 +56,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.gametest.framework.GameTestSequence;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -61,6 +66,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
@@ -150,8 +156,33 @@ public final class ShipFlightGameTests {
     private static final ShipDesign SHIP = new ShipDesign("JS-02", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
             part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("wheels")));
+    /* The same ship with no thrusters; what its blisters hold up, in newtons; a height over a world's land. */
+    private static final ShipDesign NO_THRUSTERS = new ShipDesign("JS-03", List.of(part("orbiter_cockpit"),
+            part("airlock"), part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
+            part("side_intakes"), part("blended_delta"), part("twin_canted_fins"), part("wheels")));
+    private static final double BLISTERS_NEWTONS = 240_000;
+    private static final double OVER_THE_LAND = 100;
 
     private ShipFlightGameTests() {
+    }
+
+    @GameTest(template = ARENA, batch = BATCH)
+    public static void thrusters_holdTheShipWhereThereIsNoAirAndWithoutThemItHoversOnlyInAir(
+            final GameTestHelper helper) {
+        final Map<ResourceLocation, ShipPart> parts = ShipParts.all(helper.getLevel());
+        final ShipFlightModel.Performance with = ShipFlight.performance(SHIP, parts);
+        final ShipFlightModel.Performance without = ShipFlight.performance(NO_THRUSTERS, parts);
+        helper.assertTrue(with.thrusters() == BLISTERS_NEWTONS && without.thrusters() == 0,
+                "its blisters hold up what theirs do: " + with.thrusters());
+        final ServerLevel moon = world(helper, SolarSystemWorlds.MOON);
+        final ServerLevel mars = world(helper, SolarSystemWorlds.MARS);
+        helper.assertTrue(ShipFlight.hoversAt(moon, OVER_THE_LAND, with) && ShipFlight.hoversAt(mars,
+                OVER_THE_LAND, with), "with thrusters it hovers on the Moon and in Mars' thin air");
+        helper.assertFalse(ShipFlight.hoversAt(moon, OVER_THE_LAND, without) || ShipFlight.hoversAt(mars,
+                OVER_THE_LAND, without), "with none it hovers on neither");
+        helper.assertTrue(ShipFlight.hoversAt(helper.getLevel(), OVER_THE_LAND, without),
+                "in the overworld's air its nozzles hold it up");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
@@ -600,5 +631,14 @@ public final class ShipFlightGameTests {
 
     private static ResourceLocation part(final String path) {
         return SmallShipParts.id("small_" + path);
+    }
+
+    /*
+     * The level of the world {@code world}: the test server makes only the overworld, so the world is made here as a
+     * copy of its declared dimension when no test has made it yet.
+     */
+    private static ServerLevel world(final GameTestHelper helper, final ResourceLocation world) {
+        final ResourceKey<Level> key = SpaceWorlds.get(helper.getLevel(), world).orElseThrow().dimension();
+        return RuntimeDimensions.getOrCreate(helper.getLevel().getServer(), key, key.location());
     }
 }

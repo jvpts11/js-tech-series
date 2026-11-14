@@ -1,0 +1,19 @@
+{
+  "reach": 192,
+  "emitters": [
+    {
+      "name": "gas",
+      "emission": {"shape": {"type": "cone", "angle": 6}, "rate": 90, "life": [0.15, 0.3], "speed": [7, 10]},
+      "look": {"sprite": "minecraft:generic", "frames": 8, "size": [0.2, 0.5], "colour": ["#F2F5FFB0", "#D6DCE800"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.6, "expands": true}
+    },
+    {
+      "name": "plume",
+      "emission": {"shape": {"type": "cone", "angle": 16}, "rate": 20, "life": [0.3, 0.5], "speed": [3, 5]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [0.35, 0.9], "colour": ["#E8ECF250", "#E0E4EA00"],
+               "spin": 6},
+      "motion": {"drag": 1.0, "expands": true}
+    }
+  ]
+}

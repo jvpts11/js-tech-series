@@ -799,8 +799,12 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   sinks. With nobody at the helm it comes down gently and settles. On the land its gear decides: on wheels it rolls
   on as down a runway, and on feet it stands where it comes down. Its gear is down on the land, hovering and near the
   ground, and goes up, drawn stowed, once it flies on its wings well clear. Hovering, each nozzle blows a jet of flame
-  down and the dust under it is blown out round the ship. Its flight console keeps its readings, shown on every
-  player's game: speed, climb, throttle, boost, its nozzles' angle, and whether its gear is down.
+  down and the dust under it is blown out round the ship. Where the air does not reach, on the Moon and in Mars' thin
+  air, its thrusters hold it up with a force of their own (240 kN the blisters, 210 kN the quads, enough for a small
+  ship there but never under the Overworld's pull), each firing down a jet of cold gas, the Moon's dust flying out flat
+  under them; a ship with no thrusters lands only where there is air, and LAND tells its pilot so where it cannot hover.
+  Its flight console keeps its readings, shown on every player's game: speed, climb, throttle, boost, its nozzles'
+  angle, whether its thrusters fire, and whether its gear is down.
 - A ship climbs to space without stopping, through the same passage as a rocket: over the build limit it
   flies on through the open sky, the land ahead of it loading as it goes, and over the line it crosses into the Solar
   System's space whole, with no loading screen, its pilot still at its helm and its flight going on as it went. Fast,

@@ -1028,6 +1028,7 @@
   "block.jsspace.ship_pad": "Plataforma de Pouso de Naves",
   "block.jsspace.runway_beacon": "Farol de Pista",
   "jsspace.ship_landing.runway_blocked": "A pista depois do farol não está livre: não dá para pousar ali",
+  "jsspace.ship_landing.cannot_hover": "Ar de menos aqui para os bocais e nenhum propulsor que segure a nave: não dá para pousar",
   "jsspace.crew.role.none": "NENHUM",
   "jsspace.crew.role.passenger": "PASSAG",
   "jsspace.crew.role.crew": "TRIPUL",

@@ -88,6 +88,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                     Codec.DOUBLE.fieldOf("air_thrust").forGetter(ShipFlightModel.Performance::airThrust),
                     Codec.DOUBLE.fieldOf("bell_thrust").forGetter(ShipFlightModel.Performance::bellThrust),
                     Codec.DOUBLE.fieldOf("wing").forGetter(ShipFlightModel.Performance::wing),
+                    Codec.DOUBLE.optionalFieldOf("thrusters", 0.0).forGetter(ShipFlightModel.Performance::thrusters),
                     Codec.DOUBLE.fieldOf("power").forGetter(ShipFlightModel.Performance::power),
                     GEAR.optionalFieldOf("gear", ShipFlightModel.Gear.NONE)
                             .forGetter(ShipFlightModel.Performance::gear))
@@ -170,6 +171,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         double air = 0;
         double bells = 0;
         double wing = 0;
+        double thrusters = 0;
         double power = 0;
         ShipFlightModel.Gear gear = ShipFlightModel.Gear.NONE;
         for (int index = 0; index < all.size(); index++) {
@@ -181,6 +183,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             final ShipPart.Figures figures = part.figures();
             mass += figures.mass() * share;
             air += part.kind() == ShipPartKind.AIR_ENGINE ? figures.lift() * share : 0;
+            thrusters += part.kind() == ShipPartKind.THRUSTERS ? figures.lift() * share : 0;
             bells += figures.thrust() * share;
             wing += figures.wing() * share;
             power += figures.power() * share;
@@ -188,7 +191,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                 gear = part.rolls() ? ShipFlightModel.Gear.WHEELS : ShipFlightModel.Gear.LEGS;
             }
         }
-        return new ShipFlightModel.Performance(mass, air, bells, wing, power, gear);
+        return new ShipFlightModel.Performance(mass, air, bells, wing, thrusters, power, gear);
     }
 
     /** Where the block {@code yard} of {@code body}'s yard stands from its pivot's block, as its console is kept. */
@@ -241,8 +244,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         // A part with holes in it does as much as the share of its blocks still in it, as its console counts them.
         final ShipFlightModel.Performance whole = keeper == null ? this.ship : keeper.performance().orElse(this.ship);
         final ShipFlightModel.Performance running = fuelled ? whole : new ShipFlightModel.Performance(
-                whole.mass(), whole.airThrust(), whole.bellThrust(), whole.wing(), Math.min(0, whole.power()),
-                whole.gear());
+                whole.mass(), whole.airThrust(), whole.bellThrust(), whole.wing(), whole.thrusters(),
+                Math.min(0, whole.power()), whole.gear());
         // Its pilot taking the helm, holding any of its keys, lets its autopilot go; so does an autopilot done, and a
         // runway whose stretch is found not clear as the ship comes near.
         final Optional<ShipAutopilot> pilot = this.autopilot.filter(engaged -> !holding(helm)
@@ -572,6 +575,16 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     private static ShipFlightModel.State stood(final ShipFlightModel.State next) {
         return new ShipFlightModel.State(next.speed(), 0, next.throttle(), next.charge(), Math.max(0, next.rise()),
                 next.nozzles());
+    }
+
+    /**
+     * Whether a ship of {@code ship} hovers at the height {@code y} of {@code level}: its nozzles in the air there and
+     * its thrusters together hold it up ({@link ShipFlightModel#hovers}).
+     */
+    public static boolean hoversAt(final ServerLevel level, final double y, final ShipFlightModel.Performance ship) {
+        final DimensionRules rules = DimensionRulesData.of(level);
+        return ShipFlightModel.hovers(ship, rules.at(y).pressure() / SEA_PRESSURE,
+                ShipFlightModel.GRAVITY * Math.max(0.0, rules.gravityAt(y)));
     }
 
     /*

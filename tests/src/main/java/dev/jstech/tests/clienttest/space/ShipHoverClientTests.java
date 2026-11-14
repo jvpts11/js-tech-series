@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.clienttest.space;
 
+import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureControls;
@@ -19,6 +20,7 @@ import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipReadings;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardTerminalBlockEntity;
+import dev.jstech.space.worldgen.MoonWorld;
 import dev.jstech.tests.clienttest.ClientTest;
 import dev.jstech.tests.clienttest.ClientTestContext;
 import dev.jstech.tests.testkit.space.TestShipyards;
@@ -27,11 +29,15 @@ import java.util.Map;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
@@ -61,6 +67,15 @@ public final class ShipHoverClientTests {
     private static final int RISING = 50;
     private static final double HIGH = 80;
     private static final double FAST = 30;
+    /*
+     * On the Moon: how high over its land the ship hovers, in blocks; where the player watches from, beside and below
+     * it, and which way they look; the Moon's noon, for light on the ship.
+     */
+    private static final double ABOVE_THE_MOON = 6;
+    private static final Vec3 MOON_EYES = new Vec3(-16, 4, 4);
+    private static final float MOON_YAW = -100F;
+    private static final float MOON_PITCH = -5F;
+    private static final long MOON_NOON = 6000;
     private static final ShipDesign SHIP = new ShipDesign("JS-05", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("lab"), part("reactor_flush")), List.of(part("twin_bells"), part("side_intakes"),
             part("blended_delta"), part("twin_canted_fins"), part("blisters"), part("legs")));
@@ -140,6 +155,90 @@ public final class ShipHoverClientTests {
                         "high and fast, its gear to go up on the player's game");
     }
 
+    /**
+     * On the Moon, with no air for its nozzles, the ship hovers on its thrusters: each fires down a jet of cold gas,
+     * its nozzles blowing nothing.
+     */
+    @ClientTest(timeoutTicks = 3000)
+    public static void hover_onTheMoonItsThrustersFireDown(final ClientTestContext ctx) {
+        final ServerLevel[] built = new ServerLevel[1];
+        final BlockPos[] terminal = new BlockPos[1];
+        final MovingStructure[] ship = new MovingStructure[1];
+        final boolean[] piloted = new boolean[1];
+        final int[] ground = new int[1];
+        // Its pilot at the helm holding nothing: the ship hovering where it is.
+        final Consumer<ServerTickEvent.Post> helm = event -> {
+            if (piloted[0] && ship[0] != null) {
+                ship[0].controls().pilot(ship[0].level().getGameTime(), Map.of(), new Vec3(0, 0, -1),
+                        new Vec3(0, 1, 0));
+            }
+        };
+        NeoForge.EVENT_BUS.addListener(helm);
+        ctx.afterTest(() -> {
+            NeoForge.EVENT_BUS.unregister(helm);
+            ctx.server().execute(() -> {
+                if (ship[0] != null) {
+                    MovingStructures.takeAway(ship[0]);
+                }
+                moon(ctx).setChunkForced(0, 0, false);
+                if (built[0] != null) {
+                    clear(ctx, built[0]);
+                }
+                final ServerPlayer player = ctx.serverPlayer();
+                final BlockPos home = ctx.origin().above(2);
+                player.teleportTo(ctx.server().overworld(), home.getX() + 0.5, home.getY(), home.getZ() + 0.5, 0F,
+                        0F);
+                player.setGameMode(GameType.CREATIVE);
+            });
+        });
+        ctx.thenServer(0, level -> {
+            built[0] = level;
+            clear(ctx, level);
+            terminal[0] = TestShipyards.build(level, ctx.abs(CORNER));
+            ctx.serverPlayer().setGameMode(GameType.SPECTATOR);
+        }).thenWaitUntilServer(level -> level.getBlockEntity(terminal[0]) instanceof ShipyardTerminalBlockEntity dock
+                && dock.formed(), ARRIVE, "the dock to form", level -> "not formed")
+                .thenServer(0, level -> {
+                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
+                            .getBlockEntity(terminal[0]);
+                    dock.design(SHIP);
+                    ctx.assertTrue(dock.confirm(), "the ship is sent to the dock");
+                    final PlannedBuild plan = dock.build().orElseThrow();
+                    for (final PlanSpot spot : plan.plan().spots()) {
+                        level.setBlockAndUpdate(plan.where(spot), BuiltInRegistries.BLOCK.get(spot.block())
+                                .defaultBlockState());
+                    }
+                })
+                .thenServer(SETTLE, level -> ship[0] = ((ShipyardTerminalBlockEntity) level.getBlockEntity(
+                        terminal[0])).release(null).orElseThrow())
+                .thenWaitUntilServer(level -> ship[0].ready(), ARRIVE, "its blocks to come into the structure",
+                        level -> "arriving")
+                .thenServer(0, level -> {
+                    final ServerLevel moon = moon(ctx);
+                    moon.setDayTime(MOON_NOON);
+                    moon.setChunkForced(0, 0, true);
+                    ground[0] = moon.getChunk(0, 0).getHeight(Heightmap.Types.MOTION_BLOCKING, 8, 8);
+                    ctx.assertTrue(MovingStructures.travel(ship[0], moon, new Vec3(8.5, ground[0] + ABOVE_THE_MOON,
+                            8.5)).ok(), "the ship is sent to the Moon");
+                })
+                .thenWaitUntilServer(level -> MovingStructures.byId(moon(ctx), ship[0].id()) != null
+                        && MovingStructures.byId(moon(ctx), ship[0].id()).ready(), ARRIVE,
+                        "the ship to come to the Moon", level -> "departing " + ship[0].departing())
+                .thenServer(0, level -> {
+                    ship[0] = MovingStructures.byId(moon(ctx), ship[0].id());
+                    piloted[0] = true;
+                    ctx.serverPlayer().teleportTo(moon(ctx), 8.5 + MOON_EYES.x, ground[0] + MOON_EYES.y,
+                            8.5 + MOON_EYES.z, MOON_YAW, MOON_PITCH);
+                })
+                .thenWaitUntil(() -> ctx.mc().level != null && ctx.mc().level.dimension().equals(MoonWorld.world()
+                        .dimension()) && shown(ctx, ship[0]).thrusting(), ARRIVE,
+                        "its console to show it hovering on its thrusters on the player's game")
+                .thenAwaitLandDrawn(ARRIVE)
+                .thenScreenshot(SETTLE, "ship-hover-moon")
+                .then(0, () -> ctx.assertTrue(!shown(ctx, ship[0]).lifting(), "its nozzles blow nothing, with no"
+                        + " air"));
+    }
+
     /* What {@code ship}'s console shows on the player's game. */
     private static ShipReadings shown(final ClientTestContext ctx, final MovingStructure ship) {
         final BlockPos console = ((ShipFlight) ship.motion()).consoleIn(ship).orElseThrow();
@@ -164,6 +263,12 @@ public final class ShipHoverClientTests {
 
     private static ResourceLocation part(final String path) {
         return SmallShipParts.id("small_" + path);
+    }
+
+    /* The Moon's own dimension, made from its file when it is not there yet. */
+    private static ServerLevel moon(final ClientTestContext ctx) {
+        final ResourceKey<Level> key = MoonWorld.world().dimension();
+        return RuntimeDimensions.getOrCreate(ctx.server(), key, key.location());
     }
 
     private static void clear(final ClientTestContext ctx, final ServerLevel level) {

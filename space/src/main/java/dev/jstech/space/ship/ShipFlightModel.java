@@ -16,8 +16,10 @@ import dev.jstech.space.api.ShipPart;
  * hold it up, more as the square of its speed and less in thinner air; in the thin air of the climb and in space its
  * bells push, and in space it flies free. Slower than its wings hold it, its air engines' nozzles turn down as the
  * Harrier's do, just far enough to hold what its wings do not, the rest of their thrust still pushing it on; where they
- * cannot hold it, in thin air or too heavy, it sinks. Slow, it hovers on them, rising and coming down straight, its
- * nose kept level; fast, its nose stays where its pilot points it, so it climbs out of any air on its bells.
+ * cannot hold it, in thin air or with no air at all, its thrusters, needing none, hold what they can, and past them it
+ * sinks: a ship with no thrusters hovers only where there is air. Slow, it hovers on them, rising and coming down
+ * straight, its nose kept level; fast, its nose stays where its pilot points it, so it climbs out of any air on its
+ * bells.
  * Its weight counts: a heavier ship gathers speed more slowly and needs more of it to stay up. Its boost, a store its
  * reactor fills, takes it faster across the empty stretches. On the land, wheels roll it as on a runway, and feet hold
  * it where it stands. The numbers are the game's, not a real ship's: its speeds are kept to what the world can be
@@ -91,23 +93,28 @@ public final class ShipFlightModel {
         final double breathing = ship.airThrust() * thick;
         final double bells = ship.bellThrust() * (1.0 - thick);
         final double wings = held(ship, now.speed(), thick, pull);
-        // Its wings falling short, its nozzles hold the rest; slow, it hovers on them, its pilot's up and down rising
+        // Its wings falling short, its nozzles hold the rest; where the air leaves its nozzles short of its weight,
+        // its thrusters, needing no air, hold what they can. Slow, it hovers on them, its pilot's up and down rising
         // and coming down straight, where fast they pitch its nose.
-        final boolean wanting = pull > 0 && breathing > 0 && wings < 1.0;
+        final double thrusters = breathing < weight * (1.0 - wings) ? ship.thrusters() : 0;
+        final boolean wanting = pull > 0 && breathing + thrusters > 0 && wings < 1.0;
         final boolean hovering = wanting && now.speed() < HOVER_BELOW;
         final double throttle = held.piloted()
                 ? Math.clamp(now.throttle() + held.forward() * OPENS - held.back() * CLOSES, 0.0, 1.0)
                 : Math.max(0.0, now.throttle() - CLOSES);
         final double wantedRise = !held.piloted() ? -SETTLES : hovering ? (held.up() - held.down()) * HOVER_RATE : 0;
-        final double most = weight > 0 ? wings + breathing / weight : Double.POSITIVE_INFINITY;
+        final double most = weight > 0 ? wings + (breathing + thrusters) / weight : Double.POSITIVE_INFINITY;
         final double rise = !hovering ? toward(now.rise(), 0, HOVER_GATHERS * TICK) : wantedRise > now.rise()
                 ? Math.min(wantedRise, now.rise() + Math.min(HOVER_GATHERS, Math.max(0, (most - 1.0) * pull)) * TICK)
                 : Math.max(wantedRise, now.rise() - HOVER_GATHERS * TICK);
         final boolean resting = air.grounded() && rise <= 0;
-        // What its nozzles hold up: what its wings do not, and what its rising asks; on the land, nothing.
+        // What it holds up: what its wings do not, and what its rising asks; on the land, nothing. Its nozzles hold
+        // what the air lets them, its thrusters the rest as far as they reach.
         final double lifting = resting || !wanting ? 0
                 : Math.max(0, weight * (1.0 - wings) + ship.mass() * (rise - now.rise()) / TICK);
-        final double angle = Math.toDegrees(Math.asin(breathing > 0 ? Math.clamp(lifting / breathing, 0.0, 1.0)
+        final double byNozzles = Math.min(lifting, breathing);
+        final double byThrusters = Math.min(lifting - byNozzles, thrusters);
+        final double angle = Math.toDegrees(Math.asin(breathing > 0 ? Math.clamp(byNozzles / breathing, 0.0, 1.0)
                 : 0.0));
         final double nozzles = toward(now.nozzles(), angle, NOZZLES_TURN * TICK);
         final double sin = Math.sin(Math.toRadians(nozzles));
@@ -120,7 +127,8 @@ public final class ShipFlightModel {
         final double sheds = stood ? BRAKES : between(SLOWING_SPACE, SLOWING_AIR, thick);
         final double speed = now.speed() < wanted ? Math.min(wanted, now.speed() + gathers * TICK)
                 : Math.max(wanted, now.speed() - sheds * TICK);
-        final double up = weight > 0 ? held(ship, speed, thick, pull) + breathing * sin / weight + HELD_CLOSE : 1.0;
+        final double up = weight > 0 ? held(ship, speed, thick, pull) + (breathing * sin + byThrusters) / weight
+                + HELD_CLOSE : 1.0;
         final double sink = resting || up >= 1.0 ? Math.max(0.0, now.sink() - Math.max(pull, sheds) * TICK)
                 : Math.min(MOST_SINK, now.sink() + pull * (1.0 - up) * TICK);
         final double charge = boosting ? Math.max(0.0, now.charge() - TICK / BOOST_SECONDS)
@@ -132,7 +140,7 @@ public final class ShipFlightModel {
                 || air.height() < GEAR_HEIGHT);
         return new Tick(new State(speed, resting ? 0 : sink, throttle, charge, resting ? 0 : rise, nozzles),
                 turn, lifted, boosting, up < 1.0 && pull > 0 && !air.grounded(), bells > 0 && push > 0
-                ? bells / push : 0.0, gearDown, sin > 0 && breathing > 0 && !resting);
+                ? bells / push : 0.0, gearDown, sin > 0 && breathing > 0 && !resting, byThrusters > 0);
     }
 
     /**
@@ -166,6 +174,15 @@ public final class ShipFlightModel {
             return Double.POSITIVE_INFINITY;
         }
         return WING_SPEED * Math.sqrt(weight / (ship.wing() * thick));
+    }
+
+    /**
+     * Whether it hovers, standing still, in air {@code thick} of the overworld's at sea level, pulled at {@code pull}
+     * metres a second squared: its nozzles and its thrusters together hold its weight; with no pull it needs nothing.
+     */
+    public static boolean hovers(final Performance ship, final double thick, final double pull) {
+        final double weight = ship.mass() * pull;
+        return weight <= 0 || ship.airThrust() * Math.clamp(thick, 0.0, 1.0) + ship.thrusters() >= weight;
     }
 
     /* {@code space} where there is no air, {@code air} at sea level's, straight between. */
@@ -206,14 +223,21 @@ public final class ShipFlightModel {
      * @param airThrust  what its air engines push or lift, in newtons, in the air at sea level
      * @param bellThrust what its bells push, in newtons
      * @param wing       the weight its wings hold up at {@link #WING_SPEED} in the air at sea level, in newtons
+     * @param thrusters  the weight its thrusters hold up, needing no air, in newtons
      * @param power      the power its reactor makes beyond what its parts take, in watts
      * @param gear       what it stands on
      */
-    public record Performance(double mass, double airThrust, double bellThrust, double wing, double power,
-                              Gear gear) {
+    public record Performance(double mass, double airThrust, double bellThrust, double wing, double thrusters,
+                              double power, Gear gear) {
 
         /** A ship of nothing. */
         public static final Performance NONE = new Performance(0, 0, 0, 0, 0, Gear.NONE);
+
+        /** A ship with no thrusters. */
+        public Performance(final double mass, final double airThrust, final double bellThrust, final double wing,
+                           final double power, final Gear gear) {
+            this(mass, airThrust, bellThrust, wing, 0, power, gear);
+        }
     }
 
     /**
@@ -267,10 +291,11 @@ public final class ShipFlightModel {
      * @param boosting whether it boosted
      * @param stalled  whether it flew too slowly for its wings and nozzles to hold it up
      * @param bells    how much of its push its bells gave, from nought to one
-     * @param gearDown whether its gear is down
-     * @param lifting  whether its nozzles hold it up, blowing down
+     * @param gearDown  whether its gear is down
+     * @param lifting   whether its nozzles hold it up, blowing down
+     * @param thrusting whether its thrusters hold it up, firing down
      */
     public record Tick(State state, double turn, double pitch, boolean boosting, boolean stalled, double bells,
-                       boolean gearDown, boolean lifting) {
+                       boolean gearDown, boolean lifting, boolean thrusting) {
     }
 }
