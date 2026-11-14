@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructurePose;
@@ -31,9 +32,11 @@ import dev.jstech.testkit.gametest.GameTestPlayers;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
@@ -83,8 +86,11 @@ public final class SpaceClimbGameTests {
         final double reach = SystemLayout.radius(SolarBody.MARS) * SPOT_SHARE;
         final double x = mars[0] + (overworld.getRandom().nextDouble() * 2 - 1) * reach;
         final double z = mars[2] + (overworld.getRandom().nextDouble() * 2 - 1) * reach;
-        final ServerLevel marsLevel = overworld.getServer().getLevel(SpaceWorlds.get(overworld,
-                SolarSystemWorlds.worldOf(SolarBody.MARS)).orElseThrow().dimension());
+        // The test server makes only the overworld: Mars is made as a copy of its declared dimension if no test has.
+        final ResourceKey<Level> marsKey = SpaceWorlds.get(overworld, SolarSystemWorlds.worldOf(SolarBody.MARS))
+                .orElseThrow().dimension();
+        final ServerLevel marsLevel = RuntimeDimensions.getOrCreate(overworld.getServer(), marsKey,
+                marsKey.location());
         // As its pilot would, a player in space over the spot keeps the craft's land loaded and the space ticking.
         final ServerPlayer watcher = GameTestPlayers.connected(helper, "dive_watcher");
         watcher.setGameMode(GameType.CREATIVE);

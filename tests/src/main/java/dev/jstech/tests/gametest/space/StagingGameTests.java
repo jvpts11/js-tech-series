@@ -162,6 +162,7 @@ public final class StagingGameTests {
     public static void stagesPage_measuresAPlatformAfloatWhereItIs(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         helper.setBlock(RAFT, Blocks.IRON_BLOCK);
+        final List<Integer> plots = heldPlots(level, 1);
         final MovingStructure raft = MovingStructures.assembleFor(level, helper.absolutePos(RAFT),
                 helper.absolutePos(RAFT), UUID.randomUUID()).structure();
         helper.assertTrue(raft != null, "the raft is a moving structure");
@@ -190,6 +191,7 @@ public final class StagingGameTests {
                     final int distance = computer.shownPlatforms().get(1).distance();
                     LandingPlatforms.drop(level.getServer(), platform);
                     MovingStructures.takeAway(raft);
+                    plots.forEach(plot -> forced(level, plot, false));
                     helper.assertTrue(distance < 64, "a few blocks off, as it is in the world: " + distance);
                 })
                 .thenSucceed();
@@ -306,9 +308,10 @@ public final class StagingGameTests {
     }
 
     /*
-     * The yard's next {@code count} plots of {@code level}, the plots the pieces let go next take, their chunks forced
-     * loaded ({@link #forced} lets them go): a piece parts once its plot has loaded, and the test server runs its
-     * ticks far faster than chunks load, so a stage would climb on with the rocket for thousands of ticks first.
+     * The yard's next {@code count} plots of {@code level}, the plots the structures made or let go next take, their
+     * chunks forced loaded ({@link #forced} lets them go): a structure stands ready, and a piece parts, once its plot
+     * has loaded, and the test server runs its ticks far faster than chunks load, so a stage would climb on with the
+     * rocket for thousands of ticks first.
      */
     private static List<Integer> heldPlots(final ServerLevel level, final int count) {
         final List<Integer> plots = new ArrayList<>();

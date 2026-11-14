@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
@@ -49,8 +50,10 @@ import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -287,9 +290,14 @@ public final class DescentGameTests {
         return MovingStructures.byId(level, id);
     }
 
+    /*
+     * The level of the world {@code body}: the test server makes only the overworld, so the world is made here as a
+     * copy of its declared dimension when no test has made it yet.
+     */
     private static ServerLevel levelOf(final ServerLevel level, final SolarBody body) {
-        return level.getServer().getLevel(SpaceWorlds.get(level, SolarSystemWorlds.worldOf(body)).orElseThrow()
-                .dimension());
+        final ResourceKey<Level> key = SpaceWorlds.get(level, SolarSystemWorlds.worldOf(body)).orElseThrow()
+                .dimension();
+        return RuntimeDimensions.getOrCreate(level.getServer(), key, key.location());
     }
 
     private static int chunk(final double block) {

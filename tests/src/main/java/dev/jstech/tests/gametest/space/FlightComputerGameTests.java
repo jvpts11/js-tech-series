@@ -7,6 +7,7 @@
  */
 package dev.jstech.tests.gametest.space;
 
+import dev.jstech.core.dimension.RuntimeDimensions;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
 import dev.jstech.space.flight.FlightPage;
@@ -24,7 +25,9 @@ import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.Level;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -119,9 +122,10 @@ public final class FlightComputerGameTests {
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 400)
     public static void landingMap_ofMarsIsDrawnFromItsGenerator(final GameTestHelper helper) {
-        final ServerLevel mars = helper.getLevel().getServer().getLevel(SpaceWorlds.get(helper.getLevel(),
-                SolarSystemWorlds.MARS).orElseThrow().dimension());
-        helper.assertTrue(mars != null, "Mars is on the server");
+        // The test server makes only the overworld: Mars is made as a copy of its declared dimension if no test has.
+        final ResourceKey<Level> key = SpaceWorlds.get(helper.getLevel(), SolarSystemWorlds.MARS).orElseThrow()
+                .dimension();
+        final ServerLevel mars = RuntimeDimensions.getOrCreate(helper.getLevel().getServer(), key, key.location());
         final FarMapPayload map = FarMaps.draw(mars, FlightComputerBlockEntity.WIDE, 0, 0);
         helper.assertTrue(map.blocks() == FlightComputerBlockEntity.WIDE_BLOCKS && !map.biomes().isEmpty()
                 && map.pixels().length == map.size() * map.size()
