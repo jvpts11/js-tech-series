@@ -2228,6 +2228,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A moving structure sent to another dimension waits for the pieces it let go to part first: a rocket's stage
+  let go just before it passed into space, its plot of the yard not loaded yet, was carried along into space stuck to
+  it, though counted as let go.
 - Sound: a room split in two by the first pass that groups its places is joined again, so its ambient bed
   forms; a loop the budget dropped and chose again soon after fades out in place, where a second copy began over the
   first; and the Sound Mixer keeps the tab the player chose when its window is resized, and one Done button.

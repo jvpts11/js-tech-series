@@ -65,6 +65,8 @@ public final class SpaceClimbGameTests {
     private static final double DIVE_DEPTH = 3_000;
     /* How far from the middle of Mars's low orbit the spot it dives at may be, as a share of its radius. */
     private static final double SPOT_SHARE = 0.5;
+    /* About the least two crafts of a block each rest apart in one orbit: their width and the room kept between. */
+    private static final double ROOM = 8.5;
 
     private SpaceClimbGameTests() {
     }
@@ -197,6 +199,42 @@ public final class SpaceClimbGameTests {
                 .thenSucceed();
     }
 
+    /*
+     * Two structures climbing from places side by side: the first comes to rest over its spot of the low orbit, the
+     * second, whose spot that is too, at the nearest spot round it with room, never inside the first.
+     */
+    @GameTest(template = ARENA, batch = "jsspace_climb_room", timeoutTicks = 6000)
+    public static void climb_takesTheNearestSpotWithRoomWhereAnotherRests(final GameTestHelper helper) {
+        final ServerLevel overworld = helper.getLevel();
+        helper.setBlock(CRAFT, Blocks.IRON_BLOCK);
+        helper.setBlock(CRAFT.east(2), Blocks.IRON_BLOCK);
+        final MovingStructure first = MovingStructures.assemble(overworld, helper.absolutePos(CRAFT),
+                helper.absolutePos(CRAFT)).structure();
+        final MovingStructure second = MovingStructures.assemble(overworld, helper.absolutePos(CRAFT.east(2)),
+                helper.absolutePos(CRAFT.east(2))).structure();
+        helper.assertTrue(first != null && second != null, "the crafts are made");
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(first.ready() && second.ready(), "the crafts are ready"))
+                .thenExecute(() -> climb(overworld, first))
+                .thenWaitUntil(() -> helper.assertTrue(MovingStructures.byId(space(helper), first.id()) != null
+                        && MovingStructures.byId(space(helper), first.id()).ready(), "the first rests in orbit"))
+                .thenExecute(() -> climb(overworld, second))
+                .thenWaitUntil(() -> helper.assertTrue(MovingStructures.byId(space(helper), second.id()) != null
+                        && MovingStructures.byId(space(helper), second.id()).ready(), "the second rests in orbit"))
+                .thenExecute(() -> {
+                    final MovingStructure one = MovingStructures.byId(space(helper), first.id());
+                    final MovingStructure two = MovingStructures.byId(space(helper), second.id());
+                    final double apart = Math.hypot(one.pose().x() - two.pose().x(), one.pose().z() - two.pose().z());
+                    final boolean whole = one.blocks() == 1 && two.blocks() == 1;
+                    MovingStructures.takeAway(one);
+                    MovingStructures.takeAway(two);
+                    helper.assertTrue(apart >= ROOM, "the second rests beside the first, not inside it: " + apart
+                            + " blocks apart");
+                    helper.assertTrue(whole, "both whole");
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, batch = "jsspace_climb")
     public static void farMap_isTheGroundAsTheGeneratorMakesIt(final GameTestHelper helper) {
         final BlockPos base = helper.absolutePos(BlockPos.ZERO);
@@ -227,5 +265,11 @@ public final class SpaceClimbGameTests {
 
     private static ServerLevel space(final GameTestHelper helper) {
         return SystemSpaces.spaceOf(helper.getLevel().getServer(), StarSystems.SOLAR_SYSTEM);
+    }
+
+    /* Sends {@code craft} up over the ceiling of {@code overworld}, right over where it stands. */
+    private static void climb(final ServerLevel overworld, final MovingStructure craft) {
+        MovingStructures.travel(craft, overworld, new Vec3(craft.pose().x(), SpaceClimbs.ceiling(overworld) + OVER,
+                craft.pose().z()));
     }
 }

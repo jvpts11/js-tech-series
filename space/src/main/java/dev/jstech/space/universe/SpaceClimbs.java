@@ -16,6 +16,7 @@ import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.SpaceWorld;
 import dev.jstech.space.api.SpaceWorlds;
+import dev.jstech.space.cruise.OrbitRoom;
 import dev.jstech.space.network.ClimbWorldsPayload;
 import dev.jstech.space.orbit.OrbitObjects;
 import java.util.ArrayList;
@@ -42,7 +43,8 @@ import org.jetbrains.annotations.Nullable;
  * The way up from a world to its system's space and back, with no loading screen ever: a player or a moving
  * structure, a rocket or a ship, that climbs a few hundred blocks over the world's build limit passes into the space,
  * over the spot of the world's low orbit its place below is laid under ({@link SystemLayout#orbitSpot}), going on as
- * it went; one that goes down through the floor of the low orbits passes back into the world under it, over the place
+ * it went, a structure taking the nearest spot round it with room where others rest already ({@link OrbitRoom}); one
+ * that goes down through the floor of the low orbits passes back into the world under it, over the place
  * that spot stands over, high above the ground. Nothing but sky is seen at either end, so the passage is drawn
  * through, with no screen, and the world's sphere is drawn on both sides of it.
  */
@@ -115,8 +117,10 @@ public final class SpaceClimbs {
             final MovingStructure structure = entity.structure();
             if (structure != null && structure.pose().y() > ceiling && rested(entity, level)) {
                 space = space != null ? space : SystemSpaces.spaceOf(level.getServer(), world.system());
-                final double[] spot = SystemLayout.orbitSpot(body, SphereMap.longitude(structure.pose().x(), width),
-                        SphereMap.latitude(structure.pose().z(), width));
+                // Over the place it climbed from, or the nearest spot round it with room where others rest already.
+                final double[] spot = OrbitRoom.spotFor(space, structure, SystemLayout.orbitSpot(body,
+                        SphereMap.longitude(structure.pose().x(), width), SphereMap.latitude(structure.pose().z(),
+                        width)), SolarSystemWorlds.worldOf(body));
                 final List<ServerPlayer> told = announceAboard(entity);
                 level.getEntitiesOfClass(ServerPlayer.class, structure.worldBox().inflate(ABOARD))
                         .forEach(SpaceFirsts::inOrbit);

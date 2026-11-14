@@ -29,7 +29,8 @@ import net.minecraft.world.phys.Vec3;
  * from this dimension's yard to that one's, the structure arrives at the place asked turned as it was, still moving by
  * its rule and as its pilot holds it, whatever stood on it or was inside it arrives where it was on it, and whoever sat
  * on its seats sits on them still. It goes once the plot it takes in that dimension's yard and the land it arrives at
- * have loaded, a few ticks after it is sent, working on where it is until then. A structure taller than the dimension
+ * have loaded, and every piece it let go has parted, a few ticks after it is sent, working on where it is until then:
+ * a stage let go just before stays behind, never carried along. A structure taller than the dimension
  * it goes to has room for stays where it is.
  */
 public final class StructureTravel {
@@ -115,6 +116,10 @@ public final class StructureTravel {
         final ServerLevel to = from.getServer().getLevel(going.to());
         if (to == null) {
             structure.depart(null);
+            return false;
+        }
+        if (structure.splitting()) {
+            // A piece it let go is still to part, here: it goes once that piece has gone its own way, not with it.
             return false;
         }
         final Box arriving = arriving(structure, going);

@@ -612,6 +612,11 @@ public final class MovingStructure implements IStructureBody {
         StructureSplitting.look(level, this, splitSeeds, splitting);
     }
 
+    /* Whether pieces it let go still wait for their plots of the yard, to part before it goes anywhere. */
+    boolean splitting() {
+        return !splitting.isEmpty();
+    }
+
     /* Whether blocks are leaving it whole, for a piece of it to go its own way: those are not blocks lost. */
     void parting(final boolean leaving) {
         this.parting = leaving;

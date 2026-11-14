@@ -12,6 +12,7 @@ import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureYard;
 import dev.jstech.core.moving.YardLayout;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.region.Box;
@@ -55,6 +56,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
@@ -83,6 +85,8 @@ public final class RocketRoutesGameTests {
     /* Where it lands on each world, the middle of the near side: the Moon's and, home again, the Overworld's. */
     private static final int MARKED = 0;
     private static final int HOME = 64;
+    /* The small rocket's second stage, its engine, tank and capsule, at most this many blocks tall. */
+    private static final int SECOND_STAGE_TALL = 13;
     /* The lander on the Moon's ground, its descent stage and its ascent stage, at most this many blocks tall. */
     private static final int LANDER_TALL = 12;
     /* The plots of the yard its spent pieces take as they part in the climb: four boosters and the first stage. */
@@ -130,6 +134,8 @@ public final class RocketRoutesGameTests {
                 width), SphereMap.latitude(released.pose().z(), width));
         final int chunkX = SectionPos.blockToSectionCoord(spot[0]);
         final int chunkZ = SectionPos.blockToSectionCoord(spot[1]);
+        // The plot its first stage takes as it parts, held loaded so it parts before the rocket reaches its orbit.
+        final List<Integer> plots = heldPlots(level, 1);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
                 .thenExecute(() -> {
@@ -151,10 +157,15 @@ public final class RocketRoutesGameTests {
                             "the climb to the low orbit spends what it asks, " + Rocketry.SURFACE_TO_LOW_ORBIT
                                     + " m/s, and what the pad's page said is left: the rocket had " + whole[0]
                                     + " m/s, the page said " + onThePad + " m/s for a transfer, and it has " + left
-                                    + " m/s left in orbit; " + flightOf(aboard, TWO_STAGES));
+                                    + " m/s left in orbit; " + flightOf(aboard, TWO_STAGES) + "; "
+                                    + missing(space, aboard, TWO_STAGES));
+                    final Box box = there.bounds();
+                    helper.assertTrue(box.maxY() - box.minY() + 1 <= SECOND_STAGE_TALL, "its first stage stayed"
+                            + " behind, not carried into space: " + (box.maxY() - box.minY() + 1) + " blocks tall");
                 })
                 .thenExecute(() -> {
                     space.setChunkForced(chunkX, chunkZ, false);
+                    plots.forEach(plot -> forcedPlot(level, plot, false));
                     MovingStructures.takeAway(MovingStructures.byId(space, id));
                 })
                 .thenSucceed();
@@ -310,13 +321,30 @@ public final class RocketRoutesGameTests {
         throw new IllegalStateException("no flight computer aboard");
     }
 
-    /* What {@code computer} keeps of its rocket of {@code stack}, for a failure to say: stages gone, parts holed, tanks. */
+    /* What {@code computer} keeps of its rocket of {@code stack}, for a failure to say: stages, holed parts, tanks. */
     private static String flightOf(final FlightComputerBlockEntity computer, final RocketStack stack) {
         final StringBuilder lost = new StringBuilder();
         for (int section = 0; section < stack.sections().size(); section++) {
             lost.append(section).append('=').append(computer.lost(section)).append(' ');
         }
         return "stages let go " + computer.separated() + ", blocks lost by part " + lost + "tanks " + computer.tanks();
+    }
+
+    /* The places of the rocket {@code computer} keeps that do not hold their part's block, for a failure to say. */
+    private static String missing(final ServerLevel level, final FlightComputerBlockEntity computer,
+                                  final RocketStack stack) {
+        final StringBuilder out = new StringBuilder("missing:");
+        final BlockPos base = computer.getBlockPos().offset(computer.foot().orElse(BlockPos.ZERO));
+        for (final PlanSpot spot : RocketPlans.of(level, stack).spots()) {
+            final BlockPos at = base.offset(spot.at());
+            final BlockState there = FormedPartBlock.originalAt(level, at, level.getBlockState(at));
+            if (spot.place().isPresent() && computer.lost(spot.part()) > 0
+                    && !BuiltInRegistries.BLOCK.getKey(there.getBlock()).equals(spot.block())) {
+                out.append(' ').append(spot.part()).append(':').append(spot.block().getPath()).append('@')
+                        .append(spot.at().toShortString()).append('=').append(level.getBlockState(at));
+            }
+        }
+        return out.toString();
     }
 
     /* The structure {@code id} in {@code level}, if it is there. */

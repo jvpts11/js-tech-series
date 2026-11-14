@@ -634,7 +634,8 @@ MovingStructure there = MovingStructures.byId(nether, structure.id());   // a fe
 `travel` sends a structure to another dimension with everyone aboard: its blocks go whole from one yard to the
 other, it arrives turned as it was and still moving by its motion, and whatever stood on it or was inside it arrives
 where it was on it. It goes once the plot it takes over there and the land it arrives at have loaded, with their
-entities, a few ticks after it is sent (or the seconds new land takes to be made), working where it is until then
+entities, and every piece it let go has parted (a stage let go just before stays behind), a few ticks after it is sent
+(or the seconds new land takes to be made), working where it is until then
 (`structure.departing()`); saved on the way, it goes on as it loads.
 A portal sends it the same way. It is refused, saying why, when it is taller than the dimension it goes to has room
 for, when that dimension's yard is full, while its blocks are not loaded, and while it is on its way already.

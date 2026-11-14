@@ -4248,6 +4248,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- (Space) A rocket climbing into a low orbit where another rests takes the nearest spot with room beside it, as one
+  coming in from its cruise does: it used to come out inside the other, and both broke.
+- (Core) A moving structure sent to another dimension waits for the pieces it let go to part first: a rocket's stage
+  let go just before it passed into space, its plot of the yard not loaded yet, was carried along into space stuck to
+  it, though counted as let go.
 - (Core) Sound: a room split in two by the first pass that groups its places is joined again, so its ambient bed
   forms; a loop the budget dropped and chose again soon after fades out in place, where a second copy began over the
   first; and the Sound Mixer keeps the tab the player chose when its window is resized, and one Done button.
