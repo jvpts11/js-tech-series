@@ -10,6 +10,7 @@ package dev.jstech.tests.gametest.space;
 import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureYard;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.plan.PlanSpot;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
@@ -102,6 +104,7 @@ public final class StagingGameTests {
                 part("vacuum_engine_3"), part("tank_3"), part("capsule_3"));
         final FlightComputerBlockEntity computer = build(helper, stack, Map.of(1, FIRST_FALLING));
         final MovingStructure body = RocketLaunch.release(level, computer.getBlockPos(), null).orElseThrow();
+        final List<Integer> plots = heldPlots(level, 1);
         final BlockPos[] aboard = new BlockPos[1];
         final MovingStructure[] stage = new MovingStructure[1];
         helper.startSequence()
@@ -147,6 +150,7 @@ public final class StagingGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(wreckage(helper), "its wreckage lies where it struck: last at "
                         + stage[0].pose() + ", foot " + helper.absolutePos(FOOT) + ", blasts going "
                         + StageImpacts.pending(level)))
+                .thenExecute(() -> plots.forEach(plot -> forced(level, plot, false)))
                 .thenSucceed();
     }
 
@@ -210,6 +214,7 @@ public final class StagingGameTests {
         helper.assertTrue(computer.choices().get(1) != null && computer.choices().get(1).platform()
                 .map(platform::equals).orElse(false), "its first stage is set to land on the platform");
         final MovingStructure body = RocketLaunch.release(level, computer.getBlockPos(), null).orElseThrow();
+        final List<Integer> plots = heldPlots(level, 1);
         helper.assertTrue(Rockets.get(level.getServer(), body.id()).flatMap(rocket -> rocket.fate(1))
                 .map(fate -> fate instanceof StageFate.Platform(final UUID set) && set.equals(platform))
                 .orElse(false), "the rocket keeps where its stage goes");
@@ -243,6 +248,7 @@ public final class StagingGameTests {
                             .orElse(false), "the platform is kept for it");
                     MovingStructures.takeAway(stage[0]);
                     LandingPlatforms.drop(level.getServer(), platform);
+                    plots.forEach(plot -> forced(level, plot, false));
                 })
                 .thenSucceed();
     }
@@ -297,6 +303,35 @@ public final class StagingGameTests {
      */
     private static boolean ticking(final ServerLevel level, final BlockPos pos) {
         return level.shouldTickBlocksAt(pos) && level.areEntitiesLoaded(ChunkPos.asLong(pos));
+    }
+
+    /*
+     * The yard's next {@code count} plots of {@code level}, the plots the pieces let go next take, their chunks forced
+     * loaded ({@link #forced} lets them go): a piece parts once its plot has loaded, and the test server runs its
+     * ticks far faster than chunks load, so a stage would climb on with the rocket for thousands of ticks first.
+     */
+    private static List<Integer> heldPlots(final ServerLevel level, final int count) {
+        final List<Integer> plots = new ArrayList<>();
+        int plot = StructureYard.nextPlot(level);
+        while (plots.size() < count) {
+            plots.add(plot);
+            forced(level, plot, true);
+            do {
+                plot++;
+            } while (StructureYard.owner(level, plot).isPresent());
+        }
+        return plots;
+    }
+
+    /* Forces the chunks round the middle of the yard's plot {@code plot} loaded, or lets them go. */
+    private static void forced(final ServerLevel level, final int plot, final boolean kept) {
+        final int x = SectionPos.blockToSectionCoord(YardLayout.centreX(plot));
+        final int z = SectionPos.blockToSectionCoord(YardLayout.centreZ(plot));
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dz = -1; dz <= 1; dz++) {
+                level.setChunkForced(x + dx, z + dz, kept);
+            }
+        }
     }
 
     /* How many blocks of {@code piece} draw their part's model themselves. */

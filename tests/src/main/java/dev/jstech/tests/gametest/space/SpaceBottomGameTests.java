@@ -20,6 +20,7 @@ import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.tests.JsTests;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.server.level.ServerLevel;
@@ -130,11 +131,17 @@ public final class SpaceBottomGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(craft.ready(), "the craft is ready"))
                 .thenExecute(() -> helper.assertTrue(SystemLayout.over(under.x, under.z) == SolarBody.OVERWORLD,
                         "the Overworld lies under the spot"))
-                .thenExecute(() -> helper.assertTrue(MovingStructures.travel(craft, space(helper), under).ok(),
-                        "the craft is sent into space, under the floor"))
+                .thenExecute(() -> {
+                    kept(helper, under, true);
+                    helper.assertTrue(MovingStructures.travel(craft, space(helper), under).ok(),
+                            "the craft is sent into space, under the floor");
+                })
                 .thenWaitUntil(() -> helper.assertTrue(arrived(helper, craft), "under the floor over the Overworld,"
                         + " the craft goes down into it; " + whereItIs(helper, craft)))
-                .thenExecute(() -> MovingStructures.takeAway(MovingStructures.byId(overworld, craft.id())))
+                .thenExecute(() -> {
+                    kept(helper, under, false);
+                    MovingStructures.takeAway(MovingStructures.byId(overworld, craft.id()));
+                })
                 .thenSucceed();
     }
 
@@ -160,13 +167,29 @@ public final class SpaceBottomGameTests {
         }
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(craft.ready(), "the craft is ready"))
-                .thenExecute(() -> helper.assertTrue(MovingStructures.travel(craft, space(helper), under).ok(),
-                        "the craft is sent into space, under the floor near the Overworld's edge, over "
-                                + place[0] + " east, " + place[1] + " north"))
+                .thenExecute(() -> {
+                    kept(helper, under, true);
+                    helper.assertTrue(MovingStructures.travel(craft, space(helper), under).ok(), "the craft is sent"
+                            + " into space, under the floor near the Overworld's edge, over " + place[0] + " east, "
+                            + place[1] + " north");
+                })
                 .thenWaitUntil(() -> helper.assertTrue(arrived(helper, craft), "near the Overworld's edge, the craft"
                         + " goes down into it; " + whereItIs(helper, craft)))
-                .thenExecute(() -> MovingStructures.takeAway(MovingStructures.byId(overworld, craft.id())))
+                .thenExecute(() -> {
+                    kept(helper, under, false);
+                    MovingStructures.takeAway(MovingStructures.byId(overworld, craft.id()));
+                })
                 .thenSucceed();
+    }
+
+    /*
+     * Keeps the chunk of space at {@code at} loaded, or lets it go: no one is aboard the craft to keep the place it
+     * waits at loaded while the land under it loads, and a structure waiting to go, its chunk let go, waits there
+     * unloaded till someone comes.
+     */
+    private static void kept(final GameTestHelper helper, final Vec3 at, final boolean held) {
+        space(helper).setChunkForced(SectionPos.blockToSectionCoord(at.x), SectionPos.blockToSectionCoord(at.z),
+                held);
     }
 
     /* Whether {@code craft}, sent from the Overworld into space, has come down into the Overworld again, ready. */
