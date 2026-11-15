@@ -185,12 +185,19 @@ public final class SpaceClimbGameTests {
         final double x = base.getX() + 0.5;
         final double z = base.getZ() + 0.5;
         final double width = overworld.getWorldBorder().getSize();
-        final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, SphereMap.longitude(x, width),
-                SphereMap.latitude(z, width));
+        final double[] spot = new double[2];
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(craft.ready(), "the craft is ready"))
-                .thenExecute(() -> helper.assertTrue(MovingStructures.travel(craft, overworld,
-                        new Vec3(x, SpaceClimbs.ceiling(overworld) + OVER, z)).ok(), "the craft climbs"))
+                .thenExecute(() -> {
+                    // Over the spot its place is laid under, or the nearest with room where others rest already.
+                    final double[] under = OrbitRoom.spotFor(space(helper), craft, SystemLayout.orbitSpot(
+                            SolarBody.OVERWORLD, SphereMap.longitude(x, width), SphereMap.latitude(z, width)),
+                            SolarSystemWorlds.worldOf(SolarBody.OVERWORLD));
+                    spot[0] = under[0];
+                    spot[1] = under[1];
+                    helper.assertTrue(MovingStructures.travel(craft, overworld,
+                            new Vec3(x, SpaceClimbs.ceiling(overworld) + OVER, z)).ok(), "the craft climbs");
+                })
                 .thenWaitUntil(() -> {
                     final MovingStructure arrived = MovingStructures.byId(space(helper), craft.id());
                     helper.assertTrue(arrived != null && arrived.ready(),

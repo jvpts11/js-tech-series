@@ -61,8 +61,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.storage.ServerLevelData;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.storage.ServerLevelData;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.jetbrains.annotations.Nullable;
@@ -86,6 +87,12 @@ public final class RocketRoutesGameTests {
     private static final String BIG_ENGINE = "sea_level_engine_5";
     private static final String MOON_BATCH = "jsspace_routes_moon";
     private static final String MARS_BATCH = "jsspace_routes_mars";
+    private static final String MARS_HOME_BATCH = "jsspace_routes_mars_home";
+    private static final String MOON_TO_MARS_BATCH = "jsspace_routes_moon_mars";
+    private static final String MARS_TO_MOON_BATCH = "jsspace_routes_mars_moon";
+    /* Where a site built on another world stands, its place across and along, and the room round a rocket's foot. */
+    private static final int SITE = 96;
+    private static final int SITE_ROOM = 7;
     /*
      * How far into a window the clock is moved, in ticks, a window lasting some 20,000: room for the climb to orbit
      * inside it. The Mars rocket's spent pieces: two boosters and a stage.
@@ -130,6 +137,25 @@ public final class RocketRoutesGameTests {
             part("separation_ring_5"), part("vacuum_engine_5"), part(BIG_TANK, 19), part("separation_ring_5"),
             part("vacuum_engine_5"), part("landing_legs_5"), part(BIG_TANK, 4), part("capsule_5")),
             List.of(part(BIG_ENGINE), part(BIG_TANK, 10)), 2);
+    /*
+     * A rocket a site on Mars builds to bring its crew home: a first stage of four layers and a second of six under
+     * its capsule, some 8,400 m/s of the 7,700 the climb off Mars and the transfer home ask.
+     */
+    private static final RocketStack MARS_HOME = RocketStack.of(part(BIG_ENGINE), part(BIG_TANK, 4),
+            part("separation_ring_5"), part("vacuum_engine_5"), part(BIG_TANK, 6), part("capsule_5"));
+    /*
+     * A rocket a site on the Moon builds for Mars: one stage with legs and five layers under its capsule, some 6,300
+     * m/s of the 5,900 the climb off the Moon, the transfer and the landing on Mars ask.
+     */
+    private static final RocketStack MOON_TO_MARS = RocketStack.of(part("vacuum_engine_5"), part("landing_legs_5"),
+            part(BIG_TANK, 5), part("capsule_5"));
+    /*
+     * A rocket a site on Mars builds for the Moon: a first stage of twelve layers and a second with legs and six under
+     * its capsule, some 9,900 m/s of the 9,400 the climb off Mars, the transfer and the landing on the Moon ask.
+     */
+    private static final RocketStack MARS_TO_MOON = RocketStack.of(part(BIG_ENGINE), part(BIG_TANK, 12),
+            part("separation_ring_5"), part("vacuum_engine_5"), part("landing_legs_5"), part(BIG_TANK, 6),
+            part("capsule_5"));
 
     private RocketRoutesGameTests() {
     }
@@ -152,12 +178,43 @@ public final class RocketRoutesGameTests {
      */
     @BeforeBatch(batch = MARS_BATCH)
     public static void intoMarsWindow(final ServerLevel level) {
-        final TransferPlan plan = TransferPlan.of(SolarBody.OVERWORLD, SolarBody.MARS, level.getGameTime())
-                .orElseThrow();
-        if (!plan.inWindow()) {
-            final ServerLevelData time = (ServerLevelData) level.getServer().overworld().getLevelData();
-            time.setGameTime(time.getGameTime() + plan.toWindow() + WINDOW_INSIDE);
-        }
+        intoWindow(level, SolarBody.OVERWORLD, SolarBody.MARS);
+    }
+
+    /* The clock moved on into a window home from Mars, as the crew of a site built there waits for one. */
+    @BeforeBatch(batch = MARS_HOME_BATCH)
+    public static void intoWindowHome(final ServerLevel level) {
+        intoWindow(level, SolarBody.MARS, SolarBody.OVERWORLD);
+    }
+
+    /* The cruise's events back on after the trip home from Mars. */
+    @AfterBatch(batch = MARS_HOME_BATCH)
+    public static void eventsBackAfterHome(final ServerLevel level) {
+        SpaceServerConfig.FILE.set(SpaceServerConfig.CRUISE_EVENTS, true);
+    }
+
+    /* The clock moved on into Mars' window for a site on the Moon, the Moon going round the Sun with the Overworld. */
+    @BeforeBatch(batch = MOON_TO_MARS_BATCH)
+    public static void intoMarsWindowFromTheMoon(final ServerLevel level) {
+        intoWindow(level, SolarBody.MOON, SolarBody.MARS);
+    }
+
+    /* The cruise's events back on after the trip from the Moon to Mars. */
+    @AfterBatch(batch = MOON_TO_MARS_BATCH)
+    public static void eventsBackAfterMoonToMars(final ServerLevel level) {
+        SpaceServerConfig.FILE.set(SpaceServerConfig.CRUISE_EVENTS, true);
+    }
+
+    /* The clock moved on into the window from Mars to the Moon. */
+    @BeforeBatch(batch = MARS_TO_MOON_BATCH)
+    public static void intoMoonWindowFromMars(final ServerLevel level) {
+        intoWindow(level, SolarBody.MARS, SolarBody.MOON);
+    }
+
+    /* The cruise's events back on after the trip from Mars to the Moon. */
+    @AfterBatch(batch = MARS_TO_MOON_BATCH)
+    public static void eventsBackAfterMarsToMoon(final ServerLevel level) {
+        SpaceServerConfig.FILE.set(SpaceServerConfig.CRUISE_EVENTS, true);
     }
 
     /*
@@ -433,6 +490,105 @@ public final class RocketRoutesGameTests {
                 .thenSucceed();
     }
 
+    /*
+     * The way home from Mars, launched from a site built on its ground: a rocket of two stages, a crew aboard, climbs
+     * off Mars into its low orbit, its first stage let go; in Mars' window home XFER and EXEC send it to the
+     * Overworld; its crew sleeps and the cruise passes; it brakes in the Overworld's air on its heat shield and lands
+     * under its parachutes.
+     */
+    @GameTest(template = "bench", batch = MARS_HOME_BATCH, timeoutTicks = 60_000)
+    public static void route_homeFromASiteBuiltOnMars(final GameTestHelper helper) {
+        fromASite(helper, SolarBody.MARS, SolarBody.OVERWORLD, MARS_HOME, 1, "mars_home_crew");
+    }
+
+    /*
+     * From a site built on the Moon to Mars' ground: a rocket of one stage with legs, a crew aboard, climbs off the
+     * Moon, sets out in Mars' window, brakes in Mars' air and comes down on its legs.
+     */
+    @GameTest(template = "bench", batch = MOON_TO_MARS_BATCH, timeoutTicks = 60_000)
+    public static void route_toMarsFromASiteBuiltOnTheMoon(final GameTestHelper helper) {
+        fromASite(helper, SolarBody.MOON, SolarBody.MARS, MOON_TO_MARS, 0, "moon_mars_crew");
+    }
+
+    /*
+     * From a site built on Mars to the Moon's ground: a rocket of two stages, its second with legs, a crew aboard,
+     * climbs off Mars, sets out in its window, comes to rest in the Moon's orbit and brakes down to its legs.
+     */
+    @GameTest(template = "bench", batch = MARS_TO_MOON_BATCH, timeoutTicks = 60_000)
+    public static void route_toTheMoonFromASiteBuiltOnMars(final GameTestHelper helper) {
+        fromASite(helper, SolarBody.MARS, SolarBody.MOON, MARS_TO_MOON, 1, "mars_moon_crew");
+    }
+
+    /*
+     * A crew's trip from a site built on {@code from} to the ground of {@code to} in a rocket of {@code stack}, which
+     * lets go {@code pieces} stages climbing: built and filled on the site, its crew sat in its capsule, it climbs into
+     * the low orbit, the window come XFER and EXEC send it on, its crew sleeps through the cruise, it comes to rest in
+     * the other world's orbit, LAND and SET bring it down, and it stands there landed.
+     */
+    private static void fromASite(final GameTestHelper helper, final SolarBody from, final SolarBody to,
+                                  final RocketStack stack, final int pieces, final String crewName) {
+        SpaceServerConfig.FILE.set(SpaceServerConfig.CRUISE_EVENTS, false);
+        final ServerLevel level = helper.getLevel();
+        final ServerLevel start = levelOf(level, from);
+        final ServerLevel ground = levelOf(level, to);
+        final ServerLevel space = SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM);
+        final BlockPos[] places = buildAt(start, stack, groundOf(start, SITE, SITE));
+        final ServerPlayer crew = GameTestPlayers.connected(helper, crewName);
+        crew.teleportTo(start, places[1].getX() + 0.5, places[1].getY() + 1, places[1].getZ() + 0.5, 0, 0);
+        helper.assertTrue(MovingStructures.sit(crew, places[1]), "the crew sits in the capsule's seat");
+        final MovingStructure released = RocketLaunch.release(start, places[0], crew.getUUID()).orElseThrow();
+        final StructureUuid id = released.id();
+        final List<Integer> plots = heldPlots(start, pieces);
+        final int mark = to == SolarBody.OVERWORLD ? HOME : MARKED;
+        final int[] down = new int[2];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
+                .thenExecute(() -> RocketLaunch.lift(start, released))
+                .thenWaitUntil(() -> helper.assertTrue(at(space, id) != null && at(space, id).ready()
+                        && at(space, id).motion() == null, "it climbs off " + from + " into its orbit"))
+                .thenExecute(() -> {
+                    final FlightComputerBlockEntity aboard = computerOf(space, at(space, id));
+                    aboard.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.TRANSFER));
+                    aboard.press(FlightComputerBlockEntity.LEFT + aboard.destinations().indexOf(
+                            SolarSystemWorlds.worldOf(to)));
+                    aboard.press(FlightComputerBlockEntity.RIGHT + 4);
+                    helper.assertTrue(aboard.executed().isPresent(), "EXEC sets the transfer to " + to + ", with "
+                            + aboard.available() + " m/s for " + aboard.planned());
+                })
+                .thenWaitUntil(() -> helper.assertTrue(computerOf(space, at(space, id)).cruising(),
+                        "it sets out for " + to + ": " + computerOf(space, at(space, id)).executed() + ", "
+                                + computerOf(space, at(space, id)).available() + " m/s"))
+                .thenWaitUntil(() -> {
+                    CouchSleep.pressed(crew);
+                    helper.assertTrue(CouchSleep.asleep(crew), "its crew falls asleep in the capsule's seat");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(!computerOf(space, at(space, id)).cruising()
+                        && at(space, id).motion() == null, "the cruise passes and it rests in " + to + "'s orbit"))
+                .thenExecute(() -> {
+                    final FlightComputerBlockEntity aboard = computerOf(space, at(space, id));
+                    helper.assertTrue(aboard.wideOrbit().isEmpty(), "it is captured into " + to + "'s low orbit, with "
+                            + aboard.available() + " m/s left");
+                    aboard.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.LANDING));
+                    aboard.markAt(mark, mark);
+                    aboard.press(FlightComputerBlockEntity.RIGHT + 4);
+                    helper.assertTrue(aboard.landing().isPresent(), "LAND and SET set its landing on " + to);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(at(ground, id) != null && at(ground, id).pose().y()
+                        < SpaceClimbs.ceiling(ground), "it passes into " + to + "'s sky"))
+                .thenExecute(() -> made(ground, at(ground, id), down))
+                .thenWaitUntil(() -> helper.assertTrue(at(ground, id) != null && at(ground, id).motion() == null
+                        && computerOf(ground, at(ground, id)).descent() == DescentPhase.LANDED,
+                        "it comes down on " + to + "'s ground"))
+                .thenExecute(() -> {
+                    GameTestPlayers.leave(crew);
+                    plots.forEach(plot -> forcedPlot(start, plot, false));
+                    ground.setChunkForced(down[0], down[1], false);
+                    MovingStructures.takeAway(at(ground, id));
+                    SpaceServerConfig.FILE.set(SpaceServerConfig.CRUISE_EVENTS, true);
+                })
+                .thenSucceed();
+    }
+
     /* The flight computer aboard {@code body}, in its yard. */
     private static FlightComputerBlockEntity computerOf(final ServerLevel level, final MovingStructure body) {
         final Box box = body.bounds();
@@ -540,6 +696,58 @@ public final class RocketRoutesGameTests {
         }
         sections.set(0, new RocketStack.Section(sections.get(0).part(), hung));
         return new RocketStack(sections);
+    }
+
+    /* Moves the world's clock on into a window of a transfer from {@code from} to {@code to}, if none is open now. */
+    private static void intoWindow(final ServerLevel level, final SolarBody from, final SolarBody to) {
+        final TransferPlan plan = TransferPlan.of(from, to, level.getGameTime()).orElseThrow();
+        if (!plan.inWindow()) {
+            final ServerLevelData time = (ServerLevelData) level.getServer().overworld().getLevelData();
+            time.setGameTime(time.getGameTime() + plan.toWindow() + WINDOW_INSIDE);
+        }
+    }
+
+    /* The place over the ground of {@code level} at {@code x}, {@code z}, its land made now. */
+    private static BlockPos groundOf(final ServerLevel level, final int x, final int z) {
+        level.getChunk(SectionPos.blockToSectionCoord(x), SectionPos.blockToSectionCoord(z));
+        return new BlockPos(x, level.getHeight(Heightmap.Types.MOTION_BLOCKING, x, z), z);
+    }
+
+    /*
+     * The rocket {@code stack} built by its plan on {@code level}, its foot at {@code foot}, as a site's hangar builds
+     * it, kept by its computer, its tanks full: where its flight computer and its crew seat stand.
+     */
+    private static BlockPos[] buildAt(final ServerLevel level, final RocketStack stack, final BlockPos foot) {
+        final PlannedBuild build = new PlannedBuild(RocketPlans.of(level, stack), foot);
+        build.start(level, foot.offset(-SITE_ROOM, 0, -SITE_ROOM), () -> { });
+        BlockPos computerAt = foot;
+        BlockPos seat = foot;
+        for (final PlanSpot spot : build.plan().spots()) {
+            level.setBlockAndUpdate(build.where(spot), BuiltInRegistries.BLOCK.get(spot.block()).defaultBlockState());
+            if (spot.block().equals(RocketKitBlocks.FLIGHT_COMPUTER.getId())) {
+                computerAt = build.where(spot);
+            } else if (spot.block().equals(RocketKitBlocks.CREW_SEAT.getId())) {
+                seat = build.where(spot);
+            }
+        }
+        build.stop(false);
+        final FlightComputerBlockEntity computer = (FlightComputerBlockEntity) level.getBlockEntity(computerAt);
+        final List<Integer> formed = new ArrayList<>();
+        for (int piece = 0; piece < RocketPieces.count(stack); piece++) {
+            formed.add(piece);
+        }
+        computer.carry(new RocketDesign("ROUTE", stack), foot.subtract(computerAt), formed);
+        final Map<ResourceLocation, RocketPart> parts = RocketParts.all(level);
+        for (int section = 0; section < stack.sections().size(); section++) {
+            final RocketStack.Part part = stack.sections().get(section).part();
+            final double holds = parts.get(part.id()).propellant() * part.layers();
+            if (holds > 0) {
+                final int tank = section;
+                Propellants.get(level, SkeletonPropellants.METHALOX).ifPresent(methalox -> computer.load(tank,
+                        TankLoad.filled(SkeletonPropellants.METHALOX, methalox, holds)));
+            }
+        }
+        return new BlockPos[] {computerAt, seat};
     }
 
     /* Where the crew seat of {@code stack}, built with its foot at {@code standing} of the arena, stands. */
