@@ -103,11 +103,25 @@ final class StructureContacts {
     private double grip;
     private boolean counts = true;
     private boolean meetingForeign;
+    /* How many more points the pair worked, and the block of it worked, may meet at this step. */
+    private int pairRoom = Integer.MAX_VALUE;
+    private int blockRoom = Integer.MAX_VALUE;
 
     /* How far a block's corner is from its middle: a block's whole reach, however it is turned. */
     private static final double REACH = Math.sqrt(3) / 2;
     /* The most blocks a structure's blows break in a tick, so a crash does not stall the game. */
     private static final int MOST_BROKEN = 32;
+    /*
+     * The most points a block of a structure meets another structure at in a step, and the most of its surface's
+     * blocks that meet it, spread over those pressed against it: a round part's block is many boxes, and a face of
+     * them against another met at every pair of boxes of every pair of blocks near is millions of points, a step that
+     * stalls the game. Two structures resting on each other meet at some tens.
+     */
+    private static final int MOST_POINTS_A_BLOCK = 64;
+    private static final int MOST_BLOCKS_MET = 64;
+    private static final int MOST_POINTS_A_PAIR = MOST_POINTS_A_BLOCK * MOST_BLOCKS_MET;
+    /* The most points a structure meets the world at in a step: however deep it is sunk in its blocks. */
+    private static final int MOST_POINTS_WITH_THE_WORLD = 65_536;
     /* A block of no volume, a rail or a flower, still holds a blow as a sliver of a block does. */
     private static final double LEAST_VOLUME = 0.05;
     /*
@@ -273,6 +287,7 @@ final class StructureContacts {
         this.theirParts = null;
         this.theirReads = level;
         this.theirLoaded = level;
+        this.pairRoom = MOST_POINTS_WITH_THE_WORLD;
         final int minY = Math.max(level.getMinBuildHeight(), floor(box.minY));
         final int maxY = Math.min(level.getMaxBuildHeight() - 1, floor(box.maxY));
         if (minY > maxY || YardLayout.isYard(box.minX) || YardLayout.isYard(box.maxX)) {
@@ -479,14 +494,21 @@ final class StructureContacts {
         this.theirLoaded = loaded;
         FrameMath.axes(standing, otherAxes);
         final double reach = REACH + margin;
+        final int every = every(parts, overlap);
+        int inside = 0;
+        this.pairRoom = MOST_POINTS_A_PAIR;
         for (final long key : parts.surface()) {
             final int x = BlockPos.getX(key);
             final int y = BlockPos.getY(key);
             final int z = BlockPos.getZ(key);
             FrameMath.middle(frame, x, y, z, middle);
-            if (!overlap.contains(middle.x, middle.y, middle.z)) {
+            if (!overlap.contains(middle.x, middle.y, middle.z) || inside++ % every != 0) {
                 continue;
             }
+            if (this.pairRoom <= 0) {
+                break;
+            }
+            this.blockRoom = MOST_POINTS_A_BLOCK;
             final double[] yard = standing.yardBox(middle.x - reach, middle.y - reach, middle.z - reach,
                     middle.x + reach, middle.y + reach, middle.z + reach);
             for (int ox = floor(yard[0]); ox <= floor(yard[3]); ox++) {
@@ -530,6 +552,26 @@ final class StructureContacts {
                 }
             }
         }
+        this.blockRoom = Integer.MAX_VALUE;
+    }
+
+    /*
+     * Of the structure's surface blocks in {@code overlap}, every how many are met: all of them up to
+     * {@link #MOST_BLOCKS_MET}, else that many spread over them, so a pair pressed together along a long face costs a
+     * bounded step and is held at points spread over that face, not crowded at one end of it.
+     */
+    private int every(final StructureParts parts, final AABB overlap) {
+        if (parts.surface().size() <= MOST_BLOCKS_MET) {
+            return 1;
+        }
+        int inside = 0;
+        for (final long key : parts.surface()) {
+            FrameMath.middle(frame, BlockPos.getX(key), BlockPos.getY(key), BlockPos.getZ(key), middle);
+            if (overlap.contains(middle.x, middle.y, middle.z)) {
+                inside++;
+            }
+        }
+        return Math.max(1, (inside + MOST_BLOCKS_MET - 1) / MOST_BLOCKS_MET);
     }
 
     /* The pair worked next: its bodies, its blocks and how well they grip. */
@@ -552,6 +594,11 @@ final class StructureContacts {
         if (throughCoveredFace(way)) {
             return;
         }
+        if (this.pairRoom <= 0 || this.blockRoom <= 0) {
+            return;
+        }
+        this.pairRoom--;
+        this.blockRoom--;
         // Known by where it is on the structure's own face, half the gap from the point between the two: the same
         // place whether still apart or touching, so what it pushed carries over as they close.
         FrameMath.yard(frame, onFace.set(way).mul(apart / 2).add(point), local);

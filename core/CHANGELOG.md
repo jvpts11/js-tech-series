@@ -2231,6 +2231,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- Two moving structures pressed together meet at a bounded number of points a step: at most 64 for each block,
+  and at most 64 of the blocks pressed against the other, spread over them. Pieces let go together, as a rocket's
+  boosters and first stage at the edge of space, met at every pair of boxes of every pair of blocks near each other,
+  millions of points a step for round parts of many boxes: the game stalled for seconds a tick and ran out of memory.
+  Structures resting on each other meet at some tens of points, as before.
 - A moving structure sent to another dimension waits for the pieces it let go to part first: a rocket's stage
   let go just before it passed into space, its plot of the yard not loaded yet, was carried along into space stuck to
   it, though counted as let go.

@@ -31,6 +31,7 @@ import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
 import dev.jstech.space.launch.RocketLaunch;
 import dev.jstech.space.orbit.Rocketry;
+import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketPieces;
 import dev.jstech.space.rocket.RocketStack;
@@ -117,6 +118,9 @@ public final class RocketRoutesGameTests {
     private static final double ABOUT = 300;
     /* How long a rocket come into its orbit is watched for blocks read as lost: three of its computer's counts. */
     private static final int WATCHED = 3 * 20;
+    /* The longest a tick may take as stages are let go, the climb's own work, chunks made on the way, and all. */
+    private static final long LONGEST_TICK_NANOS = 2_000_000_000L;
+    private static final long NANOS_A_MILLI = 1_000_000L;
     /* A rocket of one stage, about 2,500 m/s, and one of two, about 10,000. */
     private static final RocketStack ONE_STAGE = RocketStack.of(part("sea_level_engine_3"), part(TANK),
             part("capsule_3"));
@@ -253,14 +257,8 @@ public final class RocketRoutesGameTests {
                 // Its computer counts the blocks it has lost once a second: none of a rocket come whole into orbit.
                 .thenExecuteFor(WATCHED, () -> {
                     final FlightComputerBlockEntity aboard = computerOf(space, MovingStructures.byId(space, id));
-                    final List<Integer> holed = new ArrayList<>();
-                    for (int section = 0; section < TWO_STAGES.sections().size(); section++) {
-                        if (aboard.lost(section) > 0) {
-                            holed.add(section);
-                        }
-                    }
-                    helper.assertTrue(holed.isEmpty() && aboard.shield(), "come whole into its orbit, none of its"
-                            + " parts reads as holed and its capsule's shield is there: holed " + holed);
+                    whole(helper, aboard, TWO_STAGES, "come into its orbit");
+                    helper.assertTrue(aboard.shield(), "and its capsule's shield is there");
                 })
                 // Its computer reads its tanks once a second.
                 .thenWaitUntil(() -> {
@@ -380,6 +378,8 @@ public final class RocketRoutesGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(at(moon, id) != null && at(moon, id).motion() == null
                         && computerOf(moon, at(moon, id)).descent() == DescentPhase.LANDED,
                         "it comes down on the Moon's ground"))
+                .thenExecuteFor(WATCHED, () -> whole(helper, computerOf(moon, at(moon, id)), MOON_AND_BACK,
+                        "landed on the Moon's ground"))
                 .thenExecute(() -> {
                     final MovingStructure lander = at(moon, id);
                     final Box box = lander.bounds();
@@ -394,8 +394,11 @@ public final class RocketRoutesGameTests {
                             + aboard.available() + " m/s for " + aboard.planned());
                     home[0] = aboard.executed() + ", " + aboard.available() + " m/s, shield " + aboard.shield();
                 })
+                .thenWaitUntil(() -> helper.assertTrue(at(space, id) != null || at(moon, id) != null
+                        && at(moon, id).motion() instanceof RocketAscent, "the ascent stage lifts off the Moon: "
+                        + where(moon, space, id)))
                 .thenWaitUntil(() -> helper.assertTrue(at(space, id) != null && at(space, id).motion() == null,
-                        "the ascent stage climbs off the Moon into its orbit"))
+                        "the ascent stage climbs off the Moon into its orbit: " + where(moon, space, id)))
                 .thenWaitUntil(() -> helper.assertTrue(computerOf(space, at(space, id)).cruising(),
                         "it sets out for home"))
                 .thenWaitUntil(() -> helper.assertTrue(!computerOf(space, at(space, id)).cruising()
@@ -448,12 +451,19 @@ public final class RocketRoutesGameTests {
         final ServerLevel mars = levelOf(level, SolarBody.MARS);
         final List<Integer> plots = heldPlots(level, MARS_PIECES);
         final int[] down = new int[2];
+        final boolean[] climbing = {false};
+        final long[] ticks = longestTick(helper, climbing);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
-                .thenExecute(() -> RocketLaunch.lift(level, released))
+                .thenExecute(() -> {
+                    climbing[0] = true;
+                    RocketLaunch.lift(level, released);
+                })
                 .thenWaitUntil(() -> helper.assertTrue(at(space, id) != null && at(space, id).ready()
                         && at(space, id).motion() == null, "it climbs into the Overworld's orbit"))
                 .thenExecute(() -> {
+                    climbing[0] = false;
+                    stalledNone(helper, ticks, "its boosters and first stage let go together at the edge of space");
                     helper.assertTrue(TransferPlan.of(SolarBody.OVERWORLD, SolarBody.MARS, space.getGameTime())
                             .orElseThrow().inWindow(), "Mars' window is open as it reaches its orbit");
                     final FlightComputerBlockEntity aboard = computerOf(space, at(space, id));
@@ -555,11 +565,22 @@ public final class RocketRoutesGameTests {
         final List<Integer> plots = heldPlots(start, pieces);
         final int mark = to == SolarBody.OVERWORLD ? HOME : MARKED;
         final int[] down = new int[2];
+        final boolean[] climbing = {false};
+        final long[] ticks = longestTick(helper, climbing);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
-                .thenExecute(() -> RocketLaunch.lift(start, released))
+                .thenExecute(() -> {
+                    climbing[0] = true;
+                    RocketLaunch.lift(start, released);
+                })
                 .thenWaitUntil(() -> helper.assertTrue(at(space, id) != null && at(space, id).ready()
                         && at(space, id).motion() == null, "it climbs off " + from + " into its orbit"))
+                .thenExecute(() -> {
+                    climbing[0] = false;
+                    stalledNone(helper, ticks, "its stages let go as it climbs off " + from);
+                })
+                .thenExecuteFor(WATCHED, () -> whole(helper, computerOf(space, at(space, id)), stack,
+                        "come off " + from + " into its orbit"))
                 .thenExecute(() -> {
                     final FlightComputerBlockEntity aboard = computerOf(space, at(space, id));
                     aboard.press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.TRANSFER));
@@ -607,6 +628,16 @@ public final class RocketRoutesGameTests {
 
     /* The flight computer aboard {@code body}, in its yard. */
     private static FlightComputerBlockEntity computerOf(final ServerLevel level, final MovingStructure body) {
+        final FlightComputerBlockEntity computer = computerAboard(level, body);
+        if (computer == null) {
+            throw new IllegalStateException("no flight computer aboard");
+        }
+        return computer;
+    }
+
+    /* The flight computer aboard {@code body}, or null while none stands in its plot. */
+    private static @Nullable FlightComputerBlockEntity computerAboard(final ServerLevel level,
+                                                                      final MovingStructure body) {
         final Box box = body.bounds();
         for (final BlockPos pos : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(),
                 box.maxZ())) {
@@ -614,7 +645,7 @@ public final class RocketRoutesGameTests {
                 return computer;
             }
         }
-        throw new IllegalStateException("no flight computer aboard");
+        return null;
     }
 
     /* What {@code computer} keeps of its rocket of {@code stack}, for a failure to say: stages, holed parts, tanks. */
@@ -624,6 +655,47 @@ public final class RocketRoutesGameTests {
             lost.append(section).append('=').append(computer.lost(section)).append(' ');
         }
         return "stages let go " + computer.separated() + ", blocks lost by part " + lost + "tanks " + computer.tanks();
+    }
+
+    /*
+     * The longest a tick of the test takes while {@code watching[0]} is set, in nanoseconds, at its first place; the
+     * last tick's start at its second.
+     */
+    private static long[] longestTick(final GameTestHelper helper, final boolean[] watching) {
+        final long[] watch = new long[2];
+        helper.onEachTick(() -> {
+            final long now = System.nanoTime();
+            if (watching[0] && watch[1] != 0) {
+                watch[0] = Math.max(watch[0], now - watch[1]);
+            }
+            watch[1] = now;
+        });
+        return watch;
+    }
+
+    /*
+     * That no tick watched by {@link #longestTick} stalled the game while {@code what}: pieces pressed together, as
+     * stages let go together are, are met at a bounded number of points, so their physics never takes seconds.
+     */
+    private static void stalledNone(final GameTestHelper helper, final long[] watch, final String what) {
+        helper.assertTrue(watch[0] < LONGEST_TICK_NANOS, what + ", no tick stalls the game: the longest took "
+                + watch[0] / NANOS_A_MILLI + " ms");
+    }
+
+    /*
+     * That none of the parts of {@code stack} its flight computer {@code computer} counts reads as holed, {@code when}:
+     * a part read as holed leaks its tank and gives no thrust from its engine.
+     */
+    private static void whole(final GameTestHelper helper, final FlightComputerBlockEntity computer,
+                              final RocketStack stack, final String when) {
+        final List<Integer> holed = new ArrayList<>();
+        for (int section = 0; section < stack.sections().size(); section++) {
+            if (computer.lost(section) > 0) {
+                holed.add(section);
+            }
+        }
+        helper.assertTrue(holed.isEmpty(), when + ", none of its parts reads as holed: holed " + holed + "; "
+                + flightOf(computer, stack));
     }
 
     /* The places of the rocket {@code computer} keeps that do not hold their part's block, for a failure to say. */
@@ -641,6 +713,22 @@ public final class RocketRoutesGameTests {
             }
         }
         return out.toString();
+    }
+
+    /*
+     * Where the rocket {@code id} is, on {@code ground} or in {@code space}, and what its flight computer keeps: for a
+     * failure to say why it did not climb off the ground.
+     */
+    private static String where(final ServerLevel ground, final ServerLevel space, final StructureUuid id) {
+        final MovingStructure there = at(ground, id) != null ? at(ground, id) : at(space, id);
+        if (there == null) {
+            return "in neither world";
+        }
+        final FlightComputerBlockEntity computer = computerAboard((ServerLevel) there.level(), there);
+        return "in " + there.level().dimension().location() + " at " + there.pose() + ", ready " + there.ready()
+                + ", moved by " + there.motion() + ", " + (computer == null ? "no computer" : "descent "
+                + computer.descent() + ", executed " + computer.executed() + ", " + computer.available()
+                + " m/s, " + computer.rocket().map(design -> flightOf(computer, design.stack())).orElse("no rocket"));
     }
 
     /* The structure {@code id} in {@code level}, if it is there. */

@@ -4255,6 +4255,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- (Core) Two moving structures pressed together meet at a bounded number of points a step: at most 64 for each block,
+  and at most 64 of the blocks pressed against the other, spread over them. Pieces let go together, as a rocket's
+  boosters and first stage at the edge of space, met at every pair of boxes of every pair of blocks near each other,
+  millions of points a step for round parts of many boxes: the game stalled for seconds a tick and ran out of memory.
+  Structures resting on each other meet at some tens of points, as before.
 - (Space) The Rocket Design screen names the heat shield of a rocket with a lunar lander on top and no capsule, the
   lander's ascent stage's, where it warned of none though the flight computer counted it.
 - (Space) A launch from a pad with a Pad Service Port runs on past ignition to T-0: once the deluge was poured at T-6,
