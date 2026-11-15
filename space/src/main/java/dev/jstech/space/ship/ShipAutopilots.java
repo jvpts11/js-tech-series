@@ -51,7 +51,10 @@ public final class ShipAutopilots {
     private static final double SETTLE_GAIN = 0.2;
     private static final double MOST_SETTLE = 20;
     private static final double ON_THE_PLANE = 2;
-    /* The air's cruise, which the throttle's share is of. */
+    /*
+     * The fastest LAND closes on its spot or a runway's gate, in metres a second: the air's cruise, in every world.
+     * The throttle it holds for a speed is that speed's share of the cruise in the air the ship flies in.
+     */
     private static final double CRUISE = ShipFlightModel.CRUISE_AIR;
     /*
      * DOCK: the gap off the other's collar it comes to first, in metres; the fastest it drifts, and closes the last
@@ -115,10 +118,12 @@ public final class ShipAutopilots {
 
     /**
      * What LAND holds, the ship's flight at {@code state}, its nose at {@code heading} and {@code pitch}, in degrees,
-     * the spot {@code dx}, {@code dy}, {@code dz} metres from the middle of its hull's floor.
+     * the spot {@code dx}, {@code dy}, {@code dz} metres from the middle of its hull's floor, the ship going
+     * {@code cruise} metres a second at its throttle's full in the air round it ({@link ShipFlightModel#cruiseIn}).
      */
     public static ShipFlightModel.Held land(final ShipFlightModel.State state, final double heading,
-                                            final double pitch, final double dx, final double dy, final double dz) {
+                                            final double pitch, final double dx, final double dy, final double dz,
+                                            final double cruise) {
         final double off = Math.hypot(dx, dz);
         final double height = -dy;
         final double toward = Math.toDegrees(Math.atan2(dx, -dz));
@@ -126,7 +131,7 @@ public final class ShipAutopilots {
         final boolean slow = state.speed() < CREEP + 2;
         if (off > NEAR) {
             // On its way: as fast as the way left allows, high enough over the spot, its nose level otherwise.
-            final double[] throttle = throttle(state, Math.min(CRUISE, off * APPROACH * 2) / CRUISE);
+            final double[] throttle = throttle(state, Math.min(CRUISE, off * APPROACH * 2) / cruise);
             final double up = height < CRUISE_HEIGHT ? 1 : pitch > PITCH_OFF ? 0 : pitch < -PITCH_OFF ? 1 : 0;
             final double down = height > 2 * CRUISE_HEIGHT && pitch > -10 ? 1 : pitch > PITCH_OFF ? 1 : 0;
             return held(throttle, turn, up, up > 0 ? 0 : down, false);
@@ -134,7 +139,7 @@ public final class ShipAutopilots {
         // Near: slowing as it nears, creeping on only as its nose points at the spot, coming down once over it.
         final double facing = Math.max(0, Math.cos(Math.toRadians(Math.IEEEremainder(toward - heading, 360))));
         final double creep = off > OVER ? Math.min(CREEP, Math.max(LEAST_CREEP, off * APPROACH)) * facing : 0;
-        final double[] throttle = throttle(state, creep / CRUISE);
+        final double[] throttle = throttle(state, creep / cruise);
         if (!slow) {
             return held(throttle, turn, pitch < -PITCH_OFF ? 1 : 0, pitch > PITCH_OFF ? 1 : 0, false);
         }
@@ -147,12 +152,13 @@ public final class ShipAutopilots {
      * What LAND holds onto a runway, the ship's flight at {@code state}, its nose at {@code heading} and {@code pitch},
      * in degrees, the foot of the runway's beacon {@code dx}, {@code dy}, {@code dz} metres from the middle of its
      * hull's floor, the runway running {@code runway} degrees east of north from it; {@code grounded} whether it stands
-     * on the land. Off its final it flies to the gate; on it, down the glide; on the runway's stretch, it rolls out;
-     * on the land elsewhere, it lifts off to come round again.
+     * on the land; the ship going {@code cruise} metres a second at its throttle's full in the air round it. Off its
+     * final it flies to the gate; on it, down the glide; on the runway's stretch, it rolls out; on the land elsewhere,
+     * it lifts off to come round again.
      */
     public static ShipFlightModel.Held runway(final ShipFlightModel.State state, final double heading,
                                               final double pitch, final double dx, final double dy, final double dz,
-                                              final double runway, final boolean grounded) {
+                                              final double runway, final boolean grounded, final double cruise) {
         final double[] way = way(runway);
         // Where it is from the beacon: along the runway, and across it, to its right.
         final double along = -dx * way[0] - dz * way[1];
@@ -187,7 +193,7 @@ public final class ShipAutopilots {
             } else if (before < SETTLE_FROM) {
                 wanted = Math.min(wanted, -SETTLE);
             }
-            return held(throttle(state, flaring ? 0 : RUNWAY_SPEED / CRUISE), turn,
+            return held(throttle(state, flaring ? 0 : RUNWAY_SPEED / cruise), turn,
                     pitch < wanted - PITCH_OFF ? 1 : 0, pitch > wanted + PITCH_OFF ? 1 : 0, false);
         }
         // Off its final: to the gate, a way back along the runway's line, coming down to the glide's height there.
@@ -199,7 +205,7 @@ public final class ShipAutopilots {
         final double high = gateHeight + Math.min(CRUISE_HEIGHT - gateHeight, toGate * GATE_SLOPE);
         final double wanted = Math.clamp((high - height) * HEIGHT_GAIN, -MOST_DIVE, MOST_CLIMB_TO_GATE);
         final double speed = Math.max(RUNWAY_SPEED, Math.min(CRUISE, toGate * APPROACH * 2));
-        return held(throttle(state, speed / CRUISE), turn(heading, Math.toDegrees(Math.atan2(gx, -gz)), toGate > OVER),
+        return held(throttle(state, speed / cruise), turn(heading, Math.toDegrees(Math.atan2(gx, -gz)), toGate > OVER),
                 pitch < wanted - PITCH_OFF ? 1 : 0, pitch > wanted + PITCH_OFF ? 1 : 0, false);
     }
 

@@ -18,9 +18,14 @@ class ShipAutopilotsTest {
     /* A ship of 40 tonnes on feet: 420 kN of air engines, 420 kN of bells, delta wings holding 400 kN. */
     private static final ShipFlightModel.Performance SHIP = new ShipFlightModel.Performance(40_000, 420_000,
             420_000, 400_000, 0, ShipFlightModel.Gear.LEGS);
-    /* The same ship on wheels. */
+    /* The same ship on wheels; and on feet with thrusters holding 240 kN, which need no air. */
     private static final ShipFlightModel.Performance WHEELED = new ShipFlightModel.Performance(40_000, 420_000,
             420_000, 400_000, 0, ShipFlightModel.Gear.WHEELS);
+    private static final ShipFlightModel.Performance THRUSTED = new ShipFlightModel.Performance(40_000, 420_000,
+            420_000, 400_000, 240_000, ShipFlightModel.Gear.LEGS);
+    /* How fast it goes at full throttle in the Overworld's air at sea level; the Moon's pull, of the Overworld's. */
+    private static final double AIR = ShipFlightModel.CRUISE_AIR;
+    private static final double MOON_PULL = 0.165;
     /* The land under a runway, and how high over it a ship flies when its autopilot is engaged. */
     private static final double GROUND = 64;
     private static final double ALOFT = 40;
@@ -90,26 +95,26 @@ class ShipAutopilotsTest {
 
     @Test
     void land_turnsTowardTheSpot() {
-        final ShipFlightModel.Held east = ShipAutopilots.land(CRUISING, 0, 0, 200, 0, 0);
+        final ShipFlightModel.Held east = ShipAutopilots.land(CRUISING, 0, 0, 200, 0, 0, AIR);
         assertTrue(east.right() > 0 && east.left() == 0, "a spot to the east, its nose north, turns right");
-        final ShipFlightModel.Held west = ShipAutopilots.land(CRUISING, 0, 0, -200, 0, 0);
+        final ShipFlightModel.Held west = ShipAutopilots.land(CRUISING, 0, 0, -200, 0, 0, AIR);
         assertTrue(west.left() > 0 && west.right() == 0, "a spot to the west turns left");
-        final ShipFlightModel.Held ahead = ShipAutopilots.land(CRUISING, 0, 0, 0, 0, -200);
+        final ShipFlightModel.Held ahead = ShipAutopilots.land(CRUISING, 0, 0, 0, 0, -200, AIR);
         assertEquals(0, ahead.left() + ahead.right(), "a spot ahead turns it not at all");
     }
 
     @Test
     void land_climbsOverTheSpotOnItsWayAndSlowsNearIt() {
-        final ShipFlightModel.Held low = ShipAutopilots.land(CRUISING, 0, 0, 0, 0, -300);
+        final ShipFlightModel.Held low = ShipAutopilots.land(CRUISING, 0, 0, 0, 0, -300, AIR);
         assertEquals(1, low.up(), "level with the spot, far off, it climbs to fly over");
-        final ShipFlightModel.Held near = ShipAutopilots.land(CRUISING, 0, 0, 0, -20, -20);
+        final ShipFlightModel.Held near = ShipAutopilots.land(CRUISING, 0, 0, 0, -20, -20, AIR);
         assertEquals(1, near.back(), "near the spot its throttle closes");
     }
 
     @Test
     void land_comesDownWhenOverTheSpot() {
         final ShipFlightModel.State hovering = new ShipFlightModel.State(0.5, 0, 0, 0, 90);
-        final ShipFlightModel.Held over = ShipAutopilots.land(hovering, 0, 0, 0.3, -6, 0.2);
+        final ShipFlightModel.Held over = ShipAutopilots.land(hovering, 0, 0, 0.3, -6, 0.2, AIR);
         assertEquals(1, over.down());
         assertEquals(0, over.up());
     }
@@ -121,7 +126,7 @@ class ShipAutopilotsTest {
         final double spotZ = -160;
         for (int tick = 0; tick < 240 * TICKS_A_SECOND && !(flight.landed && tick > TICKS_A_SECOND); tick++) {
             flight.fly(ShipAutopilots.land(flight.state, flight.heading, flight.pitch, spotX - flight.x, 64 - flight.y,
-                    spotZ - flight.z), 64);
+                    spotZ - flight.z, AIR), 64);
         }
         assertTrue(flight.landed, "set down: " + flight);
         assertEquals(0, Math.hypot(spotX - flight.x, spotZ - flight.z), 2.0, "on the spot: " + flight);
@@ -134,7 +139,41 @@ class ShipAutopilotsTest {
         final double spotZ = -2.2;
         for (int tick = 0; tick < 120 * TICKS_A_SECOND && !flight.landed; tick++) {
             flight.fly(ShipAutopilots.land(flight.state, flight.heading, flight.pitch, -flight.x, 64 - flight.y,
-                    spotZ - flight.z), 64);
+                    spotZ - flight.z, AIR), 64);
+        }
+        assertTrue(flight.landed, "set down: " + flight);
+        assertEquals(0, Math.hypot(flight.x, spotZ - flight.z), 2.0, "on the spot: " + flight);
+    }
+
+    /**
+     * On the Moon, with no air to slow it, the same throttle flies a ship three times as fast: LAND holds the throttle
+     * for the speed it wants there, so it comes near enough to the spot to slow, rather than flying round it, and sets
+     * down on it on its thrusters.
+     */
+    @Test
+    void land_flownOnTheMoonSetsDownOnTheSpot() {
+        final Flight flight = new Flight(CRUISING, 0, 64 + ALOFT, 0, 0, 0, false, THRUSTED);
+        final double spotX = 220;
+        final double spotZ = -160;
+        final double moon = ShipFlightModel.cruiseIn(0);
+        for (int tick = 0; tick < 240 * TICKS_A_SECOND && !(flight.landed && tick > TICKS_A_SECOND); tick++) {
+            flight.flyOnTheMoon(ShipAutopilots.land(flight.state, flight.heading, flight.pitch, spotX - flight.x,
+                    64 - flight.y, spotZ - flight.z, moon), 64);
+        }
+        assertTrue(flight.landed, "set down: " + flight);
+        assertEquals(0, Math.hypot(spotX - flight.x, spotZ - flight.z), 2.0, "on the spot: " + flight);
+    }
+
+    @Test
+    void land_engagedFastAndNearOnTheMoonSetsDownOnTheSpot() {
+        // Come down from space at its cruise there, the spot not far ahead under it.
+        final double moon = ShipFlightModel.cruiseIn(0);
+        final Flight flight = new Flight(new ShipFlightModel.State(moon, 0, 1, 0, 0), 0, 64 + 300, 0, 0, 0, false,
+                THRUSTED);
+        final double spotZ = -56;
+        for (int tick = 0; tick < 240 * TICKS_A_SECOND && !(flight.landed && tick > TICKS_A_SECOND); tick++) {
+            flight.flyOnTheMoon(ShipAutopilots.land(flight.state, flight.heading, flight.pitch, -flight.x,
+                    64 - flight.y, spotZ - flight.z, moon), 64);
         }
         assertTrue(flight.landed, "set down: " + flight);
         assertEquals(0, Math.hypot(flight.x, spotZ - flight.z), 2.0, "on the spot: " + flight);
@@ -145,7 +184,7 @@ class ShipAutopilotsTest {
         // Its throttle shut, a spot four metres ahead: it opens just to the creep it wants, not past it.
         ShipFlightModel.State state = new ShipFlightModel.State(0, 0, 0, 0, 66);
         for (int tick = 0; tick < TICKS_A_SECOND; tick++) {
-            final ShipFlightModel.Held held = ShipAutopilots.land(state, 0, 0, 0, -20, -4);
+            final ShipFlightModel.Held held = ShipAutopilots.land(state, 0, 0, 0, -20, -4, AIR);
             state = new ShipFlightModel.State(0, 0, Math.clamp(state.throttle() + held.forward()
                     * ShipFlightModel.OPENS - held.back() * ShipFlightModel.CLOSES, 0.0, 1.0), 0, 66);
         }
@@ -191,7 +230,7 @@ class ShipAutopilotsTest {
     void runway_rollingOutShutsItsThrottleAndKeepsItsNoseAlong() {
         final ShipFlightModel.State rolling = new ShipFlightModel.State(8, 0, 0.4, 0, 0);
         // On the runway 30 metres past its beacon, slow, its nose a little off the runway's way and down.
-        final ShipFlightModel.Held held = ShipAutopilots.runway(rolling, 5, -3, 0, 0, 30, 0, true);
+        final ShipFlightModel.Held held = ShipAutopilots.runway(rolling, 5, -3, 0, 0, 30, 0, true, AIR);
         assertTrue(held.back() > 0 && held.forward() == 0, "its throttle shuts");
         assertTrue(held.left() > 0, "its nose turns back along the runway");
         assertEquals(0, held.up() + held.down(), "never up nor down, which slow would lift it off");
@@ -205,7 +244,7 @@ class ShipAutopilotsTest {
                 WHEELED);
         for (int tick = 0; tick < 10 * TICKS_A_SECOND; tick++) {
             flight.fly(ShipAutopilots.runway(flight.state, flight.heading, flight.pitch, -flight.x,
-                    GROUND - flight.y, -flight.z, 0, flight.landed), GROUND);
+                    GROUND - flight.y, -flight.z, 0, flight.landed, AIR), GROUND);
             assertTrue(flight.landed, "it stays on the land as it slows: " + flight);
         }
         assertTrue(flight.state.speed() < 0.5, "and stops: " + flight);
@@ -214,7 +253,7 @@ class ShipAutopilotsTest {
     @Test
     void runway_onTheLandOffItsStretchLiftsOff() {
         final ShipFlightModel.Held held = ShipAutopilots.runway(ShipFlightModel.State.RESTING, 0, 0, 200, 0, 200, 0,
-                true);
+                true, AIR);
         assertEquals(1, held.up());
         assertEquals(0, held.down());
     }
@@ -285,7 +324,7 @@ class ShipAutopilotsTest {
         for (int tick = 0; tick < 240 * TICKS_A_SECOND && !stopped; tick++) {
             final boolean wasLanded = flight.landed;
             flight.fly(ShipAutopilots.runway(flight.state, flight.heading, flight.pitch, -flight.x, GROUND - flight.y,
-                    -flight.z, runway, flight.landed), GROUND);
+                    -flight.z, runway, flight.landed, AIR), GROUND);
             final double along = flight.x * Math.sin(r) - flight.z * Math.cos(r);
             if (Math.abs(along) < 1.5 && Math.abs(flight.x * Math.cos(r) + flight.z * Math.sin(r)) < ON_THE_LINE) {
                 lowestOver = Math.min(lowestOver, flight.y - GROUND);
@@ -355,6 +394,12 @@ class ShipAutopilotsTest {
 
         void fly(final ShipFlightModel.Held held, final double ground) {
             fly(held, ground, new ShipFlightModel.Air(1.0, 1.0, this.y - ground >= 24, this.landed, this.y - ground));
+        }
+
+        /* A tick on the Moon, {@code ground} its land's height: no air, a sixth of the Overworld's pull. */
+        void flyOnTheMoon(final ShipFlightModel.Held held, final double ground) {
+            fly(held, ground, new ShipFlightModel.Air(0.0, MOON_PULL, this.y - ground >= 24, this.landed,
+                    this.y - ground));
         }
 
         /* A tick in a system's space: no air, no pull, no land under it. */

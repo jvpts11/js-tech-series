@@ -937,6 +937,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   in the air it leaves, less than the rocket had. The thrust against weight at lift-off is still in that air.
 
 ### Fixed
+- LAND brings a ship down on its pad in thin air and in space as in the Overworld's air: the throttle it held
+  for a speed was that speed's share of the cruise in the Overworld's air, so in a vacuum, three times as fast for the
+  same throttle and turning no faster, it came over the pad too fast to turn onto it and circled it.
 - The Rocket Design screen names the heat shield of a rocket with a lunar lander on top and no capsule, the
   lander's ascent stage's, where it warned of none though the flight computer counted it.
 - A launch from a pad with a Pad Service Port runs on past ignition to T-0: once the deluge was poured at T-6,

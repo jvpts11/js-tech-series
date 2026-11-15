@@ -4258,6 +4258,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A moving structure crossing to another dimension takes everyone sitting on its seats and every player
   standing on it, wherever they are: one flown fast into land still loading had them there, where the search round it
   sees nothing, and left them behind, a ship's pilot staying in space as their ship came down into the Moon.
+- (Space) LAND brings a ship down on its pad in thin air and in space as in the Overworld's air: the throttle it held
+  for a speed was that speed's share of the cruise in the Overworld's air, so in a vacuum, three times as fast for the
+  same throttle and turning no faster, it came over the pad too fast to turn onto it and circled it.
 - (Core) Two moving structures pressed together meet at a bounded number of points a step: at most 64 for each block,
   and at most 64 of the blocks pressed against the other, spread over them. Pieces let go together, as a rocket's
   boosters and first stage at the edge of space, met at every pair of boxes of every pair of blocks near each other,

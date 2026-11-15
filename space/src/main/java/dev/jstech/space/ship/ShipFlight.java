@@ -269,13 +269,17 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         }
         ShipFlightModel.Held held = helm;
         ShipReadings.Pilot shown = ShipReadings.Pilot.NONE;
+        final ShipFlightModel.Air around = air(level, now, body);
         if (pilot.isPresent() && pilot.get().mode() == ShipAutopilot.Mode.LAND) {
             final Vec3 spot = pilot.get().spot().orElseThrow();
             final double dy = spot.y - body.worldBox().minY;
+            // Its throttle held for the air round it: in thin air or none, the same throttle flies it faster.
+            final double cruise = ShipFlightModel.cruiseIn(around.density());
             held = pilot.get().runway().isPresent()
                     ? ShipAutopilots.runway(this.state, heading, pitch, spot.x - now.x(), dy, spot.z - now.z(),
-                    pilot.get().runway().get(), this.grounded)
-                    : ShipAutopilots.land(this.state, heading, pitch, spot.x - now.x(), dy, spot.z - now.z());
+                    pilot.get().runway().get(), this.grounded, cruise)
+                    : ShipAutopilots.land(this.state, heading, pitch, spot.x - now.x(), dy, spot.z - now.z(),
+                    cruise);
             shown = ShipReadings.Pilot.of(ShipAutopilot.Mode.LAND, spot, Math.hypot(spot.x - now.x(),
                     spot.z - now.z()), this.state.speed(), false, 0, 0);
         } else if (pilot.isPresent() && SystemSpaces.systemOf(level.dimension()).isPresent()) {
@@ -286,7 +290,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             shown = climbing(level, now, nose, altitude, this.state.speed() * nose[1]);
         }
         final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, fuelled ? held : held.unboosted(),
-                air(level, now, body), whole, pitch);
+                around, whole, pitch);
         if (keeper != null) {
             keeper.flew(ShipReadings.of(next, this.grounded, altitude, shown, ShipPulse.shown(body, spooled, tick)));
         }

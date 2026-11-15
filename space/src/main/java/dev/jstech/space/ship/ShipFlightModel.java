@@ -121,7 +121,7 @@ public final class ShipFlightModel {
         final double push = breathing * Math.cos(Math.toRadians(nozzles)) + bells;
         // Its boost, held as long as its pilot likes clear of the land, costs only how fast it turns and pitches.
         final boolean boosting = held.piloted() && held.boost() && air.empty() && push > 0;
-        final double cruise = between(CRUISE_SPACE, CRUISE_AIR, thick);
+        final double cruise = cruiseIn(thick);
         final double boosted = between(BOOSTED_SPACE, BOOSTED_AIR, thick);
         final boolean stood = air.grounded() && ship.gear() != Gear.WHEELS && rise <= 0;
         final double wanted = stood ? 0 : boosting ? boosted : throttle * cruise;
@@ -178,6 +178,14 @@ public final class ShipFlightModel {
             return Double.POSITIVE_INFINITY;
         }
         return WING_SPEED * Math.sqrt(weight / (ship.wing() * thick));
+    }
+
+    /**
+     * How fast it goes at its throttle's full in air {@code thick} of the overworld's at sea level, in metres a second:
+     * the less air, the faster, three times as fast with none.
+     */
+    public static double cruiseIn(final double thick) {
+        return between(CRUISE_SPACE, CRUISE_AIR, Math.clamp(thick, 0.0, 1.0));
     }
 
     /**
