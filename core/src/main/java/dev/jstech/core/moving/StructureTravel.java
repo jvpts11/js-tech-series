@@ -154,7 +154,13 @@ public final class StructureTravel {
         final IStructureMotion motion = structure.motion();
         final StructureMount mount = structure.mount();
         structure.move(null);
-        BlockMover.move(from, to, moves, Rotation.NONE, false, false);
+        // Its blocks leave whole: what it holds by them, a ship docked at its clamp, goes on held.
+        structure.parting(true);
+        try {
+            BlockMover.move(from, to, moves, Rotation.NONE, false, false);
+        } finally {
+            structure.parting(false);
+        }
         final StructurePose arrived = structure.pose().movedTo(going.x(), going.y(), going.z());
         final MovingStructure there = MovingStructures.make(to, structure.id(), going.plot(), arriving, moves.size(),
                 structure.pivotX() + dx, structure.pivotY() + dy, structure.pivotZ() + dz, arrived, null);

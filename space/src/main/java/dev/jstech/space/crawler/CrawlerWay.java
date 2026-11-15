@@ -141,13 +141,14 @@ public final class CrawlerWay {
         return doors;
     }
 
-    /* Whether every track of the crawler, {@code step} blocks {@code way}, has gravel under it. */
+    /*
+     * Whether every track of the crawler, {@code step} blocks {@code way}, has gravel under it: read whether or not its
+     * land is loaded, so a crawlerway longer than the land loaded round its engine is measured to its end.
+     */
     private static boolean laneUnder(final ServerLevel level, final List<BlockPos> tracks, final Direction way,
                                      final int step) {
         for (final BlockPos track : tracks) {
-            final BlockPos ground = track.relative(way, step).below();
-            if (level.getChunkSource().getChunkNow(ground.getX() >> 4, ground.getZ() >> 4) == null
-                    || !level.getBlockState(ground).is(Blocks.GRAVEL)) {
+            if (!level.getBlockState(track.relative(way, step).below()).is(Blocks.GRAVEL)) {
                 return false;
             }
         }

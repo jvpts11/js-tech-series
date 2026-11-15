@@ -192,6 +192,32 @@ public final class MovingStructureMountGameTests {
                 .thenSucceed();
     }
 
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void mounts_onePieceLetGoHeldByOneOfItsBlocksGoesWithThePiece(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        // A row of five blocks, the end one holding a crate: cut beside that end, the end block goes its own way.
+        final MovingStructure row = made(helper, square(1, 2, 4, 5, 4), Blocks.STONE);
+        final MovingStructure crate = made(helper, List.of(new BlockPos(1, 3, 4)), Blocks.OAK_PLANKS);
+        final BlockPos end = new BlockPos(row.bounds().minX(), row.bounds().minY(), row.bounds().minZ());
+        helper.assertTrue(MovingStructures.mount(crate, row, Optional.of(end)).ok(), "held by the row's end block");
+        warm(level);
+        level.setBlock(end.east(), Blocks.AIR.defaultBlockState(), 3);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(crate.mount() != null && !crate.mount().parent().equals(
+                        row.id()), "the end block let go as a piece of its own, the crate it held goes with it, held"
+                        + " by it still: " + crate.mount()))
+                .thenExecute(() -> {
+                    final MovingStructure piece = MovingStructures.byId(level, crate.mount().parent());
+                    helper.assertTrue(piece != null && piece.blocks() == 1 && crate.mount().anchor().isPresent()
+                            && !level.getBlockState(crate.mount().anchor().get()).isAir(), "held by the block of"
+                            + " the piece it stood on: " + crate.mount());
+                    MovingStructures.takeAway(crate);
+                    MovingStructures.takeAway(piece);
+                    MovingStructures.takeAway(row);
+                })
+                .thenSucceed();
+    }
+
     @GameTest(template = ARENA, batch = BATCH)
     public static void mounts_areKeptWithTheWorld(final GameTestHelper helper) {
         final StructureMount mount = new StructureMount(StructureUuid.random(),

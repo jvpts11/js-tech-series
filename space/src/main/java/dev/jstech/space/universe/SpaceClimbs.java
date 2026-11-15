@@ -95,6 +95,12 @@ public final class SpaceClimbs {
         return SystemLayout.ORBIT_Y - UNDER_THE_FLOOR;
     }
 
+    /** Whether {@code level} is a world whose sky goes up into a system's space, as one climbing over it does. */
+    public static boolean climbsOut(final ServerLevel level) {
+        return SpaceWorlds.ofDimension(level, level.dimension()).flatMap(found -> idOf(level, found))
+                .flatMap(SolarSystemWorlds::bodyOf).isPresent();
+    }
+
     private static void tick(final ServerLevel level) {
         final Optional<SpaceWorld> world = SpaceWorlds.ofDimension(level, level.dimension());
         final Optional<SolarBody> body = world.flatMap(found -> idOf(level, found)).flatMap(
@@ -115,20 +121,25 @@ public final class SpaceClimbs {
         ServerLevel space = null;
         for (final MovingStructureEntity entity : structures(level)) {
             final MovingStructure structure = entity.structure();
-            if (structure != null && structure.pose().y() > ceiling && rested(entity, level)) {
+            // One on its way already, waiting for the land it goes to, is not sent again.
+            if (structure != null && !structure.departing() && structure.pose().y() > ceiling
+                    && rested(entity, level)) {
                 space = space != null ? space : SystemSpaces.spaceOf(level.getServer(), world.system());
                 // Over the place it climbed from, or the nearest spot round it with room where others rest already.
                 final double[] spot = OrbitRoom.spotFor(space, structure, SystemLayout.orbitSpot(body,
                         SphereMap.longitude(structure.pose().x(), width), SphereMap.latitude(structure.pose().z(),
                         width)), SolarSystemWorlds.worldOf(body));
                 final List<ServerPlayer> told = announceAboard(entity);
-                level.getEntitiesOfClass(ServerPlayer.class, structure.worldBox().inflate(ABOARD))
-                        .forEach(SpaceFirsts::inOrbit);
                 // Told as a thing in the world's orbit, its blocks still here to be looked over.
                 OrbitObjects.arrived(level, structure, body);
                 OrbitRoom.restsAt(space, structure, spot);
-                if (!MovingStructures.travel(structure, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]))
+                if (MovingStructures.travel(structure, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]))
                         .ok()) {
+                    level.getEntitiesOfClass(ServerPlayer.class, structure.worldBox().inflate(ABOARD))
+                            .forEach(SpaceFirsts::inOrbit);
+                } else {
+                    // Refused, it stays in its world: no thing in orbit, and nobody aboard told they go.
+                    OrbitObjects.forget(level.getServer(), structure.id().value());
                     told.forEach(DimensionTravel::withdraw);
                 }
                 PASSED.put(entity, level.getGameTime());
@@ -150,14 +161,17 @@ public final class SpaceClimbs {
         final double floor = floor();
         for (final MovingStructureEntity entity : structures(space)) {
             final MovingStructure structure = entity.structure();
-            if (structure == null || structure.pose().y() >= floor || !rested(entity, space)) {
+            // One on its way already, waiting for the land it goes to, is not sent again.
+            if (structure == null || structure.departing() || structure.pose().y() >= floor
+                    || !rested(entity, space)) {
                 continue;
             }
             final Below below = below(space, structure.pose().x(), structure.pose().z());
             if (below != null) {
                 final List<ServerPlayer> told = announceAboard(entity);
-                OrbitObjects.forget(space.getServer(), structure.id().value());
-                if (!MovingStructures.travel(structure, below.level(), below.at()).ok()) {
+                if (MovingStructures.travel(structure, below.level(), below.at()).ok()) {
+                    OrbitObjects.forget(space.getServer(), structure.id().value());
+                } else {
                     told.forEach(DimensionTravel::withdraw);
                 }
                 PASSED.put(entity, space.getGameTime());

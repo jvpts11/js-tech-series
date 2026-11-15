@@ -447,6 +447,12 @@ public final class MovingStructures {
         } else {
             StructureYard.giveBack(level, structure.plot());
         }
+        // Gone before it went on to another dimension, the plot it took there for its blocks is given back there.
+        final StructureDeparture going = structure.departure();
+        final ServerLevel to = going == null ? null : level.getServer().getLevel(going.to());
+        if (to != null) {
+            StructureYard.giveBack(to, going.plot());
+        }
         StructureJoints.forget(level, structure.id());
         // Its maker has one more of their limit back, unless it went on as another structure, which kept them.
         final UUID maker = structure.takeMaker();

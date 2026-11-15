@@ -2231,6 +2231,13 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A moving structure crossing to another dimension takes what it holds by one of its blocks with it, held
+  still: a ship docked at another's clamp came loose as the other's blocks left, and arrived on its own. A piece let go
+  from a structure likewise takes along what was held by one of its blocks.
+- A moving structure taken away on its way to another dimension gives back the plot of the yard it took there
+  for its blocks, which stayed taken for good.
+- A block put back into a holed formed part that keeps itself, as a fitting aboard a ship or a rocket's flight
+  computer does, is formed again and drawn by the part's model; it stayed a whole block of its own.
 - A moving structure crossing to another dimension takes everyone sitting on its seats and every player
   standing on it, wherever they are: one flown fast into land still loading had them there, where the search round it
   sees nothing, and left them behind, a ship's pilot staying in space as their ship came down into the Moon.

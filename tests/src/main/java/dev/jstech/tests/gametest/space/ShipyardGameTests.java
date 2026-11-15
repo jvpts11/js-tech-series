@@ -36,6 +36,7 @@ import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.IFixtureEntity;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipFixtureBlock;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipKitBlocks;
@@ -477,6 +478,48 @@ public final class ShipyardGameTests {
                     helper.assertTrue(dock.confirm() && dock.built(), "changed, its parts form again over its"
                             + " blocks");
                     helper.assertTrue(dock.release(null).isPresent(), "and it goes again, a structure once more");
+                })
+                .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void fitting_putBackAboardIntoItsHoledPartFormsAgain(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final GameTestSequence sequence = helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(formed(level, terminal), "the dock forms"));
+        letGo(helper, terminal, sequence, new long[2]);
+        final MovingStructure[] ship = new MovingStructure[1];
+        final BlockPos[] furnace = new BlockPos[1];
+        sequence.thenExecute(() -> {
+            // The workshop's furnace aboard, where it stands in the ship's structure.
+            final PlannedBuild laid = new PlannedBuild(ShipyardPlans.of(level, WORKSHOP_SHIP, Orientation.NORTH),
+                    ShipyardStructure.shipAt(terminal, Orientation.NORTH));
+            final PlanSpot spot = laid.plan().spots().stream().filter(each -> each.block()
+                    .equals(ShipKitBlocks.SHIP_FURNACE.getId())).findFirst().orElseThrow();
+            final Vec3 built = Vec3.atCenterOf(laid.where(spot));
+            ship[0] = (MovingStructure) MovingStructures.near(level, new AABB(terminal).inflate(SHIP_REACH)).stream()
+                    .filter(each -> each instanceof MovingStructure && each.worldBox().inflate(1).contains(built))
+                    .findFirst().orElseThrow();
+            furnace[0] = BlockPos.containing(MovingStructures.toYard(ship[0], built));
+            helper.assertTrue(level.getBlockState(furnace[0]).getValue(ShipFixtureBlock.FORMED), "formed, the"
+                    + " furnace is drawn by its part's model");
+        }).thenWaitUntil(() -> helper.assertTrue(console(level, ship[0]).holes().isEmpty()
+                && console(level, ship[0]).ship().isPresent(), "the ship's console watches its plan aboard"))
+                .thenExecute(() -> level.setBlockAndUpdate(furnace[0], Blocks.AIR.defaultBlockState()))
+                .thenWaitUntil(() -> helper.assertTrue(console(level, ship[0]).holes().size() == 1, "the furnace"
+                        + " broken aboard, its part holds round the hole"))
+                .thenExecute(() -> level.setBlockAndUpdate(furnace[0], ShipKitBlocks.SHIP_FURNACE.get()
+                        .defaultBlockState()))
+                .thenWaitUntil(() -> helper.assertTrue(console(level, ship[0]).holes().isEmpty(), "put back, the"
+                        + " hole is mended"))
+                .thenExecute(() -> {
+                    final BlockState back = level.getBlockState(furnace[0]);
+                    helper.assertTrue(back.getValue(ShipFixtureBlock.FORMED)
+                            && level.getBlockEntity(furnace[0]) instanceof IFixtureEntity fitting
+                            && !fitting.places().isEmpty(), "and the furnace put back is formed again, the block of"
+                            + " its part's model it stands for kept: " + back);
+                    MovingStructures.takeAway(ship[0]);
                 })
                 .thenSucceed();
     }

@@ -20,6 +20,7 @@ import dev.jstech.space.crew.ShipCrews;
 import dev.jstech.space.landing.Runways;
 import dev.jstech.space.landing.ShipLandingTexts;
 import dev.jstech.space.landing.ShipLandings;
+import dev.jstech.space.universe.SpaceClimbs;
 import dev.jstech.space.universe.SystemSpaces;
 import java.util.List;
 import java.util.Optional;
@@ -80,8 +81,8 @@ public final class ShipAutopilotControl {
             final Optional<ShipAutopilot> offered = switch (ORDER.get(i)) {
                 case LAND -> ship.motion() instanceof ShipFlight flight ? landing(pilot, level, ship, flight)
                         : Optional.empty();
-                case ORBIT -> SystemSpaces.systemOf(level.dimension()).isEmpty() ? Optional.of(ShipAutopilot.orbit())
-                        : Optional.empty();
+                // Only from a world whose sky goes up into its space: from any other it would climb into its roof.
+                case ORBIT -> SpaceClimbs.climbsOut(level) ? Optional.of(ShipAutopilot.orbit()) : Optional.empty();
                 case DOCK -> docking(pilot, level, ship);
             };
             if (offered.isPresent()) {

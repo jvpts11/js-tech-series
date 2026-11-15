@@ -937,6 +937,16 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   in the air it leaves, less than the rocket had. The thrust against weight at lift-off is still in that air.
 
 ### Fixed
+- A structure on its way between a world and its space, waiting for the land it goes to, is not sent again: a
+  little later the crossing was asked for again, refused as under way, and everyone aboard was told it was off while it
+  went on. Climbing out, it is counted in orbit, and its crew get the advancement, only once its crossing is accepted;
+  coming down, it is forgotten from its orbit only then.
+- ORBIT is offered only over a world whose sky goes up into its space: in the Nether or the End a ship climbed
+  into the roof.
+- A starship whose flight console is broken has no deuterium left: it went on boosting and jumping as if its
+  reactor were full.
+- A crawlerway is measured to its end however far it runs: one longer than the land loaded round its engine
+  ended where that land did, and the launcher was set down short of the pad.
 - LAND brings a ship down on its pad in thin air and in space as in the Overworld's air: the throttle it held
   for a speed was that speed's share of the cruise in the Overworld's air, so in a vacuum, three times as fast for the
   same throttle and turning no faster, it came over the pad too fast to turn onto it and circled it.

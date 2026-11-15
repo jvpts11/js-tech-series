@@ -97,6 +97,8 @@ public final class ShipFlightGameTests {
     private static final int HELD = 30;
     private static final int PARKED = 100;
     private static final int BOOSTED = 20;
+    /* How fast a ship hovering still goes at the most, in metres a second; boosted a second it goes ten times that. */
+    private static final double AT_REST = 1;
     /*
      * How far north of the dock the land is kept loaded, in chunks, as a pilot aboard keeps the land round them, and
      * how far west for a ship that turns and for one that flies straight: the ship flies out of the arena, which alone
@@ -410,6 +412,24 @@ public final class ShipFlightGameTests {
             final ShipFlightModel.State now = ((ShipFlight) ship[0].motion()).state();
             helper.assertTrue(!console(helper, ship[0]).flight().boosting() && now.speed() < CRUISING, "with none"
                     + " left its reactor makes nothing, and its boost held, it does not boost: " + now);
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void flight_itsConsoleBrokenTheDeuteriumGoesWithItAndItCannotBoost(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final GameTestSequence sequence = letGo(helper, ship).thenExecute(() -> {
+            // Taken up and hovering where it is, its flight console broken aboard.
+            aloft(ship[0], HIGH);
+            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(ShipFlightModel.State.RESTING));
+            helper.getLevel().setBlockAndUpdate(((ShipFlight) ship[0].motion()).consoleIn(ship[0]).orElseThrow(),
+                    Blocks.AIR.defaultBlockState());
+        });
+        boost(helper, sequence, ship, BOOSTED).thenExecute(() -> {
+            final ShipFlightModel.State now = ((ShipFlight) ship[0].motion()).state();
+            helper.assertTrue(now.speed() < AT_REST, "with its console its reactor's deuterium is gone: its boost"
+                    + " held from rest, its throttle shut, it does not boost away: " + now);
             MovingStructures.takeAway(ship[0]);
         }).thenSucceed();
     }

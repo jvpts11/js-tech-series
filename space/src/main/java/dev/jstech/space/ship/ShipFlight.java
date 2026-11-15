@@ -245,8 +245,9 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final double pitch = Math.toDegrees(Math.asin(Math.clamp(nose[1], -1.0, 1.0)));
         final double heading = heading(nose);
         // Its reactor burns its deuterium as it flies; with none left it makes nothing, and its boost cannot be held.
+        // With its console gone, the deuterium went with it.
         final AirReserveEntity keeper = keeper(level, body);
-        final boolean fuelled = keeper == null || (this.grounded ? keeper.deuterium() > 0
+        final boolean fuelled = keeper != null && (this.grounded ? keeper.deuterium() > 0
                 : keeper.burn(ShipFlightModel.TICK / REACTOR_LOAD_SECONDS));
         // A part with holes in it does as much as the share of its blocks still in it, as its console counts them.
         final ShipFlightModel.Performance whole = keeper == null ? this.ship : keeper.performance().orElse(this.ship);

@@ -15,6 +15,7 @@ import dev.jstech.core.moving.RailsMotion;
 import dev.jstech.core.moving.SpinMotion;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureFootingPayload;
+import dev.jstech.core.moving.StructureMount;
 import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.moving.StructureSync;
 import dev.jstech.core.moving.StructureTexts;
@@ -35,6 +36,7 @@ import dev.jstech.tests.JsTests;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
@@ -122,6 +124,10 @@ public final class MovingStructureGameTests {
     private static final int DOORWAY_STRIDES = 20;
     /* How far up a structure is put at once, in blocks. */
     private static final double RAISED = 2.0;
+    /* How far into the Nether a structure is sent to wait on its way for land that is not loaded, in blocks. */
+    private static final double FAR_IN_THE_NETHER = 100_000;
+    /* How far round where a structure arrives in the Nether its land is loaded first, in chunks. */
+    private static final int LAND_ROUND = 3;
     private static final TextKey LOADER_ABOARD = TextKey.of("jstests.moving.loader_aboard",
             "A loader aboard keeps the world under it loaded");
 
@@ -636,13 +642,7 @@ public final class MovingStructureGameTests {
         pig.setInvulnerable(true);
         final Vec3 there = new Vec3(helper.absolutePos(BlockPos.ZERO).getX() + 0.5, 180,
                 helper.absolutePos(BlockPos.ZERO).getZ() + 0.5);
-        final int landX = Mth.floor(there.x) >> 4;
-        final int landZ = Mth.floor(there.z) >> 4;
-        for (int dx = -3; dx <= 3; dx++) {
-            for (int dz = -3; dz <= 3; dz++) {
-                nether.getChunk(landX + dx, landZ + dz);
-            }
-        }
+        loadLand(nether, there);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(pig.onGround(), "the pig stands on the floor"))
                 .thenExecute(() -> {
@@ -675,6 +675,70 @@ public final class MovingStructureGameTests {
                     MovingStructures.takeAway(arrived);
                 })
                 .thenSucceed();
+    }
+
+    /*
+     * What a structure holds by one of its blocks, as a ship docked at another's clamp is held, crosses with it and
+     * arrives held by the same block: the blocks leaving for another dimension are not blocks lost.
+     */
+    @GameTest(template = ARENA, batch = "jscore_moving_travel_held", timeoutTicks = 6000)
+    public static void travel_whatAStructureHoldsByABlockArrivesHeldStill(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final ServerLevel nether = level.getServer().getLevel(Level.NETHER);
+        helper.assertTrue(nether != null, "there is a Nether");
+        final MovingStructure floor = floor(helper);
+        helper.setBlock(new BlockPos(4, 4, 4), Blocks.OAK_PLANKS);
+        warm(level);
+        final StructureResult made = MovingStructures.assemble(level, helper.absolutePos(new BlockPos(4, 4, 4)),
+                helper.absolutePos(new BlockPos(4, 4, 4)));
+        helper.assertTrue(made.ok() && made.structure() != null, "a crate is made on the floor: " + refusal(made));
+        final MovingStructure crate = made.structure();
+        final Box box = floor.bounds();
+        final BlockPos clamp = new BlockPos((box.minX() + box.maxX()) / 2, box.minY(), (box.minZ() + box.maxZ()) / 2);
+        helper.assertTrue(MovingStructures.mount(crate, floor, Optional.of(clamp)).ok(), "held by the floor's"
+                + " middle block");
+        final Vec3 there = new Vec3(helper.absolutePos(BlockPos.ZERO).getX() + 0.5, 180,
+                helper.absolutePos(BlockPos.ZERO).getZ() + 0.5);
+        loadLand(nether, there);
+        helper.startSequence()
+                .thenExecute(() -> helper.assertTrue(MovingStructures.travel(floor, nether, there).ok(), "the floor"
+                        + " is sent to the Nether"))
+                .thenWaitUntil(() -> {
+                    final MovingStructure floorThere = MovingStructures.byId(nether, floor.id());
+                    final MovingStructure crateThere = MovingStructures.byId(nether, crate.id());
+                    helper.assertTrue(floorThere != null && floorThere.ready() && crateThere != null
+                            && crateThere.ready(), "the floor and the crate arrive in the Nether");
+                })
+                .thenExecute(() -> {
+                    final MovingStructure floorThere = MovingStructures.byId(nether, floor.id());
+                    final MovingStructure crateThere = MovingStructures.byId(nether, crate.id());
+                    final StructureMount held = crateThere.mount();
+                    helper.assertTrue(held != null && held.parent().equals(floor.id()) && held.anchor().isPresent()
+                            && !nether.getBlockState(held.anchor().get()).isAir(), "the crate arrives held by the"
+                            + " floor's same block: " + held);
+                    MovingStructures.takeAway(crateThere);
+                    MovingStructures.takeAway(floorThere);
+                })
+                .thenSucceed();
+    }
+
+    /* A structure taken away on its way to another dimension gives back there the plot it took for its blocks. */
+    @GameTest(template = ARENA, batch = "jscore_moving_travel_gone")
+    public static void travel_aStructureTakenAwayOnItsWayGivesBackThePlotItTookThere(final GameTestHelper helper) {
+        final ServerLevel nether = helper.getLevel().getServer().getLevel(Level.NETHER);
+        helper.assertTrue(nether != null, "there is a Nether");
+        final MovingStructure floor = floor(helper);
+        final int plot = StructureYard.nextPlot(nether);
+        // Sent to a place of the Nether whose land is not loaded, it waits on its way.
+        final Vec3 far = new Vec3(helper.absolutePos(BlockPos.ZERO).getX() + 0.5 + FAR_IN_THE_NETHER, 180,
+                helper.absolutePos(BlockPos.ZERO).getZ() + 0.5);
+        helper.assertTrue(MovingStructures.travel(floor, nether, far).ok() && floor.departing()
+                && StructureYard.owner(nether, plot).map(floor.id()::equals).orElse(false), "on its way, a plot of"
+                + " the Nether's yard is taken for it");
+        MovingStructures.takeAway(floor);
+        helper.assertTrue(StructureYard.owner(nether, plot).isEmpty(), "taken away before it went, the plot it took"
+                + " there is given back: " + StructureYard.owner(nether, plot));
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, batch = "jscore_moving_world")
@@ -1140,5 +1204,16 @@ public final class MovingStructureGameTests {
 
     private static String refusal(final StructureResult result) {
         return result.refusal() == null ? "done" : result.refusal().english();
+    }
+
+    /* Loads the land round {@code at} of {@code level}, where a structure sent there arrives. */
+    private static void loadLand(final ServerLevel level, final Vec3 at) {
+        final int landX = Mth.floor(at.x) >> 4;
+        final int landZ = Mth.floor(at.z) >> 4;
+        for (int dx = -LAND_ROUND; dx <= LAND_ROUND; dx++) {
+            for (int dz = -LAND_ROUND; dz <= LAND_ROUND; dz++) {
+                level.getChunk(landX + dx, landZ + dz);
+            }
+        }
     }
 }

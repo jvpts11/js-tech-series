@@ -140,7 +140,7 @@ public final class ShipPulse {
         if (!jump.dropping().isEmpty()) {
             return droppingOut(level, ship, now, flight, jump, keeper, tick);
         }
-        final boolean burnt = keeper == null || keeper.burn(ShipFlightModel.TICK / ShipFlight.REACTOR_LOAD_SECONDS
+        final boolean burnt = keeper != null && keeper.burn(ShipFlightModel.TICK / ShipFlight.REACTOR_LOAD_SECONDS
                 * (PulseCourse.BURNS - 1));
         final double turn = (held.left() - held.right()) * PulseCourse.TURNS * ShipFlightModel.TICK;
         final StructurePose turned = turn == 0 ? now : now.turnedBy(0, 1, 0, Math.toRadians(turn));

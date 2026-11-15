@@ -617,7 +617,10 @@ public final class MovingStructure implements IStructureBody {
         return !splitting.isEmpty();
     }
 
-    /* Whether blocks are leaving it whole, for a piece of it to go its own way: those are not blocks lost. */
+    /*
+     * Whether blocks are leaving it whole, for a piece of it to go its own way or for another dimension: those are not
+     * blocks lost.
+     */
     void parting(final boolean leaving) {
         this.parting = leaving;
     }
@@ -734,7 +737,10 @@ public final class MovingStructure implements IStructureBody {
         if (was == is) {
             return;
         }
-        StructureMounts.anchorChanged(this, at, !is);
+        // A block leaving whole, for a piece of it or for another dimension, still holds what it held: that goes too.
+        if (!parting) {
+            StructureMounts.anchorChanged(this, at, !is);
+        }
         if (was && !parting) {
             // The blocks beside one lost are looked at next tick: they may no longer be joined.
             for (final Direction side : Direction.values()) {

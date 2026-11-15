@@ -4255,6 +4255,23 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- (Core) A moving structure crossing to another dimension takes what it holds by one of its blocks with it, held
+  still: a ship docked at another's clamp came loose as the other's blocks left, and arrived on its own. A piece let go
+  from a structure likewise takes along what was held by one of its blocks.
+- (Core) A moving structure taken away on its way to another dimension gives back the plot of the yard it took there
+  for its blocks, which stayed taken for good.
+- (Core) A block put back into a holed formed part that keeps itself, as a fitting aboard a ship or a rocket's flight
+  computer does, is formed again and drawn by the part's model; it stayed a whole block of its own.
+- (Space) A structure on its way between a world and its space, waiting for the land it goes to, is not sent again: a
+  little later the crossing was asked for again, refused as under way, and everyone aboard was told it was off while it
+  went on. Climbing out, it is counted in orbit, and its crew get the advancement, only once its crossing is accepted;
+  coming down, it is forgotten from its orbit only then.
+- (Space) ORBIT is offered only over a world whose sky goes up into its space: in the Nether or the End a ship climbed
+  into the roof.
+- (Space) A starship whose flight console is broken has no deuterium left: it went on boosting and jumping as if its
+  reactor were full.
+- (Space) A crawlerway is measured to its end however far it runs: one longer than the land loaded round its engine
+  ended where that land did, and the launcher was set down short of the pad.
 - (Core) A moving structure crossing to another dimension takes everyone sitting on its seats and every player
   standing on it, wherever they are: one flown fast into land still loading had them there, where the search round it
   sees nothing, and left them behind, a ship's pilot staying in space as their ship came down into the Moon.

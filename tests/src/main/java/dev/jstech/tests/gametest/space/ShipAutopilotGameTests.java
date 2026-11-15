@@ -65,6 +65,7 @@ import net.minecraft.server.level.TicketType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.GameType;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -315,6 +316,29 @@ public final class ShipAutopilotGameTests {
                     keep(helper, false, RUNWAY_CHUNKS);
                 })
                 .thenSucceed();
+    }
+
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void autopilot_orbitIsOfferedOnlyWhereTheSkyGoesUpIntoSpace(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final ServerLevel nether = level.getServer().getLevel(Level.NETHER);
+        final ServerLevel end = level.getServer().getLevel(Level.END);
+        final MovingStructure[] ship = new MovingStructure[1];
+        letGo(helper, ship, LEGS_SHIP).thenExecute(() -> {
+            final ServerPlayer pilot = seated(helper, aboard(ship[0], plan(helper, LEGS_SHIP).where(spot(helper,
+                    LEGS_SHIP, ShipKitBlocks.PILOT_SEAT.getId()))));
+            helper.assertTrue(ShipAutopilotControl.next(pilot, level, ship[0], Optional.empty()).map(
+                    ShipAutopilot::mode).filter(ShipAutopilot.Mode.ORBIT::equals).isPresent(), "over the Overworld,"
+                    + " whose sky goes up into its space, ORBIT is offered");
+            for (final ServerLevel other : List.of(nether, end)) {
+                helper.assertTrue(ShipAutopilotControl.next(pilot, other, ship[0], Optional.empty()).map(
+                        ShipAutopilot::mode).filter(ShipAutopilot.Mode.ORBIT::equals).isEmpty(), "in "
+                        + other.dimension().location() + ", whose sky goes up into no space, ORBIT is not offered:"
+                        + " it would climb into its roof");
+            }
+            GameTestPlayers.leave(pilot);
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)

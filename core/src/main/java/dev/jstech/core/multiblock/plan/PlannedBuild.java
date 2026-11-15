@@ -222,8 +222,14 @@ public final class PlannedBuild implements IStructureWatcher {
             this.wanted.computeIfPresent(spot.block(), (block, count) -> count > 1 ? count - 1 : null);
             skipPresent();
             if (this.holed.test(part) && this.formed[part]) {
-                // A block put back into a part that held: it merges again, and the hole is mended.
-                FormedDamage.mend(this.level, pos);
+                // A block put back into a part that held: one that keeps itself, as a fitting does, is told it is
+                // formed again, as the part forming told it; another merges again, and the hole is mended.
+                final BlockState state = this.level.getBlockState(pos);
+                if (state.getBlock() instanceof IPlanMember member) {
+                    member.partFormed(this.level, pos, true, spot.place().orElse(null));
+                } else if (!state.is(IPlanMember.KEEPS_ITSELF)) {
+                    FormedDamage.mend(this.level, pos);
+                }
             } else if (this.missing[part] == 0) {
                 form(part);
             }

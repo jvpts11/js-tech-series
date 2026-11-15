@@ -12,11 +12,13 @@ import dev.jstech.space.crawler.CrawlerEngineBlockEntity;
 import dev.jstech.space.crawler.CrawlerLayout;
 import dev.jstech.space.crawler.CrawlerPieceBlock;
 import dev.jstech.space.crawler.CrawlerTexts;
+import dev.jstech.space.crawler.CrawlerWay;
 import dev.jstech.space.hangar.HangarBlocks;
 import dev.jstech.space.hangar.HangarPieceBlock;
 import dev.jstech.space.launcher.LauncherBlocks;
 import dev.jstech.space.launcher.LauncherDeckBlockEntity;
 import dev.jstech.tests.JsTests;
+import java.util.List;
 import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -53,8 +55,35 @@ public final class CrawlerGameTests {
     private static final int DECK_TO_X = 18;
     private static final int DECK_HALF = 6;
     private static final BlockPos ARM = new BlockPos(8, 8, 5);
+    /*
+     * How far east of the arena a long crawlerway is laid, out where no test keeps the land loaded, and how long it
+     * is: far longer than the land loaded round a player at its engine.
+     */
+    private static final int FAR_EAST = 4_000;
+    private static final int LONG_WAY = 300;
 
     private CrawlerGameTests() {
+    }
+
+    /* A crawlerway reaching into land no one keeps loaded is measured to its end, its land read as it loads. */
+    @GameTest(template = WAY, batch = BATCH, timeoutTicks = 4000)
+    public static void crawlerway_isMeasuredToItsEndPastTheLandLoaded(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos engine = helper.absolutePos(ENGINE).east(FAR_EAST);
+        final List<BlockPos> tracks = CrawlerLayout.tracks(engine, Direction.EAST);
+        lane(level, tracks, Blocks.GRAVEL.defaultBlockState());
+        final BlockPos far = tracks.getFirst().relative(Direction.EAST, LONG_WAY);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(level.getChunkSource().getChunkNow(far.getX() >> 4,
+                        far.getZ() >> 4) == null, "the land at the way's far end is let go, nothing keeping it"))
+                .thenExecute(() -> {
+                    final Optional<CrawlerWay.Route> route = CrawlerWay.route(level, engine, Direction.EAST);
+                    helper.assertTrue(route.isPresent() && route.get().way() == Direction.EAST
+                            && route.get().steps() == LONG_WAY, "the way is measured to its end, " + LONG_WAY
+                            + " blocks: " + route);
+                    lane(level, tracks, Blocks.AIR.defaultBlockState());
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = WAY, batch = BATCH, timeoutTicks = 200)
@@ -247,5 +276,14 @@ public final class CrawlerGameTests {
             return engine;
         }
         throw new IllegalStateException("No crawler engine at " + at);
+    }
+
+    /* Lays {@code ground} under every track of a crawler, from a block east of it to {@link #LONG_WAY} on. */
+    private static void lane(final ServerLevel level, final List<BlockPos> tracks, final BlockState ground) {
+        for (int step = 1; step <= LONG_WAY; step++) {
+            for (final BlockPos track : tracks) {
+                level.setBlockAndUpdate(track.relative(Direction.EAST, step).below(), ground);
+            }
+        }
     }
 }
