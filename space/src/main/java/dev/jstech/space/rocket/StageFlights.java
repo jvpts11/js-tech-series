@@ -176,9 +176,10 @@ public final class StageFlights extends SavedData {
                     all.forget(each.getKey());
                 }
             } else if (flight.near()) {
-                // One that came to rest with no blow worth telling lies there as its wreckage.
+                // One that came to rest with no blow worth telling lies there as its wreckage: at rest a while, as one
+                // at the top of its arc, slow for a tick, never is.
                 final double speed = speedOf(piece);
-                if (age > OUT_OF_SIGHT && speed < RESTING) {
+                if (age > OUT_OF_SIGHT && resting(piece, speed)) {
                     strike(level, piece, flight, new Vec3(piece.pose().x(), piece.pose().y(), piece.pose().z()),
                             speed);
                 }
@@ -221,6 +222,12 @@ public final class StageFlights extends SavedData {
     }
 
     /* How fast {@code piece} goes, in metres a second. */
+    /* Whether {@code piece}, going {@code speed} metres a second, is at rest: asleep by its physics, else slow. */
+    private static boolean resting(final MovingStructure piece, final double speed) {
+        final StructurePhysics physics = piece.physics();
+        return physics != null ? physics.asleep() : speed < RESTING;
+    }
+
     private static double speedOf(final MovingStructure piece) {
         final StructurePhysics physics = piece.physics();
         if (physics != null) {

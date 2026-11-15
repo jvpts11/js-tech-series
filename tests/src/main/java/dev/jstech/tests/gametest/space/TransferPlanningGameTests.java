@@ -161,8 +161,20 @@ public final class TransferPlanningGameTests {
         });
         final double transfer = computer.available().orElse(0);
         final double landing = computer.availableToLand().orElse(0);
-        helper.assertTrue(transfer > 0 && landing > transfer + 1, "the transfer is planned without the lander's"
-                + " stages, the landing with them: " + transfer + " against " + landing);
+        helper.assertTrue(transfer > 0 && landing > 0, "the transfer is planned without the lander's stages, the"
+                + " landing with its descent stage: " + transfer + " and " + landing);
+        // The landing counts the descent stage alone: the stages under it emptied, it counts the same; the descent
+        // stage emptied, nothing, though the ascent stage over it is full.
+        Propellants.get(helper.getLevel(), SkeletonPropellants.METHALOX).ifPresent(methalox -> {
+            computer.load(1, TankLoad.filled(SkeletonPropellants.METHALOX, methalox, 0));
+            computer.load(4, TankLoad.filled(SkeletonPropellants.METHALOX, methalox, 0));
+        });
+        helper.assertTrue(Math.abs(computer.availableToLand().orElse(0) - landing) < CLOSE, "the stages under the"
+                + " lander emptied, its landing counts the same: " + computer.availableToLand() + " for " + landing);
+        Propellants.get(helper.getLevel(), SkeletonPropellants.METHALOX).ifPresent(methalox -> computer.load(6,
+                TankLoad.filled(SkeletonPropellants.METHALOX, methalox, 0)));
+        helper.assertTrue(computer.availableToLand().orElse(-1) == 0, "its descent stage emptied, its landing counts"
+                + " nothing, the ascent stage full: " + computer.availableToLand());
         helper.succeed();
     }
 

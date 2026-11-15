@@ -67,9 +67,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.function.IntPredicate;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceKey;
@@ -758,19 +760,33 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
     /**
      * The delta-v its rocket has for a transfer, in metres a second: what the stages it has not let go can give in a
      * vacuum with its tanks as they hold, but for a lander's descent stage it still carries, kept for its landing, and
-     * the stages standing on it; less, on the ground, the climb to the low orbit; none before it keeps a rocket's plan.
+     * the stages standing on it; landed, the stages over the descent stage, which stays on the ground; less, on the
+     * ground, the climb to the low orbit; none before it keeps a rocket's plan.
      */
     public OptionalDouble available() {
-        return available(true);
-    }
-
-    /** The delta-v its rocket has for a landing, as {@link #available()} but with a lander's stages too. */
-    public OptionalDouble availableToLand() {
         return available(false);
     }
 
-    /* The delta-v of the stages not let go; below a lander's descent stage alone where that is {@code kept}. */
-    private OptionalDouble available(final boolean kept) {
+    /**
+     * The delta-v its rocket has for a landing: as {@link #available()}, but a lander's descent stage alone, which the
+     * landing burns, the ascent stage over it kept whole to go back.
+     */
+    public OptionalDouble availableToLand() {
+        return available(true);
+    }
+
+    /**
+     * The stage of a lander's descent stage its rocket still carries, numbered from one at the bottom: the stage its
+     * landing burns alone, and leaves on the ground. None for a rocket with no lander, or a lander sent up alone.
+     */
+    public OptionalInt landerDescent() {
+        final Optional<RocketDesign> design = rocket();
+        return this.level == null || design.isEmpty() ? OptionalInt.empty()
+                : RocketStages.keptForLanding(RocketParts.all(this.level), design.get().stack(), separated());
+    }
+
+    /* The delta-v of the stages not let go: for a landing, a transfer, or a transfer from the ground once landed. */
+    private OptionalDouble available(final boolean landing) {
         final Optional<RocketDesign> design = rocket();
         if (this.level == null || design.isEmpty()) {
             return OptionalDouble.empty();
@@ -783,12 +799,24 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             return OptionalDouble.empty();
         }
         final int gone = separated();
-        final int below = kept ? RocketStages.keptForLanding(parts, design.get().stack(), gone)
-                .orElse(Integer.MAX_VALUE) : Integer.MAX_VALUE;
-        double left = StageMath.deltaV(burns.get().stream().filter(burn -> burn.stage() > gone
-                && burn.stage() < below).toList(), 0);
-        // On a world's ground, on its pad or landed there, the climb to its low orbit comes first.
-        if (!YardLayout.isYardBlock(this.worldPosition.getX()) || descent() == DescentPhase.LANDED) {
+        final OptionalInt lander = landerDescent();
+        final IntPredicate counts;
+        if (lander.isEmpty()) {
+            counts = stage -> stage > gone;
+        } else if (landing) {
+            // A lander lands on its descent stage alone, its ascent stage kept whole to go back.
+            counts = stage -> stage == lander.getAsInt();
+        } else if (descent() == DescentPhase.LANDED) {
+            // Landed, it goes on from its ascent stage up, leaving its descent stage on the ground.
+            counts = stage -> stage > lander.getAsInt();
+        } else {
+            // In orbit, a transfer or a capture burns only the stages under the lander.
+            counts = stage -> stage > gone && stage < lander.getAsInt();
+        }
+        double left = StageMath.deltaV(burns.get().stream().filter(burn -> counts.test(burn.stage())).toList(), 0);
+        // On a world's ground, on its pad or landed there, a transfer's climb to its low orbit comes first; a landing,
+        // burnt from an orbit, pays none.
+        if (!landing && (!YardLayout.isYardBlock(this.worldPosition.getX()) || descent() == DescentPhase.LANDED)) {
             left -= here(this.level).map(Rocketry::climbFrom).orElse(0.0);
         }
         return OptionalDouble.of(Math.max(0, left));
@@ -806,6 +834,9 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             if (opened == FlightPage.LAUNCH ? launch().isPresent() : opened.open()) {
                 this.page.set(opened);
             }
+        } else if (page() == FlightPage.TRANSFER && cruising()) {
+            // Its transfer is being flown: the page shows it, and no key plans another till it arrives.
+            return;
         } else if (page() == FlightPage.TRANSFER && key >= LEFT && key < LEFT + KEYS) {
             final List<ResourceLocation> worlds = destinations();
             // A capture is planned by its burn alone: a transfer's window keys do nothing then.

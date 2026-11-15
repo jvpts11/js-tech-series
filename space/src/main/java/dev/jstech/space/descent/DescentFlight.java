@@ -139,14 +139,15 @@ public final class DescentFlight {
         if (air != RocketDescent.NO_AIR && !shield && !SpaceServerConfig.FILE.get(SpaceServerConfig.BURNING_UP)) {
             return hold(level, body, computer, DescentTexts.NO_SHIELD.with(name));
         }
-        // A lander comes down alone: the stages under its descent stage are let go here, and the landing burns it.
-        RocketStaging.letGoSpent(level, body, computer, true);
+        // Whether it can brake to its legs is known before anything is let go: a landing held lets nothing go.
         final boolean brakes = legs(level, computer) && computer.availableToLand().orElse(0)
                 >= landingDeltaV(solar.get());
         if (air != RocketDescent.THICK_AIR && !brakes
                 && !SpaceServerConfig.FILE.get(SpaceServerConfig.CRASH_LANDINGS)) {
             return hold(level, body, computer, DescentTexts.NO_LEGS.with(name));
         }
+        // A lander comes down alone: the stages under its descent stage are let go here, and the landing burns it.
+        RocketStaging.letGoSpent(level, body, computer, true);
         final double width = Math.max(1, world.getWorldBorder().getSize());
         final double[] at = inEllipse(level.random, landing, computer.guidance(), width);
         final double[] spot = SystemLayout.orbitSpot(solar.get(), SphereMap.longitude(at[0], width),
@@ -208,7 +209,7 @@ public final class DescentFlight {
         final Optional<SolarBody> solar = world == null ? Optional.empty() : SolarSystemWorlds.bodyOf(world);
         final boolean underChutes = airOf(level) == RocketDescent.THICK_AIR && computer.shield();
         final boolean braked = !underChutes && legs(level, computer) && RocketBurns.burnToLand(level, body,
-                computer.separated(), solar.map(DescentFlight::landingDeltaV).orElse(0.0));
+                computer.separated(), computer.landerDescent(), solar.map(DescentFlight::landingDeltaV).orElse(0.0));
         final Vec3 foot = new Vec3(body.pose().x(), body.pose().y(), body.pose().z());
         final Text name = world == null ? Text.literal(level.dimension().location().getPath())
                 : CruiseFlight.nameOf(world);

@@ -29,6 +29,7 @@ import dev.jstech.space.launcher.LauncherLayout;
 import dev.jstech.space.pad.LaunchPads;
 import dev.jstech.space.pad.PadBlocks;
 import dev.jstech.space.pad.PadServicePortBlockEntity;
+import dev.jstech.space.rocket.RocketAscent;
 import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.Rockets;
@@ -37,6 +38,7 @@ import dev.jstech.space.rocket.SkeletonRocketParts;
 import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.tests.JsTests;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -92,6 +94,8 @@ public final class LaunchPanelGameTests {
     private static final int HEAVY_LAYERS = 40;
     /* Of what a tank held at LAUNCH, the least it holds a few ticks on with nothing burnt, its boil-off aside. */
     private static final double KEPT = 0.999;
+    /* Where the test rocket's engine is in its stack, its first part. */
+    private static final int ENGINE = 0;
     /* The batch whose test keeps a too heavy rocket's engines off, a server setting put back after it. */
     private static final String HEAVY = BATCH + "_heavy";
     /* Whether the server kept a too heavy rocket's engines off before that batch began. */
@@ -249,6 +253,84 @@ public final class LaunchPanelGameTests {
                 .thenExecute(() -> takeAway(helper))
                 .thenWaitUntil(() -> helper.assertTrue(shown(level, panel).phase() == LaunchCount.Phase.SAFE,
                         "its rocket gone, the count stands down"))
+                .thenSucceed();
+    }
+
+    /*
+     * From ignition at T-6 only SCRUB calls the launch off: HOLD and RECYCLE do nothing with the engines lit, and a
+     * scrub puts their fire out and the count back at T-60, to be run anew.
+     */
+    @GameTest(template = WIDE, batch = BATCH + "_lit", timeoutTicks = 2000)
+    public static void count_litOnlyAScrubCallsTheLaunchOff(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        fairWeather(level);
+        helper.setBlock(PANEL, LaunchPanel.BLOCK.get());
+        rocket(helper);
+        final BlockPos panel = helper.absolutePos(PANEL);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(shown(level, panel).go(), "a fuelled rocket on the pad is go"))
+                .thenExecute(() -> {
+                    final LaunchPanelBlockEntity console = panel(level, panel);
+                    arm(console);
+                    console.press(LaunchCount.RUN);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(shown(level, panel).phase() == LaunchCount.Phase.HOLDING,
+                        "without LAUNCH pressed it holds at T-6"))
+                .thenExecute(() -> panel(level, panel).press(LaunchCount.LAUNCH))
+                .thenWaitUntil(() -> helper.assertTrue(shown(level, panel).lit(), "LAUNCH pressed, the engines light"))
+                .thenExecute(() -> {
+                    final LaunchPanelBlockEntity console = panel(level, panel);
+                    final int left = console.shown().left();
+                    console.press(LaunchCount.HOLD);
+                    console.press(LaunchCount.RECYCLE);
+                    helper.assertTrue(console.shown().phase() == LaunchCount.Phase.COUNTING
+                            && console.shown().left() == left, "lit, HOLD and RECYCLE do nothing: "
+                            + console.shown().phase() + " at " + console.shown().left());
+                    console.press(LaunchCount.SCRUB);
+                    helper.assertTrue(console.shown().phase() == LaunchCount.Phase.SCRUBBED && !console.shown().lit()
+                            && console.shown().left() == LaunchCount.START * SECOND, "SCRUB puts the engines out and"
+                            + " the count back at T-60");
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A rocket released with its engine holed: the engine lights nothing that lifts it, so it stays down on the pad,
+     * its climb over there and then, its propellant kept, never waiting for ever for a thrust that does not come.
+     */
+    @GameTest(template = WIDE, batch = BATCH + "_holed", timeoutTicks = 2000)
+    public static void release_aRocketWhoseEngineIsHoledStaysDownItsClimbOver(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        fairWeather(level);
+        helper.setBlock(PANEL, LaunchPanel.BLOCK.get());
+        rocket(helper);
+        final BlockPos panel = helper.absolutePos(PANEL);
+        final double[] stood = new double[1];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(shown(level, panel).go(), "a fuelled rocket on the pad is go"))
+                .thenExecute(() -> {
+                    final LaunchPanelBlockEntity console = panel(level, panel);
+                    arm(console);
+                    console.press(LaunchCount.RUN);
+                })
+                .thenWaitUntil(() -> helper.assertTrue(shown(level, panel).phase() == LaunchCount.Phase.HOLDING,
+                        "without LAUNCH pressed it holds at T-6"))
+                .thenExecute(() -> panel(level, panel).press(LaunchCount.LAUNCH))
+                .thenWaitUntil(() -> helper.assertTrue(released(helper) != null
+                        && released(helper).motion() instanceof RocketAscent, "at T-0 the rocket is released and"
+                        + " climbs"))
+                .thenExecute(() -> stood[0] = released(helper).pose().y())
+                .thenWaitUntil(() -> {
+                    // Holed every tick, as its flight computer, counting its blocks now and then, would not see it.
+                    Rockets.lost(level.getServer(), released(helper).id(), Map.of(ENGINE, 1));
+                    helper.assertTrue(released(helper).motion() == null, "its engine holed, its climb is over: "
+                            + released(helper).motion());
+                })
+                .thenExecute(() -> {
+                    helper.assertTrue(released(helper).pose().y() <= stood[0] + 1, "and it stays down on the pad: "
+                            + released(helper).pose().y() + " for " + stood[0]);
+                    takeAway(helper);
+                })
                 .thenSucceed();
     }
 

@@ -15,6 +15,7 @@ import dev.jstech.space.api.RocketParts;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 
@@ -57,12 +58,14 @@ public final class RocketBurns {
     }
 
     /**
-     * Burns {@code deltaV} metres a second in a vacuum from the stages of {@code body} not let go, a lander's descent
-     * stage too, as a landing burns; whether its stages had that much in them.
+     * Burns {@code deltaV} metres a second in a vacuum as a landing burns: from a lander's descent stage alone, the
+     * stage {@code descent}, its ascent stage kept whole to go back; from the stages of {@code body} not let go for a
+     * rocket with no lander. Whether they had that much in them.
      */
     public static boolean burnToLand(final ServerLevel level, final MovingStructure body, final int separated,
-                                     final double deltaV) {
-        return burn(level, body, separated, deltaV, Integer.MAX_VALUE);
+                                     final OptionalInt descent, final double deltaV) {
+        return descent.isPresent() ? burn(level, body, descent.getAsInt() - 1, deltaV, descent.getAsInt() + 1)
+                : burn(level, body, separated, deltaV, Integer.MAX_VALUE);
     }
 
     /* Burns from the stages not let go, below the stage {@code kept}, from the bottom up. */

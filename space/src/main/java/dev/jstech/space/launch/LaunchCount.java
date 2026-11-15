@@ -214,7 +214,8 @@ public final class LaunchCount {
     /** A control pressed by {@code by}, inside the rocket or out, whose rocket it is once they press LAUNCH. */
     public void press(final int control, @Nullable final UUID by) {
         final Phase now = this.phase.get();
-        if (now == Phase.RELEASED) {
+        // From ignition on, its engines lit and its deluge poured, only a scrub calls it off: then a count anew.
+        if (now == Phase.RELEASED || lit() && control != SCRUB) {
             return;
         }
         switch (control) {
@@ -444,6 +445,11 @@ public final class LaunchCount {
         } else if (now == Phase.HOLDING && (left() != LIGHT * SECOND || this.launched.get())) {
             this.phase.set(Phase.COUNTING);
         }
+    }
+
+    /* Whether its engines are lit: LAUNCH pressed and the count past T-6. */
+    private boolean lit() {
+        return this.launched.get() && left() < LIGHT * SECOND;
     }
 
     private void hold() {

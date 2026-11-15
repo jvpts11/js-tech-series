@@ -196,8 +196,10 @@ public final class CruiseFlight {
                     CruiseTexts.NOT_CAPTURED.with(nameOf(plan.to()))));
             return;
         }
-        CruiseEvents.tell(level, body, CruiseTexts.ARRIVAL.of(CruiseTexts.ARRIVED_NAME.text(), (capture > 0
-                ? CruiseTexts.ARRIVED : CruiseTexts.AEROBRAKED).with(nameOf(plan.to()))));
+        // Aerobraked where its plan meant to and its shield held; else its capture burn, the Moon's in its transfer's.
+        final boolean aerobraked = plan.aerobraking() && computer.shield();
+        CruiseEvents.tell(level, body, CruiseTexts.ARRIVAL.of(CruiseTexts.ARRIVED_NAME.text(), (aerobraked
+                ? CruiseTexts.AEROBRAKED : CruiseTexts.ARRIVED).with(nameOf(plan.to()))));
     }
 
     /*

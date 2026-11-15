@@ -133,7 +133,8 @@ public record RocketAscent(int burn, double mass, double climb, double from, boo
         // On the pad it cannot sink into the launcher: it waits there till its thrust lifts it.
         if (now.y() <= this.from && climb < 0) {
             climb = 0;
-            if (lit >= usable) {
+            // Burnt out, or with engines that push nothing there, holed or made for a vacuum, it stays down for good.
+            if (lit >= usable || thrust <= 0) {
                 // Burnt out on the pad: what it burnt there is gone from its tanks, as on a climb into space.
                 RocketBurns.climbed(level, context.structure(), lit, mass);
                 return new Step(now, null);

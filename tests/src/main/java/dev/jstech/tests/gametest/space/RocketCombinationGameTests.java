@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalInt;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -186,8 +187,10 @@ public final class RocketCombinationGameTests {
     }
 
     /**
-     * What the screen says a rocket has past the climb to the low orbit is what its flight computer counts on the pad:
-     * of one stage and of two, in each diameter, with one, two or four boosters, and a lander on top.
+     * What the screen says a rocket has past the climb to the low orbit is what its flight computer counts on the pad
+     * for a transfer: of one stage and of two, in each diameter, with one, two or four boosters, and a lander on top,
+     * whose stages are kept for its landing. The lander's landing counts its descent stage alone, as the screen's row
+     * of that stage says.
      */
     @GameTest(template = ARENA, batch = BATCH)
     public static void screen_andFlightComputerCountAlikeWhatIsLeftPastTheClimb(final GameTestHelper helper) {
@@ -210,10 +213,23 @@ public final class RocketCombinationGameTests {
                 sized("separation_ring", 5, 1), lander("descent"), lander("ascent")));
         final double climb = need(DesignDestinations.from(SolarBody.OVERWORLD));
         for (final RocketStack stack : rockets) {
-            final double screen = Math.max(0, overworld(parts, stack).deltaV() - climb);
-            final double counted = carried(helper, stack).availableToLand().orElse(-1);
+            final OptionalInt lander = RocketStages.keptForLanding(parts, stack, 0);
+            final DesignReport report = overworld(parts, stack);
+            final FlightComputerBlockEntity computer = carried(helper, stack);
+            final double under = report.stages().stream().filter(stage -> lander.isEmpty()
+                    || stage.number() < lander.getAsInt()).mapToDouble(DesignReport.Stage::deltaV).sum();
+            final double screen = Math.max(0, under - climb);
+            final double counted = computer.available().orElse(-1);
             helper.assertTrue(Math.abs(screen - counted) < AGREE, "past the climb the screen says " + screen
-                    + " m/s and the flight computer counts " + counted + " m/s: " + stack);
+                    + " m/s and the flight computer counts " + counted + " m/s for a transfer: " + stack);
+            if (lander.isPresent()) {
+                final double descent = report.stages().stream().filter(stage -> stage.number()
+                        == lander.getAsInt()).mapToDouble(DesignReport.Stage::deltaV).sum();
+                final double landing = computer.availableToLand().orElse(-1);
+                helper.assertTrue(descent > 0 && Math.abs(descent - landing) < AGREE, "the screen gives the"
+                        + " lander's descent stage " + descent + " m/s and the flight computer counts " + landing
+                        + " m/s for its landing");
+            }
         }
         helper.succeed();
     }

@@ -26,6 +26,7 @@ import dev.jstech.space.cruise.RocketCruise;
 import dev.jstech.space.cruise.SolarStorms;
 import dev.jstech.space.exploration.WorldCoverage;
 import dev.jstech.space.flight.FlightComputerBlockEntity;
+import dev.jstech.space.flight.FlightPage;
 import dev.jstech.space.flight.PlannedTransfer;
 import dev.jstech.space.hangar.RocketDesign;
 import dev.jstech.space.hangar.RocketPlans;
@@ -46,11 +47,13 @@ import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.tests.JsTests;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.gametest.GameTestHolder;
@@ -202,6 +205,17 @@ public final class CruiseGameTests {
                         Rockets.settle(level.getServer(), id).map(rocket -> rocket.tanks().get(TANK)).ifPresent(
                                 load -> Rockets.load(level.getServer(), id, TANK, load.scaled(0)));
                     }
+                    // Its crew works the XFER page on the way: no key plans another transfer while one is flown.
+                    final Optional<PlannedTransfer> flown = aboard[0].executed();
+                    final ResourceLocation target = aboard[0].target();
+                    aboard[0].press(FlightComputerBlockEntity.TOP + FlightPage.KEYS.indexOf(FlightPage.TRANSFER));
+                    for (int key = 0; key < FlightComputerBlockEntity.KEYS; key++) {
+                        aboard[0].press(FlightComputerBlockEntity.LEFT + key);
+                        aboard[0].press(FlightComputerBlockEntity.RIGHT + key);
+                    }
+                    helper.assertTrue(flown.isPresent() && aboard[0].executed().equals(flown)
+                            && aboard[0].target().equals(target), "every XFER key pressed on the way, the transfer it"
+                            + " flies is still its plan: " + aboard[0].executed() + " to " + aboard[0].target());
                     before[1] = held(space, id);
                     if (flight.slept()) {
                         helper.assertTrue(CruiseFlight.skip(space, body(space, id)), "the crew asleep, it passes");

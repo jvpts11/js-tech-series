@@ -19,6 +19,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 
 /**
  * Solar storms in a system's space: the Sun throws out a storm of particles, the crew is warned, and while it passes
@@ -37,9 +39,13 @@ public final class SolarStorms {
     private SolarStorms() {
     }
 
-    /** Lets the storms add to the radiation of every place, once, from the mod's constructor. */
+    /**
+     * Lets the storms add to the radiation of every place, once, from the mod's constructor; a server stopped takes
+     * its storms with it, never into the next world opened.
+     */
     public static void listen() {
         IonizingRadiation.RAYS.addAmbient(SolarStorms::at);
+        NeoForge.EVENT_BUS.addListener(ServerStoppedEvent.class, event -> PASSING.clear());
     }
 
     /** A storm reaches {@code level}'s space {@code ahead} ticks from now and passes through it for {@code lasts}. */

@@ -93,6 +93,8 @@ public final class StagingGameTests {
     private static final double LOOK_ACROSS = 96;
     private static final double LOOK_UP = 900;
     private static final int WRECK_ACROSS = 16;
+    /* How far under the top of its arc a stage let go climbing has fallen at the least when it strikes, in blocks. */
+    private static final double FELL = 16;
 
     private StagingGameTests() {
     }
@@ -150,6 +152,52 @@ public final class StagingGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(wreckage(helper), "its wreckage lies where it struck: last at "
                         + stage[0].pose() + ", foot " + helper.absolutePos(FOOT) + ", blasts going "
                         + StageImpacts.pending(level)))
+                .thenExecute(() -> plots.forEach(plot -> forced(level, plot, false)))
+                .thenSucceed();
+    }
+
+    /*
+     * A stage let go climbing, some sixty blocks up and going on up, set to go nowhere: it rises on to the top of its
+     * arc, slow there only for a moment, and falls back to strike the ground by the pad, its wreckage lying there; it
+     * never strikes in the air at the top of its arc.
+     */
+    @GameTest(template = ARENA, batch = FALLS + "_climbing", timeoutTicks = 12000)
+    public static void stage_letGoClimbingFallsBackToTheGroundBeforeItStrikes(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final RocketStack stack = RocketStack.of(part("sea_level_engine_3"), part("tank_3"), part("separation_ring_3"),
+                part("vacuum_engine_3"), part("tank_3"), part("capsule_3"));
+        final FlightComputerBlockEntity computer = build(helper, stack, Map.of(1, FIRST_LANDING));
+        final MovingStructure body = RocketLaunch.release(level, computer.getBlockPos(), null).orElseThrow();
+        final List<Integer> plots = heldPlots(level, 1);
+        final BlockPos[] aboard = new BlockPos[1];
+        final MovingStructure[] stage = new MovingStructure[1];
+        final double[] last = {Double.MAX_VALUE};
+        final double[] top = {-Double.MAX_VALUE};
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(body.ready(), "its body stands ready"))
+                .thenExecute(() -> aboard[0] = BlockPos.containing(MovingStructures.toYard(body, Vec3.atCenterOf(
+                        computer.getBlockPos()))))
+                .thenWaitUntil(() -> helper.assertTrue(ticking(level, aboard[0]),
+                        "its flight computer's place in the yard ticks"))
+                .thenExecute(() -> RocketLaunch.lift(level, body))
+                .thenWaitUntil(() -> {
+                    stage[0] = stageOf(level, body);
+                    helper.assertTrue(stage[0] != null, "its first stage burnt out, it comes loose as a body of its"
+                            + " own");
+                })
+                .thenExecute(() -> MovingStructures.takeAway(body))
+                .thenWaitUntil(() -> {
+                    final MovingStructure live = MovingStructures.byId(level, stage[0].id());
+                    if (live != null) {
+                        last[0] = live.worldBox().minY;
+                        top[0] = Math.max(top[0], last[0]);
+                    }
+                    helper.assertTrue(live == null && StageFlights.get(level.getServer(), stage[0].id()).isEmpty(),
+                            "it strikes: " + (live == null ? "gone" : live.pose() + " moving by " + live.motion()));
+                })
+                .thenExecute(() -> helper.assertTrue(last[0] < top[0] - FELL, "fallen back from the top of its arc,"
+                        + " not struck there: last at " + last[0] + ", its top at " + top[0]))
+                .thenWaitUntil(() -> helper.assertTrue(wreckage(helper), "its wreckage lies where it struck"))
                 .thenExecute(() -> plots.forEach(plot -> forced(level, plot, false)))
                 .thenSucceed();
     }

@@ -937,6 +937,23 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   in the air it leaves, less than the rocket had. The thrust against weight at lift-off is still in that air.
 
 ### Fixed
+- The keys of the XFER page plan nothing while a rocket flies its transfer: a world chosen on the way dropped
+  the plan being flown, and the rocket came to the end of its cruise with no capture burn and out of the world's
+  orbit, unable to land there.
+- A lunar lander lands on its descent stage alone: the landing counts and burns only what its descent stage
+  holds, the ascent stage kept whole to go back, and a descent stage short of it holds the landing in orbit with
+  nothing let go. The landing burnt the ascent stage too when the descent stage fell short, and a landing held had
+  already let go the stages under the lander. Landed, the XFER page counts what the ascent stage gives over the climb
+  back, where it showed none.
+- From ignition at T-6 only SCRUB calls a launch off; HOLD, RECYCLE and the other controls do nothing then. A
+  recycle after ignition lit the engines and poured the deluge again.
+- A rocket whose engines push nothing where it stands, holed or made for a vacuum, stays down on its pad, its
+  climb over: it waited there for a thrust that never came, for good.
+- A stage let go as the rocket climbs strikes where it comes to rest on the ground: it struck in the air at the
+  top of its arc, slow there for a moment, its wreckage falling as loose items.
+- A rocket arriving at the Moon is told it arrived, not that it aerobraked: the Moon's capture is in its
+  transfer burn.
+- A solar storm coming to one game's space no longer carries on into the next world opened.
 - A structure on its way between a world and its space, waiting for the land it goes to, is not sent again: a
   little later the crossing was asked for again, refused as under way, and everyone aboard was told it was off while it
   went on. Climbing out, it is counted in orbit, and its crew get the advancement, only once its crossing is accepted;

@@ -90,6 +90,19 @@ public final class DescentGameTests {
     private static final double NEAR = 64;
     /* How far over the ground a stage on its legs may stand, in blocks: its legs' feet reach down from its box. */
     private static final double ON_THE_GROUND = 1.5;
+    /*
+     * A lander on a transfer stage, and the places in its stack of the transfer stage's tank, the lander's descent
+     * stage and its ascent stage; what a lander's stage holds nearly empty, and full.
+     */
+    private static final RocketStack LANDER_ON_A_STAGE = RocketStack.of(part("vacuum_engine_5"), part("tank_5"),
+            part("separation_ring_5"), part("lunar_lander_descent"), part("lunar_lander_ascent"));
+    private static final int TRANSFER_TANK = 1;
+    private static final int DESCENT = 3;
+    private static final int ASCENT = 4;
+    private static final double LITTLE = 10;
+    private static final double PLENTY = 50_000;
+    /* The share of what a stage held that it holds still, at the least, with only what boils off gone. */
+    private static final double KEPT = 0.99;
 
     private DescentGameTests() {
     }
@@ -144,6 +157,105 @@ public final class DescentGameTests {
                             "with no legs and crash landings off, it cannot begin and stays in its orbit");
                     space.setChunkForced(chunk(spot[0]), chunk(spot[1]), false);
                     MovingStructures.takeAway(body(space, id));
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A lander on a transfer stage, its descent stage nearly empty and its ascent stage full, in the Moon's orbit: the
+     * landing counts the descent stage alone, short of it, and is held there with nothing let go, its transfer stage
+     * still under it to go on with.
+     */
+    @GameTest(template = ARENA, batch = "jsspace_descent_lander_short", timeoutTicks = LONG)
+    public static void descent_aLanderShortOnItsDescentStageIsHeldLettingNothingGo(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final FlightComputerBlockEntity computer = build(helper, LANDER_ON_A_STAGE, TRANSFER_TANK, SOME);
+        loadLander(level, computer, LITTLE, PLENTY);
+        final MovingStructure released = RocketLaunch.release(level, computer.getBlockPos(), null).orElseThrow();
+        final StructureUuid id = released.id();
+        final ServerLevel space = SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM);
+        final double[] spot = SystemLayout.orbitSpot(SolarBody.MOON, 0, 0);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
+                .thenExecute(() -> {
+                    space.setChunkForced(chunk(spot[0]), chunk(spot[1]), true);
+                    MovingStructures.travel(released, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(body(space, id) != null && body(space, id).ready(),
+                        "it rests in the Moon's orbit"))
+                .thenExecute(() -> {
+                    OrbitObjects.arrived(space, body(space, id), SolarBody.MOON);
+                    final FlightComputerBlockEntity aboard = computerOf(space, body(space, id));
+                    SpaceServerConfig.FILE.set(SpaceServerConfig.CRASH_LANDINGS, false);
+                    final boolean began;
+                    try {
+                        began = DescentFlight.begin(space, body(space, id), aboard,
+                                new PlannedLanding(SolarSystemWorlds.MOON, MARKED, MARKED));
+                    } finally {
+                        SpaceServerConfig.FILE.set(SpaceServerConfig.CRASH_LANDINGS, true);
+                    }
+                    helper.assertTrue(!began && body(space, id).motion() == null && aboard.separated() == 0,
+                            "its descent stage short of the landing, it is held in its orbit with no stage let go:"
+                            + " began " + began + ", stages let go " + aboard.separated());
+                    space.setChunkForced(chunk(spot[0]), chunk(spot[1]), false);
+                    MovingStructures.takeAway(body(space, id));
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A lander on a transfer stage, both its stages full, sent down to the Moon: it lets its transfer stage go and
+     * lands on its descent stage alone, its ascent stage's propellant untouched; standing there, its XFER counts what
+     * the ascent stage gives over the climb back to orbit.
+     */
+    @GameTest(template = ARENA, batch = "jsspace_descent_lander_lands", timeoutTicks = LONG)
+    public static void descent_aLanderLandsOnItsDescentStageAloneItsAscentStageWhole(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final FlightComputerBlockEntity computer = build(helper, LANDER_ON_A_STAGE, TRANSFER_TANK, SOME);
+        loadLander(level, computer, PLENTY, PLENTY);
+        final MovingStructure released = RocketLaunch.release(level, computer.getBlockPos(), null).orElseThrow();
+        final StructureUuid id = released.id();
+        final ServerLevel space = SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM);
+        final ServerLevel moon = levelOf(level, SolarBody.MOON);
+        final double[] spot = SystemLayout.orbitSpot(SolarBody.MOON, 0, 0);
+        final double[] ascent = new double[1];
+        final int[] forced = new int[2];
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
+                .thenExecute(() -> {
+                    space.setChunkForced(chunk(spot[0]), chunk(spot[1]), true);
+                    MovingStructures.travel(released, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]));
+                })
+                .thenWaitUntil(() -> helper.assertTrue(body(space, id) != null && body(space, id).ready(),
+                        "it rests in the Moon's orbit"))
+                .thenExecute(() -> {
+                    OrbitObjects.arrived(space, body(space, id), SolarBody.MOON);
+                    ascent[0] = held(space, id, ASCENT);
+                    helper.assertTrue(DescentFlight.begin(space, body(space, id), computerOf(space, body(space, id)),
+                            new PlannedLanding(SolarSystemWorlds.MOON, MARKED, MARKED)), "its landing begins");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(body(moon, id) != null, "it passes into the Moon's sky"))
+                .thenExecute(() -> {
+                    forced[0] = chunk(body(moon, id).pose().x());
+                    forced[1] = chunk(body(moon, id).pose().z());
+                    moon.setChunkForced(forced[0], forced[1], true);
+                    for (int dx = -1; dx <= 1; dx++) {
+                        for (int dz = -1; dz <= 1; dz++) {
+                            moon.getChunk(forced[0] + dx, forced[1] + dz);
+                        }
+                    }
+                })
+                .thenWaitUntil(() -> helper.assertTrue(body(moon, id) != null && body(moon, id).motion() == null
+                        && computerOf(moon, body(moon, id)).descent() == DescentPhase.LANDED, "it lands"))
+                .thenExecute(() -> {
+                    final FlightComputerBlockEntity aboard = computerOf(moon, body(moon, id));
+                    helper.assertTrue(held(moon, id, ASCENT) >= ascent[0] * KEPT, "its ascent stage's propellant"
+                            + " untouched but for what boils off: " + ascent[0] + " kg, now " + held(moon, id, ASCENT));
+                    helper.assertTrue(aboard.available().orElse(0) > 0, "standing on the Moon, its XFER counts what"
+                            + " its ascent stage gives over the climb: " + aboard.available());
+                    space.setChunkForced(chunk(spot[0]), chunk(spot[1]), false);
+                    moon.setChunkForced(forced[0], forced[1], false);
+                    MovingStructures.takeAway(body(moon, id));
                 })
                 .thenSucceed();
     }
@@ -355,6 +467,15 @@ public final class DescentGameTests {
         Propellants.get(level, SkeletonPropellants.METHALOX).ifPresent(methalox -> computer.load(tank,
                 TankLoad.filled(SkeletonPropellants.METHALOX, methalox, load)));
         return computer;
+    }
+
+    /* Loads the lander's descent stage of {@code computer}'s rocket with {@code descent} kg, its ascent stage too. */
+    private static void loadLander(final ServerLevel level, final FlightComputerBlockEntity computer,
+                                   final double descent, final double ascent) {
+        Propellants.get(level, SkeletonPropellants.METHALOX).ifPresent(methalox -> {
+            computer.load(DESCENT, TankLoad.filled(SkeletonPropellants.METHALOX, methalox, descent));
+            computer.load(ASCENT, TankLoad.filled(SkeletonPropellants.METHALOX, methalox, ascent));
+        });
     }
 
     private static RocketStack.Part part(final String path) {

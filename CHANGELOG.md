@@ -4255,6 +4255,23 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- (Space) The keys of the XFER page plan nothing while a rocket flies its transfer: a world chosen on the way dropped
+  the plan being flown, and the rocket came to the end of its cruise with no capture burn and out of the world's
+  orbit, unable to land there.
+- (Space) A lunar lander lands on its descent stage alone: the landing counts and burns only what its descent stage
+  holds, the ascent stage kept whole to go back, and a descent stage short of it holds the landing in orbit with
+  nothing let go. The landing burnt the ascent stage too when the descent stage fell short, and a landing held had
+  already let go the stages under the lander. Landed, the XFER page counts what the ascent stage gives over the climb
+  back, where it showed none.
+- (Space) From ignition at T-6 only SCRUB calls a launch off; HOLD, RECYCLE and the other controls do nothing then. A
+  recycle after ignition lit the engines and poured the deluge again.
+- (Space) A rocket whose engines push nothing where it stands, holed or made for a vacuum, stays down on its pad, its
+  climb over: it waited there for a thrust that never came, for good.
+- (Space) A stage let go as the rocket climbs strikes where it comes to rest on the ground: it struck in the air at the
+  top of its arc, slow there for a moment, its wreckage falling as loose items.
+- (Space) A rocket arriving at the Moon is told it arrived, not that it aerobraked: the Moon's capture is in its
+  transfer burn.
+- (Space) A solar storm coming to one game's space no longer carries on into the next world opened.
 - (Core) A moving structure crossing to another dimension takes what it holds by one of its blocks with it, held
   still: a ship docked at another's clamp came loose as the other's blocks left, and arrived on its own. A piece let go
   from a structure likewise takes along what was held by one of its blocks.

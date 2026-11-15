@@ -12,7 +12,7 @@ O console LCC-1 junto à base, onde um lançamento é contado e recebe o seu GO.
 
 ## Para que serve
 
-Lançar. A contagem corre a partir de T-60: os braços da torre recuam a partir de T-42, girando nas dobradiças até ficarem livres do foguete em T-10, a tampa do botão LANÇAR sobe em T-10, os motores acendem em T-6 e as garras soltam o foguete em T-0. Um cancelamento traz os braços de volta ao foguete. A contagem corre também no [computador de voo](jsspace:flight_computer) do foguete, e quem aperta LANÇAR fica dono do foguete em voo, para a sua equipe usar.
+Lançar. A contagem corre a partir de T-60: os braços da torre recuam a partir de T-42, girando nas dobradiças até ficarem livres do foguete em T-10, a tampa do botão LANÇAR sobe em T-10, os motores acendem em T-6 e as garras soltam o foguete em T-0. Um cancelamento traz os braços de volta ao foguete. A partir da ignição em T-6 só CANCELAR suspende o lançamento: os motores apagam e a contagem recomeça de T-60, quando o dilúvio estiver cheio de novo; SEGURAR CONTAGEM, VOLTAR T-10 e os outros comandos não fazem nada então. A contagem corre também no [computador de voo](jsspace:flight_computer) do foguete, e quem aperta LANÇAR fica dono do foguete em voo, para a sua equipe usar.
 
 A contagem é da [plataforma móvel](jsspace:launcher), uma só para a sua base, não do painel. O painel e a página de lançamento do computador de voo do foguete mostram-na e mexem nela: o que se faz num aparece no outro, e qualquer um a põe em espera. A base não precisa de painel; a tripulação pode fazer a contagem sozinha, de dentro da cápsula.
 
