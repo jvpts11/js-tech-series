@@ -111,10 +111,11 @@ public final class ShipAutopilotGameTests {
      */
     private static final int RUNWAY_NORTH = 150;
     /*
-     * How high a wheeled ship is taken up before it lands on a runway, the runway laid as high: over the tallest arena
-     * of the whole battery, the rocket hangar's, whose barrier walls would otherwise stand across the stretch.
+     * How high a ship flying out over the arenas north of its own is taken up, a wheeled ship's runway laid as high:
+     * over the tallest arena of the whole battery, the rocket hangar's, whose barrier walls would otherwise stand in
+     * its way. The battery lays its arenas in rows, each south of the last, and never clears the rows before.
      */
-    private static final double RUNWAY_HIGH = 130;
+    private static final double OVER_THE_ARENAS = 130;
     private static final int RUNWAY_BEHIND = 8;
     private static final int RUNWAY_CHUNKS = 15;
     private static final int BLOCKED_AT = 30;
@@ -235,7 +236,7 @@ public final class ShipAutopilotGameTests {
                 .thenExecute(() -> {
                     final BlockPos seat = aboard(ship[0], plan(helper, WHEELS_SHIP).where(spot(helper, WHEELS_SHIP,
                             ShipKitBlocks.PILOT_SEAT.getId())));
-                    aloft(ship[0], RUNWAY_HIGH);
+                    aloft(ship[0], OVER_THE_ARENAS);
                     pilot[0] = seated(helper, seat);
                     // A runway laid far to the north in the sky, its beacon facing north, the way it runs.
                     beacon[0] = skyRunwayNorthOf(level, ship[0].pose());
@@ -296,7 +297,7 @@ public final class ShipAutopilotGameTests {
                 .thenExecute(() -> {
                     final BlockPos seat = aboard(ship[0], plan(helper, WHEELS_SHIP).where(spot(helper, WHEELS_SHIP,
                             ShipKitBlocks.PILOT_SEAT.getId())));
-                    aloft(ship[0], RUNWAY_HIGH);
+                    aloft(ship[0], OVER_THE_ARENAS);
                     pilot[0] = seated(helper, seat);
                     // A runway laid in the sky to the north, and a block across its stretch, where the ship would roll.
                     beacon[0] = skyRunwayNorthOf(level, ship[0].pose());
@@ -324,7 +325,8 @@ public final class ShipAutopilotGameTests {
         letGo(helper, ship, LEGS_SHIP).thenExecute(() -> keep(helper, true, NORTH_CHUNKS))
                 .thenWaitUntil(() -> loaded(helper, NORTH_CHUNKS))
                 .thenExecute(() -> {
-                    aloft(ship[0], HIGH);
+                    // It flies north, out over the arenas laid before its own.
+                    aloft(ship[0], OVER_THE_ARENAS);
                     MovingStructures.move(ship[0], flight(ship[0]).with(new ShipFlightModel.State(CRUISING, 0, 0.75,
                             0, 0)).engaged(Optional.of(ShipAutopilot.orbit())));
                 })
@@ -334,7 +336,7 @@ public final class ShipAutopilotGameTests {
                     final double[] nose = flight.noseIn(ship[0].frame());
                     final double pitch = Math.toDegrees(Math.asin(Mth.clamp(nose[1], -1, 1)));
                     helper.assertTrue(Math.abs(pitch - 55) < ON_THE_CLIMB, "ORBIT pitches its nose up to the climb:"
-                            + " " + pitch);
+                            + " " + pitch + ", " + flight.state() + " at " + ship[0].pose());
                     helper.assertTrue(flight.state().throttle() > OPEN, "its throttle open: " + flight.state());
                     final ShipReadings.Pilot shown = console(ship[0]).flight().pilot();
                     helper.assertTrue(shown.mode().equals("orbit") && shown.apogee() == SpaceClimbs.ceiling(level)
