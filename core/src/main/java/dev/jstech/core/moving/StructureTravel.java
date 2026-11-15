@@ -87,23 +87,28 @@ public final class StructureTravel {
         return StructureResult.done(structure, structure.blocks());
     }
 
-    /* Keeps the chunks a structure on its way goes to loaded: its plot there, and the land it arrives at. */
-    static void hold(final MovingStructure structure, final ServerLevel from, final StructureDeparture going) {
+    /*
+     * Keeps the chunks a structure on its way goes to loaded: its plot there, and the land it arrives at; what it held,
+     * to let go of the same, whatever blocks it loses meanwhile.
+     */
+    static Held hold(final MovingStructure structure, final ServerLevel from, final StructureDeparture going) {
+        final Held held = new Held(arriving(structure, going), landing(structure, going));
         final ServerLevel to = from.getServer().getLevel(going.to());
         if (to != null) {
-            StructureYard.hold(to, arriving(structure, going));
-            for (final ChunkPos chunk : landing(structure, going)) {
+            StructureYard.hold(to, held.plot());
+            for (final ChunkPos chunk : held.land()) {
                 StructureYard.holdChunk(to, chunk);
             }
         }
+        return held;
     }
 
     /* Lets the chunks a structure on its way held go, as it leaves the level before it went: it holds them again. */
-    static void release(final MovingStructure structure, final ServerLevel from, final StructureDeparture going) {
+    static void release(final ServerLevel from, final StructureDeparture going, final Held held) {
         final ServerLevel to = from.getServer().getLevel(going.to());
         if (to != null) {
-            StructureYard.release(to, arriving(structure, going));
-            for (final ChunkPos chunk : landing(structure, going)) {
+            StructureYard.release(to, held.plot());
+            for (final ChunkPos chunk : held.land()) {
                 StructureYard.releaseChunk(to, chunk);
             }
         }
@@ -113,7 +118,8 @@ public final class StructureTravel {
      * Takes a structure on its way to where it goes, once the chunks it goes to have loaded; whether it went. One sent
      * to a dimension that is no more stays.
      */
-    static boolean go(final MovingStructure structure, final ServerLevel from, final StructureDeparture going) {
+    static boolean go(final MovingStructure structure, final ServerLevel from, final StructureDeparture going,
+                      final Held held) {
         final ServerLevel to = from.getServer().getLevel(going.to());
         if (to == null) {
             structure.depart(null);
@@ -177,9 +183,15 @@ public final class StructureTravel {
         StructureMounts.shift(to, structure.id(), dx, dy, dz);
         structure.depart(null);
         MovingStructures.leave(structure, true);
+        // Its plot there held as its blocks fill it now, let go first and held again in the same tick, so the chunks
+        // it fills never unload and those of blocks lost on its way go.
+        StructureYard.release(to, held.plot());
+        StructureYard.hold(to, arriving);
         // The land stays loaded a while so the structure ticks there and holds its plot, then goes as a portal's.
         for (final ChunkPos chunk : landing) {
             StructureYard.holdLanding(to, chunk);
+        }
+        for (final ChunkPos chunk : held.land()) {
             StructureYard.releaseChunk(to, chunk);
         }
         for (final Aboard one : aboard) {
@@ -273,6 +285,14 @@ public final class StructureTravel {
             }
         }
         return found;
+    }
+
+    /* What a structure on its way holds loaded where it goes: its plot's chunks there, and the land it arrives at. */
+    record Held(Box plot, List<ChunkPos> land) {
+
+        Held {
+            land = List.copyOf(land);
+        }
     }
 
     /* One aboard: where it is on the structure, in the yard, and how it looks from the structure's forward. */

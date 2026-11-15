@@ -642,6 +642,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A structure gone for good: J's Core's API is at version 62. `MovingStructureEvent.Removed` is told on the
   game's bus as a moving structure leaves the game for good, taken away, set down into the world as blocks or left
   with no block of its own, never as it goes on to another dimension or is only unloaded with its land. Experimental.
+- (Core) Changes of a structure's blocks: J's Core's API is at version 63. `MovingStructure.changes()` counts each
+  change of one of its blocks since it was made or loaded, put down, taken away or set to another, for what reads its
+  blocks to read them again only once they have changed. Experimental.
 - (Computers) The Mining Computer: J's Computers' API is at version 21. `HostScope.MINING_COMPUTER` is the Mining
   Computer's own scope, for a program or a command that runs only on a mining rig. Experimental.
 - (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of
@@ -4262,6 +4265,30 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   flying: it stayed down at any height while the ship hovered.
 
 ### Fixed
+- (Core) Two structures keeping one chunk of the world loaded keep it so till the last of them lets it go: a ship
+  arriving where another with a chunk loader aboard keeps the land, or the other of two such ships over one chunk
+  going, let the chunk go, and the ship left there froze.
+- (Core) A structure taken away while a piece it let go still waits for its plot gives that plot back: it stayed
+  taken for good.
+- (Core) A structure that loses blocks on its way to another dimension lets go of every chunk it held there: some
+  stayed loaded till the server stopped.
+- (Space) A pad's service port fuels the launcher nearest it, and a launch panel works the nearest: of two launchers
+  in reach, each took the first it came to.
+- (Space) A crawler sets off with the launcher it lifted only once it holds it: a launcher not ready to go aboard was
+  left lifted where it stood as the crawler drove off.
+- (Space) A rocket burnt out at the edge of space falls back with no plume under it.
+- (Space) A ship started from its flight console that cannot go tells its pilot why: not whole yet, or past their
+  limit of moving structures. Nothing was told.
+- (Space) A ship taken back by its dock with its boarding stair down takes the stair up first: its blocks were left
+  on the grid when the ship went again.
+- (Space) LAND looks at its pad again as the ship comes near, as it looks at a runway: a pad another ship has set down
+  on meanwhile lets LAND go, its pilot told, where it set the ship down on the other. What a ship holds, docked or
+  carried, takes no pad from it.
+- (Space) A small ship's docking collar and the blocks it stands on are read again whenever one of its blocks
+  changes: one block swapped for another, the count the same, left it docking at a collar no longer there or standing
+  on a block that was gone.
+- (Core) Who sits on a seat of a piece let go from a structure sits on it still as the piece goes its way: they were
+  put off the seat.
 - (Space) A small ship hovering down at its pilot's hand comes down no faster than DOWN asks, and on wheels at five
   metres a second at most, gentle enough for its gear: its nozzles turning to hold it let it sink faster on top, and
   it met the land fast enough to be holed.

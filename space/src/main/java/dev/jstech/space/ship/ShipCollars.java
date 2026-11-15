@@ -54,18 +54,18 @@ public final class ShipCollars {
         return known(level, ship).block();
     }
 
-    /* What {@code ship}'s blocks say of its collar, read again only when they change. */
+    /* What {@code ship}'s blocks say of its collar, read again only when one of them changes. */
     private static Read known(final ServerLevel level, final MovingStructure ship) {
         final Read known = READ.get(ship);
-        if (known != null && known.bounds().equals(ship.bounds()) && known.blocks() == ship.blocks()) {
+        if (known != null && known.bounds().equals(ship.bounds()) && known.changes() == ship.changes()) {
             return known;
         }
-        final Read read = read(level, ship.bounds(), ship.blocks());
+        final Read read = read(level, ship.bounds(), ship.changes());
         READ.put(ship, read);
         return read;
     }
 
-    private static Read read(final ServerLevel level, final Box bounds, final int blocks) {
+    private static Read read(final ServerLevel level, final Box bounds, final int changes) {
         double x = 0;
         double z = 0;
         int top = Integer.MIN_VALUE;
@@ -82,11 +82,14 @@ public final class ShipCollars {
                 first = first == null ? at.immutable() : first;
             }
         }
-        return found == 0 ? new Read(bounds, blocks, Optional.empty(), Optional.empty())
-                : new Read(bounds, blocks, Optional.of(new Vec3(x / found, top, z / found)), Optional.of(first));
+        return found == 0 ? new Read(bounds, changes, Optional.empty(), Optional.empty())
+                : new Read(bounds, changes, Optional.of(new Vec3(x / found, top, z / found)), Optional.of(first));
     }
 
-    /* A ship's collar as read from its blocks in {@code bounds}, {@code blocks} of them: its mouth and a block. */
-    private record Read(Box bounds, int blocks, Optional<Vec3> mouth, Optional<BlockPos> block) {
+    /*
+     * A ship's collar as read from its blocks in {@code bounds}, after {@code changes} changes of them: its mouth and a
+     * block.
+     */
+    private record Read(Box bounds, int changes, Optional<Vec3> mouth, Optional<BlockPos> block) {
     }
 }

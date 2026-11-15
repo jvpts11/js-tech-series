@@ -9951,6 +9951,7 @@ stable 4
 10 dev.jstech.core.moving.MovingStructure  double[] spin()
 10 dev.jstech.core.moving.MovingStructure  double[] velocity()
 10 dev.jstech.core.moving.MovingStructure  int blocks()
+63 dev.jstech.core.moving.MovingStructure  int changes()
 10 dev.jstech.core.moving.MovingStructure  int plot()
 10 dev.jstech.core.moving.MovingStructure  void fly(StructureAutopilot)
 10 dev.jstech.core.moving.MovingStructure  void move(IStructureMotion)

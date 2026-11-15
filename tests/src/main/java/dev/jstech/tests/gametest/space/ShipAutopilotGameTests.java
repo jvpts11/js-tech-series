@@ -223,6 +223,76 @@ public final class ShipAutopilotGameTests {
                 .thenSucceed();
     }
 
+    /*
+     * LAND flying to a pad another ship sets down on meanwhile: come near, it lets go, its pilot told, rather than set
+     * the ship down on the other, as a runway found not clear does.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 3000)
+    public static void autopilot_landToAPadTakenOnTheWayLetsGoAsItComesNear(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure[] ship = new MovingStructure[1];
+        final MovingStructure[] other = new MovingStructure[1];
+        final ServerPlayer[] pilot = new ServerPlayer[1];
+        final UUID pad = UUID.randomUUID();
+        final Vec3[] spot = new Vec3[1];
+        final BlockPos[] floor = new BlockPos[1];
+        letGo(helper, ship, LEGS_SHIP).thenExecute(() -> keep(helper, true, NORTH_CHUNKS))
+                .thenWaitUntil(() -> loaded(helper, NORTH_CHUNKS))
+                .thenExecute(() -> {
+                    final BlockPos seat = aboard(ship[0], plan(helper, LEGS_SHIP).where(spot(helper, LEGS_SHIP,
+                            ShipKitBlocks.PILOT_SEAT.getId())));
+                    aloft(ship[0], HIGH);
+                    pilot[0] = seated(helper, seat);
+                    floor[0] = skyPadNorthOf(level, ship[0].pose());
+                    ShipLandings.notePad(level, pad, floor[0], Ownership.of(pilot[0].getUUID()));
+                    spot[0] = ShipLandings.padSpot(level, ShipLandings.pad(level.getServer(), pad).orElseThrow());
+                    ShipAutopilotControl.pressed(pilot[0]);
+                    helper.assertTrue(flight(ship[0]).autopilot().map(ShipAutopilot::mode)
+                            .equals(Optional.of(ShipAutopilot.Mode.LAND)), "LAND engaged to its pilot's free pad");
+                    // Another ship sets down on the pad: a block standing on its deck, a structure of its own.
+                    final BlockPos deck = BlockPos.containing(spot[0]);
+                    level.setBlockAndUpdate(deck, Blocks.STONE.defaultBlockState());
+                    other[0] = MovingStructures.assemble(level, deck, deck).structure();
+                    helper.assertTrue(other[0] != null, "a structure stands on the pad");
+                })
+                .thenWaitUntil(() -> helper.assertTrue(flight(ship[0]).autopilot().isEmpty(), "come near the pad"
+                        + " taken, LAND lets go: at " + ship[0].pose() + " for " + spot[0]))
+                .thenExecute(() -> {
+                    final StructurePose at = ship[0].pose();
+                    helper.assertFalse(flight(ship[0]).grounded() && Math.hypot(at.x() - spot[0].x, at.z()
+                            - spot[0].z) < ON_THE_SPOT, "not set down on the other ship: " + at);
+                    ShipLandings.dropPad(level.getServer(), pad);
+                    GameTestPlayers.leave(pilot[0]);
+                    MovingStructures.takeAway(ship[0]);
+                    MovingStructures.takeAway(other[0]);
+                    takeAwayPad(level, floor[0]);
+                    keep(helper, false, NORTH_CHUNKS);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A block of a ship's docking collar swapped for another, its count of blocks and its box the same: its collar is
+     * read anew, not where that block was.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1200)
+    public static void collar_aBlockOfItSwappedForAnotherIsReadAnew(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure[] ship = new MovingStructure[1];
+        letGo(helper, ship, DOCKING_SHIP).thenWaitUntil(() -> helper.assertTrue(ship[0] != null && ship[0].ready(),
+                "the ship stands ready")).thenExecute(() -> {
+            final Optional<BlockPos> read = ShipCollars.collarBlock(level, ship[0]);
+            helper.assertTrue(read.isPresent(), "a ship with a docking module has a collar");
+            final BlockPos collar = read.get();
+            final int blocks = ship[0].blocks();
+            level.setBlockAndUpdate(collar, Blocks.STONE.defaultBlockState());
+            helper.assertTrue(ship[0].blocks() == blocks, "one block swapped for another, the count the same");
+            final Optional<BlockPos> now = ShipCollars.collarBlock(level, ship[0]);
+            helper.assertFalse(now.equals(Optional.of(collar)), "the block swapped is no collar's now: " + now);
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
+    }
+
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 4000)
     public static void autopilot_landOnWheelsLinesUpOnARunwayAndRollsToAStopOnIt(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();

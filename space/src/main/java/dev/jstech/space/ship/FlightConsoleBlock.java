@@ -12,6 +12,7 @@ import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.multiblock.LevelStructures;
 import dev.jstech.core.room.RoomLiving;
+import dev.jstech.core.text.GameText;
 import dev.jstech.space.crew.CrewRole;
 import dev.jstech.space.crew.ShipConsole;
 import dev.jstech.space.crew.ShipCrews;
@@ -84,9 +85,14 @@ public final class FlightConsoleBlock extends ShipFixtureBlock implements Entity
             return InteractionResult.PASS;
         }
         final BlockPos dock = LevelStructures.of(server).terminalHolding(pos);
-        if (dock != null && server.getBlockEntity(dock) instanceof ShipyardTerminalBlockEntity terminal
-                && terminal.release(player.getUUID()).isPresent()) {
-            return InteractionResult.CONSUME;
+        // Started from its console, the ship goes, or its pilot is told why it cannot yet.
+        if (dock != null && server.getBlockEntity(dock) instanceof ShipyardTerminalBlockEntity terminal) {
+            final boolean[] told = new boolean[1];
+            final boolean went = terminal.release(player.getUUID(), why -> {
+                player.displayClientMessage(GameText.component(why), true);
+                told[0] = true;
+            }).isPresent();
+            return went || told[0] ? InteractionResult.CONSUME : InteractionResult.PASS;
         }
         return InteractionResult.PASS;
     }

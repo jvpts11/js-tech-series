@@ -24,6 +24,7 @@ import java.util.Set;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
@@ -185,6 +186,9 @@ final class StructureSplitting {
         final Vector3d middle = mass > 0 ? heavy.div(mass) : new Vector3d(piece.bounds.minX() - piece.dx + HALF,
                 piece.bounds.minY() + HALF, piece.bounds.minZ() - piece.dz + HALF);
         final PhysicsMotion going = pushed(structure, frame, goingAt(structure, frame, middle), moves, mass);
+        // Who sits on a seat of the piece sits on it still where its blocks go, not put off it as they leave.
+        final List<? extends StructureSeatEntity> seats = level.getEntities(MovingStructures.SEAT.get(),
+                seat -> !seat.getPassengers().isEmpty() && moves.containsKey(seat.seat()));
         // The blocks leaving are not blocks lost: what they leave beside them is still joined.
         structure.parting(true);
         try {
@@ -199,6 +203,13 @@ final class StructureSplitting {
         StructureFooting.moved(structure, parted, moves);
         moveJoints(level, structure, parted, moves, piece.dx, piece.dz);
         moveHeld(structure, parted, moves, piece.dx, piece.dz);
+        for (final StructureSeatEntity seat : seats) {
+            final BlockPos there = moves.get(seat.seat());
+            final List<Entity> sitters = List.copyOf(seat.getPassengers());
+            seat.ejectPassengers();
+            seat.discard();
+            sitters.forEach(sitter -> StructureSeating.sit(sitter, there));
+        }
         NeoForge.EVENT_BUS.post(new MovingStructureEvent.Parted(structure, List.of(parted)));
     }
 

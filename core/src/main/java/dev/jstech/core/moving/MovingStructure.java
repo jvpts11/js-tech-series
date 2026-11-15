@@ -52,6 +52,8 @@ public final class MovingStructure implements IStructureBody {
     private final StructureKeeping keeping = new StructureKeeping();
     private Box bounds;
     private int blocks;
+    /* How many times one of its blocks changed since it was made or loaded. */
+    private int changes;
     private double pivotX;
     private double pivotY;
     private double pivotZ;
@@ -88,7 +90,8 @@ public final class MovingStructure implements IStructureBody {
     private boolean parting;
     private boolean ready;
     private boolean held;
-    private boolean departureHeld;
+    /* What its way to another dimension holds loaded there, once it holds it. */
+    private StructureTravel.@Nullable Held departureHeld;
     private boolean emptied;
 
     private static final String ID = "structure";
@@ -310,6 +313,15 @@ public final class MovingStructure implements IStructureBody {
     }
 
     /**
+     * How many times one of its blocks has changed since it was made or loaded, put down, taken away or set to another:
+     * what reads its blocks once may read them again only when this has moved on, which a count of its blocks, the
+     * same with one block swapped for another, does not tell.
+     */
+    public int changes() {
+        return changes;
+    }
+
+    /**
      * Whether it is just made and its blocks still stand where they stood, or, born as one, are still to be laid,
      * until the chunks of its plot of the yard have loaded: a few ticks, after which they are its own, in the yard,
      * and it is {@link #ready()}.
@@ -487,11 +499,10 @@ public final class MovingStructure implements IStructureBody {
             StructureSplitting.look(level, this, splitSeeds, splitting);
         }
         if (departure != null) {
-            if (!departureHeld) {
-                StructureTravel.hold(this, level, departure);
-                departureHeld = true;
+            if (departureHeld == null) {
+                departureHeld = StructureTravel.hold(this, level, departure);
             }
-            if (StructureTravel.go(this, level, departure)) {
+            if (StructureTravel.go(this, level, departure, departureHeld)) {
                 return;
             }
         }
@@ -668,7 +679,23 @@ public final class MovingStructure implements IStructureBody {
     /* Sets it on its way to another dimension, or, with null, keeps it where it is. */
     void depart(@Nullable final StructureDeparture going) {
         this.departure = going;
-        this.departureHeld = false;
+        this.departureHeld = null;
+    }
+
+    /*
+     * Gives back the plots taken for its pieces still waiting to part, as it goes for good: their blocks are still its
+     * own, cleared with it.
+     */
+    void forgetPieces(final ServerLevel level) {
+        for (final StructureSplitting.Waiting piece : splitting) {
+            StructureYard.release(level, piece.bounds());
+            StructureYard.giveBack(level, piece.plot());
+        }
+        splitting.clear();
+        for (final int plot : splitPlots) {
+            StructureYard.giveBack(level, plot);
+        }
+        splitPlots.clear();
     }
 
     /* Makes it one born as one: its blocks laid from {@code coming} once its plot has loaded. */
@@ -700,9 +727,9 @@ public final class MovingStructure implements IStructureBody {
             StructureYard.release(level, bounds);
             held = false;
         }
-        if (departure != null && departureHeld) {
-            StructureTravel.release(this, level, departure);
-            departureHeld = false;
+        if (departure != null && departureHeld != null) {
+            StructureTravel.release(level, departure, departureHeld);
+            departureHeld = null;
         }
         ready = false;
         keeping.letGo(level);
@@ -721,6 +748,9 @@ public final class MovingStructure implements IStructureBody {
      * structure whose last block went is taken away at its next tick.
      */
     void blockChanged(final ServerLevel level, final BlockPos at, final BlockState before, final BlockState after) {
+        if (before != after) {
+            changes++;
+        }
         if (physics != null) {
             physics.blockChanged(level, at, before, after);
         }

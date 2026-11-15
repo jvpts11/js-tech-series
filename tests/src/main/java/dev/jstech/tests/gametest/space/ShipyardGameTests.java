@@ -29,6 +29,7 @@ import dev.jstech.core.multiblock.ShapePreview;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.FormedShapes;
+import dev.jstech.core.text.Text;
 import dev.jstech.space.api.ShipKit;
 import dev.jstech.space.api.ShipKits;
 import dev.jstech.space.api.ShipParts;
@@ -37,6 +38,7 @@ import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.IFixtureEntity;
 import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFixtureBlock;
+import dev.jstech.space.ship.ShipFixtureTexts;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipKitBlocks;
@@ -575,7 +577,10 @@ public final class ShipyardGameTests {
             dock.design(WORKSHOP_SHIP);
             helper.assertTrue(dock.confirm(), "the ship is sent");
             final PlannedBuild plan = dock.build().orElseThrow();
-            helper.assertTrue(dock.release(null).isEmpty(), "a ship not yet whole does not go");
+            final List<Text> told = new ArrayList<>();
+            helper.assertTrue(dock.release(null, told::add).isEmpty()
+                    && told.equals(List.of(ShipFixtureTexts.NOT_WHOLE.text())), "a ship not yet whole does not go,"
+                    + " its pilot told why: " + told);
             for (final PlanSpot spot : plan.plan().spots()) {
                 lay(level, plan, spot);
                 places.add(plan.where(spot));

@@ -30,6 +30,7 @@ import dev.jstech.core.moving.joint.StructureJoints;
 import dev.jstech.core.moving.physics.PhysicsMotion;
 import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
+import dev.jstech.core.uuid.StructureUuid;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.TestAboard;
 import dev.jstech.tests.TestPhysics;
@@ -140,6 +141,33 @@ public final class MovingStructureLifeGameTests {
                             && Math.abs(rider.getZ() - seatAt.z) < KEEPS, "the rider went with the seat: "
                             + rider.position() + " for a seat at " + seatAt);
                     leave(rider);
+                    MovingStructures.takeAway(cart);
+                })
+                .thenSucceed();
+    }
+
+    /* A player sitting on a seat of a piece let go from its structure sits on it still as the piece goes its way. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 200)
+    public static void seats_aSitterOnAPieceLetGoSitsOnItStill(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        helper.setBlock(new BlockPos(2, 2, 4), Blocks.STONE);
+        helper.setBlock(new BlockPos(3, 2, 4), TestAboard.SEAT.get());
+        final MovingStructure cart = assembled(helper, new BlockPos(2, 2, 4), new BlockPos(3, 2, 4));
+        final BlockPos seat = find(level, cart, state -> state.is(TestAboard.SEAT.get()));
+        final ServerPlayer rider = rider(helper, new Vec3(3.5, 3, 4.5));
+        helper.assertTrue(MovingStructures.sit(rider, seat), "the player sits on the seat aboard");
+        final StructureUuid[] piece = new StructureUuid[1];
+        helper.startSequence()
+                .thenExecute(() -> piece[0] = cart.partOff(level, List.of(seat), Direction.UP, 0).orElseThrow())
+                .thenWaitUntil(() -> helper.assertTrue(MovingStructures.byId(level, piece[0]) != null,
+                        "the seat parts off, a piece of its own"))
+                .thenExecute(() -> {
+                    final MovingStructure parted = MovingStructures.byId(level, piece[0]);
+                    helper.assertTrue(rider.getVehicle() instanceof StructureSeatEntity sitting
+                            && sitting.structure() == parted, "its rider sits on it still: riding "
+                            + rider.getVehicle());
+                    leave(rider);
+                    MovingStructures.takeAway(parted);
                     MovingStructures.takeAway(cart);
                 })
                 .thenSucceed();

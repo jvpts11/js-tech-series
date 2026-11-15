@@ -447,6 +447,7 @@ public final class MovingStructures {
         } else {
             StructureYard.giveBack(level, structure.plot());
         }
+        structure.forgetPieces(level);
         // Gone before it went on to another dimension, the plot it took there for its blocks is given back there.
         final StructureDeparture going = structure.departure();
         final ServerLevel to = going == null ? null : level.getServer().getLevel(going.to());

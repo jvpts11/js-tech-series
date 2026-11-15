@@ -16,6 +16,8 @@ public final class ShipLandingTexts {
 
     public static final TextKey RUNWAY_BLOCKED = TextKey.of("jsspace.ship_landing.runway_blocked",
             "The runway past the beacon is not clear: no landing there");
+    public static final TextKey PAD_TAKEN = TextKey.of("jsspace.ship_landing.pad_taken",
+            "Another ship has set down on the pad: no landing there");
     public static final TextKey CANNOT_HOVER = TextKey.of("jsspace.ship_landing.cannot_hover",
             "Too little air here for the nozzles, and no thrusters to hold the ship up: no landing");
 

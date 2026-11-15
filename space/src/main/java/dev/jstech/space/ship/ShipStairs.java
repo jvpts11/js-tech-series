@@ -117,6 +117,11 @@ public final class ShipStairs {
                 .ifPresent(door -> stand(level, door, grounded && !FormedDoors.shut(level, door)))));
     }
 
+    /** Takes {@code ship}'s stair up now, if it is down: as a dock takes the ship back, the stair not in its plan. */
+    public static void takeUp(final ServerLevel level, final MovingStructure ship) {
+        outerDoor(level, ship).ifPresent(door -> stand(level, door, false));
+    }
+
     /* An airlock's outer door moving aboard a ship: its stair comes down as it opens on the land, up as it shuts. */
     private static void doorMoving(final FormedDoorEvent event) {
         final FormedDoors.Door door = event.door();

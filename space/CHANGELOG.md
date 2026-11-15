@@ -944,6 +944,21 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   flying: it stayed down at any height while the ship hovered.
 
 ### Fixed
+- A pad's service port fuels the launcher nearest it, and a launch panel works the nearest: of two launchers
+  in reach, each took the first it came to.
+- A crawler sets off with the launcher it lifted only once it holds it: a launcher not ready to go aboard was
+  left lifted where it stood as the crawler drove off.
+- A rocket burnt out at the edge of space falls back with no plume under it.
+- A ship started from its flight console that cannot go tells its pilot why: not whole yet, or past their
+  limit of moving structures. Nothing was told.
+- A ship taken back by its dock with its boarding stair down takes the stair up first: its blocks were left
+  on the grid when the ship went again.
+- LAND looks at its pad again as the ship comes near, as it looks at a runway: a pad another ship has set down
+  on meanwhile lets LAND go, its pilot told, where it set the ship down on the other. What a ship holds, docked or
+  carried, takes no pad from it.
+- A small ship's docking collar and the blocks it stands on are read again whenever one of its blocks
+  changes: one block swapped for another, the count the same, left it docking at a collar no longer there or standing
+  on a block that was gone.
 - A small ship hovering down at its pilot's hand comes down no faster than DOWN asks, and on wheels at five
   metres a second at most, gentle enough for its gear: its nozzles turning to hold it let it sink faster on top, and
   it met the land fast enough to be holed.

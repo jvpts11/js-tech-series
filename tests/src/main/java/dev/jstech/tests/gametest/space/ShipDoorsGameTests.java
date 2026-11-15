@@ -95,6 +95,8 @@ public final class ShipDoorsGameTests {
     private static final double LAND = -2.0;
     /* How close to the land the stair's lowest tread comes, at most. */
     private static final double NEAR_THE_LAND = 0.6;
+    /* How far round its terminal a dock's grid is looked over, in blocks. */
+    private static final int DOCK_ROUND = 24;
 
     private ShipDoorsGameTests() {
     }
@@ -178,6 +180,41 @@ public final class ShipDoorsGameTests {
                             "shut again, its stair goes up");
                     GameTestPlayers.leave(crew);
                     MovingStructures.takeAway(ship[0]);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * A ship standing on the land, its outer door open and its stair down, taken back by its dock: its stair goes up
+     * first, not left on the grid as blocks of no plan, and the ship goes again whole.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
+    public static void stair_downAsItsDockTakesItBackGoesUpNotLeftOnTheGrid(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final PlannedBuild[] plan = new PlannedBuild[1];
+        final MovingStructure[] ship = new MovingStructure[1];
+        final BlockPos[] terminal = new BlockPos[1];
+        build(helper, plan, terminal).thenExecute(() -> ship[0] = ((ShipyardTerminalBlockEntity) level
+                        .getBlockEntity(terminal[0])).release(null).orElseThrow())
+                .thenWaitUntil(() -> helper.assertTrue(ship[0].ready() && ship[0].motion() instanceof ShipFlight
+                        flight && flight.grounded(), "the ship let go stands on the land"))
+                .thenExecute(() -> {
+                    final ServerPlayer crew = GameTestPlayers.connected(helper, "jst-dockstair");
+                    final BlockPos built = plan[0].where(spot(plan[0], AIRLOCK, ShipKitBlocks.AIRLOCK_DOOR.getId()));
+                    final FormedDoors.Door outer = named(level, BlockPos.containing(MovingStructures.toYard(ship[0],
+                            Vec3.atCenterOf(built))), ShipDoorRules.OUTER_DOOR);
+                    ShipDoorRules.otherSide(level, outer).forEach(inner -> FormedDoors.set(level, inner, true));
+                    helper.assertTrue(FormedDoors.use(level, crew, outer) && !stairs(level, outer).isEmpty(),
+                            "its outer door open on the land, its stair is down");
+                    GameTestPlayers.leave(crew);
+                    final ShipyardTerminalBlockEntity dock = (ShipyardTerminalBlockEntity) level
+                            .getBlockEntity(terminal[0]);
+                    helper.assertTrue(dock.seat(ship[0]), "its dock takes it back onto the grid");
+                    final List<BlockPos> left = stairsAround(level, terminal[0]);
+                    helper.assertTrue(left.isEmpty(), "its stair taken up first, none of it is left on the grid: "
+                            + left);
+                    final MovingStructure again = dock.release(null).orElseThrow();
+                    MovingStructures.takeAway(again);
                 })
                 .thenSucceed();
     }
@@ -367,6 +404,18 @@ public final class ShipDoorsGameTests {
         }
         tops.sort((a, b) -> Double.compare(b, a));
         return tops;
+    }
+
+    /* The blocks of a boarding stair standing on the grid round the dock's terminal at {@code terminal}. */
+    private static List<BlockPos> stairsAround(final ServerLevel level, final BlockPos terminal) {
+        final List<BlockPos> found = new ArrayList<>();
+        for (final BlockPos at : BlockPos.betweenClosed(terminal.offset(-DOCK_ROUND, -DOCK_ROUND, -DOCK_ROUND),
+                terminal.offset(DOCK_ROUND, DOCK_ROUND, DOCK_ROUND))) {
+            if (ShipStairs.down(level, at)) {
+                found.add(at.immutable());
+            }
+        }
+        return found;
     }
 
     /* A block of each room beside {@code door}'s leaf, round it level with it: one for each side a room is on. */

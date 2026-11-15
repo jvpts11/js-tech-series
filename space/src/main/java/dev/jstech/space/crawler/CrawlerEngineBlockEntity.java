@@ -311,10 +311,10 @@ public final class CrawlerEngineBlockEntity extends SyncedBlockEntity {
             stranded(server);
             return;
         }
-        if (!launcher.resting()) {
+        // Mounted once both stand ready: not yet, it waits a tick rather than set off without the launcher.
+        if (!launcher.resting() || !MovingStructures.mount(launcher, body, Optional.empty()).ok()) {
             return;
         }
-        MovingStructures.mount(launcher, body, Optional.empty());
         drive(body, this.way.get(), LOADED_SPEED);
     }
 

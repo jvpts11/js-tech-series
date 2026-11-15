@@ -281,7 +281,8 @@ public final class FlightComputerBlockEntity extends SyncedBlockEntity {
             CruiseFlight.second(server, carried, this);
             DescentFlight.second(server, carried, this);
             SurfaceLaunch.second(server, carried, this);
-            if (carried.motion() instanceof RocketAscent ascent && !ascent.cutOff()) {
+            // Its plume while its engines burn: none burnt out, falling back short of its orbit.
+            if (carried.motion() instanceof RocketAscent ascent && ascent.burning(server, carried)) {
                 ClimbEffects.burning(server, carried, boostersBurning(server, carried, ascent));
             }
         }

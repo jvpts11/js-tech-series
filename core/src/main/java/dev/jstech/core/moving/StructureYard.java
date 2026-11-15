@@ -15,20 +15,25 @@ import dev.jstech.core.state.CoreState;
 import dev.jstech.core.state.CoreStates;
 import dev.jstech.core.state.DimensionState;
 import dev.jstech.core.uuid.StructureUuid;
+import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.LevelEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 
 /**
@@ -60,6 +65,11 @@ public final class StructureYard {
      */
     private static final TicketType<ChunkPos> LANDING = TicketType.create("jscore_moving_structure_landing",
             Comparator.comparingLong(ChunkPos::toLong), LANDING_TICKS);
+    /*
+     * How many hold each chunk of the world for structures, by dimension: the game's ticket is one whoever takes it,
+     * so it goes with the last to let go, not the first. Not saved, as the ticket is not: each holds again as it loads.
+     */
+    private static final Map<ResourceKey<Level>, Long2IntOpenHashMap> HELD = new HashMap<>();
 
     private StructureYard() {
     }
@@ -73,6 +83,12 @@ public final class StructureYard {
         NeoForge.EVENT_BUS.addListener(LevelTickEvent.Post.class, event -> {
             if (event.getLevel() instanceof ServerLevel level && level.getGameTime() % CLEAR_EVERY == 0) {
                 clearLeft(level);
+            }
+        });
+        // A level unloaded takes its tickets with it, and its count of who held its chunks goes too.
+        NeoForge.EVENT_BUS.addListener(LevelEvent.Unload.class, event -> {
+            if (event.getLevel() instanceof ServerLevel level) {
+                HELD.remove(level.dimension());
             }
         });
     }
@@ -134,13 +150,28 @@ public final class StructureYard {
         forEachChunk(bounds, chunk -> level.getChunkSource().removeRegionTicket(TICKET, chunk, REACH, chunk, true));
     }
 
-    /** Keeps the world's chunk {@code chunk} loaded and ticking, for a structure that keeps its place loaded. */
+    /**
+     * Keeps the world's chunk {@code chunk} loaded and ticking, for a structure that keeps its place loaded, as long as
+     * any that held it has not let it go: two structures may keep one chunk.
+     */
     public static void holdChunk(final ServerLevel level, final ChunkPos chunk) {
-        level.getChunkSource().addRegionTicket(TICKET, chunk, REACH, chunk, true);
+        if (HELD.computeIfAbsent(level.dimension(), dimension -> new Long2IntOpenHashMap()).addTo(chunk.toLong(), 1)
+                == 0) {
+            level.getChunkSource().addRegionTicket(TICKET, chunk, REACH, chunk, true);
+        }
     }
 
-    /** Lets go of the world's chunk {@code chunk}. */
+    /** Lets go of the world's chunk {@code chunk} held once by {@link #holdChunk}: it goes once none holds it. */
     public static void releaseChunk(final ServerLevel level, final ChunkPos chunk) {
+        final Long2IntOpenHashMap held = HELD.get(level.dimension());
+        final int was = held == null ? 0 : held.get(chunk.toLong());
+        if (was > 1) {
+            held.put(chunk.toLong(), was - 1);
+            return;
+        }
+        if (held != null) {
+            held.remove(chunk.toLong());
+        }
         level.getChunkSource().removeRegionTicket(TICKET, chunk, REACH, chunk, true);
     }
 

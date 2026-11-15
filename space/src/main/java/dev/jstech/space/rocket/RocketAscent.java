@@ -202,6 +202,14 @@ public record RocketAscent(int burn, double mass, double climb, double from, boo
                 attitude.roll(), attitude.heading(), air, all > 0 ? (float) (left / all) : 0, lit);
     }
 
+    /**
+     * Whether the engines of {@code structure}, the rocket this climbs, burn now: its climb not paid, a burn it may
+     * light still lit. Not once burnt out, falling back short of its orbit.
+     */
+    public boolean burning(final ServerLevel level, final MovingStructure structure) {
+        return !this.cutOff && this.burn < climbable(level, structure, burns(level, structure), this.burn);
+    }
+
     @Override
     public ResourceLocation type() {
         return TYPE;

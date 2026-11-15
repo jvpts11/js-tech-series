@@ -86,23 +86,29 @@ public final class LaunchPads {
     }
 
     /**
-     * The measuring hold-down arm of the launcher standing by {@code near}, within {@code reach} round it and from
-     * {@code below} under it to {@code above} over it, its deck formed; none where no launcher stands there.
+     * The measuring hold-down arm of the launcher standing nearest {@code near}, within {@code reach} round it and
+     * from {@code below} under it to {@code above} over it, its deck formed; none where no launcher stands there. Of
+     * two launchers in reach, the one beside it, not the first looked at.
      */
     public static Optional<LauncherDeckBlockEntity> launcherBy(final ServerLevel level, final BlockPos near,
                                                                final int reach, final int below, final int above) {
         final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        LauncherDeckBlockEntity nearest = null;
+        double best = Double.MAX_VALUE;
         for (int dy = -below; dy <= above; dy++) {
             for (int dx = -reach; dx <= reach; dx++) {
                 for (int dz = -reach; dz <= reach; dz++) {
                     at.set(near.getX() + dx, near.getY() + dy, near.getZ() + dz);
-                    if (level.getBlockEntity(at) instanceof LauncherDeckBlockEntity arm && arm.deck().isPresent()) {
-                        return Optional.of(arm);
+                    final double distance = at.distSqr(near);
+                    if (distance < best && level.getBlockEntity(at) instanceof LauncherDeckBlockEntity arm
+                            && arm.deck().isPresent()) {
+                        nearest = arm;
+                        best = distance;
                     }
                 }
             }
         }
-        return Optional.empty();
+        return Optional.ofNullable(nearest);
     }
 
     /**

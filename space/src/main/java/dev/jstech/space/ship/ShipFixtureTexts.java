@@ -32,6 +32,8 @@ public final class ShipFixtureTexts {
             "You will wake in this bunk");
     public static final TextKey NO_AIR = TextKey.of("jsspace.ship_fixture.no_air",
             "No air to breathe here: the bunk needs a sealed cabin");
+    public static final TextKey NOT_WHOLE = TextKey.of("jsspace.ship_fixture.not_whole",
+            "The ship is not whole yet: build every part of it in the dock");
     /** What each of the suit locker's places takes, for its hint. */
     public static final TextKey TAKES_HELMET = TextKey.of("jsspace.ship_fixture.takes_helmet", "Takes: helmet only");
     public static final TextKey TAKES_SUIT = TextKey.of("jsspace.ship_fixture.takes_suit", "Takes: suit only");

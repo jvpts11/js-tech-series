@@ -120,10 +120,10 @@ public final class ShipGround {
                 : Loaded.at(level, at);
     }
 
-    /* {@code ship}'s blocks, read again when its box or its count of blocks changed. */
+    /* {@code ship}'s blocks, read again when its box changed or any of its blocks did. */
     private static Points points(final ServerLevel level, final MovingStructure ship) {
         final Points known = READ.get(ship);
-        if (known != null && known.bounds().equals(ship.bounds()) && known.blocks() == ship.blocks()) {
+        if (known != null && known.bounds().equals(ship.bounds()) && known.changes() == ship.changes()) {
             return known;
         }
         final Points read = read(level, ship);
@@ -162,7 +162,7 @@ public final class ShipGround {
                 }
             }
         }
-        return new Points(box, ship.blocks(), List.copyOf(feet), List.copyOf(middles));
+        return new Points(box, ship.changes(), List.copyOf(feet), List.copyOf(middles));
     }
 
     /**
@@ -175,7 +175,7 @@ public final class ShipGround {
     public record Contact(double rise, boolean touching, boolean blocked) {
     }
 
-    /* A ship's blocks as read: its box and count then, its feet and the middles of its blocks. */
-    private record Points(Box bounds, int blocks, List<double[]> feet, List<double[]> middles) {
+    /* A ship's blocks as read: its box and how many times its blocks had changed then, its feet and their middles. */
+    private record Points(Box bounds, int changes, List<double[]> feet, List<double[]> middles) {
     }
 }

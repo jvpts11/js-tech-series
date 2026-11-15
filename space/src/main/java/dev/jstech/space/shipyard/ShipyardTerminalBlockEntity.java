@@ -31,6 +31,7 @@ import dev.jstech.core.multiblock.plan.PlannedBuild;
 import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.team.CoreTeams;
+import dev.jstech.core.text.Text;
 import dev.jstech.core.util.Loaded;
 import dev.jstech.space.advancement.SpaceFirsts;
 import dev.jstech.space.api.ShipKits;
@@ -40,8 +41,10 @@ import dev.jstech.space.hangar.ItemPortBlockEntity;
 import dev.jstech.space.ship.AirReserveEntity;
 import dev.jstech.space.ship.ShipAboard;
 import dev.jstech.space.ship.ShipDesign;
+import dev.jstech.space.ship.ShipFixtureTexts;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipKitBlocks;
+import dev.jstech.space.ship.ShipStairs;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -51,6 +54,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.WeakHashMap;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -337,12 +341,23 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
      * console, or its blocks cannot go.
      */
     public Optional<MovingStructure> release(final @Nullable UUID by) {
+        return release(by, why -> { });
+    }
+
+    /**
+     * Lets the ship go as {@link #release(UUID)} does, telling {@code told} why when it cannot: not whole yet, or its
+     * blocks unable to go, as past its pilot's limit of moving structures.
+     */
+    public Optional<MovingStructure> release(final @Nullable UUID by, final Consumer<Text> told) {
         final PlannedBuild built = this.build;
         final ShipDesign design = this.plan.get();
         final BlockPos at = this.planAt.get();
+        if (!(this.level instanceof ServerLevel server) || built == null || design == null || at == null) {
+            return Optional.empty();
+        }
         // Every part formed: a hole in one goes with it, mended wherever a block is put back.
-        if (!(this.level instanceof ServerLevel server) || built == null || design == null || at == null
-                || built.formedParts().size() < built.plan().parts()) {
+        if (built.formedParts().size() < built.plan().parts()) {
+            told.accept(ShipFixtureTexts.NOT_WHOLE.text());
             return Optional.empty();
         }
         final ResourceLocation console = ShipKitBlocks.FLIGHT_CONSOLE.getId();
@@ -373,6 +388,9 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
                 at.getY(), (minZ + maxZ + 1) / 2.0), by);
         if (!made.ok() || made.structure() == null) {
             startBuild();
+            if (made.refusal() != null) {
+                told.accept(made.refusal());
+            }
             return Optional.empty();
         }
         keeper.carry(new ShipAboard(design, at.subtract(seat.get()), this.planTurn.get(), formed));
@@ -430,8 +448,12 @@ public final class ShipyardTerminalBlockEntity extends MachineBlockEntity {
                 console.get().getY() + HALF, console.get().getZ() + HALF), ship.frame().worldY(console.get().getX()
                 + HALF, console.get().getY() + HALF, console.get().getZ() + HALF), ship.frame().worldZ(
                 console.get().getX() + HALF, console.get().getY() + HALF, console.get().getZ() + HALF));
+        // Its boarding stair is none of its plan: taken up first, it is not left on the grid, and let down again
+        // where the ship cannot be set down.
+        ShipStairs.takeUp(server, ship);
         if (!StructureDisassembly.setDown(ship).ok()) {
             ship.teleport(was);
+            ShipStairs.groundChanged(server, ship, ship.motion() instanceof ShipFlight flight && flight.grounded());
             return false;
         }
         if (server.getBlockEntity(landed) instanceof AirReserveEntity set) {

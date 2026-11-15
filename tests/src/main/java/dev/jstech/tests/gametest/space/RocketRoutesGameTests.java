@@ -298,17 +298,24 @@ public final class RocketRoutesGameTests {
         final ServerLevel space = SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM);
         final double start = released.pose().y();
         final double[] highest = new double[1];
+        final boolean[] plumeFalling = new boolean[1];
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
                 .thenExecute(() -> RocketLaunch.lift(level, released))
                 .thenWaitUntil(() -> {
                     highest[0] = Math.max(highest[0], released.pose().y());
+                    if (highest[0] >= SpaceClimbs.ceiling(level) - 1 && released.motion() instanceof RocketAscent ascent
+                            && ascent.burning(level, released)) {
+                        plumeFalling[0] = true;
+                    }
                     helper.assertTrue(MovingStructures.byId(space, id) == null, "it never reaches space");
                     helper.assertTrue(released.motion() == null && released.pose().y() < start + 1,
                             "it falls back to its pad: at " + released.pose().y() + ", highest " + highest[0]);
                 })
                 .thenExecute(() -> helper.assertTrue(highest[0] >= SpaceClimbs.ceiling(level) - 1,
                         "it climbed to the edge of space: " + highest[0]))
+                .thenExecute(() -> helper.assertFalse(plumeFalling[0], "burnt out at the edge of space, it falls back"
+                        + " with its engines out, no plume under it"))
                 // Its computer reads its tanks once a second.
                 .thenWaitUntil(() -> helper.assertTrue(computerOf(level, released).available().orElse(-1) < 1,
                         "having burnt all it had: " + computerOf(level, released).available().orElse(-1)

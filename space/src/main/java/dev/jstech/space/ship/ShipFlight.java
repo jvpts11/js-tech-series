@@ -23,6 +23,7 @@ import dev.jstech.core.moving.StructureMotions;
 import dev.jstech.core.moving.StructurePose;
 import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.text.GameText;
+import dev.jstech.core.text.TextKey;
 import dev.jstech.space.JsSpace;
 import dev.jstech.space.api.ShipPart;
 import dev.jstech.space.api.ShipPartKind;
@@ -275,9 +276,9 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                 / REACTOR_LOAD_SECONDS * (PulseCourse.BURNS - 1)));
         final int spooled = ShipPulse.spool(body, spooling);
         // Its pilot taking the helm, holding any of its keys, lets its autopilot go; so does an autopilot done, and a
-        // runway whose stretch is found not clear as the ship comes near.
+        // pad taken or a runway found not clear as the ship comes near.
         final Optional<ShipAutopilot> pilot = this.autopilot.filter(engaged -> !holding(helm)
-                && !done(level, now, engaged, pitch)).flatMap(engaged -> runwayLookedAt(level, body, now, engaged));
+                && !done(level, now, engaged, pitch)).flatMap(engaged -> landingLookedAt(level, body, now, engaged));
         final ShipFlight self = pilot.equals(this.autopilot) ? this : engaged(pilot);
         final int altitude = ShipAltitude.of(level, now.x(), body.worldBox().minY, now.z());
         if (pilot.isPresent() && pilot.get().mode() == ShipAutopilot.Mode.DOCK) {
@@ -466,13 +467,21 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     }
 
     /*
-     * The autopilot {@code pilot}, landing on a runway whose stretch was not yet found clear, its stretch looked at
-     * once the ship comes near and its land is loaded: clear, it flies on; not clear, its pilot is told and it lets go.
+     * The autopilot {@code pilot}, landing, its spot looked at once the ship comes near: a pad another ship has set
+     * down on meanwhile, or a runway whose stretch is not clear once its land is loaded, has its pilot told and lets
+     * go; a runway found clear flies on, not looked at again.
      */
-    private Optional<ShipAutopilot> runwayLookedAt(final ServerLevel level, final MovingStructure body,
-                                                   final StructurePose now, final ShipAutopilot pilot) {
-        if (pilot.runway().isEmpty() || pilot.cleared() || pilot.spot().isEmpty()
+    private Optional<ShipAutopilot> landingLookedAt(final ServerLevel level, final MovingStructure body,
+                                                    final StructurePose now, final ShipAutopilot pilot) {
+        if (pilot.mode() != ShipAutopilot.Mode.LAND || pilot.spot().isEmpty()
                 || Math.hypot(pilot.spot().get().x - now.x(), pilot.spot().get().z - now.z()) > RUNWAY_LOOKED_AT) {
+            return Optional.of(pilot);
+        }
+        if (pilot.runway().isEmpty()) {
+            return ShipLandings.taken(level, pilot.spot().get(), body)
+                    ? toldWhy(level, body, ShipLandingTexts.PAD_TAKEN) : Optional.of(pilot);
+        }
+        if (pilot.cleared()) {
             return Optional.of(pilot);
         }
         final ShipLandings.Beacon beacon = new ShipLandings.Beacon(level.dimension(),
@@ -481,12 +490,15 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         if (clear.isEmpty()) {
             return Optional.of(pilot);
         }
-        if (clear.get()) {
-            return Optional.of(pilot.clearedRunway());
-        }
+        return clear.get() ? Optional.of(pilot.clearedRunway()) : toldWhy(level, body, ShipLandingTexts.RUNWAY_BLOCKED);
+    }
+
+    /* Its pilot at the helm told {@code why} its autopilot lets go: none engaged. */
+    private static Optional<ShipAutopilot> toldWhy(final ServerLevel level, final MovingStructure body,
+                                                   final TextKey why) {
         for (final ServerPlayer player : level.players()) {
             if (player.getVehicle() instanceof StructureSeatEntity seat && seat.helm() && seat.structure() == body) {
-                player.displayClientMessage(GameText.component(ShipLandingTexts.RUNWAY_BLOCKED), true);
+                player.displayClientMessage(GameText.component(why), true);
             }
         }
         return Optional.empty();

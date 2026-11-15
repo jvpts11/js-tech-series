@@ -10,7 +10,9 @@ package dev.jstech.space.landing;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.moving.IStructureBody;
+import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.core.moving.StructureMounts;
 import dev.jstech.core.moving.YardLayout;
 import dev.jstech.core.team.Ownership;
 import java.util.ArrayList;
@@ -127,12 +129,17 @@ public final class ShipLandings extends SavedData {
         return YardLayout.isYardBlock(middle.getX()) ? MovingStructures.inWorld(level, top) : top;
     }
 
-    /** Whether a moving structure other than {@code ours} stands on the pad whose middle is {@code spot}. */
+    /**
+     * Whether a moving structure other than {@code ours} stands on the pad whose middle is {@code spot}: what
+     * {@code ours} holds, docked or carried, takes no pad from it.
+     */
     public static boolean taken(final ServerLevel level, final Vec3 spot, @Nullable final IStructureBody ours) {
         final AABB over = new AABB(spot.x - TAKEN_ACROSS, spot.y, spot.z - TAKEN_ACROSS, spot.x + TAKEN_ACROSS,
                 spot.y + TAKEN_UP, spot.z + TAKEN_ACROSS);
+        final IStructureBody root = ours instanceof MovingStructure mine ? StructureMounts.rootOf(mine) : ours;
         for (final IStructureBody body : MovingStructures.near(level, over)) {
-            if (body != ours) {
+            final IStructureBody top = body instanceof MovingStructure each ? StructureMounts.rootOf(each) : body;
+            if (body != ours && top != root) {
                 return true;
             }
         }

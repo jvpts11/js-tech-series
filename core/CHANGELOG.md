@@ -509,6 +509,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A structure gone for good: J's Core's API is at version 62. `MovingStructureEvent.Removed` is told on the
   game's bus as a moving structure leaves the game for good, taken away, set down into the world as blocks or left
   with no block of its own, never as it goes on to another dimension or is only unloaded with its land. Experimental.
+- Changes of a structure's blocks: J's Core's API is at version 63. `MovingStructure.changes()` counts each
+  change of one of its blocks since it was made or loaded, put down, taken away or set to another, for what reads its
+  blocks to read them again only once they have changed. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of
@@ -2231,6 +2234,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- Two structures keeping one chunk of the world loaded keep it so till the last of them lets it go: a ship
+  arriving where another with a chunk loader aboard keeps the land, or the other of two such ships over one chunk
+  going, let the chunk go, and the ship left there froze.
+- A structure taken away while a piece it let go still waits for its plot gives that plot back: it stayed
+  taken for good.
+- A structure that loses blocks on its way to another dimension lets go of every chunk it held there: some
+  stayed loaded till the server stopped.
+- Who sits on a seat of a piece let go from a structure sits on it still as the piece goes its way: they were
+  put off the seat.
 - A moving structure crossing to another dimension takes what it holds by one of its blocks with it, held
   still: a ship docked at another's clamp came loose as the other's blocks left, and arrived on its own. A piece let go
   from a structure likewise takes along what was held by one of its blocks.

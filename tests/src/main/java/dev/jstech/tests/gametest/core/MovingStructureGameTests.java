@@ -32,6 +32,7 @@ import dev.jstech.core.registry.CoreAttachments;
 import dev.jstech.core.region.ChunkLoaders;
 import dev.jstech.core.text.Text;
 import dev.jstech.core.text.TextKey;
+import dev.jstech.core.uuid.StructureUuid;
 import dev.jstech.tests.JsTests;
 import io.netty.channel.embedded.EmbeddedChannel;
 import java.util.ArrayList;
@@ -128,6 +129,8 @@ public final class MovingStructureGameTests {
     private static final double FAR_IN_THE_NETHER = 100_000;
     /* How far round where a structure arrives in the Nether its land is loaded first, in chunks. */
     private static final int LAND_ROUND = 3;
+    /* How long a chunk two held is watched going on after one let it go, in ticks. */
+    private static final int HELD_ON = 20;
     private static final TextKey LOADER_ABOARD = TextKey.of("jstests.moving.loader_aboard",
             "A loader aboard keeps the world under it loaded");
 
@@ -287,6 +290,51 @@ public final class MovingStructureGameTests {
                 chunk.getPos().getMinBlockZ()));
         helper.assertTrue(biome.is(Biomes.THE_VOID), "the yard is the void's: " + biome);
         helper.succeed();
+    }
+
+    /*
+     * Two hold one chunk loaded, as two structures with a chunk loader aboard over it, or one arriving where another
+     * keeps the land: the first to let it go leaves it ticking for the other, and it goes once the last has.
+     */
+    @GameTest(template = ARENA, batch = "jscore_moving_yard", timeoutTicks = 1200)
+    public static void yard_aChunkTwoHoldGoesOnlyWithTheLastToLetItGo(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final ChunkPos chunk = new ChunkPos(YardLayout.FIRST_CHUNK_X + 9_200, 3_333);
+        final BlockPos in = chunk.getMiddleBlockPosition(64);
+        StructureYard.holdChunk(level, chunk);
+        StructureYard.holdChunk(level, chunk);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(level.isPositionEntityTicking(in), "held, it ticks"))
+                .thenExecute(() -> StructureYard.releaseChunk(level, chunk))
+                .thenExecuteFor(HELD_ON, () -> helper.assertTrue(level.isPositionEntityTicking(in),
+                        "let go by one of the two, it goes on ticking for the other"))
+                .thenExecute(() -> StructureYard.releaseChunk(level, chunk))
+                .thenWaitUntil(() -> helper.assertFalse(level.isPositionEntityTicking(in), "let go by both, it goes"))
+                .thenSucceed();
+    }
+
+    /*
+     * A structure taken away while a piece it let go still waits for its plot gives that plot back: the piece's
+     * blocks were still its own, gone with it.
+     */
+    @GameTest(template = ARENA, batch = "jscore_moving_yard")
+    public static void yard_takenAwayWithAPieceWaitingItGivesThePiecesPlotBack(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final MovingStructure floor = floor(helper);
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(floor.ready(), "the floor stands ready"))
+                .thenExecute(() -> {
+                    final int plot = StructureYard.nextPlot(level);
+                    final Box box = floor.bounds();
+                    final Optional<StructureUuid> piece = floor.partOff(level, List.of(new BlockPos(box.minX(),
+                            box.minY(), box.minZ())), Direction.DOWN, 0);
+                    helper.assertTrue(piece.isPresent() && StructureYard.owner(level, plot).equals(piece),
+                            "a corner let go waits with a plot of its own: " + StructureYard.owner(level, plot));
+                    MovingStructures.takeAway(floor);
+                    helper.assertTrue(StructureYard.owner(level, plot).isEmpty(), "taken away with it waiting, the"
+                            + " plot it took is given back: " + StructureYard.owner(level, plot));
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = "jscore_moving_yard")
