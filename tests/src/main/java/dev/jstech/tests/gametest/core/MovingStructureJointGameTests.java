@@ -218,7 +218,9 @@ public final class MovingStructureJointGameTests {
                 StructureJoints.Anchor.world(top.add(0, 4, 0), new Vec3(0, 1, 0)), Optional.empty());
         crate.move(PhysicsMotion.AT_REST);
         final double start = crate.worldBox().minY;
+        // Timed from when it moves: a structure whose plot of the yard is still loading moves only once it is ready.
         helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(crate.ready(), "the crate is ready"))
                 .thenExecuteAfter(10, () -> helper.assertTrue(Math.abs(crate.worldBox().minY - start) < HOLDS,
                         "with no signal, the winch holds it where it hangs: " + crate.worldBox()))
                 .thenExecute(() -> level.setBlock(switchAt.above(), Blocks.REDSTONE_BLOCK.defaultBlockState(), 3))
@@ -312,20 +314,27 @@ public final class MovingStructureJointGameTests {
     public static void joints_aDrivenSliderLiftsItsLoadAlongItsLine(final GameTestHelper helper) {
         final MovingStructure lift = made(helper, List.of(new BlockPos(4, 3, 4)), Blocks.STONE);
         final Vec3 base = middleOf(lift);
-        StructureJoints.join(helper.getLevel(), new JointKind.Slider(Optional.empty(), Optional.of(
-                        JointKind.Drive.always(0.5, 1.0e6))), StructureJoints.Anchor.world(base, new Vec3(0, 1, 0)),
-                StructureJoints.Anchor.on(lift, base, new Vec3(0, 1, 0)), Optional.empty());
-        lift.move(PhysicsMotion.AT_REST);
-        helper.runAfterDelay(40, () -> {
-            final Vec3 now = middleOf(lift);
-            helper.assertTrue(Math.abs(now.y - base.y - 1.0) < 0.1, "two seconds at half a metre a second lift it a"
-                    + " metre: " + (now.y - base.y));
-            helper.assertTrue(Math.abs(now.x - base.x) < HOLDS && Math.abs(now.z - base.z) < HOLDS,
-                    "along its line: " + now + " from " + base);
-            helper.assertTrue(lift.pose().angleTo(StructurePose.at(0, 0, 0)) < 0.01, "not turning: " + lift.pose());
-            MovingStructures.takeAway(lift);
-            helper.succeed();
-        });
+        // Timed from when it moves: a structure whose plot of the yard is still loading moves only once it is ready.
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(lift.ready(), "the lift is ready"))
+                .thenExecute(() -> {
+                    StructureJoints.join(helper.getLevel(), new JointKind.Slider(Optional.empty(), Optional.of(
+                            JointKind.Drive.always(0.5, 1.0e6))), StructureJoints.Anchor.world(base,
+                            new Vec3(0, 1, 0)), StructureJoints.Anchor.on(lift, base, new Vec3(0, 1, 0)),
+                            Optional.empty());
+                    lift.move(PhysicsMotion.AT_REST);
+                })
+                .thenExecuteAfter(40, () -> {
+                    final Vec3 now = middleOf(lift);
+                    helper.assertTrue(Math.abs(now.y - base.y - 1.0) < 0.1, "two seconds at half a metre a second"
+                            + " lift it a metre: " + (now.y - base.y));
+                    helper.assertTrue(Math.abs(now.x - base.x) < HOLDS && Math.abs(now.z - base.z) < HOLDS,
+                            "along its line: " + now + " from " + base);
+                    helper.assertTrue(lift.pose().angleTo(StructurePose.at(0, 0, 0)) < 0.01, "not turning: "
+                            + lift.pose());
+                    MovingStructures.takeAway(lift);
+                })
+                .thenSucceed();
     }
 
     /* A motor of a reverse signal only, its reverse off: it drives forward at full speed, as one of no signal does. */
@@ -335,17 +344,22 @@ public final class MovingStructureJointGameTests {
         final Vec3 base = middleOf(lift);
         final JointKind.Drive drive = new JointKind.Drive(0.5, 1.0e6, Optional.empty(), Optional.of(new JointSignal(
                 JointSignal.Side.A, helper.absolutePos(new BlockPos(6, 2, 6)), BlockPhysics.SignalSide.ANY)));
-        StructureJoints.join(helper.getLevel(), new JointKind.Slider(Optional.empty(), Optional.of(drive)),
-                StructureJoints.Anchor.world(base, new Vec3(0, 1, 0)), StructureJoints.Anchor.on(lift, base,
-                        new Vec3(0, 1, 0)), Optional.empty());
-        lift.move(PhysicsMotion.AT_REST);
-        helper.runAfterDelay(40, () -> {
-            final double rose = middleOf(lift).y - base.y;
-            helper.assertTrue(Math.abs(rose - 1.0) < 0.1, "two seconds at half a metre a second lift it a metre: "
-                    + rose);
-            MovingStructures.takeAway(lift);
-            helper.succeed();
-        });
+        // Timed from when it moves: a structure whose plot of the yard is still loading moves only once it is ready.
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertTrue(lift.ready(), "the lift is ready"))
+                .thenExecute(() -> {
+                    StructureJoints.join(helper.getLevel(), new JointKind.Slider(Optional.empty(),
+                            Optional.of(drive)), StructureJoints.Anchor.world(base, new Vec3(0, 1, 0)),
+                            StructureJoints.Anchor.on(lift, base, new Vec3(0, 1, 0)), Optional.empty());
+                    lift.move(PhysicsMotion.AT_REST);
+                })
+                .thenExecuteAfter(40, () -> {
+                    final double rose = middleOf(lift).y - base.y;
+                    helper.assertTrue(Math.abs(rose - 1.0) < 0.1, "two seconds at half a metre a second lift it a"
+                            + " metre: " + rose);
+                    MovingStructures.takeAway(lift);
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 300)
