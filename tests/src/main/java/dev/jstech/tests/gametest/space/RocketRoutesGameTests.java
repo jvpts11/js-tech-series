@@ -382,6 +382,10 @@ public final class RocketRoutesGameTests {
                         "landed on the Moon's ground"))
                 .thenExecute(() -> {
                     final MovingStructure lander = at(moon, id);
+                    // Nobody aboard: the chunk it came down in, not the one it came into the sky over, is kept going
+                    // in its crew's stead, or its ascent stage freezes on its climb once the descent's hold lapses.
+                    moon.setChunkForced(down[0], down[1], false);
+                    made(moon, lander, down);
                     final Box box = lander.bounds();
                     helper.assertTrue(box.maxY() - box.minY() + 1 <= LANDER_TALL, "the lander stands on its own legs,"
                             + " no spent stage under it: " + (box.maxY() - box.minY() + 1) + " blocks tall");
@@ -404,6 +408,7 @@ public final class RocketRoutesGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(!computerOf(space, at(space, id)).cruising()
                         && at(space, id).motion() == null, "it comes to rest in the Overworld's orbit"))
                 .thenExecute(() -> {
+                    moon.setChunkForced(down[0], down[1], false);
                     final FlightComputerBlockEntity aboard = computerOf(space, at(space, id));
                     helper.assertTrue(aboard.wideOrbit().isEmpty(), "braking in the Overworld's air, it is captured: "
                             + "set out by " + home[0] + "; now " + aboard.available() + " m/s, shield "

@@ -38,6 +38,7 @@ import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.Rockets;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketParts;
+import dev.jstech.space.rocket.SpaceAhead;
 import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
@@ -179,16 +180,23 @@ public final class CruiseGameTests {
         final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, 0, 0);
         final int chunkX = SectionPos.blockToSectionCoord(spot[0]);
         final int chunkZ = SectionPos.blockToSectionCoord(spot[1]);
+        final double[] moon = SystemLayout.orbitSpot(SolarBody.MOON, 0, 0);
+        final int moonX = SectionPos.blockToSectionCoord(moon[0]);
+        final int moonZ = SectionPos.blockToSectionCoord(moon[1]);
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
                 .thenExecute(() -> {
                     // Nobody is aboard, and a space no player is in and no chunk loader holds stops a little after:
-                    // a chunk forced keeps it going, in its crew's stead, till the flight is over.
+                    // a chunk forced keeps it going, in its crew's stead, till the flight is over. The Moon's spot
+                    // too, where a cruise slept through waits till that space goes: a slow machine takes more ticks
+                    // to load it than the test has, as fast as a test server ticks.
                     space.setChunkForced(chunkX, chunkZ, true);
+                    space.setChunkForced(moonX, moonZ, true);
                     MovingStructures.travel(released, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]));
                 })
-                .thenWaitUntil(() -> helper.assertTrue(body(space, id) != null && body(space, id).ready(),
-                        "it rests in the Overworld's orbit"))
+                .thenWaitUntil(() -> helper.assertTrue(body(space, id) != null && body(space, id).ready()
+                        && SpaceAhead.ready(space, moon[0], SystemLayout.ORBIT_Y, moon[1]),
+                        "it rests in the Overworld's orbit, the Moon's spot it is bound for going"))
                 .thenExecute(() -> {
                     aboard[0] = computerOf(space, body(space, id));
                     before[0] = held(space, id);
@@ -225,8 +233,8 @@ public final class CruiseGameTests {
                         "it comes to rest at the end of its cruise"))
                 .thenExecute(() -> {
                     space.setChunkForced(chunkX, chunkZ, false);
+                    space.setChunkForced(moonX, moonZ, false);
                     final MovingStructure there = body(space, id);
-                    final double[] moon = SystemLayout.orbitSpot(SolarBody.MOON, 0, 0);
                     helper.assertTrue(Math.abs(there.pose().x() - moon[0]) < THERE
                             && Math.abs(there.pose().z() - moon[1]) < THERE, "over the Moon's orbit spot: "
                             + there.pose());

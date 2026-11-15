@@ -26,6 +26,7 @@ import dev.jstech.space.rocket.RocketKitBlocks;
 import dev.jstech.space.rocket.RocketStack;
 import dev.jstech.space.rocket.SkeletonPropellants;
 import dev.jstech.space.rocket.SkeletonRocketParts;
+import dev.jstech.space.rocket.SpaceAhead;
 import dev.jstech.space.rocket.TankLoad;
 import dev.jstech.space.universe.SolarBody;
 import dev.jstech.space.universe.SolarSystemWorlds;
@@ -125,19 +126,24 @@ public final class CouchSleepGameTests {
         final StructureUuid id = released.id();
         final ServerLevel space = SystemSpaces.spaceOf(level.getServer(), StarSystems.SOLAR_SYSTEM);
         final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, 0, 0);
+        final double[] moon = SystemLayout.orbitSpot(SolarBody.MOON, 0, 0);
         final FlightComputerBlockEntity[] aboard = new FlightComputerBlockEntity[1];
         helper.startSequence()
                 .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
                 .thenExecute(() -> {
+                    // The Moon's spot too: the cruise slept through waits there till that space goes, which takes a
+                    // slow machine more ticks than the test has, as fast as a test server ticks.
                     forced(space, spot, true);
+                    forced(space, moon, true);
                     MovingStructures.travel(released, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]));
                 })
                 .thenWaitUntil(() -> helper.assertTrue(body(space, id) != null && body(space, id).ready()
                         && crew.getVehicle() instanceof StructureSeatEntity, "it rests in the Overworld's orbit, the"
                         + " player in its seat: riding " + crew.getVehicle()))
                 .thenExecute(() -> aboard[0] = computerOf(space, body(space, id)))
-                .thenWaitUntil(() -> helper.assertTrue(ticking(space, aboard[0].getBlockPos()),
-                        "its flight computer's place in the yard ticks"))
+                .thenWaitUntil(() -> helper.assertTrue(ticking(space, aboard[0].getBlockPos())
+                        && SpaceAhead.ready(space, moon[0], SystemLayout.ORBIT_Y, moon[1]),
+                        "its flight computer's place in the yard ticks, and the Moon's spot it is bound for"))
                 .thenExecute(() -> aboard[0].execute(new PlannedTransfer(SolarSystemWorlds.MOON,
                         space.getGameTime(), BURN, CAPTURE, LONG_WAY, false, false)))
                 .thenWaitUntil(() -> helper.assertTrue(body(space, id).motion() instanceof RocketCruise
@@ -153,6 +159,7 @@ public final class CouchSleepGameTests {
                     crew.stopRiding();
                     GameTestPlayers.leave(crew);
                     forced(space, spot, false);
+                    forced(space, moon, false);
                     MovingStructures.takeAway(body(space, id));
                 })
                 .thenSucceed();
