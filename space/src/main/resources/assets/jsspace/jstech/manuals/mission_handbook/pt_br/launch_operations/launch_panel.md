@@ -65,7 +65,7 @@ title: Deixar um mundo 4/4
 ## O que pode dar errado
 
 > [!PROBLEM] CONTAGEM CORRENDO não faz nada.
-> MESTRE ou IGNIÇÃO não estão armados, ou o veículo, o propelente, o tempo, as garras ou o dilúvio estão NO-GO. O dilúvio fica NO-GO enquanto a porta de serviço da base tiver menos do que um dilúvio inteiro em AUTO: encha-a, ou desligue o DILÚVIO e confie na vala das chamas. Uma base sem porta de serviço mostra o dilúvio como NENHUM, que não suspende nada. TRIPULAÇÃO e ALCANCE nunca suspendem a contagem: ver a tripulação sentada e a base livre é trabalho do próprio jogador.
+> MESTRE ou IGNIÇÃO não estão armados, ou o veículo, o propelente, o tempo, as garras ou o dilúvio estão NO-GO. O dilúvio fica NO-GO enquanto a porta de serviço da base tiver menos do que um dilúvio inteiro em AUTO: encha-a, ou desligue o DILÚVIO e confie na vala das chamas. Da ignição em diante ele mostra GO, a sua água despejada sobre a base. Uma base sem porta de serviço mostra o dilúvio como NENHUM, que não suspende nada. TRIPULAÇÃO e ALCANCE nunca suspendem a contagem: ver a tripulação sentada e a base livre é trabalho do próprio jogador.
 
 > [!PROBLEM] A contagem fica em ESPERA em T-6.
 > LANÇAR não foi apertado até a ignição. Aperte-o: a contagem segue enquanto tudo estiver GO.

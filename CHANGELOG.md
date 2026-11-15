@@ -4251,6 +4251,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- (Space) A launch from a pad with a Pad Service Port runs on past ignition to T-0: once the deluge was poured at T-6,
+  the empty port read no-go on the board and the count held with the engines lit. From ignition on, the deluge shows
+  as go, its water poured over the pad, till the count is recycled, scrubbed or stood down.
 - (Space) A rocket climbing into a low orbit where another rests takes the nearest spot with room beside it, as one
   coming in from its cruise does: it used to come out inside the other, and both broke. Where each rocket rests in
   its orbit is kept with it, so one whose part of space is not loaded is kept clear of all the same, and a rocket

@@ -65,7 +65,7 @@ title: Leaving a world 4/4
 ## What can go wrong
 
 > [!PROBLEM] COUNT RUNNING does nothing.
-> MASTER or IGNITION is not armed, or the vehicle, the propellant, the weather, the clamps or the deluge is no-go. The deluge is no-go while the pad's service port holds less than a whole deluge on AUTO: fill it, or turn DELUGE off and trust the flame trench. A pad with no service port shows its deluge as NONE, which holds nothing. CREW and RANGE never hold the count: seeing the crew seated and the pad clear is the player's own job.
+> MASTER or IGNITION is not armed, or the vehicle, the propellant, the weather, the clamps or the deluge is no-go. The deluge is no-go while the pad's service port holds less than a whole deluge on AUTO: fill it, or turn DELUGE off and trust the flame trench. From ignition on it shows go, its water poured over the pad. A pad with no service port shows its deluge as NONE, which holds nothing. CREW and RANGE never hold the count: seeing the crew seated and the pad clear is the player's own job.
 
 > [!PROBLEM] The count holds at T-6.
 > LAUNCH was not pressed by ignition. Press it: the count runs on while all is go.

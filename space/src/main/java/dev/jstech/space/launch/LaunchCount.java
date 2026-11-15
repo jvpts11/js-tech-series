@@ -638,18 +638,27 @@ public final class LaunchCount {
 
         /**
          * The deluge's state on the board: none with no service port by the pad; off where the player turned it off;
-         * go when the port holds a whole deluge, else no-go.
+         * go when the port holds a whole deluge, and from ignition on, the port's water poured over the pad then;
+         * else no-go.
          */
         public TextKey delugeState() {
             if (!port()) {
                 return LaunchTexts.NONE;
             }
-            return !this.deluge ? LaunchTexts.OFF : this.delugeReady ? LaunchTexts.GO : LaunchTexts.NO_GO;
+            return !this.deluge ? LaunchTexts.OFF : this.delugeReady || lit() ? LaunchTexts.GO : LaunchTexts.NO_GO;
         }
 
         /** Whether the rocket's oxidiser and fuel are both loaded. */
         public boolean loaded() {
             return this.oxidiser >= FULL && this.fuel >= FULL;
+        }
+
+        /**
+         * Whether its engines are lit: LAUNCH pressed and the count past T-6, where they light, till it is recycled,
+         * scrubbed or stood down.
+         */
+        public boolean lit() {
+            return this.launched && this.left < LIGHT * SECOND;
         }
 
         /** Whether a service port stands by the pad, which holds its deluge and gives it its number. */
