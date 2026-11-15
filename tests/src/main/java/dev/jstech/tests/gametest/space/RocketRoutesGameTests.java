@@ -232,7 +232,7 @@ public final class RocketRoutesGameTests {
     public static void climb_spendsWhatTheClimbToTheLowOrbitAsks(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final FlightComputerBlockEntity computer = build(helper, TWO_STAGES);
-        final double onThePad = computer.availableToLand().orElse(-1);
+        final double onThePad = computer.available().orElse(-1);
         final double[] whole = new double[1];
         final MovingStructure released = RocketLaunch.release(level, computer.getBlockPos(), null).orElseThrow();
         final StructureUuid id = released.id();
@@ -248,7 +248,7 @@ public final class RocketRoutesGameTests {
                 .thenWaitUntil(() -> helper.assertTrue(released.ready(), "its body stands ready"))
                 .thenExecute(() -> {
                     // Off the ground, its blocks in the yard, the computer counts all its stages give.
-                    whole[0] = computerOf(level, released).availableToLand().orElse(-1);
+                    whole[0] = computerOf(level, released).available().orElse(-1);
                     space.setChunkForced(chunkX, chunkZ, true);
                     RocketLaunch.lift(level, released);
                 })
@@ -264,7 +264,7 @@ public final class RocketRoutesGameTests {
                 .thenWaitUntil(() -> {
                     final MovingStructure there = MovingStructures.byId(space, id);
                     final FlightComputerBlockEntity aboard = computerOf(space, there);
-                    final double left = aboard.availableToLand().orElse(-1);
+                    final double left = aboard.available().orElse(-1);
                     final double spent = whole[0] - left;
                     helper.assertTrue(spent >= Rocketry.SURFACE_TO_LOW_ORBIT && spent < Rocketry.SURFACE_TO_LOW_ORBIT
                                     + ABOUT && Math.abs(left - onThePad) < ABOUT,
@@ -310,8 +310,8 @@ public final class RocketRoutesGameTests {
                 .thenExecute(() -> helper.assertTrue(highest[0] >= SpaceClimbs.ceiling(level) - 1,
                         "it climbed to the edge of space: " + highest[0]))
                 // Its computer reads its tanks once a second.
-                .thenWaitUntil(() -> helper.assertTrue(computerOf(level, released).availableToLand().orElse(-1) < 1,
-                        "having burnt all it had: " + computerOf(level, released).availableToLand().orElse(-1)
+                .thenWaitUntil(() -> helper.assertTrue(computerOf(level, released).available().orElse(-1) < 1,
+                        "having burnt all it had: " + computerOf(level, released).available().orElse(-1)
                                 + " m/s left"))
                 .thenExecute(() -> MovingStructures.takeAway(released))
                 .thenSucceed();

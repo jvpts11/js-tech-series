@@ -142,13 +142,13 @@ public final class ShipRoutesGameTests {
     private static final int PRESSES = 3;
     private static final double SPEED_A_TICK = PulseCourse.SPEED * ShipFlightModel.TICK;
     /*
-     * The tickets keeping the places the ship is set at in space, and comes into a world at, ticking, and how far
-     * round them, in chunks; in a world, centred a way north of where it came in, past its pad and its runway, and the
-     * way LAND flies it to either.
+     * The tickets keeping the places the ship is set at in space, drops out at, and comes into a world at, ticking,
+     * and how far round them, in chunks: in space, past where its cruise takes it as its drive spools; in a world,
+     * centred a way north of where it came in, past its pad and its runway, and the way LAND flies it to either.
      */
     private static final TicketType<BlockPos> KEPT = TicketType.create("jstests_ship_routes", Vec3i::compareTo);
     private static final int TICKING = 2;
-    private static final int SPACE_KEPT = 3;
+    private static final int SPACE_KEPT = 6;
     private static final int WORLD_KEPT = 10;
     private static final int KEPT_NORTH = 96;
     /* How far round its pilot seats are looked for, for a failure to say, in blocks. */
@@ -279,10 +279,20 @@ public final class ShipRoutesGameTests {
         final double reach = SystemLayout.radius(to) * (1 + SystemLayout.LOW_ORBIT);
         final BlockPos start = BlockPos.containing(middle[0], SystemLayout.ORBIT_Y, middle[2] + reach
                 + SHORT_OF_THE_ORBIT);
-        // Its place there ticking first, as it would round a ship flown there, not set there.
-        sequence.thenExecute(() -> keep(helper, (ServerLevel) ship[0].level(), start, SPACE_KEPT, kept))
-                .thenWaitUntil(() -> helper.assertTrue(ticking((ServerLevel) ship[0].level(), start, SPACE_KEPT),
-                        "the place it is set at ticks"));
+        final BlockPos over = BlockPos.containing(middle[0], SystemLayout.ORBIT_Y, middle[2] + reach);
+        // Its place there ticking first, as it would round a ship flown there, not set there, and the place over the
+        // low orbit it drops out at: the land round its pilot loads slower than the test's server ticks.
+        sequence.thenExecute(() -> {
+            keep(helper, (ServerLevel) ship[0].level(), start, SPACE_KEPT, kept);
+            keep(helper, (ServerLevel) ship[0].level(), over, SPACE_KEPT, kept);
+            // Stopped where it is meanwhile, its pilot at the helm, never flying off out of the land loaded.
+            MovingStructures.move(ship[0], flight(ship[0]).with(ShipFlightModel.State.RESTING));
+        }).thenWaitUntil(() -> {
+            held(ship[0], pilot[0], Map.of());
+            helper.assertTrue(ticking((ServerLevel) ship[0].level(), start, SPACE_KEPT)
+                    && ticking((ServerLevel) ship[0].level(), over, SPACE_KEPT), "the places it is set at and drops"
+                    + " out at tick");
+        });
         sequence.thenExecute(() -> {
             // Its nose level and north, as it was built: wherever it flew before, it jumps towards the world.
             setAt(helper, ship[0], pilot[0], StructurePose.at(middle[0], SystemLayout.ORBIT_Y, middle[2] + reach
