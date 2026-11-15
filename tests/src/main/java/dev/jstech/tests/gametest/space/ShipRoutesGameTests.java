@@ -88,8 +88,12 @@ public final class ShipRoutesGameTests {
     /* Each its own batch: the ships go to the same places of space and of the worlds. */
     private static final String PADS_BATCH = "jsspace_ship_routes_pads";
     private static final String RUNWAYS_BATCH = "jsspace_ship_routes_runways";
-    /* How long a trip to the Moon, on to Mars and home takes at the most, in ticks. */
-    private static final int TRIP = 72_000;
+    /*
+     * How long a trip to the Moon, on to Mars and home takes at the most, in ticks: most of them spent waiting for the
+     * land of each world to be made, which the test's server ticks through as fast as it can, so the slower a machine
+     * makes land, the more ticks the trip takes.
+     */
+    private static final int TRIP = 200_000;
     /* Where the dock's lowest corner stands in the arena. */
     private static final BlockPos CORNER = new BlockPos(1, 2, 1);
     /* How long its pilot holds the helm's UP as it rises off the land, in ticks, and how far it rises at least. */
