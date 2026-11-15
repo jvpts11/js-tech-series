@@ -32,6 +32,7 @@ import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipGround;
 import dev.jstech.space.ship.ShipReadings;
+import dev.jstech.space.ship.ShipSequence;
 import dev.jstech.space.ship.ShipKitBlocks;
 import dev.jstech.space.ship.SmallShipParts;
 import dev.jstech.space.shipyard.ShipyardPlans;
@@ -99,6 +100,14 @@ public final class ShipFlightGameTests {
     private static final int BOOSTED = 20;
     /* How fast a ship hovering still goes at the most, in metres a second; boosted a second it goes ten times that. */
     private static final double AT_REST = 1;
+    /*
+     * How high over its cradle a ship is set hovering, in blocks, within reach of its way down; how long it is let
+     * settle there, how long its way down takes at the most, in ticks, and how near its height its way up ends.
+     */
+    private static final double OVER_THE_CRADLE = 20;
+    private static final int SETTLING = 5;
+    private static final long SET_DOWN_WITHIN = 100;
+    private static final double ROSE_CLOSE = 1;
     /*
      * How far north of the dock the land is kept loaded, in chunks, as a pilot aboard keeps the land round them, and
      * how far west for a ship that turns and for one that flies straight: the ship flies out of the arena, which alone
@@ -301,14 +310,116 @@ public final class ShipFlightGameTests {
             helper.assertTrue(Math.abs(ship[0].pose().y() - from[1].y()) < HOVER_DRIFT, "let go of up, it hovers"
                     + " where it is: " + (ship[0].pose().y() - from[1].y()));
             final ShipReadings shown = console(helper, ship[0]).flight();
-            helper.assertTrue(shown.lifting() && shown.gearDown() && shown.nozzles() > HOVER_NOZZLES, "its"
-                    + " console shows its nozzles turned down holding it, its gear down: " + shown);
+            helper.assertTrue(shown.lifting() && shown.nozzles() > HOVER_NOZZLES && shown.gearDown()
+                    == shown.altitude() < ShipFlightModel.GEAR_HEIGHT, "its console shows its nozzles turned down"
+                    + " holding it, its gear down only near the land: " + shown);
         });
         hold(helper, sequence, ship, StructureControls.ControlAxis.DOWN, RISING * 2).thenWaitUntil(() -> {
             pilot(helper, ship[0], Map.of(StructureControls.ControlAxis.DOWN, 1F));
             helper.assertTrue(((ShipFlight) ship[0].motion()).grounded() && ship[0].pose().y() < from[1].y() - 1,
                     "held down, it comes back down onto its cradle");
         }).thenExecute(() -> MovingStructures.takeAway(ship[0])).thenSucceed();
+    }
+
+    /*
+     * On feet, hovering near the land, DOWN held a moment: it comes down by itself onto the land under it, slowing as
+     * it nears it, its pilot holding UP meanwhile for nothing, and stands there whole, at rest, in about four seconds.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void sequence_onFeetDownNearTheLandSetsItDownByItselfWhole(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final int[] blocks = new int[1];
+        final long[] began = new long[1];
+        final GameTestSequence sequence = letGo(helper, ship, LEGS_SHIP).thenExecute(() -> {
+            aloft(ship[0], OVER_THE_CRADLE);
+            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(ShipFlightModel.State.RESTING));
+        });
+        cruise(helper, sequence, ship, SETTLING).thenExecute(() -> blocks[0] = blocksOf(helper, ship[0]));
+        hold(helper, sequence, ship, StructureControls.ControlAxis.DOWN, 1).thenWaitUntil(() -> helper.assertTrue(
+                ((ShipFlight) ship[0].motion()).sequence().map(ShipSequence::landing).orElse(false),
+                "DOWN held near the land, it begins its way down: " + ship[0].motion()))
+                .thenExecute(() -> began[0] = helper.getLevel().getGameTime())
+                .thenWaitUntil(() -> {
+                    pilot(helper, ship[0], Map.of(StructureControls.ControlAxis.UP, 1F));
+                    final ShipFlight flight = (ShipFlight) ship[0].motion();
+                    helper.assertTrue(flight.grounded() && flight.sequence().isEmpty(), "it comes down by itself,"
+                            + " its keys doing nothing, and stands: " + flight);
+                })
+                .thenExecute(() -> {
+                    final long took = helper.getLevel().getGameTime() - began[0];
+                    helper.assertTrue(took <= SET_DOWN_WITHIN, "in about four seconds: " + took + " ticks");
+                    helper.assertTrue(blocksOf(helper, ship[0]) == blocks[0], "whole, nothing holed: "
+                            + blocksOf(helper, ship[0]) + " blocks of " + blocks[0]);
+                    MovingStructures.takeAway(ship[0]);
+                })
+                .thenSucceed();
+    }
+
+    /*
+     * On feet, standing where it set down over the dock, the sky clear over it, UP held a moment: it goes straight up
+     * by itself, its pilot holding DOWN meanwhile for nothing, its gear folded away, and in about three seconds hovers
+     * there, the helm its pilot's again.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 800)
+    public static void sequence_onFeetUpStandingLiftsItOffByItselfAndHandsTheHelmBack(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final StructurePose[] from = new StructurePose[2];
+        final GameTestSequence sequence = letGo(helper, ship, LEGS_SHIP).thenExecute(() -> {
+            aloft(ship[0], OVER_THE_CRADLE);
+            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(ShipFlightModel.State.RESTING));
+        });
+        cruise(helper, sequence, ship, SETTLING);
+        hold(helper, sequence, ship, StructureControls.ControlAxis.DOWN, 1).thenWaitUntil(() -> helper.assertTrue(
+                ((ShipFlight) ship[0].motion()).sequence().isPresent(), "DOWN held, it begins its way down"))
+                .thenWaitUntil(() -> {
+                    final ShipFlight flight = (ShipFlight) ship[0].motion();
+                    helper.assertTrue(flight.grounded() && flight.sequence().isEmpty(), "set down over the dock: "
+                            + flight);
+                })
+                .thenExecute(() -> from[0] = ship[0].pose());
+        hold(helper, sequence, ship, StructureControls.ControlAxis.UP, 1).thenWaitUntil(() -> helper.assertTrue(
+                ((ShipFlight) ship[0].motion()).sequence().map(going -> !going.landing()).orElse(false),
+                "UP held standing, it begins its way up: " + ship[0].motion()));
+        // DOWN held on its way up does nothing; let go before it is over, else, near the land, it would set it down.
+        hold(helper, sequence, ship, StructureControls.ControlAxis.DOWN, HELD).thenWaitUntil(() -> {
+            pilot(helper, ship[0], Map.of());
+            helper.assertTrue(((ShipFlight) ship[0].motion()).sequence().isEmpty(), "it goes up by itself, its keys"
+                    + " doing nothing");
+        }).thenExecute(() -> {
+            final ShipFlight flight = (ShipFlight) ship[0].motion();
+            final double rose = ship[0].pose().y() - from[0].y();
+            helper.assertTrue(!flight.grounded() && Math.abs(rose - ShipSequence.RISES) < ROSE_CLOSE, "straight up its"
+                    + " height off the land: " + rose + " blocks");
+            helper.assertTrue(!console(helper, ship[0]).flight().gearDown(), "its gear folded away");
+            from[1] = ship[0].pose();
+        });
+        cruise(helper, sequence, ship, HOVERED).thenExecute(() -> {
+            helper.assertTrue(Math.abs(ship[0].pose().y() - from[1].y()) < HOVER_DRIFT, "the helm its pilot's again,"
+                    + " holding nothing it hovers where it is: " + (ship[0].pose().y() - from[1].y()));
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
+    }
+
+    /* On wheels, hovering, DOWN held: it comes down no faster than a touch down takes unharmed, and stands whole. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void flight_onWheelsHoveringDownItTouchesDownWhole(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final int[] blocks = new int[1];
+        final GameTestSequence sequence = letGo(helper, ship, SHIP).thenExecute(() -> {
+            aloft(ship[0], OVER_THE_CRADLE);
+            MovingStructures.move(ship[0], ((ShipFlight) ship[0].motion()).with(ShipFlightModel.State.RESTING));
+        });
+        cruise(helper, sequence, ship, SETTLING).thenExecute(() -> blocks[0] = blocksOf(helper, ship[0]))
+                .thenWaitUntil(() -> {
+                    pilot(helper, ship[0], Map.of(StructureControls.ControlAxis.DOWN, 1F));
+                    helper.assertTrue(((ShipFlight) ship[0].motion()).grounded(), "held down, it comes down");
+                })
+                .thenExecute(() -> {
+                    helper.assertTrue(blocksOf(helper, ship[0]) == blocks[0], "and stands whole, nothing holed: "
+                            + blocksOf(helper, ship[0]) + " blocks of " + blocks[0]);
+                    MovingStructures.takeAway(ship[0]);
+                })
+                .thenSucceed();
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
@@ -665,5 +776,15 @@ public final class ShipFlightGameTests {
     private static ServerLevel world(final GameTestHelper helper, final ResourceLocation world) {
         final ResourceKey<Level> key = SpaceWorlds.get(helper.getLevel(), world).orElseThrow().dimension();
         return RuntimeDimensions.getOrCreate(helper.getLevel().getServer(), key, key.location());
+    }
+
+    /* How many blocks stand in {@code ship}'s plot of the yard now: fewer once any is holed. */
+    private static int blocksOf(final GameTestHelper helper, final MovingStructure ship) {
+        int count = 0;
+        for (final BlockPos at : BlockPos.betweenClosed(ship.bounds().minX(), ship.bounds().minY(),
+                ship.bounds().minZ(), ship.bounds().maxX(), ship.bounds().maxY(), ship.bounds().maxZ())) {
+            count += helper.getLevel().getBlockState(at).isAir() ? 0 : 1;
+        }
+        return count;
     }
 }

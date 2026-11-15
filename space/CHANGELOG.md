@@ -935,8 +935,18 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   climb to the low orbit asking for the air and the pull climbed through: a rocket shown reaching a destination
   reaches it, and the screen and the flight computer on the pad give the same delta-v. It counted the first stage's
   in the air it leaves, less than the rocket had. The thrust against weight at lift-off is still in that air.
+- A small ship on feet lands and takes off by set sequences it flies by itself: hovering within about thirty
+  metres of the land, DOWN held brings it down onto the land under it in about four seconds, touching it at under a
+  metre a second; standing, UP held lifts it straight up twelve metres in three seconds and hands the helm back
+  hovering. The helm's keys do nothing while either runs, nothing is holed by it, and LAND to a pad ends with the
+  landing one.
+- A small ship's gear is down on the land and within ten metres of it, and folds away higher up, hovering or
+  flying: it stayed down at any height while the ship hovered.
 
 ### Fixed
+- A small ship hovering down at its pilot's hand comes down no faster than DOWN asks, and on wheels at five
+  metres a second at most, gentle enough for its gear: its nozzles turning to hold it let it sink faster on top, and
+  it met the land fast enough to be holed.
 - The keys of the XFER page plan nothing while a rocket flies its transfer: a world chosen on the way dropped
   the plan being flown, and the rocket came to the end of its cruise with no capture burn and out of the world's
   orbit, unable to land there.

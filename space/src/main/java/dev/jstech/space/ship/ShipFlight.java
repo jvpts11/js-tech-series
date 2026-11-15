@@ -69,10 +69,11 @@ import org.jetbrains.annotations.Nullable;
  *                 blocks, in this dimension or another
  * @param autopilot its autopilot engaged, if one is ({@link ShipAutopilots})
  * @param pulse    its pulse jump under way, if one is ({@link ShipPulse})
+ * @param sequence its fixed way down onto the land or up off it under way, if one is, on feet ({@link ShipSequence})
  */
 public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, ShipFlightModel.Performance ship,
                          boolean grounded, Optional<BlockPos> console, Optional<ShipAutopilot> autopilot,
-                         Optional<ShipPulse.Jump> pulse)
+                         Optional<ShipPulse.Jump> pulse, Optional<ShipSequence> sequence)
         implements IStructureMotion {
 
     public static final ResourceLocation TYPE = ResourceLocation.fromNamespaceAndPath(JsSpace.MODID, "ship_flight");
@@ -93,6 +94,13 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                     GEAR.optionalFieldOf("gear", ShipFlightModel.Gear.NONE)
                             .forGetter(ShipFlightModel.Performance::gear))
                     .apply(instance, ShipFlightModel.Performance::new));
+    private static final Codec<ShipSequence> SEQUENCE = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.BOOL.fieldOf("landing").forGetter(ShipSequence::landing),
+            Codec.LONG.fieldOf("began").forGetter(ShipSequence::began),
+            Codec.INT.fieldOf("ticks").forGetter(ShipSequence::ticks),
+            Codec.DOUBLE.fieldOf("depth").forGetter(ShipSequence::depth),
+            Codec.DOUBLE.fieldOf("start").forGetter(ShipSequence::start)
+    ).apply(instance, ShipSequence::new));
     public static final MapCodec<ShipFlight> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             STATE.forGetter(ShipFlight::state),
             Codec.INT.fieldOf("nose_x").forGetter(ShipFlight::noseX),
@@ -101,14 +109,16 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             Codec.BOOL.optionalFieldOf("grounded", false).forGetter(ShipFlight::grounded),
             BlockPos.CODEC.optionalFieldOf("console").forGetter(ShipFlight::console),
             ShipAutopilot.CODEC.optionalFieldOf("autopilot").forGetter(ShipFlight::autopilot),
-            ShipPulse.Jump.CODEC.optionalFieldOf("pulse").forGetter(ShipFlight::pulse)
+            ShipPulse.Jump.CODEC.optionalFieldOf("pulse").forGetter(ShipFlight::pulse),
+            SEQUENCE.optionalFieldOf("sequence").forGetter(ShipFlight::sequence)
     ).apply(instance, ShipFlight::new));
     /* The overworld's air at sea level, in kilopascals, what its air's thickness is told against. */
     private static final double SEA_PRESSURE = 101.3;
     /* How far over the land a stretch is empty for the boost, in blocks. */
     private static final int EMPTY_OVER = 24;
-    /* Below this, in metres a second or blocks, nothing moves. */
+    /* Below this, in metres a second or blocks, nothing moves; under this over the land, in blocks, it stands on it. */
     private static final double STILL = 1.0e-4;
+    private static final double STANDING = 1.0;
     /* How high over the land a ship over land not loaded is taken to be, in blocks: far. */
     private static final double FAR = 1000;
     /* How far ahead the land is loaded, in ticks of its flight, and from what speed, in metres a second. */
@@ -118,8 +128,9 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     private static final double HELD_EVERY = 8;
     /* How long a full load of deuterium keeps its reactor going in flight, in seconds: four hours. */
     static final double REACTOR_LOAD_SECONDS = 4 * 3600;
-    /* What the autopilot holds docking: its throttle closing. */
+    /* What the autopilot holds docking: its throttle closing; and a pilot at the helm holding nothing. */
     private static final ShipFlightModel.Held BRAKING = new ShipFlightModel.Held(0, 1, 0, 0, 0, 0, false, true);
+    private static final ShipFlightModel.Held AT_THE_HELM = new ShipFlightModel.Held(0, 0, 0, 0, 0, 0, false, true);
     /* Below this, in metres a second, a ship has set down, or stopped to dock; how near its spot LAND sets it down. */
     private static final double LANDED_SPEED = 0.5;
     private static final double ARRIVED = 3;
@@ -146,7 +157,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     public static ShipFlight resting(final int noseX, final int noseZ, final ShipFlightModel.Performance ship,
                                      final Optional<BlockPos> console) {
         return new ShipFlight(ShipFlightModel.State.RESTING, noseX, noseZ, ship, true, console, Optional.empty(),
-                Optional.empty());
+                Optional.empty(), Optional.empty());
     }
 
     /**
@@ -201,19 +212,19 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     /** Its flight as it stands, another way. */
     public ShipFlight with(final ShipFlightModel.State next) {
         return new ShipFlight(next, this.noseX, this.noseZ, this.ship, this.grounded, this.console, this.autopilot,
-                this.pulse);
+                this.pulse, this.sequence);
     }
 
     /** Its flight with {@code pilot} engaged, or none. */
     public ShipFlight engaged(final Optional<ShipAutopilot> pilot) {
         return new ShipFlight(this.state, this.noseX, this.noseZ, this.ship, this.grounded, this.console, pilot,
-                this.pulse);
+                this.pulse, this.sequence);
     }
 
     /** Its flight in the pulse jump {@code jump}, or out of one with none, its autopilot let go. */
     public ShipFlight jumping(final ShipPulse.@Nullable Jump jump) {
         return new ShipFlight(this.state, this.noseX, this.noseZ, this.ship, this.grounded, this.console,
-                Optional.empty(), Optional.ofNullable(jump));
+                Optional.empty(), Optional.ofNullable(jump), this.sequence);
     }
 
     /** Where its console stands in {@code body}'s yard now, if it has one. */
@@ -254,6 +265,10 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         if (this.pulse.isPresent()) {
             return ShipPulse.jumping(level, body, now, frame, this, helm, keeper);
         }
+        // Going its fixed way down or up, it goes as its sequence has it, its pilot's keys doing nothing meanwhile.
+        if (this.sequence.isPresent()) {
+            return settling(level, body, now, frame, this.sequence.get(), whole, keeper);
+        }
         // Its pulse jump's key held where it may jump, its drive spools, the reactor burning for it; spooled, it jumps.
         final boolean spooling = piloted && !this.grounded && ShipPulse.held(body, tick) && fuelled
                 && ShipPulse.mayJump(level, body, now) && (keeper == null || keeper.burn(ShipFlightModel.TICK
@@ -290,12 +305,18 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             held = ShipAutopilots.orbit(this.state, pitch);
             shown = climbing(level, now, nose, altitude, this.state.speed() * nose[1]);
         }
+        // On feet, hovering near the land with DOWN held, by its pilot or by LAND over its spot, it comes down by
+        // itself; standing, UP held, it goes up by itself: its fixed ways down onto the land and up off it.
+        final Optional<ShipSequence> begun = begun(level, now, held, around, whole, tick);
+        if (begun.isPresent()) {
+            return self.sequenced(begun).settling(level, body, now, frame, begun.get(), whole, keeper);
+        }
         final ShipFlightModel.Tick next = ShipFlightModel.step(this.state, fuelled ? held : held.unboosted(),
                 around, whole, pitch);
         if (keeper != null) {
             keeper.flew(ShipReadings.of(next, this.grounded, altitude, shown, ShipPulse.shown(body, spooled, tick)));
         }
-        final Step flown = self.flownOn(level, body, now, frame, next);
+        final Step flown = self.flownOn(level, body, now, frame, next, false);
         final Step out = spooled >= ShipPulse.SPOOL_TICKS && flown.next() instanceof ShipFlight after
                 ? new Step(flown.pose(), after.jumping(ShipPulse.Jump.begun())) : flown;
         if (out.next() instanceof ShipFlight after && after.grounded() != this.grounded) {
@@ -326,9 +347,12 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         return true;
     }
 
-    /* Its tick on from {@code now}, as {@code next} turns, pitches and flies it, the land ahead loaded first. */
+    /*
+     * Its tick on from {@code now}, as {@code next} turns, pitches and flies it, the land ahead loaded first; meeting
+     * the land {@code gentle}, as its fixed way down brings it, unharmed.
+     */
     private Step flownOn(final ServerLevel level, final MovingStructure body, final StructurePose now,
-                         final StructureFrame frame, final ShipFlightModel.Tick next) {
+                         final StructureFrame frame, final ShipFlightModel.Tick next, final boolean gentle) {
         StructurePose turned = next.turn() == 0 ? now : now.turnedBy(0, 1, 0, Math.toRadians(next.turn()));
         if (next.pitch() != 0) {
             final double[] way = nose(new StructureFrame(turned, frame.pivotX(), frame.pivotY(), frame.pivotZ()));
@@ -348,7 +372,8 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             // Land not going yet would freeze it there: it waits on its way, as it flew, till the land goes.
             return new Step(now, flying(next.state(), this.grounded));
         }
-        return flown(level, body, now, turned, way[0] * ahead, way[1] * ahead + up, way[2] * ahead, next.state());
+        return flown(level, body, now, turned, way[0] * ahead, way[1] * ahead + up, way[2] * ahead, next.state(),
+                gentle);
     }
 
     /*
@@ -514,6 +539,71 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         return ShipReadings.Pilot.of(ShipAutopilot.Mode.ORBIT, ahead, 0, climb, false, apogee, seconds);
     }
 
+    /*
+     * The fixed way down or up a ship on feet that can hold itself up where it is begins at {@code tick}, holding
+     * {@code held}: standing, UP held, its way up; hovering within {@link ShipSequence#LANDS_FROM} over the land,
+     * DOWN held, its way down onto the land under it, going on at the speed it comes down at. None otherwise.
+     */
+    private Optional<ShipSequence> begun(final ServerLevel level, final StructurePose now,
+                                         final ShipFlightModel.Held held, final ShipFlightModel.Air around,
+                                         final ShipFlightModel.Performance whole, final long tick) {
+        if (whole.gear() != ShipFlightModel.Gear.LEGS || !hoversAt(level, now.y(), whole)) {
+            return Optional.empty();
+        }
+        // Standing on the land, not only told so the tick before: a ship set high up still thinks it stands.
+        if (this.grounded && around.height() < STANDING) {
+            return held.up() > 0 ? Optional.of(ShipSequence.takingOff(tick)) : Optional.empty();
+        }
+        final boolean near = this.state.speed() < ShipFlightModel.HOVER_BELOW && around.height() >= 0
+                && around.height() < ShipSequence.LANDS_FROM;
+        return near && held.down() > 0 ? Optional.of(ShipSequence.landing(tick, around.height(),
+                Math.max(0, this.state.sink() - this.state.rise()))) : Optional.empty();
+    }
+
+    /*
+     * A tick of its fixed way down or up, {@code going}: straight down or up by as far as its way goes this tick, its
+     * nose as it is, meeting the land gently however it meets it; coming down, its time up short of the land, on down
+     * slowly till it stands. Down, once it stands on the land, it is at rest; up, its time up, it hovers, the helm its
+     * pilot's again. Its gear is down coming down and on the land, folded away going up once off it.
+     */
+    private Step settling(final ServerLevel level, final MovingStructure body, final StructurePose now,
+                          final StructureFrame frame, final ShipSequence going,
+                          final ShipFlightModel.Performance whole, final @Nullable AirReserveEntity keeper) {
+        final long tick = level.getGameTime();
+        final double way = going.landing() && going.over(tick) ? ShipSequence.CREEPS * ShipFlightModel.TICK
+                : going.gone(tick) - going.gone(tick - 1);
+        final double rise = (going.landing() ? -way : way) / ShipFlightModel.TICK;
+        // What its nozzles and thrusters do holding it still there, as for a pilot at the helm holding nothing: so
+        // they hold it once the helm is its pilot's again.
+        final ShipFlightModel.Tick held = ShipFlightModel.step(new ShipFlightModel.State(0, 0, this.state.throttle(),
+                0, this.state.nozzles()), AT_THE_HELM, air(level, now, body), whole, 0);
+        final ShipFlightModel.Tick next = new ShipFlightModel.Tick(new ShipFlightModel.State(0, 0,
+                held.state().throttle(), rise, held.state().nozzles()), 0, 0, false, 0, false, held.bells(),
+                going.landing() || this.grounded, held.lifting(), held.thrusting());
+        if (keeper != null) {
+            // LAND setting it down on its spot shows still, the way down its last stretch.
+            final ShipReadings.Pilot shown = this.autopilot.filter(pilot -> pilot.mode() == ShipAutopilot.Mode.LAND)
+                    .flatMap(ShipAutopilot::spot).map(spot -> ShipReadings.Pilot.of(ShipAutopilot.Mode.LAND, spot,
+                            Math.hypot(spot.x - now.x(), spot.z - now.z()), 0, false, 0, 0))
+                    .orElse(ShipReadings.Pilot.NONE);
+            keeper.flew(ShipReadings.of(next, this.grounded, ShipAltitude.of(level, now.x(), body.worldBox().minY,
+                    now.z()), shown, ShipPulse.shown(body, 0, tick)));
+        }
+        final Step flown = flownOn(level, body, now, frame, next, true);
+        if (!(flown.next() instanceof ShipFlight after)) {
+            return flown;
+        }
+        final boolean done = going.landing() ? after.grounded() : going.over(tick);
+        final ShipFlight out = !done ? after : after.with(going.landing() ? ShipFlightModel.State.RESTING
+                : new ShipFlightModel.State(0, 0, after.state().throttle(), 0, after.state().nozzles()))
+                .sequenced(Optional.empty());
+        if (out.grounded() != this.grounded) {
+            // Come down onto the land or lifted off it: its boarding stair follows, where its outer door is open.
+            ShipStairs.groundChanged(level, body, out.grounded());
+        }
+        return new Step(flown.pose(), out);
+    }
+
     /* Whether its pilot holds any of the helm's keys, taking the helm back from the autopilot. */
     private static boolean holding(final ShipFlightModel.Held held) {
         return held.forward() > 0 || held.back() > 0 || held.left() > 0 || held.right() > 0 || held.up() > 0
@@ -522,17 +612,18 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
 
     /*
      * The step that takes {@code body} from {@code now}, turned to {@code turned}, on by {@code dx, dy, dz}: resting on
-     * the land it comes down on, stepping up what is low enough, and stopped short by the land it would fly into.
+     * the land it comes down on, stepping up what is low enough, and stopped short by the land it would fly into; as
+     * hard as it met the land, or unharmed meeting it {@code gentle}.
      */
     private Step flown(final ServerLevel level, final MovingStructure body, final StructurePose now,
                        final StructurePose turned, final double dx, final double dy, final double dz,
-                       final ShipFlightModel.State next) {
+                       final ShipFlightModel.State next, final boolean gentle) {
         // Coming down, it may rise back as far as it came down and a step, to stand on the land it came down on.
         final double most = ShipGround.STEP + Math.max(0, -dy);
         final StructurePose moved = turned.movedTo(now.x() + dx, now.y() + dy, now.z() + dz);
         final ShipGround.Contact meets = ShipGround.meet(level, body, frameOf(body, moved), most);
         if (!meets.blocked()) {
-            if (meets.touching() && !this.grounded && dy < 0) {
+            if (meets.touching() && !this.grounded && dy < 0 && !gentle) {
                 // Touching down: as hard as it came down.
                 ShipImpacts.met(level, body, -dy / ShipFlightModel.TICK);
             }
@@ -544,7 +635,9 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
             return still(now, moved, next, false);
         }
         // Run into land: it stops where it was, as hard as it flew into it, only coming down onto what is under it.
-        ShipImpacts.met(level, body, Math.sqrt(dx * dx + dy * dy + dz * dz) / ShipFlightModel.TICK);
+        if (!gentle) {
+            ShipImpacts.met(level, body, Math.sqrt(dx * dx + dy * dy + dz * dz) / ShipFlightModel.TICK);
+        }
         final ShipFlightModel.State stopped = new ShipFlightModel.State(0, next.sink(), next.throttle(),
                 next.rise(), next.nozzles());
         final StructurePose dropped = turned.movedTo(now.x(), now.y() + Math.min(0, dy), now.z());
@@ -568,7 +661,13 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     /* Its flight standing as {@code next}, on the land or not. */
     private ShipFlight flying(final ShipFlightModel.State next, final boolean landed) {
         return new ShipFlight(next, this.noseX, this.noseZ, this.ship, landed, this.console, this.autopilot,
-                this.pulse);
+                this.pulse, this.sequence);
+    }
+
+    /* Its flight going its fixed way down or up as {@code going} has it, or out of it with none. */
+    private ShipFlight sequenced(final Optional<ShipSequence> going) {
+        return new ShipFlight(this.state, this.noseX, this.noseZ, this.ship, this.grounded, this.console,
+                this.autopilot, this.pulse, going);
     }
 
     /* Its console, which shows its flight and keeps its reactor's deuterium, where its yard's land is loaded. */

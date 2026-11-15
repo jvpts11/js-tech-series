@@ -16,6 +16,7 @@ import dev.jstech.core.moving.StructureSeatEntity;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
 import dev.jstech.core.multiblock.plan.PlannedBuild;
+import dev.jstech.core.region.Box;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.space.api.SpaceWorlds;
 import dev.jstech.space.landing.RunwayBeaconBlock;
@@ -409,7 +410,9 @@ public final class ShipRoutesGameTests {
         final UUID pad = UUID.randomUUID();
         final BlockPos[] floor = new BlockPos[1];
         final Vec3[] spot = new Vec3[1];
+        final int[] blocks = new int[1];
         return sequence.thenExecute(() -> {
+            blocks[0] = blocksOf(ship[0]);
             floor[0] = padNorthOf(world, ship[0].pose());
             ShipLandings.notePad(world, pad, floor[0], Ownership.of(pilot[0].getUUID()));
             kept.add(() -> {
@@ -436,6 +439,8 @@ public final class ShipRoutesGameTests {
             final StructurePose at = ship[0].pose();
             helper.assertTrue(Math.hypot(at.x() - spot[0].x, at.z() - spot[0].z) < ON_THE_SPOT, "on the pad's"
                     + " middle: " + at + " for " + spot[0]);
+            helper.assertTrue(blocksOf(ship[0]) == blocks[0], "whole, its feet set down gently: " + blocksOf(ship[0])
+                    + " blocks of " + blocks[0]);
         });
     }
 
@@ -449,7 +454,9 @@ public final class ShipRoutesGameTests {
                                                   final MovingStructure[] ship, final ServerPlayer[] pilot,
                                                   final ServerLevel world, final List<Runnable> kept) {
         final BlockPos[] beacon = new BlockPos[1];
+        final int[] blocks = new int[1];
         return sequence.thenExecute(() -> {
+            blocks[0] = blocksOf(ship[0]);
             beacon[0] = runwayNorthOf(world, ship[0].pose());
             kept.add(() -> takeAwayRunway(world, beacon[0]));
         }).thenWaitUntil(() -> {
@@ -476,6 +483,8 @@ public final class ShipRoutesGameTests {
             helper.assertTrue(along > 0 && along <= ShipAutopilots.RUNWAY_LENGTH
                     && Math.abs(at.x() - beacon[0].getX() - 0.5) < ON_THE_SPOT, "stopped on the runway's stretch, on"
                     + " its line: " + along + " along, " + (at.x() - beacon[0].getX() - 0.5) + " across");
+            helper.assertTrue(blocksOf(ship[0]) == blocks[0], "whole, its wheels set down gently: " + blocksOf(ship[0])
+                    + " blocks of " + blocks[0]);
         });
     }
 
@@ -487,6 +496,17 @@ public final class ShipRoutesGameTests {
             at.move(0, -1, 0);
         }
         return world.getBlockState(at) + " at " + at.toShortString();
+    }
+
+    /* How many blocks stand in {@code ship}'s plot of the yard now: fewer once any is holed. */
+    private static int blocksOf(final MovingStructure ship) {
+        final Box box = ship.bounds();
+        int count = 0;
+        for (final BlockPos at : BlockPos.betweenClosed(box.minX(), box.minY(), box.minZ(), box.maxX(), box.maxY(),
+                box.maxZ())) {
+            count += ship.level().getBlockState(at).isAir() ? 0 : 1;
+        }
+        return count;
     }
 
     /* Its pilot presses the autopilot's key till {@code mode} is engaged, a few times at most. */

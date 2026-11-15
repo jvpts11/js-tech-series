@@ -4253,8 +4253,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   lost.
 - (Computers) The Advanced High Performance Cluster Management Computer has its recipe, from the Advanced High
   Performance Personal Computer and a Fabric DPU, as every other case's has.
+- (Space) A small ship on feet lands and takes off by set sequences it flies by itself: hovering within about thirty
+  metres of the land, DOWN held brings it down onto the land under it in about four seconds, touching it at under a
+  metre a second; standing, UP held lifts it straight up twelve metres in three seconds and hands the helm back
+  hovering. The helm's keys do nothing while either runs, nothing is holed by it, and LAND to a pad ends with the
+  landing one.
+- (Space) A small ship's gear is down on the land and within ten metres of it, and folds away higher up, hovering or
+  flying: it stayed down at any height while the ship hovered.
 
 ### Fixed
+- (Space) A small ship hovering down at its pilot's hand comes down no faster than DOWN asks, and on wheels at five
+  metres a second at most, gentle enough for its gear: its nozzles turning to hold it let it sink faster on top, and
+  it met the land fast enough to be holed.
 - (Space) The keys of the XFER page plan nothing while a rocket flies its transfer: a world chosen on the way dropped
   the plan being flown, and the rocket came to the end of its cruise with no capture burn and out of the world's
   orbit, unable to land there.

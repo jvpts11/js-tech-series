@@ -45,6 +45,8 @@ class ShipFlightModelTest {
     private static final double BOOSTED_SPACE = 300;
     /* How fast it turns and pitches while boosting, as a share of how fast it does otherwise. */
     private static final double BOOST_TURNS = 0.4;
+    /* How fast a ship on feet hovering comes down as its pilot holds DOWN, in metres a second. */
+    private static final double HOVERING_DOWN = 6;
 
     @Test
     void step_openThrottleGathersSpeedByThrustOverMass() {
@@ -88,13 +90,34 @@ class ShipFlightModelTest {
     }
 
     @Test
+    void step_hoveringDownOnFeetItComesDownNoFasterThanItsPilotHolds() {
+        // Its nozzles let it down as fast as its pilot's DOWN asks: never twice that, their letting go counted as a
+        // shortfall too.
+        final ShipFlightModel.Performance feet = new ShipFlightModel.Performance(40_000, 420_000, 420_000, 400_000,
+                0, ShipFlightModel.Gear.LEGS);
+        final double fastest = fastestDown(feet, fly(feet, CRUISING, SEA, 3 * SECONDS));
+        assertEquals(HOVERING_DOWN, fastest, 0.01, "at its hovering rate: " + fastest);
+    }
+
+    @Test
+    void step_hoveringDownOnWheelsItComesDownNoFasterThanATouchDownTakesUnharmed() {
+        final double fastest = fastestDown(SHIP, fly(SHIP, CRUISING, SEA, 3 * SECONDS));
+        assertTrue(fastest <= ShipImpacts.SAFE + CLOSE && fastest > ShipImpacts.SAFE - 0.01, "at the fastest it"
+                + " touches down unharmed: " + fastest);
+        assertEquals(0, ShipImpacts.holes(fastest), "a touch down at it holes nothing");
+    }
+
+    @Test
     void step_slowItsNozzlesTurnDownJustFarEnoughToHoldWhatItsWingsDoNot() {
         final ShipFlightModel.State hovered = fly(SHIP, CRUISING, SEA, 3 * SECONDS);
         final double hold = Math.toDegrees(Math.asin(40_000 * ShipFlightModel.GRAVITY / 420_000.0));
         assertEquals(hold, hovered.nozzles(), 0.5, "at rest in the air its nozzles hold its weight");
         assertEquals(0, hovered.sink(), 1.0e-6, "and it stops sinking");
         final ShipFlightModel.Tick on = ShipFlightModel.step(hovered, CRUISING, SEA, SHIP, 0);
-        assertTrue(on.lifting() && on.gearDown(), "it blows down, its gear down: " + on);
+        assertTrue(on.lifting() && !on.gearDown(), "it blows down, hovering high its gear folded away: " + on);
+        final ShipFlightModel.Tick near = ShipFlightModel.step(hovered, CRUISING, new ShipFlightModel.Air(1.0, 1.0,
+                false, false, ShipFlightModel.GEAR_HEIGHT - 1), SHIP, 0);
+        assertTrue(near.gearDown(), "hovering near the land its gear is down: " + near);
         final ShipFlightModel.State faster = new ShipFlightModel.State(15, 0, 0.5, 0, hovered.nozzles());
         assertTrue(fly(SHIP, CRUISING, SEA, SECONDS, faster).nozzles() < hovered.nozzles(),
                 "faster, its wings holding more, its nozzles turn back");
@@ -300,6 +323,17 @@ class ShipFlightModelTest {
     private static ShipFlightModel.State fly(final ShipFlightModel.Performance ship, final ShipFlightModel.Held held,
                                              final ShipFlightModel.Air air, final int ticks) {
         return fly(ship, held, air, ticks, ShipFlightModel.State.RESTING);
+    }
+
+    /* The fastest {@code ship} comes down, in metres a second, held DOWN three seconds from {@code from} at sea. */
+    private static double fastestDown(final ShipFlightModel.Performance ship, final ShipFlightModel.State from) {
+        ShipFlightModel.State now = from;
+        double fastest = 0;
+        for (int tick = 0; tick < 3 * SECONDS; tick++) {
+            now = ShipFlightModel.step(now, DOWN, SEA, ship, 0).state();
+            fastest = Math.max(fastest, now.sink() - now.rise());
+        }
+        return fastest;
     }
 
     private static ShipFlightModel.State fly(final ShipFlightModel.Performance ship, final ShipFlightModel.Held held,

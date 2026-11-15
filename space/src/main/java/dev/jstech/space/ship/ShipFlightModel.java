@@ -43,6 +43,8 @@ public final class ShipFlightModel {
     /** How far its throttle opens a tick with its pilot's key held whole, and closes. */
     public static final double OPENS = 0.025;
     public static final double CLOSES = 0.04;
+    /** The speed it hovers below, in metres a second. */
+    public static final double HOVER_BELOW = 10.0;
     /* The fastest it goes at full throttle in space, in metres a second, and boosted, in the air and in space. */
     private static final double CRUISE_SPACE = 120.0;
     private static final double BOOSTED_AIR = 60.0;
@@ -59,12 +61,12 @@ public final class ShipFlightModel {
     /* The fastest it sinks, in metres a second. */
     private static final double MOST_SINK = 40.0;
     /*
-     * The speed it hovers below, in metres a second. Hovering, the fastest it rises or comes down as its pilot holds,
-     * and comes down with nobody at the helm, in metres a second; how fast it gathers that, in metres a second squared;
-     * how fast its nozzles turn, in degrees a second.
+     * Hovering, the fastest it rises or comes down as its pilot holds; on wheels, the fastest it comes down, a touch
+     * down at it unharmed ({@link ShipImpacts#SAFE}); and how it comes down with nobody at the helm, in metres a
+     * second; how fast it gathers that, in metres a second squared; how fast its nozzles turn, in degrees a second.
      */
-    private static final double HOVER_BELOW = 10.0;
     private static final double HOVER_RATE = 6.0;
+    private static final double WHEELS_DOWN = 5.0;
     private static final double SETTLES = 2.0;
     private static final double HOVER_GATHERS = 4.0;
     private static final double NOZZLES_TURN = 90.0;
@@ -102,7 +104,9 @@ public final class ShipFlightModel {
         final double throttle = held.piloted()
                 ? Math.clamp(now.throttle() + held.forward() * OPENS - held.back() * CLOSES, 0.0, 1.0)
                 : Math.max(0.0, now.throttle() - CLOSES);
-        final double wantedRise = !held.piloted() ? -SETTLES : hovering ? (held.up() - held.down()) * HOVER_RATE : 0;
+        final double descends = ship.gear() == Gear.WHEELS ? WHEELS_DOWN : HOVER_RATE;
+        final double wantedRise = !held.piloted() ? -SETTLES
+                : hovering ? held.up() * HOVER_RATE - held.down() * descends : 0;
         final double most = weight > 0 ? wings + (breathing + thrusters) / weight : Double.POSITIVE_INFINITY;
         final double rise = !hovering ? toward(now.rise(), 0, HOVER_GATHERS * TICK) : wantedRise > now.rise()
                 ? Math.min(wantedRise, now.rise() + Math.min(HOVER_GATHERS, Math.max(0, (most - 1.0) * pull)) * TICK)
@@ -129,21 +133,28 @@ public final class ShipFlightModel {
         final double sheds = stood ? BRAKES : between(SLOWING_SPACE, SLOWING_AIR, thick);
         final double speed = now.speed() < wanted ? Math.min(wanted, now.speed() + gathers * TICK)
                 : Math.max(wanted, now.speed() - sheds * TICK);
-        final double up = weight > 0 ? held(ship, speed, thick, pull) + (breathing * sin + byThrusters) / weight
-                + HELD_CLOSE : 1.0;
-        final double sink = resting || up >= 1.0 ? Math.max(0.0, now.sink() - Math.max(pull, sheds) * TICK)
-                : Math.min(MOST_SINK, now.sink() + pull * (1.0 - up) * TICK);
+        // What holds it up, its wings and what its nozzles and thrusters push down, against what keeps it going as its
+        // rising has it: short of that it sinks by the shortfall alone, its rising having come down by itself.
+        final double asked = resting ? 0 : weight + ship.mass() * (rise - now.rise()) / TICK;
+        final double holding = held(ship, speed, thick, pull) * weight + breathing * sin + byThrusters;
+        final boolean falling = weight > 0 && holding + HELD_CLOSE * weight < asked;
+        final double sinking = !falling ? Math.max(0.0, now.sink() - Math.max(pull, sheds) * TICK)
+                : Math.min(MOST_SINK, now.sink() + (asked - holding) / ship.mass() * TICK);
+        // Hovering at its pilot's hand where it can hold itself up, it comes down no faster than their DOWN asks: its
+        // nozzles, turning to hold it, take up what their turning leaves short meanwhile.
+        final double sink = hovering && held.piloted() && most >= 1.0 ? Math.min(sinking, Math.max(0, rise + descends))
+                : sinking;
         final double nimble = boosting ? BOOST_TURNS : 1.0;
         final double turn = (held.left() - held.right()) * TURNS * nimble * TICK;
         final double lifted = hovering ? toward(pitch, 0, PITCHES * TICK) - pitch
                 : Math.clamp(pitch + (held.up() - held.down()) * PITCHES * nimble * TICK, -MOST_PITCH, MOST_PITCH)
                 - pitch;
-        final boolean gearDown = ship.gear() != Gear.NONE && (air.grounded() || hovering
-                || air.height() < GEAR_HEIGHT);
+        // Its gear is down on the land and near it, folded away higher up, hovering there or flying.
+        final boolean gearDown = ship.gear() != Gear.NONE && (air.grounded() || air.height() < GEAR_HEIGHT);
         final double reached = boosting && boosted > cruise ? Math.clamp((speed - cruise) / (boosted - cruise), 0, 1)
                 : 0;
         return new Tick(new State(speed, resting ? 0 : sink, throttle, resting ? 0 : rise, nozzles), turn, lifted,
-                boosting, reached, up < 1.0 && pull > 0 && !air.grounded(), bells > 0 && push > 0 ? bells / push : 0.0,
+                boosting, reached, falling && pull > 0 && !air.grounded(), bells > 0 && push > 0 ? bells / push : 0.0,
                 gearDown, sin > 0 && breathing > 0 && !resting, byThrusters > 0);
     }
 

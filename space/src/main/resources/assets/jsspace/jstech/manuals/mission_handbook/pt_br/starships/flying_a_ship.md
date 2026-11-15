@@ -21,7 +21,7 @@ Dê partida numa nave construída inteira num [estaleiro](jsspace:shipyard): ela
 
 1. Use o Assento do Piloto para sentar no comando. O HUD acende no vidro da cabine, e na tela inteira na vista de trás ([[F5]]).
 2. A tecla de andar para a frente ([[W]]) abre o acelerador, que fica onde você deixar; a de trás ([[S]]) fecha. [[A]] e [[D]] viram a nave. Pular ([[Espaço]]) levanta o nariz, [[C]] abaixa.
-3. Abaixo de 10 metros por segundo, os bocais dos motores de ar viram para baixo e a nave paira, de nariz nivelado: pular e [[C]] a levam direto para cima e para baixo.
+3. Abaixo de 10 metros por segundo, os bocais dos motores de ar viram para baixo e a nave paira, de nariz nivelado: pular e [[C]] a levam direto para cima e para baixo. Com rodas, ela desce a no máximo 5 metros por segundo. Com pés, o pouso e a decolagem se fazem sozinhos: pairando a até 30 metros do chão, segure [[C]] e a nave pousa sozinha em uns quatro segundos; parada no chão, segure pular e ela sobe reto 12 metros em três segundos e devolve o comando pairando. Enquanto isso, o comando não responde.
 4. Mais rápido, as asas a sustentam. Segure [[Ctrl Esquerdo]] para dar impulso num trecho vazio, bem longe do chão ou no espaço, pelo tempo que quiser; enquanto impulsiona, o nariz vira devagar (`GIRO LENTO`).
 5. Continue subindo: setecentos blocos acima do limite de construção do mundo, a nave entra no espaço do seu sistema.
 6. No espaço, longe dos mundos, segure [[B]] por um segundo e meio: o motor de pulso carrega e a nave dá o salto a 3.000 metros por segundo, na horizontal, ao longo do nariz, quase sem virar. Segure a tecla de trás ([[S]]) para sair; ela sai sozinha sobre a órbita baixa de um mundo, pronta para descer.
@@ -67,6 +67,7 @@ title: Pouso manual 1/2
 
 ```card
 title: Pouso manual 2/2
+[ ] Com pés: C abaixo de 30 m, pousa sozinha
 [ ] Com rodas: acelerador fechado, rolar até parar
 [ ] Estacionada: levantar do comando
 ```

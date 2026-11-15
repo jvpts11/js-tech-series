@@ -141,10 +141,14 @@ kit for its vehicles.
   a force of their own, firing down jets of cold gas; **a ship with no thrusters lands only where there is air**, and
   LAND tells its pilot so there. Below flying speed the ship hovers with its nose level and the pilot takes it up and down. **Every small
   ship takes off and lands vertically**; the gear decides the rest. **Wheels** roll on the ground, on a runway, and also
-  land on a pad. **Feet** stand where they come down, on rough ground. The gear is down on the land, when hovering and
-  near the ground, and folds flat into the floor as the ship climbs away, struts first and bay doors shutting after,
-  in about two seconds. With nobody at the helm a ship comes down gently and settles; its throttle closes, and it stays
-  parked.
+  land on a pad; hovering on wheels, the ship comes down at five metres a second at most, gentle enough for its gear.
+  **Feet** stand where they come down, on rough ground, and **on feet landing and taking off are set sequences the ship
+  flies by itself**, as in No Man's Sky: hovering within about thirty metres of the land, DOWN held brings it down onto
+  the land under it in about four seconds, slowing to touch it at under a metre a second; standing, UP held lifts it
+  straight up about twelve metres in three seconds and hands the helm back hovering. The pilot's keys do nothing while
+  either runs, and nothing is holed by it. The gear is down on the land and within ten metres of it, and folds flat
+  into the floor as the ship climbs higher, struts first and bay doors shutting after, in about two seconds. With nobody
+  at the helm a ship comes down gently and settles; its throttle closes, and it stays parked.
 - **The climb.** A ship climbs to orbit without stopping, with the same passage into space as a rocket
   ([Travel](travel.md)): over the build limit it flies on through the open sky, and over the line it crosses into the
   system's space whole, with no loading screen, its pilot still at the helm.
@@ -160,8 +164,8 @@ kit for its vehicles.
 ### Autopilots
 
 - **LAND** flies the ship to the nearest landing pad its pilot may use, within about 512 blocks, high enough on its way,
-  slowing as it nears, and sets it down hovering over the deck's middle. A ship on wheels may instead land on a runway
-  marked by a Runway Beacon.
+  slowing as it nears, and sets it down over the deck's middle, a ship on feet by its landing sequence. A ship on wheels
+  may instead land on a runway marked by a Runway Beacon.
 - **ORBIT** opens the throttle, pitches the nose up to a 55-degree climb and boosts, up and over the line into the system's
   space.
 - **DOCK**, in space, turns the ship to face the nearest ship with a docking collar that would let the pilot aboard, at
