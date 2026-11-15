@@ -115,6 +115,8 @@ public final class RocketRoutesGameTests {
     private static final int PIECES = 5;
     /* How near the climb's cost and the page's count the flight comes, in metres a second. */
     private static final double ABOUT = 300;
+    /* How long a rocket come into its orbit is watched for blocks read as lost: three of its computer's counts. */
+    private static final int WATCHED = 3 * 20;
     /* A rocket of one stage, about 2,500 m/s, and one of two, about 10,000. */
     private static final RocketStack ONE_STAGE = RocketStack.of(part("sea_level_engine_3"), part(TANK),
             part("capsule_3"));
@@ -248,6 +250,18 @@ public final class RocketRoutesGameTests {
                 })
                 .thenWaitUntil(() -> helper.assertTrue(MovingStructures.byId(space, id) != null
                         && MovingStructures.byId(space, id).ready(), "it climbs into space"))
+                // Its computer counts the blocks it has lost once a second: none of a rocket come whole into orbit.
+                .thenExecuteFor(WATCHED, () -> {
+                    final FlightComputerBlockEntity aboard = computerOf(space, MovingStructures.byId(space, id));
+                    final List<Integer> holed = new ArrayList<>();
+                    for (int section = 0; section < TWO_STAGES.sections().size(); section++) {
+                        if (aboard.lost(section) > 0) {
+                            holed.add(section);
+                        }
+                    }
+                    helper.assertTrue(holed.isEmpty() && aboard.shield(), "come whole into its orbit, none of its"
+                            + " parts reads as holed and its capsule's shield is there: holed " + holed);
+                })
                 // Its computer reads its tanks once a second.
                 .thenWaitUntil(() -> {
                     final MovingStructure there = MovingStructures.byId(space, id);
@@ -557,7 +571,9 @@ public final class RocketRoutesGameTests {
                 })
                 .thenWaitUntil(() -> helper.assertTrue(computerOf(space, at(space, id)).cruising(),
                         "it sets out for " + to + ": " + computerOf(space, at(space, id)).executed() + ", "
-                                + computerOf(space, at(space, id)).available() + " m/s"))
+                                + computerOf(space, at(space, id)).available() + " m/s; "
+                                + flightOf(computerOf(space, at(space, id)), stack) + "; "
+                                + missing(space, computerOf(space, at(space, id)), stack)))
                 .thenWaitUntil(() -> {
                     CouchSleep.pressed(crew);
                     helper.assertTrue(CouchSleep.asleep(crew), "its crew falls asleep in the capsule's seat");
