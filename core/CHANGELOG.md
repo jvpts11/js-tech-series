@@ -2231,6 +2231,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A moving structure crossing to another dimension takes everyone sitting on its seats and every player
+  standing on it, wherever they are: one flown fast into land still loading had them there, where the search round it
+  sees nothing, and left them behind, a ship's pilot staying in space as their ship came down into the Moon.
 - Two moving structures pressed together meet at a bounded number of points a step: at most 64 for each block,
   and at most 64 of the blocks pressed against the other, spread over them. Pieces let go together, as a rocket's
   boosters and first stage at the edge of space, met at every pair of boxes of every pair of blocks near each other,

@@ -10,6 +10,7 @@ package dev.jstech.core.moving;
 import dev.jstech.core.region.Box;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -223,11 +224,18 @@ public final class StructureTravel {
                 bounds.maxY() + going.dy(), bounds.maxZ() + dz);
     }
 
-    /* What stands on the structure or is inside its box, and where each is on it; its seats are made anew there. */
+    /*
+     * What stands on the structure or is inside its box, and where each is on it; its seats are made anew there. Its
+     * players are looked for among the level's own: a search of a place sees only chunks loaded with their entities,
+     * and a structure flown fast carries a player standing on it into chunks still loading, unseen there by it.
+     */
     private static List<Aboard> aboard(final MovingStructure structure, final ServerLevel level) {
         final List<Aboard> found = new ArrayList<>();
         final StructureFrame frame = structure.frame();
-        for (final Entity entity : level.getEntities((Entity) null, structure.worldBox().inflate(2), any -> true)) {
+        final Set<Entity> near = new LinkedHashSet<>(level.getEntities((Entity) null,
+                structure.worldBox().inflate(2), any -> true));
+        near.addAll(level.players());
+        for (final Entity entity : near) {
             if (entity instanceof MovingStructureEntity || entity instanceof StructureSeatEntity
                     || entity.isPassenger()) {
                 continue;
@@ -244,15 +252,18 @@ public final class StructureTravel {
         return found;
     }
 
-    /* Who sits on the structure's own seats, each with the seat they sit on. */
+    /*
+     * Who sits on the structure's own seats, each with the seat they sit on. The seats are looked for by their kind,
+     * not round the structure: a search of a place sees only chunks loaded with their entities, and a seat, ticking
+     * wherever it is, goes on with a structure flown fast into chunks still loading, unseen there by it, its sitter
+     * left behind as the structure went.
+     */
     private static List<Seated> seated(final MovingStructure structure, final ServerLevel level) {
         final List<Seated> found = new ArrayList<>();
-        for (final StructureSeatEntity seat : level.getEntitiesOfClass(StructureSeatEntity.class,
-                structure.worldBox().inflate(ABOARD_REACH))) {
-            if (seat.structure() == structure) {
-                for (final Entity sitter : seat.getPassengers()) {
-                    found.add(new Seated(sitter, seat));
-                }
+        for (final StructureSeatEntity seat : level.getEntities(MovingStructures.SEAT.get(),
+                each -> each.structure() == structure)) {
+            for (final Entity sitter : seat.getPassengers()) {
+                found.add(new Seated(sitter, seat));
             }
         }
         return found;
