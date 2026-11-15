@@ -21,7 +21,7 @@ No menu criativo, aba J's Space.
 ## Como usar
 
 1. Na tela Projeto de Foguete, arraste um motor para baixo dos tanques de cada estágio. A ficha técnica dele dá o empuxo e o impulso específico ao nível do mar e no vácuo.
-2. Use um Motor de Nível do Mar no primeiro estágio e Motores de Vácuo acima dele: a tela conta a primeira queima no ar e as seguintes no vácuo.
+2. Use um Motor de Nível do Mar no primeiro estágio e Motores de Vácuo acima dele: a tela conta o delta-v de cada estágio no vácuo, como o voo conta, mas o primeiro estágio tem de tirar o foguete do chão no ar, onde um Motor de Vácuo empurra muito menos.
 3. Leia o delta-v de cada estágio e o empuxo contra o peso antes de construir.
 
 ## O que pode dar errado

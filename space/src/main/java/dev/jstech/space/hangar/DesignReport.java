@@ -29,9 +29,10 @@ import net.minecraft.world.level.Level;
 /**
  * What a Rocket Hangar's design screen shows of a design, without becoming a simulator: each stage's delta-v and its
  * thrust against its weight on the world it leaves, the whole rocket's delta-v, how tall and how wide it stands, the
- * seats it has, where it can go and what each destination asks, and what it lacks. The first burn is summed in the air
- * of the world it leaves, every later one in a vacuum, as a rocket is above the air by the time its first stage drops.
- * A design that lacks what it needs to fly is not ready, and is not sent to the bay.
+ * seats it has, where it can go and what each destination asks, and what it lacks. Every burn's delta-v is its
+ * vacuum's, as its flight counts it: the climb to the low orbit asks for the air and the pull it climbs through. The
+ * thrust against weight at lift-off is in the air of the world it leaves. A design that lacks what it needs to fly is
+ * not ready, and is not sent to the bay.
  *
  * @param stages       its stages, from the bottom up
  * @param deltaV       its delta-v, in metres a second
@@ -56,10 +57,7 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
         final List<StageMath.Burn> burns = RocketStages.burns(parts, stack).orElse(List.of());
         final List<List<Integer>> places = RocketStages.stages(parts, stack);
         final List<Stage> stages = new ArrayList<>();
-        double total = 0;
-        for (int k = 0; k < burns.size(); k++) {
-            total += StageMath.deltaV(burns.get(k), k == 0 ? air : 0);
-        }
+        final double total = StageMath.deltaV(burns, 0);
         for (int s = 0; s < places.size(); s++) {
             stages.add(stage(parts, stack, s + 1, places.get(s), burns, pull, air));
         }
@@ -130,11 +128,11 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
             if (burn.stage() != number) {
                 continue;
             }
-            final double round = k == 0 ? air : 0;
-            deltaV += StageMath.deltaV(burn, round);
+            deltaV += StageMath.deltaV(burn, 0);
             if (first) {
                 thrust = burn.thrust();
-                ratio = StageMath.thrustToWeight(burn, pull, round);
+                // Only the first burn lights in the air of the world it leaves.
+                ratio = StageMath.thrustToWeight(burn, pull, k == 0 ? air : 0);
                 first = false;
             }
         }
@@ -215,17 +213,19 @@ public record DesignReport(List<Stage> stages, double deltaV, double liftOff, in
                         HangarStructure.WIDEST_ROCKET)));
             }
         }
-        boolean capsule = false;
+        // A capsule's heat shield, or a lunar lander's ascent stage's, which brings its crew home from the Moon.
+        boolean shield = false;
         for (final RocketStack.Section section : stack.sections()) {
             final RocketPart part = parts.get(section.part().id());
-            capsule |= part != null && part.kind() == RocketPart.Kind.CAPSULE;
+            shield |= part != null && (part.kind() == RocketPart.Kind.CAPSULE
+                    || part.kind() == RocketPart.Kind.LANDER_ASCENT);
         }
         if (seats == 0) {
             rest.add(new Check(Severity.WARNING, DesignTexts.NO_SEATS.text()));
         } else {
             rest.add(new Check(Severity.FINE, seats == 1 ? DesignTexts.SEAT_ONE.text()
                     : DesignTexts.SEATS.with(seats)));
-            rest.add(capsule ? new Check(Severity.FINE, DesignTexts.SHIELD.text())
+            rest.add(shield ? new Check(Severity.FINE, DesignTexts.SHIELD.text())
                     : new Check(Severity.WARNING, DesignTexts.NO_SHIELD.text()));
         }
         rest.add(new Check(Severity.NOTE, DesignTexts.TANKS.text()));

@@ -21,7 +21,7 @@ From the creative menu, J's Space tab.
 ## How to use it
 
 1. On the Rocket Design screen, drag an engine under each stage's tanks. Its spec sheet gives its thrust and specific impulse at sea level and in a vacuum.
-2. Fit a Sea-Level Engine to the first stage and Vacuum Engines above it: the screen sums the first burn in air, the later ones in a vacuum.
+2. Fit a Sea-Level Engine to the first stage and Vacuum Engines above it: the screen counts every stage's delta-v in a vacuum, as the flight does, but the first stage must lift the rocket off in air, where a Vacuum Engine pushes far less.
 3. Read each stage's delta-v and thrust against weight before you build.
 
 ## What can go wrong

@@ -100,12 +100,12 @@ public final class RocketDesignGameTests {
         helper.assertTrue(report.stages().size() == 2 && report.stages().get(0).engine().orElseThrow()
                 .equals(SEA_ENGINE) && report.stages().get(1).engine().orElseThrow().equals(VACUUM_ENGINE),
                 "two stages, each with its engine: " + report.stages());
-        final double first = StageMath.deltaV(burns.get(0), 1);
+        final double first = StageMath.deltaV(burns.get(0), 0);
         final double second = StageMath.deltaV(burns.get(1), 0);
         helper.assertTrue(Math.abs(report.stages().get(0).deltaV() - first) < CLOSE
                 && Math.abs(report.stages().get(1).deltaV() - second) < CLOSE
                 && Math.abs(report.deltaV() - first - second) < CLOSE,
-                "the first burn in the air it leaves, the second in a vacuum, summed: " + report.deltaV());
+                "each burn at its vacuum delta-v, as its flight counts it, summed: " + report.deltaV());
         helper.assertTrue(Math.abs(report.liftOff() - StageMath.thrustToWeight(burns.get(0), 1, 1)) < CLOSE
                 && report.liftOff() > 1, "it leaves the Overworld: " + report.liftOff());
         helper.assertTrue(report.height() == RocketStages.height(parts, stack) && report.width() == 3

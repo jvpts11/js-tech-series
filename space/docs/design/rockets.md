@@ -23,7 +23,7 @@ At the **Hangar Terminal** or the **Rocket Design Table** in the Rocket Hangar's
 
 **The screen shows**, without becoming a simulator:
 
-- the **delta-v of each stage** and the total;
+- the **delta-v of each stage** and the total, each in a vacuum, as the flight counts it (the climb's 9,400 m/s already asks for the air and the pull climbed through), so a rocket shown reaching a destination reaches it;
 - the **thrust-to-weight ratio on the world the rocket leaves from**: under 1, the rocket doesn't leave the ground, and a rocket that takes off from the Moon (0.17 g) may not take off from the Earth;
 - the **delta-v each destination asks for**, with a bar showing how far the rocket gets, short in red. From the Overworld, a first estimate: a low orbit 9,400 m/s, the Moon 15,200 m/s, Mars 13,000 m/s;
 - what is missing: a stage with propellant and no engine, an engine with nothing to burn, a rocket too weak to lift off, taller than 96 blocks or wider than 17, the most the hangar's bay and its door take, the crew's seats, the heat shield to come home through air, the tanks filled at the pad;

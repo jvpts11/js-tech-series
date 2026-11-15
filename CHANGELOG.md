@@ -3960,6 +3960,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
 
 ### Changed
+- (Space) The Rocket Design screen counts each stage's delta-v in a vacuum, as the rocket's flight counts it, the
+  climb to the low orbit asking for the air and the pull climbed through: a rocket shown reaching a destination
+  reaches it, and the screen and the flight computer on the pad give the same delta-v. It counted the first stage's
+  in the air it leaves, less than the rocket had. The thrust against weight at lift-off is still in that air.
 - (Computers) `mkfs` on Linux is `mkfs.ext4`, beside a `mkfs` for each other file system, and formats a partition,
   `mkfs.ext4 /dev/sdb1`, refusing the one the system runs from.
 - (Computers) Removable media in real bytes: a floppy disk holds 1.44 MB, a CD 700 MB, a DVD 4.7 GB, a Blu-ray 25 GB
@@ -4251,6 +4255,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   Performance Personal Computer and a Fabric DPU, as every other case's has.
 
 ### Fixed
+- (Space) The Rocket Design screen names the heat shield of a rocket with a lunar lander on top and no capsule, the
+  lander's ascent stage's, where it warned of none though the flight computer counted it.
 - (Space) A launch from a pad with a Pad Service Port runs on past ignition to T-0: once the deluge was poured at T-6,
   the empty port read no-go on the board and the count held with the engines lit. From ignition on, the deluge shows
   as go, its water poured over the pad, till the count is recycled, scrubbed or stood down.

@@ -930,7 +930,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   once their part is formed, stand, are aimed at and are outlined as the ship's model draws them there, no longer as
   whole blocks.
 
+### Changed
+- The Rocket Design screen counts each stage's delta-v in a vacuum, as the rocket's flight counts it, the
+  climb to the low orbit asking for the air and the pull climbed through: a rocket shown reaching a destination
+  reaches it, and the screen and the flight computer on the pad give the same delta-v. It counted the first stage's
+  in the air it leaves, less than the rocket had. The thrust against weight at lift-off is still in that air.
+
 ### Fixed
+- The Rocket Design screen names the heat shield of a rocket with a lunar lander on top and no capsule, the
+  lander's ascent stage's, where it warned of none though the flight computer counted it.
 - A launch from a pad with a Pad Service Port runs on past ignition to T-0: once the deluge was poured at T-6,
   the empty port read no-go on the board and the count held with the engines lit. From ignition on, the deluge shows
   as go, its water poured over the pad, till the count is recycled, scrubbed or stood down.
