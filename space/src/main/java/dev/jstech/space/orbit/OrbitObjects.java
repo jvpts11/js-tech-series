@@ -8,8 +8,10 @@
 package dev.jstech.space.orbit;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.codecs.RecordCodecBuilder;
 import dev.jstech.core.jstechseries.persistor.SpacePersistor;
 import dev.jstech.core.moving.MovingStructure;
+import dev.jstech.core.moving.MovingStructureEvent;
 import dev.jstech.core.region.Box;
 import dev.jstech.core.team.Ownership;
 import dev.jstech.space.config.SpaceServerConfig;
@@ -32,24 +34,40 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.saveddata.SavedData;
+import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * Everything in the orbits of a world's worlds, by id: the rockets parked there, the satellites and probes, and the
  * debris of those destroyed. A rocket that passes into a world's orbit is told here as it arrives and forgotten as it
  * goes back down. A satellite's or a probe's owner may let it go: it works no more, and any team may take it, as
  * satellites are given or traded between teams. A destroyed one becomes debris in its orbit, unless the server turns
- * debris off. A Space Persistor aboard keeps a thing's place loaded. Kept with the world.
+ * debris off. A Space Persistor aboard keeps a thing's place loaded. Where each rocket rests is kept too, so one coming
+ * into its orbit finds room beside it even where its part of space is not loaded; a rocket taken away or set down is
+ * forgotten. Kept with the world.
  */
 public final class OrbitObjects extends SavedData {
 
     private final Map<UUID, OrbitObject> objects = new HashMap<>();
+    /* Where each rocket in an orbit rests in its system's space. */
+    private final Map<UUID, Rest> resting = new HashMap<>();
 
     private static final String FILE = "jsspace_orbit_objects";
     private static final String OBJECTS = "Objects";
+    private static final String RESTING = "Resting";
     private static final Codec<Map<UUID, OrbitObject>> MAP = Codec.unboundedMap(UUIDUtil.STRING_CODEC,
             OrbitObject.CODEC);
+    private static final Codec<Map<UUID, Rest>> RESTS = Codec.unboundedMap(UUIDUtil.STRING_CODEC, Rest.CODEC);
 
     private OrbitObjects() {
+    }
+
+    /** Hands the game's bus what forgets a rocket gone from the game for good, once, from the mod's constructor. */
+    public static void listen() {
+        NeoForge.EVENT_BUS.addListener(MovingStructureEvent.Removed.class, event -> {
+            if (event.structure().level() instanceof ServerLevel level) {
+                forget(level.getServer(), event.structure().id().value());
+            }
+        });
     }
 
     /** Keeps {@code object} as the thing in orbit {@code id}, in place of what it was. */
@@ -68,10 +86,36 @@ public final class OrbitObjects extends SavedData {
     public static boolean forget(final MinecraftServer server, final UUID id) {
         final OrbitObjects all = of(server);
         final boolean was = all.objects.remove(id) != null;
-        if (was) {
+        final boolean rested = all.resting.remove(id) != null;
+        if (was || rested) {
             all.setDirty();
         }
         return was;
+    }
+
+    /**
+     * The thing in orbit {@code id} rests at {@code rest} of its orbit, a place of its system's space, till it is
+     * forgotten; nothing for one not told in an orbit.
+     */
+    public static void restsAt(final MinecraftServer server, final UUID id, final Rest rest) {
+        final OrbitObjects all = of(server);
+        if (all.objects.containsKey(id)) {
+            all.resting.put(id, rest);
+            all.setDirty();
+        }
+    }
+
+    /** Where the rockets in the orbits of {@code world} rest, by id. */
+    public static Map<UUID, Rest> restingAround(final MinecraftServer server, final ResourceLocation world) {
+        final OrbitObjects all = of(server);
+        final Map<UUID, Rest> out = new LinkedHashMap<>();
+        all.resting.forEach((id, rest) -> {
+            final OrbitObject object = all.objects.get(id);
+            if (object != null && object.world().equals(world)) {
+                out.put(id, rest);
+            }
+        });
+        return out;
     }
 
     /** Everything in the orbits of the world {@code world}, by id. */
@@ -126,6 +170,7 @@ public final class OrbitObjects extends SavedData {
     @Override
     public CompoundTag save(final CompoundTag tag, final HolderLookup.Provider registries) {
         MAP.encodeStart(NbtOps.INSTANCE, this.objects).result().ifPresent(saved -> tag.put(OBJECTS, saved));
+        RESTS.encodeStart(NbtOps.INSTANCE, this.resting).result().ifPresent(saved -> tag.put(RESTING, saved));
         return tag;
     }
 
@@ -164,6 +209,10 @@ public final class OrbitObjects extends SavedData {
         if (saved != null) {
             MAP.parse(NbtOps.INSTANCE, saved).result().ifPresent(loaded.objects::putAll);
         }
+        final Tag rests = tag.get(RESTING);
+        if (rests != null) {
+            RESTS.parse(NbtOps.INSTANCE, rests).result().ifPresent(loaded.resting::putAll);
+        }
         return loaded;
     }
 
@@ -171,5 +220,21 @@ public final class OrbitObjects extends SavedData {
     private static OrbitObjects of(final MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(new SavedData.Factory<>(OrbitObjects::new,
                 OrbitObjects::load), FILE);
+    }
+
+    /**
+     * Where a rocket rests in its orbit, in its system's space.
+     *
+     * @param x     its place across
+     * @param z     its place along
+     * @param width how wide it is, the wider of its two sides, in blocks
+     */
+    public record Rest(double x, double z, double width) {
+
+        public static final Codec<Rest> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.DOUBLE.fieldOf("x").forGetter(Rest::x),
+                Codec.DOUBLE.fieldOf("z").forGetter(Rest::z),
+                Codec.DOUBLE.fieldOf("width").forGetter(Rest::width)
+        ).apply(instance, Rest::new));
     }
 }

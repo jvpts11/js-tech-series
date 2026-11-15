@@ -15,9 +15,14 @@ import dev.jstech.core.moving.StructureResult;
 import dev.jstech.core.moving.TowardMotion;
 import dev.jstech.core.progression.TeamProgress;
 import dev.jstech.core.team.CoreTeams;
+import dev.jstech.core.team.Ownership;
+import dev.jstech.core.uuid.StructureUuid;
 import dev.jstech.space.api.SpaceWorlds;
+import dev.jstech.space.cruise.OrbitRoom;
 import dev.jstech.space.exploration.SpaceMilestones;
 import dev.jstech.space.network.FarMapPayload;
+import dev.jstech.space.orbit.OrbitObject;
+import dev.jstech.space.orbit.OrbitObjects;
 import dev.jstech.space.universe.FarMaps;
 import dev.jstech.space.universe.FarRings;
 import dev.jstech.space.universe.SolarBody;
@@ -29,10 +34,12 @@ import dev.jstech.space.universe.SystemLayout;
 import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.tests.JsTests;
 import dev.jstech.testkit.gametest.GameTestPlayers;
+import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.GameType;
@@ -233,6 +240,54 @@ public final class SpaceClimbGameTests {
                     helper.assertTrue(whole, "both whole");
                 })
                 .thenSucceed();
+    }
+
+    /*
+     * A rocket told resting at a spot of the Overworld's low orbit, its part of space not loaded: another coming to
+     * that spot takes the nearest with room round it all the same.
+     */
+    @GameTest(template = ARENA, batch = "jsspace_climb_room")
+    public static void room_keepsClearOfARocketToldRestingWhereNoneIsLoaded(final GameTestHelper helper) {
+        final ServerLevel overworld = helper.getLevel();
+        helper.setBlock(CRAFT, Blocks.IRON_BLOCK);
+        final MovingStructure craft = MovingStructures.assemble(overworld, helper.absolutePos(CRAFT),
+                helper.absolutePos(CRAFT)).structure();
+        helper.assertTrue(craft != null, "the craft is made");
+        final double[] spot = SystemLayout.orbitSpot(SolarBody.OVERWORLD, 0, 0);
+        final UUID parked = UUID.randomUUID();
+        final ResourceLocation world = SolarSystemWorlds.worldOf(SolarBody.OVERWORLD);
+        OrbitObjects.put(overworld.getServer(), parked, OrbitObject.rocket(world, new StructureUuid(parked),
+                Ownership.of(UUID.randomUUID()), false));
+        OrbitObjects.restsAt(overworld.getServer(), parked, new OrbitObjects.Rest(spot[0], spot[1], 1));
+        final double[] chosen = OrbitRoom.spotFor(space(helper), craft, spot, world);
+        OrbitObjects.forget(overworld.getServer(), parked);
+        MovingStructures.takeAway(craft);
+        helper.assertTrue(Math.hypot(chosen[0] - spot[0], chosen[1] - spot[1]) >= ROOM, "it keeps clear of the"
+                + " rocket resting there unloaded: " + chosen[0] + ", " + chosen[1] + " against " + spot[0] + ", "
+                + spot[1]);
+        helper.succeed();
+    }
+
+    /* A rocket in orbit taken away for good is forgotten there, and where it rested with it. */
+    @GameTest(template = ARENA, batch = "jsspace_climb_room")
+    public static void removed_rocketIsForgottenFromItsOrbit(final GameTestHelper helper) {
+        final ServerLevel overworld = helper.getLevel();
+        helper.setBlock(CRAFT.east(4), Blocks.IRON_BLOCK);
+        final MovingStructure craft = MovingStructures.assemble(overworld, helper.absolutePos(CRAFT.east(4)),
+                helper.absolutePos(CRAFT.east(4))).structure();
+        helper.assertTrue(craft != null, "the craft is made");
+        final UUID id = craft.id().value();
+        final ResourceLocation world = SolarSystemWorlds.worldOf(SolarBody.OVERWORLD);
+        OrbitObjects.put(overworld.getServer(), id, OrbitObject.rocket(world, craft.id(),
+                Ownership.of(UUID.randomUUID()), false));
+        OrbitObjects.restsAt(overworld.getServer(), id, new OrbitObjects.Rest(0, 0, 1));
+        helper.assertTrue(OrbitObjects.restingAround(overworld.getServer(), world).containsKey(id),
+                "told resting in the Overworld's orbit");
+        MovingStructures.takeAway(craft);
+        helper.assertTrue(OrbitObjects.get(overworld.getServer(), id).isEmpty()
+                && !OrbitObjects.restingAround(overworld.getServer(), world).containsKey(id),
+                "taken away, it is forgotten from its orbit");
+        helper.succeed();
     }
 
     @GameTest(template = ARENA, batch = "jsspace_climb")

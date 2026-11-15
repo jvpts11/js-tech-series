@@ -932,7 +932,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 
 ### Fixed
 - A rocket climbing into a low orbit where another rests takes the nearest spot with room beside it, as one
-  coming in from its cruise does: it used to come out inside the other, and both broke.
+  coming in from its cruise does: it used to come out inside the other, and both broke. Where each rocket rests in
+  its orbit is kept with it, so one whose part of space is not loaded is kept clear of all the same, and a rocket
+  taken away or set down is forgotten there.
 - A small starship's faces no longer fight as the eye moves: only its windows' glass is drawn see-through,
   the rest of it solid, where the whole ship was drawn see-through and faces in one plane swapped places from frame to
   frame; and no two of its faces lie on one another any more: a doorway's frame on the bulkhead's wall, the raised

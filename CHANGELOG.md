@@ -639,6 +639,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Core) A helm's own down key: J's Core's API is at version 61. `CoreKeys.HELM_DOWN`, C until the player changes
   it, takes a moving structure down from its helm, which the sprint key did before; the sprint key is left to what a
   mod's helm does with it, as a ship's boost. Experimental.
+- (Core) A structure gone for good: J's Core's API is at version 62. `MovingStructureEvent.Removed` is told on the
+  game's bus as a moving structure leaves the game for good, taken away, set down into the world as blocks or left
+  with no block of its own, never as it goes on to another dimension or is only unloaded with its land. Experimental.
 - (Computers) The Mining Computer: J's Computers' API is at version 21. `HostScope.MINING_COMPUTER` is the Mining
   Computer's own scope, for a program or a command that runs only on a mining rig. Experimental.
 - (Computers) Media in bytes: J's Computers' API is at version 20. `MediaFormat.capacityBytes()` is what a medium of
@@ -4249,7 +4252,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 
 ### Fixed
 - (Space) A rocket climbing into a low orbit where another rests takes the nearest spot with room beside it, as one
-  coming in from its cruise does: it used to come out inside the other, and both broke.
+  coming in from its cruise does: it used to come out inside the other, and both broke. Where each rocket rests in
+  its orbit is kept with it, so one whose part of space is not loaded is kept clear of all the same, and a rocket
+  taken away or set down is forgotten there.
 - (Core) A moving structure sent to another dimension waits for the pieces it let go to part first: a rocket's stage
   let go just before it passed into space, its plot of the yard not loaded yet, was carried along into space stuck to
   it, though counted as let go.

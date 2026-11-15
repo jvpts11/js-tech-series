@@ -186,6 +186,7 @@ public final class CruiseFlight {
         final double capture = plan.captureBurn(computer.shield());
         final boolean captured = capture <= 0 || RocketBurns.burn(level, body, computer.separated(), capture);
         OrbitObjects.arrived(level, body, there.get());
+        OrbitRoom.restsAt(level, body, new double[] {body.pose().x(), body.pose().z()});
         aboard(level, body).forEach(player -> SpaceFirsts.arrived(player, plan.to()));
         Rockets.get(level.getServer(), body.id()).ifPresent(rocket -> WorldCoverage.photographAt(level.getServer(),
                 CoreTeams.teamOf(level.getServer(), rocket.ownership().owner()), plan.to(), level.getGameTime()));

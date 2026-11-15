@@ -10004,6 +10004,8 @@ stable 4
 10 dev.jstech.core.moving.MovingStructureEvent.Parted  type static final class extends MovingStructureEvent
 10 dev.jstech.core.moving.MovingStructureEvent.Parted  List<MovingStructure> pieces()
 10 dev.jstech.core.moving.MovingStructureEvent.Parted  new(MovingStructure, List<MovingStructure>)
+62 dev.jstech.core.moving.MovingStructureEvent.Removed  type static final class extends MovingStructureEvent
+62 dev.jstech.core.moving.MovingStructureEvent.Removed  new(MovingStructure)
 10 dev.jstech.core.moving.MovingStructureEvent.Undocked  type static final class extends MovingStructureEvent
 10 dev.jstech.core.moving.MovingStructureEvent.Undocked  MovingStructure host()
 10 dev.jstech.core.moving.MovingStructureEvent.Undocked  new(MovingStructure, MovingStructure)

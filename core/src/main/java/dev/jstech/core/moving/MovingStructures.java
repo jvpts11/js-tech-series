@@ -419,8 +419,19 @@ public final class MovingStructures {
         return structure;
     }
 
-    /* Takes {@code structure} away for good: its entity gone, its plot given back, its blocks cleared if asked. */
+    /* Takes {@code structure} away for good, told on the game's bus as gone: as {@link #leave} does. */
     static void remove(final MovingStructure structure, final boolean clear) {
+        if (!structure.entity().isRemoved() && structure.level() instanceof ServerLevel) {
+            NeoForge.EVENT_BUS.post(new MovingStructureEvent.Removed(structure));
+        }
+        leave(structure, clear);
+    }
+
+    /*
+     * Takes {@code structure} out of its level: its entity gone, its plot given back, its blocks cleared if asked; as
+     * it goes for good, or on as another structure in another dimension.
+     */
+    static void leave(final MovingStructure structure, final boolean clear) {
         final MovingStructureEntity entity = structure.entity();
         if (entity.isRemoved() || !(structure.level() instanceof ServerLevel level)) {
             return;

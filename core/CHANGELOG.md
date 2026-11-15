@@ -506,6 +506,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - A helm's own down key: J's Core's API is at version 61. `CoreKeys.HELM_DOWN`, C until the player changes
   it, takes a moving structure down from its helm, which the sprint key did before; the sprint key is left to what a
   mod's helm does with it, as a ship's boost. Experimental.
+- A structure gone for good: J's Core's API is at version 62. `MovingStructureEvent.Removed` is told on the
+  game's bus as a moving structure leaves the game for good, taken away, set down into the world as blocks or left
+  with no block of its own, never as it goes on to another dimension or is only unloaded with its land. Experimental.
 
 ### Added
 - Armour standing with no one in it: `KitArmorModel.drawStanding(stack, slot, poses, light)` draws a piece of

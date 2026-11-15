@@ -126,6 +126,7 @@ public final class SpaceClimbs {
                         .forEach(SpaceFirsts::inOrbit);
                 // Told as a thing in the world's orbit, its blocks still here to be looked over.
                 OrbitObjects.arrived(level, structure, body);
+                OrbitRoom.restsAt(space, structure, spot);
                 if (!MovingStructures.travel(structure, space, new Vec3(spot[0], SystemLayout.ORBIT_Y, spot[1]))
                         .ok()) {
                     told.forEach(DimensionTravel::withdraw);

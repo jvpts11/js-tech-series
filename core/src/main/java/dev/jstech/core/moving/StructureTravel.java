@@ -169,7 +169,7 @@ public final class StructureTravel {
         StructureMounts.shift(from, structure.id(), dx, dy, dz);
         StructureMounts.shift(to, structure.id(), dx, dy, dz);
         structure.depart(null);
-        MovingStructures.remove(structure, true);
+        MovingStructures.leave(structure, true);
         // The land stays loaded a while so the structure ticks there and holds its plot, then goes as a portal's.
         for (final ChunkPos chunk : landing) {
             StructureYard.holdLanding(to, chunk);

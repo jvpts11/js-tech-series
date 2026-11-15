@@ -11,6 +11,7 @@ import dev.jstech.core.moving.IStructureBody;
 import dev.jstech.core.moving.LevelMovingStructures;
 import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
+import dev.jstech.space.orbit.OrbitObjects;
 import dev.jstech.space.universe.SystemLayout;
 import java.util.ArrayList;
 import java.util.List;
@@ -51,6 +52,12 @@ public final class OrbitRoom {
                         Math.max(resting.worldBox().getXsize(), resting.worldBox().getZsize())});
             }
         }
+        // The rockets told resting there, loaded or not: one whose part of space is not loaded is no less there.
+        OrbitObjects.restingAround(space.getServer(), world).forEach((id, rest) -> {
+            if (!id.equals(body.id().value())) {
+                taken.add(new double[] {rest.x(), rest.z(), rest.width()});
+            }
+        });
         for (final IStructureBody other : LevelMovingStructures.of(space).all()) {
             if (other instanceof MovingStructure bound && !bound.id().equals(body.id())
                     && bound.motion() instanceof RocketCruise cruise && cruise.to().equals(world)) {
@@ -70,6 +77,12 @@ public final class OrbitRoom {
             }
         }
         return headed;
+    }
+
+    /** Tells that {@code body} rests at {@code spot} of the low orbit it is in, for others to keep clear of. */
+    public static void restsAt(final ServerLevel space, final MovingStructure body, final double[] spot) {
+        OrbitObjects.restsAt(space.getServer(), body.id().value(), new OrbitObjects.Rest(spot[0], spot[1],
+                Math.max(body.worldBox().getXsize(), body.worldBox().getZsize())));
     }
 
     /* Whether a rocket {@code room} wide, its room kept, rests at {@code spot} clear of each of {@code taken}. */

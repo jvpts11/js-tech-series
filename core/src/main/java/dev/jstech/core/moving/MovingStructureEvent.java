@@ -106,6 +106,17 @@ public abstract class MovingStructureEvent extends Event {
         }
     }
 
+    /**
+     * A structure gone from the game for good: taken away, set down into the world as blocks, or left with no block of
+     * its own; never one going on to another dimension, nor one only unloaded with its land.
+     */
+    public static final class Removed extends MovingStructureEvent {
+
+        public Removed(final MovingStructure structure) {
+            super(structure);
+        }
+    }
+
     /** A structure docked to another: it is held by it, as one with it. */
     public static final class Docked extends MovingStructureEvent {
 

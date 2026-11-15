@@ -500,6 +500,7 @@ What happens to a structure is told on the game's bus, as a `MovingStructureEven
 | `Parted` | it broke into pieces, each now a structure of its own |
 | `Docked` | it docked to a host |
 | `Undocked` | it was let go from its host |
+| `Removed` | it is gone for good: taken away, set down into the world as blocks, or left with no block of its own; never as it goes on to another dimension, nor as it is only unloaded with its land |
 
 ```java
 NeoForge.EVENT_BUS.addListener(MovingStructureEvent.Collision.class, blow -> {
