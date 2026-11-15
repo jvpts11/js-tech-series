@@ -148,8 +148,11 @@ jobs:
           cache-read-only: false
 
       - name: Run the GameTests
-        # The server exits with the number of required tests that failed.
-        run: ./gradlew :tests:runGameTestServer "-PgtMods=${{ needs.suites.outputs.mods }}" --console=plain
+        # The server exits with the number of required tests that failed. Half the runner's memory for its heap:
+        # the rockets flown between the worlds keep three dimensions loaded.
+        run: >
+          ./gradlew :tests:runGameTestServer -PgtHeap=8g
+          "-PgtMods=${{ needs.suites.outputs.mods }}" --console=plain
 
       - name: Keep the server logs
         if: failure()
@@ -180,7 +183,7 @@ jobs:
       - name: 'Run the GameTests with CC: Tweaked out of the runtime'
         # CC: Tweaked is a soft dependency, so every mod must run unchanged without it.
         run: >
-          ./gradlew :tests:runGameTestServer -PwithoutComputerCraft
+          ./gradlew :tests:runGameTestServer -PwithoutComputerCraft -PgtHeap=8g
           "-PgtMods=${{ needs.suites.outputs.mods }}" --console=plain
 
       - name: Keep the server logs

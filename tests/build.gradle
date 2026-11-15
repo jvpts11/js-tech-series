@@ -179,6 +179,11 @@ neoForge {
             // space, example, series (see TestSuites). With -PgtOnly too, a test runs when it is in one of them and
             // is named.
             systemProperty 'jsc.gametests.mods', (providers.gradleProperty('gtMods').getOrElse(''))
+            // -PgtHeap=<size> gives the server that much heap: the rockets flown between the worlds keep three
+            // dimensions loaded, more than a quarter of a small machine's memory, the default, holds.
+            if (providers.gradleProperty('gtHeap').present) {
+                jvmArguments.add('-Xmx' + providers.gradleProperty('gtHeap').get())
+            }
             // -PkeepOldSaves keeps the samples the old-save tests build as this version's, in the folder they are
             // read from (the test kit's OldSaves): run once for each version that is released.
             if (providers.gradleProperty('keepOldSaves').present) {
