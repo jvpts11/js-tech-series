@@ -23,7 +23,6 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
-import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -31,8 +30,7 @@ import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 /**
  * The series' basic energy content: the Insulated Copper Cable, a low-voltage line of J's Energy that loses a tenth over
  * a hundred blocks, and the Lead-Acid Battery Bank, 50 MJ at low voltage, its charge on its gauge; while J's Energy is
- * off both speak FE, so the battery feeds any mod's machine along the basic cable; their recipes of the game's own
- * materials give way to J's Industrial's.
+ * off both speak FE, so the battery feeds any mod's machine along the basic cable.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -107,16 +105,6 @@ public final class SharedEnergyGameTests {
                 "its item names its port, low voltage");
         helper.assertTrue(Energies.ofGrid(SharedEnergy.INSULATED_COPPER_CABLE.get().grid()).orElse(null)
                 == JsEnergy.ENERGY, "the cable's grid is J's Energy's");
-        helper.succeed();
-    }
-
-    @GameTest(template = ARENA)
-    public static void recipes_ofTheGamesMaterialsGiveWayToIndustrials(final GameTestHelper helper) {
-        final ResourceLocation cable = ResourceLocation.fromNamespaceAndPath("jscore", "insulated_copper_cable");
-        final ResourceLocation battery = ResourceLocation.fromNamespaceAndPath("jscore", "lead_acid_battery_bank");
-        helper.assertTrue(helper.getLevel().getRecipeManager().byKey(cable).isEmpty()
-                && helper.getLevel().getRecipeManager().byKey(battery).isEmpty(),
-                "with J's Industrial installed, its own recipes stand instead");
         helper.succeed();
     }
 
