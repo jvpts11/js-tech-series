@@ -62,8 +62,9 @@ import org.jetbrains.annotations.Nullable;
  * then the ship goes, standing on its gear on the open floor, whole; a ship on wheels rolls out of its open front, one
  * on legs rises out of its open top. A ship taken back closes it round itself again, its plan the dock's; a dock empty
  * opens by itself, and a design sent to it closes it for the arms to build. It starts nothing it cannot finish: not
- * with something in its crane's way or someone in its pit, nor twice at once; saved halfway it finishes; broken halfway
- * it drops its cradle; and a ship that cannot go at the end has the dock close back round it, its plan kept.
+ * with something in its crane's way, nor twice at once, while a creature in its pit never holds it; saved halfway it
+ * finishes; broken halfway it drops its cradle; and a ship that cannot go at the end has the dock close back round
+ * it, its plan kept.
  */
 @GameTestHolder(JsTests.MODID)
 @PrefixGameTestTemplate(false)
@@ -86,8 +87,6 @@ public final class ShipyardDoorsGameTests {
     /* How long a dock waits with its floor not loaded, and tries a blocked closing again, in ticks, in the tests. */
     private static final int UNLOADED_WAIT = 200;
     private static final int RETRIES = 100;
-    /* How long after its crane has rolled back a dock with someone in its pit is watched, in ticks. */
-    private static final int AFTER_THE_CRANE = 60;
     /* How far a ship standing still may seem to move, in blocks; how many structures a pilot is given at most. */
     private static final double STILL = 0.1;
     private static final int MOST_TAKEN = 1000;
@@ -264,7 +263,7 @@ public final class ShipyardDoorsGameTests {
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 800)
-    public static void blocked_somethingInTheCranesWayOrSomeoneInThePitStartsNothing(final GameTestHelper helper) {
+    public static void blocked_somethingInTheCranesWayStartsNothing(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
         final List<Text> told = new ArrayList<>();
@@ -278,14 +277,6 @@ public final class ShipyardDoorsGameTests {
                     helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED && !told.isEmpty()
                             && GameText.resolve(told.getFirst()).contains(inTheWay.toShortString()), "and says why,"
                             + " naming the place: " + told.stream().map(GameText::resolve).toList());
-                    level.setBlockAndUpdate(inTheWay, Blocks.AIR.defaultBlockState());
-                    told.clear();
-                    final AABB pit = ShipyardStructure.bay(terminal, Orientation.NORTH);
-                    EntityType.PIG.spawn(level, BlockPos.containing(pit.getCenter().x, pit.minY, pit.getCenter().z),
-                            null);
-                    helper.assertFalse(dock(level, terminal).launch(null, told::add), "a pig in its pit, it does not"
-                            + " open");
-                    helper.assertTrue(!told.isEmpty(), "and says why: " + told);
                 })
                 .thenSucceed();
     }
@@ -517,34 +508,32 @@ public final class ShipyardDoorsGameTests {
     }
 
     /*
-     * Someone walking into the pit as the crane rolls back holds the floor: the cradle stays and the floor waits till
-     * they are out, then rises.
+     * A creature in the pit never holds the dock: it opens round its ship, the floor rising whatever stands in the pit,
+     * and closes again round it; one in the way gets hurt as it would by any moving block.
      */
-    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
-    public static void opening_someoneWhoWalksInMeanwhileHoldsTheFloor(final GameTestHelper helper) {
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 2400)
+    public static void pit_aCreatureInThePitNeverHoldsTheDock(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
-        final Entity[] pig = new Entity[1];
+        final AABB pit = ShipyardStructure.bay(terminal, Orientation.NORTH);
+        final MovingStructure[] ship = new MovingStructure[1];
         built(helper, terminal, WHEELS, new int[1])
                 .thenExecute(() -> {
-                    helper.assertTrue(dock(level, terminal).launch(null, why -> { }), "it opens");
-                    final AABB pit = ShipyardStructure.bay(terminal, Orientation.NORTH);
-                    pig[0] = EntityType.PIG.spawn(level, BlockPos.containing(pit.minX + 1, pit.minY, pit.minZ + 1),
-                            null);
+                    EntityType.PIG.spawn(level, BlockPos.containing(pit.minX + 1, pit.minY, pit.minZ + 1), null);
+                    helper.assertTrue(dock(level, terminal).launch(null, why -> { }), "a pig in its pit, it opens");
                 })
-                .thenWaitUntil(() -> helper.assertTrue(standing(level, ShipyardStructure.cranePlaces(terminal,
-                        Orientation.NORTH, true)), "its crane rolled back to the back of the bay"))
-                .thenIdle(AFTER_THE_CRANE)
+                .thenWaitUntil(() -> {
+                    ship[0] = shipIn(level, terminal);
+                    helper.assertTrue(dock(level, terminal).open() && ship[0] != null && ship[0].ready(), "the floor "
+                            + "rises and the ship goes: " + dock(level, terminal).doors());
+                })
                 .thenExecute(() -> {
-                    helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CRANE_BACK
-                            && ShipyardStructure.cradlePlaces(terminal, Orientation.NORTH).stream()
-                            .noneMatch(level::isEmptyBlock), "someone in the pit, the cradle stays and the floor"
-                            + " waits: " + dock(level, terminal).doors());
-                    pig[0].discard();
+                    EntityType.PIG.spawn(level, BlockPos.containing(pit.minX + 1, pit.maxY, pit.minZ + 1), null);
+                    helper.assertTrue(dock(level, terminal).seat(ship[0]), "a pig on its floor, it takes the ship "
+                            + "back");
                 })
-                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).open() && shipIn(level, terminal)
-                        != null, "out of the pit, the floor rises and the ship goes"))
-                .thenExecute(() -> MovingStructures.takeAway(shipIn(level, terminal)))
+                .thenWaitUntil(() -> helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED,
+                        "and is closed: " + dock(level, terminal).doors()))
                 .thenSucceed();
     }
 

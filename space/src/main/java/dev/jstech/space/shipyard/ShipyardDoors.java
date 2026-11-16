@@ -40,8 +40,6 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Containers;
-import net.minecraft.world.entity.EntitySelector;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
@@ -106,8 +104,6 @@ public final class ShipyardDoors implements IFieldPart {
     private static final int RETRY = 20;
     /* How long a dock just formed with nothing to build stands closed before it opens by itself, in ticks. */
     private static final int EMPTY_WAIT = 100;
-    /* How high over the floor risen someone stands in its way, in blocks: on the floor, or on a jaw standing. */
-    private static final int OVER_THE_FLOOR = 2;
     /* Blocks taken off and put back as a moving structure's are: no drops, no damage, no updates round them. */
     private static final int QUIETLY = Block.UPDATE_CLIENTS | Block.UPDATE_KNOWN_SHAPE | Block.UPDATE_SUPPRESS_DROPS
             | Block.UPDATE_MOVE_BY_PISTON;
@@ -444,14 +440,10 @@ public final class ShipyardDoors implements IFieldPart {
     }
 
     /*
-     * Whether nothing is in the floor's way as it sets off: no one in the pit, nor on the floor or a jaw over it, and
-     * no ship come into the bay meanwhile; the pilot told once while something is.
+     * Whether nothing is in the floor's way as it sets off: no ship come into the bay meanwhile; the pilot told once
+     * while one is. A creature in the pit never holds it, and one in the way is hurt as by any moving block.
      */
     private boolean wayClear(final ServerLevel level, final Orientation dock) {
-        if (!level.getEntitiesOfClass(LivingEntity.class, way(dock), EntitySelector.NO_SPECTATORS).isEmpty()) {
-            held(level, ShipyardDoorTexts.SOMEONE_IN_THE_PIT.text());
-            return false;
-        }
         if (!MovingStructures.near(level, ShipyardStructure.bay(this.terminal.getBlockPos(), dock)).isEmpty()) {
             held(level, ShipyardDoorTexts.SHIP_IN_THE_BAY.text());
             return false;
@@ -482,8 +474,8 @@ public final class ShipyardDoors implements IFieldPart {
     }
 
     /*
-     * The cradle's blocks put back where they stood, once nothing stands there, no one and no ship; whether they are
-     * back.
+     * The cradle's blocks put back where they stood, once no block and no ship stands there, whoever else does;
+     * whether they are back.
      */
     private boolean putCradleBack(final ServerLevel level) {
         if (this.cradle.isEmpty()) {
@@ -496,8 +488,7 @@ public final class ShipyardDoors implements IFieldPart {
             }
             box = box.minmax(new AABB(place));
         }
-        if (!level.getEntitiesOfClass(LivingEntity.class, box, EntitySelector.NO_SPECTATORS).isEmpty()
-                || !MovingStructures.near(level, box).isEmpty()) {
+        if (!MovingStructures.near(level, box).isEmpty()) {
             return false;
         }
         for (final BlockPos place : this.cradle) {
@@ -572,8 +563,8 @@ public final class ShipyardDoors implements IFieldPart {
 
     /*
      * Whether the dock's parts may move, closed opening or {@code open} closing: the crane's way along the rails free,
-     * the floor's way through the pit free, the cradle's places free to come back to, no ship standing in the bay, no
-     * one in the pit nor on the floor; told what is in the way, and where, when not.
+     * the floor's way through the pit free, the cradle's places free to come back to, no ship standing in the bay;
+     * told what is in the way, and where, when not. A creature in the pit or on the floor never holds it.
      */
     private boolean clear(final ServerLevel level, final Orientation dock, final boolean open,
                           final Consumer<Text> told) {
@@ -617,17 +608,7 @@ public final class ShipyardDoors implements IFieldPart {
             told.accept(ShipyardDoorTexts.SHIP_IN_THE_BAY.text());
             return false;
         }
-        if (!level.getEntitiesOfClass(LivingEntity.class, way(dock), EntitySelector.NO_SPECTATORS).isEmpty()) {
-            told.accept(ShipyardDoorTexts.SOMEONE_IN_THE_PIT.text());
-            return false;
-        }
         return true;
-    }
-
-    /* The room its floor moves through: the pit, from the floor closed up to a little over the floor risen. */
-    private AABB way(final Orientation dock) {
-        final AABB pit = ShipyardStructure.bay(this.terminal.getBlockPos(), dock);
-        return pit.setMaxY(pit.minY + ShipyardStructure.DECK_UP - ShipyardStructure.DECK_DOWN + OVER_THE_FLOOR);
     }
 
     /* Drops the blocks of the dock's part {@code body} as the blocks they were, at {@code at}, before it is taken. */

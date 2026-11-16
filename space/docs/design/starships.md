@@ -116,7 +116,9 @@ sink into the floor and its jaws swing out and lie flat in their slots, in about
 air. Then the ship is let go, standing on its own gear on the open floor: it becomes one moving structure, once, and
 stays one, standing still or flying. A ship on wheels rolls out of the dock's open front, one on legs rises out of
 its open top. Everything the release needs is checked before the dock opens and again at the end; a release that
-fails at the end closes the dock back round the ship, its plan kept, and its pilot is told why.
+fails at the end closes the dock back round the ship, its plan kept, and its pilot is told why. Only blocks in its
+parts' way and a ship come into its bay hold the dock: nothing alive does, and a creature or a player in the pit or on
+the floor as it moves is hurt as by any moving block.
 
 An empty dock stands open, ready for a ship to come in, whether it has just formed or its plan was put away before
 anything was built. A ship comes back the same way it left: one on legs comes down through the open top onto the floor,

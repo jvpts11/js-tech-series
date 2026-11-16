@@ -687,12 +687,12 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   its jaws fold flat into the floor, in two; then the ship is let go, standing on its own gear, never left in the air:
   on wheels it rolls out of the open front, on legs it lifts off out of the open top. A ship set down on the open
   floor and taken back has the dock close round it the same way back, the cradle holding it before the floor goes
-  down. A dock just formed with nothing to build
-  opens by itself and stands open, ready for a ship to come in; a design sent to it closes it for the arms to build.
-  Nothing starts that cannot finish: the pilot is told when something stands in the crane's or the floor's way, and
-  where, when a ship stands in the bay, when someone is in the pit, and, before the dock opens, when the ship could
-  not go, at their limit of moving structures or too big to move; someone who walks into the pit as it opens holds
-  the floor till they are out, and a closing refused is tried again once a second till its way is clear. A ship
+  down. A dock just formed with nothing to build opens by itself and stands open, ready for a ship to come in; a
+  design sent to it closes it for the arms to build. Nothing starts that cannot finish: the pilot is told when
+  something stands in the crane's or the floor's way, and where, when a ship stands in the bay, and, before the dock
+  opens, when the ship could not go, at their limit of moving structures or too big to move; a closing refused is
+  tried again once a second till its way is clear. Nothing alive holds the dock: a creature or a player in the pit as
+  its floor moves is hurt as by any moving block. A ship
   standing on the open floor is never dropped into the pit. A dock broken while it moves sets its parts down and
   drops its cradle's blocks; a ship that cannot go at the end has the dock close back round it, its plan kept; a
   world closed while the dock moves finishes the move when it opens again, the moving part waited for till its land
