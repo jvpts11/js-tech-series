@@ -4285,6 +4285,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) A ship built in its dock is drawn round a player standing in it: it vanished from inside, looking away from
+  the dock's terminal, its walls hiding the terminal from the game's culling.
 - (Space) The Starship Design's keys along the bottom stay inside their panel: closer together where they must, and
   in the small letters where a language's longer words need it.
 - (Core) Two structures keeping one chunk of the world loaded keep it so till the last of them lets it go: a ship

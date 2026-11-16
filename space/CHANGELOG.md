@@ -961,6 +961,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A ship built in its dock is drawn round a player standing in it: it vanished from inside, looking away from
+  the dock's terminal, its walls hiding the terminal from the game's culling.
 - The Starship Design's keys along the bottom stay inside their panel: closer together where they must, and
   in the small letters where a language's longer words need it.
 - A pad's service port fuels the launcher nearest it, and a launch panel works the nearest: of two launchers

@@ -89,9 +89,14 @@ public final class ShipyardRenderer implements BlockEntityRenderer<ShipyardTermi
         return SEEN_FROM;
     }
 
+    /*
+     * The dock and the ship in it reach far from the terminal's own chunk, so they are drawn whenever their box is in
+     * sight, whether or not the game's culling sees the terminal's chunk: else a player standing in the docked ship,
+     * its walls hiding that chunk, sees the ship round them vanish.
+     */
     @Override
     public boolean shouldRenderOffScreen(final ShipyardTerminalBlockEntity terminal) {
-        return false;
+        return true;
     }
 
     /* The dock's box, and with a plan the box round the terminal the dock and its ship stand in. */
