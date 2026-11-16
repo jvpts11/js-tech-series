@@ -33,6 +33,7 @@ import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.fml.ModList;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -48,6 +49,9 @@ public final class CarbonAdvancementGameTests {
 
     private static final String ARENA = "empty";
     private static final long DAY = 24_000L;
+    /* The Networks tab's advancements with CC: Tweaked loaded, and its mod id. */
+    private static final long NETWORKS = 22L;
+    private static final String COMPUTERCRAFT = "computercraft";
 
     private CarbonAdvancementGameTests() {
     }
@@ -59,8 +63,10 @@ public final class CarbonAdvancementGameTests {
                         && !id.getPath().startsWith("recipes/"))
                 .collect(Collectors.groupingBy(id -> id.getPath().substring(0, id.getPath().indexOf('/')),
                         Collectors.counting()));
-        helper.assertTrue(perTab.equals(Map.of("fab", 14L, "hardware", 24L, "systems", 36L, "networks", 22L,
-                "sigma", 14L, "teracoin", 9L)), "119 in six tabs: " + perTab);
+        // Talking to the Neighbours is earned with CC: Tweaked, and is there only while it is.
+        final long networks = ModList.get().isLoaded(COMPUTERCRAFT) ? NETWORKS : NETWORKS - 1;
+        helper.assertTrue(perTab.equals(Map.of("fab", 14L, "hardware", 24L, "systems", 36L, "networks", networks,
+                "sigma", 14L, "teracoin", 9L)), "119 in six tabs, 118 with no CC: Tweaked: " + perTab);
         for (final String hidden : List.of("hardware/magic_smoke", "hardware/cpu_over_temperature",
                 "systems/not_properly_shut_down", "teracoin/the_halvening")) {
             helper.assertTrue(display(helper, hidden).isHidden(), hidden + " stays hidden until earned");
