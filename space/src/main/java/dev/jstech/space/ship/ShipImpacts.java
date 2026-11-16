@@ -20,9 +20,10 @@ import net.minecraft.server.level.ServerPlayer;
 /**
  * What a ship that meets the land too fast suffers. Up to {@link #SAFE} blocks a second it touches down as a ship
  * should. Faster, the blocks it meets the land with are holed, one more for every {@link #PER_HOLE} blocks a second
- * past that: its feet, wheels and underside first, each a hole its part holds round, as a block broken aboard leaves,
- * and the blow is heard as the game's own explosion. Faster than {@link #HURTS} blocks a second its crew are hurt too,
- * more the faster. The figures are estimates, to be weighed in play.
+ * past that: those foremost the way it went, its feet, wheels and underside coming down, its top going up into what is
+ * over it, its nose flying into a hill; each a hole its part holds round, as a block broken aboard leaves, and the
+ * blow is heard as the game's own explosion. Faster than {@link #HURTS} blocks a second its crew are hurt too, more
+ * the faster. The figures are estimates, to be weighed in play.
  */
 public final class ShipImpacts {
 
@@ -52,11 +53,20 @@ public final class ShipImpacts {
     }
 
     /**
-     * {@code ship} met the land at {@code speed} blocks a second: once its tick is done, so its blocks do not change
-     * under its own step, the lowest of its blocks are holed and its crew hurt as the speed says. Nothing at a touch
-     * down.
+     * {@code ship} came down onto the land at {@code speed} blocks a second: once its tick is done, so its blocks do
+     * not change under its own step, the lowest of its blocks are holed and its crew hurt as the speed says. Nothing at
+     * a touch down.
      */
     public static void met(final ServerLevel level, final MovingStructure ship, final double speed) {
+        met(level, ship, speed, 0, -1, 0);
+    }
+
+    /**
+     * {@code ship} going the way {@code (wayX, wayY, wayZ)} in the world met the land at {@code speed} blocks a second:
+     * as {@link #met(ServerLevel, MovingStructure, double)}, the blocks holed those foremost that way.
+     */
+    public static void met(final ServerLevel level, final MovingStructure ship, final double speed, final double wayX,
+                           final double wayY, final double wayZ) {
         final int holes = holes(speed);
         final float hurt = hurt(speed);
         if (holes == 0 && hurt == 0) {
@@ -66,7 +76,7 @@ public final class ShipImpacts {
             if (ship.entity().isRemoved() || ship.level() != level) {
                 return;
             }
-            final List<BlockPos> struck = lowest(level, ship, Math.max(1, holes));
+            final List<BlockPos> struck = foremost(level, ship, Math.max(1, holes), wayX, wayY, wayZ);
             if (holes > 0 && !struck.isEmpty()) {
                 ShipSounds.impact(level, struck.getFirst());
             }
@@ -82,8 +92,12 @@ public final class ShipImpacts {
         });
     }
 
-    /* The {@code count} blocks of {@code ship}'s yard lowest in the world as it stands: what meets the land first. */
-    private static List<BlockPos> lowest(final ServerLevel level, final MovingStructure ship, final int count) {
+    /*
+     * The {@code count} blocks of {@code ship}'s yard foremost in the world, as it stands, the way {@code (wayX, wayY,
+     * wayZ)} it went: what meets the land first.
+     */
+    private static List<BlockPos> foremost(final ServerLevel level, final MovingStructure ship, final int count,
+                                           final double wayX, final double wayY, final double wayZ) {
         final StructureFrame frame = ship.frame();
         final Box box = ship.bounds();
         final List<BlockPos> blocks = new ArrayList<>();
@@ -93,8 +107,16 @@ public final class ShipImpacts {
                 blocks.add(at.immutable());
             }
         }
-        blocks.sort(Comparator.comparingDouble(at -> frame.worldY(at.getX() + HALF, at.getY() + HALF,
-                at.getZ() + HALF)));
+        blocks.sort(Comparator.comparingDouble(at -> -along(frame, at, wayX, wayY, wayZ)));
         return blocks.subList(0, Math.min(count, blocks.size()));
+    }
+
+    /* How far along the way {@code (wayX, wayY, wayZ)} the middle of the yard's block {@code at} is in the world. */
+    private static double along(final StructureFrame frame, final BlockPos at, final double wayX, final double wayY,
+                                final double wayZ) {
+        final double x = at.getX() + HALF;
+        final double y = at.getY() + HALF;
+        final double z = at.getZ() + HALF;
+        return frame.worldX(x, y, z) * wayX + frame.worldY(x, y, z) * wayY + frame.worldZ(x, y, z) * wayZ;
     }
 }

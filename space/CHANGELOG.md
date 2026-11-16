@@ -961,6 +961,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A ship that runs into something is holed where it met it, its top going up and its nose going on, no longer
+  always at its feet; and one that rises into what is over it stops climbing, where it ran into it again at once on
+  every tick, as hard, and was holed away from the bottom up while its pilot held up.
 - A ship meets the land with the whole of each of its blocks: it met it only at their middles, so a beam or a
   slab thinner than a block could pass into its hull between two of them, and a ship rising off its cradle in the
   Small Shipyard was caught on the crane's bridge that way, unable to move.

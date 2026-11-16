@@ -31,6 +31,7 @@ import dev.jstech.space.ship.ShipDesign;
 import dev.jstech.space.ship.ShipFlight;
 import dev.jstech.space.ship.ShipFlightModel;
 import dev.jstech.space.ship.ShipGround;
+import dev.jstech.space.ship.ShipImpacts;
 import dev.jstech.space.ship.ShipReadings;
 import dev.jstech.space.ship.ShipSequence;
 import dev.jstech.space.ship.ShipKitBlocks;
@@ -47,10 +48,13 @@ import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestShipyards;
 import java.util.Comparator;
 import java.util.EnumMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
 import net.minecraft.core.Vec3i;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -73,7 +77,9 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.chunk.LevelChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -147,6 +153,15 @@ public final class ShipFlightGameTests {
     private static final int RISING = 50;
     private static final int HOVERED = 20;
     private static final int ROLLED = 10;
+    /*
+     * How long its pilot holds up under its dock's crane, in ticks: past its climb to the crane's bridge, pressing up
+     * against it a while; how high over a ship what stands over it is looked for, and how far it flies on out of its
+     * dock's front at least, in blocks.
+     */
+    private static final int UNDER_THE_BRIDGE = 200;
+    private static final int OVERHEAD = 16;
+    /* How fast a ship meets what is over it in the test of where it is holed, in blocks a second: two holes. */
+    private static final double UP_HIT = 14;
     /* How far a hovering ship may drift up or down, and roll on wheels at least, in blocks; its nozzles, in degrees. */
     private static final double HOVER_DRIFT = 0.05;
     private static final double ROLLS = 0.3;
@@ -319,6 +334,58 @@ public final class ShipFlightGameTests {
             helper.assertTrue(((ShipFlight) ship[0].motion()).grounded() && ship[0].pose().y() < from[1].y() - 1,
                     "held down, it comes back down onto its cradle");
         }).thenExecute(() -> MovingStructures.takeAway(ship[0])).thenSucceed();
+    }
+
+    /*
+     * Let go in its dock, its pilot holding UP long: it rises off its cradle to the crane's bridge over the bay and
+     * stops under it, never past it, the bridge never in its hull and not one of its blocks holed for pressing up
+     * against it.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 900)
+    public static void flight_heldUpUnderTheCranesBridgeItStopsUnderItWhole(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final int[] blocks = new int[1];
+        final double[] bridge = new double[1];
+        final StructurePose[] from = new StructurePose[1];
+        final GameTestSequence sequence = letGo(helper, ship, SHIP).thenExecute(() -> {
+            from[0] = ship[0].pose();
+            blocks[0] = blocksOf(helper, ship[0]);
+            bridge[0] = overhead(helper, ship[0]);
+            helper.assertTrue(bridge[0] < Double.POSITIVE_INFINITY, "the crane's bridge stands over the ship");
+        });
+        hold(helper, sequence, ship, StructureControls.ControlAxis.UP, UNDER_THE_BRIDGE).thenExecute(() -> {
+            final StructurePose now = ship[0].pose();
+            helper.assertTrue(now.y() > from[0].y() + 1 && ship[0].worldBox().minY < bridge[0], "held up, it rises"
+                    + " off its cradle to the crane's bridge, never past it: " + (now.y() - from[0].y()) + " blocks");
+            helper.assertFalse(ShipGround.meet(helper.getLevel(), ship[0], ship[0].frame()).blocked(),
+                    "the bridge is never in its hull");
+            helper.assertTrue(blocksOf(helper, ship[0]) == blocks[0], "pressed up against it, none of its blocks is"
+                    + " holed: " + blocksOf(helper, ship[0]) + " of " + blocks[0]);
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
+    }
+
+    /*
+     * Let go in its dock, then meeting what is over it going up, fast enough to be holed twice: the two blocks holed
+     * are its topmost, what met it, never its feet.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void impact_goingUpItsTopIsHoledNotItsFeet(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final Set<BlockPos> before = new HashSet<>();
+        letGo(helper, ship, SHIP).thenExecute(() -> {
+            before.addAll(standing(helper, ship[0]));
+            ShipImpacts.met(helper.getLevel(), ship[0], UP_HIT, 0, 1, 0);
+        }).thenExecuteAfter(2, () -> {
+            final Set<BlockPos> after = standing(helper, ship[0]);
+            final List<BlockPos> holed = before.stream().filter(at -> !after.contains(at)).toList();
+            final double lowestHoled = holed.stream().mapToDouble(at -> height(ship[0], at)).min().orElse(0);
+            final double highestLeft = after.stream().mapToDouble(at -> height(ship[0], at)).max().orElse(0);
+            helper.assertTrue(holed.size() == ShipImpacts.holes(UP_HIT) && lowestHoled >= highestLeft, "met going up,"
+                    + " its " + ShipImpacts.holes(UP_HIT) + " topmost blocks are holed: " + holed.size() + " holed, the"
+                    + " lowest at " + lowestHoled + ", the highest left at " + highestLeft);
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
     }
 
     /*
@@ -776,6 +843,46 @@ public final class ShipFlightGameTests {
     private static ServerLevel world(final GameTestHelper helper, final ResourceLocation world) {
         final ResourceKey<Level> key = SpaceWorlds.get(helper.getLevel(), world).orElseThrow().dimension();
         return RuntimeDimensions.getOrCreate(helper.getLevel().getServer(), key, key.location());
+    }
+
+    /*
+     * The lowest underside of what stands over {@code ship}, within its box's breadth and {@link #OVERHEAD} blocks
+     * over its top: its dock crane's bridge, for a ship in its cradle; infinite with nothing there.
+     */
+    private static double overhead(final GameTestHelper helper, final MovingStructure ship) {
+        final ServerLevel level = helper.getLevel();
+        final AABB box = ship.worldBox();
+        final BlockPos.MutableBlockPos at = new BlockPos.MutableBlockPos();
+        double lowest = Double.POSITIVE_INFINITY;
+        for (int x = Mth.floor(box.minX); x <= Mth.floor(box.maxX); x++) {
+            for (int z = Mth.floor(box.minZ); z <= Mth.floor(box.maxZ); z++) {
+                for (int y = Mth.floor(box.maxY); y <= Mth.floor(box.maxY) + OVERHEAD; y++) {
+                    final VoxelShape shape = level.getBlockState(at.set(x, y, z)).getCollisionShape(level, at);
+                    if (!shape.isEmpty()) {
+                        lowest = Math.min(lowest, y + shape.min(Direction.Axis.Y));
+                        break;
+                    }
+                }
+            }
+        }
+        return lowest;
+    }
+
+    /* The places of {@code ship}'s yard a block stands in now. */
+    private static Set<BlockPos> standing(final GameTestHelper helper, final MovingStructure ship) {
+        final Set<BlockPos> places = new HashSet<>();
+        for (final BlockPos at : BlockPos.betweenClosed(ship.bounds().minX(), ship.bounds().minY(),
+                ship.bounds().minZ(), ship.bounds().maxX(), ship.bounds().maxY(), ship.bounds().maxZ())) {
+            if (!helper.getLevel().getBlockState(at).isAir()) {
+                places.add(at.immutable());
+            }
+        }
+        return places;
+    }
+
+    /* How high in the world the middle of {@code ship}'s yard block {@code at} stands. */
+    private static double height(final MovingStructure ship, final BlockPos at) {
+        return ship.frame().worldY(at.getX() + 0.5, at.getY() + 0.5, at.getZ() + 0.5);
     }
 
     /* How many blocks stand in {@code ship}'s plot of the yard now: fewer once any is holed. */
