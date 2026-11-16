@@ -1,0 +1,19 @@
+{
+  "reach": 192,
+  "emitters": [
+    {
+      "name": "core",
+      "emission": {"shape": {"type": "cone", "angle": 3}, "rate": 120, "life": [0.14, 0.24], "speed": [14, 18]},
+      "look": {"sprite": "jsspace:engine_glow", "frames": 1, "size": [0.8, 1.2], "colour": ["#FFF6E0FF", "#FFD8A000"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.3, "attached": true}
+    },
+    {
+      "name": "plume",
+      "emission": {"shape": {"type": "cone", "angle": 10}, "rate": 180, "life": [0.35, 0.65], "speed": [12, 16]},
+      "look": {"sprite": "jsspace:engine_glow", "frames": 1, "size": [1.0, 2.4], "colour": ["#C8DAFF90", "#8CA8F000"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.1, "attached": true}
+    }
+  ]
+}

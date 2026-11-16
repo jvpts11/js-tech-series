@@ -124,6 +124,12 @@ kit for its vehicles.
   climb and in space its bells push. Its wings hold it up, more the faster it goes and less in thinner air, and flying too
   slowly it sinks. In space it flies free and faster. **Weight counts**: a heavier ship gathers speed more slowly and needs
   more of it to stay up; a ship too heavy for its engines only sinks.
+- **Its engines are seen running**, the mouths glowing as in Starfield and the jet growing with the throttle as in No
+  Man's Sky. While they run, the mouths of its bells glow: faintly where the air is thick, which leaves the bells cold,
+  brightly where they push, in the thin air of the climb and in space, and there a jet grows out of each with the
+  throttle, longer and hotter while it boosts, leaving a heat trail in thin air and clean and blue in space. Its air
+  engines blow their exhaust back out of their nozzles where they breathe, and down holding the ship up. The jets go with
+  the ship however fast it flies; only the trail stays behind in the air.
 - **Boost.** Held on left Ctrl, the boost takes the ship faster across an empty stretch, well clear of the land or in
   space, for as long as the pilot holds it. Its one cost is the ship's agility: while it boosts, the ship turns and
   pitches at four tenths of its usual rate, and the HUD says TURN SLOW. The reactor drives it, so a ship whose reactor has

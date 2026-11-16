@@ -23,6 +23,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.SplittableRandom;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
@@ -96,6 +97,15 @@ public final class EffectEngine {
         return STORE.count;
     }
 
+    /** How far from {@code at} the living particle farthest from it is, in blocks; nought for none. */
+    public static double farthestFrom(final Vec3 at) {
+        double farthest = 0;
+        for (int i = 0; i < STORE.count; i++) {
+            farthest = Math.max(farthest, at.distanceToSqr(STORE.x[i], STORE.y[i], STORE.z[i]));
+        }
+        return Math.sqrt(farthest);
+    }
+
     /** How many particles were drawn many at once on the graphics card in the last frame. */
     public static int instancedLastFrame() {
         return instancedLast;
@@ -118,9 +128,9 @@ public final class EffectEngine {
     static RunningEffect start(final ClientLevel level, final @Nullable ResourceLocation id,
                                final EffectDefinition definition, final @Nullable Object holder,
                                final Supplier<Vec3> at, final Supplier<Vec3> way, final Supplier<Optional<Vec3>> to,
-                               final int colour, final float scale) {
+                               final int colour, final float scale, final DoubleSupplier reach) {
         final RunningEffect effect = new RunningEffect(level, id, definition, holder, at, way, to, colour, scale,
-                RANDOM.nextLong());
+                reach, RANDOM.nextLong());
         RUNNING.add(effect);
         return effect;
     }
@@ -180,6 +190,8 @@ public final class EffectEngine {
                 continue;
             }
             final Vec3 at = effect.at.get();
+            // What is attached to it goes with it however far it went, a jump too: an engine's jet stays on it.
+            effect.moved = effect.lastAt == null ? Vec3.ZERO : at.subtract(effect.lastAt);
             effect.place = EffectPlace.of(level, at);
             if (!effect.started) {
                 effect.started = true;
@@ -239,7 +251,8 @@ public final class EffectEngine {
 
     /*
      * Emits what the effect's emitters emit this tick, from where it is; one that moved emits along the way it went
-     * since the tick before, so a fast engine leaves a line, not beads a tick apart.
+     * since the tick before, so a fast engine leaves a line, not beads a tick apart, but what stays attached to it
+     * it emits where it is, as its jet goes with it.
      */
     private static void emit(final RunningEffect effect, final Vec3 at, final double thinned, final int budget) {
         final Vec3 way = effect.way.get();
@@ -265,8 +278,11 @@ public final class EffectEngine {
                 count += (int) run.carry;
                 run.carry -= (int) run.carry;
             }
+            // What stays attached to it is laid where it was, for the step to take it along to where it is now.
+            final boolean attached = emitter.motion().attached();
+            final Vec3 laid = attached ? at.subtract(effect.moved) : at;
             for (int i = 0; i < count; i++) {
-                spawn(run, effect, count > 1 ? from.lerp(at, (i + 1.0) / count) : at, frame, budget);
+                spawn(run, effect, count > 1 && !attached ? from.lerp(at, (i + 1.0) / count) : laid, frame, budget);
             }
         }
     }
@@ -286,7 +302,7 @@ public final class EffectEngine {
         final double px = at.x + (frame[0] * local[0] + frame[3] * local[1] + frame[6] * local[2]) * scale;
         final double py = at.y + (frame[1] * local[0] + frame[4] * local[1] + frame[7] * local[2]) * scale;
         final double pz = at.z + (frame[2] * local[0] + frame[5] * local[1] + frame[8] * local[2]) * scale;
-        final double speed = emission.speed().at(RANDOM.nextDouble());
+        final double speed = emission.speed().at(RANDOM.nextDouble()) * effect.reach.getAsDouble();
         final double[] v = {
             (frame[0] * way[0] + frame[3] * way[1] + frame[6] * way[2]) * speed,
             (frame[1] * way[0] + frame[4] * way[1] + frame[7] * way[2]) * speed,
@@ -334,9 +350,11 @@ public final class EffectEngine {
             STORE.lastX[i] = STORE.x[i];
             STORE.lastY[i] = STORE.y[i];
             STORE.lastZ[i] = STORE.z[i];
-            final double nx = STORE.x[i] + v[0] * TICK;
-            final double ny = STORE.y[i] + v[1] * TICK;
-            final double nz = STORE.z[i] + v[2] * TICK;
+            // One attached goes on with what emits it as well, as far as that moved since the tick before.
+            final Vec3 along = motion.attached() ? run.effect.moved : Vec3.ZERO;
+            final double nx = STORE.x[i] + v[0] * TICK + along.x;
+            final double ny = STORE.y[i] + v[1] * TICK + along.y;
+            final double nz = STORE.z[i] + v[2] * TICK + along.z;
             if (motion.collide() && solid(level, block.set(nx, ny, nz))) {
                 v[0] = 0;
                 v[1] = 0;

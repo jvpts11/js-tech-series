@@ -155,7 +155,7 @@ public final class ShipFlightModel {
                 : 0;
         return new Tick(new State(speed, resting ? 0 : sink, throttle, resting ? 0 : rise, nozzles), turn, lifted,
                 boosting, reached, falling && pull > 0 && !air.grounded(), bells > 0 && push > 0 ? bells / push : 0.0,
-                gearDown, sin > 0 && breathing > 0 && !resting, byThrusters > 0);
+                gearDown, sin > 0 && breathing > 0 && !resting, byThrusters > 0, breathing > 0);
     }
 
     /**
@@ -316,8 +316,9 @@ public final class ShipFlightModel {
      * @param gearDown  whether its gear is down
      * @param lifting   whether its nozzles hold it up, blowing down
      * @param thrusting whether its thrusters hold it up, firing down
+     * @param breathing whether its air engines breathe the air round it, pushing out of their nozzles
      */
     public record Tick(State state, double turn, double pitch, boolean boosting, double reached, boolean stalled,
-                       double bells, boolean gearDown, boolean lifting, boolean thrusting) {
+                       double bells, boolean gearDown, boolean lifting, boolean thrusting, boolean breathing) {
     }
 }

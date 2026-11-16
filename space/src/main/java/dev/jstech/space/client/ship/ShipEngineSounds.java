@@ -157,7 +157,7 @@ public final class ShipEngineSounds {
         @Override
         public List<LoopRequest> loops() {
             final ShipReadings now = this.console.flight();
-            if (!running(now) || this.console.ship().isEmpty()) {
+            if (!now.running() || this.console.ship().isEmpty()) {
                 return List.of();
             }
             if (now.pulse().on()) {
@@ -231,11 +231,6 @@ public final class ShipEngineSounds {
             if (was.on() && !is.on()) {
                 once(level, ShipSounds.PULSE_END, enginesPlace());
             }
-        }
-
-        /* Whether its engines run: in the air, held up on its nozzles, or with its throttle open. */
-        private static boolean running(final ShipReadings now) {
-            return !now.grounded() || now.lifting() || now.throttle() > 0 || now.boosting();
         }
 
         /* Where the middle of its main engines is in its yard: its console's block if it has none. */

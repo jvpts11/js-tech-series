@@ -29,6 +29,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -40,8 +41,9 @@ import org.slf4j.Logger;
 
 /**
  * Effects as a player sees them: steam rising from a block and drifting with the world's wind; sparks, an arc flash
- * and a laser at night; a tracer drawn out along its path, and the same one not, a dot; bubbles that live only in
- * water; scorch on the ground; the screen's flash, shake, vignette and
+ * and a laser at night; a tracer drawn out along its path, and the same one not, a dot; a jet attached to what emits
+ * it going along with it however fast, a loose one left behind, and one held reaching further; bubbles that live only
+ * in water; scorch on the ground; the screen's flash, shake, vignette and
  * the ring of a shockwave; the effects editor open on the real block, an emitter turned off and the file saved; and a
  * new effect made from a starting point and opened in the editor.
  */
@@ -62,6 +64,17 @@ public final class EffectsClientTests {
     private static final double SQUARE_ENOUGH = 3.0;
     /* How far above the middle of the screen the crosshair reaches, in the screen's own units. */
     private static final int CROSSHAIR = 8;
+    /*
+     * A jet flying two blocks a tick for a second: an attached one's particles, flying a block from it in their life,
+     * keep within two blocks of it, where a loose one's are left some eighteen behind; held reaching four times as
+     * far, they fly four blocks.
+     */
+    private static final double FLIES = 2.0;
+    private static final int FLIGHT = 20;
+    private static final double NEAR = 2.0;
+    private static final double LEFT_BEHIND = 10.0;
+    private static final double REACH = 4.0;
+    private static final double REACHED = 3.0;
 
     private EffectsClientTests() {
     }
@@ -138,6 +151,43 @@ public final class EffectsClientTests {
                     level.setDayTime(DAY);
                     clear(ctx, level);
                 });
+    }
+
+    @ClientTest(timeoutTicks = 900)
+    public static void attached_goesAlongWithWhatEmitsIt(final ClientTestContext ctx) {
+        final Vec3 from = Vec3.atCenterOf(ctx.abs(new BlockPos(-12, 6, 10)));
+        final Vec3 west = new Vec3(-1, 0, 0);
+        final long[] start = new long[1];
+        // An emitter flying east two blocks a tick, as fast as a ship cruising through the air.
+        final Supplier<Vec3> flying = () -> from.add(FLIES * (ctx.mc().level.getGameTime() - start[0]), 0, 0);
+        final double[] spread = new double[3];
+        ctx.thenTeleport(0, STAND, Direction.SOUTH)
+                .thenServer(0, level -> clear(ctx, level))
+                .then(2, () -> {
+                    start[0] = ctx.mc().level.getGameTime();
+                    ClientEffects.hold(TOWER_HOLDER, tests("test_attached"), flying, () -> west);
+                })
+                .then(FLIGHT, () -> spread[0] = EffectEngine.farthestFrom(flying.get()))
+                .then(0, () -> ClientEffects.release(TOWER_HOLDER))
+                .thenWaitUntil(() -> EffectEngine.particles() == 0, WAIT, "the attached jet to die away")
+                .then(0, () -> {
+                    start[0] = ctx.mc().level.getGameTime();
+                    ClientEffects.hold(TOWER_HOLDER, tests("test_loose"), flying, () -> west);
+                })
+                .then(FLIGHT, () -> spread[1] = EffectEngine.farthestFrom(flying.get()))
+                .then(0, () -> ClientEffects.release(TOWER_HOLDER))
+                .thenWaitUntil(() -> EffectEngine.particles() == 0, WAIT, "the loose jet to die away")
+                .then(0, () -> ClientEffects.holdReaching(TOWER_HOLDER, tests("test_attached"), () -> from,
+                        () -> west, 1.0F, () -> REACH))
+                .then(FLIGHT, () -> spread[2] = EffectEngine.farthestFrom(from))
+                .then(0, () -> ClientEffects.release(TOWER_HOLDER))
+                .then(0, () -> LOGGER.info("[CT] attached {} from its emitter, loose {}, reaching {} times {}",
+                        spread[0], spread[1], REACH, spread[2]))
+                .thenAssert(0, () -> spread[0] < NEAR, "an attached jet keeps to what emits it; the log says how")
+                .thenAssert(0, () -> spread[1] > LEFT_BEHIND, "a loose one is left behind along the way it went")
+                .thenAssert(0, () -> spread[2] > REACHED && spread[2] < REACH + 1,
+                        "held reaching four times as far, it flies four times as far")
+                .thenServer(0, level -> clear(ctx, level));
     }
 
     @ClientTest(timeoutTicks = 900)

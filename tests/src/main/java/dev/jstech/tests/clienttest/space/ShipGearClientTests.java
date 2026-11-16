@@ -72,6 +72,11 @@ public final class ShipGearClientTests {
     private static final int STILL = 3;
     /* Of the nine pixels round one, how many must differ too for it to be of a thing, not a bit flying past. */
     private static final int MOST = 6;
+    /*
+     * How far down the view the belly is, a share of its height: the gear is drawn below it, where nothing else the
+     * ship does in the air is; its engines, running, glow at its tail above its wing.
+     */
+    private static final double BELLY = 0.35;
     private static final int CHANNEL = 0xFF;
     private static final ShipDesign SHIP = new ShipDesign("JS-07", List.of(part("orbiter_cockpit"), part("airlock"),
             part("quarters"), part("workshop"), part("reactor_flush")), List.of(part("twin_bells"),
@@ -159,7 +164,8 @@ public final class ShipGearClientTests {
                             && changed(frames[1], frames[2], gear) >= TURNED, "going up, the gear is seen folding,"
                             + " between down and in: " + changed(frames[0], frames[1], gear));
                     ctx.assertTrue(changed(frames[2], frames[3], gear) <= STILL, "and stays gone, nothing moving: "
-                            + changed(frames[2], frames[3], gear));
+                            + changed(frames[2], frames[3], gear) + " " + where(frames[2], frames[3], gear,
+                            ctx.mc().getWindow().getGuiScaledWidth()));
                     ctx.assertTrue(changed(frames[2], frames[4], gear) >= seen / 2, "down again, the gear is out"
                             + " under the belly: " + changed(frames[2], frames[4], gear) + " of " + seen);
                     ctx.assertTrue(changed(frames[4], frames[5], gear) >= TURNED, "rolling, its wheels turn: "
@@ -172,9 +178,9 @@ public final class ShipGearClientTests {
     }
 
     /*
-     * The pixels that differ between {@code a} and {@code b}, frames {@code width} wide, each kept only with most of
-     * the pixels round it differing too: a thing seen in one and not the other, not the scattered bits of something
-     * flying past.
+     * The pixels below the belly that differ between {@code a} and {@code b}, frames {@code width} wide, each kept only
+     * with most of the pixels round it differing too: a thing seen in one and not the other, not the scattered bits of
+     * something flying past.
      */
     private static boolean[] area(final int[] a, final int[] b, final int width) {
         final int height = a.length / width;
@@ -183,7 +189,7 @@ public final class ShipGearClientTests {
             differs[i] = differ(a[i], b[i]);
         }
         final boolean[] out = new boolean[a.length];
-        for (int y = 1; y < height - 1; y++) {
+        for (int y = Math.max(1, (int) (height * BELLY)); y < height - 1; y++) {
             for (int x = 1; x < width - 1; x++) {
                 int round = 0;
                 for (int dy = -1; dy <= 1; dy++) {
@@ -205,6 +211,23 @@ public final class ShipGearClientTests {
         return found;
     }
 
+    /* Where in frames {@code width} wide the pixels of {@code area} that differ between two lie, for a failure. */
+    private static String where(final int[] a, final int[] b, final boolean[] area, final int width) {
+        int left = Integer.MAX_VALUE;
+        int top = Integer.MAX_VALUE;
+        int right = -1;
+        int bottom = -1;
+        for (int i = 0; i < Math.min(a.length, area.length); i++) {
+            if (area[i] && differ(a[i], b[i])) {
+                left = Math.min(left, i % width);
+                right = Math.max(right, i % width);
+                top = Math.min(top, i / width);
+                bottom = Math.max(bottom, i / width);
+            }
+        }
+        return right < 0 ? "nowhere" : "from " + left + "," + top + " to " + right + "," + bottom;
+    }
+
     /* How many pixels of {@code area} differ between two frames. */
     private static int changed(final int[] a, final int[] b, final boolean[] area) {
         int found = 0;
@@ -222,7 +245,7 @@ public final class ShipGearClientTests {
         final AirReserveEntity console = console(ctx, ship);
         ctx.assertTrue(console != null, "its console on the player's game");
         console.flew(new ShipReadings(speed, 0, 0, 0, false, 0, false, false, down, false, down ? 0 : 40,
-                grounded, ShipReadings.Pilot.NONE, ShipReadings.Pulse.NONE));
+                grounded, ShipReadings.Pilot.NONE, ShipReadings.Pulse.NONE, 0, false));
     }
 
     /* The console of {@code ship} on the player's game, if it has arrived. */

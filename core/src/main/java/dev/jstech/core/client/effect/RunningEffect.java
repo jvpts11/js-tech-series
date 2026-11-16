@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.resources.ResourceLocation;
@@ -37,6 +38,8 @@ final class RunningEffect {
     final Supplier<Optional<Vec3>> to;
     final int colour;
     final float scale;
+    /* How many times as far as its file says its particles fly, asked as each is emitted: a jet as long as now. */
+    final DoubleSupplier reach;
     final long seed;
     final List<EmitterRun> runs = new ArrayList<>();
     EffectDefinition definition;
@@ -46,10 +49,13 @@ final class RunningEffect {
     EffectPlace place = EffectPlace.STILL;
     /* Where it was the tick before, for what it emits moving to be laid along the way it went; null at first. */
     @Nullable Vec3 lastAt;
+    /* How far it moved since the tick before, which the particles attached to it move too. */
+    Vec3 moved = Vec3.ZERO;
 
     RunningEffect(final ClientLevel level, final @Nullable ResourceLocation id, final EffectDefinition definition,
                   final @Nullable Object holder, final Supplier<Vec3> at, final Supplier<Vec3> way,
-                  final Supplier<Optional<Vec3>> to, final int colour, final float scale, final long seed) {
+                  final Supplier<Optional<Vec3>> to, final int colour, final float scale, final DoubleSupplier reach,
+                  final long seed) {
         this.level = level;
         this.id = id;
         this.holder = holder;
@@ -58,6 +64,7 @@ final class RunningEffect {
         this.to = to;
         this.colour = colour;
         this.scale = scale;
+        this.reach = reach;
         this.seed = seed;
         this.definition = definition;
         build();

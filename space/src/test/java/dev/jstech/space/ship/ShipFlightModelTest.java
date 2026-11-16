@@ -76,6 +76,9 @@ class ShipFlightModelTest {
         final ShipFlightModel.State fast = new ShipFlightModel.State(40, 0, 1, 0, 0);
         assertEquals(0.0, ShipFlightModel.step(fast, CRUISING, SEA, SHIP, 0).bells(), CLOSE);
         assertEquals(1.0, ShipFlightModel.step(fast, CRUISING, SPACE, SHIP, 0).bells(), CLOSE);
+        assertTrue(ShipFlightModel.step(fast, CRUISING, SEA, SHIP, 0).breathing(), "its air engines breathe in air");
+        assertFalse(ShipFlightModel.step(fast, CRUISING, SPACE, SHIP, 0).breathing(), "and in space not");
+        assertFalse(ShipFlightModel.step(fast, CRUISING, SEA, BELLS, 0).breathing(), "a ship of bells alone never");
     }
 
     @Test

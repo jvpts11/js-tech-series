@@ -2074,6 +2074,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   the rest of the block, its part of the model as before.
 - A formed model's piece is used from any block it stands in, through the block it works by: a seat whose back
   stands in the block over it is sat in from its back.
+- An emitter of an effect file can keep its particles `attached` to what emits them, moved along as far as it
+  moves each tick, as an engine's jet keeps its shape behind a fast craft; and `ClientEffects.holdReaching` holds an
+  effect whose particles fly as many times as far as asked each moment, as a jet grows with its throttle.
 
 ### Changed
 - A machine says why it will not work what it was given beside its status, in its lamp's tooltip and on its

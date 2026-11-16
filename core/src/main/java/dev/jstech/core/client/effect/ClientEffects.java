@@ -10,6 +10,7 @@ package dev.jstech.core.client.effect;
 import dev.jstech.core.effect.EffectDefinition;
 import dev.jstech.core.effect.EffectPayload;
 import java.util.Optional;
+import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -32,6 +33,8 @@ import net.minecraft.world.phys.Vec3;
 public final class ClientEffects {
 
     private static final Vec3 UP = new Vec3(0, 1, 0);
+    /* Its particles fly as far as its file says. */
+    private static final DoubleSupplier AS_FAR = () -> 1.0;
 
     private ClientEffects() {
     }
@@ -43,12 +46,12 @@ public final class ClientEffects {
 
     /** Plays the effect {@code id} once at {@code at}, facing {@code way}. */
     public static void play(final ResourceLocation id, final Vec3 at, final Vec3 way) {
-        start(id, null, () -> at, () -> way, Optional::empty, 0, 1.0F);
+        start(id, null, () -> at, () -> way, Optional::empty, 0, 1.0F, AS_FAR);
     }
 
     /** Plays the effect {@code id} once from {@code at} to {@code to}: a beam's or an arc's ends. */
     public static void play(final ResourceLocation id, final Vec3 at, final Vec3 way, final Vec3 to) {
-        start(id, null, () -> at, () -> way, () -> Optional.of(to), 0, 1.0F);
+        start(id, null, () -> at, () -> way, () -> Optional.of(to), 0, 1.0F, AS_FAR);
     }
 
     /** Plays the effect {@code id} once on the block at {@code pos}, where its file anchors it. */
@@ -63,7 +66,7 @@ public final class ClientEffects {
     public static void hold(final Object holder, final ResourceLocation id, final Supplier<Vec3> at,
                             final Supplier<Vec3> way) {
         EffectEngine.stop(holder);
-        start(id, holder, at, way, Optional::empty, 0, 1.0F);
+        start(id, holder, at, way, Optional::empty, 0, 1.0F, AS_FAR);
     }
 
     /**
@@ -74,7 +77,7 @@ public final class ClientEffects {
     public static void hold(final Object holder, final ResourceLocation id, final Supplier<Vec3> at,
                             final Supplier<Vec3> way, final int rgb) {
         EffectEngine.stop(holder);
-        start(id, holder, at, way, Optional::empty, 0xFF << 24 | rgb, 1.0F);
+        start(id, holder, at, way, Optional::empty, 0xFF << 24 | rgb, 1.0F, AS_FAR);
     }
 
     /**
@@ -84,7 +87,17 @@ public final class ClientEffects {
     public static void holdScaled(final Object holder, final ResourceLocation id, final Supplier<Vec3> at,
                                   final Supplier<Vec3> way, final float scale) {
         EffectEngine.stop(holder);
-        start(id, holder, at, way, Optional::empty, 0, scale);
+        start(id, holder, at, way, Optional::empty, 0, scale, AS_FAR);
+    }
+
+    /**
+     * Holds the effect {@code id} as {@link #holdScaled} does, its particles flying {@code reach} times as far as its
+     * file says, asked as each is emitted: an engine's jet as long as its throttle now, without starting it anew.
+     */
+    public static void holdReaching(final Object holder, final ResourceLocation id, final Supplier<Vec3> at,
+                                    final Supplier<Vec3> way, final float scale, final DoubleSupplier reach) {
+        EffectEngine.stop(holder);
+        start(id, holder, at, way, Optional::empty, 0, scale, reach);
     }
 
     /** Plays the effect {@code id} on the block at {@code pos}, where its file anchors it, until let go. */
@@ -114,7 +127,7 @@ public final class ClientEffects {
             EffectFiles.get(payload.effect()).ifPresent(definition -> {
                 final EffectAnchors.Placed placed = EffectAnchors.of(level, pos, definition.anchor());
                 EffectEngine.start(level, payload.effect(), definition, null, placed::at, placed::way,
-                        () -> payload.to(), payload.colour(), payload.scale());
+                        () -> payload.to(), payload.colour(), payload.scale(), AS_FAR);
             });
             return;
         }
@@ -122,7 +135,7 @@ public final class ClientEffects {
         final Vec3 offset = followed == null ? Vec3.ZERO : payload.at().subtract(followed.position());
         final Supplier<Vec3> at = followed == null ? payload::at : () -> followed.position().add(offset);
         final Vec3 way = new Vec3(payload.way().x(), payload.way().y(), payload.way().z());
-        start(payload.effect(), null, at, () -> way, payload::to, payload.colour(), payload.scale());
+        start(payload.effect(), null, at, () -> way, payload::to, payload.colour(), payload.scale(), AS_FAR);
     }
 
     /** Plays {@code definition}, not from a file, held by {@code holder}, as the effects editor's preview does. */
@@ -130,7 +143,7 @@ public final class ClientEffects {
                                  final Supplier<Vec3> way) {
         EffectEngine.stop(holder);
         final ClientLevel level = Minecraft.getInstance().level;
-        return EffectEngine.start(level, null, definition, holder, at, way, Optional::empty, 0, 1.0F);
+        return EffectEngine.start(level, null, definition, holder, at, way, Optional::empty, 0, 1.0F, AS_FAR);
     }
 
     private static void onBlock(final ResourceLocation id, final Object holder, final BlockPos pos) {
@@ -140,17 +153,17 @@ public final class ClientEffects {
         }
         EffectFiles.get(id).ifPresent(definition -> EffectEngine.start(level, id, definition, holder,
                 () -> EffectAnchors.of(level, pos, definition.anchor()).at(),
-                () -> EffectAnchors.of(level, pos, definition.anchor()).way(), Optional::empty, 0, 1.0F));
+                () -> EffectAnchors.of(level, pos, definition.anchor()).way(), Optional::empty, 0, 1.0F, AS_FAR));
     }
 
     private static void start(final ResourceLocation id, final Object holder, final Supplier<Vec3> at,
                               final Supplier<Vec3> way, final Supplier<Optional<Vec3>> to, final int colour,
-                              final float scale) {
+                              final float scale, final DoubleSupplier reach) {
         final ClientLevel level = Minecraft.getInstance().level;
         if (level == null) {
             return;
         }
         EffectFiles.get(id).ifPresent(definition -> EffectEngine.start(level, id, definition, holder, at,
-                way.get().lengthSqr() > 0 ? way : () -> UP, to, colour, scale));
+                way.get().lengthSqr() > 0 ? way : () -> UP, to, colour, scale, reach));
     }
 }

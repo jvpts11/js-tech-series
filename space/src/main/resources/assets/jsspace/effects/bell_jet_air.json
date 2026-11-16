@@ -1,0 +1,25 @@
+{
+  "reach": 192,
+  "emitters": [
+    {
+      "name": "core",
+      "emission": {"shape": {"type": "cone", "angle": 2}, "rate": 120, "life": [0.12, 0.22], "speed": [14, 18]},
+      "look": {"sprite": "jsspace:engine_glow", "frames": 1, "size": [0.7, 1.1], "colour": ["#FFF6E0FF", "#FFC06000"],
+               "blend": "additive", "light": 15},
+      "motion": {"drag": 0.4, "attached": true}
+    },
+    {
+      "name": "flame",
+      "emission": {"shape": {"type": "cone", "angle": 5}, "rate": 160, "life": [0.25, 0.45], "speed": [12, 16]},
+      "look": {"sprite": "minecraft:flame", "frames": 1, "size": [0.6, 1.2], "colour": ["#FFE890FF", "#FF5A1800"],
+               "light": 15},
+      "motion": {"drag": 0.5, "attached": true}
+    },
+    {
+      "name": "trail",
+      "emission": {"shape": {"type": "cone", "angle": 8}, "rate": 70, "life": [1.2, 2.0], "speed": [0.1, 0.3]},
+      "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [1.2, 3.0], "colour": ["#F2F0EC58", "#ECEAE600"]},
+      "motion": {"drag": 1.5, "medium": "air"}
+    }
+  ]
+}

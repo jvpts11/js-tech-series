@@ -929,8 +929,15 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   block they stand in, and used from any part of them; and the ship's fixtures, the suit locker, the flight console, the oxygen panel and the bunk,
   once their part is formed, stand, are aimed at and are outlined as the ship's model draws them there, no longer as
   whole blocks.
+- A starship's engines are seen running. The mouths of its bells glow, faintly in thick air, where the bells
+  are cold, and brightly where they push, in the thin air of the climb and in space; there a jet grows out of each
+  with the throttle, longer and hotter boosting, leaving a heat trail in thin air and clean and blue in space. Its air
+  engines blow their exhaust back out of their nozzles where they breathe. The jets go with the ship however fast it
+  flies, and come out of the mouths and nozzles where its model draws them.
 
 ### Changed
+- A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and
+  seen running.
 - The Rocket Design screen counts each stage's delta-v in a vacuum, as the rocket's flight counts it, the
   climb to the low orbit asking for the air and the pull climbed through: a rocket shown reaching a destination
   reaches it, and the screen and the flight computer on the pad give the same delta-v. It counted the first stage's

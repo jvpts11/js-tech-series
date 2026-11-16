@@ -592,7 +592,7 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
                 0, this.state.nozzles()), AT_THE_HELM, air(level, now, body), whole, 0);
         final ShipFlightModel.Tick next = new ShipFlightModel.Tick(new ShipFlightModel.State(0, 0,
                 held.state().throttle(), rise, held.state().nozzles()), 0, 0, false, 0, false, held.bells(),
-                going.landing() || this.grounded, held.lifting(), held.thrusting());
+                going.landing() || this.grounded, held.lifting(), held.thrusting(), held.breathing());
         if (keeper != null) {
             // LAND setting it down on its spot shows still, the way down its last stretch.
             final ShipReadings.Pilot shown = this.autopilot.filter(pilot -> pilot.mode() == ShipAutopilot.Mode.LAND)

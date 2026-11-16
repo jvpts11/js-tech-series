@@ -3961,8 +3961,18 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   height, follow a route, dock to another structure's clamp) and reads its altitude, speed, tilt and heading.
   `System.Teracoin` reads and sends from a wallet file, reads the chain, sets the machine's miner as the `miner`
   command does, and lists the network's Mining Pools. The Book of Sigma and the library reference gain their pages.
+- (Space) A starship's engines are seen running. The mouths of its bells glow, faintly in thick air, where the bells
+  are cold, and brightly where they push, in the thin air of the climb and in space; there a jet grows out of each
+  with the throttle, longer and hotter boosting, leaving a heat trail in thin air and clean and blue in space. Its air
+  engines blow their exhaust back out of their nozzles where they breathe. The jets go with the ship however fast it
+  flies, and come out of the mouths and nozzles where its model draws them.
+- (Core) An emitter of an effect file can keep its particles `attached` to what emits them, moved along as far as it
+  moves each tick, as an engine's jet keeps its shape behind a fast craft; and `ClientEffects.holdReaching` holds an
+  effect whose particles fly as many times as far as asked each moment, as a jet grows with its throttle.
 
 ### Changed
+- (Space) A starship holding itself up on its thrusters while it stands on the land, its throttle shut, is heard and
+  seen running.
 - (Space) The Rocket Design screen counts each stage's delta-v in a vacuum, as the rocket's flight counts it, the
   climb to the low orbit asking for the air and the pull climbed through: a rocket shown reaching a destination
   reaches it, and the screen and the flight computer on the pad give the same delta-v. It counted the first stage's

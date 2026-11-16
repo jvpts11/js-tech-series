@@ -297,11 +297,14 @@ public record Emitter(String name, Kind kind, boolean enabled, Emission emission
      * @param collide  whether it stops at blocks
      * @param expands  whether it widens as the air thins, as a plume of gas does
      * @param medium   what it lives in
+     * @param attached whether it goes along with what emits it, moved as far as that moved each tick, as an engine's
+     *                 jet keeps its shape behind a craft however fast it goes; else it is left where it was emitted
      */
     public record Motion(double gravity, double drag, double buoyancy, EffectPhysics.Moves moves, boolean collide,
-                         boolean expands, Medium medium) {
+                         boolean expands, Medium medium, boolean attached) {
 
-        public static final Motion FLOATING = new Motion(0, 1, 0, EffectPhysics.Moves.ALL, false, false, Medium.ANY);
+        public static final Motion FLOATING = new Motion(0, 1, 0, EffectPhysics.Moves.ALL, false, false, Medium.ANY,
+                false);
         public static final Codec<EffectPhysics.Moves> MOVES = RecordCodecBuilder.create(instance -> instance.group(
                 Codec.BOOL.optionalFieldOf("gravity", true).forGetter(EffectPhysics.Moves::gravity),
                 Codec.BOOL.optionalFieldOf("air", true).forGetter(EffectPhysics.Moves::air),
@@ -315,7 +318,8 @@ public record Emitter(String name, Kind kind, boolean enabled, Emission emission
                 MOVES.optionalFieldOf("moved_by", EffectPhysics.Moves.ALL).forGetter(Motion::moves),
                 Codec.BOOL.optionalFieldOf("collide", false).forGetter(Motion::collide),
                 Codec.BOOL.optionalFieldOf("expands", false).forGetter(Motion::expands),
-                StableCodecs.byName(Medium.class).optionalFieldOf("medium", Medium.ANY).forGetter(Motion::medium))
+                StableCodecs.byName(Medium.class).optionalFieldOf("medium", Medium.ANY).forGetter(Motion::medium),
+                Codec.BOOL.optionalFieldOf("attached", false).forGetter(Motion::attached))
                 .apply(instance, Motion::new));
 
         public Motion {
@@ -326,7 +330,7 @@ public record Emitter(String name, Kind kind, boolean enabled, Emission emission
         /** It, moved by {@code changed}. */
         public Motion withMoves(final EffectPhysics.Moves changed) {
             return new Motion(this.gravity, this.drag, this.buoyancy, changed, this.collide, this.expands,
-                    this.medium);
+                    this.medium, this.attached);
         }
     }
 

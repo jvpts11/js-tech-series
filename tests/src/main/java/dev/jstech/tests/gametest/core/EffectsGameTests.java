@@ -49,7 +49,7 @@ public final class EffectsGameTests {
               "look": {"sprite": "minecraft:big_smoke", "frames": 12, "size": [0.4, 2],
                        "colour": ["#F0F4F8E0", "#F0F4F800"], "blend": "additive", "trail": 0.3},
               "motion": {"buoyancy": 1.6, "drag": 1.2, "expands": true, "medium": "air",
-                         "moved_by": {"wind": false}} },
+                         "moved_by": {"wind": false}, "attached": true} },
               { "name": "drops", "kind": "particles" },
               { "name": "zap", "kind": "arc", "extra": {"branches": 3, "jagged": 0.3} } ] }
             """;
@@ -75,6 +75,8 @@ public final class EffectsGameTests {
                 "its blend and frames");
         helper.assertTrue(steam.motion().expands() && !steam.motion().moves().wind() && steam.motion().moves().air(),
                 "it widens, and the wind leaves it alone");
+        helper.assertTrue(steam.motion().attached() && !read.emitters().get(1).motion().attached(),
+                "it goes along with what emits it, where one that does not say is left behind");
         helper.assertTrue(read.emitters().get(2).kind() == Emitter.Kind.ARC
                 && read.emitters().get(2).extra().branches() == 3, "an arc and its branches");
         final EffectDefinition again = EffectDefinition.CODEC.parse(JsonOps.INSTANCE, EffectDefinition.CODEC
