@@ -121,7 +121,7 @@ public final class ShipDoorsGameTests {
     }
 
     @GameTest(template = ARENA, batch = BATCH, timeoutTicks = WAIT)
-    public static void airlock_neverStandsOpenInsideAndOutAtOnce(final GameTestHelper helper) {
+    public static void airlock_cyclesShuttingOneSideAsTheOtherOpens(final GameTestHelper helper) {
         final ServerLevel level = helper.getLevel();
         final PlannedBuild[] plan = new PlannedBuild[1];
         build(helper, plan).thenExecute(() -> {
@@ -131,16 +131,16 @@ public final class ShipDoorsGameTests {
             final List<FormedDoors.Door> inner = ShipDoorRules.otherSide(level, outer);
             helper.assertTrue(inner.size() == 2 && FormedDoors.shut(level, outer), "its outer door stands shut as the"
                     + " ship forms, the airlock a door at each end: " + inner.size());
-            helper.assertTrue(!FormedDoors.use(level, crew, outer) && FormedDoors.shut(level, outer), "its outer door"
-                    + " stays shut while a door at its ends is open");
-            inner.forEach(each -> FormedDoors.use(level, crew, each));
-            helper.assertTrue(inner.stream().allMatch(each -> FormedDoors.shut(level, each)), "its inner doors shut");
-            helper.assertTrue(FormedDoors.use(level, crew, outer) && !FormedDoors.shut(level, outer), "then its outer"
-                    + " door opens");
-            helper.assertTrue(!FormedDoors.use(level, crew, inner.getFirst()) && FormedDoors.shut(level,
-                    inner.getFirst()), "and its inner doors stay shut while it is open");
-            helper.assertTrue(FormedDoors.use(level, crew, outer) && FormedDoors.use(level, crew, inner.getFirst())
-                    && !FormedDoors.shut(level, inner.getFirst()), "its outer door shut, an inner one opens");
+            helper.assertTrue(FormedDoors.use(level, crew, outer) && !FormedDoors.shut(level, outer), "used from"
+                    + " outside on a ship just formed, its outer door opens");
+            helper.assertTrue(inner.stream().allMatch(each -> FormedDoors.shut(level, each)), "and its inner doors"
+                    + " shut as it does, never open with it");
+            helper.assertTrue(FormedDoors.use(level, crew, inner.getFirst()) && !FormedDoors.shut(level,
+                    inner.getFirst()) && FormedDoors.shut(level, outer), "an inner door used opens, shutting the outer"
+                    + " one");
+            helper.assertTrue(FormedDoors.use(level, crew, outer) && !FormedDoors.shut(level, outer)
+                    && inner.stream().allMatch(each -> FormedDoors.shut(level, each)), "the outer one used again"
+                    + " opens, shutting the inner ones");
             GameTestPlayers.leave(crew);
         }).thenSucceed();
     }

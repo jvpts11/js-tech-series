@@ -18,7 +18,6 @@ import dev.jstech.core.multiblock.shape.FormedShapes;
 import dev.jstech.core.multiblock.shape.IFormedPlaced;
 import dev.jstech.core.multiblock.shape.MeshCells;
 import dev.jstech.core.text.GameText;
-import dev.jstech.space.ship.ShipFixtureTexts;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -30,8 +29,8 @@ import net.neoforged.neoforge.common.NeoForge;
 
 /**
  * Who may move a starship's doors, and when: its airlock's outer door lets in whoever may come aboard, as its crew
- * says; and an airlock never stands open inside and out at once, so its outer door opens only with the doors at its
- * ends shut, and either of those only with its outer door shut. A player kept from moving a door is told why.
+ * says; and an airlock never stands open inside and out at once: it cycles, its outer door opening shutting the doors
+ * at its ends, and either of those opening shutting its outer door. A player kept from moving a door is told why.
  */
 public final class ShipDoorRules {
 
@@ -80,7 +79,10 @@ public final class ShipDoorRules {
         return out;
     }
 
-    /* A door moving: kept as it is where its crew does not let the player, or where it would open an airlock. */
+    /*
+     * A door moving: kept as it is where its crew does not let the player; opening one side of an airlock, the other
+     * side shut first.
+     */
     private static void moving(final FormedDoorEvent event) {
         final ServerLevel level = event.level();
         final FormedDoors.Door door = event.door();
@@ -97,13 +99,10 @@ public final class ShipDoorRules {
         if (event.shutting()) {
             return;
         }
+        // An airlock cycles: one side opening shuts the other first, so it never stands open inside and out at once.
         for (final FormedDoors.Door other : otherSide(level, door)) {
             if (!FormedDoors.shut(level, other)) {
-                event.setCanceled(true);
-                if (event.player() instanceof ServerPlayer player) {
-                    player.displayClientMessage(GameText.component(ShipFixtureTexts.AIRLOCK_OTHER_DOOR), true);
-                }
-                return;
+                FormedDoors.set(level, other, true);
             }
         }
     }

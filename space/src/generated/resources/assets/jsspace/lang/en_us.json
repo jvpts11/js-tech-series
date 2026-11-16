@@ -878,7 +878,6 @@
   "jsspace.ship_finish.bare_metal": "Bare Metal",
   "jsspace.ship_finish.enamel": "Enamel",
   "jsspace.ship_finish.orbiter": "Orbiter",
-  "jsspace.ship_fixture.airlock_other_door": "Shut the airlock's other door first",
   "jsspace.ship_fixture.barrel": "Barrel",
   "jsspace.ship_fixture.crafting": "Crafting",
   "jsspace.ship_fixture.filled": "%s seconds of oxygen in the suit's tanks",
