@@ -380,7 +380,9 @@ public final class ShipyardDoorsGameTests {
                 });
         sequence.thenWaitUntil(() -> {
             note(seen, dock(level, terminal).doors().serializedName());
-            helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED, "the dock closed");
+            helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED, "the dock closed: through "
+                    + seen + ", the cradle back " + ShipyardStructure.cradlePlaces(terminal, Orientation.NORTH).stream()
+                    .noneMatch(level::isEmptyBlock));
         }).thenExecute(() -> helper.assertTrue(seen.equals(List.of("cradle_holds", "floor_down", "crane_in", "closed"))
                 || seen.equals(List.of("open", "cradle_holds", "floor_down", "crane_in", "closed")), "closing, the"
                 + " cradle holds the ship, then the floor goes down: " + seen)).thenSucceed();
