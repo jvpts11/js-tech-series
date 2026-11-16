@@ -4317,6 +4317,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) A starship turns and pitches the way a craft does: its turn and pitch gather over a quarter of a second as
+  its pilot holds and fall away as they let go, up to eighty and fifty degrees a second, where they jumped to forty-five
+  and thirty at once and stopped dead, stiff and slow.
 - (Core) J's Core's basic pipes, its Insulated Copper Cable and its Lead-Acid Battery Bank are made with J's Industrial
   installed too: their recipes went away whenever it was, waiting for recipes of its own it does not have, so they
   could not be made at all, nor what needs them, as J's Computers' cooling units. They go away now only when J's

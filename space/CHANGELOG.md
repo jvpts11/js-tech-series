@@ -978,6 +978,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A starship turns and pitches the way a craft does: its turn and pitch gather over a quarter of a second as
+  its pilot holds and fall away as they let go, up to eighty and fifty degrees a second, where they jumped to forty-five
+  and thirty at once and stopped dead, stiff and slow.
 - A ship let go from a dock keeps its plan aboard however soon its blocks come into it: where they came in at
   once, the plan was given to its flight console's block as it stood in the dock, left behind, and the ship flew with
   none, its parts not drawn and no dock able to take it back.

@@ -54,10 +54,14 @@ public final class ShipFlightModel {
     private static final double SLOWING_SPACE = 3.0;
     /* How fast feet, or a hull with no gear, stop it on the land, in metres a second squared. */
     private static final double BRAKES = 12.0;
-    /* How fast it turns and pitches, in degrees a second, and how far its nose goes up or down. */
-    private static final double TURNS = 45.0;
-    private static final double PITCHES = 30.0;
+    /*
+     * How fast it turns and pitches at most, in degrees a second, how far its nose goes up or down, and how long its
+     * turn and pitch take to gather to that as its pilot holds and to fall away as they let go, in seconds.
+     */
+    private static final double TURNS = 80.0;
+    private static final double PITCHES = 50.0;
     private static final double MOST_PITCH = 60.0;
+    private static final double TURN_GATHERS = 0.25;
     /* The fastest it sinks, in metres a second. */
     private static final double MOST_SINK = 40.0;
     /*
@@ -145,15 +149,21 @@ public final class ShipFlightModel {
         final double sink = hovering && held.piloted() && most >= 1.0 ? Math.min(sinking, Math.max(0, rise + descends))
                 : sinking;
         final double nimble = boosting ? BOOST_TURNS : 1.0;
-        final double turn = (held.left() - held.right()) * TURNS * nimble * TICK;
+        // Its turn and its pitch gather as its pilot holds and fall away as they let go, as a craft's do, never jump.
+        final double yawRate = toward(now.yawRate(), (held.left() - held.right()) * TURNS * nimble,
+                TURNS / TURN_GATHERS * TICK);
+        final double turn = yawRate * TICK;
         final double lifted = hovering ? toward(pitch, 0, PITCHES * TICK) - pitch
-                : Math.clamp(pitch + (held.up() - held.down()) * PITCHES * nimble * TICK, -MOST_PITCH, MOST_PITCH)
-                - pitch;
+                : Math.clamp(pitch + toward(now.pitchRate(), (held.up() - held.down()) * PITCHES * nimble,
+                PITCHES / TURN_GATHERS * TICK) * TICK, -MOST_PITCH, MOST_PITCH) - pitch;
+        // What it pitched, its nose stopped at its furthest, is what it pitches at next: none is kept in hand there.
+        final double pitchRate = hovering ? 0 : lifted / TICK;
         // Its gear is down on the land and near it, folded away higher up, hovering there or flying.
         final boolean gearDown = ship.gear() != Gear.NONE && (air.grounded() || air.height() < GEAR_HEIGHT);
         final double reached = boosting && boosted > cruise ? Math.clamp((speed - cruise) / (boosted - cruise), 0, 1)
                 : 0;
-        return new Tick(new State(speed, resting ? 0 : sink, throttle, resting ? 0 : rise, nozzles), turn, lifted,
+        return new Tick(new State(speed, resting ? 0 : sink, throttle, resting ? 0 : rise, nozzles, yawRate,
+                pitchRate), turn, lifted,
                 boosting, reached, falling && pull > 0 && !air.grounded(), bells > 0 && push > 0 ? bells / push : 0.0,
                 gearDown, sin > 0 && breathing > 0 && !resting, byThrusters > 0, breathing > 0);
     }
@@ -259,16 +269,25 @@ public final class ShipFlightModel {
     /**
      * Where a ship's flight stands.
      *
-     * @param speed    how fast it goes along its nose, in metres a second
-     * @param sink     how fast it sinks for want of lift, in metres a second
-     * @param throttle how far its throttle is open, from nought to one
-     * @param rise     how fast it rises on its nozzles, in metres a second, coming down below nought
-     * @param nozzles  how far its air engines' nozzles are turned down, in degrees
+     * @param speed     how fast it goes along its nose, in metres a second
+     * @param sink      how fast it sinks for want of lift, in metres a second
+     * @param throttle  how far its throttle is open, from nought to one
+     * @param rise      how fast it rises on its nozzles, in metres a second, coming down below nought
+     * @param nozzles   how far its air engines' nozzles are turned down, in degrees
+     * @param yawRate   how fast it turns to its left now, in degrees a second, to its right below nought
+     * @param pitchRate how fast its nose goes up now, in degrees a second, down below nought
      */
-    public record State(double speed, double sink, double throttle, double rise, double nozzles) {
+    public record State(double speed, double sink, double throttle, double rise, double nozzles, double yawRate,
+                        double pitchRate) {
 
         /** At rest, its nozzles back. */
         public static final State RESTING = new State(0, 0, 0, 0, 0);
+
+        /** Neither turning nor pitching, as a ship stands once set down, saved or handed a new flight. */
+        public State(final double speed, final double sink, final double throttle, final double rise,
+                     final double nozzles) {
+            this(speed, sink, throttle, rise, nozzles, 0, 0);
+        }
     }
 
     /**

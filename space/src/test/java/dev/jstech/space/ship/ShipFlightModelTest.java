@@ -45,6 +45,10 @@ class ShipFlightModelTest {
     private static final double BOOSTED_SPACE = 300;
     /* How fast it turns and pitches while boosting, as a share of how fast it does otherwise. */
     private static final double BOOST_TURNS = 0.4;
+    /* How fast it turns and pitches at most, in degrees a second, and the ticks it takes to gather that. */
+    private static final double TURNS = 80;
+    private static final double PITCHES = 50;
+    private static final int GATHERED = 5;
     /* How fast a ship on feet hovering comes down as its pilot holds DOWN, in metres a second. */
     private static final double HOVERING_DOWN = 6;
 
@@ -132,15 +136,15 @@ class ShipFlightModelTest {
         final ShipFlightModel.State rising = fly(SHIP, UP, SEA, SECONDS, hovered);
         assertTrue(rising.rise() > 0, "held up, it rises: " + rising);
         assertTrue(fly(SHIP, DOWN, SEA, SECONDS, hovered).rise() < 0, "held down, it comes down");
-        assertEquals(-1.5, ShipFlightModel.step(hovered, UP, SEA, SHIP, 10).pitch(), CLOSE,
-                "its nose comes back level");
+        assertEquals(-PITCHES * ShipFlightModel.TICK, ShipFlightModel.step(hovered, UP, SEA, SHIP, 10).pitch(),
+                CLOSE, "its nose comes back level");
     }
 
     @Test
     void step_fastInThinAirItsNoseStaysWhereItsPilotPointsIt() {
         final ShipFlightModel.Tick fast = ShipFlightModel.step(new ShipFlightModel.State(100, 0, 1, 0, 0), UP,
                 THIN, SHIP, 20);
-        assertEquals(30.0 * ShipFlightModel.TICK, fast.pitch(), CLOSE, "held up, its nose goes up: " + fast);
+        assertTrue(fast.pitch() > 0, "held up, its nose goes up: " + fast);
         final ShipFlightModel.Tick slow = ShipFlightModel.step(new ShipFlightModel.State(5, 0, 0, 0, 0), UP, THIN,
                 SHIP, 20);
         assertTrue(slow.pitch() < 0, "slow, it hovers, its nose coming back level: " + slow);
@@ -253,11 +257,12 @@ class ShipFlightModelTest {
     @Test
     void step_whileBoostingItTurnsAndPitchesSlowly() {
         final ShipFlightModel.Held leftUp = new ShipFlightModel.Held(0, 0, 1, 0, 1, 0, true, true);
-        final ShipFlightModel.Tick tick = ShipFlightModel.step(new ShipFlightModel.State(CRUISE_SPACE, 0, 1, 0, 0),
-                leftUp, SPACE, SHIP, 0);
+        final ShipFlightModel.State turning = fly(SHIP, leftUp, SPACE, GATHERED,
+                new ShipFlightModel.State(CRUISE_SPACE, 0, 1, 0, 0));
+        final ShipFlightModel.Tick tick = ShipFlightModel.step(turning, leftUp, SPACE, SHIP, 0);
         assertTrue(tick.boosting(), "it boosts: " + tick);
-        assertEquals(45.0 * BOOST_TURNS * ShipFlightModel.TICK, tick.turn(), CLOSE);
-        assertEquals(30.0 * BOOST_TURNS * ShipFlightModel.TICK, tick.pitch(), CLOSE);
+        assertEquals(TURNS * BOOST_TURNS * ShipFlightModel.TICK, tick.turn(), CLOSE);
+        assertEquals(PITCHES * BOOST_TURNS * ShipFlightModel.TICK, tick.pitch(), CLOSE);
     }
 
     @Test
@@ -275,14 +280,38 @@ class ShipFlightModelTest {
     }
 
     @Test
-    void step_itTurnsAndPitchesAsHeldAndItsNoseStopsAtSixtyDegrees() {
+    void step_itsTurnAndPitchGatherOverAQuarterSecondAsHeld() {
         final ShipFlightModel.Held leftUp = new ShipFlightModel.Held(0, 0, 1, 0, 1, 0, false, true);
-        final ShipFlightModel.Tick tick = ShipFlightModel.step(ShipFlightModel.State.RESTING, leftUp, SPACE, SHIP,
+        final ShipFlightModel.Tick first = ShipFlightModel.step(ShipFlightModel.State.RESTING, leftUp, SPACE, SHIP,
                 0);
-        assertEquals(45.0 * ShipFlightModel.TICK, tick.turn(), CLOSE);
-        assertEquals(30.0 * ShipFlightModel.TICK, tick.pitch(), CLOSE);
-        assertEquals(0.5, ShipFlightModel.step(ShipFlightModel.State.RESTING, leftUp, SPACE, SHIP, 59.5).pitch(),
-                CLOSE);
+        assertTrue(first.turn() > 0 && first.turn() < TURNS * ShipFlightModel.TICK, "its first tick turns it a "
+                + "little: " + first.turn());
+        assertTrue(first.pitch() > 0 && first.pitch() < PITCHES * ShipFlightModel.TICK, "and pitches it a little: "
+                + first.pitch());
+        final ShipFlightModel.State turning = fly(SHIP, leftUp, SPACE, GATHERED);
+        final ShipFlightModel.Tick held = ShipFlightModel.step(turning, leftUp, SPACE, SHIP, 0);
+        assertEquals(TURNS * ShipFlightModel.TICK, held.turn(), CLOSE, "held a quarter second, it turns its fastest");
+        assertEquals(PITCHES * ShipFlightModel.TICK, held.pitch(), CLOSE, "and pitches its fastest");
+    }
+
+    @Test
+    void step_letGoItsTurnAndPitchFallAwayOverAQuarterSecond() {
+        final ShipFlightModel.Held leftUp = new ShipFlightModel.Held(0, 0, 1, 0, 1, 0, false, true);
+        final ShipFlightModel.State turning = fly(SHIP, leftUp, SPACE, GATHERED);
+        final ShipFlightModel.Held none = new ShipFlightModel.Held(0, 0, 0, 0, 0, 0, false, true);
+        final ShipFlightModel.Tick easing = ShipFlightModel.step(turning, none, SPACE, SHIP, 0);
+        assertTrue(easing.turn() > 0 && easing.pitch() > 0, "let go, it goes on turning a little: " + easing);
+        final ShipFlightModel.Tick stopped = ShipFlightModel.step(fly(SHIP, none, SPACE, GATHERED, turning), none,
+                SPACE, SHIP, 0);
+        assertEquals(0, stopped.turn(), CLOSE, "a quarter second later it has stopped turning");
+        assertEquals(0, stopped.pitch(), CLOSE, "and pitching");
+    }
+
+    @Test
+    void step_itsNoseStopsAtSixtyDegrees() {
+        final ShipFlightModel.Held leftUp = new ShipFlightModel.Held(0, 0, 1, 0, 1, 0, false, true);
+        final ShipFlightModel.State turning = fly(SHIP, leftUp, SPACE, GATHERED);
+        assertEquals(0.5, ShipFlightModel.step(turning, leftUp, SPACE, SHIP, 59.5).pitch(), CLOSE);
     }
 
     @Test
