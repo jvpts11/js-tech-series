@@ -146,7 +146,11 @@ kit for its vehicles.
   second, first estimates. In the air its air engines push, and in the thin air of the
   climb and in space its bells push. Its wings hold it up, more the faster it goes and less in thinner air, and flying too
   slowly it sinks. In space it flies free and faster. **Weight counts**: a heavier ship gathers speed more slowly and needs
-  more of it to stay up; a ship too heavy for its engines only sinks.
+  more of it to stay up; a ship too heavy for its engines only sinks. **Coming down on a world**, as in No Man's
+  Sky's planetary approach, the nearer its land the slower it may go: its full speeds from a thousand blocks over the
+  land, falling away below that to the air's own near a hundred, the ship braking hard to them (40 metres a second
+  each second), so it never plunges and the land loads before it gets there; climbing away, its nose up past fifteen
+  degrees, it is not held back. First estimates.
 - **Its engines are seen running**, the mouths glowing as in Starfield and the jet growing with the throttle as in No
   Man's Sky. While they run, the mouths of its bells glow: faintly where the air is thick, which leaves the bells cold,
   brightly where they push, in the thin air of the climb and in space, and there a jet grows out of each with the

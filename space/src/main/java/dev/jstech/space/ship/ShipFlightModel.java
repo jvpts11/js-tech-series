@@ -55,6 +55,15 @@ public final class ShipFlightModel {
     /* How fast feet, or a hull with no gear, stop it on the land, in metres a second squared. */
     private static final double BRAKES = 12.0;
     /*
+     * Coming down on a world: how high over its land it flies at most at the air's speeds, how high over it its full
+     * speeds come back, in blocks, and how hard it brakes to what its height allows, in metres a second squared.
+     */
+    private static final double APPROACH_LOW = 100.0;
+    private static final double APPROACH_HIGH = 1_000.0;
+    private static final double APPROACH_BRAKES = 40.0;
+    /* How far its nose points up, in degrees, for it to be climbing away from the land rather than coming down. */
+    private static final double CLIMBS_AWAY = 15.0;
+    /*
      * How fast it turns and pitches at most, in degrees a second, how far its nose goes up or down, and how long its
      * turn and pitch take to gather to that as its pilot holds and to fall away as they let go, in seconds.
      */
@@ -129,12 +138,18 @@ public final class ShipFlightModel {
         final double push = breathing * Math.cos(Math.toRadians(nozzles)) + bells;
         // Its boost, held as long as its pilot likes clear of the land, costs only how fast it turns and pitches.
         final boolean boosting = held.piloted() && held.boost() && air.empty() && push > 0;
-        final double cruise = cruiseIn(thick);
-        final double boosted = between(BOOSTED_SPACE, BOOSTED_AIR, thick);
+        // Coming down on a world, as in No Man's Sky, the nearer its land the slower it may go, down to the air's own
+        // speeds near it, braking hard to them: it never plunges, and the land loads before it gets there. Climbing
+        // away from the land it is not held back.
+        final double approach = pull > 0 && pitch < CLIMBS_AWAY ? Math.pow(Math.clamp((air.height() - APPROACH_LOW)
+                / (APPROACH_HIGH - APPROACH_LOW), 0.0, 1.0), 2) : 1.0;
+        final double cruise = CRUISE_AIR + (cruiseIn(thick) - CRUISE_AIR) * approach;
+        final double boosted = BOOSTED_AIR + (between(BOOSTED_SPACE, BOOSTED_AIR, thick) - BOOSTED_AIR) * approach;
         final boolean stood = air.grounded() && ship.gear() != Gear.WHEELS && rise <= 0;
         final double wanted = stood ? 0 : boosting ? boosted : throttle * cruise;
         final double gathers = ship.mass() > 0 ? push / ship.mass() : 0;
-        final double sheds = stood ? BRAKES : between(SLOWING_SPACE, SLOWING_AIR, thick);
+        final double sheds = stood ? BRAKES : approach < 1.0 && now.speed() > (boosting ? boosted : cruise)
+                ? APPROACH_BRAKES : between(SLOWING_SPACE, SLOWING_AIR, thick);
         final double speed = now.speed() < wanted ? Math.min(wanted, now.speed() + gathers * TICK)
                 : Math.max(wanted, now.speed() - sheds * TICK);
         // What holds it up, its wings and what its nozzles and thrusters push down, against what keeps it going as its

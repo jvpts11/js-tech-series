@@ -49,6 +49,9 @@ class ShipFlightModelTest {
     private static final double TURNS = 80;
     private static final double PITCHES = 50;
     private static final int GATHERED = 5;
+    /* How high over a world's land, in blocks, it flies at most at the air's speeds; how hard it brakes coming down. */
+    private static final double APPROACH_LOW = 100;
+    private static final double APPROACH_BRAKES = 40;
     /* How fast a ship on feet hovering comes down as its pilot holds DOWN, in metres a second. */
     private static final double HOVERING_DOWN = 6;
 
@@ -305,6 +308,34 @@ class ShipFlightModelTest {
                 SPACE, SHIP, 0);
         assertEquals(0, stopped.turn(), CLOSE, "a quarter second later it has stopped turning");
         assertEquals(0, stopped.pitch(), CLOSE, "and pitching");
+    }
+
+    @Test
+    void step_nearAWorldsLandItFliesNoFasterThanItsApproachAllows() {
+        final ShipFlightModel.Air low = new ShipFlightModel.Air(0.0, 0.165, true, false, APPROACH_LOW);
+        final ShipFlightModel.State flown = fly(SHIP, BOOSTING, low, 10 * SECONDS,
+                new ShipFlightModel.State(BOOSTED_SPACE, 0, 1, 0, 0));
+        assertEquals(BOOSTED_AIR, flown.speed(), CLOSE, "boosted low over the Moon it slows to the air's boost: "
+                + flown);
+        final ShipFlightModel.State high = fly(SHIP, BOOSTING, MOON, 60 * SECONDS,
+                new ShipFlightModel.State(CRUISE_SPACE, 0, 1, 0, 0));
+        assertEquals(BOOSTED_SPACE, high.speed(), CLOSE, "high over it, it boosts to its full speed");
+    }
+
+    @Test
+    void step_comingDownFastOnAWorldItBrakesHardToItsApproachSpeed() {
+        final ShipFlightModel.Air low = new ShipFlightModel.Air(0.0, 0.165, true, false, APPROACH_LOW);
+        final ShipFlightModel.State braked = fly(SHIP, BOOSTING, low, SECONDS,
+                new ShipFlightModel.State(BOOSTED_SPACE, 0, 1, 0, 0));
+        assertTrue(BOOSTED_SPACE - braked.speed() >= APPROACH_BRAKES - 1, "it sheds a second's hard braking, far "
+                + "more than space's slowing: " + braked.speed());
+        final ShipFlightModel.State inSpace = fly(SHIP, BOOSTING, SPACE, SECONDS,
+                new ShipFlightModel.State(BOOSTED_SPACE, 0, 1, 0, 0));
+        assertEquals(BOOSTED_SPACE, inSpace.speed(), CLOSE, "in the system's space, no world under it, nothing slows "
+                + "it");
+        final ShipFlightModel.Tick climbing = ShipFlightModel.step(new ShipFlightModel.State(BOOSTED_SPACE, 0, 1, 0,
+                0), BOOSTING, low, SHIP, CLIMBING);
+        assertEquals(BOOSTED_SPACE, climbing.state().speed(), CLOSE, "climbing away from the land it is not held back");
     }
 
     @Test

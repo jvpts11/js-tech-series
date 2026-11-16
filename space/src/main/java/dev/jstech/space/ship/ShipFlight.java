@@ -120,8 +120,6 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
     /* Below this, in metres a second or blocks, nothing moves; under this over the land, in blocks, it stands on it. */
     private static final double STILL = 1.0e-4;
     private static final double STANDING = 1.0;
-    /* How high over the land a ship over land not loaded is taken to be, in blocks: far. */
-    private static final double FAR = 1000;
     /* How far ahead the land is loaded, in ticks of its flight, and from what speed, in metres a second. */
     private static final int AHEAD = 40;
     private static final double LOADS_FROM = 1.0;
@@ -732,8 +730,11 @@ public record ShipFlight(ShipFlightModel.State state, int noseX, int noseZ, Ship
         final double gravity = rules.gravityAt(now.y());
         final double density = climate.pressure() / SEA_PRESSURE;
         final BlockPos under = BlockPos.containing(now.x(), now.y(), now.z());
+        // Over land not loaded yet, it is taken to be as near as the land could stand, at the world's top, so it comes
+        // down no faster than it would over land that high; never so near that its gear comes down or its boost stops.
         final double height = level.isLoaded(under) ? body.worldBox().minY - level.getHeight(
-                Heightmap.Types.MOTION_BLOCKING, under.getX(), under.getZ()) : FAR;
+                Heightmap.Types.MOTION_BLOCKING, under.getX(), under.getZ())
+                : Math.max(EMPTY_OVER, body.worldBox().minY - level.getMaxBuildHeight());
         final boolean empty = density <= 0 || gravity <= 0 || height >= EMPTY_OVER;
         return new ShipFlightModel.Air(density, gravity, empty, this.grounded, height);
     }

@@ -978,6 +978,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A starship coming down on a world slows as its land comes near, as in No Man's Sky's planetary approach:
+  its full speeds from a thousand blocks over the land, falling away below that to the air's own near a hundred, the
+  ship braking hard to them; climbing away it is not held back. It came down on the Moon from its space as fast as it
+  flew there, the land loading too late to be seen, the game falling behind, and it went into the ground with no
+  time to pull up. Over land not loaded yet it is taken to be as near as the world's top, not far off.
 - A starship's pulse jump spools as soon as the ship is in space, over a world's low orbit too as long as its
   nose points away from that world, where it had to fly some 4,000 blocks clear of the Overworld first, B held doing
   nothing and saying nothing. B held where it may not jump shows PULSE OFF on the HUD with why: near the world its nose
