@@ -2055,6 +2055,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   still damages it.
 - (Core) Overvoltage, said: a machine that refuses a line above its class rather than burn says Overvoltage (HI LINE
   on its display), and starts again by itself once the line is gone.
+- (Industrial) A setting for its own recipes of J's Core's basic lines: `recipes.industrial_basic_lines` in
+  `jsindustrial-server.toml` hands J's Core's pipes, cable and battery bank to J's Industrial's own recipes in place of
+  the Core's; off as it comes, J's Industrial having none of its own for them yet.
 - (Industrial) The four tabs of its advancements: Foundation opens with the first machine, Industrialisation at the
   third tier, Discovery with a team's first discovery and Transcendence at the sixth tier.
 - (Core) Manuals: a figure drawn more than one way, with a switch over it, a click on a word showing it that way: a
@@ -4314,6 +4317,10 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Core) J's Core's basic pipes, its Insulated Copper Cable and its Lead-Acid Battery Bank are made with J's Industrial
+  installed too: their recipes went away whenever it was, waiting for recipes of its own it does not have, so they
+  could not be made at all, nor what needs them, as J's Computers' cooling units. They go away now only when J's
+  Industrial's new setting hands them to its own recipes, off as it comes.
 - (Core) A structure that changes its build keeps its blocks merged into its model: a plain block put back where a
   merged one stood while its parts were away merges again, where it stayed a plain block in the model, and a merged
   block carried to a new place with a moving part of its structure takes the shape of the model where it stands.

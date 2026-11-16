@@ -131,6 +131,10 @@ enchantment onto, though it is still renamed and repaired there.
   (`swords`, `pickaxes`, `axes`, `shovels`, `hoes`). Off, the kind's recipes are gone and its tools leave the creative
   tab; those already made keep working. A tool is of a kind by its tag, `jsindustrial:tool_kinds/swords` and the
   rest, so a data pack files another mod's tools under one too.
+- **J's Core's basic lines:** `recipes.industrial_basic_lines` in `jsindustrial-server.toml`, off as it comes, hands
+  J's Core's Copper Pipe, Iron Gas Pipe, Vacuum-Jacketed Pipe, Insulated Copper Cable and Lead-Acid Battery Bank to
+  J's Industrial's own recipes; while it is off, J's Core's recipes of the game's own materials make them. A modpack
+  that gives them recipes of its own turns it on and adds its recipes by data pack.
 
 ## Capabilities
 

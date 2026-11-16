@@ -123,7 +123,8 @@ pushes air one way and clears a room of a cloud.
 
 The **Copper Pipe**, the **Iron Gas Pipe** and the **Vacuum-Jacketed Pipe** are J's Core's **basic lines**: any mod
 uses them on its own, with recipes of vanilla materials, as J's Space carries its propellants with no other mod. J's
-Industrial gives them its industrial recipes and adds every other pipe.
+Industrial adds every other pipe, and may give them industrial recipes in place of the Core's, behind the setting "J's
+Industrial makes the basic lines", off as it comes.
 
 **Slurries:** the **Rubber-Lined Pipe** (T2, 200) and the **Ceramic-Lined Pipe** (T3, 400, which wears much more
 slowly).

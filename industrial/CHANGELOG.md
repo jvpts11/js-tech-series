@@ -17,6 +17,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   under) and `IndustrialSoundGroup` (the groups its sounds are mixed in, each in a channel of the Core's).
 
 ### Added
+- A setting for its own recipes of J's Core's basic lines: `recipes.industrial_basic_lines` in
+  `jsindustrial-server.toml` hands J's Core's pipes, cable and battery bank to J's Industrial's own recipes in place of
+  the Core's; off as it comes, J's Industrial having none of its own for them yet.
 - The four tabs of its advancements: Foundation opens with the first machine, Industrialisation at the
   third tier, Discovery with a team's first discovery and Transcendence at the sixth tier.
 - The Plant Drawings by the sections of the mod's design, each lettered for its trade: Reading the

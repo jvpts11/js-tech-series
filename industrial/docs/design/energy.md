@@ -87,8 +87,9 @@ cable comes in several voltages.
 | Singularity Cable | T7 | any | no ceiling | none |
 
 - The **Insulated Copper Cable** is one of J's Core's **basic lines**: any mod uses it on its own, with a recipe of
-  vanilla materials, so J's Space's generators reach its machines with no other mod. J's Industrial gives it its
-  industrial recipe and adds every other cable.
+  vanilla materials, so J's Space's generators reach its machines with no other mod. J's Industrial adds every other
+  cable, and may give it an industrial recipe in place of the Core's: behind the setting "J's Industrial makes the
+  basic lines", off as it comes, so the Core's recipe stands while J's Industrial has none of its own.
 - Superconducting cables carry their coolant (liquid helium for niobium-titanium, liquid nitrogen for REBCO) sealed in
   from when they are made, and need no upkeep.
 - The Quantum and Singularity cables go beyond voltage: they join any class to any class. Their materials are in

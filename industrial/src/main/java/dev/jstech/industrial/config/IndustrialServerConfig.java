@@ -18,14 +18,15 @@ import net.neoforged.fml.ModContainer;
 
 /**
  * The settings of J's Industrial for a world, {@code jsindustrial-server.toml} beside it: whether its research locks
- * what its discoveries open, the consequences of its pipes, each on unless a server turns it off, and each kind of
- * its tools, which a server may leave out.
+ * what its discoveries open, the consequences of its pipes, each on unless a server turns it off, each kind of its
+ * tools, which a server may leave out, and whether its own recipes replace J's Core's for the basic lines.
  */
 public final class IndustrialServerConfig {
 
     private static final String RESEARCH = "research";
     private static final String FLUIDS = "fluids";
     private static final String TOOLS = "tools";
+    private static final String RECIPES = "recipes";
 
     /** Whether a recipe that needs a discovery waits until the team of the machine's owner has made it. */
     public static final ConfigKey<Boolean> REQUIRE_RESEARCH = ConfigKey.flag(RESEARCH + ".require_research", true)
@@ -52,6 +53,17 @@ public final class IndustrialServerConfig {
     public static final ConfigKey<Boolean> AXES = toolKind("axes").named("Axes");
     public static final ConfigKey<Boolean> SHOVELS = toolKind("shovels").named("Shovels");
     public static final ConfigKey<Boolean> HOES = toolKind("hoes").named("Hoes");
+    /**
+     * Whether J's Industrial's own recipes make J's Core's basic lines and battery, its pipes, its cable and its
+     * battery bank, in place of the Core's recipes of the game's own materials; off as it comes, J's Industrial
+     * having none of its own for them yet.
+     */
+    public static final ConfigKey<Boolean> INDUSTRIAL_BASIC_LINES = ConfigKey.flag(RECIPES + ".industrial_basic_lines",
+                    false)
+            .comment("Whether J's Industrial's own recipes make J's Core's basic pipes, cable and battery bank in place "
+                            + "of the Core's recipes of the game's own materials.",
+                    "Off, the Core's recipes make them.")
+            .named("J's Industrial makes the basic lines");
 
     public static final ConfigFile FILE = ConfigFile.builder("jsindustrial-server", ConfigSide.SERVER,
                     ConfigFormats.TOML)
@@ -64,6 +76,9 @@ public final class IndustrialServerConfig {
             .sectionNamed(TOOLS, "Tools")
             .sectionComment(TOOLS, "Which kinds of J's Industrial's tools are made.")
             .key(SWORDS).key(PICKAXES).key(AXES).key(SHOVELS).key(HOES)
+            .sectionNamed(RECIPES, "Recipes")
+            .sectionComment(RECIPES, "Which recipes J's Industrial gives in place of J's Core's.")
+            .key(INDUSTRIAL_BASIC_LINES)
             .build();
 
     private IndustrialServerConfig() {

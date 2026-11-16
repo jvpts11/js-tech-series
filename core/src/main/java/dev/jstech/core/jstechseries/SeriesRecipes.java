@@ -7,8 +7,10 @@
  */
 package dev.jstech.core.jstechseries;
 
+import com.google.gson.JsonPrimitive;
 import dev.jstech.core.JsCore;
 import dev.jstech.core.cable.CableEntry;
+import dev.jstech.core.condition.SettingCondition;
 import dev.jstech.core.config.CoreConfigKeys;
 import dev.jstech.core.item.SwitchedShapedRecipe;
 import dev.jstech.core.jstechseries.energy.EnergyConverters;
@@ -17,6 +19,7 @@ import dev.jstech.core.jstechseries.lines.SharedPipes;
 import dev.jstech.core.jstechseries.tools.PhysicsTool;
 import dev.jstech.core.jstechseries.tools.SharedTools;
 import dev.jstech.core.multipart.MicroblockRecipes;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.advancements.Advancement;
 import net.minecraft.advancements.AdvancementHolder;
@@ -33,6 +36,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.ShapedRecipe;
+import net.neoforged.neoforge.common.conditions.AndCondition;
 import net.neoforged.neoforge.common.conditions.ICondition;
 import net.neoforged.neoforge.common.conditions.ModLoadedCondition;
 import net.neoforged.neoforge.common.conditions.NotCondition;
@@ -40,13 +44,17 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The recipes of the series' shared content, of the game's own materials, so a mod used alone can make it. The basic
- * cable, pipes and battery are J's Industrial's first cable, pipes and energy bank when it is installed, and it gives
- * them its own industrial recipes, so these stand only without it; the wrench's and the converters' stand always.
+ * cable, pipes and battery are J's Industrial's first cable, pipes and energy bank when it is installed, and it may
+ * give them its own industrial recipes: these stand unless J's Industrial is installed with its setting that hands
+ * them to its own recipes on, which is off as it comes. The wrench's and the converters' stand always.
  */
 public final class SeriesRecipes extends RecipeProvider {
 
-    /** The mod whose own recipes replace those of the basic cable and battery. */
+    /** The mod whose own recipes may replace those of the basic cable and battery. */
     public static final String INDUSTRIAL = "jsindustrial";
+    /* J's Industrial's settings file, and its switch that hands the basic lines to its own recipes. */
+    private static final String INDUSTRIAL_SETTINGS = "jsindustrial-server";
+    private static final String INDUSTRIAL_BASIC_LINES = "recipes.industrial_basic_lines";
     private static final int CABLES_A_CRAFT = 6;
 
     public SeriesRecipes(final PackOutput output, final CompletableFuture<HolderLookup.Provider> registries) {
@@ -55,7 +63,10 @@ public final class SeriesRecipes extends RecipeProvider {
 
     @Override
     protected void buildRecipes(final RecipeOutput output) {
-        final RecipeOutput alone = output.withConditions(new NotCondition(new ModLoadedCondition(INDUSTRIAL)));
+        // Gone only where J's Industrial is installed and hands them to its own recipes; the setting is read only then.
+        final RecipeOutput alone = output.withConditions(new NotCondition(new AndCondition(List.of(
+                new ModLoadedCondition(INDUSTRIAL), new SettingCondition(INDUSTRIAL_SETTINGS, INDUSTRIAL_BASIC_LINES,
+                        new JsonPrimitive(true))))));
         // Copper wire between two layers of kelp dried into a rubbery insulation.
         ShapedRecipeBuilder.shaped(RecipeCategory.REDSTONE, SharedEnergy.INSULATED_COPPER_CABLE, CABLES_A_CRAFT)
                 .pattern("KKK").pattern("CCC").pattern("KKK")

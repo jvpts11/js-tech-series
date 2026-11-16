@@ -2249,6 +2249,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- J's Core's basic pipes, its Insulated Copper Cable and its Lead-Acid Battery Bank are made with J's Industrial
+  installed too: their recipes went away whenever it was, waiting for recipes of its own it does not have, so they
+  could not be made at all, nor what needs them, as J's Computers' cooling units. They go away now only when J's
+  Industrial's new setting hands them to its own recipes, off as it comes.
 - A structure that changes its build keeps its blocks merged into its model: a plain block put back where a
   merged one stood while its parts were away merges again, where it stayed a plain block in the model, and a merged
   block carried to a new place with a moving part of its structure takes the shape of the model where it stands.

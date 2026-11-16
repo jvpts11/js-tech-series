@@ -63,6 +63,7 @@ part of the mod off as a "module".
 | The Aleph | on | [The Aleph](aleph.md) |
 | Dissonance | on | [The Aleph](aleph.md) |
 | Swords, and each other kind of tool | on | [Tools and armour](tools-and-armour.md) |
+| J's Industrial makes the basic lines (its own recipes for J's Core's pipes, cable and battery bank) | off; the Core's recipes make them | [Energy](energy.md), [Fluids and gases](fluids-and-gases.md) |
 | Discoverers name the elements beyond 118 | on | [Materials](materials.md) |
 | Require the "-ium" ending | off | [Materials](materials.md) |
 | Radiation's effects | on | [Nuclear](nuclear.md) |

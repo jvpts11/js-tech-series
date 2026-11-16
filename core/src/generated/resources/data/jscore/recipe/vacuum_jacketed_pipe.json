@@ -3,8 +3,18 @@
     {
       "type": "neoforge:not",
       "value": {
-        "type": "neoforge:mod_loaded",
-        "modid": "jsindustrial"
+        "type": "neoforge:and",
+        "values": [
+          {
+            "type": "neoforge:mod_loaded",
+            "modid": "jsindustrial"
+          },
+          {
+            "type": "jscore:setting",
+            "file": "jsindustrial-server",
+            "setting": "recipes.industrial_basic_lines"
+          }
+        ]
       }
     }
   ],
