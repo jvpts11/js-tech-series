@@ -82,9 +82,11 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
 - The Small Shipyard opens round a finished ship and closes round one taken back, so any small ship leaves
   and comes back: started from its flight console, the dock's crane rolls back along its rails to the back of the bay
   in three seconds, its hook drawn up, then a floor of Ship Pad Plates rises from under the pit to the ground's top in
-  five as the cradle's rams sink and its jaws fold flat into it, and only then is the ship let go, standing on its own
-  gear: on wheels it rolls out of the open front, on legs it lifts off out of the open top. A ship set down on the
-  open floor and taken back has the dock close round it the same way back. A dock just formed with nothing to build
+  five, to meet the ship's gear with the cradle still holding the ship, and only then do the cradle's rams sink and
+  its jaws fold flat into the floor, in two; then the ship is let go, standing on its own gear, never left in the air:
+  on wheels it rolls out of the open front, on legs it lifts off out of the open top. A ship set down on the open
+  floor and taken back has the dock close round it the same way back, the cradle holding it before the floor goes
+  down. A dock just formed with nothing to build
   opens by itself and stands open, ready for a ship to come in; a design sent to it closes it for the arms to build.
   Nothing starts that cannot finish: the pilot is told when something stands in the crane's or the floor's way, and
   where, when a ship stands in the bay, when someone is in the pit, and, before the dock opens, when the ship could

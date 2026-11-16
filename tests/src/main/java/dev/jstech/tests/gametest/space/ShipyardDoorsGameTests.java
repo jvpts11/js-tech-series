@@ -12,6 +12,7 @@ import dev.jstech.core.moving.MovingStructure;
 import dev.jstech.core.moving.MovingStructures;
 import dev.jstech.core.moving.StructureControls;
 import dev.jstech.core.moving.StructureYard;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedPartBlockEntity;
 import dev.jstech.core.multiblock.Orientation;
 import dev.jstech.core.multiblock.plan.PlanSpot;
@@ -362,6 +363,39 @@ public final class ShipyardDoorsGameTests {
     }
 
     /*
+     * The ship is never left in the air: opening, the floor rises to meet its gear with the cradle still holding it,
+     * and only then does the cradle let go and fold into the floor; closing, the cradle holds it first, and only then
+     * does the floor go down from under its gear.
+     */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 1600)
+    public static void holds_theCradleHoldsTheShipWhileTheFloorMovesUnderIt(final GameTestHelper helper) {
+        final ServerLevel level = helper.getLevel();
+        final BlockPos terminal = TestShipyards.build(level, helper.absolutePos(CORNER));
+        final MovingStructure[] ship = new MovingStructure[1];
+        final List<String> seen = new ArrayList<>();
+        final GameTestSequence sequence = built(helper, terminal, WHEELS, new int[1])
+                .thenExecute(() -> dock(level, terminal).launch(null, why -> { }))
+                .thenWaitUntil(() -> {
+                    note(seen, dock(level, terminal).doors().serializedName());
+                    ship[0] = shipIn(level, terminal);
+                    helper.assertTrue(ship[0] != null && ship[0].ready(), "the ship let go");
+                })
+                .thenExecute(() -> {
+                    helper.assertTrue(seen.equals(List.of("closed", "crane_back", "floor_up", "cradle_folds", "open"))
+                            || seen.equals(List.of("crane_back", "floor_up", "cradle_folds", "open")), "opening, the"
+                            + " floor rises under the ship held, then the cradle folds: " + seen);
+                    seen.clear();
+                    helper.assertTrue(dock(level, terminal).seat(ship[0]), "the ship taken back");
+                });
+        sequence.thenWaitUntil(() -> {
+            note(seen, dock(level, terminal).doors().serializedName());
+            helper.assertTrue(dock(level, terminal).doors() == ShipyardDoors.State.CLOSED, "the dock closed");
+        }).thenExecute(() -> helper.assertTrue(seen.equals(List.of("cradle_holds", "floor_down", "crane_in", "closed"))
+                || seen.equals(List.of("open", "cradle_holds", "floor_down", "crane_in", "closed")), "closing, the"
+                + " cradle holds the ship, then the floor goes down: " + seen)).thenSucceed();
+    }
+
+    /*
      * Its cradle taken off the grid as it opens and put back as it closes, the dock is none the worse: none of its
      * blocks carries the mark of a block lost, as a block broken out of it would.
      */
@@ -382,6 +416,12 @@ public final class ShipyardDoorsGameTests {
                     final long marked = dockBlocks.stream().filter(place -> level.getBlockEntity(place)
                             instanceof FormedPartBlockEntity part && !part.damage().isEmpty()).count();
                     helper.assertTrue(marked == 0, "none of its blocks marked as a block lost: " + marked);
+                    // The cradle's blocks put back where the floor stood open, too, not left plain blocks.
+                    final List<BlockPos> plain = dockBlocks.stream().filter(place -> !(level.getBlockState(place)
+                            .getBlock() instanceof FormedPartBlock)).toList();
+                    helper.assertTrue(plain.isEmpty(), "every block of its crane, floor and cradle merged into its"
+                            + " model again: " + plain.size() + " plain, " + plain.stream().limit(4).map(place
+                            -> level.getBlockState(place).getBlock()).toList());
                 })
                 .thenSucceed();
     }
@@ -622,6 +662,13 @@ public final class ShipyardDoorsGameTests {
                 level.setBlockAndUpdate(at, Blocks.AIR.defaultBlockState());
             }
         });
+    }
+
+    /* Notes {@code state} in {@code seen} when it is not the last one noted. */
+    private static void note(final List<String> seen, final String state) {
+        if (seen.isEmpty() || !seen.getLast().equals(state)) {
+            seen.add(state);
+        }
     }
 
     /* Whether a block stands at every one of {@code places}. */

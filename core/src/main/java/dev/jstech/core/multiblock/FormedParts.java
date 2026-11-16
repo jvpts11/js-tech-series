@@ -86,7 +86,9 @@ public final class FormedParts {
     }
 
     /**
-     * The same, each block taking the shape of the block of the formed model {@code shaped} says it is.
+     * The same, each block taking the shape of the block of the formed model {@code shaped} says it is. A block merged
+     * into that terminal's model already, carried where it is now with a part of its structure that moves, as a dock's
+     * crane is, is merged where it stands: it takes the shape of the block of the model it is there.
      *
      * @return the places that merged
      */
@@ -96,6 +98,12 @@ public final class FormedParts {
         for (final long place : places) {
             final BlockPos at = MultiblockPatterns.decode(place);
             final BlockState was = level.getBlockState(at);
+            if (was.getBlock() instanceof FormedPartBlock && level.getBlockEntity(at) instanceof FormedPartBlockEntity
+                    part && terminal.equals(part.terminal())) {
+                part.merged(part.original(), terminal, shaped.apply(at).orElse(null));
+                out.add(place);
+                continue;
+            }
             if (!merges(was)) {
                 continue;
             }

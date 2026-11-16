@@ -12,6 +12,7 @@ import dev.jstech.core.blockentity.IFieldPart;
 import dev.jstech.core.model.network.ModelAnimations;
 import dev.jstech.core.moving.BlockMove;
 import dev.jstech.core.multiblock.BlockMatch;
+import dev.jstech.core.multiblock.FormedPartBlock;
 import dev.jstech.core.multiblock.FormedParts;
 import dev.jstech.core.multiblock.IBlockMatcher;
 import dev.jstech.core.multiblock.IStructureShape;
@@ -664,20 +665,25 @@ public final class MachineStructure implements IFieldPart, IStructureWatcher {
 
     /*
      * Merges its shell's plain blocks into its model: those it holds that have not merged yet, as a structure found
-     * again larger has; and gives back the merged ones it no longer holds.
+     * again larger has; and gives back the merged ones it no longer holds. A place it had merged whose block is plain
+     * again, put there while its blocks were away as a structure that changes its build puts them, merges again.
      */
     private void mergeInto(final ServerLevel level, final BlockPos pos, final ShapeMatch.Formed found,
                            final List<Long> gone) {
-        final Set<Long> wasMerged = new HashSet<>(this.merged);
         final List<Long> kept = new ArrayList<>();
         final List<Long> released = new ArrayList<>();
         for (final long place : this.merged) {
-            (gone.contains(place) ? released : kept).add(place);
+            if (gone.contains(place)) {
+                released.add(place);
+            } else if (level.getBlockState(MultiblockPatterns.decode(place)).getBlock() instanceof FormedPartBlock) {
+                kept.add(place);
+            }
         }
         FormedParts.restore(level, released);
+        final Set<Long> stillMerged = new HashSet<>(kept);
         final List<Long> fresh = new ArrayList<>();
         for (final long place : found.parts()) {
-            if (!wasMerged.contains(place)) {
+            if (!stillMerged.contains(place)) {
                 fresh.add(place);
             }
         }

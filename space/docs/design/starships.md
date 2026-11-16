@@ -110,18 +110,19 @@ that computer to the network; both are optional places of the structure ([J's Co
 
 A ship built whole leaves the dock when its pilot uses its flight console, and the dock opens round it first, its
 crane and its floor real moving structures of J's Core's kit: the crane rolls back along its rails to the back of the
-bay, in about three seconds; then the ship's gear comes down, the floor rises three blocks to the level of the ground
-outside, and the cradle's rams sink into it as its jaws swing out and lie flat in their slots, in about five. Only
-then is the ship let go, standing on its own gear on the open floor: it becomes one moving structure, once, and stays
-one, standing still or flying. A ship on wheels rolls out of the dock's open front, one on legs rises out of its open
-top. Everything the release needs is checked before the dock opens and again at the end; a release that fails at the
-end closes the dock back round the ship, its plan kept, and its pilot is told why.
+bay, in about three seconds; then the ship's gear comes down and the floor rises three blocks to the level of the
+ground outside, in about five, to meet its gear, the cradle still holding the ship; and only then do the cradle's rams
+sink into the floor and its jaws swing out and lie flat in their slots, in about two. The ship is never left in the
+air. Then the ship is let go, standing on its own gear on the open floor: it becomes one moving structure, once, and
+stays one, standing still or flying. A ship on wheels rolls out of the dock's open front, one on legs rises out of
+its open top. Everything the release needs is checked before the dock opens and again at the end; a release that
+fails at the end closes the dock back round the ship, its plan kept, and its pilot is told why.
 
 An empty dock stands open, ready for a ship to come in, whether it has just formed or its plan was put away before
 anything was built. A ship comes back the same way it left: one on legs comes down through the open top onto the floor,
 one on wheels rolls in from the front. Its pilot uses its console, and the dock takes it back onto the grid, set
-straight in the bay, and closes round it: the cradle rises and closes on its hull as its gear folds and the floor goes
-down, then the crane rolls back over the bay. A design sent to an open, empty dock closes it the same way, for the arms
+straight in the bay, and closes round it: the cradle rises and closes on its hull first, holding it, and only then
+does its gear fold and the floor go down from under it, then the crane rolls back over the bay. A design sent to an open, empty dock closes it the same way, for the arms
 to build. A ship is changed only in a dock, closed round it. A dock broken while it moves sets its moving parts down
 where they are and comes apart as any broken structure does, the cradle's blocks it held dropping as items. A repair
 can be made anywhere, by putting the right block back; in its dock, the arms put back what the ship lost, from the

@@ -683,9 +683,11 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Space) The Small Shipyard opens round a finished ship and closes round one taken back, so any small ship leaves
   and comes back: started from its flight console, the dock's crane rolls back along its rails to the back of the bay
   in three seconds, its hook drawn up, then a floor of Ship Pad Plates rises from under the pit to the ground's top in
-  five as the cradle's rams sink and its jaws fold flat into it, and only then is the ship let go, standing on its own
-  gear: on wheels it rolls out of the open front, on legs it lifts off out of the open top. A ship set down on the
-  open floor and taken back has the dock close round it the same way back. A dock just formed with nothing to build
+  five, to meet the ship's gear with the cradle still holding the ship, and only then do the cradle's rams sink and
+  its jaws fold flat into the floor, in two; then the ship is let go, standing on its own gear, never left in the air:
+  on wheels it rolls out of the open front, on legs it lifts off out of the open top. A ship set down on the open
+  floor and taken back has the dock close round it the same way back, the cradle holding it before the floor goes
+  down. A dock just formed with nothing to build
   opens by itself and stands open, ready for a ship to come in; a design sent to it closes it for the arms to build.
   Nothing starts that cannot finish: the pilot is told when something stands in the crane's or the floor's way, and
   where, when a ship stands in the bay, when someone is in the pit, and, before the dock opens, when the ship could
@@ -4312,6 +4314,9 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Core) A structure that changes its build keeps its blocks merged into its model: a plain block put back where a
+  merged one stood while its parts were away merges again, where it stayed a plain block in the model, and a merged
+  block carried to a new place with a moving part of its structure takes the shape of the model where it stands.
 - (Core) A player joins a world whatever its synced data adds up to: a data registry bigger than one message may hold,
   as the formed shapes of many machines are, was sent whole, and its message was refused as the player's game read it,
   dropping the player as they joined. It goes in parts now, and a single value too big for any message stays behind,

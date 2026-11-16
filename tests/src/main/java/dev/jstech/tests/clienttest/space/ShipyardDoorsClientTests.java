@@ -78,6 +78,8 @@ public final class ShipyardDoorsClientTests {
     private static final double YELLOW = 0.3;
     private static final double STRIPED = 0.15;
     private static final double NONE = 0.05;
+    /* How far the floor has gone when it is pictured moving and its cradle looked at, of its way. */
+    private static final double SOME_WAY = 0.3;
     /* How long a picture's name taken from what it checks is, at the most. */
     private static final int PICTURE_NAME = 48;
     private static final int CHANNEL = 0xFF;
@@ -134,13 +136,14 @@ public final class ShipyardDoorsClientTests {
         seen(ctx, OVER_THE_BACK, BRIDGE_PARKED, 0, "closed, nothing yellow at the back of the bay over it");
         seen(ctx, WIDE, BAND, 0, "closed, the floor's band is down in the pit, not at the ground");
         seen(ctx, LOW, JAW, YELLOW, "closed, the cradle's jaw stands up by the hull");
-        // Opening: the floor half way up, drawn rising.
+        // Opening: the floor rising to the ship's gear, the cradle still holding the ship, never in the air.
         look(ctx, WIDE, BAY);
         ctx.thenServer(0, level -> ctx.assertTrue(dock(level, terminal[0]).launch(null, why -> { }), "the dock opens"))
                 .thenWaitUntil(() -> client(ctx, terminal[0]).doors() == ShipyardDoors.State.FLOOR_UP
-                        && client(ctx, terminal[0]).doorsProgress(now(ctx)) > 0.5, ARRIVE, "the floor half way up")
-                .thenScreenshot(0, "shipyard-doors-rising")
-                .thenWaitUntilServer(level -> {
+                        && client(ctx, terminal[0]).doorsProgress(now(ctx)) > SOME_WAY, ARRIVE, "the floor rising")
+                .thenScreenshot(0, "shipyard-doors-rising");
+        seen(ctx, LOW, JAW, YELLOW, "rising, the cradle's jaw still holds the ship");
+        ctx.thenWaitUntilServer(level -> {
                     ship[0] = shipIn(level, terminal[0]);
                     return ship[0] != null && ship[0].ready() && dock(level, terminal[0]).open();
                 }, ARRIVE, "the dock open, the ship let go", level -> String.valueOf(dock(level, terminal[0]).doors()))
@@ -156,13 +159,14 @@ public final class ShipyardDoorsClientTests {
         seen(ctx, LOW, JAW, 0, "open, the cradle's jaw lies flat in the floor");
         look(ctx, LOW, JAW);
         ctx.thenScreenshot(SETTLE, "shipyard-doors-jaws");
-        // Closing round it again: the floor half way down, drawn going down.
+        // Closing round it again: the cradle holding the ship first, then the floor going down from under its gear.
         look(ctx, WIDE, BAY);
         ctx.thenServer(0, level -> ctx.assertTrue(dock(level, terminal[0]).seat(ship[0]), "the ship is taken back"))
                 .thenWaitUntil(() -> client(ctx, terminal[0]).doors() == ShipyardDoors.State.FLOOR_DOWN
-                        && client(ctx, terminal[0]).doorsProgress(now(ctx)) > 0.5, ARRIVE, "the floor half way down")
-                .thenScreenshot(0, "shipyard-doors-closing")
-                .thenWaitUntil(() -> client(ctx, terminal[0]).doors() == ShipyardDoors.State.CLOSED, ARRIVE,
+                        && client(ctx, terminal[0]).doorsProgress(now(ctx)) > SOME_WAY, ARRIVE, "the floor going down")
+                .thenScreenshot(0, "shipyard-doors-closing");
+        seen(ctx, LOW, JAW, YELLOW, "going down, the cradle's jaw holds the ship");
+        ctx.thenWaitUntil(() -> client(ctx, terminal[0]).doors() == ShipyardDoors.State.CLOSED, ARRIVE,
                         "the dock closed round the ship again");
         seen(ctx, OVER_THE_BAY, BRIDGE_OVER, YELLOW, "closed again, the bridge over the ship");
         seen(ctx, LOW, JAW, YELLOW, "closed again, the jaw stands up by the hull");

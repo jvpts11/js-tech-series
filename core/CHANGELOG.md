@@ -2249,6 +2249,9 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   what is built, and each lists at its end only what is still to build.
 
 ### Fixed
+- A structure that changes its build keeps its blocks merged into its model: a plain block put back where a
+  merged one stood while its parts were away merges again, where it stayed a plain block in the model, and a merged
+  block carried to a new place with a moving part of its structure takes the shape of the model where it stands.
 - A player joins a world whatever its synced data adds up to: a data registry bigger than one message may hold,
   as the formed shapes of many machines are, was sent whole, and its message was refused as the player's game read it,
   dropping the player as they joined. It goes in parts now, and a single value too big for any message stays behind,

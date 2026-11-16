@@ -47,9 +47,11 @@ import org.joml.Quaternionf;
  * Draws a formed Small Shipyard whole from its terminal: the dock's frame, as its approved drawing has it, and with it
  * its crane, its floor and its cradle, and the control booth's glass, which shapes none of its blocks. Nothing of the
  * dock is drawn while it is not formed: its blocks show. Formed, its robot arms at work on their rails. As it opens
- * (space/docs/design/starships.md), its crane rolls back along its rails, its hook drawn up, then its floor rises
- * while its cradle folds flat into it, the rams sinking and the jaws swinging out; closing, the other way, all drawn as
- * far on as the dock has gone, so they move with the blocks that move. And the ship its plan builds, each part formed
+ * (space/docs/design/starships.md), its crane rolls back along its rails, its hook drawn up, then its floor rises to
+ * the ship's gear, the cradle still holding the ship, and only then does the cradle let go and fold flat into the
+ * floor, the rams sinking and the jaws swinging out; closing, the other way, the cradle holding the ship before the
+ * floor goes down; all drawn as far on as the dock has gone, so they move with the blocks that move, and the ship is
+ * never drawn in the air. And the ship its plan builds, each part formed
  * into its model where the plan lays it, painted as the plan says, whether or not the dock stands whole, a part just
  * formed glowing round its box for a moment; its gear stowed in its cradle, coming down as the floor rises to meet
  * it and folding as the floor goes down.
@@ -190,22 +192,27 @@ public final class ShipyardRenderer implements BlockEntityRenderer<ShipyardTermi
         return switch (doors) {
             case CLOSED, CRANE_BACK, CRANE_IN -> 1;
             case FLOOR_UP -> 1 - Math.min(1, progress / GEAR_SHARE);
-            case OPEN -> 0;
+            case CRADLE_FOLDS, OPEN, CRADLE_HOLDS -> 0;
             case FLOOR_DOWN -> Math.min(1, progress / GEAR_SHARE);
         };
     }
 
-    /* How far the dock has opened: its crane rolled back, and its floor risen with its cradle folded, each 0 to 1. */
-    private record Opening(double crane, double floor) {
+    /*
+     * How far the dock has opened, each from 0 to 1: its crane rolled back, its floor risen, and its cradle let go of
+     * the ship and folded into the floor, only once the floor stands up under the ship's gear.
+     */
+    private record Opening(double crane, double floor, double cradle) {
 
         static Opening of(final ShipyardDoors.State doors, final double progress) {
             return switch (doors) {
-                case CLOSED -> new Opening(0, 0);
-                case CRANE_BACK -> new Opening(progress, 0);
-                case FLOOR_UP -> new Opening(1, progress);
-                case OPEN -> new Opening(1, 1);
-                case FLOOR_DOWN -> new Opening(1, 1 - progress);
-                case CRANE_IN -> new Opening(1 - progress, 0);
+                case CLOSED -> new Opening(0, 0, 0);
+                case CRANE_BACK -> new Opening(progress, 0, 0);
+                case FLOOR_UP -> new Opening(1, progress, 0);
+                case CRADLE_FOLDS -> new Opening(1, 1, progress);
+                case OPEN -> new Opening(1, 1, 1);
+                case CRADLE_HOLDS -> new Opening(1, 1, 1 - progress);
+                case FLOOR_DOWN -> new Opening(1, 1 - progress, 0);
+                case CRANE_IN -> new Opening(1 - progress, 0, 0);
             };
         }
     }
@@ -237,9 +244,9 @@ public final class ShipyardRenderer implements BlockEntityRenderer<ShipyardTermi
     }
 
     /*
-     * Folds the cradle flat into the floor as it rises, as the storyboard draws it: each ram's saddle sinking to just
-     * under the floor's top, each jaw's pivot riding up with the floor as the jaw swings out and down to lie in its
-     * slot; standing again, the other way.
+     * Folds the cradle flat into the floor once the floor stands up under the ship: each ram's saddle sinking to just
+     * under the floor's top, each jaw's pivot rising to the floor's top as the jaw swings out and down to lie in its
+     * slot; standing again to hold the ship, the other way, before the floor goes down.
      */
     private static final class CradleDriver implements IKitDriver<Opening> {
 
@@ -265,8 +272,8 @@ public final class ShipyardRenderer implements BlockEntityRenderer<ShipyardTermi
 
         @Override
         public void move(final Opening opening, final ModelPose pose, final double seconds) {
-            final double t = opening.floor();
-            final double top = FLOOR_DOWN + t * FLOOR_RISE;
+            final double t = opening.cradle();
+            final double top = FLOOR_DOWN + opening.floor() * FLOOR_RISE;
             final float sinks = (float) (-t * (RAM_TOP - (top - SUNK)) * PIXELS);
             final float rides = (float) (t * (top + LIFTED - PIVOT) * PIXELS);
             final float swings = (float) (t * (JAW_OUT - JAW_UP));

@@ -52,15 +52,16 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The Small Shipyard's moving parts as they open and close (space/docs/design/starships.md): its crane and its floor
- * become moving structures while they move, its cradle is taken off the grid and drawn folding into the floor. Opening
- * round a finished ship, the crane rolls back along its rails to the back of the bay, then the floor rises to the
- * ground's top as the cradle folds, and only then is the ship let go, standing on its own gear; closing round a ship
- * taken back, or for a new build, the floor goes down, the cradle rises round the hull and the crane rolls back over
- * the bay. A dock just formed with nothing to build opens by itself, to stand open, ready for a ship to come in; one
- * whose ship was let go from it as it stood closed stays closed. While its parts move the dock holds itself as it
- * stood. Nothing starts that cannot finish: not with something in the crane's or the floor's way, a ship standing in
- * the bay, or someone in the pit; someone who walks in meanwhile holds it where it stands till they are out. A closing
- * refused is tried again once a second, till its way is clear.
+ * become moving structures while they move, its cradle is taken off the grid and drawn folding into the floor; the
+ * ship is never left in the air. Opening round a finished ship, the crane rolls back along its rails to the back of the
+ * bay, then the floor rises to the ground's top to meet the ship's gear, the cradle still holding it, and only then
+ * does the cradle let go and fold into the floor, and the ship is let go, standing on its own gear; closing round a
+ * ship taken back, or for a new build, the cradle rises round the hull and holds it first, then the floor goes down
+ * from under its gear and the crane rolls back over the bay. A dock just formed with nothing to build opens by itself,
+ * to stand open, ready for a ship to come in; one whose ship was let go from it as it stood closed stays closed. While
+ * its parts move the dock holds itself as it stood. Nothing starts that cannot finish: not with something in the
+ * crane's or the floor's way, a ship standing in the bay, or someone in the pit; someone who walks in meanwhile holds
+ * it where it stands till they are out. A closing refused is tried again once a second, till its way is clear.
  */
 public final class ShipyardDoors implements IFieldPart {
 
@@ -93,9 +94,13 @@ public final class ShipyardDoors implements IFieldPart {
     /* How long it has stood closed with nothing to build, in ticks. */
     private int empty;
 
-    /** How long the crane takes to roll along the bay, and the floor to rise or fall, in seconds. */
+    /**
+     * How long the crane takes to roll along the bay, the floor to rise or fall, and the cradle to let the ship go and
+     * fold, or to rise and hold it, in seconds.
+     */
     public static final double CRANE_SECONDS = 3;
     public static final double FLOOR_SECONDS = 5;
+    public static final double CRADLE_SECONDS = 2;
     private static final int TICKS = 20;
     /* How long a part, or a closing, waits before it tries again where something still is in its way, in ticks. */
     private static final int RETRY = 20;
@@ -144,8 +149,11 @@ public final class ShipyardDoors implements IFieldPart {
         if (!this.sent) {
             return 0;
         }
-        final double seconds = this.state == State.CRANE_BACK || this.state == State.CRANE_IN ? CRANE_SECONDS
-                : FLOOR_SECONDS;
+        final double seconds = switch (this.state) {
+            case CRANE_BACK, CRANE_IN -> CRANE_SECONDS;
+            case CRADLE_FOLDS, CRADLE_HOLDS -> CRADLE_SECONDS;
+            default -> FLOOR_SECONDS;
+        };
         return Math.clamp((now - this.since) / (seconds * TICKS), 0.0, 1.0);
     }
 
@@ -245,7 +253,7 @@ public final class ShipyardDoors implements IFieldPart {
         }
         this.closing = false;
         this.letsGo = false;
-        enter(State.FLOOR_DOWN);
+        begin(level, State.CRADLE_HOLDS);
         return true;
     }
 
@@ -271,20 +279,32 @@ public final class ShipyardDoors implements IFieldPart {
         switch (this.state) {
             case CLOSED -> openWhenEmpty(level);
             case CRANE_BACK -> {
-                // The cradle comes off and the floor rises only with no one in the pit.
+                // The cradle comes off the grid and the floor rises only with nothing in the pit.
                 if (moved(level, ShipyardStructure.cranePlaces(at, dock, false),
-                        ShipyardStructure.cranePlaces(at, dock, true), CRANE_SECONDS) && nobodyInTheWay(level, dock)) {
+                        ShipyardStructure.cranePlaces(at, dock, true), CRANE_SECONDS) && wayClear(level, dock)) {
                     takeCradleOff(level, dock);
                     enter(State.FLOOR_UP);
                 }
             }
             case FLOOR_UP -> {
+                // The floor meets the ship's gear, the cradle still holding it, and only then does the cradle let go.
                 if (moved(level, ShipyardStructure.deckPlaces(at, dock, false),
                         ShipyardStructure.deckPlaces(at, dock, true), FLOOR_SECONDS)) {
+                    begin(level, State.CRADLE_FOLDS);
+                }
+            }
+            case CRADLE_FOLDS -> {
+                if (progress(level.getGameTime()) >= 1) {
                     enter(State.OPEN);
                     if (this.letsGo) {
                         letGo(level);
                     }
+                }
+            }
+            case CRADLE_HOLDS -> {
+                // The cradle holds the ship before the floor goes down from under its gear.
+                if (progress(level.getGameTime()) >= 1 && wayClear(level, dock)) {
+                    enter(State.FLOOR_DOWN);
                 }
             }
             case FLOOR_DOWN -> {
@@ -342,6 +362,14 @@ public final class ShipyardDoors implements IFieldPart {
         this.arrived = false;
         this.wait = 0;
         this.holding = null;
+        this.changed.run();
+    }
+
+    /* Into {@code next}, a move of the cradle only, drawn, that sets off now. */
+    private void begin(final ServerLevel level, final State next) {
+        enter(next);
+        this.sent = true;
+        this.since = level.getGameTime();
         this.changed.run();
     }
 
@@ -416,16 +444,20 @@ public final class ShipyardDoors implements IFieldPart {
     }
 
     /*
-     * Whether no one is in the pit, nor on the floor or a jaw over it, as the cradle comes off and the floor rises;
-     * the pilot told once while someone is.
+     * Whether nothing is in the floor's way as it sets off: no one in the pit, nor on the floor or a jaw over it, and
+     * no ship come into the bay meanwhile; the pilot told once while something is.
      */
-    private boolean nobodyInTheWay(final ServerLevel level, final Orientation dock) {
-        if (level.getEntitiesOfClass(LivingEntity.class, way(dock), EntitySelector.NO_SPECTATORS).isEmpty()) {
-            this.holding = null;
-            return true;
+    private boolean wayClear(final ServerLevel level, final Orientation dock) {
+        if (!level.getEntitiesOfClass(LivingEntity.class, way(dock), EntitySelector.NO_SPECTATORS).isEmpty()) {
+            held(level, ShipyardDoorTexts.SOMEONE_IN_THE_PIT.text());
+            return false;
         }
-        held(level, ShipyardDoorTexts.SOMEONE_IN_THE_PIT.text());
-        return false;
+        if (!MovingStructures.near(level, ShipyardStructure.bay(this.terminal.getBlockPos(), dock)).isEmpty()) {
+            held(level, ShipyardDoorTexts.SHIP_IN_THE_BAY.text());
+            return false;
+        }
+        this.holding = null;
+        return true;
     }
 
     /* Held where it stands by {@code why}, told to the pilot once while it holds. */
@@ -623,10 +655,13 @@ public final class ShipyardDoors implements IFieldPart {
         }
     }
 
-    /** How the dock's doors stand or move: closed, opening (the crane, then the floor), open, closing. */
+    /**
+     * How the dock's doors stand or move: closed; opening, the crane, then the floor, then the cradle letting go;
+     * open; closing, the cradle holding the ship, then the floor, then the crane.
+     */
     public enum State implements IStableName {
-        CLOSED("closed"), CRANE_BACK("crane_back"), FLOOR_UP("floor_up"), OPEN("open"), FLOOR_DOWN("floor_down"),
-        CRANE_IN("crane_in");
+        CLOSED("closed"), CRANE_BACK("crane_back"), FLOOR_UP("floor_up"), CRADLE_FOLDS("cradle_folds"), OPEN("open"),
+        CRADLE_HOLDS("cradle_holds"), FLOOR_DOWN("floor_down"), CRANE_IN("crane_in");
 
         private final String name;
 
