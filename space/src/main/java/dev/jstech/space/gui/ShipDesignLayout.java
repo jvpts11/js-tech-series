@@ -105,10 +105,15 @@ public final class ShipDesignLayout {
     public static final int SHIP_STEP = 15;
     /** The dock's blocks. */
     public static final int DOCK_Y = 187;
-    /** The keys along the bottom; what the screen says, over the keys. */
+    /**
+     * The keys along the bottom, from and to, and the room between two, which narrows down to the least where the
+     * words are long; what the screen says, over the keys.
+     */
     public static final int KEYS_X0 = 127;
+    public static final int KEYS_X1 = 354;
     public static final int KEYS_Y0 = 255;
     public static final int KEY_GAP = 7;
+    public static final int KEY_GAP_LEAST = 3;
     public static final int SAID_Y = 238;
     /**
      * The plans' list over the middle, as the approved mock lays it: its glass, the tab of its title, how many plans it

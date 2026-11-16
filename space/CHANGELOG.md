@@ -961,6 +961,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- The Starship Design's keys along the bottom stay inside their panel: closer together where they must, and
+  in the small letters where a language's longer words need it.
 - A pad's service port fuels the launcher nearest it, and a launch panel works the nearest: of two launchers
   in reach, each took the first it came to.
 - A crawler sets off with the launcher it lifted only once it holds it: a launcher not ready to go aboard was

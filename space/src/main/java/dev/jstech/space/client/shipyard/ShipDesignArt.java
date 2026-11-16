@@ -159,12 +159,30 @@ public final class ShipDesignArt {
     /** A key prompt: the key on a small cap, what it does beside it in the game's letters. Its width. */
     public static int keycap(final GuiGraphics g, final Font font, final int x, final int y, final String key,
                              final String label) {
+        return keycap(g, font, x, y, key, label, false);
+    }
+
+    /**
+     * A key prompt as {@link #keycap(GuiGraphics, Font, int, int, String, String)} draws it, what it does in the small
+     * letters when {@code small}, for a row of keys too long for its panel otherwise. Its width.
+     */
+    public static int keycap(final GuiGraphics g, final Font font, final int x, final int y, final String key,
+                             final String label, final boolean small) {
         final Colours c = PALETTE.get();
-        final int kw = Math.max(KEY_LEAST, smallWidth(font, key) + 5);
+        final int kw = capWidth(font, key);
         g.fill(x, y, x + kw, y + KEY_H, c.text());
         Draw.textScaled(g, font, key, x + kw / 2 - smallWidth(font, key) / 2 + 1, y + 2, c.dark(), SMALL);
-        Draw.text(g, font, label, x + kw + 3, y + 1, c.text());
-        return kw + 3 + font.width(label);
+        if (small) {
+            small(g, font, label, x + kw + 3, y + 2, c.text());
+        } else {
+            Draw.text(g, font, label, x + kw + 3, y + 1, c.text());
+        }
+        return keycapWidth(font, key, label, small);
+    }
+
+    /** How wide a key prompt is, what it does in the small letters or the game's. */
+    public static int keycapWidth(final Font font, final String key, final String label, final boolean small) {
+        return capWidth(font, key) + 3 + (small ? smallWidth(font, label) : font.width(label));
     }
 
     /**
@@ -311,6 +329,11 @@ public final class ShipDesignArt {
                 FastColor.ARGB32.blue(colour) / CHANNEL, FastColor.ARGB32.alpha(colour) / CHANNEL);
         drawing.run();
         g.setColor(1, 1, 1, 1);
+    }
+
+    /* How wide a key's cap is, its key in the small letters on it. */
+    private static int capWidth(final Font font, final String key) {
+        return Math.max(KEY_LEAST, smallWidth(font, key) + 5);
     }
 
     /**

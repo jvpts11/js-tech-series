@@ -1226,17 +1226,21 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         final ShipDesignArt.Colours c = ShipDesignArt.PALETTE.get();
         ShipDesignArt.panel(g, this.font, ShipDesignLayout.MIDDLE_X0, ShipDesignLayout.BOTTOM_Y0,
                 ShipDesignLayout.MIDDLE_X1, ShipDesignLayout.BOTTOM_Y1, "", ShipDesignLayout.BOTTOM_CUT);
+        final String[][] keys = {{keyName(GLFW.GLFW_KEY_E), GameText.resolve(ShipDesignTexts.SEND)},
+            {keyName(GLFW.GLFW_KEY_S), GameText.resolve(ShipDesignTexts.SAVE)},
+            {keyName(GLFW.GLFW_KEY_L), GameText.resolve(ShipDesignTexts.PLANS)},
+            {keyName(GLFW.GLFW_KEY_F), GameText.resolve(ShipDesignTexts.FINISH_TOOL)},
+            {GameText.resolve(ShipDesignTexts.KEY_DELETE), GameText.resolve(ShipDesignTexts.DELETE)}};
+        // Keys too long for the panel go closer together as far as they must, and those too long even then, as a
+        // language's longer words make them, go into the small letters.
+        final int room = ShipDesignLayout.KEYS_X1 - ShipDesignLayout.KEYS_X0;
+        final boolean small = keysWidth(keys, false) + (keys.length - 1) * ShipDesignLayout.KEY_GAP_LEAST > room;
+        final int gap = Math.clamp((room - keysWidth(keys, small)) / (keys.length - 1), ShipDesignLayout.KEY_GAP_LEAST,
+                ShipDesignLayout.KEY_GAP);
         int x = ShipDesignLayout.KEYS_X0;
-        x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, keyName(GLFW.GLFW_KEY_E),
-                GameText.resolve(ShipDesignTexts.SEND)) + ShipDesignLayout.KEY_GAP;
-        x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, keyName(GLFW.GLFW_KEY_S),
-                GameText.resolve(ShipDesignTexts.SAVE)) + ShipDesignLayout.KEY_GAP;
-        x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, keyName(GLFW.GLFW_KEY_L),
-                GameText.resolve(ShipDesignTexts.PLANS)) + ShipDesignLayout.KEY_GAP;
-        x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, keyName(GLFW.GLFW_KEY_F),
-                GameText.resolve(ShipDesignTexts.FINISH_TOOL)) + ShipDesignLayout.KEY_GAP;
-        ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, GameText.resolve(ShipDesignTexts.KEY_DELETE),
-                GameText.resolve(ShipDesignTexts.DELETE));
+        for (final String[] key : keys) {
+            x += ShipDesignArt.keycap(g, this.font, x, ShipDesignLayout.KEYS_Y0, key[0], key[1], small) + gap;
+        }
         if (this.said != null && Util.getMillis() < this.saidUntil) {
             final String words = GameText.resolve(this.said);
             final int w = ShipDesignArt.calloutWidth(this.font, words);
@@ -1295,6 +1299,15 @@ public final class ShipDesignScreen extends AbstractContainerScreen<ShipDesignMe
         final String help = GameText.resolve(ShipDesignTexts.PLANS_HELP);
         ShipDesignArt.small(g, this.font, help, (x0 + x1 - ShipDesignArt.smallWidth(this.font, help)) / 2,
                 ShipDesignLayout.PLANS_HELP_Y, c.dim());
+    }
+
+    /* How wide the key prompts {@code keys} (each its key and what it does) are together, small or not. */
+    private int keysWidth(final String[][] keys, final boolean small) {
+        int wide = 0;
+        for (final String[] key : keys) {
+            wide += ShipDesignArt.keycapWidth(this.font, key[0], key[1], small);
+        }
+        return wide;
     }
 
     /* A plan's length and mass, as the top writes the design's, worked out once. */

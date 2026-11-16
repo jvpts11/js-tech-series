@@ -63,6 +63,13 @@ class ShipDesignLayoutTest {
     }
 
     @Test
+    void layout_keepsTheKeysInsideTheBottomPanel() {
+        assertTrue(ShipDesignLayout.KEYS_X0 > ShipDesignLayout.MIDDLE_X0);
+        assertTrue(ShipDesignLayout.KEYS_X1 < ShipDesignLayout.MIDDLE_X1);
+        assertTrue(ShipDesignLayout.KEY_GAP_LEAST > 0 && ShipDesignLayout.KEY_GAP_LEAST < ShipDesignLayout.KEY_GAP);
+    }
+
+    @Test
     void plansLayout_keepsEveryRowsNameFiguresAndButtonsApartAndTheHelpUnderTheLast() {
         final GuiLayout layout = ShipDesignLayout.plansLayout();
         assertEquals(List.of(), layout.overlaps());

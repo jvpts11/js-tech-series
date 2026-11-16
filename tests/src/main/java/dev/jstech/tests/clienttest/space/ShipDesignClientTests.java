@@ -83,6 +83,10 @@ public final class ShipDesignClientTests {
     private static final int OUTLINE_SEEN = 25;
     /* The plans saved for the plans' list. */
     private static final int PLANS = 3;
+    /* How far past the bottom panel the keys' row is looked along, how tall it is, and how bright a letter is. */
+    private static final int PAST = 12;
+    private static final int KEY_ROW = 9;
+    private static final int WHITE = 220;
 
     private ShipDesignClientTests() {
     }
@@ -101,6 +105,8 @@ public final class ShipDesignClientTests {
                     ctx.assertTrue((argb >> 8 & CHANNEL) - (argb >> 16 & CHANNEL) > CYAN
                             || (argb & CHANNEL) - (argb >> 16 & CHANNEL) > CYAN, "the panels are drawn in cyan: "
                             + Integer.toHexString(argb));
+                    ctx.assertTrue(lettersPastTheKeys(ctx) == 0, "the keys along the bottom end inside their panel: "
+                            + lettersPastTheKeys(ctx) + " letters' pixels past its edge");
                 })
                 .then(0, () -> {
                     final ShipDesignScreen screen = screen(ctx);
@@ -379,6 +385,23 @@ public final class ShipDesignClientTests {
         } else if (r > g + HUE && r > b + HUE) {
             out[from + RED_AT]++;
         }
+    }
+
+    /* How many pixels of the keys' white letters stand past the bottom panel's right edge, along the keys' row. */
+    private static int lettersPastTheKeys(final ClientTestContext ctx) {
+        final int[] from = frame(ctx, ShipDesignLayout.MIDDLE_X1, ShipDesignLayout.KEYS_Y0);
+        final int[] to = frame(ctx, ShipDesignLayout.MIDDLE_X1 + PAST, ShipDesignLayout.KEYS_Y0 + KEY_ROW);
+        int found = 0;
+        try (ClientTestContext.FrameSampler frame = ctx.sampleFrame()) {
+            for (int y = from[1]; y <= to[1]; y++) {
+                for (int x = from[0] + 1; x <= to[0]; x++) {
+                    final int argb = frame.pixel(x, y);
+                    found += (argb >> 16 & CHANNEL) > WHITE && (argb >> 8 & CHANNEL) > WHITE && (argb & CHANNEL) > WHITE
+                            ? 1 : 0;
+                }
+            }
+        }
+        return found;
     }
 
     private static int pixel(final ClientTestContext ctx, final int x, final int y) {

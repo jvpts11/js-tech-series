@@ -4285,6 +4285,8 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- (Space) The Starship Design's keys along the bottom stay inside their panel: closer together where they must, and
+  in the small letters where a language's longer words need it.
 - (Core) Two structures keeping one chunk of the world loaded keep it so till the last of them lets it go: a ship
   arriving where another with a chunk loader aboard keeps the land, or the other of two such ships over one chunk
   going, let the chunk go, and the ship left there froze.
