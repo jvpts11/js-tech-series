@@ -2253,6 +2253,10 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   installed too: their recipes went away whenever it was, waiting for recipes of its own it does not have, so they
   could not be made at all, nor what needs them, as J's Computers' cooling units. They go away now only when J's
   Industrial's new setting hands them to its own recipes, off as it comes.
+- A model's parts hidden at rest, scaled to nothing until an animation shows them, no longer stretch the room the
+  model is measured to fill: they counted as a point at the file's own origin, so most of J's Computers' chain machines
+  reached 65 blocks down, were drawn from far past where they could be seen and showed as a dot wherever a model is fitted
+  to its room, as the model preview.
 - A structure that changes its build keeps its blocks merged into its model: a plain block put back where a
   merged one stood while its parts were away merges again, where it stayed a plain block in the model, and a merged
   block carried to a new place with a moving part of its structure takes the shape of the model where it stands.

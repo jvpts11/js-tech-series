@@ -44,6 +44,8 @@ public record KitModel(ResourceLocation id, ModelDefinition definition, ModelDat
                        Map<String, KitModel> variants, ResourceLocation file, AABB bounds, @Nullable KitModel far) {
 
     private static final float PIXEL = 1.0F / 16.0F;
+    /* The squared stretch below which a part's place holds it as a point. */
+    private static final float COLLAPSED = 1.0E-12F;
 
     public KitModel {
         Objects.requireNonNull(id, "id");
@@ -95,6 +97,10 @@ public record KitModel(ResourceLocation id, ModelDefinition definition, ModelDat
         final Vector3f high = new Vector3f(-Float.MAX_VALUE);
         final Vector3f corner = new Vector3f();
         for (int bone = 0; bone < world.length; bone++) {
+            // A part scaled to nothing at rest, which only an animation shows, fills no room.
+            if (collapsed(world[bone])) {
+                continue;
+            }
             for (final BakedGeometry.Part part : geometry.partsOf(bone)) {
                 final float[] vertices = part.vertices();
                 for (int at = 0; at < vertices.length; at += BakedGeometry.STRIDE) {
@@ -107,6 +113,9 @@ public record KitModel(ResourceLocation id, ModelDefinition definition, ModelDat
         for (final BakedGeometry.Deformed deformed : geometry.deformed()) {
             final ModelMesh mesh = deformed.mesh();
             final Matrix4f place = deformed.skin() == null ? world[deformed.bone()] : new Matrix4f();
+            if (collapsed(place)) {
+                continue;
+            }
             for (int at = 0; at + 2 < mesh.positions().length; at += 3) {
                 place.transformPosition(corner.set(mesh.positions()[at], mesh.positions()[at + 1],
                         mesh.positions()[at + 2]));
@@ -119,5 +128,10 @@ public record KitModel(ResourceLocation id, ModelDefinition definition, ModelDat
         }
         final float size = PIXEL * scale;
         return new AABB(low.x * size, low.y * size, low.z * size, high.x * size, high.y * size, high.z * size);
+    }
+
+    /* Whether {@code place} draws everything it holds at one point, as a part scaled to nothing is. */
+    private static boolean collapsed(final Matrix4f place) {
+        return place.getScale(new Vector3f()).lengthSquared() < COLLAPSED;
     }
 }

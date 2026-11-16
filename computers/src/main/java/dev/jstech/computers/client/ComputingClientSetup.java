@@ -16,6 +16,7 @@ import dev.jstech.computers.chain.machine.ChainMachine;
 import dev.jstech.computers.chain.machine.ChainMachineBlockEntity;
 import dev.jstech.computers.chain.machine.ChainMachines;
 import dev.jstech.computers.client.chain.ChainEmitters;
+import dev.jstech.computers.client.chain.ChainMachineItemRenderer;
 import dev.jstech.computers.client.chain.ChainMachineRenderer;
 import dev.jstech.computers.client.chain.ChainRigs;
 import dev.jstech.computers.client.portable.CameraShots;
@@ -305,6 +306,11 @@ public final class ComputingClientSetup {
             } else if (item instanceof PortableItem) {
                 event.registerItem(portables, item);
             }
+        }
+        // Each chain machine's own terminal shows the formed machine, the recipe viewers' picture of it.
+        for (final ChainMachine machine : ChainMachines.all()) {
+            event.registerItem(ChainMachineItemRenderer.extensions(ChainMachines.modelOf(machine)),
+                    ChainMachines.terminalOf(machine).get().asItem());
         }
     }
 

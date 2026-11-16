@@ -39,7 +39,10 @@ public final class ChainMachineTerminalBlock extends ChainFormedBlock {
         return new ItemStack(ChainMachineBlocks.TERMINAL.get());
     }
 
-    /* It has no item of its own: the Machine Terminal it was placed as comes back. */
+    /*
+     * Its own item only shows the formed machine in the recipe viewers: the Machine Terminal it was placed as comes
+     * back.
+     */
     @Override
     protected void spawnAfterBreak(final BlockState state, final ServerLevel level, final BlockPos pos,
                                    final ItemStack tool, final boolean dropExperience) {

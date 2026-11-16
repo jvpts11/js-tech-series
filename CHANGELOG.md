@@ -4324,6 +4324,14 @@ subject, as in "(Computers) Racks and servers:", and each mod has a changelog of
 - (Computers) The page of a chain machine's multiblock in JEI, EMI and REI shows its terminal again, in the shape and
   among the materials: it named the terminal the machine's becomes once formed, which has no item, so the page left it
   out. It names the Machine Terminal a player places there now, and the Structure Projector's ghost asks for it too.
+- (Computers) JEI, EMI and REI show the recipes of a chain machine by the machine itself, drawn as it stands formed and
+  made small enough for a slot, where they showed one of its parts: the Advanced Electronics Assembly Line's recipes
+  showed its placement head, the Crusher's its roll. An assembly line's recipes still show the Electronics Workbench
+  first, whose recipes they are.
+- (Core) A model's parts hidden at rest, scaled to nothing until an animation shows them, no longer stretch the room the
+  model is measured to fill: they counted as a point at the file's own origin, so most of J's Computers' chain machines
+  reached 65 blocks down, were drawn from far past where they could be seen and showed as a dot wherever a model is fitted
+  to its room, as the model preview.
 - (Core) A structure that changes its build keeps its blocks merged into its model: a plain block put back where a
   merged one stood while its parts were away merges again, where it stayed a plain block in the model, and a merged
   block carried to a new place with a moving part of its structure takes the shape of the model where it stands.
