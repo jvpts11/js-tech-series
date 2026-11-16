@@ -978,6 +978,8 @@ the releases before 0.5.0a. This file is written from it by `./gradlew changelog
   FIRST, where nothing said why the drive would not spool.
 
 ### Fixed
+- A starship crash hard enough to hurt its crew bursts where the ship is seen, the game's explosion growing
+  with the speed, seen and heard, breaking and hurting nothing of itself; it was only heard before.
 - A starship coming down on a world slows as its land comes near, as in No Man's Sky's planetary approach:
   its full speeds from a thousand blocks over the land, falling away below that to the air's own near a hundred, the
   ship braking hard to them; climbing away it is not held back. It came down on the Moon from its space as fast as it

@@ -46,6 +46,7 @@ import dev.jstech.space.universe.SystemSpaces;
 import dev.jstech.testkit.gametest.GameTestPlayers;
 import dev.jstech.tests.JsTests;
 import dev.jstech.tests.testkit.space.TestShipyards;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.HashSet;
@@ -53,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.SectionPos;
@@ -80,6 +82,8 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.level.ExplosionEvent;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 
@@ -162,6 +166,8 @@ public final class ShipFlightGameTests {
     private static final int OVERHEAD = 16;
     /* How fast a ship meets what is over it in the test of where it is holed, in blocks a second: two holes. */
     private static final double UP_HIT = 14;
+    /* How fast a ship crashes in the test of its burst, in blocks a second: past what its crew stand. */
+    private static final double HARD_HIT = 40;
     /* How far a hovering ship may drift up or down, and roll on wheels at least, in blocks; its nozzles, in degrees. */
     private static final double HOVER_DRIFT = 0.05;
     private static final double ROLLS = 0.3;
@@ -384,6 +390,23 @@ public final class ShipFlightGameTests {
             helper.assertTrue(holed.size() == ShipImpacts.holes(UP_HIT) && lowestHoled >= highestLeft, "met going up,"
                     + " its " + ShipImpacts.holes(UP_HIT) + " topmost blocks are holed: " + holed.size() + " holed, the"
                     + " lowest at " + lowestHoled + ", the highest left at " + highestLeft);
+            MovingStructures.takeAway(ship[0]);
+        }).thenSucceed();
+    }
+
+    /* A crash hard enough to hurt its crew bursts where the ship is seen in the world, not where its blocks are kept. */
+    @GameTest(template = ARENA, batch = BATCH, timeoutTicks = 600)
+    public static void impact_aHardCrashBurstsWhereTheShipIsSeen(final GameTestHelper helper) {
+        final MovingStructure[] ship = new MovingStructure[1];
+        final Bursts bursts = new Bursts();
+        letGo(helper, ship, SHIP).thenExecute(() -> {
+            NeoForge.EVENT_BUS.addListener(bursts);
+            ShipImpacts.met(helper.getLevel(), ship[0], HARD_HIT, 0, -1, 0);
+        }).thenExecuteAfter(2, () -> {
+            NeoForge.EVENT_BUS.unregister(bursts);
+            final AABB seen = ship[0].worldBox().inflate(2);
+            helper.assertTrue(bursts.at.stream().anyMatch(seen::contains), "a hard crash bursts where the ship is "
+                    + "seen: " + bursts.at + " for " + seen);
             MovingStructures.takeAway(ship[0]);
         }).thenSucceed();
     }
@@ -893,5 +916,16 @@ public final class ShipFlightGameTests {
             count += helper.getLevel().getBlockState(at).isAir() ? 0 : 1;
         }
         return count;
+    }
+
+    /* Where the explosions set off while it listens burst. */
+    private static final class Bursts implements Consumer<ExplosionEvent.Start> {
+
+        private final List<Vec3> at = new ArrayList<>();
+
+        @Override
+        public void accept(final ExplosionEvent.Start event) {
+            this.at.add(event.getExplosion().center());
+        }
     }
 }
